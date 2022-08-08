@@ -4,7 +4,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hgit as hgit
-import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import helpers.hunit_test_utils as hunteuti
 import helpers.repo_config_utils as hrecouti
@@ -57,6 +57,21 @@ class TestRepoConfig_Amp(hunitest.TestCase):
 
     def test_config_func_to_str(self) -> None:
         _LOG.info(henv.execute_repo_config_code("config_func_to_str()"))
+
+    def test_is_dev4(self) -> None:
+        """
+        Amp could run on dev4 or not.
+        """
+        _ = hserver.is_dev4()
+
+    def test_is_CK_S3_available(self) -> None:
+        """
+        When running Amp on dev_ck there CK bucket should be available.
+        """
+        if hserver.is_dev_ck():
+            act = henv.execute_repo_config_code("is_CK_S3_available()")
+            exp = True
+            self.assertEqual(act, exp)
 
 
 # #############################################################################
@@ -115,6 +130,10 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_TELEGRAM_TOKEN=***
           CI=''
           GH_ACTION_ACCESS_TOKEN=empty
+          CK_AWS_ACCESS_KEY_ID=***
+          CK_AWS_DEFAULT_REGION=***
+          CK_AWS_S3_BUCKET=***
+          CK_AWS_SECRET_ACCESS_KEY=***
         """
         hunteuti.check_env_to_str(self, exp)
 
@@ -169,7 +188,9 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         #
         exp_enable_privileged_mode = True
         exp_has_dind_support = True
-        hrecouti.assert_setup(self, exp_enable_privileged_mode, exp_has_dind_support)
+        hrecouti.assert_setup(
+            self, exp_enable_privileged_mode, exp_has_dind_support
+        )
 
     @pytest.mark.skipif(
         not henv.execute_repo_config_code("get_name()") == "//amp",

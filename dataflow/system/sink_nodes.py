@@ -8,7 +8,6 @@ import dataflow.system.sink_nodes as dtfsysinod
 import collections
 import datetime
 import logging
-import os
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -19,6 +18,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import oms.portfolio as omportfo
 import oms.process_forecasts_ as oprofore
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -109,13 +109,11 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 # Dict builders.
 # #############################################################################
 
-
+# TODO(Grisha): generalize and move to `system_builder_utils.py`?
 def get_process_forecasts_dict_example1(
     portfolio: omportfo.Portfolio,
     prediction_col: str,
     volatility_col: str,
-    # TODO(Paul): Remove this parameter.
-    price_col: str,
     spread_col: Optional[str],
     order_duration_in_mins: int,
     style: str,
@@ -123,7 +121,7 @@ def get_process_forecasts_dict_example1(
     log_dir: str,
 ) -> Dict[str, Any]:
     """
-    Get the config for `ProcessForecast` node.
+    Get the config for `ProcessForecastNode`.
     """
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     #

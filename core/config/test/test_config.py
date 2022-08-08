@@ -1,7 +1,8 @@
+import collections
 import datetime
 import logging
 import pprint
-from typing import Any
+from typing import Any, Dict
 
 import pytest
 
@@ -1084,6 +1085,150 @@ class Test_make_read_only1(hunitest.TestCase):
           com: 28'
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_to_dict1
+# #############################################################################
+
+
+class Test_to_dict1(hunitest.TestCase):
+    def helper(
+        self,
+        config_as_dict: Dict[str, Any],
+        expected_result_as_str: str,
+    ) -> None:
+        """
+        Check that a `Config`'s conversion to a dict is correct.
+
+        :param config_as_dict: a dictionary to build a `Config` from
+        :param expected_result_as_str: expected `Config` value as string
+        """
+        config = cconfig.get_config_from_nested_dict(config_as_dict)
+        act = str(config)
+        self.assert_equal(act, expected_result_as_str, fuzzy_match=True)
+        # Ensure that the round trip transform is correct.
+        config_as_dict2 = config.to_dict()
+        self.assert_equal(str(config_as_dict), str(config_as_dict2))
+
+    def test1(self) -> None:
+        """
+        Test a regular `Config`.
+        """
+        config_as_dict = collections.OrderedDict(
+            {
+                "param1": 1,
+                "param2": 2,
+                "param3": 3,
+            }
+        )
+        #
+        exp = r"""
+        param1: 1
+        param2: 2
+        param3: 3
+        """
+        self.helper(config_as_dict, exp)
+
+    def test2(self) -> None:
+        """
+        Test a `Config` with a non-empty sub-config.
+        """
+        sub_config_dict = collections.OrderedDict(
+            {
+                "sub_key1": "sub_value1",
+                "sub_key2": "sub_value2",
+            }
+        )
+        config_as_dict = collections.OrderedDict(
+            {
+                "param1": 1,
+                "param2": 2,
+                "param3_as_config": sub_config_dict,
+            }
+        )
+        #
+        exp = r"""
+        param1: 1
+        param2: 2
+        param3_as_config:
+          sub_key1: sub_value1
+          sub_key2: sub_value2
+        """
+        self.helper(config_as_dict, exp)
+
+    def test3(self) -> None:
+        """
+        Test a `Config` with an empty sub-config.
+        """
+        config_as_dict = collections.OrderedDict(
+            {
+                "param1": 1,
+                "param2": 2,
+                # An empty dict becomes an empty config when converting to `Config`
+                # further.
+                "param3": collections.OrderedDict(),
+            }
+        )
+        #
+        exp = r"""
+        param1: 1
+        param2: 2
+        param3:
+        """
+        self.helper(config_as_dict, exp)
+
+    # def test4(self):
+    #     import dataflow_lime.pipelines.E8.E8d_pipeline as dtflpee8pi
+    #     obj = dtflpee8pi.E8d_DagBuilder()
+    #     obj.get_config_template()
+    #     assert 0
+    #     dict_ = {
+    #         "resample": {
+    #             "in_col_groups": [
+    #                 ("close",),
+    #                 ("volume",),
+    #                 ("sbc_sac.compressed_difference",),
+    #                 ("day_spread",),
+    #                 ("day_num_spread",),
+    #             ],
+    #             "out_col_group": (),
+    #             "transformer_kwargs": {
+    #                 "rule": "5T",
+    #                 # "rule": "15T",
+    #                 "resampling_groups": [
+    #                     ({"close": "close"}, "last", {}),
+    #                     (
+    #                         {
+    #                             "close": "twap",
+    #                             "sbc_sac.compressed_difference": "sbc_sac.compressed_difference",
+    #                         },
+    #                         "mean",
+    #                         # TODO(gp): Use {}
+    #                         # {},
+    #                         None,
+    #                     ),
+    #                     (
+    #                         {
+    #                             "day_spread": "day_spread",
+    #                             "day_num_spread": "day_num_spread",
+    #                             "volume": "volume",
+    #                         },
+    #                         "sum",
+    #                         {"min_count": 1},
+    #                     ),
+    #                 ],
+    #                 "vwap_groups": [
+    #                     ("close", "volume", "vwap"),
+    #                 ],
+    #             },
+    #             "reindex_like_input": False,
+    #             "join_output_with_input": False,
+    #         },
+    #     }
+    #     config_tail = cconfig.get_config_from_nested_dict(dict_)
+    #     config = cconfig.Config()
+    #     config.update(config_tail)
 
 
 # TODO(gp): Unit tests all the functions.
