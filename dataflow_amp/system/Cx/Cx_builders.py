@@ -5,7 +5,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
@@ -13,9 +13,11 @@ import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
 
@@ -74,6 +76,35 @@ def get_Cx_RealTimeMarketData_example1(
         im_client, event_loop, asset_ids
     )
     return market_data
+
+
+def get_RealTimeImClientMarketData_prod_instance(
+    im_client: icdc.ImClient,
+    asset_ids: List[int],
+) -> Tuple[mdata.ReplayedMarketData, hdateti.GetWallClockTime]:
+    """
+    Build a `RealTimeMarketData` for production.
+    """
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    event_loop = None
+    get_wall_clock_time = lambda: hdateti.get_current_time(
+        tz="ET", event_loop=event_loop
+    )
+    # Build a `ReplayedMarketData`.
+    market_data = mdata.RealTimeMarketData2(
+        im_client,
+        #
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+    )
+    return market_data, get_wall_clock_time
 
 
 # #############################################################################

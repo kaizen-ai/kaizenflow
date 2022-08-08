@@ -354,35 +354,6 @@ def get_RealTimeImClientMarketData_example1(
     return market_data, get_wall_clock_time
 
 
-def get_RealTimeImClientMarketData_prod_instance2(
-    im_client: icdc.ImClient,
-    asset_ids: List[int],
-) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
-    """
-    Build a `RealTimeMarketData` for production.
-    """
-    asset_id_col = "asset_id"
-    start_time_col_name = "start_timestamp"
-    end_time_col_name = "end_timestamp"
-    columns = None
-    event_loop = None
-    get_wall_clock_time = lambda: hdateti.get_current_time(
-        tz="ET", event_loop=event_loop
-    )
-    # Build a `ReplayedMarketData`.
-    market_data = mdrtmada.RealTimeMarketData2(
-        im_client,
-        #
-        asset_id_col,
-        asset_ids,
-        start_time_col_name,
-        end_time_col_name,
-        columns,
-        get_wall_clock_time,
-    )
-    return market_data, get_wall_clock_time
-
-
 # TODO(Grisha): @Dan -> `get_RealTimeImClientMarketData_example2`.
 def get_RealtimeMarketData_example1(
     im_client: icdc.RealTimeImClient,
