@@ -318,7 +318,7 @@ Diff with:
 or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
-EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
+ACTUAL VARIABLE: Test_AssertEqual1.test_not_equal1
 --------------------------------------------------------------------------------
 exp = r"""
 completed failure Lint    Run_linter
@@ -1040,8 +1040,7 @@ class Test_purify_object_representation1(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        Test replacing
-        wall_clock_time=Timestamp('2022-08-04 09:29:13.892793-0400', tz='America/New_York'))
+        Test replacing wall_clock_time=Timestamp('..., tz='America/New_York'))
         """
         txt = """
         _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'

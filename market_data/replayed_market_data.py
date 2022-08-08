@@ -207,7 +207,7 @@ def load_market_data(
     column_remap: Optional[Dict[str, str]] = None,
     timestamp_db_column: Optional[str] = None,
     datetime_columns: Optional[List[str]] = None,
-    kwargs: Optional[Dict[str, Any]] = None,
+    read_csv_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Load some example market data from a CSV file.
@@ -227,17 +227,18 @@ def load_market_data(
     :param datetime_columns: names (after remapping) of the columns to convert
         to datetime
     """
-    # Build options.
-    if kwargs is None:
-        kwargs = {}
-    kwargs_tmp = kwargs.copy()
+    # Build options for `read_csv_to_df()`.
+    if read_csv_kwargs is None:
+        read_csv_kwargs = {}
+    read_csv_kwargs_tmp = read_csv_kwargs.copy()
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
-        kwargs_tmp["s3fs"] = s3fs_
-    kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
-    df = hpandas.read_csv_to_df(stream, **kwargs)
-    # TODO(gp): Difference btw amp and cmamp.
+        read_csv_kwargs_tmp["s3fs"] = s3fs_
+    read_csv_kwargs.update(read_csv_kwargs_tmp)  # type: ignore[arg-type]
+    stream, read_csv_kwargs = hs3.get_local_or_s3_stream(
+        file_name, **read_csv_kwargs
+    )
+    df = hpandas.read_csv_to_df(stream, **read_csv_kwargs)
     # Adjust column names to the processable format.
     if column_remap:
         hpandas.dassert_valid_remap(list(df.columns), column_remap)
@@ -254,6 +255,7 @@ def load_market_data(
             hdbg.dassert_in(col_name, df.columns)
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
     df.reset_index(inplace=True)
+    #
     _LOG.debug(
         hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
     )
