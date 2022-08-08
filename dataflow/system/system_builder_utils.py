@@ -534,7 +534,7 @@ def get_DatabasePortfolio_from_System(
     portfolio = oms.get_DatabasePortfolio_example1(
         system.config["event_loop_object"],
         system.config["db_connection_object"],
-        oms.CURRENT_POSITIONS_TABLE_NAME,
+        table_name=oms.CURRENT_POSITIONS_TABLE_NAME,
         market_data=system.market_data,
         mark_to_market_col=system.config[
             "portfolio_config", "mark_to_market_col"
