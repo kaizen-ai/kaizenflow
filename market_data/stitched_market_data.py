@@ -310,7 +310,8 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         # TODO(gp): It should delegate to the ImClient.
         return True
 
-    # TODO(Nina): CmTask2568 "Move `_merge_dfs` to `handas` and unit test."
+    # TODO(Nina): CmTask2568 "Move `_merge_dfs` to `hpandas` and unit test."
+    # TODO(Nina): Add `filter_data_mode`.
     @staticmethod
     def _merge_dfs(
         df1: pd.DataFrame,
@@ -387,9 +388,10 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             right_close,
             limit,
         )
-        # TODO(Grisha): @Dan Decide how to handle `full_symbol` because
-        #  if do not merge on it, the column will become duplicated,
-        #  i.e. `full_symbol_1`, `full_symbol_2`.
+        # TODO(Grisha): @Dan If the data is coming from the same data source,
+        # then we merge on `full_symbol` and `asset_id`. If the data is coming
+        # from different data sets then the merge should be done on
+        # `full_symbol` and not `asset_id`.
         cols_to_merge_on = [
             self._end_time_col_name,
             self._asset_id_col,
