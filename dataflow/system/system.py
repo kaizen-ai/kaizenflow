@@ -182,9 +182,9 @@ class System(abc.ABC):
         """
         Set the config for a System.
 
-        This is used in the tile backtesting flow to create multiple configs and
-        then inject one at a time into a `System` in order to simulate the `System`
-        for a specific tile.
+        This is used in the tile backtesting flow to create multiple
+        configs and then inject one at a time into a `System` in order
+        to simulate the `System` for a specific tile.
         """
         self._config = config
 
@@ -259,6 +259,8 @@ class System(abc.ABC):
     # - To access the objects (e.g., for checking the output of a test) one uses the
     #   public properties
 
+    # TODO(gp): Pass also the expected type so we can check that each function
+    #  returns what's expected.
     def _get_cached_value(
         self,
         key: str,
@@ -537,35 +539,25 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
 
-    # TODO(gp): I've noticed that tests actually create an order processor instead
-    #  of using this. The tests should use this.
-    def get_order_processor_coroutine(self) -> Coroutine:
-        db_connection = self.config["db_connection_object"]
-        asset_id_name = self.config["market_data_config", "asset_id_col_name"]
-        #
-        # If an order is not placed within a bar, then there is a timeout,
-        # so we add extra 5 seconds to `sleep_interval_in_secs` (which
-        # represents the length of a trading bar) to make sure that
-        # the `OrderProcessor` waits long enough before timing out.
-        max_wait_time_for_order_in_secs = (
-            self.config["dag_runner_config", "sleep_interval_in_secs"] + 5
+    # TODO(gp): -> order_processor_coroutine?
+    # TODO(gp): Can we return the OrderProcessor somehow so we can add it to the
+    #  config?
+    @property
+    def order_processor(
+        self,
+    ) -> Coroutine:
+        order_processor_coroutine: Coroutine = self._get_cached_value(
+            "order_processor", self._get_order_processor
         )
-        order_processor = oms.get_order_processor_example1(
-            db_connection,
-            self.portfolio,
-            asset_id_name,
-            max_wait_time_for_order_in_secs,
-        )
-        # We add extra 5 seconds for the `OrderProcessor` to account for
-        # the first bar that the DAG spends in fit mode.
-        real_time_loop_time_out_in_secs = (
-            self.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
-            + 5
-        )
-        order_processor_coroutine = oms.get_order_processor_coroutine_example1(
-            order_processor, self.portfolio, real_time_loop_time_out_in_secs
-        )
+        hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
         return order_processor_coroutine
+
+    @abc.abstractmethod
+    def _get_order_processor(self) -> Coroutine:
+        """
+        Return the coroutine representing the OrderProcessor.
+        """
+        ...
 
 
 # #############################################################################

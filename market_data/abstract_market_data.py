@@ -289,7 +289,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # Convert start and end timestamps to the timezone specified in the ctor.
         df = self._convert_timestamps_to_timezone(df)
         # Check that columns are required ones.
-        # TODO(gp): Difference btw amp and cmamp.
+        # TODO(gp): Difference between amp and cmamp.
         if self._columns is not None:
             df = hpandas.check_and_filter_matching_columns(
                 df, self._columns, self._filter_data_mode
@@ -606,8 +606,10 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     # Data normalization.
     # /////////////////////////////////////////////////////////////////////////////
 
-    def _dassert_valid_asset_ids(self, asset_ids: Optional[Iterable[AssetId]],
-                                 ) -> None:
+    def _dassert_valid_asset_ids(
+        self,
+        asset_ids: Optional[Iterable[AssetId]],
+    ) -> None:
         if asset_ids is not None:
             hdbg.dassert_container_type(
                 asset_ids, (np.ndarray, list), (int, np.int64)

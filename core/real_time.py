@@ -102,7 +102,7 @@ class ReplayedTime:
         hdateti.dassert_tz_compatible(
             self._initial_replayed_dt, self._initial_wall_clock_dt
         )
-        # TODO(gp): Difference btw amp and cmamp.
+        # TODO(gp): Difference between amp and cmamp.
         hdbg.dassert_lte(
             self._initial_replayed_dt,
             self._initial_wall_clock_dt,
@@ -276,7 +276,8 @@ def align_on_time_grid(
 
     # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
     target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
-        grid_time_in_secs, get_wall_clock_time)
+        grid_time_in_secs, get_wall_clock_time
+    )
     #
     if use_high_resolution:
         # Wait for a bit and then busy wait.
