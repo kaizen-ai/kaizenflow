@@ -46,7 +46,6 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         # Get params for ProcessForecastsNode.
         prediction_col = "close"
         volatility_col = "close"
-        price_col = "close"
         spread_col = None
         order_duration_in_mins = 5
         style = "cross_sectional"
@@ -60,7 +59,6 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
             portfolio,
             volatility_col,
             prediction_col,
-            price_col,
             spread_col,
             order_duration_in_mins,
             style,

@@ -27,7 +27,12 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
+# Disable _LOG.debug.
 _LOG.debug = lambda *_: 0
+
+# Enable or disable _LOG.verb_debug
+# _LOG.verb_debug = lambda *_: 0
+# _LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -80,7 +85,10 @@ class Config:
         If `key` is an iterable of keys, then the key hierarchy is
         navigated/created and the leaf value added/updated with `val`.
         """
-        _LOG.debug("key=%s, config=%s", key, self)
+        # _LOG.verb_debug("key=%s, config=%s", key, self)
+        # TODO(gp): Difference between amp and cmamp.
+        if isinstance(val, dict):
+            hdbg.dfatal(f"val='{val}' can't be a dict")
         if False:
             # To debug who sets a certain key.
             _LOG.info("key.set=%s", str(key))
@@ -277,6 +285,15 @@ class Config:
         """
         _LOG.debug("")
         self._read_only = True
+        # TODO(gp): Make read_only recursive. Add unit tests.
+        # for v in self._config.values():
+        #     if isinstance(v, Config):
+        #         v.mark_read_only()
+        #         assert 0
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # From / to functions.
+    # /////////////////////////////////////////////////////////////////////////////
 
     @classmethod
     def from_python(cls, code: str) -> Optional["Config"]:
@@ -333,10 +350,13 @@ class Config:
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
         for k, v in self._config.items():
             if isinstance(v, Config):
+                # If a value is a `Config` convert to dictionary recursively.
                 dict_[k] = v.to_dict()
             else:
                 dict_[k] = v
         return dict_
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def is_serializable(self) -> bool:
         """
@@ -398,6 +418,10 @@ class Config:
             % (key, self._config[key], hprint.indent(str(self)))
         )
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Private methods.
+    # /////////////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
         hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
@@ -405,11 +429,13 @@ class Config:
         _LOG.debug(
             "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
         )
-        hdbg.dassert_isinstance(head_key, (int, str), "Keys can only be string or int")
+        hdbg.dassert_isinstance(
+            head_key, (int, str), "Keys can only be string or int"
+        )
         return head_key, tail_key
 
     def _get_item(self, key: Key, *, level: int) -> Any:
-        _LOG.debug("key=%s, config=%s, lev=%s", key, self, level)
+        # _LOG.debug("key=%s, config=%s, lev=%s", key, self, level)
         # Check if the key is nested.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)

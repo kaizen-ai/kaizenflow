@@ -6,13 +6,14 @@ import dataflow.system.system_builder_utils as dtfssybuut
 
 import datetime
 import logging
-from typing import Callable, Optional
+from typing import Callable, Coroutine, Optional
 
 import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
+import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
@@ -24,6 +25,13 @@ import oms
 
 _LOG = logging.getLogger(__name__)
 
+# There are different types of functions
+# - `apply_..._config(system, ...)`
+#   - Use parameters from `system` and other inputs to populate the System Config
+#     with values corresponding to a certain System object
+#   - TODO(gp): It's unclear if we should return `System` or not.
+# - `build_..._from_System(system)`
+#   - Build objects using parameters from System Config
 
 # #############################################################################
 # System config utils
@@ -47,7 +55,6 @@ def get_SystemConfig_template_from_DagBuilder(
     return system_config
 
 
-# TODO(gp): Move to dataflow/backtest
 def apply_backtest_config(
     system: dtfsyssyst.ForecastSystem, backtest_config: str
 ) -> dtfsyssyst.ForecastSystem:
@@ -71,6 +78,7 @@ def apply_backtest_config(
     return system
 
 
+# TODO(gp): -> apply_MarketData_config
 def apply_market_data_config(
     system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
@@ -88,9 +96,10 @@ def apply_market_data_config(
     return system
 
 
+# TODO(gp): build_ImClient_from_System
 def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
     """
-    Build an IM client from params in the system config.
+    Build an IM client from params in the system Config.
     """
     ctor = system.config["market_data_config", "im_client_ctor"]
     hdbg.dassert_isinstance(ctor, Callable)
@@ -105,11 +114,13 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 # #############################################################################
 
 
+# TODO(gp): -> build_EventLoop_MarketData_from_df
 def get_EventLoop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
-    Build an event loop MarketData with data from a dataframe.
+    Build an event loop MarketData with data from a dataframe stored inside the
+    Config.
     """
     event_loop = system.config["event_loop_object"]
     initial_replayed_delay = system.config[
@@ -124,11 +135,6 @@ def get_EventLoop_MarketData_from_df(
         delay_in_secs=delay_in_secs,
     )
     return market_data
-
-
-# #############################################################################
-# Source node instances
-# #############################################################################
 
 
 # #############################################################################
@@ -156,9 +162,10 @@ def adapt_dag_to_real_time_from_config(
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
+    # TODO(gp): Why is this not returning anything? Is this even used?
 
 
-# TODO(gp): -> ...from_System
+# TODO(gp): -> build...from_System
 def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
@@ -347,7 +354,7 @@ def apply_dag_property(
     return system
 
 
-# TODO(gp): build_dag_with_DataSourceNode?
+# TODO(gp): -> build_Dag_with_DataSourceNode_from_System?
 def build_dag_with_data_source_node(
     system: dtfsyssyst.System,
     data_source_node: dtfcore.DataSource,
@@ -369,7 +376,7 @@ def build_dag_with_data_source_node(
     return dag
 
 
-# TODO(Grisha): -> `add_RealTimeDataSource`?
+# TODO(gp): -> build_dag_with_RealTimeDataSource?
 def add_real_time_data_source(
     system: dtfsyssyst.System,
 ) -> dtfcore.DAG:
@@ -394,6 +401,22 @@ def add_real_time_data_source(
         multiindex_output,
     )
     dag = build_dag_with_data_source_node(system, node)
+    return dag
+
+
+def add_process_forecasts_node(
+    system: dtfsyssyst.System, dag: dtfcore.DAG
+) -> dtfcore.DAG:
+    """
+    Append `ProcessForecastsNode` to a DAG.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "process_forecasts"
+    _LOG.debug("stage=%s", stage)
+    node = dtfsysinod.ProcessForecastsNode(
+        stage, **system.config["process_forecasts_config"].to_dict()
+    )
+    dag.append_to_tail(node)
     return dag
 
 
@@ -540,3 +563,31 @@ def get_DatabasePortfolio_from_System(
         "price": "close",
     }
     return portfolio
+
+
+# #############################################################################
+# OrderProcessor instances.
+# #############################################################################
+
+
+def get_OrderProcessorCoroutine_from_System(
+    system: dtfsyssyst.System,
+) -> Coroutine:
+    """
+    Build an OrderProcessor coroutine from the parameters in the SystemConfig.
+    """
+    order_processor = oms.get_order_processor_example1(
+        system.config["db_connection_object"],
+        system.portfolio,
+        system.config["market_data_config", "asset_id_col_name"],
+        system.config[
+            "order_processor_config", "max_wait_time_for_order_in_secs"
+        ],
+    )
+    order_processor_coroutine = oms.get_order_processor_coroutine_example1(
+        order_processor,
+        system.portfolio,
+        system.config["order_processor_config", "duration_in_secs"],
+    )
+    hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
+    return order_processor_coroutine

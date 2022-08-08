@@ -8,6 +8,7 @@ from typing import Any, Dict
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
@@ -25,16 +26,16 @@ def adapt_dag_to_real_time(
     market_data_history_lookback: pd.Timedelta,
     process_forecasts_dict: Dict[str, Any],
     # TODO(gp): Move after market_data_history_lookback.
-    ts_col_name: str
+    ts_col_name: str,
 ):
     """
     Insert a `RealTimeDataSource` node at the beginning of a DAG and a
-    `ProcessForecasts` at the end of a DAG.
-    The DAG needs to have a single source and sink to be compatible with this
-    operation.
+    `ProcessForecasts` at the end of a DAG. The DAG needs to have a single
+    source and sink to be compatible with this operation.
 
-    This function is equivalent to the old approach of `RealTimeDagAdapter`, but
-    working on the `DAG` directly instead of a `DagBuilder`.
+    This function is equivalent to the old approach of
+    `RealTimeDagAdapter`, but working on the `DAG` directly instead of a
+    `DagBuilder`.
     """
     # Add the DataSource node.
     stage = "read_data"
@@ -52,6 +53,11 @@ def adapt_dag_to_real_time(
     # Create and append the ProcessForecast node.
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
-    node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_dict)
+    process_forecasts_dict = cconfig.get_config_from_nested_dict(
+        process_forecasts_dict
+    )
+    node = dtfsysinod.ProcessForecastsNode(
+        stage, **process_forecasts_dict.to_dict()
+    )
     dag.append_to_tail(node)
     return dag

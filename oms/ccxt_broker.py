@@ -73,15 +73,93 @@ class CcxtBroker(ombroker.Broker):
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
 
-    def get_fills(
-        self, sent_orders: List[omorder.Order] = None
-    ) -> List[ombroker.Fill]:
+    @staticmethod
+    def convert_ccxt_order_to_oms_order(
+        ccxt_order: Dict[Any, Any]
+    ) -> omorder.Order:
+        """
+        Convert sent CCXT orders to oms.Order class.
+
+        Example of an input:
+        {'info':
+         {'orderId': '3101620940',
+            'symbol': 'BTCUSDT',
+            'status': 'FILLED',
+            'clientOrderId': '***REMOVED***',
+            'price': '0',
+            'avgPrice': '23480.20000',
+            'origQty': '0.001',
+            'executedQty': '0.001',
+            'cumQuote': '23.48020',
+            'timeInForce': 'GTC',
+            'type': 'MARKET',
+            'reduceOnly': False,
+            'closePosition': False,
+            'side': 'BUY',
+            'positionSide': 'BOTH',
+            'stopPrice': '0',
+            'workingType': 'CONTRACT_PRICE',
+            'priceProtect': False, 'origType':
+            'MARKET', 'time': '1659465769012',
+            'updateTime': '1659465769012'},
+            'id': '3101620940',
+            'clientOrderId': '***REMOVED***',
+            'timestamp': 1659465769012,
+            'datetime': '2022-08-02T18:42:49.012Z',
+            'lastTradeTimestamp': None,
+            'symbol': 'BTC/USDT',
+            'type': 'market',
+            'timeInForce': 'IOC',
+            'postOnly': False,
+            'side': 'buy',
+            'price': 23480.2,
+            'stopPrice': None,
+            'amount': 0.001,
+            'cost': 23.4802,
+            'average': 23480.2,
+            'filled': 0.001,
+            'remaining': 0.0,
+            'status': 'closed',
+            'fee': None,
+            'trades': [],
+            'fees': [],
+            'asset_id': 1467591036
+            }
+        """
+        asset_id = ccxt_order["asset_id"]
+        type_ = "market"
+        # Select creation and start date.
+        creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
+            ccxt_order["timestamp"]
+        )
+        start_timestamp = creation_timestamp
+        # Get an offset end timestamp.
+        end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
+            int(ccxt_order["info"]["updateTime"])
+        ) + pd.DateOffset(minutes=1)
+        # Get the amount of shares filled.
+        curr_num_shares = float(ccxt_order["info"]["origQty"])
+        diff_num_shares = ccxt_order["filled"]
+        oms_order = omorder.Order(
+            creation_timestamp,
+            asset_id,
+            type_,
+            start_timestamp,
+            end_timestamp,
+            curr_num_shares,
+            diff_num_shares,
+        )
+        return oms_order
+
+    def get_fills(self) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
 
         :param sent_orders: a list of orders submitted by Broker
         :return: a list of filled orders
         """
+        # Load previously sent orders from class state.
+        sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
@@ -106,6 +184,12 @@ class CcxtBroker(ombroker.Broker):
                         ][0]
                         # Assign an `asset_id` to the filled order.
                         filled_order["asset_id"] = asset_id
+                        # Convert CCXT `dict` order to oms.Order.
+                        #  TODO(Danya): bind together self._sent_orders and CCXT response
+                        #  so we can avoid this conversion while keeping the fill status.
+                        filled_order = self.convert_ccxt_order_to_oms_order(
+                            filled_order
+                        )
                         # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
@@ -258,7 +342,9 @@ class CcxtBroker(ombroker.Broker):
             order.ccxt_id = order_resp["id"]
             sent_orders.append(order)
             _LOG.info(order_resp)
-        return sent_orders
+        # Save sent CCXT orders to class state.
+        self._sent_orders = sent_orders
+        return None
 
     def _build_asset_id_to_symbol_mapping(
         self, universe_version: str

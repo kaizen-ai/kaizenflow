@@ -930,6 +930,7 @@ def pytest_repro(  # type: ignore
     # `helpers/test/test_env.py::Test_env1::test_get_system_signature1`.
     hdbg.dassert_isinstance(targets, list)
     targets = hlist.remove_duplicates(targets)
+    targets = sorted(targets)
     failed_test_output_str = (
         f"Found {len(targets)} failed pytest '{mode}' target(s); "
         "to reproduce run:\n"
@@ -1213,7 +1214,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     _run(cmd)
     #
     print(hprint.frame("grep Failures"))
-    cmd = f"grep '^FAILED' {log_file}"
+    cmd = f"grep '^FAILED' {log_file} | sort"
     _run(cmd)
 
 
