@@ -35,7 +35,7 @@ async def process_forecasts(
     volatility_df: pd.DataFrame,
     portfolio: omportfo.Portfolio,
     # TODO(gp): It should be a dict.
-    # -> process_forecasts_config
+    # TODO(gp): Remove the two nested process_forecasts_config in the config.
     config: cconfig.Config,
     # TODO(gp): Should we keep all the dfs close together in the interface?
     # TODO(gp): Add a *

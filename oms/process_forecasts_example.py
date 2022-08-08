@@ -8,8 +8,7 @@ import datetime
 import core.config as cconfig
 
 
-# TODO(gp): -> get_forecast_processor_config_example1
-def get_process_forecasts_config() -> cconfig.Config:
+def get_process_forecasts_config_example1() -> cconfig.Config:
     dict_ = {
         "order_config": {
             "order_type": "price@twap",

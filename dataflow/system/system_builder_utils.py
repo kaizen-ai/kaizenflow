@@ -317,7 +317,6 @@ def apply_dag_property(
     recursion.
     """
     dag_builder = system.config["dag_builder_object"]
-    #
     # TODO(gp): This is not a DAG property and needs to be set-up before the DAG
     #  is built. Also each piece of config should `make_read_only` the pieces that
     #  is used.
