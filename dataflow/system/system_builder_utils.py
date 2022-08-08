@@ -564,13 +564,10 @@ def apply_Portfolio_config(
         "midpoint": "midpoint",
         "price": "close",
     }
-<<<<<<< HEAD
     system.config[
         "portfolio_config", "column_remap"
     ] = cconfig.get_config_from_nested_dict(column_remap)
     return system
-=======
-    return portfolio
 
 
 # #############################################################################
