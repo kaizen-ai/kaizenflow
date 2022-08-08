@@ -556,6 +556,7 @@ def apply_Portfolio_config(
     """
     Extend system config with parameters for `Portfolio` init.
     """
+    # TODO(Grisha): @Dan do not hard-wire the values inside the function.
     system.config["portfolio_config", "mark_to_market_col"] = "close"
     system.config["portfolio_config", "pricing_method"] = "twap.5T"
     column_remap = {
