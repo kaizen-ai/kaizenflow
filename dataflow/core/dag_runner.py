@@ -18,6 +18,7 @@ import dataflow.core.utils as dtfcorutil
 import dataflow.core.visitors as dtfcorvisi
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): At hindsight a `DagRunner` just calls methods on a DAG so we could
 #  merge the code into the DAG to simplify the class system. If we wanted to
 #  keep the behaviors separated, we could use mixins like `FitPredictDag`.
-class DagRunner(abc.ABC):
+class DagRunner(abc.ABC, hobject.PrintableMixin):
     """
     Abstract class with the common code to all `DagRunner`s.
 
@@ -53,7 +54,9 @@ class DagRunner(abc.ABC):
         self.dag = dag
         # TODO(gp): Not sure what to do here.
         self.config = cconfig.Config()
-        self._column_to_tags_mapping = []
+        # We should pass None to `ResultBundle` in order not to rely on the
+        # default value in `ResultBundle`.
+        self._column_to_tags_mapping = None
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)
@@ -167,6 +170,7 @@ class FitPredictDagRunner(DagRunner):
 # #############################################################################
 
 
+# TODO(gp): This is obsolete.
 class PredictionDagRunner(FitPredictDagRunner):
     """
     Run prediction DAGs.

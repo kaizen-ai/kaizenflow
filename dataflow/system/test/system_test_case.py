@@ -6,8 +6,7 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
-import os
-from typing import Callable, List, Tuple, Union
+from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 
 import pandas as pd
 
@@ -50,6 +49,51 @@ def get_signature(
     #
     res = "\n".join(txt)
     return res
+
+
+def _get_signature_from_result_bundle(
+    system: dtfsyssyst.System,
+    result_bundles: List[dtfcore.ResultBundle],
+    add_system_config: bool,
+    add_run_signature: bool,
+) -> str:
+    portfolio = system.portfolio
+    dag_runner = system.dag_runner
+    # Compute signature.
+    txt = []
+    if add_system_config:
+        txt.append(hprint.frame("system_config"))
+        txt.append(str(system.config))
+    if add_run_signature:
+        # TODO(gp): This should be factored out.
+        txt.append(hprint.frame("compute_run_signature"))
+        hdbg.dassert_isinstance(result_bundles, list)
+        result_bundle = result_bundles[-1]
+        # result_bundle.result_df = result_bundle.result_df.tail(40)
+        system_tester = SystemTester()
+        # Check output.
+        forecast_evaluator_from_prices_dict = system.config[
+            "research_forecast_evaluator_from_prices"
+        ].to_dict()
+        txt_tmp = system_tester.compute_run_signature(
+            dag_runner,
+            portfolio,
+            result_bundle,
+            forecast_evaluator_from_prices_dict,
+        )
+        txt.append(txt_tmp)
+    #
+    actual = "\n".join(txt)
+    # Remove the following line:
+    # ```
+    # db_connection_object: <connection object; dsn: 'user=aljsdalsd
+    #   password=xxx dbname=oms_postgres_db_local
+    #   host=cf-spm-dev4 port=12056', closed: 0>
+    # ```
+    actual = hunitest.filter_text("db_connection_object", actual)
+    actual = hunitest.filter_text("log_dir:", actual)
+    actual = hunitest.filter_text("trade_date:", actual)
+    return actual
 
 
 # #############################################################################
@@ -313,6 +357,9 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     @staticmethod
     def _test_dataframe_portfolio_helper(
         system: dtfsyssyst.System,
+        *,
+        add_system_config: bool = True,
+        add_run_signature: bool = True,
     ) -> str:
         """
         Run a System with a DataframePortfolio.
@@ -320,48 +367,43 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             #
             system.config["event_loop_object"] = event_loop
-            portfolio = system.portfolio
             dag_runner = system.dag_runner
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Compute signature.
-            txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            # TODO(gp): This should be factored out.
-            txt.append(hprint.frame("compute_run_signature"))
+            # Check.
+            # Pick the ResultBundle corresponding to the DagRunner execution.
             result_bundles = result_bundles[0]
-            result_bundle = result_bundles[-1]
-            result_bundle.result_df = result_bundle.result_df.tail(40)
-            system_tester = SystemTester()
-            # Check output.
-            forecast_evaluator_from_prices_dict = system.config[
-                "research_forecast_evaluator_from_prices"
-            ].to_dict()
-            txt_tmp = system_tester.compute_run_signature(
-                dag_runner,
-                portfolio,
-                result_bundle,
-                forecast_evaluator_from_prices_dict,
+            actual = _get_signature_from_result_bundle(
+                system, result_bundles, add_system_config, add_run_signature
             )
-            txt.append(txt_tmp)
-            #
-            actual = "\n".join(txt)
-            # Remove the following line:
-            # ```
-            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
-            #   password=xxx dbname=oms_postgres_db_local
-            #   host=cf-spm-dev4 port=12056', closed: 0>
-            # ```
-            actual = hunitest.filter_text("db_connection_object", actual)
-            actual = hunitest.filter_text("log_dir:", actual)
-            actual = hunitest.filter_text("trade_date:", actual)
             return actual
 
-    def _test1(self, system):
+    def _test_save_data(
+        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    ) -> None:
+        """
+        Generate data used in this test.
+
+        E.g.,
+        ```
+        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
+        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+        ```
+        """
+        # period = "last_day"
+        # period = pd.Timedelta("15D")
+        limit = None
+        mdata.save_market_data(market_data, file_name, period, limit)
+        _LOG.warning("Updated file '%s'", file_name)
+        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
+
+    def _test1(self, system: dtfsyssyst.System) -> None:
         """
         Run a system using the desired DataFramePortfolio and freeze the
         output.
@@ -392,9 +434,34 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    def _test_save_data(
+        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    ) -> None:
+        """
+        Generate data used in this test.
+
+        E.g.,
+        ```
+        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
+        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
+        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+        ```
+        """
+        # period = "last_day"
+        # period = pd.Timedelta("15D")
+        limit = None
+        mdata.save_market_data(market_data, file_name, period, limit)
+        _LOG.warning("Updated file '%s'", file_name)
+        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
+
     def _test_database_portfolio_helper(
         self,
         system: dtfsyssyst.System,
+        *,
+        add_system_config: bool = True,
+        add_run_signature: bool = True,
     ) -> str:
         """
         Run a System with a DatabasePortfolio.
@@ -408,49 +475,23 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
+            # Create and add order processor.
+            order_processor_coroutine = system.order_processor
+            hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
+            coroutines.append(order_processor_coroutine)
             # Create DAG runner.
             dag_runner = system.dag_runner
             coroutines.append(dag_runner.predict())
-            # Create and add order processor.
-            portfolio = system.portfolio
-            order_processor_coroutine = system.get_order_processor_coroutine()
-            coroutines.append(order_processor_coroutine)
             #
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Compute signature.
-            txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            # TODO(gp): This should be factored out.
-            txt.append(hprint.frame("compute_run_signature"))
-            result_bundles = result_bundles[0]
-            result_bundle = result_bundles[-1]
-            result_bundle.result_df = result_bundle.result_df.tail(40)
-            system_tester = SystemTester()
-            # Check output.
-            forecast_evaluator_from_prices_dict = system.config[
-                "research_forecast_evaluator_from_prices"
-            ].to_dict()
-            txt_tmp = system_tester.compute_run_signature(
-                dag_runner,
-                portfolio,
-                result_bundle,
-                forecast_evaluator_from_prices_dict,
+            # Check.
+            # Pick the result_bundle that corresponds to the DagRunner.
+            result_bundles = result_bundles[1]
+            actual = _get_signature_from_result_bundle(
+                system, result_bundles, add_system_config, add_run_signature
             )
-            txt.append(txt_tmp)
-            #
-            actual = "\n".join(txt)
-            # Remove the following line:
-            # ```
-            # db_connection_object: <connection object; dsn: 'user=aljsdalsd
-            #   password=xxx dbname=oms_postgres_db_local
-            #   host=cf-spm-dev4 port=12056', closed: 0>
-            # ```
-            actual = hunitest.filter_text("db_connection_object", actual)
-            actual = hunitest.filter_text("log_dir:", actual)
-            actual = hunitest.filter_text("trade_date:", actual)
             return actual
 
     def _test1(self, system: dtfsyssyst.System) -> None:
@@ -479,20 +520,29 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         Test that the outcome is the same when running a System with a
         DataFramePortfolio vs running one with a DatabasePortfolio.
         """
+        # The config signature is different (since the systems are different) so
+        # we only compare the result of the run.
+        add_system_config = False
+        add_run_signature = True
         actual = self._test_dataframe_portfolio_helper(
-            system_with_dataframe_portfolio
+            system_with_dataframe_portfolio,
+            add_system_config=add_system_config,
+            add_run_signature=add_run_signature,
         )
+        hdbg.dassert_lte(10, len(actual.split("\n")))
         expected = self._test_database_portfolio_helper(
-            system_with_database_portfolio
+            system_with_database_portfolio,
+            add_system_config=add_system_config,
+            add_run_signature=add_run_signature,
         )
-        # Remove `system_class` since it is different for the two systems.
-        # E.g.,
-        #   system_class: Example1_Time_ForecastSystem_with_DataFramePortfolio
-        #   system_class: Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
-        actual = hunitest.filter_text("system_class:", actual)
-        expected = hunitest.filter_text("system_class:", expected)
-        self.assert_equal(actual, expected, fuzzy_match=True, purify_text=True,
-                purify_expected_text=True)
+        hdbg.dassert_lte(10, len(expected.split("\n")))
+        self.assert_equal(
+            actual,
+            expected,
+            fuzzy_match=True,
+            purify_text=True,
+            purify_expected_text=True,
+        )
 
 
 # TODO(gp): Add a longer test with more assets once things are working.
@@ -535,11 +585,12 @@ class SystemTester:
 
     def compute_run_signature(
         self,
-        dag_runner,
-        portfolio,
-        result_bundle,
-        forecast_evaluator_from_prices_dict,
+        dag_runner: dtfcore.DagRunner,
+        portfolio: oms.Portfolio,
+        result_bundle: dtfcore.ResultBundle,
+        forecast_evaluator_from_prices_dict: Dict[str, Any],
     ) -> str:
+        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
         # Check output.
         actual = []
         #
@@ -572,9 +623,10 @@ class SystemTester:
 
     def get_research_pnl_signature(
         self,
-        result_bundle,
-        forecast_evaluator_from_prices_dict,
+        result_bundle: dtfcore.ResultBundle,
+        forecast_evaluator_from_prices_dict: Dict[str, Any],
     ) -> Tuple[str, pd.Series]:
+        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
         # TODO(gp): @all use actual.append(hprint.frame("system_config"))
         #  to separate the sections of the output.
         actual = ["\n# forecast_evaluator_from_prices signature=\n"]

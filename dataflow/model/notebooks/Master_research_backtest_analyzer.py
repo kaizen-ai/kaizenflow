@@ -46,7 +46,7 @@ hprint.config_notebook()
 
 # %%
 tile_dict = {
-    "dir_name": "/app/build_tile_configs.../tiled_results/",
+    "dir_name": "/app/build_tile_config_list.../tiled_results/",
     "asset_id_col": "asset_id",
 }
 tile_config = cconfig.get_config_from_nested_dict(tile_dict)

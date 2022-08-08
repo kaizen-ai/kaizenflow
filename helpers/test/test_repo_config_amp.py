@@ -4,7 +4,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hgit as hgit
-import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hunit_test as hunitest
 import helpers.hunit_test_utils as hunteuti
 import helpers.repo_config_utils as hrecouti
@@ -58,6 +58,21 @@ class TestRepoConfig_Amp(hunitest.TestCase):
     def test_config_func_to_str(self) -> None:
         _LOG.info(henv.execute_repo_config_code("config_func_to_str()"))
 
+    def test_is_dev4(self) -> None:
+        """
+        Amp could run on dev4 or not.
+        """
+        _ = hserver.is_dev4()
+
+    def test_is_CK_S3_available(self) -> None:
+        """
+        When running Amp on dev_ck there CK bucket should be available.
+        """
+        if hserver.is_dev_ck():
+            act = henv.execute_repo_config_code("is_CK_S3_available()")
+            exp = True
+            self.assertEqual(act, exp)
+
 
 # #############################################################################
 # TestRepoConfig_Amp_signature
@@ -86,6 +101,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='{'/data/shared': '/shared_data'}'
             has_dind_support='True'
             has_docker_sudo='True'
+            is_CK_S3_available='False'
             run_docker_as_root='False'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
@@ -93,7 +109,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             use_docker_sibling_containers='False'
             # hserver.config
               is_AM_S3_available()='True'
-              is_CK_S3_available()='True'
               is_dev4()='False'
               is_dev_ck()='True'
               is_inside_ci()='False'
@@ -115,6 +130,10 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_TELEGRAM_TOKEN=***
           CI=''
           GH_ACTION_ACCESS_TOKEN=empty
+          CK_AWS_ACCESS_KEY_ID=***
+          CK_AWS_DEFAULT_REGION=***
+          CK_AWS_S3_BUCKET=***
+          CK_AWS_SECRET_ACCESS_KEY=***
         """
         hunteuti.check_env_to_str(self, exp)
 
@@ -136,19 +155,19 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='None'
             has_dind_support='False'
             has_docker_sudo='True'
+            is_CK_S3_available='False'
             run_docker_as_root='False'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='True'
             use_docker_network_mode_host='False'
             use_docker_sibling_containers='True'
             # hserver.config
-            is_AM_S3_available='True'
-            is_CK_S3_available='True'
-            is_dev4='False'
-            is_dev_ck='False'
-            is_inside_ci='False'
-            is_inside_docker='True'
-            is_mac='True'
+              is_AM_S3_available='True'
+              is_dev4='False'
+              is_dev_ck='False'
+              is_inside_ci='False'
+              is_inside_docker='True'
+              is_mac='True'
         # Env vars:
         AM_AWS_ACCESS_KEY_ID=undef
         AM_AWS_DEFAULT_REGION=undef
@@ -169,9 +188,62 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         #
         exp_enable_privileged_mode = True
         exp_has_dind_support = True
-        hrecouti.assert_setup(self, exp_enable_privileged_mode, exp_has_dind_support)
+        hrecouti.assert_setup(
+            self, exp_enable_privileged_mode, exp_has_dind_support
+        )
 
-    def test_ci(self) -> None:
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//amp",
+        reason="Run only in //amp",
+    )
+    def test_amp_ci(self) -> None:
+        hunteuti.execute_only_on_ci()
+        #
+        exp = r"""
+        # Repo config:
+          # repo_config.config
+            enable_privileged_mode='True'
+            get_docker_base_image_name='amp'
+            get_docker_shared_group=''
+            get_docker_user=''
+            get_host_name='github.com'
+            get_invalid_words='[]'
+            get_shared_data_dirs='None'
+            has_dind_support='True'
+            has_docker_sudo='False'
+            is_CK_S3_available='False'
+            run_docker_as_$USER_NAME='True'
+            skip_submodules_test='False'
+            use_docker_db_container_name_to_connect='False'
+            use_docker_network_mode_host='False'
+            use_docker_sibling_containers='False'
+            # hserver.config
+              is_AM_S3_available()='True'
+              is_dev4()='False'
+              is_dev_ck()='False'
+              is_inside_ci()='True'
+              is_inside_docker()='True'
+              is_mac(version='Catalina')='False'
+              is_mac(version='Monterey')='False'
+        # Env vars:
+          AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
+          AM_ENABLE_DIND='1'
+          AM_FORCE_TEST_FAIL=''
+          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
+          AM_REPO_CONFIG_CHECK='True'
+          AM_REPO_CONFIG_PATH=''
+          CI='true'
+        """
+        # We ignore the AWS vars, since GH Actions does some replacement to mask
+        # the env vars coming from secrets.
+        skip_secrets_vars = True
+        hunteuti.check_env_to_str(self, exp, skip_secrets_vars=skip_secrets_vars)
+
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
+    def test_cmamp_ci(self) -> None:
         hunteuti.execute_only_on_ci()
         #
         exp = r"""
@@ -186,6 +258,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='None'
             has_dind_support='True'
             has_docker_sudo='False'
+            is_CK_S3_available='True'
             run_docker_as_$USER_NAME='True'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
@@ -193,7 +266,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             use_docker_sibling_containers='False'
             # hserver.config
               is_AM_S3_available()='True'
-              is_CK_S3_available()='True'
               is_dev4()='False'
               is_dev_ck()='False'
               is_inside_ci()='True'

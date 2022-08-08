@@ -20,6 +20,7 @@ import im_v2.common.data.client as icdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.real_time_market_data as mdrtmada
 import market_data.replayed_market_data as mdremada
+import market_data.stitched_market_data as mdstmada
 
 _LOG = logging.getLogger(__name__)
 
@@ -328,6 +329,7 @@ def get_RealTimeImClientMarketData_example1(
     # Build a `ReplayedMarketData`.
     tz = "ET"
     # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
+    # TODO(Grisha): @Dan Do not hard-code `initial_replayed_dt`.
     initial_replayed_dt = pd.Timestamp(
         "2022-07-21 09:30:00-04:00", tz="America/New_York"
     )
@@ -377,5 +379,54 @@ def get_RealtimeMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
+    )
+    return market_data
+
+
+# #############################################################################
+# StitchedMarketData examples
+# #############################################################################
+
+
+def get_HorizontalStitchedMarketData_example1(
+    im_client_market_data1: mdimcmada.ImClientMarketData,
+    im_client_market_data2: mdimcmada.ImClientMarketData,
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+    *,
+    wall_clock_time: Optional[pd.Timestamp] = None,
+    filter_data_mode: str = "assert",
+) -> mdstmada.HorizontalStitchedMarketData:
+    """
+    Build a `HorizontalStitchedMarketData` backed with the data defined by
+    `ImClient`s.
+    """
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    if wall_clock_time is None:
+        # The maximum timestamp is set from the data except for the cases when
+        # it's too computationally expensive to read all of the data on the fly.
+        wall_clock_time1 = im_client_market_data1.get_wall_clock_time()
+        wall_clock_time2 = im_client_market_data2.get_wall_clock_time()
+        wall_clock_time = max(wall_clock_time1, wall_clock_time2)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return wall_clock_time
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data = mdstmada.HorizontalStitchedMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client_market_data1=im_client_market_data1,
+        im_client_market_data2=im_client_market_data2,
+        column_remap=column_remap,
+        filter_data_mode=filter_data_mode,
     )
     return market_data

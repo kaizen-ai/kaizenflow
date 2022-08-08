@@ -12,6 +12,7 @@ import pandas as pd
 
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -22,7 +23,7 @@ import oms.order as omorder
 _LOG = logging.getLogger(__name__)
 
 
-class OrderProcessor:
+class OrderProcessor(hobject.PrintableMixin):
     """
     An `OrderProcessor` mocks the behavior of part of a real-world OMS to allow
     the simulation of a `DatabasePortfolio` and `DatabaseBroker` without a real
@@ -69,6 +70,13 @@ class OrderProcessor:
             tests and so we have control over the DB and we can use names chosen by us,
             so we use the standard table names as defaults
         """
+        _LOG.debug(
+            hprint.to_str(
+                "db_connection max_wait_time_for_order_in_secs delay_to_accept_in_secs"
+                " delay_to_fill_in_secs broker asset_id_name submitted_orders_table_name"
+                " accepted_orders_table_name current_positions_table_name"
+            )
+        )
         self._db_connection = db_connection
         #
         hdbg.dassert_lte(0, max_wait_time_for_order_in_secs)
@@ -92,6 +100,8 @@ class OrderProcessor:
         #  we may need to resize the queue.
         self._orders = asyncio.Queue(maxsize=1)
         self._target_list_id = 0
+        #
+        _LOG.debug("After initialization:\n%s", repr(self))
 
     async def run_loop(
         self,
@@ -108,6 +118,7 @@ class OrderProcessor:
                 submitting orders.
             - int: number of orders to accept before shut down
         """
+        _LOG.debug(hprint.to_str("termination_condition"))
         while True:
             wall_clock_time = self._get_wall_clock_time()
             target_list_id = self._target_list_id
@@ -136,15 +147,16 @@ class OrderProcessor:
         """
         Poll for submitted orders, accept, and enqueue.
         """
-        poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time,
-            timeout_in_secs=self.max_wait_time_for_order_in_secs
-            )
+        poll_kwargs = hasynci.get_poll_kwargs(
+            self._get_wall_clock_time,
+            timeout_in_secs=self.max_wait_time_for_order_in_secs,
+        )
         # Wait for orders to be written in `submitted_orders_table_name`.
         diff_num_rows = await hsql.wait_for_change_in_number_of_rows(
             self._get_wall_clock_time,
             self._db_connection,
             self._submitted_orders_table_name,
-            poll_kwargs
+            poll_kwargs,
         )
         _LOG.debug("diff_num_rows=%s", diff_num_rows)
         # Extract the latest file_name after order submission is complete.

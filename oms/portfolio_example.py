@@ -103,7 +103,7 @@ def get_DataFramePortfolio_example2(
 # #############################################################################
 
 
-# TODO(gp): Remove the repeatition across these functions.
+# TODO(gp): Remove the repetition across these functions.
 def get_DatabasePortfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     db_connection: hsql.DbConnection,
@@ -181,27 +181,20 @@ def get_DatabasePortfolio_example2(
     return portfolio
 
 
+# TODO(gp): It's specific of IG move to lime.
 def get_DatabasePortfolio_example3(
     db_connection: hsql.DbConnection,
     event_loop: asyncio.AbstractEventLoop,
     market_data: mdata.MarketData,
+    asset_ids: List[int],
     # TODO(gp): Return oms.Portfolio like parent class?
 ) -> omportfo.DatabasePortfolio:
     """
     Contain:
     - a DatabaseBroker
     - a DatabasePortfolio
-
-    configured to use 3 asset ids.
     """
     table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
-    # Neither the fake data nor the pipeline is filtering out weekends, and
-    # so this is treated as a valid trading day.
-    asset_ids = [
-        17085,
-        # 13684,
-        # 10971
-    ]
     timestamp_col = "end_time"
     portfolio = get_DatabasePortfolio_example1(
         event_loop,
@@ -245,7 +238,7 @@ def get_DatabasePortfolio_example4(
         table_name,
         market_data=market_data,
         mark_to_market_col="close",
-        #pricing_method="twap.5T",
+        # pricing_method="twap.5T",
         pricing_method=pricing_method,
         timestamp_col=timestamp_col,
         asset_ids=asset_ids,

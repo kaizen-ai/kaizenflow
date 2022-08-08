@@ -7,17 +7,16 @@ import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
-import helpers.hserver as hserver
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadRealtimeForOneExchange1(
@@ -59,7 +58,7 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(
+        extractor = imvcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -91,9 +90,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(imvcdexex.hsecret, "get_secret")
     def test_function_call1(
         self,
         mock_get_secret: umock.MagicMock,
@@ -120,9 +119,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
     @pytest.mark.skip(reason="CMTask2089")
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(imvcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
         mock_get_secret: umock.MagicMock,
@@ -178,7 +177,7 @@ class TestDownloadRealtimeForOneExchange1(
 
 
 @pytest.mark.skipif(
-    not hserver.is_CK_S3_available(),
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
 class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
@@ -201,14 +200,14 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = ivcdexex.CcxtExtractor(
+        exchange = imvcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(imvcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,
@@ -312,6 +311,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         )
 
 
+# TODO(gp): Difference between amp and cmamp.
 class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
     @classmethod
     def get_id(cls) -> int:
@@ -419,6 +419,32 @@ class TestVerifySchema(hunitest.TestCase):
         # Fix the type of the `close` column to `float64`.
         expected_df["close"] = expected_df["close"].astype("float64")
         # Function should fix the type of `close` column to `int`.
+        actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
+        hunitest.compare_df(expected_df, actual_df)
+
+    def test_fix_int_column2(self) -> None:
+        """
+        Test if int64 column if forced to int32.
+        """
+        # Define test Dataframe data with `year` and `month` columns with type `int64`.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "year": [2022, 2022, 2022],
+            "month": [7, 7, 8],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
+        test_df = pd.DataFrame(data=test_data)
+        expected_df = test_df.copy()
+        # Fix the type of the `month` and `year` columns to `int32`.
+        expected_df["year"] = expected_df["year"].astype("int32")
+        expected_df["month"] = expected_df["month"].astype("int32")
+        # Function should fix the type of the columns to `int32`.
         actual_df = imvcdeexut.verify_schema(test_df)
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)

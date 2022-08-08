@@ -6,15 +6,15 @@ import dataflow.system.system_builder_utils as dtfssybuut
 
 import datetime
 import logging
-from typing import Callable
+import os
+from typing import Callable, Coroutine, Optional
 
 import pandas as pd
 
 import core.config as cconfig
-
 import dataflow.core as dtfcore
-import core.config as cconfig
 import dataflow.system.real_time_dag_runner as dtfsrtdaru
+import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
@@ -22,9 +22,22 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import market_data as mdata
+import oms
 
 _LOG = logging.getLogger(__name__)
 
+# There are different types of functions
+# - `apply_..._config(system, ...)`
+#   - Use parameters from `system` and other inputs to populate the System Config
+#     with values corresponding to a certain System object
+# TODO(gp): It's not clear if the `apply_...` functions should return System or
+#  just implicitly update System in place.
+#  - The explicit approach of assigning System as return value adds more code
+#    and creates ambiguity, since it works even if one doesn't assign it.
+#  - The implicit approach allows less code variation, requires less code, but
+#    it relies on a side effect.
+# - `build_..._from_System(system)`
+#   - Build objects using parameters from System Config
 
 # #############################################################################
 # System config utils
@@ -48,7 +61,6 @@ def get_SystemConfig_template_from_DagBuilder(
     return system_config
 
 
-# TODO(gp): Move to dataflow/backtest
 def apply_backtest_config(
     system: dtfsyssyst.ForecastSystem, backtest_config: str
 ) -> dtfsyssyst.ForecastSystem:
@@ -72,6 +84,7 @@ def apply_backtest_config(
     return system
 
 
+# TODO(gp): -> apply_MarketData_config
 def apply_market_data_config(
     system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
@@ -89,9 +102,10 @@ def apply_market_data_config(
     return system
 
 
+# TODO(gp): build_ImClient_from_System
 def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
     """
-    Build an IM client from params in the system config.
+    Build an IM client from params in the system Config.
     """
     ctor = system.config["market_data_config", "im_client_ctor"]
     hdbg.dassert_isinstance(ctor, Callable)
@@ -106,11 +120,13 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 # #############################################################################
 
 
+# TODO(gp): -> build_EventLoop_MarketData_from_df
 def get_EventLoop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
-    Build an event loop MarketData with data from a dataframe.
+    Build an event loop MarketData with data from a dataframe stored inside the
+    Config.
     """
     event_loop = system.config["event_loop_object"]
     initial_replayed_delay = system.config[
@@ -125,11 +141,6 @@ def get_EventLoop_MarketData_from_df(
         delay_in_secs=delay_in_secs,
     )
     return market_data
-
-
-# #############################################################################
-# Source node instances
-# #############################################################################
 
 
 # #############################################################################
@@ -157,9 +168,10 @@ def adapt_dag_to_real_time_from_config(
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
+    # TODO(gp): Why is this not returning anything? Is this even used?
 
 
-# TODO(gp): -> ...from_System
+# TODO(gp): -> build...from_System
 def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
@@ -279,12 +291,16 @@ def apply_dag_runner_config(
 
 def apply_history_lookback(
     system: dtfsyssyst.System,
+    *,
+    days: Optional[int] = None,
 ) -> dtfsyssyst.System:
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
-    market_data_history_lookback = pd.Timedelta(
-        days=dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
-    )
+    if days is None:
+        days = (
+            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+        )
+    market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
         "market_data_config", "history_lookback"
     ] = market_data_history_lookback
@@ -302,6 +318,9 @@ def apply_dag_property(
     recursion.
     """
     dag_builder = system.config["dag_builder_object"]
+    # TODO(gp): This is not a DAG property and needs to be set-up before the DAG
+    #  is built. Also each piece of config should `make_read_only` the pieces that
+    #  is used.
     fast_prod_setup = system.config.get(
         ["dag_builder_config", "fast_prod_setup"], False
     )
@@ -312,13 +331,23 @@ def apply_dag_property(
             system.config["dag_config"]
         )
     # Set DAG properties.
+    # 1) debug_mode_config
     debug_mode_config = system.config.get(
         ["dag_property_config", "debug_mode_config"], None
     )
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
+        if "dst_dir" not in debug_mode_config:
+            # Infer the dst dir based on the `log_dir`.
+            log_dir = system.config["log_dir"]
+            dst_dir = os.path.join(log_dir, "dag/node_io")
+            _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)
+            # Update the data structures.
+            debug_mode_config["dst_dir"] = dst_dir
+            system.config["dag_property_config", "dst_dir"] = dst_dir
         dag.set_debug_mode(**debug_mode_config)
+    # 2) force_free_nodes
     force_free_nodes = system.config.get(
         ["dag_property_config", "force_free_nodes"], False
     )
@@ -329,7 +358,7 @@ def apply_dag_property(
     return system
 
 
-# TODO(gp): build_dag_with_DataSourceNode?
+# TODO(gp): -> build_Dag_with_DataSourceNode_from_System?
 def build_dag_with_data_source_node(
     system: dtfsyssyst.System,
     data_source_node: dtfcore.DataSource,
@@ -351,7 +380,7 @@ def build_dag_with_data_source_node(
     return dag
 
 
-# TODO(Grisha): -> `add_RealTimeDataSource`?
+# TODO(gp): -> build_dag_with_RealTimeDataSource?
 def add_real_time_data_source(
     system: dtfsyssyst.System,
 ) -> dtfcore.DAG:
@@ -376,6 +405,22 @@ def add_real_time_data_source(
         multiindex_output,
     )
     dag = build_dag_with_data_source_node(system, node)
+    return dag
+
+
+def add_process_forecasts_node(
+    system: dtfsyssyst.System, dag: dtfcore.DAG
+) -> dtfcore.DAG:
+    """
+    Append `ProcessForecastsNode` to a DAG.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    stage = "process_forecasts"
+    _LOG.debug("stage=%s", stage)
+    node = dtfsysinod.ProcessForecastsNode(
+        stage, **system.config["process_forecasts_config"].to_dict()
+    )
+    dag.append_to_tail(node)
     return dag
 
 
@@ -464,3 +509,110 @@ def get_RealTimeDagRunner_from_System(
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
     return dag_runner
+
+
+# #############################################################################
+# Portfolio instances.
+# #############################################################################
+
+
+def get_DataFramePortfolio_from_System(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    """
+    Build a `DataFramePortfolio` from a system config.
+    """
+    event_loop = system.config["event_loop_object"]
+    market_data = system.market_data
+    mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
+    pricing_method = system.config["portfolio_config", "pricing_method"]
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DataFramePortfolio_example1(
+        event_loop,
+        market_data=market_data,
+        mark_to_market_col=mark_to_market_col,
+        pricing_method=pricing_method,
+        asset_ids=asset_ids,
+    )
+    # TODO(gp): We should pass the column_remap to the Portfolio builder,
+    # instead of injecting it after the fact.
+    portfolio.broker._column_remap = system.config[
+        "portfolio_config", "column_remap"
+    ]
+    return portfolio
+
+
+# TODO(Grisha): Generalize `get_DatabasePortfolio_from_System` and
+#  `get_DataFramePortfolio_from_System`.
+def get_DatabasePortfolio_from_System(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    """
+    Build a `DatabasePortfolio` from a system config.
+    """
+    portfolio = oms.get_DatabasePortfolio_example1(
+        system.config["event_loop_object"],
+        system.config["db_connection_object"],
+        table_name=oms.CURRENT_POSITIONS_TABLE_NAME,
+        market_data=system.market_data,
+        mark_to_market_col=system.config[
+            "portfolio_config", "mark_to_market_col"
+        ],
+        pricing_method=system.config["portfolio_config", "pricing_method"],
+        asset_ids=system.config["market_data_config", "asset_ids"],
+    )
+    # TODO(gp): We should pass the column_remap to the Portfolio builder,
+    # instead of injecting it after the fact.
+    portfolio.broker._column_remap = system.config[
+        "portfolio_config", "column_remap"
+    ]
+    return portfolio
+
+
+def apply_Portfolio_config(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    """
+    Extend system config with parameters for `Portfolio` init.
+    """
+    # TODO(Grisha): @Dan do not hard-wire the values inside the function.
+    system.config["portfolio_config", "mark_to_market_col"] = "close"
+    system.config["portfolio_config", "pricing_method"] = "twap.5T"
+    column_remap = {
+        "bid": "bid",
+        "ask": "ask",
+        "midpoint": "midpoint",
+        "price": "close",
+    }
+    system.config[
+        "portfolio_config", "column_remap"
+    ] = cconfig.get_config_from_nested_dict(column_remap)
+    return system
+
+
+# #############################################################################
+# OrderProcessor instances.
+# #############################################################################
+
+
+def get_OrderProcessorCoroutine_from_System(
+    system: dtfsyssyst.System,
+) -> Coroutine:
+    """
+    Build an OrderProcessor coroutine from the parameters in the SystemConfig.
+    """
+    order_processor = oms.get_order_processor_example1(
+        system.config["db_connection_object"],
+        system.portfolio,
+        system.config["market_data_config", "asset_id_col_name"],
+        system.config[
+            "order_processor_config", "max_wait_time_for_order_in_secs"
+        ],
+    )
+    order_processor_coroutine = oms.get_order_processor_coroutine_example1(
+        order_processor,
+        system.portfolio,
+        system.config["order_processor_config", "duration_in_secs"],
+    )
+    hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
+    return order_processor_coroutine
