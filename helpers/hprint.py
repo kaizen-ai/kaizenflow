@@ -387,7 +387,8 @@ def to_str2(*variables_values: Any) -> str:
     Limitations: can't work with an argument that contains parenthesis,
     e.g.,: `to_str(to_str(a, b), c)`.
 
-    Dependencies: funtion call index depends on the Python version, `frame.lineno` is
+    Dependencies: function call index depends on the Python version, `frame.lineno`
+        is:
        - Last argument line in Python >=3.6 and < 3.9
        - Function call line in Python 3.9 and above
 
