@@ -256,6 +256,7 @@ class IgStitchedMarketData(mdabmada.MarketData):
 # #############################################################################
 
 
+# TODO(Grisha): @Dan CmTask2572 "Add gallery `MarketData`."
 class HorizontalStitchedMarketData(mdabmada.MarketData):
     """
     Stitch together 2 `ImClientMarketData` objects horizontally.
