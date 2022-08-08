@@ -149,7 +149,7 @@ def get_example_ccxt_broker(
     """
     # Set default broker values.
     universe = "v7"
-    mode = "test"
+    mode = "debug_test1"
     portfolio_id = "ck_portfolio_id"
     strategy_id = "SAU1"
     # Initialize the broker.
