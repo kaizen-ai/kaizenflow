@@ -32,6 +32,8 @@ class CcxtBroker(ombroker.Broker):
         mode: str,
         portfolio_id: str,
         contract_type: str,
+        # TODO(gp): @all *args should go first according to our convention of
+        #  appending params to the parent class constructor.
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -39,18 +41,25 @@ class CcxtBroker(ombroker.Broker):
         """
         Constructor.
 
-        :param exchange: name of the exchange to initialize the broker for
+        :param exchange_id: name of the exchange to initialize the broker for
+            (e.g., Binance)
         :param universe_version: version of the universe to use
-        :param mode: supported values: "test", "prod", if "test", launches the broker
-         in sandbox environment (not supported for every exchange),
-         if "prod" launches with production API.
+        :param mode:
+            - "test", launches the broker in sandbox environment (not supported for
+              every exchange
+            - "prod" launches with production API
         :param contract_type: "spot" or "futures"
         """
-        hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
         self._mode = mode
         self._exchange_id = exchange_id
+        self._mode = mode
+        hdbg.dassert_in(self._mode, ["prod", "test", "debug_test1"])
+        # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
+        self._portfolio_id = portfolio_id
+        #
         hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._contract_type = contract_type
+        #
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
@@ -61,10 +70,8 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
-        # Will be used to determine timestamp since when to fetch orders.
+        # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
-        # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
-        self._portfolio_id = portfolio_id
 
     @staticmethod
     def convert_ccxt_order_to_oms_order(
@@ -349,13 +356,14 @@ class CcxtBroker(ombroker.Broker):
         """
         Build asset id to full symbol mapping.
 
-        Example:
-
+        E.g.,
+        ```
         {
             1528092593: 'BAKE/USDT',
             8968126878: 'BNB/USDT',
             1182743717: 'BTC/BUSD',
         }
+        ```
         """
         # Get full symbol universe.
         full_symbol_universe = imvcounun.get_vendor_universe(
