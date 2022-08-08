@@ -10,7 +10,9 @@ Example use:
     --contract_type 'futures'
 """
 import argparse
+import asyncio
 import logging
+import time
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
@@ -20,7 +22,6 @@ import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
 import oms.oms_utils as oomsutil
 import oms.order as omorder
-import asyncio
 
 _LOG = logging.getLogger(__name__)
 
@@ -61,7 +62,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=int,
-        help="Sleep time between order submissions in seconds."
+        help="Sleep time between order submissions in seconds.",
     )
     parser.add_argument(
         "--orders_file",
@@ -69,7 +70,7 @@ def _parse() -> argparse.ArgumentParser:
         required=False,
         default=None,
         type=str,
-        help="Orders in string format"
+        help="Orders in string format",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser
@@ -93,16 +94,26 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type
-    broker = oomsutil.get_example_ccxt_broker(market_data, exchange_id, contract_type)
+    broker = oomsutil.get_example_ccxt_broker(
+        market_data, exchange_id, contract_type
+    )
     if args.orders_file is None:
         orders = omorder.orders_from_string(DEFAULT_ORDERS)
     else:
         hdbg.dassert_file_exists(args.orders_file)
         with open(args.orders_file, "r") as f:
-            txt = f.read()
-            orders = omorder.orders_from_string(txt)
+            orders_as_txt = f.read()
+            _LOG.info("Orders as string: %s", orders_as_txt)
+            orders = omorder.orders_from_string(orders_as_txt)
+    _LOG.info("All orders: %s", [str(order) for order in orders])
     for order in orders:
+        _LOG.info("Submitting order: %s", str(order))
         asyncio.run(broker.submit_orders([order]))
+        _LOG.info("Orders submitted, sleeping for %s secs", args.sleep_in_seconds)
+        time.sleep(args.sleep_in_seconds)
+        _LOG.info("Getting fills...")
+        fills = broker.get_fills()
+        _LOG.info("Fills: %s", [str(fill) for fill in fills])
 
 
 if __name__ == "__main__":
