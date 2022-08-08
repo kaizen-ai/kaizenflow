@@ -310,7 +310,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         # TODO(gp): It should delegate to the ImClient.
         return True
 
-    # TODO(Grisha): @Dan Move to `hpandas` if needed.
+    # TODO(Nina): CmTask2568 "Move `_merge_dfs` to `handas` and unit test."
     @staticmethod
     def _merge_dfs(
         df1: pd.DataFrame,
