@@ -446,8 +446,20 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     filter_data_mode: str = "assert",
 ) -> mdstmada.HorizontalStitchedMarketData:
     """
-    Build a `HorizontalStitchedMarketData` using "ohlcv" and "bid_ask" dataset
-    type `ImClient`s.
+    Build a `HorizontalStitchedMarketData`:
+
+    - with "ohlcv" and "bid_ask" dataset type `ImClient`s
+    - with CryptoChassis `ImClient`s
+    - `contract_type` = "futures"
+
+    Output df:
+    ```
+                                 asset_id        full_symbol      open      high       low     close    volume        vwap  number_of_trades        twap              knowledge_timestamp                  start_ts     bid_price  bid_size     ask_price  ask_size
+    end_ts
+    2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT   2726.62   2727.16   2724.99   2725.59   648.179   2725.8408               618   2725.7606 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
+    2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  37635.00  37635.60  37603.70  37626.80   168.216  37619.4980              1322  37619.8180 2022-06-20 09:48:46.910826+00:00 2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
+    2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265   2728.7821              1295   2728.3652 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
+    ```
     """
     contract_type = "futures"
     if universe_version2 is None:
