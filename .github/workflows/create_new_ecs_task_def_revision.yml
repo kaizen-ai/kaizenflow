@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
   schedule:
     # Run this once a day even if there are no commit.
-    - cron:  '0 0 */1 * *'
+    - cron:  '0 */6 * * *'
 
 jobs:
   create_new_ecs_task_def_revision:
@@ -52,14 +52,6 @@ jobs:
           # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
-      # TODO(Juraj): We need to fill with prod credentials
-      - name: Create AWS credentials file
-        # env:
-        # needed for a command in prod.Dockerfile
-        run: |
-          mkdir aws
-        shell: bash
-
       - name: Run 'docker_create_candidate_image' workflow
         env:
           GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
@@ -75,4 +67,4 @@ jobs:
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         # TODO(Juraj): change task definition once the action is ready
-        run: invoke docker_create_candidate_image --task-definition "cmamp-test-juraj"
+        run: invoke docker_create_candidate_image --task-definition "cmamp-preprod"
