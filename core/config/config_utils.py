@@ -299,7 +299,7 @@ def get_object_from_config(
         hdbg.dassert_issubclass(default_value, expected_type)
     if key in config:
         obj = config[key]
-        hdbg.dassert_issubclass(obj, expected_type)
     else:
         obj = default_value
+    hdbg.dassert_issubclass(obj, expected_type)
     return obj

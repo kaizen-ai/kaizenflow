@@ -13,6 +13,7 @@ import core.config as cconfig
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+import oms.process_forecasts_example as oprfoexa
 import oms.tiled_process_forecasts as otiprfor
 
 _LOG = logging.getLogger(__name__)
@@ -91,7 +92,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     market_data_tile_config = get_market_data_tile_config()
     _LOG.info("market_data_tile_config=\n%s", str(market_data_tile_config))
     backtest_tile_config = get_backtest_tile_config()
-    process_forecasts_config = otiprfor.get_process_forecasts_config()
+    process_forecasts_config = oprfoexa.get_process_forecasts_config_example1()
     # TODO(Paul): Warn if we are overriding.
     backtest_tile_config["file_name"] = args.backtest_file_name
     backtest_tile_config["asset_id_col"] = args.asset_id_col
