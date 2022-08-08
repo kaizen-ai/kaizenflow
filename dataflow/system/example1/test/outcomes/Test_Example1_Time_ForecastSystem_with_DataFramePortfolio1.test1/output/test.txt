@@ -61,6 +61,14 @@ market_data_config:
     2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
     2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
   history_lookback: 7 days 00:00:00
+portfolio_config:
+  mark_to_market_col: close
+  pricing_method: twap.5T
+  column_remap:
+    bid: bid
+    ask: ask
+    midpoint: midpoint
+    price: close
 dag_runner_config:
   sleep_interval_in_secs: 300
   real_time_loop_time_out_in_secs: 2100
@@ -127,7 +135,11 @@ object.str:
             _knowledge_datetime_col_name='timestamp_db' <str>
             _delay_in_secs='5' <int>
         _timestamp_col='end_datetime' <str>
-        _column_remap='{'bid': 'bid', 'ask': 'ask', 'midpoint': 'midpoint', 'price': 'close'}' <dict>
+        _column_remap= <core.config.config_.Config>
+          bid: bid
+          ask: ask
+          midpoint: midpoint
+          price: close
         _orders='OrderedDict()' <collections.OrderedDict>
         _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
         _fills='[]' <list>
