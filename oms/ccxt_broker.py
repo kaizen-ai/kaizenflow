@@ -74,7 +74,7 @@ class CcxtBroker(ombroker.Broker):
         Convert sent CCXT orders to oms.Order class.
 
         Example of an input:
-        
+
         {'info': {'orderId': '3101620940',
                 'symbol': 'BTCUSDT',
                 'status': 'FILLED',
@@ -127,9 +127,14 @@ class CcxtBroker(ombroker.Broker):
         )
         start_timestamp = creation_timestamp
         # Get an offset end timestamp.
+        #  Note: `updateTime` is the timestamp of the latest order status change,
+        #  so for filled orders this is a moment when the order is filled.
         end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
             int(ccxt_order["info"]["updateTime"])
-        ) + pd.DateOffset(minutes=1)
+        )
+        # Add 1 minute to end timestamp.
+        # This is done since in CCXT testnet the orders are filled instantaneously.
+        end_timestamp += pd.DateOffset(minutes=1)
         # Get the amount of shares filled.
         curr_num_shares = float(ccxt_order["info"]["origQty"])
         diff_num_shares = ccxt_order["filled"]
@@ -148,7 +153,6 @@ class CcxtBroker(ombroker.Broker):
         """
         Return list of fills from the last order execution.
 
-        :param sent_orders: a list of orders submitted by Broker
         :return: a list of filled orders
         """
         # Load previously sent orders from class state.
