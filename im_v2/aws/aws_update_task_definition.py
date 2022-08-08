@@ -46,10 +46,11 @@ def _update_task_definition(task_definition: str, image_tag: str) -> None:
     new_image = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image)
     task_def["containerDefinitions"][0]["image"] = new_image
     # Register the new revision with the new image.
+
     response = client.register_task_definition(
         family=task_definition,
-        taskRoleArn=task_def["taskRoleArn"],
-        executionRoleArn=task_def["taskRoleArn"],
+        taskRoleArn=task_def.get("taskRoleArn", ""),
+        executionRoleArn=task_def["executionRoleArn"],
         networkMode=task_def["networkMode"],
         containerDefinitions=task_def["containerDefinitions"],
         volumes=task_def["volumes"],

@@ -81,50 +81,50 @@ class CcxtBroker(ombroker.Broker):
         Convert sent CCXT orders to oms.Order class.
 
         Example of an input:
-        {'info':
-         {'orderId': '3101620940',
-            'symbol': 'BTCUSDT',
-            'status': 'FILLED',
-            'clientOrderId': '***REMOVED***',
-            'price': '0',
-            'avgPrice': '23480.20000',
-            'origQty': '0.001',
-            'executedQty': '0.001',
-            'cumQuote': '23.48020',
-            'timeInForce': 'GTC',
-            'type': 'MARKET',
-            'reduceOnly': False,
-            'closePosition': False,
-            'side': 'BUY',
-            'positionSide': 'BOTH',
-            'stopPrice': '0',
-            'workingType': 'CONTRACT_PRICE',
-            'priceProtect': False, 'origType':
-            'MARKET', 'time': '1659465769012',
-            'updateTime': '1659465769012'},
-            'id': '3101620940',
-            'clientOrderId': '***REMOVED***',
-            'timestamp': 1659465769012,
-            'datetime': '2022-08-02T18:42:49.012Z',
-            'lastTradeTimestamp': None,
-            'symbol': 'BTC/USDT',
-            'type': 'market',
-            'timeInForce': 'IOC',
-            'postOnly': False,
-            'side': 'buy',
-            'price': 23480.2,
-            'stopPrice': None,
-            'amount': 0.001,
-            'cost': 23.4802,
-            'average': 23480.2,
-            'filled': 0.001,
-            'remaining': 0.0,
-            'status': 'closed',
-            'fee': None,
-            'trades': [],
-            'fees': [],
-            'asset_id': 1467591036
-            }
+
+        {'info': {'orderId': '3101620940',
+                'symbol': 'BTCUSDT',
+                'status': 'FILLED',
+                'clientOrderId': '***REMOVED***',
+                'price': '0',
+                'avgPrice': '23480.20000',
+                'origQty': '0.001',
+                'executedQty': '0.001',
+                'cumQuote': '23.48020',
+                'timeInForce': 'GTC',
+                'type': 'MARKET',
+                'reduceOnly': False,
+                'closePosition': False,
+                'side': 'BUY',
+                'positionSide': 'BOTH',
+                'stopPrice': '0',
+                'workingType': 'CONTRACT_PRICE',
+                'priceProtect': False,
+                'origType': 'MARKET',
+                'time': '1659465769012',
+                'updateTime': '1659465769012'},
+        'id': '3101620940',
+        'clientOrderId': '***REMOVED***',
+        'timestamp': 1659465769012,
+        'datetime': '2022-08-02T18:42:49.012Z',
+        'lastTradeTimestamp': None,
+        'symbol': 'BTC/USDT',
+        'type': 'market',
+        'timeInForce': 'IOC',
+        'postOnly': False,
+        'side': 'buy',
+        'price': 23480.2,
+        'stopPrice': None,
+        'amount': 0.001,
+        'cost': 23.4802,
+        'average': 23480.2,
+        'filled': 0.001,
+        'remaining': 0.0,
+        'status': 'closed',
+        'fee': None,
+        'trades': [],
+        'fees': [],
+        'asset_id': 1467591036}
         """
         asset_id = ccxt_order["asset_id"]
         type_ = "market"
@@ -134,9 +134,14 @@ class CcxtBroker(ombroker.Broker):
         )
         start_timestamp = creation_timestamp
         # Get an offset end timestamp.
+        #  Note: `updateTime` is the timestamp of the latest order status change,
+        #  so for filled orders this is a moment when the order is filled.
         end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
             int(ccxt_order["info"]["updateTime"])
-        ) + pd.DateOffset(minutes=1)
+        )
+        # Add 1 minute to end timestamp.
+        # This is done since in CCXT testnet the orders are filled instantaneously.
+        end_timestamp += pd.DateOffset(minutes=1)
         # Get the amount of shares filled.
         curr_num_shares = float(ccxt_order["info"]["origQty"])
         diff_num_shares = ccxt_order["filled"]
@@ -155,7 +160,6 @@ class CcxtBroker(ombroker.Broker):
         """
         Return list of fills from the last order execution.
 
-        :param sent_orders: a list of orders submitted by Broker
         :return: a list of filled orders
         """
         # Load previously sent orders from class state.
