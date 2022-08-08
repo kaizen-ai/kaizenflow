@@ -368,8 +368,8 @@ def get_RealtimeMarketData_example1(
     start_time_col_name = "start_timestamp"
     end_time_col_name = "end_timestamp"
     columns = None
-    get_wall_clock_time = lambda: pd.Timestamp(
-        "2022-04-23", tz="America/New_York"
+    get_wall_clock_time = lambda: pd.Timestamp.now(
+        tz="America/New_York"
     )
     market_data = mdrtmada.RealTimeMarketData2(
         im_client,

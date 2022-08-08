@@ -26,8 +26,7 @@ import oms.order as omorder
 _LOG = logging.getLogger(__name__)
 
 
-DEFAULT_ORDERS = """
-        Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121 tz=America/New_York
+DEFAULT_ORDERS = """Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121 tz=America/New_York
 Order: order_id=1 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=1467591036 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.011 tz=America/New_York
 Order: order_id=2 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=2061507978 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=169.063 tz=America/New_York
 Order: order_id=3 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=2237530510 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=2.828 tz=America/New_York
@@ -107,6 +106,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             orders = omorder.orders_from_string(orders_as_txt)
     _LOG.info("All orders: %s", [str(order) for order in orders])
     for order in orders:
+        # Update order type to one supported by CCXT.
+        order.type_ = "market"
         _LOG.info("Submitting order: %s", str(order))
         asyncio.run(broker.submit_orders([order]))
         _LOG.info("Orders submitted, sleeping for %s secs", args.sleep_in_seconds)

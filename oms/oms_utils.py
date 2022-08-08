@@ -92,12 +92,12 @@ def flatten_ccxt_account(
     :param dry_run: whether to avoid actual execution
     :param deadline_in_secs: deadline for order to be executed, 60 by default
     """
-    # Verify that the broker is in test mode.
-    hdbg.dassert_eq(
-        broker._mode,
-        "test",
-        msg="Account flattening is supported only for test accounts.",
-    )
+    # # Verify that the broker is in test mode.
+    # hdbg.dassert_eq(
+    #     broker._mode,
+    #     "test",
+    #     msg="Account flattening is supported only for test accounts.",
+    # )
     # Fetch all open positions.
     open_positions = broker.get_open_positions()
     if open_positions:
@@ -148,7 +148,7 @@ def get_example_ccxt_broker(
     :return: initialized CCXT broker
     """
     # Set default broker values.
-    universe = "v7"
+    universe = "v5"
     mode = "debug_test1"
     portfolio_id = "ck_portfolio_id"
     strategy_id = "SAU1"

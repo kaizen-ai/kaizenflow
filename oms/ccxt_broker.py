@@ -46,7 +46,7 @@ class CcxtBroker(ombroker.Broker):
          if "prod" launches with production API.
         :param contract_type: "spot" or "futures"
         """
-        hdbg.dassert_in(mode, ["prod", "test"])
+        hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
         self._mode = mode
         self._exchange_id = exchange_id
         hdbg.dassert_in(contract_type, ["spot", "futures"])
@@ -411,7 +411,7 @@ class CcxtBroker(ombroker.Broker):
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
-        if self._mode == "test":
+        if self._mode in ["test", "debug_test1"]:
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")
         hdbg.dassert(
