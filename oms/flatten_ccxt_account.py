@@ -18,7 +18,6 @@ import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
-import oms.ccxt_broker as occxbrok
 import oms.oms_utils as oomsutil
 
 _LOG = logging.getLogger(__name__)
@@ -65,7 +64,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type
-    broker = oomsutil.get_example_ccxt_broker(market_data, exchange_id, contract_type)  
+    broker = oomsutil.get_example_ccxt_broker(
+        market_data, exchange_id, contract_type
+    )
     # Close all open positions.
     oomsutil.flatten_ccxt_account(broker, dry_run=False)
 
