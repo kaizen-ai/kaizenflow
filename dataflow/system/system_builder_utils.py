@@ -596,4 +596,3 @@ def get_OrderProcessorCoroutine_from_System(
     )
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
     return order_processor_coroutine
->>>>>>> master
