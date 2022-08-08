@@ -51,34 +51,21 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _LOG.debug("Initializing broker.")
-    # Initialize broker to connect to exchange.
-    exchange_id = args.exchange_id
-    contract_type = args.contract_type
-    universe = "v7"
-    mode = "test"
-    portfolio_id = "ck_portfolio_id"
-    strategy_id = "SAU1"
     # Get environment variables with login info.
     env_file = imvimlita.get_db_env_path("dev")
     # Get login info.
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     # Login.
     connection = hsql.get_connection(*connection_params)
+    # Remove table if it already existed.
     hsql.remove_table(connection, "example2_marketdata")
+    # Initialize real-time market data.
     im_client = icdc.get_mock_realtime_client(connection)
     market_data = mdata.get_RealtimeMarketData_example1(im_client)
-    broker = occxbrok.CcxtBroker(
-        exchange_id,
-        universe,
-        mode,
-        portfolio_id,
-        contract_type,
-        market_data=market_data,
-        strategy_id=strategy_id,
-    )
-    _LOG.info(
-        "Flattening the %s account for %s exchange.", contract_type, exchange_id
-    )
+    # Initialize CcxtBroker connected to testnet.
+    exchange_id = args.exchange_id
+    contract_type = args.contract_type
+    broker = oomsutil.get_example_ccxt_broker(market_data, exchange_id, contract_type)  
     # Close all open positions.
     oomsutil.flatten_ccxt_account(broker, dry_run=False)
 

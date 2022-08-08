@@ -12,6 +12,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 
@@ -134,3 +135,31 @@ def flatten_ccxt_account(
     if len(open_positions) != 0:
         _LOG.warning("Some positions failed to close: %s", open_positions)
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
+
+
+def get_example_ccxt_broker(
+    market_data: mdata.MarketData, exchange_id: str, contract_type: str
+) -> occxbrok.CcxtBroker:
+    """
+    Set up an example broker in testnet for debugging.
+
+    :param exchange_id: name of exchange, e.g. "binance"
+    :param contract_type: e.g. "futures"
+    :return: initialized CCXT broker
+    """
+    # Set default broker values.
+    universe = "v7"
+    mode = "test"
+    portfolio_id = "ck_portfolio_id"
+    strategy_id = "SAU1"
+    # Initialize the broker.
+    broker = occxbrok.CcxtBroker(
+        exchange_id,
+        universe,
+        mode,
+        portfolio_id,
+        contract_type,
+        market_data=market_data,
+        strategy_id=strategy_id,
+    )
+    return broker
