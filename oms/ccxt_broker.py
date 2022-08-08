@@ -356,13 +356,14 @@ class CcxtBroker(ombroker.Broker):
         """
         Build asset id to full symbol mapping.
 
-        Example:
-
+        E.g.,
+        ```
         {
             1528092593: 'BAKE/USDT',
             8968126878: 'BNB/USDT',
             1182743717: 'BTC/BUSD',
         }
+        ```
         """
         # Get full symbol universe.
         full_symbol_universe = imvcounun.get_vendor_universe(

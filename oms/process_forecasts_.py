@@ -78,7 +78,6 @@ async def process_forecasts(
             - `real_time`: place the trades only for the last prediction in the df
               (used in real-time mode)
         - `log_dir`: directory for logging state
-
     """
     # TODO(gp): Move all this in a _validate method
     # Check `predictions_df`.
@@ -102,7 +101,7 @@ async def process_forecasts(
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     hdbg.dassert_isinstance(config, cconfig.Config)
-    #hdbg.dassert_isinstance(config, dict)
+    # hdbg.dassert_isinstance(config, dict)
     # Check `restrictions`.
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
@@ -482,7 +481,7 @@ class ForecastProcessor:
         self._orders[wall_clock_timestamp] = orders_as_str
         return orders
 
-    async def submit_orders(self, orders) -> None:
+    async def submit_orders(self, orders: List[omorder.Order]) -> None:
         """
         Submit `orders` to the broker and confirm receipt.
 

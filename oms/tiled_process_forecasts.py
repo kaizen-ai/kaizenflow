@@ -4,7 +4,6 @@ Import as:
 import oms.tiled_process_forecasts as otiprfor
 """
 import asyncio
-import datetime
 import logging
 
 import pandas as pd
@@ -17,8 +16,6 @@ import market_data as mdata
 import oms.portfolio as omportfo
 import oms.portfolio_example as oporexam
 import oms.process_forecasts_ as oprofore
-import oms.process_forecasts_example as prfe
-
 
 _LOG = logging.getLogger(__name__)
 
