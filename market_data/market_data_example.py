@@ -436,10 +436,12 @@ def get_HorizontalStitchedMarketData_example1(
 # TODO(Grisha): we should mock ImClients.
 def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     asset_ids: List[int],
-    universe_version: str,
-    resample_1min: bool,
-    data_snapshot: str,
+    universe_version1: str,
+    data_snapshot1: str,
     *,
+    universe_version2: Optional[str] = None,
+    data_snapshot2: Optional[str] = None,
+    resample_1min: bool = False,
     wall_clock_time: Optional[pd.Timestamp] = None,
     filter_data_mode: str = "assert",
 ) -> mdstmada.HorizontalStitchedMarketData:
@@ -448,23 +450,27 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     type `ImClient`s.
     """
     contract_type = "futures"
+    if universe_version2 is None:
+        universe_version2 = universe_version1
+    if data_snapshot2 is None:
+        data_snapshot2 = data_snapshot1
     #
     dataset1 = "ohlcv"
     im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
-        universe_version,
+        universe_version1,
         resample_1min,
         dataset1,
         contract_type,
-        data_snapshot,
+        data_snapshot1,
     )
     #
     dataset2 = "bid_ask"
     im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
-        universe_version,
+        universe_version2,
         resample_1min,
         dataset2,
         contract_type,
-        data_snapshot,
+        data_snapshot2,
     )
     #
     columns = None

@@ -258,10 +258,32 @@ class IgStitchedMarketData(mdabmada.MarketData):
 
 class HorizontalStitchedMarketData(mdabmada.MarketData):
     """
-    Build `MarketData` client from 2 `ImClientMarketData` clients.
+    Stitch together 2 `ImClientMarketData` objects horizontally.
 
-    Obtained data is a horizontally concatenated return from both input
-    clients.
+    Input df1:
+    ```
+                          end_ts    asset_id        full_symbol      open      high       low     close    volume        vwap  number_of_trades        twap              knowledge_timestamp
+    0  2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT   2726.62   2727.16   2724.99   2725.59   648.179   2725.8408               618   2725.7606 2022-06-20 09:49:40.140622+00:00
+    1  2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  37635.00  37635.60  37603.70  37626.80   168.216  37619.4980              1322  37619.8180 2022-06-20 09:48:46.910826+00:00
+    2  2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265   2728.7821              1295   2728.3652 2022-06-20 09:49:40.140622+00:00
+    ```
+
+    Input df2:
+    ```
+                       end_ts    asset_id        full_symbol                   start_ts     bid_price  bid_size     ask_price  ask_size
+    2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT  2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
+    2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
+    2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT  2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
+    ```
+
+    Output df:
+    ```
+                                 asset_id        full_symbol      open      high       low     close    volume        vwap  number_of_trades        twap              knowledge_timestamp                  start_ts     bid_price  bid_size     ask_price  ask_size
+    end_ts
+    2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT   2726.62   2727.16   2724.99   2725.59   648.179   2725.8408               618   2725.7606 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
+    2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  37635.00  37635.60  37603.70  37626.80   168.216  37619.4980              1322  37619.8180 2022-06-20 09:48:46.910826+00:00 2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
+    2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265   2728.7821              1295   2728.3652 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
+    ```
     """
 
     def __init__(
@@ -293,7 +315,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
     def _merge_dfs(
         df1: pd.DataFrame,
         df2: pd.DataFrame,
-        end_time_col_name: str,
+        threshold_col_name: str,
         *,
         how: str,
         cols_to_merge_on: List[str],
@@ -302,36 +324,36 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         """
         Merge `_get_data()` returns in one dataframe.
 
-        :param df1: data to use for merge
-        :param df2: data to use for merge
-        :param end_time_col_name: end time column name
+        :param df1: data to merge
+        :param df2: data to merge
+        :param threshold_col_name: column to check input data similarity on
         :param how: mode of merge to use
         :param cols_to_merge_on: columns to perform the merge on
-        :param threshold: share of end time column values in common to allow the merge
+        :param threshold: share of threshold column values in common to allow the merge
         :return: merged data
         """
         # Verify that end time columns have values of the same type.
-        end_time_col1 = df1[end_time_col_name]
-        end_time_col2 = df2[end_time_col_name]
+        threshold_col1 = df1[threshold_col_name]
+        threshold_col2 = df2[threshold_col_name]
         only_first_elem = False
         hdbg.dassert_array_has_same_type_element(
-            end_time_col1, end_time_col2, only_first_elem
+            threshold_col1, threshold_col2, only_first_elem
         )
         # TODO(Grisha): @Dan Implement asserts for each asset id.
         # Verify that the share of unique common end time values is above threshold.
-        end_time_unique_values1 = set(end_time_col1)
-        end_time_unique_values2 = set(end_time_col2)
-        end_time_common_values = set(end_time_unique_values1) & set(
-            end_time_unique_values2
+        threshold_unique_values1 = set(threshold_col1)
+        threshold_unique_values2 = set(threshold_col2)
+        threshold_common_values = set(threshold_unique_values1) & set(
+            threshold_unique_values2
         )
-        end_time_common_values_share1 = len(end_time_common_values) / len(
-            end_time_unique_values1
+        threshold_common_values_share1 = len(threshold_common_values) / len(
+            threshold_unique_values1
         )
-        end_time_common_values_share2 = len(end_time_common_values) / len(
-            end_time_unique_values2
+        threshold_common_values_share2 = len(threshold_common_values) / len(
+            threshold_unique_values2
         )
-        hdbg.dassert_lte(threshold, end_time_common_values_share1)
-        hdbg.dassert_lte(threshold, end_time_common_values_share2)
+        hdbg.dassert_lte(threshold, threshold_common_values_share1)
+        hdbg.dassert_lte(threshold, threshold_common_values_share2)
         #
         res_df = df1.merge(df2, how=how, on=cols_to_merge_on)
         return res_df

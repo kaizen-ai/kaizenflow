@@ -22,15 +22,13 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     def test_get_data_for_interval5(self) -> None:
         # Prepare inputs.
         asset_ids = [1467591036, 1464553467]
-        universe_version = "v4"
-        resample_1min = True
-        data_snapshot = "20220707"
+        universe_version1 = "v4"
+        data_snapshot1 = "20220707"
         #
         market_data = mdmadaex.get_CryptoChassis_BidAskOhlcvMarketData_example1(
             asset_ids,
-            universe_version,
-            resample_1min,
-            data_snapshot,
+            universe_version1,
+            data_snapshot1,
         )
         start_ts = pd.Timestamp("2022-05-01T00:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01T00:30:00+00:00")
