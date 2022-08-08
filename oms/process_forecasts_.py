@@ -35,12 +35,15 @@ async def process_forecasts(
     volatility_df: pd.DataFrame,
     portfolio: omportfo.Portfolio,
     # TODO(gp): It should be a dict.
+    # -> process_forecasts_config
     config: cconfig.Config,
+    # TODO(gp): Should we keep all the dfs close together in the interface?
+    # TODO(gp): Add a *
     spread_df: Optional[pd.DataFrame],
     restrictions_df: Optional[pd.DataFrame],
 ) -> None:
     """
-    Place orders corresponding to the predictions stored in the given df.
+    Place orders corresponding to the predictions stored in the passed df.
 
     Orders will be realized over the span of two intervals of time (i.e., two lags).
 
@@ -54,13 +57,10 @@ async def process_forecasts(
     :param volatility_df: like `prediction_df`, but for volatility
     :param spread_df: like `prediction_df`, but for the bid-ask spread
     :param portfolio: initialized `Portfolio` object
-    :param config:
-        - `execution_mode`:
-            - `batch`: place the trades for all the predictions (used in historical
-               mode)
-            - `real_time`: place the trades only for the last prediction as in a
-        - `log_dir`: directory for logging state
-        - {
+    :param config: the required params are:
+          # TODO(gp): Is this updated?
+          ```
+          {
             "order_dict": dict,
             "optimizer_dict": dict,
             "ath_start_time": datetime.time,
@@ -70,8 +70,17 @@ async def process_forecasts(
             "execution_mode": str ["real_time", "batch"],
             "remove_weekends": Optional[bool],
             "log_dir": Optional[None],
-        }
+          }
+          ```
+        - `execution_mode`:
+            - `batch`: place the trades for all the predictions (used in historical
+               mode)
+            - `real_time`: place the trades only for the last prediction in the df
+              (used in real-time mode)
+        - `log_dir`: directory for logging state
+
     """
+    # TODO(gp): Move all this in a _validate method
     # Check `predictions_df`.
     hpandas.dassert_time_indexed_df(
         prediction_df, allow_empty=True, strictly_increasing=True
@@ -80,19 +89,26 @@ async def process_forecasts(
     hpandas.dassert_time_indexed_df(
         volatility_df, allow_empty=True, strictly_increasing=True
     )
+    # Check `spread_df`.
     if spread_df is None:
         _LOG.info("spread_df is `None`; imputing 0.0 spread")
         spread_df = pd.DataFrame(0.0, prediction_df.index, prediction_df.columns)
-    # Check index/column compatibility.
+    hpandas.dassert_time_indexed_df(
+        spread_df, allow_empty=True, strictly_increasing=True
+    )
+    # Check index/column compatibility among the dfs.
     hpandas.dassert_axes_equal(prediction_df, volatility_df)
     hpandas.dassert_axes_equal(prediction_df, spread_df)
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     hdbg.dassert_isinstance(config, cconfig.Config)
-    #
+    #hdbg.dassert_isinstance(config, dict)
+    # Check `restrictions`.
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
     # Create an `order_config` from `config` elements.
+    # TODO(gp): If config is a dict then we need to change get_object_from_config.
+    #  We can have a similar function in hdict or hpython.
     order_config = cconfig.get_object_from_config(
         config, "order_config", cconfig.Config, None
     )
@@ -229,6 +245,12 @@ async def process_forecasts(
     _LOG.debug("Event: exiting process_forecasts() for loop.")
 
 
+# #############################################################################
+# ForecastProcessor
+# #############################################################################
+
+
+# process_forecasts_config
 class ForecastProcessor:
     """
     Take forecasts for the most recent bar and submit orders.
@@ -242,27 +264,44 @@ class ForecastProcessor:
     def __init__(
         self,
         portfolio: omportfo.Portfolio,
+        # TODO(gp): dict?
         order_config: cconfig.Config,
         optimizer_config: cconfig.Config,
+        # TODO(gp): -> restrictions_df like the process_forecast
         restrictions: Optional[pd.DataFrame],
         *,
         log_dir: Optional[str] = None,
     ) -> None:
         """
 
+        :param order_config: config for the
+            - E.g.,
+              ```
+              order_type: price@twap
+              order_duration_in_mins: 5
+              ```
+        :param optimizer_config: config for the optimizer, e.g.,
+            ```
+            backend: pomo
+            params:
+              style: cross_sectional
+              kwargs:
+                bulk_frac_to_remove: 0.0
+                bulk_fill_method: zero
+                target_gmv: 100000.0
+            ```
         :param log_dir: directory to log different stages of computation
-
-        ```
-        - Saved by `ForecastEvaluatorFromPrices`
-            - evaluate_forecasts
-        - Saved by `ForecastProcessor`
-            - orders
-            - portfolio
-            - target_positions
-        ```
+            - Saved by `ForecastProcessor`
+                - `orders`
+                - `portfolio`
+                - `target_positions`
+            - Saved by `ForecastEvaluatorFromPrices` (not instantiated by this
+                object anymore)
+                - evaluate_forecasts
         """
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
+        # Process order config.
         # TODO(Paul): process config with checks.
         _validate_order_config(order_config)
         self._order_config = order_config
@@ -307,8 +346,7 @@ class ForecastProcessor:
         """
         Parse logged `target_position` dataframes.
 
-        Returns a dataframe indexed by datetimes and with two column
-        levels.
+        :return a dataframe indexed by datetimes and with two column levels
         """
         name = "target_positions"
         dir_name = os.path.join(log_dir, name)
@@ -462,6 +500,8 @@ class ForecastProcessor:
         if self._log_dir:
             self.log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def _compute_target_positions_in_shares(
         self,
@@ -778,6 +818,9 @@ class ForecastProcessor:
             diff_num_shares = 0.0
         _LOG.warning("Enforcing restriction for asset_id=%i", asset_id)
         return diff_num_shares
+
+
+# #############################################################################
 
 
 def _validate_order_config(config: cconfig.Config) -> None:
