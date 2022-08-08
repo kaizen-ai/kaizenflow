@@ -57,6 +57,7 @@ class ResultBundle(abc.ABC):
         :param info: DAG execution info
         :param payload: config with additional information, e.g., meta config
         """
+        hdbg.dassert_isinstance(config, cconfig.Config)
         self._config = config
         self._result_nid = result_nid
         hdbg.dassert_isinstance(method, dtfcornode.Method)
@@ -64,6 +65,11 @@ class ResultBundle(abc.ABC):
         if result_df is not None:
             hdbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
+        if isinstance(column_to_tags, cconfig.Config):
+            # It should be a dict but when we initialize `ResultBundle` using a config,
+            # e.g., `ResultBundle(**config)` the value is a config because dict-like
+            # values are not allowed.
+            column_to_tags = column_to_tags.to_dict()
         self._column_to_tags = column_to_tags
         self._info = info
         self._payload = payload
@@ -240,20 +246,20 @@ class ResultBundle(abc.ABC):
 
         :param commit_hash: whether to include current commit hash
         """
-        serialized_bundle = cconfig.Config()
+        serialized_bundle = {}
         serialized_bundle["config"] = self._config
         serialized_bundle["result_nid"] = self._result_nid
         serialized_bundle["method"] = self._method
         serialized_bundle["result_df"] = self._result_df
         serialized_bundle["column_to_tags"] = self._column_to_tags
         info = self._info
-        if info is not None:
-            info = cconfig.get_config_from_nested_dict(info)
         serialized_bundle["info"] = info
         serialized_bundle["payload"] = self._payload
         serialized_bundle["class"] = self.__class__.__name__
         if commit_hash:
             serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
+        # Convert to a `Config`.
+        serialized_bundle = cconfig.get_config_from_nested_dict(serialized_bundle)
         return serialized_bundle
 
     @classmethod
@@ -261,6 +267,8 @@ class ResultBundle(abc.ABC):
         """
         Initialize `ResultBundle` from config.
         """
+        # In a `Config` dicts are configs but the class accepts `info` and
+        # `column_to_tags` as dicts.
         column_to_tags = serialized_bundle["column_to_tags"]
         if column_to_tags:
             column_to_tags = column_to_tags.to_dict()

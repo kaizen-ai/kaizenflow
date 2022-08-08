@@ -45,6 +45,8 @@ def _get_test_config3() -> cconfig.Config:
 
 
 # #############################################################################
+# Test_validate_configs1
+# #############################################################################
 
 
 # TODO(gp): -> validate_config_list
@@ -80,6 +82,8 @@ class Test_validate_configs1(hunitest.TestCase):
         config_list.validate_config_list()
 
 
+# #############################################################################
+# Test_get_config_from_flattened_dict1
 # #############################################################################
 
 
@@ -130,6 +134,8 @@ class Test_get_config_from_flattened_dict1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_get_config_from_nested_dict1
+# #############################################################################
 
 
 class Test_get_config_from_nested_dict1(hunitest.TestCase):
@@ -179,7 +185,53 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp, fuzzy_match=False)
 
+    def test3(self) -> None:
+        """
+        One of the dict's values is an empty dict.
+        """
+        nested = {
+            "key1": "val1",
+            "key2": {"key3": {"key4": {}}},
+        }
+        config = cconfig.get_config_from_nested_dict(nested)
+        act = str(config)
+        exp = r"""
+        key1: val1
+        key2:
+          key3:
+            key4:
+        """
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+        # Check the the value type.
+        check = isinstance(config["key2", "key3", "key4"], cconfig.Config)
+        self.assertTrue(check)
+        # Check length.
+        length = len(config["key2", "key3", "key4"])
+        self.assertEqual(length, 0)
 
+    def test4(self) -> None:
+        """
+        One of the dict's values is a dict that should become a `Config`.
+        """
+        test_dict = {"key1": "value1", "key2": {"key3": "value2"}}
+        test_config = cconfig.get_config_from_nested_dict(test_dict)
+        act = str(test_config)
+        exp = r"""
+        key1: value1
+        key2:
+          key3: value2
+        """
+        # Compare expected vs. actual outputs.
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+        # Check the the value type.
+        check = isinstance(test_config["key2"], cconfig.Config)
+        self.assertTrue(check)
+
+
+# #############################################################################
+# Test_intersect_configs1
 # #############################################################################
 
 
@@ -216,6 +268,8 @@ class Test_intersect_configs1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_subtract_configs1
+# #############################################################################
 
 
 class Test_subtract_configs1(hunitest.TestCase):
@@ -243,6 +297,8 @@ class Test_subtract_configs1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
 
+# #############################################################################
+# Test_diff_configs1
 # #############################################################################
 
 
@@ -323,6 +379,8 @@ class Test_diff_configs1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_convert_to_dataframe1
+# #############################################################################
 
 
 class Test_convert_to_dataframe1(hunitest.TestCase):
@@ -351,6 +409,8 @@ class Test_convert_to_dataframe1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
 
+# #############################################################################
+# Test_build_config_diff_dataframe1
 # #############################################################################
 
 
