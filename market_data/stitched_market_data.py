@@ -270,10 +270,10 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
 
     Input df2:
     ```
-                       end_ts    asset_id        full_symbol                   start_ts     bid_price  bid_size     ask_price  ask_size
-    2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT  2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
-    2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
-    2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT  2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
+                          end_ts    asset_id        full_symbol                   start_ts     bid_price  bid_size     ask_price  ask_size
+    0  2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT  2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
+    1  2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
+    2  2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT  2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
     ```
 
     Output df:
@@ -317,9 +317,8 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         df2: pd.DataFrame,
         threshold_col_name: str,
         *,
-        how: str,
-        cols_to_merge_on: List[str],
         threshold: float = 0.9,
+        **pd_merge_kwargs: Any,
     ) -> pd.DataFrame:
         """
         Merge `_get_data()` returns in one dataframe.
@@ -327,9 +326,8 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         :param df1: data to merge
         :param df2: data to merge
         :param threshold_col_name: column to check input data similarity on
-        :param how: mode of merge to use
-        :param cols_to_merge_on: columns to perform the merge on
         :param threshold: share of threshold column values in common to allow the merge
+        :param pd_merge_kwargs: `pd.merge` kwargs
         :return: merged data
         """
         # Verify that end time columns have values of the same type.
@@ -355,7 +353,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         hdbg.dassert_lte(threshold, threshold_common_values_share1)
         hdbg.dassert_lte(threshold, threshold_common_values_share2)
         #
-        res_df = df1.merge(df2, how=how, on=cols_to_merge_on)
+        res_df = df1.merge(df2, **pd_merge_kwargs)
         return res_df
 
     def _get_data(
@@ -399,12 +397,15 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
             "full_symbol",
             self._start_time_col_name,
         ]
+        #
+        pd_merge_kwargs = {}
+        pd_merge_kwargs["how"] = "outer"
+        pd_merge_kwargs["on"] = cols_to_merge_on
         market_data_df = self._merge_dfs(
             market_data_df1,
             market_data_df2,
             self._end_time_col_name,
-            how="outer",
-            cols_to_merge_on=cols_to_merge_on,
+            **pd_merge_kwargs,
         )
         return market_data_df
 
