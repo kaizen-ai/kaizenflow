@@ -1693,6 +1693,9 @@ class Test_merge_dfs1(hunitest.TestCase):
     """
 
     def test_merge_dfs1(self) -> None:
+        """
+        Test when `cols_to_merge` values are equal.
+        """
         # Create test data.
         df1 = pd.DataFrame.from_dict(
             data={
@@ -1743,6 +1746,109 @@ class Test_merge_dfs1(hunitest.TestCase):
         0     1    2.0     3              7     4    5.0
         1    10    NaN    30             70    40    NaN
         2   100  200.0   300            700   400  500.0
+        """
+        # Check.
+        self.check_df_output(
+            merged_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_merge_dfs2(self) -> None:
+        """
+        Test when `threshold_col` values is below a threshold.
+        """
+        # Create test data.
+        df1 = pd.DataFrame.from_dict(
+            data={
+                1: [1, 2, 3, 7],
+                2: [10, np.nan, 30, 70],
+                3: [100, 200, 300, 700],
+            },
+            orient="index",
+            columns=["col1", "col2", "col3", "threshold_col"],
+        )
+        df2 = pd.DataFrame.from_dict(
+            data={
+                3: [3, 4, 5, 7],
+                4: [30, 40, np.nan, 60],
+                5: [300, 400, 500, 600],
+            },
+            orient="index",
+            columns=["col3", "col4", "col5", "threshold_col"],
+        )
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        pd_merge_kwargs = {}
+        pd_merge_kwargs["how"] = "outer"
+        pd_merge_kwargs["on"] = cols_to_merge_on
+        # Check.
+        with self.assertRaises(AssertionError):
+            hpandas.merge_dfs(
+                df1,
+                df2,
+                threshold_col_name,
+                **pd_merge_kwargs,
+            )
+    
+    def test_merge_dfs3(self) -> None:
+        """
+        Test when one of the `cols_to_merge` values are not equal.
+        """
+        # Create test data.
+        df1 = pd.DataFrame.from_dict(
+            data={
+                1: [1, 2, 8, 7],
+                2: [10, np.nan, 80, 70],
+                3: [100, 200, 300, 700],
+            },
+            orient="index",
+            columns=["col1", "col2", "col3", "threshold_col"],
+        )
+        df2 = pd.DataFrame.from_dict(
+            data={
+                3: [3, 4, 5, 7],
+                4: [30, 40, np.nan, 70],
+                5: [300, 400, 500, 700],
+            },
+            orient="index",
+            columns=["col3", "col4", "col5", "threshold_col"],
+        )
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        pd_merge_kwargs = {}
+        pd_merge_kwargs["how"] = "outer"
+        pd_merge_kwargs["on"] = cols_to_merge_on
+        merged_df = hpandas.merge_dfs(
+            df1,
+            df2,
+            threshold_col_name,
+            **pd_merge_kwargs,
+        )
+        # Set expected values.
+        expected_length = 5
+        expected_column_names = [
+            "col1",
+            "col2",
+            "col3",
+            "col4",
+            "col5",
+            "threshold_col",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[0, 4]
+        columns=col1,col2,col3,threshold_col,col4,col5
+        shape=(5, 6)
+            col1   col2  col3  threshold_col   col4   col5
+        0    1.0    2.0     8              7    NaN    NaN
+        1   10.0    NaN    80             70    NaN    NaN
+        2  100.0  200.0   300            700  400.0  500.0
+        3    NaN    NaN     3              7    4.0    5.0
+        4    NaN    NaN    30             70   40.0    NaN
         """
         # Check.
         self.check_df_output(
