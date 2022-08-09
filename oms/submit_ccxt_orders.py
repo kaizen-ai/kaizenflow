@@ -19,8 +19,7 @@ import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
-import market_data as mdata
-import oms.oms_utils as oomsutil
+import oms.oms_ccxt_utils as oomccuti
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -89,11 +88,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hsql.remove_table(connection, "example2_marketdata")
     # Initialize real-time market data.
     im_client = icdc.get_mock_realtime_client(connection)
-    market_data = mdata.get_RealTimeImClientMarketData_example2(im_client)
+    market_data = oomccuti.get_RealTimeImClientMarketData_example2(im_client)
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type
-    broker = oomsutil.get_example_ccxt_broker(
+    broker = oomccuti.get_CcxtBroker_example1(
         market_data, exchange_id, contract_type
     )
     if args.orders_file is None:

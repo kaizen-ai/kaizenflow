@@ -50,9 +50,10 @@ class CcxtBroker(ombroker.Broker):
             - "prod" launches with production API
         :param contract_type: "spot" or "futures"
         """
+        self._exchange_id = exchange_id
+        #
         hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
         self._mode = mode
-        self._exchange_id = exchange_id
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
