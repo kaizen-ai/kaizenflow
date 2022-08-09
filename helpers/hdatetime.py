@@ -426,7 +426,7 @@ def _handle_incorrect_conversions(
     :param date: string date
     :return: date format and a function to apply to string dates before passing
         them into `pd.to_datetime()`
-    """  
+    """
     if len(date) in [7, 8]:
         # "2021-M2" is transformed to '2020-01-01 00:00:01' by
         # `pd.to_datetime`.
@@ -455,6 +455,7 @@ def _shift_to_period_end(  # pylint: disable=too-many-return-statements
     :return: a function to shift the dates to the end of period. If `None`, no
         shift is needed
     """
+
     def shift_to_month_end(x: StrictDatetime) -> StrictDatetime:
         return x + pd.offsets.MonthEnd(0)
 
