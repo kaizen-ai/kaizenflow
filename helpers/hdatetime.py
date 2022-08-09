@@ -426,7 +426,7 @@ def _handle_incorrect_conversions(
     :param date: string date
     :return: date format and a function to apply to string dates before passing
         them into `pd.to_datetime()`
-    """
+    """  
     if len(date) in [7, 8]:
         # "2021-M2" is transformed to '2020-01-01 00:00:01' by
         # `pd.to_datetime`.

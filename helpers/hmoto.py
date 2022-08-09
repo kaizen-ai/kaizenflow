@@ -44,7 +44,7 @@ class S3Mock_TestCase(hunitest.TestCase):
         if self.binance_secret is None:
             import helpers.hsecrets as hsecret
 
-            self.binance_secret = hsecret.get_secret("binance")
+            self.binance_secret = hsecret.get_secret("***REMOVED***")
 
         # Start boto3 mock.
         self.mock_s3.start()

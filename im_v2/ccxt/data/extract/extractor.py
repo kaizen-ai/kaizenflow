@@ -56,10 +56,10 @@ class CcxtExtractor(imvcdexex.Extractor):
         Log into an exchange via CCXT and return the corresponding
         `ccxt.Exchange` object.
         """
-        # Add 
         exchange_params: Dict[str, Any] = {}
+        secret_id = f"{self.exchange_id}.preprod.trading.1"
         # Select credentials for provided exchange.
-        credentials = hsecret.get_secret(self.exchange_id)
+        credentials = hsecret.get_secret(secret_id)
         exchange_params.update(credentials)
         # Enable rate limit.
         exchange_params["rateLimit"] = True
