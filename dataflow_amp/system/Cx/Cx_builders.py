@@ -93,7 +93,7 @@ def get_RealTimeImClientMarketData_prod_instance1(
     get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="ET", event_loop=event_loop
     )
-    # Build a `ReplayedMarketData`.
+    # 
     market_data = mdata.RealTimeMarketData2(
         im_client,
         asset_id_col,
