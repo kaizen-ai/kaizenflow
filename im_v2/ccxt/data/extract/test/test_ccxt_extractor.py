@@ -25,14 +25,14 @@ class TestCcxtExtractor1(hunitest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # On test run, brand new mocks are created from patch's `.start()` method.
+        # Create new mocks from patch's start() method.
         self.get_secret_mock: umock.MagicMock = self.get_secret_patch.start()
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
         # Set dummy credentials for all tests.
         self.get_secret_mock.return_value = {"apiKey": "test", "secret": "test"}
 
     def tearDown(self) -> None:
-        # We need to deallocate in reverse order to avoid race conditions.
+        # Deallocate in reverse order to avoid race conditions.
         super().tearDown()
         #
         self.get_secret_patch.stop()

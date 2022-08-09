@@ -11,7 +11,7 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as imvcdexex
+import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
@@ -26,12 +26,10 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         "_download_realtime_for_one_exchange_with_timeout",
         spec=imvcdeexut._download_realtime_for_one_exchange_with_timeout,
     )
-    # Mock current time calls, so they can be controlled.
+    # Mock current time calls.
     timedelta_patch = umock.patch.object(
         imvcdeexut, "timedelta", spec=imvcdeexut.timedelta
     )
-    # `datetime.now` can not be directly patched as it is built-in method.
-    # Error: "can't set attributes of built-in/extension type 'datetime.datetime'"
     datetime_patch = umock.patch.object(
         imvcdeexut, "datetime", spec=imvcdeexut.datetime
     )
@@ -41,7 +39,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
 
     def setUp(self) -> None:
         super().setUp()
-        # On test run, brand new mocks are created from patch's `.start()` method.
+        # Create new mocks from patch's start() method.
         self.log_mock: umock.MagicMock = self.log_patch.start()
         self.realtime_download_mock: umock.MagicMock = (
             self.realtime_download_patch.start()
@@ -67,30 +65,33 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
             "stop_time": "2022-08-04 21:20:35",
         }
         # Predefined side effects for successful run.
-        time_window_min = 5  # to mimic the one in the function call.
+        iteration_delay_sec = timedelta(seconds=1)
+        time_window_min = timedelta(minutes=5)
+        interval_mins = [timedelta(minutes=1) for _ in range(3)]
         self.timedelta_side_effect = [
-            timedelta(seconds=1),
-            timedelta(minutes=time_window_min),
-            # `interval_min` passed in kwargs.
-            *[timedelta(minutes=1) for _ in range(3)],
+            iteration_delay_sec,
+            time_window_min,
+            *interval_mins,
             # Exit on second iteration.
-            timedelta(seconds=1),
+            iteration_delay_sec,
         ]
         #
+        enter_while_loop = [datetime(2022, 8, 4, 21, 17, 34) for _ in range(3)]
+        end_timestamp = datetime(2022, 8, 4, 21, 17, 35)
+        complete_without_grid_align = [
+            datetime(2022, 8, 4, 21, 18, 15) for _ in range(3)
+        ]
+        second_iteration_exit = datetime(2022, 8, 4, 21, 22, 45)
         self.datetime_side_effect = [
-            datetime(2022, 8, 4, 21, 17, 34),
-            datetime(2022, 8, 4, 21, 17, 34),
-            # Entering into while loop.
-            datetime(2022, 8, 4, 21, 17, 34),
-            datetime(2022, 8, 4, 21, 17, 35),
-            # Download time, align the grid.
-            *[datetime(2022, 8, 4, 21, 18, 15) for _ in range(3)],
+            *enter_while_loop,
+            end_timestamp,
+            *complete_without_grid_align,
             # Exit on second iteration.
-            datetime(2022, 8, 4, 21, 22, 45),
+            second_iteration_exit,
         ]
 
     def tearDown(self) -> None:
-        # We need to deallocate in reverse order to avoid race conditions.
+        # Deallocate in reverse order to avoid race conditions.
         super().tearDown()
         #
         self.log_patch.stop()
@@ -177,7 +178,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
             [call.info('Delay %s sec until next iteration', 1.0),
              call.error('The download was not finished in %s minutes.', 1),
              call.debug('Initial start time before align `%s`.', Timestamp('2022-08-04 21:17:35')),
-             call.debug('Start time aligned `%s`.', Timestamp('2022-08-04 21:18:35'))]
+             call.debug('Start time after align `%s`.', Timestamp('2022-08-04 21:18:35'))]
         """
         self.assert_equal(actual_logs, expected_logs, fuzzy_match=True)
         #
@@ -244,13 +245,13 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         Run with wrong `interval_min`.
         """
         additional_kwargs = {"interval_min": 0}
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically(
                 additional_kwargs=additional_kwargs
             )
         # Check output for error.
-        actual_error = str(fail.value)
+        actual_error = str(fail.exception)
         expected_error = r"""
             * Failed assertion *
             1 <= 0
@@ -263,11 +264,11 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         Run with `start_time` in the past.
         """
         self.datetime_mock.now.return_value = datetime(2022, 8, 4, 21, 17, 36)
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically()
         # Check output for error.
-        actual_error = str(fail.value)
+        actual_error = str(fail.exception)
         expected_error = r"""
             * Failed assertion *
             2022-08-04 21:17:36 < 2022-08-04 21:17:35
@@ -281,13 +282,13 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         """
         additional_kwargs = {"start_time": "2022-08-04 21:20:36"}
         self.datetime_mock.now.return_value = datetime(2022, 8, 4, 21, 17, 34)
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically(
                 additional_kwargs=additional_kwargs
             )
         # Check output for error.
-        actual_error = str(fail.value)
+        actual_error = str(fail.exception)
         expected_error = r"""
             * Failed assertion *
             2022-08-04 21:20:36 < 2022-08-04 21:20:35
@@ -301,13 +302,13 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         """
         additional_kwargs = {"start_time": "2022-08-04 21:17:35+02:00"}
         self.datetime_mock.now.return_value = datetime(2022, 8, 4, 21, 17, 34)
-        with pytest.raises(AssertionError) as fail:
+        with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically(
                 additional_kwargs=additional_kwargs
             )
         # Check output for error.
-        actual_error = str(fail.value)
+        actual_error = str(fail.exception)
         expected_error = r"""
             * Failed assertion *
             'pytz.FixedOffset(120)'
@@ -360,7 +361,7 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = imvcdexex.CcxtExtractor(
+        extractor = ivcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -392,9 +393,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdexex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call1(
         self,
         mock_get_secret: umock.MagicMock,
@@ -421,9 +422,9 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
     @pytest.mark.skip(reason="CMTask2089")
-    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdexex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
         mock_get_secret: umock.MagicMock,
@@ -502,14 +503,14 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = imvcdexex.CcxtExtractor(
+        exchange = ivcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(imvcdexex.hsecret, "get_secret")
+    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,

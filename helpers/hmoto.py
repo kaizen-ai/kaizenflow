@@ -63,7 +63,7 @@ class S3Mock_TestCase(hunitest.TestCase):
         super().setUp()
 
     def tearDown(self) -> None:
-        # We need to deallocate in reverse order to avoid race conditions.
+        # Deallocate in reverse order to avoid race conditions.
         super().tearDown()
         # Delete bucket.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
