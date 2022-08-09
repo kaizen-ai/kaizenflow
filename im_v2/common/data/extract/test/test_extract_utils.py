@@ -91,14 +91,13 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         ]
 
     def tearDown(self) -> None:
-        # Deallocate in reverse order to avoid race conditions.
-        super().tearDown()
-        #
         self.log_patch.stop()
         self.realtime_download_patch.stop()
         self.timedelta_patch.stop()
         self.datetime_patch.stop()
         self.sleep_patch.stop()
+        # Deallocate in reverse order to avoid race conditions.
+        super().tearDown()
 
     def call_download_realtime_for_one_exchange_periodically(
         self, additional_kwargs: Optional[Dict[str, Any]] = None
