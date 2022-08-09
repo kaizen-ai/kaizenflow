@@ -12,7 +12,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import dataflow.system.system as dtfsyssyst
+import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
@@ -82,7 +82,7 @@ def get_Cx_RealTimeMarketData_example1(
 
 
 def get_Cx_process_forecasts_dict_example1(
-    system: dtfsyssyst.System,
+    system: dtfsys.System,
 ) -> Dict[str, Any]:
     """
     Get the dictionary with `ProcessForecastsNode` config params for C1b
@@ -141,10 +141,6 @@ def get_Cx_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     # Build the DAG.
     dag_builder = system.config["dag_builder_object"]
     dag = dag_builder.get_dag(system.config["dag_config"])
-    # This is for debugging. It saves the output of each node in a `csv` file.
-    # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
-    if False:
-        dag.force_freeing_nodes = True
     # Add the data source node.
     dag.insert_at_head(node)
     return dag
