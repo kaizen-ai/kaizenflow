@@ -19,7 +19,6 @@ import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
 import oms.broker as ombroker
-import math
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -51,6 +50,7 @@ class CcxtBroker(ombroker.Broker):
             - "prod" launches with production API
         :param contract_type: "spot" or "futures"
         """
+        super.__init__(*args, **kwargs)
         self._exchange_id = exchange_id
         #
         hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
@@ -161,7 +161,16 @@ class CcxtBroker(ombroker.Broker):
         return oms_order
 
     def check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
-        """ """
+        """
+        Check if the order matches the minimum quantity for the asset.
+
+        The functions checks both the flat amount of the asset
+        and the total cost of the asset in the order.
+        If the order amount does not match, the order is changed
+        to be slightly above the minimum amount.
+
+        :param order: order to be submitted
+        """
         # Load all limits for the asset.
         asset_limits = self._minimal_order_limits[order.asset_id]
         order_amount = order.diff_num_shares
@@ -186,13 +195,16 @@ class CcxtBroker(ombroker.Broker):
         min_cost = asset_limits["min_cost"]
         if total_cost < min_cost:
             # Set amount based on minimal notional price.
-            required_amount = math.ceil(min_cost / last_price)
+            #  Note: the amount is rounded up to closest integer
+            #  to cover for possible inaccuracy in market cost.
+            required_amount = round(min_cost / last_price, 0) + 1
             _LOG.warning(
                 "Amount of asset in order is below minimal base: %s. \
                 Setting to following amount based on notional limit: %s",
                 order_amount,
                 required_amount,
             )
+            # Change number of shares to minimal amount.
             if order.diff_num_shares < 0:
                 order.diff_num_shares = -required_amount
             else:
@@ -200,7 +212,9 @@ class CcxtBroker(ombroker.Broker):
         return order
 
     def get_last_market_price(self, asset_id: int) -> float:
-        """ """
+        """
+        Load the latest price for the given ticker.
+        """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         last_price = self._exchange.fetch_ticker(symbol)["last"]
         return last_price
@@ -343,9 +357,99 @@ class CcxtBroker(ombroker.Broker):
         currency_pair = currency_pair.replace("_", "/")
         return currency_pair
 
-    def _get_minimal_order_limits(self) -> Dict[str, float]:
-        """ """
-        minimal_order_limits: Dict[str, Dict[str, float]] = {}
+    def _get_minimal_order_limits(self) -> Dict[int, Any]:
+        """
+        Load minimal amount and total cost for the given exchange.
+
+        The numbers are determined by loading the market metadata from CCXT.
+
+        Example:
+        {'active': True,
+        'base': 'ADA',
+        'baseId': 'ADA',
+        'contract': True,
+        'contractSize': 1.0,
+        'delivery': False,
+        'expiry': None,
+        'expiryDatetime': None,
+        'feeSide': 'get',
+        'future': True,
+        'id': 'ADAUSDT',
+        'info': {'baseAsset': 'ADA',
+                'baseAssetPrecision': '8',
+                'contractType': 'PERPETUAL',
+                'deliveryDate': '4133404800000',
+                'filters': [{'filterType': 'PRICE_FILTER',
+                            'maxPrice': '25.56420',
+                            'minPrice': '0.01530',
+                            'tickSize': '0.00010'},
+                            {'filterType': 'LOT_SIZE',
+                            'maxQty': '10000000',
+                            'minQty': '1',
+                            'stepSize': '1'},
+                            {'filterType': 'MARKET_LOT_SIZE',
+                            'maxQty': '10000000',
+                            'minQty': '1',
+                            'stepSize': '1'},
+                            {'filterType': 'MAX_NUM_ORDERS', 'limit': '200'},
+                            {'filterType': 'MAX_NUM_ALGO_ORDERS', 'limit': '10'},
+                            {'filterType': 'MIN_NOTIONAL', 'notional': '10'},
+                            {'filterType': 'PERCENT_PRICE',
+                            'multiplierDecimal': '4',
+                            'multiplierDown': '0.9000',
+                            'multiplierUp': '1.1000'}],
+                'liquidationFee': '0.020000',
+                'maintMarginPercent': '2.5000',
+                'marginAsset': 'USDT',
+                'marketTakeBound': '0.10',
+                'onboardDate': '1569398400000',
+                'orderTypes': ['LIMIT',
+                                'MARKET',
+                                'STOP',
+                                'STOP_MARKET',
+                                'TAKE_PROFIT',
+                                'TAKE_PROFIT_MARKET',
+                                'TRAILING_STOP_MARKET'],
+                'pair': 'ADAUSDT',
+                'pricePrecision': '5',
+                'quantityPrecision': '0',
+                'quoteAsset': 'USDT',
+                'quotePrecision': '8',
+                'requiredMarginPercent': '5.0000',
+                'settlePlan': '0',
+                'status': 'TRADING',
+                'symbol': 'ADAUSDT',
+                'timeInForce': ['GTC', 'IOC', 'FOK', 'GTX'],
+                'triggerProtect': '0.0500',
+                'underlyingSubType': ['HOT'],
+                'underlyingType': 'COIN'},
+        'inverse': False,
+        'limits': {'amount': {'max': 10000000.0, 'min': 1.0},
+                    'cost': {'max': None, 'min': 10.0},
+                    'leverage': {'max': None, 'min': None},
+                    'market': {'max': 10000000.0, 'min': 1.0},
+                    'price': {'max': 25.5642, 'min': 0.0153}},
+        'linear': True,
+        'lowercaseId': 'adausdt',
+        'maker': 0.0002,
+        'margin': False,
+        'option': False,
+        'optionType': None,
+        'percentage': True,
+        'precision': {'amount': 0, 'base': 8, 'price': 4, 'quote': 8},
+        'quote': 'USDT',
+        'quoteId': 'USDT',
+        'settle': 'USDT',
+        'settleId': 'USDT',
+        'spot': False,
+        'strike': None,
+        'swap': True,
+        'symbol': 'ADA/USDT',
+        'taker': 0.0004,
+        'tierBased': False,
+        'type': 'future'}
+        """
+        minimal_order_limits: Dict[str, Any] = {}
         # Load market information from CCXT.
         exchange_markets = self._exchange.load_markets()
         for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
@@ -390,6 +494,7 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[str] = []
         for order in orders:
+            # Verify that order conforms
             order = self.check_minimal_limit(order)
             _LOG.info("Submitted order: %s", str(order))
             # TODO(Juraj): perform bunch of assertions for order attributes.
