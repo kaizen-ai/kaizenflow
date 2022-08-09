@@ -141,6 +141,10 @@ def get_Cx_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     # Build the DAG.
     dag_builder = system.config["dag_builder_object"]
     dag = dag_builder.get_dag(system.config["dag_config"])
+    # This is for debugging. It saves the output of each node in a `csv` file.
+    # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
+    if False:
+        dag.force_freeing_nodes = True
     # Add the data source node.
     dag.insert_at_head(node)
     return dag
