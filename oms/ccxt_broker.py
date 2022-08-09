@@ -7,6 +7,7 @@ import oms.ccxt_broker as occxbrok
 """
 
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 import ccxt
@@ -50,7 +51,7 @@ class CcxtBroker(ombroker.Broker):
             - "prod" launches with production API
         :param contract_type: "spot" or "futures"
         """
-        super.__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self._exchange_id = exchange_id
         #
         hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
@@ -357,6 +358,23 @@ class CcxtBroker(ombroker.Broker):
         currency_pair = currency_pair.replace("_", "/")
         return currency_pair
 
+    @staticmethod
+    def _check_binance_code_error(e: Exception, error_code: int) -> bool:
+        """
+        Check if the exception matches the expected error code.
+
+        Examples a binance exception:
+        {"code":-4131,
+        "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
+
+        :param e: Binance exception raised by CCXT
+        :param error_code: expected error code, e.g. -4131
+        :return: whether error code is contained in error message
+        """
+        error_message = str(e)
+        error_regex = f'"code":{error_code}'
+        return bool(re.search(error_regex, error_message))
+
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
         """
         Load minimal amount and total cost for the given exchange.
@@ -500,24 +518,36 @@ class CcxtBroker(ombroker.Broker):
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
             side = "buy" if order.diff_num_shares > 0 else "sell"
-            order_resp = self._exchange.createOrder(
-                symbol=symbol,
-                type=order.type_,
-                side=side,
-                amount=abs(order.diff_num_shares),
-                # id = order.order_id,
-                # id=order.order_id,
-                # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
-                # but most likely the method will need to be overriden per each exchange
-                # to accomodate endpoint specific behavior.
-                params={
-                    "portfolio_id": self._portfolio_id,
-                    "client_oid": order.order_id,
-                },
-            )
-            order.ccxt_id = order_resp["id"]
-            sent_orders.append(order)
-            _LOG.info(order_resp)
+            try:
+                order_resp = self._exchange.createOrder(
+                    symbol=symbol,
+                    type=order.type_,
+                    side=side,
+                    amount=abs(order.diff_num_shares),
+                    # id = order.order_id,
+                    # id=order.order_id,
+                    # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
+                    # but most likely the method will need to be overriden per each exchange
+                    # to accomodate endpoint specific behavior.
+                    params={
+                        "portfolio_id": self._portfolio_id,
+                        "client_oid": order.order_id,
+                    },
+                )
+                order.ccxt_id = order_resp["id"]
+                sent_orders.append(order)
+                _LOG.info(order_resp)
+            except Exception as e:
+                # Check the Binance API error message.
+                #  If the error is connected to liquidity, continue submitting orders.
+                if self._check_binance_code_error(e, -4131):
+                    _LOG.warning(
+                        "PERCENT_PRICE error has been raised. The Exception was: %s",
+                        e,
+                    )
+                    _LOG.warning("Continuing...")
+                else:
+                    raise (e)
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
         return None
