@@ -1682,3 +1682,63 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
         actual_columns = df.columns.to_list()
         expected_columns = ["col1", "col2"]
         self.assert_equal(str(actual_columns), str(expected_columns))
+
+
+# #############################################################################
+
+
+class TestMergeDfs(hunitest.TestCase):
+    """
+    Test that dataframes are merged correctly.
+    """
+    def test_merge_dfs1(self):
+        # Create test data.
+        df1 = pd.DataFrame(
+            data={
+                "col1": [1, 2, 3.14],
+                "col2": [4, 5.6, 6.43],
+                "col3": [7, 8.68, 9.23]
+            }
+        )
+        df2 = pd.DataFrame(
+            data={
+                "col1": [1, 2, 3.14],
+                "col2": [6, 8.6, 6.43],
+                "col3": [7, 8.68, 9.23]
+            }
+        )
+        threshold_col_name = "col1"
+        cols_to_merge_on = ["col1", "col2", "col3"]
+        pd_merge_kwargs = {}
+        pd_merge_kwargs["how"] = "outer"
+        pd_merge_kwargs["on"] = cols_to_merge_on
+        merged_df = hpandas.merge_dfs(
+            df1,
+            df2,
+            threshold_col_name,
+            **pd_merge_kwargs,
+        )
+        # Set expected values.
+        expected_length = 5
+        expected_column_names = ["col1", "col2", "col3"]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[0, 4]
+        columns=col1,col2,col3
+        shape=(5, 3)
+        col1  col2  col3
+        0  1.00  4.00  7.00
+        1  2.00  5.60  8.68
+        2  3.14  6.43  9.23
+        3  1.00  6.00  7.00
+        4  2.00  8.60  8.68
+        """
+        # Check.
+        self.check_df_output(
+            merged_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
