@@ -1,8 +1,10 @@
 import logging
 import unittest.mock as umock
 
+import ccxt
 import pandas as pd
 import pytest
+
 
 import helpers.henv as henv
 import helpers.hpandas as hpandas
@@ -19,15 +21,11 @@ _LOG = logging.getLogger(__name__)
 class TestCcxtExtractor1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(ivcdexex.hsecret, "get_secret")
-    ccxt_patch = umock.patch.object(ivcdexex, "ccxt", spec=ivcdexex.ccxt)
-    # Placeholder variables for mocks that are created from patches above.
-    # On test run, brand new mocks are created from patch's `.start()` method.
-    get_secret_mock = None
-    ccxt_mock = None
+    ccxt_patch = umock.patch.object(ivcdexex, "ccxt", spec=ccxt)
 
     def setUp(self) -> None:
         super().setUp()
-        #
+        # Create new mocks from patch's start() method.
         self.get_secret_mock: umock.MagicMock = self.get_secret_patch.start()
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
         # Set dummy credentials for all tests.
