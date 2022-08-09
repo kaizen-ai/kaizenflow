@@ -3,10 +3,17 @@ import logging
 import pandas as pd
 
 import core.finance.market_data_example as cfmadaex
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
+import market_data.market_data_example as mdmadaex
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# Test_generate_random_bars
+# #############################################################################
 
 
 class Test_generate_random_bars(hunitest.TestCase):
@@ -45,6 +52,11 @@ class Test_generate_random_bars(hunitest.TestCase):
 19 2000-01-03 09:39:00-05:00 2000-01-03 09:40:00-05:00 2000-01-03 09:40:10-05:00  1000.696466     997  1904  1972  19.52   94       200
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_generate_random_ohlcv_bars
+# #############################################################################
 
 
 class Test_generate_random_ohlcv_bars(hunitest.TestCase):
@@ -88,3 +100,16 @@ class Test_generate_random_ohlcv_bars(hunitest.TestCase):
 19 2000-01-03 11:45:00-05:00 2000-01-03 12:00:00-05:00 2000-01-03 12:00:10-05:00  1000.70  1001.33  1000.15  1000.15    1044       200
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_MarketData_builders1
+# #############################################################################
+
+
+class Test_MarketData_builders1(hunitest.TestCase):
+    def test1(self) -> None:
+        event_loop = None
+        market_data, _ = mdmadaex.get_ReplayedTimeMarketData_example3(event_loop)
+        #
+        hobject.test_object_signature(self, market_data)

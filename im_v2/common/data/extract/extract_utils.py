@@ -285,7 +285,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    _LOG.warning(
+    _LOG.info(
         "Starting data download from: %s, till: %s",
         start_timestamp,
         end_timestamp,
@@ -300,7 +300,7 @@ def download_realtime_for_one_exchange_periodically(
     Encapsulate common logic for periodical exchange data download.
 
     :param args: arguments passed on script run
-    :param exchange_class: which exchange is used in script run
+    :param exchange: name of exchange used in script run
     """
     # Time range for each download.
     time_window_min = 5
@@ -358,6 +358,9 @@ def download_realtime_for_one_exchange_periodically(
             _LOG.error(
                 "The download was not finished in %s minutes.", interval_min
             )
+            _LOG.debug(
+                "Initial start time before align `%s`.", iteration_start_time
+            )
             iteration_delay_sec = 0
             # Download that will start after repeated one, should follow to the initial schedule.
             while datetime.now(tz) > iteration_start_time + timedelta(
@@ -365,6 +368,9 @@ def download_realtime_for_one_exchange_periodically(
             ):
                 iteration_start_time = iteration_start_time + timedelta(
                     minutes=interval_min
+                )
+                _LOG.debug(
+                    "Start time after align `%s`.", iteration_start_time
                 )
         # If download failed, but there is time before next download.
         elif num_failures > 0:
@@ -582,6 +588,11 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
             # and fails to be merged.
             # Wherefore force column type into float if float is expected and the column is numeric.
             data[column] = data[column].astype("float64")
+        if expected_type == "int32" and pd.api.types.is_integer_dtype(
+            data[column].dtype
+        ):
+            # Force all `int` columns into `int32` type.
+            data[column] = data[column].astype("int32")
         # Get the actual data type of the column.
         actual_type = str(data[column].dtype)
         # Compare types.

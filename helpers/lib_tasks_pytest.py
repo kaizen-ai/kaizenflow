@@ -830,6 +830,7 @@ def pytest_repro(  # type: ignore
     file_name="./.pytest_cache/v/cache/lastfailed",
     show_stacktrace=False,
     create_script=True,
+    script_name="./tmp.pytest_repro.sh",
 ):
     """
     Generate commands to reproduce the failed tests after a `pytest` run.
@@ -929,6 +930,7 @@ def pytest_repro(  # type: ignore
     # `helpers/test/test_env.py::Test_env1::test_get_system_signature1`.
     hdbg.dassert_isinstance(targets, list)
     targets = hlist.remove_duplicates(targets)
+    targets = sorted(targets)
     failed_test_output_str = (
         f"Found {len(targets)} failed pytest '{mode}' target(s); "
         "to reproduce run:\n"
@@ -983,7 +985,6 @@ def pytest_repro(  # type: ignore
             res += full_traceback
     _LOG.info("%s", failed_test_output_str)
     if create_script:
-        script_name = "./tmp.pytest_repro.sh"
         script_txt = ["pytest \\"]
         script_txt.extend([f"  {t} \\" for t in targets])
         script_txt.append("  $*")
@@ -1213,7 +1214,7 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
     _run(cmd)
     #
     print(hprint.frame("grep Failures"))
-    cmd = f"grep '^FAILED' {log_file}"
+    cmd = f"grep '^FAILED' {log_file} | sort"
     _run(cmd)
 
 

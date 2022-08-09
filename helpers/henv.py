@@ -124,6 +124,12 @@ def get_env_vars() -> List[str]:
         "GH_ACTION_ACCESS_TOKEN",
         # Whether we are running inside GH Actions.
         "CI",
+        # CK AWS credentials.
+        "CK_AWS_ACCESS_KEY_ID",
+        "CK_AWS_DEFAULT_REGION",
+        "CK_AWS_SECRET_ACCESS_KEY",
+        # S3 bucket to use for CK.
+        "CK_AWS_S3_BUCKET"
     ]
     # No duplicates.
     assert len(set(env_var_names)) == len(
@@ -142,7 +148,9 @@ def get_secret_env_vars() -> List[str]:
         "AM_TELEGRAM_TOKEN",
         "AM_AWS_ACCESS_KEY_ID",
         "AM_AWS_SECRET_ACCESS_KEY",
-        "GH_ACTION_ACCESS_TOKEN",
+        "CK_AWS_ACCESS_KEY_ID",
+        "CK_AWS_SECRET_ACCESS_KEY",
+        "GH_ACTION_ACCESS_TOKEN"
     ]
     # No duplicates.
     assert len(set(secret_env_var_names)) == len(

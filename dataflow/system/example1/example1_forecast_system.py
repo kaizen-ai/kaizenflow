@@ -5,6 +5,7 @@ import dataflow.system.example1.example1_forecast_system as dtfseefosy
 """
 
 import logging
+from typing import Coroutine
 
 import pandas as pd
 
@@ -180,10 +181,12 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     system = Example1_Time_ForecastSystem_with_DataFramePortfolio()
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-    system.config["market_data_config", "delay_in_secs"] = 0
+    system.config["market_data_config", "delay_in_secs"] = 5
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
+    # Portfolio config.
+    system = dtfssybuut.apply_Portfolio_config(system)
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
@@ -233,9 +236,7 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         )
         return system_config
 
-    def _get_market_data(
-        self,
-    ) -> mdata.ReplayedMarketData:
+    def _get_market_data(self) -> mdata.ReplayedMarketData:
         market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
         return market_data
 
@@ -246,6 +247,12 @@ class Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_portfolio(self) -> oms.Portfolio:
         portfolio = dtfssybuut.get_DatabasePortfolio_from_System(self)
         return portfolio
+
+    def _get_order_processor(self) -> Coroutine:
+        order_processor_coroutine = (
+            dtfssybuut.get_OrderProcessorCoroutine_from_System(self)
+        )
+        return order_processor_coroutine
 
     def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
         dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
@@ -265,10 +272,12 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     )
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-    system.config["market_data_config", "delay_in_secs"] = 0
+    system.config["market_data_config", "delay_in_secs"] = 5
     system.config["market_data_config", "initial_replayed_delay"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
+    # Portfolio config.
+    system = dtfssybuut.apply_Portfolio_config(system)
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
@@ -290,4 +299,22 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     system.config[
         "research_forecast_evaluator_from_prices"
     ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
+    # If an order is not placed within a bar, then there is a timeout, so
+    # we add extra 5 seconds to `sleep_interval_in_secs` (which represents
+    # the length of a trading bar) to make sure that the `OrderProcessor`
+    # waits long enough before timing out.
+    max_wait_time_for_order_in_secs = (
+        system.config["dag_runner_config", "sleep_interval_in_secs"] + 5
+    )
+    system.config[
+        "order_processor_config", "max_wait_time_for_order_in_secs"
+    ] = max_wait_time_for_order_in_secs
+    # We add extra 5 seconds for the `OrderProcessor` to account for the first bar
+    # that the DAG spends in fit mode.
+    real_time_loop_time_out_in_secs = (
+        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] + 5
+    )
+    system.config[
+        "order_processor_config", "duration_in_secs"
+    ] = real_time_loop_time_out_in_secs
     return system

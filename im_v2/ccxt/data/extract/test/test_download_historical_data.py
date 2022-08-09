@@ -46,9 +46,17 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         }
         self.assertDictEqual(actual, expected)
 
-    @pytest.mark.slow
-    @umock.patch.object(imvcdeexut, "download_historical_data")
-    def test_main(self, mock_download_historical: umock.MagicMock) -> None:
+    @umock.patch.object(
+        imvcdedhda.ivcdexex, "CcxtExtractor", autospec=True, spec_set=True
+    )
+    @umock.patch.object(
+        imvcdeexut, "download_historical_data", autospec=True, spec_set=True
+    )
+    def test_main(
+        self,
+        download_historical_mock: umock.MagicMock,
+        ccxt_extractor_mock: umock.MagicMock,
+    ) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
         """
@@ -73,8 +81,14 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
         imvcdedhda._main(mock_argument_parser)
-        # Check call.
-        self.assertEqual(len(mock_download_historical.call_args), 2)
-        self.assertEqual(
-            mock_download_historical.call_args.args[1].exchange_id, "binance"
-        )
+        # Check args.
+        self.assertEqual(len(download_historical_mock.call_args), 2)
+        actual_args = download_historical_mock.call_args.args
+        self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "ms"}})
+        # Verify that `CcxtExtractor` instance is passed.
+        self.assertEqual(actual_args[1]._extract_mock_name(), "CcxtExtractor()")
+        # Verify that `CcxtExtractor` instance creation is properly called.
+        self.assertEqual(ccxt_extractor_mock.call_count, 1)
+        actual_args = tuple(ccxt_extractor_mock.call_args)
+        expected_args = (("binance", "spot"), {})
+        self.assertEqual(actual_args, expected_args)

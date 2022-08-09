@@ -17,9 +17,11 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
+import im_v2.crypto_chassis.data.client as iccdc
 import market_data.im_client_market_data as mdimcmada
 import market_data.real_time_market_data as mdrtmada
 import market_data.replayed_market_data as mdremada
+import market_data.stitched_market_data as mdstmada
 
 _LOG = logging.getLogger(__name__)
 
@@ -325,24 +327,19 @@ def get_RealTimeImClientMarketData_example1(
     start_time_col_name = "start_timestamp"
     end_time_col_name = "end_timestamp"
     columns = None
-    # # Build a `ReplayedMarketData`.
-    # tz = "ET"
-    # # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
-    # initial_replayed_dt = pd.Timestamp(
-    #     "2022-07-21 09:30:00-04:00", tz="America/New_York"
-    # )
-    # speed_up_factor = 1.0
-    # get_wall_clock_time = creatime.get_replayed_wall_clock_time(
-    #     tz,
-    #     initial_replayed_dt,
-    #     event_loop=event_loop,
-    #     speed_up_factor=speed_up_factor,
-    # )
-    # TODO(Grisha): We need to have a get_RealTimeImClientMarketData_prod_instance1().
-    # We use a real time clock since there is RT market data.
-    event_loop = None
-    get_wall_clock_time = lambda: hdateti.get_current_time(
-        tz="ET", event_loop=event_loop
+    # Build a `ReplayedMarketData`.
+    tz = "ET"
+    # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
+    # TODO(Grisha): @Dan Do not hard-code `initial_replayed_dt`.
+    initial_replayed_dt = pd.Timestamp(
+        "2022-07-21 09:30:00-04:00", tz="America/New_York"
+    )
+    speed_up_factor = 1.0
+    get_wall_clock_time = creatime.get_replayed_wall_clock_time(
+        tz,
+        initial_replayed_dt,
+        event_loop=event_loop,
+        speed_up_factor=speed_up_factor,
     )
     # Build a `ReplayedMarketData`.
     market_data = mdrtmada.RealTimeMarketData2(
@@ -383,5 +380,137 @@ def get_RealtimeMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
+    )
+    return market_data
+
+
+# #############################################################################
+# StitchedMarketData examples
+# #############################################################################
+
+
+def get_HorizontalStitchedMarketData_example1(
+    im_client_market_data1: mdimcmada.ImClientMarketData,
+    im_client_market_data2: mdimcmada.ImClientMarketData,
+    asset_ids: Optional[List[int]],
+    columns: List[str],
+    column_remap: Optional[Dict[str, str]],
+    *,
+    wall_clock_time: Optional[pd.Timestamp] = None,
+    filter_data_mode: str = "assert",
+) -> mdstmada.HorizontalStitchedMarketData:
+    """
+    Build a `HorizontalStitchedMarketData` backed with the data defined by
+    `ImClient`s.
+    """
+    # Build a function that returns a wall clock to initialise `MarketData`.
+    if wall_clock_time is None:
+        # The maximum timestamp is set from the data except for the cases when
+        # it's too computationally expensive to read all of the data on the fly.
+        wall_clock_time1 = im_client_market_data1.get_wall_clock_time()
+        wall_clock_time2 = im_client_market_data2.get_wall_clock_time()
+        wall_clock_time = max(wall_clock_time1, wall_clock_time2)
+
+    def get_wall_clock_time() -> pd.Timestamp:
+        return wall_clock_time
+
+    #
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_ts"
+    end_time_col_name = "end_ts"
+    market_data = mdstmada.HorizontalStitchedMarketData(
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+        im_client_market_data1=im_client_market_data1,
+        im_client_market_data2=im_client_market_data2,
+        column_remap=column_remap,
+        filter_data_mode=filter_data_mode,
+    )
+    return market_data
+
+
+# TODO(Grisha): we should mock ImClients.
+def get_CryptoChassis_BidAskOhlcvMarketData_example1(
+    asset_ids: List[int],
+    universe_version1: str,
+    data_snapshot1: str,
+    *,
+    universe_version2: Optional[str] = None,
+    data_snapshot2: Optional[str] = None,
+    resample_1min: bool = False,
+    wall_clock_time: Optional[pd.Timestamp] = None,
+    filter_data_mode: str = "assert",
+) -> mdstmada.HorizontalStitchedMarketData:
+    """
+    Build a `HorizontalStitchedMarketData`:
+
+    - with "ohlcv" and "bid_ask" dataset type `ImClient`s
+    - with CryptoChassis `ImClient`s
+    - `contract_type` = "futures"
+
+    Output df:
+    ```
+                                 asset_id        full_symbol      open      high       low     close    volume        vwap  number_of_trades        twap              knowledge_timestamp                  start_ts     bid_price  bid_size     ask_price  ask_size
+    end_ts
+    2022-04-30 20:01:00-04:00  1464553467  binance::ETH_USDT   2726.62   2727.16   2724.99   2725.59   648.179   2725.8408               618   2725.7606 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:00:00-04:00   2725.493716  1035.828   2725.731107  1007.609
+    2022-04-30 20:01:00-04:00  1467591036  binance::BTC_USDT  37635.00  37635.60  37603.70  37626.80   168.216  37619.4980              1322  37619.8180 2022-06-20 09:48:46.910826+00:00 2022-04-30 20:00:00-04:00  37620.402680   120.039  37622.417898   107.896
+    2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265   2728.7821              1295   2728.3652 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
+    ```
+    """
+    contract_type = "futures"
+    if universe_version2 is None:
+        universe_version2 = universe_version1
+    if data_snapshot2 is None:
+        data_snapshot2 = data_snapshot1
+    #
+    dataset1 = "ohlcv"
+    im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+        universe_version1,
+        resample_1min,
+        dataset1,
+        contract_type,
+        data_snapshot1,
+    )
+    #
+    dataset2 = "bid_ask"
+    im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+        universe_version2,
+        resample_1min,
+        dataset2,
+        contract_type,
+        data_snapshot2,
+    )
+    #
+    columns = None
+    column_remap = None
+    #
+    im_client_market_data1 = get_HistoricalImClientMarketData_example1(
+        im_client1,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
+    )
+    im_client_market_data2 = get_HistoricalImClientMarketData_example1(
+        im_client2,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
+    )
+    market_data = get_HorizontalStitchedMarketData_example1(
+        im_client_market_data1,
+        im_client_market_data2,
+        asset_ids,
+        columns,
+        column_remap,
+        wall_clock_time=wall_clock_time,
+        filter_data_mode=filter_data_mode,
     )
     return market_data
