@@ -4,7 +4,9 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
+import datetime
 import logging
+import os
 from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
@@ -20,6 +22,7 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -204,7 +207,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
 
 
 # TODO(gp): Copied from _get_E1_dag_prod... Try to share code.
-def get_Cx_dag_prod_instance1(
+def _get_Cx_dag_prod_instance1(
     system: dtfsys.System,
     get_process_forecasts_dict_func: Callable,
 ) -> dtfcore.DAG:
@@ -262,4 +265,51 @@ def get_Cx_dag_prod_instance1(
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
+    return dag
+
+
+def get_process_forecasts_dict_prod_instance1(
+    portfolio: oms.Portfolio,
+    order_duration_in_mins: int,
+) -> Dict[str, Any]:
+    """
+    Build process forecast dictionary for a production system.
+    """
+    #prediction_col = "prediction"
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    price_col = "vwap"
+    #spread_col = "pct_bar_spread"
+    spread_col = None
+    style = "cross_sectional"
+    #
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 2000.0,
+    }
+    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    #
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+        portfolio,
+        prediction_col,
+        volatility_col,
+        price_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir=log_dir,
+    )
+    return process_forecasts_dict
+
+
+def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
+    """
+    Build the DAG for a production system from a system config.
+    """
+    # TODO(gp): It seems that we inlined the code somewhere so we should factor it
+    #  out.
+    #get_process_forecasts_dict_func = dtfsys.get_process_forecasts_dict_example3
+    get_process_forecasts_dict_func = get_process_forecasts_dict_prod_instance1
+    dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_dict_func)
     return dag
