@@ -61,6 +61,14 @@ market_data_config:
     2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
     2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
   history_lookback: 7 days 00:00:00
+portfolio_config:
+  mark_to_market_col: close
+  pricing_method: twap.5T
+  column_remap:
+    bid: bid
+    ask: ask
+    midpoint: midpoint
+    price: close
 dag_runner_config:
   sleep_interval_in_secs: 300
   real_time_loop_time_out_in_secs: 2100
@@ -73,6 +81,9 @@ research_forecast_evaluator_from_prices:
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
+order_processor_config:
+  max_wait_time_for_order_in_secs: 305
+  duration_in_secs: 2105
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
 object.str:
@@ -127,11 +138,15 @@ object.str:
             _knowledge_datetime_col_name='timestamp_db' <str>
             _delay_in_secs='5' <int>
         _timestamp_col='end_datetime' <str>
-        _column_remap='{'bid': 'bid', 'ask': 'ask', 'midpoint': 'midpoint', 'price': 'close'}' <dict>
+        _column_remap= <core.config.config_.Config>
+          bid: bid
+          ask: ask
+          midpoint: midpoint
+          price: close
         _orders='OrderedDict()' <collections.OrderedDict>
         _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
         _fills='[]' <list>
-        _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
+        _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=xxx port=xxx', closed: 0>' <psycopg2.extensions.connection>
         _submitted_orders_table_name='submitted_orders' <str>
         _accepted_orders_table_name='accepted_orders' <str>
         _poll_kwargs= <dict>
@@ -217,13 +232,14 @@ object.str:
        101                  0.0
       -1              1000000.0
     _initial_universe='Int64Index([101], dtype='int64', name='asset_id')' <pandas.core.indexes.numeric.Int64Index>
-    _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
+    _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=xxx port=xxx', closed: 0>' <psycopg2.extensions.connection>
     _table_name='current_positions' <str>
     _timestamp_to_snapshot_df='OrderedDict()' <collections.OrderedDict>
     _net_cost= <core.key_sorted_ordered_dict.KeySortedOrderedDict>
       <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
         _max_keys='None' <NoneType>
         _odict='OrderedDict()' <collections.OrderedDict>
+  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
   dag_object: <dataflow.core.dag.DAG at 0x>:
     _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
     _name='None' <NoneType>
@@ -383,7 +399,7 @@ object.str:
             ]
         }
     config='' <core.config.config_.Config>
-    _column_to_tags_mapping='[]' <list>
+    _column_to_tags_mapping='None' <NoneType>
     _result_nid='process_forecasts' <str>
     _execute_rt_loop_kwargs= <dict>
       {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
@@ -418,6 +434,7 @@ object.str:
 object.builder_function:
   market_object: dataflow.system.example1.example1_forecast_system._get_market_data
   portfolio_object: dataflow.system.example1.example1_forecast_system._get_portfolio
+  order_processor: dataflow.system.example1.example1_forecast_system._get_order_processor
   dag_object: dataflow.system.example1.example1_forecast_system._get_dag
   dag_runner_object: dataflow.system.example1.example1_forecast_system._get_dag_runner
 portfolio_object: # historical holdings=
@@ -464,6 +481,7 @@ asset_id                      101
 2000-01-01 09:55:06-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.10e+06    1.00e+06       0.1
 2000-01-01 10:00:06-05:00  997.24     199007.16   199007.16   99338.84   99338.84  9.05e+05    1.00e+06       0.1
 2000-01-01 10:05:06-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.11e+06    1.01e+06       0.1
+order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 process_forecasts_config:
   prediction_col: feature1
   volatility_col: vwap.ret_0.vol
@@ -530,7 +548,7 @@ process_forecasts_config:
     trading_end_time: 16:40:00
     execution_mode: real_time
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
-dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=[] <list>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
   _asset_id_col='asset_id' <str>
   _asset_ids='[101]' <list>
   _start_time_col_name='start_datetime' <str>

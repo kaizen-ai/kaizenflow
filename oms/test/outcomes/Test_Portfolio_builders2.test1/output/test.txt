@@ -57,7 +57,7 @@ repr:
       _orders='OrderedDict()' <collections.OrderedDict>
       _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
       _fills='[]' <list>
-      _db_connection='<connection object at 0x; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
+      _db_connection='<connection object at 0x; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=xxx port=xxx', closed: 0>' <psycopg2.extensions.connection>
       _submitted_orders_table_name='submitted_orders' <str>
       _accepted_orders_table_name='accepted_orders' <str>
       _poll_kwargs= <dict>
@@ -143,7 +143,7 @@ repr:
      101                  0.0
     -1              1000000.0
   _initial_universe='Int64Index([101], dtype='int64', name='asset_id')' <pandas.core.indexes.numeric.Int64Index>
-  _db_connection='<connection object at 0x; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=localhost port=xxx', closed: 0>' <psycopg2.extensions.connection>
+  _db_connection='<connection object at 0x; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=xxx port=xxx', closed: 0>' <psycopg2.extensions.connection>
   _table_name='current_positions' <str>
   _timestamp_to_snapshot_df='OrderedDict()' <collections.OrderedDict>
   _net_cost= <core.key_sorted_ordered_dict.KeySortedOrderedDict>

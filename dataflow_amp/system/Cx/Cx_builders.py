@@ -1,19 +1,22 @@
 """
 Import as:
 
-import dataflow_orange.system.C1b.C1b_builders as dtfoscc1bu
+import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
-import datetime
 import logging
+from typing import Any, Dict, List, Tuple
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
+import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
 
@@ -74,6 +77,70 @@ def get_Cx_RealTimeMarketData_example1(
     return market_data
 
 
+def get_RealTimeImClientMarketData_prod_instance1(
+    im_client: icdc.ImClient,
+    asset_ids: List[int],
+) -> Tuple[mdata.MarketData, hdateti.GetWallClockTime]:
+    """
+    Build a `RealTimeMarketData` for production.
+    """
+    asset_id_col = "asset_id"
+    start_time_col_name = "start_timestamp"
+    end_time_col_name = "end_timestamp"
+    columns = None
+    event_loop = None
+    get_wall_clock_time = lambda: hdateti.get_current_time(
+        tz="ET", event_loop=event_loop
+    )
+    # 
+    market_data = mdata.RealTimeMarketData2(
+        im_client,
+        asset_id_col,
+        asset_ids,
+        start_time_col_name,
+        end_time_col_name,
+        columns,
+        get_wall_clock_time,
+    )
+    return market_data, get_wall_clock_time
+
+
+# #############################################################################
+# Process forecasts configs.
+# #############################################################################
+
+
+def get_Cx_process_forecasts_dict_example1(
+    system: dtfsys.System,
+) -> Dict[str, Any]:
+    """
+    Get the dictionary with `ProcessForecastsNode` config params for C1b
+    pipeline.
+    """
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    spread_col = None
+    order_duration_in_mins = 5
+    style = "cross_sectional"
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "bulk_fill_method": "zero",
+        "target_gmv": 1e5,
+    }
+    log_dir = None
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+        system.portfolio,
+        prediction_col,
+        volatility_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir,
+    )
+    return process_forecasts_dict
+
+
 # #############################################################################
 # DAG instances.
 # #############################################################################
@@ -103,10 +170,6 @@ def get_Cx_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     # Build the DAG.
     dag_builder = system.config["dag_builder_object"]
     dag = dag_builder.get_dag(system.config["dag_config"])
-    # This is for debugging. It saves the output of each node in a `csv` file.
-    # dag.set_debug_mode("df_as_csv", False, "crypto_forever")
-    if False:
-        dag.force_freeing_nodes = True
     # Add the data source node.
     dag.insert_at_head(node)
     return dag
@@ -122,61 +185,18 @@ def get_Cx_RealTimeDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     return dag
 
 
-# TODO(Paul): Refactor this.
 def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     """
-    Build a DAG with a real time data source and forecast processor.
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
-    # Copied from E8_system_example.py
-    # Configure a `ProcessForecast` node.
-    # TODO(gp): @all we should use get_process_forecasts_dict_example1 or a similar
-    #  function.
-    prediction_col = system.config["research_pnl", "prediction_col"]
-    volatility_col = system.config["research_pnl", "volatility_col"]
-    spread_col = None
-    bulk_frac_to_remove = 0.0
-    target_gmv = 1e5
-    log_dir = None
-    # log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
-    order_type = "price@twap"
-    process_forecasts_config_dict = {
-        "order_config": {
-            "order_type": order_type,
-            "order_duration_in_mins": 5,
-        },
-        "optimizer_config": {
-            "backend": "pomo",
-            "params": {
-                "style": "cross_sectional",
-                "kwargs": {
-                    "bulk_frac_to_remove": bulk_frac_to_remove,
-                    "bulk_fill_method": "zero",
-                    "target_gmv": target_gmv,
-                },
-            },
-        },
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
-        "execution_mode": "real_time",
-        "log_dir": log_dir,
-    }
-    system.config["process_forecasts_config"] = {
-        "prediction_col": prediction_col,
-        "volatility_col": volatility_col,
-        "spread_col": spread_col,
-        "portfolio": system.portfolio,
-        "process_forecasts_config": process_forecasts_config_dict,
-    }
-    # Append the ProcessForecast node.
-    stage = "process_forecasts"
-    _LOG.debug("stage=%s", stage)
-    node = dtfsys.ProcessForecastsNode(
-        stage, **system.config["process_forecasts_config"]
-    )
-    dag.append_to_tail(node)
+    # Configure a `ProcessForecastNode`.
+    process_forecasts_config = get_Cx_process_forecasts_dict_example1(system)
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
+    # Append the `ProcessForecastNode`.
+    dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
