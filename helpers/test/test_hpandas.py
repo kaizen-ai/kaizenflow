@@ -1687,29 +1687,33 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 # #############################################################################
 
 
-class TestMergeDfs(hunitest.TestCase):
+class Test_merge_dfs1(hunitest.TestCase):
     """
     Test that dataframes are merged correctly.
     """
 
-    def test_merge_dfs1(self):
+    def test_merge_dfs1(self) -> None:
         # Create test data.
-        df1 = pd.DataFrame(
+        df1 = pd.DataFrame.from_dict(
             data={
-                "col1": [1, 2, 3.14],
-                "col2": [4, 5.6, 6.43],
-                "col3": [7, 8.68, 9.23],
-            }
+                1: [1, 2, 3, 7],
+                2: [10, np.nan, 30, 70],
+                3: [100, 200, 300, 700],
+            },
+            orient="index",
+            columns=["col1", "col2", "col3", "threshold_col"],
         )
-        df2 = pd.DataFrame(
+        df2 = pd.DataFrame.from_dict(
             data={
-                "col1": [1, 2, 3.14],
-                "col2": [6, 8.6, 6.43],
-                "col3": [7, 8.68, 9.23],
-            }
+                3: [3, 4, 5, 7],
+                4: [30, 40, np.nan, 70],
+                5: [300, 400, 500, 700],
+            },
+            orient="index",
+            columns=["col3", "col4", "col5", "threshold_col"],
         )
-        threshold_col_name = "col1"
-        cols_to_merge_on = ["col1", "col2", "col3"]
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
         pd_merge_kwargs = {}
         pd_merge_kwargs["how"] = "outer"
         pd_merge_kwargs["on"] = cols_to_merge_on
@@ -1720,20 +1724,25 @@ class TestMergeDfs(hunitest.TestCase):
             **pd_merge_kwargs,
         )
         # Set expected values.
-        expected_length = 5
-        expected_column_names = ["col1", "col2", "col3"]
+        expected_length = 3
+        expected_column_names = [
+            "col1",
+            "col2",
+            "col3",
+            "col4",
+            "col5",
+            "threshold_col",
+        ]
         expected_column_unique_values = None
         expected_signature = r"""
         # df=
-        index=[0, 4]
-        columns=col1,col2,col3
-        shape=(5, 3)
-        col1  col2  col3
-        0  1.00  4.00  7.00
-        1  2.00  5.60  8.68
-        2  3.14  6.43  9.23
-        3  1.00  6.00  7.00
-        4  2.00  8.60  8.68
+        index=[0, 2]
+        columns=col1,col2,col3,threshold_col,col4,col5
+        shape=(3, 6)
+            col1   col2  col3  threshold_col  col4   col5
+        0     1    2.0     3              7     4    5.0
+        1    10    NaN    30             70    40    NaN
+        2   100  200.0   300            700   400  500.0
         """
         # Check.
         self.check_df_output(
