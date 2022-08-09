@@ -591,6 +591,11 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
     # Push candidate image.
     docker_push_prod_candidate_image(ctx, tag)
     # Register new task definition revision with updated image URL. 
-    cmd = f'invoke docker_cmd -c "im_v2/aws/aws_update_task_definition.py -t {task_definition} -i {tag}"'
+    exec_name = f"im_v2/aws/aws_update_task_definition.py"
+    if not os.path.exists(exec_name):
+        exec_name = f"amp/{exec_name}"
+    hdbg.dassert_file_exists(exec_name)
+    _LOG.debug("exec_name=%s", exec_name)
+    cmd = f'invoke docker_cmd -c "{exec_name} -t {task_definition} -i {tag}"'
     hlitauti._run(ctx, cmd)
     return
