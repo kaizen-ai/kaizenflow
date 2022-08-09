@@ -78,10 +78,10 @@ def get_Cx_RealTimeMarketData_example1(
     return market_data
 
 
-def get_RealTimeImClientMarketData_prod_instance(
+def get_RealTimeImClientMarketData_prod_instance1(
     im_client: icdc.ImClient,
     asset_ids: List[int],
-) -> Tuple[mdata.ReplayedMarketData, hdateti.GetWallClockTime]:
+) -> Tuple[mdata.MarketData, hdateti.GetWallClockTime]:
     """
     Build a `RealTimeMarketData` for production.
     """
@@ -96,7 +96,6 @@ def get_RealTimeImClientMarketData_prod_instance(
     # Build a `ReplayedMarketData`.
     market_data = mdata.RealTimeMarketData2(
         im_client,
-        #
         asset_id_col,
         asset_ids,
         start_time_col_name,
