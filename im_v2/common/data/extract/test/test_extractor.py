@@ -1,49 +1,57 @@
-from typing import Any
-
-import pandas as pd
-import pytest
+import unittest.mock as umock
 
 import helpers.hunit_test as hunitest
 import im_v2.common.data.extract.extractor as imvcdexex
 
 
-class DummyExtractor(imvcdexex.Extractor):
-    """
-    Abstract methods can not be mocked or tested other way.
-    """
-    # Placeholder variables to be used for comparison.
-    exchange_id = None
-    currency_pair = None
-    kwargs = None
+class TestExtractor1(hunitest.TestCase):
+    # Mock `Extractor`'s abstract functions.
+    abstract_methods_patch = umock.patch.object(
+        imvcdexex.Extractor, "__abstractmethods__", new=set()
+    )
+    ohlcv_patch = umock.patch.object(
+        imvcdexex.Extractor,
+        "_download_ohlcv",
+        spec=imvcdexex.Extractor._download_ohlcv,
+    )
+    bid_ask_patch = umock.patch.object(
+        imvcdexex.Extractor,
+        "_download_bid_ask",
+        spec=imvcdexex.Extractor._download_bid_ask,
+    )
+    trades_patch = umock.patch.object(
+        imvcdexex.Extractor,
+        "_download_trades",
+        spec=imvcdexex.Extractor._download_trades,
+    )
 
-    def _download_ohlcv(
-        self, exchange_id: str, currency_pair: str, **kwargs: Any
-    ) -> pd.DataFrame:
-        assert self.exchange_id == exchange_id
-        assert self.currency_pair == currency_pair
-        assert self.kwargs == kwargs
+    def setUp(self) -> None:
+        super().setUp()
+        #
+        self.abstract_methods_patch.start()
+        self.ohlcv_mock: umock.MagicMock = self.ohlcv_patch.start()
+        self.bid_ask_mock: umock.MagicMock = self.bid_ask_patch.start()
+        self.trades_mock: umock.MagicMock = self.trades_patch.start()
 
-    def _download_bid_ask(
-        self, exchange_id: str, currency_pair: str, **kwargs: Any
-    ) -> pd.DataFrame:
-        assert self.exchange_id == exchange_id
-        assert self.currency_pair == currency_pair
-        assert self.kwargs == kwargs
+    def tearDown(self) -> None:
+        # Deallocate in reverse order to avoid race conditions.
+        super().tearDown()
+        #
+        self.abstract_methods_patch.stop()
+        self.ohlcv_patch.stop()
+        self.bid_ask_patch.stop()
+        self.trades_patch.stop()
 
-    def _download_trades(
-        self, exchange_id: str, currency_pair: str, **kwargs: Any
-    ) -> pd.DataFrame:
-        assert self.exchange_id == exchange_id
-        assert self.currency_pair == currency_pair
-        assert self.kwargs == kwargs
-
-
-class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_download_data1(self) -> None:
         """
         Verify if proper function is called depending on `data_type`.
         """
-        dummy_extractor = DummyExtractor()
+        mock_map = {
+            "ohlcv": self.ohlcv_mock,
+            "bid_ask": self.bid_ask_mock,
+            "trades": self.trades_mock,
+        }
+        dummy_extractor = imvcdexex.Extractor()
         test_samples = [
             ("ohlcv", "dummy_id", "dummy_currency_pair", {"type": "ohlcv"}),
             ("bid_ask", "dummy_id", "dummy_currency_pair", {"type": "bid_ask"}),
@@ -57,16 +65,25 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             dummy_extractor.download_data(
                 data_type, exchange_id, currency_pair, **kwargs
             )
+            # Check function calls.
+            function_mock = mock_map[data_type]
+            self.assertEqual(function_mock.call_count, 1)
+            actual_args = tuple(function_mock.call_args)
+            expected_args = (
+                ("dummy_id", "dummy_currency_pair"),
+                {"type": data_type},
+            )
+            self.assertEqual(actual_args, expected_args)
 
     def test_download_data_error1(self) -> None:
         """
         Verify that error is raised on unknown `data_type`.
         """
-        dummy_extractor = DummyExtractor()
-        with pytest.raises(AssertionError) as fail:
+        dummy_extractor = imvcdexex.Extractor()
+        with self.assertRaises(AssertionError) as fail:
             # Run.
             dummy_extractor.download_data("dummy_data_type", "", "")
-        actual_error = str(fail.value)
+        actual_error = str(fail.exception)
         expected_error = r"""
             Unknown data type dummy_data_type. Possible data types: ohlcv, bid_ask, trades
         """
