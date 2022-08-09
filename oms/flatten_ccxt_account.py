@@ -17,9 +17,7 @@ import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
-import market_data as mdata
-import oms.ccxt_broker as occxbrok
-import oms.oms_utils as oomsutil
+import oms.oms_ccxt_utils as oomccuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,36 +49,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _LOG.debug("Initializing broker.")
-    # Initialize broker to connect to exchange.
-    exchange_id = args.exchange_id
-    contract_type = args.contract_type
-    universe = "v7"
-    mode = "test"
-    portfolio_id = "ck_portfolio_id"
-    strategy_id = "SAU1"
     # Get environment variables with login info.
     env_file = imvimlita.get_db_env_path("dev")
     # Get login info.
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     # Login.
     connection = hsql.get_connection(*connection_params)
+    # Remove table if it already exists.
     hsql.remove_table(connection, "example2_marketdata")
+    # Initialize real-time market data.
     im_client = icdc.get_mock_realtime_client(connection)
-    market_data = mdata.get_RealtimeMarketData_example1(im_client)
-    broker = occxbrok.CcxtBroker(
-        exchange_id,
-        universe,
-        mode,
-        portfolio_id,
-        contract_type,
-        market_data=market_data,
-        strategy_id=strategy_id,
-    )
-    _LOG.info(
-        "Flattening the %s account for %s exchange.", contract_type, exchange_id
+    market_data = oomccuti.get_RealTimeImClientMarketData_example2(im_client)
+    # Initialize CcxtBroker connected to testnet.
+    exchange_id = args.exchange_id
+    contract_type = args.contract_type
+    broker = oomccuti.get_CcxtBroker_example1(
+        market_data, exchange_id, contract_type
     )
     # Close all open positions.
-    oomsutil.flatten_ccxt_account(broker, dry_run=False)
+    oomccuti.flatten_ccxt_account(broker, dry_run=False)
 
 
 if __name__ == "__main__":
