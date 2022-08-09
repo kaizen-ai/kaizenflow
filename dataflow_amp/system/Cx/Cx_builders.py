@@ -75,7 +75,7 @@ def get_Cx_RealTimeMarketData_example1(
     # Get the real-time `MarketData`.
     event_loop = system.config["event_loop_object"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    market_data, _ = mdata.get_RealTimeImClientMarketData_example1(
+    market_data, _ = mdata.get_ReplayedImClientMarketData_example1(
         im_client, event_loop, asset_ids
     )
     return market_data
