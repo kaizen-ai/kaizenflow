@@ -1792,7 +1792,7 @@ class Test_merge_dfs1(hunitest.TestCase):
                 threshold_col_name,
                 **pd_merge_kwargs,
             )
-    
+
     def test_merge_dfs3(self) -> None:
         """
         Test when one of the `cols_to_merge` values are not equal.
