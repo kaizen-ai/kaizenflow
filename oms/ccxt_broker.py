@@ -19,6 +19,7 @@ import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
 import oms.broker as ombroker
+import math
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -63,13 +64,16 @@ class CcxtBroker(ombroker.Broker):
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
-        self._asset_id_to_symbol_mapping = self._build_asset_id_to_symbol_mapping(
-            universe_version
+        self._universe_version = universe_version
+        self._asset_id_to_symbol_mapping = (
+            self._build_asset_id_to_symbol_mapping()
         )
         self._symbol_to_asset_id_mapping = {
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
+        # Set minimal order limits.
+        self._minimal_order_limits = self._get_minimal_order_limits()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
 
@@ -155,6 +159,51 @@ class CcxtBroker(ombroker.Broker):
             diff_num_shares,
         )
         return oms_order
+
+    def check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+        """ """
+        # Load all limits for the asset.
+        asset_limits = self._minimal_order_limits[order.asset_id]
+        order_amount = order.diff_num_shares
+        min_amount = asset_limits["min_amount"]
+        if abs(order_amount) < min_amount:
+            _LOG.warning(
+                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
+                order_amount,
+                min_amount,
+            )
+            if order_amount < 0:
+                order.diff_num_shares = -min_amount
+            else:
+                order.diff_num_shares = min_amount
+        # Verify that order is not below minimal cost.
+        #
+        # Get the last price for the asset.
+        last_price = self.get_last_market_price(order.asset_id)
+        # Calculate the total cost of the order based on the last price.
+        total_cost = last_price * abs(order_amount)
+        # Verify that the order total cost is not below minimum.
+        min_cost = asset_limits["min_cost"]
+        if total_cost < min_cost:
+            # Set amount based on minimal notional price.
+            required_amount = math.ceil(min_cost / last_price)
+            _LOG.warning(
+                "Amount of asset in order is below minimal base: %s. \
+                Setting to following amount based on notional limit: %s",
+                order_amount,
+                required_amount,
+            )
+            if order.diff_num_shares < 0:
+                order.diff_num_shares = -required_amount
+            else:
+                order.diff_num_shares = required_amount
+        return order
+
+    def get_last_market_price(self, asset_id: int) -> float:
+        """ """
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        last_price = self._exchange.fetch_ticker(symbol)["last"]
+        return last_price
 
     def get_fills(self) -> List[ombroker.Fill]:
         """
@@ -294,6 +343,22 @@ class CcxtBroker(ombroker.Broker):
         currency_pair = currency_pair.replace("_", "/")
         return currency_pair
 
+    def _get_minimal_order_limits(self) -> Dict[str, float]:
+        """ """
+        minimal_order_limits: Dict[str, Dict[str, float]] = {}
+        # Load market information from CCXT.
+        exchange_markets = self._exchange.load_markets()
+        for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
+            minimal_order_limits[asset_id] = {}
+            limits = exchange_markets[symbol]["limits"]
+            # Get the minimal amount of asset in the order.
+            amount_limit = limits["amount"]["min"]
+            minimal_order_limits[asset_id]["min_amount"] = amount_limit
+            # Get the minimal cost of asset in the order.
+            notional_limit = limits["cost"]["min"]
+            minimal_order_limits[asset_id]["min_cost"] = notional_limit
+        return minimal_order_limits
+
     def _assert_order_methods_presence(self) -> None:
         """
         Assert that the requested exchange supports all methods necessary to
@@ -325,6 +390,8 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[str] = []
         for order in orders:
+            order = self.check_minimal_limit(order)
+            _LOG.info("Submitted order: %s", str(order))
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
             side = "buy" if order.diff_num_shares > 0 else "sell"
@@ -351,7 +418,7 @@ class CcxtBroker(ombroker.Broker):
         return None
 
     def _build_asset_id_to_symbol_mapping(
-        self, universe_version: str
+        self,
     ) -> Dict[int, str]:
         """
         Build asset id to full symbol mapping.
@@ -367,7 +434,7 @@ class CcxtBroker(ombroker.Broker):
         """
         # Get full symbol universe.
         full_symbol_universe = imvcounun.get_vendor_universe(
-            "CCXT", "trade", version=universe_version, as_full_symbol=True
+            "CCXT", "trade", version=self._universe_version, as_full_symbol=True
         )
         # Filter symbols of the exchange corresponding to this instance.
         full_symbol_universe = list(

@@ -17,6 +17,11 @@ import oms.order as omorder
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# CCXT Broker Utilities
+# #############################################################################
+
+
 def flatten_ccxt_account(
     broker: occxbrok.CcxtBroker, dry_run: bool, *, deadline_in_secs: int = 60
 ) -> None:
@@ -72,6 +77,11 @@ def flatten_ccxt_account(
     if len(open_positions) != 0:
         _LOG.warning("Some positions failed to close: %s", open_positions)
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
+
+
+# #############################################################################
+# Example Instances
+# #############################################################################
 
 
 def get_CcxtBroker_example1(
