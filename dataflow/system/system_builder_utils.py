@@ -616,3 +616,18 @@ def get_OrderProcessorCoroutine_from_System(
     )
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
     return order_processor_coroutine
+
+
+def apply_process_forecasts_config_for_equities(system):
+    system.config["process_forecasts_config", "process_forecasts_config", "ath_start_time"] = datetime.time(9, 30)
+    system.config["process_forecasts_config", "process_forecasts_config", "trading_start_time"] = datetime.time(9, 30)
+    system.config["process_forecasts_config", "process_forecasts_config", "ath_end_time"] = datetime.time(16, 40)
+    system.config["process_forecasts_config", "process_forecasts_config", "trading_end_time"] = datetime.time(16, 40)
+    return system
+
+def apply_process_forecasts_config_for_crypto(system):
+    system.config["process_forecasts_config", "process_forecasts_config", "ath_start_time"] = None
+    system.config["process_forecasts_config", "process_forecasts_config", "trading_start_time"] = None
+    system.config["process_forecasts_config", "process_forecasts_config", "ath_end_time"] = None
+    system.config["process_forecasts_config", "process_forecasts_config", "trading_end_time"] = None
+    return system
