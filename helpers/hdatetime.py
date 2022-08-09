@@ -455,7 +455,6 @@ def _shift_to_period_end(  # pylint: disable=too-many-return-statements
     :return: a function to shift the dates to the end of period. If `None`, no
         shift is needed
     """
-
     def shift_to_month_end(x: StrictDatetime) -> StrictDatetime:
         return x + pd.offsets.MonthEnd(0)
 
