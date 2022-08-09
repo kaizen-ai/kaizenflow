@@ -4,8 +4,10 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
+import datetime
 import logging
-from typing import Any, Dict, List, Tuple
+import os
+from typing import Any, Callable, Dict, List, Tuple
 
 import pandas as pd
 
@@ -20,7 +22,7 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
-import oms as oms
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -94,7 +96,7 @@ def get_RealTimeImClientMarketData_prod_instance1(
     get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="ET", event_loop=event_loop
     )
-    # 
+    #
     market_data = mdata.RealTimeMarketData2(
         im_client,
         asset_id_col,
@@ -260,3 +262,112 @@ def _get_Cx_portfolio(
         # )
         pass
     return portfolio
+
+
+# TODO(gp): Copied from _get_E1_dag_prod... Try to share code.
+def _get_Cx_dag_prod_instance1(
+    system: dtfsys.System,
+    get_process_forecasts_dict_func: Callable,
+) -> dtfcore.DAG:
+    """
+    Build the DAG for a C1b production system from a system config.
+    """
+    hdbg.dassert_isinstance(system, dtfsys.System)
+    # Create the pipeline.
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    # TODO(gp): Fast prod system must be set before the DAG is built.
+    dag_builder = system.config["dag_builder_object"]
+    fast_prod_setup = system.config.get(
+        ["dag_builder_config", "fast_prod_setup"], False
+    )
+    _LOG.debug(hprint.to_str("fast_prod_setup"))
+    if fast_prod_setup:
+        _LOG.warning("Setting fast prod setup")
+        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
+            system.config["dag_config"]
+        )
+    # The config must be complete and stable here.
+    dag = dag_builder.get_dag(dag_config)
+    system = dtfsys.apply_dag_property(dag, system)
+    #
+    system = dtfsys.apply_dag_runner_config(system)
+    # Build Portfolio.
+    trading_period_str = dag_builder.get_trading_period(dag_config)
+    # TODO(gp): Add a param to get_trading_period to return the int.
+    order_duration_in_mins = int(trading_period_str.replace("T", ""))
+    system.config[
+        "portfolio_config", "order_duration_in_mins"
+    ] = order_duration_in_mins
+    portfolio = system.portfolio
+    # Set market data history lookback in days in to config.
+    system = dtfsys.apply_history_lookback(system)
+    # Build the process forecast dict.
+    process_forecasts_dict = get_process_forecasts_dict_func(
+        portfolio, order_duration_in_mins
+    )
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
+    # Assemble.
+    market_data = system.market_data
+    market_data_history_lookback = pd.Timedelta(
+        days=system.config["market_data_config", "history_lookback"]
+    )
+    ts_col_name = "timestamp_db"
+    dag = dtfsys.adapt_dag_to_real_time(
+        dag,
+        market_data,
+        market_data_history_lookback,
+        process_forecasts_dict,
+        ts_col_name,
+    )
+    _LOG.debug("dag=\n%s", dag)
+    return dag
+
+
+def get_process_forecasts_dict_prod_instance1(
+    portfolio: oms.Portfolio,
+    order_duration_in_mins: int,
+) -> Dict[str, Any]:
+    """
+    Build process forecast dictionary for a production system.
+    """
+    # prediction_col = "prediction"
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    price_col = "vwap"
+    # spread_col = "pct_bar_spread"
+    spread_col = None
+    style = "cross_sectional"
+    #
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 2000.0,
+    }
+    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    #
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+        portfolio,
+        prediction_col,
+        volatility_col,
+        price_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir=log_dir,
+    )
+    return process_forecasts_dict
+
+
+def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
+    """
+    Build the DAG for a production system from a system config.
+    """
+    # TODO(gp): It seems that we inlined the code somewhere so we should factor it
+    #  out.
+    # get_process_forecasts_dict_func = dtfsys.get_process_forecasts_dict_example3
+    get_process_forecasts_dict_func = get_process_forecasts_dict_prod_instance1
+    dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_dict_func)
+    return dag
