@@ -12,7 +12,6 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import dataflow.system.system as dtfsyssyst
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsql as hsql
@@ -112,7 +111,7 @@ def get_RealTimeImClientMarketData_prod_instance1(
 
 
 def get_Cx_process_forecasts_dict_example1(
-    system: dtfsyssyst.System,
+    system: dtfsys.System,
 ) -> Dict[str, Any]:
     """
     Get the dictionary with `ProcessForecastsNode` config params for C1b
