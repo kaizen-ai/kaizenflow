@@ -46,11 +46,12 @@ class CcxtBroker(ombroker.Broker):
             (e.g., Binance)
         :param universe_version: version of the universe to use
         :param stage:
-            - "preprod"
-            - "local" for debugging
+            - "preprod" preproduction stage
+            - "local" debugging stage
         :param account_type: 
-            - "trading"
-            - "sandbox" for 
+            - "trading" launches the broker in trading environment
+            - "sandbox" launches the broker in sandbox environment (not supported for
+              every exchange) 
         :param contract_type: "spot" or "futures"
         """
         self._exchange_id = exchange_id
