@@ -14,10 +14,12 @@ import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
+import oms as oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -171,3 +173,61 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
+
+
+# #############################################################################
+# Portfolio instances.
+# #############################################################################
+
+
+def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
+    """
+    Build Portfolio instance for production.
+    """
+    market_data = system.market_data
+    dag_builder = system.config["dag_builder_object"]
+    trading_period_str = dag_builder.get_trading_period(
+        system.config["dag_config"]
+    )
+    _LOG.debug(hprint.to_str("trading_period_str"))
+    pricing_method = "twap." + trading_period_str
+    retrieve_initial_holdings_from_db = system.config[
+        "portfolio_config", "retrieve_initial_holdings_from_db"
+    ]
+    portfolio = oms.get_CcxtPortfolio_prod_instance(
+        system.config["cf_config", "strategy"],
+        system.config["cf_config", "liveness"],
+        system.config["cf_config", "instance_type"],
+        retrieve_initial_holdings_from_db,
+        market_data,
+        system.config["market_data_config", "asset_ids"],
+        system.config["portfolio_config", "order_duration_in_mins"],
+        system.config["portfolio_config", "order_extra_params"],
+        pricing_method,
+    )
+    return portfolio
+
+
+# TODO(gp): We should dump the state of the portfolio and load it back.
+# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
+#  so we can generalize the class to be not E8 specific.
+def _get_Cx_portfolio(
+    system: dtfsys.System,
+) -> oms.Portfolio:
+    # We prefer to configure code statically (e.g., without switches) but in this
+    # case the prod system vs its simulat-able version are so close (and we want to
+    # keep them close) that we use a switch.
+    if not system.use_simulation:
+        # Prod.
+        portfolio = get_Cx_portfolio_prod_instance1(system)
+    else:
+        # Simulation.
+        # TODO(gp): This needs to be fixed before reconciliation.
+        # _LOG.warning("Configuring for simulation")
+        # portfolio = oms.get_DatabasePortfolio_example3(
+        #     system.config["db_connection_object"],
+        #     system.config["event_loop_object"],
+        #     system.market_data,
+        # )
+        pass
+    return portfolio
