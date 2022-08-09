@@ -34,11 +34,10 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.get_secret_mock.return_value = {"apiKey": "test", "secret": "test"}
 
     def tearDown(self) -> None:
-        # We need to deallocate in reverse order to avoid race conditions.
-        super().tearDown()
-        #
         self.get_secret_patch.stop()
         self.ccxt_patch.stop()
+        # Deallocate in reverse order to avoid race conditions.
+        super().tearDown()
 
     def test_initialize_class(self) -> None:
         """

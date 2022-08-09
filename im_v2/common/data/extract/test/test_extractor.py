@@ -34,13 +34,12 @@ class TestExtractor1(hunitest.TestCase):
         self.trades_mock: umock.MagicMock = self.trades_patch.start()
 
     def tearDown(self) -> None:
-        # Deallocate in reverse order to avoid race conditions.
-        super().tearDown()
-        #
         self.abstract_methods_patch.stop()
         self.ohlcv_patch.stop()
         self.bid_ask_patch.stop()
         self.trades_patch.stop()
+        # Deallocate in reverse order to avoid race conditions.
+        super().tearDown()
 
     def test_download_data1(self) -> None:
         """
