@@ -81,6 +81,36 @@ def get_Cx_RealTimeMarketData_example1(
     return market_data
 
 
+# TODO(Grisha): @Dan share code with `get_Cx_RealTimeMarketData_example1`.
+def get_Cx_RealTimeMarketData_prod_instance1(
+    system: dtfsys.System,
+) -> mdata.MarketData:
+    """
+    Build a MarketData backed with RealTimeImClient.
+    """
+    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
+    resample_1min = False
+    # Get environment variables with login info.
+    env_file = imvimlita.get_db_env_path("dev")
+    # Get login info.
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    # Login.
+    db_connection = hsql.get_connection(*connection_params)
+    # Get the real-time `ImClient`.
+    table_name = "ccxt_ohlcv"
+    im_client = imvcdccccl.CcxtSqlRealTimeImClient(
+        resample_1min, db_connection, table_name
+    )
+    # Get the real-time `MarketData`.
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    market_data, _ = get_RealTimeImClientMarketData_prod_instance1(
+        im_client, asset_ids
+    )
+    return market_data
+
+
+# TODO(Grisha): @Dan this should become `get_RealTimeImClientMarketData_example1` and go
+# to `market_data_example.py`.
 def get_RealTimeImClientMarketData_prod_instance1(
     im_client: icdc.ImClient,
     asset_ids: List[int],
@@ -286,9 +316,7 @@ def _get_Cx_dag_prod_instance1(
     ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
     # Assemble.
     market_data = system.market_data
-    market_data_history_lookback = pd.Timedelta(
-        days=system.config["market_data_config", "history_lookback"]
-    )
+    market_data_history_lookback = system.config["market_data_config", "history_lookback"]
     ts_col_name = "timestamp_db"
     dag = dtfsys.adapt_dag_to_real_time(
         dag,
@@ -329,14 +357,10 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     )
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
-    retrieve_initial_holdings_from_db = system.config[
-        "portfolio_config", "retrieve_initial_holdings_from_db"
-    ]
     portfolio = oms.get_CcxtPortfolio_prod_instance(
         system.config["cf_config", "strategy"],
         system.config["cf_config", "liveness"],
         system.config["cf_config", "instance_type"],
-        retrieve_initial_holdings_from_db,
         market_data,
         system.config["market_data_config", "asset_ids"],
         system.config["portfolio_config", "order_duration_in_mins"],
