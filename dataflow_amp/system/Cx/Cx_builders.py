@@ -96,7 +96,7 @@ def get_RealTimeImClientMarketData_prod_instance1(
     get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="ET", event_loop=event_loop
     )
-    # 
+    #
     market_data = mdata.RealTimeMarketData2(
         im_client,
         asset_id_col,
@@ -275,11 +275,11 @@ def get_process_forecasts_dict_prod_instance1(
     """
     Build process forecast dictionary for a production system.
     """
-    #prediction_col = "prediction"
+    # prediction_col = "prediction"
     prediction_col = "vwap.ret_0.vol_adj_2_hat"
     volatility_col = "vwap.ret_0.vol"
     price_col = "vwap"
-    #spread_col = "pct_bar_spread"
+    # spread_col = "pct_bar_spread"
     spread_col = None
     style = "cross_sectional"
     #
@@ -309,7 +309,7 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     """
     # TODO(gp): It seems that we inlined the code somewhere so we should factor it
     #  out.
-    #get_process_forecasts_dict_func = dtfsys.get_process_forecasts_dict_example3
+    # get_process_forecasts_dict_func = dtfsys.get_process_forecasts_dict_example3
     get_process_forecasts_dict_func = get_process_forecasts_dict_prod_instance1
     dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_dict_func)
     return dag
