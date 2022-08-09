@@ -17,7 +17,6 @@ import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
-import market_data as mdata
 import oms.oms_ccxt_utils as oomccuti
 
 _LOG = logging.getLogger(__name__)

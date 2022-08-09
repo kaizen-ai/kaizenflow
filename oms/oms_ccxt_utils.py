@@ -4,6 +4,7 @@ Import as:
 import oms.oms_ccxt_utils as oomccuti
 """
 import asyncio
+import logging
 
 import pandas as pd
 
@@ -12,9 +13,9 @@ import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
-import logging
 
 _LOG = logging.getLogger(__name__)
+
 
 def flatten_ccxt_account(
     broker: occxbrok.CcxtBroker, dry_run: bool, *, deadline_in_secs: int = 60
@@ -125,4 +126,3 @@ def get_RealTimeImClientMarketData_example2(
         get_wall_clock_time,
     )
     return market_data
-
