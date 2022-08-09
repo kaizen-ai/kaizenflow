@@ -204,7 +204,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
 
 
 # TODO(gp): Copied from _get_E1_dag_prod... Try to share code.
-def get_C1b_dag_prod_instance1(
+def get_Cx_dag_prod_instance1(
     system: dtfsys.System,
     get_process_forecasts_dict_func: Callable,
 ) -> dtfcore.DAG:
