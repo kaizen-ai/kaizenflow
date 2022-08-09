@@ -52,7 +52,7 @@ class CcxtBroker(ombroker.Broker):
         """
         self._exchange_id = exchange_id
         #
-        hdbg.dassert_in(mode, ["prod", "test"])
+        hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
         self._mode = mode
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
@@ -404,6 +404,10 @@ class CcxtBroker(ombroker.Broker):
         # Select credentials for provided exchange.
         if self._mode == "test":
             secrets_id = self._exchange_id + "_sandbox"
+        elif self._mode == "debug_test1":
+            # TODO(Danya): Temporary mode for running debug script.
+            #  See CMTask2575.
+            secrets_id = self._exchange_id + "_debug_test1"
         else:
             secrets_id = self._exchange_id
         exchange_params = hsecret.get_secret(secrets_id)
@@ -415,7 +419,7 @@ class CcxtBroker(ombroker.Broker):
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
-        if self._mode == "test":
+        if self._mode in ["test", "debug_test1"]:
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")
         hdbg.dassert(
