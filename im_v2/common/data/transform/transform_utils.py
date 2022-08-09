@@ -36,10 +36,6 @@ def convert_timestamp_column(
             hdateti.convert_unix_epoch_to_timestamp, **kwargs
         )
     elif pd.api.types.is_string_dtype(datetime_col_name):
-        first = datetime_col_name.tolist()[0]
-        last = datetime_col_name.tolist()[-1]
-        _LOG.info("First element:", type(first), first)
-        _LOG.info("Last element:", type(last), last)
         # Convert string into timestamp.
         converted_datetime_col = hdateti.to_generalized_datetime(
             datetime_col_name
