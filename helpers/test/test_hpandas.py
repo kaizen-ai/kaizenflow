@@ -1691,20 +1691,21 @@ class TestMergeDfs(hunitest.TestCase):
     """
     Test that dataframes are merged correctly.
     """
+
     def test_merge_dfs1(self):
         # Create test data.
         df1 = pd.DataFrame(
             data={
                 "col1": [1, 2, 3.14],
                 "col2": [4, 5.6, 6.43],
-                "col3": [7, 8.68, 9.23]
+                "col3": [7, 8.68, 9.23],
             }
         )
         df2 = pd.DataFrame(
             data={
                 "col1": [1, 2, 3.14],
                 "col2": [6, 8.6, 6.43],
-                "col3": [7, 8.68, 9.23]
+                "col3": [7, 8.68, 9.23],
             }
         )
         threshold_col_name = "col1"

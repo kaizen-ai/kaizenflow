@@ -786,7 +786,7 @@ def merge_dfs(
     **pd_merge_kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Merge 2 dataframes in to one dataframe.
+    Merge 2 dataframes in to one.
 
     :param df1: data to merge
     :param df2: data to merge
