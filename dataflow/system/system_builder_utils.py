@@ -615,17 +615,27 @@ def get_OrderProcessorCoroutine_from_System(
         system.config["order_processor_config", "duration_in_secs"],
     )
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
-    return order_processor_coroutine
+    return order_processor_coroutine    
 
 
-def apply_process_forecasts_config_for_equities(system):
+def apply_process_forecasts_config_for_equities(system: dtfsyssyst.System) -> dtfsyssyst.System:
+    """
+    Set the trading hours for equities.
+
+    Equities market is open only on a certain time of the day.
+    """
     system.config["process_forecasts_config", "process_forecasts_config", "ath_start_time"] = datetime.time(9, 30)
     system.config["process_forecasts_config", "process_forecasts_config", "trading_start_time"] = datetime.time(9, 30)
     system.config["process_forecasts_config", "process_forecasts_config", "ath_end_time"] = datetime.time(16, 40)
     system.config["process_forecasts_config", "process_forecasts_config", "trading_end_time"] = datetime.time(16, 40)
     return system
 
-def apply_process_forecasts_config_for_crypto(system):
+def apply_process_forecasts_config_for_crypto(system: dtfsyssyst.System) -> dtfsyssyst.System:
+    """
+    Set the trading hours for crypto.
+
+    For crypto we do not filter since crypto market is open 24/7.
+    """
     system.config["process_forecasts_config", "process_forecasts_config", "ath_start_time"] = None
     system.config["process_forecasts_config", "process_forecasts_config", "trading_start_time"] = None
     system.config["process_forecasts_config", "process_forecasts_config", "ath_end_time"] = None

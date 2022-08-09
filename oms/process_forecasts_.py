@@ -118,23 +118,12 @@ async def process_forecasts(
     )
     _validate_optimizer_config(optimizer_config)
     # Extract ATH and trading start times from config.
-    # TODO(Paul): Add a check for ATH start/end.
-    ath_start_time = cconfig.get_object_from_config(
-        config, "ath_start_time", datetime.time, None
-    )
-    trading_start_time = cconfig.get_object_from_config(
-        config, "trading_start_time", datetime.time, None
-    )
-    # Ensure `ath_start_time` <= `trading_start_time`.
-    hdbg.dassert_lte(ath_start_time, trading_start_time)
-    # Extract end times and sanity-check.
-    ath_end_time = cconfig.get_object_from_config(
-        config, "ath_end_time", datetime.time, None
-    )
-    trading_end_time = cconfig.get_object_from_config(
-        config, "trading_end_time", datetime.time, None
-    )
-    hdbg.dassert_lte(trading_end_time, ath_end_time)
+    ath_start_time = config.get("ath_start_time")
+    trading_start_time = config.get("trading_start_time")
+    ath_end_time = config.get("ath_end_time")
+    trading_end_time = config.get("trading_end_time")
+    # Sanity check trading time.
+    _validate_trading_time(ath_start_time, ath_end_time, trading_start_time, trading_end_time)
     # Get execution mode ("real_time" or "batch").
     execution_mode = cconfig.get_object_from_config(
         config, "execution_mode", str, None
@@ -200,23 +189,25 @@ async def process_forecasts(
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         # Get the time of day of the wall clock timestamp.
         time = wall_clock_timestamp.time()
-        if time < ath_start_time:
-            _LOG.debug(
-                "time=`%s` < `ath_start_time=`%s`, skipping...",
-                time,
-                ath_start_time,
-            )
-            continue
-        if time >= ath_end_time:
-            _LOG.debug(
-                "time=`%s` > `ath_end_time=`%s`, skipping...",
-                time,
-                ath_end_time,
-            )
-            continue
-        # Continue if we are outside of our trading window.
-        if time < trading_start_time or time > trading_end_time:
-            continue
+        if ath_start_time is None and ath_end_time is not None and trading_start_time is not None and trading_end_time is None:
+            # Perform trading time filtering.
+            if time < ath_start_time:
+                _LOG.debug(
+                    "time=`%s` < `ath_start_time=`%s`, skipping...",
+                    time,
+                    ath_start_time,
+                )
+                continue
+            if time >= ath_end_time:
+                _LOG.debug(
+                    "time=`%s` > `ath_end_time=`%s`, skipping...",
+                    time,
+                    ath_end_time,
+                )
+                continue
+            # Continue if we are outside of our trading window.
+            if time < trading_start_time or time > trading_end_time:
+                continue
         # if execution_mode == "batch":
         #     if idx == len(predictions_df) - 1:
         #         # For the last timestamp we only need to mark to market, but not
@@ -243,6 +234,12 @@ async def process_forecasts(
         _LOG.debug("ForecastProcessor=\n%s", str(forecast_processor))
     _LOG.debug("Event: exiting process_forecasts() for loop.")
 
+
+def _validate_trading_time(ath_start_time, ath_end_time, trading_start_time, trading_end_time):
+    if ath_start_time is None and ath_end_time is not None and trading_start_time is not None and trading_end_time is None:
+        hdbg.dassert_lte(ath_start_time, ath_end_time)
+        hdbg.dassert_lte(ath_start_time, trading_start_time)
+        hdbg.dassert_lte(trading_end_time, ath_end_time)
 
 # #############################################################################
 # ForecastProcessor
