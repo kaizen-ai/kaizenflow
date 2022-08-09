@@ -5,7 +5,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
 import logging
-from typing import Any, Dict
+from typing import Any, Callable, Dict
 
 import pandas as pd
 
@@ -14,6 +14,7 @@ import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.im_lib_tasks as imvimlita
@@ -170,4 +171,66 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
+    return dag
+
+
+# TODO(gp): Copied from _get_E1_dag_prod... Try to share code.
+def get_C1b_dag_prod_instance1(
+    system: dtfsys.System,
+    get_process_forecasts_dict_func: Callable,
+) -> dtfcore.DAG:
+    """
+    Build the DAG for a C1b production system from a system config.
+    """
+    hdbg.dassert_isinstance(system, dtfsys.System)
+    # Create the pipeline.
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    # TODO(gp): Fast prod system must be set before the DAG is built.
+    dag_builder = system.config["dag_builder_object"]
+    fast_prod_setup = system.config.get(
+        ["dag_builder_config", "fast_prod_setup"], False
+    )
+    _LOG.debug(hprint.to_str("fast_prod_setup"))
+    if fast_prod_setup:
+        _LOG.warning("Setting fast prod setup")
+        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
+            system.config["dag_config"]
+        )
+    # The config must be complete and stable here.
+    dag = dag_builder.get_dag(dag_config)
+    system = dtfsys.apply_dag_property(dag, system)
+    #
+    system = dtfsys.apply_dag_runner_config(system)
+    # Build Portfolio.
+    trading_period_str = dag_builder.get_trading_period(dag_config)
+    # TODO(gp): Add a param to get_trading_period to return the int.
+    order_duration_in_mins = int(trading_period_str.replace("T", ""))
+    system.config[
+        "portfolio_config", "order_duration_in_mins"
+    ] = order_duration_in_mins
+    portfolio = system.portfolio
+    # Set market data history lookback in days in to config.
+    system = dtfsys.apply_history_lookback(system)
+    # Build the process forecast dict.
+    process_forecasts_dict = get_process_forecasts_dict_func(
+        portfolio, order_duration_in_mins
+    )
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
+    # Assemble.
+    market_data = system.market_data
+    market_data_history_lookback = pd.Timedelta(
+        days=system.config["market_data_config", "history_lookback"]
+    )
+    ts_col_name = "timestamp_db"
+    dag = dtfsys.adapt_dag_to_real_time(
+        dag,
+        market_data,
+        market_data_history_lookback,
+        process_forecasts_dict,
+        ts_col_name,
+    )
+    _LOG.debug("dag=\n%s", dag)
     return dag
