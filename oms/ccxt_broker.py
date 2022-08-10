@@ -632,7 +632,7 @@ class CcxtBroker(ombroker.Broker):
             try:
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
-                    type=order.type_,
+                    type="market",
                     side=side,
                     amount=abs(order.diff_num_shares),
                     # id = order.order_id,
