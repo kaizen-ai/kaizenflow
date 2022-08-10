@@ -74,6 +74,8 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
+        # There are no sent orders when the class is instantiated. 
+        self._sent_orders = None
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
@@ -327,7 +329,7 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str: # List[omorder.Order]:
+    ) -> None:
         """
         Submit orders.
         """
@@ -339,7 +341,6 @@ class CcxtBroker(ombroker.Broker):
             side = "buy" if order.diff_num_shares > 0 else "sell"
             order_resp = self._exchange.createOrder(
                 symbol=symbol,
-                #type=order.type_,
                 type="market",
                 side=side,
                 amount=abs(order.diff_num_shares),
@@ -439,29 +440,18 @@ class CcxtBroker(ombroker.Broker):
         return exchange
 
 
-# TODO(Grisha): remove the leftovers.
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
-    # TODO(Grisha): do we need to pass these params?
-    liveness: str,
-    instance_type: str,
-    order_duration_in_mins: int,
-    order_extra_params: Optional[Dict[str, Any]],
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
-    # TODO(gp): This is function of liveness.
     exchange_id = "binance"
     universe_version = "v5"
     mode = "test"
     contract_type = "futures"
     portfolio_id = "ck_portfolio_1"
-    # Build CkBroker.
-    # get_wall_clock_time = market_data.get_wall_clock_time
-    # poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time, timeout_in_secs=60)
-    # timestamp_col = "end_time"
     broker = CcxtBroker(
         exchange_id,
         universe_version,
@@ -470,12 +460,5 @@ def get_CcxtBroker_prod_instance1(
         contract_type,
         strategy_id=strategy_id,
         market_data=market_data,
-        # liveness=liveness,
-        # instance_type=instance_type,
-        # TODO(gp): This param should be moved from Ig to the base class Broker.
-        # order_duration_in_mins=order_duration_in_mins,
-        # order_extra_params=order_extra_params,
-        # poll_kwargs=poll_kwargs,
-        # timestamp_col=timestamp_col,
     )
     return broker
