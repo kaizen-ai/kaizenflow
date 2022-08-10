@@ -74,6 +74,8 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
+        # There are no sent orders when the class is instantiated.
+        self._sent_orders = None
         # Set minimal order limits.
         self._minimal_order_limits = self._get_minimal_order_limits()
         # Used to determine timestamp since when to fetch orders.
@@ -232,8 +234,7 @@ class CcxtBroker(ombroker.Broker):
         # Load previously sent orders from class state.
         sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
-        # Return empty Fills if no orders were sent.
-        if sent_orders == None:
+        if sent_orders is None:
             return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
@@ -363,6 +364,112 @@ class CcxtBroker(ombroker.Broker):
         """
         currency_pair = currency_pair.replace("_", "/")
         return currency_pair
+
+    def _get_minimal_order_limits(self) -> Dict[int, Any]:
+        """
+        Load minimal amount and total cost for the given exchange.
+
+        The numbers are determined by loading the market metadata from CCXT.
+
+        Example:
+        {'active': True,
+        'base': 'ADA',
+        'baseId': 'ADA',
+        'contract': True,
+        'contractSize': 1.0,
+        'delivery': False,
+        'expiry': None,
+        'expiryDatetime': None,
+        'feeSide': 'get',
+        'future': True,
+        'id': 'ADAUSDT',
+        'info': {'baseAsset': 'ADA',
+                'baseAssetPrecision': '8',
+                'contractType': 'PERPETUAL',
+                'deliveryDate': '4133404800000',
+                'filters': [{'filterType': 'PRICE_FILTER',
+                            'maxPrice': '25.56420',
+                            'minPrice': '0.01530',
+                            'tickSize': '0.00010'},
+                            {'filterType': 'LOT_SIZE',
+                            'maxQty': '10000000',
+                            'minQty': '1',
+                            'stepSize': '1'},
+                            {'filterType': 'MARKET_LOT_SIZE',
+                            'maxQty': '10000000',
+                            'minQty': '1',
+                            'stepSize': '1'},
+                            {'filterType': 'MAX_NUM_ORDERS', 'limit': '200'},
+                            {'filterType': 'MAX_NUM_ALGO_ORDERS', 'limit': '10'},
+                            {'filterType': 'MIN_NOTIONAL', 'notional': '10'},
+                            {'filterType': 'PERCENT_PRICE',
+                            'multiplierDecimal': '4',
+                            'multiplierDown': '0.9000',
+                            'multiplierUp': '1.1000'}],
+                'liquidationFee': '0.020000',
+                'maintMarginPercent': '2.5000',
+                'marginAsset': 'USDT',
+                'marketTakeBound': '0.10',
+                'onboardDate': '1569398400000',
+                'orderTypes': ['LIMIT',
+                                'MARKET',
+                                'STOP',
+                                'STOP_MARKET',
+                                'TAKE_PROFIT',
+                                'TAKE_PROFIT_MARKET',
+                                'TRAILING_STOP_MARKET'],
+                'pair': 'ADAUSDT',
+                'pricePrecision': '5',
+                'quantityPrecision': '0',
+                'quoteAsset': 'USDT',
+                'quotePrecision': '8',
+                'requiredMarginPercent': '5.0000',
+                'settlePlan': '0',
+                'status': 'TRADING',
+                'symbol': 'ADAUSDT',
+                'timeInForce': ['GTC', 'IOC', 'FOK', 'GTX'],
+                'triggerProtect': '0.0500',
+                'underlyingSubType': ['HOT'],
+                'underlyingType': 'COIN'},
+        'inverse': False,
+        'limits': {'amount': {'max': 10000000.0, 'min': 1.0},
+                    'cost': {'max': None, 'min': 10.0},
+                    'leverage': {'max': None, 'min': None},
+                    'market': {'max': 10000000.0, 'min': 1.0},
+                    'price': {'max': 25.5642, 'min': 0.0153}},
+        'linear': True,
+        'lowercaseId': 'adausdt',
+        'maker': 0.0002,
+        'margin': False,
+        'option': False,
+        'optionType': None,
+        'percentage': True,
+        'precision': {'amount': 0, 'base': 8, 'price': 4, 'quote': 8},
+        'quote': 'USDT',
+        'quoteId': 'USDT',
+        'settle': 'USDT',
+        'settleId': 'USDT',
+        'spot': False,
+        'strike': None,
+        'swap': True,
+        'symbol': 'ADA/USDT',
+        'taker': 0.0004,
+        'tierBased': False,
+        'type': 'future'}
+        """
+        minimal_order_limits: Dict[str, Any] = {}
+        # Load market information from CCXT.
+        exchange_markets = self._exchange.load_markets()
+        for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
+            minimal_order_limits[asset_id] = {}
+            limits = exchange_markets[symbol]["limits"]
+            # Get the minimal amount of asset in the order.
+            amount_limit = limits["amount"]["min"]
+            minimal_order_limits[asset_id]["min_amount"] = amount_limit
+            # Get the minimal cost of asset in the order.
+            notional_limit = limits["cost"]["min"]
+            minimal_order_limits[asset_id]["min_cost"] = notional_limit
+        return minimal_order_limits
 
     @staticmethod
     def _check_binance_code_error(e: Exception, error_code: int) -> bool:
@@ -506,12 +613,12 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_orders(
-        self,
-        orders: List[omorder.Order],
-        wall_clock_timestamp: pd.Timestamp,
-        *,
-        dry_run: bool,
-    ) -> List[omorder.Order]:
+            self,
+            orders: List[omorder.Order],
+            wall_clock_timestamp: pd.Timestamp,
+            *,
+            dry_run: bool,
+    ) -> None:
         """
         Submit orders.
         """
@@ -637,29 +744,18 @@ class CcxtBroker(ombroker.Broker):
         return exchange
 
 
-# TODO(Grisha): remove the leftovers.
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
-    # TODO(Grisha): do we need to pass these params?
-    liveness: str,
-    instance_type: str,
-    order_duration_in_mins: int,
-    order_extra_params: Optional[Dict[str, Any]],
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
-    # TODO(gp): This is function of liveness.
     exchange_id = "binance"
     universe_version = "v5"
     mode = "test"
     contract_type = "futures"
     portfolio_id = "ck_portfolio_1"
-    # Build CkBroker.
-    # get_wall_clock_time = market_data.get_wall_clock_time
-    # poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time, timeout_in_secs=60)
-    # timestamp_col = "end_time"
     broker = CcxtBroker(
         exchange_id,
         universe_version,
@@ -668,12 +764,5 @@ def get_CcxtBroker_prod_instance1(
         contract_type,
         strategy_id=strategy_id,
         market_data=market_data,
-        # liveness=liveness,
-        # instance_type=instance_type,
-        # TODO(gp): This param should be moved from Ig to the base class Broker.
-        # order_duration_in_mins=order_duration_in_mins,
-        # order_extra_params=order_extra_params,
-        # poll_kwargs=poll_kwargs,
-        # timestamp_col=timestamp_col,
     )
     return broker

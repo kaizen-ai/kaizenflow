@@ -7,19 +7,17 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 import datetime
 import logging
 import os
-from typing import Any, Callable, Dict, List, Tuple
+from typing import Any, Callable, Dict
 
 import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
-import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
 import oms
@@ -81,32 +79,34 @@ def get_Cx_RealTimeMarketData_example1(
     return market_data
 
 
-def get_RealTimeImClientMarketData_prod_instance1(
-    im_client: icdc.ImClient,
-    asset_ids: List[int],
-) -> Tuple[mdata.MarketData, hdateti.GetWallClockTime]:
+# TODO(Grisha): @Dan share some code with `get_Cx_RealTimeMarketData_example1` but
+# the difference will be that the prod `MarketData` should use the dev DB while
+# `get_Cx_RealTimeMarketData_example1` should use the local DB.
+def get_Cx_RealTimeMarketData_prod_instance1(
+        system: dtfsys.System,
+) -> mdata.MarketData:
     """
-    Build a `RealTimeMarketData` for production.
+    Build a MarketData backed with RealTimeImClient.
     """
-    asset_id_col = "asset_id"
-    start_time_col_name = "start_timestamp"
-    end_time_col_name = "end_timestamp"
-    columns = None
-    event_loop = None
-    get_wall_clock_time = lambda: hdateti.get_current_time(
-        tz="ET", event_loop=event_loop
+    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
+    resample_1min = False
+    # Get environment variables with login info.
+    env_file = imvimlita.get_db_env_path("dev")
+    # Get login info.
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    # Login.
+    db_connection = hsql.get_connection(*connection_params)
+    # Get the real-time `ImClient`.
+    table_name = "ccxt_ohlcv"
+    im_client = imvcdccccl.CcxtSqlRealTimeImClient(
+        resample_1min, db_connection, table_name
     )
-    #
-    market_data = mdata.RealTimeMarketData2(
-        im_client,
-        asset_id_col,
-        asset_ids,
-        start_time_col_name,
-        end_time_col_name,
-        columns,
-        get_wall_clock_time,
+    # Get the real-time `MarketData`.
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    market_data, _ = mdata.get_RealTimeImClientMarketData_example2(
+        im_client, asset_ids
     )
-    return market_data, get_wall_clock_time
+    return market_data
 
 
 # #############################################################################
