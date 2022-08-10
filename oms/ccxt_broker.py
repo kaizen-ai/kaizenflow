@@ -78,6 +78,8 @@ class CcxtBroker(ombroker.Broker):
         self._minimal_order_limits = self._get_minimal_order_limits()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
+        # Set up empty sent orders for the first run of the system.
+        self._sent_orders = None
 
     @staticmethod
     def convert_ccxt_order_to_oms_order(
@@ -230,6 +232,9 @@ class CcxtBroker(ombroker.Broker):
         # Load previously sent orders from class state.
         sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
+        # Return empty Fills if no orders were sent.
+        if sent_orders == None:
+            return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
         if self.last_order_execution_ts:
