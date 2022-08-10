@@ -57,6 +57,7 @@ class CcxtBroker(ombroker.Broker):
         self._mode = mode
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
+        self._sent_orders = None
         #
         hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._contract_type = contract_type
@@ -166,6 +167,8 @@ class CcxtBroker(ombroker.Broker):
         # Load previously sent orders from class state.
         sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
+        if sent_orders is None:
+            return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
         if self.last_order_execution_ts:
@@ -319,7 +322,7 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> List[omorder.Order]:
+    ) -> str:
         """
         Submit orders.
         """
@@ -331,14 +334,14 @@ class CcxtBroker(ombroker.Broker):
             side = "buy" if order.diff_num_shares > 0 else "sell"
             order_resp = self._exchange.createOrder(
                 symbol=symbol,
-                type=order.type_,
+                type="market",
                 side=side,
                 amount=abs(order.diff_num_shares),
                 # id = order.order_id,
                 # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
-                # to accomodate endpoint specific behavior.
+                # to accommodate endpoint specific behavior.
                 params={
                     "portfolio_id": self._portfolio_id,
                     "client_oid": order.order_id,
@@ -430,29 +433,18 @@ class CcxtBroker(ombroker.Broker):
         return exchange
 
 
-# TODO(Grisha): remove the leftovers.
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
-    # TODO(Grisha): do we need to pass these params?
-    liveness: str,
-    instance_type: str,
-    order_duration_in_mins: int,
-    order_extra_params: Optional[Dict[str, Any]],
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
-    # TODO(gp): This is function of liveness.
     exchange_id = "binance"
     universe_version = "v5"
     mode = "test"
     contract_type = "futures"
     portfolio_id = "ck_portfolio_1"
-    # Build CkBroker.
-    # get_wall_clock_time = market_data.get_wall_clock_time
-    # poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time, timeout_in_secs=60)
-    # timestamp_col = "end_time"
     broker = CcxtBroker(
         exchange_id,
         universe_version,
@@ -461,12 +453,5 @@ def get_CcxtBroker_prod_instance1(
         contract_type,
         strategy_id=strategy_id,
         market_data=market_data,
-        # liveness=liveness,
-        # instance_type=instance_type,
-        # TODO(gp): This param should be moved from Ig to the base class Broker.
-        # order_duration_in_mins=order_duration_in_mins,
-        # order_extra_params=order_extra_params,
-        # poll_kwargs=poll_kwargs,
-        # timestamp_col=timestamp_col,
     )
     return broker
