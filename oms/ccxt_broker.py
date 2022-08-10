@@ -58,7 +58,7 @@ class CcxtBroker(ombroker.Broker):
         super().__init__(*args, **kwargs)
         self._exchange_id = exchange_id
         #
-        hdbg.dassert_in(stage, ["prod", "local"])
+        hdbg.dassert_in(stage, ["local", "preprod"])
         self._stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
