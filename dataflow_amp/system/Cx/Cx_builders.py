@@ -329,12 +329,8 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     pricing_method = "twap." + trading_period_str
     portfolio = oms.get_CcxtPortfolio_prod_instance(
         system.config["cf_config", "strategy"],
-        system.config["cf_config", "liveness"],
-        system.config["cf_config", "instance_type"],
         market_data,
         system.config["market_data_config", "asset_ids"],
-        system.config["portfolio_config", "order_duration_in_mins"],
-        system.config["portfolio_config", "order_extra_params"],
         pricing_method,
     )
     return portfolio
