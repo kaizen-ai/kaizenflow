@@ -18,6 +18,7 @@ import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
+import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
 
@@ -72,6 +73,8 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
+        # There are no sent orders when the class is instantiated.
+        self._sent_orders = None
         # Set minimal order limits.
         self._minimal_order_limits = self._get_minimal_order_limits()
         # Used to determine timestamp since when to fetch orders.
@@ -228,6 +231,8 @@ class CcxtBroker(ombroker.Broker):
         # Load previously sent orders from class state.
         sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
+        if sent_orders is None:
+            return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
         if self.last_order_execution_ts:
@@ -482,12 +487,12 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_orders(
-        self,
-        orders: List[omorder.Order],
-        wall_clock_timestamp: pd.Timestamp,
-        *,
-        dry_run: bool,
-    ) -> List[omorder.Order]:
+            self,
+            orders: List[omorder.Order],
+            wall_clock_timestamp: pd.Timestamp,
+            *,
+            dry_run: bool,
+    ) -> None:
         """
         Submit orders.
         """
@@ -502,14 +507,16 @@ class CcxtBroker(ombroker.Broker):
             side = "buy" if order.diff_num_shares > 0 else "sell"
             order_resp = self._exchange.createOrder(
                 symbol=symbol,
-                type=order.type_,
+                # TODO(*): Pass order type from the System.
+                #  Right now, 'market' is the only used type of order.
+                type="market",
                 side=side,
                 amount=abs(order.diff_num_shares),
                 # id = order.order_id,
                 # id=order.order_id,
                 # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                 # but most likely the method will need to be overriden per each exchange
-                # to accomodate endpoint specific behavior.
+                # to accommodate endpoint specific behavior.
                 params={
                     "portfolio_id": self._portfolio_id,
                     "client_oid": order.order_id,
@@ -599,3 +606,27 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
+
+
+def get_CcxtBroker_prod_instance1(
+        market_data: mdata.MarketData,
+        strategy_id: str,
+) -> CcxtBroker:
+    """
+    Build an `CcxtBroker` for production.
+    """
+    exchange_id = "binance"
+    universe_version = "v5"
+    mode = "test"
+    contract_type = "futures"
+    portfolio_id = "ck_portfolio_1"
+    broker = CcxtBroker(
+        exchange_id,
+        universe_version,
+        mode,
+        portfolio_id,
+        contract_type,
+        strategy_id=strategy_id,
+        market_data=market_data,
+    )
+    return broker

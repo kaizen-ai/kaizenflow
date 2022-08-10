@@ -145,6 +145,39 @@ def get_Cx_process_forecasts_dict_example1(
     return process_forecasts_dict
 
 
+def get_process_forecasts_dict_prod_instance1(
+        portfolio: oms.Portfolio,
+        order_duration_in_mins: int,
+) -> Dict[str, Any]:
+    """
+    Build process forecast dictionary for a production system.
+    """
+    # prediction_col = "prediction"
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    # spread_col = "pct_bar_spread"
+    spread_col = None
+    style = "cross_sectional"
+    #
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 2000.0,
+    }
+    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    #
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+        portfolio,
+        prediction_col,
+        volatility_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir=log_dir,
+    )
+    return process_forecasts_dict
+
+
 # #############################################################################
 # DAG instances.
 # #############################################################################
@@ -268,41 +301,6 @@ def _get_Cx_dag_prod_instance1(
     return dag
 
 
-def get_process_forecasts_dict_prod_instance1(
-    portfolio: oms.Portfolio,
-    order_duration_in_mins: int,
-) -> Dict[str, Any]:
-    """
-    Build process forecast dictionary for a production system.
-    """
-    # prediction_col = "prediction"
-    prediction_col = "vwap.ret_0.vol_adj_2_hat"
-    volatility_col = "vwap.ret_0.vol"
-    price_col = "vwap"
-    # spread_col = "pct_bar_spread"
-    spread_col = None
-    style = "cross_sectional"
-    #
-    compute_target_positions_kwargs = {
-        "bulk_frac_to_remove": 0.0,
-        "target_gmv": 2000.0,
-    }
-    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
-    #
-    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
-        portfolio,
-        prediction_col,
-        volatility_col,
-        price_col,
-        spread_col,
-        order_duration_in_mins,
-        style,
-        compute_target_positions_kwargs,
-        log_dir=log_dir,
-    )
-    return process_forecasts_dict
-
-
 def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     """
     Build the DAG for a production system from a system config.
@@ -313,3 +311,61 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     get_process_forecasts_dict_func = get_process_forecasts_dict_prod_instance1
     dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_dict_func)
     return dag
+
+
+# #############################################################################
+# Portfolio instances.
+# #############################################################################
+
+
+def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
+    """
+    Build Portfolio instance for production.
+    """
+    market_data = system.market_data
+    dag_builder = system.config["dag_builder_object"]
+    trading_period_str = dag_builder.get_trading_period(
+        system.config["dag_config"]
+    )
+    _LOG.debug(hprint.to_str("trading_period_str"))
+    pricing_method = "twap." + trading_period_str
+    retrieve_initial_holdings_from_db = system.config[
+        "portfolio_config", "retrieve_initial_holdings_from_db"
+    ]
+    portfolio = oms.get_CcxtPortfolio_prod_instance(
+        system.config["cf_config", "strategy"],
+        system.config["cf_config", "liveness"],
+        system.config["cf_config", "instance_type"],
+        retrieve_initial_holdings_from_db,
+        market_data,
+        system.config["market_data_config", "asset_ids"],
+        system.config["portfolio_config", "order_duration_in_mins"],
+        system.config["portfolio_config", "order_extra_params"],
+        pricing_method,
+    )
+    return portfolio
+
+
+# TODO(gp): We should dump the state of the portfolio and load it back.
+# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
+#  so we can generalize the class to be not E8 specific.
+def _get_Cx_portfolio(
+        system: dtfsys.System,
+) -> oms.Portfolio:
+    # We prefer to configure code statically (e.g., without switches) but in this
+    # case the prod system vs its simulat-able version are so close (and we want to
+    # keep them close) that we use a switch.
+    if not system.use_simulation:
+        # Prod.
+        portfolio = get_Cx_portfolio_prod_instance1(system)
+    else:
+        # Simulation.
+        # TODO(gp): This needs to be fixed before reconciliation.
+        # _LOG.warning("Configuring for simulation")
+        # portfolio = oms.get_DatabasePortfolio_example3(
+        #     system.config["db_connection_object"],
+        #     system.config["event_loop_object"],
+        #     system.market_data,
+        # )
+        pass
+    return portfolio
