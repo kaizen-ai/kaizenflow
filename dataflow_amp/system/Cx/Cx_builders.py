@@ -83,7 +83,7 @@ def get_Cx_RealTimeMarketData_example1(
 # the difference will be that the prod `MarketData` should use the dev DB while
 # `get_Cx_RealTimeMarketData_example1` should use the local DB.
 def get_Cx_RealTimeMarketData_prod_instance1(
-        system: dtfsys.System,
+    system: dtfsys.System,
 ) -> mdata.MarketData:
     """
     Build a MarketData backed with RealTimeImClient.

@@ -386,8 +386,8 @@ def get_RealtimeMarketData_example1(
 
 # TODO(Grisha): @Max -> `example1` after we rename `get_RealTimeImClientMarketData_example1`.
 def get_RealTimeImClientMarketData_example2(
-        im_client: icdc.ImClient,
-        asset_ids: List[int],
+    im_client: icdc.ImClient,
+    asset_ids: List[int],
 ) -> Tuple[mdrtmada.RealTimeMarketData2, hdateti.GetWallClockTime]:
     """
     Build a `RealTimeMarketData` with the real wall-clock.
@@ -421,9 +421,9 @@ def get_RealTimeImClientMarketData_example2(
 
 
 def get_HorizontalStitchedMarketData_example1(
-        im_client_market_data1: mdimcmada.ImClientMarketData,
-        im_client_market_data2: mdimcmada.ImClientMarketData,
-        asset_ids: Optional[List[int]],
+    im_client_market_data1: mdimcmada.ImClientMarketData,
+    im_client_market_data2: mdimcmada.ImClientMarketData,
+    asset_ids: Optional[List[int]],
     columns: List[str],
     column_remap: Optional[Dict[str, str]],
     *,

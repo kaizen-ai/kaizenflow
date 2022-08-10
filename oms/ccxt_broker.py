@@ -613,11 +613,11 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_orders(
-            self,
-            orders: List[omorder.Order],
-            wall_clock_timestamp: pd.Timestamp,
-            *,
-            dry_run: bool,
+        self,
+        orders: List[omorder.Order],
+        wall_clock_timestamp: pd.Timestamp,
+        *,
+        dry_run: bool,
     ) -> None:
         """
         Submit orders.
