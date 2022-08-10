@@ -1689,7 +1689,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
 class Test_merge_dfs1(hunitest.TestCase):
     """
-    Test that dataframes are merged correctly.
+    Test when an overlap of `threshold_col` values is below the threshold.
     """
 
     @staticmethod
@@ -1701,7 +1701,7 @@ class Test_merge_dfs1(hunitest.TestCase):
 
     def test_merge_dfs1(self) -> None:
         """
-        Test when `cols_to_merge` values are equal.
+        Test when an overlap of `threshold_col` values is 100%.
         """
         # Create test data.
         data1 = {

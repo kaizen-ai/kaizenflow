@@ -786,16 +786,13 @@ def merge_dfs(
     **pd_merge_kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Merge 2 dataframes in to one.
+    Wrapper around `pd.merge`.
 
-    :param df1: data to merge
-    :param df2: data to merge
-    :param threshold_col_name: column to check input data similarity on
-    :param threshold: share of threshold column values in common to allow the merge
-    :param pd_merge_kwargs: `pd.merge` kwargs
+    :param threshold_col_name: a column's name to check the minimum overlap on
+    :param threshold: minimum overlap of unique values in a specified column to perform the merge
     :return: merged data
     """
-    # Verify that end time columns have values of the same type.
+    # Sanity check column types.
     threshold_col1 = df1[threshold_col_name]
     threshold_col2 = df2[threshold_col_name]
     only_first_elem = False
@@ -803,7 +800,7 @@ def merge_dfs(
         threshold_col1, threshold_col2, only_first_elem
     )
     # TODO(Grisha): @Dan Implement asserts for each asset id.
-    # Verify that the share of unique common end time values is above threshold.
+    # Check that an overlap of unique values is above the specified threshold.
     threshold_unique_values1 = set(threshold_col1)
     threshold_unique_values2 = set(threshold_col2)
     threshold_common_values = set(threshold_unique_values1) & set(
