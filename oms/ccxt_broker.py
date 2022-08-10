@@ -57,7 +57,6 @@ class CcxtBroker(ombroker.Broker):
         self._mode = mode
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
-        self._sent_orders = None
         #
         hdbg.dassert_in(contract_type, ["spot", "futures"])
         self._contract_type = contract_type
@@ -72,6 +71,8 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
+        # There are no sent orders when the class is instantiated. 
+        self._sent_orders = None
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
 
@@ -322,7 +323,7 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str:
+    ) -> None:
         """
         Submit orders.
         """
