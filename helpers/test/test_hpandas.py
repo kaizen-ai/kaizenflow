@@ -1697,7 +1697,7 @@ class Test_merge_dfs1(hunitest.TestCase):
         data: Dict, index: List[int]
     ) -> pd.DataFrame:
         df = pd.DataFrame.from_dict(data=data)
-        df = df.set_index(index)
+        df = df.set_index(index, drop=False)
         return df
     
     def test_merge_dfs1(self) -> None:
