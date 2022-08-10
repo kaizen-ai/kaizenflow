@@ -10,7 +10,7 @@ import logging
 from typing import Any, Dict, List, Optional
 
 import ccxt
-import pandas as pd 
+import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -48,10 +48,10 @@ class CcxtBroker(ombroker.Broker):
         :param stage:
             - "preprod" preproduction stage
             - "local" debugging stage
-        :param account_type: 
+        :param account_type:
             - "trading" launches the broker in trading environment
             - "sandbox" launches the broker in sandbox environment (not supported for
-              every exchange) 
+              every exchange)
         :param contract_type: "spot" or "futures"
         """
         self._exchange_id = exchange_id
