@@ -18,6 +18,7 @@ import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
+import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
 
@@ -427,3 +428,45 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
+
+
+# TODO(Grisha): remove the leftovers.
+def get_CcxtBroker_prod_instance1(
+    market_data: mdata.MarketData,
+    strategy_id: str,
+    # TODO(Grisha): do we need to pass these params?
+    liveness: str,
+    instance_type: str,
+    order_duration_in_mins: int,
+    order_extra_params: Optional[Dict[str, Any]],
+) -> CcxtBroker:
+    """
+    Build an `CcxtBroker` for production.
+    """
+    # TODO(gp): This is function of liveness.
+    exchange_id = "binance"
+    universe_version = "v5"
+    mode = "test"
+    contract_type = "futures"
+    portfolio_id = "ck_portfolio_1"
+    # Build CkBroker.
+    # get_wall_clock_time = market_data.get_wall_clock_time
+    # poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time, timeout_in_secs=60)
+    # timestamp_col = "end_time"
+    broker = CcxtBroker(
+        exchange_id,
+        universe_version,
+        mode,
+        portfolio_id,
+        contract_type,
+        strategy_id=strategy_id,
+        market_data=market_data,
+        # liveness=liveness,
+        # instance_type=instance_type,
+        # TODO(gp): This param should be moved from Ig to the base class Broker.
+        # order_duration_in_mins=order_duration_in_mins,
+        # order_extra_params=order_extra_params,
+        # poll_kwargs=poll_kwargs,
+        # timestamp_col=timestamp_col,
+    )
+    return broker
