@@ -1693,10 +1693,10 @@ class Test_merge_dfs1(hunitest.TestCase):
     """
     
     @staticmethod
-    def get_dataframe(data: Dict, index: List[int]) -> pd.DataFrame:
-        df = pd.DataFrame.from_dict(
-            data=data,
-        )
+    def get_dataframe(
+        data: Dict, index: List[int]
+    ) -> pd.DataFrame:
+        df = pd.DataFrame.from_dict(data=data)
         df = df.reset_index(index, drop=True)
         return df
     
