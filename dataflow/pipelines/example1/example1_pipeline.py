@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dataflow.pipelines.examples.example1_pipeline as dtfpexexpi
+import dataflow.pipelines.example1.example1_pipeline as dtfpexexpi
 """
 
 import datetime
@@ -25,6 +25,13 @@ class Example1_DagBuilder(dtfcore.DagBuilder):
 
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
+            self._get_nid("filter_ath"): {
+                "col_mode": "replace_all",
+                "transformer_kwargs": {
+                    "start_time": datetime.time(9, 30),
+                    "end_time": datetime.time(16, 00),
+                },
+            },
             self._get_nid("resample"): {
                 "in_col_groups": [
                     ("close",),
@@ -109,6 +116,15 @@ class Example1_DagBuilder(dtfcore.DagBuilder):
     ) -> dtfcore.DAG:
         dag = dtfcore.DAG(mode=mode)
         _LOG.debug("%s", config)
+        #
+        stage = "filter_ath"
+        nid = self._get_nid(stage)
+        node = dtfcore.ColumnTransformer(
+            nid,
+            transformer_func=cofinanc.set_non_ath_to_nan,
+            **config[nid].to_dict(),
+        )
+        dag.append_to_tail(node)
         #
         stage = "resample"
         nid = self._get_nid(stage)
