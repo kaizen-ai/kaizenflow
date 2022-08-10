@@ -1691,30 +1691,38 @@ class Test_merge_dfs1(hunitest.TestCase):
     """
     Test that dataframes are merged correctly.
     """
-
+    
+    @staticmethod
+    def get_dataframe(data: Dict, index: List[int]) -> pd.DataFrame:
+        df = pd.DataFrame.from_dict(
+            data=data,
+        )
+        df = df.reset_index(index, drop=True)
+        return df
+    
     def test_merge_dfs1(self) -> None:
         """
         Test when `cols_to_merge` values are equal.
         """
         # Create test data.
-        df1 = pd.DataFrame.from_dict(
-            data={
-                1: [1, 2, 3, 7],
-                2: [10, np.nan, 30, 70],
-                3: [100, 200, 300, 700],
-            },
-            orient="index",
-            columns=["col1", "col2", "col3", "threshold_col"],
-        )
-        df2 = pd.DataFrame.from_dict(
-            data={
-                3: [3, 4, 5, 7],
-                4: [30, 40, np.nan, 70],
-                5: [300, 400, 500, 700],
-            },
-            orient="index",
-            columns=["col3", "col4", "col5", "threshold_col"],
-        )
+        data1 = {
+            "col1": [1, 10, 100],
+            "col2": [2, np.nan, 200],
+            "col3": [3, 30, 300],
+            "threshold_col": [7, 70, 700]
+        },
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 70, 700]
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
         pd_merge_kwargs = {}
@@ -1761,24 +1769,24 @@ class Test_merge_dfs1(hunitest.TestCase):
         Test when `threshold_col` values is below a threshold.
         """
         # Create test data.
-        df1 = pd.DataFrame.from_dict(
-            data={
-                1: [1, 2, 3, 7],
-                2: [10, np.nan, 30, 70],
-                3: [100, 200, 300, 700],
-            },
-            orient="index",
-            columns=["col1", "col2", "col3", "threshold_col"],
-        )
-        df2 = pd.DataFrame.from_dict(
-            data={
-                3: [3, 4, 5, 7],
-                4: [30, 40, np.nan, 60],
-                5: [300, 400, 500, 600],
-            },
-            orient="index",
-            columns=["col3", "col4", "col5", "threshold_col"],
-        )
+        data1 = {
+            "col1": [1, 10, 100],
+            "col2": [2, np.nan, 200],
+            "col3": [3, 30, 300],
+            "threshold_col": [7, 70, 700]
+        },
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 60, 600]
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
         pd_merge_kwargs = {}
@@ -1798,24 +1806,24 @@ class Test_merge_dfs1(hunitest.TestCase):
         Test when one of the `cols_to_merge` values are not equal.
         """
         # Create test data.
-        df1 = pd.DataFrame.from_dict(
-            data={
-                1: [1, 2, 8, 7],
-                2: [10, np.nan, 80, 70],
-                3: [100, 200, 300, 700],
-            },
-            orient="index",
-            columns=["col1", "col2", "col3", "threshold_col"],
-        )
-        df2 = pd.DataFrame.from_dict(
-            data={
-                3: [3, 4, 5, 7],
-                4: [30, 40, np.nan, 70],
-                5: [300, 400, 500, 700],
-            },
-            orient="index",
-            columns=["col3", "col4", "col5", "threshold_col"],
-        )
+        data1 = {
+            "col1": [1, 10, 100],
+            "col2": [2, np.nan, 200],
+            "col3": [8, 80, 300],
+            "threshold_col": [7, 70, 700]
+        },
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 70, 700]
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
         pd_merge_kwargs = {}
