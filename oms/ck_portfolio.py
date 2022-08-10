@@ -22,10 +22,10 @@ class CkPortfolio(omportfo.DataFramePortfolio):
     """
 
     def __init__(
-            self,
-            *args: Any,
-            # table_name: str,
-            **kwargs: Any,
+        self,
+        *args: Any,
+        # table_name: str,
+        **kwargs: Any,
     ):
         """
         Constructor.
@@ -40,14 +40,14 @@ class CkPortfolio(omportfo.DataFramePortfolio):
 
 
 def get_CcxtPortfolio_prod_instance(
-        strategy_id: str,
-        liveness: str,
-        instance_type: str,
-        market_data: mdata.MarketData,
-        asset_ids: Optional[List[int]],
-        order_duration_in_mins: int,
-        order_extra_params: Optional[Dict[str, Any]],
-        pricing_method: str,
+    strategy_id: str,
+    liveness: str,
+    instance_type: str,
+    market_data: mdata.MarketData,
+    asset_ids: Optional[List[int]],
+    order_duration_in_mins: int,
+    order_extra_params: Optional[Dict[str, Any]],
+    pricing_method: str,
 ) -> CkPortfolio:
     """
     Build an CK Portfolio retrieving its state from the DB.

@@ -487,11 +487,11 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_orders(
-            self,
-            orders: List[omorder.Order],
-            wall_clock_timestamp: pd.Timestamp,
-            *,
-            dry_run: bool,
+        self,
+        orders: List[omorder.Order],
+        wall_clock_timestamp: pd.Timestamp,
+        *,
+        dry_run: bool,
     ) -> None:
         """
         Submit orders.
@@ -609,8 +609,8 @@ class CcxtBroker(ombroker.Broker):
 
 
 def get_CcxtBroker_prod_instance1(
-        market_data: mdata.MarketData,
-        strategy_id: str,
+    market_data: mdata.MarketData,
+    strategy_id: str,
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.

@@ -146,8 +146,8 @@ def get_Cx_process_forecasts_dict_example1(
 
 
 def get_process_forecasts_dict_prod_instance1(
-        portfolio: oms.Portfolio,
-        order_duration_in_mins: int,
+    portfolio: oms.Portfolio,
+    order_duration_in_mins: int,
 ) -> Dict[str, Any]:
     """
     Build process forecast dictionary for a production system.
@@ -350,7 +350,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
 # TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
 #  so we can generalize the class to be not E8 specific.
 def _get_Cx_portfolio(
-        system: dtfsys.System,
+    system: dtfsys.System,
 ) -> oms.Portfolio:
     # We prefer to configure code statically (e.g., without switches) but in this
     # case the prod system vs its simulat-able version are so close (and we want to
