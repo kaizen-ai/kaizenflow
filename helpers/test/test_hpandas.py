@@ -4,7 +4,7 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Optional, Tuple, List, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -1691,15 +1691,14 @@ class Test_merge_dfs1(hunitest.TestCase):
     """
     Test that dataframes are merged correctly.
     """
-    
+
     @staticmethod
-    def get_dataframe(
-        data: Dict, index: List[int]
-    ) -> pd.DataFrame:
-        df = pd.DataFrame.from_dict(data=data)
-        df = df.set_index(pd.Index(index))
+    def get_dataframe(data: Dict, index: List[int]) -> pd.DataFrame:
+        df = pd.DataFrame.from_dict(data)
+        index = pd.Index(index)
+        df = df.set_index(index, drop=True)
         return df
-    
+
     def test_merge_dfs1(self) -> None:
         """
         Test when `cols_to_merge` values are equal.
@@ -1709,8 +1708,8 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col1": [1, 10, 100],
             "col2": [2, np.nan, 200],
             "col3": [3, 30, 300],
-            "threshold_col": [7, 70, 700]
-        },
+            "threshold_col": [7, 70, 700],
+        }
         index1 = [1, 2, 3]
         df1 = self.get_dataframe(data1, index1)
         #
@@ -1718,7 +1717,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col3": [3, 30, 300],
             "col4": [4, 40, 400],
             "col5": [5, np.nan, 500],
-            "threshold_col": [7, 70, 700]
+            "threshold_col": [7, 70, 700],
         }
         index2 = [3, 4, 5]
         df2 = self.get_dataframe(data2, index2)
@@ -1773,8 +1772,8 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col1": [1, 10, 100],
             "col2": [2, np.nan, 200],
             "col3": [3, 30, 300],
-            "threshold_col": [7, 70, 700]
-        },
+            "threshold_col": [7, 70, 700],
+        }
         index1 = [1, 2, 3]
         df1 = self.get_dataframe(data1, index1)
         #
@@ -1782,7 +1781,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col3": [3, 30, 300],
             "col4": [4, 40, 400],
             "col5": [5, np.nan, 500],
-            "threshold_col": [7, 60, 600]
+            "threshold_col": [7, 60, 600],
         }
         index2 = [3, 4, 5]
         df2 = self.get_dataframe(data2, index2)
@@ -1810,8 +1809,8 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col1": [1, 10, 100],
             "col2": [2, np.nan, 200],
             "col3": [8, 80, 300],
-            "threshold_col": [7, 70, 700]
-        },
+            "threshold_col": [7, 70, 700],
+        }
         index1 = [1, 2, 3]
         df1 = self.get_dataframe(data1, index1)
         #
@@ -1819,7 +1818,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col3": [3, 30, 300],
             "col4": [4, 40, 400],
             "col5": [5, np.nan, 500],
-            "threshold_col": [7, 70, 700]
+            "threshold_col": [7, 70, 700],
         }
         index2 = [3, 4, 5]
         df2 = self.get_dataframe(data2, index2)
