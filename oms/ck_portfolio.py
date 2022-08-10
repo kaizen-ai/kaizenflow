@@ -41,12 +41,8 @@ class CkPortfolio(omportfo.DataFramePortfolio):
 
 def get_CcxtPortfolio_prod_instance(
     strategy_id: str,
-    liveness: str,
-    instance_type: str,
     market_data: mdata.MarketData,
     asset_ids: Optional[List[int]],
-    order_duration_in_mins: int,
-    order_extra_params: Optional[Dict[str, Any]],
     pricing_method: str,
 ) -> CkPortfolio:
     """
@@ -56,10 +52,6 @@ def get_CcxtPortfolio_prod_instance(
     broker = occxbrok.get_CcxtBroker_prod_instance1(
         market_data,
         strategy_id,
-        liveness,
-        instance_type,
-        order_duration_in_mins,
-        order_extra_params,
     )
     # Build CkPortfolio.
     mark_to_market_col = "close"
