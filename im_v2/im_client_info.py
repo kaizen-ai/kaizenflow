@@ -3,7 +3,7 @@
 Return information about:
 
 - full symbol
-    E.g: `> im_client_info.py --action asset_id --param 3065029174 --im_client ccxt_realtime`
+    E.g: `> im_client_info.py --action convert_to_full_symbol --asset_id 3065029174 --im_client ccxt_realtime`
 - universe as a list of asset ids
     E.g: `> im_client_info.py --action print_universe --im_client ccxt_realtime`
 """
@@ -19,7 +19,7 @@ import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
-ACTIONS = ["print_universe", "asset_id"]
+ACTIONS = ["print_universe", "convert_to_full_symbol"]
 
 
 def _get_ImClient(im_client: str) -> imvcdcbimcl.SqlRealTimeImClient:
@@ -54,11 +54,11 @@ def _parse() -> argparse.ArgumentParser:
         help=f"Choose action to perfom: {ACTIONS}",
     )
     parser.add_argument(
-        "--param",
+        "--asset_id",
         action="store",
         required=False,
         type=int,
-        help="Required if --action asset_id",
+        help="Required if --action is convert_to_full_symbol",
     )
     parser.add_argument(
         "--im_client",
@@ -75,12 +75,12 @@ def _parse() -> argparse.ArgumentParser:
 def _run(args: argparse.Namespace) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     im_client = _get_ImClient(args.im_client)
-    if args.action == "asset_id":
+    if args.action == "convert_to_full_symbol":
         try:
-            full_symbol = im_client.get_full_symbols_from_asset_ids([args.param])
+            full_symbol = im_client.get_full_symbols_from_asset_ids([args.asset_id])
             _LOG.info("Full symbol: %s" % full_symbol)
         except Exception:
-            _LOG.error("Asset id is missing. Add as --param value.")
+            _LOG.error("Asset id is missing or incorrect. Add as --asset_id value.")
     if args.action == "print_universe":
         full_symbols = im_client.get_universe()
         asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
