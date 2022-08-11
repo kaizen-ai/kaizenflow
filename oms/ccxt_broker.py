@@ -16,6 +16,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+import helpers.hprint as hprint
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
@@ -84,7 +85,7 @@ class CcxtBroker(ombroker.Broker):
         self._sent_orders = None
 
     @staticmethod
-    def convert_ccxt_order_to_oms_order(
+    def _convert_ccxt_order_to_oms_order(
         ccxt_order: Dict[Any, Any]
     ) -> omorder.Order:
         """
@@ -166,14 +167,13 @@ class CcxtBroker(ombroker.Broker):
         )
         return oms_order
 
-    def check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
         """
         Check if the order matches the minimum quantity for the asset.
 
-        The functions checks both the flat amount of the asset
-        and the total cost of the asset in the order.
-        If the order amount does not match, the order is changed
-        to be slightly above the minimum amount.
+        The functions checks both the flat amount of the asset and the total
+        cost of the asset in the order. If the order amount does not match,
+         he order is changed to be slightly above the minimal amount.
 
         :param order: order to be submitted
         """
@@ -191,10 +191,10 @@ class CcxtBroker(ombroker.Broker):
                 order.diff_num_shares = -min_amount
             else:
                 order.diff_num_shares = min_amount
-        # Verify that order is not below minimal cost.
+        # Check if the order is not below minimal cost.
         #
         # Get the last price for the asset.
-        last_price = self.get_last_market_price(order.asset_id)
+        last_price = self._get_last_market_price(order.asset_id)
         # Calculate the total cost of the order based on the last price.
         total_cost = last_price * abs(order_amount)
         # Verify that the order total cost is not below minimum.
@@ -217,7 +217,7 @@ class CcxtBroker(ombroker.Broker):
                 order.diff_num_shares = required_amount
         return order
 
-    def get_last_market_price(self, asset_id: int) -> float:
+    def _get_last_market_price(self, asset_id: int) -> float:
         """
         Load the latest price for the given ticker.
         """
@@ -262,7 +262,7 @@ class CcxtBroker(ombroker.Broker):
                         # Convert CCXT `dict` order to oms.Order.
                         #  TODO(Danya): bind together self._sent_orders and CCXT response
                         #  so we can avoid this conversion while keeping the fill status.
-                        filled_order = self.convert_ccxt_order_to_oms_order(
+                        filled_order = self._convert_ccxt_order_to_oms_order(
                             filled_order
                         )
                         # Create a Fill object.
@@ -476,7 +476,7 @@ class CcxtBroker(ombroker.Broker):
         """
         Check if the exception matches the expected error code.
 
-        Examples a binance exception:
+        Example of a Binance exception:
         {"code":-4131,
         "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
 
@@ -485,114 +485,8 @@ class CcxtBroker(ombroker.Broker):
         :return: whether error code is contained in error message
         """
         error_message = str(e)
-        error_regex = f'"code":{error_code}'
+        error_regex = f'"code":{error_code},'
         return bool(re.search(error_regex, error_message))
-
-    def _get_minimal_order_limits(self) -> Dict[int, Any]:
-        """
-        Load minimal amount and total cost for the given exchange.
-
-        The numbers are determined by loading the market metadata from CCXT.
-
-        Example:
-        {'active': True,
-        'base': 'ADA',
-        'baseId': 'ADA',
-        'contract': True,
-        'contractSize': 1.0,
-        'delivery': False,
-        'expiry': None,
-        'expiryDatetime': None,
-        'feeSide': 'get',
-        'future': True,
-        'id': 'ADAUSDT',
-        'info': {'baseAsset': 'ADA',
-                'baseAssetPrecision': '8',
-                'contractType': 'PERPETUAL',
-                'deliveryDate': '4133404800000',
-                'filters': [{'filterType': 'PRICE_FILTER',
-                            'maxPrice': '25.56420',
-                            'minPrice': '0.01530',
-                            'tickSize': '0.00010'},
-                            {'filterType': 'LOT_SIZE',
-                            'maxQty': '10000000',
-                            'minQty': '1',
-                            'stepSize': '1'},
-                            {'filterType': 'MARKET_LOT_SIZE',
-                            'maxQty': '10000000',
-                            'minQty': '1',
-                            'stepSize': '1'},
-                            {'filterType': 'MAX_NUM_ORDERS', 'limit': '200'},
-                            {'filterType': 'MAX_NUM_ALGO_ORDERS', 'limit': '10'},
-                            {'filterType': 'MIN_NOTIONAL', 'notional': '10'},
-                            {'filterType': 'PERCENT_PRICE',
-                            'multiplierDecimal': '4',
-                            'multiplierDown': '0.9000',
-                            'multiplierUp': '1.1000'}],
-                'liquidationFee': '0.020000',
-                'maintMarginPercent': '2.5000',
-                'marginAsset': 'USDT',
-                'marketTakeBound': '0.10',
-                'onboardDate': '1569398400000',
-                'orderTypes': ['LIMIT',
-                                'MARKET',
-                                'STOP',
-                                'STOP_MARKET',
-                                'TAKE_PROFIT',
-                                'TAKE_PROFIT_MARKET',
-                                'TRAILING_STOP_MARKET'],
-                'pair': 'ADAUSDT',
-                'pricePrecision': '5',
-                'quantityPrecision': '0',
-                'quoteAsset': 'USDT',
-                'quotePrecision': '8',
-                'requiredMarginPercent': '5.0000',
-                'settlePlan': '0',
-                'status': 'TRADING',
-                'symbol': 'ADAUSDT',
-                'timeInForce': ['GTC', 'IOC', 'FOK', 'GTX'],
-                'triggerProtect': '0.0500',
-                'underlyingSubType': ['HOT'],
-                'underlyingType': 'COIN'},
-        'inverse': False,
-        'limits': {'amount': {'max': 10000000.0, 'min': 1.0},
-                    'cost': {'max': None, 'min': 10.0},
-                    'leverage': {'max': None, 'min': None},
-                    'market': {'max': 10000000.0, 'min': 1.0},
-                    'price': {'max': 25.5642, 'min': 0.0153}},
-        'linear': True,
-        'lowercaseId': 'adausdt',
-        'maker': 0.0002,
-        'margin': False,
-        'option': False,
-        'optionType': None,
-        'percentage': True,
-        'precision': {'amount': 0, 'base': 8, 'price': 4, 'quote': 8},
-        'quote': 'USDT',
-        'quoteId': 'USDT',
-        'settle': 'USDT',
-        'settleId': 'USDT',
-        'spot': False,
-        'strike': None,
-        'swap': True,
-        'symbol': 'ADA/USDT',
-        'taker': 0.0004,
-        'tierBased': False,
-        'type': 'future'}
-        """
-        minimal_order_limits: Dict[str, Any] = {}
-        # Load market information from CCXT.
-        exchange_markets = self._exchange.load_markets()
-        for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
-            minimal_order_limits[asset_id] = {}
-            limits = exchange_markets[symbol]["limits"]
-            # Get the minimal amount of asset in the order.
-            amount_limit = limits["amount"]["min"]
-            minimal_order_limits[asset_id]["min_amount"] = amount_limit
-            # Get the minimal cost of asset in the order.
-            notional_limit = limits["cost"]["min"]
-            minimal_order_limits[asset_id]["min_cost"] = notional_limit
-        return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:
         """
@@ -623,10 +517,10 @@ class CcxtBroker(ombroker.Broker):
         Submit orders.
         """
         self.last_order_execution_ts = pd.Timestamp.now()
-        sent_orders: List[str] = []
+        sent_orders: List[omorder.Order] = []
         for order in orders:
             # Verify that order conforms
-            order = self.check_minimal_limit(order)
+            order = self._check_minimal_limit(order)
             _LOG.info("Submitted order: %s", str(order))
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
@@ -649,18 +543,17 @@ class CcxtBroker(ombroker.Broker):
                 )
                 order.ccxt_id = order_resp["id"]
                 sent_orders.append(order)
-                _LOG.info(order_resp)
+                _LOG.info(hprint.to_str(order_resp))
             except Exception as e:
-                # Check the Binance API error message.
-                #  If the error is connected to liquidity, continue submitting orders.
+                # Check the Binance API er
                 if self._check_binance_code_error(e, -4131):
+                    # If the error is connected to liquidity, continue submitting orders.
                     _LOG.warning(
-                        "PERCENT_PRICE error has been raised. The Exception was: %s",
+                        "PERCENT_PRICE error has been raised. The Exception was:\n%s\nContinuing...",
                         e,
                     )
-                    _LOG.warning("Continuing...")
                 else:
-                    raise (e)
+                    raise e
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
         return None
