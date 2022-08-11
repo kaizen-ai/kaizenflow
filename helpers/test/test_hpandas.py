@@ -1692,6 +1692,13 @@ class Test_merge_dfs1(hunitest.TestCase):
     Test when an overlap of `threshold_col` values is below the threshold.
     """
 
+    @staticmethod
+    def get_dataframe(data: Dict, index: List[int]) -> pd.DataFrame:
+        df = pd.DataFrame.from_dict(data)
+        index = pd.Index(index)
+        df = df.set_index(index, drop=True)
+        return df
+    
     def test_merge_dfs1(self) -> None:
         """
         Test when an overlap of `threshold_col` values is 100%.
@@ -1704,7 +1711,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index1 = [1, 2, 3]
-        df1 = self._get_dataframe(data1, index1)
+        df1 = self.get_dataframe(data1, index1)
         #
         data2 = {
             "col3": [3, 30, 300],
@@ -1713,7 +1720,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index2 = [3, 4, 5]
-        df2 = self._get_dataframe(data2, index2)
+        df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
@@ -1768,7 +1775,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index1 = [1, 2, 3]
-        df1 = self._get_dataframe(data1, index1)
+        df1 = self.get_dataframe(data1, index1)
         #
         data2 = {
             "col3": [3, 30, 300],
@@ -1777,7 +1784,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 60, 600],
         }
         index2 = [3, 4, 5]
-        df2 = self._get_dataframe(data2, index2)
+        df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
@@ -1805,7 +1812,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index1 = [1, 2, 3]
-        df1 = self._get_dataframe(data1, index1)
+        df1 = self.get_dataframe(data1, index1)
         #
         data2 = {
             "col3": [3, 30, 300],
@@ -1814,7 +1821,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index2 = [3, 4, 5]
-        df2 = self._get_dataframe(data2, index2)
+        df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
@@ -1872,7 +1879,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 7, 7, 7, 70, 700],
         }
         index1 = [1, 2, 3, 4, 5, 6]
-        df1 = self._get_dataframe(data1, index1)
+        df1 = self.get_dataframe(data1, index1)
         #
         data2 = {
             "col3": [3, 30, 300],
@@ -1881,7 +1888,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index2 = [3, 4, 5]
-        df2 = self._get_dataframe(data2, index2)
+        df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
@@ -1939,7 +1946,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 70, 700],
         }
         index1 = [1, 2, 3]
-        df1 = self._get_dataframe(data1, index1)
+        df1 = self.get_dataframe(data1, index1)
         #
         data2 = {
             "col3": [3, 30, 300],
@@ -1948,7 +1955,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             "threshold_col": [7, 60, 600],
         }
         index2 = [3, 4, 5]
-        df2 = self._get_dataframe(data2, index2)
+        df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
@@ -1963,10 +1970,3 @@ class Test_merge_dfs1(hunitest.TestCase):
                 threshold_col_name,
                 **pd_merge_kwargs,
             )
-
-    @staticmethod
-    def _get_dataframe(data: Dict, index: List[int]) -> pd.DataFrame:
-        df = pd.DataFrame.from_dict(data)
-        index = pd.Index(index)
-        df = df.set_index(index, drop=True)
-        return df
