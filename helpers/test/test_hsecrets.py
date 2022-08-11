@@ -56,7 +56,7 @@ if _HAS_MOTO:
             # Make sure the region name matches the one used in `hsecret` profile.
             client = boto3.client("secretsmanager", region_name="eu-north-1")
             secret = {"testkey": "testvalue"}
-            secret_name = "Testsecret"
+            secret_name = "test.local.sandbox.1"
             client.create_secret(
                 Name=secret_name, SecretString=json.dumps(secret)
             )
@@ -73,7 +73,7 @@ if _HAS_MOTO:
             Verify that a secret can be stored correctly.
             """
             secret = {"testkey": "testvalue"}
-            secret_name = "Testsecret"
+            secret_name = "test.local.sandbox.1"
             hsecret.store_secret(secret_name, secret)
             # Make sure the region name matches the one used in `hsecret`.
             client = boto3.client("secretsmanager", region_name="eu-north-1")
