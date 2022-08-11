@@ -17,6 +17,11 @@ import oms.order as omorder
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# CCXT Broker Utilities
+# #############################################################################
+
+
 def flatten_ccxt_account(
     broker: occxbrok.CcxtBroker, dry_run: bool, *, deadline_in_secs: int = 60
 ) -> None:
@@ -74,6 +79,11 @@ def flatten_ccxt_account(
     _LOG.info("Account flattened. Total balance: %s", broker.get_total_balance())
 
 
+# #############################################################################
+# Example Instances
+# #############################################################################
+
+
 def get_CcxtBroker_example1(
     market_data: mdata.MarketData, exchange_id: str, contract_type: str
 ) -> occxbrok.CcxtBroker:
@@ -87,7 +97,7 @@ def get_CcxtBroker_example1(
     # Set default broker values.
     universe = "v5"
     mode = "debug_test1"
-    portfolio_id = "ck_portfolio_id"
+    portfolio_id = "ccxt_portfolio_id"
     strategy_id = "SAU1"
     # Initialize the broker.
     broker = occxbrok.CcxtBroker(
