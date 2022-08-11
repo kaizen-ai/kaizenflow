@@ -814,6 +814,10 @@ def merge_dfs(
     )
     hdbg.dassert_lte(threshold, threshold_common_values_share1)
     hdbg.dassert_lte(threshold, threshold_common_values_share2)
+    # Check that there are no common columns.
+    df1_cols = set(df1.columns.to_list()) - set(pd_merge_kwargs["on"])
+    df2_cols = set(df2.columns.to_list()) - set(pd_merge_kwargs["on"])
+    hdbg.dassert_ne(df1_cols, df2_cols)
     #
     res_df = df1.merge(df2, **pd_merge_kwargs)
     return res_df

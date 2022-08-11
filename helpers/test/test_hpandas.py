@@ -1865,3 +1865,108 @@ class Test_merge_dfs1(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
+
+    def test_merge_dfs4(self) -> None:
+        """
+        Test when `threshold_col` values is above a threshold but not 100%
+        equal.
+        """
+        # Create test data.
+        data1 = {
+            "col1": [1, 3, 5, 7, 10, 100],
+            "col2": [2, 4, 6, 8, np.nan, 200],
+            "col3": [1, 2, 3, 4, 30, 300],
+            "threshold_col": [7, 7, 7, 7, 70, 700],
+        }
+        index1 = [1, 2, 3, 4, 5, 6]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 70, 700],
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        pd_merge_kwargs = {}
+        pd_merge_kwargs["how"] = "outer"
+        pd_merge_kwargs["on"] = cols_to_merge_on
+        merged_df = hpandas.merge_dfs(
+            df1,
+            df2,
+            threshold_col_name,
+            **pd_merge_kwargs,
+        )
+        # Set expected values.
+        expected_length = 6
+        expected_column_names = [
+            "col1",
+            "col2",
+            "col3",
+            "col4",
+            "col5",
+            "threshold_col",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[0, 5]
+        columns=col1,col2,col3,threshold_col,col4,col5
+        shape=(6, 6)
+        col1   col2  col3  threshold_col   col4   col5
+        0     1    2.0     1              7    NaN    NaN
+        1     3    4.0     2              7    NaN    NaN
+        2     5    6.0     3              7    4.0    5.0
+        3     7    8.0     4              7    NaN    NaN
+        4    10    NaN    30             70   40.0    NaN
+        5   100  200.0   300            700  400.0  500.0
+        """
+        # Check.
+        self.check_df_output(
+            merged_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_merge_dfs5(self) -> None:
+        """
+        Test when `threshold_col` values is below a threshold.
+        """
+        # Create test data.
+        data1 = {
+            "col1": [1, 10, 100],
+            "col5": [2, np.nan, 200],
+            "col3": [3, 30, 300],
+            "threshold_col": [7, 70, 700],
+        }
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 60, 600],
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        pd_merge_kwargs = {}
+        pd_merge_kwargs["how"] = "outer"
+        pd_merge_kwargs["on"] = cols_to_merge_on
+        # Check.
+        with self.assertRaises(AssertionError):
+            hpandas.merge_dfs(
+                df1,
+                df2,
+                threshold_col_name,
+                **pd_merge_kwargs,
+            )
