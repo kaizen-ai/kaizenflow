@@ -1,11 +1,11 @@
 """
 Import as:
 
-import oms.ck_portfolio as ockport
+import oms.ccxt_portfolio as occxport
 """
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
@@ -16,7 +16,8 @@ _LOG = logging.getLogger(__name__)
 
 class CcxtPortfolio(omportfo.DataFramePortfolio):
     """
-    A Portfolio that stores the information in a dataframe backed by CcxtBroker.
+    A Portfolio that stores the information in a dataframe backed by
+    CcxtBroker.
     """
 
     def __init__(
