@@ -14,49 +14,43 @@ import oms.portfolio as omportfo
 _LOG = logging.getLogger(__name__)
 
 
-class CkPortfolio(omportfo.DataFramePortfolio):
+class CcxtPortfolio(omportfo.DataFramePortfolio):
     """
-    Portfolio class connected to CK OMS.
-
-    Invariant: this class should have minimal state, but always query the DB.
+    A Portfolio that stores the information in a dataframe backed by CcxtBroker.
     """
 
     def __init__(
         self,
         *args: Any,
-        # table_name: str,
         **kwargs: Any,
     ):
         """
         Constructor.
         """
-        # In `CkPortfolio` the name of the table depends on the type of account,
-        # which depends on the Broker. Thus, we need to initialize the parent class
-        # with Broker and then overwrite the name of the table.
         super().__init__(
             *args,
             **kwargs,
         )
 
 
-def get_CcxtPortfolio_prod_instance(
+def get_CcxtPortfolio_prod_instance1(
     strategy_id: str,
     market_data: mdata.MarketData,
     asset_ids: Optional[List[int]],
     pricing_method: str,
-) -> CkPortfolio:
+) -> CcxtPortfolio:
     """
-    Build an CK Portfolio retrieving its state from the DB.
+    Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
     """
-    # Build CkBroker.
+    # Build CcxtBroker.
     broker = occxbrok.get_CcxtBroker_prod_instance1(
         market_data,
         strategy_id,
     )
-    # Build CkPortfolio.
+    # Build CcxtPortfolio.
     mark_to_market_col = "close"
     initial_cash = 1e6
-    portfolio = CkPortfolio.from_cash(
+    portfolio = CcxtPortfolio.from_cash(
         broker,
         mark_to_market_col,
         pricing_method,
