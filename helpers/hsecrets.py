@@ -22,6 +22,7 @@ def get_secrets_client(aws_profile: str) -> BaseClient:
     client = session.client(service_name="secretsmanager")
     return client
 
+
 # TODO(Juraj): add support to access secrets for different profiles, not important rn
 def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     """
@@ -30,6 +31,8 @@ def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
 
     { 'apiKey': '<secret_value>', 'secret': '<secret_value>' }
     """
+    # Check if the secret name format is valid.
+    dassert_valid_secret(secret_name)
     hdbg.dassert_isinstance(secret_name, str)
     # Create a AWS Secrets Manager client.
     aws_profile = "ck"
@@ -89,3 +92,31 @@ def store_secret(
         raise e
     # If we did not return inside try block then something went wrong.
     return False
+
+
+def dassert_valid_secret(secret_id: str) -> None:
+    """
+    The valid format is `exchange_id.stage.account_type.num`.
+    """
+    values = secret_id.split(".")
+    hdbg.dassert_eq(len(values), 4)
+    hdbg.dassert_in(
+        values[0],
+        [
+            "binance",
+            "bitfinex",
+            "coinbase",
+            "coinbaseprime",
+            "coinbasepro",
+            "ftx",
+            "gateio",
+            "huobi",
+            "kraken",
+            "kucoin",
+            "talos",
+            "test",
+        ],
+    )
+    hdbg.dassert_in(values[1], ["local", "preprod"])
+    hdbg.dassert_in(values[2], ["trading", "sandbox"])
+    hdbg.dassert_is(values[3].isnumeric(), True)
