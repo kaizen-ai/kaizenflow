@@ -51,7 +51,7 @@ def get_Cx_HistoricalMarketData_example1(
     return market_data
 
 
-def get_Cx_RealTimeMarketData_example1(
+def get_Cx_ReplayedMarketData_example1(
     system: dtfsys.System,
 ) -> mdata.MarketData:
     """
@@ -82,9 +82,9 @@ def get_Cx_RealTimeMarketData_example1(
     return market_data
 
 
-# TODO(Grisha): @Dan share some code with `get_Cx_RealTimeMarketData_example1` but
+# TODO(Grisha): @Dan share some code with `get_Cx_ReplayedMarketData_example1` but
 # the difference will be that the prod `MarketData` should use the dev DB while
-# `get_Cx_RealTimeMarketData_example1` should use the local DB.
+# `get_Cx_ReplayedMarketData_example1` should use the local DB.
 def get_Cx_RealTimeMarketData_prod_instance1(
     system: dtfsys.System,
 ) -> mdata.MarketData:
