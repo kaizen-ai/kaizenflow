@@ -438,7 +438,6 @@ def save_parquet(
     """
     Save Parquet dataset.
     """
-
     # Update indexing and add partition columns.
     # TODO(Danya): Add `unit` as a parameter in the function.
     data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
