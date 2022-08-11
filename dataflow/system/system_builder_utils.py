@@ -624,10 +624,15 @@ def apply_process_forecasts_config_for_equities(system: dtfsyssyst.System) -> dt
 
     Equities market is open only on a certain time of the day.
     """
-    system.config["process_forecasts_config", "process_forecasts_config", "ath_start_time"] = datetime.time(9, 30)
-    system.config["process_forecasts_config", "process_forecasts_config", "trading_start_time"] = datetime.time(9, 30)
-    system.config["process_forecasts_config", "process_forecasts_config", "ath_end_time"] = datetime.time(16, 40)
-    system.config["process_forecasts_config", "process_forecasts_config", "trading_end_time"] = datetime.time(16, 40)
+    dict_ = {
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 30),
+        "ath_end_time": datetime.time(16, 40),
+        "trading_end_time": datetime.time(16, 40),
+    }
+    system.config[
+        "process_forecasts_config.", "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(dict_)
     return system
 
 def apply_process_forecasts_config_for_crypto(system: dtfsyssyst.System) -> dtfsyssyst.System:
@@ -636,8 +641,13 @@ def apply_process_forecasts_config_for_crypto(system: dtfsyssyst.System) -> dtfs
 
     For crypto we do not filter since crypto market is open 24/7.
     """
-    system.config["process_forecasts_config", "process_forecasts_config", "ath_start_time"] = None
-    system.config["process_forecasts_config", "process_forecasts_config", "trading_start_time"] = None
-    system.config["process_forecasts_config", "process_forecasts_config", "ath_end_time"] = None
-    system.config["process_forecasts_config", "process_forecasts_config", "trading_end_time"] = None
+    dict_ = {
+        "ath_start_time": None,
+        "trading_start_time": None,
+        "ath_end_time": None,
+        "trading_end_time": None,
+    }
+    system.config[
+        "process_forecasts_config.", "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(dict_)
     return system

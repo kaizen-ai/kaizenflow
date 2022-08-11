@@ -63,10 +63,10 @@ async def process_forecasts(
           {
             "order_dict": dict,
             "optimizer_dict": dict,
-            "ath_start_time": datetime.time,
-            "trading_start_time": datetime.time,
-            "ath_end_time": datetime.time,
-            "trading_end_time": datetime.time,
+            "ath_start_time": datetime.time or None,
+            "trading_start_time": datetime.time or None,
+            "ath_end_time": datetime.time or None,
+            "trading_end_time": datetime.time or None,
             "execution_mode": str ["real_time", "batch"],
             "remove_weekends": Optional[bool],
             "log_dir": Optional[None],
@@ -123,7 +123,9 @@ async def process_forecasts(
     ath_end_time = config.get("ath_end_time")
     trading_end_time = config.get("trading_end_time")
     # Sanity check trading time.
-    _validate_trading_time(ath_start_time, ath_end_time, trading_start_time, trading_end_time)
+    _validate_trading_time(
+        ath_start_time, ath_end_time, trading_start_time, trading_end_time
+    )
     # Get execution mode ("real_time" or "batch").
     execution_mode = cconfig.get_object_from_config(
         config, "execution_mode", str, None
@@ -189,25 +191,16 @@ async def process_forecasts(
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         # Get the time of day of the wall clock timestamp.
         time = wall_clock_timestamp.time()
-        if ath_start_time is None and ath_end_time is not None and trading_start_time is not None and trading_end_time is None:
-            # Perform trading time filtering.
-            if time < ath_start_time:
-                _LOG.debug(
-                    "time=`%s` < `ath_start_time=`%s`, skipping...",
-                    time,
-                    ath_start_time,
-                )
-                continue
-            if time >= ath_end_time:
-                _LOG.debug(
-                    "time=`%s` > `ath_end_time=`%s`, skipping...",
-                    time,
-                    ath_end_time,
-                )
-                continue
-            # Continue if we are outside of our trading window.
-            if time < trading_start_time or time > trading_end_time:
-                continue
+        skip_bar = _skip_bar(
+            time,
+            ath_start_time,
+            ath_end_time,
+            trading_start_time,
+            trading_end_time,
+        )
+        if skip_bar:
+            _LOG.warning("Skipping bar for time: `%s`", time)
+            continue
         # if execution_mode == "batch":
         #     if idx == len(predictions_df) - 1:
         #         # For the last timestamp we only need to mark to market, but not
@@ -235,11 +228,70 @@ async def process_forecasts(
     _LOG.debug("Event: exiting process_forecasts() for loop.")
 
 
-def _validate_trading_time(ath_start_time, ath_end_time, trading_start_time, trading_end_time):
-    if ath_start_time is None and ath_end_time is not None and trading_start_time is not None and trading_end_time is None:
+# TODO(Dan): Move to `helpers/hdbg.py`
+def dassert_all_defined_or_all_None(vals: List[Any]) -> None:
+    """
+    Check that all the values in list either are all defined or all None.
+    """
+    all_defined_cond = all(val is not None for val in vals)
+    all_none_cond = all(val is None for val in vals)
+    cond = all_defined_cond or all_none_cond
+    if not cond:
+        txt = f"Some values in list are defined and some are None: '{vals}'"
+        hdbg._dfatal(txt, msg, *args, only_warning=only_warning)
+
+
+def _validate_trading_time(
+    ath_start_time: Optional[datetime.time],
+    ath_end_time: Optional[datetime.time],
+    trading_start_time: Optional[datetime.time],
+    trading_end_time: Optional[datetime.time],
+) -> None:
+    """
+    Validate that trading hours are specified correctly.
+    """
+    dassert_all_defined_or_all_None(
+        [ath_start_time, ath_end_time, trading_start_time, trading_end_time]
+    )
+    if ath_start_time is not None:
         hdbg.dassert_lte(ath_start_time, ath_end_time)
         hdbg.dassert_lte(ath_start_time, trading_start_time)
         hdbg.dassert_lte(trading_end_time, ath_end_time)
+
+
+def _skip_bar(
+    time: datetime.time,
+    ath_start_time: Optional[datetime.time],
+    ath_end_time: Optional[datetime.time],
+    trading_start_time: Optional[datetime.time],
+    trading_end_time: Optional[datetime.time],
+) -> bool:
+    """
+    Determine whether to skip a bar processing or not.
+    """
+    skip_bar_cond = False
+    # TODO(Dan): Decifr wherher this condition is enough.
+    if ath_start_time is not None:
+        # Perform trading time filtering.
+        if time < ath_start_time:
+            _LOG.debug(
+                "time=`%s` < `ath_start_time=`%s`, skipping...",
+                time,
+                ath_start_time,
+            )
+            skip_bar_cond = True
+        if time >= ath_end_time:
+            _LOG.debug(
+                "time=`%s` > `ath_end_time=`%s`, skipping...",
+                time,
+                ath_end_time,
+            )
+            skip_bar_cond = True
+        # Continue if we are outside of our trading window.
+        if time < trading_start_time or time > trading_end_time:
+            skip_bar_cond = True
+    return skip_bar_cond
+
 
 # #############################################################################
 # ForecastProcessor
