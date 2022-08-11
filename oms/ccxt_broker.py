@@ -32,11 +32,13 @@ class CcxtBroker(ombroker.Broker):
         self,
         exchange_id: str,
         universe_version: str,
-        mode: str,
+        stage: str,
+        account_type: str,
         portfolio_id: str,
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
+        secret_id: int=1,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -47,17 +49,24 @@ class CcxtBroker(ombroker.Broker):
         :param exchange_id: name of the exchange to initialize the broker for
             (e.g., Binance)
         :param universe_version: version of the universe to use
-        :param mode:
-            - "test", launches the broker in sandbox environment (not supported for
-              every exchange
-            - "prod" launches with production API
+        :param stage:
+            - "preprod" preproduction stage
+            - "local" debugging stage
+        :param account_type:
+            - "trading" launches the broker in trading environment
+            - "sandbox" launches the broker in sandbox environment (not supported for
+              every exchange)
         :param contract_type: "spot" or "futures"
+        :param secret_id: the number id of the secret
         """
         super().__init__(*args, **kwargs)
         self._exchange_id = exchange_id
         #
-        hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
-        self._mode = mode
+        hdbg.dassert_in(stage, ["local", "preprod"])
+        self._stage = stage
+        hdbg.dassert_in(account_type, ["trading", "sandbox"])
+        self._account_type = account_type
+        self._secret_id = secret_id
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -607,15 +616,9 @@ class CcxtBroker(ombroker.Broker):
         Log into coinbasepro and return the corresponding `ccxt.Exchange`
         object.
         """
+        # Construct secrets ID, e.g. `***REMOVED***`.
+        secrets_id = f"{self._exchange_id}.{self._stage}.{self._account_type}.{str(self._secret_id)}"
         # Select credentials for provided exchange.
-        if self._mode == "test":
-            secrets_id = self._exchange_id + "_sandbox"
-        elif self._mode == "debug_test1":
-            # TODO(Danya): Temporary mode for running debug script.
-            #  See CMTask2575.
-            secrets_id = self._exchange_id + "_debug_test1"
-        else:
-            secrets_id = self._exchange_id
         exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
         exchange_params["rateLimit"] = True
