@@ -541,7 +541,7 @@ class CcxtBroker(ombroker.Broker):
                 )
                 order.ccxt_id = order_resp["id"]
                 sent_orders.append(order)
-                _LOG.info(hprint.to_str(order_resp))
+                _LOG.info(hprint.to_str("order_resp"))
             except Exception as e:
                 # Check the Binance API er
                 if self._check_binance_code_error(e, -4131):
