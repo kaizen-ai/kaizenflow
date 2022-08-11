@@ -75,8 +75,6 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
-        # There are no sent orders when the class is instantiated.
-        self._sent_orders = None
         # Set minimal order limits.
         self._minimal_order_limits = self._get_minimal_order_limits()
         # Used to determine timestamp since when to fetch orders.
@@ -528,7 +526,7 @@ class CcxtBroker(ombroker.Broker):
             try:
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
-                    type=order.type_,
+                    type="market",
                     side=side,
                     amount=abs(order.diff_num_shares),
                     # id = order.order_id,
@@ -543,7 +541,7 @@ class CcxtBroker(ombroker.Broker):
                 )
                 order.ccxt_id = order_resp["id"]
                 sent_orders.append(order)
-                _LOG.info(hprint.to_str(order_resp))
+                _LOG.info(hprint.to_str("order_resp"))
             except Exception as e:
                 # Check the Binance API er
                 if self._check_binance_code_error(e, -4131):
@@ -648,7 +646,7 @@ def get_CcxtBroker_prod_instance1(
     universe_version = "v5"
     mode = "test"
     contract_type = "futures"
-    portfolio_id = "ck_portfolio_1"
+    portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
         exchange_id,
         universe_version,
