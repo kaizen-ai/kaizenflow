@@ -86,7 +86,7 @@ class CcxtBroker(ombroker.Broker):
 
     @staticmethod
     def _convert_ccxt_order_to_oms_order(
-            ccxt_order: Dict[Any, Any]
+        ccxt_order: Dict[Any, Any]
     ) -> omorder.Order:
         """
         Convert sent CCXT orders to oms.Order class.
