@@ -4,21 +4,23 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
+import datetime
 import logging
-from typing import Any, Dict, List, Tuple
+import os
+from typing import Any, Callable, Dict
 
 import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
-import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
 import market_data as mdata
+import oms
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,7 +51,7 @@ def get_Cx_HistoricalMarketData_example1(
     return market_data
 
 
-def get_Cx_RealTimeMarketData_example1(
+def get_Cx_ReplayedMarketData_example1(
     system: dtfsys.System,
 ) -> mdata.MarketData:
     """
@@ -71,38 +73,43 @@ def get_Cx_RealTimeMarketData_example1(
     # Get the real-time `MarketData`.
     event_loop = system.config["event_loop_object"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    market_data, _ = mdata.get_RealTimeImClientMarketData_example1(
-        im_client, event_loop, asset_ids
+    initial_replayed_dt = pd.Timestamp(
+        "2022-07-21 09:30:00-04:00", tz="America/New_York"
+    )
+    market_data, _ = mdata.get_ReplayedImClientMarketData_example1(
+        im_client, event_loop, asset_ids, initial_replayed_dt
     )
     return market_data
 
 
-def get_RealTimeImClientMarketData_prod_instance1(
-    im_client: icdc.ImClient,
-    asset_ids: List[int],
-) -> Tuple[mdata.MarketData, hdateti.GetWallClockTime]:
+# TODO(Grisha): @Dan share some code with `get_Cx_ReplayedMarketData_example1` but
+# the difference will be that the prod `MarketData` should use the dev DB while
+# `get_Cx_ReplayedMarketData_example1` should use the local DB.
+def get_Cx_RealTimeMarketData_prod_instance1(
+    system: dtfsys.System,
+) -> mdata.MarketData:
     """
-    Build a `RealTimeMarketData` for production.
+    Build a MarketData backed with RealTimeImClient.
     """
-    asset_id_col = "asset_id"
-    start_time_col_name = "start_timestamp"
-    end_time_col_name = "end_timestamp"
-    columns = None
-    event_loop = None
-    get_wall_clock_time = lambda: hdateti.get_current_time(
-        tz="ET", event_loop=event_loop
+    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
+    resample_1min = False
+    # Get environment variables with login info.
+    env_file = imvimlita.get_db_env_path("dev")
+    # Get login info.
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    # Login.
+    db_connection = hsql.get_connection(*connection_params)
+    # Get the real-time `ImClient`.
+    table_name = "ccxt_ohlcv"
+    im_client = imvcdccccl.CcxtSqlRealTimeImClient(
+        resample_1min, db_connection, table_name
     )
-    # 
-    market_data = mdata.RealTimeMarketData2(
-        im_client,
-        asset_id_col,
-        asset_ids,
-        start_time_col_name,
-        end_time_col_name,
-        columns,
-        get_wall_clock_time,
+    # Get the real-time `MarketData`.
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    market_data, _ = mdata.get_RealTimeImClientMarketData_example2(
+        im_client, asset_ids
     )
-    return market_data, get_wall_clock_time
+    return market_data
 
 
 # #############################################################################
@@ -137,6 +144,39 @@ def get_Cx_process_forecasts_dict_example1(
         style,
         compute_target_positions_kwargs,
         log_dir,
+    )
+    return process_forecasts_dict
+
+
+def get_process_forecasts_dict_prod_instance1(
+    portfolio: oms.Portfolio,
+    order_duration_in_mins: int,
+) -> Dict[str, Any]:
+    """
+    Build process forecast dictionary for a production system.
+    """
+    # prediction_col = "prediction"
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    # spread_col = "pct_bar_spread"
+    spread_col = None
+    style = "cross_sectional"
+    #
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 2000.0,
+    }
+    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    #
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+        portfolio,
+        prediction_col,
+        volatility_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        log_dir=log_dir,
     )
     return process_forecasts_dict
 
@@ -200,3 +240,125 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
+
+
+# TODO(gp): Copied from _get_E1_dag_prod... Try to share code.
+def _get_Cx_dag_prod_instance1(
+    system: dtfsys.System,
+    get_process_forecasts_dict_func: Callable,
+) -> dtfcore.DAG:
+    """
+    Build the DAG for a C1b production system from a system config.
+    """
+    hdbg.dassert_isinstance(system, dtfsys.System)
+    # Create the pipeline.
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    # TODO(gp): Fast prod system must be set before the DAG is built.
+    dag_builder = system.config["dag_builder_object"]
+    fast_prod_setup = system.config.get(
+        ["dag_builder_config", "fast_prod_setup"], False
+    )
+    _LOG.debug(hprint.to_str("fast_prod_setup"))
+    if fast_prod_setup:
+        _LOG.warning("Setting fast prod setup")
+        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
+            system.config["dag_config"]
+        )
+    # The config must be complete and stable here.
+    dag = dag_builder.get_dag(dag_config)
+    system = dtfsys.apply_dag_property(dag, system)
+    #
+    system = dtfsys.apply_dag_runner_config(system)
+    # Build Portfolio.
+    trading_period_str = dag_builder.get_trading_period(dag_config)
+    # TODO(gp): Add a param to get_trading_period to return the int.
+    order_duration_in_mins = int(trading_period_str.replace("T", ""))
+    system.config[
+        "portfolio_config", "order_duration_in_mins"
+    ] = order_duration_in_mins
+    portfolio = system.portfolio
+    # Set market data history lookback in days in to config.
+    system = dtfsys.apply_history_lookback(system)
+    # Build the process forecast dict.
+    process_forecasts_dict = get_process_forecasts_dict_func(
+        portfolio, order_duration_in_mins
+    )
+    system.config[
+        "process_forecasts_config"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
+    # Assemble.
+    market_data = system.market_data
+    market_data_history_lookback = system.config["market_data_config", "history_lookback"]
+    ts_col_name = "timestamp_db"
+    dag = dtfsys.adapt_dag_to_real_time(
+        dag,
+        market_data,
+        market_data_history_lookback,
+        process_forecasts_dict,
+        ts_col_name,
+    )
+    _LOG.debug("dag=\n%s", dag)
+    return dag
+
+
+def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
+    """
+    Build the DAG for a production system from a system config.
+    """
+    # TODO(gp): It seems that we inlined the code somewhere so we should factor it
+    #  out.
+    # get_process_forecasts_dict_func = dtfsys.get_process_forecasts_dict_example3
+    get_process_forecasts_dict_func = get_process_forecasts_dict_prod_instance1
+    dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_dict_func)
+    return dag
+
+
+# #############################################################################
+# Portfolio instances.
+# #############################################################################
+
+
+def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
+    """
+    Build Portfolio instance for production.
+    """
+    market_data = system.market_data
+    dag_builder = system.config["dag_builder_object"]
+    trading_period_str = dag_builder.get_trading_period(
+        system.config["dag_config"]
+    )
+    _LOG.debug(hprint.to_str("trading_period_str"))
+    pricing_method = "twap." + trading_period_str
+    portfolio = oms.get_CcxtPortfolio_prod_instance1(
+        system.config["cf_config", "strategy"],
+        market_data,
+        system.config["market_data_config", "asset_ids"],
+        pricing_method,
+    )
+    return portfolio
+
+
+# TODO(gp): We should dump the state of the portfolio and load it back.
+# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
+#  so we can generalize the class to be not E8 specific.
+def _get_Cx_portfolio(
+    system: dtfsys.System,
+) -> oms.Portfolio:
+    # We prefer to configure code statically (e.g., without switches) but in this
+    # case the prod system vs its simulat-able version are so close (and we want to
+    # keep them close) that we use a switch.
+    if not system.use_simulation:
+        # Prod.
+        portfolio = get_Cx_portfolio_prod_instance1(system)
+    else:
+        # Simulation.
+        # TODO(gp): This needs to be fixed before reconciliation.
+        # _LOG.warning("Configuring for simulation")
+        # portfolio = oms.get_DatabasePortfolio_example3(
+        #     system.config["db_connection_object"],
+        #     system.config["event_loop_object"],
+        #     system.market_data,
+        # )
+        pass
+    return portfolio

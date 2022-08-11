@@ -7,6 +7,7 @@ import oms.ccxt_broker as occxbrok
 """
 
 import logging
+import re
 from typing import Any, Dict, List, Optional
 
 import ccxt
@@ -15,9 +16,11 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+import helpers.hprint as hprint
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
+import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
 
@@ -29,11 +32,13 @@ class CcxtBroker(ombroker.Broker):
         self,
         exchange_id: str,
         universe_version: str,
-        mode: str,
+        stage: str,
+        account_type: str,
         portfolio_id: str,
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
+        secret_id: int=1,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -44,16 +49,24 @@ class CcxtBroker(ombroker.Broker):
         :param exchange_id: name of the exchange to initialize the broker for
             (e.g., Binance)
         :param universe_version: version of the universe to use
-        :param mode:
-            - "test", launches the broker in sandbox environment (not supported for
-              every exchange
-            - "prod" launches with production API
+        :param stage:
+            - "preprod" preproduction stage
+            - "local" debugging stage
+        :param account_type:
+            - "trading" launches the broker in trading environment
+            - "sandbox" launches the broker in sandbox environment (not supported for
+              every exchange)
         :param contract_type: "spot" or "futures"
+        :param secret_id: the number id of the secret
         """
+        super().__init__(*args, **kwargs)
         self._exchange_id = exchange_id
         #
-        hdbg.dassert_in(mode, ["prod", "test", "debug_test1"])
-        self._mode = mode
+        hdbg.dassert_in(stage, ["local", "preprod"])
+        self._stage = stage
+        hdbg.dassert_in(account_type, ["trading", "sandbox"])
+        self._account_type = account_type
+        self._secret_id = secret_id
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -63,18 +76,23 @@ class CcxtBroker(ombroker.Broker):
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
         # Enable mapping back from asset ids when placing orders.
-        self._asset_id_to_symbol_mapping = self._build_asset_id_to_symbol_mapping(
-            universe_version
+        self._universe_version = universe_version
+        self._asset_id_to_symbol_mapping = (
+            self._build_asset_id_to_symbol_mapping()
         )
         self._symbol_to_asset_id_mapping = {
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
+        # Set minimal order limits.
+        self._minimal_order_limits = self._get_minimal_order_limits()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
+        # Set up empty sent orders for the first run of the system.
+        self._sent_orders = None
 
     @staticmethod
-    def convert_ccxt_order_to_oms_order(
+    def _convert_ccxt_order_to_oms_order(
         ccxt_order: Dict[Any, Any]
     ) -> omorder.Order:
         """
@@ -156,6 +174,64 @@ class CcxtBroker(ombroker.Broker):
         )
         return oms_order
 
+    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+        """
+        Check if the order matches the minimum quantity for the asset.
+
+        The functions checks both the flat amount of the asset and the total
+        cost of the asset in the order. If the order amount does not match,
+         he order is changed to be slightly above the minimal amount.
+
+        :param order: order to be submitted
+        """
+        # Load all limits for the asset.
+        asset_limits = self._minimal_order_limits[order.asset_id]
+        order_amount = order.diff_num_shares
+        min_amount = asset_limits["min_amount"]
+        if abs(order_amount) < min_amount:
+            _LOG.warning(
+                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
+                order_amount,
+                min_amount,
+            )
+            if order_amount < 0:
+                order.diff_num_shares = -min_amount
+            else:
+                order.diff_num_shares = min_amount
+        # Check if the order is not below minimal cost.
+        #
+        # Get the last price for the asset.
+        last_price = self._get_last_market_price(order.asset_id)
+        # Calculate the total cost of the order based on the last price.
+        total_cost = last_price * abs(order_amount)
+        # Verify that the order total cost is not below minimum.
+        min_cost = asset_limits["min_cost"]
+        if total_cost < min_cost:
+            # Set amount based on minimal notional price.
+            #  Note: the amount is rounded up to closest integer
+            #  to cover for possible inaccuracy in market cost.
+            required_amount = round(min_cost / last_price, 0) + 1
+            _LOG.warning(
+                "Amount of asset in order is below minimal base: %s. \
+                Setting to following amount based on notional limit: %s",
+                order_amount,
+                required_amount,
+            )
+            # Change number of shares to minimal amount.
+            if order.diff_num_shares < 0:
+                order.diff_num_shares = -required_amount
+            else:
+                order.diff_num_shares = required_amount
+        return order
+
+    def _get_last_market_price(self, asset_id: int) -> float:
+        """
+        Load the latest price for the given ticker.
+        """
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        last_price = self._exchange.fetch_ticker(symbol)["last"]
+        return last_price
+
     def get_fills(self) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
@@ -165,6 +241,8 @@ class CcxtBroker(ombroker.Broker):
         # Load previously sent orders from class state.
         sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
+        if sent_orders is None:
+            return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
         if self.last_order_execution_ts:
@@ -191,7 +269,7 @@ class CcxtBroker(ombroker.Broker):
                         # Convert CCXT `dict` order to oms.Order.
                         #  TODO(Danya): bind together self._sent_orders and CCXT response
                         #  so we can avoid this conversion while keeping the fill status.
-                        filled_order = self.convert_ccxt_order_to_oms_order(
+                        filled_order = self._convert_ccxt_order_to_oms_order(
                             filled_order
                         )
                         # Create a Fill object.
@@ -294,6 +372,129 @@ class CcxtBroker(ombroker.Broker):
         currency_pair = currency_pair.replace("_", "/")
         return currency_pair
 
+    def _get_minimal_order_limits(self) -> Dict[int, Any]:
+        """
+        Load minimal amount and total cost for the given exchange.
+
+        The numbers are determined by loading the market metadata from CCXT.
+
+        Example:
+        {'active': True,
+        'base': 'ADA',
+        'baseId': 'ADA',
+        'contract': True,
+        'contractSize': 1.0,
+        'delivery': False,
+        'expiry': None,
+        'expiryDatetime': None,
+        'feeSide': 'get',
+        'future': True,
+        'id': 'ADAUSDT',
+        'info': {'baseAsset': 'ADA',
+                'baseAssetPrecision': '8',
+                'contractType': 'PERPETUAL',
+                'deliveryDate': '4133404800000',
+                'filters': [{'filterType': 'PRICE_FILTER',
+                            'maxPrice': '25.56420',
+                            'minPrice': '0.01530',
+                            'tickSize': '0.00010'},
+                            {'filterType': 'LOT_SIZE',
+                            'maxQty': '10000000',
+                            'minQty': '1',
+                            'stepSize': '1'},
+                            {'filterType': 'MARKET_LOT_SIZE',
+                            'maxQty': '10000000',
+                            'minQty': '1',
+                            'stepSize': '1'},
+                            {'filterType': 'MAX_NUM_ORDERS', 'limit': '200'},
+                            {'filterType': 'MAX_NUM_ALGO_ORDERS', 'limit': '10'},
+                            {'filterType': 'MIN_NOTIONAL', 'notional': '10'},
+                            {'filterType': 'PERCENT_PRICE',
+                            'multiplierDecimal': '4',
+                            'multiplierDown': '0.9000',
+                            'multiplierUp': '1.1000'}],
+                'liquidationFee': '0.020000',
+                'maintMarginPercent': '2.5000',
+                'marginAsset': 'USDT',
+                'marketTakeBound': '0.10',
+                'onboardDate': '1569398400000',
+                'orderTypes': ['LIMIT',
+                                'MARKET',
+                                'STOP',
+                                'STOP_MARKET',
+                                'TAKE_PROFIT',
+                                'TAKE_PROFIT_MARKET',
+                                'TRAILING_STOP_MARKET'],
+                'pair': 'ADAUSDT',
+                'pricePrecision': '5',
+                'quantityPrecision': '0',
+                'quoteAsset': 'USDT',
+                'quotePrecision': '8',
+                'requiredMarginPercent': '5.0000',
+                'settlePlan': '0',
+                'status': 'TRADING',
+                'symbol': 'ADAUSDT',
+                'timeInForce': ['GTC', 'IOC', 'FOK', 'GTX'],
+                'triggerProtect': '0.0500',
+                'underlyingSubType': ['HOT'],
+                'underlyingType': 'COIN'},
+        'inverse': False,
+        'limits': {'amount': {'max': 10000000.0, 'min': 1.0},
+                    'cost': {'max': None, 'min': 10.0},
+                    'leverage': {'max': None, 'min': None},
+                    'market': {'max': 10000000.0, 'min': 1.0},
+                    'price': {'max': 25.5642, 'min': 0.0153}},
+        'linear': True,
+        'lowercaseId': 'adausdt',
+        'maker': 0.0002,
+        'margin': False,
+        'option': False,
+        'optionType': None,
+        'percentage': True,
+        'precision': {'amount': 0, 'base': 8, 'price': 4, 'quote': 8},
+        'quote': 'USDT',
+        'quoteId': 'USDT',
+        'settle': 'USDT',
+        'settleId': 'USDT',
+        'spot': False,
+        'strike': None,
+        'swap': True,
+        'symbol': 'ADA/USDT',
+        'taker': 0.0004,
+        'tierBased': False,
+        'type': 'future'}
+        """
+        minimal_order_limits: Dict[str, Any] = {}
+        # Load market information from CCXT.
+        exchange_markets = self._exchange.load_markets()
+        for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
+            minimal_order_limits[asset_id] = {}
+            limits = exchange_markets[symbol]["limits"]
+            # Get the minimal amount of asset in the order.
+            amount_limit = limits["amount"]["min"]
+            minimal_order_limits[asset_id]["min_amount"] = amount_limit
+            # Get the minimal cost of asset in the order.
+            notional_limit = limits["cost"]["min"]
+            minimal_order_limits[asset_id]["min_cost"] = notional_limit
+        return minimal_order_limits
+
+    @staticmethod
+    def _check_binance_code_error(e: Exception, error_code: int) -> bool:
+        """
+        Check if the exception matches the expected error code.
+
+        Example of a Binance exception:
+        {"code":-4131,
+        "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
+
+        :param e: Binance exception raised by CCXT
+        :param error_code: expected error code, e.g. -4131
+        :return: whether error code is contained in error message
+        """
+        error_message = str(e)
+        error_regex = f'"code":{error_code},'
+        return bool(re.search(error_regex, error_message))
+
     def _assert_order_methods_presence(self) -> None:
         """
         Assert that the requested exchange supports all methods necessary to
@@ -318,40 +519,54 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> List[omorder.Order]:
+    ) -> None:
         """
         Submit orders.
         """
         self.last_order_execution_ts = pd.Timestamp.now()
-        sent_orders: List[str] = []
+        sent_orders: List[omorder.Order] = []
         for order in orders:
+            # Verify that order conforms
+            order = self._check_minimal_limit(order)
+            _LOG.info("Submitted order: %s", str(order))
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
             side = "buy" if order.diff_num_shares > 0 else "sell"
-            order_resp = self._exchange.createOrder(
-                symbol=symbol,
-                type=order.type_,
-                side=side,
-                amount=abs(order.diff_num_shares),
-                # id = order.order_id,
-                # id=order.order_id,
-                # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
-                # but most likely the method will need to be overriden per each exchange
-                # to accomodate endpoint specific behavior.
-                params={
-                    "portfolio_id": self._portfolio_id,
-                    "client_oid": order.order_id,
-                },
-            )
-            order.ccxt_id = order_resp["id"]
-            sent_orders.append(order)
-            _LOG.info(order_resp)
+            try:
+                order_resp = self._exchange.createOrder(
+                    symbol=symbol,
+                    type="market",
+                    side=side,
+                    amount=abs(order.diff_num_shares),
+                    # id = order.order_id,
+                    # id=order.order_id,
+                    # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
+                    # but most likely the method will need to be overriden per each exchange
+                    # to accomodate endpoint specific behavior.
+                    params={
+                        "portfolio_id": self._portfolio_id,
+                        "client_oid": order.order_id,
+                    },
+                )
+                order.ccxt_id = order_resp["id"]
+                sent_orders.append(order)
+                _LOG.info(hprint.to_str("order_resp"))
+            except Exception as e:
+                # Check the Binance API er
+                if self._check_binance_code_error(e, -4131):
+                    # If the error is connected to liquidity, continue submitting orders.
+                    _LOG.warning(
+                        "PERCENT_PRICE error has been raised. The Exception was:\n%s\nContinuing...",
+                        e,
+                    )
+                else:
+                    raise e
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
         return None
 
     def _build_asset_id_to_symbol_mapping(
-        self, universe_version: str
+        self,
     ) -> Dict[int, str]:
         """
         Build asset id to full symbol mapping.
@@ -367,7 +582,7 @@ class CcxtBroker(ombroker.Broker):
         """
         # Get full symbol universe.
         full_symbol_universe = imvcounun.get_vendor_universe(
-            "CCXT", "trade", version=universe_version, as_full_symbol=True
+            "CCXT", "trade", version=self._universe_version, as_full_symbol=True
         )
         # Filter symbols of the exchange corresponding to this instance.
         full_symbol_universe = list(
@@ -401,15 +616,9 @@ class CcxtBroker(ombroker.Broker):
         Log into coinbasepro and return the corresponding `ccxt.Exchange`
         object.
         """
+        # Construct secrets ID, e.g. `***REMOVED***`.
+        secrets_id = f"{self._exchange_id}.{self._stage}.{self._account_type}.{str(self._secret_id)}"
         # Select credentials for provided exchange.
-        if self._mode == "test":
-            secrets_id = self._exchange_id + "_sandbox"
-        elif self._mode == "debug_test1":
-            # TODO(Danya): Temporary mode for running debug script.
-            #  See CMTask2575.
-            secrets_id = self._exchange_id + "_debug_test1"
-        else:
-            secrets_id = self._exchange_id
         exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
         exchange_params["rateLimit"] = True
@@ -427,3 +636,27 @@ class CcxtBroker(ombroker.Broker):
             msg="Required credentials not passed",
         )
         return exchange
+
+
+def get_CcxtBroker_prod_instance1(
+    market_data: mdata.MarketData,
+    strategy_id: str,
+) -> CcxtBroker:
+    """
+    Build an `CcxtBroker` for production.
+    """
+    exchange_id = "binance"
+    universe_version = "v5"
+    mode = "test"
+    contract_type = "futures"
+    portfolio_id = "ccxt_portfolio_1"
+    broker = CcxtBroker(
+        exchange_id,
+        universe_version,
+        mode,
+        portfolio_id,
+        contract_type,
+        strategy_id=strategy_id,
+        market_data=market_data,
+    )
+    return broker
