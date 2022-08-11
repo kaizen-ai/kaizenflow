@@ -369,9 +369,7 @@ def download_realtime_for_one_exchange_periodically(
                 iteration_start_time = iteration_start_time + timedelta(
                     minutes=interval_min
                 )
-                _LOG.debug(
-                    "Start time after align `%s`.", iteration_start_time
-                )
+                _LOG.debug("Start time after align `%s`.", iteration_start_time)
         # If download failed, but there is time before next download.
         elif num_failures > 0:
             _LOG.info("Start repeat download immediately.")
@@ -440,6 +438,7 @@ def save_parquet(
     """
     Save Parquet dataset.
     """
+
     # Update indexing and add partition columns.
     # TODO(Danya): Add `unit` as a parameter in the function.
     data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
@@ -581,18 +580,12 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
     for column in data.columns:
         # Extract the expected type of the column from the schema.
         expected_type = DATASET_SCHEMA[column]
-        if expected_type == "float64" and pd.api.types.is_numeric_dtype(
-            data[column].dtype
+        if (
+            expected_type in ["float64", "int32", "int64"]
+            and pd.to_numeric(data[column], errors="coerce").notnull().all()
         ):
-            # Sometimes float with no numbers after the decimal point is considered an int
-            # and fails to be merged.
-            # Wherefore force column type into float if float is expected and the column is numeric.
-            data[column] = data[column].astype("float64")
-        if expected_type == "int32" and pd.api.types.is_integer_dtype(
-            data[column].dtype
-        ):
-            # Force all `int` columns into `int32` type.
-            data[column] = data[column].astype("int32")
+            # Fix the type of numerical column.
+            data[column] = data[column].astype(expected_type)
         # Get the actual data type of the column.
         actual_type = str(data[column].dtype)
         # Compare types.
