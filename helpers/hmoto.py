@@ -44,7 +44,7 @@ class S3Mock_TestCase(hunitest.TestCase):
         if self.binance_secret is None:
             import helpers.hsecrets as hsecret
 
-            self.binance_secret = hsecret.get_secret("binance")
+            self.binance_secret = hsecret.get_secret("***REMOVED***")
 
         # Start boto3 mock.
         self.mock_s3.start()
@@ -63,11 +63,11 @@ class S3Mock_TestCase(hunitest.TestCase):
         super().setUp()
 
     def tearDown(self) -> None:
-        # We need to deallocate in reverse order to avoid race conditions.
-        super().tearDown()
         # Delete bucket.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         s3fs_.delete(f"s3://{self.bucket_name}", recursive=True)
         # Stop moto.
         self.mock_aws_credentials_patch.stop()
         self.mock_s3.stop()
+        # Deallocate in reverse order to avoid race conditions.
+        super().tearDown()
