@@ -229,7 +229,12 @@ async def process_forecasts(
 
 
 # TODO(Dan): Move to `helpers/hdbg.py`
-def dassert_all_defined_or_all_None(vals: List[Any]) -> None:
+def dassert_all_defined_or_all_None(
+    vals: List[Any],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
     """
     Check that all the values in list either are all defined or all None.
     """
@@ -270,8 +275,14 @@ def _skip_bar(
     Determine whether to skip a bar processing or not.
     """
     skip_bar_cond = False
-    # TODO(Dan): Decifr wherher this condition is enough.
-    if ath_start_time is not None:
+    trading_time_list = [
+        ath_start_time,
+        ath_end_time,
+        trading_start_time,
+        trading_end_time,
+    ]
+    all_defined_cond = all(val is not None for val in trading_time_list)
+    if all_defined_cond:
         # Perform trading time filtering.
         if time < ath_start_time:
             _LOG.debug(
