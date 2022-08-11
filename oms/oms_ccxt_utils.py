@@ -97,7 +97,7 @@ def get_CcxtBroker_example1(
     # Set default broker values.
     universe = "v5"
     mode = "debug_test1"
-    portfolio_id = "ck_portfolio_id"
+    portfolio_id = "ccxt_portfolio_id"
     strategy_id = "SAU1"
     # Initialize the broker.
     broker = occxbrok.CcxtBroker(
