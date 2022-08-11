@@ -114,6 +114,7 @@ def dassert_valid_secret(secret_id: str) -> None:
             "kraken",
             "kucoin",
             "talos",
+            "test",
         ],
     )
     hdbg.dassert_in(values[1], ["prod", "local"])
