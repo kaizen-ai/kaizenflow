@@ -38,6 +38,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
+        secret_id: int=1,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -56,6 +57,7 @@ class CcxtBroker(ombroker.Broker):
             - "sandbox" launches the broker in sandbox environment (not supported for
               every exchange)
         :param contract_type: "spot" or "futures"
+        :param secret_id: the number id of the secret
         """
         super().__init__(*args, **kwargs)
         self._exchange_id = exchange_id
@@ -64,6 +66,7 @@ class CcxtBroker(ombroker.Broker):
         self._stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
+        self._secret_id = secret_id
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -616,7 +619,7 @@ class CcxtBroker(ombroker.Broker):
         object.
         """
         # Construct secrets ID, e.g. `***REMOVED***`.
-        secrets_id = f"{self._exchange_id}.{self._stage}.{self._account_type}.1"
+        secrets_id = f"{self._exchange_id}.{self._stage}.{self._account_type}.{str(self._secret_id)}"
         # Select credentials for provided exchange.
         exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
