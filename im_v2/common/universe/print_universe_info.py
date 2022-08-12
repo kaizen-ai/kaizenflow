@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 """
-This script performs several actions:
+The script performs several actions:
+
     - converts asset id to a full symbol
     - prints universe as a list of asset ids
 
@@ -24,8 +25,8 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hsql as hsql
 import helpers.hprint as hprint
+import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import im_v2.im_lib_tasks as imvimlita
