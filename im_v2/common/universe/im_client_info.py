@@ -1,11 +1,23 @@
 #!/usr/bin/env python
 """
-Return information about:
+Perfom several actions on client's universe, such as:
 
-- full symbol
-    E.g: `> im_client_info.py --action convert_to_full_symbol --asset_id 3065029174 --im_client ccxt_realtime`
-- universe as a list of asset ids
-    E.g: `> im_client_info.py --action print_universe --im_client ccxt_realtime`
+- convert asset id to a full symbol
+    E.g:
+    ```
+    im_client_info.py
+    --action convert_to_full_symbol
+    --asset_id 3065029174
+    --im_client ccxt_realtime
+    ```
+
+- return universe as a list of asset ids
+    E.g:
+    ```
+    im_client_info.py
+    --action print_universe
+    --im_client ccxt_realtime
+    ```
 """
 import argparse
 import logging
@@ -19,10 +31,10 @@ import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
-ACTIONS = ["print_universe", "convert_to_full_symbol"]
+_ACTIONS = ["print_universe", "convert_to_full_symbol"]
 
 
-def _get_ImClient(im_client: str) -> imvcdcbimcl.SqlRealTimeImClient:
+def _get_ImClient(im_client: str) -> imvcdcbimcl.ImClient:
     if im_client == "ccxt_realtime":
         resample_1min = False
         env_file = imvimlita.get_db_env_path("dev")
@@ -50,8 +62,8 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        choices=ACTIONS,
-        help=f"Choose action to perfom: {ACTIONS}",
+        choices=_ACTIONS,
+        help=f"Choose action to perfom: {_ACTIONS}",
     )
     parser.add_argument(
         "--asset_id",
@@ -62,9 +74,8 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--im_client",
-        default="ccxt_realtime",
         action="store",
-        required=False,
+        required=True,
         type=str,
         help="",
     )
@@ -77,14 +88,17 @@ def _run(args: argparse.Namespace) -> None:
     im_client = _get_ImClient(args.im_client)
     if args.action == "convert_to_full_symbol":
         try:
-            full_symbol = im_client.get_full_symbols_from_asset_ids([args.asset_id])
-            _LOG.info("Full symbol: %s" % full_symbol)
-        except Exception:
-            _LOG.error("Asset id is missing or incorrect. Add as --asset_id value.")
+            full_symbol = im_client.get_full_symbols_from_asset_ids(
+                [args.asset_id]
+            )
+            _LOG.info("Full symbol: %s", full_symbol)
+        except Exception as e:
+            _LOG.error(e)
+            _LOG.error("Asset id is not a part of the universe or invalid.")
     if args.action == "print_universe":
         full_symbols = im_client.get_universe()
         asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
-        _LOG.info("Asset ids: %s " % asset_ids)
+        _LOG.info("Asset ids: %s ", asset_ids)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
