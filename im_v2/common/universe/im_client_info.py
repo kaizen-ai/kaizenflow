@@ -92,6 +92,7 @@ def _run(args: argparse.Namespace) -> None:
                 [args.asset_id]
             )
             _LOG.info("Full symbol: %s", full_symbol)
+        # TODO(gp): Catch a stricter exception.
         except Exception as e:
             _LOG.error(e)
             _LOG.error("Asset id is not a part of the universe or invalid.")
