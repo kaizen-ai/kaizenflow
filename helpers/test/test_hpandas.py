@@ -1689,7 +1689,7 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
 
 class Test_merge_dfs1(hunitest.TestCase):
     """
-    Test when an overlap of `threshold_col` values is below the threshold.
+    Test that 2 dataframes are merged correctly.
     """
 
     @staticmethod
@@ -1698,8 +1698,8 @@ class Test_merge_dfs1(hunitest.TestCase):
         index = pd.Index(index)
         df = df.set_index(index, drop=True)
         return df
-    
-    def test_merge_dfs1(self) -> None:
+
+    def test1(self) -> None:
         """
         Test when an overlap of `threshold_col` values is 100%.
         """
@@ -1763,7 +1763,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             expected_signature,
         )
 
-    def test_merge_dfs2(self) -> None:
+    def test2(self) -> None:
         """
         Test when an overlap of `threshold_col` values is below the threshold.
         """
@@ -1800,7 +1800,7 @@ class Test_merge_dfs1(hunitest.TestCase):
                 **pd_merge_kwargs,
             )
 
-    def test_merge_dfs3(self) -> None:
+    def test3(self) -> None:
         """
         Test when one of the `cols_to_merge` values are not equal.
         """
@@ -1866,28 +1866,28 @@ class Test_merge_dfs1(hunitest.TestCase):
             expected_signature,
         )
 
-    def test_merge_dfs4(self) -> None:
+    def test4(self) -> None:
         """
-        Test when an overlap of `threshold_col` values is above the threshold
-        but not 100% equal.
+        Test when an overlap of threshold_col values is above the threshold is
+        enough.
         """
         # Create test data.
         data1 = {
-            "col1": [1, 3, 5, 7, 10, 100],
-            "col2": [2, 4, 6, 8, np.nan, 200],
-            "col3": [1, 2, 3, 4, 30, 300],
-            "threshold_col": [7, 7, 7, 7, 70, 700],
+            "col1": [1, 3, 5, 7, 10, 100, 100, 100, 100, 10, 10],
+            "col2": [2, 4, 6, 8, np.nan, 200, 200, np.nan, 10, 10, 100],
+            "col3": [1, 2, 3, 4, 30, 300, 300, np.nan, 300, 300, 30],
+            "threshold_col": [0, 1, 3, 5, 7, 9, 11, 13, 15, 70, 700],
         }
-        index1 = [1, 2, 3, 4, 5, 6]
+        index1 = range(0, 11)
         df1 = self.get_dataframe(data1, index1)
         #
         data2 = {
-            "col3": [3, 30, 300],
-            "col4": [4, 40, 400],
-            "col5": [5, np.nan, 500],
-            "threshold_col": [7, 70, 700],
+            "col3": [3, 30, 300, 1, 2, 3, 4, 30, 300, 300, np.nan],
+            "col4": [4, 40, 400, 2, 4, 6, 8, 11, 13, 15, 70],
+            "col5": [5, np.nan, 500, 5, 7, 10, 1, 2, 3, 4, 30],
+            "threshold_col": [1, 2, 3, 5, 7, 9, 11, 13, 15, 70, 700],
         }
-        index2 = [3, 4, 5]
+        index2 = range(9, 20)
         df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
@@ -1902,7 +1902,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             **pd_merge_kwargs,
         )
         # Set expected values.
-        expected_length = 6
+        expected_length = 20
         expected_column_names = [
             "col1",
             "col2",
@@ -1914,16 +1914,17 @@ class Test_merge_dfs1(hunitest.TestCase):
         expected_column_unique_values = None
         expected_signature = r"""
         # df=
-        index=[0, 5]
+        index=[0, 19]
         columns=col1,col2,col3,threshold_col,col4,col5
-        shape=(6, 6)
-        col1   col2  col3  threshold_col   col4   col5
-        0     1    2.0     1              7    NaN    NaN
-        1     3    4.0     2              7    NaN    NaN
-        2     5    6.0     3              7    4.0    5.0
-        3     7    8.0     4              7    NaN    NaN
-        4    10    NaN    30             70   40.0    NaN
-        5   100  200.0   300            700  400.0  500.0
+        shape=(20, 6)
+        col1  col2  col3  threshold_col  col4  col5
+        0   1.0   2.0   1.0              0   NaN   NaN
+        1   3.0   4.0   2.0              1   NaN   NaN
+        2   5.0   6.0   3.0              3   NaN   NaN
+        ...
+        17   NaN   NaN   4.0             11   8.0   1.0
+        18   NaN   NaN  30.0             13  11.0   2.0
+        19   NaN   NaN   NaN            700  70.0  30.0
         """
         # Check.
         self.check_df_output(
@@ -1934,7 +1935,7 @@ class Test_merge_dfs1(hunitest.TestCase):
             expected_signature,
         )
 
-    def test_merge_dfs5(self) -> None:
+    def test5(self) -> None:
         """
         Test when an overlap of columns is in the dataframes.
         """
