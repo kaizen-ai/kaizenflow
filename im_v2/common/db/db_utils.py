@@ -13,7 +13,6 @@ from typing import Optional
 
 import psycopg2 as psycop
 
-import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
@@ -146,6 +145,34 @@ def create_im_database(
     new_db_connection.close()
 
 
+def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None:
+    """
+    Delete duplicate data rows from a db table which uses a standard OHLCV
+    table format. In this context a row is considered duplicate, when
+    there exists another row which has identical timestamp, currency pair
+    and exchange ID but different row ID and knowledge timestamp.
+    
+    :param db_stage: database stage to connect to
+    :param db_table: database table to delete duplicates from
+    """
+    env_file = imvimlita.get_db_env_path(db_stage)
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    db_connection = hsql.get_connection(*connection_params)
+    delete_query = f"DELETE FROM {db_table} \
+                   WHERE id IN ( \
+                   SELECT t1.id \
+                   FROM {db_table} AS t1 JOIN {db_table} AS t2 \
+                   ON t1.timestamp = t2.timestamp \
+                   AND t1.currency_pair = t2.currency_pair \
+                   AND t1.exchange_id = t2.exchange_id \
+                   WHERE t1.id < t2.id \
+                   AND t1.knowledge_timestamp < t2.knowledge_timestamp)"
+    num_before = hsql.get_num_rows(db_connection, db_table)
+    hsql.execute_query(db_connection, delete_query)
+    num_after = hsql.get_num_rows(db_connection, db_table)
+    _LOG.info("Removed %s duplicate rows from %s table.", str(num_before - num_after), db_table)
+
+
 # #############################################################################
 # TestImDbHelper
 # #############################################################################
@@ -197,4 +224,3 @@ class TestImDbHelper(hsqltest.TestImOmsDbHelper, abc.ABC):
     @classmethod
     def _get_postgres_db(cls) -> str:
         return "im_postgres_db_local"
-
