@@ -393,6 +393,7 @@ async def async_wait_until(
     """
     Asynchronous wait until the wall clock time is `timestamp`.
     """
+    _LOG.debug(hprint.to_str("wait_until_timestamp"))
     time_in_secs = _wait_until(wait_until_timestamp, get_wall_clock_time, tag=tag)
     # Async wait.
     hdbg.dassert_lte(0, time_in_secs)

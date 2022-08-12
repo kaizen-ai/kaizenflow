@@ -5,6 +5,7 @@ import helpers.hunit_test as hunitest
 """
 
 import abc
+import datetime
 import inspect
 import logging
 import os
@@ -337,7 +338,8 @@ def get_dir_signature(
     hdbg.dassert_path_exists(dir_name)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
-    file_names = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
+    dir_name_tmp = None
+    file_names = hsystem.system_to_files(cmd, dir_name_tmp, remove_files_non_present)
     file_names = sorted(file_names)
     # Save the directory / file structure.
     txt.append("# Dir structure")
@@ -498,6 +500,7 @@ def purify_object_representation(txt: str) -> str:
     Remove references like `at 0x7f43493442e0`.
     """
     txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
+    txt = re.sub(r" id='\d+'>", " id='xxx'>", txt, flags=re.MULTILINE)
     txt = re.sub(r"port=\d+", "port=xxx", txt, flags=re.MULTILINE)
     txt = re.sub("host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
     # wall_clock_time=Timestamp('2022-08-04 09:25:04.830746-0400'
@@ -511,7 +514,20 @@ def purify_object_representation(txt: str) -> str:
     return txt
 
 
+def purify_today_date(txt: str) -> str:
+    """
+    Remove today's date like `20220810`.
+    """
+    today_date = datetime.date.today()
+    today_date_as_str = today_date.strftime("%Y%m%d")
+    txt = re.sub(today_date_as_str, "YYYYMMDD", txt, flags=re.MULTILINE)
+    return txt
+
+
 def purify_white_spaces(txt: str) -> str:
+    """
+    Remove trailing white spaces.
+    """
     txt_new = []
     for line in txt.split("\n"):
         line = line.rstrip()
@@ -529,6 +545,7 @@ def purify_txt_from_client(txt: str) -> str:
     txt = purify_amp_references(txt)
     txt = purify_from_env_vars(txt)
     txt = purify_object_representation(txt)
+    txt = purify_today_date(txt)
     txt = purify_white_spaces(txt)
     return txt
 

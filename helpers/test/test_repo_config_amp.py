@@ -124,7 +124,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
-          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
           AM_REPO_CONFIG_CHECK='True'
           AM_REPO_CONFIG_PATH=''
           AM_TELEGRAM_TOKEN=***
@@ -177,7 +176,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
         AM_ECR_BASE_PATH='665840871993.dkr.ecr.us-east-1.amazonaws.com'
         AM_ENABLE_DIND='1'
         AM_FORCE_TEST_FAIL=''
-        AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
         AM_REPO_CONFIG_CHECK='False'
         AM_REPO_CONFIG_PATH=''
         AM_TELEGRAM_TOKEN=***
@@ -229,7 +227,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
-          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
           AM_REPO_CONFIG_CHECK='True'
           AM_REPO_CONFIG_PATH=''
           CI='true'
@@ -276,7 +273,6 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
-          AM_PUBLISH_NOTEBOOK_LOCAL_PATH=''
           AM_REPO_CONFIG_CHECK='True'
           AM_REPO_CONFIG_PATH=''
           CI='true'
