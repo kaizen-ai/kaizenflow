@@ -10,7 +10,7 @@ import io
 import logging
 import os
 import re
-from typing import Any, Dict, List, Match, Optional
+from typing import Any, Dict, List, Match, Optional, Tuple
 
 import yaml
 from invoke import task
@@ -297,11 +297,14 @@ def docker_login(ctx):  # type: ignore
             f"https://{ecr_base_path}"
         )
     else:
-        NotImplementedError(f"Docker login for awscli v{major_version} is not implemented!")
+        NotImplementedError(
+            f"Docker login for awscli v{major_version} is not implemented!"
+        )
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
     hlitauti._run(ctx, cmd, use_system=True)
+
 
 # ////////////////////////////////////////////////////////////////////////////////
 # Compose files.
@@ -762,16 +765,21 @@ def _resolve_version_value(
     version: str,
     *,
     container_dir_name: str = ".",
-) -> str:
+) -> Tuple[str, str]:
     """
     Pass a version (e.g., 1.0.0) or a symbolic value (e.g., FROM_CHANGELOG) and
     return the resolved value of the version.
+
+    :return: stripped version without patch for dev and full one with patch for prod
     """
     hdbg.dassert_isinstance(version, str)
     if version == _IMAGE_VERSION_FROM_CHANGELOG:
         version = hversio.get_changelog_version(container_dir_name)
     _dassert_is_version_valid(version)
-    return version
+    # Strip patch value from the version.
+    stripped_version = version.split(".")[:-1]
+    stripped_version = ".".join(stripped_version) + ".0"
+    return stripped_version, version
 
 
 def _dassert_is_subsequent_version(
@@ -798,9 +806,7 @@ _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
-_IMAGE_STAGE_RE = (
-    rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
-)
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -814,7 +820,7 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
-    - `prod` candidate image has an optional tag (e.g., a user name) and 
+    - `prod` candidate image has an optional tag (e.g., a user name) and
         a 9 character hash identifier corresponding Git commit
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
         - and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-saggese-4rf74b83a`
