@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Perfom several actions on client's universe, such as:
+This script performs several actions on client's universe, such as:
 
 - convert asset id to a full symbol
     E.g:
