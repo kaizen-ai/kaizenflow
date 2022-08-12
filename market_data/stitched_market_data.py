@@ -311,53 +311,6 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         # TODO(gp): It should delegate to the ImClient.
         return True
 
-    # TODO(Nina): CmTask2568 "Move `_merge_dfs` to `hpandas` and unit test."
-    # TODO(Nina): Add `filter_data_mode`.
-    @staticmethod
-    def _merge_dfs(
-        df1: pd.DataFrame,
-        df2: pd.DataFrame,
-        threshold_col_name: str,
-        *,
-        threshold: float = 0.9,
-        **pd_merge_kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        Merge `_get_data()` returns in one dataframe.
-
-        :param df1: data to merge
-        :param df2: data to merge
-        :param threshold_col_name: column to check input data similarity on
-        :param threshold: share of threshold column values in common to allow the merge
-        :param pd_merge_kwargs: `pd.merge` kwargs
-        :return: merged data
-        """
-        # Verify that end time columns have values of the same type.
-        threshold_col1 = df1[threshold_col_name]
-        threshold_col2 = df2[threshold_col_name]
-        only_first_elem = False
-        hdbg.dassert_array_has_same_type_element(
-            threshold_col1, threshold_col2, only_first_elem
-        )
-        # TODO(Grisha): @Dan Implement asserts for each asset id.
-        # Verify that the share of unique common end time values is above threshold.
-        threshold_unique_values1 = set(threshold_col1)
-        threshold_unique_values2 = set(threshold_col2)
-        threshold_common_values = set(threshold_unique_values1) & set(
-            threshold_unique_values2
-        )
-        threshold_common_values_share1 = len(threshold_common_values) / len(
-            threshold_unique_values1
-        )
-        threshold_common_values_share2 = len(threshold_common_values) / len(
-            threshold_unique_values2
-        )
-        hdbg.dassert_lte(threshold, threshold_common_values_share1)
-        hdbg.dassert_lte(threshold, threshold_common_values_share2)
-        #
-        res_df = df1.merge(df2, **pd_merge_kwargs)
-        return res_df
-
     def _get_data(
         self,
         start_ts: Optional[pd.Timestamp],
@@ -404,7 +357,7 @@ class HorizontalStitchedMarketData(mdabmada.MarketData):
         pd_merge_kwargs = {}
         pd_merge_kwargs["how"] = "outer"
         pd_merge_kwargs["on"] = cols_to_merge_on
-        market_data_df = self._merge_dfs(
+        market_data_df = hpandas.merge_dfs(
             market_data_df1,
             market_data_df2,
             self._end_time_col_name,
