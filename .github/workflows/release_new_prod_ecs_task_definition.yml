@@ -1,10 +1,13 @@
-name: Update ECS preprod task definition with newly created preprod tag
+name: Update ECS prod task definition with newly created prod tag
 on:
   # Run manually.
   workflow_dispatch:
-  schedule:
-    # Run this once a day even if there are no commit.
-    - cron:  '0 */6 * * *'
+      # User controlled inputs that will affect build flow.
+     inputs:
+        preprod_tag:
+          description: Which preprod tag to re-tag as prod
+          required: true
+          type: string
 
 jobs:
   create_new_ecs_task_def_revision:
@@ -47,13 +50,15 @@ jobs:
       - name: Pull image
         env:
           AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
-          # For now, we always get Docker images from AM account, so we don't need `CK_ECR_BASE_PATH`.
+          # For now, we always get Docker images from AM account,
+          # so we don't need `CK_ECR_BASE_PATH`.
           # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
-      # Run the `invoke` target `docker_create_candidate_image` to create candidate.
+      # Run the `invoke` target `docker_update_prod_task_definition` to update
+      # prod task definition with the new prod image.
       # See the corresponding documentation for more information.
-      - name: Run 'docker_create_candidate_image' workflow
+      - name: Run 'update_prod_task_definition_image' workflow
         env:
           GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
           AM_AWS_ACCESS_KEY_ID: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
@@ -67,7 +72,7 @@ jobs:
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
-        # TODO(Juraj): change task definition once the action is ready
-        run: invoke docker_create_candidate_image --task-definition "cmamp-preprod"
+          PREPROD_TAG: ${{ inputs.preprod_tag }}
+        run: invoke docker_update_prod_task_definition --version=FROM_CHANGELOG --preprod-tag=$PREPROD_TAG
 
       # TODO(Nikola): Notify in case of failure?
