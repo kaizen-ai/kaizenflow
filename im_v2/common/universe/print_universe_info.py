@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 """
 The script performs several actions:
-
     - converts asset id to a full symbol
     - prints universe as a list of asset ids
 
