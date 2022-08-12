@@ -6,7 +6,7 @@ This script performs several actions:
 
 The following command converts asset id to a full symbol:
     ```
-    > im_v2/common/universe/im_client_info.py \
+    > im_v2/common/universe/universe_info.py \
         --action convert_to_full_symbol \
         --asset_id 3065029174 \
         --im_client ccxt_realtime
@@ -14,7 +14,7 @@ The following command converts asset id to a full symbol:
 
 The command below prints the universe as asset ids:
     ```
-    > im_v2/common/universe/im_client_info.py \
+    > im_v2/common/universe/universe_info.py \
         --action print_universe \
         --im_client ccxt_realtime
     ```
@@ -40,7 +40,6 @@ def _get_ImClient(im_client: str) -> icdc.ImClient:
     Get `ImClient` from its string representation.
 
     :param im_client: client as string, e.g., `ccxt_realtime`
-    :return: `ImClient` instance
     """
     if im_client == "ccxt_realtime":
         resample_1min = False
