@@ -790,7 +790,6 @@ def merge_dfs(
 
     :param threshold_col_name: a column's name to check the minimum overlap on
     :param threshold: minimum overlap of unique values in a specified column to perform the merge
-    :return: merged data
     """
     # Sanity check column types.
     threshold_col1 = df1[threshold_col_name]
@@ -817,7 +816,7 @@ def merge_dfs(
     # Check that there are no common columns.
     df1_cols = set(df1.columns.to_list()) - set(pd_merge_kwargs["on"])
     df2_cols = set(df2.columns.to_list()) - set(pd_merge_kwargs["on"])
-    hdbg.dassert_ne(df1_cols, df2_cols)
+    hdbg.dassert_not_intersection(df1_cols, df2_cols)
     #
     res_df = df1.merge(df2, **pd_merge_kwargs)
     return res_df
