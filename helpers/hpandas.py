@@ -776,6 +776,52 @@ def trim_df(
     return df
 
 
+# TODO(Nina): Add `filter_data_mode`.
+def merge_dfs(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    threshold_col_name: str,
+    *,
+    threshold: float = 0.9,
+    **pd_merge_kwargs: Any,
+) -> pd.DataFrame:
+    """
+    Wrapper around `pd.merge`.
+
+    :param threshold_col_name: a column's name to check the minimum overlap on
+    :param threshold: minimum overlap of unique values in a specified column to perform the merge
+    """
+    # Sanity check column types.
+    threshold_col1 = df1[threshold_col_name]
+    threshold_col2 = df2[threshold_col_name]
+    only_first_elem = False
+    hdbg.dassert_array_has_same_type_element(
+        threshold_col1, threshold_col2, only_first_elem
+    )
+    # TODO(Grisha): @Dan Implement asserts for each asset id.
+    # Check that an overlap of unique values is above the specified threshold.
+    threshold_unique_values1 = set(threshold_col1)
+    threshold_unique_values2 = set(threshold_col2)
+    threshold_common_values = set(threshold_unique_values1) & set(
+        threshold_unique_values2
+    )
+    threshold_common_values_share1 = len(threshold_common_values) / len(
+        threshold_unique_values1
+    )
+    threshold_common_values_share2 = len(threshold_common_values) / len(
+        threshold_unique_values2
+    )
+    hdbg.dassert_lte(threshold, threshold_common_values_share1)
+    hdbg.dassert_lte(threshold, threshold_common_values_share2)
+    # Check that there are no common columns.
+    df1_cols = set(df1.columns.to_list()) - set(pd_merge_kwargs["on"])
+    df2_cols = set(df2.columns.to_list()) - set(pd_merge_kwargs["on"])
+    hdbg.dassert_not_intersection(df1_cols, df2_cols)
+    #
+    res_df = df1.merge(df2, **pd_merge_kwargs)
+    return res_df
+
+
 # #############################################################################
 
 

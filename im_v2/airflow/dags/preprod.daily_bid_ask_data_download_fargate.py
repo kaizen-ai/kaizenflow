@@ -8,16 +8,18 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.models import Variable
 from itertools import product
 import copy
+import os
 
+_FILENAME = os.path.basename(__file__)
 
 # This variable will be propagated throughout DAG definition as a prefix to 
-# names of Airflow configuration variables, allow to switch from test to prod
+# names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
-_STAGE = "prod"
-assert _STAGE in ["prod", "test"]
+_STAGE = _FILENAME.split(".")[0]
+assert _STAGE in ["prod", "preprod", "test"]
 
 # Used for seperations of deployment environments
-# ignored when executing on prod.
+# ignored when executing on prod/preprod.
 _USERNAME = ""
 
 # Deployment type, if the task should be run via fargate (serverless execution)
@@ -25,34 +27,29 @@ _USERNAME = ""
 _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
-_DAG_ID = f"{_STAGE}_daily_ohlcv_data_download_{_LAUNCH_TYPE}"
-_DAG_ID += f"_{_USERNAME}" if _STAGE == "test" else ""
+_DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"] 
-_PROVIDERS = ["crypto_chassis", "ccxt"]
-_UNIVERSES = { "crypto_chassis": "v2", "ccxt" : "v5"}
+_PROVIDERS = ["crypto_chassis"]
+_UNIVERSES = { "crypto_chassis": "v2"}
 _CONTRACTS = ["spot", "futures"]
-#_DATA_TYPES = ["bid_ask", "ohlcv"]
-_DATA_TYPES = ["ohlcv"]
+_DATA_TYPES = ["bid_ask"]
 _DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data download, contracts:" \
                 + f"{_CONTRACTS}, using {_PROVIDERS} from {_EXCHANGES}."
+_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
 # i.e. cmamp-test-juraj since we try to follow the convention of container having
 # the same name as task-definition if applicable
 # Set to the name your task definition is suffixed with i.e. cmamp-test-juraj,
-_CONTAINER_SUFFIX = f"-{_STAGE}-{_USERNAME}" if _STAGE == "test" else ""
+_CONTAINER_SUFFIX = f"-{_STAGE}" if _STAGE in ["preprod", "test"] else ""
+_CONTAINER_SUFFIX += f"-{_USERNAME}" if _STAGE == "test" else ""
 _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
-
-# TODO(Juraj): Fix, such that this logic applies for test stage as well.
-if _STAGE == "prod" and _LAUNCH_TYPE == "fargate":
-    _CONTAINER_NAME += "-fargate"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
 # in log groups, stream prefixes and container names to minimize 
 # convolution and maximize simplicity.
-# TODO(Juraj): solve the difference in fargate task definitions.
 ecs_task_definition = _CONTAINER_NAME
 
 # Subnets and security group is not needed for EC2 deployment but 
@@ -67,7 +64,7 @@ s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{V
 default_args = {
     "retries": 1,
     "email": [Variable.get(f'{_STAGE}_notification_email')],
-    "email_on_failure": True if _STAGE == "prod" else False,
+    "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     'email_on_retry': False,
     "owner": "airflow",
 }
@@ -78,9 +75,9 @@ dag = airflow.DAG(
     description=_DAG_DESCRIPTION,
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval="15 0 * * *",
+    schedule_interval=_SCHEDULE,
     catchup=False,
-    start_date=datetime.datetime(2022, 5, 30, 0, 15, 0),
+    start_date=datetime.datetime(2022, 7, 1, 0, 0, 0),
 )
 
 download_command = [
@@ -120,13 +117,13 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
     )
     
     kwargs = {}
-    if _LAUNCH_TYPE == "fargate":
-        kwargs["network_configuration"] = {
-            "awsvpcConfiguration": {
-                "securityGroups": ecs_security_group,
-                "subnets": ecs_subnets,
-            },
-        }
+    kwargs["network_configuration"] = {
+        "awsvpcConfiguration": {
+            "securityGroups": ecs_security_group,
+            "subnets": ecs_subnets,
+        },
+    }
+    
     downloading_task = ECSOperator(
         task_id=f"download_{provider}_{exchange}_{contract}",
         dag=dag,

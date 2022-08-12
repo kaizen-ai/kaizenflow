@@ -71,7 +71,7 @@ connection = hsql.get_connection(*connection_params)
 # %%
 hsql.remove_table(connection, "example2_marketdata")
 im_client = icdc.get_mock_realtime_client(connection)
-market_data = mdata.get_RealtimeMarketData_example1(im_client)
+market_data = mdata.get_RealtimeMarketData2_example1(im_client)
 
 # %%
 # Load an example of CCXT order.
