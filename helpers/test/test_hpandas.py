@@ -4,7 +4,7 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -1682,3 +1682,217 @@ class TestCheckAndFilterMatchingColumns(hunitest.TestCase):
         actual_columns = df.columns.to_list()
         expected_columns = ["col1", "col2"]
         self.assert_equal(str(actual_columns), str(expected_columns))
+
+
+# #############################################################################
+
+
+class Test_merge_dfs1(hunitest.TestCase):
+    """
+    Test that 2 dataframes are merged correctly.
+    """
+
+    @staticmethod
+    def get_dataframe(data: Dict, index: List[int]) -> pd.DataFrame:
+        df = pd.DataFrame.from_dict(data)
+        index = pd.Index(index)
+        df = df.set_index(index, drop=True)
+        return df
+
+    def test1(self) -> None:
+        """
+        Overlap of `threshold_col` values is 100%.
+        """
+        # Create test data.
+        data1 = {
+            "col1": [1, 10, 100],
+            "col2": [2, np.nan, 200],
+            "col3": [3, 30, 300],
+            "threshold_col": [7, 70, 700],
+        }
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 70, 700],
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        merged_df = hpandas.merge_dfs(
+            df1,
+            df2,
+            threshold_col_name,
+            how="outer",
+            on=cols_to_merge_on,
+        )
+        # Set expected values.
+        expected_length = 3
+        expected_column_names = [
+            "col1",
+            "col2",
+            "col3",
+            "col4",
+            "col5",
+            "threshold_col",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[0, 2]
+        columns=col1,col2,col3,threshold_col,col4,col5
+        shape=(3, 6)
+            col1   col2  col3  threshold_col  col4   col5
+        0     1    2.0     3              7     4    5.0
+        1    10    NaN    30             70    40    NaN
+        2   100  200.0   300            700   400  500.0
+        """
+        # Check.
+        self.check_df_output(
+            merged_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test2(self) -> None:
+        """
+        Overlap of `threshold_col` values is below the threshold.
+        """
+        # Create test data.
+        data1 = {
+            "col1": [1, 10, 100],
+            "col2": [2, np.nan, 200],
+            "col3": [3, 30, 300],
+            "threshold_col": [7, 70, 700],
+        }
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 60, 600],
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        # Check.
+        with self.assertRaises(AssertionError):
+            hpandas.merge_dfs(
+                df1,
+                df2,
+                threshold_col_name,
+                how="outer",
+                on=cols_to_merge_on,
+            )
+
+    def test3(self) -> None:
+        """
+        Overlap of `threshold_col` values is above the threshold.
+        """
+        # Create test data.
+        data1 = {
+            "col1": [1, 3, 5, 7, 10, 100, 100, 100, 100, 10, 10],
+            "col2": [2, 4, 6, 8, np.nan, 200, 200, np.nan, 10, 10, 100],
+            "col3": [1, 2, 3, 4, 30, 300, 300, np.nan, 300, 300, 30],
+            "threshold_col": [0, 1, 3, 5, 7, 9, 11, 13, 15, 70, 700],
+        }
+        index1 = range(0, 11)
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300, 1, 2, 3, 4, 30, 300, 300, np.nan],
+            "col4": [4, 40, 400, 2, 4, 6, 8, 11, 13, 15, 70],
+            "col5": [5, np.nan, 500, 5, 7, 10, 1, 2, 3, 4, 30],
+            "threshold_col": [1, 2, 3, 5, 7, 9, 11, 13, 15, 70, 700],
+        }
+        index2 = range(9, 20)
+        df2 = self.get_dataframe(data2, index2)
+        #
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        merged_df = hpandas.merge_dfs(
+            df1,
+            df2,
+            threshold_col_name,
+            how="outer",
+            on=cols_to_merge_on,
+        )
+        # Set expected values.
+        expected_length = 20
+        expected_column_names = [
+            "col1",
+            "col2",
+            "col3",
+            "col4",
+            "col5",
+            "threshold_col",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""
+        # df=
+        index=[0, 19]
+        columns=col1,col2,col3,threshold_col,col4,col5
+        shape=(20, 6)
+        col1  col2  col3  threshold_col  col4  col5
+        0   1.0   2.0   1.0              0   NaN   NaN
+        1   3.0   4.0   2.0              1   NaN   NaN
+        2   5.0   6.0   3.0              3   NaN   NaN
+        ...
+        17   NaN   NaN   4.0             11   8.0   1.0
+        18   NaN   NaN  30.0             13  11.0   2.0
+        19   NaN   NaN   NaN            700  70.0  30.0
+        """
+        # Check.
+        self.check_df_output(
+            merged_df,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test4(self) -> None:
+        """
+        There are common columns (besides columns to merge on) in dataframes.
+        """
+        # Create test data.
+        data1 = {
+            "col1": [1, 10, 100],
+            "col5": [2, np.nan, 200],
+            "col3": [3, 30, 300],
+            "threshold_col": [7, 70, 700],
+        }
+        index1 = [1, 2, 3]
+        df1 = self.get_dataframe(data1, index1)
+        #
+        data2 = {
+            "col3": [3, 30, 300],
+            "col4": [4, 40, 400],
+            "col5": [5, np.nan, 500],
+            "threshold_col": [7, 70, 700],
+        }
+        index2 = [3, 4, 5]
+        df2 = self.get_dataframe(data2, index2)
+        #
+        threshold_col_name = "threshold_col"
+        cols_to_merge_on = ["col3", "threshold_col"]
+        # Check.
+        with self.assertRaises(AssertionError):
+            hpandas.merge_dfs(
+                df1,
+                df2,
+                threshold_col_name,
+                how="outer",
+                on=cols_to_merge_on,
+            )
