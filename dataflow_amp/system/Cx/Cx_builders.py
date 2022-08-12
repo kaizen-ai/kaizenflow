@@ -51,7 +51,7 @@ def get_Cx_HistoricalMarketData_example1(
     return market_data
 
 
-def get_Cx_RealTimeMarketData_example1(
+def get_Cx_ReplayedMarketData_example1(
     system: dtfsys.System,
 ) -> mdata.MarketData:
     """
@@ -73,15 +73,18 @@ def get_Cx_RealTimeMarketData_example1(
     # Get the real-time `MarketData`.
     event_loop = system.config["event_loop_object"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    market_data, _ = mdata.get_RealTimeImClientMarketData_example1(
-        im_client, event_loop, asset_ids
+    initial_replayed_dt = pd.Timestamp(
+        "2022-07-21 09:30:00-04:00", tz="America/New_York"
+    )
+    market_data, _ = mdata.get_ReplayedImClientMarketData_example1(
+        im_client, event_loop, asset_ids, initial_replayed_dt
     )
     return market_data
 
 
-# TODO(Grisha): @Dan share some code with `get_Cx_RealTimeMarketData_example1` but
+# TODO(Grisha): @Dan share some code with `get_Cx_ReplayedMarketData_example1` but
 # the difference will be that the prod `MarketData` should use the dev DB while
-# `get_Cx_RealTimeMarketData_example1` should use the local DB.
+# `get_Cx_ReplayedMarketData_example1` should use the local DB.
 def get_Cx_RealTimeMarketData_prod_instance1(
     system: dtfsys.System,
 ) -> mdata.MarketData:

@@ -315,13 +315,15 @@ def get_HistoricalImClientMarketData_example1(
 # #############################################################################
 
 
-def get_RealTimeImClientMarketData_example1(
+def get_ReplayedImClientMarketData_example1(
     im_client: icdc.ImClient,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
+    initial_replayed_dt: pd.Timestamp,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
+    # TODO(Max): Refactor mix of replay and realtime. 
     """
-    Build a `RealTimeMarketData` with data coming from an `RealTimeImClient`.
+    Build a `ReplayedMarketData2` with data coming from an `RealTimeImClient`.
     """
     asset_id_col = "asset_id"
     start_time_col_name = "start_timestamp"
@@ -330,10 +332,6 @@ def get_RealTimeImClientMarketData_example1(
     # Build a `ReplayedMarketData`.
     tz = "ET"
     # TODO(Grisha): @Dan use the same timezone as above, explore `hdatetime`.
-    # TODO(Grisha): @Dan Do not hard-code `initial_replayed_dt`.
-    initial_replayed_dt = pd.Timestamp(
-        "2022-07-21 09:30:00-04:00", tz="America/New_York"
-    )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,
@@ -355,8 +353,7 @@ def get_RealTimeImClientMarketData_example1(
     return market_data, get_wall_clock_time
 
 
-# TODO(Grisha): @Dan -> `get_RealTimeImClientMarketData_example2`.
-def get_RealtimeMarketData_example1(
+def get_RealtimeMarketData2_example1(
     im_client: icdc.RealTimeImClient,
 ) -> mdrtmada.RealTimeMarketData2:
     """
