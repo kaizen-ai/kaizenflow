@@ -1724,14 +1724,12 @@ class Test_merge_dfs1(hunitest.TestCase):
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
-        pd_merge_kwargs = {}
-        pd_merge_kwargs["how"] = "outer"
-        pd_merge_kwargs["on"] = cols_to_merge_on
         merged_df = hpandas.merge_dfs(
             df1,
             df2,
             threshold_col_name,
-            **pd_merge_kwargs,
+            how="outer",
+            on=cols_to_merge_on,
         )
         # Set expected values.
         expected_length = 3
@@ -1788,16 +1786,14 @@ class Test_merge_dfs1(hunitest.TestCase):
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
-        pd_merge_kwargs = {}
-        pd_merge_kwargs["how"] = "outer"
-        pd_merge_kwargs["on"] = cols_to_merge_on
         # Check.
         with self.assertRaises(AssertionError):
             hpandas.merge_dfs(
                 df1,
                 df2,
                 threshold_col_name,
-                **pd_merge_kwargs,
+                how="outer",
+                on=cols_to_merge_on,
             )
 
     def test3(self) -> None:
@@ -1825,14 +1821,12 @@ class Test_merge_dfs1(hunitest.TestCase):
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
-        pd_merge_kwargs = {}
-        pd_merge_kwargs["how"] = "outer"
-        pd_merge_kwargs["on"] = cols_to_merge_on
         merged_df = hpandas.merge_dfs(
             df1,
             df2,
             threshold_col_name,
-            **pd_merge_kwargs,
+            how="outer",
+            on=cols_to_merge_on,
         )
         # Set expected values.
         expected_length = 20
@@ -1870,7 +1864,7 @@ class Test_merge_dfs1(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        There are common columns in dataframes.
+        There are common columns (besides columns to merge on) in dataframes.
         """
         # Create test data.
         data1 = {
@@ -1886,21 +1880,19 @@ class Test_merge_dfs1(hunitest.TestCase):
             "col3": [3, 30, 300],
             "col4": [4, 40, 400],
             "col5": [5, np.nan, 500],
-            "threshold_col": [7, 60, 600],
+            "threshold_col": [7, 70, 700],
         }
         index2 = [3, 4, 5]
         df2 = self.get_dataframe(data2, index2)
         #
         threshold_col_name = "threshold_col"
         cols_to_merge_on = ["col3", "threshold_col"]
-        pd_merge_kwargs = {}
-        pd_merge_kwargs["how"] = "outer"
-        pd_merge_kwargs["on"] = cols_to_merge_on
         # Check.
         with self.assertRaises(AssertionError):
             hpandas.merge_dfs(
                 df1,
                 df2,
                 threshold_col_name,
-                **pd_merge_kwargs,
+                how="outer",
+                on=cols_to_merge_on,
             )
