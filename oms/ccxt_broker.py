@@ -98,8 +98,8 @@ class CcxtBroker(ombroker.Broker):
         """
         Convert sent CCXT orders to oms.Order class.
 
-        Example of an input:
-
+        Example of an input `ccxt_order`:
+        ```
         {'info': {'orderId': '3101620940',
                 'symbol': 'BTCUSDT',
                 'status': 'FILLED',
@@ -143,6 +143,7 @@ class CcxtBroker(ombroker.Broker):
         'trades': [],
         'fees': [],
         'asset_id': 1467591036}
+        ```
         """
         asset_id = ccxt_order["asset_id"]
         type_ = "market"
@@ -513,13 +514,14 @@ class CcxtBroker(ombroker.Broker):
                 f"The {self._exchange_id} exchange is not fully supported for placing orders."
             )
 
+    # TODO(gp): Update interface to return Tuple[str, order_df].
     async def _submit_orders(
         self,
         orders: List[omorder.Order],
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> None:
+    ) -> Tuple[str, pd.DataFrame]:
         """
         Submit orders.
         """

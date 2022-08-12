@@ -21,6 +21,7 @@ import helpers.hlist as hlist
 import helpers.hlogging as hloggin
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.htimer as htimer
 import helpers.hwall_clock_time as hwacltim
@@ -507,12 +508,12 @@ class DAG(hobject.PrintableMixin):
         json_node_link_data = json.dumps(node_link_data, indent=4, sort_keys=True)
         return json_node_link_data
 
-    def _write_system_stats_to_dst_dir(
+    def _write_prof_stats_to_dst_dir(
         self,
         topological_id: int,
         nid: dtfcornode.NodeId,
         method: dtfcornode.Method,
-        file_tag: str,
+        output_name: str,
         *,
         extra_txt: str = "",
     ) -> None:
@@ -520,16 +521,27 @@ class DAG(hobject.PrintableMixin):
         Write information about the system (e.g., time and memory) before
         running a node.
 
-        The file has a format like
-        `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
+        The file has a format like:
+        ```
+        {dst_dir}/
+           node_io.stats/
+               {method}.{topological_id}.{nid}.{output_name}.{machine_timestamp}.txt
+        ```
+        E.g.,
+        ```
+            system_log_dir/20220808/dag/
+                node_io.prof/
+                    predict.0.read_data.df_out.20220808_161500.txt
+        ```
 
         :param topological_id, nid, method: information about the node and its method
             to run
-        :param file_tag: the tag to add to the file (e.g., "before_execution",
-            "after_execution")
+        :param output_name: the tag to add to the file (e.g., `df_out`)
         """
         txt = []
-        curr_timestamp = str(hwacltim.get_machine_wall_clock_time())
+        # We use the machine timestamp here since this is information about the
+        # actual run and not the simulation.
+        curr_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
         txt.append(f"timestamp={curr_timestamp}")
         memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
         txt.append("memory=%s" % memory_as_str)
@@ -541,15 +553,22 @@ class DAG(hobject.PrintableMixin):
             "\n%s\n%s",
             hprint.frame(
                 "%s: method '%s' for node topological_id=%s nid='%s'"
-                % (file_tag, method, topological_id, nid)
+                % (output_name, method, topological_id, nid)
             ),
             txt,
         )
         # Save information to file.
-        basename = f"{method}.{topological_id}.{nid}.{file_tag}.txt"
+        # E.g., system_log_dir/20220808/dag/
+        #   node_io.prof/
+        #   predict.0.read_data.df_out.20220808_161500.txt
         dst_dir = cast(str, self._dst_dir)
-        file_name = os.path.join(dst_dir, basename)
+        bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        filename = (
+            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.txt"
+        )
+        file_name = os.path.join(dst_dir, "node_io.prof", filename)
         hio.to_file(file_name, txt)
+        _LOG.debug("Saved log file '%s'", file_name)
 
     def _write_node_interface_to_dst_dir(
         self,
@@ -564,11 +583,26 @@ class DAG(hobject.PrintableMixin):
         running a node.
 
         The file has a format like:
-        `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
+        ```
+        {dst_dir}/
+           node_io.stats/
+               {method}.{topo_id}.{nid}.{output_name}.{bar_timestamp}.[csv|parquet]
+        ```
+        E.g.,
+        ```
+            system_log_dir/20220808/dag/
+                node_io.data/
+                    predict.0.read_data.df_out.20220808_161500.csv
+        ```
+
+        :param: similar to `_write_prof_stats_to_dst_dir()`
         """
-        basename = f"{method}.{topological_id}.{nid}.{output_name}"
         dst_dir = cast(str, self._dst_dir)
-        file_name = os.path.join(dst_dir, basename)
+        bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        basename = (
+            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}"
+        )
+        file_name = os.path.join(dst_dir, "node_io.data", basename)
         #
         if isinstance(obj, pd.Series):
             obj = pd.DataFrame(obj)
@@ -585,11 +619,14 @@ class DAG(hobject.PrintableMixin):
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
             if self._save_node_io == "df_as_csv":
-                df.to_csv(file_name + ".csv")
+                file_name += ".csv"
+                df.to_csv(file_name)
             elif self._save_node_io == "df_as_parquet":
-                import helpers.hparquet as hparque
-
-                hparque.to_parquet(df, file_name + ".parquet")
+                file_name += ".parquet"
+                hparque.to_parquet(df, file_name)
+            else:
+                raise ValueError(f"Invalid save_node_io='{self._save_node_io}'")
+            _LOG.debug("Saved log dir in '%s'", file_name)
         else:
             _LOG.warning(
                 "Can't save node input / output of type '%s': %s",
@@ -618,7 +655,7 @@ class DAG(hobject.PrintableMixin):
         # Save system info before execution of the node.
         if self._profile_execution:
             file_tag = "before_execution"
-            self._write_system_stats_to_dst_dir(
+            self._write_prof_stats_to_dst_dir(
                 topological_id, nid, method, file_tag
             )
             run_node_dtimer = htimer.dtimer_start(logging.DEBUG, "run_node")
@@ -670,7 +707,7 @@ class DAG(hobject.PrintableMixin):
             txt.append(htimer.dtimer_stop(run_node_dtimer)[0])
             txt.append(htimer.dmemory_stop(run_node_dmemory))
             txt = "\n".join(txt)
-            self._write_system_stats_to_dst_dir(
+            self._write_prof_stats_to_dst_dir(
                 topological_id,
                 nid,
                 method,

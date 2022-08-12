@@ -71,7 +71,7 @@ connection = hsql.get_connection(*connection_params)
 # %%
 hsql.remove_table(connection, "example2_marketdata")
 im_client = icdc.get_mock_realtime_client(connection)
-market_data = mdata.get_RealtimeMarketData2_example1(im_client)
+market_data = mdata.get_RealtimeMarketData_example1(im_client)
 
 # %%
 # Load an example of CCXT order.
@@ -109,7 +109,7 @@ broker = occxbrok.CcxtBroker(
 # %%
 orders = [order]
 # Submitting orders to exchange and getting the
-order_resps = await broker._submit_orders(orders, pd.Timestamp.utcnow(), dry_run=False)
+order_resps, df = await broker._submit_orders(orders, pd.Timestamp.utcnow(), dry_run=False)
 
 # %% [markdown]
 # ### `get_fills`
