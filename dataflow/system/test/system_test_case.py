@@ -6,6 +6,7 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
+import os
 from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 
 import pandas as pd
@@ -51,6 +52,19 @@ def get_signature(
     return res
 
 
+# TODO(gp): This should be moved in the utils and used everywhere.
+def _apply_unit_test_log_dir(
+    self_: Any,
+    system: dtfsyssyst.System
+):
+    """
+    Update the `system_log_dir` to save data in the scratch space.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    system.config["system_log_dir"] = os.path.join(
+        self_.get_scratch_space(), "system_log_dir")
+
+
 def _get_signature_from_result_bundle(
     system: dtfsyssyst.System,
     result_bundles: List[dtfcore.ResultBundle],
@@ -59,11 +73,12 @@ def _get_signature_from_result_bundle(
 ) -> str:
     portfolio = system.portfolio
     dag_runner = system.dag_runner
-    # Compute signature.
     txt = []
+    # - Compute system signature.
     if add_system_config:
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))
+    # - Compute run signature.
     if add_run_signature:
         # TODO(gp): This should be factored out.
         txt.append(hprint.frame("compute_run_signature"))
@@ -82,6 +97,12 @@ def _get_signature_from_result_bundle(
             forecast_evaluator_from_prices_dict,
         )
         txt.append(txt_tmp)
+    # - Compute the signature of the output dir.
+    txt.append(hprint.frame("system_log_dir signature"))
+    log_dir = system.config["system_log_dir"]
+    txt_tmp = hunitest.get_dir_signature(log_dir, include_file_content=False,
+            remove_dir_name=True)
+    txt.append(txt_tmp)
     #
     actual = "\n".join(txt)
     # Remove the following line:
@@ -111,6 +132,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         Freeze config.
         """
         hdbg.dassert_isinstance(system, dtfsyssyst.System)
+        _apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         _ = system.dag_runner
         #
@@ -143,6 +165,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the backtest_config period
         - Save the signature of the system
         """
+        _apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
@@ -172,6 +195,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the given period
         - Save the signature of the system
         """
+        _apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         # Set the time boundaries.
@@ -184,6 +208,8 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
+    # TODO(Paul, gp): This should have the option to burn the last N elements
+    #  of the fit/predict dataframes.
     def _test_fit_vs_predict1(
         self,
         system: dtfsyssyst.System,
@@ -192,6 +218,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
         """
+        _apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         # Get the time boundaries.
@@ -268,6 +295,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self,
         system: dtfsyssyst.System,
     ) -> None:
+        _apply_unit_test_log_dir(self, system)
         dag_runner = system.dag_runner
         # Set the time boundaries.
         start_datetime = system.config[
@@ -322,6 +350,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         *,
         output_col_name: str = "prediction",
     ) -> None:
+        _apply_unit_test_log_dir(self, system)
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
@@ -352,10 +381,13 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     - Simulated broker
     """
 
-    # TODO(Grisha): there is some code that is common for `Time_ForecastSystem_with_DataFramePortfolio_TestCase1`
-    # and `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1` that we should factor out.
-    @staticmethod
+    # TODO(Grisha): there is some code that is common for
+    #  `Time_ForecastSystem_with_DataFramePortfolio_TestCase1`
+    #  and
+    #  `Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1`
+    #  that we should factor out.
     def _test_dataframe_portfolio_helper(
+        self,
         system: dtfsyssyst.System,
         *,
         add_system_config: bool = True,
@@ -364,6 +396,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         Run a System with a DataframePortfolio.
         """
+        _apply_unit_test_log_dir(self, system)
         with hasynci.solipsism_context() as event_loop:
             #
             system.config["event_loop_object"] = event_loop
@@ -466,6 +499,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         Run a System with a DatabasePortfolio.
         """
+        _apply_unit_test_log_dir(self, system)
+        #
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
@@ -475,24 +510,24 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
+            # Create DAG runner.
+            dag_runner = system.dag_runner
+            coroutines.append(dag_runner.predict())
             # Create and add order processor.
             order_processor_coroutine = system.order_processor
             hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            coroutines.append(dag_runner.predict())
             #
-            result_bundles = hasynci.run(
+            coro_output = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Check.
-            # Pick the result_bundle that corresponds to the DagRunner.
-            result_bundles = result_bundles[1]
-            actual = _get_signature_from_result_bundle(
-                system, result_bundles, add_system_config, add_run_signature
-            )
-            return actual
+        # Check.
+        # Pick the result_bundle that corresponds to the DagRunner.
+        result_bundles = coro_output[0]
+        actual = _get_signature_from_result_bundle(
+            system, result_bundles, add_system_config, add_run_signature
+        )
+        return actual
 
     def _test1(self, system: dtfsyssyst.System) -> None:
         """
@@ -529,6 +564,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             add_system_config=add_system_config,
             add_run_signature=add_run_signature,
         )
+        # Make sure there is something in the actual outcome.
         hdbg.dassert_lte(10, len(actual.split("\n")))
         expected = self._test_database_portfolio_helper(
             system_with_database_portfolio,
@@ -544,8 +580,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             purify_expected_text=True,
         )
 
-
-# TODO(gp): Add a longer test with more assets once things are working.
 
 # #############################################################################
 # SystemTester
