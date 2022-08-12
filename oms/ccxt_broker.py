@@ -628,7 +628,7 @@ class CcxtBroker(ombroker.Broker):
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
-        if self._mode in ["test", "debug_test1"]:
+        if self._account_type == "sandbox":
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")
         hdbg.dassert(
@@ -647,13 +647,15 @@ def get_CcxtBroker_prod_instance1(
     """
     exchange_id = "binance"
     universe_version = "v5"
-    mode = "test"
+    stage = "local"
+    account_type = "sandbox"
     contract_type = "futures"
     portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
         exchange_id,
         universe_version,
-        mode,
+        stage,
+        account_type,
         portfolio_id,
         contract_type,
         strategy_id=strategy_id,
