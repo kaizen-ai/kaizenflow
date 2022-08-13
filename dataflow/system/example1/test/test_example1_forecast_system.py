@@ -7,6 +7,7 @@ import pytest
 import core.finance as cofinanc
 import dataflow.system.example1.example1_forecast_system as dtfseefosy
 import dataflow.system.system as dtfsyssyst
+import dataflow.system.system_builder_utils as dtfssybuut
 import dataflow.system.test.system_test_case as dtfsytsytc
 
 _LOG = logging.getLogger(__name__)
@@ -36,6 +37,7 @@ class Test_Example1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         system_builder = system_builder_func()
+        dtfssybuut.apply_unit_test_log_dir(self,system)
         self._test_freeze_config1(system_builder)
 
 
@@ -53,6 +55,7 @@ class Test_Example1_ForecastSystem_FitPredict(
         """
         system_builder_func = _get_test_system_builder_func()
         system = system_builder_func()
+        dtfssybuut.apply_unit_test_log_dir(self,system)
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -93,6 +96,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
 ):
     def test_test_invariance1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
+        dtfssybuut.apply_unit_test_log_dir(self,system)
         start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
         start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
         end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
@@ -119,6 +123,7 @@ class Test_Example1_ForecastSystem_CheckPnl(
     def test_test_fit_run1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         system = system_builder_func()
+        dtfssybuut.apply_unit_test_log_dir(self,system)
         system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
@@ -141,6 +146,7 @@ class Test_Example1_Time_ForecastSystem1(
         Verify the contents of DAG prediction.
         """
         system = dtfseefosy.Example1_Time_ForecastSystem()
+        dtfssybuut.apply_unit_test_log_dir(self,system)
         market_data, real_time_loop_time_out = cofinanc.get_market_data_df4()
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
@@ -175,6 +181,7 @@ def _get_test_System_with_DataFramePortfolio(
     system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         market_data_df, real_time_loop_time_out_in_secs
     )
+    dtfssybuut.apply_unit_test_log_dir(self,system)
     return system
 
 
@@ -211,6 +218,7 @@ def _get_test_System_with_DatabasePortfolio(
     system = dtfseefosy.get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
         market_data_df, real_time_loop_time_out_in_secs
     )
+    dtfssybuut.apply_unit_test_log_dir(self,system)
     return system
 
 

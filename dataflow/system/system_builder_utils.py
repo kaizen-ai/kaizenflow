@@ -427,6 +427,18 @@ def add_process_forecasts_node(
     return dag
 
 
+def apply_unit_test_log_dir(
+    self_: Any,
+    system: dtfsyssyst.System
+):
+    """
+    Update the `system_log_dir` to save data in the scratch space.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    system.config["system_log_dir"] = os.path.join(
+        self_.get_scratch_space(), "system_log_dir")
+
+
 # #############################################################################
 # DAG runner instances.
 # #############################################################################

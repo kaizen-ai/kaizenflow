@@ -15,6 +15,7 @@ import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import dataflow.system.system as dtfsyssyst
+import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -50,19 +51,6 @@ def get_signature(
     #
     res = "\n".join(txt)
     return res
-
-
-# TODO(gp): This should be moved in the utils and used everywhere.
-def _apply_unit_test_log_dir(
-    self_: Any,
-    system: dtfsyssyst.System
-):
-    """
-    Update the `system_log_dir` to save data in the scratch space.
-    """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    system.config["system_log_dir"] = os.path.join(
-        self_.get_scratch_space(), "system_log_dir")
 
 
 def _get_signature_from_result_bundle(
@@ -132,7 +120,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         Freeze config.
         """
         hdbg.dassert_isinstance(system, dtfsyssyst.System)
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         _ = system.dag_runner
         #
@@ -165,7 +153,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the backtest_config period
         - Save the signature of the system
         """
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
@@ -195,7 +183,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the given period
         - Save the signature of the system
         """
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         # Set the time boundaries.
@@ -218,7 +206,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
         """
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         # Get the time boundaries.
@@ -295,7 +283,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self,
         system: dtfsyssyst.System,
     ) -> None:
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         dag_runner = system.dag_runner
         # Set the time boundaries.
         start_datetime = system.config[
@@ -350,7 +338,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         *,
         output_col_name: str = "prediction",
     ) -> None:
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
@@ -396,7 +384,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         Run a System with a DataframePortfolio.
         """
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         with hasynci.solipsism_context() as event_loop:
             #
             system.config["event_loop_object"] = event_loop
@@ -499,7 +487,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         Run a System with a DatabasePortfolio.
         """
-        _apply_unit_test_log_dir(self, system)
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         #
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
