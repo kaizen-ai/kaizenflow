@@ -297,11 +297,14 @@ def docker_login(ctx):  # type: ignore
             f"https://{ecr_base_path}"
         )
     else:
-        NotImplementedError(f"Docker login for awscli v{major_version} is not implemented!")
+        NotImplementedError(
+            f"Docker login for awscli v{major_version} is not implemented!"
+        )
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
     hlitauti._run(ctx, cmd, use_system=True)
+
 
 # ////////////////////////////////////////////////////////////////////////////////
 # Compose files.
@@ -442,7 +445,6 @@ def _generate_docker_compose_file(
           - AM_REPO_CONFIG_CHECK=True
           # Use inferred path for `repo_config.py`.
           - AM_REPO_CONFIG_PATH=
-          - AM_PUBLISH_NOTEBOOK_LOCAL_PATH=$AM_PUBLISH_NOTEBOOK_LOCAL_PATH
           - AM_TELEGRAM_TOKEN=$AM_TELEGRAM_TOKEN
           - CK_AWS_ACCESS_KEY_ID=$CK_AWS_ACCESS_KEY_ID
           - CK_AWS_DEFAULT_REGION=$CK_AWS_DEFAULT_REGION
@@ -798,9 +800,7 @@ _IMAGE_BASE_NAME_RE = r"[a-z0-9_-]+"
 _IMAGE_USER_RE = r"[a-z0-9_-]+"
 # For candidate prod images which have added hash for easy identification.
 _IMAGE_HASH_RE = r"[a-z0-9]{9}"
-_IMAGE_STAGE_RE = (
-    rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
-)
+_IMAGE_STAGE_RE = rf"(local(?:-{_IMAGE_USER_RE})?|dev|prod|prod(?:-{_IMAGE_USER_RE})(?:-{_IMAGE_HASH_RE})?|prod(?:-{_IMAGE_HASH_RE})?)"
 
 
 def _dassert_is_image_name_valid(image: str) -> None:
@@ -814,7 +814,7 @@ def _dassert_is_image_name_valid(image: str) -> None:
       to indicate the latest
       - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev-1.0.0`
         and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:dev`
-    - `prod` candidate image has an optional tag (e.g., a user name) and 
+    - `prod` candidate image has an optional tag (e.g., a user name) and
         a 9 character hash identifier corresponding Git commit
         - E.g., `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-4rf74b83a`
         - and `*****.dkr.ecr.us-east-1.amazonaws.com/amp:prod-1.0.0-saggese-4rf74b83a`

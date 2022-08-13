@@ -148,6 +148,7 @@ object.str:
           ask: ask
           midpoint: midpoint
           price: close
+        _log_dir='None' <NoneType>
         _orders='OrderedDict()' <collections.OrderedDict>
         _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
         _fills='[]' <list>
@@ -244,7 +245,6 @@ object.str:
       <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
         _max_keys='None' <NoneType>
         _odict='OrderedDict()' <collections.OrderedDict>
-  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
   dag_object: <dataflow.core.dag.DAG at 0x>:
     _nx_dag='DiGraph with 8 nodes and 7 edges' <networkx.classes.digraph.DiGraph>
     _name='None' <NoneType>
@@ -454,12 +454,13 @@ object.str:
     _wake_up_timestamp='None' <NoneType>
     _grid_time_in_secs='300' <int>
     _events='[]' <list>
+  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 object.builder_function:
   market_object: dataflow.system.example1.example1_forecast_system._get_market_data
   portfolio_object: dataflow.system.example1.example1_forecast_system._get_portfolio
-  order_processor: dataflow.system.example1.example1_forecast_system._get_order_processor
   dag_object: dataflow.system.example1.example1_forecast_system._get_dag
   dag_runner_object: dataflow.system.example1.example1_forecast_system._get_dag_runner
+  order_processor: dataflow.system.example1.example1_forecast_system._get_order_processor
 portfolio_object: # historical holdings=
 asset_id                      101      -1
 2000-01-01 09:35:06-05:00    0.00  1.00e+06
@@ -504,7 +505,6 @@ asset_id                      101
 2000-01-01 09:55:06-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.10e+06    1.00e+06       0.1
 2000-01-01 10:00:06-05:00  997.24     199007.16   199007.16   99338.84   99338.84  9.05e+05    1.00e+06       0.1
 2000-01-01 10:05:06-05:00  992.84     200997.24  -200997.24  100665.56 -100665.56  1.11e+06    1.01e+06       0.1
-order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 process_forecasts_config:
   prediction_col: feature1
   volatility_col: vwap.ret_0.vol
@@ -593,6 +593,7 @@ dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 
     2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
   _knowledge_datetime_col_name='timestamp_db' <str>
   _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
+order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 ################################################################################
 compute_run_signature
 ################################################################################
@@ -676,3 +677,10 @@ end_datetime
                              pnl  gross_volume  net_volume       gmv       nmv
 end_datetime
 2000-01-01 10:05:00-05:00  990.1      201000.0   -201000.0  101000.0 -101000.0
+################################################################################
+system_log_dir signature
+################################################################################
+# Dir structure
+.
+system_config.input.txt
+system_config.output.txt

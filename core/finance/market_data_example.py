@@ -25,6 +25,280 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Paul): Consider factoring out this wrapper pattern.
+def generate_random_ohlcv_bars(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Wraps `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
+
+    :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
+        concatenated along the index, sorted by timestamp then by asset it
+    """
+    asset_dfs = []
+    for asset_id in asset_ids:
+        df = generate_random_ohlcv_bars_for_asset(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            bar_expected_count=bar_expected_count,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+            seed=seed,
+        )
+        asset_dfs.append(df)
+        seed += 1
+    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
+    df.reset_index(drop=True, inplace=True)
+    return df
+
+
+def generate_random_ohlcv_bars_for_asset(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_id: int,
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Return a dataframe of random OHLCV bars for a single instrument.
+
+    Output example:
+
+    :param start_datetime: initial timestamp
+    :param end_datetime: final timestamp
+    :param asset_id: asset id for labeling
+    :param bar_duration: length of bar in time
+    :param bar_volatility_in_bps: expected bar volatility
+    :param bar_expected_count: expected volume per bar
+    :param last_price: "last price" before start of series
+    :param start_time: e.g., start of active trading hours
+    :param end_time: e.g., end of active trading hours
+    :param seed: seed for numpy `Generator`
+    :return: dataframe like
+      - index is an integer index
+      - columns include timestamps, asset id, open, high, low, close, volume
+    """
+    price_process = carsigen.PriceProcess(seed)
+    native_bar_duration = "1T"
+    bar_ratio = pd.Timedelta(bar_duration) / pd.Timedelta(native_bar_duration)
+    native_bar_volatility_in_bps = int(bar_volatility_in_bps / np.sqrt(bar_ratio))
+    _LOG.debug("1-min bar volatility in bps=%d", native_bar_volatility_in_bps)
+    native_bar_expected_count = int(bar_expected_count / bar_ratio)
+    _LOG.debug("1-min bar expected count=%d", native_bar_expected_count)
+    close = price_process.generate_price_series_from_normal_log_returns(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=native_bar_duration,
+        bar_volatility_in_bps=native_bar_volatility_in_bps,
+        last_price=last_price,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("close")
+    ohlc = (
+        close.resample(bar_duration, label="right", closed="right")
+        .ohlc()
+        .round(2)
+    )
+    volume = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=native_bar_duration,
+        bar_expected_count=native_bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("volume")
+    volume = volume.resample(bar_duration, label="right", closed="right").sum(
+        min_count=1
+    )
+    bar_delay = "10s"
+    df = build_timestamp_df(
+        ohlc.index,
+        bar_duration,
+        bar_delay,
+    )
+    df = pd.concat(
+        [df, ohlc, volume],
+        axis=1,
+    )
+    df["asset_id"] = asset_id
+    return df.reset_index(drop=True)
+
+
+def generate_random_top_of_book_bars(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_ids: List[int],
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_spread_in_bps: int = 4,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Wraps `generate_random_top_of_book_bars_for_asset()` for multiple
+    instruments.
+
+    Output example:
+
+    ```
+                  start_datetime ...        ask     midpoint  volume  asset_id
+    0  2000-01-01 09:31:00-05:00     998.897634   998.897480     988       101
+    1  2000-01-01 09:31:00-05:00    1000.120981  1000.117331     955       102
+    2  2000-01-01 09:32:00-05:00     997.401239   997.399872    1045       101
+    ```
+
+    :return: dataframe like
+      - index is an integer index
+      - columns include timestamps, asset ids, price, volume, and fake features
+    """
+    asset_dfs = []
+    for asset_id in asset_ids:
+        df = generate_random_top_of_book_bars_for_asset(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            bar_spread_in_bps=bar_spread_in_bps,
+            bar_expected_count=bar_expected_count,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+            seed=seed,
+        )
+        asset_dfs.append(df)
+        seed += 1
+    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
+    return df
+
+
+def generate_random_top_of_book_bars_for_asset(
+    start_datetime: pd.Timestamp,
+    end_datetime: pd.Timestamp,
+    asset_id: int,
+    *,
+    bar_duration: str = "1T",
+    bar_volatility_in_bps: int = 10,
+    bar_spread_in_bps: int = 4,
+    bar_expected_count: int = 1000,
+    last_price: float = 1000,
+    start_time: datetime.time = datetime.time(9, 31),
+    end_time: datetime.time = datetime.time(16, 00),
+    seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Return a dataframe of random bars for a single instrument.
+
+    Output example:
+
+    ```
+                  start_datetime ...        ask    midpoint  volume  asset_id
+    0  2000-01-01 09:31:00-05:00     998.897634  998.897480     988       101
+    1  2000-01-01 09:32:00-05:00     998.120981  998.117331     955       101
+    2  2000-01-01 09:33:00-05:00     997.401239  997.399872    1045       101
+    ```
+
+    :param start_datetime: initial timestamp
+    :param end_datetime: final timestamp
+    :param asset_id: asset id for labeling
+    :param bar_duration: length of bar in time
+    :param bar_volatility_in_bps: expected bar volatility
+    :param bar_spread_in_bps: expected bar spread
+    :param bar_expected_count: expected volume per bar
+    :param last_price: "last price" before start of series
+    :param start_time: e.g., start of active trading hours
+    :param end_time: e.g., end of active trading hours
+    :param seed: seed for numpy `Generator`
+    :return: dataframe like
+      - index is an integer index
+      - columns include timestamps, asset id, price, volume, and fake features
+    """
+    price_process = carsigen.PriceProcess(seed)
+    bid = (
+        price_process.generate_price_series_from_normal_log_returns(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        .rename("bid")
+        .round(2)
+    )
+    spread = (
+        (
+            100
+            * price_process.generate_price_series_from_normal_log_returns(
+                start_datetime,
+                end_datetime,
+                asset_id,
+                bar_duration=bar_duration,
+                bar_volatility_in_bps=bar_spread_in_bps,
+                last_price=last_price,
+                start_time=start_time,
+                end_time=end_time,
+            )
+            .pct_change()
+            .shift(-1)
+            .abs()
+        )
+        .round(2)
+        .clip(lower=0.01)
+    )
+    ask = (bid + spread).rename("ask").round(2)
+    midpoint = (0.5 * (bid + ask)).rename("midpoint")
+    volume = price_process.generate_volume_series_from_poisson_process(
+        start_datetime,
+        end_datetime,
+        asset_id,
+        bar_duration=bar_duration,
+        bar_expected_count=bar_expected_count,
+        start_time=start_time,
+        end_time=end_time,
+    ).rename("volume")
+    bar_delay = "1s"
+    df = build_timestamp_df(
+        bid.index,
+        bar_duration,
+        bar_delay,
+    )
+    df = pd.concat(
+        [df, bid, ask, midpoint, volume],
+        axis=1,
+    )
+    df["asset_id"] = asset_id
+    return df.reset_index(drop=True)
+
+
 def generate_random_price_data(
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
@@ -236,127 +510,6 @@ def generate_random_bars_for_asset(
     return df.reset_index(drop=True)
 
 
-# TODO(Paul): Consider factoring out this wrapper pattern.
-def generate_random_ohlcv_bars(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
-    asset_ids: List[int],
-    *,
-    bar_duration: str = "1T",
-    bar_volatility_in_bps: int = 10,
-    bar_expected_count: int = 1000,
-    last_price: float = 1000,
-    start_time: datetime.time = datetime.time(9, 31),
-    end_time: datetime.time = datetime.time(16, 00),
-    seed: int = 10,
-) -> pd.DataFrame:
-    """
-    Wraps `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
-
-    :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
-        concatenated along the index, sorted by timestamp then by asset it
-    """
-    asset_dfs = []
-    for asset_id in asset_ids:
-        df = generate_random_ohlcv_bars_for_asset(
-            start_datetime,
-            end_datetime,
-            asset_id,
-            bar_duration=bar_duration,
-            bar_volatility_in_bps=bar_volatility_in_bps,
-            bar_expected_count=bar_expected_count,
-            last_price=last_price,
-            start_time=start_time,
-            end_time=end_time,
-            seed=seed,
-        )
-        asset_dfs.append(df)
-        seed += 1
-    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
-    df.reset_index(drop=True, inplace=True)
-    return df
-
-
-def generate_random_ohlcv_bars_for_asset(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
-    asset_id: int,
-    *,
-    bar_duration: str = "1T",
-    bar_volatility_in_bps: int = 10,
-    bar_expected_count: int = 1000,
-    last_price: float = 1000,
-    start_time: datetime.time = datetime.time(9, 31),
-    end_time: datetime.time = datetime.time(16, 00),
-    seed: int = 10,
-) -> pd.DataFrame:
-    """
-    Return a dataframe of random OHLCV bars for a single instrument.
-
-    Output example:
-
-    :param start_datetime: initial timestamp
-    :param end_datetime: final timestamp
-    :param asset_id: asset id for labeling
-    :param bar_duration: length of bar in time
-    :param bar_volatility_in_bps: expected bar volatility
-    :param bar_expected_count: expected volume per bar
-    :param last_price: "last price" before start of series
-    :param start_time: e.g., start of active trading hours
-    :param end_time: e.g., end of active trading hours
-    :param seed: seed for numpy `Generator`
-    :return: dataframe like
-      - index is an integer index
-      - columns include timestamps, asset id, open, high, low, close, volume
-    """
-    price_process = carsigen.PriceProcess(seed)
-    native_bar_duration = "1T"
-    bar_ratio = pd.Timedelta(bar_duration) / pd.Timedelta(native_bar_duration)
-    native_bar_volatility_in_bps = int(bar_volatility_in_bps / np.sqrt(bar_ratio))
-    _LOG.debug("1-min bar volatility in bps=%d", native_bar_volatility_in_bps)
-    native_bar_expected_count = int(bar_expected_count / bar_ratio)
-    _LOG.debug("1-min bar expected count=%d", native_bar_expected_count)
-    close = price_process.generate_price_series_from_normal_log_returns(
-        start_datetime,
-        end_datetime,
-        asset_id,
-        bar_duration=native_bar_duration,
-        bar_volatility_in_bps=native_bar_volatility_in_bps,
-        last_price=last_price,
-        start_time=start_time,
-        end_time=end_time,
-    ).rename("close")
-    ohlc = (
-        close.resample(bar_duration, label="right", closed="right")
-        .ohlc()
-        .round(2)
-    )
-    volume = price_process.generate_volume_series_from_poisson_process(
-        start_datetime,
-        end_datetime,
-        asset_id,
-        bar_duration=native_bar_duration,
-        bar_expected_count=native_bar_expected_count,
-        start_time=start_time,
-        end_time=end_time,
-    ).rename("volume")
-    volume = volume.resample(bar_duration, label="right", closed="right").sum(
-        min_count=1
-    )
-    bar_delay = "10s"
-    df = build_timestamp_df(
-        ohlc.index,
-        bar_duration,
-        bar_delay,
-    )
-    df = pd.concat(
-        [df, ohlc, volume],
-        axis=1,
-    )
-    df["asset_id"] = asset_id
-    return df.reset_index(drop=True)
-
-
 def build_timestamp_df(
     index: pd.DatetimeIndex,
     bar_duration: str,
@@ -393,159 +546,6 @@ def build_timestamp_df(
         axis=1,
     )
     return df
-
-
-def generate_random_top_of_book_bars(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
-    asset_ids: List[int],
-    *,
-    bar_duration: str = "1T",
-    bar_volatility_in_bps: int = 10,
-    bar_spread_in_bps: int = 4,
-    bar_expected_count: int = 1000,
-    last_price: float = 1000,
-    start_time: datetime.time = datetime.time(9, 31),
-    end_time: datetime.time = datetime.time(16, 00),
-    seed: int = 10,
-) -> pd.DataFrame:
-    """
-    Wraps `generate_random_top_of_book_bars_for_asset()` for multiple
-    instruments.
-
-    Output example:
-
-    ```
-                  start_datetime ...        ask     midpoint  volume  asset_id
-    0  2000-01-01 09:31:00-05:00     998.897634   998.897480     988       101
-    1  2000-01-01 09:31:00-05:00    1000.120981  1000.117331     955       102
-    2  2000-01-01 09:32:00-05:00     997.401239   997.399872    1045       101
-    ```
-
-    :return: dataframe like
-      - index is an integer index
-      - columns include timestamps, asset ids, price, volume, and fake features
-    """
-    asset_dfs = []
-    for asset_id in asset_ids:
-        df = generate_random_top_of_book_bars_for_asset(
-            start_datetime,
-            end_datetime,
-            asset_id,
-            bar_duration=bar_duration,
-            bar_volatility_in_bps=bar_volatility_in_bps,
-            bar_spread_in_bps=bar_spread_in_bps,
-            bar_expected_count=bar_expected_count,
-            last_price=last_price,
-            start_time=start_time,
-            end_time=end_time,
-            seed=seed,
-        )
-        asset_dfs.append(df)
-        seed += 1
-    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
-    return df
-
-
-def generate_random_top_of_book_bars_for_asset(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
-    asset_id: int,
-    *,
-    bar_duration: str = "1T",
-    bar_volatility_in_bps: int = 10,
-    bar_spread_in_bps: int = 4,
-    bar_expected_count: int = 1000,
-    last_price: float = 1000,
-    start_time: datetime.time = datetime.time(9, 31),
-    end_time: datetime.time = datetime.time(16, 00),
-    seed: int = 10,
-) -> pd.DataFrame:
-    """
-    Return a dataframe of random bars for a single instrument.
-
-    Output example:
-
-    ```
-                  start_datetime ...        ask    midpoint  volume  asset_id
-    0  2000-01-01 09:31:00-05:00     998.897634  998.897480     988       101
-    1  2000-01-01 09:32:00-05:00     998.120981  998.117331     955       101
-    2  2000-01-01 09:33:00-05:00     997.401239  997.399872    1045       101
-    ```
-
-    :param start_datetime: initial timestamp
-    :param end_datetime: final timestamp
-    :param asset_id: asset id for labeling
-    :param bar_duration: length of bar in time
-    :param bar_volatility_in_bps: expected bar volatility
-    :param bar_spread_in_bps: expected bar spread
-    :param bar_expected_count: expected volume per bar
-    :param last_price: "last price" before start of series
-    :param start_time: e.g., start of active trading hours
-    :param end_time: e.g., end of active trading hours
-    :param seed: seed for numpy `Generator`
-    :return: dataframe like
-      - index is an integer index
-      - columns include timestamps, asset id, price, volume, and fake features
-    """
-    price_process = carsigen.PriceProcess(seed)
-    bid = (
-        price_process.generate_price_series_from_normal_log_returns(
-            start_datetime,
-            end_datetime,
-            asset_id,
-            bar_duration=bar_duration,
-            bar_volatility_in_bps=bar_volatility_in_bps,
-            last_price=last_price,
-            start_time=start_time,
-            end_time=end_time,
-        )
-        .rename("bid")
-        .round(2)
-    )
-    spread = (
-        (
-            100
-            * price_process.generate_price_series_from_normal_log_returns(
-                start_datetime,
-                end_datetime,
-                asset_id,
-                bar_duration=bar_duration,
-                bar_volatility_in_bps=bar_spread_in_bps,
-                last_price=last_price,
-                start_time=start_time,
-                end_time=end_time,
-            )
-            .pct_change()
-            .shift(-1)
-            .abs()
-        )
-        .round(2)
-        .clip(lower=0.01)
-    )
-    ask = (bid + spread).rename("ask").round(2)
-    midpoint = (0.5 * (bid + ask)).rename("midpoint")
-    volume = price_process.generate_volume_series_from_poisson_process(
-        start_datetime,
-        end_datetime,
-        asset_id,
-        bar_duration=bar_duration,
-        bar_expected_count=bar_expected_count,
-        start_time=start_time,
-        end_time=end_time,
-    ).rename("volume")
-    bar_delay = "1s"
-    df = build_timestamp_df(
-        bid.index,
-        bar_duration,
-        bar_delay,
-    )
-    df = pd.concat(
-        [df, bid, ask, midpoint, volume],
-        axis=1,
-    )
-    df["asset_id"] = asset_id
-    return df.reset_index(drop=True)
 
 
 # #############################################################################
