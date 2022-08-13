@@ -227,14 +227,19 @@ def load_market_data(
     :param datetime_columns: names (after remapping) of the columns to convert
         to datetime
     """
+    _LOG.debug(
+        hprint.to_str(
+            "file_name aws_profile column_remap timestamp_db_column "
+            "datetime_columns read_csv_kwargs"
+        )
+    )
     # Build options for `read_csv_to_df()`.
     if read_csv_kwargs is None:
         read_csv_kwargs = {}
-    read_csv_kwargs_tmp = read_csv_kwargs.copy()
+    read_csv_kwargs = read_csv_kwargs.copy()
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
-        read_csv_kwargs_tmp["s3fs"] = s3fs_
-    read_csv_kwargs.update(read_csv_kwargs_tmp)  # type: ignore[arg-type]
+        read_csv_kwargs["s3fs"] = s3fs_
     stream, read_csv_kwargs = hs3.get_local_or_s3_stream(
         file_name, **read_csv_kwargs
     )

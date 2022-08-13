@@ -116,6 +116,7 @@ def get_DatabasePortfolio_example1(
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
+    broker_log_dir: Optional[str] = None,
 ) -> omportfo.DatabasePortfolio:
     """
     Contain:
@@ -127,6 +128,7 @@ def get_DatabasePortfolio_example1(
         event_loop,
         db_connection,
         market_data=market_data,
+        log_dir=broker_log_dir,
         timestamp_col=timestamp_col,
     )
     # Build DatabasePortfolio.
@@ -187,6 +189,8 @@ def get_DatabasePortfolio_example3(
     event_loop: asyncio.AbstractEventLoop,
     market_data: mdata.MarketData,
     asset_ids: List[int],
+    *,
+    broker_log_dir: Optional[str] = None,
     # TODO(gp): Return oms.Portfolio like parent class?
 ) -> omportfo.DatabasePortfolio:
     """
@@ -205,6 +209,7 @@ def get_DatabasePortfolio_example3(
         pricing_method="twap.5T",
         timestamp_col=timestamp_col,
         asset_ids=asset_ids,
+        broker_log_dir=broker_log_dir,
     )
     portfolio.broker._column_remap = {
         "bid": "bid",

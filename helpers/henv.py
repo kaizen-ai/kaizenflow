@@ -113,7 +113,6 @@ def get_env_vars() -> List[str]:
         "AM_HOST_USER_NAME",
         # The version of the host running Docker.
         "AM_HOST_VERSION",
-        "AM_PUBLISH_NOTEBOOK_LOCAL_PATH",
         # Whether to check if certain property of the repo are as expected or not.
         "AM_REPO_CONFIG_CHECK",
         # Path to use for `repo_config.py`. E.g., used when running `dev_tools`
@@ -124,12 +123,13 @@ def get_env_vars() -> List[str]:
         "GH_ACTION_ACCESS_TOKEN",
         # Whether we are running inside GH Actions.
         "CI",
+        # TODO(gp): Difference between amp and cmamp.
         # CK AWS credentials.
         "CK_AWS_ACCESS_KEY_ID",
         "CK_AWS_DEFAULT_REGION",
         "CK_AWS_SECRET_ACCESS_KEY",
         # S3 bucket to use for CK.
-        "CK_AWS_S3_BUCKET"
+        "CK_AWS_S3_BUCKET",
     ]
     # No duplicates.
     assert len(set(env_var_names)) == len(
@@ -148,9 +148,10 @@ def get_secret_env_vars() -> List[str]:
         "AM_TELEGRAM_TOKEN",
         "AM_AWS_ACCESS_KEY_ID",
         "AM_AWS_SECRET_ACCESS_KEY",
+        # TODO(gp): Difference between amp and cmamp.
         "CK_AWS_ACCESS_KEY_ID",
         "CK_AWS_SECRET_ACCESS_KEY",
-        "GH_ACTION_ACCESS_TOKEN"
+        "GH_ACTION_ACCESS_TOKEN",
     ]
     # No duplicates.
     assert len(set(secret_env_var_names)) == len(
