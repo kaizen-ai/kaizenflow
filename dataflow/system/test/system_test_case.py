@@ -6,7 +6,6 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 
 import asyncio
 import logging
-import os
 from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
 
 import pandas as pd
@@ -88,8 +87,9 @@ def _get_signature_from_result_bundle(
     # - Compute the signature of the output dir.
     txt.append(hprint.frame("system_log_dir signature"))
     log_dir = system.config["system_log_dir"]
-    txt_tmp = hunitest.get_dir_signature(log_dir, include_file_content=False,
-            remove_dir_name=True)
+    txt_tmp = hunitest.get_dir_signature(
+        log_dir, include_file_content=False, remove_dir_name=True
+    )
     txt.append(txt_tmp)
     #
     actual = "\n".join(txt)
@@ -253,6 +253,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         """
         # Run dag_runner1.
         system = system_builder()
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         dag_runner1 = system.dag_runner
         dag_runner1.set_fit_intervals(
             [(start_timestamp1, end_timestamp)],
@@ -261,6 +262,7 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
         result_df1 = result_bundle1.result_df
         # Run dag_runner2.
         system = system_builder()
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         dag_runner2 = system.dag_runner
         dag_runner2.set_fit_intervals(
             [(start_timestamp2, end_timestamp)],

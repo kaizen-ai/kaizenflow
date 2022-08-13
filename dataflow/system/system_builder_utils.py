@@ -7,7 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import datetime
 import logging
 import os
-from typing import Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional
 
 import pandas as pd
 
@@ -427,16 +427,14 @@ def add_process_forecasts_node(
     return dag
 
 
-def apply_unit_test_log_dir(
-    self_: Any,
-    system: dtfsyssyst.System
-):
+def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     """
     Update the `system_log_dir` to save data in the scratch space.
     """
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     system.config["system_log_dir"] = os.path.join(
-        self_.get_scratch_space(), "system_log_dir")
+        self_.get_scratch_space(), "system_log_dir"
+    )
 
 
 # #############################################################################

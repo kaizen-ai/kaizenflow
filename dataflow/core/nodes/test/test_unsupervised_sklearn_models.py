@@ -279,11 +279,11 @@ class TestResidualizer2(hunitest.TestCase):
         """
         # Load test data.
         data = self.get_data()
-        data[("close.ret_0", 100)].loc[:"2021-01-04"] = np.nan
+        data[("close.ret_0", 100)].loc[:"2021-01-04"] = np.nan  # type: ignore[misc]
         #
         config = self.get_node_config()
         node = dtfcnuskmo.Residualizer("sklearn", **config.to_dict())
-        _ = node.fit(data.loc[:"2021-01-04"])["df_out"]
+        _ = node.fit(data.loc[:"2021-01-04"])["df_out"]  # type: ignore[misc]
         df_out = node.predict(data)["df_out"]
         #
         pca_residual = df_out["pca_residual"]
@@ -296,11 +296,11 @@ class TestResidualizer2(hunitest.TestCase):
         """
         # Load test data.
         data = self.get_data()
-        data[("close.ret_0", 100)].loc["2021-01-04":] = np.nan
+        data[("close.ret_0", 100)].loc["2021-01-04":] = np.nan  # type: ignore[misc]
         #
         config = self.get_node_config()
         node = dtfcnuskmo.Residualizer("sklearn", **config.to_dict())
-        _ = node.fit(data.loc["2021-01-04":])["df_out"]
+        _ = node.fit(data.loc["2021-01-04":])["df_out"]  # type: ignore[misc]
         df_out = node.predict(data)["df_out"]
         #
         pca_residual = df_out["pca_residual"]

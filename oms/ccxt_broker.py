@@ -15,8 +15,8 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hsecrets as hsecret
 import helpers.hprint as hprint
+import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
@@ -38,7 +38,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: int=1,
+        secret_id: int = 1,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -90,148 +90,6 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # Set up empty sent orders for the first run of the system.
         self._sent_orders = None
-
-    @staticmethod
-    def _convert_ccxt_order_to_oms_order(
-        ccxt_order: Dict[Any, Any]
-    ) -> omorder.Order:
-        """
-        Convert sent CCXT orders to oms.Order class.
-
-        Example of an input `ccxt_order`:
-        ```
-        {'info': {'orderId': '3101620940',
-                'symbol': 'BTCUSDT',
-                'status': 'FILLED',
-                'clientOrderId': '***REMOVED***',
-                'price': '0',
-                'avgPrice': '23480.20000',
-                'origQty': '0.001',
-                'executedQty': '0.001',
-                'cumQuote': '23.48020',
-                'timeInForce': 'GTC',
-                'type': 'MARKET',
-                'reduceOnly': False,
-                'closePosition': False,
-                'side': 'BUY',
-                'positionSide': 'BOTH',
-                'stopPrice': '0',
-                'workingType': 'CONTRACT_PRICE',
-                'priceProtect': False,
-                'origType': 'MARKET',
-                'time': '1659465769012',
-                'updateTime': '1659465769012'},
-        'id': '3101620940',
-        'clientOrderId': '***REMOVED***',
-        'timestamp': 1659465769012,
-        'datetime': '2022-08-02T18:42:49.012Z',
-        'lastTradeTimestamp': None,
-        'symbol': 'BTC/USDT',
-        'type': 'market',
-        'timeInForce': 'IOC',
-        'postOnly': False,
-        'side': 'buy',
-        'price': 23480.2,
-        'stopPrice': None,
-        'amount': 0.001,
-        'cost': 23.4802,
-        'average': 23480.2,
-        'filled': 0.001,
-        'remaining': 0.0,
-        'status': 'closed',
-        'fee': None,
-        'trades': [],
-        'fees': [],
-        'asset_id': 1467591036}
-        ```
-        """
-        asset_id = ccxt_order["asset_id"]
-        type_ = "market"
-        # Select creation and start date.
-        creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
-            ccxt_order["timestamp"]
-        )
-        start_timestamp = creation_timestamp
-        # Get an offset end timestamp.
-        #  Note: `updateTime` is the timestamp of the latest order status change,
-        #  so for filled orders this is a moment when the order is filled.
-        end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
-            int(ccxt_order["info"]["updateTime"])
-        )
-        # Add 1 minute to end timestamp.
-        # This is done since in CCXT testnet the orders are filled instantaneously.
-        end_timestamp += pd.DateOffset(minutes=1)
-        # Get the amount of shares filled.
-        curr_num_shares = float(ccxt_order["info"]["origQty"])
-        diff_num_shares = ccxt_order["filled"]
-        oms_order = omorder.Order(
-            creation_timestamp,
-            asset_id,
-            type_,
-            start_timestamp,
-            end_timestamp,
-            curr_num_shares,
-            diff_num_shares,
-        )
-        return oms_order
-
-    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
-        """
-        Check if the order matches the minimum quantity for the asset.
-
-        The functions checks both the flat amount of the asset and the total
-        cost of the asset in the order. If the order amount does not match,
-         he order is changed to be slightly above the minimal amount.
-
-        :param order: order to be submitted
-        """
-        # Load all limits for the asset.
-        asset_limits = self._minimal_order_limits[order.asset_id]
-        order_amount = order.diff_num_shares
-        min_amount = asset_limits["min_amount"]
-        if abs(order_amount) < min_amount:
-            _LOG.warning(
-                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
-                order_amount,
-                min_amount,
-            )
-            if order_amount < 0:
-                order.diff_num_shares = -min_amount
-            else:
-                order.diff_num_shares = min_amount
-        # Check if the order is not below minimal cost.
-        #
-        # Get the last price for the asset.
-        last_price = self._get_last_market_price(order.asset_id)
-        # Calculate the total cost of the order based on the last price.
-        total_cost = last_price * abs(order_amount)
-        # Verify that the order total cost is not below minimum.
-        min_cost = asset_limits["min_cost"]
-        if total_cost < min_cost:
-            # Set amount based on minimal notional price.
-            #  Note: the amount is rounded up to closest integer
-            #  to cover for possible inaccuracy in market cost.
-            required_amount = round(min_cost / last_price, 0) + 1
-            _LOG.warning(
-                "Amount of asset in order is below minimal base: %s. \
-                Setting to following amount based on notional limit: %s",
-                order_amount,
-                required_amount,
-            )
-            # Change number of shares to minimal amount.
-            if order.diff_num_shares < 0:
-                order.diff_num_shares = -required_amount
-            else:
-                order.diff_num_shares = required_amount
-        return order
-
-    def _get_last_market_price(self, asset_id: int) -> float:
-        """
-        Load the latest price for the given ticker.
-        """
-        symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["last"]
-        return last_price
 
     def get_fills(self) -> List[ombroker.Fill]:
         """
@@ -364,6 +222,90 @@ class CcxtBroker(ombroker.Broker):
         return open_positions
 
     @staticmethod
+    def _convert_ccxt_order_to_oms_order(
+        ccxt_order: Dict[Any, Any]
+    ) -> omorder.Order:
+        """
+        Convert sent CCXT orders to oms.Order class.
+
+        Example of an input `ccxt_order`:
+        ```
+        {'info': {'orderId': '3101620940',
+                'symbol': 'BTCUSDT',
+                'status': 'FILLED',
+                'clientOrderId': '***REMOVED***',
+                'price': '0',
+                'avgPrice': '23480.20000',
+                'origQty': '0.001',
+                'executedQty': '0.001',
+                'cumQuote': '23.48020',
+                'timeInForce': 'GTC',
+                'type': 'MARKET',
+                'reduceOnly': False,
+                'closePosition': False,
+                'side': 'BUY',
+                'positionSide': 'BOTH',
+                'stopPrice': '0',
+                'workingType': 'CONTRACT_PRICE',
+                'priceProtect': False,
+                'origType': 'MARKET',
+                'time': '1659465769012',
+                'updateTime': '1659465769012'},
+        'id': '3101620940',
+        'clientOrderId': '***REMOVED***',
+        'timestamp': 1659465769012,
+        'datetime': '2022-08-02T18:42:49.012Z',
+        'lastTradeTimestamp': None,
+        'symbol': 'BTC/USDT',
+        'type': 'market',
+        'timeInForce': 'IOC',
+        'postOnly': False,
+        'side': 'buy',
+        'price': 23480.2,
+        'stopPrice': None,
+        'amount': 0.001,
+        'cost': 23.4802,
+        'average': 23480.2,
+        'filled': 0.001,
+        'remaining': 0.0,
+        'status': 'closed',
+        'fee': None,
+        'trades': [],
+        'fees': [],
+        'asset_id': 1467591036}
+        ```
+        """
+        asset_id = ccxt_order["asset_id"]
+        type_ = "market"
+        # Select creation and start date.
+        creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
+            ccxt_order["timestamp"]
+        )
+        start_timestamp = creation_timestamp
+        # Get an offset end timestamp.
+        #  Note: `updateTime` is the timestamp of the latest order status change,
+        #  so for filled orders this is a moment when the order is filled.
+        end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
+            int(ccxt_order["info"]["updateTime"])
+        )
+        # Add 1 minute to end timestamp.
+        # This is done since in CCXT testnet the orders are filled instantaneously.
+        end_timestamp += pd.DateOffset(minutes=1)
+        # Get the amount of shares filled.
+        curr_num_shares = float(ccxt_order["info"]["origQty"])
+        diff_num_shares = ccxt_order["filled"]
+        oms_order = omorder.Order(
+            creation_timestamp,
+            asset_id,
+            type_,
+            start_timestamp,
+            end_timestamp,
+            curr_num_shares,
+            diff_num_shares,
+        )
+        return oms_order
+
+    @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
         """
         Convert full symbol to CCXT format.
@@ -372,6 +314,81 @@ class CcxtBroker(ombroker.Broker):
         """
         currency_pair = currency_pair.replace("_", "/")
         return currency_pair
+
+    @staticmethod
+    def _check_binance_code_error(e: Exception, error_code: int) -> bool:
+        """
+        Check if the exception matches the expected error code.
+
+        Example of a Binance exception:
+        {"code":-4131,
+        "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
+
+        :param e: Binance exception raised by CCXT
+        :param error_code: expected error code, e.g. -4131
+        :return: whether error code is contained in error message
+        """
+        error_message = str(e)
+        error_regex = f'"code":{error_code},'
+        return bool(re.search(error_regex, error_message))
+
+    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+        """
+        Check if the order matches the minimum quantity for the asset.
+
+        The functions checks both the flat amount of the asset and the total
+        cost of the asset in the order. If the order amount does not match,
+         he order is changed to be slightly above the minimal amount.
+
+        :param order: order to be submitted
+        """
+        # Load all limits for the asset.
+        asset_limits = self._minimal_order_limits[order.asset_id]
+        order_amount = order.diff_num_shares
+        min_amount = asset_limits["min_amount"]
+        if abs(order_amount) < min_amount:
+            _LOG.warning(
+                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
+                order_amount,
+                min_amount,
+            )
+            if order_amount < 0:
+                order.diff_num_shares = -min_amount
+            else:
+                order.diff_num_shares = min_amount
+        # Check if the order is not below minimal cost.
+        #
+        # Get the last price for the asset.
+        last_price = self._get_last_market_price(order.asset_id)
+        # Calculate the total cost of the order based on the last price.
+        total_cost = last_price * abs(order_amount)
+        # Verify that the order total cost is not below minimum.
+        min_cost = asset_limits["min_cost"]
+        if total_cost < min_cost:
+            # Set amount based on minimal notional price.
+            #  Note: the amount is rounded up to closest integer
+            #  to cover for possible inaccuracy in market cost.
+            required_amount = round(min_cost / last_price, 0) + 1
+            _LOG.warning(
+                "Amount of asset in order is below minimal base: %s. \
+                Setting to following amount based on notional limit: %s",
+                order_amount,
+                required_amount,
+            )
+            # Change number of shares to minimal amount.
+            if order.diff_num_shares < 0:
+                order.diff_num_shares = -required_amount
+            else:
+                order.diff_num_shares = required_amount
+        return order
+
+    def _get_last_market_price(self, asset_id: int) -> float:
+        """
+        Load the latest price for the given ticker.
+        """
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        last_price = self._exchange.fetch_ticker(symbol)["last"]
+        return last_price
 
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
         """
@@ -478,23 +495,6 @@ class CcxtBroker(ombroker.Broker):
             notional_limit = limits["cost"]["min"]
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
         return minimal_order_limits
-
-    @staticmethod
-    def _check_binance_code_error(e: Exception, error_code: int) -> bool:
-        """
-        Check if the exception matches the expected error code.
-
-        Example of a Binance exception:
-        {"code":-4131,
-        "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
-
-        :param e: Binance exception raised by CCXT
-        :param error_code: expected error code, e.g. -4131
-        :return: whether error code is contained in error message
-        """
-        error_message = str(e)
-        error_regex = f'"code":{error_code},'
-        return bool(re.search(error_regex, error_message))
 
     def _assert_order_methods_presence(self) -> None:
         """

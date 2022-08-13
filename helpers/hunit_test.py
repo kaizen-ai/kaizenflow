@@ -339,7 +339,9 @@ def get_dir_signature(
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
     dir_name_tmp = None
-    file_names = hsystem.system_to_files(cmd, dir_name_tmp, remove_files_non_present)
+    file_names = hsystem.system_to_files(
+        cmd, dir_name_tmp, remove_files_non_present
+    )
     file_names = sorted(file_names)
     # Save the directory / file structure.
     txt.append("# Dir structure")

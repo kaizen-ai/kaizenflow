@@ -97,8 +97,9 @@ def set_current_bar_timestamp(timestamp: "pd.Timestamp") -> None:
     global _CURR_BAR_TIMESTAMP
     if _CURR_BAR_TIMESTAMP is not None:
         assert _CURR_BAR_TIMESTAMP <= timestamp, (
-                "Bar timestamp can only move forward: " +
-                f"{_CURR_BAR_TIMESTAMP} <= {timestamp}")
+            "Bar timestamp can only move forward: "
+            + f"{_CURR_BAR_TIMESTAMP} <= {timestamp}"
+        )
     _CURR_BAR_TIMESTAMP = timestamp
 
 

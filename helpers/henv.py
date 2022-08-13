@@ -129,7 +129,7 @@ def get_env_vars() -> List[str]:
         "CK_AWS_DEFAULT_REGION",
         "CK_AWS_SECRET_ACCESS_KEY",
         # S3 bucket to use for CK.
-        "CK_AWS_S3_BUCKET"
+        "CK_AWS_S3_BUCKET",
     ]
     # No duplicates.
     assert len(set(env_var_names)) == len(
@@ -151,7 +151,7 @@ def get_secret_env_vars() -> List[str]:
         # TODO(gp): Difference between amp and cmamp.
         "CK_AWS_ACCESS_KEY_ID",
         "CK_AWS_SECRET_ACCESS_KEY",
-        "GH_ACTION_ACCESS_TOKEN"
+        "GH_ACTION_ACCESS_TOKEN",
     ]
     # No duplicates.
     assert len(set(secret_env_var_names)) == len(

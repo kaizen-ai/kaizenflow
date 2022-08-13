@@ -297,9 +297,10 @@ async def sleep(
 
 
 def get_seconds_to_align_to_grid(
-    grid_time_in_secs: float, get_wall_clock_time: hdateti.GetWallClockTime,
+    grid_time_in_secs: float,
+    get_wall_clock_time: hdateti.GetWallClockTime,
     *,
-    add_buffer_in_secs: int = 0
+    add_buffer_in_secs: int = 0,
 ) -> Tuple[pd.Timestamp, int]:
     """
     Given the current time return the amount of seconds to wait to align on a
