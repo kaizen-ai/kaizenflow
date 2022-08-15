@@ -338,7 +338,7 @@ class CcxtBroker(ombroker.Broker):
 
         The functions checks both the flat amount of the asset and the total
         cost of the asset in the order. If the order amount does not match,
-         he order is changed to be slightly above the minimal amount.
+        the order is changed to be slightly above the minimal amount.
 
         :param order: order to be submitted
         """
@@ -346,16 +346,15 @@ class CcxtBroker(ombroker.Broker):
         asset_limits = self._minimal_order_limits[order.asset_id]
         order_amount = order.diff_num_shares
         min_amount = asset_limits["min_amount"]
-        if abs(order_amount) < min_amount:
-            _LOG.warning(
-                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
-                order_amount,
-                min_amount,
-            )
-            if order_amount < 0:
-                order.diff_num_shares = -min_amount
-            else:
-                order.diff_num_shares = min_amount
+        _LOG.warning(
+            "Setting num_shares to min amount: %s",
+            order_amount,
+            min_amount,
+        )
+        if order_amount < 0:
+            order.diff_num_shares = -min_amount
+        else:
+            order.diff_num_shares = min_amount
         # Check if the order is not below minimal cost.
         #
         # Get the last price for the asset.
