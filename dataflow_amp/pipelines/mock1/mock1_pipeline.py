@@ -18,7 +18,7 @@ import dataflow.core as dtfcore
 _LOG = logging.getLogger(__name__)
 
 
-class Example1_DagBuilder(dtfcore.DagBuilder):
+class Mock1_DagBuilder(dtfcore.DagBuilder):
     """
     A pipeline similar to real models.
     """
