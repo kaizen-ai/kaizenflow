@@ -74,7 +74,7 @@ dict_ = {
     "target_gmv_upper_bound_multiple": 1.01,
 }
 
-spo_config = cconfig.get_config_from_nested_dict(dict_)
+spo_config = cconfig.from_dict(dict_)
 
 # %% [markdown]
 # # Optimize

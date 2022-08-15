@@ -276,7 +276,7 @@ def apply_dag_runner_config(
         "real_time_loop_time_out_in_secs": real_time_loop_time_out_in_secs,
         "trading_period_str": trading_period_str,
     }
-    system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
+    system.config["dag_runner_config"] = cconfig.from_dict(
         real_time_config
     )
     # Apply history_lookback.
@@ -599,7 +599,7 @@ def apply_Portfolio_config(
     }
     system.config[
         "portfolio_config", "column_remap"
-    ] = cconfig.get_config_from_nested_dict(column_remap)
+    ] = cconfig.from_dict(column_remap)
     return system
 
 

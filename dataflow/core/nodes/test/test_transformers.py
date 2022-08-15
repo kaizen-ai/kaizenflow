@@ -22,7 +22,7 @@ class TestGroupedColDfToDfTransformer1(hunitest.TestCase):
             quotient = (df[col1] / df[col2]).rename("div")
             return quotient.to_frame()
 
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_groups": [("ret",), ("vol",)],
                 "out_col_group": (),
@@ -71,7 +71,7 @@ class TestGroupedColDfToDfTransformer2(hunitest.TestCase):
         def resample(df: pd.DataFrame, rule: str) -> pd.DataFrame:
             return df.resample(rule=rule).sum(min_count=1)
 
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_groups": [("ret",), ("vol",)],
                 "out_col_group": (),
@@ -118,7 +118,7 @@ datetime,MN0,MN1,MN0,MN1
 class TestGroupedColDfToDfTransformer3(hunitest.TestCase):
     def test_multicolumn_processing1(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_groups": [
                     ("close",),
@@ -153,7 +153,7 @@ class TestGroupedColDfToDfTransformer3(hunitest.TestCase):
 
     def test_multicolumn_processing2(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_groups": [
                     ("close",),
@@ -205,7 +205,7 @@ class TestGroupedColDfToDfTransformer4(hunitest.TestCase):
     def test_drop_nans(self) -> None:
         data = self._get_data()
 
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_groups": [("close",), ("mid",)],
                 "out_col_group": (),
@@ -241,7 +241,7 @@ class TestGroupedColDfToDfTransformer4(hunitest.TestCase):
     def test_drop_nans_without_reindexing(self) -> None:
         data = self._get_data()
 
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_groups": [("close",), ("mid",)],
                 "out_col_group": (),
@@ -299,7 +299,7 @@ class TestCrossSectionalDfToDfTransformer1(hunitest.TestCase):
             demeaned = df.subtract(mean, axis=0)
             return demeaned
 
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("ret",),
                 "out_col_group": ("ret.demeaned",),
@@ -349,7 +349,7 @@ class TestSeriesToDfTransformer1(hunitest.TestCase):
             return out_df
 
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": (),
@@ -393,7 +393,7 @@ datetime,MN0,MN1,MN0,MN1
 class TestSeriesToDfTransformer2(hunitest.TestCase):
     def test_drop_nans(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": (),
@@ -427,7 +427,7 @@ class TestSeriesToDfTransformer2(hunitest.TestCase):
 
     def test_drop_nans_then_join(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": (),
@@ -460,7 +460,7 @@ class TestSeriesToDfTransformer2(hunitest.TestCase):
 
     def test_drop_nans_without_reindexing(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": (),
@@ -493,7 +493,7 @@ class TestSeriesToDfTransformer2(hunitest.TestCase):
 
     def test_drop_nans_without_reindexing_then_attempt_join(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": (),
@@ -538,7 +538,7 @@ datetime,MN0,MN1,MN0,MN1
 class TestSeriesToSeriesTransformer1(hunitest.TestCase):
     def test1(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("ret_0",),
@@ -584,7 +584,7 @@ class TestSeriesToSeriesTransformer2(hunitest.TestCase):
         Test `fit()` call.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("ret_0",),
@@ -603,7 +603,7 @@ class TestSeriesToSeriesTransformer2(hunitest.TestCase):
         Test `predict()` call.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("ret_0",),
@@ -635,7 +635,7 @@ class TestSeriesToSeriesTransformer2(hunitest.TestCase):
 class TestSeriesToSeriesTransformer3(hunitest.TestCase):
     def test_drop_nans(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("diff",),
@@ -666,7 +666,7 @@ class TestSeriesToSeriesTransformer3(hunitest.TestCase):
 
     def test_drop_nans_then_join(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("diff",),
@@ -696,7 +696,7 @@ class TestSeriesToSeriesTransformer3(hunitest.TestCase):
 
     def test_drop_nans_without_reindexing(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("diff",),
@@ -726,7 +726,7 @@ class TestSeriesToSeriesTransformer3(hunitest.TestCase):
 
     def test_drop_nans_without_reindexing_then_attempt_join(self) -> None:
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "in_col_group": ("close",),
                 "out_col_group": ("diff",),
@@ -768,7 +768,7 @@ class TestFunctionWrapper(hunitest.TestCase):
             product = (df[col1] * df[col2]).rename("pv")
             return product.to_frame()
 
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "func": multiply,
                 "func_kwargs": {
@@ -809,7 +809,7 @@ class TestTwapVwapComputer(hunitest.TestCase):
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "rule": "5T",
                 "price_col": "close",
@@ -828,7 +828,7 @@ class TestTwapVwapComputer(hunitest.TestCase):
         Test `predict()` call.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "rule": "5T",
                 "price_col": "close",
@@ -874,7 +874,7 @@ class TestMultiindexTwapVwapComputer(hunitest.TestCase):
         Test building 5-min TWAP/VWAP bars from 1-min close/volume bars.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "rule": "5T",
                 "price_col_group": ("close",),
@@ -896,7 +896,7 @@ class TestMultiindexTwapVwapComputer(hunitest.TestCase):
         Test `predict()` call.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 "rule": "5T",
                 "price_col_group": ("close",),

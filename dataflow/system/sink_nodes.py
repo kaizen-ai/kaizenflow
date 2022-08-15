@@ -48,7 +48,7 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
         self._volatility_col = volatility_col
         self._spread_col = spread_col
         self._portfolio = portfolio
-        process_forecasts_config = cconfig.get_config_from_nested_dict(
+        process_forecasts_config = cconfig.from_dict(
             process_forecasts_config
         )
         hdbg.dassert_isinstance(process_forecasts_config, cconfig.Config)

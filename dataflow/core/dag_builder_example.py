@@ -32,7 +32,7 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
                 "func": lambda x: x,
             },
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.from_dict(dict_)
         return config
 
     def _get_dag(
@@ -68,7 +68,7 @@ class ReturnsBuilder(dtfcodabui.DagBuilder):
         """
         Same as abstract method.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 # Filter ATH.
                 self._get_nid("rets/filter_ath"): {
@@ -195,7 +195,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         """
         Same as abstract method.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 # Load prices.
                 self._get_nid("rets/read_data"): {
@@ -334,7 +334,7 @@ class MvnReturnsBuilder(dtfcodabui.DagBuilder):
     """
 
     def get_config_template(self) -> cconfig.Config:
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.from_dict(
             {
                 self._get_nid("filter_ath"): {
                     "col_mode": "replace_all",

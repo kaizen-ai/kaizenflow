@@ -65,7 +65,7 @@ hdbg.dassert_dir_exists(dict_["portfolio_data_dir"])
 hdbg.dassert_dir_exists(dict_["research_data_dir"])
 
 # %%
-config = cconfig.get_config_from_nested_dict(dict_)
+config = cconfig.from_dict(dict_)
 #
 start_timestamp = config["start_timestamp"]
 end_timestamp = config["end_timestamp"]

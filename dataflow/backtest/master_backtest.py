@@ -66,7 +66,7 @@ def run_rolling_experiment(config: cconfig.Config) -> None:
         config["backtest_config"]["retraining_lookback"],
     )
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
-        payload = cconfig.get_config_from_nested_dict({"config": config})
+        payload = cconfig.from_dict({"config": config})
         fit_rb.payload = payload
         dtfbaexuti.save_experiment_result_bundle(
             config,

@@ -62,7 +62,7 @@ class TestSinglePeriodOptimizer1(hunitest.TestCase):
         }
         if solver is not None:
             dict_["solver"] = solver
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.from_dict(dict_)
         df = self.get_prediction_df()
         actual = _run_optimizer(config, df, restrictions=None)
         return actual
@@ -121,7 +121,7 @@ asset_id
             "target_gmv": 3000,
             "target_gmv_upper_bound_multiple": 1.00,
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.from_dict(dict_)
         df = self.get_prediction_df()
         restrictions = pd.DataFrame(
             [[2, True, True, True, True]],
@@ -153,7 +153,7 @@ asset_id
             "target_gmv": 3000,
             "target_gmv_upper_bound_multiple": 1.01,
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.from_dict(dict_)
         df = self.get_prediction_df()
         actual = _run_optimizer(config, df, restrictions=None)
         expected = r"""
@@ -172,7 +172,7 @@ asset_id
             "target_gmv": 3000,
             "target_gmv_upper_bound_multiple": 1.01,
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.from_dict(dict_)
         df = self.get_prediction_df()
         restrictions = pd.DataFrame(
             [[3, False, False, True, False]],
@@ -226,7 +226,7 @@ class TestSinglePeriodOptimizer2(hunitest.TestCase):
             "target_gmv": 1e5,
             "target_gmv_upper_bound_multiple": 1.01,
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.from_dict(dict_)
         df = self.get_prediction_df()
         actual = _run_optimizer(config, df)
         expected = r"""

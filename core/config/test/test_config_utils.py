@@ -151,7 +151,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
                 "com": 28,
             },
         }
-        config = cconfig.get_config_from_nested_dict(nested)
+        config = cconfig.from_dict(nested)
         act = str(config)
         exp = r"""
         read_data:
@@ -173,7 +173,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
             "single_val": "hello",
             "zscore": cconfig.Config(),
         }
-        config = cconfig.get_config_from_nested_dict(nested)
+        config = cconfig.from_dict(nested)
         act = str(config)
         exp = r"""
         read_data:
@@ -193,7 +193,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
             "key1": "val1",
             "key2": {"key3": {"key4": {}}},
         }
-        config = cconfig.get_config_from_nested_dict(nested)
+        config = cconfig.from_dict(nested)
         act = str(config)
         exp = r"""
         key1: val1
@@ -215,7 +215,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         One of the dict's values is a dict that should become a `Config`.
         """
         test_dict = {"key1": "value1", "key2": {"key3": "value2"}}
-        test_config = cconfig.get_config_from_nested_dict(test_dict)
+        test_config = cconfig.from_dict(test_dict)
         act = str(test_config)
         exp = r"""
         key1: value1
@@ -342,11 +342,11 @@ class Test_diff_configs1(hunitest.TestCase):
         act = cconfig.diff_configs([config1, config2])
         exp = [
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.from_dict(
                 {"build_targets": {"target_asset": "Gold"}}
             ),
         ]
@@ -362,15 +362,15 @@ class Test_diff_configs1(hunitest.TestCase):
         #
         exp = [
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.from_dict(
                 {"build_targets": {"target_asset": "Gold"}}
             ),
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}, "hello": "world"}
             ),
         ]

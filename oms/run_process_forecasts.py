@@ -54,7 +54,7 @@ def get_market_data_tile_config() -> cconfig.Config:
         "start_time_col": "start_time",
         "end_time_col": "end_time",
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.from_dict(dict_)
     return config
 
 
@@ -68,7 +68,7 @@ def get_backtest_tile_config() -> cconfig.Config:
         "volatility_col": "vwap.ret_0.vol",
         "spread_col": "pct_bar_spread",
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.from_dict(dict_)
     return config
 
 

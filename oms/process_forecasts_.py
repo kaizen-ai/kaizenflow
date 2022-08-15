@@ -478,7 +478,7 @@ class ForecastProcessor:
             "start_timestamp": timestamp_start,
             "end_timestamp": timestamp_end,
         }
-        order_config = cconfig.get_config_from_nested_dict(order_dict_)
+        order_config = cconfig.from_dict(order_dict_)
         orders = self._generate_orders(
             target_positions[["curr_num_shares", "diff_num_shares"]], order_config
         )

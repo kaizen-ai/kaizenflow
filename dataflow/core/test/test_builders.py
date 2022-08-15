@@ -53,7 +53,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         dag_builder = dtfcdabuex.MvnReturnsBuilder()
         #
         overriding_config = cconfig.Config()
-        overriding_config["load_prices"] = cconfig.get_config_from_nested_dict(
+        overriding_config["load_prices"] = cconfig.from_dict(
             {
                 "frequency": "T",
                 "start_date": "2010-01-04 09:30:00",

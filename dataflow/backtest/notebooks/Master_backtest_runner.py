@@ -77,7 +77,7 @@ if "set_predict_intervals" in config["backtest_config"].to_dict():
 fit_result_bundle = dag_runner.fit()
 
 # %%
-payload = cconfig.get_config_from_nested_dict({"config": config})
+payload = cconfig.from_dict({"config": config})
 
 # %%
 if (
