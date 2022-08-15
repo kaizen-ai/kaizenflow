@@ -7,6 +7,7 @@ from typing import Any, Dict
 import pytest
 
 import core.config as cconfig
+import core.config.config_ as cconconf
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
@@ -1250,7 +1251,7 @@ class Test_get_config_from_flattened_dict1(hunitest.TestCase):
                 (("zscore", "com"), 28),
             ]
         )
-        config = self._get_config_from_flattened_dict(flattened)
+        config = cconconf._get_config_from_flattened_dict(flattened)
         act = str(config)
         exp = r"""
         read_data:
@@ -1272,7 +1273,7 @@ class Test_get_config_from_flattened_dict1(hunitest.TestCase):
                 (("zscore",), cconfig.Config()),
             ]
         )
-        config = self._get_config_from_flattened_dict(flattened)
+        config = cconconf._get_config_from_flattened_dict(flattened)
         act = str(config)
         exp = r"""
         read_data:
