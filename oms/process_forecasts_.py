@@ -234,7 +234,7 @@ async def process_forecasts(
     _LOG.debug("Event: exiting process_forecasts() for loop.")
 
 
-# TODO(Dan): Move to `helpers/hdbg.py`
+# TODO(Grisha): @Dan Move to `helpers/hdbg.py`
 def dassert_all_defined_or_all_None(
     vals: List[Any],
     msg: Optional[str] = None,
