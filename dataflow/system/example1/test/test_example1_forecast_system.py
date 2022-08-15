@@ -91,7 +91,7 @@ class Test_Example1_ForecastSystem_FitPredict(
 class Test_Example1_ForecastSystem_FitInvariance(
     dtfsytsytc.ForecastSystem_FitInvariance_TestCase1
 ):
-    def test_test_invariance1(self) -> None:
+    def test_invariance1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         start_timestamp1 = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
         start_timestamp2 = pd.Timestamp("2000-01-01 09:40:00+0000", tz="UTC")
@@ -116,7 +116,7 @@ class Test_Example1_ForecastSystem_FitInvariance(
 class Test_Example1_ForecastSystem_CheckPnl(
     dtfsytsytc.ForecastSystem_CheckPnl_TestCase1
 ):
-    def test_test_fit_run1(self) -> None:
+    def test_fit_run1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         system = system_builder_func()
         system.config[

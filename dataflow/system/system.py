@@ -192,6 +192,11 @@ class System(abc.ABC):
     def dag_runner(
         self,
     ) -> dtfcore.DagRunner:
+        key = "dag_runner_object"
+        if key in self.config:
+            _LOG.debug("Using cached object for '%s'", key)
+            dag_runner = self.config[key]
+            return dag_runner
         _LOG.info(
             "\n"
             + hprint.frame("# Before building dag_runner, config=")
@@ -201,23 +206,21 @@ class System(abc.ABC):
             + hprint.frame("End config before dag_runner")
         )
         #
-        log_dir = self.config["log_dir"]
+        log_dir = self.config["system_log_dir"]
         hio.create_dir(log_dir, incremental=False)
         #
         file_name = os.path.join(log_dir, "system_config.input.txt")
         hio.to_file(file_name, repr(self.config))
         #
-        key = "dag_runner_object"
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
             key, self._get_dag_runner
         )
         # After everything is built, mark the config as read-only to avoid
         # further modifications.
-        # TODO(Grisha): this prevents from writing any object in a config, after we do
-        #  `system.dag_runner`. E.g., after `dag_runner` is built one wants to do
-        #  `system.portfolio` while `portfolio` is not in a config yet, but since a config
-        #  is already marked as read-only execution fails.
-        self._config.mark_read_only()
+        # TODO(gp): Each builder should mark as read-only the piece of the
+        #  config that was consumed. For now dag_runner only marks the DAG
+        #  config as read-only. OrderProcessor is built after this.
+        self._config["dag_config"].mark_read_only()
         #
         _LOG.info(
             "\n"
@@ -546,6 +549,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def order_processor(
         self,
     ) -> Coroutine:
+        """
+        OrderProcessor should be built after DAG.
+        """
         order_processor_coroutine: Coroutine = self._get_cached_value(
             "order_processor", self._get_order_processor
         )

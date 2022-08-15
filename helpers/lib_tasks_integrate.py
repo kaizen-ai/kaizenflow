@@ -285,6 +285,7 @@ def integrate_diff_dirs(  # type: ignore
     check_branches=True,
     clean_branches=True,
     remove_usual=False,
+    run_diff_script=True,
     dry_run=False,
 ):
     """
@@ -307,6 +308,8 @@ def integrate_diff_dirs(  # type: ignore
     :param copy: copy the files instead of diffing
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
     :param remove_usual: remove the usual mismatching files (e.g., `.github`)
+    :param run_diff_script: run the diff script
+    :param dry_run:
     """
     hlitauti._report_task()
     if reverse:
@@ -356,6 +359,10 @@ def integrate_diff_dirs(  # type: ignore
                 regex = "|".join(vals)
                 cmd += f" --ignore_files='{regex}'"
     hlitauti._run(ctx, cmd, dry_run=dry_run, print_cmd=True)
+    if dry_run:
+        return
+    # Start the script automatically.
+    os.system("./tmp.diff_to_vimdiff.sh")
 
 
 # //////////////////////////////////////////////////////////////////////////////

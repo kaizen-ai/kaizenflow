@@ -23,6 +23,7 @@ import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.htqdm as htqdm
+import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
 import oms.order as omorder
 import oms.portfolio as omportfo
@@ -177,6 +178,7 @@ async def process_forecasts(
         restrictions_df,
         log_dir=log_dir,
     )
+    hwacltim.reset_current_bar_timestamp()
     # `timestamp` is the time when the forecast is available and in the current
     #  setup is also when the order should begin.
     for idx, (timestamp, predictions) in tqdm(
@@ -186,6 +188,10 @@ async def process_forecasts(
             "\n%s",
             hprint.frame("# idx=%s timestamp=%s" % (idx, timestamp)),
         )
+        # Update the global state tracking the current bar.
+        # TODO(gp): The outermost loop in run_dag should set the bar based on
+        #  align_on_grid.
+        hwacltim.set_current_bar_timestamp(timestamp)
         # Wait until get_wall_clock_time() == timestamp.
         if get_wall_clock_time() > timestamp:
             # E.g., it's 10:21:51, we computed the forecast for [10:20, 10:25]

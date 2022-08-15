@@ -300,7 +300,7 @@ def docker_build_prod_image(  # type: ignore
     Phases:
     - Build the prod image on top of the dev image
 
-    :param version: version to tag the image and code with 
+    :param version: version to tag the image and code with
     :param cache: note that often the prod image is just a copy of the dev
         image so caching makes no difference
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
@@ -566,22 +566,20 @@ def docker_rollback_prod_image(  # type: ignore
 @task
 def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: ignore
     """
-    Create new prod candidate image and update the specified ECS task definition such that
-    the Image URL specified in container definition points to the new candidate image.
+    Create new prod candidate image and update the specified ECS task
+    definition such that the Image URL specified in container definition points
+    to the new candidate image.
 
-    :param task_definition: the name of the ECS task definition for which an update 
+    :param task_definition: the name of the ECS task definition for which an update
       to container image URL is made, e.g. cmamp-test
-    :param user_tag: the name of the user creating the image, empty parameter means 
+    :param user_tag: the name of the user creating the image, empty parameter means
       the command was ran via gh actions
     """
     # Get latest version.
     last_version = hversio.get_changelog_version(".")
     # Create new prod image.
     docker_build_prod_image(
-        ctx,
-        version=last_version,
-        candidate=True, 
-        user_tag=user_tag
+        ctx, version=last_version, candidate=True, user_tag=user_tag
     )
     # Get the hash of the image.
     tag = hgit.get_head_hash(".", short_hash=True)
@@ -589,7 +587,7 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
         # Add user name to the candidate tag.
         tag = f"{user_tag}-{tag}"
     # Push candidate image.
-    docker_push_prod_candidate_image(ctx, tag) 
+    docker_push_prod_candidate_image(ctx, tag)
     exec_name = f"im_v2/aws/aws_update_task_definition.py"
     # Ensure compatibility with repos where amp is a submodule.
     if not os.path.exists(exec_name):

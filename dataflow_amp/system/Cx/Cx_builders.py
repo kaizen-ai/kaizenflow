@@ -289,7 +289,9 @@ def _get_Cx_dag_prod_instance1(
     ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
     # Assemble.
     market_data = system.market_data
-    market_data_history_lookback = system.config["market_data_config", "history_lookback"]
+    market_data_history_lookback = system.config[
+        "market_data_config", "history_lookback"
+    ]
     ts_col_name = "timestamp_db"
     dag = dtfsys.adapt_dag_to_real_time(
         dag,

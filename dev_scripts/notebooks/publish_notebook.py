@@ -23,6 +23,9 @@ This script performs several actions on a Jupyter notebook, such as:
       --aws_profile 'am'
   ```
 
+# Detailed instructions at:
+https://docs.google.com/document/d/1b3RptKVK6vFUc8upcz3n0nTZhTO0ZQ-Ay5I01nCp5WM/edit#heading=h.prfy6fm6muxp
+
 Import as:
 
 import dev_scripts.notebooks.publish_notebook as dsnopuno
@@ -38,6 +41,7 @@ from typing import BinaryIO, List, Tuple
 import requests
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hio as hio
 import helpers.hopen as hopen
 import helpers.hparser as hparser
@@ -299,11 +303,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if args.publish_notebook_dir is not None:
             dst_dir = args.publish_notebook_dir
         else:
-            env_var = "AM_PUBLISH_NOTEBOOK_LOCAL_PATH"
-            hdbg.dassert_in(
-                env_var, os.environ, "The env needs to set env var '%s'", env_var
-            )
-            dst_dir = os.environ[env_var]
+            dst_dir = henv.execute_repo_config_code("get_html_local_path()")
+            dst_dir = os.path.join(dst_dir, "published_notebooks")
         hdbg.dassert_dir_exists(dst_dir)
         hio.create_dir(dst_dir, incremental=True)
         _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
@@ -312,7 +313,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
-        aws_profile = hs3.get_aws_profile(args.aws_profile)
+        aws_profile = args.aws_profile
         _LOG.debug("aws_profile='%s'", aws_profile)
         # Get the S3 path from command line.
         s3_path = args.s3_path

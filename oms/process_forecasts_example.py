@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.process_forecasts_example as prfe
+import oms.process_forecasts_example as oprfoexa
 """
 import datetime
 
