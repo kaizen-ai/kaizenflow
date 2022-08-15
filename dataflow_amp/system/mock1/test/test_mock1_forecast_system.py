@@ -5,9 +5,9 @@ import pandas as pd
 import pytest
 
 import core.finance as cofinanc
-import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow.system as dtfsys
 import dataflow.system.test.system_test_case as dtfsytsytc
+import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 
 _LOG = logging.getLogger(__name__)
 

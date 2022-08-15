@@ -8,11 +8,10 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): -> test_example1_tiled_backtest.py
 
-class Test_Mock1_ForecastSystem_TiledBacktest(
-    dtfmrpmofl.TiledBacktest_TestCase
-):
+
+class Test_Mock1_ForecastSystem_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     """
-    Run end-to-end backtest for an Example1 pipeline:
+    Run end-to-end backtest for an Mock1 pipeline:
 
     - run model
     - run the analysis flow to make sure that it works
@@ -28,7 +27,7 @@ class Test_Mock1_ForecastSystem_TiledBacktest(
         backtest_config = "example1_v1-top2.5T.2000-01-01_2000-02-01"
         config_builder = (
             "dataflow.system.example1.example1_tile_config_builders."
-            + f'build_Mock1_tile_config_list("{backtest_config}")'
+            + f'build_Example1_tile_config_list("{backtest_config}")'
         )
         experiment_builder = (
             "dataflow.backtest.master_backtest.run_tiled_backtest"

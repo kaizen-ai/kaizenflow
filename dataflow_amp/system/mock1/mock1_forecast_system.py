@@ -11,8 +11,8 @@ import pandas as pd
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow_amp.pipelines.mock1.mock1_pipeline as dtfapmmopi
 import dataflow.system as dtfsys
+import dataflow_amp.pipelines.mock1.mock1_pipeline as dtfapmmopi
 import dataflow_amp.system.mock1.mock1_builders as dtfasmmobu
 import im_v2.common.data.client as icdc
 import market_data as mdata
@@ -31,9 +31,9 @@ class Mock1_ForecastSystem(dtfsys.ForecastSystem):
     Create a System with:
 
     - a ReplayedMarketData
-    - an non-timed Example1 DAG
+    - an non-timed Mock1 DAG
 
-    This is used to run an historical simulation of an Example1 system.
+    This is used to run an historical simulation of an Mock1 system.
     """
 
     def _get_system_config_template(self) -> cconfig.Config:
@@ -103,7 +103,7 @@ class Mock1_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
     Create a System with:
 
     - a ReplayedMarketData
-    - an Example1 DAG
+    - an Mock1 DAG
     - a RealTimeDagRunner
     """
 
@@ -140,7 +140,7 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
     Build a system with:
 
     - a ReplayedTimeMarketData
-    - a time Example1 DAG
+    - a time Mock1 DAG
     - a DataFramePortfolio
     """
 
@@ -221,7 +221,7 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     A System with:
 
     - a `ReplayedMarketData`
-    - an `Example1` DAG
+    - an `Mock1` DAG
     - a `DatabasePortfolio` (which includes a `DatabaseBroker`)
     - an `OrderProcessor`
     """
