@@ -6,7 +6,7 @@ import pytest
 
 import core.finance as cofinanc
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
-import dataflow.system.system as dtfsyssyst
+import dataflow.system as dtfsys
 import dataflow.system.test.system_test_case as dtfsytsytc
 
 _LOG = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class Test_Mock1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
 class Test_Mock1_ForecastSystem_FitPredict(
     dtfsytsytc.ForecastSystem_FitPredict_TestCase1
 ):
-    def get_system(self) -> dtfsyssyst.System:
+    def get_system(self) -> dtfsys.System:
         """
         Create the System for testing.
         """
@@ -168,7 +168,7 @@ class Test_Mock1_Time_ForecastSystem1(
 def _get_test_System_with_DataFramePortfolio(
     market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
-) -> dtfsyssyst.System:
+) -> dtfsys.System:
     """
     Get a System object with a DataFramePortfolio for unit testing.
     """
@@ -204,7 +204,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
 def _get_test_System_with_DatabasePortfolio(
     market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
-) -> dtfsyssyst.System:
+) -> dtfsys.System:
     """
     Get a System object with a DatabasePortfolio for unit testing.
     """

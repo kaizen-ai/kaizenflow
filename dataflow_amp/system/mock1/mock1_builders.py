@@ -8,14 +8,7 @@ from typing import Any, Dict
 
 import core.config as cconfig
 import dataflow.core as dtfcore
-
-# TODO(gp): We can't use dtfsys because we are inside dataflow/system.
-#  Consider moving out Example1 from this dir somehow so that we can use dtfsys
-#  like we do for other systems.
-import dataflow.system.sink_nodes as dtfsysinod
-import dataflow.system.source_nodes as dtfsysonod
-import dataflow.system.system as dtfsyssyst
-import dataflow.system.system_builder_utils as dtfssybuut
+import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
 import market_data as mdata
 
@@ -29,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_Mock1_MarketData_example2(
-    system: dtfsyssyst.System,
+    system: dtfsys.System,
 ) -> mdata.ImClientMarketData:
     """
     Build a replayed MarketData from an ImClient feeding data from a df.
@@ -51,7 +44,7 @@ def get_Mock1_MarketData_example2(
 
 
 def get_Mock1_process_forecasts_dict_example1(
-    system: dtfsyssyst.System,
+    system: dtfsys.System,
 ) -> Dict[str, Any]:
     """
     Get the dictionary with `ProcessForecastsNode` config params for Example1
@@ -68,7 +61,7 @@ def get_Mock1_process_forecasts_dict_example1(
         "target_gmv": 1e5,
     }
     log_dir = None
-    process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
+    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
         system.portfolio,
         prediction_col,
         volatility_col,
@@ -86,11 +79,11 @@ def get_Mock1_process_forecasts_dict_example1(
 # #############################################################################
 
 
-def get_Mock1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Mock1_HistoricalDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     """
     Build a DAG with `HistoricalDataSource` for simulation.
     """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    hdbg.dassert_isinstance(system, dtfsys.System)
     # Create HistoricalDataSource.
     stage = "read_data"
     market_data = system.market_data
@@ -99,39 +92,39 @@ def get_Mock1_HistoricalDag_example1(system: dtfsyssyst.System) -> dtfcore.DAG:
     ts_col_name = "end_datetime"
     multiindex_output = True
     col_names_to_remove = ["start_ts"]
-    node = dtfsysonod.HistoricalDataSource(
+    node = dtfsys.HistoricalDataSource(
         stage,
         market_data,
         ts_col_name,
         multiindex_output,
         col_names_to_remove=col_names_to_remove,
     )
-    dag = dtfssybuut.build_dag_with_data_source_node(system, node)
+    dag = dtfsys.build_dag_with_data_source_node(system, node)
     return dag
 
 
 # TODO(Grisha): -> `..._example1`.
-def get_Mock1_RealtimeDag_example2(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Mock1_RealtimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     """
     Build a DAG with `RealTimeDataSource`.
     """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    hdbg.dassert_isinstance(system, dtfsys.System)
     # How much history is needed for the DAG to compute.
     lookback_in_days = 1
-    system = dtfssybuut.apply_history_lookback(system, days=lookback_in_days)
-    dag = dtfssybuut.add_real_time_data_source(system)
+    system = dtfsys.apply_history_lookback(system, days=lookback_in_days)
+    dag = dtfsys.add_real_time_data_source(system)
     return dag
 
 
 # TODO(Grisha): -> `..._example2`.
-def get_Mock1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
+def get_Mock1_RealtimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
     """
     Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
     """
     # How much history is needed for the DAG to compute.
     lookback_in_days = 7
-    system = dtfssybuut.apply_history_lookback(system, days=lookback_in_days)
-    dag = dtfssybuut.add_real_time_data_source(system)
+    system = dtfsys.apply_history_lookback(system, days=lookback_in_days)
+    dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
     process_forecasts_config = get_Mock1_process_forecasts_dict_example1(
         system
@@ -140,5 +133,5 @@ def get_Mock1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
     # Append the `ProcessForecastNode`.
-    dag = dtfssybuut.add_process_forecasts_node(system, dag)
+    dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag

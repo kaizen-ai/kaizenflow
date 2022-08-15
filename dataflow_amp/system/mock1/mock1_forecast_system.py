@@ -12,9 +12,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow_amp.pipelines.mock1.mock1_pipeline as dtfapmmopi
-import dataflow.system.real_time_dag_runner as dtfsrtdaru
-import dataflow.system.system as dtfsyssyst
-import dataflow.system.system_builder_utils as dtfssybuut
+import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_builders as dtfasmmobu
 import im_v2.common.data.client as icdc
 import market_data as mdata
@@ -28,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class Mock1_ForecastSystem(dtfsyssyst.ForecastSystem):
+class Mock1_ForecastSystem(dtfsys.ForecastSystem):
     """
     Create a System with:
 
@@ -41,7 +39,7 @@ class Mock1_ForecastSystem(dtfsyssyst.ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfapmmopi.Mock1_DagBuilder()
-        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
+        system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
@@ -61,12 +59,12 @@ class Mock1_ForecastSystem(dtfsyssyst.ForecastSystem):
 
 def get_Mock1_ForecastSystem_for_simulation_example1(
     backtest_config: str,
-) -> dtfsyssyst.ForecastSystem:
+) -> dtfsys.ForecastSystem:
     """
     Get Mock1_ForecastSystem object for backtest simulation.
     """
     system = Mock1_ForecastSystem()
-    system = dtfssybuut.apply_backtest_config(system, backtest_config)
+    system = dtfsys.apply_backtest_config(system, backtest_config)
     # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
     system.config["backtest_config", "lookback_as_pd_str"] = "10D"
@@ -91,7 +89,7 @@ def get_Mock1_ForecastSystem_for_simulation_example1(
     system.config[
         "research_forecast_evaluator_from_prices"
     ] = cconfig.get_config_from_nested_dict(forecast_evaluator_from_prices_dict)
-    system = dtfssybuut.apply_market_data_config(system)
+    system = dtfsys.apply_market_data_config(system)
     return system
 
 
@@ -100,7 +98,7 @@ def get_Mock1_ForecastSystem_for_simulation_example1(
 # #############################################################################
 
 
-class Mock1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
+class Mock1_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
     """
     Create a System with:
 
@@ -112,21 +110,21 @@ class Mock1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfapmmopi.Mock1_DagBuilder()
-        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
+        system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
+        market_data = dtfsys.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
         dag = dtfasmmobu.get_Mock1_RealtimeDag_example2(self)
         return dag
 
-    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
+    def _get_dag_runner(self) -> dtfsys.RealTimeDagRunner:
+        dag_runner = dtfsys.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
@@ -136,7 +134,7 @@ class Mock1_Time_ForecastSystem(dtfsyssyst.Time_ForecastSystem):
 
 
 class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
-    dtfsyssyst.Time_ForecastSystem_with_DataFramePortfolio
+    dtfsys.Time_ForecastSystem_with_DataFramePortfolio
 ):
     """
     Build a system with:
@@ -149,13 +147,13 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfapmmopi.Mock1_DagBuilder()
-        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
+        system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
+        market_data = dtfsys.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
@@ -163,18 +161,18 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
         return dag
 
     def _get_portfolio(self) -> oms.Portfolio:
-        portfolio = dtfssybuut.get_DataFramePortfolio_from_System(self)
+        portfolio = dtfsys.get_DataFramePortfolio_from_System(self)
         return portfolio
 
-    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
+    def _get_dag_runner(self) -> dtfsys.RealTimeDagRunner:
+        dag_runner = dtfsys.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
 def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
-) -> dtfsyssyst.System:
+) -> dtfsys.System:
     """
     The System is used for the corresponding unit tests.
     """
@@ -186,7 +184,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
-    system = dtfssybuut.apply_Portfolio_config(system)
+    system = dtfsys.apply_Portfolio_config(system)
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
@@ -217,7 +215,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
 
 
 class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
-    dtfsyssyst.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+    dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
 ):
     """
     A System with:
@@ -231,13 +229,13 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
         dag_builder = dtfapmmopi.Mock1_DagBuilder()
-        system_config = dtfssybuut.get_SystemConfig_template_from_DagBuilder(
+        system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfssybuut.get_EventLoop_MarketData_from_df(self)
+        market_data = dtfsys.get_EventLoop_MarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
@@ -245,17 +243,17 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return dag
 
     def _get_portfolio(self) -> oms.Portfolio:
-        portfolio = dtfssybuut.get_DatabasePortfolio_from_System(self)
+        portfolio = dtfsys.get_DatabasePortfolio_from_System(self)
         return portfolio
 
     def _get_order_processor(self) -> Coroutine:
         order_processor_coroutine = (
-            dtfssybuut.get_OrderProcessorCoroutine_from_System(self)
+            dtfsys.get_OrderProcessorCoroutine_from_System(self)
         )
         return order_processor_coroutine
 
-    def _get_dag_runner(self) -> dtfsrtdaru.RealTimeDagRunner:
-        dag_runner = dtfssybuut.get_RealTimeDagRunner_from_System(self)
+    def _get_dag_runner(self) -> dtfsys.RealTimeDagRunner:
+        dag_runner = dtfsys.get_RealTimeDagRunner_from_System(self)
         return dag_runner
 
 
@@ -263,7 +261,7 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
 def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
     market_data_df: pd.DataFrame,
     real_time_loop_time_out_in_secs: int,
-) -> dtfsyssyst.System:
+) -> dtfsys.System:
     """
     The System is used for the corresponding unit tests.
     """
@@ -275,7 +273,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
-    system = dtfssybuut.apply_Portfolio_config(system)
+    system = dtfsys.apply_Portfolio_config(system)
     # Dag runner config.
     system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
     system.config[
