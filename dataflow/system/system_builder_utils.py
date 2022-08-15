@@ -635,7 +635,7 @@ def apply_process_forecasts_config_for_equities(system: dtfsyssyst.System) -> dt
     """
     Set the trading hours for equities.
 
-    Equities market is open only on a certain time of the day.
+    Equities market is open only during certain hours.
     """
     dict_ = {
         "ath_start_time": datetime.time(9, 30),

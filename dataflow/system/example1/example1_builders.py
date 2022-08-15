@@ -139,7 +139,6 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
-    #system = dtfssybuut.apply_process_forecasts_config_for_crypto(system)
     system = dtfssybuut.apply_process_forecasts_config_for_equities(system)
     # Append the `ProcessForecastNode`.
     dag = dtfssybuut.add_process_forecasts_node(system, dag)

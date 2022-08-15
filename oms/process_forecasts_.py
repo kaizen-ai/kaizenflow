@@ -64,13 +64,13 @@ async def process_forecasts(
           {
             "order_dict": dict,
             "optimizer_dict": dict,
-            "ath_start_time": datetime.time or None,
-            "trading_start_time": datetime.time or None,
-            "ath_end_time": datetime.time or None,
-            "trading_end_time": datetime.time or None,
+            "ath_start_time": Optional[datetime.time],
+            "trading_start_time": Optional[datetime.time],
+            "ath_end_time": Optional[datetime.time],
+            "trading_end_time": Optional[datetime.time],
             "execution_mode": str ["real_time", "batch"],
             "remove_weekends": Optional[bool],
-            "log_dir": Optional[None],
+            "log_dir": Optional[str],
           }
           ```
         - `execution_mode`:
@@ -259,13 +259,14 @@ def _validate_trading_time(
     trading_end_time: Optional[datetime.time],
 ) -> None:
     """
-    Validate that trading hours are specified correctly.
+    Check that trading hours are specified correctly.
     """
     dassert_all_defined_or_all_None(
         [ath_start_time, ath_end_time, trading_start_time, trading_end_time]
     )
     if ath_start_time is not None:
         hdbg.dassert_lte(ath_start_time, ath_end_time)
+        hdbg.dassert_lte(trading_start_time, trading_end_time)
         hdbg.dassert_lte(ath_start_time, trading_start_time)
         hdbg.dassert_lte(trading_end_time, ath_end_time)
 
