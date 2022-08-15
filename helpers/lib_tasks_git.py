@@ -539,7 +539,8 @@ def git_rename_branch(ctx, new_branch_name):  # type: ignore
 @task
 def git_branch_next_name(ctx, branch_name=None):  # type: ignore
     """
-    Return a name derived from the current branch so that the branch doesn't exist.
+    Return a name derived from the current branch so that the branch doesn't
+    exist.
 
     :param branch_name: if `None` use the current branch name, otherwise specify it
 
@@ -548,7 +549,9 @@ def git_branch_next_name(ctx, branch_name=None):  # type: ignore
     """
     hlitauti._report_task()
     _ = ctx
-    branch_next_name = hgit.get_branch_next_name(curr_branch_name=branch_name, log_verb=logging.INFO)
+    branch_next_name = hgit.get_branch_next_name(
+        curr_branch_name=branch_name, log_verb=logging.INFO
+    )
     print(f"branch_next_name='{branch_next_name}'")
 
 
@@ -606,6 +609,7 @@ def _git_diff_with_branch(
     subdir: str,
     extensions: str,
     file_name: str,
+    only_print_files: bool,
     dry_run: bool,
 ) -> None:
     """
@@ -626,10 +630,11 @@ def _git_diff_with_branch(
     cmd = " ".join(cmd)
     files = hsystem.system_to_files(cmd, dir_name, remove_files_non_present=False)
     files = sorted(files)
-    print("files=%s\n%s" % (len(files), "\n".join(files)))
-    # Filter the files, if needed.
-    print("# Before filtering files=%s\n%s" % (len(files), "\n".join(files)))
+    _LOG.debug("%s", "\n".join(files))
+    # Filter by `file_name`, if needed.
     if file_name:
+        _LOG.debug("Filter by file_name")
+        _LOG.info("Before filtering files=%s", len(files))
         files_tmp = []
         for f in files:
             if f == file_name:
@@ -642,8 +647,12 @@ def _git_diff_with_branch(
             "\n".join(files),
         )
         files = files_tmp
-        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
+        _LOG.info("After filtering by file_name: files=%s", len(files))
+        _LOG.debug("%s", "\n".join(files))
+    # Filer by extension.
     if extensions:
+        _LOG.debug("# Filter by extensions")
+        _LOG.debug("Before filtering files=%s", len(files))
         extensions_lst = extensions.split(",")
         _LOG.warning(
             "Requested filtering by %d extensions: %s",
@@ -655,9 +664,29 @@ def _git_diff_with_branch(
             if any(f.endswith(ext) for ext in extensions_lst):
                 files_tmp.append(f)
         files = files_tmp
-        print("# After filtering files=%s\n%s" % (len(files), "\n".join(files)))
+        _LOG.info(
+            "After filtering by extensions: files=%s\n%s",
+            (len(files), "\n".join(files)),
+        )
+    # Filter by subdir.
+    if subdir != "":
+        _LOG.debug("# Filter by subdir")
+        _LOG.debug("Before filtering files=%s", len(files))
+        files_tmp = []
+        for f in files:
+            if f.startswith(subdir):
+                files_tmp.append(f)
+        files = files_tmp
+        _LOG.info("After filtering by subdir: files=%s", len(files))
+        _LOG.debug("%s", "\n".join(files))
+    # Done filtering.
+    _LOG.info("\n" + hprint.frame("# files=%s" % len(files)))
+    _LOG.info("\n" + "\n".join(files))
     if len(files) == 0:
         _LOG.warning("Nothing to diff: exiting")
+        return
+    if only_print_files:
+        _LOG.warning("Exiting as per user request with --only-print-files")
         return
     # Create the dir storing all the files to compare.
     root_dir = hgit.get_repo_full_name_from_client(super_module=True)
@@ -668,15 +697,6 @@ def _git_diff_with_branch(
     script_txt = []
     for branch_file in files:
         _LOG.debug("\n%s", hprint.frame(f"branch_file={branch_file}"))
-        # Check if it needs to be compared.
-        if subdir != "":
-            if not branch_file.startswith(subdir):
-                _LOG.debug(
-                    "Skipping since '%s' doesn't start with '%s'",
-                    branch_file,
-                    subdir,
-                )
-                continue
         # Get the file on the right of the vimdiff.
         if os.path.exists(branch_file):
             right_file = branch_file
@@ -709,8 +729,8 @@ def _git_diff_with_branch(
         script_txt.append(cmd)
     script_txt = "\n".join(script_txt)
     # Files to diff.
-    print(hprint.frame("Diffing script"))
-    print(script_txt)
+    _LOG.info(hprint.frame("Diffing script"))
+    _LOG.info(script_txt)
     # Save the script to compare.
     script_file_name = f"./tmp.vimdiff_branch_with_{tag}.sh"
     msg = f"To diff against {tag} run"
@@ -723,7 +743,13 @@ def _git_diff_with_branch(
 
 @task
 def git_branch_diff_with_base(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", file_name="", dry_run=False
+    ctx,
+    diff_type="",
+    subdir="",
+    extensions="",
+    file_name="",
+    only_print_files=False,
+    dry_run=False,
 ):
     """
     Diff files of the current branch with master at the branching point.
@@ -732,12 +758,12 @@ def git_branch_diff_with_base(  # type: ignore
     :param subdir: subdir to consider for diffing, instead of `.`
     :param extensions: a comma-separated list of extensions to check, e.g.,
         'csv,py'. An empty string means all the files
+    :param only_print_files: print files to diff and exit
     :param dry_run: execute diffing script or not
     """
     # Get the branching point.
     dir_name = "."
     hash_ = hgit.get_branch_hash(dir_name=dir_name)
-    #
     tag = "base"
     _git_diff_with_branch(
         ctx,
@@ -748,13 +774,20 @@ def git_branch_diff_with_base(  # type: ignore
         subdir,
         extensions,
         file_name,
+        only_print_files,
         dry_run,
     )
 
 
 @task
 def git_branch_diff_with_master(  # type: ignore
-    ctx, diff_type="", subdir="", extensions="", file_name="", dry_run=False
+    ctx,
+    diff_type="",
+    subdir="",
+    extensions="",
+    file_name="",
+    only_print_files=False,
+    dry_run=False,
 ):
     """
     Diff files of the current branch with origin/master.
@@ -764,6 +797,7 @@ def git_branch_diff_with_master(  # type: ignore
     :param extensions: a comma-separated list of extensions to check, e.g.,
         'csv,py'. An empty string means all the files
     :param file_name: a specific file name to diff
+    :param only_print_files: print files to diff and exit
     :param dry_run: execute diffing script or not
     """
     dir_name = "."
@@ -778,6 +812,7 @@ def git_branch_diff_with_master(  # type: ignore
         subdir,
         extensions,
         file_name,
+        only_print_files,
         dry_run,
     )
 

@@ -7,6 +7,7 @@ import oms.broker as ombroker
 import abc
 import collections
 import logging
+import os
 from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
@@ -14,6 +15,7 @@ import pandas as pd
 
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -128,6 +130,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         account: Optional[str] = None,
         timestamp_col: str = "end_datetime",
         column_remap: Optional[Dict[str, str]] = None,
+        log_dir: Optional[str] = None,
     ) -> None:
         """
         Constructor.
@@ -139,7 +142,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         _LOG.debug(
             hprint.to_str(
-                "strategy_id market_data account timestamp_col column_remap"
+                "strategy_id market_data account timestamp_col column_remap log_dir"
             )
         )
         self._strategy_id = strategy_id
@@ -150,6 +153,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         self._get_wall_clock_time = market_data.get_wall_clock_time
         self._timestamp_col = timestamp_col
         self._column_remap = column_remap
+        self._log_dir = log_dir
         # Track the orders for internal accounting, mapping wall clock when the
         # order was submitted to the submitted orders.
         self._orders: Dict[
@@ -181,7 +185,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         orders: List[omorder.Order],
         *,
         dry_run: bool = False,
-    ) -> str:
+    ) -> Tuple[str, pd.DataFrame]:
         """
         Submit a list of orders to the broker.
 
@@ -211,20 +215,30 @@ class Broker(abc.ABC, hobject.PrintableMixin):
                 "Using dry-run mode since strategy_id='%s'", self._strategy_id
             )
             dry_run = True
-        file_name = await self._submit_orders(
+        receipt, order_df = await self._submit_orders(
             orders, wall_clock_timestamp, dry_run=dry_run
         )
-        _LOG.debug("The receipt is '%s'", file_name)
+        hdbg.dassert_isinstance(receipt, str)
+        _LOG.debug("The receipt is '%s'", receipt)
+        hdbg.dassert_isinstance(order_df, pd.DataFrame)
+        if self._log_dir:
+            wall_clock_time = self._get_wall_clock_time()
+            wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
+            file_name = f"order.{wall_clock_time_str}.csv"
+            file_name = os.path.join(self._log_dir, file_name)
+            hio.create_enclosing_dir(file_name, incremental=True)
+            order_df.to_csv(file_name)
+            _LOG.debug("Saved log file '%s'", file_name)
         #
         if not dry_run:
             _LOG.debug("Waiting for the accepted orders")
-            await self._wait_for_accepted_orders(file_name)
+            await self._wait_for_accepted_orders(receipt)
         else:
             _LOG.warning(
                 "Skipping waiting for the accepted orders because of dry_run=%s",
                 dry_run,
             )
-        return file_name
+        return receipt, order_df
 
     @abc.abstractmethod
     def get_fills(self) -> List[Fill]:
@@ -246,11 +260,17 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str:
+    ) -> Tuple[str, pd.DataFrame]:
         """
         Submit orders to the actual OMS and wait for the orders to be accepted.
 
-        :return: a string representing the receipt of submission / acceptance
+        :param dry_run: the order is created, logged in the log_dir, but not placed
+            to the execution system (e.g., if the execution system requires a file
+            on S3, the file is not written on S3)
+        :return:
+            - str: representing the id of the submitted order (e.g., a filename if
+              the order was saved in a file)
+            - pd.Series: an internal representation of the order to log in a file
         """
         ...
 
@@ -383,7 +403,7 @@ class SimulatedBroker(Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
-    ) -> str:
+    ) -> Tuple[str, pd.DataFrame]:
         """
         Same as abstract method.
         """
@@ -392,7 +412,9 @@ class SimulatedBroker(Broker):
         _ = orders, wall_clock_timestamp
         if dry_run:
             _LOG.warning("Not submitting orders to OMS because of dry_run")
-        return "dummy_order_receipt"
+        order_df = pd.DataFrame(None)
+        receipt = "dummy_order_receipt"
+        return receipt, order_df
 
     async def _wait_for_accepted_orders(
         self,
@@ -468,11 +490,9 @@ class DatabaseBroker(Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool = False,
-    ) -> str:
+    ) -> Tuple[str, pd.DataFrame]:
         """
         Same as abstract method.
-
-        :return: a `file_name` representing the id of the submitted order in the DB
         """
         # Add an order in the submitted orders table.
         submitted_order_id = self._get_next_submitted_order_id()
@@ -492,7 +512,10 @@ class DatabaseBroker(Broker):
             hsql.execute_insert_query(
                 self._db_connection, row, self._submitted_orders_table_name
             )
-        return file_name
+        # TODO(gp): We save a single entry in the DB for all the orders instead
+        #  of one row per order, to accommodate IG semantic.
+        order_df = pd.DataFrame(row)
+        return file_name, order_df
 
     async def _wait_for_accepted_orders(
         self,

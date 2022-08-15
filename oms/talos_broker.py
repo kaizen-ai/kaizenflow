@@ -188,6 +188,7 @@ class TalosBroker(ombroker.Broker):
             fill_status_dict[order_id] = fills_general
         return fill_status_dict
 
+    # TODO(gp): Update interface.
     def _submit_orders(
         self,
         orders: List[Dict[str, Any]],

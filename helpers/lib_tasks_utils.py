@@ -217,7 +217,7 @@ def _run(
     _LOG.debug("cmd=%s", cmd)
     if dry_run:
         print(f"Dry-run: > {cmd}")
-        _LOG.warning("Skipping execution")
+        _LOG.warning("Skipping execution of '%s'", cmd)
         res = None
     else:
         if print_cmd:

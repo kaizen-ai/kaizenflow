@@ -362,6 +362,16 @@ def get_current_timestamp_as_string(tz: str) -> str:
     return ret
 
 
+def get_current_date_as_string(tz: str) -> str:
+    """
+    Return the current date in the format `YYYYMMDD` (e.g., 20210728).
+    """
+    timestamp = get_current_time(tz)
+    ret = timestamp.strftime("%Y%m%d")
+    ret = cast(str, ret)
+    return ret
+
+
 # #############################################################################
 
 
