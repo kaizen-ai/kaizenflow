@@ -172,7 +172,7 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     num_before = hsql.get_num_rows(db_connection, db_table)
     hsql.execute_query(db_connection, delete_query)
     num_after = hsql.get_num_rows(db_connection, db_table)
-    _LOG.info("Removed %s duplicate rows from %s table.", str(num_before - num_after), db_table)
+    _LOG.warning("Removed %s duplicate rows from %s table.", str(num_before - num_after), db_table)
 
 
 # #############################################################################
