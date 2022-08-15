@@ -7,7 +7,7 @@ there exists another row which has identical timestamp, currency pair
 and exchange ID but different row ID and knowledge timestamp.
 
 # Delete duplicates from OHLCV table in dev stage
-remove_duplicates_from_ohlcv_table.py --db_stage dev --table_name 'ccxt_ohlcv_test'
+im_v2/common/db/delete_duplicates_from_ohlcv_table.py --db_stage 'dev' --db_table 'ccxt_ohlcv_test'
 """
 
 import argparse
