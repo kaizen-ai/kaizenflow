@@ -491,7 +491,6 @@ class Config:
 # #############################################################################
 
 
-# TODO(gp): This method belongs should be Config.from_dict()
 def from_dict(nested: Dict[str, Any]) -> Config:
     """
     Build a `Config` from a nested dict.
@@ -507,7 +506,6 @@ def from_dict(nested: Dict[str, Any]) -> Config:
     return _get_config_from_flattened_dict(flattened)
 
 
-# TODO(gp): This should be a private method of the method below.
 def _get_config_from_flattened_dict(
     flattened: Dict[Tuple[str], Any]
 ) -> Config:
