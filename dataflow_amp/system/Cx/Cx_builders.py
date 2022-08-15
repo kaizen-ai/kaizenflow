@@ -134,7 +134,7 @@ def get_Cx_process_forecasts_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    log_dir = None
+    root_log_dir = None
     process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
         system.portfolio,
         prediction_col,
@@ -143,7 +143,7 @@ def get_Cx_process_forecasts_dict_example1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir,
+        root_log_dir,
     )
     return process_forecasts_dict
 
@@ -166,7 +166,7 @@ def get_process_forecasts_dict_prod_instance1(
         "bulk_frac_to_remove": 0.0,
         "target_gmv": 2000.0,
     }
-    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    root_log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     #
     process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
         portfolio,
@@ -176,7 +176,7 @@ def get_process_forecasts_dict_prod_instance1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir=log_dir,
+        root_log_dir,
     )
     return process_forecasts_dict
 

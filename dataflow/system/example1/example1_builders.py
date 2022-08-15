@@ -67,7 +67,7 @@ def get_Example1_process_forecasts_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    log_dir = None
+    root_log_dir = None
     process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
         system.portfolio,
         prediction_col,
@@ -76,7 +76,7 @@ def get_Example1_process_forecasts_dict_example1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir,
+        root_log_dir,
     )
     return process_forecasts_dict
 
