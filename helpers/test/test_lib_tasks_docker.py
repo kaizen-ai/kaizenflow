@@ -92,6 +92,16 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
     Test `_get_docker_compose_cmd()`.
     """
 
+    def check(self, act: str, exp: str) -> None:
+        # Remove current timestamp (e.g., `20220317_232120``) from the `--name`
+        # so that the tests pass.
+        timestamp_regex = r"\.\d{8}_\d{6}"
+        act = re.sub(timestamp_regex, "", act)
+        act = hunitest.purify_txt_from_client(act)
+        # This is required when different repos run Docker with user vs root / remap.
+        act = hunitest.filter_text("--user", act)
+        self.assert_equal(act, exp, fuzzy_match=True)
+
     # TODO(gp): After using a single docker file as part of AmpTask2308
     #  "Update_amp_container" we can probably run these tests in any repo, so
     #  we should be able to remove this `skipif`.
@@ -129,7 +139,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             --entrypoint bash \
             app
         """
-        self._check(act, exp)
+        self.check(act, exp)
 
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
@@ -159,7 +169,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
                 --name $USER_NAME.amp_test.app.app \
                 app \
                 bash """
-        self._check(act, exp)
+        self.check(act, exp)
 
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
@@ -195,7 +205,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             app \
             bash
         """
-        self._check(act, exp)
+        self.check(act, exp)
 
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_supermodule(),
@@ -227,8 +237,12 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             --entrypoint bash \
             app
         """
-        self._check(act, exp)
+        self.check(act, exp)
 
+    # TODO(gp): Difference between amp and cmamp.
+    @pytest.mark.skip(
+        reason="It changes a Docker file creating permission issues"
+    )
     def test_docker_bash5(self) -> None:
         """
         Command for running through a shell.
@@ -260,7 +274,7 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             app \
             bash -c 'ls && cd ..'
         """
-        self._check(act, exp)
+        self.check(act, exp)
 
     @pytest.mark.skipif(
         not hgit.is_in_amp_as_submodule(), reason="Only run in amp as submodule"
@@ -292,14 +306,4 @@ class TestLibTasksGetDockerCmd1(httestlib._LibTasksTestCase):
             --service-ports \
             jupyter_server_test
         """
-        self._check(act, exp)
-
-    def _check(self, act: str, exp: str) -> None:
-        act = hunitest.purify_txt_from_client(act)
-        # This is required when different repos run Docker with user vs root / remap.
-        act = hunitest.filter_text("--user", act)
-        # Remove current timestamp (e.g., `20220317_232120``) from the `--name`
-        # so that the tests pass.
-        timestamp_regex = r"\.\d{8}_\d{6}"
-        act = re.sub(timestamp_regex, "", act)
-        self.assert_equal(act, exp, fuzzy_match=True)
+        self.check(act, exp)

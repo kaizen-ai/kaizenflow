@@ -7,7 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import datetime
 import logging
 import os
-from typing import Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional
 
 import pandas as pd
 
@@ -338,14 +338,17 @@ def apply_dag_property(
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
-        if "dst_dir" not in debug_mode_config:
-            # Infer the dst dir based on the `log_dir`.
-            log_dir = system.config["log_dir"]
-            dst_dir = os.path.join(log_dir, "dag/node_io")
-            _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)
-            # Update the data structures.
-            debug_mode_config["dst_dir"] = dst_dir
-            system.config["dag_property_config", "dst_dir"] = dst_dir
+        hdbg.dassert_not_in("dst_dir", debug_mode_config)
+        # Infer the dst dir based on the `log_dir`.
+        log_dir = system.config["system_log_dir"]
+        # TODO(gp): the DAG should add node_io to the passed dir.
+        dst_dir = os.path.join(log_dir, "dag/node_io")
+        _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)
+        # Update the data structures.
+        debug_mode_config["dst_dir"] = dst_dir
+        system.config[
+            "dag_property_config", "debug_mode_config", "dst_dir"
+        ] = dst_dir
         dag.set_debug_mode(**debug_mode_config)
     # 2) force_free_nodes
     force_free_nodes = system.config.get(
@@ -422,6 +425,16 @@ def add_process_forecasts_node(
     )
     dag.append_to_tail(node)
     return dag
+
+
+def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
+    """
+    Update the `system_log_dir` to save data in the scratch space.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    system.config["system_log_dir"] = os.path.join(
+        self_.get_scratch_space(), "system_log_dir"
+    )
 
 
 # #############################################################################

@@ -6,7 +6,6 @@ import oms.ck_credentials as ockcred
 
 import helpers.hdbg as hdbg
 
-
 # TODO(gp): Unclear if we need DB table names if we don't use DatabasePortfolio.
 
 # Liveness = real trading (=LIVE) or paper trading (=CANDIDATE)

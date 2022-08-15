@@ -863,7 +863,7 @@ class TestNestedConfigFlatten1(hunitest.TestCase):
 
 
 class TestSubtractConfig1(hunitest.TestCase):
-    def test_test1(self) -> None:
+    def test1(self) -> None:
         config1 = cconfig.Config()
         config1[("l0",)] = "1st_floor"
         config1[["l1", "l2"]] = "2nd_floor"
@@ -882,7 +882,7 @@ class TestSubtractConfig1(hunitest.TestCase):
         """.lstrip().rstrip()
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_test2(self) -> None:
+    def test2(self) -> None:
         config1 = cconfig.Config()
         config1[("l0",)] = "1st_floor"
         config1[["l1", "l2"]] = "2nd_floor"

@@ -148,6 +148,7 @@ object.str:
           ask: ask
           midpoint: midpoint
           price: close
+        _log_dir='None' <NoneType>
         _orders='OrderedDict()' <collections.OrderedDict>
         _deadline_timestamp_to_orders='defaultdict(<class 'list'>, {})' <collections.defaultdict>
         _fills='[]' <list>
@@ -244,7 +245,6 @@ object.str:
       <core.key_sorted_ordered_dict.KeySortedOrderedDict at 0x>:
         _max_keys='None' <NoneType>
         _odict='OrderedDict()' <collections.OrderedDict>
-  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
   dag_object: <dataflow.core.dag.DAG at 0x>:
     _nx_dag='DiGraph with 8 nodes and 7 edges' <networkx.classes.digraph.DiGraph>
     _name='None' <NoneType>
@@ -454,12 +454,13 @@ object.str:
     _wake_up_timestamp='None' <NoneType>
     _grid_time_in_secs='300' <int>
     _events='[]' <list>
+  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 object.builder_function:
   market_object: dataflow.system.example1.example1_forecast_system._get_market_data
   portfolio_object: dataflow.system.example1.example1_forecast_system._get_portfolio
-  order_processor: dataflow.system.example1.example1_forecast_system._get_order_processor
   dag_object: dataflow.system.example1.example1_forecast_system._get_dag
   dag_runner_object: dataflow.system.example1.example1_forecast_system._get_dag_runner
+  order_processor: dataflow.system.example1.example1_forecast_system._get_order_processor
 portfolio_object: # historical holdings=
 asset_id                      101      -1
 2000-01-01 09:35:06-05:00    0.00  1.00e+06
@@ -584,7 +585,6 @@ asset_id                       101
 2000-01-01 11:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
 2000-01-01 11:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
 2000-01-01 11:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 process_forecasts_config:
   prediction_col: feature1
   volatility_col: vwap.ret_0.vol
@@ -753,6 +753,7 @@ dag_runner_object: RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 
     2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
   _knowledge_datetime_col_name='timestamp_db' <str>
   _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 6900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=8, current_time=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=9, current_time=Timestamp('2000-01-01 10:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=10, current_time=Timestamp('2000-01-01 10:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=11, current_time=Timestamp('2000-01-01 10:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=12, current_time=Timestamp('2000-01-01 10:30:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=13, current_time=Timestamp('2000-01-01 10:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=14, current_time=Timestamp('2000-01-01 10:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=15, current_time=Timestamp('2000-01-01 10:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=16, current_time=Timestamp('2000-01-01 10:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=17, current_time=Timestamp('2000-01-01 10:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=18, current_time=Timestamp('2000-01-01 11:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=19, current_time=Timestamp('2000-01-01 11:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=20, current_time=Timestamp('2000-01-01 11:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=21, current_time=Timestamp('2000-01-01 11:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=22, current_time=Timestamp('2000-01-01 11:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=23, current_time=Timestamp('2000-01-01 11:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
+order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 ################################################################################
 compute_run_signature
 ################################################################################
@@ -1017,3 +1018,10 @@ end_datetime
 
 corr = 0.997
 corr_samples = 10
+################################################################################
+system_log_dir signature
+################################################################################
+# Dir structure
+.
+system_config.input.txt
+system_config.output.txt

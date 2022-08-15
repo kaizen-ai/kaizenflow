@@ -375,9 +375,16 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_S3_BUCKET"
-    hdbg.dassert_in(env_var, os.environ)
-    s3_bucket = os.environ[env_var]
-    hdbg.dassert_ne(s3_bucket, "", "Env var '%s' is empty", env_var)
+    if env_var in os.environ:
+        _LOG.debug("No env var '%s'", env_var)
+        s3_bucket = os.environ[env_var]
+    else:
+        # Fall-back to local credentials.
+        _LOG.debug("Checking credentials")
+        aws_credentials = get_aws_credentials(aws_profile)
+        _LOG.debug("%s", aws_credentials)
+        s3_bucket = aws_credentials.get("aws_s3_bucket", "")
+    hdbg.dassert_ne(s3_bucket, "")
     hdbg.dassert(
         not s3_bucket.startswith("s3://"),
         "Invalid %s value '%s'",
@@ -542,6 +549,12 @@ def get_aws_credentials(
         result[key] = config.get(aws_profile, key)
         #
         key = "aws_session_token"
+        if config.has_option(aws_profile, key):
+            result[key] = config.get(aws_profile, key)
+        else:
+            result[key] = None
+        #
+        key = "aws_s3_bucket"
         if config.has_option(aws_profile, key):
             result[key] = config.get(aws_profile, key)
         else:

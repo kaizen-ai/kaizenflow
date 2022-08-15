@@ -45,6 +45,7 @@ def get_DatabaseBroker_example1(
     timestamp_col: str = "end_datetime",
     submitted_orders_table_name: str = oomsdb.SUBMITTED_ORDERS_TABLE_NAME,
     accepted_orders_table_name: str = oomsdb.ACCEPTED_ORDERS_TABLE_NAME,
+    log_dir: Optional[str] = None,
 ) -> ombroker.DatabaseBroker:
     """
     Build a `DatabaseBroker` using `MarketData`, unless specified.
@@ -66,5 +67,6 @@ def get_DatabaseBroker_example1(
         db_connection=db_connection,
         submitted_orders_table_name=submitted_orders_table_name,
         accepted_orders_table_name=accepted_orders_table_name,
+        log_dir=log_dir,
     )
     return broker

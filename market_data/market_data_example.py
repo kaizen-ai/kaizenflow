@@ -321,7 +321,7 @@ def get_ReplayedImClientMarketData_example1(
     asset_ids: List[int],
     initial_replayed_dt: pd.Timestamp,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
-    # TODO(Max): Refactor mix of replay and realtime. 
+    # TODO(Max): Refactor mix of replay and realtime.
     """
     Build a `ReplayedMarketData2` with data coming from an `RealTimeImClient`.
     """

@@ -88,7 +88,7 @@ class Config:
         # _LOG.verb_debug("key=%s, config=%s", key, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
-            hdbg.dfatal(f"val='{val}' can't be a dict")
+            hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
         if False:
             # To debug who sets a certain key.
             _LOG.info("key.set=%s", str(key))
@@ -279,12 +279,12 @@ class Config:
         """
         return copy.deepcopy(self)
 
-    def mark_read_only(self) -> None:
+    def mark_read_only(self, value: bool = True) -> None:
         """
         Force a Config object to become read-only.
         """
         _LOG.debug("")
-        self._read_only = True
+        self._read_only = value
         # TODO(gp): Make read_only recursive. Add unit tests.
         # for v in self._config.values():
         #     if isinstance(v, Config):
