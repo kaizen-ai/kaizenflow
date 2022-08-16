@@ -10,11 +10,11 @@ OPTS="$OPTS --num_threads serial"
 #OPTS="$OPTS --dry_run"
 OPTS="$OPTS $*"
 
-tag="example1"
+tag="mock1"
 backtest_config="example1_v1-top2.1T.Jan2000"
-config_builder="dataflow.pipelines.example1.example1_configs.build_tile_configs(\"${backtest_config}\")"
+config_builder="dataflow_amp.system.mock1.mock1_tile_config_builders.build_Mock1_tile_config_list(\"${backtest_config}\")"
 
-dst_dir="build_tile_configs.${tag}.${backtest_config}.run1"
+dst_dir="build_Mock1_tile_config_list.${tag}.${backtest_config}.run1"
 
 # TODO(gp): -> run_configs.py
 ./amp/dataflow/backtest/run_config_list.py \
