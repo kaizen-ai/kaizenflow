@@ -47,7 +47,7 @@ def get_Mock1_process_forecasts_dict_example1(
     system: dtfsys.System,
 ) -> Dict[str, Any]:
     """
-    Get the dictionary with `ProcessForecastsNode` config params for Example1
+    Get the dictionary with `ProcessForecastsNode` config params for Mock1
     pipeline.
     """
     prediction_col = "feature1"

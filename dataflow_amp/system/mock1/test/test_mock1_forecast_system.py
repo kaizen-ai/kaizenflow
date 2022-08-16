@@ -218,7 +218,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
 ):
     """
-    Test an Example1 system with DatabasePortfolio.
+    Test a Mock1 system with DatabasePortfolio.
 
     See description in the parent class.
     """
@@ -263,7 +263,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
     dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
 ):
     """
-    Run an Example1 system with DatabasePortfolio and DataFramePortfolio and
+    Run a Mock1 system with DatabasePortfolio and DataFramePortfolio and
     verify that the output is the same.
 
     See description in the parent class.
