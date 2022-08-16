@@ -221,7 +221,7 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     A System with:
 
     - a `ReplayedMarketData`
-    - an `Mock1` DAG
+    - a `Mock1` DAG
     - a `DatabasePortfolio` (which includes a `DatabaseBroker`)
     - an `OrderProcessor`
     """
