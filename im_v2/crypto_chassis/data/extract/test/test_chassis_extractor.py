@@ -39,11 +39,11 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         "_download_bid_ask",
         spec=imvccdexex.CryptoChassisExtractor._download_bid_ask,
     )
-    def test_download_bid_ask_data1(
+    def test_download_bid_ask_data_spot(
         self, download_bid_ask_mock: umock.MagicMock, 
     ) -> None:
         """
-        Verify that `_download_bid_ask` is called properly.
+        Verify that `_download_bid_ask` is called properly in `spot` mode.
         """
         download_bid_ask_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
@@ -57,10 +57,47 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         )
         self.assertEqual(download_bid_ask_mock.call_count, 1)
         actual_args = tuple(download_bid_ask_mock.call_args)
-        expected_args = (('binance', 
-            ('btc/usdt'), 
-            (pd.Timestamp('2022-01-09 00:00:00+0000', tz='UTC')),
-            (pd.Timestamp('2022-01-09 23:59:00+0000', tz='UTC'))),
+        expected_args = (("binance", 
+            ("btc/usdt"), 
+            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
+            (pd.Timestamp("2022-01-09 23:59:00+0000", tz="UTC"))),
+            {},
+        )
+        self.assertEqual(actual_args, expected_args)
+        actual_output = hpandas.df_to_str(bidask_data)
+        expected_output = r"""dummy
+            0  dummy
+        """
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
+
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_download_bid_ask",
+        spec=imvccdexex.CryptoChassisExtractor._download_bid_ask,
+    )
+    def test_download_bid_ask_data_futures(
+        self, download_bid_ask_mock: umock.MagicMock, 
+    ) -> None:
+        """
+        Verify that `_download_bid_ask` is called properly in `futures` mode.
+        """
+        download_bid_ask_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
+        exchange_id = "binance"
+        currency_pair = "btc/usdt"
+        contract_type = "futures"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
+        bidask_data = client._download_bid_ask(
+            exchange_id, currency_pair, start_timestamp, end_timestamp
+        )
+        self.assertEqual(download_bid_ask_mock.call_count, 1)
+        actual_args = tuple(download_bid_ask_mock.call_args)
+        expected_args = (("binance", 
+            ("btc/usdt"), 
+            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
+            (pd.Timestamp("2022-01-09 23:59:00+0000", tz="UTC"))),
             {},
         )
         self.assertEqual(actual_args, expected_args)
@@ -133,13 +170,53 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
     @umock.patch.object(
         imvccdexex.CryptoChassisExtractor,
         "_download_ohlcv",
-        spec=imvccdexex.CryptoChassisExtractor._download_bid_ask,
+        spec=imvccdexex.CryptoChassisExtractor._download_ohlcv,
     )
-    def test_download_ohlcv1(
+    def test_download_ohlcv_spot(
         self, download_ohlcv_mock: umock.MagicMock
     ) -> None:
         """
-        Verify that `_download_ohlcv` is called properly.
+        Verify that `_download_ohlcv` is called properly in `spot` mode.
+        """
+        download_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
+        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
+        exchange = "binance"
+        currency_pair = "btc/usdt"
+        contract_type = "spot"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
+        ohlcv_data = client._download_ohlcv(
+            exchange,
+            currency_pair,
+            start_timestamp,
+            end_timestamp,
+        )
+        self.assertEqual(download_ohlcv_mock.call_count, 1)
+        actual_args = tuple(download_ohlcv_mock.call_args)
+        expected_args = (("binance", 
+            ("btc/usdt"), 
+            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
+            (pd.Timestamp("2022-03-09 00:00:00+0000", tz="UTC"))),
+            {},
+        )
+        self.assertEqual(actual_args, expected_args)
+        actual_output = hpandas.df_to_str(ohlcv_data)
+        expected_output = r"""dummy
+            0  dummy
+        """
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+
+
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_download_ohlcv",
+        spec=imvccdexex.CryptoChassisExtractor._download_ohlcv,
+    )
+    def test_download_ohlcv_futures(
+        self, download_ohlcv_mock: umock.MagicMock
+    ) -> None:
+        """
+        Verify that `_download_ohlcv` is called properly in `futures` mode.
         """
         download_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
@@ -156,10 +233,10 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         )
         self.assertEqual(download_ohlcv_mock.call_count, 1)
         actual_args = tuple(download_ohlcv_mock.call_args)
-        expected_args = (('binance', 
-            ('btc/usdt'), 
-            (pd.Timestamp('2022-01-09 00:00:00+0000', tz='UTC')),
-            (pd.Timestamp('2022-03-09 00:00:00+0000', tz='UTC'))),
+        expected_args = (("binance", 
+            ("btc/usdt"), 
+            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
+            (pd.Timestamp("2022-03-09 00:00:00+0000", tz="UTC"))),
             {},
         )
         self.assertEqual(actual_args, expected_args)
@@ -167,7 +244,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         expected_output = r"""dummy
             0  dummy
         """
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)        
 
     @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_ohlcv_invalid_input1(self) -> None:
@@ -240,59 +317,71 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = str(cm.exception)
         self.assertIn(expected, actual)
 
-    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
-    def test_download_trade1(
-        self,
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_download_trades",
+        spec=imvccdexex.CryptoChassisExtractor._download_trades,
+    )
+    def test_download_trades_spot(
+        self, download_trades_mock: umock.MagicMock,
     ) -> None:
         """
-        Test download for historical data.
+        Verify that `_download_trade` is called properly in `spot` mode.
         """
+        download_trades_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "coinbase"
         currency_pair = "btc/usdt"
         contract_type = "spot"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        actual = client._download_trades(
+        trades_data = client._download_trades(
             exchange, currency_pair, start_timestamp=start_timestamp
         )
-        # Verify dataframe length.
-        self.assertEqual(12396, actual.shape[0])
-        # Verify corner datetime if output is not empty.
-        first_date = int(actual["timestamp"].iloc[0])
-        last_date = int(actual["timestamp"].iloc[-1])
-        self.assertEqual(1641686404, first_date)
-        self.assertEqual(1641772751, last_date)
-        # Check the output values.
-        actual = actual.reset_index(drop=True)
-        actual = hpandas.convert_df_to_json_string(actual)
-        self.check_string(actual)
-
-    @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
-    def test_download_trade_futures1(
-        self,
+        self.assertEqual(download_trades_mock.call_count, 1)
+        actual_args = tuple(download_trades_mock.call_args)
+        expected_args = ((("coinbase"), 
+            ("btc/usdt")), 
+            {'start_timestamp': pd.Timestamp('2022-01-09 00:00:00+0000', tz='UTC')},
+        )
+        self.assertEqual(actual_args, expected_args)
+        actual_output = hpandas.df_to_str(trades_data)
+        expected_output = r"""dummy
+            0  dummy
+        """
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
+        
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_download_trades",
+        spec=imvccdexex.CryptoChassisExtractor._download_trades,
+    )
+    def test_download_trade_futures(
+        self, download_trades_mock: umock.MagicMock
     ) -> None:
         """
-        Test download for historical data.
+        Verify that `_download_trade` is called properly in `futures` mode.
         """
+        download_trades_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        exchange = "binance"
+        exchange = "coinbase"
         currency_pair = "btc/usdt"
         contract_type = "futures"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        actual = client._download_trades(
+        trades_data = client._download_trades(
             exchange, currency_pair, start_timestamp=start_timestamp
         )
-        # Verify dataframe length.
-        self.assertEqual(1265597, actual.shape[0])
-        # Verify corner datetime if output is not empty.
-        first_date = int(actual["timestamp"].iloc[0])
-        last_date = int(actual["timestamp"].iloc[-1])
-        self.assertEqual(1641686402, first_date)
-        self.assertEqual(1641772799, last_date)
-        # Check the output values.
-        actual = actual.reset_index(drop=True)
-        actual = hpandas.convert_df_to_json_string(actual)
-        self.check_string(actual)
+        self.assertEqual(download_trades_mock.call_count, 1)
+        actual_args = tuple(download_trades_mock.call_args)
+        expected_args = ((("coinbase"), 
+            ("btc/usdt")), 
+            {'start_timestamp': pd.Timestamp('2022-01-09 00:00:00+0000', tz='UTC')},
+        )
+        self.assertEqual(actual_args, expected_args)
+        actual_output = hpandas.df_to_str(trades_data)
+        expected_output = r"""dummy
+            0  dummy
+        """
+        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
     def test_download_trade_invalid_input1(self) -> None:
         """
