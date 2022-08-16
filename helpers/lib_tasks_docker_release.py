@@ -91,9 +91,10 @@ def docker_build_local_image(  # type: ignore
         hlitadoc._dassert_is_subsequent_version(
             version, container_dir_name=container_dir_name
         )
-    dev_version, _ = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -144,9 +145,10 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    dev_version, _ = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
     image_versioned_local = hlitadoc.get_image(base_image, "local", dev_version)
     image_versioned_dev = hlitadoc.get_image(base_image, "dev", dev_version)
@@ -173,9 +175,10 @@ def docker_push_dev_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    dev_version, _ = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     #
     hlitadoc.docker_login(ctx)
     # Push Docker versioned tag.
@@ -238,9 +241,10 @@ def docker_release_dev_image(  # type: ignore
     # Run resolve after `docker_build_local_image` so that a proper check
     # for subsequent version can be made in case `FROM_CHANGELOG` token
     # is used.
-    dev_version, _ = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -310,7 +314,7 @@ def docker_build_prod_image(  # type: ignore
     :param user_tag: the name of the user building the candidate image
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    dev_version, prod_version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
     # Prepare `.dockerignore`.
@@ -344,6 +348,7 @@ def docker_build_prod_image(  # type: ignore
     # TODO(gp): Use _to_multi_line_cmd()
     opts = "--no-cache" if not cache else ""
     # Use dev version for building prod image.
+    dev_version = hlitadoc._to_dev_version(prod_version)
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -385,9 +390,8 @@ def docker_push_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    _, prod_version = hlitadoc._resolve_version_value(
-        version,
-        container_dir_name=container_dir_name,
+    prod_version = hlitadoc._resolve_version_value(
+        version, container_dir_name=container_dir_name
     )
     #
     hlitadoc.docker_login(ctx)
@@ -452,9 +456,8 @@ def docker_release_prod_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    _, prod_version = hlitadoc._resolve_version_value(
-        version,
-        container_dir_name=container_dir_name,
+    prod_version = hlitadoc._resolve_version_value(
+        version, container_dir_name=container_dir_name
     )
     # 1) Build prod image.
     docker_build_prod_image(
