@@ -338,9 +338,9 @@ def apply_dag_property(
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
-        hdbg.dassert_not_in("dst_dir", debug_mode_config)
+        #hdbg.dassert_not_in("dst_dir", debug_mode_config)
         # Infer the dst dir based on the `log_dir`.
-        log_dir = system.config["system_log_dir"]
+        log_dir = system.config["log_dir"]
         # TODO(gp): the DAG should add node_io to the passed dir.
         dst_dir = os.path.join(log_dir, "dag/node_io")
         _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)

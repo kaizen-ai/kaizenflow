@@ -206,7 +206,7 @@ class System(abc.ABC):
             + hprint.frame("End config before dag_runner")
         )
         #
-        log_dir = self.config["system_log_dir"]
+        log_dir = self.config["log_dir"]
         hio.create_dir(log_dir, incremental=False)
         #
         file_name = os.path.join(log_dir, "system_config.input.txt")

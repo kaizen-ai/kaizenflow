@@ -164,7 +164,7 @@ def get_process_forecasts_dict_prod_instance1(
     #
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
-        "target_gmv": 2000.0,
+        "target_gmv": 1000.0,
     }
     log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
     #
@@ -176,7 +176,7 @@ def get_process_forecasts_dict_prod_instance1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir=log_dir,
+        root_log_dir=log_dir,
     )
     return process_forecasts_dict
 

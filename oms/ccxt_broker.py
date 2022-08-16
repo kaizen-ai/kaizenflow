@@ -23,6 +23,7 @@ import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
+import math
 
 _LOG = logging.getLogger(__name__)
 
@@ -345,40 +346,30 @@ class CcxtBroker(ombroker.Broker):
         # Load all limits for the asset.
         asset_limits = self._minimal_order_limits[order.asset_id]
         order_amount = order.diff_num_shares
-        min_amount = asset_limits["min_amount"]
-        _LOG.warning(
-            "Setting num_shares to min amount: %s",
-            order_amount,
-            min_amount,
-        )
-        if order_amount < 0:
-            order.diff_num_shares = -min_amount
-        else:
-            order.diff_num_shares = min_amount
-        # Check if the order is not below minimal cost.
-        #
+        required_amount = asset_limits["min_amount"]
         # Get the last price for the asset.
         last_price = self._get_last_market_price(order.asset_id)
+        if last_price * required_amount <= 10:
+            required_amount = (10 / last_price) * 3
         # Calculate the total cost of the order based on the last price.
-        total_cost = last_price * abs(order_amount)
-        # Verify that the order total cost is not below minimum.
-        min_cost = asset_limits["min_cost"]
-        if total_cost < min_cost:
-            # Set amount based on minimal notional price.
-            #  Note: the amount is rounded up to closest integer
-            #  to cover for possible inaccuracy in market cost.
-            required_amount = round(min_cost / last_price, 0) + 1
-            _LOG.warning(
-                "Amount of asset in order is below minimal base: %s. \
-                Setting to following amount based on notional limit: %s",
-                order_amount,
-                required_amount,
-            )
-            # Change number of shares to minimal amount.
-            if order.diff_num_shares < 0:
-                order.diff_num_shares = -required_amount
-            else:
-                order.diff_num_shares = required_amount
+        # # Verify that the order total cost is not below minimum.
+        # min_cost = asset_limits["min_cost"]
+        # # if total_cost < min_cost:
+        #     # Set amount based on minimal notional price.
+        #     #  Note: the amount is rounded up to closest integer
+        #     #  to cover for possible inaccuracy in market cost.
+        # required_amount = (min_cost / last_price) * 3
+        # _LOG.warning(
+        #     "Amount of asset in order is below minimal base: %s. \
+        #     Setting to following amount based on notional limit: %s",
+        #     order_amount,
+        #     required_amount,
+        # )
+        # Change number of shares to minimal amount.
+        if order.diff_num_shares < 0:
+            order.diff_num_shares = -required_amount
+        else:
+            order.diff_num_shares = required_amount
         return order
 
     def _get_last_market_price(self, asset_id: int) -> float:
@@ -564,7 +555,7 @@ class CcxtBroker(ombroker.Broker):
                     raise e
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
-        return None
+        return str(order_resp), pd.DataFrame()
 
     def _build_asset_id_to_symbol_mapping(
         self,
