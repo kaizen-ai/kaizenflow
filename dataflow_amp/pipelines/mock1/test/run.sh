@@ -11,7 +11,7 @@ OPTS="$OPTS --num_threads serial"
 OPTS="$OPTS $*"
 
 tag="mock1"
-# TODO(Nina): rename example1 universe dir and files to mock1.
+# TODO(Nina): Change `backtest_config` universe from example1 to mock1, rename corresponding files.
 backtest_config="example1_v1-top2.1T.Jan2000"
 config_builder="dataflow_amp.system.mock1.mock1_tile_config_builders.build_Mock1_tile_config_list(\"${backtest_config}\")"
 
