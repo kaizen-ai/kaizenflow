@@ -224,6 +224,9 @@ def apply_dag_runner_config(
     wake_up_timestamp = system.market_data.get_wall_clock_time()
     _LOG.info("Current time=%s", wake_up_timestamp)
     wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
+    # TODO(Grisha): For crypto we should set `wake_up_timestamp` to None,
+    # same for `real_time_loop_time_out_in_secs` unless they are specified
+    # via the cmd line parameters.
     if trading_period_str == "1T":
         # Run every 1 min.
         wake_up_timestamp = wake_up_timestamp.replace(
@@ -279,6 +282,7 @@ def apply_dag_runner_config(
     system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
         real_time_config
     )
+    # TODO(Grisha): we should reuse `apply_history_lookback`.
     # Apply history_lookback.
     market_data_history_lookback = pd.Timedelta(
         days=dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
@@ -435,6 +439,48 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     system.config["system_log_dir"] = os.path.join(
         self_.get_scratch_space(), "system_log_dir"
     )
+
+
+def apply_process_forecasts_config_for_equities(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    """
+    Set the trading hours for equities.
+
+    Equities market is open only during certain hours.
+    """
+    dict_ = {
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 30),
+        "ath_end_time": datetime.time(16, 40),
+        "trading_end_time": datetime.time(16, 40),
+    }
+    config = cconfig.get_config_from_nested_dict(dict_)
+    system.config["process_forecasts_config", "process_forecasts_config"].update(
+        config
+    )
+    return system
+
+
+def apply_process_forecasts_config_for_crypto(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    """
+    Set the trading hours for crypto.
+
+    For crypto we do not filter since crypto market is open 24/7.
+    """
+    dict_ = {
+        "ath_start_time": None,
+        "trading_start_time": None,
+        "ath_end_time": None,
+        "trading_end_time": None,
+    }
+    config = cconfig.get_config_from_nested_dict(dict_)
+    system.config["process_forecasts_config", "process_forecasts_config"].update(
+        config
+    )
+    return system
 
 
 # #############################################################################
