@@ -242,7 +242,7 @@ def dassert_all_defined_or_all_None(
     only_warning: bool = False,
 ) -> None:
     """
-    Check that all the values in list either are all defined or all None.
+    Check that all the values in a list are either all defined or all None.
     """
     all_defined_cond = all(val is not None for val in vals)
     all_none_cond = all(val is None for val in vals)
