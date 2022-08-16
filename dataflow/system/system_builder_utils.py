@@ -441,7 +441,9 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     )
 
 
-def apply_process_forecasts_config_for_equities(system: dtfsyssyst.System) -> dtfsyssyst.System:
+def apply_process_forecasts_config_for_equities(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
     """
     Set the trading hours for equities.
 
@@ -454,13 +456,15 @@ def apply_process_forecasts_config_for_equities(system: dtfsyssyst.System) -> dt
         "trading_end_time": datetime.time(16, 40),
     }
     config = cconfig.get_config_from_nested_dict(dict_)
-    system.config[
-        "process_forecasts_config", "process_forecasts_config"
-    ].update(config)
+    system.config["process_forecasts_config", "process_forecasts_config"].update(
+        config
+    )
     return system
 
 
-def apply_process_forecasts_config_for_crypto(system: dtfsyssyst.System) -> dtfsyssyst.System:
+def apply_process_forecasts_config_for_crypto(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
     """
     Set the trading hours for crypto.
 
@@ -473,9 +477,9 @@ def apply_process_forecasts_config_for_crypto(system: dtfsyssyst.System) -> dtfs
         "trading_end_time": None,
     }
     config = cconfig.get_config_from_nested_dict(dict_)
-    system.config[
-        "process_forecasts_config", "process_forecasts_config"
-    ].update(config)
+    system.config["process_forecasts_config", "process_forecasts_config"].update(
+        config
+    )
     return system
 
 

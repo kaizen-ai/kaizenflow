@@ -166,7 +166,9 @@ def get_process_forecasts_dict_prod_instance1(
         "bulk_frac_to_remove": 0.0,
         "target_gmv": 2000.0,
     }
-    root_log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    root_log_dir = os.path.join(
+        "process_forecasts", datetime.date.today().isoformat()
+    )
     #
     process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
         portfolio,
