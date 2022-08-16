@@ -37,7 +37,11 @@ class CcxtExtractor(imvcdexex.Extractor):
         :param contract_type: spot or futures contracts to extract
         """
         super().__init__()
-        hdbg.dassert_in(contract_type, ["futures", "spot"], msg="Supported contract types: spot, futures")
+        hdbg.dassert_in(
+            contract_type,
+            ["futures", "spot"],
+            msg="Supported contract types: spot, futures",
+        )
         self.contract_type = contract_type
         self.exchange_id = exchange_id
         self._exchange = self.log_into_exchange()
@@ -64,7 +68,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Enable rate limit.
         exchange_params["rateLimit"] = True
         if self.contract_type == "futures":
-            exchange_params["options"] = { 'defaultType': 'future' }
+            exchange_params["options"] = {"defaultType": "future"}
         exchange_class = getattr(ccxt, self.exchange_id)
         exchange = exchange_class(exchange_params)
         hdbg.dassert(
@@ -189,9 +193,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         return pd.concat(all_bars)
 
     def _download_bid_ask(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError(
-            "Bid_ask data is not available for CCXT vendor"
-        )
+        raise NotImplementedError("Bid_ask data is not available for CCXT vendor")
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for CCXT vendor")

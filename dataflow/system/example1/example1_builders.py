@@ -67,7 +67,7 @@ def get_Example1_process_forecasts_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    log_dir = None
+    root_log_dir = None
     process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
         system.portfolio,
         prediction_col,
@@ -76,7 +76,7 @@ def get_Example1_process_forecasts_dict_example1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir,
+        root_log_dir,
     )
     return process_forecasts_dict
 
@@ -139,6 +139,7 @@ def get_Example1_RealtimeDag_example3(system: dtfsyssyst.System) -> dtfcore.DAG:
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
+    system = dtfssybuut.apply_process_forecasts_config_for_equities(system)
     # Append the `ProcessForecastNode`.
     dag = dtfssybuut.add_process_forecasts_node(system, dag)
     return dag

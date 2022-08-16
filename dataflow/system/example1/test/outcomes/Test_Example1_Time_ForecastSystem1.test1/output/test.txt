@@ -48,7 +48,7 @@ dag_config:
 dag_builder_object: nid_prefix=
 dag_builder_class: Example1_DagBuilder
 system_class: Example1_Time_ForecastSystem
-log_dir: ./system_log_dir
+system_log_dir: $GIT_ROOT/dataflow/system/example1/test/outcomes/Test_Example1_Time_ForecastSystem1.test1/tmp.scratch/system_log_dir
 market_data_config:
   delay_in_secs: 0
   data:

@@ -30,6 +30,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): Ideally log_dir should be passed to the constructor.
 class Portfolio(abc.ABC, hobject.PrintableMixin):
     """
     Store holdings over time, e.g., how many shares of each asset are owned at

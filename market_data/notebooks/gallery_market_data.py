@@ -18,18 +18,15 @@
 # %matplotlib inline
 
 # %%
-import datetime
 import logging
 
+import pandas as pd
+
 import dataflow.system as dtfsys
-import market_data as mdata
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import numpy as np
-import pandas as pd
-import sklearn.linear_model as sklimod
-import sklearn.model_selection as skmosel
 
 # %%
 hdbg.init_logger(verbosity=logging.DEBUG)
@@ -40,18 +37,14 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+# %% [markdown]
+# # OHLCV market data
+
 # %%
 import pandas as pd
-import pytest
 
 import im_v2.ccxt.data.client as icdcl
-import im_v2.common.data.client as icdc
-import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client as iccdc
-
-
-# https://github.com/cryptokaizen/cmamp/pull/2315
-
 
 # Initialize the client.
 universe_version = "v4"
@@ -88,31 +81,27 @@ print(asset_ids)
 # %%
 import market_data.market_data_example as mdmadaex
 
-#asset_ids = None
 columns = None
 column_remap = None
 
 market_data = mdmadaex.get_HistoricalImClientMarketData_example1(
-    im_client,
-    asset_ids,
-    columns,
-    column_remap)
+    im_client, asset_ids, columns, column_remap
+)
 
 
 # %%
+# TODO(*): Document whether we need UTC.
 start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
-end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
+end_ts = pd.Timestamp("2022-05-02 13:05:00+00:00")
 ts_col_name = "knowledge_timestamp"
-        
+
 df = market_data.get_data_for_interval(
     start_ts,
     end_ts,
     ts_col_name,
     asset_ids,
 )
-
-# %%
-df.tail()
+hpandas.df_to_str(df)
 
 # %%
 data_source_node = dtfsys.HistoricalDataSource(
@@ -122,11 +111,96 @@ data_source_node = dtfsys.HistoricalDataSource(
     True,
     col_names_to_remove=["knowledge_timestamp", "start_ts", "full_symbol"],
 )
+data_source_node.set_fit_intervals([(start_ts, end_ts)])
 
 # %%
 data = data_source_node.fit()["df_out"]
+hpandas.df_to_str(data)
+
+# %% [markdown]
+# # Stitched OHLCV and bid/ask data
 
 # %%
-data.tail()
+universe_version = "v4"
+resample_1min = True
+contract_type = "futures"
+data_snapshot = "20220707"
+#
+dataset1 = "ohlcv"
+im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+    universe_version,
+    resample_1min,
+    dataset1,
+    contract_type,
+    data_snapshot,
+)
+#
+dataset2 = "bid_ask"
+im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
+    universe_version,
+    resample_1min,
+    dataset2,
+    contract_type,
+    data_snapshot,
+)
+#
+asset_ids = [1467591036, 1464553467]
+columns = None
+column_remap = None
+wall_clock_time = None
+filter_data_mode = "assert"
+#
+im_client_market_data1 = mdmadaex.get_HistoricalImClientMarketData_example1(
+    im_client1,
+    asset_ids,
+    columns,
+    column_remap,
+    wall_clock_time=wall_clock_time,
+    filter_data_mode=filter_data_mode,
+)
+im_client_market_data2 = mdmadaex.get_HistoricalImClientMarketData_example1(
+    im_client2,
+    asset_ids,
+    columns,
+    column_remap,
+    wall_clock_time=wall_clock_time,
+    filter_data_mode=filter_data_mode,
+)
+market_data = mdmadaex.get_HorizontalStitchedMarketData_example1(
+    im_client_market_data1,
+    im_client_market_data2,
+    asset_ids,
+    columns,
+    column_remap,
+    wall_clock_time=wall_clock_time,
+    filter_data_mode=filter_data_mode,
+)
+
+# %%
+start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
+end_ts = pd.Timestamp("2022-05-02 13:05:00+00:00")
+ts_col_name = "knowledge_timestamp"
+
+df = market_data.get_data_for_interval(
+    start_ts,
+    end_ts,
+    ts_col_name,
+    asset_ids,
+)
+hpandas.df_to_str(df)
+
+# %%
+data_source_node = dtfsys.HistoricalDataSource(
+    "load_prices",
+    market_data,
+    "end_ts",
+    True,
+    col_names_to_remove=["knowledge_timestamp", "start_ts", "full_symbol"],
+)
+data_source_node.set_fit_intervals([(start_ts, end_ts)])
+
+# %%
+data = data_source_node.fit()["df_out"]
+hpandas.df_to_str(data)
 
 # %%

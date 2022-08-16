@@ -24,8 +24,6 @@
 # %autoreload 2
 import logging
 
-import pandas as pd
-
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
@@ -71,7 +69,7 @@ connection = hsql.get_connection(*connection_params)
 # %%
 hsql.remove_table(connection, "example2_marketdata")
 im_client = icdc.get_mock_realtime_client(connection)
-market_data = mdata.get_RealtimeMarketData2_example1(im_client)
+market_data = mdata.get_RealtimeMarketData_example1(im_client)
 
 # %%
 # Load an example of CCXT order.
@@ -109,7 +107,9 @@ broker = occxbrok.CcxtBroker(
 # %%
 orders = [order]
 # Submitting orders to exchange and getting the
-order_resps = await broker._submit_orders(orders, pd.Timestamp.utcnow(), dry_run=False)
+order_resps, df = await broker._submit_orders(
+    orders, pd.Timestamp.utcnow(), dry_run=False
+)
 
 # %% [markdown]
 # ### `get_fills`
@@ -133,6 +133,6 @@ fills[0].to_dict()
 #     - see oms/ccxt_broker.py::82
 # - Another point to consider: we get fills from CCXT via the `fetch_orders` CCXT method, which returns a dictionary. We use this dictionary to create a `Fill` object since this dictionary contains more complete data on the order status.
 #    - This makes the `to_dict()` method unusable. We can create a new Order object from the one returned by CCXT, or we can use the original Order object.
-#    - This looks like the DatabaseBroker's `submitted_orders`/`filled_orders` distinction. We don't use the database in CCXT broker since all data is stored in the exchange. Also, CCXT (at least binance implementation) does not support the user ID assignment. 
+#    - This looks like the DatabaseBroker's `submitted_orders`/`filled_orders` distinction. We don't use the database in CCXT broker since all data is stored in the exchange. Also, CCXT (at least binance implementation) does not support the user ID assignment.
 
 # %%

@@ -8,6 +8,7 @@ import dataflow.system.sink_nodes as dtfsysinod
 import collections
 import datetime
 import logging
+import os
 from typing import Any, Dict, Optional
 
 import pandas as pd
@@ -18,7 +19,6 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import oms.portfolio as omportfo
 import oms.process_forecasts_ as oprofore
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -109,7 +109,10 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 # Dict builders.
 # #############################################################################
 
-# TODO(Grisha): generalize and move to `system_builder_utils.py`?
+
+# TODO(Grisha): @all Move to `system_builder_utils.py` or sink_nodes_example.py
+#   This function can become `get_process_forecasts_dict_example` (without a number)
+#   which signify the innermost / most general builder.
 def get_process_forecasts_dict_example1(
     portfolio: omportfo.Portfolio,
     prediction_col: str,
@@ -118,14 +121,23 @@ def get_process_forecasts_dict_example1(
     order_duration_in_mins: int,
     style: str,
     compute_target_positions_kwargs: Dict[str, Any],
-    log_dir: str,
+    root_log_dir: str,
 ) -> Dict[str, Any]:
     """
     Get the config for `ProcessForecastNode`.
+
+    :param root_log_dir: the root directory in which to log data. This function
+        saves the data in `$root_log_dir/process_forecasts`, and then each related
+        object decides where to save its own data underneath the
+        `process_forecasts()` log dir
     """
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
     #
     order_type = "price@twap"
+    if root_log_dir is not None:
+        log_dir = os.path.join(root_log_dir, "process_forecasts")
+    else:
+        log_dir = None
     process_forecasts_config_dict = {
         # Params for `ForecastProcessor`.
         "order_config": {
@@ -140,10 +152,6 @@ def get_process_forecasts_dict_example1(
             },
         },
         # Params for `process_forecasts()`.
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }

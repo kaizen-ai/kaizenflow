@@ -18,6 +18,7 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): This looks like it should go in `config_list_builder.py`.
 def get_config_list_from_builder(config_builder: str) -> ccocolis.ConfigList:
     """
     Execute Python code `config_builder()` to build configs.
