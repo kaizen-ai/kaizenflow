@@ -1,5 +1,5 @@
 #!/bin/bash -xe
-
+# TODO(Nina): Debug test. Failure is possibly related to `backtest_config`.
 clear
 
 OPTS="$OPTS --clean_dst_dir --no_confirm"
