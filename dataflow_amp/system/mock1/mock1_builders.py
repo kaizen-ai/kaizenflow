@@ -14,7 +14,7 @@ import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> example1_system_builder.py? What's the convention now?
+# TODO(gp): -> mock1_system_builder.py? What's the convention now?
 
 # #############################################################################
 # Market data instances

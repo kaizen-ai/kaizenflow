@@ -6,7 +6,7 @@ import dataflow.backtest as dtfmrpmofl
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): -> test_example1_tiled_backtest.py
+# TODO(gp): -> test_mock1_tiled_backtest.py
 
 
 class Test_Mock1_ForecastSystem_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
