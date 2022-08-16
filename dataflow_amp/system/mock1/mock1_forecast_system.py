@@ -31,9 +31,9 @@ class Mock1_ForecastSystem(dtfsys.ForecastSystem):
     Create a System with:
 
     - a ReplayedMarketData
-    - an non-timed Mock1 DAG
+    - a non-timed Mock1 DAG
 
-    This is used to run an historical simulation of an Mock1 system.
+    This is used to run an historical simulation of a Mock1 system.
     """
 
     def _get_system_config_template(self) -> cconfig.Config:
@@ -103,7 +103,7 @@ class Mock1_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
     Create a System with:
 
     - a ReplayedMarketData
-    - an Mock1 DAG
+    - a Mock1 DAG
     - a RealTimeDagRunner
     """
 

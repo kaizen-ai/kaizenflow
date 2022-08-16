@@ -11,7 +11,7 @@ _LOG = logging.getLogger(__name__)
 
 class Test_Mock1_ForecastSystem_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     """
-    Run end-to-end backtest for an Mock1 pipeline:
+    Run end-to-end backtest for a Mock1 pipeline:
 
     - run model
     - run the analysis flow to make sure that it works
