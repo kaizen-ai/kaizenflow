@@ -29,7 +29,10 @@ def convert_timestamp_column(
     :param unit: the unit of unix epoch
     :return: series containing datetime as `pd.Timestamp`
     """
-    if pd.api.types.is_integer_dtype(datetime_col_name):
+    if pd.to_numeric(
+        datetime_col_name, errors="coerce"
+    ).notnull().all() and not pd.api.types.is_float_dtype(datetime_col_name):
+        # Check whether the column is numeric but not float typed.
         # Convert unix epoch into timestamp.
         kwargs = {"unit": unit}
         converted_datetime_col = datetime_col_name.apply(
