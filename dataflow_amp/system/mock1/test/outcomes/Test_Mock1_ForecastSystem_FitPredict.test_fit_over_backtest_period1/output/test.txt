@@ -48,7 +48,7 @@ dag_config:
 dag_builder_object: nid_prefix=
 dag_builder_class: Mock1_DagBuilder
 system_class: Mock1_ForecastSystem
-log_dir: ./system_log_dir
+system_log_dir: $GIT_ROOT/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_ForecastSystem_FitPredict.test_fit_over_backtest_period1/tmp.scratch/system_log_dir
 backtest_config:
   universe_str: example1_v1-top2
   trading_period_str: 5T
@@ -73,7 +73,6 @@ research_forecast_evaluator_from_prices:
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
-system_log_dir: $GIT_ROOT/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_ForecastSystem_FitPredict.test_fit_over_backtest_period1/tmp.scratch/system_log_dir
 market_object: ImClientMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[3303714233, 1467591036] <list>, _start_time_col_name=start_ts <str>, _end_time_col_name=end_ts <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _im_client=<im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object> <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient>)
 object.str:
   market_object: <market_data.im_client_market_data.ImClientMarketData at 0x>:
