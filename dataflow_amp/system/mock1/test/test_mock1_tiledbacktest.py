@@ -24,6 +24,8 @@ class Test_Mock1_ForecastSystem_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase)
 
         The output is a single tile with both asset_ids.
         """
+        # TODO(Nina): Change `backtest_config` universe from example1 to mock1,
+        # rename corresponding files.
         backtest_config = "example1_v1-top2.5T.2000-01-01_2000-02-01"
         config_builder = (
             "dataflow_amp.system.mock1.mock1_tile_config_builders."
