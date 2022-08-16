@@ -318,6 +318,9 @@ class ForecastSystem(System):
     The forecasts can then be processed in terms of a PnL through a notebook or
     other data pipelines.
     """
+    def __init__(self, fit_at_beginning: bool = False):
+        self.fit_at_beginning = fit_at_beginning
+        super().__init__()
 
     @property
     def market_data(
