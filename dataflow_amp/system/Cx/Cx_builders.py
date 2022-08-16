@@ -281,8 +281,6 @@ def _get_Cx_dag_prod_instance1(
     portfolio = system.portfolio
     # Set market data history lookback in days in to config.
     system = dtfsys.apply_history_lookback(system)
-    # 
-    # dag = dtfsys.add_real_time_data_source(system)
     # Build the process forecast dict.
     process_forecasts_dict = get_process_forecasts_dict_func(
         portfolio, order_duration_in_mins
@@ -290,6 +288,7 @@ def _get_Cx_dag_prod_instance1(
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
+    system = dtfsys.apply_process_forecasts_config_for_crypto(system)
     process_forecasts_dict1 = system.config["process_forecasts_config"].to_dict()
     # Assemble.
     market_data = system.market_data
@@ -297,6 +296,8 @@ def _get_Cx_dag_prod_instance1(
         "market_data_config", "history_lookback"
     ]
     ts_col_name = "timestamp_db"
+    # TODO(Grisha): should we use `add_real_time_data_source` and
+    # `add_process_forecasts_node` from `system_builder_utils.py`?
     dag = dtfsys.adapt_dag_to_real_time(
         dag,
         market_data,
@@ -305,8 +306,6 @@ def _get_Cx_dag_prod_instance1(
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
-    # Append the `ProcessForecastNode`.
-    # dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
 
 
