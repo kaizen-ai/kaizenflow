@@ -155,13 +155,13 @@ def get_process_forecasts_dict_example1(
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
-    # This goes to `ProcessForecastsNode`.
-    process_forecasts_dict = {
+    # Params for `ProcessForecastsNode`.
+    process_forecasts_node_dict = {
         "prediction_col": prediction_col,
         "volatility_col": volatility_col,
         "spread_col": spread_col,
         "portfolio": portfolio,
         # This configures `process_forecasts()`.
-        "process_forecasts_config": process_forecasts_config_dict,
+        "process_forecasts_dict": process_forecasts_dict,
     }
-    return process_forecasts_dict
+    return process_forecasts_node_dict

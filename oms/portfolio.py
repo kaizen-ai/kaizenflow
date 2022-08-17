@@ -158,7 +158,11 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         """
         Return the state of the Portfolio in terms of the holdings as a string.
         """
+        txt = []
+        # <...portfolio at 0x>
+        txt.append(hprint.to_object_repr(self))
         act = []
+        # Print the rest of the data in a more readable format.
         num_periods = None
         precision = 2
         act.append(
@@ -202,7 +206,33 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             )
         )
         act = "\n".join(act)
-        return act
+        txt.append(hprint.indent(act))
+        txt = "\n".join(txt)
+        return txt
+
+    def __repr__(self) -> str:
+        """
+        Return the state of the Portfolio in terms of the holdings as a string.
+        """
+        txt = []
+        txt.append(str(self))
+        act = []
+        act.append("broker=%s" % hprint.to_object_repr(self.broker))
+        act.append("market_data=%s" % hprint.to_object_repr(self.market_data))
+        act.append("_account=%s" % self._account)
+        act.append("_timestamp_col=%s" % self._timestamp_col)
+        act.append("_get_wall_clock_time=%s" % self._get_wall_clock_time)
+        act.append("_asset_id_col=%s" % self._asset_id_col)
+        act.append("_mark_to_market_col=%s" % self._mark_to_market_col)
+        act.append("_pricing_type=%s" % self._pricing_type)
+        act.append("_bar_duration=%s" % self._bar_duration)
+        act.append("_max_num_bars=%s" % self._max_num_bars)
+        act = "\n".join(act)
+        txt.append(hprint.indent(act))
+        txt = "\n".join(txt)
+        return txt
+
+    # __repr__ prints a detailed state of the Portfolio.
 
     @staticmethod
     def read_state(

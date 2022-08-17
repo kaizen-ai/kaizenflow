@@ -45,6 +45,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         )
         return portfolio
 
+    # TODO(gp): -> get_process_forecasts_dict
     @staticmethod
     def get_process_forecasts_config() -> cconfig.Config:
         dict_ = {
@@ -69,8 +70,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        return config
+        return dict_
 
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
@@ -78,6 +78,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
                 self._test_simulated_system1(event_loop), event_loop=event_loop
             )
 
+    # TODO(gp): -> run_simulated_system1
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
     ) -> None:
@@ -120,7 +121,9 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             restrictions_df,
         )
         actual = str(portfolio)
-        expected = r"""# historical holdings=
+        expected = r"""
+<oms.portfolio.DataFramePortfolio at 0x>
+# historical holdings=
 asset_id                     101    202       -1
 2000-01-01 09:35:01-05:00   0.00   0.00  1000000.0
 2000-01-01 09:40:01-05:00 -49.98  49.98  1000000.0
@@ -144,7 +147,12 @@ asset_id                     101    202
 2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
 2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
 2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+# TestSimulatedProcessForecasts2
+# #############################################################################
 
 
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
@@ -181,6 +189,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         )
         return portfolio
 
+    # TODO(gp): -> get_process_forecasts_dict
     @staticmethod
     def get_process_forecasts_config() -> cconfig.Config:
         dict_ = {
@@ -205,8 +214,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        return config
+        return dict_
 
     @pytest.mark.slow("~8 seconds")
     def test_initialization1(self) -> None:
@@ -215,6 +223,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
                 self._test_simulated_system1(event_loop), event_loop=event_loop
             )
 
+    # TODO(gp): -> run_simulated_system1
     async def _test_simulated_system1(
         self, event_loop: asyncio.AbstractEventLoop
     ) -> None:
@@ -255,6 +264,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         )
         actual = str(portfolio)
         expected = r"""
+<oms.portfolio.DataFramePortfolio at 0x>
 # historical holdings=
 asset_id                     100    200      -1
 2000-01-01 15:05:01-05:00   0.00   0.00  1.00e+06
@@ -379,7 +389,7 @@ asset_id                      100     200
 2000-01-02 10:20:01-05:00    5.78     200157.27   -31337.30  100019.38 -12755.58  1.01e+06   999878.48       0.1
 2000-01-02 10:25:01-05:00    0.67     200011.27    12181.23   99969.33   -573.68  1.00e+06   999879.15       0.1
 2000-01-02 10:30:01-05:00   -0.38       1015.14     1015.14   99995.09    441.09  9.99e+05   999878.78       0.1"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
@@ -413,8 +423,10 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         )
         return portfolio
 
+    # TODO(gp): -> get_process_forecasts_dict
     @staticmethod
     def get_process_forecasts_config() -> cconfig.Config:
+        # TODO(gp): Factor this out.
         dict_ = {
             "order_config": {
                 "order_type": "partial_spread_0.25@twap",
@@ -437,8 +449,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
-        return config
+        return dict_
 
     def test_initialization1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
@@ -489,6 +500,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         )
         actual = str(portfolio)
         expected = r"""
+<oms.portfolio.DataFramePortfolio at 0x>
 # historical holdings=
 asset_id                     101    202      -1
 2000-01-01 09:35:01-05:00   0.00   0.00  1.00e+06
@@ -513,7 +525,7 @@ asset_id                      101    202
 2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00    0.00  1.00e+06    1.00e+06       0.0
 2000-01-01 09:40:01-05:00  -67.12     100061.30      -79.26  100036.08 -146.38  1.00e+06    1.00e+06       0.1
 2000-01-01 09:45:01-05:00  226.12        146.31      146.31   99935.34  226.05  1.00e+06    1.00e+06       0.1"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
@@ -574,7 +586,6 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         Run process_forecasts() logic with a given prediction df to update a
         Portfolio.
         """
-        config = {}
         # Build predictions.
         index = [
             pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York"),
@@ -594,6 +605,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             [1, 1],
         ]
         volatility = pd.DataFrame(volatility_data, index, columns)
+        # TODO(gp): Factor this out.
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
@@ -616,7 +628,6 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
         spread_df = None
         restrictions_df = None
         # Run.
@@ -624,13 +635,14 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             predictions,
             volatility,
             portfolio,
-            config,
+            dict_,
             spread_df,
             restrictions_df,
         )
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
         expected = r"""
+<oms.portfolio.DatabasePortfolio at 0x>
 # historical holdings=
 asset_id                     101    202       -1
 2000-01-01 09:35:01-05:00   0.00   0.00  1000000.0
@@ -655,7 +667,7 @@ asset_id                     101    202
 2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
 2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
 2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
@@ -691,7 +703,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         predictions, volatility = self._get_predictions_and_volatility2(data)
         self._run_coroutines(data, predictions, volatility)
 
-    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those functions.
+    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those
+    #  functions.
     @staticmethod
     def _get_market_data_df1() -> pd.DataFrame:
         """
@@ -713,7 +726,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         data["asset_id"] = 101
         return data
 
-    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those functions.
+    # TODO(gp): Move to core/finance/market_data_example.py or reuse some of
+    #  those functions.
     @staticmethod
     def _get_market_data_df2() -> pd.DataFrame:
         idx = pd.date_range(
@@ -863,7 +877,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         Run process_forecasts() logic with a given prediction df to update a
         Portfolio.
         """
-        dict_ = {
+        # TODO(gp): Factor this out.
+        process_forecasts_dict = {
             "order_config": {
                 "order_type": "price@twap",
                 "order_duration_in_mins": 5,
@@ -885,7 +900,6 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
         spread_df = None
         restrictions_df = None
         # Run.
@@ -893,7 +907,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             predictions,
             volatility,
             portfolio,
-            config,
+            process_forecasts_dict,
             spread_df,
             restrictions_df,
         )
@@ -924,4 +938,4 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         self._append(actual, "research_pnl", research_pnl)
         actual.append(portfolio)
         actual = "\n".join(map(str, actual))
-        self.check_string(actual)
+        self.check_string(actual, purify_text=True)

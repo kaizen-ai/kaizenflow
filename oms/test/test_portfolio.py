@@ -314,6 +314,35 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    async def coroutine1(self, portfolio: omportfo.Portfolio) -> None:
+        portfolio.mark_to_market()
+        await asyncio.sleep(60 * 5)
+        portfolio.mark_to_market()
+        # Check.
+        actual = str(portfolio)
+        expected = r"""
+        <oms.portfolio.DatabasePortfolio at 0x>
+        # historical holdings=
+        asset_id                    101       -1
+        2000-01-01 09:35:00-05:00   0.0  1000000.0
+        2000-01-01 09:40:00-05:00  20.0  1000000.0
+        # historical holdings marked to market=
+        asset_id                        101       -1
+        2000-01-01 09:35:00-05:00      0.00  1000000.0
+        2000-01-01 09:40:00-05:00  20004.03  1000000.0
+        # historical flows=
+        asset_id                   101
+        2000-01-01 09:40:00-05:00  0.0
+        # historical pnl=
+        asset_id                        101
+        2000-01-01 09:35:00-05:00       NaN
+        2000-01-01 09:40:00-05:00  20004.03
+        # historical statistics=
+                                        pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
+        2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
+        2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
     def test1(self) -> None:
         """
         Test that the update of Portfolio works.
@@ -340,8 +369,39 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
                 table_name,
                 asset_ids=[101],
             )
-            coroutines = [self._coroutine1(portfolio)]
+            coroutines = [self.coroutine1(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+
+    # //////////////////////////////////////////////////////////////////////////////
+
+    async def coroutine2(self, portfolio: omportfo.Portfolio):
+        portfolio.mark_to_market()
+        await asyncio.sleep(60 * 5)
+        portfolio.mark_to_market()
+        # Check.
+        actual = str(portfolio)
+        expected = r"""
+        <oms.portfolio.DatabasePortfolio at 0x>
+        # historical holdings=
+        asset_id                    101      -1
+        2000-01-01 09:35:00-05:00   0.0  1.00e+06
+        2000-01-01 09:40:00-05:00  20.0  1.00e+06
+        # historical holdings marked to market=
+        asset_id                        101      -1
+        2000-01-01 09:35:00-05:00      0.00  1.00e+06
+        2000-01-01 09:40:00-05:00  20004.03  1.00e+06
+        # historical flows=
+        asset_id                       101
+        2000-01-01 09:40:00-05:00  1903.12
+        # historical pnl=
+        asset_id                        101
+        2000-01-01 09:35:00-05:00       NaN
+        2000-01-01 09:40:00-05:00  21907.15
+        # historical statistics=
+                                        pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
+        2000-01-01 09:35:00-05:00       NaN          0.00        0.00      0.00      0.00  1.00e+06    1.00e+06      0.00
+        2000-01-01 09:40:00-05:00  21907.15       1903.12    -1903.12  20004.03  20004.03  1.00e+06    1.02e+06      0.02"""
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test2(self) -> None:
         """
@@ -369,64 +429,8 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
                 table_name,
                 asset_ids=[101],
             )
-            coroutines = [self._coroutine2(portfolio)]
+            coroutines = [self.coroutine2(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
-
-    async def _coroutine1(self, portfolio: omportfo.Portfolio):
-        portfolio.mark_to_market()
-        await asyncio.sleep(60 * 5)
-        portfolio.mark_to_market()
-        # Check.
-        actual = str(portfolio)
-        expected = r"""
-        # historical holdings=
-        asset_id                    101       -1
-        2000-01-01 09:35:00-05:00   0.0  1000000.0
-        2000-01-01 09:40:00-05:00  20.0  1000000.0
-        # historical holdings marked to market=
-        asset_id                        101       -1
-        2000-01-01 09:35:00-05:00      0.00  1000000.0
-        2000-01-01 09:40:00-05:00  20004.03  1000000.0
-        # historical flows=
-        asset_id                   101
-        2000-01-01 09:40:00-05:00  0.0
-        # historical pnl=
-        asset_id                        101
-        2000-01-01 09:35:00-05:00       NaN
-        2000-01-01 09:40:00-05:00  20004.03
-        # historical statistics=
-                                        pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-        2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
-        2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    async def _coroutine2(self, portfolio: omportfo.Portfolio):
-        portfolio.mark_to_market()
-        await asyncio.sleep(60 * 5)
-        portfolio.mark_to_market()
-        # Check.
-        actual = str(portfolio)
-        expected = r"""
-        # historical holdings=
-        asset_id                    101      -1
-        2000-01-01 09:35:00-05:00   0.0  1.00e+06
-        2000-01-01 09:40:00-05:00  20.0  1.00e+06
-        # historical holdings marked to market=
-        asset_id                        101      -1
-        2000-01-01 09:35:00-05:00      0.00  1.00e+06
-        2000-01-01 09:40:00-05:00  20004.03  1.00e+06
-        # historical flows=
-        asset_id                       101
-        2000-01-01 09:40:00-05:00  1903.12
-        # historical pnl=
-        asset_id                        101
-        2000-01-01 09:35:00-05:00       NaN
-        2000-01-01 09:40:00-05:00  21907.15
-        # historical statistics=
-                                        pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
-        2000-01-01 09:35:00-05:00       NaN          0.00        0.00      0.00      0.00  1.00e+06    1.00e+06      0.00
-        2000-01-01 09:40:00-05:00  21907.15       1903.12    -1903.12  20004.03  20004.03  1.00e+06    1.02e+06      0.02"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################
@@ -439,36 +443,7 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def test1(self) -> None:
-        """
-        Test the `log_state()`/`read_state()` round trip.
-        """
-        with hasynci.solipsism_context() as event_loop:
-            # Create current positions in the table.
-            row = _get_row1()
-            asset_id_name = "asset_id"
-            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
-            oomsdb.create_current_positions_table(
-                self.connection, False, asset_id_name, table_name
-            )
-            hsql.execute_insert_query(self.connection, row, table_name)
-            if False:
-                # Print the DB status.
-                query = """SELECT * FROM current_positions"""
-                df = hsql.execute_query_to_df(self.connection, query)
-                print(hpandas.df_to_str(df))
-                assert 0
-            # Create DatabasePortfolio with some initial cash.
-            portfolio = oporexam.get_DatabasePortfolio_example1(
-                event_loop,
-                self.connection,
-                table_name,
-                asset_ids=[101],
-            )
-            coroutines = [self._coroutine1(portfolio)]
-            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
-
-    async def _coroutine1(self, portfolio: omportfo.Portfolio):
+    async def coroutine1(self, portfolio: omportfo.Portfolio) -> None:
         portfolio.mark_to_market()
         await asyncio.sleep(60 * 5)
         portfolio.mark_to_market()
@@ -501,7 +476,41 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
                                         pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
         2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02
         2000-01-01 09:45:00-05:00     -5.66           0.0         0.0  19998.37  19998.37  1000000.0    1.02e+06      0.02"""
-        self.assert_equal(stats_df_str, expected_stats_df_str, fuzzy_match=True)
+        self.assert_equal(
+            stats_df_str,
+            expected_stats_df_str,
+            purify_text=True,
+            fuzzy_match=True,
+        )
+
+    def test1(self) -> None:
+        """
+        Test the `log_state()`/`read_state()` round trip.
+        """
+        with hasynci.solipsism_context() as event_loop:
+            # Create current positions in the table.
+            row = _get_row1()
+            asset_id_name = "asset_id"
+            table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
+            oomsdb.create_current_positions_table(
+                self.connection, False, asset_id_name, table_name
+            )
+            hsql.execute_insert_query(self.connection, row, table_name)
+            if False:
+                # Print the DB status.
+                query = """SELECT * FROM current_positions"""
+                df = hsql.execute_query_to_df(self.connection, query)
+                print(hpandas.df_to_str(df))
+                assert 0
+            # Create DatabasePortfolio with some initial cash.
+            portfolio = oporexam.get_DatabasePortfolio_example1(
+                event_loop,
+                self.connection,
+                table_name,
+                asset_ids=[101],
+            )
+            coroutines = [self.coroutine1(portfolio)]
+            hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
 
 
 # #############################################################################
@@ -513,6 +522,35 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
+
+    async def coroutine1(self, portfolio: omportfo.Portfolio) -> None:
+        portfolio.mark_to_market()
+        await asyncio.sleep(60 * 5)
+        portfolio.mark_to_market()
+        #
+        actual = str(portfolio)
+        expected = r"""
+        <oms.portfolio.DatabasePortfolio at 0x>
+        # historical holdings=
+        asset_id                    101  -1
+        2000-01-01 09:35:00-05:00  20.0  0.0
+        2000-01-01 09:40:00-05:00  20.0  0.0
+        # historical holdings marked to market=
+        asset_id                        101  -1
+        2000-01-01 09:35:00-05:00  20006.24  0.0
+        2000-01-01 09:40:00-05:00  20004.03  0.0
+        # historical flows=
+        asset_id                   101
+        2000-01-01 09:40:00-05:00  0.0
+        # historical pnl=
+        asset_id                    101
+        2000-01-01 09:35:00-05:00   NaN
+        2000-01-01 09:40:00-05:00 -2.21
+        # historical statistics=
+                                    pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
+        2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
+        2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0"""
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test1(self) -> None:
         """
@@ -540,33 +578,5 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
                 table_name,
                 universe=[101, -1],
             )
-            coroutines = [self._coroutine1(portfolio)]
+            coroutines = [self.coroutine1(portfolio)]
             hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
-
-    async def _coroutine1(self, portfolio: omportfo.Portfolio):
-        portfolio.mark_to_market()
-        await asyncio.sleep(60 * 5)
-        portfolio.mark_to_market()
-        #
-        actual = str(portfolio)
-        expected = r"""
-        # historical holdings=
-        asset_id                    101  -1
-        2000-01-01 09:35:00-05:00  20.0  0.0
-        2000-01-01 09:40:00-05:00  20.0  0.0
-        # historical holdings marked to market=
-        asset_id                        101  -1
-        2000-01-01 09:35:00-05:00  20006.24  0.0
-        2000-01-01 09:40:00-05:00  20004.03  0.0
-        # historical flows=
-        asset_id                   101
-        2000-01-01 09:40:00-05:00  0.0
-        # historical pnl=
-        asset_id                    101
-        2000-01-01 09:35:00-05:00   NaN
-        2000-01-01 09:40:00-05:00 -2.21
-        # historical statistics=
-                                    pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
-        2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
-        2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0"""
-        self.assert_equal(actual, expected, fuzzy_match=True)
