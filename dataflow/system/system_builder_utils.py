@@ -10,6 +10,7 @@ import os
 from typing import Any, Callable, Coroutine, Optional
 
 import pandas as pd
+from amp.dataflow.core import dag_runner
 
 import core.config as cconfig
 import dataflow.core as dtfcore
@@ -229,6 +230,28 @@ def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
     system = apply_dag_property(dag, system)
     _ = system
     return dag
+
+
+def apply_dag_runner_config_for_crypto(
+    system: dtfsyssyst.System,
+    *,
+    wake_up_timestamp: pd.Timestamp = None,
+    real_time_loop_time_out_in_secs = None,
+) -> dtfsyssyst.System:
+    dag_config = system.config["dag_config"]
+    dag_builder = system.config["dag_builder_object"]
+    # Could be used for calculating `sleep_interval_in_secs` and `real_time_loop_time_out_in_secs`, like
+    # sleep_interval_in_secs = system.config["dag_runner_config", "trading_period_str"]
+    # Calculate minutes for real_time_loop_time:
+    # minutes = 60 - system.config["dag_runner_config", "trading_period_str"]
+    # real_time_loop_time_out_in_secs = datetime.time(15, minutes)
+    system.config["dag_runner_config", "trading_period_str"] = pd.Timedelta(dag_builder.get_trading_period(dag_config).seconds)
+    system.config["dag_runner_config", "wake_up_timestamp"] = real_time_loop_time_out_in_secs
+    # 
+    if wake_up_timestamp is not None:
+        wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
+    system.config["dag_runner_config", "wake_up_timestamp"] = wake_up_timestamp
+    return system
 
 
 def apply_dag_runner_config(
