@@ -87,7 +87,7 @@ def update_task_definition(task_definition_name: str, new_image_url: str) -> Non
         _LOG.info(
             "New image url `%s` is already set for task definition `%s`!",
             new_image_url,
-            task_definition_name
+            task_definition_name,
         )
         return
     task_definition_json["containerDefinitions"][0]["image"] = new_image_url
@@ -104,7 +104,9 @@ def update_task_definition(task_definition_name: str, new_image_url: str) -> Non
         cpu=task_definition_json["cpu"],
         memory=task_definition_json["memory"],
     )
-    updated_image_url = response["taskDefinition"]["containerDefinitions"][0]["image"]
+    updated_image_url = response["taskDefinition"]["containerDefinitions"][0][
+        "image"
+    ]
     # Check if the image URL is updated.
     hdbg.dassert_eq(updated_image_url, new_image_url)
     _LOG.info(

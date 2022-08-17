@@ -12,9 +12,9 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
+import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.haws as haws
 import helpers.hs3 as hs3
 import helpers.hversion as hversio
 import helpers.lib_tasks_docker as hlitadoc
@@ -605,19 +605,19 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
 @task
 def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: ignore
     """
-    Update image in prod task definition to he desired version.
+    Update image in prod task definition to the desired version.
 
     :param version: latest version from `changelog.txt` or custom one (e.g., `1.1.1`)
     :param preprod_tag: image that will be re-tagged with prod version
         e.g., `preprod-d8sf76s` -> `prod-1.1.1`
     """
-    # TODO(Nikola): Will be `cryptokaizen-airflow` ...
-    airflow_dags_s3_path = "s3://nikolaj-test-pre-prod/DAGs/"
+    airflow_dags_s3_path = "s3://cryptokaizen-airflow/DAGs/"
     # TODO(Nikola): Use env var for CK profile.
     s3fs_ = hs3.get_s3fs(aws_profile="ck")
+    super_module = not hgit.is_inside_submodule()
+    full_repo_name = hgit.get_repo_full_name_from_client(super_module)
+    short_repo_name = os.path.split(full_repo_name)[-1]
     # Prepare params for listing DAGs.
-    # TODO(Nikola): Orange as supermodule?
-    super_module = False
     root_dir = hgit.get_client_root(super_module)
     dir_name = os.path.join(root_dir, "im_v2", "airflow", "dags")
     pattern = "preprod.*.py"
@@ -633,22 +633,18 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: igno
             s3fs_.cat(airflow_dags_s3_path + dag_name).decode(),
             msg=f"Preprod file `{dag_name}` is out of sync with `{airflow_dags_s3_path}`!",
         )
-    # TODO(Nikola): Will be changed to `cmamp-preprod`...
-    preprod_task_definition_name = "cmamp-test-nikolaj"
     # Prepare params to compose new prod image url.
     prod_version = hlitadoc._resolve_version_value(version)
     base_image = ""
     stage = "prod"
     # Compose new prod image url.
-    # new_prod_image_url = hlitadoc.get_image(base_image, stage, prod_version)
-    # new_prod_image_url_no_version = hlitadoc.get_image(base_image, stage, None)
-    # TODO(Nikola): Temporarily here so real prod is not touched.
-    new_prod_image_url = "665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:test-prod-nikolaj-1.1.1"
-    new_prod_image_url_no_version = "665840871993.dkr.ecr.us-east-1.amazonaws.com/cmamp:test-prod-nikolaj"
+    new_prod_image_url = hlitadoc.get_image(base_image, stage, prod_version)
+    new_prod_image_url_no_version = hlitadoc.get_image(base_image, stage, None)
     # Check if preprod tag exist in preprod task definition as precaution.
-    # TODO(Nikola): Reiterate to previous versions, if needed.
+    # TODO(Nikola): Reiterate to previous versions to pick correct one, if needed.
     # client.list_task_definitions(familyPrefix=preprod_task_definition_name, sort="DESC")
     # TODO(Nikola): Use env var for CK profile.
+    preprod_task_definition_name = f"{short_repo_name}-preprod"
     ecs_client = haws.get_service_client(aws_profile="ck", service_name="ecs")
     task_description = ecs_client.describe_task_definition(
         taskDefinition=preprod_task_definition_name
@@ -665,14 +661,13 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: igno
     hlitauti._run(ctx, cmd)
     cmd = f"docker rmi {preprod_image_url}"
     hlitauti._run(ctx, cmd)
-    #
     # Update prod task definition to the latest prod tag.
-    # TODO(Nikola): Will be changed to `cmamp-prod`...
-    prod_task_definition_name = "cmamp-test-nikolaj"
+    prod_task_definition_name = f"{short_repo_name}-prod"
     haws.update_task_definition(prod_task_definition_name, new_prod_image_url)
     # Add prod DAGs to airflow s3 bucket after all checks are passed.
     for dag_path in dag_paths:
         # Update prod DAGs.
         _, dag_name = os.path.split(dag_path)
         prod_dag_name = dag_name.replace("preprod.", "prod.")
+        # TODO (Nikola): Ensure that files are uploaded.
         s3fs_.put(dag_path, airflow_dags_s3_path + prod_dag_name)
