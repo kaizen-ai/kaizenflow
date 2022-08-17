@@ -344,10 +344,17 @@ class CcxtBroker(ombroker.Broker):
         """
         asset_limits = self._minimal_order_limits[order.asset_id]
         required_amount = asset_limits["min_amount"]
+        # Note: 10 is the minimal total cost of an order in testnet.
+        min_cost = 10
         # Get the last price for the asset.
         last_price = self._get_last_market_price(order.asset_id)
-        if last_price * required_amount <= 10:
-            required_amount = (10 / last_price) * 2
+        # Verify that the estimated total cost is above 10.
+        if last_price * required_amount <= min_cost:
+            # Set the amount of asset to above min cost.
+            #  Note: the multiplication by 2 is done to give some
+            #  buffer so the order does not go below
+            #  the minimal amount of asset.
+            required_amount = (min_cost / last_price) * 2
         if order.diff_num_shares < 0:
             order.diff_num_shares = -required_amount
         else:
