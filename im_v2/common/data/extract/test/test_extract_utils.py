@@ -751,9 +751,9 @@ class TestVerifySchema(hunitest.TestCase):
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
-    def test_non_numerical_column(self) -> None:
+    def test_numerical_column(self) -> None:
         """
-        Test if invalid Dataframe schema produces an error.
+        Test if object typed numerical column is forced to float.
         """
         # Define test Dataframe data with non-numerical `close` column.
         test_data = {
@@ -762,6 +762,32 @@ class TestVerifySchema(hunitest.TestCase):
             "high": [2.228, 2.232, 2.233],
             "low": [2.225, 2.227, 2.23],
             "close": ["2", "2", "2"],
+            "volume": [64687.0, 59076.3, 58236.2],
+            "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
+            "exchange_id": ["binance", "binance", "binance"],
+        }
+        # Create Dataframe.
+        test_df = pd.DataFrame(data=test_data)
+        expected_df = test_df.copy()
+        # Fix the type of `close` column to `int32`.
+        expected_df["close"] = expected_df["close"].astype("float64")
+        # Function should fix the type of the column to `float64`.
+        actual_df = imvcdeexut.verify_schema(test_df)
+        # Check the result.
+        hunitest.compare_df(expected_df, actual_df)
+
+
+    def test_non_numerical_column(self) -> None:
+        """
+        Test if non numerical column that supposed to be numerical produces an error.
+        """
+        # Define test Dataframe data with non-numerical `close` column.
+        test_data = {
+            "timestamp": [1636539120000, 1636539180000, 1636539240000],
+            "open": [2.226, 2.228, 2.23],
+            "high": [2.228, 2.232, 2.233],
+            "low": [2.225, 2.227, 2.23],
+            "close": ["two", "two", "two"],
             "volume": [64687.0, 59076.3, 58236.2],
             "currency_pair": ["ADA_USDT", "ADA_USDT", "ADA_USDT"],
             "exchange_id": ["binance", "binance", "binance"],
