@@ -232,10 +232,7 @@ def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
 
 
 def apply_dag_runner_config_for_crypto(
-    system: dtfsyssyst.System,
-    *,
-    wake_up_timestamp: Optional[datetime.time] = None,
-    real_time_loop_time_out_in_secs: Optional[datetime.time] = None,
+    system: dtfsyssyst.System
 ) -> dtfsyssyst.System:
     """
     Update for crypto:
@@ -244,6 +241,8 @@ def apply_dag_runner_config_for_crypto(
     """
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
+    wake_up_timestamp = system.config["dag_runner_config", "wake_up_timestamp"]
+    real_time_loop_time_out_in_secs = system.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
     #
     trading_period_str = dag_builder.get_trading_period(dag_config)
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
@@ -252,18 +251,6 @@ def apply_dag_runner_config_for_crypto(
     )
     if wake_up_timestamp:
         wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
-    if ("dag_runner_config", "real_time_loop_time_out_in_secs") in system.config:
-        # Sometimes we want to override params from the test (e.g., if we want
-        # to run for a shorter period than the entire day, as the prod system does).
-        val = system.config[
-            ("dag_runner_config", "real_time_loop_time_out_in_secs")
-        ]
-        _LOG.warning(
-            "Overriding real_time_loop_time_out_in_secs=%s with value %s",
-            real_time_loop_time_out_in_secs,
-            val,
-        )
-        real_time_loop_time_out_in_secs = val
     real_time_config = {
         "wake_up_timestamp": wake_up_timestamp,
         "sleep_interval_in_secs": sleep_interval_in_secs,
