@@ -1,7 +1,7 @@
 import asyncio
 import datetime
 import logging
-from typing import List, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import pandas as pd
 import pytest
@@ -45,9 +45,9 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         )
         return portfolio
 
-    # TODO(gp): -> get_process_forecasts_dict
+    # TODO(gp): @all -> get_process_forecasts_dict
     @staticmethod
-    def get_process_forecasts_config() -> cconfig.Config:
+    def get_process_forecasts_config() -> Dict[str, Any]:
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
@@ -191,7 +191,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
 
     # TODO(gp): -> get_process_forecasts_dict
     @staticmethod
-    def get_process_forecasts_config() -> cconfig.Config:
+    def get_process_forecasts_config() -> Dict[str, Any]:
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",

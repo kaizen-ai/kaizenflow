@@ -211,9 +211,6 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         return txt
 
     def __repr__(self) -> str:
-        """
-        Return the state of the Portfolio in terms of the holdings as a string.
-        """
         txt = []
         txt.append(str(self))
         act = []

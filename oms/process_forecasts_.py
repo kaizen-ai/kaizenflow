@@ -206,22 +206,15 @@ async def process_forecasts(
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         # Get the time of day of the wall clock timestamp.
         time = wall_clock_timestamp.time()
-        if time < ath_start_time:
-            _LOG.debug(
-                "time=`%s` < `ath_start_time=`%s`, skipping...",
-                time,
-                ath_start_time,
-            )
-            continue
-        if time >= ath_end_time:
-            _LOG.debug(
-                "time=`%s` > `ath_end_time=`%s`, skipping...",
-                time,
-                ath_end_time,
-            )
-            continue
-        # Continue if we are outside of our trading window.
-        if time < trading_start_time or time > trading_end_time:
+        skip_bar = _skip_bar(
+            time,
+            ath_start_time,
+            ath_end_time,
+            trading_start_time,
+            trading_end_time,
+        )
+        if skip_bar:
+            _LOG.warning("Skipping bar for time: `%s`", time)
             continue
         # if execution_mode == "batch":
         #     if idx == len(predictions_df) - 1:
@@ -393,7 +386,7 @@ class ForecastProcessor:
         #
         self._restrictions = restrictions
         self._log_dir = log_dir
-        # Store the target positions
+        # Store the target positions.
         self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
         self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
 
