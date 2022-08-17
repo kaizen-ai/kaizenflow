@@ -369,10 +369,9 @@ class Config:
         hdbg.dassert(nested)
         iter_ = hdict.get_nested_dict_iterator(nested)
         flattened = collections.OrderedDict(iter_)
-        return cls._get_config_from_flattened_dict(cls, flattened)
+        return Config._get_config_from_flattened_dict(flattened)
 
     def _get_config_from_flattened_dict(
-        cls,
         flattened: Dict[Tuple[str], Any]
     ) -> "Config":
         """
@@ -389,7 +388,7 @@ class Config:
                 if v:
                     # Convert each dict-value to `Config` recursively because we
                     # cannot use dict as value in a `Config`.
-                    v = cls.from_dict(v)
+                    v = Config.from_dict(v)
                 else:
                     # TODO(Grisha): maybe move to `get_config_from_nested_dict`, i.e.
                     # return empty `Config` right away without passing further.
