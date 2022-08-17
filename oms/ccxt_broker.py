@@ -350,7 +350,7 @@ class CcxtBroker(ombroker.Broker):
         # Get the last price for the asset.
         last_price = self._get_last_market_price(order.asset_id)
         if last_price * required_amount <= 10:
-            required_amount = (10 / last_price) * 3
+            required_amount = (10 / last_price) * 2
         # Calculate the total cost of the order based on the last price.
         # # Verify that the order total cost is not below minimum.
         # min_cost = asset_limits["min_cost"]
