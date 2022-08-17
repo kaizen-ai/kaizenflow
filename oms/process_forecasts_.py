@@ -393,7 +393,7 @@ class ForecastProcessor:
         #
         self._restrictions = restrictions
         self._log_dir = log_dir
-        #
+        # Store the target positions
         self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
         self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
 

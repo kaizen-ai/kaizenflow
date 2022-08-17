@@ -319,9 +319,9 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     #  out.
     # get_process_forecasts_node_dict_func = dtfsys.get_process_forecasts_dict_example3
     get_process_forecasts_node_dict_func = (
-    # get_process_forecasts_dict_func = dtfsys.get_process_forecasts_dict_example3
-    get_process_forecasts_dict_func = get_process_forecasts_dict_prod_instance1
-    dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_dict_func)
+        get_process_forecasts_node_dict_prod_instance1
+    )
+    dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_node_dict_func)
     return dag
 
 
