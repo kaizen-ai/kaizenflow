@@ -8,6 +8,7 @@ import oms.ccxt_broker as occxbrok
 
 import logging
 import re
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import ccxt
@@ -38,7 +39,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: int = 1,
+        secret_id: int = 2,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -514,25 +515,26 @@ class CcxtBroker(ombroker.Broker):
                 f"The {self._exchange_id} exchange is not fully supported for placing orders."
             )
 
-    async def _submit_orders(
-        self,
-        orders: List[omorder.Order],
-        wall_clock_timestamp: pd.Timestamp,
-        *,
-        dry_run: bool,
-    ) -> Tuple[str, pd.DataFrame]:
+    async def _submit_single_order(
+        self, order: omorder.Order
+    ) -> Optional[omorder.Order]:
         """
-        Submit orders.
+        Submit single order.
+
+        :param order: order to be submitted
+
+        Returns order with ccxt ID appended if the submission was successful, None otherwise.
         """
-        self.last_order_execution_ts = pd.Timestamp.now()
-        sent_orders: List[omorder.Order] = []
-        for order in orders:
-            # Verify that order conforms
-            order = self._check_minimal_limit(order)
-            _LOG.info("Submitted order: %s", str(order))
-            # TODO(Juraj): perform bunch of assertions for order attributes.
-            symbol = self._asset_id_to_symbol_mapping[order.asset_id]
-            side = "buy" if order.diff_num_shares > 0 else "sell"
+        # Max number of order submission retries.
+        _MAX_ORDER_SUBMIT_RETRIES = 3
+        submitted_order: Optional[omorder.Order] = None
+        # Verify that order conforms.
+        order = self._check_minimal_limit(order)
+        _LOG.info("Submitted order: %s", str(order))
+        # TODO(Juraj): perform bunch of assertions for order attributes.
+        symbol = self._asset_id_to_symbol_mapping[order.asset_id]
+        side = "buy" if order.diff_num_shares > 0 else "sell"
+        for _ in range(_MAX_ORDER_SUBMIT_RETRIES):
             try:
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
@@ -549,19 +551,45 @@ class CcxtBroker(ombroker.Broker):
                         "client_oid": order.order_id,
                     },
                 )
-                order.ccxt_id = order_resp["id"]
-                sent_orders.append(order)
+                submitted_order = order
+                submitted_order.ccxt_id = order_resp["id"]
                 _LOG.info(hprint.to_str("order_resp"))
+            except ccxt.base.errors.ExchangeNotAvailable:
+                # If there is a temporary server error, wait for
+                # a set amount of seconds and retry.
+                time.sleep(3)
+                continue
             except Exception as e:
                 # Check the Binance API er
                 if self._check_binance_code_error(e, -4131):
                     # If the error is connected to liquidity, continue submitting orders.
                     _LOG.warning(
-                        "PERCENT_PRICE error has been raised. The Exception was:\n%s\nContinuing...",
+                        "PERCENT_PRICE error has been raised. \
+                        The Exception was:\n%s\nContinuing...",
                         e,
                     )
                 else:
                     raise e
+        return submitted_order
+
+    async def _submit_orders(
+        self,
+        orders: List[omorder.Order],
+        wall_clock_timestamp: pd.Timestamp,
+        *,
+        dry_run: bool,
+    ) -> Tuple[str, pd.DataFrame]:
+        """
+        Submit orders.
+        """
+        self.last_order_execution_ts = pd.Timestamp.now()
+        sent_orders: List[omorder.Order] = []
+        for order in orders:
+            sent_order = self._submit_single_order(order)
+            # If order was submitted successfully append it to
+            # the list of sent orders.
+            if sent_order:
+                sent_orders.append(sent_orders)
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
         # TODO(Grisha): what should we use as `receipt` for CCXT? For equities IIUC
