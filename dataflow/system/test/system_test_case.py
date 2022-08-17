@@ -388,7 +388,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
         with hasynci.solipsism_context() as event_loop:
-            #
             system.config["event_loop_object"] = event_loop
             dag_runner = system.dag_runner
             # Run.

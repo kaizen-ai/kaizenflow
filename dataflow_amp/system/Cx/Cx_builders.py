@@ -135,7 +135,7 @@ def get_Cx_process_forecasts_node_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    log_dir = None
+    root_log_dir = None
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
@@ -144,7 +144,7 @@ def get_Cx_process_forecasts_node_dict_example1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir,
+        root_log_dir,
     )
     return process_forecasts_node_dict
 
@@ -169,8 +169,7 @@ def get_process_forecasts_node_dict_prod_instance1(
         "target_gmv": 2000.0,
     }
     root_log_dir = os.path.join(
-        "process_forecasts", datetime.date.today().isoformat()
-    #
+        "process_forecasts", datetime.date.today().isoformat())
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         portfolio,
         prediction_col,
@@ -179,7 +178,7 @@ def get_process_forecasts_node_dict_prod_instance1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir=log_dir,
+        root_log_dir,
     )
     return process_forecasts_node_dict
 
@@ -240,7 +239,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     system.config[
         "process_forecasts_node_config"
     ] = process_forecasts_node_dict
-    system = dtfsys.apply_process_forecasts_config_for_crypto(system)
+    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
@@ -285,13 +284,13 @@ def _get_Cx_dag_prod_instance1(
     # Set market data history lookback in days in to config.
     system = dtfsys.apply_history_lookback(system)
     # Build the process forecast dict.
-    process_forecasts_dict = get_process_forecasts_node_dict_func(
+    process_forecasts_node_dict = get_process_forecasts_node_dict_func(
         portfolio, order_duration_in_mins
     )
     system.config[
         "process_forecasts_node_dict"
-    ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
-    system = dtfsys.apply_process_forecasts_config_for_crypto(system)
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_node_dict)
+    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Assemble.
     market_data = system.market_data
     market_data_history_lookback = system.config[
@@ -304,7 +303,7 @@ def _get_Cx_dag_prod_instance1(
         dag,
         market_data,
         market_data_history_lookback,
-        process_forecasts_dict,
+        process_forecasts_node_dict,
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
