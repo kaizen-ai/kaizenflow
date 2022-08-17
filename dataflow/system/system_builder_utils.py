@@ -287,9 +287,10 @@ def apply_dag_runner_config_for_crypto(
     """
     Update dag runner config for crypto.
     """
-    trading_period_str, sleep_interval_in_secs = (
-        _get_trading_period_str_and_sleep_interval_in_secs(system)
-    )
+    (
+        trading_period_str,
+        sleep_interval_in_secs,
+    ) = _get_trading_period_str_and_sleep_interval_in_secs(system)
     wake_up_timestamp = None
     real_time_loop_time_out_in_secs = None
     #
@@ -310,9 +311,10 @@ def apply_dag_runner_config_for_equities(
     """
     Update dag runner config for equities.
     """
-    trading_period_str, sleep_interval_in_secs = (
-        _get_trading_period_str_and_sleep_interval_in_secs(system)
-    )
+    (
+        trading_period_str,
+        sleep_interval_in_secs,
+    ) = _get_trading_period_str_and_sleep_interval_in_secs(system)
     # Determine when start and stop trading.
     # The system should come up around 9:37am ET and then we align to the
     # next bar.
