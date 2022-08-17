@@ -47,7 +47,7 @@
     dag_builder_object: nid_prefix=
     dag_builder_class: Mock1_DagBuilder
     system_class: Mock1_ForecastSystem
-    system_log_dir: ./system_log_dir
+    log_dir: ./system_log_dir
     backtest_config:
       universe_str: example1_v1-top2
       trading_period_str: 5T
@@ -119,7 +119,7 @@
       dag_builder_object: nid_prefix=
       dag_builder_class: Mock1_DagBuilder
       system_class: Mock1_ForecastSystem
-      system_log_dir: ./system_log_dir
+      log_dir: ./system_log_dir
       backtest_config:
         universe_str: example1_v1-top2
         trading_period_str: 5T
