@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 class Test_adapt_dag_to_real_time1(hunitest.TestCase):
 
-    # TODO(gp): Add a test for Example1 and factor out the code below.
+    # TODO(gp): Add a test for Mock1 and factor out the code below.
 
     def testMvnReturnsBuilder1(self) -> None:
         """
