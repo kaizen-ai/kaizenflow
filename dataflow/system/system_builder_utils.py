@@ -7,7 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import datetime
 import logging
 import os
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional, Tuple
 
 import pandas as pd
 
@@ -231,94 +231,16 @@ def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
-def apply_dag_runner_config_for_crypto(
+def _apply_real_time_config(
     system: dtfsyssyst.System,
+    wake_up_timestamp: Optional[datetime.date],
+    sleep_interval_in_secs: int,
+    real_time_loop_time_out_in_secs: Optional[int],
+    trading_period_str: str,
 ) -> dtfsyssyst.System:
     """
-    Update for crypto:
-
-    - dag_runner_config
-    - market_data_config
+    Update system config with real time config.
     """
-    dag_config = system.config["dag_config"]
-    dag_builder = system.config["dag_builder_object"]
-    wake_up_timestamp = system.config["dag_runner_config", "wake_up_timestamp"]
-    real_time_loop_time_out_in_secs = system.config[
-        "dag_runner_config", "real_time_loop_time_out_in_secs"
-    ]
-    #
-    trading_period_str = dag_builder.get_trading_period(dag_config)
-    hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
-    sleep_interval_in_secs = pd.Timedelta(trading_period_str).seconds
-    if wake_up_timestamp:
-        wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
-    real_time_config = {
-        "wake_up_timestamp": wake_up_timestamp,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
-        "real_time_loop_time_out_in_secs": real_time_loop_time_out_in_secs,
-        "trading_period_str": trading_period_str,
-    }
-    system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
-        real_time_config
-    )
-    system = apply_history_lookback(system)
-    return system
-
-
-def apply_dag_runner_config(
-    system: dtfsyssyst.System,
-) -> dtfsyssyst.System:
-    """
-    Update:
-    - dag_runner_config
-    - market_data_config
-    """
-    dag_config = system.config["dag_config"]
-    dag_builder = system.config["dag_builder_object"]
-    trading_period_str = dag_builder.get_trading_period(dag_config)
-    # Determine when start and stop trading.
-    # The system should come up around 9:37am ET and then we align to the
-    # next bar.
-    wake_up_timestamp = system.market_data.get_wall_clock_time()
-    _LOG.info("Current time=%s", wake_up_timestamp)
-    wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
-    # TODO(Grisha): For crypto we should set `wake_up_timestamp` to None,
-    # same for `real_time_loop_time_out_in_secs` unless they are specified
-    # via the cmd line parameters.
-    if trading_period_str == "1T":
-        # Run every 1 min.
-        wake_up_timestamp = wake_up_timestamp.replace(
-            hour=9, minute=30, second=0, microsecond=0, nanosecond=0
-        )
-        sleep_interval_in_secs = 60 * 1
-        # TODO(gp): Horrible confusing name.
-        real_time_loop_time_out_in_secs = datetime.time(15, 59)
-    elif trading_period_str == "2T":
-        # Run every 2 min.
-        wake_up_timestamp = wake_up_timestamp.replace(
-            hour=9, minute=30, second=0, microsecond=0, nanosecond=0
-        )
-        sleep_interval_in_secs = 60 * 2
-        # TODO(gp): Horrible confusing name.
-        real_time_loop_time_out_in_secs = datetime.time(15, 58)
-    elif trading_period_str == "5T":
-        # Run every 5 mins.
-        wake_up_timestamp = wake_up_timestamp.replace(
-            hour=9, minute=40, second=0, microsecond=0, nanosecond=0
-        )
-        sleep_interval_in_secs = 60 * 5
-        real_time_loop_time_out_in_secs = datetime.time(15, 55)
-    elif trading_period_str == "15T":
-        # Run every 15 mins.
-        wake_up_timestamp = wake_up_timestamp.replace(
-            hour=9, minute=45, second=0, microsecond=0, nanosecond=0
-        )
-        sleep_interval_in_secs = 60 * 15
-        real_time_loop_time_out_in_secs = datetime.time(15, 45)
-    else:
-        raise ValueError(f"Invalid trading_period_str='{trading_period_str}'")
-    #
-    wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
     if ("dag_runner_config", "real_time_loop_time_out_in_secs") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
         # to run for a shorter period than the entire day, as the prod system does).
@@ -331,6 +253,7 @@ def apply_dag_runner_config(
             val,
         )
         real_time_loop_time_out_in_secs = val
+    #
     real_time_config = {
         "wake_up_timestamp": wake_up_timestamp,
         "sleep_interval_in_secs": sleep_interval_in_secs,
@@ -340,14 +263,97 @@ def apply_dag_runner_config(
     system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
         real_time_config
     )
-    # TODO(Grisha): we should reuse `apply_history_lookback`.
-    # Apply history_lookback.
-    market_data_history_lookback = pd.Timedelta(
-        days=dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+    return system
+
+
+def _get_trading_period_str_and_sleep_interval_in_secs(
+    system: dtfsyssyst.System,
+) -> Tuple[str, int]:
+    """
+    Get trading period string and sleep interval in seconds from system.
+    """
+    dag_config = system.config["dag_config"]
+    dag_builder = system.config["dag_builder_object"]
+    #
+    trading_period_str = dag_builder.get_trading_period(dag_config)
+    hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
+    sleep_interval_in_secs = pd.Timedelta(trading_period_str).seconds
+    return trading_period_str, sleep_interval_in_secs
+
+
+def apply_dag_runner_config_for_crypto(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    """
+    Update dag runner config for crypto.
+    """
+    trading_period_str, sleep_interval_in_secs = (
+        _get_trading_period_str_and_sleep_interval_in_secs(system)
     )
-    system.config[
-        "market_data_config", "history_lookback"
-    ] = market_data_history_lookback
+    wake_up_timestamp = None
+    real_time_loop_time_out_in_secs = None
+    #
+    system = _apply_real_time_config(
+        system,
+        wake_up_timestamp,
+        sleep_interval_in_secs,
+        real_time_loop_time_out_in_secs,
+        trading_period_str,
+    )
+    system = apply_history_lookback(system)
+    return system
+
+
+def apply_dag_runner_config_for_equities(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    """
+    Update dag runner config for equities.
+    """
+    trading_period_str, sleep_interval_in_secs = (
+        _get_trading_period_str_and_sleep_interval_in_secs(system)
+    )
+    # Determine when start and stop trading.
+    # The system should come up around 9:37am ET and then we align to the
+    # next bar.
+    wake_up_timestamp = system.market_data.get_wall_clock_time()
+    _LOG.info("Current time=%s", wake_up_timestamp)
+    #
+    if trading_period_str == "1T":
+        # Run every 1 min.
+        wake_up_timestamp = wake_up_timestamp.replace(
+            hour=9, minute=30, second=0, microsecond=0, nanosecond=0
+        )
+    elif trading_period_str == "2T":
+        # Run every 2 min.
+        wake_up_timestamp = wake_up_timestamp.replace(
+            hour=9, minute=30, second=0, microsecond=0, nanosecond=0
+        )
+    elif trading_period_str == "5T":
+        # Run every 5 mins.
+        wake_up_timestamp = wake_up_timestamp.replace(
+            hour=9, minute=40, second=0, microsecond=0, nanosecond=0
+        )
+    elif trading_period_str == "15T":
+        # Run every 15 mins.
+        wake_up_timestamp = wake_up_timestamp.replace(
+            hour=9, minute=45, second=0, microsecond=0, nanosecond=0
+        )
+    else:
+        raise ValueError(f"Invalid trading_period_str='{trading_period_str}'")
+    wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
+    # Set clock minutes value for real time loop timeout time.
+    time_out_clock_mins = 60 - (sleep_interval_in_secs / 60)
+    # TODO(gp): Horrible confusing name.
+    real_time_loop_time_out_in_secs = datetime.time(15, time_out_clock_mins)
+    system = _apply_real_time_config(
+        system,
+        wake_up_timestamp,
+        sleep_interval_in_secs,
+        real_time_loop_time_out_in_secs,
+        trading_period_str,
+    )
+    system = apply_history_lookback(system)
     return system
 
 
