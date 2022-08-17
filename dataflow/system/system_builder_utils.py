@@ -232,23 +232,24 @@ def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
 
 
 def apply_dag_runner_config_for_crypto(
-    system: dtfsyssyst.System
+    system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
     Update for crypto:
+
     - dag_runner_config
     - market_data_config
     """
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
     wake_up_timestamp = system.config["dag_runner_config", "wake_up_timestamp"]
-    real_time_loop_time_out_in_secs = system.config["dag_runner_config", "real_time_loop_time_out_in_secs"]
+    real_time_loop_time_out_in_secs = system.config[
+        "dag_runner_config", "real_time_loop_time_out_in_secs"
+    ]
     #
     trading_period_str = dag_builder.get_trading_period(dag_config)
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
-    sleep_interval_in_secs = int(
-        pd.Timedelta(trading_period_str).total_seconds()
-    )
+    sleep_interval_in_secs = int(pd.Timedelta(trading_period_str).total_seconds())
     if wake_up_timestamp:
         wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
     real_time_config = {
