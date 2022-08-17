@@ -23,7 +23,6 @@ import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
-import math
 
 _LOG = logging.getLogger(__name__)
 
@@ -356,54 +355,54 @@ class CcxtBroker(ombroker.Broker):
         return order
 
     def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
-            """
-            Check if the order matches the minimum quantity for the asset.
+        """
+        Check if the order matches the minimum quantity for the asset.
 
-            The functions checks both the flat amount of the asset and the total
-            cost of the asset in the order. If the order amount does not match,
-            he order is changed to be slightly above the minimal amount.
+        The functions checks both the flat amount of the asset and the total
+        cost of the asset in the order. If the order amount does not match,
+        he order is changed to be slightly above the minimal amount.
 
-            :param order: order to be submitted
-            """
-            # Load all limits for the asset.
-            asset_limits = self._minimal_order_limits[order.asset_id]
-            order_amount = order.diff_num_shares
-            min_amount = asset_limits["min_amount"]
-            if abs(order_amount) < min_amount:
-                _LOG.warning(
-                    "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
-                    order_amount,
-                    min_amount,
-                )
-                if order_amount < 0:
-                    order.diff_num_shares = -min_amount
-                else:
-                    order.diff_num_shares = min_amount
-            # Check if the order is not below minimal cost.
-            #
-            # Get the last price for the asset.
-            last_price = self._get_last_market_price(order.asset_id)
-            # Calculate the total cost of the order based on the last price.
-            total_cost = last_price * abs(order_amount)
-            # Verify that the order total cost is not below minimum.
-            min_cost = asset_limits["min_cost"]
-            if total_cost < min_cost:
-                # Set amount based on minimal notional price.
-                #  Note: the amount is rounded up to closest integer
-                #  to cover for possible inaccuracy in market cost.
-                required_amount = round(min_cost / last_price, 0) + 1
-                _LOG.warning(
-                    "Amount of asset in order is below minimal base: %s. \
+        :param order: order to be submitted
+        """
+        # Load all limits for the asset.
+        asset_limits = self._minimal_order_limits[order.asset_id]
+        order_amount = order.diff_num_shares
+        min_amount = asset_limits["min_amount"]
+        if abs(order_amount) < min_amount:
+            _LOG.warning(
+                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
+                order_amount,
+                min_amount,
+            )
+            if order_amount < 0:
+                order.diff_num_shares = -min_amount
+            else:
+                order.diff_num_shares = min_amount
+        # Check if the order is not below minimal cost.
+        #
+        # Get the last price for the asset.
+        last_price = self._get_last_market_price(order.asset_id)
+        # Calculate the total cost of the order based on the last price.
+        total_cost = last_price * abs(order_amount)
+        # Verify that the order total cost is not below minimum.
+        min_cost = asset_limits["min_cost"]
+        if total_cost < min_cost:
+            # Set amount based on minimal notional price.
+            #  Note: the amount is rounded up to closest integer
+            #  to cover for possible inaccuracy in market cost.
+            required_amount = round(min_cost / last_price, 0) + 1
+            _LOG.warning(
+                "Amount of asset in order is below minimal base: %s. \
                     Setting to following amount based on notional limit: %s",
-                    order_amount,
-                    required_amount,
-                )
-                # Change number of shares to minimal amount.
-                if order.diff_num_shares < 0:
-                    order.diff_num_shares = -required_amount
-                else:
-                    order.diff_num_shares = required_amount
-            return order
+                order_amount,
+                required_amount,
+            )
+            # Change number of shares to minimal amount.
+            if order.diff_num_shares < 0:
+                order.diff_num_shares = -required_amount
+            else:
+                order.diff_num_shares = required_amount
+        return order
 
     def _get_last_market_price(self, asset_id: int) -> float:
         """
@@ -550,8 +549,14 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[omorder.Order] = []
         for order in orders:
-            # Verify that order conforms
-            order = self._check_minimal_limit(order)
+            if self._stage in ["local", "preprod"]:
+                # Reduce order to a minimal possible amount.
+                #  This is done to avoid "Margin is insufficient" error
+                #  in testnet.
+                order = self._force_minimal_order(order)
+            else:
+                # Verify that order is not below the minimal amount.
+                order = self._check_minimal_limit(order)
             _LOG.info("Submitted order: %s", str(order))
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
