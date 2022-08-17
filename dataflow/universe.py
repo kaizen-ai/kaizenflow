@@ -300,8 +300,8 @@ def get_universe(universe_str: str) -> List[Amid]:
         ret = _get_kibot_universe_v2(top_n)
     elif universe_version == "kibot_v3":
         ret = _get_kibot_universe_v3(top_n)
-    elif universe_version == "example1_v1":
-        ret = _get_example1_universe_v1(top_n)
+    elif universe_version == "mock1_v1":
+        ret = _get_mock1_universe_v1(top_n)
     elif universe_version == "ccxt_v3":
         version = "v3"
         ret = _get_ccxt_universe(version, top_n)
