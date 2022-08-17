@@ -13,6 +13,8 @@ import helpers.hobject as hobject
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): It could be in helpers since it's a basic data structure.
+
 
 class KeySortedOrderedDict(hobject.PrintableMixin):
     """

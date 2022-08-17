@@ -68,7 +68,7 @@ sta
 time = "121500"
 sim_dir = "/app/process_forecasts/2022-07-20/"
 sim_file = f"/app/process_forecasts/2022-07-20/evaluate_forecasts/prediction/20220714_{time}.csv"
-    
+
 prod_dir = "/app/prod_execution/20220714/"
 
 # prod_execution/20220714/process_forecasts/2022-07-14/evaluate_forecasts/prediction/20220714_113000.csv

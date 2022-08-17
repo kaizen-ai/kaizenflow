@@ -3,15 +3,19 @@ import logging
 import pandas as pd
 import pytest
 
+import helpers.henv as henv
 import market_data.market_data_example as mdmadaex
 import market_data.test.market_data_test_case as mdtmdtca
-
-# import market_data_lime.eg_market_data_example as mdlemdaex
-# import market_data_lime.eg_stitched_market_data as mdlesmada
+# import market_data_lime.ig_market_data_example as mdlemdaex
+# import market_data_lime.ig_stitched_market_data as mdlesmada
 
 _LOG = logging.getLogger(__name__)
 
 
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
