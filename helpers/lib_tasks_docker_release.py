@@ -12,7 +12,6 @@ from invoke import task
 
 # We want to minimize the dependencies from non-standard Python packages since
 # this code needs to run with minimal dependencies and without Docker.
-import helpers.haws as haws
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hs3 as hs3
@@ -611,6 +610,9 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: igno
     :param preprod_tag: image that will be re-tagged with prod version
         e.g., `preprod-d8sf76s` -> `prod-1.1.1`
     """
+    # TODO(Nikola): Convert `haws` part to script so it can be called via `docker_cmd`.
+    import helpers.haws as haws
+    #
     airflow_dags_s3_path = "s3://cryptokaizen-airflow/DAGs/"
     # TODO(Nikola): Use env var for CK profile.
     s3fs_ = hs3.get_s3fs(aws_profile="ck")
