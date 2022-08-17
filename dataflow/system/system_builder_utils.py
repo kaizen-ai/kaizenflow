@@ -682,5 +682,3 @@ def get_RealTimeDagRunner_from_System(
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
     return dag_runner
-
-

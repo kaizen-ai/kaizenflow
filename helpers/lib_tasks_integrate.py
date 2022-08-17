@@ -88,6 +88,11 @@ _LOG = logging.getLogger(__name__)
 #   # Remove end-of-file.
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
+# - Remove trailing spaces
+#   ```
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
+#   ```
+#
 
 # ## Integration
 #
