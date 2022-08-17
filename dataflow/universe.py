@@ -233,15 +233,15 @@ def _get_kibot_universe_v3(n: Optional[int]) -> List[Amid]:
 
 
 # #############################################################################
-# Example1
+# Mock1
 # #############################################################################
 
 
-def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
+def _get_mock1_universe_v1(n: Optional[int]) -> List[Amid]:
     """
     Create universe for Mock1 DAG.
     """
-    vendor = "example1"
+    vendor = "mock1"
     mode = "trade"
     full_symbols = ivcu.get_vendor_universe(
         vendor, mode, version="v1", as_full_symbol=True
