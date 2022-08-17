@@ -354,7 +354,7 @@ class CcxtBroker(ombroker.Broker):
             order.diff_num_shares = required_amount
         return order
 
-    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+    def _check_order_limit(self, order: omorder.Order) -> omorder.Order:
         """
         Check if the order matches the minimum quantity for the asset.
 
@@ -556,7 +556,7 @@ class CcxtBroker(ombroker.Broker):
                 order = self._force_minimal_order(order)
             else:
                 # Verify that order is not below the minimal amount.
-                order = self._check_minimal_limit(order)
+                order = self._check_order_limit(order)
             _LOG.info("Submitted order: %s", str(order))
             # TODO(Juraj): perform bunch of assertions for order attributes.
             symbol = self._asset_id_to_symbol_mapping[order.asset_id]
