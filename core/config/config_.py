@@ -283,7 +283,8 @@ class Config:
                 # No default value found, then raise.
                 raise e
         if expected_type is not None:
-            hdbg.dassert_issubclass(ret, expected_type)
+            if ret is not None:
+                hdbg.dassert_issubclass(ret, expected_type)
         return ret
 
     def pop(self, key: str) -> Any:
