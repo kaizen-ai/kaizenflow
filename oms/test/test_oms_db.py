@@ -42,7 +42,7 @@ class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -131,7 +131,7 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the accepted orders table.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -189,7 +189,7 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
     """
     Test interactions through the DB.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -199,7 +199,7 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
         Create a clean DB table and run the coroutines.
         """
         incremental = False
-        oomsdb.create_accepted_orders_table(self.connection, incremental, oomsdb.ACCEPTED_ORDERS_TABLE_NAME), 
+        oomsdb.create_accepted_orders_table(self.connection, incremental, oomsdb.ACCEPTED_ORDERS_TABLE_NAME),
         with hasynci.solipsism_context() as event_loop:
             # Run.
             coroutine = hasynci.gather_coroutines_with_wall_clock(
@@ -309,7 +309,7 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the submitted orders table.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
@@ -335,7 +335,7 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
     """
     Test operations on the restrictions table.
     """
-    
+
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000

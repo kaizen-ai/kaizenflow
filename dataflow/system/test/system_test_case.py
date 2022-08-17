@@ -388,7 +388,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
         with hasynci.solipsism_context() as event_loop:
-            #
             system.config["event_loop_object"] = event_loop
             dag_runner = system.dag_runner
             # Run.
@@ -561,7 +560,15 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             add_system_config=add_system_config,
             add_run_signature=add_run_signature,
         )
+        #
         hdbg.dassert_lte(10, len(expected.split("\n")))
+        # Remove `DataFrame*` and `Database*` to avoid mismatches from the fact
+        # that the systems are different.
+        regex = (
+            "DataFramePortfolio|DatabasePortfolio|SimulatedBroker|DatabaseBroker"
+        )
+        actual = hunitest.filter_text(regex, actual)
+        expected = hunitest.filter_text(regex, expected)
         self.assert_equal(
             actual,
             expected,

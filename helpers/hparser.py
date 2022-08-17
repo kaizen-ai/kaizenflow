@@ -26,18 +26,26 @@ _LOG = logging.getLogger(__name__)
 def add_bool_arg(
     parser: argparse.ArgumentParser,
     name: str,
-    default: bool = False,
+    *,
+    default_value: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add options to a parser like `--xyz` and `--no_xyz`.
+    Add options to a parser like `--xyz` and `--no_xyz`, controlled by `args.xyz`.
 
-    E.g., `--incremental` and `--no_incremental`.
+    E.g., `add_bool_arg(parser, "run_diff_script", default_value=True)` adds
+    two options:
+    ```
+      --run_diff_script     Run the diffing script or not
+      --no_run_diff_script
+    ```
+    corresponding to `args.run_diff_script`, where the default behavior is to have
+    that value equal to True unless one specifies `--no_run_diff_script`.
     """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)
     group.add_argument("--no_" + name, dest=name, action="store_false")
-    parser.set_defaults(**{name: default})
+    parser.set_defaults(**{name: default_value})
     return parser
 
 
