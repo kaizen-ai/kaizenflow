@@ -94,7 +94,7 @@ class ResultBundle(abc.ABC):
         """
         Initialize `ResultBundle` from a nested dict.
         """
-        result_bundle_config = cconfig.from_dict(
+        result_bundle_config = cconfig.Config.from_dict(
             result_bundle_dict
         )
         result_bundle_class = eval(result_bundle_config["class"])
@@ -259,7 +259,7 @@ class ResultBundle(abc.ABC):
         if commit_hash:
             serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
         # Convert to a `Config`.
-        serialized_bundle = cconfig.from_dict(serialized_bundle)
+        serialized_bundle = cconfig.Config.from_dict(serialized_bundle)
         return serialized_bundle
 
     @classmethod

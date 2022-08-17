@@ -57,7 +57,7 @@ class TestLinearRegression(hunitest.TestCase):
         # Load test data.
         data = self._get_frozen_input()
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -96,7 +96,7 @@ class TestLinearRegression(hunitest.TestCase):
         # Load test data.
         data = self._get_frozen_input()
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -142,7 +142,7 @@ class TestLinearRegression(hunitest.TestCase):
             "2000-01-10":  # type: ignore[misc]
         ]  # type: error[misc]  # type: ignore[misc]
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -181,7 +181,7 @@ class TestLinearRegression(hunitest.TestCase):
             index=data.index, data=range(1, data.shape[0] + 1)
         )
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -230,7 +230,7 @@ class TestLinearRegression(hunitest.TestCase):
             "2000-01-10":  # type: ignore[misc]
         ]  # type: error[misc]  # type: ignore[misc]
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -266,7 +266,7 @@ class TestLinearRegression(hunitest.TestCase):
         # Load test data.
         data = self._get_frozen_input()
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -307,7 +307,7 @@ class TestLinearRegression(hunitest.TestCase):
         data = self._get_frozen_input()
         # Generate output using a certain regression config but manually
         # specified feature weights.
-        config1 = cconfig.from_dict(
+        config1 = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -324,7 +324,7 @@ class TestLinearRegression(hunitest.TestCase):
         df_out1 = node1.fit(data)["df_out"]
         # Generate output using a different regression config but the same
         # (as above) manually specified feature weights.
-        config2 = cconfig.from_dict(
+        config2 = cconfig.Config.from_dict(
             {
                 "x_vars": ["x1", "x2", "x3", "x4"],
                 "y_vars": ["y"],
@@ -418,7 +418,7 @@ end_ts,,,,,,,,
         # Load test data.
         data = self.get_data()
         # Generate node config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_groups": [
                     ("x1",),

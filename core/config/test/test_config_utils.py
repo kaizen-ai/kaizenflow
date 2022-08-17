@@ -194,11 +194,11 @@ class Test_diff_configs1(hunitest.TestCase):
         act = cconfig.diff_configs([config1, config2])
         exp = [
             #
-            cconfig.from_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.from_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Gold"}}
             ),
         ]
@@ -214,15 +214,15 @@ class Test_diff_configs1(hunitest.TestCase):
         #
         exp = [
             #
-            cconfig.from_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.from_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Gold"}}
             ),
             #
-            cconfig.from_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}, "hello": "world"}
             ),
         ]

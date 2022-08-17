@@ -32,7 +32,7 @@ def _get_init_config() -> cconfig.Config:
         "info": info_,
         "payload": None,
     }
-    init_config = cconfig.from_dict(init_dict)
+    init_config = cconfig.Config.from_dict(init_dict)
     return init_config
 
 
@@ -70,7 +70,7 @@ class TestResultBundle(hunitest.TestCase):
         rb_as_dict = result_bundle.to_config().to_dict()
         # After unpickling, we convert to a `Config`, then to a `ResultBundle`.
         result_bundle_2 = dtfcorebun.ResultBundle.from_config(
-            cconfig.from_dict(rb_as_dict)
+            cconfig.Config.from_dict(rb_as_dict)
         )
         # Check.
         self.assert_equal(str(result_bundle), str(result_bundle_2))

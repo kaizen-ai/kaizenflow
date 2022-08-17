@@ -44,7 +44,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     @pytest.mark.skip("Generate manually files used by other tests")

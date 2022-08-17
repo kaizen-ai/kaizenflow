@@ -24,7 +24,7 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Create sklearn config and modeling node.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sdecom.PCA,
@@ -42,7 +42,7 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
         Test `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sdecom.PCA,
@@ -61,7 +61,7 @@ class TestUnsupervisedSkLearnModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": [0, 1, 2, 3],
                 "model_func": sdecom.PCA,
@@ -93,7 +93,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
         Test `fit()` call.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("pca",),
@@ -113,7 +113,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
         Test `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("pca",),
@@ -135,7 +135,7 @@ class TestMultiindexUnsupervisedSkLearnModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("pca",),
@@ -230,7 +230,7 @@ class TestResidualizer(hunitest.TestCase):
         return data
 
     def get_node_config(self) -> pd.DataFrame:
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "out_col_group": ("residual",),
@@ -338,7 +338,7 @@ class TestResidualizer2(hunitest.TestCase):
         )
         data = data.pivot(columns="asset_id")
         #
-        compute_ret_0_config = cconfig.from_dict(
+        compute_ret_0_config = cconfig.Config.from_dict(
             {
                 "in_col_groups": [("close",)],
                 "out_col_group": (),
@@ -360,7 +360,7 @@ class TestResidualizer2(hunitest.TestCase):
         return data
 
     def get_node_config(self) -> pd.DataFrame:
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("close.ret_0",),
                 "out_col_group": ("pca_residual",),

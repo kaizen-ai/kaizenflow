@@ -90,7 +90,7 @@ def get_Example1_ForecastSystem_for_simulation_example1(
     }
     system.config[
         "research_forecast_evaluator_from_prices"
-    ] = cconfig.from_dict(forecast_evaluator_from_prices_dict)
+    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
     system = dtfssybuut.apply_market_data_config(system)
     return system
 
@@ -207,7 +207,7 @@ def get_Example1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     }
     system.config[
         "research_forecast_evaluator_from_prices"
-    ] = cconfig.from_dict(forecast_evaluator_from_prices_dict)
+    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
     return system
 
 
@@ -298,7 +298,7 @@ def get_Example1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_e
     }
     system.config[
         "research_forecast_evaluator_from_prices"
-    ] = cconfig.from_dict(forecast_evaluator_from_prices_dict)
+    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
     # If an order is not placed within a bar, then there is a timeout, so
     # we add extra 5 seconds to `sleep_interval_in_secs` (which represents
     # the length of a trading bar) to make sure that the `OrderProcessor`

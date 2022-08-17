@@ -106,7 +106,7 @@ class Example1_DagBuilder(dtfcore.DagBuilder):
                 },
             },
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     def _get_dag(

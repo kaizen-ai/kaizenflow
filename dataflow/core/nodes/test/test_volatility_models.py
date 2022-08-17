@@ -29,7 +29,7 @@ class TestSmaModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         _LOG.debug("data=\n%s", str(data))
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -48,7 +48,7 @@ class TestSmaModel(hunitest.TestCase):
         Specify `tau` parameter.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -65,7 +65,7 @@ class TestSmaModel(hunitest.TestCase):
         Specify `col_mode=='merge_all'`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -82,7 +82,7 @@ class TestSmaModel(hunitest.TestCase):
         Run `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -101,7 +101,7 @@ class TestSmaModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -162,7 +162,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -183,7 +183,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -205,7 +205,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -246,7 +246,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.from_dict(info)))
+        act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
@@ -262,7 +262,7 @@ class TestVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -281,7 +281,7 @@ class TestVolatilityModel(hunitest.TestCase):
         Check that the volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -309,7 +309,7 @@ class TestVolatilityModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -331,7 +331,7 @@ class TestVolatilityModel(hunitest.TestCase):
         Check that the `predict()` volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -359,7 +359,7 @@ class TestVolatilityModel(hunitest.TestCase):
         Use "replace_all" column mode.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -380,7 +380,7 @@ class TestVolatilityModel(hunitest.TestCase):
         Use "replace_selected" column mode.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -405,7 +405,7 @@ class TestVolatilityModel(hunitest.TestCase):
         # TODO(Paul): Rename this column.
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config and create modeling node.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -429,7 +429,7 @@ class TestVolatilityModel(hunitest.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -450,7 +450,7 @@ class TestVolatilityModel(hunitest.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config with columns implicit.
-        config1 = cconfig.from_dict(
+        config1 = cconfig.Config.from_dict(
             {
                 "steps_ahead": 2,
                 "nan_mode": "leave_unchanged",
@@ -459,7 +459,7 @@ class TestVolatilityModel(hunitest.TestCase):
         node1 = VolatilityModel("vol_model", **config1.to_dict())
         df_out1 = node1.fit(data)["df_out"]
         # Specify config with explicit column names.
-        config2 = cconfig.from_dict(
+        config2 = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -482,7 +482,7 @@ class TestVolatilityModel(hunitest.TestCase):
         data = self._get_data()
         data[10] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": [10],
                 "steps_ahead": 2,
@@ -558,7 +558,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.from_dict(info)))
+        act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(hunitest.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
@@ -603,7 +603,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -623,7 +623,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -643,7 +643,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -667,7 +667,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.from_dict(info)))
+        act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
@@ -701,7 +701,7 @@ class TestVolatilityModulator(hunitest.TestCase):
             -1
         )
         df_in["ret_1_hat"] = y_hat
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_1_hat"],
                 "volatility_col": "vol_2_hat",
@@ -718,7 +718,7 @@ class TestVolatilityModulator(hunitest.TestCase):
     def test_demodulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -735,7 +735,7 @@ class TestVolatilityModulator(hunitest.TestCase):
     def test_col_mode1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -754,7 +754,7 @@ class TestVolatilityModulator(hunitest.TestCase):
     def test_col_mode2(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",

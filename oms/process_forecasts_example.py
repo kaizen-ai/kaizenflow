@@ -31,5 +31,5 @@ def get_process_forecasts_config_example1() -> cconfig.Config:
         "trading_end_time": datetime.time(15, 55),
         "remove_weekends": True,
     }
-    config = cconfig.from_dict(dict_)
+    config = cconfig.Config.from_dict(dict_)
     return config

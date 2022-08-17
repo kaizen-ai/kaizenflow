@@ -495,7 +495,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that doesn't exist.
         """
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
@@ -515,7 +515,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that already exists.
         """
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
@@ -532,7 +532,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that doesn't exist in the hierarchy.
         """
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
@@ -550,13 +550,13 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that exist in the hierarchy with a Config.
         """
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
         )
         # Assign a config to an existing key.
-        config["rets/read_data"] = cconfig.from_dict(
+        config["rets/read_data"] = cconfig.Config.from_dict(
             {"source_node_name": "data_downloader"}
         )
         # Check.
@@ -569,13 +569,13 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that exists with a complex Config.
         """
-        config = cconfig.from_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
         )
         # Assign a config.
-        config["rets/read_data"] = cconfig.from_dict(
+        config["rets/read_data"] = cconfig.Config.from_dict(
             {
                 "source_node_name": "data_downloader",
                 "source_node_kwargs": {
@@ -918,7 +918,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
         Test a config that can be serialized correctly.
         """
         src_dir = "../../test"
-        eval_config = cconfig.from_dict(
+        eval_config = cconfig.Config.from_dict(
             {
                 "load_experiment_kwargs": {
                     "src_dir": src_dir,
@@ -949,7 +949,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
         """
         src_dir = "../../test"
         func = lambda x: x + 1
-        eval_config = cconfig.from_dict(
+        eval_config = cconfig.Config.from_dict(
             {
                 "load_experiment_kwargs": {
                     "src_dir": src_dir,
@@ -981,7 +981,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
 
 class TestFromEnvVar1(hunitest.TestCase):
     def test1(self) -> None:
-        eval_config = cconfig.from_dict(
+        eval_config = cconfig.Config.from_dict(
             {
                 "load_experiment_kwargs": {
                     "file_name": "result_bundle.v2_0.pkl",
@@ -1105,7 +1105,7 @@ class Test_to_dict1(hunitest.TestCase):
         :param config_as_dict: a dictionary to build a `Config` from
         :param expected_result_as_str: expected `Config` value as string
         """
-        config = cconfig.from_dict(config_as_dict)
+        config = cconfig.Config.from_dict(config_as_dict)
         act = str(config)
         self.assert_equal(act, expected_result_as_str, fuzzy_match=True)
         # Ensure that the round trip transform is correct.
@@ -1227,7 +1227,7 @@ class Test_to_dict1(hunitest.TestCase):
     #             "join_output_with_input": False,
     #         },
     #     }
-    #     config_tail = cconfig.from_dict(dict_)
+    #     config_tail = cconfig.Config.from_dict(dict_)
     #     config = cconfig.Config()
     #     config.update(config_tail)
 
@@ -1304,7 +1304,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
                 "com": 28,
             },
         }
-        config = cconfig.from_dict(nested)
+        config = cconfig.Config.from_dict(nested)
         act = str(config)
         exp = r"""
         read_data:
@@ -1326,7 +1326,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
             "single_val": "hello",
             "zscore": cconfig.Config(),
         }
-        config = cconfig.from_dict(nested)
+        config = cconfig.Config.from_dict(nested)
         act = str(config)
         exp = r"""
         read_data:
@@ -1346,7 +1346,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
             "key1": "val1",
             "key2": {"key3": {"key4": {}}},
         }
-        config = cconfig.from_dict(nested)
+        config = cconfig.Config.from_dict(nested)
         act = str(config)
         exp = r"""
         key1: val1
@@ -1368,7 +1368,7 @@ class Test_get_config_from_nested_dict1(hunitest.TestCase):
         One of the dict's values is a dict that should become a `Config`.
         """
         test_dict = {"key1": "value1", "key2": {"key3": "value2"}}
-        test_config = cconfig.from_dict(test_dict)
+        test_config = cconfig.Config.from_dict(test_dict)
         act = str(test_config)
         exp = r"""
         key1: value1

@@ -59,7 +59,7 @@ if config is None:
     # selected_idxs = None
     selected_idxs = range(3)
 
-    eval_config = cconfig.from_dict(
+    eval_config = cconfig.Config.from_dict(
         {
             "load_experiment_kwargs": {
                 "src_dir": exp_dir,

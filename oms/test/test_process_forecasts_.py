@@ -69,7 +69,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     def test_initialization1(self) -> None:
@@ -205,7 +205,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     @pytest.mark.slow("~8 seconds")
@@ -437,7 +437,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     def test_initialization1(self) -> None:
@@ -616,7 +616,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         spread_df = None
         restrictions_df = None
         # Run.
@@ -885,7 +885,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.from_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         spread_df = None
         restrictions_df = None
         # Run.
