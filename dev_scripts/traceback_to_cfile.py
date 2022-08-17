@@ -47,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = hparser.add_bool_arg(
         parser,
         "purify_from_client",
-        default=True,
+        default_value=True,
         help_="Make references to files in the current client",
     )
     parser = hparser.add_verbosity_arg(parser)

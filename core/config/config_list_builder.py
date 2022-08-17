@@ -62,7 +62,7 @@ def get_universe_top_n(universe: List[Any], n: Optional[int]) -> List[Any]:
 def get_period(period: str) -> Tuple[pd.Timestamp, pd.Timestamp]:
     """
     Get start and end timestamps from the specified period.
-    
+
     The usual period pattern looks the following: e.g., `2022-01-01_2022-02-01`.
 
     The interval type is [a, b), i.e. the last day of the interval is

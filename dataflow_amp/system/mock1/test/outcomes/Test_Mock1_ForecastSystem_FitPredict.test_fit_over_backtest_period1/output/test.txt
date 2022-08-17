@@ -75,179 +75,182 @@ research_forecast_evaluator_from_prices:
     liquidate_at_end_of_day: False
 market_object: ImClientMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[3303714233, 1467591036] <list>, _start_time_col_name=start_ts <str>, _end_time_col_name=end_ts <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _im_client=<im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object> <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient>)
 object.str:
-  market_object: <market_data.im_client_market_data.ImClientMarketData at 0x>:
-    _asset_id_col='asset_id' <str>
-    _asset_ids='[3303714233, 1467591036]' <list>
-    _start_time_col_name='start_ts' <str>
-    _end_time_col_name='end_ts' <str>
-    _columns='None' <NoneType>
-    _sleep_in_secs='1.0' <float>
-    _timezone='America/New_York' <str>
-    _column_remap='None' <NoneType>
-    _filter_data_mode='assert' <str>
-    _max_iterations='120' <int>
-    _im_client='<im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>' <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient>
-  dag_object: <dataflow.core.dag.DAG at 0x>:
-    _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
-    _name='None' <NoneType>
-    _mode='strict' <str>
-    _save_node_io='' <str>
-    _profile_execution='False' <bool>
-    _dst_dir='None' <NoneType>
-    force_free_nodes='False' <bool>
-    nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
-    edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
-    json=
-    {
-        "directed": true,
-        "graph": {},
-        "links": [
-            {
-                "df_in": "df_out",
-                "source": "filter_ath",
-                "target": "resample"
-            },
-            {
-                "df_in": "df_out",
-                "source": "resample",
-                "target": "compute_ret_0"
-            },
-            {
-                "df_in": "df_out",
-                "source": "compute_ret_0",
-                "target": "compute_vol"
-            },
-            {
-                "df_in": "df_out",
-                "source": "compute_vol",
-                "target": "adjust_rets"
-            },
-            {
-                "df_in": "df_out",
-                "source": "adjust_rets",
-                "target": "compress_rets"
-            },
-            {
-                "df_in": "df_out",
-                "source": "read_data",
-                "target": "filter_ath"
-            }
-        ],
-        "multigraph": false,
-        "nodes": [
-            {
-                "id": "filter_ath",
-                "stage": "ColumnTransformer"
-            },
-            {
-                "id": "resample",
-                "stage": "GroupedColDfToDfTransformer"
-            },
-            {
-                "id": "compute_ret_0",
-                "stage": "GroupedColDfToDfTransformer"
-            },
-            {
-                "id": "compute_vol",
-                "stage": "SeriesToSeriesTransformer"
-            },
-            {
-                "id": "adjust_rets",
-                "stage": "GroupedColDfToDfTransformer"
-            },
-            {
-                "id": "compress_rets",
-                "stage": "GroupedColDfToDfTransformer"
-            },
-            {
-                "id": "read_data",
-                "stage": "HistoricalDataSource"
-            }
-        ]
-    }
-  dag_runner_object: <dataflow.core.dag_runner.FitPredictDagRunner at 0x>:
-    dag= <dataflow.core.dag.DAG>
-      <dataflow.core.dag.DAG at 0x>:
-        _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
-        _name='None' <NoneType>
-        _mode='strict' <str>
-        _save_node_io='' <str>
-        _profile_execution='False' <bool>
-        _dst_dir='None' <NoneType>
-        force_free_nodes='False' <bool>
-        nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
-        edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
-        json=
-        {
-            "directed": true,
-            "graph": {},
-            "links": [
-                {
-                    "df_in": "df_out",
-                    "source": "filter_ath",
-                    "target": "resample"
-                },
-                {
-                    "df_in": "df_out",
-                    "source": "resample",
-                    "target": "compute_ret_0"
-                },
-                {
-                    "df_in": "df_out",
-                    "source": "compute_ret_0",
-                    "target": "compute_vol"
-                },
-                {
-                    "df_in": "df_out",
-                    "source": "compute_vol",
-                    "target": "adjust_rets"
-                },
-                {
-                    "df_in": "df_out",
-                    "source": "adjust_rets",
-                    "target": "compress_rets"
-                },
-                {
-                    "df_in": "df_out",
-                    "source": "read_data",
-                    "target": "filter_ath"
-                }
-            ],
-            "multigraph": false,
-            "nodes": [
-                {
-                    "id": "filter_ath",
-                    "stage": "ColumnTransformer"
-                },
-                {
-                    "id": "resample",
-                    "stage": "GroupedColDfToDfTransformer"
-                },
-                {
-                    "id": "compute_ret_0",
-                    "stage": "GroupedColDfToDfTransformer"
-                },
-                {
-                    "id": "compute_vol",
-                    "stage": "SeriesToSeriesTransformer"
-                },
-                {
-                    "id": "adjust_rets",
-                    "stage": "GroupedColDfToDfTransformer"
-                },
-                {
-                    "id": "compress_rets",
-                    "stage": "GroupedColDfToDfTransformer"
-                },
-                {
-                    "id": "read_data",
-                    "stage": "HistoricalDataSource"
-                }
-            ]
-        }
-    config='' <core.config.config_.Config>
-    _column_to_tags_mapping='None' <NoneType>
-    _result_nid='compress_rets' <str>
+  market_object:
+    <market_data.im_client_market_data.ImClientMarketData at 0x>:
+      _asset_id_col='asset_id' <str>
+      _asset_ids='[3303714233, 1467591036]' <list>
+      _start_time_col_name='start_ts' <str>
+      _end_time_col_name='end_ts' <str>
+      _columns='None' <NoneType>
+      _sleep_in_secs='1.0' <float>
+      _timezone='America/New_York' <str>
+      _column_remap='None' <NoneType>
+      _filter_data_mode='assert' <str>
+      _max_iterations='120' <int>
+      _im_client='<im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object>' <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient>
+  dag_object:
+    <dataflow.core.dag.DAG at 0x>:
+      _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+      _name='None' <NoneType>
+      _mode='strict' <str>
+      _save_node_io='' <str>
+      _profile_execution='False' <bool>
+      _dst_dir='None' <NoneType>
+      force_free_nodes='False' <bool>
+      nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
+      edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
+      json=
+      {
+          "directed": true,
+          "graph": {},
+          "links": [
+              {
+                  "df_in": "df_out",
+                  "source": "filter_ath",
+                  "target": "resample"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "resample",
+                  "target": "compute_ret_0"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_ret_0",
+                  "target": "compute_vol"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compute_vol",
+                  "target": "adjust_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "adjust_rets",
+                  "target": "compress_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "read_data",
+                  "target": "filter_ath"
+              }
+          ],
+          "multigraph": false,
+          "nodes": [
+              {
+                  "id": "filter_ath",
+                  "stage": "ColumnTransformer"
+              },
+              {
+                  "id": "resample",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_ret_0",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compute_vol",
+                  "stage": "SeriesToSeriesTransformer"
+              },
+              {
+                  "id": "adjust_rets",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "compress_rets",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "read_data",
+                  "stage": "HistoricalDataSource"
+              }
+          ]
+      }
+  dag_runner_object:
+    <dataflow.core.dag_runner.FitPredictDagRunner at 0x>:
+      dag= <dataflow.core.dag.DAG>
+        <dataflow.core.dag.DAG at 0x>:
+          _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+          _name='None' <NoneType>
+          _mode='strict' <str>
+          _save_node_io='' <str>
+          _profile_execution='False' <bool>
+          _dst_dir='None' <NoneType>
+          force_free_nodes='False' <bool>
+          nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.HistoricalDataSource object>})]
+          edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
+          json=
+          {
+              "directed": true,
+              "graph": {},
+              "links": [
+                  {
+                      "df_in": "df_out",
+                      "source": "filter_ath",
+                      "target": "resample"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "resample",
+                      "target": "compute_ret_0"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "compute_ret_0",
+                      "target": "compute_vol"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "compute_vol",
+                      "target": "adjust_rets"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "adjust_rets",
+                      "target": "compress_rets"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "read_data",
+                      "target": "filter_ath"
+                  }
+              ],
+              "multigraph": false,
+              "nodes": [
+                  {
+                      "id": "filter_ath",
+                      "stage": "ColumnTransformer"
+                  },
+                  {
+                      "id": "resample",
+                      "stage": "GroupedColDfToDfTransformer"
+                  },
+                  {
+                      "id": "compute_ret_0",
+                      "stage": "GroupedColDfToDfTransformer"
+                  },
+                  {
+                      "id": "compute_vol",
+                      "stage": "SeriesToSeriesTransformer"
+                  },
+                  {
+                      "id": "adjust_rets",
+                      "stage": "GroupedColDfToDfTransformer"
+                  },
+                  {
+                      "id": "compress_rets",
+                      "stage": "GroupedColDfToDfTransformer"
+                  },
+                  {
+                      "id": "read_data",
+                      "stage": "HistoricalDataSource"
+                  }
+              ]
+          }
+      config='' <core.config.config_.Config>
+      _column_to_tags_mapping='None' <NoneType>
+      _result_nid='compress_rets' <str>
 object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag

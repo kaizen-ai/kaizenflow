@@ -52,7 +52,7 @@
   {
     "name": "Permanent",
     "color": "#b7330b",
-        "description": "Routine ongoing tasks, which cannot be closed" 
+        "description": "Routine ongoing tasks, which cannot be closed"
    },
   {
     "name": "Wontfix",
