@@ -149,11 +149,11 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     """
     Delete duplicate data rows from a db table which uses a standard OHLCV
     table format.
-    
+
     In this context, a row is considered duplicate, when
     there exists another row which has identical timestamp, currency pair
     and exchange ID but different row ID and knowledge timestamp.
-    
+
     :param db_stage: database stage to connect to
     :param db_table: database table to delete duplicates from
     """

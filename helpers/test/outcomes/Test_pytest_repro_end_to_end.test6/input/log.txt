@@ -11,7 +11,7 @@ NETWORK_MODE=bridge \
         run \
         --rm \
         app \
-        'pytest -m "not slow and not superslow" . -o timeout_func_only=true --timeout 5 --reruns 2 --only-rerun "Failed: Timeout"' 
+        'pytest -m "not slow and not superslow" . -o timeout_func_only=true --timeout 5 --reruns 2 --only-rerun "Failed: Timeout"'
 [1;37mIMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
 NETWORK_MODE=bridge \
         docker-compose \
@@ -25,7 +25,7 @@ NETWORK_MODE=bridge \
 [33mWARNING[0m: The AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: The AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: Found orphan containers (compose_oms_postgres_1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-Creating compose_app_run ... 
+Creating compose_app_run ...
 
 [1A[2K
 Creating compose_app_run ... [32mdone[0m
@@ -43,7 +43,7 @@ Testing sudo
 /app
 Setting up Docker
 { "storage-driver": "vfs" }
- * Starting Docker: docker       [80G 
+ * Starting Docker: docker       [80G
 [74G[ OK ]
  * Docker is running
 # Check AWS authentication setup
@@ -51,8 +51,8 @@ AWS_DEFAULT_REGION='us-east-1'
       Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                       am           manual    --profile
-access_key     ****************3J32 shared-credentials-file    
-secret_key     ****************QpHW shared-credentials-file    
+access_key     ****************3J32 shared-credentials-file
+secret_key     ****************QpHW shared-credentials-file
     region                us-east-1              env    AWS_DEFAULT_REGION
 CONTAINER_VERSION=''
 BUILD_TAG=''
@@ -96,7 +96,7 @@ You need to:
     hash='29bdaf1'
     # Last commits:
       * 29bdaf1 saggese  Lint                                                              ( 3 minutes ago) Mon Mar 7 20:10:16 2022  (HEAD -> AmpTask2163_Implement_tiled_backtesting_5, origin/AmpTask2163_Implement_tiled_backtesting_5)
-      * c26c937 saggese  Checkpoint                                                        ( 3 minutes ago) Mon Mar 7 20:09:34 2022           
+      * c26c937 saggese  Checkpoint                                                        ( 3 minutes ago) Mon Mar 7 20:09:34 2022
       * 9846b44 saggese  Fix break                                                         (  27 hours ago) Sun Mar 6 17:24:31 2022  (origin/master, origin/HEAD, master)
 # Machine info
     system=Linux
@@ -388,18 +388,18 @@ amp/helpers/test/test_unit_test.py::TestCheckString1::test_check_string_not_equa
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_equal1 (0.02 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_equal2 (0.02 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_equal3 (0.02 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing1 
+amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing1
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/TestCheckDataFrame1.test_check_df_missing1/output/test_df.txt'(0.02 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing2 (0.01 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing3 
+amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing3
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/TestCheckDataFrame1.test_check_df_missing3/output/test_df.txt'(0.15 s) ([33mWARNING[0m: Test was updated) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal1 (0.06 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 (0.05 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal3 
+amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal3
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/TestCheckDataFrame1.test_check_df_not_equal3/output/test_df.txt'(0.03 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 (0.05 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::Test_check_string_debug1::test1 (0.16 s) ([33mWARNING[0m: Test was updated) [32mPASSED[0m[32m [ 15%][0m
-amp/helpers/test/test_unit_test.py::Test_check_string_debug1::test2 
+amp/helpers/test/test_unit_test.py::Test_check_string_debug1::test2
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/Test_check_string_debug1.test2/output/test_df.txt'(0.15 s) ([33mWARNING[0m: Test was updated) [32mPASSED[0m[32m [ 15%][0m
 amp/helpers/test/test_unit_test.py::Test_unit_test1::test_purify_txt_from_client1 (0.00 s) [32mPASSED[0m[32m [ 15%][0m
 amp/helpers/test/test_unit_test.py::Test_unit_test1::test_purify_txt_from_client2 (0.00 s) [32mPASSED[0m[32m [ 15%][0m
@@ -2110,7 +2110,7 @@ NETWORK_MODE=bridge \
         run \
         --rm \
         app \
-        'pytest -m "slow and not superslow" . -o timeout_func_only=true --timeout 30 --reruns 1 --only-rerun "Failed: Timeout"' 
+        'pytest -m "slow and not superslow" . -o timeout_func_only=true --timeout 30 --reruns 1 --only-rerun "Failed: Timeout"'
 [1;37mIMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
 NETWORK_MODE=bridge \
         docker-compose \
@@ -2124,7 +2124,7 @@ NETWORK_MODE=bridge \
 [33mWARNING[0m: The AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: The AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: Found orphan containers (compose_oms_postgres_1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-Creating compose_app_run ... 
+Creating compose_app_run ...
 
 [1A[2K
 Creating compose_app_run ... [32mdone[0m
@@ -2142,7 +2142,7 @@ Testing sudo
 /app
 Setting up Docker
 { "storage-driver": "vfs" }
- * Starting Docker: docker       [80G 
+ * Starting Docker: docker       [80G
 [74G[ OK ]
  * Docker is running
 # Check AWS authentication setup
@@ -2150,8 +2150,8 @@ AWS_DEFAULT_REGION='us-east-1'
       Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                       am           manual    --profile
-access_key     ****************3J32 shared-credentials-file    
-secret_key     ****************QpHW shared-credentials-file    
+access_key     ****************3J32 shared-credentials-file
+secret_key     ****************QpHW shared-credentials-file
     region                us-east-1              env    AWS_DEFAULT_REGION
 CONTAINER_VERSION=''
 BUILD_TAG=''
@@ -2196,7 +2196,7 @@ You need to:
     hash='29bdaf1'
     # Last commits:
       * 29bdaf1 saggese  Lint                                                              ( 6 minutes ago) Mon Mar 7 20:10:16 2022  (HEAD -> AmpTask2163_Implement_tiled_backtesting_5, origin/AmpTask2163_Implement_tiled_backtesting_5)
-      * c26c937 saggese  Checkpoint                                                        ( 7 minutes ago) Mon Mar 7 20:09:34 2022           
+      * c26c937 saggese  Checkpoint                                                        ( 7 minutes ago) Mon Mar 7 20:09:34 2022
       * 9846b44 saggese  Fix break                                                         (  27 hours ago) Sun Mar 6 17:24:31 2022  (origin/master, origin/HEAD, master)
 # Machine info
     system=Linux
@@ -2310,7 +2310,7 @@ Traceback (most recent call last):
     hdbg.dfatal(msg)
   File "/app/amp/helpers/hdbg.py", line 63, in dfatal
     raise assertion_type(ret)
-AssertionError: 
+AssertionError:
 ################################################################################
 The golden outcome doesn't exist: saved the actual output in '/app/dataflow_lime/pipelines/E8/test/Test_TiledBacktest_E8d.test_end_to_end_slow1/output/configs_signature.txt.tmp'
 ################################################################################
@@ -2372,7 +2372,7 @@ NETWORK_MODE=bridge \
         run \
         --rm \
         app \
-        'pytest -m "not slow and superslow" . -o timeout_func_only=true --timeout 3600 --reruns 1 --only-rerun "Failed: Timeout"' 
+        'pytest -m "not slow and superslow" . -o timeout_func_only=true --timeout 3600 --reruns 1 --only-rerun "Failed: Timeout"'
 [1;37mIMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
 NETWORK_MODE=bridge \
         docker-compose \
@@ -2386,7 +2386,7 @@ NETWORK_MODE=bridge \
 [33mWARNING[0m: The AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: The AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: Found orphan containers (compose_oms_postgres_1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-Creating compose_app_run ... 
+Creating compose_app_run ...
 
 [1A[2K
 Creating compose_app_run ... [32mdone[0m
@@ -2404,7 +2404,7 @@ Testing sudo
 /app
 Setting up Docker
 { "storage-driver": "vfs" }
- * Starting Docker: docker       [80G 
+ * Starting Docker: docker       [80G
 [74G[ OK ]
  * Docker is running
 # Check AWS authentication setup
@@ -2412,8 +2412,8 @@ AWS_DEFAULT_REGION='us-east-1'
       Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                       am           manual    --profile
-access_key     ****************3J32 shared-credentials-file    
-secret_key     ****************QpHW shared-credentials-file    
+access_key     ****************3J32 shared-credentials-file
+secret_key     ****************QpHW shared-credentials-file
     region                us-east-1              env    AWS_DEFAULT_REGION
 CONTAINER_VERSION=''
 BUILD_TAG=''
@@ -2457,7 +2457,7 @@ You need to:
     hash='29bdaf1'
     # Last commits:
       * 29bdaf1 saggese  Lint                                                              (11 minutes ago) Mon Mar 7 20:10:16 2022  (HEAD -> AmpTask2163_Implement_tiled_backtesting_5, origin/AmpTask2163_Implement_tiled_backtesting_5)
-      * c26c937 saggese  Checkpoint                                                        (12 minutes ago) Mon Mar 7 20:09:34 2022           
+      * c26c937 saggese  Checkpoint                                                        (12 minutes ago) Mon Mar 7 20:09:34 2022
       * 9846b44 saggese  Fix break                                                         (  27 hours ago) Sun Mar 6 17:24:31 2022  (origin/master, origin/HEAD, master)
 # Machine info
     system=Linux
@@ -2489,7 +2489,7 @@ You need to:
 collected 1874 items / 1864 deselected / 10 selected                           [0m
 
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data3_database_vs_dataframe_portfolio [33mSKIPPED[0m[32m [ 10%][0m
-dataflow_lime/system/test/test_E8d_replayed_system_runner.py::Test_E8d_Replayed_SystemRunner::test1 
+dataflow_lime/system/test/test_E8d_replayed_system_runner.py::Test_E8d_Replayed_SystemRunner::test1
 
 
 (462.17 s) [32mPASSED[0m[32m [ 20%][0m

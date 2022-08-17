@@ -230,7 +230,7 @@ class TestRemoveDuplicates(hunitest.TestCase):
                     0 1 A 3 3
                     1 2 A 2 2"""
         self.assert_equal(actual, expected, fuzzy_match=True)
-    
+
     def test_remove_duplicates2(self) -> None:
         test_data = {
             "dummy_value_1": [1, 2, 1],
@@ -249,7 +249,7 @@ class TestRemoveDuplicates(hunitest.TestCase):
                     1 2 A 2 2
                     2 1 A 1 1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
-    
+
     def test_remove_duplicates3(self) -> None:
         test_data = {
             "dummy_value_1": [1, 2, 1],

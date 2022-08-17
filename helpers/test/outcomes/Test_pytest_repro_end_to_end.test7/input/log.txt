@@ -1,5 +1,5 @@
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4532280Z core/event_study/test/test_core.py::TestUnwrapLocalTimeseries::test_minutely1 (0.03 s) [32mPASSED[0m[31m [100%][0m
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4532780Z 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4532780Z
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4533026Z =================================== FAILURES ===================================
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4533724Z [31m[1m_______________________ TestDryRunTasks1.test_git_clean ________________________[0m
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4534485Z Traceback (most recent call last):
@@ -13,11 +13,11 @@ Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4537889Z   File "/app/helpers/
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4538319Z     diff_files(
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4538746Z   File "/app/helpers/hunit_test.py", line 586, in diff_files
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4539220Z     raise RuntimeError(msg_as_str)
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4539617Z RuntimeError: 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4539617Z RuntimeError:
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4540266Z --------------------------------------------------------------------------------
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4540856Z ACTUAL vs EXPECTED: TestDryRunTasks1.test_git_clean
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4541568Z --------------------------------------------------------------------------------
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4541928Z 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4541928Z
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4542194Z report_memory_usage=False report_cpu_usage=False                          (
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4542753Z ## git_clean: dry_run=False                                               (
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4543426Z                                                                           >  git clean -fd >/dev/null 2>&1
@@ -48,11 +48,11 @@ Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4644949Z   File "/app/helpers/
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4645544Z     diff_files(
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4645997Z   File "/app/helpers/hunit_test.py", line 586, in diff_files
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4646473Z     raise RuntimeError(msg_as_str)
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4646868Z RuntimeError: 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4646868Z RuntimeError:
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4647564Z --------------------------------------------------------------------------------
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4648290Z FUZZY ACTUAL vs EXPECTED: Test_Example1_ForecastSystem_FitPredict.test_fit_over_backtest_period1
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4649091Z --------------------------------------------------------------------------------
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4649436Z 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4649436Z
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4649668Z system_config                                                             (
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4650153Z dag_config:                                                               (
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4650634Z filter_ath:                                                               (
@@ -223,11 +223,11 @@ Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4744328Z   File "/app/helpers/
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4744767Z     diff_files(
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4745216Z   File "/app/helpers/hunit_test.py", line 586, in diff_files
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4745672Z     raise RuntimeError(msg_as_str)
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4746068Z RuntimeError: 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4746068Z RuntimeError:
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4746708Z --------------------------------------------------------------------------------
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4747409Z FUZZY ACTUAL vs EXPECTED: Test_Example1_ForecastSystem_FitPredict.test_fit_over_period1
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4748182Z --------------------------------------------------------------------------------
-Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4748547Z 
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4748547Z
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4748848Z system_config                                                             (
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4749340Z dag_config:                                                               (
 Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4749833Z filter_ath:                                                               (

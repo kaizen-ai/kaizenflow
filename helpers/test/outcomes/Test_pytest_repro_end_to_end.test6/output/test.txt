@@ -1,5 +1,5 @@
 INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test6/input/log.txt --show-stacktrace'
-## pytest_repro: 
+## pytest_repro:
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test6/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test6/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Found 2 failed pytest 'tests' target(s); to reproduce run:
@@ -31,7 +31,7 @@ Traceback (most recent call last):
     hdbg.dfatal(msg)
   File "/app/helpers/hdbg.py", line 63, in dfatal
     raise assertion_type(ret)
-AssertionError: 
+AssertionError:
 ################################################################################
 The golden outcome doesn't exist: saved the actual output in '/app/dataflow_lime/pipelines/E8/test/Test_TiledBacktest_E8d.test_end_to_end_slow1/output/configs_signature.txt.tmp'
 ################################################################################
