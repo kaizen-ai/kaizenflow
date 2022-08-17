@@ -349,6 +349,7 @@ def git_branch_files(ctx):  # type: ignore
     )
 
 
+# TODO(gp): @all -> git_branch_rename
 @task
 def git_create_branch(  # type: ignore
     ctx,
@@ -435,7 +436,7 @@ def git_create_branch(  # type: ignore
     hlitauti._run(ctx, cmd)
 
 
-# TODO(gp): Move to hgit.
+# TODO(gp): @all Move to hgit.
 def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
     if tag == "local":
         # Delete local branches that are already merged into master.
@@ -475,6 +476,7 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
         hlitauti._run(ctx, cmd_tmp)
 
 
+# TODO(gp): @all -> git_branch_delete_merged
 @task
 def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     """
@@ -497,6 +499,7 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     hlitauti._run(ctx, cmd)
 
 
+# TODO(gp): @all -> git_branch_rename
 @task
 def git_rename_branch(ctx, new_branch_name):  # type: ignore
     """
@@ -555,6 +558,7 @@ def git_branch_next_name(ctx, branch_name=None):  # type: ignore
     print(f"branch_next_name='{branch_next_name}'")
 
 
+# TODO(gp): @all Improve docstring
 @task
 def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_patch=False):  # type: ignore
     """
@@ -598,6 +602,9 @@ def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_pa
     #
     cmd = f"git merge --squash --ff {curr_branch_name} && git reset HEAD"
     hlitauti._run(ctx, cmd)
+
+
+# ///////////////////////////////////////////////////////////////////////////////
 
 
 def _git_diff_with_branch(

@@ -504,7 +504,6 @@ class CcxtBroker(ombroker.Broker):
                 f"The {self._exchange_id} exchange is not fully supported for placing orders."
             )
 
-    # TODO(gp): Update interface to return Tuple[str, order_df].
     async def _submit_orders(
         self,
         orders: List[omorder.Order],
@@ -555,7 +554,14 @@ class CcxtBroker(ombroker.Broker):
                     raise e
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
-        return str(order_resp), pd.DataFrame()
+        # TODO(Grisha): what should we use as `receipt` for CCXT? For equities IIUC
+        # we use a file name.
+        submitted_order_id = self._get_next_submitted_order_id()
+        receipt = f"filename_{submitted_order_id}.txt"
+        # Combine all orders in a df.
+        order_dicts = [order.to_dict() for order in sent_orders]
+        order_df = pd.DataFrame(order_dicts)
+        return receipt, order_df
 
     def _build_asset_id_to_symbol_mapping(
         self,

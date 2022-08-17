@@ -134,7 +134,7 @@ def get_Cx_process_forecasts_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    log_dir = None
+    root_log_dir = None
     process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
         system.portfolio,
         prediction_col,
@@ -143,7 +143,7 @@ def get_Cx_process_forecasts_dict_example1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        log_dir,
+        root_log_dir,
     )
     return process_forecasts_dict
 
@@ -164,9 +164,11 @@ def get_process_forecasts_dict_prod_instance1(
     #
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
-        "target_gmv": 300.0,
+        "target_gmv": 500.0,
     }
-    log_dir = os.path.join("process_forecasts", datetime.date.today().isoformat())
+    root_log_dir = os.path.join(
+        "process_forecasts", datetime.date.today().isoformat()
+    )
     #
     process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
         portfolio,
@@ -176,7 +178,7 @@ def get_process_forecasts_dict_prod_instance1(
         order_duration_in_mins,
         style,
         compute_target_positions_kwargs,
-        root_log_dir=log_dir,
+        root_log_dir,
     )
     return process_forecasts_dict
 
@@ -237,6 +239,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
+    system = dtfsys.apply_process_forecasts_config_for_crypto(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
@@ -287,17 +290,21 @@ def _get_Cx_dag_prod_instance1(
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_dict)
+    system = dtfsys.apply_process_forecasts_config_for_crypto(system)
+    process_forecasts_dict1 = system.config["process_forecasts_config"].to_dict()
     # Assemble.
     market_data = system.market_data
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
     ts_col_name = "timestamp_db"
+    # TODO(Grisha): should we use `add_real_time_data_source` and
+    # `add_process_forecasts_node` from `system_builder_utils.py`?
     dag = dtfsys.adapt_dag_to_real_time(
         dag,
         market_data,
         market_data_history_lookback,
-        process_forecasts_dict,
+        process_forecasts_dict1,
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
