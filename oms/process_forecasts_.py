@@ -116,7 +116,8 @@ async def process_forecasts(
     # Create an `order_config` from `config` elements.
     order_config = hdict.typed_get(config, "order_config", dict, None)
     _validate_order_config(order_config)
-    #
+    # TODO(gp): Consider forcing to have everything specified, instead of using
+    #  None defaults.
     optimizer_config = hdict.typed_get(
         config, "optimizer_config", cconfig.Config, None
     )
@@ -128,7 +129,6 @@ async def process_forecasts(
     trading_start_time = hdict.typed_get(
         config, "trading_start_time", datetime.time, None
     )
-    hdbg.dassert_lte(ath_start_time, trading_start_time)
     # Extract end times.
     ath_end_time = hdict.typed_get(config, "ath_end_time", datetime.time, None)
     trading_end_time = hdict.typed_get(
