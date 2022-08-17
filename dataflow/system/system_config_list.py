@@ -60,6 +60,11 @@ class SystemConfigList(cconfig.ConfigList):
         return system_config_list
 
 
+# #############################################################################
+# Utils
+# #############################################################################
+
+
 def build_tile_config_list(
     system: dtfsyssyst.System,
 ) -> SystemConfigList:
