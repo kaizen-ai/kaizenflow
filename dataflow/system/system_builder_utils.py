@@ -10,7 +10,6 @@ import os
 from typing import Any, Callable, Coroutine, Optional
 
 import pandas as pd
-from amp.dataflow.core import dag_runner
 
 import core.config as cconfig
 import dataflow.core as dtfcore
@@ -133,15 +132,15 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
 
 
 def apply_history_lookback(
-        system: dtfsyssyst.System,
-        *,
-        days: Optional[int] = None,
+    system: dtfsyssyst.System,
+    *,
+    days: Optional[int] = None,
 ) -> dtfsyssyst.System:
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
     if days is None:
         days = (
-                dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
         )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
@@ -236,7 +235,7 @@ def apply_dag_runner_config_for_crypto(
     system: dtfsyssyst.System,
     *,
     wake_up_timestamp: pd.Timestamp = None,
-    real_time_loop_time_out_in_secs = None,
+    real_time_loop_time_out_in_secs=None,
 ) -> dtfsyssyst.System:
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
@@ -245,9 +244,13 @@ def apply_dag_runner_config_for_crypto(
     # Calculate minutes for real_time_loop_time:
     # minutes = 60 - system.config["dag_runner_config", "trading_period_str"]
     # real_time_loop_time_out_in_secs = datetime.time(15, minutes)
-    system.config["dag_runner_config", "trading_period_str"] = pd.Timedelta(dag_builder.get_trading_period(dag_config).seconds)
-    system.config["dag_runner_config", "wake_up_timestamp"] = real_time_loop_time_out_in_secs
-    # 
+    system.config["dag_runner_config", "trading_period_str"] = pd.Timedelta(
+        dag_builder.get_trading_period(dag_config).seconds
+    )
+    system.config[
+        "dag_runner_config", "wake_up_timestamp"
+    ] = real_time_loop_time_out_in_secs
+    #
     if wake_up_timestamp is not None:
         wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
     system.config["dag_runner_config", "wake_up_timestamp"] = wake_up_timestamp
@@ -627,7 +630,7 @@ def get_OrderProcessorCoroutine_from_System(
 # TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
 # TODO(gp): This seems less general than the one below.
 def get_realtime_DagRunner_from_system(
-        system: dtfsyssyst.System,
+    system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:
     """
     Build a real-time DAG runner.
@@ -657,7 +660,7 @@ def get_realtime_DagRunner_from_system(
 
 
 def get_RealTimeDagRunner_from_System(
-        system: dtfsyssyst.System,
+    system: dtfsyssyst.System,
 ) -> dtfsrtdaru.RealTimeDagRunner:
     """
     Build a real-time DAG runner from a system config.
@@ -704,5 +707,3 @@ def get_RealTimeDagRunner_from_System(
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
     return dag_runner
-
-
