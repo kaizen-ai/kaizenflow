@@ -130,6 +130,7 @@ def get_Mock1_RealtimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
     system.config[
         "process_forecasts_config"
     ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
+    system = dtfsys.apply_process_forecasts_config_for_equities(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag
