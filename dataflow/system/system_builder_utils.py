@@ -338,6 +338,7 @@ def add_real_time_data_source(
     return dag
 
 
+# TODO(gp): -> ...ProcessForecastsNode...
 def add_process_forecasts_node(
     system: dtfsyssyst.System, dag: dtfcore.DAG
 ) -> dtfcore.DAG:
@@ -348,7 +349,7 @@ def add_process_forecasts_node(
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecastsNode(
-        stage, **system.config["process_forecasts_config"].to_dict()
+        stage, **system.config["process_forecasts_node_dict"].to_dict(),
     )
     dag.append_to_tail(node)
     return dag
@@ -364,7 +365,7 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     )
 
 
-def apply_process_forecasts_config_for_equities(
+def apply_ProcessForecastsNode_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -379,13 +380,13 @@ def apply_process_forecasts_config_for_equities(
         "trading_end_time": datetime.time(16, 40),
     }
     config = cconfig.get_config_from_nested_dict(dict_)
-    system.config["process_forecasts_config", "process_forecasts_config"].update(
+    system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
         config
     )
     return system
 
 
-def apply_process_forecasts_config_for_crypto(
+def apply_ProcessForecastsNode_config_for_crypto(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -400,7 +401,7 @@ def apply_process_forecasts_config_for_crypto(
         "trading_end_time": None,
     }
     config = cconfig.get_config_from_nested_dict(dict_)
-    system.config["process_forecasts_config", "process_forecasts_config"].update(
+    system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
         config
     )
     return system

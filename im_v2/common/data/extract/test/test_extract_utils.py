@@ -614,6 +614,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 
 
 # TODO(gp): Difference between amp and cmamp.
+@pytest.mark.skip(reason="File '/home/.aws/credentials' doesn't exist")
 class TestRemoveDuplicates(hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper):
     @classmethod
     def get_id(cls) -> int:
@@ -775,7 +776,6 @@ class TestVerifySchema(hunitest.TestCase):
         actual_df = imvcdeexut.verify_schema(test_df)
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
-
 
     def test_non_numerical_column(self) -> None:
         """

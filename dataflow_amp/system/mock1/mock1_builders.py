@@ -43,7 +43,7 @@ def get_Mock1_MarketData_example2(
 # #############################################################################
 
 
-def get_Mock1_process_forecasts_dict_example1(
+def get_Mock1_ProcessForecastsNode_dict_example1(
     system: dtfsys.System,
 ) -> Dict[str, Any]:
     """
@@ -61,7 +61,7 @@ def get_Mock1_process_forecasts_dict_example1(
         "target_gmv": 1e5,
     }
     root_log_dir = None
-    process_forecasts_dict = dtfsys.get_process_forecasts_dict_example1(
+    process_forecasts_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
         volatility_col,
@@ -126,11 +126,11 @@ def get_Mock1_RealtimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
     system = dtfsys.apply_history_lookback(system, days=lookback_in_days)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    process_forecasts_config = get_Mock1_process_forecasts_dict_example1(system)
+    process_forecasts_node_config = get_Mock1_ProcessForecastsNode_dict_example1(system)
     system.config[
-        "process_forecasts_config"
-    ] = cconfig.get_config_from_nested_dict(process_forecasts_config)
-    system = dtfsys.apply_process_forecasts_config_for_equities(system)
+        "process_forecasts_node_dict"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_node_config)
+    system = dtfsys.apply_ProcessForecastsNode_config_for_equities(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
     return dag

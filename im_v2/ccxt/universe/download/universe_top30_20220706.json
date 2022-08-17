@@ -1,6 +1,6 @@
 {
    "CCXT": {
-      "binance": [ 
+      "binance": [
         "ETH_USDT",
         "BTC_USDT",
         "SAND_USDT",
