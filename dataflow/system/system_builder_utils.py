@@ -605,8 +605,8 @@ def apply_dag_runner_config_for_equities(
     Update dag runner config for equities.
 
     For equities `wake_up_timestamp` and
-    `real_time_loop_time_out_in_secs` are with the start and end of a
-    trading day for equties market.
+    `real_time_loop_time_out_in_secs` are aligned with the start
+    and end of a trading day for equties market.
     """
     (
         trading_period_str,
