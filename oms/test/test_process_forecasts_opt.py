@@ -22,7 +22,8 @@ _LOG = logging.getLogger(__name__)
 @pytest.mark.skip("CmTask #1580 Optimizer-related tests fail.")
 class TestDataFrameProcessForecasts1(hunitest.TestCase):
 
-    # TODO(gp): This can become an _example.
+    # TODO(gp): @all This can become an _example.
+    # TODO(gp): @all -> get_process_forecasts_dict
     @staticmethod
     def get_process_forecasts_config() -> cconfig.Config:
         dict_ = {

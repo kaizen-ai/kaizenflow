@@ -4,11 +4,10 @@ Import as:
 import oms.process_forecasts_example as oprfoexa
 """
 import datetime
+from typing import Any, Dict
 
-import core.config as cconfig
 
-
-def get_process_forecasts_config_example1() -> cconfig.Config:
+def get_process_forecasts_dict_example1() -> Dict[str, Any]:
     dict_ = {
         "order_config": {
             "order_type": "price@twap",
@@ -31,5 +30,4 @@ def get_process_forecasts_config_example1() -> cconfig.Config:
         "trading_end_time": datetime.time(15, 55),
         "remove_weekends": True,
     }
-    config = cconfig.Config.from_dict(dict_)
-    return config
+    return dict_

@@ -188,6 +188,19 @@ class Config:
                     v_as_str = "\n" + hprint.indent(v_as_str)
                 else:
                     v_as_str = str(v)
+                    # Indent a string that spans multiple lines like:
+                    # ```
+                    # portfolio_object:
+                    #   # historical holdings=
+                    #   egid                        10365    -1
+                    #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
+                    #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
+                    #   ...
+                    #   # historical holdings marked to market=
+                    #   ...
+                    # ```
+                    if len(v_as_str.split("\n")) > 1:
+                        v_as_str = "\n" + hprint.indent(v_as_str)
                 txt.append("%s: %s" % (k, v_as_str))
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
@@ -241,30 +254,36 @@ class Config:
         for path, val in flattened.items():
             self.__setitem__(path, val)
 
-    def get(self, key: Key, *args: Any) -> Any:
+    def get(
+        self,
+        key: Key,
+        default_value: Optional[Any] = "__impossible_value__",
+        expected_type: Optional[Any] = None,
+    ) -> Any:
         """
         Equivalent to `dict.get(key, default_val)`.
 
         It has the same functionality as `__getitem__()` but returning
         `val` if the value corresponding to `key` doesn't exist.
+
+        :param default_value: default value to return if key is not in `config`
+        :param expected_type: expected type of `value`
+        :return: config[key] if available, else `default_value`
         """
         try:
             ret = self.__getitem__(key, print_config_on_error=True)
         except KeyError as e:
             # No key: use the default val if it was passed or asserts.
             _LOG.debug("e=%s", e)
-            if args:
-                # There should be only one element.
-                hdbg.dassert_eq(
-                    len(args),
-                    1,
-                    "There should be only one parameter passed, instead there is %s",
-                    str(args),
-                )
-                ret = args[0]
+            # We can't use None since None can be a valid default value, so we use
+            # another value.
+            if default_value != "__impossible_value__":
+                ret = default_value
             else:
-                # No parameter found, then raise.
+                # No default value found, then raise.
                 raise e
+        if expected_type is not None:
+            hdbg.dassert_issubclass(ret, expected_type)
         return ret
 
     def pop(self, key: str) -> Any:

@@ -229,33 +229,3 @@ def build_config_diff_dataframe(
         tags = [config[tag_col] for config in config_dict.values()]
         config_diffs[tag_col] = tags
     return config_diffs
-
-
-# TODO(gp): This is almost equivalent to a get(..., default_value). The only
-#  difference is the type check.
-def get_object_from_config(
-    config: cconconf.Config,
-    key: str,
-    expected_type: type,
-    default_value: Any,
-) -> Any:
-    """
-    Return value at key or `default_value` if key is not in `config`.
-
-    :param config: config object
-    :param key: str key (top-level only). TODO(Paul): Consider supporting
-        nested keys.
-    :param expected_type: expected type of `value`
-    :param default_value: default value to return if key is not in `config`
-    :return: config[key] if available, else `default_value`
-    """
-    hdbg.dassert_isinstance(config, cconconf.Config),
-    hdbg.dassert_isinstance(key, str)
-    if default_value is not None:
-        hdbg.dassert_issubclass(default_value, expected_type)
-    if key in config:
-        obj = config[key]
-    else:
-        obj = default_value
-    hdbg.dassert_issubclass(obj, expected_type)
-    return obj

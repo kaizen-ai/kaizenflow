@@ -21,121 +21,126 @@ column_to_tags: None
 info:
   filter_weekends:
     predict:
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   11916 non-null  float64
-       1   (close, MN1)   11916 non-null  float64
-       2   (close, MN2)   11916 non-null  float64
-       3   (close, MN3)   11916 non-null  float64
-       4   (volume, MN0)  11916 non-null  float64
-       5   (volume, MN1)  11916 non-null  float64
-       6   (volume, MN2)  11916 non-null  float64
-       7   (volume, MN3)  11916 non-null  float64
-      dtypes: float64(8)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   11916 non-null  float64
+         1   (close, MN1)   11916 non-null  float64
+         2   (close, MN2)   11916 non-null  float64
+         3   (close, MN3)   11916 non-null  float64
+         4   (volume, MN0)  11916 non-null  float64
+         5   (volume, MN1)  11916 non-null  float64
+         6   (volume, MN2)  11916 non-null  float64
+         7   (volume, MN3)  11916 non-null  float64
+        dtypes: float64(8)
   filter_ath:
     predict:
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   3510 non-null   float64
-       1   (close, MN1)   3510 non-null   float64
-       2   (close, MN2)   3510 non-null   float64
-       3   (close, MN3)   3510 non-null   float64
-       4   (volume, MN0)  3510 non-null   float64
-       5   (volume, MN1)  3510 non-null   float64
-       6   (volume, MN2)  3510 non-null   float64
-       7   (volume, MN3)  3510 non-null   float64
-      dtypes: float64(8)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   3510 non-null   float64
+         1   (close, MN1)   3510 non-null   float64
+         2   (close, MN2)   3510 non-null   float64
+         3   (close, MN3)   3510 non-null   float64
+         4   (volume, MN0)  3510 non-null   float64
+         5   (volume, MN1)  3510 non-null   float64
+         6   (volume, MN2)  3510 non-null   float64
+         7   (volume, MN3)  3510 non-null   float64
+        dtypes: float64(8)
   resample:
     predict:
       func_info:
 
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: 5T
-      Data columns (total 16 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   702 non-null    float64
-       1   (close, MN1)   702 non-null    float64
-       2   (close, MN2)   702 non-null    float64
-       3   (close, MN3)   702 non-null    float64
-       4   (twap, MN0)    702 non-null    float64
-       5   (twap, MN1)    702 non-null    float64
-       6   (twap, MN2)    702 non-null    float64
-       7   (twap, MN3)    702 non-null    float64
-       8   (volume, MN0)  702 non-null    float64
-       9   (volume, MN1)  702 non-null    float64
-       10  (volume, MN2)  702 non-null    float64
-       11  (volume, MN3)  702 non-null    float64
-       12  (vwap, MN0)    702 non-null    float64
-       13  (vwap, MN1)    702 non-null    float64
-       14  (vwap, MN2)    702 non-null    float64
-       15  (vwap, MN3)    702 non-null    float64
-      dtypes: float64(16)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: 5T
+        Data columns (total 16 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   702 non-null    float64
+         1   (close, MN1)   702 non-null    float64
+         2   (close, MN2)   702 non-null    float64
+         3   (close, MN3)   702 non-null    float64
+         4   (twap, MN0)    702 non-null    float64
+         5   (twap, MN1)    702 non-null    float64
+         6   (twap, MN2)    702 non-null    float64
+         7   (twap, MN3)    702 non-null    float64
+         8   (volume, MN0)  702 non-null    float64
+         9   (volume, MN1)  702 non-null    float64
+         10  (volume, MN2)  702 non-null    float64
+         11  (volume, MN3)  702 non-null    float64
+         12  (vwap, MN0)    702 non-null    float64
+         13  (vwap, MN1)    702 non-null    float64
+         14  (vwap, MN2)    702 non-null    float64
+         15  (vwap, MN3)    702 non-null    float64
+        dtypes: float64(16)
   compute_ret_0:
     predict:
       func_info:
 
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: 5T
-      Data columns (total 28 columns):
-       #   Column              Non-Null Count  Dtype
-      ---  ------              --------------  -----
-       0   (close.ret_0, MN0)  693 non-null    float64
-       1   (close.ret_0, MN1)  693 non-null    float64
-       2   (close.ret_0, MN2)  693 non-null    float64
-       3   (close.ret_0, MN3)  693 non-null    float64
-       4   (twap.ret_0, MN0)   693 non-null    float64
-       5   (twap.ret_0, MN1)   693 non-null    float64
-       6   (twap.ret_0, MN2)   693 non-null    float64
-       7   (twap.ret_0, MN3)   693 non-null    float64
-       8   (vwap.ret_0, MN0)   693 non-null    float64
-       9   (vwap.ret_0, MN1)   693 non-null    float64
-       10  (vwap.ret_0, MN2)   693 non-null    float64
-       11  (vwap.ret_0, MN3)   693 non-null    float64
-       12  (close, MN0)        702 non-null    float64
-       13  (close, MN1)        702 non-null    float64
-       14  (close, MN2)        702 non-null    float64
-       15  (close, MN3)        702 non-null    float64
-       16  (twap, MN0)         702 non-null    float64
-       17  (twap, MN1)         702 non-null    float64
-       18  (twap, MN2)         702 non-null    float64
-       19  (twap, MN3)         702 non-null    float64
-       20  (volume, MN0)       702 non-null    float64
-       21  (volume, MN1)       702 non-null    float64
-       22  (volume, MN2)       702 non-null    float64
-       23  (volume, MN3)       702 non-null    float64
-       24  (vwap, MN0)         702 non-null    float64
-       25  (vwap, MN1)         702 non-null    float64
-       26  (vwap, MN2)         702 non-null    float64
-       27  (vwap, MN3)         702 non-null    float64
-      dtypes: float64(28)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: 5T
+        Data columns (total 28 columns):
+         #   Column              Non-Null Count  Dtype
+        ---  ------              --------------  -----
+         0   (close.ret_0, MN0)  693 non-null    float64
+         1   (close.ret_0, MN1)  693 non-null    float64
+         2   (close.ret_0, MN2)  693 non-null    float64
+         3   (close.ret_0, MN3)  693 non-null    float64
+         4   (twap.ret_0, MN0)   693 non-null    float64
+         5   (twap.ret_0, MN1)   693 non-null    float64
+         6   (twap.ret_0, MN2)   693 non-null    float64
+         7   (twap.ret_0, MN3)   693 non-null    float64
+         8   (vwap.ret_0, MN0)   693 non-null    float64
+         9   (vwap.ret_0, MN1)   693 non-null    float64
+         10  (vwap.ret_0, MN2)   693 non-null    float64
+         11  (vwap.ret_0, MN3)   693 non-null    float64
+         12  (close, MN0)        702 non-null    float64
+         13  (close, MN1)        702 non-null    float64
+         14  (close, MN2)        702 non-null    float64
+         15  (close, MN3)        702 non-null    float64
+         16  (twap, MN0)         702 non-null    float64
+         17  (twap, MN1)         702 non-null    float64
+         18  (twap, MN2)         702 non-null    float64
+         19  (twap, MN3)         702 non-null    float64
+         20  (volume, MN0)       702 non-null    float64
+         21  (volume, MN1)       702 non-null    float64
+         22  (volume, MN2)       702 non-null    float64
+         23  (volume, MN3)       702 non-null    float64
+         24  (vwap, MN0)         702 non-null    float64
+         25  (vwap, MN1)         702 non-null    float64
+         26  (vwap, MN2)         702 non-null    float64
+         27  (vwap, MN3)         702 non-null    float64
+        dtypes: float64(28)
   load_prices:
     predict:
-      predict_df_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   14796 non-null  float64
-       1   (close, MN1)   14796 non-null  float64
-       2   (close, MN2)   14796 non-null  float64
-       3   (close, MN3)   14796 non-null  float64
-       4   (volume, MN0)  14796 non-null  int64
-       5   (volume, MN1)  14796 non-null  int64
-       6   (volume, MN2)  14796 non-null  int64
-       7   (volume, MN3)  14796 non-null  int64
-      dtypes: float64(4), int64(4)
+      predict_df_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   14796 non-null  float64
+         1   (close, MN1)   14796 non-null  float64
+         2   (close, MN2)   14796 non-null  float64
+         3   (close, MN3)   14796 non-null  float64
+         4   (volume, MN0)  14796 non-null  int64
+         5   (volume, MN1)  14796 non-null  int64
+         6   (volume, MN2)  14796 non-null  int64
+         7   (volume, MN3)  14796 non-null  int64
+        dtypes: float64(4), int64(4)
 payload: None
 class: ResultBundle
 config:
@@ -160,121 +165,126 @@ column_to_tags: None
 info:
   filter_weekends:
     predict:
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   11916 non-null  float64
-       1   (close, MN1)   11916 non-null  float64
-       2   (close, MN2)   11916 non-null  float64
-       3   (close, MN3)   11916 non-null  float64
-       4   (volume, MN0)  11916 non-null  float64
-       5   (volume, MN1)  11916 non-null  float64
-       6   (volume, MN2)  11916 non-null  float64
-       7   (volume, MN3)  11916 non-null  float64
-      dtypes: float64(8)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   11916 non-null  float64
+         1   (close, MN1)   11916 non-null  float64
+         2   (close, MN2)   11916 non-null  float64
+         3   (close, MN3)   11916 non-null  float64
+         4   (volume, MN0)  11916 non-null  float64
+         5   (volume, MN1)  11916 non-null  float64
+         6   (volume, MN2)  11916 non-null  float64
+         7   (volume, MN3)  11916 non-null  float64
+        dtypes: float64(8)
   filter_ath:
     predict:
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   3510 non-null   float64
-       1   (close, MN1)   3510 non-null   float64
-       2   (close, MN2)   3510 non-null   float64
-       3   (close, MN3)   3510 non-null   float64
-       4   (volume, MN0)  3510 non-null   float64
-       5   (volume, MN1)  3510 non-null   float64
-       6   (volume, MN2)  3510 non-null   float64
-       7   (volume, MN3)  3510 non-null   float64
-      dtypes: float64(8)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   3510 non-null   float64
+         1   (close, MN1)   3510 non-null   float64
+         2   (close, MN2)   3510 non-null   float64
+         3   (close, MN3)   3510 non-null   float64
+         4   (volume, MN0)  3510 non-null   float64
+         5   (volume, MN1)  3510 non-null   float64
+         6   (volume, MN2)  3510 non-null   float64
+         7   (volume, MN3)  3510 non-null   float64
+        dtypes: float64(8)
   resample:
     predict:
       func_info:
 
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: 5T
-      Data columns (total 16 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   702 non-null    float64
-       1   (close, MN1)   702 non-null    float64
-       2   (close, MN2)   702 non-null    float64
-       3   (close, MN3)   702 non-null    float64
-       4   (twap, MN0)    702 non-null    float64
-       5   (twap, MN1)    702 non-null    float64
-       6   (twap, MN2)    702 non-null    float64
-       7   (twap, MN3)    702 non-null    float64
-       8   (volume, MN0)  702 non-null    float64
-       9   (volume, MN1)  702 non-null    float64
-       10  (volume, MN2)  702 non-null    float64
-       11  (volume, MN3)  702 non-null    float64
-       12  (vwap, MN0)    702 non-null    float64
-       13  (vwap, MN1)    702 non-null    float64
-       14  (vwap, MN2)    702 non-null    float64
-       15  (vwap, MN3)    702 non-null    float64
-      dtypes: float64(16)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: 5T
+        Data columns (total 16 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   702 non-null    float64
+         1   (close, MN1)   702 non-null    float64
+         2   (close, MN2)   702 non-null    float64
+         3   (close, MN3)   702 non-null    float64
+         4   (twap, MN0)    702 non-null    float64
+         5   (twap, MN1)    702 non-null    float64
+         6   (twap, MN2)    702 non-null    float64
+         7   (twap, MN3)    702 non-null    float64
+         8   (volume, MN0)  702 non-null    float64
+         9   (volume, MN1)  702 non-null    float64
+         10  (volume, MN2)  702 non-null    float64
+         11  (volume, MN3)  702 non-null    float64
+         12  (vwap, MN0)    702 non-null    float64
+         13  (vwap, MN1)    702 non-null    float64
+         14  (vwap, MN2)    702 non-null    float64
+         15  (vwap, MN3)    702 non-null    float64
+        dtypes: float64(16)
   compute_ret_0:
     predict:
       func_info:
 
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: 5T
-      Data columns (total 28 columns):
-       #   Column              Non-Null Count  Dtype
-      ---  ------              --------------  -----
-       0   (close.ret_0, MN0)  693 non-null    float64
-       1   (close.ret_0, MN1)  693 non-null    float64
-       2   (close.ret_0, MN2)  693 non-null    float64
-       3   (close.ret_0, MN3)  693 non-null    float64
-       4   (twap.ret_0, MN0)   693 non-null    float64
-       5   (twap.ret_0, MN1)   693 non-null    float64
-       6   (twap.ret_0, MN2)   693 non-null    float64
-       7   (twap.ret_0, MN3)   693 non-null    float64
-       8   (vwap.ret_0, MN0)   693 non-null    float64
-       9   (vwap.ret_0, MN1)   693 non-null    float64
-       10  (vwap.ret_0, MN2)   693 non-null    float64
-       11  (vwap.ret_0, MN3)   693 non-null    float64
-       12  (close, MN0)        702 non-null    float64
-       13  (close, MN1)        702 non-null    float64
-       14  (close, MN2)        702 non-null    float64
-       15  (close, MN3)        702 non-null    float64
-       16  (twap, MN0)         702 non-null    float64
-       17  (twap, MN1)         702 non-null    float64
-       18  (twap, MN2)         702 non-null    float64
-       19  (twap, MN3)         702 non-null    float64
-       20  (volume, MN0)       702 non-null    float64
-       21  (volume, MN1)       702 non-null    float64
-       22  (volume, MN2)       702 non-null    float64
-       23  (volume, MN3)       702 non-null    float64
-       24  (vwap, MN0)         702 non-null    float64
-       25  (vwap, MN1)         702 non-null    float64
-       26  (vwap, MN2)         702 non-null    float64
-       27  (vwap, MN3)         702 non-null    float64
-      dtypes: float64(28)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: 5T
+        Data columns (total 28 columns):
+         #   Column              Non-Null Count  Dtype
+        ---  ------              --------------  -----
+         0   (close.ret_0, MN0)  693 non-null    float64
+         1   (close.ret_0, MN1)  693 non-null    float64
+         2   (close.ret_0, MN2)  693 non-null    float64
+         3   (close.ret_0, MN3)  693 non-null    float64
+         4   (twap.ret_0, MN0)   693 non-null    float64
+         5   (twap.ret_0, MN1)   693 non-null    float64
+         6   (twap.ret_0, MN2)   693 non-null    float64
+         7   (twap.ret_0, MN3)   693 non-null    float64
+         8   (vwap.ret_0, MN0)   693 non-null    float64
+         9   (vwap.ret_0, MN1)   693 non-null    float64
+         10  (vwap.ret_0, MN2)   693 non-null    float64
+         11  (vwap.ret_0, MN3)   693 non-null    float64
+         12  (close, MN0)        702 non-null    float64
+         13  (close, MN1)        702 non-null    float64
+         14  (close, MN2)        702 non-null    float64
+         15  (close, MN3)        702 non-null    float64
+         16  (twap, MN0)         702 non-null    float64
+         17  (twap, MN1)         702 non-null    float64
+         18  (twap, MN2)         702 non-null    float64
+         19  (twap, MN3)         702 non-null    float64
+         20  (volume, MN0)       702 non-null    float64
+         21  (volume, MN1)       702 non-null    float64
+         22  (volume, MN2)       702 non-null    float64
+         23  (volume, MN3)       702 non-null    float64
+         24  (vwap, MN0)         702 non-null    float64
+         25  (vwap, MN1)         702 non-null    float64
+         26  (vwap, MN2)         702 non-null    float64
+         27  (vwap, MN3)         702 non-null    float64
+        dtypes: float64(28)
   load_prices:
     predict:
-      predict_df_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   14796 non-null  float64
-       1   (close, MN1)   14796 non-null  float64
-       2   (close, MN2)   14796 non-null  float64
-       3   (close, MN3)   14796 non-null  float64
-       4   (volume, MN0)  14796 non-null  int64
-       5   (volume, MN1)  14796 non-null  int64
-       6   (volume, MN2)  14796 non-null  int64
-       7   (volume, MN3)  14796 non-null  int64
-      dtypes: float64(4), int64(4)
+      predict_df_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   14796 non-null  float64
+         1   (close, MN1)   14796 non-null  float64
+         2   (close, MN2)   14796 non-null  float64
+         3   (close, MN3)   14796 non-null  float64
+         4   (volume, MN0)  14796 non-null  int64
+         5   (volume, MN1)  14796 non-null  int64
+         6   (volume, MN2)  14796 non-null  int64
+         7   (volume, MN3)  14796 non-null  int64
+        dtypes: float64(4), int64(4)
 payload: None
 class: ResultBundle
 config:
@@ -299,120 +309,125 @@ column_to_tags: None
 info:
   filter_weekends:
     predict:
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   11916 non-null  float64
-       1   (close, MN1)   11916 non-null  float64
-       2   (close, MN2)   11916 non-null  float64
-       3   (close, MN3)   11916 non-null  float64
-       4   (volume, MN0)  11916 non-null  float64
-       5   (volume, MN1)  11916 non-null  float64
-       6   (volume, MN2)  11916 non-null  float64
-       7   (volume, MN3)  11916 non-null  float64
-      dtypes: float64(8)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   11916 non-null  float64
+         1   (close, MN1)   11916 non-null  float64
+         2   (close, MN2)   11916 non-null  float64
+         3   (close, MN3)   11916 non-null  float64
+         4   (volume, MN0)  11916 non-null  float64
+         5   (volume, MN1)  11916 non-null  float64
+         6   (volume, MN2)  11916 non-null  float64
+         7   (volume, MN3)  11916 non-null  float64
+        dtypes: float64(8)
   filter_ath:
     predict:
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   3510 non-null   float64
-       1   (close, MN1)   3510 non-null   float64
-       2   (close, MN2)   3510 non-null   float64
-       3   (close, MN3)   3510 non-null   float64
-       4   (volume, MN0)  3510 non-null   float64
-       5   (volume, MN1)  3510 non-null   float64
-       6   (volume, MN2)  3510 non-null   float64
-       7   (volume, MN3)  3510 non-null   float64
-      dtypes: float64(8)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   3510 non-null   float64
+         1   (close, MN1)   3510 non-null   float64
+         2   (close, MN2)   3510 non-null   float64
+         3   (close, MN3)   3510 non-null   float64
+         4   (volume, MN0)  3510 non-null   float64
+         5   (volume, MN1)  3510 non-null   float64
+         6   (volume, MN2)  3510 non-null   float64
+         7   (volume, MN3)  3510 non-null   float64
+        dtypes: float64(8)
   resample:
     predict:
       func_info:
 
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: 5T
-      Data columns (total 16 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   702 non-null    float64
-       1   (close, MN1)   702 non-null    float64
-       2   (close, MN2)   702 non-null    float64
-       3   (close, MN3)   702 non-null    float64
-       4   (twap, MN0)    702 non-null    float64
-       5   (twap, MN1)    702 non-null    float64
-       6   (twap, MN2)    702 non-null    float64
-       7   (twap, MN3)    702 non-null    float64
-       8   (volume, MN0)  702 non-null    float64
-       9   (volume, MN1)  702 non-null    float64
-       10  (volume, MN2)  702 non-null    float64
-       11  (volume, MN3)  702 non-null    float64
-       12  (vwap, MN0)    702 non-null    float64
-       13  (vwap, MN1)    702 non-null    float64
-       14  (vwap, MN2)    702 non-null    float64
-       15  (vwap, MN3)    702 non-null    float64
-      dtypes: float64(16)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: 5T
+        Data columns (total 16 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   702 non-null    float64
+         1   (close, MN1)   702 non-null    float64
+         2   (close, MN2)   702 non-null    float64
+         3   (close, MN3)   702 non-null    float64
+         4   (twap, MN0)    702 non-null    float64
+         5   (twap, MN1)    702 non-null    float64
+         6   (twap, MN2)    702 non-null    float64
+         7   (twap, MN3)    702 non-null    float64
+         8   (volume, MN0)  702 non-null    float64
+         9   (volume, MN1)  702 non-null    float64
+         10  (volume, MN2)  702 non-null    float64
+         11  (volume, MN3)  702 non-null    float64
+         12  (vwap, MN0)    702 non-null    float64
+         13  (vwap, MN1)    702 non-null    float64
+         14  (vwap, MN2)    702 non-null    float64
+         15  (vwap, MN3)    702 non-null    float64
+        dtypes: float64(16)
   compute_ret_0:
     predict:
       func_info:
 
-      df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: 5T
-      Data columns (total 28 columns):
-       #   Column              Non-Null Count  Dtype
-      ---  ------              --------------  -----
-       0   (close.ret_0, MN0)  693 non-null    float64
-       1   (close.ret_0, MN1)  693 non-null    float64
-       2   (close.ret_0, MN2)  693 non-null    float64
-       3   (close.ret_0, MN3)  693 non-null    float64
-       4   (twap.ret_0, MN0)   693 non-null    float64
-       5   (twap.ret_0, MN1)   693 non-null    float64
-       6   (twap.ret_0, MN2)   693 non-null    float64
-       7   (twap.ret_0, MN3)   693 non-null    float64
-       8   (vwap.ret_0, MN0)   693 non-null    float64
-       9   (vwap.ret_0, MN1)   693 non-null    float64
-       10  (vwap.ret_0, MN2)   693 non-null    float64
-       11  (vwap.ret_0, MN3)   693 non-null    float64
-       12  (close, MN0)        702 non-null    float64
-       13  (close, MN1)        702 non-null    float64
-       14  (close, MN2)        702 non-null    float64
-       15  (close, MN3)        702 non-null    float64
-       16  (twap, MN0)         702 non-null    float64
-       17  (twap, MN1)         702 non-null    float64
-       18  (twap, MN2)         702 non-null    float64
-       19  (twap, MN3)         702 non-null    float64
-       20  (volume, MN0)       702 non-null    float64
-       21  (volume, MN1)       702 non-null    float64
-       22  (volume, MN2)       702 non-null    float64
-       23  (volume, MN3)       702 non-null    float64
-       24  (vwap, MN0)         702 non-null    float64
-       25  (vwap, MN1)         702 non-null    float64
-       26  (vwap, MN2)         702 non-null    float64
-       27  (vwap, MN3)         702 non-null    float64
-      dtypes: float64(28)
+      df_transformed_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 2960 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: 5T
+        Data columns (total 28 columns):
+         #   Column              Non-Null Count  Dtype
+        ---  ------              --------------  -----
+         0   (close.ret_0, MN0)  693 non-null    float64
+         1   (close.ret_0, MN1)  693 non-null    float64
+         2   (close.ret_0, MN2)  693 non-null    float64
+         3   (close.ret_0, MN3)  693 non-null    float64
+         4   (twap.ret_0, MN0)   693 non-null    float64
+         5   (twap.ret_0, MN1)   693 non-null    float64
+         6   (twap.ret_0, MN2)   693 non-null    float64
+         7   (twap.ret_0, MN3)   693 non-null    float64
+         8   (vwap.ret_0, MN0)   693 non-null    float64
+         9   (vwap.ret_0, MN1)   693 non-null    float64
+         10  (vwap.ret_0, MN2)   693 non-null    float64
+         11  (vwap.ret_0, MN3)   693 non-null    float64
+         12  (close, MN0)        702 non-null    float64
+         13  (close, MN1)        702 non-null    float64
+         14  (close, MN2)        702 non-null    float64
+         15  (close, MN3)        702 non-null    float64
+         16  (twap, MN0)         702 non-null    float64
+         17  (twap, MN1)         702 non-null    float64
+         18  (twap, MN2)         702 non-null    float64
+         19  (twap, MN3)         702 non-null    float64
+         20  (volume, MN0)       702 non-null    float64
+         21  (volume, MN1)       702 non-null    float64
+         22  (volume, MN2)       702 non-null    float64
+         23  (volume, MN3)       702 non-null    float64
+         24  (vwap, MN0)         702 non-null    float64
+         25  (vwap, MN1)         702 non-null    float64
+         26  (vwap, MN2)         702 non-null    float64
+         27  (vwap, MN3)         702 non-null    float64
+        dtypes: float64(28)
   load_prices:
     predict:
-      predict_df_info: <class 'pandas.core.frame.DataFrame'>
-      DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
-      Freq: T
-      Data columns (total 8 columns):
-       #   Column         Non-Null Count  Dtype
-      ---  ------         --------------  -----
-       0   (close, MN0)   14796 non-null  float64
-       1   (close, MN1)   14796 non-null  float64
-       2   (close, MN2)   14796 non-null  float64
-       3   (close, MN3)   14796 non-null  float64
-       4   (volume, MN0)  14796 non-null  int64
-       5   (volume, MN1)  14796 non-null  int64
-       6   (volume, MN2)  14796 non-null  int64
-       7   (volume, MN3)  14796 non-null  int64
-      dtypes: float64(4), int64(4)
+      predict_df_info:
+        <class 'pandas.core.frame.DataFrame'>
+        DatetimeIndex: 14796 entries, 2010-01-04 09:30:00 to 2010-01-14 16:05:00
+        Freq: T
+        Data columns (total 8 columns):
+         #   Column         Non-Null Count  Dtype
+        ---  ------         --------------  -----
+         0   (close, MN0)   14796 non-null  float64
+         1   (close, MN1)   14796 non-null  float64
+         2   (close, MN2)   14796 non-null  float64
+         3   (close, MN3)   14796 non-null  float64
+         4   (volume, MN0)  14796 non-null  int64
+         5   (volume, MN1)  14796 non-null  int64
+         6   (volume, MN2)  14796 non-null  int64
+         7   (volume, MN3)  14796 non-null  int64
+        dtypes: float64(4), int64(4)
 payload: None
 class: ResultBundle

@@ -8,14 +8,18 @@ import dataflow.backtest.master_backtest as dtfbamaexp
 
 import logging
 import os
+from typing import Optional
+
+import pandas as pd
 
 import core.config as cconfig
-import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbdtfbaut
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -34,7 +38,7 @@ def run_experiment(system_config: cconfig.Config) -> None:
     """
     _LOG.debug("system_config=\n%s", system_config)
     system_config = system_config.copy()
-    #dag_runner = system_config["dag_runner_builder"]()
+    # dag_runner = system_config["dag_runner_builder"]()
     fit_result_bundle = dag_runner.fit()
     # Maybe run OOS.
     if (
@@ -47,45 +51,77 @@ def run_experiment(system_config: cconfig.Config) -> None:
     # Save results.
     # TODO(gp): We could return a `ResultBundle` and have
     #  `run_config_stub.py` save it.
-    dtfbaexuti.save_experiment_result_bundle(system_config, result_bundle)
+    dtfbdtfbaut.save_experiment_result_bundle(system_config, result_bundle)
 
 
 # #############################################################################
+# run_rolling_backtest
+# #############################################################################
 
 
-# TODO(gp): -> run_rolling_backtest
-def run_rolling_experiment(config: cconfig.Config) -> None:
-    _LOG.debug("config=\n%s", config)
-    dag_config = config.pop("dag_config")
-    dag_runner = dtfcore.RollingFitPredictDagRunner(
-        dag_config,
-        config["dag_builder"],
-        config["backtest_config"]["start"],
-        config["backtest_config"]["end"],
-        config["backtest_config"]["retraining_freq"],
-        config["backtest_config"]["retraining_lookback"],
-    )
+def _get_single_system_config(
+    system_config_list: dtfsys.SystemConfigList,
+):
+    # Create the DAG runner customizing the System with the specific config.
+    hdbg.dassert_isinstance(system_config_list, dtfsys.SystemConfigList)
+    _LOG.debug("system_config_list=\n%s", system_config_list)
+    system = system_config_list.system
+    system_config = system_config_list.get_only_config()
+    system.set_config(system_config)
+    return system
+
+
+def run_tiled_rolling_backtest(
+    system_config_list: dtfsys.SystemConfigList,
+) -> None:
+    system = _get_single_system_config(system_config_list)
+    #
+    system.config["backtest_config", "retraining_freq"] = "7D"
+    system.config["backtest_config", "retraining_lookback"] = 3
+    # Build the dag runner.
+    dag_runner = system.dag_runner
+    hdbg.dassert_isinstance(dag_runner, dtfcore.RollingFitPredictDagRunner)
+
+    # This loop corresponds to evaluating the model on a tile, but it's done in chunks
+    # to do fit / predict.
+    pred_rbs = []
     for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
-        payload = cconfig.Config.from_dict({"config": config})
-        fit_rb.payload = payload
-        dtfbaexuti.save_experiment_result_bundle(
-            config,
-            fit_rb,
-            file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
-        )
-        pred_rb.payload = payload
-        dtfbaexuti.save_experiment_result_bundle(
-            config,
-            pred_rb,
-            file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
-        )
+        _LOG.debug(hprint.to_str("training_datetime_str"))
+        # fit_rb.payload = payload
+        # dtfbaexuti.save_experiment_result_bundle(
+        #     config,
+        #     fit_rb,
+        #     file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
+        # )
+        # pred_rb.payload = payload
+        # dtfbaexuti.save_experiment_result_bundle(
+        #     config,
+        #     pred_rb,
+        #     file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
+        # )
+        _LOG.debug("fit_rb=\n%s", str(fit_rb))
+        _LOG.debug("pred_rb=\n%s", str(pred_rb))
+        pred_rbs.append(pred_rb.result_df)
+        # TODO(gp): After each training session, we want to save all the info from
+        #  training and the model stats (including weights) into an extra directory.
+    # TODO(gp): We might need to compute extra data before and after the tile
+    #  and then remove it.
+    # TODO(gp): The invariant is that concatenating all the OOS prediction you
+    #  get exactly a tile.
+    pred_rb = pd.concat(pred_rbs, axis=0)
+    # Save results.
+    _save_tiled_output(system.config, pred_rb)
 
 
+# #############################################################################
+# run_tiled_backtest
 # #############################################################################
 
 
 def _save_tiled_output(
-    system_config: cconfig.Config, result_bundle: dtfcore.ResultBundle
+    system_config: cconfig.Config,
+    result_df: pd.DataFrame,
+    tag: Optional[str] = None,
 ) -> None:
     """
     Serialize the results of a tiled experiment.
@@ -115,7 +151,7 @@ def _save_tiled_output(
     # If it's saved in ET timezone it's going to become
     # `[2022-05-31 20:00:00-04:00, 2022-06-30 19:55:00-04:00]` so it's going to
     # span two months potentially overwriting some other tile.
-    result_df = result_bundle.result_df.loc[start_timestamp:end_timestamp]
+    result_df = result_df.loc[start_timestamp:end_timestamp]
     result_df.index = result_df.index.tz_convert(start_timestamp.tzinfo)
     # Convert the result into Parquet.
     df = result_df.stack()
@@ -128,6 +164,8 @@ def _save_tiled_output(
     tiled_dst_dir = os.path.join(
         system_config["backtest_config", "dst_dir"], "tiled_results"
     )
+    if tag:
+        tiled_dst_dir += "." + tag
     hparque.to_partitioned_parquet(
         df, [asset_id_col_name, "year", "month"], dst_dir=tiled_dst_dir
     )
@@ -148,24 +186,21 @@ def run_tiled_backtest(
     All parameters are passed through a `Config`.
     """
     # Create the DAG runner customizing the System with the specific config.
-    hdbg.dassert_isinstance(system_config_list, dtfsys.SystemConfigList)
-    _LOG.debug("system_config_list=\n%s", system_config_list)
-    system = system_config_list.system
-    system_config = system_config_list.get_only_config()
-    system.set_config(system_config)
+    system = _get_single_system_config(system_config_list)
+    #
     dag_runner = system.dag_runner
+    # TODO(gp): -> FitPredictDagRunner?
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # TODO(gp): Even this should go in the DAG creation in the builder.
     dag_runner.set_fit_intervals(
         [
             (
-                system_config[
-                    "backtest_config", "start_timestamp_with_lookback"
-                ],
-                system_config["backtest_config", "end_timestamp"],
+                system.config["backtest_config", "start_timestamp_with_lookback"],
+                system.config["backtest_config", "end_timestamp"],
             )
         ],
     )
     fit_result_bundle = dag_runner.fit()
     # Save results.
-    _save_tiled_output(system_config, fit_result_bundle)
+    result_df = fit_result_bundle.result_df
+    _save_tiled_output(system.config, result_df)

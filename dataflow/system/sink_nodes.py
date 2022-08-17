@@ -13,7 +13,6 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 
-import core.config as cconfig
 import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -35,24 +34,20 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
         volatility_col: str,
         spread_col: Optional[str],
         portfolio: omportfo.Portfolio,
-        # TODO(Paul): Rename this `process_forecasts_dict`.
-        process_forecasts_config: Dict[str, Any],
+        process_forecasts_dict: Dict[str, Any],
     ) -> None:
         """
         Parameters have the same meaning as in `oms/process_forecasts_()`.
 
-        :param process_forecasts_config: configures `process_forecasts()`
+        :param process_forecasts_dict: configures `process_forecasts()`
         """
         super().__init__(nid)
         self._prediction_col = prediction_col
         self._volatility_col = volatility_col
         self._spread_col = spread_col
         self._portfolio = portfolio
-        process_forecasts_config = cconfig.Config.from_dict(
-            process_forecasts_config
-        )
-        hdbg.dassert_isinstance(process_forecasts_config, cconfig.Config)
-        self._process_forecasts_config = process_forecasts_config
+        hdbg.dassert_isinstance(process_forecasts_dict, dict)
+        self._process_forecasts_dict = process_forecasts_dict
 
     def fit(self, df_in: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         return self._compute_forecasts(df_in, fit=True)
@@ -67,7 +62,7 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
             self._prediction_df,
             self._volatility_df,
             self._portfolio,
-            self._process_forecasts_config,
+            self._process_forecasts_dict,
             self._spread_df,
             restrictions,
         )
@@ -111,9 +106,9 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 
 
 # TODO(Grisha): @all Move to `system_builder_utils.py` or sink_nodes_example.py
-#   This function can become `get_process_forecasts_dict_example` (without a number)
+#   This function can become `get_ProcessForecastsNode_dict_example` (without a number)
 #   which signify the innermost / most general builder.
-def get_process_forecasts_dict_example1(
+def get_ProcessForecastsNode_dict_example1(
     portfolio: omportfo.Portfolio,
     prediction_col: str,
     volatility_col: str,
@@ -121,7 +116,7 @@ def get_process_forecasts_dict_example1(
     order_duration_in_mins: int,
     style: str,
     compute_target_positions_kwargs: Dict[str, Any],
-    root_log_dir: str,
+    root_log_dir: Optional[str],
 ) -> Dict[str, Any]:
     """
     Get the config for `ProcessForecastNode`.
@@ -138,7 +133,7 @@ def get_process_forecasts_dict_example1(
         log_dir = os.path.join(root_log_dir, "process_forecasts")
     else:
         log_dir = None
-    process_forecasts_config_dict = {
+    process_forecasts_dict = {
         # Params for `ForecastProcessor`.
         "order_config": {
             "order_type": order_type,
@@ -155,13 +150,13 @@ def get_process_forecasts_dict_example1(
         "execution_mode": "real_time",
         "log_dir": log_dir,
     }
-    # This goes to `ProcessForecastsNode`.
-    process_forecasts_dict = {
+    # Params for `ProcessForecastsNode`.
+    process_forecasts_node_dict = {
         "prediction_col": prediction_col,
         "volatility_col": volatility_col,
         "spread_col": spread_col,
         "portfolio": portfolio,
         # This configures `process_forecasts()`.
-        "process_forecasts_config": process_forecasts_config_dict,
+        "process_forecasts_dict": process_forecasts_dict,
     }
-    return process_forecasts_dict
+    return process_forecasts_node_dict
