@@ -362,8 +362,8 @@ class Config:
         Build a `Config` from a nested dict.
 
         :param nested: nested dict, with certain restrictions:
-        - only leaf nodes may not be a dict
-        - every nonempty dict must only have keys of type `str`
+          - only leaf nodes may not be a dict
+          - every nonempty dict must only have keys of type `str`
         """
         hdbg.dassert_isinstance(nested, dict)
         hdbg.dassert(nested)
@@ -390,7 +390,7 @@ class Config:
                     # cannot use dict as value in a `Config`.
                     v = Config.from_dict(v)
                 else:
-                    # TODO(Grisha): maybe move to `get_config_from_nested_dict`, i.e.
+                    # TODO(Grisha): maybe move to `from_dict`, i.e.
                     # return empty `Config` right away without passing further.
                     # If dictionary is empty convert to an empty `Config`.
                     v = Config()

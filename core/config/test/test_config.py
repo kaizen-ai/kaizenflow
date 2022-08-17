@@ -1287,11 +1287,11 @@ class Test_get_config_from_flattened_dict1(hunitest.TestCase):
 
 
 # #############################################################################
-# Test_get_config_from_nested_dict1
+# Test_from_dict1
 # #############################################################################
 
 
-class Test_get_config_from_nested_dict1(hunitest.TestCase):
+class Test_from_dict1(hunitest.TestCase):
     def test1(self) -> None:
         nested = {
             "read_data": {

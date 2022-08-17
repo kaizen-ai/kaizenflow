@@ -482,7 +482,7 @@ def apply_process_forecasts_config_for_crypto(
         "ath_end_time": None,
         "trading_end_time": None,
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_config", "process_forecasts_config"].update(
         config
     )
