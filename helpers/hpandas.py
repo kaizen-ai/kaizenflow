@@ -789,7 +789,8 @@ def merge_dfs(
     Wrapper around `pd.merge`.
 
     :param threshold_col_name: a column's name to check the minimum overlap on
-    :param threshold: minimum overlap of unique values in a specified column to perform the merge
+    :param threshold: minimum overlap of unique values in a specified column to
+        perform the merge
     """
     # Sanity check column types.
     threshold_col1 = df1[threshold_col_name]

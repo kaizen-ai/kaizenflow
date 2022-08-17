@@ -1,5 +1,5 @@
 INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt --show-stacktrace'
-## pytest_repro:
+## pytest_repro: 
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Found 3 failed pytest 'tests' target(s); to reproduce run:
@@ -23,7 +23,7 @@ RuntimeError:
 --------------------------------------------------------------------------------
 ACTUAL vs EXPECTED: TestDryRunTasks1.test_git_clean
 --------------------------------------------------------------------------------
-
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4541928Z
 report_memory_usage=False report_cpu_usage=False                          (
 ## git_clean: dry_run=False                                               (
                                                                           >  git clean -fd >/dev/null 2>&1
@@ -59,7 +59,7 @@ RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: Test_Example1_ForecastSystem_FitPredict.test_fit_over_backtest_period1
 --------------------------------------------------------------------------------
-
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4649436Z
 system_config                                                             (
 dag_config:                                                               (
 filter_ath:                                                               (
@@ -235,7 +235,7 @@ RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: Test_Example1_ForecastSystem_FitPredict.test_fit_over_period1
 --------------------------------------------------------------------------------
-
+Run_fast_tests	Run fast tests	2022-07-10T12:40:40.4748547Z
 system_config                                                             (
 dag_config:                                                               (
 filter_ath:                                                               (

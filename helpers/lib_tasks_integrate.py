@@ -88,6 +88,11 @@ _LOG = logging.getLogger(__name__)
 #   # Remove end-of-file.
 #   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
 #   ```
+# - Remove trailing spaces
+#   ```
+#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
+#   ```
+#
 
 # ## Integration
 #
@@ -309,8 +314,9 @@ def integrate_diff_dirs(  # type: ignore
     :param use_linux_diff: use Linux `diff` instead of `diff_to_vimdiff.py`
     :param remove_usual: remove the usual mismatching files (e.g., `.github`)
     :param run_diff_script: run the diff script
-    :param dry_run:
+    :param dry_run: do not execute the commands
     """
+    _ = ctx
     hlitauti._report_task()
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
@@ -351,18 +357,23 @@ def integrate_diff_dirs(  # type: ignore
         if use_linux_diff:
             cmd = f"diff -r --brief {abs_src_dir} {abs_dst_dir}"
         else:
-            cmd = f"dev_scripts/diff_to_vimdiff.py --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
+            cmd = "dev_scripts/diff_to_vimdiff.py"
+            if run_diff_script:
+                cmd += " --run_diff_script"
+            else:
+                cmd += " --no_run_diff_script"
+                _LOG.warning("Skipping running diff script")
+            cmd += f" --dir1 {abs_src_dir} --dir2 {abs_dst_dir}"
             if remove_usual:
                 vals = [
                     r"\/\.github\/",
                 ]
                 regex = "|".join(vals)
                 cmd += f" --ignore_files='{regex}'"
-    hlitauti._run(ctx, cmd, dry_run=dry_run, print_cmd=True)
-    if dry_run:
-        return
-    # Start the script automatically.
-    os.system("./tmp.diff_to_vimdiff.sh")
+    # We need to use `system` to get vimdiff to connect to stdin and stdout.
+    if not dry_run:
+        #hlitauti._run(ctx, cmd, dry_run=dry_run, print_cmd=True)
+        os.system(cmd)
 
 
 # //////////////////////////////////////////////////////////////////////////////

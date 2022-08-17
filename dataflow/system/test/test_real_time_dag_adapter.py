@@ -15,7 +15,7 @@ _LOG = logging.getLogger(__name__)
 
 class Test_adapt_dag_to_real_time1(hunitest.TestCase):
 
-    # TODO(gp): Add a test for Example1 and factor out the code below.
+    # TODO(gp): Add a test for Mock1 and factor out the code below.
 
     def testMvnReturnsBuilder1(self) -> None:
         """
@@ -55,15 +55,17 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         }
         #
         root_log_dir = None
-        process_forecasts_dict = dtfsysinod.get_process_forecasts_dict_example1(
-            portfolio,
-            volatility_col,
-            prediction_col,
-            spread_col,
-            order_duration_in_mins,
-            style,
-            compute_target_positions_kwargs,
-            root_log_dir,
+        process_forecasts_node_dict = (
+            dtfsysinod.get_ProcessForecastsNode_dict_example1(
+                portfolio,
+                volatility_col,
+                prediction_col,
+                spread_col,
+                order_duration_in_mins,
+                style,
+                compute_target_positions_kwargs,
+                root_log_dir,
+            )
         )
         ts_col_name = "end_datetime"
         # Adapt DAG to real-time.
@@ -71,7 +73,7 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
             dag,
             market_data,
             market_data_history_lookback,
-            process_forecasts_dict,
+            process_forecasts_node_dict,
             ts_col_name,
         )
         # Print the final DAG.
