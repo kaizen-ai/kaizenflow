@@ -103,7 +103,7 @@ class Mock1_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
     Create a System with:
 
     - a ReplayedMarketData
-    - a Mock1 DAG
+    - a timed Mock1 DAG
     - a RealTimeDagRunner
     """
 
@@ -140,7 +140,7 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
     Build a system with:
 
     - a ReplayedTimeMarketData
-    - a time Mock1 DAG
+    - a timed Mock1 DAG
     - a DataFramePortfolio
     """
 
@@ -221,7 +221,7 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     A System with:
 
     - a `ReplayedMarketData`
-    - a `Mock1` DAG
+    - a timed `Mock1` DAG
     - a `DatabasePortfolio` (which includes a `DatabaseBroker`)
     - an `OrderProcessor`
     """
