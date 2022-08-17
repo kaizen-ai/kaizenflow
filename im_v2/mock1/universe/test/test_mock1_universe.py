@@ -35,7 +35,7 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         self._test_get_vendor_universe_small(vendor, "binance", "ADA_USDT")
 
     def test_get_vendor_universe_as_full_symbol(self) -> None:
-        vendor = "mock1cd amp"
+        vendor = "mock1"
         universe_as_full_symbols = [
             "binance::ADA_USDT",
             "gateio::XRP_USDT",
