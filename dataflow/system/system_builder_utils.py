@@ -249,7 +249,7 @@ def apply_dag_runner_config_for_crypto(
     #
     trading_period_str = dag_builder.get_trading_period(dag_config)
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
-    sleep_interval_in_secs = int(pd.Timedelta(trading_period_str).total_seconds())
+    sleep_interval_in_secs = pd.Timedelta(trading_period_str).seconds
     if wake_up_timestamp:
         wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
     real_time_config = {
