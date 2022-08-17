@@ -164,7 +164,7 @@ class System(abc.ABC):
         self._config["system_class"] = self.__class__.__name__
         _LOG.debug("system_config=\n%s", self._config)
         # Default log dir.
-        self._config["log_dir"] = "./system_log_dir"
+        self._config["system_log_dir"] = "./system_log_dir"
 
     # TODO(gp): Improve str if needed.
     def __str__(self) -> str:
