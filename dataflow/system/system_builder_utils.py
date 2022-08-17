@@ -577,8 +577,8 @@ def apply_dag_runner_config_for_crypto(
     """
     Update dag runner config for crypto.
 
-    Since crypto market is open 24/7 the system can be started at any time
-    and run an infinite amount of time.
+    Since crypto market is open 24/7 the system can be started at any
+    time and run an infinite amount of time.
     """
     (
         trading_period_str,
@@ -604,8 +604,9 @@ def apply_dag_runner_config_for_equities(
     """
     Update dag runner config for equities.
 
-    For equities `wake_up_timestamp` and `real_time_loop_time_out_in_secs` are
-    with the start and end of a trading day for equties market.
+    For equities `wake_up_timestamp` and
+    `real_time_loop_time_out_in_secs` are with the start and end of a
+    trading day for equties market.
     """
     (
         trading_period_str,
@@ -642,10 +643,12 @@ def apply_dag_runner_config_for_equities(
     wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
     # Get minutes for a time at which the real time loop should be terminated.
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
-    # before the market closes, i.e. at 15:58. 
+    # before the market closes, i.e. at 15:58.
     real_time_loop_time_out_minutes = 60 - (sleep_interval_in_secs / 60)
     # TODO(gp): Horrible confusing name.
-    real_time_loop_time_out_in_secs = datetime.time(15, real_time_loop_time_out_minutes)
+    real_time_loop_time_out_in_secs = datetime.time(
+        15, real_time_loop_time_out_minutes
+    )
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
