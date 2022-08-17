@@ -39,8 +39,19 @@ _LOG = logging.getLogger(__name__)
 # - `build_..._from_System(system)`
 #   - Build objects using parameters from System Config
 
+
+# Maintain the functions ordered to resemble the dependency / construction order
+# in a System:
+# - System config
+# - MarketData
+# - DAG
+# - Portfolio
+# - Order processor
+# - DAG Runner
+
+
 # #############################################################################
-# System config utils
+# System config
 # #############################################################################
 
 
@@ -84,7 +95,12 @@ def apply_backtest_config(
     return system
 
 
-# TODO(gp): -> apply_MarketData_config
+# #############################################################################
+# MarketData
+# #############################################################################
+
+
+# TODO(gp): @all -> apply_MarketData_config
 def apply_market_data_config(
     system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
@@ -115,9 +131,22 @@ def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
     return im_client
 
 
-# #############################################################################
-# Market data utils
-# #############################################################################
+def apply_history_lookback(
+        system: dtfsyssyst.System,
+        *,
+        days: Optional[int] = None,
+) -> dtfsyssyst.System:
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    if days is None:
+        days = (
+                dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+        )
+    market_data_history_lookback = pd.Timedelta(days=days)
+    system.config[
+        "market_data_config", "history_lookback"
+    ] = market_data_history_lookback
+    return system
 
 
 # TODO(gp): -> build_EventLoop_MarketData_from_df
@@ -144,7 +173,7 @@ def get_EventLoop_MarketData_from_df(
 
 
 # #############################################################################
-# DAG building utils
+# DAG
 # #############################################################################
 
 
@@ -202,11 +231,6 @@ def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
     return dag
 
 
-# #############################################################################
-# SystemConfig
-# #############################################################################
-
-
 def apply_dag_runner_config(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
@@ -224,6 +248,9 @@ def apply_dag_runner_config(
     wake_up_timestamp = system.market_data.get_wall_clock_time()
     _LOG.info("Current time=%s", wake_up_timestamp)
     wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
+    # TODO(Grisha): For crypto we should set `wake_up_timestamp` to None,
+    # same for `real_time_loop_time_out_in_secs` unless they are specified
+    # via the cmd line parameters.
     if trading_period_str == "1T":
         # Run every 1 min.
         wake_up_timestamp = wake_up_timestamp.replace(
@@ -279,28 +306,11 @@ def apply_dag_runner_config(
     system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
         real_time_config
     )
+    # TODO(Grisha): we should reuse `apply_history_lookback`.
     # Apply history_lookback.
     market_data_history_lookback = pd.Timedelta(
         days=dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
     )
-    system.config[
-        "market_data_config", "history_lookback"
-    ] = market_data_history_lookback
-    return system
-
-
-def apply_history_lookback(
-    system: dtfsyssyst.System,
-    *,
-    days: Optional[int] = None,
-) -> dtfsyssyst.System:
-    dag_builder = system.config["dag_builder_object"]
-    dag_config = system.config["dag_config"]
-    if days is None:
-        days = (
-            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
-        )
-    market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
         "market_data_config", "history_lookback"
     ] = market_data_history_lookback
@@ -437,95 +447,50 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     )
 
 
-# #############################################################################
-# DAG runner instances.
-# #############################################################################
-
-
-# TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
-# TODO(gp): This seems less general than the one below.
-def get_realtime_DagRunner_from_system(
+def apply_process_forecasts_config_for_equities(
     system: dtfsyssyst.System,
-) -> dtfsrtdaru.RealTimeDagRunner:
+) -> dtfsyssyst.System:
     """
-    Build a real-time DAG runner.
+    Set the trading hours for equities.
+
+    Equities market is open only during certain hours.
     """
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    dag = system.dag
-    # TODO(gp): This should come from the config.
-    sleep_interval_in_secs = 5 * 60
-    # Set up the event loop.
-    get_wall_clock_time = system.market_data.get_wall_clock_time
-    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
-        "real_time_loop_time_out_in_secs"
-    ]
-    execute_rt_loop_kwargs = {
-        "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
-        "time_out_in_secs": real_time_loop_time_out_in_secs,
+    dict_ = {
+        "ath_start_time": datetime.time(9, 30),
+        "trading_start_time": datetime.time(9, 30),
+        "ath_end_time": datetime.time(16, 40),
+        "trading_end_time": datetime.time(16, 40),
     }
-    dag_runner_kwargs = {
-        "dag": dag,
-        "fit_state": None,
-        "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
-        "dst_dir": None,
-    }
-    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
-    return dag_runner
+    config = cconfig.get_config_from_nested_dict(dict_)
+    system.config["process_forecasts_config", "process_forecasts_config"].update(
+        config
+    )
+    return system
 
 
-def get_RealTimeDagRunner_from_System(
+def apply_process_forecasts_config_for_crypto(
     system: dtfsyssyst.System,
-) -> dtfsrtdaru.RealTimeDagRunner:
+) -> dtfsyssyst.System:
     """
-    Build a real-time DAG runner from a system config.
+    Set the trading hours for crypto.
 
-    This is independent from the type of System.
+    For crypto we do not filter since crypto market is open 24/7.
     """
-    # We need to make sure the DAG was built here before moving on.
-    hdbg.dassert_isinstance(system, dtfsyssyst.System)
-    dag = system.dag
-    market_data = system.market_data
-    hdbg.dassert_isinstance(market_data, mdata.MarketData)
-    fit_at_beginning = system.config.get(
-        ("dag_runner_config", "fit_at_beginning"), False
-    )
-    get_wall_clock_time = market_data.get_wall_clock_time
-    # TODO(gp): This should become a builder method injecting values inside the
-    #  config.
-    _LOG.debug("system.config=\n%s", str(system.config))
-    wake_up_timestamp = system.config.get(
-        ("dag_runner_config", "wake_up_timestamp"), None
-    )
-    grid_time_in_secs = system.config.get(
-        ("dag_runner_config", "sleep_interval_in_secs"), None
-    )
-    execute_rt_loop_config = {
-        "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": system.config[
-            "dag_runner_config", "sleep_interval_in_secs"
-        ],
-        "time_out_in_secs": system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
-        ],
+    dict_ = {
+        "ath_start_time": None,
+        "trading_start_time": None,
+        "ath_end_time": None,
+        "trading_end_time": None,
     }
-    dag_runner_kwargs = {
-        "dag": dag,
-        "fit_state": None,
-        "execute_rt_loop_kwargs": execute_rt_loop_config,
-        "dst_dir": None,
-        "fit_at_beginning": fit_at_beginning,
-        "get_wall_clock_time": get_wall_clock_time,
-        "wake_up_timestamp": wake_up_timestamp,
-        "grid_time_in_secs": grid_time_in_secs,
-    }
-    # _LOG.debug("system=\n%s", str(system.config))
-    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
-    return dag_runner
+    config = cconfig.get_config_from_nested_dict(dict_)
+    system.config["process_forecasts_config", "process_forecasts_config"].update(
+        config
+    )
+    return system
 
 
 # #############################################################################
-# Portfolio instances.
+# Portfolio
 # #############################################################################
 
 
@@ -604,7 +569,7 @@ def apply_Portfolio_config(
 
 
 # #############################################################################
-# OrderProcessor instances.
+# OrderProcessor
 # #############################################################################
 
 
@@ -629,3 +594,92 @@ def get_OrderProcessorCoroutine_from_System(
     )
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
     return order_processor_coroutine
+
+
+# #############################################################################
+# DAG runner
+# #############################################################################
+
+
+# TODO(gp): @all -> get_RealtimeDagRunner or get_RealtimeDagRunner_from_system?
+# TODO(gp): This seems less general than the one below.
+def get_realtime_DagRunner_from_system(
+        system: dtfsyssyst.System,
+) -> dtfsrtdaru.RealTimeDagRunner:
+    """
+    Build a real-time DAG runner.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    dag = system.dag
+    # TODO(gp): This should come from the config.
+    sleep_interval_in_secs = 5 * 60
+    # Set up the event loop.
+    get_wall_clock_time = system.market_data.get_wall_clock_time
+    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
+        "real_time_loop_time_out_in_secs"
+    ]
+    execute_rt_loop_kwargs = {
+        "get_wall_clock_time": get_wall_clock_time,
+        "sleep_interval_in_secs": sleep_interval_in_secs,
+        "time_out_in_secs": real_time_loop_time_out_in_secs,
+    }
+    dag_runner_kwargs = {
+        "dag": dag,
+        "fit_state": None,
+        "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
+        "dst_dir": None,
+    }
+    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
+    return dag_runner
+
+
+def get_RealTimeDagRunner_from_System(
+        system: dtfsyssyst.System,
+) -> dtfsrtdaru.RealTimeDagRunner:
+    """
+    Build a real-time DAG runner from a system config.
+
+    This is independent from the type of System.
+    """
+    # We need to make sure the DAG was built here before moving on.
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    dag = system.dag
+    market_data = system.market_data
+    hdbg.dassert_isinstance(market_data, mdata.MarketData)
+    fit_at_beginning = system.config.get(
+        ("dag_runner_config", "fit_at_beginning"), False
+    )
+    get_wall_clock_time = market_data.get_wall_clock_time
+    # TODO(gp): This should become a builder method injecting values inside the
+    #  config.
+    _LOG.debug("system.config=\n%s", str(system.config))
+    wake_up_timestamp = system.config.get(
+        ("dag_runner_config", "wake_up_timestamp"), None
+    )
+    grid_time_in_secs = system.config.get(
+        ("dag_runner_config", "sleep_interval_in_secs"), None
+    )
+    execute_rt_loop_config = {
+        "get_wall_clock_time": get_wall_clock_time,
+        "sleep_interval_in_secs": system.config[
+            "dag_runner_config", "sleep_interval_in_secs"
+        ],
+        "time_out_in_secs": system.config[
+            "dag_runner_config", "real_time_loop_time_out_in_secs"
+        ],
+    }
+    dag_runner_kwargs = {
+        "dag": dag,
+        "fit_state": None,
+        "execute_rt_loop_kwargs": execute_rt_loop_config,
+        "dst_dir": None,
+        "fit_at_beginning": fit_at_beginning,
+        "get_wall_clock_time": get_wall_clock_time,
+        "wake_up_timestamp": wake_up_timestamp,
+        "grid_time_in_secs": grid_time_in_secs,
+    }
+    # _LOG.debug("system=\n%s", str(system.config))
+    dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
+    return dag_runner
+
+
