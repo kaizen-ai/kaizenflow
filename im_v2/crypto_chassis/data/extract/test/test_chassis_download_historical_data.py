@@ -9,10 +9,6 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.crypto_chassis.data.extract.download_historical_data as imvccdedhd
 
 
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
 class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_parser(self) -> None:
         """
@@ -81,13 +77,10 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         # Check call.
         self.assertEqual(len(mock_download_historical.call_args), 2)
         actual_args = mock_download_historical.call_args.args
-        #self.assertEqual(
-        #    mock_download_historical.call_args.args[1]._vendor, "crypto_chassis"
-        #)
         self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "s"}})
-        # Verify that `CcxtExtractor` instance is passed.
+        # Verify that `CryptoChassisExtractor` instance is passed.
         self.assertEqual(actual_args[1]._extract_mock_name(), "CryptoChassisExtractor()")
-        # Verify that `CcxtExtractor` instance creation is properly called.
+        # Verify that `CryptoChassisExtractor` instance creation is properly called.
         self.assertEqual(chassis_extractor_mock.call_count, 1)
         actual_args = tuple(chassis_extractor_mock.call_args)
         expected_args = (("spot",), {})
