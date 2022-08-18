@@ -186,7 +186,7 @@ def compute_transaction_cost(
     between.
 
     Collected statistics for a given trading period:
-    
+
     - Stats from `compute_execution()`
     - close_price_holding_period: close price at the end of holding period
     - trade_pnl_per_share: difference between start and close price (holding period)

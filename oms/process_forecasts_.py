@@ -19,6 +19,7 @@ import core.finance as cofinanc
 import core.key_sorted_ordered_dict as cksoordi
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
+import helpers.hdict as hdict
 import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -31,13 +32,20 @@ import oms.portfolio as omportfo
 _LOG = logging.getLogger(__name__)
 
 
+# `ProcessForecastsNode`
+# - Adapts `process_forecasts()` to a DataFlow node
+# `process_forecasts()`
+# - Contains the loop processing the predictions
+# - Instantiates `ForecastProcessor` to do the actual work every bar
+
+
 async def process_forecasts(
     prediction_df: pd.DataFrame,
     volatility_df: pd.DataFrame,
     portfolio: omportfo.Portfolio,
-    # TODO(gp): It should be a dict.
-    # TODO(gp): Remove the two nested process_forecasts_config in the config.
-    config: cconfig.Config,
+    # TODO(gp): It should be a dict -> config_dict, process_forecasts_dict. Do
+    #  we need to use a bit of stuttering to make the name unique in the config?
+    config: Dict[str, Any],
     # TODO(gp): Should we keep all the dfs close together in the interface?
     # TODO(gp): Add a *
     spread_df: Optional[pd.DataFrame],
@@ -101,36 +109,37 @@ async def process_forecasts(
     hpandas.dassert_axes_equal(prediction_df, spread_df)
     # Check `portfolio`.
     hdbg.dassert_isinstance(portfolio, omportfo.Portfolio)
-    hdbg.dassert_isinstance(config, cconfig.Config)
-    # hdbg.dassert_isinstance(config, dict)
+    hdbg.dassert_isinstance(config, dict)
     # Check `restrictions`.
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
     # Create an `order_config` from `config` elements.
-    # TODO(gp): If config is a dict then we need to change get_object_from_config.
-    #  We can have a similar function in hdict or hpython.
-    order_config = cconfig.get_object_from_config(
-        config, "order_config", cconfig.Config, None
-    )
+    order_config = hdict.typed_get(config, "order_config", None, dict)
     _validate_order_config(order_config)
-    #
-    optimizer_config = cconfig.get_object_from_config(
-        config, "optimizer_config", cconfig.Config, None
+    # TODO(gp): Consider forcing to have everything specified, instead of using
+    #  None defaults.
+    optimizer_config = hdict.typed_get(
+        config, "optimizer_config", None, dict
     )
     _validate_optimizer_config(optimizer_config)
     # Extract ATH and trading start times from config.
-    ath_start_time = config.get("ath_start_time")
-    trading_start_time = config.get("trading_start_time")
-    ath_end_time = config.get("ath_end_time")
-    trading_end_time = config.get("trading_end_time")
+    ath_start_time = hdict.typed_get(
+        config, "ath_start_time", None, datetime.time
+    )
+    trading_start_time = hdict.typed_get(
+        config, "trading_start_time", None, datetime.time
+    )
+    # Extract end times.
+    ath_end_time = hdict.typed_get(config, "ath_end_time", None, datetime.time)
+    trading_end_time = hdict.typed_get(
+        config, "trading_end_time", None, datetime.time
+    )
     # Sanity check trading time.
     _validate_trading_time(
         ath_start_time, ath_end_time, trading_start_time, trading_end_time
     )
     # Get execution mode ("real_time" or "batch").
-    execution_mode = cconfig.get_object_from_config(
-        config, "execution_mode", str, None
-    )
+    execution_mode = hdict.typed_get(config, "execution_mode", None, str)
     if execution_mode == "real_time":
         prediction_df = prediction_df.tail(1)
     elif execution_mode == "batch":
@@ -316,7 +325,7 @@ def _skip_bar(
 # #############################################################################
 
 
-# process_forecasts_config
+# TODO(gp): -> _ForecastProcessor
 class ForecastProcessor:
     """
     Take forecasts for the most recent bar and submit orders.
@@ -330,8 +339,9 @@ class ForecastProcessor:
     def __init__(
         self,
         portfolio: omportfo.Portfolio,
-        # TODO(gp): dict?
+        # TODO(gp): -> order_dict?
         order_config: cconfig.Config,
+        # TODO(gp): -> optimizer_dict
         optimizer_config: cconfig.Config,
         # TODO(gp): -> restrictions_df like the process_forecast
         restrictions: Optional[pd.DataFrame],
@@ -339,13 +349,13 @@ class ForecastProcessor:
         log_dir: Optional[str] = None,
     ) -> None:
         """
+        Build the object.
 
-        :param order_config: config for the
-            - E.g.,
-              ```
-              order_type: price@twap
-              order_duration_in_mins: 5
-              ```
+        :param order_config: config for placing the orders, e.g.,
+            ```
+            order_type: price@twap
+            order_duration_in_mins: 5
+            ```
         :param optimizer_config: config for the optimizer, e.g.,
             ```
             backend: pomo
@@ -361,14 +371,10 @@ class ForecastProcessor:
                 - `orders`
                 - `portfolio`
                 - `target_positions`
-            - Saved by `ForecastEvaluatorFromPrices` (not instantiated by this
-                object anymore)
-                - evaluate_forecasts
         """
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
         # Process order config.
-        # TODO(Paul): process config with checks.
         _validate_order_config(order_config)
         self._order_config = order_config
         self._offset_min = pd.DateOffset(
@@ -380,7 +386,7 @@ class ForecastProcessor:
         #
         self._restrictions = restrictions
         self._log_dir = log_dir
-        #
+        # Store the target positions.
         self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
         self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
 
@@ -389,17 +395,21 @@ class ForecastProcessor:
         Return the most recent state of the ForecastProcessor as a string.
         """
         act = []
+        act.append("# last target positions=")
         if self._target_positions:
             _, target_positions = self._target_positions.peek()
             target_positions_str = hpandas.df_to_str(target_positions)
         else:
             target_positions_str = "None"
-        act.append("# last target positions=\n%s" % target_positions_str)
+        act.append(target_positions_str)
+        #
+        act.append("# last orders=")
         if self._orders:
             _, orders_str = self._orders.peek()
         else:
             orders_str = "None"
-        act.append("# last orders=\n%s" % orders_str)
+        act.append(orders_str)
+        #
         act = "\n".join(act)
         return act
 
@@ -415,15 +425,9 @@ class ForecastProcessor:
         :return a dataframe indexed by datetimes and with two column levels
         """
         name = "target_positions"
-        dir_name = os.path.join(log_dir, name)
-        pattern = "*"
-        only_files = True
-        use_relative_paths = True
-        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
-        files.sort()
+        files = ForecastProcessor._get_files(log_dir, name)
         dfs = []
-        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
-            path = os.path.join(dir_name, file_name)
+        for path in tqdm(files, desc=f"Loading `{name}` files..."):
             df = pd.read_csv(
                 path, index_col=0, parse_dates=["wall_clock_timestamp"]
             )
@@ -431,7 +435,7 @@ class ForecastProcessor:
             df = df.reset_index().set_index("wall_clock_timestamp")
             hpandas.dassert_series_type_is(df["asset_id"], np.int64)
             if not isinstance(df.index, pd.DatetimeIndex):
-                _LOG.info("Skipping file_name=%s", file_name)
+                _LOG.info("Skipping file_name=%s", path)
                 continue
             df.index = df.index.tz_convert(tz)
             # Pivot to multiple column levels.
@@ -451,15 +455,9 @@ class ForecastProcessor:
         logged target positions.
         """
         name = "orders"
-        dir_name = os.path.join(log_dir, name)
-        pattern = "*"
-        only_files = True
-        use_relative_paths = True
-        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
-        files.sort()
+        files = ForecastProcessor._get_files(log_dir, name)
         dfs = []
-        for file_name in tqdm(files, desc=f"Loading `{name}` files..."):
-            path = os.path.join(dir_name, file_name)
+        for path in tqdm(files, desc=f"Loading `{name}` files..."):
             lines = hio.from_file(path)
             lines = lines.split("\n")
             for line in lines:
@@ -539,7 +537,7 @@ class ForecastProcessor:
             "start_timestamp": timestamp_start,
             "end_timestamp": timestamp_end,
         }
-        order_config = cconfig.get_config_from_nested_dict(order_dict_)
+        order_config = cconfig.Config.from_dict(order_dict_)
         orders = self._generate_orders(
             target_positions[["curr_num_shares", "diff_num_shares"]], order_config
         )
@@ -566,6 +564,19 @@ class ForecastProcessor:
         if self._log_dir:
             self.log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+
+    @staticmethod
+    def _get_files(log_dir: str, name: str) -> List[str]:
+        # Find all files in the requested dir.
+        dir_name = os.path.join(log_dir, name)
+        pattern = "*"
+        only_files = True
+        use_relative_paths = True
+        files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
+        files.sort()
+        # Add enclosing dir.
+        files = [os.path.join(dir_name, file_name) for file_name in files]
+        return files
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -890,27 +901,20 @@ class ForecastProcessor:
 
 
 def _validate_order_config(config: cconfig.Config) -> None:
-    hdbg.dassert_isinstance(config, cconfig.Config)
-    order_type_type = str
-    order_type = cconfig.get_object_from_config(
-        config, "order_type", order_type_type, None
+    hdbg.dassert_isinstance(config, dict)
+    _ = hdict.typed_get(
+        config, "order_type", None, str
     )
-    hdbg.dassert_isinstance(order_type, order_type_type)
-    order_duration_in_mins_type = int
-    order_duration_in_mins = cconfig.get_object_from_config(
-        config, "order_duration_in_mins", order_duration_in_mins_type, None
+    _ = hdict.typed_get(
+        config, "order_duration_in_mins", None, int
     )
-    # TODO(gp): is_subclass because it can be a float or int?
-    hdbg.dassert_issubclass(order_duration_in_mins, order_duration_in_mins_type)
 
 
 def _validate_optimizer_config(config: cconfig.Config) -> None:
-    hdbg.dassert_isinstance(config, cconfig.Config)
-    backend_type = str
-    backend = cconfig.get_object_from_config(
-        config, "backend", backend_type, None
+    hdbg.dassert_isinstance(config, dict)
+    backend = hdict.typed_get(
+        config, "backend", None, str
     )
-    hdbg.dassert_issubclass(backend, backend_type)
     # target_gmv_type = float
     # target_gmv = cconfig.get_object_from_config(
     #     config, "target_gmv", target_gmv_type, None

@@ -1,12 +1,9 @@
-from typing import Any
-
 import helpers.hasyncio as hasynci
 import helpers.hobject as hobject
 import helpers.hunit_test as hunitest
 import oms.oms_db as oomsdb
 import oms.portfolio_example as oporexam
 import oms.test.oms_db_helper as omtodh
-
 
 # #############################################################################
 # Test_Portfolio_builders1

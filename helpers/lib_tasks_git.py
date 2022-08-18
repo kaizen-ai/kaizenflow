@@ -614,16 +614,21 @@ def _git_diff_with_branch(
     dir_name: str,
     diff_type: str,
     subdir: str,
-    extensions: str,
+    keep_extensions: str,
+    skip_extensions: str,
     file_name: str,
     only_print_files: bool,
     dry_run: bool,
 ) -> None:
     """
     Diff files from this client against files in a branch using vimdiff.
+
+    Same parameters as `git_branch_diff_with_base`.
     """
     _LOG.debug(
-        hprint.to_str("hash_ tag dir_name diff_type subdir extensions dry_run")
+        hprint.to_str(
+            "hash_ tag dir_name diff_type subdir keep_extensions skip_extensions"
+            " file_name only_print_files dry_run")
     )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
@@ -656,13 +661,13 @@ def _git_diff_with_branch(
         files = files_tmp
         _LOG.info("After filtering by file_name: files=%s", len(files))
         _LOG.debug("%s", "\n".join(files))
-    # Filer by extension.
-    if extensions:
-        _LOG.debug("# Filter by extensions")
+    # Filter by keep_extension.
+    if keep_extensions:
+        _LOG.debug("# Filter by keep_extensions")
         _LOG.debug("Before filtering files=%s", len(files))
-        extensions_lst = extensions.split(",")
+        extensions_lst = keep_extensions.split(",")
         _LOG.warning(
-            "Requested filtering by %d extensions: %s",
+            "Keeping files with %d extensions: %s",
             len(extensions_lst),
             extensions_lst,
         )
@@ -671,10 +676,25 @@ def _git_diff_with_branch(
             if any(f.endswith(ext) for ext in extensions_lst):
                 files_tmp.append(f)
         files = files_tmp
-        _LOG.info(
-            "After filtering by extensions: files=%s\n%s",
-            (len(files), "\n".join(files)),
+        _LOG.info("After filtering by keep_extensions: files=%s", len(files))
+        _LOG.debug("%s", "\n".join(files))
+    # Filter by skip_extension.
+    if skip_extensions:
+        _LOG.debug("# Filter by skip_extensions")
+        _LOG.debug("Before filtering files=%s", len(files))
+        extensions_lst = skip_extensions.split(",")
+        _LOG.warning(
+            "Skipping files with %d extensions: %s",
+            len(extensions_lst),
+            extensions_lst,
         )
+        files_tmp = []
+        for f in files:
+            if not any(f.endswith(ext) for ext in extensions_lst):
+                files_tmp.append(f)
+        files = files_tmp
+        _LOG.info("After filtering by skip_extensions: files=%s", len(files))
+        _LOG.debug("%s", "\n".join(files))
     # Filter by subdir.
     if subdir != "":
         _LOG.debug("# Filter by subdir")
@@ -753,7 +773,8 @@ def git_branch_diff_with_base(  # type: ignore
     ctx,
     diff_type="",
     subdir="",
-    extensions="",
+    keep_extensions="",
+    skip_extensions="",
     file_name="",
     only_print_files=False,
     dry_run=False,
@@ -763,8 +784,10 @@ def git_branch_diff_with_base(  # type: ignore
 
     :param diff_type: files to diff using git `--diff-filter` options
     :param subdir: subdir to consider for diffing, instead of `.`
-    :param extensions: a comma-separated list of extensions to check, e.g.,
-        'csv,py'. An empty string means all the files
+    :param keep_extensions: a comma-separated list of extensions to check, e.g.,
+        'csv,py'. An empty string means keep all the extensions
+    :param skip_extensions: a comma-separated list of extensions to skip, e.g.,
+        'txt'. An empty string means do not skip any extension
     :param only_print_files: print files to diff and exit
     :param dry_run: execute diffing script or not
     """
@@ -779,7 +802,8 @@ def git_branch_diff_with_base(  # type: ignore
         dir_name,
         diff_type,
         subdir,
-        extensions,
+        keep_extensions,
+        skip_extensions,
         file_name,
         only_print_files,
         dry_run,
@@ -791,7 +815,8 @@ def git_branch_diff_with_master(  # type: ignore
     ctx,
     diff_type="",
     subdir="",
-    extensions="",
+    keep_extensions="",
+    skip_extensions="",
     file_name="",
     only_print_files=False,
     dry_run=False,
@@ -799,13 +824,7 @@ def git_branch_diff_with_master(  # type: ignore
     """
     Diff files of the current branch with origin/master.
 
-    :param diff_type: files to diff using git `--diff-filter` options
-    :param subdir: subdir to consider for diffing, instead of `.`
-    :param extensions: a comma-separated list of extensions to check, e.g.,
-        'csv,py'. An empty string means all the files
-    :param file_name: a specific file name to diff
-    :param only_print_files: print files to diff and exit
-    :param dry_run: execute diffing script or not
+    Same options as `git_branch_diff_with_base`.
     """
     dir_name = "."
     hash_ = "origin/master"
@@ -817,7 +836,8 @@ def git_branch_diff_with_master(  # type: ignore
         dir_name,
         diff_type,
         subdir,
-        extensions,
+        keep_extensions,
+        skip_extensions,
         file_name,
         only_print_files,
         dry_run,

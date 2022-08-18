@@ -98,7 +98,7 @@ def get_CrossSectionalLearning_config() -> cconconf.Config:
             "BTC_is_included": True,
         },
     }
-    config = ccocouti.get_config_from_nested_dict(param_dict)
+    config = cconfig.Config.from_dict(param_dict)
     return config
 
 

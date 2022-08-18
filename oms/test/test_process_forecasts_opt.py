@@ -22,7 +22,8 @@ _LOG = logging.getLogger(__name__)
 @pytest.mark.skip("CmTask #1580 Optimizer-related tests fail.")
 class TestDataFrameProcessForecasts1(hunitest.TestCase):
 
-    # TODO(gp): This can become an _example.
+    # TODO(gp): @all This can become an _example.
+    # TODO(gp): @all -> get_process_forecasts_dict
     @staticmethod
     def get_process_forecasts_config() -> cconfig.Config:
         dict_ = {
@@ -44,7 +45,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     @pytest.mark.skip("Generate manually files used by other tests")

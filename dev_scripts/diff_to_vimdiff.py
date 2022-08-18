@@ -271,6 +271,11 @@ def _parse_diff_output(
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
         #
+        # Start the script automatically.
+        if args.run_diff_script:
+            os.system(cmd)
+        else:
+            _LOG.warning("Skipping running script: %s", cmd)
         # cmd = "kill -kill $(ps -ef | grep %s | awk '{print $2 }')" % output_file
         # print("# To kill the script run:\n> " + cmd)
 
@@ -320,7 +325,12 @@ def _parse() -> argparse.ArgumentParser:
         help="Show only files that are not present in both trees",
     )
     parser.add_argument(
-        "--ignore_files", action="store", default=None, help="Regex to skip certain files"
+        "--ignore_files", action="store", default=None,
+        help="Regex to skip certain files"
+    )
+    hparser.add_bool_arg(
+        parser, "run_diff_script", default_value=True,
+        help_="Run the diffing script or not"
     )
     parser.add_argument(
         "--skip_comments", action="store_true", help="Do not show comments"

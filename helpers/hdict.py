@@ -8,6 +8,8 @@ import collections
 import logging
 from typing import Any, Dict, Generator, Iterable, Mapping, Optional, Tuple
 
+import helpers.hdbg as hdbg
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -50,3 +52,35 @@ def extract_leaf_values(nested: Dict[Any, Any], key: Any) -> Dict[Any, Any]:
         if k[-1] == key:
             d[k] = v
     return d
+
+
+def typed_get(
+    dict_: Dict,
+    key: Any,
+    default_value: Optional[Any] = "__impossible_value__",
+    expected_type: Optional[Any] = None,
+) -> Any:
+    """
+    Equivalent to `dict.get(key, default_val)` and check the type of the
+    output.
+
+    :param default_value: default value to return if key is not in `config`
+    :param expected_type: expected type of `value`
+    :return: config[key] if available, else `default_value`
+    """
+    try:
+        ret = dict_.__getitem__(key)
+    except KeyError as e:
+        # No key: use the default val if it was passed or asserts.
+        _LOG.debug("e=%s", e)
+        # We can't use None since None can be a valid default value, so we use
+        # another value.
+        if default_value != "__impossible_value__":
+            ret = default_value
+        else:
+            # No default value found, then raise.
+            raise e
+    if expected_type is not None:
+        if ret is not None:
+            hdbg.dassert_issubclass(ret, expected_type)
+    return ret

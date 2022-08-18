@@ -8,10 +8,11 @@ from typing import Any, Dict
 
 import pandas as pd
 
-import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ def adapt_dag_to_real_time(
     market_data: mdata.MarketData,
     # TODO(gp): This could become a market_data_dict
     market_data_history_lookback: pd.Timedelta,
-    process_forecasts_dict: Dict[str, Any],
+    process_forecasts_node_dict: Dict[str, Any],
     # TODO(gp): Move after market_data_history_lookback.
     ts_col_name: str,
 ):
@@ -37,6 +38,7 @@ def adapt_dag_to_real_time(
     `RealTimeDagAdapter`, but working on the `DAG` directly instead of a
     `DagBuilder`.
     """
+    hdbg.dassert_isinstance(process_forecasts_node_dict, dict)
     # Add the DataSource node.
     stage = "read_data"
     multiindex_output = True
@@ -52,12 +54,7 @@ def adapt_dag_to_real_time(
     dag.insert_at_head(node)
     # Create and append the ProcessForecast node.
     stage = "process_forecasts"
-    _LOG.debug("stage=%s", stage)
-    process_forecasts_dict = cconfig.get_config_from_nested_dict(
-        process_forecasts_dict
-    )
-    node = dtfsysinod.ProcessForecastsNode(
-        stage, **process_forecasts_dict.to_dict()
-    )
+    _LOG.debug(hprint.to_str("stage process_forecasts_node_dict"))
+    node = dtfsysinod.ProcessForecastsNode(stage, **process_forecasts_node_dict)
     dag.append_to_tail(node)
     return dag
