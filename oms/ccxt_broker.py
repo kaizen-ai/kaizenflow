@@ -591,7 +591,7 @@ class CcxtBroker(ombroker.Broker):
             # If order was submitted successfully append it to
             # the list of sent orders.
             if sent_order:
-                sent_orders.append(sent_orders)
+                sent_orders.append(sent_order)
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
         # TODO(Grisha): what should we use as `receipt` for CCXT? For equities IIUC
