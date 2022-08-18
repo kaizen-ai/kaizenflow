@@ -1,18 +1,18 @@
 # """
 # Import as:
-# 
+#
 # import oms_lime.ig_broker as oliegbro
 # """
-# 
+#
 # import collections
 # import datetime
 # import logging
 # import os
 # from typing import Any, Dict, List, Optional
-# 
+#
 # import numpy as np
 # import pandas as pd
-# 
+#
 # import helpers.hdbg as hdbg
 # import helpers.hio as hio
 # import helpers.hpandas as hpandas
@@ -20,24 +20,24 @@
 # import helpers.hsystem as hsystem
 # import oms
 # import vendors_lime.ig_credentials as vliegcre
-# 
+#
 # _LOG = logging.getLogger(__name__)
-# 
-# 
+#
+#
 # def _cast_to_int(obj: Any) -> int:
 #     as_int = int(obj)
 #     # hdbg.dassert_eq(obj, as_int)
 #     return as_int
-# 
-# 
+#
+#
 # class IgBroker(oms.DatabaseBroker):
 #     """
 #     IG implementation of the interface to place orders and receive back fills.
-# 
+#
 #     This implementation is the same as a broker using a mocked DB but
 #     using a real DB.
 #     """
-# 
+#
 #     def __init__(
 #         self,
 #         *args: Any,
@@ -50,7 +50,7 @@
 #     ):
 #         """
 #         Constructor.
-# 
+#
 #         :param strategy_id: e.g., SAU1
 #         """
 #         vliegcre.dassert_is_config_valid(liveness, instance_type)
@@ -79,19 +79,19 @@
 #             poll_kwargs=poll_kwargs,
 #             **kwargs,
 #         )
-# 
+#
 #     @property
 #     def liveness(self) -> str:
 #         return self._liveness
-# 
+#
 #     @property
 #     def instance_type(self) -> str:
 #         return self._instance_type
-# 
+#
 #     @property
 #     def db_connection(self) -> str:
 #         return self._db_connection
-# 
+#
 #     @staticmethod
 #     def _get_S3_tradelist_path(liveness: str, instance_type: str) -> str:
 #         vliegcre.dassert_is_config_valid(liveness, instance_type)
@@ -104,7 +104,7 @@
 #         # TODO(gp): We should also support listType=universeDropout (see pynudge
 #         #  Java code).
 #         return drop_id
-# 
+#
 #     async def _submit_orders(
 #         self,
 #         orders: List[oms.Order],
@@ -114,7 +114,7 @@
 #     ) -> str:
 #         """
 #         Same as abstract class.
-# 
+#
 #         :return: a `file_name` representing the id of the submitted order in the DB
 #         """
 #         _LOG.info("\n%s", hprint.frame("Sending order"))
@@ -170,7 +170,7 @@
 #             _LOG.info("Dry-run placing trades:\n%s", order_txt)
 #         # TODO(gp): Check the `changed_count`, `unchanged_count`,
 #         return s3_file_name
-# 
+#
 #     def _convert_order_to_df(
 #         self,
 #         curr_timestamp: pd.Timestamp,
@@ -268,7 +268,7 @@
 #         df = pd.DataFrame.from_dict(ig_order, orient="index").T
 #         _LOG.debug("order_df=\n%s", hpandas.df_to_str(df))
 #         return df
-# 
+#
 #     def _get_file_name(
 #         self,
 #         curr_timestamp: pd.Timestamp,
@@ -278,7 +278,7 @@
 #     ) -> str:
 #         """
 #         The file should look like:
-# 
+#
 #         s3://eglp-core-exch/files/spms/SAU1/cand/targets/YYYYMMDD000000/<filename>.csv
 #         """
 #         # The reference Java CF code looks like:
@@ -301,7 +301,7 @@
 #         file_name = os.path.join(dst_dir, date_dir, file_name)
 #         _LOG.debug("file_name=%s", file_name)
 #         return file_name
-# 
+#
 #     def _get_fills(
 #         self, as_of_timestamp: pd.Timestamp
 #     ) -> List[oms.Fill]:  # pylint: disable=no-self-use

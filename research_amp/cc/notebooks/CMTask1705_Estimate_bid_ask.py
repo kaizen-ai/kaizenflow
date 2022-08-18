@@ -172,7 +172,7 @@ for date in datelist:
     r = requests.get(
         f"https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?startTime={date}"
     )
-    data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")  
+    data = pd.read_csv(r.json()["urls"][0]["url"], compression="gzip")
     # Attaching it day-by-day to the final DataFrame.
     result.append(data)
 bid_ask_df = pd.concat(result)

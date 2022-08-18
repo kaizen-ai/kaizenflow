@@ -35,175 +35,6 @@ def _get_flat_config1() -> cconfig.Config:
     return config
 
 
-def _get_flat_config2() -> cconfig.Config:
-    """
-    Build a flat (i.e., non-nested) config, that looks like:
-        ```
-        nrows: 10000
-        nrows2: hello
-        ```
-    """
-    config = cconfig.Config()
-    config["nrows"] = 10000
-    config["nrows2"] = "hello"
-    #
-    _LOG.debug("config=\n%s", config)
-    return config
-
-
-def _get_nested_config1() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        nrows: 10000
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-        ```
-    """
-    config = cconfig.Config()
-    config["nrows"] = 10000
-    #
-    config.add_subconfig("read_data")
-    config["read_data"]["file_name"] = "foo_bar.txt"
-    config["read_data"]["nrows"] = 999
-    #
-    config["single_val"] = "hello"
-    #
-    config.add_subconfig("zscore")
-    config["zscore"]["style"] = "gaz"
-    config["zscore"]["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
-    return config
-
-
-def _get_nested_config2() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        nrows: 10000
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28
-        ```
-    """
-    config = cconfig.Config()
-    config["nrows"] = 10000
-    #
-    config_tmp = config.add_subconfig("read_data")
-    config_tmp["file_name"] = "foo_bar.txt"
-    config_tmp["nrows"] = 999
-    #
-    config["single_val"] = "hello"
-    #
-    config_tmp = config.add_subconfig("zscore")
-    config_tmp["style"] = "gaz"
-    config_tmp["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
-    return config
-
-
-def _get_nested_config3() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28
-        ```
-    """
-    config = cconfig.Config()
-    #
-    config_tmp = config.add_subconfig("read_data")
-    config_tmp["file_name"] = "foo_bar.txt"
-    config_tmp["nrows"] = 999
-    #
-    config["single_val"] = "hello"
-    #
-    config_tmp = config.add_subconfig("zscore")
-    config_tmp["style"] = "gaz"
-    config_tmp["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
-    return config
-
-
-def _get_nested_config4() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        write_data:
-          file_name: baz.txt
-          nrows: 999
-        single_val2: goodbye
-        zscore2:
-          style: gaz
-          com: 28
-        ```
-    """
-    config = cconfig.Config()
-    #
-    config_tmp = config.add_subconfig("write_data")
-    config_tmp["file_name"] = "baz.txt"
-    config_tmp["nrows"] = 999
-    #
-    config["single_val2"] = "goodbye"
-    #
-    config_tmp = config.add_subconfig("zscore2")
-    config_tmp["style"] = "gaz"
-    config_tmp["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
-    return config
-
-
-def _get_nested_config5() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        read_data:
-          file_name: baz.txt
-          nrows: 999
-        single_val: goodbye
-        zscore:
-          style: super
-        extra_zscore:
-          style: universal
-          tau: 32
-        ```
-    """
-    config = cconfig.Config()
-    #
-    config_tmp = config.add_subconfig("read_data")
-    config_tmp["file_name"] = "baz.txt"
-    config_tmp["nrows"] = 999
-    #
-    config["single_val"] = "goodbye"
-    #
-    config_tmp = config.add_subconfig("zscore")
-    config_tmp["style"] = "super"
-    #
-    config_tmp = config.add_subconfig("extra_zscore")
-    config_tmp["style"] = "universal"
-    config_tmp["tau"] = 32
-    #
-    _LOG.debug("config=\n%s", config)
-    return config
-
-
 # #############################################################################
 
 
@@ -284,20 +115,46 @@ class TestFlatConfigSet1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestFlatConfigGet1
+# Test_flat_config_get1
 # #############################################################################
 
 
-class TestFlatConfigGet1(hunitest.TestCase):
+def _get_flat_config2(self_: Any) -> cconfig.Config:
     """
-    Test `__getitem__()` to `get()`.
+    Build a flat (i.e., non-nested) config, that looks like:
+        ```
+        nrows: 10000
+        nrows2: hello
+        ```
+    """
+    config = cconfig.Config()
+    config["nrows"] = 10000
+    config["nrows2"] = "hello"
+    #
+    _LOG.debug("config=\n%s", config)
+    exp = r"""
+    nrows: 10000
+    nrows2: hello
+    """
+    self_.assert_equal(str(config), exp, fuzzy_match=True)
+    return config
+
+
+class Test_flat_config_get1(hunitest.TestCase):
+    """
+    Test `__getitem__()` and `get()`.
     """
 
     def test_existing_key1(self) -> None:
         """
         Look up an existing key.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
+        exp = r"""
+        nrows: 10000
+        nrows2: hello
+        """
+        self.assert_equal(str(config), exp, fuzzy_match=True)
         #
         self.assertEqual(config["nrows"], 10000)
 
@@ -305,16 +162,18 @@ class TestFlatConfigGet1(hunitest.TestCase):
         """
         Look up a key that exists and thus ignore the default value.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         self.assertEqual(config.get("nrows", None), 10000)
         self.assertEqual(config.get("nrows", "hello"), 10000)
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def test_non_existing_key1(self) -> None:
         """
         Look up a non-existent key, passing a default value.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         self.assertEqual(config.get("nrows_tmp", None), None)
         self.assertEqual(config.get("nrows_tmp", "hello"), "hello")
@@ -324,7 +183,7 @@ class TestFlatConfigGet1(hunitest.TestCase):
         """
         Look up a non-existent key, not passing a default value.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         with self.assertRaises(KeyError) as cm:
             config.get("nrows_tmp")
@@ -336,7 +195,7 @@ class TestFlatConfigGet1(hunitest.TestCase):
         """
         Look up a non-existent multiple key, not passing a default value.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         with self.assertRaises(KeyError) as cm:
             config.get(("nrows2", "nrows_tmp"))
@@ -348,7 +207,7 @@ class TestFlatConfigGet1(hunitest.TestCase):
         """
         Look up a non-existent multiple key, not passing a default value.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         with self.assertRaises(KeyError) as cm:
             config.get(("nrows2", "hello"))
@@ -356,18 +215,65 @@ class TestFlatConfigGet1(hunitest.TestCase):
         exp = r'''"tail_key='('hello',)' not in 'hello'"'''
         self.assert_equal(act, exp)
 
+    # /////////////////////////////////////////////////////////////////////////////
+
+    def test_existing_key_with_type1(self) -> None:
+        """
+        nrows exists, so the default value is not used.
+        """
+        config = _get_flat_config2(self)
+        self.assertEqual(config.get("nrows", None, int), 10000)
+        self.assertEqual(config.get("nrows", "hello", int), 10000)
+
+    def test_existing_key_with_type2(self) -> None:
+        """
+        nrows3 is missing so the default value is used.
+        """
+        config = _get_flat_config2(self)
+        self.assertEqual(config.get("nrows3", 5, int), 5)
+        self.assertEqual(config.get("nrows3", "hello", str), "hello")
+
+    def test_existing_key_with_type3(self) -> None:
+        """
+        nrows exists, so the default value is not used but the type is checked.
+        """
+        config = _get_flat_config2(self)
+        with self.assertRaises(AssertionError) as cm:
+            self.assertEqual(config.get("nrows", None, str), 10000)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Instance '10000' of class 'int' is not a subclass of '<class 'str'>'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
+    def test_non_existing_key_with_type1(self) -> None:
+        """
+        nrows exists (so the default value is not used) but it's int and not
+        str.
+        """
+        config = _get_flat_config2(self)
+        with self.assertRaises(AssertionError) as cm:
+            self.assertEqual(config.get("nrows", "hello", str), 10000)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        Instance '10000' of class 'int' is not a subclass of '<class 'str'>'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
 
 # #############################################################################
-# TestFlatConfigIn1
+# Test_flat_config_in1
 # #############################################################################
 
 
-class TestFlatConfigIn1(hunitest.TestCase):
+class Test_flat_config_in1(hunitest.TestCase):
     def test_in1(self) -> None:
         """
         Test in operator.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         self.assertTrue("nrows" in config)
         self.assertTrue("nrows2" in config)
@@ -376,7 +282,7 @@ class TestFlatConfigIn1(hunitest.TestCase):
         """
         Test not in operator.
         """
-        config = _get_flat_config2()
+        config = _get_flat_config2(self)
         #
         self.assertTrue("nrows3" not in config)
         self.assertFalse("nrows3" in config)
@@ -390,15 +296,10 @@ class TestFlatConfigIn1(hunitest.TestCase):
 # #############################################################################
 
 
-class TestNestedConfigGet1(hunitest.TestCase):
-    def test_existing_key1(self) -> None:
-        """
-        Check that a key exists.
-        """
-        config = _get_nested_config1()
-        #
-        act = str(config)
-        exp = r"""
+def _get_nested_config1(self_: Any) -> cconfig.Config:
+    """
+    Build a nested config, that looks like:
+        ```
         nrows: 10000
         read_data:
           file_name: foo_bar.txt
@@ -406,9 +307,42 @@ class TestNestedConfigGet1(hunitest.TestCase):
         single_val: hello
         zscore:
           style: gaz
-          com: 28
-        """.lstrip().rstrip()
-        self.assert_equal(act, exp, fuzzy_match=True)
+        ```
+    """
+    config = cconfig.Config()
+    config["nrows"] = 10000
+    #
+    config.add_subconfig("read_data")
+    config["read_data"]["file_name"] = "foo_bar.txt"
+    config["read_data"]["nrows"] = 999
+    #
+    config["single_val"] = "hello"
+    #
+    config.add_subconfig("zscore")
+    config["zscore"]["style"] = "gaz"
+    config["zscore"]["com"] = 28
+    #
+    _LOG.debug("config=\n%s", config)
+    exp = r"""
+    nrows: 10000
+    read_data:
+      file_name: foo_bar.txt
+      nrows: 999
+    single_val: hello
+    zscore:
+      style: gaz
+      com: 28
+    """
+    self_.assert_equal(str(config), exp, fuzzy_match=True)
+    return config
+
+
+class TestNestedConfigGet1(hunitest.TestCase):
+    def test_existing_key1(self) -> None:
+        """
+        Check that a key exists.
+        """
+        config = _get_nested_config1(self)
         #
         elem = config["read_data"]["file_name"]
         self.assertEqual(elem, "foo_bar.txt")
@@ -417,7 +351,7 @@ class TestNestedConfigGet1(hunitest.TestCase):
         """
         Test accessing the config with nested vs chained access.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         elem1 = config[("read_data", "file_name")]
         elem2 = config["read_data"]["file_name"]
@@ -428,7 +362,7 @@ class TestNestedConfigGet1(hunitest.TestCase):
         """
         Show that nested access is equivalent to chained access.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         elem1 = config.get(("read_data", "file_name"))
         elem2 = config["read_data"]["file_name"]
@@ -436,7 +370,7 @@ class TestNestedConfigGet1(hunitest.TestCase):
         self.assertEqual(str(elem1), str(elem2))
 
     def test_existing_key4(self) -> None:
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         elem = config.get(("read_data2", "file_name"), "hello_world1")
         self.assertEqual(elem, "hello_world1")
@@ -447,11 +381,13 @@ class TestNestedConfigGet1(hunitest.TestCase):
         elem = config.get(("read_data", "file_name2"), "hello_world3")
         self.assertEqual(elem, "hello_world3")
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def test_non_existing_key1(self) -> None:
         """
         Check a non-existent key at the first level.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         with self.assertRaises(KeyError) as cm:
             _ = config["read_data2"]
@@ -463,7 +399,7 @@ class TestNestedConfigGet1(hunitest.TestCase):
         """
         Check a non-existent key at the second level.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         with self.assertRaises(KeyError) as cm:
             _ = config["read_data"]["file_name2"]
@@ -475,7 +411,7 @@ class TestNestedConfigGet1(hunitest.TestCase):
         """
         Check a non-existent key at the second level.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         with self.assertRaises(KeyError) as cm:
             _ = config["read_data2"]["file_name2"]
@@ -608,12 +544,135 @@ class TestNestedConfigSet1(hunitest.TestCase):
 # #############################################################################
 
 
+def _get_nested_config2() -> cconfig.Config:
+    """
+    Build a nested config, that looks like:
+        ```
+        nrows: 10000
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        ```
+    """
+    config = cconfig.Config()
+    config["nrows"] = 10000
+    #
+    config_tmp = config.add_subconfig("read_data")
+    config_tmp["file_name"] = "foo_bar.txt"
+    config_tmp["nrows"] = 999
+    #
+    config["single_val"] = "hello"
+    #
+    config_tmp = config.add_subconfig("zscore")
+    config_tmp["style"] = "gaz"
+    config_tmp["com"] = 28
+    #
+    _LOG.debug("config=\n%s", config)
+    return config
+
+
+def _get_nested_config3() -> cconfig.Config:
+    """
+    Build a nested config, that looks like:
+        ```
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        ```
+    """
+    config = cconfig.Config()
+    #
+    config_tmp = config.add_subconfig("read_data")
+    config_tmp["file_name"] = "foo_bar.txt"
+    config_tmp["nrows"] = 999
+    #
+    config["single_val"] = "hello"
+    #
+    config_tmp = config.add_subconfig("zscore")
+    config_tmp["style"] = "gaz"
+    config_tmp["com"] = 28
+    #
+    _LOG.debug("config=\n%s", config)
+    return config
+
+
+def _get_nested_config4() -> cconfig.Config:
+    """
+    Build a nested config, that looks like:
+        ```
+        write_data:
+          file_name: baz.txt
+          nrows: 999
+        single_val2: goodbye
+        zscore2:
+          style: gaz
+          com: 28
+        ```
+    """
+    config = cconfig.Config()
+    #
+    config_tmp = config.add_subconfig("write_data")
+    config_tmp["file_name"] = "baz.txt"
+    config_tmp["nrows"] = 999
+    #
+    config["single_val2"] = "goodbye"
+    #
+    config_tmp = config.add_subconfig("zscore2")
+    config_tmp["style"] = "gaz"
+    config_tmp["com"] = 28
+    #
+    _LOG.debug("config=\n%s", config)
+    return config
+
+
+def _get_nested_config5() -> cconfig.Config:
+    """
+    Build a nested config, that looks like:
+        ```
+        read_data:
+          file_name: baz.txt
+          nrows: 999
+        single_val: goodbye
+        zscore:
+          style: super
+        extra_zscore:
+          style: universal
+          tau: 32
+        ```
+    """
+    config = cconfig.Config()
+    #
+    config_tmp = config.add_subconfig("read_data")
+    config_tmp["file_name"] = "baz.txt"
+    config_tmp["nrows"] = 999
+    #
+    config["single_val"] = "goodbye"
+    #
+    config_tmp = config.add_subconfig("zscore")
+    config_tmp["style"] = "super"
+    #
+    config_tmp = config.add_subconfig("extra_zscore")
+    config_tmp["style"] = "universal"
+    config_tmp["tau"] = 32
+    #
+    _LOG.debug("config=\n%s", config)
+    return config
+
+
 class TestNestedConfigMisc1(hunitest.TestCase):
     def test_config_print1(self) -> None:
         """
         Test printing a config.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         act = str(config)
         exp = r"""
@@ -632,7 +691,7 @@ class TestNestedConfigMisc1(hunitest.TestCase):
         """
         Test `to_python()` on a nested config.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         # Check.
         act = config.to_python()
         exp = r"""
@@ -644,7 +703,7 @@ class TestNestedConfigMisc1(hunitest.TestCase):
         """
         Test serialization/deserialization for nested config.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         # Check.
         act = _check_roundtrip_transformation(self, config)
         exp = r"""
@@ -666,7 +725,7 @@ class TestNestedConfigMisc1(hunitest.TestCase):
         """
         Compare two different styles of building a nested config.
         """
-        config1 = _get_nested_config1()
+        config1 = _get_nested_config1(self)
         config2 = _get_nested_config2()
         #
         self.assert_equal(str(config1), str(config2))
@@ -682,7 +741,7 @@ class TestNestedConfigIn1(hunitest.TestCase):
         """
         Test `in` with nested access.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         act = str(config)
         exp = r"""
@@ -702,28 +761,28 @@ class TestNestedConfigIn1(hunitest.TestCase):
         self.assertTrue("read_data" in config)
 
     def test_in2(self) -> None:
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         self.assertTrue(("read_data", "file_name") in config)
         self.assertTrue(("zscore", "style") in config)
 
     def test_not_in1(self) -> None:
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         self.assertTrue("read_data3" not in config)
 
     def test_not_in2(self) -> None:
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         self.assertTrue(("read_data2", "file_name") not in config)
 
     def test_not_in3(self) -> None:
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         self.assertTrue(("read_data", "file_name2") not in config)
 
     def test_not_in4(self) -> None:
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         #
         self.assertTrue(("read_data", "file_name", "foo_bar") not in config)
 
@@ -1015,7 +1074,7 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         Show that setting a value on a read-only config raises.
         """
-        config = _get_nested_config1()
+        config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         # Assign the value.
         self.assertEqual(config["zscore", "style"], "gaz")
