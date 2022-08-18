@@ -554,6 +554,8 @@ class CcxtBroker(ombroker.Broker):
                 submitted_order = order
                 submitted_order.ccxt_id = order_resp["id"]
                 _LOG.info(hprint.to_str("order_resp"))
+                # If the submission was successful, don't retry.
+                break
             except ccxt.base.errors.ExchangeNotAvailable:
                 # If there is a temporary server error, wait for
                 # a set amount of seconds and retry.
