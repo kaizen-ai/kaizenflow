@@ -549,7 +549,7 @@ def _apply_dag_runner_config(
         # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
         "trading_period_str": trading_period_str,
     }
-    system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
+    system.config["dag_runner_config"] = cconfig.Config.from_dict(
         real_time_config
     )
     system = apply_history_lookback(system)
