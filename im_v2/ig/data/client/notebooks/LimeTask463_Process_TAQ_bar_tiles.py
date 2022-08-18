@@ -47,7 +47,7 @@ tile_dict = {
     "dir_name": "/cache/tiled.bar_data.top100.2010_2020/",
     "asset_id_col": "igid",
 }
-tile_config = cconfig.get_config_from_nested_dict(tile_dict)
+tile_config = cconfig.Config.from_dict(tile_dict)
 
 # %%
 parquet_tile_analyzer = dtfmod.ParquetTileAnalyzer()

@@ -51,7 +51,7 @@ class TestOptimize(hunitest.TestCase):
             "target_gmv": 3000,
             "target_gmv_upper_bound_multiple": 1.00,
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         df = self.get_prediction_df()
         scratch_dir = self.get_scratch_space()
         actual = self.helper(config, df, scratch_dir)
