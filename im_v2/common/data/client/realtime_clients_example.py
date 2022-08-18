@@ -18,14 +18,14 @@ import im_v2.common.data.client as icdc
 # #############################################################################
 
 
-def _get_example1_create_table_query() -> str:
+def _get_mock1_create_table_query() -> str:
     """
-    Get SQL query to create an Example1 table.
+    Get SQL query to create an Mock1 table.
 
     The table schema corresponds to the OHLCV data.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS example1_marketdata(
+    CREATE TABLE IF NOT EXISTS mock1_marketdata(
             timestamp BIGINT,
             open NUMERIC,
             high NUMERIC,
@@ -41,7 +41,7 @@ def _get_example1_create_table_query() -> str:
     return query
 
 
-def _create_example1_sql_data() -> pd.DataFrame:
+def _create_mock1_sql_data() -> pd.DataFrame:
     """
     Generate a dataframe with price features and fixed currency_pair and
     exchange_id.
@@ -103,12 +103,12 @@ def _create_example1_sql_data() -> pd.DataFrame:
 
 
 # #############################################################################
-# Example1SqlRealTimeImClient
+# Mock1SqlRealTimeImClient
 # #############################################################################
 
 
-# TODO(Dan): Consider joining `Example1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
-class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
+# TODO(Dan): Consider joining `Mock1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
+class Mock1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
         self,
         resample_1min: bool,
@@ -125,25 +125,25 @@ class Example1SqlRealTimeImClient(icdc.SqlRealTimeImClient):
         return True
 
 
-def get_example1_realtime_client(
+def get_mock1_realtime_client(
     connection: hsql.DbConnection, *, resample_1min: bool = False
-) -> Example1SqlRealTimeImClient:
+) -> Mock1SqlRealTimeImClient:
     """
-    Set up a real time Example1 SQL client.
+    Set up a real time Mock1 SQL client.
 
-    - Creates an Example1 table
-    - Uploads example1 data
+    - Creates an Mock1 table
+    - Uploads mock1 data
     - Creates a client connected to the given DB
     """
     # Create example table.
-    table_name = "example1_marketdata"
-    query = _get_example1_create_table_query()
+    table_name = "mock1_marketdata"
+    query = _get_mock1_create_table_query()
     connection.cursor().execute(query)
     # Create a data example and upload to local DB.
-    data = _create_example1_sql_data()
+    data = _create_mock1_sql_data()
     hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
-    im_client = Example1SqlRealTimeImClient(resample_1min, connection, table_name)
+    im_client = Mock1SqlRealTimeImClient(resample_1min, connection, table_name)
     return im_client
 
 
@@ -152,7 +152,7 @@ def get_example1_realtime_client(
 # #############################################################################
 
 
-def _get_example2_create_table_query() -> str:
+def _get_mock2_create_table_query() -> str:
     """
     Get SQL query to create a test table.
 
@@ -160,7 +160,7 @@ def _get_example2_create_table_query() -> str:
     testing.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS example2_marketdata(
+    CREATE TABLE IF NOT EXISTS mock_marketdata(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             open NUMERIC,
@@ -178,9 +178,9 @@ def _get_example2_create_table_query() -> str:
     return query
 
 
-def _create_example2_sql_data() -> pd.DataFrame:
+def _create_mock2_sql_data() -> pd.DataFrame:
     """
-    Create an Example2 OHLCV dataframe.
+    Create an Mock2 OHLCV dataframe.
 
     It recreates OHLCV data found in Talos and CCXT providers
     """
@@ -221,7 +221,7 @@ def _create_example2_sql_data() -> pd.DataFrame:
     return test_data
 
 
-# TODO(Dan): Consider joining `Example1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
+# TODO(Dan): Consider joining `Mock1SqlRealTimeImClient` and `MockSqlRealTimeImClient`.
 class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     """
     Vendor-agnostic client to be used in tests.
@@ -248,20 +248,20 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
 def get_mock_realtime_client(
     connection: hsql.DbConnection, *, resample_1min: bool = False
-) -> Example1SqlRealTimeImClient:
+) -> Mock1SqlRealTimeImClient:
     """
-    Set up a real time Example2 SQL client.
+    Set up a real time Mock2 SQL client.
 
-    - Creates an Example2 table
-    - Uploads example2 data
+    - Creates an Mock2 table
+    - Uploads mock2 data
     - Creates a client connected to the given DB
     """
     # Create example table.
-    table_name = "example2_marketdata"
-    query = _get_example2_create_table_query()
+    table_name = "mock_marketdata"
+    query = _get_mock2_create_table_query()
     connection.cursor().execute(query)
     # Create a data example and upload to local DB.
-    data = _create_example2_sql_data()
+    data = _create_mock2_sql_data()
     hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
     im_client = MockSqlRealTimeImClient(resample_1min, connection, table_name)
