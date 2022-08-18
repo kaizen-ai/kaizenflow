@@ -375,6 +375,8 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     hdbg.dassert_type_is(aws_profile, str)
     prefix = aws_profile.upper()
     env_var = f"{prefix}_AWS_S3_BUCKET"
+    print("env_var", env_var)
+    hsystem.system("printenv")
     if env_var in os.environ:
         _LOG.debug("No env var '%s'", env_var)
         s3_bucket = os.environ[env_var]
