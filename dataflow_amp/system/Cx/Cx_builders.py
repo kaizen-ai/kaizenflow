@@ -237,8 +237,8 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     # Configure a `ProcessForecastNode`.
     process_forecasts_node_dict = get_Cx_process_forecasts_node_dict_example1(system)
     system.config[
-        "process_forecasts_node_config"
-    ] = process_forecasts_node_dict
+        "process_forecasts_node_dict"
+    ] = cconfig.get_config_from_nested_dict(process_forecasts_node_dict)
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)

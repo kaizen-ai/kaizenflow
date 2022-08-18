@@ -114,32 +114,32 @@ async def process_forecasts(
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
     # Create an `order_config` from `config` elements.
-    order_config = hdict.typed_get(config, "order_config", dict, None)
+    order_config = hdict.typed_get(config, "order_config", None, dict)
     _validate_order_config(order_config)
     # TODO(gp): Consider forcing to have everything specified, instead of using
     #  None defaults.
     optimizer_config = hdict.typed_get(
-        config, "optimizer_config", cconfig.Config, None
+        config, "optimizer_config", None, dict
     )
     _validate_optimizer_config(optimizer_config)
     # Extract ATH and trading start times from config.
     ath_start_time = hdict.typed_get(
-        config, "ath_start_time", datetime.time, None
+        config, "ath_start_time", None, datetime.time
     )
     trading_start_time = hdict.typed_get(
-        config, "trading_start_time", datetime.time, None
+        config, "trading_start_time", None, datetime.time
     )
     # Extract end times.
-    ath_end_time = hdict.typed_get(config, "ath_end_time", datetime.time, None)
+    ath_end_time = hdict.typed_get(config, "ath_end_time", None, datetime.time)
     trading_end_time = hdict.typed_get(
-        config, "trading_end_time", datetime.time, None
+        config, "trading_end_time", None, datetime.time
     )
     # Sanity check trading time.
     _validate_trading_time(
         ath_start_time, ath_end_time, trading_start_time, trading_end_time
     )
     # Get execution mode ("real_time" or "batch").
-    execution_mode = hdict.typed_get(config, "execution_mode", str, None)
+    execution_mode = hdict.typed_get(config, "execution_mode", None, str)
     if execution_mode == "real_time":
         prediction_df = prediction_df.tail(1)
     elif execution_mode == "batch":
@@ -903,17 +903,17 @@ class ForecastProcessor:
 def _validate_order_config(config: cconfig.Config) -> None:
     hdbg.dassert_isinstance(config, dict)
     _ = hdict.typed_get(
-        config, "order_type", str, None
+        config, "order_type", None, str
     )
     _ = hdict.typed_get(
-        config, "order_duration_in_mins", int, None
+        config, "order_duration_in_mins", None, int
     )
 
 
 def _validate_optimizer_config(config: cconfig.Config) -> None:
     hdbg.dassert_isinstance(config, dict)
     backend = hdict.typed_get(
-        config, "backend", str, None
+        config, "backend", None, str
     )
     # target_gmv_type = float
     # target_gmv = cconfig.get_object_from_config(
