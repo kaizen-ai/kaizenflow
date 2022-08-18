@@ -49,7 +49,7 @@
     system_class: Mock1_ForecastSystem
     system_log_dir: ./system_log_dir
     backtest_config:
-      universe_str: example1_v1-top2
+      universe_str: mock1_v1-top2
       trading_period_str: 5T
       time_interval_str: 2000-01-01_2000-02-01
       freq_as_pd_str: M
@@ -121,7 +121,7 @@
       system_class: Mock1_ForecastSystem
       system_log_dir: ./system_log_dir
       backtest_config:
-        universe_str: example1_v1-top2
+        universe_str: mock1_v1-top2
         trading_period_str: 5T
         time_interval_str: 2000-01-01_2000-02-01
         freq_as_pd_str: M
