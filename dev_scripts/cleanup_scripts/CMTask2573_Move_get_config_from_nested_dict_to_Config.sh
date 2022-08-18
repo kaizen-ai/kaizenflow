@@ -27,7 +27,7 @@
 #fi;
 
 ./dev_scripts/replace_text.py \
-  --old "cconfig.Config.from_dict" \
+  --old "cconfig.get_config_from_nested_dict" \
   --new "cconfig.Config.from_dict" \
 
 ./dev_scripts/replace_text.py \
