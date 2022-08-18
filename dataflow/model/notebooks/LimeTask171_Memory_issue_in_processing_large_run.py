@@ -56,7 +56,7 @@ if eval_config is None:
     aws_profile = None
     selected_idxs = None
 
-    eval_config = cconfig.get_config_from_nested_dict(
+    eval_config = cconfig.Config.from_dict(
         {
             "load_experiment_kwargs": {
                 "src_dir": experiment_dir,
