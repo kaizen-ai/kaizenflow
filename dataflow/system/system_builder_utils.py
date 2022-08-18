@@ -527,7 +527,10 @@ def _apply_dag_runner_config(
     trading_period_str: str,
 ) -> dtfsyssyst.System:
     """
-    Update system config with real time config.
+    Apply `dag_runner_config` to the system config.
+
+    The parameters passed via `dag_runner_config` are required to initialize
+    a `DagRunner` (e.g., `RealtimeDagRunner`).
     """
     if ("dag_runner_config", "real_time_loop_time_out_in_secs") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
@@ -576,7 +579,7 @@ def apply_dag_runner_config_for_crypto(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
-    Update dag runner config for crypto.
+    Apply `dag_runner_config` for crypto.
 
     Since crypto market is open 24/7 the system can be started at any
     time and run an infinite amount of time.
@@ -603,11 +606,11 @@ def apply_dag_runner_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
-    Update dag runner config for equities.
+    Apply `dag_runner_config` for equities.
 
     For equities `wake_up_timestamp` and
     `real_time_loop_time_out_in_secs` are aligned with the start
-    and end of a trading day for equties market.
+    and end of a trading day for the equties market.
     """
     (
         trading_period_str,
