@@ -320,7 +320,7 @@ class SingleColumnVolatilityModel(dtfconobas.FitPredictNode):
         :param tau: tau for SMA; if `None`, then to be learned
         :return: a complete config to be used with `_get_dag()`
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "calculate_vol_pth_power": {
                     "cols": [col],

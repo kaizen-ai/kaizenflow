@@ -72,50 +72,6 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
     return True
 
 
-# TODO(gp): This should be a private method of the method below.
-def get_config_from_flattened_dict(
-    flattened: Dict[Tuple[str], Any]
-) -> cconconf.Config:
-    """
-    Build a config from the flattened config representation.
-
-    :param flattened: flattened config like result from `config.flatten()`
-    :return: `Config` object initialized from flattened representation
-    """
-    hdbg.dassert_isinstance(flattened, dict)
-    hdbg.dassert(flattened)
-    config = cconconf.Config()
-    for k, v in flattened.items():
-        if isinstance(v, dict):
-            if v:
-                # Convert each dict-value to `Config` recursively because we
-                # cannot use dict as value in a `Config`.
-                v = get_config_from_nested_dict(v)
-            else:
-                # TODO(Grisha): maybe move to `get_config_from_nested_dict`, i.e.
-                # return empty `Config` right away without passing further.
-                # If dictionary is empty convert to an empty `Config`.
-                v = cconconf.Config()
-        config[k] = v
-    return config
-
-
-# TODO(gp): This method belongs should be Config.from_dict()
-def get_config_from_nested_dict(nested: Dict[str, Any]) -> cconconf.Config:
-    """
-    Build a `Config` from a nested dict.
-
-    :param nested: nested dict, with certain restrictions:
-      - only leaf nodes may not be a dict
-      - every nonempty dict must only have keys of type `str`
-    """
-    hdbg.dassert_isinstance(nested, dict)
-    hdbg.dassert(nested)
-    iter_ = hdict.get_nested_dict_iterator(nested)
-    flattened = collections.OrderedDict(iter_)
-    return get_config_from_flattened_dict(flattened)
-
-
 # #############################################################################
 
 
