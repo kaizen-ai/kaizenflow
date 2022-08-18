@@ -768,12 +768,29 @@ def _resolve_version_value(
     """
     Pass a version (e.g., 1.0.0) or a symbolic value (e.g., FROM_CHANGELOG) and
     return the resolved value of the version.
+
+    :return: full version with patch for prod (e.g., 1.3.2)
     """
     hdbg.dassert_isinstance(version, str)
     if version == _IMAGE_VERSION_FROM_CHANGELOG:
         version = hversio.get_changelog_version(container_dir_name)
     _dassert_is_version_valid(version)
-    return version
+    prod_version = version
+    return prod_version
+
+
+def _to_dev_version(prod_version: str) -> str:
+    """
+    Pass a prod version (e.g., 1.1.1) and strip the patch value.
+
+    :return: stripped version without patch for dev (e.g., 1.1.0)
+    """
+    hdbg.dassert_isinstance(prod_version, str)
+    _dassert_is_version_valid(prod_version)
+    # Strip patch value from the version.
+    dev_version = prod_version.split(".")[:-1]
+    dev_version = ".".join(dev_version) + ".0"
+    return dev_version
 
 
 def _dassert_is_subsequent_version(
