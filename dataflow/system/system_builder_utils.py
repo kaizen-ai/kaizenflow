@@ -303,7 +303,7 @@ def apply_dag_runner_config(
         "real_time_loop_time_out_in_secs": real_time_loop_time_out_in_secs,
         "trading_period_str": trading_period_str,
     }
-    system.config["dag_runner_config"] = cconfig.get_config_from_nested_dict(
+    system.config["dag_runner_config"] = cconfig.Config.from_dict(
         real_time_config
     )
     # TODO(Grisha): we should reuse `apply_history_lookback`.
@@ -462,7 +462,7 @@ def apply_ProcessForecastsNode_config_for_equities(
         "ath_end_time": datetime.time(16, 40),
         "trading_end_time": datetime.time(16, 40),
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
         config
     )
@@ -483,7 +483,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
         "ath_end_time": None,
         "trading_end_time": None,
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
         config
     )
@@ -565,7 +565,7 @@ def apply_Portfolio_config(
     }
     system.config[
         "portfolio_config", "column_remap"
-    ] = cconfig.get_config_from_nested_dict(column_remap)
+    ] = cconfig.Config.from_dict(column_remap)
     return system
 
 
