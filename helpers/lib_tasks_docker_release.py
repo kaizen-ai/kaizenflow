@@ -14,7 +14,6 @@ from invoke import task
 # this code needs to run with minimal dependencies and without Docker.
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
-import helpers.hversion as hversio
 import helpers.lib_tasks_docker as hlitadoc
 import helpers.lib_tasks_pytest as hlitapyt
 import helpers.lib_tasks_utils as hlitauti
@@ -92,9 +91,10 @@ def docker_build_local_image(  # type: ignore
         hlitadoc._dassert_is_subsequent_version(
             version, container_dir_name=container_dir_name
         )
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     # Update poetry, if needed.
     if update_poetry:
         cmd = "cd devops/docker_build; poetry lock -v"
@@ -103,7 +103,7 @@ def docker_build_local_image(  # type: ignore
     docker_ignore = ".dockerignore.dev"
     _prepare_docker_ignore(ctx, docker_ignore)
     # Build the local image.
-    image_local = hlitadoc.get_image(base_image, "local", version)
+    image_local = hlitadoc.get_image(base_image, "local", dev_version)
     hlitadoc._dassert_is_image_name_valid(image_local)
     # This code path through Git tag was discontinued with CmTask746.
     # git_tag_prefix = get_default_param("BASE_IMAGE")
@@ -120,7 +120,7 @@ def docker_build_local_image(  # type: ignore
     docker build \
         --progress=plain \
         {opts} \
-        --build-arg AM_CONTAINER_VERSION={version} \
+        --build-arg AM_CONTAINER_VERSION={dev_version} \
         --tag {image_local} \
         --file {dockerfile} \
         .
@@ -145,12 +145,13 @@ def docker_tag_local_image_as_dev(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     # Tag local image as versioned dev image (e.g., `dev-1.0.0`).
-    image_versioned_local = hlitadoc.get_image(base_image, "local", version)
-    image_versioned_dev = hlitadoc.get_image(base_image, "dev", version)
+    image_versioned_local = hlitadoc.get_image(base_image, "local", dev_version)
+    image_versioned_dev = hlitadoc.get_image(base_image, "dev", dev_version)
     cmd = f"docker tag {image_versioned_local} {image_versioned_dev}"
     hlitauti._run(ctx, cmd)
     # Tag local image as dev image.
@@ -174,13 +175,14 @@ def docker_push_dev_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     #
     hlitadoc.docker_login(ctx)
     # Push Docker versioned tag.
-    image_versioned_dev = hlitadoc.get_image(base_image, "dev", version)
+    image_versioned_dev = hlitadoc.get_image(base_image, "dev", dev_version)
     cmd = f"docker push {image_versioned_dev}"
     hlitauti._run(ctx, cmd, pty=True)
     # Push Docker tag.
@@ -239,9 +241,10 @@ def docker_release_dev_image(  # type: ignore
     # Run resolve after `docker_build_local_image` so that a proper check
     # for subsequent version can be made in case `FROM_CHANGELOG` token
     # is used.
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
+    dev_version = hlitadoc._to_dev_version(prod_version)
     # 2) Run tests for the "local" image.
     if skip_tests:
         _LOG.warning("Skipping all tests and releasing")
@@ -251,21 +254,23 @@ def docker_release_dev_image(  # type: ignore
         qa_tests = False
     stage = "local"
     if fast_tests:
-        hlitapyt.run_fast_tests(ctx, stage=stage, version=version)
+        hlitapyt.run_fast_tests(ctx, stage=stage, version=dev_version)
     if slow_tests:
-        hlitapyt.run_slow_tests(ctx, stage=stage, version=version)
+        hlitapyt.run_slow_tests(ctx, stage=stage, version=dev_version)
     if superslow_tests:
-        hlitapyt.run_superslow_tests(ctx, stage=stage, version=version)
+        hlitapyt.run_superslow_tests(ctx, stage=stage, version=dev_version)
     # 3) Promote the "local" image to "dev".
     docker_tag_local_image_as_dev(
-        ctx, version, container_dir_name=container_dir_name
+        ctx, dev_version, container_dir_name=container_dir_name
     )
     # 4) Run QA tests for the (local version) of the dev image.
     if qa_tests:
-        hlitapyt.run_qa_tests(ctx, stage="dev", version=version)
+        hlitapyt.run_qa_tests(ctx, stage="dev", version=dev_version)
     # 5) Push the "dev" image to ECR.
     if push_to_repo:
-        docker_push_dev_image(ctx, version, container_dir_name=container_dir_name)
+        docker_push_dev_image(
+            ctx, dev_version, container_dir_name=container_dir_name
+        )
     else:
         _LOG.warning(
             "Skipping pushing dev image to repo_short_name, as requested"
@@ -309,7 +314,7 @@ def docker_build_prod_image(  # type: ignore
     :param user_tag: the name of the user building the candidate image
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
     # Prepare `.dockerignore`.
@@ -332,7 +337,9 @@ def docker_build_prod_image(  # type: ignore
         # Add head hash to the prod image name.
         image_versioned_prod += f"-{head_hash}"
     else:
-        image_versioned_prod = hlitadoc.get_image(base_image, "prod", version)
+        image_versioned_prod = hlitadoc.get_image(
+            base_image, "prod", prod_version
+        )
     hlitadoc._dassert_is_image_name_valid(image_versioned_prod)
     #
     dockerfile = "devops/docker_build/prod.Dockerfile"
@@ -340,6 +347,8 @@ def docker_build_prod_image(  # type: ignore
     #
     # TODO(gp): Use _to_multi_line_cmd()
     opts = "--no-cache" if not cache else ""
+    # Use dev version for building prod image.
+    dev_version = hlitadoc._to_dev_version(prod_version)
     cmd = rf"""
     DOCKER_BUILDKIT={DOCKER_BUILDKIT} \
     time \
@@ -348,7 +357,7 @@ def docker_build_prod_image(  # type: ignore
         {opts} \
         --tag {image_versioned_prod} \
         --file {dockerfile} \
-        --build-arg VERSION={version} \
+        --build-arg VERSION={dev_version} \
         .
     """
     hlitauti._run(ctx, cmd)
@@ -381,13 +390,13 @@ def docker_push_prod_image(  # type: ignore
     :param base_image: e.g., *****.dkr.ecr.us-east-1.amazonaws.com/amp
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
     #
     hlitadoc.docker_login(ctx)
     # Push versioned tag.
-    image_versioned_prod = hlitadoc.get_image(base_image, "prod", version)
+    image_versioned_prod = hlitadoc.get_image(base_image, "prod", prod_version)
     cmd = f"docker push {image_versioned_prod}"
     hlitauti._run(ctx, cmd, pty=True)
     #
@@ -447,12 +456,15 @@ def docker_release_prod_image(  # type: ignore
     :param push_to_repo: push the image to the repo_short_name
     """
     hlitauti._report_task(container_dir_name=container_dir_name)
-    version = hlitadoc._resolve_version_value(
+    prod_version = hlitadoc._resolve_version_value(
         version, container_dir_name=container_dir_name
     )
     # 1) Build prod image.
     docker_build_prod_image(
-        ctx, cache=cache, version=version, container_dir_name=container_dir_name
+        ctx,
+        cache=cache,
+        version=prod_version,
+        container_dir_name=container_dir_name,
     )
     # 2) Run tests.
     if skip_tests:
@@ -460,15 +472,15 @@ def docker_release_prod_image(  # type: ignore
         fast_tests = slow_tests = superslow_tests = False
     stage = "prod"
     if fast_tests:
-        hlitapyt.run_fast_tests(ctx, stage=stage, version=version)
+        hlitapyt.run_fast_tests(ctx, stage=stage, version=prod_version)
     if slow_tests:
-        hlitapyt.run_slow_tests(ctx, stage=stage, version=version)
+        hlitapyt.run_slow_tests(ctx, stage=stage, version=prod_version)
     if superslow_tests:
-        hlitapyt.run_superslow_tests(ctx, stage=stage, version=version)
+        hlitapyt.run_superslow_tests(ctx, stage=stage, version=prod_version)
     # 3) Push prod image.
     if push_to_repo:
         docker_push_prod_image(
-            ctx, version=version, container_dir_name=container_dir_name
+            ctx, version=prod_version, container_dir_name=container_dir_name
         )
     else:
         _LOG.warning("Skipping pushing image to repo_short_name as requested")
@@ -573,13 +585,14 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
     :param task_definition: the name of the ECS task definition for which an update
       to container image URL is made, e.g. cmamp-test
     :param user_tag: the name of the user creating the image, empty parameter means
-      the command was ran via gh actions
+      the command was run via gh actions
     """
-    # Get latest version.
-    last_version = hversio.get_changelog_version(".")
     # Create new prod image.
     docker_build_prod_image(
-        ctx, version=last_version, candidate=True, user_tag=user_tag
+        ctx,
+        version=hlitadoc._IMAGE_VERSION_FROM_CHANGELOG,
+        candidate=True,
+        user_tag=user_tag,
     )
     # Get the hash of the image.
     tag = hgit.get_head_hash(".", short_hash=True)
@@ -588,7 +601,7 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
         tag = f"{user_tag}-{tag}"
     # Push candidate image.
     docker_push_prod_candidate_image(ctx, tag)
-    exec_name = f"im_v2/aws/aws_update_task_definition.py"
+    exec_name = "im_v2/aws/aws_update_task_definition.py"
     # Ensure compatibility with repos where amp is a submodule.
     if not os.path.exists(exec_name):
         exec_name = f"amp/{exec_name}"
@@ -597,4 +610,3 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
     # Register new task definition revision with updated image URL.
     cmd = f'invoke docker_cmd -c "{exec_name} -t {task_definition} -i {tag}"'
     hlitauti._run(ctx, cmd)
-    return
