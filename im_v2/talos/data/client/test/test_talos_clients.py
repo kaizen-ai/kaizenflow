@@ -1623,6 +1623,5 @@ class TestMockSqlRealTimeImClient1(
         self.client = icdc.get_mock_realtime_client(self.connection)
 
     def tearDown(self) -> None:
-        table_name = self.client._table_name
-        hsql.remove_table(self.connection, table_name)
+        hsql.remove_table(self.connection, "mock2_marketdata")
         super().tearDown()
