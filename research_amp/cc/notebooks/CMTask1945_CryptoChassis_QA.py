@@ -66,7 +66,7 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
                 "universe_version": "v1",
                 "resample_1min": True,
                 "root_dir": os.path.join(
-                    hs3.get_s3_bucket_path("ck"), 
+                    hs3.get_s3_bucket_path("ck"),
                     "reorg", "historical.manual.pq",
                 ),
                 "partition_mode": "by_year_month",
@@ -338,11 +338,11 @@ _ = _plot_bad_data_stats(config, kucoin_stats_by_year_month)
 #    - Data is acceptable
 #    - All coins have  <1% of NaNs
 # - FTX:
-#    - NaN spikes for `DOGE` and `XRP` in 2022 
+#    - NaN spikes for `DOGE` and `XRP` in 2022
 #    - Other coins are of decent quality
 # - Gateio:
-#    - Data is acceptable 
+#    - Data is acceptable
 #    - All coins have  <2% of NaNs
 # - Kucoin:
-#    - Data is acceptable 
+#    - Data is acceptable
 #    - All coins have  <2% of NaNs

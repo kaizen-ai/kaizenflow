@@ -79,7 +79,7 @@ def get_cmtask1953_config() -> cconconf.Config:
                 "aws_profile": "ck",
             },
             # TODO(max): bid_ask_im_client
-            
+
             # Parameters for data query.
             "read_data": {
                 "full_symbols": ["binance::BTC_USDT"],
@@ -226,7 +226,7 @@ display(get_target_value(btc, date, "volume"))
 # Value(t+2) = Value(t)
 
 # %%
-# TODO(max): delete this guy, because we will use lags 
+# TODO(max): delete this guy, because we will use lags
 def get_naive_value(
     df: pd.DataFrame,
     timestamp: pd.Timestamp,

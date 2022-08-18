@@ -306,7 +306,7 @@ class ForecastEvaluatorFromReturns:
         dollar_neutrality: str = "no_constraint",
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        
+
         """
         positions, _, _ = self.compute_portfolio(
             df, target_gmv=target_gmv, dollar_neutrality=dollar_neutrality
