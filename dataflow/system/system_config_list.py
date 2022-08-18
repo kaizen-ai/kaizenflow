@@ -58,3 +58,26 @@ class SystemConfigList(cconfig.ConfigList):
         system_config_list.system = system
         system_config_list.configs = [system.config]
         return system_config_list
+
+
+# #############################################################################
+# Utils
+# #############################################################################
+
+
+def build_tile_config_list(
+    system: dtfsyssyst.System,
+) -> SystemConfigList:
+    """
+    Define and fill `SystemConfigList` with universe and periods.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    system_config_list = SystemConfigList.from_system(system)
+    #
+    system_config_list = (
+        cconfig.build_config_list_with_tiled_universe_and_periods(
+            system_config_list
+        )
+    )
+    hdbg.dassert_isinstance(system_config_list, SystemConfigList)
+    return system_config_list

@@ -239,7 +239,7 @@ def _get_kibot_universe_v3(n: Optional[int]) -> List[Amid]:
 
 def _get_example1_universe_v1(n: Optional[int]) -> List[Amid]:
     """
-    Create universe for Example1 DAG.
+    Create universe for Mock1 DAG.
     """
     vendor = "example1"
     mode = "trade"
@@ -312,7 +312,7 @@ def get_universe(universe_str: str) -> List[Amid]:
         version = "v6"
         ret = _get_ccxt_universe(version, top_n)
     elif universe_version == "ccxt_v7":
-        version = "v7" 
+        version = "v7"
         ret = _get_ccxt_universe(version, top_n)
     elif universe_version == "crypto_chassis_v1":
         version = "v1"

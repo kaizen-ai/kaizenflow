@@ -1,0 +1,12 @@
+# Kill all the stopped jobs.
+# From https://serverfault.com/questions/240155/how-can-i-kill-all-stopped-jobs
+kill -s 9 $(jobs -ps)
+clear
+clear
+#
+reset
+reset
+#
+clear
+#
+jobs -ps

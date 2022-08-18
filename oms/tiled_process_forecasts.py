@@ -5,11 +5,12 @@ import oms.tiled_process_forecasts as otiprfor
 """
 import asyncio
 import logging
+from typing import Any, Dict
 
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
-import core.config as cconfig
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import market_data as mdata
@@ -49,18 +50,21 @@ def get_portfolio(market_data: mdata.MarketData) -> omportfo.Portfolio:
 
 async def run_tiled_process_forecasts(
     event_loop: asyncio.AbstractEventLoop,
-    market_data_tile_config: cconfig.Config,
-    backtest_tile_config: cconfig.Config,
-    process_forecasts_config: cconfig.Config,
+    market_data_tile_dict: Dict[str, Any],
+    backtest_tile_dict: Dict[str, Any],
+    process_forecasts_dict: Dict[str, Any],
 ) -> None:
-    # Process `backtest_tile_config`.
-    backtest_file_name = backtest_tile_config["file_name"]
-    asset_id_col = backtest_tile_config["asset_id_col"]
-    start_date = backtest_tile_config["start_date"]
-    end_date = backtest_tile_config["end_date"]
-    prediction_col = backtest_tile_config["prediction_col"]
-    volatility_col = backtest_tile_config["volatility_col"]
-    spread_col = backtest_tile_config["spread_col"]
+    hdbg.dassert_isinstance(market_data_tile_dict, Dict)
+    hdbg.dassert_isinstance(backtest_tile_dict, Dict)
+    hdbg.dassert_isinstance(process_forecasts_dict, Dict)
+    # Process `backtest_tile_dict`.
+    backtest_file_name = backtest_tile_dict["file_name"]
+    asset_id_col = backtest_tile_dict["asset_id_col"]
+    start_date = backtest_tile_dict["start_date"]
+    end_date = backtest_tile_dict["end_date"]
+    prediction_col = backtest_tile_dict["prediction_col"]
+    volatility_col = backtest_tile_dict["volatility_col"]
+    spread_col = backtest_tile_dict["spread_col"]
     # Yield backtest tiles.
     backtest_cols = [asset_id_col, volatility_col, prediction_col, spread_col]
     backtest_tiles = hparque.yield_parquet_tiles_by_year(
@@ -69,12 +73,12 @@ async def run_tiled_process_forecasts(
         end_date,
         backtest_cols,
     )
-    # Process `market_data_tile_config`.
-    market_data_file_name = market_data_tile_config["file_name"]
-    price_col = market_data_tile_config["price_col"]
-    knowledge_datetime_col = market_data_tile_config["knowledge_datetime_col"]
-    start_time_col = market_data_tile_config["start_time_col"]
-    end_time_col = market_data_tile_config["end_time_col"]
+    # Process `market_data_tile_dict`.
+    market_data_file_name = market_data_tile_dict["file_name"]
+    price_col = market_data_tile_dict["price_col"]
+    knowledge_datetime_col = market_data_tile_dict["knowledge_datetime_col"]
+    start_time_col = market_data_tile_dict["start_time_col"]
+    end_time_col = market_data_tile_dict["end_time_col"]
     # Yield market data tiles.
     market_data_cols = [
         asset_id_col,
@@ -134,7 +138,7 @@ async def run_tiled_process_forecasts(
             prediction_df,
             volatility_df,
             portfolio,
-            process_forecasts_config,
+            process_forecasts_dict,
             spread_df,
             restrictions_df,
         )
