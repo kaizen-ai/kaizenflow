@@ -52,7 +52,7 @@ if eval_config is None:
     target_col = ""
     aws_profile = None
 
-    eval_config = cconfig.get_config_from_nested_dict(
+    eval_config = cconfig.Config.from_dict(
         {
             "compute_stats_kwargs": {
                 "src_dir": src_dir,

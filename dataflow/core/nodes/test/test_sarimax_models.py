@@ -83,7 +83,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         data.drop(columns=["x"], inplace=True)
         steps_ahead = 1
         # Train SkLearn model.
-        sklearn_config = cconfig.get_config_from_nested_dict(
+        sklearn_config = cconfig.Config.from_dict(
             {
                 "model_func": slmode.LinearRegression,
                 "x_vars": ["ret_0"],
@@ -128,7 +128,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         data.drop(columns=["x"], inplace=True)
         steps_ahead = 3
         # Train SkLearn model.
-        sklearn_config = cconfig.get_config_from_nested_dict(
+        sklearn_config = cconfig.Config.from_dict(
             {
                 "model_func": slmode.LinearRegression,
                 "x_vars": ["ret_0"],
@@ -322,7 +322,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
         order: Tuple[int, int, int],
         seasonal_order: Optional[Tuple[int, int, int, int]] = None,
     ) -> cconfig.Config:
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "y_vars": ["ret_0"],
                 "steps_ahead": 3,
@@ -354,7 +354,7 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
 class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
     def test1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
@@ -384,7 +384,7 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
 
     def test_invert_zret_0_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(1)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": ["ret_0_zscored_1_hat"],
@@ -405,7 +405,7 @@ class TestMultihorizonReturnsPredictionProcessor(hunitest.TestCase):
 
     def test_invert_zret_3_zscoring1(self) -> None:
         model_output = self._get_multihorizon_model_output(3)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "target_col": "ret_0_zscored",
                 "prediction_cols": [
