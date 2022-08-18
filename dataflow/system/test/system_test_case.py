@@ -105,6 +105,12 @@ def _get_signature_from_result_bundle(
     return actual
 
 
+# TODO(gp): @grisha remove _test_save_data from the TestCase
+#  and have callers from the tests directly call
+# mdata.save_market_data(market_data, file_name, period) 
+# like we are doing in Test_C1b_EOD_Reconciliation
+
+
 # #############################################################################
 # System_CheckConfig_TestCase1
 # #############################################################################
@@ -321,18 +327,18 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     - a time DAG
     """
 
-    def _test_save_data(
-        self,
-        market_data: mdata.MarketData,
-        period: pd.Timedelta,
-        file_path: str,
-    ) -> None:
-        """
-        Generate test data and store it.
-        """
-        limit = None
-        mdata.save_market_data(market_data, file_path, period, limit)
-        _LOG.warning("Updated file '%s'", file_path)
+    # def _test_save_data(
+    #     self,
+    #     market_data: mdata.MarketData,
+    #     period: pd.Timedelta,
+    #     file_path: str,
+    # ) -> None:
+    #     """
+    #     Generate test data and store it.
+    #     """
+    #     limit = None
+    #     mdata.save_market_data(market_data, file_path, period, limit)
+    #     _LOG.warning("Updated file '%s'", file_path)
 
     def _test1(
         self,
@@ -403,28 +409,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             )
             return actual
 
-    def _test_save_data(
-        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
-    ) -> None:
-        """
-        Generate data used in this test.
-
-        E.g.,
-        ```
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
-        ```
-        """
-        # period = "last_day"
-        # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
-        _LOG.warning("Updated file '%s'", file_name)
-        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
-
     def _test1(self, system: dtfsyssyst.System) -> None:
         """
         Run a system using the desired DataFramePortfolio and freeze the
@@ -456,27 +440,27 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
-    def _test_save_data(
-        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
-    ) -> None:
-        """
-        Generate data used in this test.
-
-        E.g.,
-        ```
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
-        ```
-        """
-        # period = "last_day"
-        # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
-        _LOG.warning("Updated file '%s'", file_name)
-        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
+    # def _test_save_data(
+    #     self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
+    # ) -> None:
+    #     """
+    #     Generate data used in this test.
+    #
+    #     E.g.,
+    #     ```
+    #     end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
+    #     2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
+    #     2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
+    #     2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
+    #     2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
+    #     ```
+    #     """
+    #     # period = "last_day"
+    #     # period = pd.Timedelta("15D")
+    #     limit = None
+    #     mdata.save_market_data(market_data, file_name, period, limit)
+    #     _LOG.warning("Updated file '%s'", file_name)
+    #     # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
     def _test_database_portfolio_helper(
         self,
@@ -656,6 +640,7 @@ class SystemTester:
         self,
         result_bundle: dtfcore.ResultBundle,
         forecast_evaluator_from_prices_dict: Dict[str, Any],
+        log_dir: str,
     ) -> Tuple[str, pd.Series]:
         hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
         # TODO(gp): @all use actual.append(hprint.frame("system_config"))
@@ -684,9 +669,40 @@ class SystemTester:
             style=forecast_evaluator_from_prices_dict["style"],
             **forecast_evaluator_from_prices_dict["kwargs"],
         )
+        # #
+        # forecast_evaluator.log_portfolio(
+        #         result_df,
+        #         log_dir,
+        #         style = forecast_evaluator_from_prices_dict["style"],
+        #         ** forecast_evaluator_from_prices_dict["kwargs"])
+        #
         research_pnl = stats["pnl"]
         actual = "\n".join(map(str, actual))
         return actual, research_pnl
+
+    def log_forecast_evaluator_portfolio(
+        self,
+        result_bundle: dtfcore.ResultBundle,
+        forecast_evaluator_from_prices_dict: Dict[str, Any],
+        log_dir: str,
+    ) -> None:
+        # Build ForecastEvaluatorFromPrices.
+        hdbg.dassert(
+            forecast_evaluator_from_prices_dict,
+            "`forecast_evaluator_from_prices_dict` must be nontrivial",
+        )
+        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
+            **forecast_evaluator_from_prices_dict["init"],
+        )
+        #
+        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
+        result_df = result_bundle.result_df
+        # Save Portfolio info.
+        forecast_evaluator.log_portfolio(
+            result_df,
+            log_dir,
+            style=forecast_evaluator_from_prices_dict["style"],
+            **forecast_evaluator_from_prices_dict["kwargs"]) \
 
     @staticmethod
     def _append(

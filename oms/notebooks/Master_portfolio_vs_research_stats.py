@@ -12,12 +12,23 @@
 #     name: python3
 # ---
 
-# %%
+# %% [markdown]
+# Compare
+# - ForecastEvaluator output (research pnl)
+# - a Portfolio
+#
+# It can be used:
+# - In the daily reconciliation flow to compare
+#     - ForecastEvaluator coming from a simulation
+#     - portfolio comes from a production system
+
+# %% run_control={"marked": true}
 # %load_ext autoreload
 # %autoreload 2
 # %matplotlib inline
 
 import logging
+import os
 
 import pandas as pd
 
@@ -39,23 +50,31 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-date = "2022-07-22"
-date2 = "20220722"
+sim_dir = "../../../system_log_dir/forecast_evaluator"
+prod_dir = "/data/cf_production/CF_2022_08_15/job-sasm_job-jobid-1002348952/user_executable_run_0-1000005033091/cf_prod_system_log_dir"
+prod_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
+
+# Simulation data.
+print("# sim_dir")
+hdbg.dassert_dir_exists(sim_dir)
+# !ls {simulation_dir}
+
+# Production data.
+print("# prod_dir")
+hdbg.dassert_dir_exists(prod_dir)
+# !ls {prod_dir}
+
+# %%
+date = "2022-08-15"
 start_timestamp = pd.Timestamp(date + " 09:30:00", tz="America/New_York")
 end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
 
 # %%
-# !ls /cache/production/process_forecasts.20220718/
-
-# %%
-#root_dir = "/cache/production/process_forecasts.20220718/"
-root_dir = f"/cache/production/process_forecast.20220725/process_forecasts"
-
 hdbg.dassert_dir_exists(root_dir)
 dict_ = {
-    "portfolio_data_dir": f"{root_dir}/{date}/portfolio",
-    "research_data_dir": f"{root_dir}/{date}/evaluate_forecasts",
-    "freq": "5T",
+    "portfolio_data_dir": prod_dir,
+    "research_data_dir": sim_dir,
+    "freq": "15T",
     "portfolio_file_name": None,
     "research_file_name": None,
     "start_timestamp": start_timestamp,
@@ -64,20 +83,32 @@ dict_ = {
 hdbg.dassert_dir_exists(dict_["portfolio_data_dir"])
 hdbg.dassert_dir_exists(dict_["research_data_dir"])
 
+# %% [markdown]
+# # Load Portfolio data
+
 # %%
-config = cconfig.Config.from_dict(dict_)
+config = cconfig.get_config_from_nested_dict(dict_)
 #
 start_timestamp = config["start_timestamp"]
 end_timestamp = config["end_timestamp"]
 
-# %%
 # Load and time-localize Portfolio logged data.
 paper_df, paper_stats_df = oms.Portfolio.read_state(
     config["portfolio_data_dir"],
     #file_name=config["portfolio_file_name"],
 )
 paper_df = paper_df.loc[start_timestamp:end_timestamp]
+display(paper_df.head(3))
+
 paper_stats_df = paper_stats_df.loc[start_timestamp:end_timestamp]
+display(paper_stats_df.head(3))
+
+# %% [markdown]
+# # Load ForecastEvaluator data
+
+# %%
+print(config["research_data_dir"])
+# !ls {config["research_data_dir"]}
 
 # %%
 # Load and time localize ForecastEvaluator logged data.
@@ -94,23 +125,35 @@ paper_stats_df = paper_stats_df.loc[start_timestamp:end_timestamp]
     research_stats_df,
 ) = dtfmod.ForecastEvaluatorFromPrices.read_portfolio(
     config["research_data_dir"],
-    file_name=config["research_file_name"],
+    #file_name=config["research_file_name"],
 )
 
-research_df = research_df.loc[start_timestamp:end_timestamp]
-research_stats_df = research_stats_df.loc[start_timestamp:end_timestamp]
+
+# %%
+# Load and time-localize Portfolio logged data.
+paper_df, paper_stats_df = oms.Portfolio.read_state(
+    config["portfolio_data_dir"],
+    #file_name=config["portfolio_file_name"],
+)
+
+# %%
+paper_df = paper_df.loc[start_timestamp:end_timestamp]
+paper_stats_df = paper_stats_df.loc[start_timestamp:end_timestamp]
+
+
+# %%
 
 # %%
 print(research_df.columns.levels[0])
 
-research_df["price"]
+#research_df["price"]
 #research
 
 # %%
 research_df["position"]
 
 # %%
-research_df
+#research_df
 
 # %%
 research_stats_df
@@ -184,8 +227,8 @@ display(pnl.head())
 
 # %%
 #pnl.corr()
-pnl[4:].corr()
+pnl[2:].corr()
 
 # %%
-#coplotti.plot_portfolio_stats(bar_stats_df[4:])
-coplotti.plot_portfolio_stats(bar_stats_df)
+coplotti.plot_portfolio_stats(bar_stats_df[2:])
+#coplotti.plot_portfolio_stats(bar_stats_df)

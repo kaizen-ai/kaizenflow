@@ -167,7 +167,8 @@ def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
     timedelta: pd.Timedelta,
-    limit: Optional[int],
+    *,
+    limit: Optional[int] = None,
 ) -> None:
     """
     Save data from a `MarketData` to a CSV file.

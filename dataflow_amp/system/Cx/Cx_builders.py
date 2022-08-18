@@ -86,7 +86,10 @@ def get_Cx_ReplayedMarketData_example1(
 # the difference will be that the prod `MarketData` should use the dev DB while
 # `get_Cx_ReplayedMarketData_example1` should use the local DB.
 def get_Cx_RealTimeMarketData_prod_instance1(
-    system: dtfsys.System,
+    #system: dtfsys.System,
+    # TODO(gp): @grisha we should pass asset_ids and not system since we need
+    # only that.
+    asset_ids,
 ) -> mdata.MarketData:
     """
     Build a MarketData backed with RealTimeImClient.
@@ -105,7 +108,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
         resample_1min, db_connection, table_name
     )
     # Get the real-time `MarketData`.
-    asset_ids = system.config["market_data_config", "asset_ids"]
+    #asset_ids = system.config["market_data_config", "asset_ids"]
     market_data, _ = mdata.get_RealTimeImClientMarketData_example2(
         im_client, asset_ids
     )
