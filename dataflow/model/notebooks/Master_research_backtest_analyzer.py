@@ -49,7 +49,7 @@ tile_dict = {
     "dir_name": "/app/build_tile_config_list.../tiled_results/",
     "asset_id_col": "asset_id",
 }
-tile_config = cconfig.get_config_from_nested_dict(tile_dict)
+tile_config = cconfig.Config.from_dict(tile_dict)
 
 # %% [markdown]
 # ## Report tile stats
@@ -111,7 +111,7 @@ fep_dict = {
     "burn_in_bars": 3,
     "style": "longitudinal"
 }
-fep_config = cconfig.get_config_from_nested_dict(fep_dict)
+fep_config = cconfig.Config.from_dict(fep_dict)
 
 # %%
 fep = dtfmod.ForecastEvaluatorFromPrices(
@@ -203,7 +203,7 @@ regression_dict = {
     "feature_lag": 2,
     "batch_size": 50,
 }
-regression_config = cconfig.get_config_from_nested_dict(regression_dict)
+regression_config = cconfig.Config.from_dict(regression_dict)
 
 # %%
 coefficients, corr = dtfmod.regress(

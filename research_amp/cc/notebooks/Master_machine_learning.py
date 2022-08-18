@@ -107,7 +107,7 @@ def get_cmtask1953_config() -> cconconf.Config:
             "n_splits": 5,
         },
     }
-    config = ccocouti.get_config_from_nested_dict(param_dict)
+    config = cconfig.Config.from_dict(param_dict)
     return config
 
 
