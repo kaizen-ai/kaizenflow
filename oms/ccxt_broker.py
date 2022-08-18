@@ -587,7 +587,7 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[omorder.Order] = []
         for order in orders:
-            sent_order = self._submit_single_order(order)
+            sent_order = await self._submit_single_order(order)
             # If order was submitted successfully append it to
             # the list of sent orders.
             if sent_order:
