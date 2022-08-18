@@ -238,7 +238,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     process_forecasts_node_dict = get_Cx_process_forecasts_node_dict_example1(system)
     system.config[
         "process_forecasts_node_dict"
-    ] = cconfig.get_config_from_nested_dict(process_forecasts_node_dict)
+    ] = cconfig.Config.from_dict(process_forecasts_node_dict)
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)
@@ -289,7 +289,7 @@ def _get_Cx_dag_prod_instance1(
     )
     system.config[
         "process_forecasts_node_dict"
-    ] = cconfig.get_config_from_nested_dict(process_forecasts_node_dict)
+    ] = cconfig.Config.from_dict(process_forecasts_node_dict)
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Assemble.
     market_data = system.market_data

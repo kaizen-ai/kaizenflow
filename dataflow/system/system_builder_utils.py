@@ -379,7 +379,7 @@ def apply_ProcessForecastsNode_config_for_equities(
         "ath_end_time": datetime.time(16, 40),
         "trading_end_time": datetime.time(16, 40),
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
         config
     )
@@ -400,7 +400,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
         "ath_end_time": None,
         "trading_end_time": None,
     }
-    config = cconfig.get_config_from_nested_dict(dict_)
+    config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
         config
     )
@@ -482,7 +482,7 @@ def apply_Portfolio_config(
     }
     system.config[
         "portfolio_config", "column_remap"
-    ] = cconfig.get_config_from_nested_dict(column_remap)
+    ] = cconfig.Config.from_dict(column_remap)
     return system
 
 

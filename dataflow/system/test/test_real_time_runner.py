@@ -37,7 +37,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         # Get a naive pipeline as DAG.
         dag_builder = dtfcore.MvnReturnsBuilder()
         #
-        data_source_config = cconfig.get_config_from_nested_dict(
+        data_source_config = cconfig.Config.from_dict(
             {
                 "frequency": "T",
                 "start_date": "2010-01-04 09:30:00",
