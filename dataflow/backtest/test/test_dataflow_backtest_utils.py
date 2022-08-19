@@ -4,7 +4,7 @@ from typing import List
 import core.config as cconfig
 import dataflow.backtest.dataflow_backtest_utils as dtfbaexcon
 import dataflow.core as dtfcore
-import dataflow_amp.pipelines as dtapi
+import dataflow_amp.pipelines as dtfapi
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 def _build_base_config() -> cconfig.Config:
     wrapper = cconfig.Config()
     #
-    dag_builder = dtapi.Mock1_DagBuilder()
+    dag_builder = dtfapi.Mock1_DagBuilder()
     dag_config = dag_builder.get_config_template()
     wrapper["dag_config"] = dag_config
     wrapper["dag_builder_object"] = dag_builder
