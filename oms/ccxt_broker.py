@@ -593,7 +593,7 @@ class CcxtBroker(ombroker.Broker):
                 break
             except Exception as e:
                 # Check the Binance API er
-                if isinstance(e, ExchangeNotAvailable):
+                if isinstance(e, ccxt.ExchangeNotAvailable):
                     # If there is a temporary server error, wait for
                     # a set amount of seconds and retry.
                     time.sleep(3)
