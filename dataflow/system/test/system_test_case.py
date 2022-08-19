@@ -105,10 +105,10 @@ def _get_signature_from_result_bundle(
     return actual
 
 
-# TODO(gp): @grisha remove _test_save_data from the TestCase
+# TODO(gp): remove _test_save_data from the TestCase
 #  and have callers from the tests directly call
-# mdata.save_market_data(market_data, file_name, period) 
-# like we are doing in Test_C1b_EOD_Reconciliation
+#  mdata.save_market_data(market_data, file_name, period) 
+#  like we are doing in Test_C1b_EOD_Reconciliation
 
 
 # #############################################################################
