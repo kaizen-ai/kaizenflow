@@ -27,6 +27,8 @@ import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
+# Max number of order submission retries.
+_MAX_ORDER_SUBMIT_RETRIES = 3
 
 class CcxtBroker(ombroker.Broker):
     def __init__(
@@ -61,6 +63,7 @@ class CcxtBroker(ombroker.Broker):
         :param secret_id: the number id of the secret
         """
         super().__init__(*args, **kwargs)
+        self.max_order_submit_retries = _MAX_ORDER_SUBMIT_RETRIES
         self._exchange_id = exchange_id
         #
         hdbg.dassert_in(stage, ["local", "preprod"])
@@ -548,22 +551,20 @@ class CcxtBroker(ombroker.Broker):
         self, order: omorder.Order
     ) -> Optional[omorder.Order]:
         """
-        Submit single order.
+        Submit a single order.
 
         :param order: order to be submitted
 
-        Returns order with ccxt ID appended if the submission was successful, None otherwise.
+        :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
-        # Max number of order submission retries.
-        _MAX_ORDER_SUBMIT_RETRIES = 3
         submitted_order: Optional[omorder.Order] = None
         # Verify that order conforms.
         order = self._check_minimal_limit(order)
         _LOG.info("Submitted order: %s", str(order))
-        # TODO(Juraj): perform bunch of assertions for order attributes.
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
-        for _ in range(_MAX_ORDER_SUBMIT_RETRIES):
+        #TODO(Juraj): separate the retry logic from the code that does the work.
+        for _ in range(self.max_order_submit_retries):
             try:
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
@@ -585,13 +586,13 @@ class CcxtBroker(ombroker.Broker):
                 _LOG.info(hprint.to_str("order_resp"))
                 # If the submission was successful, don't retry.
                 break
-            except ccxt.ExchangeNotAvailable:
-                # If there is a temporary server error, wait for
-                # a set amount of seconds and retry.
-                time.sleep(3)
-                continue
             except Exception as e:
                 # Check the Binance API er
+                if isinstance(e, ExchangeNotAvailable):
+                    # If there is a temporary server error, wait for
+                    # a set amount of seconds and retry.
+                    time.sleep(3)
+                    continue
                 if self._check_binance_code_error(e, -4131):
                     # If the error is connected to liquidity, continue submitting orders.
                     _LOG.warning(
@@ -599,9 +600,9 @@ class CcxtBroker(ombroker.Broker):
                         The Exception was:\n%s\nContinuing...",
                         e,
                     )
+                    break
                 else:
                     raise e
-                break
         return submitted_order
 
     async def _submit_orders(
