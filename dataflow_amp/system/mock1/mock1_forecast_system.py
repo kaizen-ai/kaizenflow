@@ -12,7 +12,7 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import dataflow_amp.pipelines as dtfapi
+import dataflow_amp.pipelines.mock1 as dtfapmo
 import dataflow_amp.system.mock1.mock1_builders as dtfasmmobu
 import market_data as mdata
 import oms
@@ -37,7 +37,7 @@ class Mock1_ForecastSystem(dtfsys.ForecastSystem):
 
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
-        dag_builder = dtfapi.Mock1_DagBuilder()
+        dag_builder = dtfapmo.Mock1_DagBuilder()
         system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
@@ -72,7 +72,7 @@ class Mock1_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
 
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
-        dag_builder = dtfapi.Mock1_DagBuilder()
+        dag_builder = dtfapmo.Mock1_DagBuilder()
         system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
@@ -109,7 +109,7 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
 
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
-        dag_builder = dtfapi.Mock1_DagBuilder()
+        dag_builder = dtfapmo.Mock1_DagBuilder()
         system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
@@ -151,7 +151,7 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
 
     def _get_system_config_template(self) -> cconfig.Config:
         _ = self
-        dag_builder = dtfapi.Mock1_DagBuilder()
+        dag_builder = dtfapmo.Mock1_DagBuilder()
         system_config = dtfsys.get_SystemConfig_template_from_DagBuilder(
             dag_builder
         )
