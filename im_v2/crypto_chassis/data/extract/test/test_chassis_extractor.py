@@ -30,43 +30,6 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         self.assertIn(expected, actual)
 
     @umock.patch.object(
-        imvccdexex.CryptoChassisExtractor,
-        "_download_bid_ask",
-        spec=imvccdexex.CryptoChassisExtractor._download_bid_ask,
-    )
-    def test_download_bid_ask_data_spot(
-        self, download_bid_ask_mock: umock.MagicMock, 
-    ) -> None:
-        """
-        Verify that `_download_bid_ask` is called properly in `spot` mode.
-        """
-        download_bid_ask_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
-        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
-        exchange_id = "binance"
-        currency_pair = "btc/usdt"
-        contract_type = "spot"
-        client = imvccdexex.CryptoChassisExtractor(contract_type)
-        bidask_data = client._download_bid_ask(
-            exchange_id, currency_pair, start_timestamp, end_timestamp
-        )
-        self.assertEqual(download_bid_ask_mock.call_count, 1)
-        actual_args = tuple(download_bid_ask_mock.call_args)
-        expected_args = (("binance", 
-            ("btc/usdt"), 
-            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
-            (pd.Timestamp("2022-01-09 23:59:00+0000", tz="UTC"))),
-            {},
-        )
-        self.assertEqual(actual_args, expected_args)
-        actual_output = hpandas.df_to_str(bidask_data)
-        expected_output = r"""dummy
-            0  dummy
-        """
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
-
-
-    @umock.patch.object(
         imvccdexex.pd,
         "read_csv",
         spec=imvccdexex.pd.read_csv,
@@ -111,9 +74,9 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         currency_pair = "btc/usdt"
         contract_type = "futures"
         # Mock the returns of the functions.
-        convert_currency_pair_mock.return_value = "btc-usd"
-        build_base_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/coinbase/btc-usd"
-        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/coinbase/btc-usd?startTime=1641672000&endTime=1641758340"
+        convert_currency_pair_mock.return_value = "btcusd"
+        build_base_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp"
+        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp?startTime=1641672000&endTime=1641758340"
         response_mock = umock.MagicMock()
         response_mock.json = lambda: {"urls": [{"url":"https://mock-url.com"}]}
         requests_mock.get.return_value = response_mock
@@ -143,13 +106,13 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         expected_args = ((), 
         {'data_type': 'market-depth', 
         'exchange': 'binance-coin-futures',
-        'currency_pair': 'btc-usd_perp'})
+        'currency_pair': 'btcusd_perp'})
         self.assertEqual(actual_args, expected_args)
         # Test `build_query_url`.
         self.assertEqual(build_query_url_mock.call_count, 1)
         actual_args = tuple(build_query_url_mock.call_args)
         expected_args = (
-            ('https://api.cryptochassis.com/v1/market-depth/coinbase/btc-usd',), 
+            ('https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp',), 
             {'depth': '1', 'startTime': '2022-01-09T00:00:00Z'})
         self.assertEqual(actual_args, expected_args)
         # Test `coerce_to_numeric`.
@@ -158,10 +121,10 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         # Reproduce the structure of the arguments.
         exp_arg_df = pd.DataFrame(
             {"time_seconds": [1660780800],
-            "bid_price": [23341.25],
-            "bid_size": [0.003455],
-            "ask_price": [23344.58],
-            "ask_size": [0.052201]})
+            "bid_price": ["23341.25"],
+            "bid_size": ["0.003455"],
+            "ask_price": ["23344.58"],
+            "ask_size": ["0.052201"]})
         expected_args = ((exp_arg_df,), {'float_columns': ['bid_price', 'bid_size', 'ask_price', 'ask_size']})
         # Convert Dataframes to string.
         expected_df_str = hpandas.df_to_str(expected_args[0][0])
@@ -170,6 +133,16 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
         # Compare `float_columns` argument.
         self.assertEqual(actual_args[1], expected_args[1])
+        # Check final `bid-ask` data.
+        bidask_expected =  pd.DataFrame(
+            {"timestamp": [1660780800], 
+            "bid_price": [23341.25],
+            "bid_size": [0.003455],
+            "ask_price": [23344.58],
+            "ask_size": [0.052201]})
+        expected_df_str = hpandas.df_to_str(bidask_expected)
+        actual_df_str = hpandas.df_to_str(bidask_data)
+        self.assertEqual(actual_df_str, expected_df_str)
         
 
     def test_download_bid_ask_invalid_input1(self) -> None:
