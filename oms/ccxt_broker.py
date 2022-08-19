@@ -558,9 +558,14 @@ class CcxtBroker(ombroker.Broker):
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
         submitted_order: Optional[omorder.Order] = None
-        # Verify that order conforms.
-        order = self._check_minimal_limit(order)
-        _LOG.info("Submitted order: %s", str(order))
+        if self._stage in ["local", "preprod"]:
+            # Reduce order to a minimal possible amount.
+            #  This is done to avoid "Margin is insufficient" error
+            #  in testnet.
+            order = self._force_minimal_order(order)
+        else:
+            # Verify that order is not below the minimal amount.
+            order = self._check_order_limit(order)
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
         #TODO(Juraj): separate the retry logic from the code that does the work.
