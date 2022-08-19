@@ -333,13 +333,42 @@ class CcxtBroker(ombroker.Broker):
         error_regex = f'"code":{error_code},'
         return bool(re.search(error_regex, error_message))
 
-    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+    def _force_minimal_order(self, order: omorder.Order) -> omorder.Order:
+        """
+        Force a minimal possible order quantity.
+
+        Changes the order to buy/sell the minimal possible quantity of an asset.
+        Required for running the system in testnet.
+
+        :param order: order to be submitted
+        :return: an order with minimal quantity of asset
+        """
+        asset_limits = self._minimal_order_limits[order.asset_id]
+        required_amount = asset_limits["min_amount"]
+        # Note: 10 is the minimal total cost of an order in testnet.
+        min_cost = 10
+        # Get the last price for the asset.
+        last_price = self._get_last_market_price(order.asset_id)
+        # Verify that the estimated total cost is above 10.
+        if last_price * required_amount <= min_cost:
+            # Set the amount of asset to above min cost.
+            #  Note: the multiplication by 2 is done to give some
+            #  buffer so the order does not go below
+            #  the minimal amount of asset.
+            required_amount = (min_cost / last_price) * 2
+        if order.diff_num_shares < 0:
+            order.diff_num_shares = -required_amount
+        else:
+            order.diff_num_shares = required_amount
+        return order
+
+    def _check_order_limit(self, order: omorder.Order) -> omorder.Order:
         """
         Check if the order matches the minimum quantity for the asset.
 
         The functions checks both the flat amount of the asset and the total
         cost of the asset in the order. If the order amount does not match,
-         he order is changed to be slightly above the minimal amount.
+        he order is changed to be slightly above the minimal amount.
 
         :param order: order to be submitted
         """
@@ -372,7 +401,7 @@ class CcxtBroker(ombroker.Broker):
             required_amount = round(min_cost / last_price, 0) + 1
             _LOG.warning(
                 "Amount of asset in order is below minimal base: %s. \
-                Setting to following amount based on notional limit: %s",
+                    Setting to following amount based on notional limit: %s",
                 order_amount,
                 required_amount,
             )
