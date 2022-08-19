@@ -1146,6 +1146,37 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test_set3(self) -> None:
+        """
+        Show that by setting `value=False` config can be updated.
+        """
+        config = _get_nested_config1(self)
+        _LOG.debug("config=\n%s", config)
+        # Assign the value.
+        self.assertEqual(config["zscore", "style"], "gaz")
+        config["zscore", "style"] = "gasoline"
+        self.assertEqual(config["zscore", "style"], "gasoline")
+        # Mark as read-only.
+        config.mark_read_only(value=False)
+        # Assign new values.
+        config["zscore", "com"] = 11
+        self.assertEqual(config["zscore", "com"], 11)
+        config["single_val"] = "hello1"
+        self.assertEqual(config["single_val"], "hello1")
+        # Check the final config.
+        act = str(config)
+        exp = r"""
+        nrows: 10000
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello1
+        zscore:
+          style: gasoline
+          com: 11
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
 
 # #############################################################################
 # Test_to_dict1
