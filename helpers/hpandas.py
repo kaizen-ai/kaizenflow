@@ -25,7 +25,8 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+#_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+_LOG.verb_debug = _LOG.debug
 
 
 # #############################################################################
@@ -710,6 +711,7 @@ def trim_df(
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
+    _LOG.debug("df=\n%s", df_to_str(df))
     if df.empty:
         # If the df is empty, there is nothing to trim.
         return df
@@ -736,6 +738,7 @@ def trim_df(
         else:
             # There is nothing to filter, so the left index is the first one.
             left_idx = 0
+        _LOG.debug(hprint.to_str("start_ts left_idx"))
         # Find the index corresponding to the right boundary of the interval.
         if end_ts is not None:
             side = "right" if right_close else "left"
@@ -743,6 +746,7 @@ def trim_df(
         else:
             # There is nothing to filter, so the right index is None.
             right_idx = None
+        _LOG.debug(hprint.to_str("end_ts right_idx"))
         hdbg.dassert_lte(0, left_idx)
         if right_idx is not None:
             hdbg.dassert_lte(left_idx, right_idx)

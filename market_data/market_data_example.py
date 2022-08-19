@@ -107,6 +107,21 @@ def get_ReplayedTimeMarketData_from_df(
     return market_data, get_wall_clock_time
 
 
+# def get_ReplayedTimeMarketData_from_file(
+#     *args,
+#     laod_market_data_kwargs,
+#     **kwargs,
+# ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
+#     market_data_df = mdata.load_market_data(
+#         file_path,
+#         aws_profile=aws_profile,
+#         column_remap=column_remap,
+#         timestamp_db_column=timestamp_db_column,
+#         datetime_columns=datetime_columns,
+#     )
+
+
+
 # TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
 def get_ReplayedTimeMarketData_example2(
     event_loop: asyncio.AbstractEventLoop,
