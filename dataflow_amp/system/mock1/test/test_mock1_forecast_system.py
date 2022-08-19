@@ -8,6 +8,8 @@ import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow.system.test.system_test_case as dtfsytsytc
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
+import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -20,7 +22,7 @@ def _get_test_system_builder_func() -> Callable:
     # so the value of `time_interval_str` doesn't affect tests.
     backtest_config = "mock1_v1-top2.5T.Jan2000"
     system_builder_func = (
-        lambda: dtfasmmfosy.get_Mock1_ForecastSystem_for_simulation_example1(
+        lambda: dtfasmmfsex.get_Mock1_ForecastSystem_for_simulation_example1(
             backtest_config
         )
     )
@@ -172,7 +174,7 @@ def _get_test_System_with_DataFramePortfolio(
     """
     Get a System object with a DataFramePortfolio for unit testing.
     """
-    system = dtfasmmfosy.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+    system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         market_data_df, real_time_loop_time_out_in_secs
     )
     return system
@@ -208,7 +210,7 @@ def _get_test_System_with_DatabasePortfolio(
     """
     Get a System object with a DatabasePortfolio for unit testing.
     """
-    system = dtfasmmfosy.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+    system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
         market_data_df, real_time_loop_time_out_in_secs
     )
     return system

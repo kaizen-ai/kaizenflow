@@ -132,46 +132,6 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
         return dag_runner
 
 
-def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
-    market_data_df: pd.DataFrame,
-    real_time_loop_time_out_in_secs: int,
-) -> dtfsys.System:
-    """
-    The System is used for the corresponding unit tests.
-    """
-    system = Mock1_Time_ForecastSystem_with_DataFramePortfolio()
-    # Market data config.
-    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
-    system.config["market_data_config", "delay_in_secs"] = 5
-    system.config["market_data_config", "initial_replayed_delay"] = 5
-    system.config["market_data_config", "asset_ids"] = [101]
-    system.config["market_data_config", "data"] = market_data_df
-    # Portfolio config.
-    system = dtfsys.apply_Portfolio_config(system)
-    # Dag runner config.
-    system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
-    system.config[
-        "dag_runner_config", "real_time_loop_time_out_in_secs"
-    ] = real_time_loop_time_out_in_secs
-    # PnL config.
-    forecast_evaluator_from_prices_dict = {
-        "style": "cross_sectional",
-        "init": {
-            "price_col": "vwap",
-            "volatility_col": "vwap.ret_0.vol",
-            "prediction_col": "feature1",
-        },
-        "kwargs": {
-            "target_gmv": 1e5,
-            "liquidate_at_end_of_day": False,
-        },
-    }
-    system.config[
-        "research_forecast_evaluator_from_prices"
-    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
-    return system
-
-
 # #############################################################################
 # Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
 # #############################################################################
