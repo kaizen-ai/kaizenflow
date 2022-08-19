@@ -1158,9 +1158,11 @@ class Test_make_read_only1(hunitest.TestCase):
         self.assertEqual(config["zscore", "style"], "gasoline")
         # Mark as read-only.
         config.mark_read_only(value=False)
-        # Assign new value.
+        # Assign new values.
         config["zscore", "com"] = 11
         self.assertEqual(config["zscore", "com"], 11)
+        config["single_val"] = "hello1"
+        self.assertEqual(config["single_val"], "hello1")
         # Check the final config.
         act = str(config)
         exp = r"""
@@ -1168,7 +1170,7 @@ class Test_make_read_only1(hunitest.TestCase):
         read_data:
           file_name: foo_bar.txt
           nrows: 999
-        single_val: hello
+        single_val: hello1
         zscore:
           style: gasoline
           com: 11
