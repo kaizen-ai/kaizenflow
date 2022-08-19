@@ -39,7 +39,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: int = 2,
+        secret_id: int = 1,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -556,7 +556,7 @@ class CcxtBroker(ombroker.Broker):
                 _LOG.info(hprint.to_str("order_resp"))
                 # If the submission was successful, don't retry.
                 break
-            except ccxt.base.errors.ExchangeNotAvailable:
+            except ccxt.ExchangeNotAvailable:
                 # If there is a temporary server error, wait for
                 # a set amount of seconds and retry.
                 time.sleep(3)
@@ -572,6 +572,7 @@ class CcxtBroker(ombroker.Broker):
                     )
                 else:
                     raise e
+                break
         return submitted_order
 
     async def _submit_orders(
