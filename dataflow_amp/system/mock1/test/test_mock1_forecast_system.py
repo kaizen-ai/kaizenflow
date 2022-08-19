@@ -18,7 +18,7 @@ def _get_test_system_builder_func() -> Callable:
     """
     # TODO(Max): In the current system, the time periods are set manually,
     # so the value of `time_interval_str` doesn't affect tests.
-    backtest_config = "example1_v1-top2.5T.Jan2000"
+    backtest_config = "mock1_v1-top2.5T.Jan2000"
     system_builder_func = (
         lambda: dtfasmmfosy.get_Mock1_ForecastSystem_for_simulation_example1(
             backtest_config
