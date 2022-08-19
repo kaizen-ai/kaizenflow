@@ -39,7 +39,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
     @staticmethod
     def coerce_to_numeric(
         data: pd.DataFrame, float_columns: Optional[List[str]] = None
-    ):
+    ) -> pd.DataFrame:
         """
         Coerce given DataFrame to numeric data type.
 
@@ -164,7 +164,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             query_url = self._build_query_url(
                 core_url, startTime=timestamp, depth=depth
             )
-            _LOG.info(query_url)
             # Request the data.
             r = requests.get(query_url)
             # Retrieve raw data.
