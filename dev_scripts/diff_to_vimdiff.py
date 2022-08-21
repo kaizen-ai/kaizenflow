@@ -271,7 +271,7 @@ def _parse_diff_output(
         hsystem.system(cmd)
         # Press enter to continue.
         hsystem.press_enter_to_continue()
-        # RUn the diff script.
+        # Run the diff script.
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
         #

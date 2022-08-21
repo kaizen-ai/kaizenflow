@@ -407,7 +407,7 @@ def dassert_is_integer(
     only_warning: bool = False,
 ) -> None:
     """
-    Assert that val is an integer.
+    Assert that val represents an integer number, independently of the type.
     """
     if isinstance(val, int):
         pass
