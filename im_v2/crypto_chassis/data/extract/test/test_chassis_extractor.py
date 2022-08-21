@@ -11,7 +11,7 @@ import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 _LOG = logging.getLogger(__name__)
 
 
-class TestCryptoChassisExtractor1(hunitest.TestCase): 
+class TestCryptoChassisExtractor1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """
         Smoke test that the class is being initialized correctly.
@@ -19,14 +19,14 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         exchange_class = imvccdexex.CryptoChassisExtractor("spot")
         self.assertEqual(exchange_class.contract_type, "spot")
         self.assertEqual(exchange_class.vendor, "crypto_chassis")
-        self.assertEqual(exchange_class._endpoint,"https://api.cryptochassis.com/v1")
+        self.assertEqual(
+            exchange_class._endpoint, "https://api.cryptochassis.com/v1"
+        )
         # Wrong contract type.
         with self.assertRaises(AssertionError) as fail:
             imvccdexex.CryptoChassisExtractor("dummy")
         actual = str(fail.exception)
-        expected = (
-            "Failed assertion *\n'dummy' in '['spot', 'futures']'\n"
-        )
+        expected = "Failed assertion *\n'dummy' in '['spot', 'futures']'\n"
         self.assertIn(expected, actual)
 
     @umock.patch.object(
@@ -48,48 +48,56 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
     @umock.patch.object(
         imvccdexex.CryptoChassisExtractor,
         "_build_base_url",
-        spec=imvccdexex.CryptoChassisExtractor._build_base_url
+        spec=imvccdexex.CryptoChassisExtractor._build_base_url,
     )
     @umock.patch.object(
         imvccdexex.CryptoChassisExtractor,
         "convert_currency_pair",
         spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
     )
-    def test_download_bid_ask_futures(
-        self, 
+    def test_download_bid_ask_spot(
+        self,
         convert_currency_pair_mock: umock.MagicMock,
         build_base_url_mock: umock.MagicMock,
         build_query_url_mock: umock.MagicMock,
         requests_mock: umock.MagicMock,
         coerce_to_numeric_mock: umock.MagicMock,
         pandas_read_csv_mock: umock.MagicMock,
-        ) -> None:
+    ) -> None:
         """
-        Verify that `_download_bid_ask` is called properly in `futures` mode.
+        Verify that `_download_bid_ask` is called properly in `spot` mode.
         """
         #
-        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        end_timestamp = pd.Timestamp("2022-01-09T23:59:00", tz="UTC")
+        start_timestamp = pd.Timestamp("2022-08-18T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-08-18T23:59:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usdt"
-        contract_type = "futures"
+        contract_type = "spot"
         # Mock the returns of the functions.
-        convert_currency_pair_mock.return_value = "btcusd"
-        build_base_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp"
-        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp?startTime=1641672000&endTime=1641758340"
+        convert_currency_pair_mock.return_value = "btc-usd"
+        build_base_url_mock.return_value = (
+            "https://api.cryptochassis.com/v1/market-depth/binance/btc-usd"
+        )
+        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance/btc-usd?startTime=1660766400&endTime=1660852740"
         response_mock = umock.MagicMock()
-        response_mock.json = lambda: {"urls": [{"url":"https://mock-url.com"}]}
+        response_mock.json = lambda: {"urls": [{"url": "https://mock-url.com"}]}
         requests_mock.get.return_value = response_mock
         pandas_read_csv_mock.return_value = pd.DataFrame(
-            {"time_seconds": [1660780800],  
-            "bid_price_bid_size": ["23341.25_0.003455"],
-            "ask_price_ask_size": ["23344.58_0.052201"]})
+            {
+                "time_seconds": [1660780800],
+                "bid_price_bid_size": ["23341.25_0.003455"],
+                "ask_price_ask_size": ["23344.58_0.052201"],
+            }
+        )
         coerce_to_numeric_mock.return_value = pd.DataFrame(
-            {"time_seconds": [1660780800], 
-            "bid_price": [23341.25],
-            "bid_size": [0.003455],
-            "ask_price": [23344.58],
-            "ask_size": [0.052201]})
+            {
+                "time_seconds": [1660780800],
+                "bid_price": [23341.25],
+                "bid_size": [0.003455],
+                "ask_price": [23344.58],
+                "ask_size": [0.052201],
+            }
+        )
         #
         client = imvccdexex.CryptoChassisExtractor(contract_type)
         bidask_data = client._download_bid_ask(
@@ -98,34 +106,45 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         # Test `convert_currency`.
         self.assertEqual(convert_currency_pair_mock.call_count, 1)
         actual_args = tuple(convert_currency_pair_mock.call_args)
-        expected_args = (('btc/usdt',), {})
+        expected_args = (("btc/usdt",), {})
         self.assertEqual(actual_args, expected_args)
         # Test `build_base_url`.
         self.assertEqual(build_base_url_mock.call_count, 1)
         actual_args = tuple(build_base_url_mock.call_args)
-        expected_args = ((), 
-        {'data_type': 'market-depth', 
-        'exchange': 'binance-coin-futures',
-        'currency_pair': 'btcusd_perp'})
+        expected_args = (
+            (),
+            {
+                "data_type": "market-depth",
+                "exchange": "binance",
+                "currency_pair": "btc-usd",
+            },
+        )
         self.assertEqual(actual_args, expected_args)
         # Test `build_query_url`.
         self.assertEqual(build_query_url_mock.call_count, 1)
         actual_args = tuple(build_query_url_mock.call_args)
         expected_args = (
-            ('https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp',), 
-            {'depth': '1', 'startTime': '2022-01-09T00:00:00Z'})
+            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usd",),
+            {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
+        )
         self.assertEqual(actual_args, expected_args)
         # Test `coerce_to_numeric`.
         self.assertEqual(coerce_to_numeric_mock.call_count, 1)
         actual_args = tuple(coerce_to_numeric_mock.call_args)
         # Reproduce the structure of the arguments.
         exp_arg_df = pd.DataFrame(
-            {"time_seconds": [1660780800],
-            "bid_price": ["23341.25"],
-            "bid_size": ["0.003455"],
-            "ask_price": ["23344.58"],
-            "ask_size": ["0.052201"]})
-        expected_args = ((exp_arg_df,), {'float_columns': ['bid_price', 'bid_size', 'ask_price', 'ask_size']})
+            {
+                "time_seconds": [1660780800],
+                "bid_price": ["23341.25"],
+                "bid_size": ["0.003455"],
+                "ask_price": ["23344.58"],
+                "ask_size": ["0.052201"],
+            }
+        )
+        expected_args = (
+            (exp_arg_df,),
+            {"float_columns": ["bid_price", "bid_size", "ask_price", "ask_size"]},
+        )
         # Convert Dataframes to string.
         expected_df_str = hpandas.df_to_str(expected_args[0][0])
         actual_df_str = hpandas.df_to_str(actual_args[0][0])
@@ -134,16 +153,155 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         # Compare `float_columns` argument.
         self.assertEqual(actual_args[1], expected_args[1])
         # Check final `bid-ask` data.
-        bidask_expected =  pd.DataFrame(
-            {"timestamp": [1660780800], 
-            "bid_price": [23341.25],
-            "bid_size": [0.003455],
-            "ask_price": [23344.58],
-            "ask_size": [0.052201]})
+        bidask_expected = pd.DataFrame(
+            {
+                "timestamp": [1660780800],
+                "bid_price": [23341.25],
+                "bid_size": [0.003455],
+                "ask_price": [23344.58],
+                "ask_size": [0.052201],
+            }
+        )
         expected_df_str = hpandas.df_to_str(bidask_expected)
         actual_df_str = hpandas.df_to_str(bidask_data)
         self.assertEqual(actual_df_str, expected_df_str)
-        
+
+    @umock.patch.object(
+        imvccdexex.pd,
+        "read_csv",
+        spec=imvccdexex.pd.read_csv,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "coerce_to_numeric",
+        spec=imvccdexex.CryptoChassisExtractor.coerce_to_numeric,
+    )
+    @umock.patch.object(imvccdexex, "requests", spec=imvccdexex.requests)
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_build_query_url",
+        spec=imvccdexex.CryptoChassisExtractor._build_query_url,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_build_base_url",
+        spec=imvccdexex.CryptoChassisExtractor._build_base_url,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "convert_currency_pair",
+        spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
+    )
+    def test_download_bid_ask_futures(
+        self,
+        convert_currency_pair_mock: umock.MagicMock,
+        build_base_url_mock: umock.MagicMock,
+        build_query_url_mock: umock.MagicMock,
+        requests_mock: umock.MagicMock,
+        coerce_to_numeric_mock: umock.MagicMock,
+        pandas_read_csv_mock: umock.MagicMock,
+    ) -> None:
+        """
+        Verify that `_download_bid_ask` is called properly in `futures` mode.
+        """
+        #
+        start_timestamp = pd.Timestamp("2022-08-18T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-08-18T23:59:00", tz="UTC")
+        exchange_id = "binance"
+        currency_pair = "btc/usdt"
+        contract_type = "futures"
+        # Mock the returns of the functions.
+        convert_currency_pair_mock.return_value = "btcusd"
+        build_base_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp"
+        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp?startTime=1660766400&endTime=1660852740"
+        response_mock = umock.MagicMock()
+        response_mock.json = lambda: {"urls": [{"url": "https://mock-url.com"}]}
+        requests_mock.get.return_value = response_mock
+        pandas_read_csv_mock.return_value = pd.DataFrame(
+            {
+                "time_seconds": [1660780800],
+                "bid_price_bid_size": ["23341.25_0.003455"],
+                "ask_price_ask_size": ["23344.58_0.052201"],
+            }
+        )
+        coerce_to_numeric_mock.return_value = pd.DataFrame(
+            {
+                "time_seconds": [1660780800],
+                "bid_price": [23341.25],
+                "bid_size": [0.003455],
+                "ask_price": [23344.58],
+                "ask_size": [0.052201],
+            }
+        )
+        #
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
+        bidask_data = client._download_bid_ask(
+            exchange_id, currency_pair, start_timestamp, end_timestamp
+        )
+        # Test `convert_currency`.
+        self.assertEqual(convert_currency_pair_mock.call_count, 1)
+        actual_args = tuple(convert_currency_pair_mock.call_args)
+        expected_args = (("btc/usdt",), {})
+        self.assertEqual(actual_args, expected_args)
+        # Test `build_base_url`.
+        self.assertEqual(build_base_url_mock.call_count, 1)
+        actual_args = tuple(build_base_url_mock.call_args)
+        expected_args = (
+            (),
+            {
+                "data_type": "market-depth",
+                "exchange": "binance-coin-futures",
+                "currency_pair": "btcusd_perp",
+            },
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Test `build_query_url`.
+        self.assertEqual(build_query_url_mock.call_count, 1)
+        actual_args = tuple(build_query_url_mock.call_args)
+        expected_args = (
+            (
+                "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp",
+            ),
+            {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Test `coerce_to_numeric`.
+        self.assertEqual(coerce_to_numeric_mock.call_count, 1)
+        actual_args = tuple(coerce_to_numeric_mock.call_args)
+        # Reproduce the structure of the arguments.
+        exp_arg_df = pd.DataFrame(
+            {
+                "time_seconds": [1660780800],
+                "bid_price": ["23341.25"],
+                "bid_size": ["0.003455"],
+                "ask_price": ["23344.58"],
+                "ask_size": ["0.052201"],
+            }
+        )
+        expected_args = (
+            (exp_arg_df,),
+            {"float_columns": ["bid_price", "bid_size", "ask_price", "ask_size"]},
+        )
+        # Convert Dataframes to string.
+        expected_df_str = hpandas.df_to_str(expected_args[0][0])
+        actual_df_str = hpandas.df_to_str(actual_args[0][0])
+        # Compare Dataframes.
+        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
+        # Compare `float_columns` argument.
+        self.assertEqual(actual_args[1], expected_args[1])
+        # Check final `bid-ask` data.
+        bidask_expected = pd.DataFrame(
+            {
+                "timestamp": [1660780800],
+                "bid_price": [23341.25],
+                "bid_size": [0.003455],
+                "ask_price": [23344.58],
+                "ask_size": [0.052201],
+            }
+        )
+        expected_df_str = hpandas.df_to_str(bidask_expected)
+        actual_df_str = hpandas.df_to_str(bidask_data)
+        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
 
     def test_download_bid_ask_invalid_input1(self) -> None:
         """
@@ -204,85 +362,319 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
 
-
     @umock.patch.object(
         imvccdexex.CryptoChassisExtractor,
-        "_download_ohlcv",
-        spec=imvccdexex.CryptoChassisExtractor._download_ohlcv,
+        "coerce_to_numeric",
+        spec=imvccdexex.CryptoChassisExtractor.coerce_to_numeric,
+    )
+    @umock.patch.object(imvccdexex, "requests", spec=imvccdexex.requests)
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_build_query_url",
+        spec=imvccdexex.CryptoChassisExtractor._build_query_url,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_build_base_url",
+        spec=imvccdexex.CryptoChassisExtractor._build_base_url,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "convert_currency_pair",
+        spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
     )
     def test_download_ohlcv_spot(
-        self, download_ohlcv_mock: umock.MagicMock
+        self,
+        convert_currency_pair_mock: umock.MagicMock,
+        build_base_url_mock: umock.MagicMock,
+        build_query_url_mock: umock.MagicMock,
+        requests_mock: umock.MagicMock,
+        coerce_to_numeric_mock: umock.MagicMock,
     ) -> None:
         """
         Verify that `_download_ohlcv` is called properly in `spot` mode.
         """
-        download_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
-        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        exchange = "binance"
+        start_timestamp = pd.Timestamp("2022-08-19T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-08-19T23:59:00", tz="UTC")
+        exchange_id = "coinbase"
         currency_pair = "btc/usdt"
         contract_type = "spot"
+        # Mock the returns of the functions.
+        convert_currency_pair_mock.return_value = "btc-usd"
+        build_base_url_mock.return_value = (
+            "https://api.cryptochassis.com/v1/ohlc/coinbase/btc-usd"
+        )
+        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/ohlc/coinbase/btc-usd?startTime=1660852800&endTime=1660939140"
+        response_mock = umock.MagicMock()
+        response_mock.json = lambda: {
+            "recent": {
+                "fields": "time_seconds, open, high, low, close, volume, vwap, number_of_trades, twap",
+                "data": [
+                    [
+                        1660922520,
+                        "21347.98",
+                        "21350.43",
+                        "21333.03",
+                        "21340.22",
+                        "18.51337353",
+                        "21340.4743",
+                        572,
+                        "21341.1172",
+                    ]
+                ],
+            }
+        }
+        requests_mock.get.return_value = response_mock
+        coerce_to_numeric_mock.return_value = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "open": [21347.98],
+                "high": [21350.43],
+                "low": [21333.03],
+                "close": [21340.22],
+                "volume": [18.51337353],
+                "vwap": [21340.4743],
+                "number_of_trades": [572],
+                "twap": [21341.1172],
+            }
+        )
+        #
         client = imvccdexex.CryptoChassisExtractor(contract_type)
         ohlcv_data = client._download_ohlcv(
-            exchange,
-            currency_pair,
-            start_timestamp,
-            end_timestamp,
+            exchange_id, currency_pair, start_timestamp, end_timestamp
         )
-        self.assertEqual(download_ohlcv_mock.call_count, 1)
-        actual_args = tuple(download_ohlcv_mock.call_args)
-        expected_args = (("binance", 
-            ("btc/usdt"), 
-            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
-            (pd.Timestamp("2022-03-09 00:00:00+0000", tz="UTC"))),
-            {},
+        # Test `convert_currency`.
+        self.assertEqual(convert_currency_pair_mock.call_count, 1)
+        actual_args = tuple(convert_currency_pair_mock.call_args)
+        expected_args = (("btc/usdt",), {})
+        self.assertEqual(actual_args, expected_args)
+        # Test `build_base_url`.
+        self.assertEqual(build_base_url_mock.call_count, 1)
+        actual_args = tuple(build_base_url_mock.call_args)
+        expected_args = (
+            (),
+            {
+                "data_type": "ohlc",
+                "exchange": "coinbase",
+                "currency_pair": "btc-usd",
+            },
         )
         self.assertEqual(actual_args, expected_args)
-        actual_output = hpandas.df_to_str(ohlcv_data)
-        expected_output = r"""dummy
-            0  dummy
-        """
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)
-
+        # Test `build_query_url`.
+        self.assertEqual(build_query_url_mock.call_count, 1)
+        actual_args = tuple(build_query_url_mock.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/ohlc/coinbase/btc-usd",),
+            {
+                "endTime": 1660953540,
+                "includeRealTime": "1",
+                "interval": "1m",
+                "startTime": 1660867200,
+            },
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Test `coerce_to_numeric`.
+        self.assertEqual(coerce_to_numeric_mock.call_count, 1)
+        actual_args = tuple(coerce_to_numeric_mock.call_args)
+        # Reproduce the structure of the arguments.
+        exp_arg_df = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "open": ["21347.98"],
+                "high": ["21350.43"],
+                "low": ["21333.03"],
+                "close": ["21340.22"],
+                "volume": ["18.51337353"],
+                "vwap": ["21340.4743"],
+                "number_of_trades": [572],
+                "twap": ["21341.1172"],
+            }
+        )
+        expected_args = (
+            (exp_arg_df,),
+            {"float_columns": ["open", "high", "low", "close", "volume"]},
+        )
+        # Convert Dataframes to string.
+        expected_df_str = hpandas.df_to_str(expected_args[0][0])
+        actual_df_str = hpandas.df_to_str(actual_args[0][0])
+        # Compare Dataframes.
+        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
+        # Compare `float_columns` argument.
+        self.assertEqual(actual_args[1], expected_args[1])
+        # Check final `ohlcv` data.
+        ohlcv_expected = pd.DataFrame(
+            {
+                "timestamp": [1660922520],
+                "open": [21347.98],
+                "high": [21350.43],
+                "low": [21333.03],
+                "close": [21340.22],
+                "volume": [18.51337353],
+                "vwap": [21340.4743],
+                "number_of_trades": [572],
+                "twap": [21341.1172],
+            }
+        )
+        expected_df_str = hpandas.df_to_str(ohlcv_expected)
+        actual_df_str = hpandas.df_to_str(ohlcv_data)
+        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
 
     @umock.patch.object(
         imvccdexex.CryptoChassisExtractor,
-        "_download_ohlcv",
-        spec=imvccdexex.CryptoChassisExtractor._download_ohlcv,
+        "coerce_to_numeric",
+        spec=imvccdexex.CryptoChassisExtractor.coerce_to_numeric,
+    )
+    @umock.patch.object(imvccdexex, "requests", spec=imvccdexex.requests)
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_build_query_url",
+        spec=imvccdexex.CryptoChassisExtractor._build_query_url,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "_build_base_url",
+        spec=imvccdexex.CryptoChassisExtractor._build_base_url,
+    )
+    @umock.patch.object(
+        imvccdexex.CryptoChassisExtractor,
+        "convert_currency_pair",
+        spec=imvccdexex.CryptoChassisExtractor.convert_currency_pair,
     )
     def test_download_ohlcv_futures(
-        self, download_ohlcv_mock: umock.MagicMock
+        self,
+        convert_currency_pair_mock: umock.MagicMock,
+        build_base_url_mock: umock.MagicMock,
+        build_query_url_mock: umock.MagicMock,
+        requests_mock: umock.MagicMock,
+        coerce_to_numeric_mock: umock.MagicMock,
     ) -> None:
         """
-        Verify that `_download_ohlcv` is called properly in `futures` mode.
+        Verify that `_download_ohlcv` is called properly in `spot` mode.
         """
-        download_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
-        start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
-        end_timestamp = pd.Timestamp("2022-03-09T00:00:00", tz="UTC")
-        exchange = "binance"
+        start_timestamp = pd.Timestamp("2022-08-19T00:00:00", tz="UTC")
+        end_timestamp = pd.Timestamp("2022-08-19T23:59:00", tz="UTC")
+        exchange_id = "binance"
         currency_pair = "btc/usdt"
         contract_type = "futures"
+        # Mock the returns of the functions.
+        convert_currency_pair_mock.return_value = "btcusd"
+        build_base_url_mock.return_value = "https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp"
+        build_query_url_mock.return_value = "https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp?startTime=1660852800&endTime=1660939140"
+        response_mock = umock.MagicMock()
+        response_mock.json = lambda: {
+            "recent": {
+                "fields": "time_seconds, open, high, low, close, volume, vwap, number_of_trades, twap",
+                "data": [
+                    [
+                        1660922520,
+                        "21347.98",
+                        "21350.43",
+                        "21333.03",
+                        "21340.22",
+                        "18.51337353",
+                        "21340.4743",
+                        572,
+                        "21341.1172",
+                    ]
+                ],
+            }
+        }
+        requests_mock.get.return_value = response_mock
+        coerce_to_numeric_mock.return_value = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "open": [21347.98],
+                "high": [21350.43],
+                "low": [21333.03],
+                "close": [21340.22],
+                "volume": [18.51337353],
+                "vwap": [21340.4743],
+                "number_of_trades": [572],
+                "twap": [21341.1172],
+            }
+        )
+        #
         client = imvccdexex.CryptoChassisExtractor(contract_type)
         ohlcv_data = client._download_ohlcv(
-            exchange,
-            currency_pair,
-            start_timestamp,
-            end_timestamp,
+            exchange_id, currency_pair, start_timestamp, end_timestamp
         )
-        self.assertEqual(download_ohlcv_mock.call_count, 1)
-        actual_args = tuple(download_ohlcv_mock.call_args)
-        expected_args = (("binance", 
-            ("btc/usdt"), 
-            (pd.Timestamp("2022-01-09 00:00:00+0000", tz="UTC")),
-            (pd.Timestamp("2022-03-09 00:00:00+0000", tz="UTC"))),
-            {},
+        # Test `convert_currency`.
+        self.assertEqual(convert_currency_pair_mock.call_count, 1)
+        actual_args = tuple(convert_currency_pair_mock.call_args)
+        expected_args = (("btc/usdt",), {})
+        self.assertEqual(actual_args, expected_args)
+        # Test `build_base_url`.
+        self.assertEqual(build_base_url_mock.call_count, 1)
+        actual_args = tuple(build_base_url_mock.call_args)
+        expected_args = (
+            (),
+            {
+                "data_type": "ohlc",
+                "exchange": "binance-coin-futures",
+                "currency_pair": "btcusd_perp",
+            },
         )
         self.assertEqual(actual_args, expected_args)
-        actual_output = hpandas.df_to_str(ohlcv_data)
-        expected_output = r"""dummy
-            0  dummy
-        """
-        self.assert_equal(actual_output, expected_output, fuzzy_match=True)        
+        # Test `build_query_url`.
+        self.assertEqual(build_query_url_mock.call_count, 1)
+        actual_args = tuple(build_query_url_mock.call_args)
+        expected_args = (
+            (
+                "https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp",
+            ),
+            {
+                "endTime": 1660953540,
+                "includeRealTime": "1",
+                "interval": "1m",
+                "startTime": 1660867200,
+            },
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Test `coerce_to_numeric`.
+        self.assertEqual(coerce_to_numeric_mock.call_count, 1)
+        actual_args = tuple(coerce_to_numeric_mock.call_args)
+        # Reproduce the structure of the arguments.
+        exp_arg_df = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "open": ["21347.98"],
+                "high": ["21350.43"],
+                "low": ["21333.03"],
+                "close": ["21340.22"],
+                "volume": ["18.51337353"],
+                "vwap": ["21340.4743"],
+                "number_of_trades": [572],
+                "twap": ["21341.1172"],
+            }
+        )
+        expected_args = (
+            (exp_arg_df,),
+            {"float_columns": ["open", "high", "low", "close", "volume"]},
+        )
+        # Convert Dataframes to string.
+        expected_df_str = hpandas.df_to_str(expected_args[0][0])
+        actual_df_str = hpandas.df_to_str(actual_args[0][0])
+        # Compare Dataframes.
+        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
+        # Compare `float_columns` argument.
+        self.assertEqual(actual_args[1], expected_args[1])
+        # Check final `ohlcv` data.
+        ohlcv_expected = pd.DataFrame(
+            {
+                "timestamp": [1660922520],
+                "open": [21347.98],
+                "high": [21350.43],
+                "low": [21333.03],
+                "close": [21340.22],
+                "volume": [18.51337353],
+                "vwap": [21340.4743],
+                "number_of_trades": [572],
+                "twap": [21341.1172],
+            }
+        )
+        expected_df_str = hpandas.df_to_str(ohlcv_expected)
+        actual_df_str = hpandas.df_to_str(ohlcv_data)
+        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
 
     @pytest.mark.skip(reason="CmTask1997 'Too many request errors'.")
     def test_download_ohlcv_invalid_input1(self) -> None:
@@ -361,12 +753,15 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         spec=imvccdexex.CryptoChassisExtractor._download_trades,
     )
     def test_download_trades_spot(
-        self, download_trades_mock: umock.MagicMock,
+        self,
+        download_trades_mock: umock.MagicMock,
     ) -> None:
         """
         Verify that `_download_trade` is called properly in `spot` mode.
         """
-        download_trades_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
+        download_trades_mock.return_value = pd.DataFrame(
+            ["dummy"], columns=["dummy"]
+        )
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "coinbase"
         currency_pair = "btc/usdt"
@@ -377,9 +772,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         )
         self.assertEqual(download_trades_mock.call_count, 1)
         actual_args = tuple(download_trades_mock.call_args)
-        expected_args = ((("coinbase"), 
-            ("btc/usdt")), 
-            {'start_timestamp': pd.Timestamp('2022-01-09 00:00:00+0000', tz='UTC')},
+        expected_args = (
+            (("coinbase"), ("btc/usdt")),
+            {
+                "start_timestamp": pd.Timestamp(
+                    "2022-01-09 00:00:00+0000", tz="UTC"
+                )
+            },
         )
         self.assertEqual(actual_args, expected_args)
         actual_output = hpandas.df_to_str(trades_data)
@@ -387,7 +786,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             0  dummy
         """
         self.assert_equal(actual_output, expected_output, fuzzy_match=True)
-        
+
     @umock.patch.object(
         imvccdexex.CryptoChassisExtractor,
         "_download_trades",
@@ -399,7 +798,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         """
         Verify that `_download_trade` is called properly in `futures` mode.
         """
-        download_trades_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
+        download_trades_mock.return_value = pd.DataFrame(
+            ["dummy"], columns=["dummy"]
+        )
         start_timestamp = pd.Timestamp("2022-01-09T00:00:00", tz="UTC")
         exchange = "coinbase"
         currency_pair = "btc/usdt"
@@ -410,9 +811,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         )
         self.assertEqual(download_trades_mock.call_count, 1)
         actual_args = tuple(download_trades_mock.call_args)
-        expected_args = ((("coinbase"), 
-            ("btc/usdt")), 
-            {'start_timestamp': pd.Timestamp('2022-01-09 00:00:00+0000', tz='UTC')},
+        expected_args = (
+            (("coinbase"), ("btc/usdt")),
+            {
+                "start_timestamp": pd.Timestamp(
+                    "2022-01-09 00:00:00+0000", tz="UTC"
+                )
+            },
         )
         self.assertEqual(actual_args, expected_args)
         actual_output = hpandas.df_to_str(trades_data)
