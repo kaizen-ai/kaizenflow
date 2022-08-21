@@ -244,7 +244,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = str(cm.exception)
         exp = """
         * Failed assertion *
-        Instance '10000' of class 'int' is not a subclass of '<class 'str'>'
+        Instance of '10000' is '<class 'int'>' instead of '<class 'str'>'
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
@@ -259,7 +259,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = str(cm.exception)
         exp = """
         * Failed assertion *
-        Instance '10000' of class 'int' is not a subclass of '<class 'str'>'
+        Instance of '10000' is '<class 'int'>' instead of '<class 'str'>'
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 

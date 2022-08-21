@@ -79,7 +79,12 @@ def get_replayed_time_execute_rt_loop_kwargs(
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> htypes.Kwargs:
     """
-    Return kwargs for a call to `execute_rt_loop` using replayed time.
+    Return kwargs for a call to `execute_with_real_time_loop()` using replayed time.
+
+    Same params as `execute_with_real_time_loop()`
+
+    :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
+        true or simulated seconds
     """
     # TODO(gp): Replace all these with `get_replayed_wall_clock_time()`.
     rt = get_replayed_time(event_loop=event_loop)

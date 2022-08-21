@@ -167,7 +167,8 @@ def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
     timedelta: pd.Timedelta,
-    limit: Optional[int],
+    *,
+    limit: Optional[int] = None,
 ) -> None:
     """
     Save data from a `MarketData` to a CSV file.
@@ -192,12 +193,12 @@ def save_market_data(
         )
     )
     #
-    _LOG.info("Saving ...")
+    _LOG.info("Saving data in '%s' ...", file_name)
     compression = None
     if file_name.endswith(".gz"):
         compression = "gzip"
     rt_df.to_csv(file_name, compression=compression, index=True)
-    _LOG.info("Saving done")
+    _LOG.info("Saving in '%s' done", file_name)
 
 
 def load_market_data(

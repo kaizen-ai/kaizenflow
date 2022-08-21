@@ -53,7 +53,7 @@ async def run_tiled_process_forecasts(
     market_data_tile_dict: Dict[str, Any],
     backtest_tile_dict: Dict[str, Any],
     process_forecasts_dict: Dict[str, Any],
-) -> None:
+) -> oms.Portfolio:
     hdbg.dassert_isinstance(market_data_tile_dict, Dict)
     hdbg.dassert_isinstance(backtest_tile_dict, Dict)
     hdbg.dassert_isinstance(process_forecasts_dict, Dict)
@@ -139,8 +139,8 @@ async def run_tiled_process_forecasts(
             volatility_df,
             portfolio,
             process_forecasts_dict,
-            spread_df,
-            restrictions_df,
+            spread_df=spread_df,
+            restrictions_df=restrictions_df,
         )
         # TODO(Paul): Save `portfolio` state.
     return portfolio

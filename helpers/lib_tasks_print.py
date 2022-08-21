@@ -32,7 +32,7 @@ def print_setup(ctx):  # type: ignore
     """
     Print some configuration variables.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
@@ -49,7 +49,7 @@ def print_tasks(ctx, as_code=False):  # type: ignore
     :param as_code: print as python code so that it can be embed in a
         `from helpers.lib_tasks import ...`
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     func_names = []
     lib_tasks_file_name = os.path.join(

@@ -49,7 +49,7 @@ def lint_check_python_files_in_docker(  # type: ignore
 
     The params have the same meaning as in `_get_files_to_process()`.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     # We allow to filter through the user specified `files`.
     mutually_exclusive = False
@@ -131,7 +131,7 @@ def lint_check_python_files(  # type: ignore
     ]
     docker_cmd_ = " ".join(cmd_line)
     cmd = f'invoke docker_cmd --cmd="{docker_cmd_}"'
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
 
 
 def _parse_linter_output(txt: str) -> str:
@@ -197,11 +197,11 @@ def lint_detect_cycles(  # type: ignore
           the task is run
     :param debug_tool: print the output of the cycle detector
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # Remove the log file.
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
-        hlitauti._run(ctx, cmd)
+        hlitauti.run(ctx, cmd)
     # Prepare the command line.
     docker_cmd_opts = [dir_name]
     if debug_tool:
@@ -216,7 +216,7 @@ def lint_detect_cycles(  # type: ignore
     # because writing to a file succeeds.
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}; exit $PIPESTATUS"
     # Run.
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
 
 
 # pylint: disable=line-too-long
@@ -276,11 +276,11 @@ def lint(  # type: ignore
     :param stage: the image stage to use
     :param out_file_name: name of the file to save the log output in
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # Remove the file.
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
-        hlitauti._run(ctx, cmd)
+        hlitauti.run(ctx, cmd)
     # The available phases are:
     # ```
     # > i lint -f "foobar.py"
@@ -315,7 +315,7 @@ def lint(  # type: ignore
         )
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
-        hlitauti._run(ctx, cmd)
+        hlitauti.run(ctx, cmd)
         return
     if run_entrypoint_and_bash:
         # Run the Docker entrypoint (which configures the environment) and then bash.
@@ -323,7 +323,7 @@ def lint(  # type: ignore
         cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
         cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
         # Run.
-        hlitauti._run(ctx, cmd)
+        hlitauti.run(ctx, cmd)
         return
     if only_format:
         hdbg.dassert_eq(phases, "")
@@ -399,7 +399,7 @@ def lint(  # type: ignore
             cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
             cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
             # Run.
-            hlitauti._run(ctx, cmd)
+            hlitauti.run(ctx, cmd)
     else:
         _LOG.warning("Skipping linter step, as per user request")
     #
@@ -423,7 +423,7 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
 
     The dir needs to be specified to ensure the set-up is correct.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     date = datetime.datetime.now().date()
     date_as_str = date.strftime("%Y%m%d")
@@ -431,4 +431,4 @@ def lint_create_branch(ctx, dry_run=False):  # type: ignore
     # query_yes_no("Are you sure you want to create the branch '{branch_name}'")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
-    hlitauti._run(ctx, cmd, dry_run=dry_run)
+    hlitauti.run(ctx, cmd, dry_run=dry_run)

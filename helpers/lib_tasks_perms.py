@@ -338,7 +338,7 @@ def fix_perms(  # type: ignore
             as the owner ones
     """
     _ = ctx
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     if hserver.is_dev4():
         if action == "all":
