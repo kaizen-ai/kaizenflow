@@ -302,7 +302,7 @@ class Config:
     def mark_read_only(self, value: bool = True) -> None:
         """
         Force a Config object to become read-only.
-        
+
         Note: the read-only mode is applied recursively, i.e. for all sub-configs.
         """
         _LOG.debug("")
