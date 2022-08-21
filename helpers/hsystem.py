@@ -7,6 +7,7 @@ Import as:
 import helpers.hsystem as hsystem
 """
 
+import contextlib
 import getpass
 import logging
 import os
@@ -19,6 +20,7 @@ from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
+import helpers.hlogging as hlogging
 import helpers.hprint as hprint
 
 # This module can depend only on:
@@ -213,8 +215,10 @@ def _system(
     try:
         stdout = subprocess.PIPE
         stderr = subprocess.STDOUT
-        # Only for debug.
+        # We want to print the command line even if this module logging is disabled.
         # print("  ==> cmd=%s" % cmd)
+        with hlogging.set_level(_LOG, logging.DEBUG):
+            _LOG.debug("> %s", cmd)
         with subprocess.Popen(
             cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
         ) as p:
@@ -767,6 +771,25 @@ def find_file_with_dir(
     res = select_result_file_from_list(matching_files, mode)
     _LOG.debug("-> res=%s", str(res))
     return res
+
+
+# https://stackoverflow.com/questions/169070
+@contextlib.contextmanager
+def cd(dir_name: str) -> None:
+    """
+    Context manager managing changing directory.
+    """
+    hdbg.dassert_dir_exists(dir_name)
+    current_dir = os.getcwd()
+    _LOG.debug("Entering ctx manager: " + hprint.to_str("current_dir"))
+    try:
+        os.chdir(dir_name)
+        _LOG.debug("Switched to dir '%s'", os.getcwd())
+        yield
+    finally:
+        _LOG.debug("Switching back to dir '%s'", current_dir)
+        os.chdir(current_dir)
+    _LOG.debug("Exiting ctx manager")
 
 
 # #############################################################################

@@ -49,11 +49,11 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     List images in the logged in repo_short_name.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     docker_login(ctx)
     ecr_base_path = hlitauti.get_default_param("AM_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
-    hlitauti._run(ctx, f"{docker_exec} image ls {ecr_base_path}")
+    hlitauti.run(ctx, f"{docker_exec} image ls {ecr_base_path}")
 
 
 @task
@@ -68,7 +68,7 @@ def docker_ps(ctx, sudo=False):  # type: ignore
     2ece37303ec9  gp    *****....:latest  "./docker_build/entry.sh"  5 seconds ago  Up 4 seconds         user_space
     ```
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # pylint: enable=line-too-long
     fmt = (
         r"""table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}"""
@@ -78,7 +78,7 @@ def docker_ps(ctx, sudo=False):  # type: ignore
     docker_exec = _get_docker_exec(sudo)
     cmd = f"{docker_exec} ps --format='{fmt}'"
     cmd = hlitauti._to_single_line_cmd(cmd)
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
 
 
 def _get_last_container_id(sudo: bool) -> str:
@@ -113,7 +113,7 @@ def docker_stats(  # type: ignore
     :param all: report stats for all the containers
     """
     # pylint: enable=line-too-long
-    hlitauti._report_task(txt=hprint.to_str("all"))
+    hlitauti.report_task(txt=hprint.to_str("all"))
     _ = ctx
     fmt = (
         r"table {{.ID}}\t{{.Name}}\t{{.CPUPerc}}\t{{.MemUsage}}"
@@ -157,7 +157,7 @@ def docker_kill(  # type: ignore
     :param all: kill all the containers (be careful!)
     :param sudo: use sudo for the Docker commands
     """
-    hlitauti._report_task(txt=hprint.to_str("all"))
+    hlitauti.report_task(txt=hprint.to_str("all"))
     docker_exec = _get_docker_exec(sudo)
     # Last container.
     opts = "-l"
@@ -167,10 +167,10 @@ def docker_kill(  # type: ignore
         opts = "-a"
     # Print the containers that will be terminated.
     cmd = f"{docker_exec} ps {opts}"
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
     # Kill.
     cmd = f"{docker_exec} rm -f $({docker_exec} ps {opts} -q)"
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
 
 
 # docker system prune
@@ -225,7 +225,7 @@ def _docker_pull(
     _LOG.info("image='%s'", image)
     _dassert_is_image_name_valid(image)
     cmd = f"docker pull {image}"
-    hlitauti._run(ctx, cmd, pty=True)
+    hlitauti.run(ctx, cmd, pty=True)
 
 
 @task
@@ -233,7 +233,7 @@ def docker_pull(ctx, stage="dev", version=None):  # type: ignore
     """
     Pull latest dev image corresponding to the current repo from the registry.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     base_image = ""
     _docker_pull(ctx, base_image, stage, version)
@@ -244,7 +244,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     """
     Pull latest prod image of `dev_tools` from the registry.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     base_image = hlitauti.get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
@@ -273,7 +273,7 @@ def docker_login(ctx):  # type: ignore
     """
     Log in the AM Docker repo_short_name on AWS.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     if hserver.is_inside_ci():
         _LOG.warning("Running inside GitHub Action: skipping `docker_login`")
         return
@@ -303,7 +303,7 @@ def docker_login(ctx):  # type: ignore
     # TODO(Grisha): fix properly. We pass `ctx` despite the fact that we do not
     #  need it with `use_system=True`, but w/o `ctx` invoke tasks (i.e. ones
     #  with `@task` decorator) do not work.
-    hlitauti._run(ctx, cmd, use_system=True)
+    hlitauti.run(ctx, cmd, use_system=True)
 
 
 # ////////////////////////////////////////////////////////////////////////////////
@@ -1238,7 +1238,7 @@ def _docker_cmd(
     _LOG.info("Pulling the latest version of Docker")
     docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)
-    rc: Optional[int] = hlitauti._run(
+    rc: Optional[int] = hlitauti.run(
         ctx, docker_cmd_, pty=True, **ctx_run_kwargs
     )
     return rc
@@ -1262,7 +1262,7 @@ def docker_bash(  # type: ignore
     :param as_user: pass the user / group id or not
     :param generate_docker_compose_file: generate the Docker compose file or not
     """
-    hlitauti._report_task(container_dir_name=container_dir_name)
+    hlitauti.report_task(container_dir_name=container_dir_name)
     cmd = "bash"
     docker_cmd_ = _get_docker_compose_cmd(
         base_image,
@@ -1295,7 +1295,7 @@ def docker_cmd(  # type: ignore
     :param generate_docker_compose_file: generate or reuse the Docker compose file
     :param use_bash: run command through a shell
     """
-    hlitauti._report_task(container_dir_name=container_dir_name)
+    hlitauti.report_task(container_dir_name=container_dir_name)
     hdbg.dassert_ne(cmd, "")
     # TODO(gp): Do we need to overwrite the entrypoint?
     docker_cmd_ = _get_docker_compose_cmd(
@@ -1359,7 +1359,7 @@ def docker_jupyter(  # type: ignore
     :param auto_assign_port: use the UID of the user and the inferred number of the
         repo (e.g., 4 for `~/src/amp4`) to get a unique port
     """
-    hlitauti._report_task(container_dir_name=container_dir_name)
+    hlitauti.report_task(container_dir_name=container_dir_name)
     if port is None:
         if auto_assign_port:
             uid = os.getuid()

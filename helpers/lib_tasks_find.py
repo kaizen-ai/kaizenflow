@@ -130,7 +130,7 @@ def find_test_class(ctx, class_name, dir_name=".", pbcopy=True, exact_match=Fals
     :param dir_name: the dir from which to search (default: .)
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    hlitauti._report_task(txt="class_name abs_dir pbcopy")
+    hlitauti.report_task(txt="class_name abs_dir pbcopy")
     hdbg.dassert(class_name != "", "You need to specify a class name")
     _ = ctx
     file_names = _find_test_files(dir_name)
@@ -280,7 +280,7 @@ def find(ctx, regex, mode="all", how="remove_dups", subdir="."):  # type: ignore
     :param how: how to report the results
         - `remove_dups`: report only imports and calls that are the same
     """
-    hlitauti._report_task(txt=hprint.to_str("regex mode how subdir"))
+    hlitauti.report_task(txt=hprint.to_str("regex mode how subdir"))
     _ = ctx
     # Process the `where`.
     python_files = _get_python_files(subdir)
@@ -357,7 +357,7 @@ def find_test_decorator(ctx, decorator_name="", dir_name="."):  # type: ignore
     :param decorator_name: the decorator to search
     :param dir_name: the dir from which to search
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     hdbg.dassert_ne(decorator_name, "", "You need to specify a decorator name")
     file_names = _find_test_files(dir_name)
@@ -387,7 +387,7 @@ def find_check_string_output(  # type: ignore
     :param fuzzy_match: if True return Python code with `fuzzy_match=True`
     :param pbcopy: save the result into the system clipboard (only on macOS)
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     hdbg.dassert_ne(class_name, "", "You need to specify a class name")
     hdbg.dassert_ne(method_name, "", "You need to specify a method name")
