@@ -47,7 +47,8 @@ dag_config:
       vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
 dag_builder_object: nid_prefix=
 dag_builder_class: Mock1_DagBuilder
-system_class: Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+system_class: Mock1_Time_ForecastSystem_with_DataFramePortfolio
+system_log_dir: $GIT_ROOT/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio1.test3/tmp.scratch/system_log_dir
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
@@ -86,9 +87,6 @@ research_forecast_evaluator_from_prices:
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
-order_processor_config:
-  max_wait_time_for_order_in_secs: 305
-  duration_in_secs: 6905
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((120, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
 object.str:
@@ -116,7 +114,7 @@ object.str:
       _knowledge_datetime_col_name='timestamp_db' <str>
       _delay_in_secs='5' <int>
   portfolio_object:
-    <oms.portfolio.DatabasePortfolio at 0x>
+    <oms.portfolio.DataFramePortfolio at 0x>
       # historical holdings=
       Empty DataFrame
       Columns: [-1]
@@ -137,7 +135,7 @@ object.str:
       Empty DataFrame
       Columns: [pnl]
       Index: []
-      broker=<oms.broker.DatabaseBroker at 0x>
+      broker=<oms.broker.SimulatedBroker at 0x>
       market_data=<market_data.replayed_market_data.ReplayedMarketData at 0x>
       _account=candidate
       _timestamp_col=end_datetime
@@ -380,15 +378,13 @@ object.str:
       _grid_time_in_secs='300' <int>
       _set_current_bar_timestamp='True' <bool>
       _events='[]' <list>
-  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
 object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   portfolio_object: dataflow_amp.system.mock1.mock1_forecast_system._get_portfolio
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
-  order_processor: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor
 portfolio_object:
-  <oms.portfolio.DatabasePortfolio at 0x>
+  <oms.portfolio.DataFramePortfolio at 0x>
     # historical holdings=
     asset_id                      101      -1
     2000-01-01 09:35:06-05:00    0.00  1.00e+06
@@ -518,7 +514,7 @@ process_forecasts_node_dict:
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DatabasePortfolio at 0x>
+    <oms.portfolio.DataFramePortfolio at 0x>
       # historical holdings=
       asset_id                      101      -1
       2000-01-01 09:35:06-05:00    0.00  1.00e+06
@@ -656,6 +652,7 @@ process_forecasts_node_dict:
           bulk_fill_method: zero
           target_gmv: 100000.0
     execution_mode: real_time
+    log_dir: None
     ath_start_time: 09:30:00
     trading_start_time: 09:30:00
     ath_end_time: 16:40:00
@@ -684,276 +681,3 @@ dag_runner_object:
       2000-01-01 11:30:00-05:00 2000-01-01 11:29:00-05:00 2000-01-01 11:30:00-05:00 2000-01-01 11:30:00-05:00  102.0       101     100       1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
     _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 6900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=8, current_time=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=9, current_time=Timestamp('2000-01-01 10:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=10, current_time=Timestamp('2000-01-01 10:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=11, current_time=Timestamp('2000-01-01 10:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=12, current_time=Timestamp('2000-01-01 10:30:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=13, current_time=Timestamp('2000-01-01 10:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=14, current_time=Timestamp('2000-01-01 10:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=15, current_time=Timestamp('2000-01-01 10:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=16, current_time=Timestamp('2000-01-01 10:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=17, current_time=Timestamp('2000-01-01 10:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=18, current_time=Timestamp('2000-01-01 11:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=19, current_time=Timestamp('2000-01-01 11:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=20, current_time=Timestamp('2000-01-01 11:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=21, current_time=Timestamp('2000-01-01 11:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=22, current_time=Timestamp('2000-01-01 11:20:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=23, current_time=Timestamp('2000-01-01 11:25:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
-order_processor: <coroutine object OrderProcessor.run_loop at 0x>
-################################################################################
-compute_run_signature
-################################################################################
-# event signature=
-
-events_as_str=
-num_it=1 current_time='2000-01-01 09:35:00-05:00'
-num_it=2 current_time='2000-01-01 09:40:00-05:00'
-num_it=3 current_time='2000-01-01 09:45:00-05:00'
-num_it=4 current_time='2000-01-01 09:50:00-05:00'
-num_it=5 current_time='2000-01-01 09:55:00-05:00'
-num_it=6 current_time='2000-01-01 10:00:00-05:00'
-num_it=7 current_time='2000-01-01 10:05:00-05:00'
-num_it=8 current_time='2000-01-01 10:10:00-05:00'
-num_it=9 current_time='2000-01-01 10:15:00-05:00'
-num_it=10 current_time='2000-01-01 10:20:00-05:00'
-num_it=11 current_time='2000-01-01 10:25:00-05:00'
-num_it=12 current_time='2000-01-01 10:30:00-05:00'
-num_it=13 current_time='2000-01-01 10:35:00-05:00'
-num_it=14 current_time='2000-01-01 10:40:00-05:00'
-num_it=15 current_time='2000-01-01 10:45:00-05:00'
-num_it=16 current_time='2000-01-01 10:50:00-05:00'
-num_it=17 current_time='2000-01-01 10:55:00-05:00'
-num_it=18 current_time='2000-01-01 11:00:00-05:00'
-num_it=19 current_time='2000-01-01 11:05:00-05:00'
-num_it=20 current_time='2000-01-01 11:10:00-05:00'
-num_it=21 current_time='2000-01-01 11:15:00-05:00'
-num_it=22 current_time='2000-01-01 11:20:00-05:00'
-num_it=23 current_time='2000-01-01 11:25:00-05:00'
-
-# portfolio signature=
-
-<oms.portfolio.DatabasePortfolio at 0x>
-  # historical holdings=
-  asset_id                      101      -1
-  2000-01-01 09:35:06-05:00    0.00  1.00e+06
-  2000-01-01 09:40:06-05:00 -994.04  1.10e+06
-  2000-01-01 09:45:06-05:00  991.74  8.98e+05
-  2000-01-01 09:50:06-05:00 -980.39  1.10e+06
-  2000-01-01 09:55:06-05:00  991.74  8.97e+05
-  2000-01-01 10:00:06-05:00 -991.74  1.10e+06
-  2000-01-01 10:05:06-05:00  980.39  9.01e+05
-  2000-01-01 10:10:06-05:00 -991.74  1.10e+06
-  2000-01-01 10:15:06-05:00  991.74  8.98e+05
-  2000-01-01 10:20:06-05:00 -980.39  1.10e+06
-  2000-01-01 10:25:06-05:00  991.74  8.97e+05
-  2000-01-01 10:30:06-05:00 -991.74  1.10e+06
-  2000-01-01 10:35:06-05:00  980.39  9.01e+05
-  2000-01-01 10:40:06-05:00 -991.74  1.10e+06
-  2000-01-01 10:45:06-05:00  991.74  8.98e+05
-  2000-01-01 10:50:06-05:00 -980.39  1.10e+06
-  2000-01-01 10:55:06-05:00  991.74  8.97e+05
-  2000-01-01 11:00:06-05:00 -991.74  1.10e+06
-  2000-01-01 11:05:06-05:00  980.39  9.01e+05
-  2000-01-01 11:10:06-05:00 -991.74  1.10e+06
-  2000-01-01 11:15:06-05:00  991.74  8.98e+05
-  2000-01-01 11:20:06-05:00 -980.39  1.10e+06
-  2000-01-01 11:25:06-05:00  991.74  8.97e+05
-  # historical holdings marked to market=
-  asset_id                         101      -1
-  2000-01-01 09:35:06-05:00       0.00  1.00e+06
-  2000-01-01 09:40:06-05:00 -100231.94  1.10e+06
-  2000-01-01 09:45:06-05:00  101157.02  8.98e+05
-  2000-01-01 09:50:06-05:00  -98856.21  1.10e+06
-  2000-01-01 09:55:06-05:00  100000.00  8.97e+05
-  2000-01-01 10:00:06-05:00 -101157.02  1.10e+06
-  2000-01-01 10:05:06-05:00   98856.21  9.01e+05
-  2000-01-01 10:10:06-05:00 -100000.00  1.10e+06
-  2000-01-01 10:15:06-05:00  101157.02  8.98e+05
-  2000-01-01 10:20:06-05:00  -98856.21  1.10e+06
-  2000-01-01 10:25:06-05:00  100000.00  8.97e+05
-  2000-01-01 10:30:06-05:00 -101157.02  1.10e+06
-  2000-01-01 10:35:06-05:00   98856.21  9.01e+05
-  2000-01-01 10:40:06-05:00 -100000.00  1.10e+06
-  2000-01-01 10:45:06-05:00  101157.02  8.98e+05
-  2000-01-01 10:50:06-05:00  -98856.21  1.10e+06
-  2000-01-01 10:55:06-05:00  100000.00  8.97e+05
-  2000-01-01 11:00:06-05:00 -101157.02  1.10e+06
-  2000-01-01 11:05:06-05:00   98856.21  9.01e+05
-  2000-01-01 11:10:06-05:00 -100000.00  1.10e+06
-  2000-01-01 11:15:06-05:00  101157.02  8.98e+05
-  2000-01-01 11:20:06-05:00  -98856.21  1.10e+06
-  2000-01-01 11:25:06-05:00  100000.00  8.97e+05
-  # historical flows=
-  asset_id                         101
-  2000-01-01 09:40:06-05:00  100397.61
-  2000-01-01 09:45:06-05:00 -202548.67
-  2000-01-01 09:50:06-05:00  198396.05
-  2000-01-01 09:55:06-05:00 -199184.90
-  2000-01-01 10:00:06-05:00  202314.05
-  2000-01-01 10:05:06-05:00 -198396.05
-  2000-01-01 10:10:06-05:00  199184.90
-  2000-01-01 10:15:06-05:00 -202314.05
-  2000-01-01 10:20:06-05:00  198396.05
-  2000-01-01 10:25:06-05:00 -199184.90
-  2000-01-01 10:30:06-05:00  202314.05
-  2000-01-01 10:35:06-05:00 -198396.05
-  2000-01-01 10:40:06-05:00  199184.90
-  2000-01-01 10:45:06-05:00 -202314.05
-  2000-01-01 10:50:06-05:00  198396.05
-  2000-01-01 10:55:06-05:00 -199184.90
-  2000-01-01 11:00:06-05:00  202314.05
-  2000-01-01 11:05:06-05:00 -198396.05
-  2000-01-01 11:10:06-05:00  199184.90
-  2000-01-01 11:15:06-05:00 -202314.05
-  2000-01-01 11:20:06-05:00  198396.05
-  2000-01-01 11:25:06-05:00 -199184.90
-  # historical pnl=
-  asset_id                       101
-  2000-01-01 09:35:06-05:00      NaN
-  2000-01-01 09:40:06-05:00   165.67
-  2000-01-01 09:45:06-05:00 -1159.71
-  2000-01-01 09:50:06-05:00 -1617.19
-  2000-01-01 09:55:06-05:00  -328.69
-  2000-01-01 10:00:06-05:00  1157.02
-  2000-01-01 10:05:06-05:00  1617.19
-  2000-01-01 10:10:06-05:00   328.69
-  2000-01-01 10:15:06-05:00 -1157.02
-  2000-01-01 10:20:06-05:00 -1617.19
-  2000-01-01 10:25:06-05:00  -328.69
-  2000-01-01 10:30:06-05:00  1157.02
-  2000-01-01 10:35:06-05:00  1617.19
-  2000-01-01 10:40:06-05:00   328.69
-  2000-01-01 10:45:06-05:00 -1157.02
-  2000-01-01 10:50:06-05:00 -1617.19
-  2000-01-01 10:55:06-05:00  -328.69
-  2000-01-01 11:00:06-05:00  1157.02
-  2000-01-01 11:05:06-05:00  1617.19
-  2000-01-01 11:10:06-05:00   328.69
-  2000-01-01 11:15:06-05:00 -1157.02
-  2000-01-01 11:20:06-05:00 -1617.19
-  2000-01-01 11:25:06-05:00  -328.69
-  # historical statistics=
-                                 pnl  gross_volume  net_volume        gmv        nmv      cash  net_wealth  leverage
-  2000-01-01 09:35:06-05:00      NaN          0.00        0.00       0.00       0.00  1.00e+06    1.00e+06       0.0
-  2000-01-01 09:40:06-05:00   165.67     100397.61  -100397.61  100231.94 -100231.94  1.10e+06    1.00e+06       0.1
-  2000-01-01 09:45:06-05:00 -1159.71     202548.67   202548.67  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 09:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 09:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-  2000-01-01 10:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-  2000-01-01 10:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-  2000-01-01 10:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-  2000-01-01 10:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 10:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 10:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-  2000-01-01 10:30:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-  2000-01-01 10:35:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-  2000-01-01 10:40:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-  2000-01-01 10:45:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 10:50:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 10:55:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-  2000-01-01 11:00:06-05:00  1157.02     202314.05  -202314.05  101157.02 -101157.02  1.10e+06    9.98e+05       0.1
-  2000-01-01 11:05:06-05:00  1617.19     198396.05   198396.05   98856.21   98856.21  9.01e+05    1.00e+06       0.1
-  2000-01-01 11:10:06-05:00   328.69     199184.90  -199184.90  100000.00 -100000.00  1.10e+06    1.00e+06       0.1
-  2000-01-01 11:15:06-05:00 -1157.02     202314.05   202314.05  101157.02  101157.02  8.98e+05    9.99e+05       0.1
-  2000-01-01 11:20:06-05:00 -1617.19     198396.05  -198396.05   98856.21  -98856.21  1.10e+06    9.97e+05       0.1
-  2000-01-01 11:25:06-05:00  -328.69     199184.90   199184.90  100000.00  100000.00  8.97e+05    9.97e+05       0.1
-
-# forecast_evaluator_from_prices signature=
-
-# holdings=
-                              101
-end_datetime
-2000-01-01 10:05:00-05:00  980.39
-2000-01-01 10:10:00-05:00 -994.04
-2000-01-01 10:15:00-05:00  990.10
-2000-01-01 10:20:00-05:00 -980.39
-2000-01-01 10:25:00-05:00  994.04
-2000-01-01 10:30:00-05:00 -990.10
-2000-01-01 10:35:00-05:00  980.39
-2000-01-01 10:40:00-05:00 -994.04
-2000-01-01 10:45:00-05:00  990.10
-2000-01-01 10:50:00-05:00 -980.39
-2000-01-01 10:55:00-05:00  994.04
-2000-01-01 11:00:00-05:00 -990.10
-2000-01-01 11:05:00-05:00  980.39
-2000-01-01 11:10:00-05:00 -994.04
-2000-01-01 11:15:00-05:00  990.10
-2000-01-01 11:20:00-05:00 -980.39
-2000-01-01 11:25:00-05:00  994.04
-# holdings marked to market=
-                                 101
-end_datetime
-2000-01-01 10:05:00-05:00   98627.45
-2000-01-01 10:10:00-05:00 -100397.61
-2000-01-01 10:15:00-05:00  100990.10
-2000-01-01 10:20:00-05:00  -98627.45
-2000-01-01 10:25:00-05:00  100397.61
-2000-01-01 10:30:00-05:00 -100990.10
-2000-01-01 10:35:00-05:00   98627.45
-2000-01-01 10:40:00-05:00 -100397.61
-2000-01-01 10:45:00-05:00  100990.10
-2000-01-01 10:50:00-05:00  -98627.45
-2000-01-01 10:55:00-05:00  100397.61
-2000-01-01 11:00:00-05:00 -100990.10
-2000-01-01 11:05:00-05:00   98627.45
-2000-01-01 11:10:00-05:00 -100397.61
-2000-01-01 11:15:00-05:00  100990.10
-2000-01-01 11:20:00-05:00  -98627.45
-2000-01-01 11:25:00-05:00  100397.61
-# flows=
-                                 101
-end_datetime
-2000-01-01 10:05:00-05:00 -198231.41
-2000-01-01 10:10:00-05:00  199417.22
-2000-01-01 10:15:00-05:00 -202381.75
-2000-01-01 10:20:00-05:00  198231.41
-2000-01-01 10:25:00-05:00 -199417.22
-2000-01-01 10:30:00-05:00  202381.75
-2000-01-01 10:35:00-05:00 -198231.41
-2000-01-01 10:40:00-05:00  199417.22
-2000-01-01 10:45:00-05:00 -202381.75
-2000-01-01 10:50:00-05:00  198231.41
-2000-01-01 10:55:00-05:00 -199417.22
-2000-01-01 11:00:00-05:00  202381.75
-2000-01-01 11:05:00-05:00 -198231.41
-2000-01-01 11:10:00-05:00  199417.22
-2000-01-01 11:15:00-05:00 -202381.75
-2000-01-01 11:20:00-05:00  198231.41
-2000-01-01 11:25:00-05:00 -199417.22
-# pnl=
-                               101
-end_datetime
-2000-01-01 10:05:00-05:00  1386.14
-2000-01-01 10:10:00-05:00   392.16
-2000-01-01 10:15:00-05:00  -994.04
-2000-01-01 10:20:00-05:00 -1386.14
-2000-01-01 10:25:00-05:00  -392.16
-2000-01-01 10:30:00-05:00   994.04
-2000-01-01 10:35:00-05:00  1386.14
-2000-01-01 10:40:00-05:00   392.16
-2000-01-01 10:45:00-05:00  -994.04
-2000-01-01 10:50:00-05:00 -1386.14
-2000-01-01 10:55:00-05:00  -392.16
-2000-01-01 11:00:00-05:00   994.04
-2000-01-01 11:05:00-05:00  1386.14
-2000-01-01 11:10:00-05:00   392.16
-2000-01-01 11:15:00-05:00  -994.04
-2000-01-01 11:20:00-05:00 -1386.14
-2000-01-01 11:25:00-05:00  -392.16
-# statistics=
-                               pnl  gross_volume  net_volume        gmv        nmv
-end_datetime
-2000-01-01 10:05:00-05:00  1386.14     198231.41   198231.41   98627.45   98627.45
-2000-01-01 10:10:00-05:00   392.16     199417.22  -199417.22  100397.61 -100397.61
-2000-01-01 10:15:00-05:00  -994.04     202381.75   202381.75  100990.10  100990.10
-2000-01-01 10:20:00-05:00 -1386.14     198231.41  -198231.41   98627.45  -98627.45
-2000-01-01 10:25:00-05:00  -392.16     199417.22   199417.22  100397.61  100397.61
-2000-01-01 10:30:00-05:00   994.04     202381.75  -202381.75  100990.10 -100990.10
-2000-01-01 10:35:00-05:00  1386.14     198231.41   198231.41   98627.45   98627.45
-2000-01-01 10:40:00-05:00   392.16     199417.22  -199417.22  100397.61 -100397.61
-2000-01-01 10:45:00-05:00  -994.04     202381.75   202381.75  100990.10  100990.10
-2000-01-01 10:50:00-05:00 -1386.14     198231.41  -198231.41   98627.45  -98627.45
-2000-01-01 10:55:00-05:00  -392.16     199417.22   199417.22  100397.61  100397.61
-2000-01-01 11:00:00-05:00   994.04     202381.75  -202381.75  100990.10 -100990.10
-2000-01-01 11:05:00-05:00  1386.14     198231.41   198231.41   98627.45   98627.45
-2000-01-01 11:10:00-05:00   392.16     199417.22  -199417.22  100397.61 -100397.61
-2000-01-01 11:15:00-05:00  -994.04     202381.75   202381.75  100990.10  100990.10
-2000-01-01 11:20:00-05:00 -1386.14     198231.41  -198231.41   98627.45  -98627.45
-2000-01-01 11:25:00-05:00  -392.16     199417.22   199417.22  100397.61  100397.61
-
-# pnl agreement with research pnl
-
-corr = 0.997
-corr_samples = 10
-################################################################################
-system_log_dir signature
-################################################################################
-# Dir structure
-.
-system_config.input.txt
-system_config.output.txt
