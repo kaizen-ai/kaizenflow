@@ -627,6 +627,14 @@ def query_yes_no(question: str, abort_on_no: bool = True) -> bool:
     return ret
 
 
+def press_enter_to_continue(question: str = "") -> None:
+    hdbg.dassert_isinstance(question, str)
+    if not question:
+        question = "Press Enter to continue..."
+    sys.stdout.write(question)
+    _ = input()
+
+
 # #############################################################################
 # Functions similar to Linux commands.
 # #############################################################################
