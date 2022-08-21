@@ -601,7 +601,6 @@ def apply_dag_runner_config_for_crypto(
     return system
 
 
-# TODO(Grisha): @GP use this on the other side instead of `apply_dag_runner_config`.
 def apply_dag_runner_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:

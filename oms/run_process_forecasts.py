@@ -54,7 +54,7 @@ def get_market_data_tile_dict() -> Dict[str, Any]:
         "start_time_col": "start_time",
         "end_time_col": "end_time",
     }
-    return config
+    return dict_
 
 
 def get_backtest_tile_dict() -> Dict[str, Any]:
