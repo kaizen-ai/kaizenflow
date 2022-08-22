@@ -297,7 +297,9 @@ def _get_Cx_dag_prod_instance1(
     )
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Convert to a dict to pass further after the ath/trading hours are applied.
-    updated_process_forecasts_node_dict = system.config["process_forecasts_node_dict"].to_dict()
+    updated_process_forecasts_node_dict = system.config[
+        "process_forecasts_node_dict"
+    ].to_dict()
     # Assemble.
     market_data = system.market_data
     market_data_history_lookback = system.config[
