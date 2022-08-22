@@ -18,6 +18,7 @@ import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
+import helpers.lib_tasks_gh as hlitagh
 import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
@@ -53,7 +54,7 @@ _LOG = logging.getLogger(__name__)
 #
 # - Align `lib_tasks.py`:
 #   ```
-#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; vimdiff ~/src/{amp1,cmamp1}/helpers/lib_tasks.py
+#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
 #   ```
 #
 # - Create the integration branches
@@ -93,34 +94,50 @@ _LOG = logging.getLogger(__name__)
 #   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
 #   ```
 #
+# - Remove empty files:
+#   ```
+#   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
+#   ```
+#
 
 # ## Integration
 #
-# - Check what files were modified since the last integration in each fork:
+# 1) Check what files were modified since the last integration in each fork:
 #   ```
 #   > i integrate_files --file-direction common_files
 #   > i integrate_files --file-direction only_files_in_src
 #   > i integrate_files --file-direction only_files_in_dst
 #   ```
 #
-# - Look for directory touched on only one branch:
+# 2) Look for directory touched on only one branch:
 #   ```
 #   > i integrate_files --file-direction common_files --mode "print_dirs"
 #   > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
 #   > i integrate_files --file-direction only_files_in_dst --mode "print_dirs"
 #   ```
-# - If we find dirs that are touched in one branch but not in the other
-#   we can copy / merge without running risks
+# - If we find dirs that are touched in one branch but not in the other we can
+#   copy / merge without running risks
 #   ```
 #   > i integrate_diff_dirs --subdir $SUBDIR -c
 #   ```
 #
-# - Check which files are different between the dirs:
+# 3) Check which change was made in each side since the last integration
+#    ```
+#    # Find the integration point:
+#    > i integrate_files --file-direction common_files
+#    ...
+#    last_integration_hash='813c7e763'
+#
+#    # Diff the changes in each side from the integration point:
+#    > i git_branch_diff_with -t hash -h 813c7e763 -f ...
+#    ```
+#
+# 4) Check which files are different between the dirs:
 #   ```
 #   > i integrate_diff_dirs
 #   ```
 #
-# - Diff dir by dir
+# 5) Diff dir by dir
 #   ```
 #   > i integrate_diff_dirs --subdir dataflow/system
 #   ```
@@ -128,11 +145,6 @@ _LOG = logging.getLogger(__name__)
 # - Copy by dir
 #   ```
 #   > i integrate_diff_dirs --subdir market_data -c
-#   ```
-#
-# - Remove the empty files
-#   ```
-#   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
 #   ```
 #
 # - Copy a dir
@@ -159,9 +171,9 @@ _LOG = logging.getLogger(__name__)
 # - Quickly scan all the changes in the branch compared to the base
 #   ```
 #   > cd amp1
-#   > i git_branch_diff_with_base
+#   > i git_branch_diff_with -t base
 #   > cd cmamp1
-#   > i git_branch_diff_with_base
+#   > i git_branch_diff_with -t base
 #   ```
 
 
@@ -238,9 +250,11 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     :param dir_basename: specify the dir name (e.g., `amp1`) to ensure the set-up is
         correct.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # Check that the current dir has the name `dir_basename`.
     _dassert_current_dir_matches(dir_basename)
+    # Login in GitHub.
+    hlitagh.gh_login()
     # Create the integration branch with the current date, e.g.,
     # `AmpTask1786_Integrate_20211231`.
     date = datetime.datetime.now().date()
@@ -249,7 +263,7 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     # query_yes_no("Are you sure you want to create the branch ")
     _LOG.info("Creating branch '%s'", branch_name)
     cmd = f"invoke git_create_branch -b '{branch_name}'"
-    hlitauti._run(ctx, cmd, dry_run=dry_run)
+    hlitauti.run(ctx, cmd, dry_run=dry_run)
 
 
 # //////////////////////////////////////////////////////////////////////////////
@@ -317,7 +331,7 @@ def integrate_diff_dirs(  # type: ignore
     :param dry_run: do not execute the commands
     """
     _ = ctx
-    hlitauti._report_task()
+    hlitauti.report_task()
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
         _LOG.warning(
@@ -372,7 +386,7 @@ def integrate_diff_dirs(  # type: ignore
                 cmd += f" --ignore_files='{regex}'"
     # We need to use `system` to get vimdiff to connect to stdin and stdout.
     if not dry_run:
-        #hlitauti._run(ctx, cmd, dry_run=dry_run, print_cmd=True)
+        #hlitauti.run(ctx, cmd, dry_run=dry_run, print_cmd=True)
         os.system(cmd)
 
 
@@ -458,7 +472,7 @@ def integrate_find_files_touched_since_last_integration(  # type: ignore
     """
     Print the list of files modified since the last integration for this dir.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     abs_dir = os.getcwd()
     _ = ctx
     files = _find_files_touched_since_last_integration(abs_dir, subdir)
@@ -549,7 +563,7 @@ def integrate_files(  # type: ignore
     :param only_different_files: consider only the files that are different among
         the branches
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     if reverse:
         src_dir_basename, dst_dir_basename = dst_dir_basename, src_dir_basename
@@ -652,7 +666,7 @@ def integrate_find_files(  # type: ignore
     Find the files that are touched in the current branch since last
     integration.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     #
     abs_src_dir = "."
@@ -677,7 +691,7 @@ def integrate_diff_overlapping_files(  # type: ignore
     This is used to check what changes were made to files modified by
     both branches.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     # Check that the integration branches are in the expected state.
     _dassert_current_dir_matches(src_dir_basename)

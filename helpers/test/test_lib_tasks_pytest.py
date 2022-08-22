@@ -228,11 +228,13 @@ class Test_build_run_command_line1(hunitest.TestCase):
 
 class Test_pytest_repro1(hunitest.TestCase):
     def helper(self, file_name: str, mode: str, exp: List[str]) -> None:
+        script_name = os.path.join(self.get_scratch_space(), "tmp.pytest_repro.sh")
         ctx = httestlib._build_mock_context_returning_ok()
         act = hlitapyt.pytest_repro(
             ctx,
             mode=mode,
             file_name=file_name,
+            script_name=script_name
         )
         hdbg.dassert_isinstance(act, str)
         exp = "\n".join(["pytest " + x for x in exp])
@@ -377,7 +379,7 @@ class Test_pytest_repro1(hunitest.TestCase):
         # pylint: enable=line-too-long
         self.helper(file_name, mode, exp)
 
-    # #########################################################################
+    # ////////////////////////////////////////////////////////////////////////////
 
     def _build_pytest_filehelper(self, txt: str) -> str:
         txt = hprint.dedent(txt)
@@ -465,6 +467,9 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
     """
 
     def helper(self, cmd: str) -> None:
+        # Save output in tmp dir.
+        script_name = os.path.join(self.get_scratch_space(), "tmp.pytest_repro.sh")
+        cmd += f" --script-name {script_name}"
         # Run the command.
         _, act = hsystem.system_to_string(cmd)
         # Modify the outcome for reproducibility.
@@ -483,32 +488,43 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         lines_test_output = lines[test_output_start:]
         act = "\n".join([line_cmd] + lines_test_output)
         # Check the outcome.
-        self.check_string(act)
+        self.check_string(act, purify_text=True)
 
     def test1(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/cache/lastfailed'"
+        file_name = f"{self.get_input_dir()}/cache/lastfailed"
+        cmd = f"invoke pytest_repro --file-name='{file_name}'"
         self.helper(cmd)
 
     def test2(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        """
+        The tests are different since the input depends on the test and it's
+        different for different tests.
+        """
+        file_name = f"{self.get_input_dir()}/log.txt"
+        cmd = f"invoke pytest_repro --file-name='{file_name}'"
         self.helper(cmd)
 
     def test3(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt'"
+        file_name = f"{self.get_input_dir()}/log.txt"
+        cmd = f"invoke pytest_repro --file-name='{file_name}'"
         self.helper(cmd)
 
     def test4(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        file_name = f"{self.get_input_dir()}/log.txt"
+        cmd = f"invoke pytest_repro --file-name='{file_name}' --show-stacktrace"
         self.helper(cmd)
 
     def test5(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        file_name = f"{self.get_input_dir()}/log.txt"
+        cmd = f"invoke pytest_repro --file-name='{file_name}' --show-stacktrace"
         self.helper(cmd)
 
     def test6(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        file_name = f"{self.get_input_dir()}/log.txt"
+        cmd = f"invoke pytest_repro --file-name='{file_name}' --show-stacktrace"
         self.helper(cmd)
 
     def test7(self) -> None:
-        cmd = f"invoke pytest_repro --file-name='{self.get_input_dir()}/log.txt' --show-stacktrace"
+        file_name = f"{self.get_input_dir()}/log.txt"
+        cmd = f"invoke pytest_repro --file-name='{file_name}' --show-stacktrace"
         self.helper(cmd)

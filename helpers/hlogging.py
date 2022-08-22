@@ -5,6 +5,7 @@ import helpers.hlogging as hloggin
 """
 
 import asyncio
+import contextlib
 import copy
 import datetime
 import logging
@@ -38,6 +39,8 @@ def get_user_name() -> str:
     return res
 
 
+# #############################################################################
+# Memory usage
 # #############################################################################
 
 # TODO(gp): Consider moving to hmemory.py
@@ -690,3 +693,17 @@ def set_v2_formatter(
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
     return formatter
+
+
+@contextlib.contextmanager
+def set_level(logger: Any, level: int) -> None:
+    """
+    Context manager changing the verbosity level.
+    """
+    previous_level = logger.getEffectiveLevel()
+    try:
+        logger.setLevel(level)
+        yield
+    finally:
+        logger.setLevel(previous_level)
+    assert logger.getEffectiveLevel() == previous_level

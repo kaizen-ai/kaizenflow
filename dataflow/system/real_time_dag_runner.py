@@ -18,6 +18,7 @@ import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,6 +47,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
         wake_up_timestamp: Optional[pd.Timestamp] = None,
         grid_time_in_secs: Optional[int] = None,
+        set_current_bar_timestamp: bool = True,
     ) -> None:
         """
         Build object.
@@ -55,6 +57,9 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         :param wake_up_timestamp: timestamp to wait to start the execution (e.g.,
             9:30am)
         :param grid_time_in_secs: duration of a bar (e.g., 5 mins = 300 secs)
+        :param set_current_bar_timestamp: True if we need to set the timestamp
+            of the bar. It requires grid_time_in_secs to be a multiple of 60 secs,
+            since for now we support only bars that last a multiple of one minute.
         """
         super().__init__(dag)
         # Save input parameters.
@@ -66,6 +71,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         self._get_wall_clock_time = get_wall_clock_time
         self._wake_up_timestamp = wake_up_timestamp
         self._grid_time_in_secs = grid_time_in_secs
+        self._set_current_bar_timestamp = set_current_bar_timestamp
         # Store information about the real-time execution.
         self._events: creatime.Events = []
 
@@ -73,15 +79,14 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         """
         Wait until `wake_up_timestamp` in config (e.g., 9:45am).
         """
-        get_wall_clock_time = self._get_wall_clock_time
         # The system should come up sometime before the first bar (e.g., around
         # 9:37am ET) and then we align to the next trading bar.
-        curr_timestamp = get_wall_clock_time()
+        curr_timestamp = self._get_wall_clock_time()
         _LOG.info("Current time=%s", curr_timestamp)
         wake_up_timestamp = self._wake_up_timestamp
         _LOG.info("Waiting until session start at %s ...", wake_up_timestamp)
-        await hasynci.async_wait_until(wake_up_timestamp, get_wall_clock_time)
-        curr_timestamp = get_wall_clock_time()
+        await hasynci.async_wait_until(wake_up_timestamp, self._get_wall_clock_time)
+        curr_timestamp = self._get_wall_clock_time()
         _LOG.info(
             "Current time=%s: session started at %s",
             curr_timestamp,
@@ -125,8 +130,8 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             _LOG.info("fit_state=\n%s", str(fit_state))
         # Wait until time to start trading.
         if self._wake_up_timestamp is not None:
-            # TODO(gp): Add a check to make sure that all the params
-            # are set up consistently.
+            # TODO(gp): Add a check to make sure that all the params are set up
+            #  consistently.
             await self.wait_for_start_trading()
         # Align on the bar.
         await self.align_on_grid()
