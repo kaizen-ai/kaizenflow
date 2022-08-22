@@ -6,19 +6,16 @@ replace_text.py \
   --old "cconfig.get_config_from_nested_dict" \
   --new "cconfig.Config.from_dict" \
   --exclude_files $script_name \
-  --preview
 
 replace_text.py \
   --old "cfgb.get_config_from_nested_dict" \
   --new "cconfig.Config.from_dict" \
   --exclude_files $script_name \
-  --preview
 
 replace_text.py \
   --old "ccocouti.get_config_from_nested_dict" \
   --new "cconfig.Config.from_dict" \
   --exclude_files $script_name \
-  --preview
 
 # Remove unused imports from affected files.
 invoke lint -m --only-format
