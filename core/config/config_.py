@@ -27,8 +27,11 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
+# Mute this module unless we want to debug it.
+_LOG.setLevel(logging.INFO)
+
 # Disable _LOG.debug.
-_LOG.debug = lambda *_: 0
+#_LOG.debug = lambda *_: 0
 
 # Enable or disable _LOG.verb_debug
 # _LOG.verb_debug = lambda *_: 0
@@ -37,6 +40,8 @@ _LOG.debug = lambda *_: 0
 
 # Placeholder value used in configs, when configs are built in multiple phases.
 DUMMY = "__DUMMY__"
+
+_NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
 
 
 class Config:
@@ -254,10 +259,11 @@ class Config:
         for path, val in flattened.items():
             self.__setitem__(path, val)
 
+    # This is similar to `hdict.typed_get()`.
     def get(
         self,
         key: Key,
-        default_value: Optional[Any] = "__impossible_value__",
+        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
         expected_type: Optional[Any] = None,
     ) -> Any:
         """
@@ -277,14 +283,13 @@ class Config:
             _LOG.debug("e=%s", e)
             # We can't use None since None can be a valid default value, so we use
             # another value.
-            if default_value != "__impossible_value__":
+            if default_value != _NO_VALUE_SPECIFIED:
                 ret = default_value
             else:
                 # No default value found, then raise.
                 raise e
         if expected_type is not None:
-            if ret is not None:
-                hdbg.dassert_issubclass(ret, expected_type)
+            hdbg.dassert_isinstance(ret, expected_type)
         return ret
 
     def pop(self, key: str) -> Any:
@@ -302,14 +307,14 @@ class Config:
     def mark_read_only(self, value: bool = True) -> None:
         """
         Force a Config object to become read-only.
+
+        Note: the read-only mode is applied recursively, i.e. for all sub-configs.
         """
         _LOG.debug("")
         self._read_only = value
-        # TODO(gp): Make read_only recursive. Add unit tests.
-        # for v in self._config.values():
-        #     if isinstance(v, Config):
-        #         v.mark_read_only()
-        #         assert 0
+        for v in self._config.values():
+            if isinstance(v, Config):
+                v.mark_read_only(value)
 
     # /////////////////////////////////////////////////////////////////////////////
     # From / to functions.

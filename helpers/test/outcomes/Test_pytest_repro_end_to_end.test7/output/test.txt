@@ -1,7 +1,7 @@
-INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt --show-stacktrace'
-## pytest_repro: 
-HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading file_name='/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
-HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading failed tests from file '/app/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
+INFO: > cmd='/venv/bin/invoke pytest_repro --file-name=$GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt --show-stacktrace --script-name $GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/tmp.scratch/tmp.pytest_repro.sh'
+## pytest_repro:
+HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading file_name='$GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
+HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Reading failed tests from file '$GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/input/log.txt'
 HH:MM:SS - INFO  lib_tasks_pytest.py pytest_repro:{LINE_NUM}                   Found 3 failed pytest 'tests' target(s); to reproduce run:
 pytest dataflow/system/example1/test/test_example1_forecast_system.py::Test_Example1_ForecastSystem_FitPredict::test_fit_over_backtest_period1
 pytest dataflow/system/example1/test/test_example1_forecast_system.py::Test_Example1_ForecastSystem_FitPredict::test_fit_over_period1
@@ -9,15 +9,15 @@ pytest helpers/test/test_lib_tasks.py::TestDryRunTasks1::test_git_clean
 
 # TestDryRunTasks1.test_git_clean
 Traceback (most recent call last):
-  File "/app/helpers/test/test_lib_tasks.py", line 189, in test_git_clean
+  File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 189, in test_git_clean
     self.dry_run(target)
-  File "/app/helpers/test/test_lib_tasks.py", line 170, in dry_run
+  File "$GIT_ROOT/helpers/test/test_lib_tasks.py", line 170, in dry_run
     self.check_string(act)
-  File "/app/helpers/hunit_test.py", line 1266, in check_string
+  File "$GIT_ROOT/helpers/hunit_test.py", line 1266, in check_string
     is_equal = assert_equal(
-  File "/app/helpers/hunit_test.py", line 881, in assert_equal
+  File "$GIT_ROOT/helpers/hunit_test.py", line 881, in assert_equal
     diff_files(
-  File "/app/helpers/hunit_test.py", line 586, in diff_files
+  File "$GIT_ROOT/helpers/hunit_test.py", line 586, in diff_files
     raise RuntimeError(msg_as_str)
 RuntimeError:
 --------------------------------------------------------------------------------
@@ -45,15 +45,15 @@ find . -name '*\.pyc' -o -name '*\.pyo' -o -name '.coverage' -o -name '.ipynb_ch
 
 # Test_Example1_ForecastSystem_FitPredict.test_fit_over_backtest_period1
 Traceback (most recent call last):
-  File "/app/dataflow/system/example1/test/test_example1_forecast_system.py", line 50, in test_fit_over_backtest_period1
+  File "$GIT_ROOT/dataflow/system/example1/test/test_example1_forecast_system.py", line 50, in test_fit_over_backtest_period1
     self._test_fit_over_backtest_period1(system, output_col_name)
-  File "/app/dataflow/system/system_tester.py", line 114, in _test_fit_over_backtest_period1
+  File "$GIT_ROOT/dataflow/system/system_tester.py", line 114, in _test_fit_over_backtest_period1
     self.check_string(actual, fuzzy_match=True, purify_text=True)
-  File "/app/helpers/hunit_test.py", line 1266, in check_string
+  File "$GIT_ROOT/helpers/hunit_test.py", line 1266, in check_string
     is_equal = assert_equal(
-  File "/app/helpers/hunit_test.py", line 881, in assert_equal
+  File "$GIT_ROOT/helpers/hunit_test.py", line 881, in assert_equal
     diff_files(
-  File "/app/helpers/hunit_test.py", line 586, in diff_files
+  File "$GIT_ROOT/helpers/hunit_test.py", line 586, in diff_files
     raise RuntimeError(msg_as_str)
 RuntimeError:
 --------------------------------------------------------------------------------
@@ -221,15 +221,15 @@ end_ts
 
 # Test_Example1_ForecastSystem_FitPredict.test_fit_over_period1
 Traceback (most recent call last):
-  File "/app/dataflow/system/example1/test/test_example1_forecast_system.py", line 57, in test_fit_over_period1
+  File "$GIT_ROOT/dataflow/system/example1/test/test_example1_forecast_system.py", line 57, in test_fit_over_period1
     self._test_fit_over_period1(
-  File "/app/dataflow/system/system_tester.py", line 137, in _test_fit_over_period1
+  File "$GIT_ROOT/dataflow/system/system_tester.py", line 137, in _test_fit_over_period1
     self.check_string(actual, fuzzy_match=True, purify_text=True)
-  File "/app/helpers/hunit_test.py", line 1266, in check_string
+  File "$GIT_ROOT/helpers/hunit_test.py", line 1266, in check_string
     is_equal = assert_equal(
-  File "/app/helpers/hunit_test.py", line 881, in assert_equal
+  File "$GIT_ROOT/helpers/hunit_test.py", line 881, in assert_equal
     diff_files(
-  File "/app/helpers/hunit_test.py", line 586, in diff_files
+  File "$GIT_ROOT/helpers/hunit_test.py", line 586, in diff_files
     raise RuntimeError(msg_as_str)
 RuntimeError:
 --------------------------------------------------------------------------------
@@ -396,4 +396,4 @@ end_ts
 """
 
 # To run the tests:
-> ./tmp.pytest_repro.sh
+> $GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test7/tmp.scratch/tmp.pytest_repro.sh

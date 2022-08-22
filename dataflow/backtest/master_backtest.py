@@ -19,6 +19,7 @@ import dataflow.system as dtfsys
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
+import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -74,40 +75,76 @@ def _get_single_system_config(
 def run_tiled_rolling_backtest(
     system_config_list: dtfsys.SystemConfigList,
 ) -> None:
+    """
+    The output looks like:
+
+    ```
+    > find build_tile_configs.E8f.eg_v2_0-top3.5T.2020-01-01_2020-03-01.run1/ | sort
+    build_tile_configs.run1/
+    build_tile_configs.run1/fit_results
+    build_tile_configs.run1/fit_results/fit_0_20191208_000000
+    build_tile_configs.run1/fit_results/fit_0_20191208_000000/fit_result_df.parquet
+    build_tile_configs.run1/fit_results/fit_0_20191208_000000/fit_result_df.pq
+    build_tile_configs.run1/fit_results/fit_0_20191208_000000/fit_state.json
+    build_tile_configs.run1/fit_results/fit_0_20191208_000000/fit_state.pkl
+    build_tile_configs.run1/fit_results/fit_1_20191215_000000
+    build_tile_configs.run1/fit_results/fit_1_20191215_000000/fit_result_df.parquet
+    ...
+    build_tile_configs.run1/result_0
+    build_tile_configs.run1/result_0/config.pkl
+    build_tile_configs.run1/result_0/config.txt
+    build_tile_configs.run1/result_0/run_config_list.0.log
+    build_tile_configs.run1/tiled_results
+    build_tile_configs.run1/tiled_results/egid=10025
+    build_tile_configs.run1/tiled_results/egid=10025/year=2020
+    build_tile_configs.run1/tiled_results/egid=10025/year=2020/month=1
+    build_tile_configs.run1/tiled_results/egid=10025/year=2020/month=1/data.parquet
+    ...
+    ```
+    """
     system = _get_single_system_config(system_config_list)
     #
-    system.config["backtest_config", "retraining_freq"] = "7D"
+    system.config["backtest_config", "retraining_freq"] = "1W"
     system.config["backtest_config", "retraining_lookback"] = 3
     # Build the dag runner.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.RollingFitPredictDagRunner)
-
-    # This loop corresponds to evaluating the model on a tile, but it's done in chunks
-    # to do fit / predict.
+    dst_dir = os.path.join(system.config["backtest_config", "dst_dir"], "fit_results")
+    # This loop corresponds to evaluating the model on a tile, but it's done in
+    # chunks to do fit / predict.
     pred_rbs = []
-    for training_datetime_str, fit_rb, pred_rb in dag_runner.fit_predict():
-        _LOG.debug(hprint.to_str("training_datetime_str"))
-        # fit_rb.payload = payload
-        # dtfbaexuti.save_experiment_result_bundle(
-        #     config,
-        #     fit_rb,
-        #     file_name="fit_result_bundle_" + training_datetime_str + ".pkl",
-        # )
-        # pred_rb.payload = payload
-        # dtfbaexuti.save_experiment_result_bundle(
-        #     config,
-        #     pred_rb,
-        #     file_name="predict_result_bundle_" + training_datetime_str + ".pkl",
-        # )
+    for idx, data in enumerate(dag_runner.fit_predict()):
+        training_datetime_str, fit_rb, pred_rb = data
+        _LOG.debug(hprint.to_str("idx training_datetime_str"))
         _LOG.debug("fit_rb=\n%s", str(fit_rb))
         _LOG.debug("pred_rb=\n%s", str(pred_rb))
+        # After each training session, we want to save all the info from training
+        # and the model stats (including weights) into an extra directory.
+        # Note that the fit result_df don't form a tile (since they overlap) so we
+        # just save them as they are.
+        dag = dag_runner.dag
+        fit_state = dtfcore.get_fit_state(dag)
+        dst_dir_tmp = os.path.join(dst_dir, f"fit_{idx}_{training_datetime_str}")
+        file_name = os.path.join(dst_dir_tmp, "fit_state.pkl")
+        hpickle.to_pickle(
+            fit_state, file_name, log_level=logging.DEBUG
+        )
+        file_name = os.path.join(dst_dir_tmp, "fit_state.json")
+        hpickle.to_json(
+            file_name, fit_state
+        )
+        # Save fit data.
+        file_name = os.path.join(dst_dir_tmp, "fit_result_df.parquet")
+        result_df = fit_rb.result_df
+        hparque.to_parquet(result_df, file_name, log_level=logging.DEBUG)
+        #
+        file_name = os.path.join(dst_dir_tmp, "predict_result_df.parquet")
+        result_df = pred_rb.result_df
+        hparque.to_parquet(result_df, file_name, log_level=logging.DEBUG)
+        # Concat prediction output to convert into a tile.
         pred_rbs.append(pred_rb.result_df)
-        # TODO(gp): After each training session, we want to save all the info from
-        #  training and the model stats (including weights) into an extra directory.
-    # TODO(gp): We might need to compute extra data before and after the tile
-    #  and then remove it.
-    # TODO(gp): The invariant is that concatenating all the OOS prediction you
-    #  get exactly a tile.
+    # The invariant is that concatenating all the OOS prediction you get exactly a
+    # tile.
     pred_rb = pd.concat(pred_rbs, axis=0)
     # Save results.
     _save_tiled_output(system.config, pred_rb)
