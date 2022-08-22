@@ -54,10 +54,14 @@ def extract_leaf_values(nested: Dict[Any, Any], key: Any) -> Dict[Any, Any]:
     return d
 
 
+_NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
+
+
 def typed_get(
     dict_: Dict,
     key: Any,
-    default_value: Optional[Any] = "__impossible_value__",
+    default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+    *,
     expected_type: Optional[Any] = None,
 ) -> Any:
     """
@@ -68,6 +72,10 @@ def typed_get(
     :param expected_type: expected type of `value`
     :return: config[key] if available, else `default_value`
     """
+    if default_value == _NO_VALUE_SPECIFIED:
+        # No value is specified so check that the key is present with dassert_in
+        # to report a decent error.
+        hdbg.dassert_in(key, dict_)
     try:
         ret = dict_.__getitem__(key)
     except KeyError as e:
@@ -75,12 +83,19 @@ def typed_get(
         _LOG.debug("e=%s", e)
         # We can't use None since None can be a valid default value, so we use
         # another value.
-        if default_value != "__impossible_value__":
+        if default_value != _NO_VALUE_SPECIFIED:
             ret = default_value
         else:
             # No default value found, then raise.
             raise e
     if expected_type is not None:
-        if ret is not None:
-            hdbg.dassert_issubclass(ret, expected_type)
+        hdbg.dassert_isinstance(ret, expected_type)
     return ret
+
+
+def checked_get(
+    dict_: Dict,
+    key: Any,
+) -> Any:
+    hdbg.dassert_in(key, dict_)
+    return dict_[key]

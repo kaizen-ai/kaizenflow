@@ -601,7 +601,6 @@ def apply_dag_runner_config_for_crypto(
     return system
 
 
-# TODO(Grisha): @GP use this on the other side instead of `apply_dag_runner_config`.
 def apply_dag_runner_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
@@ -649,9 +648,10 @@ def apply_dag_runner_config_for_equities(
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
     # before the market closes, i.e. at 15:58.
     real_time_loop_time_out_minutes = 60 - (sleep_interval_in_secs / 60)
+    hdbg.dassert_is_integer(real_time_loop_time_out_minutes)
     # TODO(gp): Horrible confusing name.
     real_time_loop_time_out_in_secs = datetime.time(
-        15, real_time_loop_time_out_minutes
+        15, int(real_time_loop_time_out_minutes)
     )
     system = _apply_dag_runner_config(
         system,
