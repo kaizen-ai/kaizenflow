@@ -98,18 +98,18 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 # TODO(gp): This is due to the coupling between code in linter container and
 #  the code being linted.
 try:
-    from helpers.lib_tasks import (
+    from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
         docker_update_prod_task_definition,
         find_dependency,
-        git_branch_diff_with,
         gh_create_pr,
         gh_issue_title,
         gh_login,
         gh_workflow_list,
         gh_workflow_run,
+        git_branch_diff_with,
         pytest_buildmeister,
         pytest_buildmeister_check,
-    )  # isort: skip # noqa: F401  # pylint: disable=unused-import
+    )
 except ImportError:
     pass
 

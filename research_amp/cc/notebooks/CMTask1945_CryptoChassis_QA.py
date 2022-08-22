@@ -89,7 +89,7 @@ def get_cmtask1866_config_ccxt() -> cconconf.Config:
             "threshold": 30,
         },
     }
-    config = ccocouti.get_config_from_nested_dict(param_dict)
+    config = cconfig.Config.from_dict(param_dict)
     return config
 
 
