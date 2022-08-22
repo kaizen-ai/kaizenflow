@@ -98,7 +98,7 @@ def get_cmtask1953_config() -> cconconf.Config:
             "num_lags": 4,
         },
     }
-    config = ccocouti.get_config_from_nested_dict(param_dict)
+    config = cconfig.Config.from_dict(param_dict)
     return config
 
 config = get_cmtask1953_config()
@@ -386,7 +386,7 @@ def get_mean_error(
 ) -> pd.Series:
     """
     - Calculate the error of difference between real and estimated values.
-    - Show the mean and ± num_std*standard_deviation levels.
+    - Show the mean and Â± num_std*standard_deviation levels.
 
     :param df: data with real values and estimators
     :param column_name_actual: e.g., "spread", "volume")
