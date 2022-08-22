@@ -7,7 +7,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 import datetime
 import logging
 import os
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, Optional
 
 import pandas as pd
 
@@ -153,6 +153,7 @@ def get_Cx_process_forecasts_node_dict_example1(
 def get_process_forecasts_node_dict_prod_instance1(
     portfolio: oms.Portfolio,
     order_duration_in_mins: int,
+    root_log_dir: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Build process forecast dictionary for a production system.
@@ -168,7 +169,13 @@ def get_process_forecasts_node_dict_prod_instance1(
         "bulk_frac_to_remove": 0.0,
         "target_gmv": 500.0,
     }
-    root_log_dir = os.path.join(
+    #TODO(Juraj): Temporary workaround so we can store 
+    # all logs under single location.
+    if root_log_dir:
+        hdbg.dassert_path_exists(root_log_dir)
+    else: 
+        root_log_dir = "."
+    root_log_dir = os.path.join(root_log_dir,
         "process_forecasts", datetime.date.today().isoformat())
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         portfolio,
@@ -285,7 +292,7 @@ def _get_Cx_dag_prod_instance1(
     system = dtfsys.apply_history_lookback(system)
     # Build the process forecast dict.
     process_forecasts_node_dict = get_process_forecasts_node_dict_func(
-        portfolio, order_duration_in_mins
+        portfolio, order_duration_in_mins, system.config.get("system_log_dir")
     )
     system.config[
         "process_forecasts_node_dict"
