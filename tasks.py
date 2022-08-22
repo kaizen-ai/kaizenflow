@@ -18,7 +18,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     docker_build_prod_image,
     docker_cmd,
     docker_create_candidate_image,
-    docker_update_prod_task_definition,
     docker_images_ls_repo,
     docker_jupyter,
     docker_kill,
@@ -43,14 +42,8 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     find_test_class,
     find_test_decorator,
     fix_perms,
-    gh_create_pr,
-    gh_issue_title,
-    gh_login,
-    gh_workflow_list,
-    gh_workflow_run,
     git_add_all_untracked,
     git_branch_copy,
-    git_branch_diff_with,
     git_branch_files,
     git_branch_next_name,
     git_clean,
@@ -106,7 +99,14 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 #  the code being linted.
 try:
     from helpers.lib_tasks import (
+        docker_update_prod_task_definition,
         find_dependency,
+        git_branch_diff_with,
+        gh_create_pr,
+        gh_issue_title,
+        gh_login,
+        gh_workflow_list,
+        gh_workflow_run,
         pytest_buildmeister,
         pytest_buildmeister_check,
     )  # isort: skip # noqa: F401  # pylint: disable=unused-import

@@ -1,4 +1,4 @@
-name: Update ECS prod task definition with newly created prod tag
+name: Release new ECS prod task definition
 on:
   # Run manually.
   workflow_dispatch:
@@ -10,7 +10,7 @@ on:
           type: string
 
 jobs:
-  create_new_ecs_task_def_revision:
+  run_release_new_ecs_prod_task_definition:
     runs-on: ubuntu-latest
 
     steps:
@@ -73,6 +73,27 @@ jobs:
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
           PREPROD_TAG: ${{ inputs.preprod_tag }}
-        run: invoke docker_update_prod_task_definition --version=FROM_CHANGELOG --preprod-tag=$PREPROD_TAG
+        run: >
+          invoke docker_update_prod_task_definition
+          --version=FROM_CHANGELOG
+          --preprod-tag=$PREPROD_TAG
+          --airflow-dags-s3-path=s3://cryptokaizen-airflow/DAGs/
 
-      # TODO(Nikola): Notify in case of failure?
+      # Notify the team via Telegram in case of failure.
+      - name: Send Telegram notification for failure
+        # Need to use ref_name as it contains the branch that triggered the
+        # workflow run.
+        # Alternative, head_ref is only available when the event that triggers a
+        # workflow run is either pull_request or pull_request_target.
+        if: ${{ failure() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🧨 ECS PROD TASK DEFINITION RELEASE FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '${{ github.ref_name }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}

@@ -614,18 +614,19 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
 
 
 @task
-def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: ignore
+def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s3_path):  # type: ignore
     """
     Update image in prod task definition to the desired version.
 
     :param version: latest version from `changelog.txt` or custom one (e.g., `1.1.1`)
     :param preprod_tag: image that will be re-tagged with prod version
         e.g., `preprod-d8sf76s` -> `prod-1.1.1`
+    :param airflow_dags_s3_path: S3 bucket from which airflow will load DAGs
     """
     # TODO(Nikola): Convert `haws` part to script so it can be called via `docker_cmd`.
+    #   https://github.com/cryptokaizen/cmamp/pull/2594/files#r948551787
     import helpers.haws as haws
     #
-    airflow_dags_s3_path = "s3://cryptokaizen-airflow/DAGs/"
     # TODO(Nikola): Use env var for CK profile.
     s3fs_ = hs3.get_s3fs(aws_profile="ck")
     super_module = not hgit.is_inside_submodule()
@@ -633,6 +634,7 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: igno
     short_repo_name = os.path.split(full_repo_name)[-1]
     # Prepare params for listing DAGs.
     root_dir = hgit.get_client_root(super_module)
+    # TODO(Nikola): Make dirname agnostic for each repo.
     dir_name = os.path.join(root_dir, "im_v2", "airflow", "dags")
     pattern = "preprod.*.py"
     only_files = True
@@ -675,6 +677,8 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: igno
     hlitauti.run(ctx, cmd)
     cmd = f"docker rmi {preprod_image_url}"
     hlitauti.run(ctx, cmd)
+    # Upload new tag to ECS.
+    docker_push_prod_image(ctx, prod_version)
     # Update prod task definition to the latest prod tag.
     prod_task_definition_name = f"{short_repo_name}-prod"
     haws.update_task_definition(prod_task_definition_name, new_prod_image_url)
@@ -683,5 +687,5 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag):  # type: igno
         # Update prod DAGs.
         _, dag_name = os.path.split(dag_path)
         prod_dag_name = dag_name.replace("preprod.", "prod.")
-        # TODO (Nikola): Ensure that files are uploaded.
+        # TODO(Nikola): Ensure that files are uploaded.
         s3fs_.put(dag_path, airflow_dags_s3_path + prod_dag_name)

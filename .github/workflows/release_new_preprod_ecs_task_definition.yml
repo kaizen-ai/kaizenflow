@@ -1,4 +1,4 @@
-name: Update ECS preprod task definition with newly created preprod tag
+name: Release new ECS preprod task definition
 on:
   # Run manually.
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
     - cron:  '0 */6 * * *'
 
 jobs:
-  create_new_ecs_task_def_revision:
+  run_release_new_ecs_preprod_task_definition:
     runs-on: ubuntu-latest
 
     steps:
@@ -67,7 +67,23 @@ jobs:
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
-        # TODO(Juraj): change task definition once the action is ready
         run: invoke docker_create_candidate_image --task-definition "cmamp-preprod"
 
-      # TODO(Nikola): Notify in case of failure?
+      # Notify the team via Telegram in case of failure.
+      - name: Send Telegram notification for failure
+        # Need to use ref_name as it contains the branch that triggered the
+        # workflow run.
+        # Alternative, head_ref is only available when the event that triggers a
+        # workflow run is either pull_request or pull_request_target.
+        if: ${{ failure() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🧨 ECS PREPROD TASK DEFINITION RELEASE FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '${{ github.ref_name }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
