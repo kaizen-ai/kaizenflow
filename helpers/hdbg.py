@@ -400,6 +400,27 @@ def dassert_issubclass(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+def dassert_is_integer(
+    val: Union[int, float],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    """
+    Assert that val represents an integer number, independently of the type.
+    """
+    if isinstance(val, int):
+        pass
+    elif isinstance(val, float):
+        cond = val == int(val)
+        if not cond:
+            txt = f"Invalid val='{val}' of type '{type(val)}'"
+            _dfatal(txt, msg, *args, only_warning=only_warning)
+    else:
+        txt = f"Invalid val='{val}' of type '{type(val)}'"
+        _dfatal(txt, msg, *args, only_warning=only_warning)
+
+
 def dassert_callable(
     func: Any,
     msg: Optional[str] = None,

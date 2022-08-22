@@ -27,6 +27,7 @@ import helpers.hprint as hprint
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
+import helpers.hwall_clock_time as hwacltim
 
 # We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
 # we have the corresponding libraries installed.
@@ -991,6 +992,8 @@ class TestCase(unittest.TestCase):
         if _HAS_PANDAS:
             self._old_pd_options = get_pd_default_values()
             set_pd_default_values()
+        # Reset the timestamp of the current bar.
+        hwacltim.reset_current_bar_timestamp()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
 
@@ -1452,6 +1455,7 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
+        # TODO(gp): Print the file with the updated test.
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 

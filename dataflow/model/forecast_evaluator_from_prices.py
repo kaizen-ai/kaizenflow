@@ -14,8 +14,14 @@ import core.finance as cofinanc
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# ForecastEvaluatorFromPrices
+# #############################################################################
 
 
 class ForecastEvaluatorFromPrices:
@@ -28,32 +34,37 @@ class ForecastEvaluatorFromPrices:
         price_col: str,
         volatility_col: str,
         prediction_col: str,
+        *,
         spread_col: Optional[str] = None,
         buy_price_col: Optional[str] = None,
         sell_price_col: Optional[str] = None,
     ) -> None:
         """
-        Initialize column names.
-
-        Note:
-        - the `price_col` is unadjusted price (no adjustment for splits,
-          dividends, or volatility); it is used for marking to market and,
-          unless buy/sell prices columns are also supplied, execution
-          simulation
-        - the `volatility_col` is used for position sizing
-        - the `prediction_col` is a prediction of vol-adjusted returns
-          (presumably with volatility given by `volatility_col`)
+        Construct object.
 
         :param price_col: price per share
+            - the `price_col` is unadjusted price (no adjustment for splits,
+              dividends, or volatility); it is used for marking to market and,
+              unless buy/sell prices columns are also supplied, execution
+              simulation
         :param volatility_col: volatility used for adjustment of forward returns
+            - the `volatility_col` is used for position sizing
         :param prediction_col: prediction of volatility-adjusted returns, two
             steps ahead
+            - the `prediction_col` is a prediction of vol-adjusted returns
+              (presumably with volatility given by `volatility_col`)
         """
+        _LOG.debug(hprint.to_str(
+            "price_col volatility_col prediction_col spread_col buy_price_col"
+            " sell_price_col"
+            ))
         # Initialize dataframe columns.
         hdbg.dassert_isinstance(price_col, str)
         self._price_col = price_col
+        #
         hdbg.dassert_isinstance(volatility_col, str)
         self._volatility_col = volatility_col
+        #
         hdbg.dassert_isinstance(prediction_col, str)
         self._prediction_col = prediction_col
         # Process optional columns.
@@ -61,6 +72,7 @@ class ForecastEvaluatorFromPrices:
             hdbg.dassert_isinstance(spread_col, str)
             _LOG.debug("Initialized with spread_col=%s", spread_col)
         self._spread_col = spread_col
+        #
         if buy_price_col is not None:
             hdbg.dassert_isinstance(buy_price_col, str)
             # If `buy_price_col` is not `None`, then `sell_price_col` must also
@@ -68,6 +80,7 @@ class ForecastEvaluatorFromPrices:
             hdbg.dassert_isinstance(sell_price_col, str)
             _LOG.debug("Initialized with buy_price_col=%s", buy_price_col)
         self._buy_price_col = buy_price_col
+        #
         if sell_price_col is not None:
             hdbg.dassert_isinstance(sell_price_col, str)
             # If `sell_price_col` is not `None`, then `buy_price_col` must also
@@ -149,66 +162,7 @@ class ForecastEvaluatorFromPrices:
         )
         return portfolio_df, statistics_df
 
-    def to_str(
-        self,
-        df: pd.DataFrame,
-        **kwargs,
-    ) -> str:
-        """
-        Return the state of the Portfolio as a string.
-
-        :param df: as in `compute_portfolio`
-        :param kwargs: forwarded to `compute_portfolio()`
-        :return: portfolio state (rounded) as a string
-        """
-        holdings, positions, flows, pnl, stats = self.compute_portfolio(
-            df,
-            **kwargs,
-        )
-        act = []
-        round_precision = 6
-        precision = 2
-        act.append(
-            "# holdings=\n%s"
-            % hpandas.df_to_str(
-                holdings.round(round_precision),
-                num_rows=None,
-                precision=precision,
-            )
-        )
-        act.append(
-            "# holdings marked to market=\n%s"
-            % hpandas.df_to_str(
-                positions.round(round_precision),
-                num_rows=None,
-                precision=precision,
-            )
-        )
-        act.append(
-            "# flows=\n%s"
-            % hpandas.df_to_str(
-                flows.round(round_precision),
-                num_rows=None,
-                precision=precision,
-            )
-        )
-        act.append(
-            "# pnl=\n%s"
-            % hpandas.df_to_str(
-                pnl.round(round_precision),
-                num_rows=None,
-                precision=precision,
-            )
-        )
-        act.append(
-            "# statistics=\n%s"
-            % hpandas.df_to_str(
-                stats.round(round_precision), num_rows=None, precision=precision
-            )
-        )
-        act = "\n".join(act)
-        return act
-
+    # TODO(gp): save_portfolio for symmetry?
     def log_portfolio(
         self,
         df: pd.DataFrame,
@@ -267,6 +221,69 @@ class ForecastEvaluatorFromPrices:
         )
         return file_name
 
+    def to_str(
+        self,
+        df: pd.DataFrame,
+        **kwargs,
+    ) -> str:
+        """
+        Return the state of the Portfolio as a string.
+
+        :param df: as in `compute_portfolio`
+        :param kwargs: forwarded to `compute_portfolio()`
+        :return: portfolio state (rounded) as a string
+        """
+        holdings, positions, flows, pnl, stats = self.compute_portfolio(
+            df,
+            **kwargs,
+        )
+        #
+        act = []
+        round_precision = 6
+        precision = 2
+        act.append("# holdings=")
+        act.append(
+            hpandas.df_to_str(
+                holdings.round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        act.append("# holdings marked to market=")
+        act.append(
+            hpandas.df_to_str(
+                positions.round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        act.append("# flows=")
+        act.append(
+            hpandas.df_to_str(
+                flows.round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        act.append("# pnl=")
+        act.append(
+            hpandas.df_to_str(
+                pnl.round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        act.append("# statistics=")
+        act.append(
+            hpandas.df_to_str(
+                stats.round(round_precision), num_rows=None, precision=precision
+            )
+        )
+        act = "\n".join(act)
+        return act
+
+    # //////////////////////////////////////////////////////////////////////////////
+
     def compute_portfolio(
         self,
         df: pd.DataFrame,
@@ -288,9 +305,6 @@ class ForecastEvaluatorFromPrices:
         Compute target positions, PnL, and portfolio stats.
 
         :param df: multiindexed dataframe with predictions, price, volatility
-        :param reindex_like_input: output dataframes to have the same input as
-            `df` (e.g., including any weekends or values outside of the
-            `start_time`-`end_time` range)
         :param style: belongs to
             - "cross_sectional": cross-sectionally normalize predictions,
               possibly remove a portion of the bulk of the distribution,
@@ -298,13 +312,15 @@ class ForecastEvaluatorFromPrices:
             - "longitudinal": normalize and threshold predictions
               longitudinally, allocating an equal dollar risk to each name
               independently
-        :param quantization: indicate whether to round to nearest share, lot
+        :param quantization: indicate whether to round to nearest share / lot
         :param liquidate_at_end_of_day: force holdings to zero at the last
             trade if true (otherwise hold overnight)
         :param adjust_for_splits: account for stock splits in considering
             overnight holdings
-        :param reindex_like_input: if `False`, only return dataframes indexed
-            by the inferred "active index" of datetimes
+        :param reindex_like_input: output dataframes to have the same input as
+            `df` (e.g., including any weekends or values outside of the
+            `start_time`-`end_time` range). If `False`, only return dataframes
+            indexed by the inferred "active index" of datetimes
         :param burn_in_bars: number of leading bars to trim (to remove warm-up
             artifacts)
         :param burn_in_days: number of leading days to trim (to remove warm-up
@@ -317,6 +333,7 @@ class ForecastEvaluatorFromPrices:
             value of `style`
         :return: (holdings, position, flow, pnl, stats)
         """
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df, print_shape_info=True))
         self._validate_df(df)
         # Record index in case we reindex the results.
         if reindex_like_input:
@@ -444,6 +461,8 @@ class ForecastEvaluatorFromPrices:
         count_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return count_df
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     @staticmethod
     def _build_multiindex_df(dfs: Dict[str, pd.DataFrame]) -> pd.DataFrame:
         portfolio_df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
@@ -509,12 +528,13 @@ class ForecastEvaluatorFromPrices:
         Trim `df` according to ATH, weekends, missing data.
 
         :param df: as in `compute_portfolio()`
-        :return: `df` trimmed down to
+        :return: `df` trimmed down to:
           - required and possibly optional columns
           - "active" bars (bars where at least one instrument has an end-of-bar
             price)
           - first index with both a returns prediction and a volatility
         """
+        _LOG.debug("df.shape=%s", str(df.shape))
         # Restrict to required columns.
         cols = [self._price_col, self._volatility_col, self._prediction_col]
         optional_cols = [
@@ -526,26 +546,27 @@ class ForecastEvaluatorFromPrices:
             if col is not None:
                 cols += [col]
         df = df[cols]
+        _LOG.debug("cols=%s", cols)
         active_index = cofinanc.infer_active_bars(df[self._price_col])
         # Drop rows with no prices (this is an approximate way to handle weekends,
         # market holidays, and shortened trading sessions).
         df = df.reindex(index=active_index)
+        _LOG.debug("after active_index: df.shape=%s", df.shape)
         # Drop indices with prices that precede any returns prediction or
         # volatility computation.
-        first_valid_prediction_index = df[
-            self._prediction_col
-        ].first_valid_index()
+        first_valid_prediction_index = df[self._prediction_col].first_valid_index()
         hdbg.dassert_is_not(first_valid_prediction_index, None)
+        _LOG.debug(hprint.to_str("first_valid_prediction_index"))
         #
-        first_valid_volatility_index = df[
-            self._volatility_col
-        ].first_valid_index()
+        first_valid_volatility_index = df[self._volatility_col].first_valid_index()
         hdbg.dassert_is_not(first_valid_volatility_index, None)
+        _LOG.debug(hprint.to_str("first_valid_volatility_index"))
         #
         first_valid_index = max(
             first_valid_prediction_index, first_valid_volatility_index
         )
         df = df.loc[first_valid_index:]
+        _LOG.debug("df.shape=%s", str(df.shape))
         _LOG.debug("trimmed df=\n%s", hpandas.df_to_str(df))
         return df
 
@@ -849,6 +870,9 @@ class ForecastEvaluatorFromPrices:
             pnl = pnl.reindex(input_idx)
             stats = stats.reindex(input_idx)
         return holdings, positions, flows, pnl, stats
+
+
+# ##################################################################################
 
 
 def cross_check_portfolio_pnl(df: pd.DataFrame) -> pd.DataFrame:

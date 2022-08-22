@@ -26,6 +26,8 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
+# DagRunner
+# #############################################################################
 
 
 # TODO(gp): At hindsight a `DagRunner` just calls methods on a DAG so we could
@@ -48,8 +50,7 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
         """
         Constructor.
 
-        :param config: config for DAG
-        :param dag_builder: `DagBuilder` instance to build a DAG from the config
+        :param dag: `DAG` instance
         """
         # Save dag
         hdbg.dassert_isinstance(dag, dtfcordag.DAG)
@@ -202,7 +203,7 @@ class PredictionDagRunner(FitPredictDagRunner):
 
 
 # #############################################################################
-#
+# RollingFitPredictDagRunner
 # #############################################################################
 
 
@@ -259,7 +260,11 @@ class RollingFitPredictDagRunner(DagRunner):
         :param predict_start_timestamp: start of predict window
         :param predict_end_timestamp: end of predict window
         :param retraining_freq: how often to retrain using Pandas frequency
-            convention (e.g., `2B`)
+            convention (e.g., `2B`). The frequency should be such that it's
+            independent from `predict_start_timestamp` and `predict_end_timestamp`
+            (since we want the retraining grid to be independent on the tiling).
+            E.g., "7D" is not the same as "1W" because with "7D" Pandas starts
+            sampling from predict_start_timestamp, while "1W" aligns on Sundays
         :param retraining_lookback: number of periods of past data to include
             in retraining, expressed in integral units of `retraining_freq`
         """
@@ -474,8 +479,11 @@ class RollingFitPredictDagRunner(DagRunner):
 
 
 # #############################################################################
+# IncrementalDagRunner
+# #############################################################################
 
 
+# TODO(gp): This might be obsolete.
 class IncrementalDagRunner(DagRunner):
     """
     Run DAGs in incremental fashion, i.e., running one step at a time.
@@ -494,8 +502,7 @@ class IncrementalDagRunner(DagRunner):
         """
         Constructor.
 
-        :param config: config for DAG
-        :param dag_builder: `DagBuilder` instance
+        :param dag: `DAG` instance
         :param start_timestamp: first prediction datetime_ (e.g., first time at which we
             generate a prediction in `predict` mode, using all available data
             up to and including `start`)

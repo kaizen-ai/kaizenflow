@@ -34,7 +34,8 @@ _LOG = logging.getLogger(__name__)
 class TestSimulatedProcessForecasts1(hunitest.TestCase):
     @staticmethod
     def get_portfolio(
-        event_loop, asset_ids: List[int]
+        event_loop: asyncio.AbstractEventLoop,
+        asset_ids: List[int]
     ) -> omportfo.DataFramePortfolio:
         (
             market_data,
@@ -117,8 +118,8 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             volatility,
             portfolio,
             config,
-            spread_df,
-            restrictions_df,
+            spread_df=spread_df,
+            restrictions_df=restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -158,7 +159,7 @@ asset_id                     101    202
 class TestSimulatedProcessForecasts2(hunitest.TestCase):
     @staticmethod
     def get_portfolio(
-        event_loop,
+        event_loop: asyncio.AbstractEventLoop,
         start_datetime: pd.Timestamp,
         end_datetime: pd.Timestamp,
         asset_ids: List[int],
@@ -259,8 +260,8 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             volatility,
             portfolio,
             config,
-            spread_df,
-            restrictions_df,
+            spread_df=spread_df,
+            restrictions_df=restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -400,7 +401,8 @@ asset_id                      100     200
 class TestSimulatedProcessForecasts3(hunitest.TestCase):
     @staticmethod
     def get_portfolio(
-        event_loop, asset_ids: List[int]
+        event_loop: asyncio.AbstractEventLoop,
+        asset_ids: List[int]
     ) -> omportfo.DataFramePortfolio:
         start_datetime = pd.Timestamp(
             "2000-01-01 09:30:00-05:00", tz="America/New_York"
@@ -495,8 +497,8 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
             volatility,
             portfolio,
             config,
-            spread_df,
-            restrictions_df,
+            spread_df=spread_df,
+            restrictions_df=restrictions_df,
         )
         actual = str(portfolio)
         expected = r"""
@@ -580,7 +582,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
 
     async def _test_mocked_system1(
         self,
-        portfolio,
+        portfolio: omportfo.Portfolio,
     ) -> None:
         """
         Run process_forecasts() logic with a given prediction df to update a
@@ -636,8 +638,8 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             volatility,
             portfolio,
             dict_,
-            spread_df,
-            restrictions_df,
+            spread_df=spread_df,
+            restrictions_df=restrictions_df,
         )
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
@@ -746,7 +748,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
 
     @staticmethod
     def _get_predictions_and_volatility1(
-        market_data_df,
+        market_data_df: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Generate a signal that alternates every 5 minutes.
@@ -780,7 +782,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
 
     @staticmethod
     def _get_predictions_and_volatility2(
-        market_data_df,
+        market_data_df: pd.DataFrame,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Generate a signal that is only long.
@@ -819,7 +821,11 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
         list_.append(f"{label}=\n{data_str}")
 
-    def _run_coroutines(self, data, predictions, volatility):
+    def _run_coroutines(self,
+            data: pd.DataFrame,
+            predictions: pd.DataFrame,
+            volatility: pd.DataFrame
+        ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build MarketData.
             initial_replayed_delay = 5
@@ -908,8 +914,8 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             volatility,
             portfolio,
             process_forecasts_dict,
-            spread_df,
-            restrictions_df,
+            spread_df=spread_df,
+            restrictions_df=restrictions_df,
         )
         #
         asset_ids = portfolio.universe
@@ -931,7 +937,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             predictions_srs.shift(2).multiply(rets).rename("research_pnl")
         )
         #
-        actual = []
+        actual: List[str] = []
         self._append(actual, "TWAP", twap)
         self._append(actual, "rets", rets)
         self._append(actual, "prediction", predictions_srs)

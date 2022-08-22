@@ -15,6 +15,19 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+def _is_valid_df(df: pd.DataFrame):
+    hpandas.dassert_time_indexed_df(
+        df,
+        allow_empty=False,
+        strictly_increasing=True,
+    )
+    # Optional checks, but applicable to all current use cases.
+    hdbg.dassert_eq(df.columns.nlevels, 1)
+    hdbg.dassert_in(
+        df.columns.dtype.type, [np.int64], "The asset ids should be integers."
+    )
+
+
 def infer_active_bars(df: pd.DataFrame) -> pd.DatetimeIndex:
     """
     Applies the heuristic that all-NaN bars are "inactive".
@@ -142,19 +155,6 @@ def retrieve_end_of_day_values(df: pd.DataFrame) -> pd.DataFrame:
     """
     _is_valid_df(df)
     return df.dropna(how="all").groupby(lambda x: x.date()).last()
-
-
-def _is_valid_df(df: pd.DataFrame):
-    hpandas.dassert_time_indexed_df(
-        df,
-        allow_empty=False,
-        strictly_increasing=True,
-    )
-    # Optional checks, but applicable to all current use cases.
-    hdbg.dassert_eq(df.columns.nlevels, 1)
-    hdbg.dassert_in(
-        df.columns.dtype.type, [np.int64], "The asset ids should be integers."
-    )
 
 
 def replace_end_of_day_values(
