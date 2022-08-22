@@ -49,7 +49,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     gh_workflow_run,
     git_add_all_untracked,
     git_branch_copy,
-    git_branch_diff_with,
     git_branch_files,
     git_branch_next_name,
     git_clean,
@@ -106,6 +105,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 try:
     from helpers.lib_tasks import (
         find_dependency,
+        git_branch_diff_with,
         pytest_buildmeister,
         pytest_buildmeister_check,
     )  # isort: skip # noqa: F401  # pylint: disable=unused-import
