@@ -50,8 +50,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     gh_workflow_run,
     git_add_all_untracked,
     git_branch_copy,
-    git_branch_diff_with_base,
-    git_branch_diff_with_master,
+    git_branch_diff_with,
     git_branch_files,
     git_branch_next_name,
     git_clean,
@@ -103,6 +102,8 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     traceback,
 )
 
+# TODO(gp): This is due to the coupling between code in linter container and
+#  the code being linted.
 try:
     from helpers.lib_tasks import (
         find_dependency,

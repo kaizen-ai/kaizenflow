@@ -127,7 +127,7 @@ def opt_docker_pull(ctx, stage="dev", version=None):  # type: ignore
     """
     Pull the latest dev `opt` image from the Docker registry.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     base_image = ""
     hlitadoc._docker_pull(ctx, base_image, stage, version)
@@ -389,7 +389,7 @@ def opt_docker_up(  # type: ignore
     # Build `docker-compose up` cmd.
     docker_up_cmd = _get_opt_docker_up_cmd(detach, base_image, stage, version)
     # Run.
-    hlitauti._run(ctx, docker_up_cmd, pty=True)
+    hlitauti.run(ctx, docker_up_cmd, pty=True)
 
 
 # TODO(gp): @all merge this command with the up command passing a `mode` switch.
@@ -434,4 +434,4 @@ def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignor
     # Build `docker-compose down` cmd.
     docker_down_cmd = _get_opt_docker_down_cmd(base_image, stage, version)
     # Run.
-    hlitauti._run(ctx, docker_down_cmd, pty=True)
+    hlitauti.run(ctx, docker_down_cmd, pty=True)

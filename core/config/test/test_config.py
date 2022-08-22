@@ -7,6 +7,7 @@ from typing import Any, Dict
 import pytest
 
 import core.config as cconfig
+import core.config.config_ as cconconf
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
@@ -243,7 +244,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = str(cm.exception)
         exp = """
         * Failed assertion *
-        Instance '10000' of class 'int' is not a subclass of '<class 'str'>'
+        Instance of '10000' is '<class 'int'>' instead of '<class 'str'>'
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
@@ -258,7 +259,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = str(cm.exception)
         exp = """
         * Failed assertion *
-        Instance '10000' of class 'int' is not a subclass of '<class 'str'>'
+        Instance of '10000' is '<class 'int'>' instead of '<class 'str'>'
         """
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
@@ -430,7 +431,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that doesn't exist.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
@@ -450,7 +451,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that already exists.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
@@ -467,7 +468,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that doesn't exist in the hierarchy.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
@@ -485,13 +486,13 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that exist in the hierarchy with a Config.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
         )
         # Assign a config to an existing key.
-        config["rets/read_data"] = cconfig.get_config_from_nested_dict(
+        config["rets/read_data"] = cconfig.Config.from_dict(
             {"source_node_name": "data_downloader"}
         )
         # Check.
@@ -504,13 +505,13 @@ class TestNestedConfigSet1(hunitest.TestCase):
         """
         Set a key that exists with a complex Config.
         """
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "rets/read_data": cconfig.DUMMY,
             }
         )
         # Assign a config.
-        config["rets/read_data"] = cconfig.get_config_from_nested_dict(
+        config["rets/read_data"] = cconfig.Config.from_dict(
             {
                 "source_node_name": "data_downloader",
                 "source_node_kwargs": {
@@ -976,7 +977,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
         Test a config that can be serialized correctly.
         """
         src_dir = "../../test"
-        eval_config = cconfig.get_config_from_nested_dict(
+        eval_config = cconfig.Config.from_dict(
             {
                 "load_experiment_kwargs": {
                     "src_dir": src_dir,
@@ -1007,7 +1008,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
         """
         src_dir = "../../test"
         func = lambda x: x + 1
-        eval_config = cconfig.get_config_from_nested_dict(
+        eval_config = cconfig.Config.from_dict(
             {
                 "load_experiment_kwargs": {
                     "src_dir": src_dir,
@@ -1039,7 +1040,7 @@ class TestDassertIsSerializable1(hunitest.TestCase):
 
 class TestFromEnvVar1(hunitest.TestCase):
     def test1(self) -> None:
-        eval_config = cconfig.get_config_from_nested_dict(
+        eval_config = cconfig.Config.from_dict(
             {
                 "load_experiment_kwargs": {
                     "file_name": "result_bundle.v2_0.pkl",
@@ -1145,6 +1146,37 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test_set3(self) -> None:
+        """
+        Show that by setting `value=False` config can be updated.
+        """
+        config = _get_nested_config1(self)
+        _LOG.debug("config=\n%s", config)
+        # Assign the value.
+        self.assertEqual(config["zscore", "style"], "gaz")
+        config["zscore", "style"] = "gasoline"
+        self.assertEqual(config["zscore", "style"], "gasoline")
+        # Mark as read-only.
+        config.mark_read_only(value=False)
+        # Assign new values.
+        config["zscore", "com"] = 11
+        self.assertEqual(config["zscore", "com"], 11)
+        config["single_val"] = "hello1"
+        self.assertEqual(config["single_val"], "hello1")
+        # Check the final config.
+        act = str(config)
+        exp = r"""
+        nrows: 10000
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello1
+        zscore:
+          style: gasoline
+          com: 11
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
 
 # #############################################################################
 # Test_to_dict1
@@ -1163,7 +1195,7 @@ class Test_to_dict1(hunitest.TestCase):
         :param config_as_dict: a dictionary to build a `Config` from
         :param expected_result_as_str: expected `Config` value as string
         """
-        config = cconfig.get_config_from_nested_dict(config_as_dict)
+        config = cconfig.Config.from_dict(config_as_dict)
         act = str(config)
         self.assert_equal(act, expected_result_as_str, fuzzy_match=True)
         # Ensure that the round trip transform is correct.
@@ -1285,9 +1317,157 @@ class Test_to_dict1(hunitest.TestCase):
     #             "join_output_with_input": False,
     #         },
     #     }
-    #     config_tail = cconfig.get_config_from_nested_dict(dict_)
+    #     config_tail = cconfig.Config.from_dict(dict_)
     #     config = cconfig.Config()
     #     config.update(config_tail)
 
 
 # TODO(gp): Unit tests all the functions.
+
+
+# #############################################################################
+# Test_get_config_from_flattened_dict1
+# #############################################################################
+
+
+class Test_get_config_from_flattened_dict1(hunitest.TestCase):
+    def test1(self) -> None:
+        flattened = collections.OrderedDict(
+            [
+                (("read_data", "file_name"), "foo_bar.txt"),
+                (("read_data", "nrows"), 999),
+                (("single_val",), "hello"),
+                (("zscore", "style"), "gaz"),
+                (("zscore", "com"), 28),
+            ]
+        )
+        config = cconconf.Config._get_config_from_flattened_dict(flattened)
+        act = str(config)
+        exp = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28"""
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+    def test2(self) -> None:
+        flattened = collections.OrderedDict(
+            [
+                (("read_data", "file_name"), "foo_bar.txt"),
+                (("read_data", "nrows"), 999),
+                (("single_val",), "hello"),
+                (("zscore",), cconfig.Config()),
+            ]
+        )
+        config = cconconf.Config._get_config_from_flattened_dict(flattened)
+        act = str(config)
+        exp = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+        """
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+
+# #############################################################################
+# Test_from_dict1
+# #############################################################################
+
+
+class Test_from_dict1(hunitest.TestCase):
+    def test1(self) -> None:
+        nested = {
+            "read_data": {
+                "file_name": "foo_bar.txt",
+                "nrows": 999,
+            },
+            "single_val": "hello",
+            "zscore": {
+                "style": "gaz",
+                "com": 28,
+            },
+        }
+        config = cconfig.Config.from_dict(nested)
+        act = str(config)
+        exp = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28"""
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+    def test2(self) -> None:
+        nested = {
+            "read_data": {
+                "file_name": "foo_bar.txt",
+                "nrows": 999,
+            },
+            "single_val": "hello",
+            "zscore": cconfig.Config(),
+        }
+        config = cconfig.Config.from_dict(nested)
+        act = str(config)
+        exp = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+        """
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+
+    def test3(self) -> None:
+        """
+        One of the dict's values is an empty dict.
+        """
+        nested = {
+            "key1": "val1",
+            "key2": {"key3": {"key4": {}}},
+        }
+        config = cconfig.Config.from_dict(nested)
+        act = str(config)
+        exp = r"""
+        key1: val1
+        key2:
+          key3:
+            key4:
+        """
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+        # Check the the value type.
+        check = isinstance(config["key2", "key3", "key4"], cconfig.Config)
+        self.assertTrue(check)
+        # Check length.
+        length = len(config["key2", "key3", "key4"])
+        self.assertEqual(length, 0)
+
+    def test4(self) -> None:
+        """
+        One of the dict's values is a dict that should become a `Config`.
+        """
+        test_dict = {"key1": "value1", "key2": {"key3": "value2"}}
+        test_config = cconfig.Config.from_dict(test_dict)
+        act = str(test_config)
+        exp = r"""
+        key1: value1
+        key2:
+          key3: value2
+        """
+        # Compare expected vs. actual outputs.
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp, fuzzy_match=False)
+        # Check the the value type.
+        check = isinstance(test_config["key2"], cconfig.Config)
+        self.assertTrue(check)

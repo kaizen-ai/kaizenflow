@@ -214,8 +214,6 @@ class TestHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
-        # TODO(Nina): will fix it in another PR by 'spoiling' the stored test data
-        #  so we can demonstrate that everything works.
         # Generate Parquet test data and initialize client.
         full_symbols = ["binance::BTC_USDT", "kucoin::FIL_USDT"]
         resample_1min = False

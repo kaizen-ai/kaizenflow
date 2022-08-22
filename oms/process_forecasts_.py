@@ -39,6 +39,27 @@ _LOG = logging.getLogger(__name__)
 # - Instantiates `ForecastProcessor` to do the actual work every bar
 
 
+# - `wake_up_timestamp`:
+#   - used by `DagRunner`
+#   - when the system starts processing the DagRunner loop
+#   - E.g., the system can wake up at 9:00am to warm up some functions
+#
+# - `real_time_loop_time_out_in_secs`:
+#   - used by `DagRunner`
+#   - when the system stops running the DagRunner loop
+#
+# - `ath_start_time`, `ath_end_time`:
+#   - used by `process_forecasts()`
+#   - describe when the market is open
+#   - right now it's used but in a redundant way with `trading_start_time`
+#   - we want to snapshot the Portfolio during all the ATH
+#
+# - `trading_start_time`, `trading_end_time`
+#   - used by `process_forecasts()`
+#   - we use it to filter the forecasts reaching the Optimizer when the system is
+#     producing forecasts
+
+
 async def process_forecasts(
     prediction_df: pd.DataFrame,
     volatility_df: pd.DataFrame,
@@ -47,7 +68,7 @@ async def process_forecasts(
     #  we need to use a bit of stuttering to make the name unique in the config?
     config: Dict[str, Any],
     # TODO(gp): Should we keep all the dfs close together in the interface?
-    # TODO(gp): Add a *
+    *,
     spread_df: Optional[pd.DataFrame],
     restrictions_df: Optional[pd.DataFrame],
 ) -> None:
@@ -78,6 +99,9 @@ async def process_forecasts(
             "trading_end_time": Optional[datetime.time],
             "execution_mode": str ["real_time", "batch"],
             "remove_weekends": Optional[bool],
+            # - Force liquidating the holdings in the bar that corresponds to
+            #   trading_end_time, which must be not None.
+            "liquidate_at_trading_end_time": bool
             "log_dir": Optional[str],
           }
           ```
@@ -113,33 +137,38 @@ async def process_forecasts(
     # Check `restrictions`.
     if restrictions_df is None:
         _LOG.info("restrictions_df is `None`; no restrictions will be enforced")
-    # Create an `order_config` from `config` elements.
-    order_config = hdict.typed_get(config, "order_config", None, dict)
-    _validate_order_config(order_config)
-    # TODO(gp): Consider forcing to have everything specified, instead of using
-    #  None defaults.
-    optimizer_config = hdict.typed_get(
-        config, "optimizer_config", None, dict
+    # See https://stackoverflow.com/questions/21706609/where-is-the-nonetype-located
+    NoneType = type(None)
+    # Create an `order_dict` from `config` elements.
+    order_dict = hdict.typed_get(
+        config, "order_config", expected_type=(dict, NoneType)
     )
-    _validate_optimizer_config(optimizer_config)
+    _validate_order_dict(order_dict)
+    optimizer_dict = hdict.typed_get(
+        config, "optimizer_config", expected_type=(dict, NoneType)
+    )
+    _validate_optimizer_dict(optimizer_dict)
     # Extract ATH and trading start times from config.
     ath_start_time = hdict.typed_get(
-        config, "ath_start_time", None, datetime.time
+        config, "ath_start_time", expected_type=(datetime.time, NoneType)
     )
     trading_start_time = hdict.typed_get(
-        config, "trading_start_time", None, datetime.time
+        config, "trading_start_time", expected_type=(datetime.time, NoneType)
     )
-    # Extract end times.
-    ath_end_time = hdict.typed_get(config, "ath_end_time", None, datetime.time)
+    # Extract ATH and trading end times from config.
+    ath_end_time = hdict.typed_get(
+        config, "ath_end_time", expected_type=(datetime.time, NoneType)
+    )
     trading_end_time = hdict.typed_get(
-        config, "trading_end_time", None, datetime.time
+        config, "trading_end_time", expected_type=(datetime.time, NoneType)
     )
     # Sanity check trading time.
     _validate_trading_time(
-        ath_start_time, ath_end_time, trading_start_time, trading_end_time
+        ath_start_time, ath_end_time, trading_start_time, trading_end_time,
+        # TODO(gp): Pass liquidate_at_trading_end_time
     )
     # Get execution mode ("real_time" or "batch").
-    execution_mode = hdict.typed_get(config, "execution_mode", None, str)
+    execution_mode = hdict.typed_get(config, "execution_mode", expected_type=str)
     if execution_mode == "real_time":
         prediction_df = prediction_df.tail(1)
     elif execution_mode == "batch":
@@ -169,12 +198,12 @@ async def process_forecasts(
     get_wall_clock_time = portfolio.market_data.get_wall_clock_time
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     iter_ = enumerate(prediction_df.iterrows())
-    offset_min = pd.DateOffset(minutes=order_config["order_duration_in_mins"])
+    offset_min = pd.DateOffset(minutes=order_dict["order_duration_in_mins"])
     # Initialize a `ForecastProcessor` object to perform the heavy lifting.
     forecast_processor = ForecastProcessor(
         portfolio,
-        order_config,
-        optimizer_config,
+        order_dict,
+        optimizer_dict,
         restrictions_df,
         log_dir=log_dir,
     )
@@ -189,9 +218,10 @@ async def process_forecasts(
             hprint.frame("# idx=%s timestamp=%s" % (idx, timestamp)),
         )
         # Update the global state tracking the current bar.
-        # TODO(gp): The outermost loop in run_dag should set the bar based on
-        #  align_on_grid.
-        hwacltim.set_current_bar_timestamp(timestamp)
+        # The loop in `RealTimeDagRunner` sets the bar based on align_on_grid.
+        # If we are running `run_process_forecasts.py`
+        if hwacltim.get_current_bar_timestamp(as_str=False) is None:
+            hwacltim.set_current_bar_timestamp(timestamp)
         # Wait until get_wall_clock_time() == timestamp.
         if get_wall_clock_time() > timestamp:
             # E.g., it's 10:21:51, we computed the forecast for [10:20, 10:25]
@@ -233,11 +263,13 @@ async def process_forecasts(
                 char1="#",
             ),
         )
+        # Generate orders.
         volatility = volatility_df.loc[timestamp]
         spread = spread_df.loc[timestamp]
         orders = forecast_processor.generate_orders(
             predictions, volatility, spread
         )
+        # Submit orders.
         await forecast_processor.submit_orders(orders)
         _LOG.debug("ForecastProcessor=\n%s", str(forecast_processor))
     _LOG.debug("Event: exiting process_forecasts() for loop.")
@@ -340,9 +372,9 @@ class ForecastProcessor:
         self,
         portfolio: omportfo.Portfolio,
         # TODO(gp): -> order_dict?
-        order_config: cconfig.Config,
+        order_dict: cconfig.Config,
         # TODO(gp): -> optimizer_dict
-        optimizer_config: cconfig.Config,
+        optimizer_dict: cconfig.Config,
         # TODO(gp): -> restrictions_df like the process_forecast
         restrictions: Optional[pd.DataFrame],
         *,
@@ -351,12 +383,12 @@ class ForecastProcessor:
         """
         Build the object.
 
-        :param order_config: config for placing the orders, e.g.,
+        :param order_dict: config for placing the orders, e.g.,
             ```
             order_type: price@twap
             order_duration_in_mins: 5
             ```
-        :param optimizer_config: config for the optimizer, e.g.,
+        :param optimizer_dict: config for the optimizer, e.g.,
             ```
             backend: pomo
             params:
@@ -375,16 +407,17 @@ class ForecastProcessor:
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
         # Process order config.
-        _validate_order_config(order_config)
-        self._order_config = order_config
+        _validate_order_dict(order_dict)
+        self._order_dict = order_dict
         self._offset_min = pd.DateOffset(
-            minutes=order_config["order_duration_in_mins"]
+            minutes=order_dict["order_duration_in_mins"]
         )
         # Process optimizer config.
-        _validate_optimizer_config(optimizer_config)
-        self._optimizer_config = optimizer_config
+        _validate_optimizer_dict(optimizer_dict)
+        self._optimizer_dict = optimizer_dict
         #
         self._restrictions = restrictions
+        #
         self._log_dir = log_dir
         # Store the target positions.
         self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
@@ -531,15 +564,14 @@ class ForecastProcessor:
         # Create a config for `Order`.
         timestamp_start = wall_clock_timestamp
         timestamp_end = wall_clock_timestamp + self._offset_min
-        order_dict_ = {
-            "type_": self._order_config["order_type"],
+        order_dict = {
+            "type_": self._order_dict["order_type"],
             "creation_timestamp": wall_clock_timestamp,
             "start_timestamp": timestamp_start,
             "end_timestamp": timestamp_end,
         }
-        order_config = cconfig.get_config_from_nested_dict(order_dict_)
         orders = self._generate_orders(
-            target_positions[["curr_num_shares", "diff_num_shares"]], order_config
+            target_positions[["curr_num_shares", "diff_num_shares"]], order_dict
         )
         # Convert orders to a string representation and internally log.
         orders_as_str = omorder.orders_to_string(orders)
@@ -592,6 +624,7 @@ class ForecastProcessor:
         :param predictions: predictions indexed by `asset_id`
         :param volatility: volatility forecasts indexed by `asset_id`
         :param spread: spread forecasts indexed by `asset_id`
+        :return: the df with target_positions including `diff_num_shares`
         """
         assets_and_predictions = self._prepare_data_for_optimizer(
             predictions, volatility, spread
@@ -603,10 +636,10 @@ class ForecastProcessor:
         # TODO(Paul): Align with ForecastEvaluator and update callers.
         # compute_target_positions_func
         # compute_target_positions_kwargs
-        backend = self._optimizer_config["backend"]
+        backend = self._optimizer_dict["backend"]
         if backend == "pomo":
-            style = self._optimizer_config["params"]["style"]
-            kwargs = self._optimizer_config["params"]["kwargs"]
+            style = self._optimizer_dict["params"]["style"]
+            kwargs = self._optimizer_dict["params"]["kwargs"]
             df = ocalopti.compute_target_positions_in_cash(
                 assets_and_predictions,
                 style=style,
@@ -616,7 +649,7 @@ class ForecastProcessor:
             import optimizer.single_period_optimization as osipeopt
 
             spo = osipeopt.SinglePeriodOptimizer(
-                self._optimizer_config,
+                self._optimizer_dict,
                 assets_and_predictions,
                 restrictions=self._restrictions,
             )
@@ -643,6 +676,7 @@ class ForecastProcessor:
         diff_num_shares = df["target_notional_trade"] / df["price"]
         diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
         diff_num_shares = diff_num_shares.fillna(0)
+        #
         df["diff_num_shares"] = diff_num_shares
         df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
         _LOG.debug("df=\n%s", hpandas.df_to_str(df))
@@ -807,17 +841,18 @@ class ForecastProcessor:
     def _generate_orders(
         self,
         shares_df: pd.DataFrame,
-        order_config: Dict[str, Any],
+        order_dict: Dict[str, Any],
     ) -> List[omorder.Order]:
         """
         Turn a series of asset_id / shares to trade into a list of orders.
 
         :param shares_df: dataframe indexed by `asset_id`. Contains columns
             `curr_num_shares` and `diff_num_shares`. May contain zero rows.
-        :param order_config: common parameters used to initialize `Order`
+        :param order_dict: common parameters used to initialize `Order`
         :return: a list of nontrivial orders (i.e., no zero-share orders)
         """
         _LOG.debug("# Generate orders")
+        hdbg.dassert_isinstance(order_dict, dict)
         hdbg.dassert_is_subset(
             ("curr_num_shares", "diff_num_shares"), shares_df.columns
         )
@@ -846,7 +881,7 @@ class ForecastProcessor:
                 asset_id=asset_id,
                 curr_num_shares=curr_num_shares,
                 diff_num_shares=diff_num_shares,
-                **order_config.to_dict(),
+                **order_dict,
             )
             _LOG.debug("order=%s", order.order_id)
             orders.append(order)
@@ -900,23 +935,15 @@ class ForecastProcessor:
 # #############################################################################
 
 
-def _validate_order_config(config: cconfig.Config) -> None:
-    hdbg.dassert_isinstance(config, dict)
-    _ = hdict.typed_get(
-        config, "order_type", None, str
-    )
-    _ = hdict.typed_get(
-        config, "order_duration_in_mins", None, int
-    )
+def _validate_order_dict(order_dict: Dict[str, Any]) -> None:
+    hdbg.dassert_isinstance(order_dict, dict)
+    _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
+    _ = hdict.typed_get(order_dict, "order_duration_in_mins", expected_type=int)
 
 
-def _validate_optimizer_config(config: cconfig.Config) -> None:
-    hdbg.dassert_isinstance(config, dict)
-    backend = hdict.typed_get(
-        config, "backend", None, str
-    )
-    # target_gmv_type = float
-    # target_gmv = cconfig.get_object_from_config(
-    #     config, "target_gmv", target_gmv_type, None
+def _validate_optimizer_dict(optimizer_dict: Dict[str, Any]) -> None:
+    hdbg.dassert_isinstance(optimizer_dict, dict)
+    _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)
+    # target_gmv = hdict.typed_get(
+    #     optimizer_dict, "target_gmv", expected_type=(float, int)
     # )
-    # hdbg.dassert_issubclass(target_gmv, target_gmv_type)

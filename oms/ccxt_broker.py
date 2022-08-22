@@ -8,6 +8,7 @@ import oms.ccxt_broker as occxbrok
 
 import logging
 import re
+import time
 from typing import Any, Dict, List, Optional, Tuple
 
 import ccxt
@@ -26,6 +27,8 @@ import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
+# Max number of order submission retries.
+_MAX_ORDER_SUBMIT_RETRIES = 3
 
 class CcxtBroker(ombroker.Broker):
     def __init__(
@@ -60,6 +63,7 @@ class CcxtBroker(ombroker.Broker):
         :param secret_id: the number id of the secret
         """
         super().__init__(*args, **kwargs)
+        self.max_order_submit_retries = _MAX_ORDER_SUBMIT_RETRIES
         self._exchange_id = exchange_id
         #
         hdbg.dassert_in(stage, ["local", "preprod"])
@@ -332,13 +336,42 @@ class CcxtBroker(ombroker.Broker):
         error_regex = f'"code":{error_code},'
         return bool(re.search(error_regex, error_message))
 
-    def _check_minimal_limit(self, order: omorder.Order) -> omorder.Order:
+    def _force_minimal_order(self, order: omorder.Order) -> omorder.Order:
+        """
+        Force a minimal possible order quantity.
+
+        Changes the order to buy/sell the minimal possible quantity of an asset.
+        Required for running the system in testnet.
+
+        :param order: order to be submitted
+        :return: an order with minimal quantity of asset
+        """
+        asset_limits = self._minimal_order_limits[order.asset_id]
+        required_amount = asset_limits["min_amount"]
+        # Note: 10 is the minimal total cost of an order in testnet.
+        min_cost = 10
+        # Get the last price for the asset.
+        last_price = self._get_last_market_price(order.asset_id)
+        # Verify that the estimated total cost is above 10.
+        if last_price * required_amount <= min_cost:
+            # Set the amount of asset to above min cost.
+            #  Note: the multiplication by 2 is done to give some
+            #  buffer so the order does not go below
+            #  the minimal amount of asset.
+            required_amount = (min_cost / last_price) * 2
+        if order.diff_num_shares < 0:
+            order.diff_num_shares = -required_amount
+        else:
+            order.diff_num_shares = required_amount
+        return order
+
+    def _check_order_limit(self, order: omorder.Order) -> omorder.Order:
         """
         Check if the order matches the minimum quantity for the asset.
 
         The functions checks both the flat amount of the asset and the total
         cost of the asset in the order. If the order amount does not match,
-         he order is changed to be slightly above the minimal amount.
+        he order is changed to be slightly above the minimal amount.
 
         :param order: order to be submitted
         """
@@ -371,7 +404,7 @@ class CcxtBroker(ombroker.Broker):
             required_amount = round(min_cost / last_price, 0) + 1
             _LOG.warning(
                 "Amount of asset in order is below minimal base: %s. \
-                Setting to following amount based on notional limit: %s",
+                    Setting to following amount based on notional limit: %s",
                 order_amount,
                 required_amount,
             )
@@ -514,25 +547,29 @@ class CcxtBroker(ombroker.Broker):
                 f"The {self._exchange_id} exchange is not fully supported for placing orders."
             )
 
-    async def _submit_orders(
-        self,
-        orders: List[omorder.Order],
-        wall_clock_timestamp: pd.Timestamp,
-        *,
-        dry_run: bool,
-    ) -> Tuple[str, pd.DataFrame]:
+    async def _submit_single_order(
+        self, order: omorder.Order
+    ) -> Optional[omorder.Order]:
         """
-        Submit orders.
+        Submit a single order.
+
+        :param order: order to be submitted
+
+        :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
-        self.last_order_execution_ts = pd.Timestamp.now()
-        sent_orders: List[omorder.Order] = []
-        for order in orders:
-            # Verify that order conforms
-            order = self._check_minimal_limit(order)
-            _LOG.info("Submitted order: %s", str(order))
-            # TODO(Juraj): perform bunch of assertions for order attributes.
-            symbol = self._asset_id_to_symbol_mapping[order.asset_id]
-            side = "buy" if order.diff_num_shares > 0 else "sell"
+        submitted_order: Optional[omorder.Order] = None
+        if self._stage in ["local", "preprod"]:
+            # Reduce order to a minimal possible amount.
+            #  This is done to avoid "Margin is insufficient" error
+            #  in testnet.
+            order = self._force_minimal_order(order)
+        else:
+            # Verify that order is not below the minimal amount.
+            order = self._check_order_limit(order)
+        symbol = self._asset_id_to_symbol_mapping[order.asset_id]
+        side = "buy" if order.diff_num_shares > 0 else "sell"
+        #TODO(Juraj): separate the retry logic from the code that does the work.
+        for _ in range(self.max_order_submit_retries):
             try:
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
@@ -549,19 +586,48 @@ class CcxtBroker(ombroker.Broker):
                         "client_oid": order.order_id,
                     },
                 )
-                order.ccxt_id = order_resp["id"]
-                sent_orders.append(order)
+                submitted_order = order
+                submitted_order.ccxt_id = order_resp["id"]
                 _LOG.info(hprint.to_str("order_resp"))
+                # If the submission was successful, don't retry.
+                break
             except Exception as e:
                 # Check the Binance API er
+                if isinstance(e, ccxt.ExchangeNotAvailable):
+                    # If there is a temporary server error, wait for
+                    # a set amount of seconds and retry.
+                    time.sleep(3)
+                    continue
                 if self._check_binance_code_error(e, -4131):
                     # If the error is connected to liquidity, continue submitting orders.
                     _LOG.warning(
-                        "PERCENT_PRICE error has been raised. The Exception was:\n%s\nContinuing...",
+                        "PERCENT_PRICE error has been raised. \
+                        The Exception was:\n%s\nContinuing...",
                         e,
                     )
+                    break
                 else:
                     raise e
+        return submitted_order
+
+    async def _submit_orders(
+        self,
+        orders: List[omorder.Order],
+        wall_clock_timestamp: pd.Timestamp,
+        *,
+        dry_run: bool,
+    ) -> Tuple[str, pd.DataFrame]:
+        """
+        Submit orders.
+        """
+        self.last_order_execution_ts = pd.Timestamp.now()
+        sent_orders: List[omorder.Order] = []
+        for order in orders:
+            sent_order = await self._submit_single_order(order)
+            # If order was submitted successfully append it to
+            # the list of sent orders.
+            if sent_order:
+                sent_orders.append(sent_order)
         # Save sent CCXT orders to class state.
         self._sent_orders = sent_orders
         # TODO(Grisha): what should we use as `receipt` for CCXT? For equities IIUC

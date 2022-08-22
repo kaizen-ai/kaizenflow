@@ -29,7 +29,7 @@ class TestRealTimeMarketData2(
 
     def tearDown(self) -> None:
         # Delete the table.
-        hsql.remove_table(self.connection, "example2_marketdata")
+        hsql.remove_table(self.connection, "mock2_marketdata")
         super().tearDown()
 
     def test_get_data_for_last_period1(self) -> None:

@@ -72,11 +72,11 @@ if True:
             config["x_vars"] = None
             config["y_vars"] = ["y"]
             trainer_kwargs = {"epochs": 1}
-            config["trainer_kwargs"] = cconfig.get_config_from_nested_dict(
+            config["trainer_kwargs"] = cconfig.Config.from_dict(
                 trainer_kwargs
             )
             estimator_kwargs = {"prediction_length": 2}
-            config["estimator_kwargs"] = cconfig.get_config_from_nested_dict(
+            config["estimator_kwargs"] = cconfig.Config.from_dict(
                 estimator_kwargs
             )
             node = ContinuousDeepArModel(
@@ -157,14 +157,14 @@ if True:
             config = cconfig.Config()
             config["nid"] = "deepar"
             trainer_kwargs = {"epochs": 1}
-            config["trainer_kwargs"] = cconfig.get_config_from_nested_dict(
+            config["trainer_kwargs"] = cconfig.Config.from_dict(
                 trainer_kwargs
             )
             estimator_kwargs = {
                 "freq": "T",
                 "use_feat_dynamic_real": False,
             }
-            config["estimator_kwargs"] = cconfig.get_config_from_nested_dict(
+            config["estimator_kwargs"] = cconfig.Config.from_dict(
                 estimator_kwargs
             )
             config["x_vars"] = self._x_vars
