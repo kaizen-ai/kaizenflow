@@ -26,6 +26,7 @@ import helpers.hparser as hparser
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Nikola): Deprecate in favor of `haws` one.
 def _update_task_definition(task_definition: str, image_tag: str) -> None:
     """
     Create the new revision of specified ECS task definition and point Image
@@ -36,36 +37,15 @@ def _update_task_definition(task_definition: str, image_tag: str) -> None:
     :param image_tag: the hash of the new candidate image, e.g. 13538588e
     """
     client = haws.get_ecs_client("ck")
-    # Get the last revison of the task definition.
+    # Get the last revision of the task definition.
     task_description = client.describe_task_definition(
         taskDefinition=task_definition
     )
     task_def = task_description["taskDefinition"]
-    old_image = task_def["containerDefinitions"][0]["image"]
+    old_image_url = task_def["containerDefinitions"][0]["image"]
     # Edit container version, e.g. cmamp:prod-12a45 - > cmamp:prod-12b46`
-    new_image = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image)
-    task_def["containerDefinitions"][0]["image"] = new_image
-    # Register the new revision with the new image.
-    response = client.register_task_definition(
-        family=task_definition,
-        taskRoleArn=task_def.get("taskRoleArn", ""),
-        executionRoleArn=task_def["executionRoleArn"],
-        networkMode=task_def["networkMode"],
-        containerDefinitions=task_def["containerDefinitions"],
-        volumes=task_def["volumes"],
-        placementConstraints=task_def["placementConstraints"],
-        requiresCompatibilities=task_def["requiresCompatibilities"],
-        cpu=task_def["cpu"],
-        memory=task_def["memory"],
-    )
-    new_image_url = response["taskDefinition"]["containerDefinitions"][0]["image"]
-    # Check if the image URL is updated.
-    hdbg.dassert_eq(new_image_url.endswith(image_tag), True)
-    _LOG.info(
-        "The image URL of `%s` task definition is updated to `%s`",
-        task_definition,
-        new_image_url,
-    )
+    new_image_url = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image_url)
+    haws.update_task_definition(task_definition, new_image_url)
 
 
 def _parse() -> argparse.ArgumentParser:
