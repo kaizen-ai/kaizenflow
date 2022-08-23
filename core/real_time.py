@@ -249,22 +249,22 @@ async def _sleep(sleep_in_secs: float) -> None:
 
 def align_on_time_grid(
     get_wall_clock_time: hdateti.GetWallClockTime,
-    grid_time_in_secs: float,
+    bar_duration_in_secs: int,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop],
     use_high_resolution: bool = False,
 ) -> None:
     """
-    Wait until the current wall clock time is aligned on `grid_time_in_secs`.
+    Wait until the current wall clock time is aligned on `bar_duration_in_secs`.
 
-    E.g., for `grid_time_in_secs` = 2, if wall clock time is `2021-07-29 10:45:51`,
+    E.g., for `bar_duration_in_secs` = 2, if wall clock time is `2021-07-29 10:45:51`,
     then this function terminates when the wall clock is `2021-07-29 10:46:00`.
 
     :param use_high_resolution: `time.sleep()` has low resolution, so by
         default this function spins on the wall clock until the proper amount of
         time has elapsed
     """
-    _LOG.info("Aligning on %s secs", grid_time_in_secs)
+    _LOG.info("Aligning on %s secs", bar_duration_in_secs)
 
     def _wait(sleep_in_secs: float) -> None:
         _LOG.debug("wall_clock=%s", get_wall_clock_time())
@@ -276,7 +276,7 @@ def align_on_time_grid(
 
     # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
     target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
-        grid_time_in_secs, get_wall_clock_time
+        bar_duration_in_secs, get_wall_clock_time
     )
     #
     if use_high_resolution:

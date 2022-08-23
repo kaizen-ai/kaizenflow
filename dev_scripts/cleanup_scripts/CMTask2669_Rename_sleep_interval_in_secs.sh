@@ -12,3 +12,12 @@ replace_text.py \
   --new "bar_duration_in_secs" \
   --exclude_files $script_name \
 
+replace_text.py \
+  --old "grid_time_in_secs: float" \
+  --new "bar_duration_in_secs: int" \
+  --exclude_files $script_name \
+
+replace_text.py \
+  --old "grid_time_in_secs" \
+  --new "bar_duration_in_secs" \
+  --exclude_files $script_name \

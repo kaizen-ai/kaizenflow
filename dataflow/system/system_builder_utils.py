@@ -719,7 +719,7 @@ def get_RealTimeDagRunner_from_System(
     wake_up_timestamp = system.config.get(
         ("dag_runner_config", "wake_up_timestamp"), None
     )
-    grid_time_in_secs = system.config.get(
+    bar_duration_in_secs = system.config.get(
         ("dag_runner_config", "bar_duration_in_secs"), None
     )
     execute_rt_loop_config = {
@@ -739,7 +739,7 @@ def get_RealTimeDagRunner_from_System(
         "fit_at_beginning": fit_at_beginning,
         "get_wall_clock_time": get_wall_clock_time,
         "wake_up_timestamp": wake_up_timestamp,
-        "grid_time_in_secs": grid_time_in_secs,
+        "bar_duration_in_secs": bar_duration_in_secs,
     }
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)

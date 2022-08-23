@@ -46,7 +46,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         fit_at_beginning: bool = False,
         get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
         wake_up_timestamp: Optional[pd.Timestamp] = None,
-        grid_time_in_secs: Optional[int] = None,
+        bar_duration_in_secs: Optional[int] = None,
         set_current_bar_timestamp: bool = True,
     ) -> None:
         """
@@ -56,9 +56,9 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         :param get_wall_clock_time: wall clock to use
         :param wake_up_timestamp: timestamp to wait to start the execution (e.g.,
             9:30am)
-        :param grid_time_in_secs: duration of a bar (e.g., 5 mins = 300 secs)
+        :param bar_duration_in_secs: duration of a bar (e.g., 5 mins = 300 secs)
         :param set_current_bar_timestamp: True if we need to set the timestamp
-            of the bar. It requires grid_time_in_secs to be a multiple of 60 secs,
+            of the bar. It requires bar_duration_in_secs to be a multiple of 60 secs,
             since for now we support only bars that last a multiple of one minute.
         """
         super().__init__(dag)
@@ -70,7 +70,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         self._fit_at_beginning = fit_at_beginning
         self._get_wall_clock_time = get_wall_clock_time
         self._wake_up_timestamp = wake_up_timestamp
-        self._grid_time_in_secs = grid_time_in_secs
+        self._bar_duration_in_secs = bar_duration_in_secs
         self._set_current_bar_timestamp = set_current_bar_timestamp
         # Store information about the real-time execution.
         self._events: creatime.Events = []
@@ -98,13 +98,13 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         # If the system comes up in the middle of the day then we need to wait to
         # align to a bar.
         # Align on the trading grid (e.g., 1, 5, 15 minutes).
-        grid_time_in_secs = self._grid_time_in_secs
-        hdbg.dassert_lte(1, grid_time_in_secs)
-        _LOG.info("Aligning on a bar lasting %s secs ...", grid_time_in_secs)
+        bar_duration_in_secs = self._bar_duration_in_secs
+        hdbg.dassert_lte(1, bar_duration_in_secs)
+        _LOG.info("Aligning on a bar lasting %s secs ...", bar_duration_in_secs)
         # Add one second to make sure we are after the start trading time.
         add_buffer_in_secs = 1
         target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
-            grid_time_in_secs,
+            bar_duration_in_secs,
             get_wall_clock_time,
             add_buffer_in_secs=add_buffer_in_secs,
         )
