@@ -73,7 +73,7 @@ def run_blank_tests(ctx, stage="dev", version=""):  # type: ignore
     """
     (ONLY CI/CD) Test that pytest in the container works.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     base_image = ""
     cmd = '"pytest -h >/dev/null"'
@@ -204,7 +204,7 @@ def _run_test_cmd(
     """
     if collect_only:
         # Clean files.
-        hlitauti._run(ctx, "rm -rf ./.coverage*")
+        hlitauti.run(ctx, "rm -rf ./.coverage*")
     # Run.
     base_image = ""
     # We need to add some " to pass the string as it is to the container.
@@ -269,7 +269,7 @@ def _run_tests(
     """
     if git_clean_:
         cmd = "invoke git_clean --fix-perms"
-        hlitauti._run(ctx, cmd)
+        hlitauti.run(ctx, cmd)
     # Build the command line.
     cmd = _build_run_command_line(
         test_list_name,
@@ -381,7 +381,7 @@ def run_fast_tests(  # type: ignore
     :param git_clean_: run `invoke git_clean --fix-perms` before running the tests
     :param kwargs: kwargs for `ctx.run`
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     test_list_name = "fast_tests"
     custom_marker = ""
     rc = _run_tests(
@@ -421,7 +421,7 @@ def run_slow_tests(  # type: ignore
 
     Same params as `invoke run_fast_tests`.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     test_list_name = "slow_tests"
     custom_marker = ""
     rc = _run_tests(
@@ -461,7 +461,7 @@ def run_superslow_tests(  # type: ignore
 
     Same params as `invoke run_fast_tests`.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     test_list_name = "superslow_tests"
     custom_marker = ""
     rc = _run_tests(
@@ -501,7 +501,7 @@ def run_fast_slow_tests(  # type: ignore
 
     Same params as `invoke run_fast_tests`.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # Run fast tests but do not fail on error.
     test_lists = "fast_tests,slow_tests"
     custom_marker = ""
@@ -542,7 +542,7 @@ def run_fast_slow_superslow_tests(  # type: ignore
 
     Same params as `invoke run_fast_tests`.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # Run fast tests but do not fail on error.
     test_lists = "fast_tests,slow_tests,superslow_tests"
     custom_marker = ""
@@ -576,7 +576,7 @@ def run_qa_tests(  # type: ignore
     :param version: version to tag the image and code with
     :param stage: select a specific stage for the Docker image
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     qa_test_fn = hlitauti.get_default_param("QA_TEST_FUNCTION")
     # Run the call back function.
@@ -680,12 +680,12 @@ def run_coverage_report(  # type: ignore
         f"invoke run_fast_tests --coverage -p {target_dir}; "
         "cp .coverage .coverage_fast_tests"
     )
-    hlitauti._run(ctx, fast_tests_cmd)
+    hlitauti.run(ctx, fast_tests_cmd)
     slow_tests_cmd = (
         f"invoke run_slow_tests --coverage -p {target_dir}; "
         "cp .coverage .coverage_slow_tests"
     )
-    hlitauti._run(ctx, slow_tests_cmd)
+    hlitauti.run(ctx, slow_tests_cmd)
     #
     report_cmd: List[str] = []
     # Clean the previous coverage results. For some docker-specific reasons
@@ -728,7 +728,7 @@ def run_coverage_report(  # type: ignore
     # installed outside docker.
     full_report_cmd = " && ".join(report_cmd)
     docker_cmd_ = f"invoke docker_cmd --use-bash --cmd '{full_report_cmd}'"
-    hlitauti._run(ctx, docker_cmd_)
+    hlitauti.run(ctx, docker_cmd_)
     if publish_html_on_s3:
         # Publish HTML report on S3.
         _publish_html_coverage_report_on_s3(aws_profile)
@@ -758,7 +758,7 @@ def traceback(ctx, log_name="tmp.pytest_script.txt", purify=True):  # type: igno
     :param log_name: the file with the traceback
     :param purify: purify the filenames from client (e.g., from running inside Docker)
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     #
     dst_cfile = "cfile"
     hio.delete_file(dst_cfile)
@@ -774,11 +774,11 @@ def traceback(ctx, log_name="tmp.pytest_script.txt", purify=True):  # type: igno
     else:
         cmd.append("--no_purify_from_client")
     cmd = " ".join(cmd)
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
     # Read and navigate the cfile with vim.
     if os.path.exists(dst_cfile):
         cmd = 'vim -c "cfile cfile"'
-        hlitauti._run(ctx, cmd, pty=True)
+        hlitauti.run(ctx, cmd, pty=True)
     else:
         _LOG.warning("Can't find %s", dst_cfile)
 
@@ -793,7 +793,7 @@ def pytest_clean(ctx):  # type: ignore
     """
     Clean pytest artifacts.
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     import helpers.hpytest as hpytest
 
@@ -868,7 +868,7 @@ def pytest_repro(  # type: ignore
     :param create_script: create a script to run the tests
     :return: commands to reproduce pytest failures at the requested granularity level
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     # Read file.
     _LOG.info("Reading file_name='%s'", file_name)
@@ -1016,7 +1016,7 @@ def pytest_rename_test(ctx, old_test_class_name, new_test_class_name):  # type: 
     :param old_test_class_name: old class name
     :param new_test_class_name: new class name
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     _ = ctx
     root_dir = os.getcwd()
     # `lib_tasks` is used from outside the Docker container in the thin dev
@@ -1053,11 +1053,11 @@ def pytest_find_unused_goldens(  # type: ignore
 
     :param dir_name: the head dir to start the check from
     """
-    hlitauti._report_task()
+    hlitauti.report_task()
     # Remove the log file.
     if os.path.exists(out_file_name):
         cmd = f"rm {out_file_name}"
-        hlitauti._run(ctx, cmd)
+        hlitauti.run(ctx, cmd)
     # Prepare the command line.
     amp_abs_path = hgit.get_amp_abs_path()
     amp_path = amp_abs_path.replace(
@@ -1074,7 +1074,7 @@ def pytest_find_unused_goldens(  # type: ignore
     cmd = hlitadoc._get_lint_docker_cmd(docker_cmd_, stage, version)
     cmd = f"({cmd}) 2>&1 | tee -a {out_file_name}"
     # Run.
-    hlitauti._run(ctx, cmd)
+    hlitauti.run(ctx, cmd)
 
 
 # #############################################################################
@@ -1142,7 +1142,7 @@ def pytest_compare_logs(  # type: ignore
     script_txt = f"vimdiff {file1_tmp} {file2_tmp}"
     msg = "To diff run:"
     hio.create_executable_script(script_file_name, script_txt, msg=msg)
-    hlitauti._run(ctx, script_file_name, dry_run=dry_run, pty=True)
+    hlitauti.run(ctx, script_file_name, dry_run=dry_run, pty=True)
 
 
 # #############################################################################
