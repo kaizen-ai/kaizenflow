@@ -35,7 +35,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Return only MarketData since the wall clock is inside it.
 def get_ReplayedTimeMarketData_from_df(
     event_loop: asyncio.AbstractEventLoop,
-    initial_replayed_delay: int,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
     df: pd.DataFrame,
     *,
     knowledge_datetime_col_name: str = "timestamp_db",
@@ -51,7 +51,7 @@ def get_ReplayedTimeMarketData_from_df(
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
-    :param initial_replayed_delay: how many minutes after the beginning of the
+    :param replayed_delay_in_mins_or_timestamp: how many minutes after the beginning of the
         data the replayed time starts. This is useful to simulate the beginning
         / end of the trading day.
     """
@@ -65,14 +65,14 @@ def get_ReplayedTimeMarketData_from_df(
     # Build the wall clock.
     tz = "ET"
     # Find the initial timestamp of the data and shift by
-    # `initial_replayed_delay`.
+    # `replayed_delay_in_mins_or_timestamp`.
     min_start_time_col_name = df[start_time_col_name].min()
     initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
-        minutes=initial_replayed_delay
+        minutes=replayed_delay_in_mins_or_timestamp
     )
     _LOG.debug(
         hprint.to_str(
-            "min_start_time_col_name initial_replayed_delay initial_replayed_dt"
+            "min_start_time_col_name replayed_delay_in_mins_or_timestamp initial_replayed_dt"
         )
     )
     # The initial replayed datetime should be before the end of the data.
@@ -107,12 +107,12 @@ def get_ReplayedTimeMarketData_from_df(
     return market_data, get_wall_clock_time
 
 
-# TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
+# TODO(gp): replayed_delay_in_mins_or_timestamp -> initial_delay_in_mins (or in secs).
 def get_ReplayedTimeMarketData_example2(
     event_loop: asyncio.AbstractEventLoop,
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
-    initial_replayed_delay: int,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
     asset_ids: List[int],
     *,
     delay_in_secs: int = 0,
@@ -125,7 +125,7 @@ def get_ReplayedTimeMarketData_example2(
 
     :param start_datetime: start time for the generation of the synthetic data
     :param end_datetime: end time for the generation of the synthetic data
-    :param initial_replayed_delay: how many minutes after the beginning of the data
+    :param replayed_delay_in_mins_or_timestamp: how many minutes after the beginning of the data
         the replayed time starts. This is useful to simulate the beginning / end of
         the trading day
     :param asset_ids: asset ids to generate data for. `None` defaults to all the
@@ -140,7 +140,7 @@ def get_ReplayedTimeMarketData_example2(
     )
     (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
         event_loop,
-        initial_replayed_delay,
+        replayed_delay_in_mins_or_timestamp,
         df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
@@ -173,13 +173,13 @@ def get_ReplayedTimeMarketData_example3(
     )
     _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
-    initial_replayed_delay = 5
+    replayed_delay_in_mins_or_timestamp = 5
     delay_in_secs = 0
     sleep_in_secs = 30
     time_out_in_secs = 60 * 5
     (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
         event_loop,
-        initial_replayed_delay,
+        replayed_delay_in_mins_or_timestamp,
         df=df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
@@ -194,7 +194,7 @@ def get_ReplayedTimeMarketData_example4(
     end_datetime: pd.Timestamp,
     asset_ids: List[int],
     *,
-    initial_replayed_delay: int = 0,
+    replayed_delay_in_mins_or_timestamp: int = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` with synthetic bar data.
@@ -208,7 +208,7 @@ def get_ReplayedTimeMarketData_example4(
     time_out_in_secs = 60 * 5
     market_data, get_wall_clock_time = get_ReplayedTimeMarketData_from_df(
         event_loop,
-        initial_replayed_delay,
+        replayed_delay_in_mins_or_timestamp,
         df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
@@ -223,7 +223,7 @@ def get_ReplayedTimeMarketData_example5(
     end_datetime: pd.Timestamp,
     asset_ids: List[int],
     *,
-    initial_replayed_delay: int = 0,
+    replayed_delay_in_mins_or_timestamp: int = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` with synthetic top-of-the-book data.
@@ -239,7 +239,7 @@ def get_ReplayedTimeMarketData_example5(
     time_out_in_secs = 60 * 5
     market_data, get_wall_clock_time = get_ReplayedTimeMarketData_from_df(
         event_loop,
-        initial_replayed_delay,
+        replayed_delay_in_mins_or_timestamp,
         df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,

@@ -148,7 +148,7 @@ class Test_Mock1_Time_ForecastSystem1(
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
         # We need at least 7 bars to compute volatility.
-        system.config["market_data_config", "initial_replayed_delay"] = 35
+        system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 35
         # Exercise the system for multiple 5 minute intervals.
         system.config[
             "dag_runner_config", "real_time_loop_time_out_in_secs"
