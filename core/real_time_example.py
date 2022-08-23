@@ -74,7 +74,7 @@ def get_replayed_time(
 
 # TODO(gp): Make `event_loop` mandatory.
 def get_replayed_time_execute_rt_loop_kwargs(
-    bar_duration_in_secs: float,
+    bar_duration_in_secs: int,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> htypes.Kwargs:
@@ -101,7 +101,7 @@ def get_replayed_time_execute_rt_loop_kwargs(
 # TODO(gp): move time_out_in_secs to defaults, then kill the example.
 # TODO(gp): Add "_example" to the end of the name.
 def get_real_time_execute_rt_loop_kwargs(
-    bar_duration_in_secs: float,
+    bar_duration_in_secs: int,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop],
 ) -> htypes.Kwargs:

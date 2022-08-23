@@ -347,7 +347,7 @@ class Events(List[Event]):
 
 async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
-    bar_duration_in_secs: float,
+    bar_duration_in_secs: int,
     # TODO(gp): -> exit_condition
     time_out_in_secs: Union[float, int, datetime.time, None],
     workload: Callable[[pd.Timestamp], Any],
