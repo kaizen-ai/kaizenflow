@@ -6,7 +6,6 @@ import dataflow.system.sink_nodes as dtfsysinod
 
 
 import collections
-import datetime
 import logging
 import os
 from typing import Any, Dict, Optional
@@ -16,6 +15,7 @@ import pandas as pd
 import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import oms.portfolio as omportfo
 import oms.process_forecasts_ as oprofore
 
@@ -41,6 +41,12 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 
         :param process_forecasts_dict: configures `process_forecasts()`
         """
+        _LOG.debug(
+            hprint.to_str(
+                "nid prediction_col volatility_col "
+                "spread_col portfolio process_forecasts_dict"
+            )
+        )
         super().__init__(nid)
         self._prediction_col = prediction_col
         self._volatility_col = volatility_col
@@ -57,14 +63,14 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 
     async def process_forecasts(self) -> None:
         # Get the latest `df` index value.
-        restrictions = None
+        restrictions_df = None
         await oprofore.process_forecasts(
             self._prediction_df,
             self._volatility_df,
             self._portfolio,
             self._process_forecasts_dict,
-            self._spread_df,
-            restrictions,
+            spread_df=self._spread_df,
+            restrictions_df=restrictions_df,
         )
 
     def _compute_forecasts(

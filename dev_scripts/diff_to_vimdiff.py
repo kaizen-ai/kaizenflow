@@ -261,13 +261,17 @@ def _parse_diff_output(
     out = "\n".join(out)
     output_file = args.output_file
     if output_file is None:
+        # Print to screen.
         print(out)
     else:
+        # Prepare the diff script.
         _LOG.info("Writing '%s'", output_file)
         hio.to_file(output_file, out)
         cmd = "chmod +x %s" % output_file
         hsystem.system(cmd)
-        #
+        # Press enter to continue.
+        hsystem.press_enter_to_continue()
+        # Run the diff script.
         cmd = "./%s" % output_file
         print("Run script with:\n> " + cmd)
         #

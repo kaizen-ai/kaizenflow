@@ -236,6 +236,15 @@ def is_in_amp_as_supermodule() -> bool:
     return is_amp() and not is_inside_submodule(".")
 
 
+def is_amp_present() -> bool:
+    """
+    Return whether the `amp` dir exists.
+
+    This is a bit of an hacky way of knowing if there is the amp submodule.
+    """
+    return os.path.exists("amp")
+
+
 # Using these functions is the last resort to skip / change the tests depending
 # on the repo. We should control the tests through what functionalities they have,
 # e.g.,

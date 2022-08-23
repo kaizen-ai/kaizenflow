@@ -96,7 +96,7 @@ def im_docker_cmd(ctx, stage, cmd):  # type: ignore
     # Get docker cmd.
     docker_cmd = _get_docker_cmd(stage, cmd)
     # Execute the command.
-    hlitauti._run(ctx, docker_cmd, pty=True)
+    hlitauti.run(ctx, docker_cmd, pty=True)
 
 
 # #############################################################################
@@ -148,7 +148,7 @@ def im_docker_up(ctx, stage, detach=False):  # type: ignore
     # Get docker down command.
     docker_clean_up_cmd = _get_docker_up_cmd(stage, detach)
     # Execute the command.
-    hlitauti._run(ctx, docker_clean_up_cmd, pty=True)
+    hlitauti.run(ctx, docker_clean_up_cmd, pty=True)
 
 
 # #############################################################################
@@ -204,7 +204,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
     # Get docker down command.
     cmd = _get_docker_down_cmd(stage, volumes_remove)
     # Execute the command.
-    hlitauti._run(ctx, cmd, pty=True)
+    hlitauti.run(ctx, cmd, pty=True)
 
 
 # #############################################################################
@@ -274,7 +274,7 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     # Get docker cmd.
 #     docker_cmd = _get_create_db_cmd(dbname, overwrite, credentials)
 #     # Execute the command.
-#     hlitauti._run(ctx, docker_cmd, pty=True)
+#     hlitauti.run(ctx, docker_cmd, pty=True)
 #
 #
 # # #############################################################################
@@ -337,4 +337,4 @@ def im_docker_down(ctx, stage, volumes_remove=False):  # type: ignore
 #     # Get docker cmd.
 #     docker_cmd = _get_remove_db_cmd(dbname, credentials)
 #     # Execute the command.
-#     hlitauti._run(ctx, docker_cmd, pty=True)
+#     hlitauti.run(ctx, docker_cmd, pty=True)

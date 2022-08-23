@@ -28,7 +28,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
     """
 
     @staticmethod
-    def helper(
+    def run_dag_runner(
         event_loop: Optional[asyncio.AbstractEventLoop],
     ) -> Tuple[creatime.Events, List[dtfcore.ResultBundle]]:
         """
@@ -79,6 +79,8 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             "dst_dir": None,
             "get_wall_clock_time": get_wall_clock_time,
             "grid_time_in_secs": grid_time_in_secs,
+            # We don't want to set the current bar in this test.
+            "set_current_bar_timestamp": False,
         }
         # Run.
         dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
@@ -122,7 +124,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         Use simulated replayed time.
         """
         with hasynci.solipsism_context() as event_loop:
-            events, result_bundles = self.helper(event_loop)
+            events, result_bundles = self.run_dag_runner(event_loop)
         self.check(events, result_bundles)
 
     # TODO(gp): Enable this but make it trigger more often.
@@ -132,7 +134,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         Use replayed time.
         """
         event_loop = None
-        events, result_bundles = self.helper(event_loop)
+        events, result_bundles = self.run_dag_runner(event_loop)
         # It's difficult to check the output of any real-time test, so we don't
         # verify the output.
         _ = events, result_bundles

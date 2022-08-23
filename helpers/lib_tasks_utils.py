@@ -109,8 +109,7 @@ def parse_command_line() -> None:
 _WAS_FIRST_CALL_DONE = False
 
 
-# TODO(gp): Make it public.
-def _report_task(txt: str = "", container_dir_name: str = ".") -> None:
+def report_task(txt: str = "", container_dir_name: str = ".") -> None:
     # On the first invocation report the version.
     global _WAS_FIRST_CALL_DONE
     if not _WAS_FIRST_CALL_DONE:
@@ -201,8 +200,7 @@ def _to_multi_line_cmd(docker_cmd_: List[str]) -> str:
 use_one_line_cmd = False
 
 
-# TODO(Grisha): make it public #755.
-def _run(
+def run(
     ctx: Any,
     cmd: str,
     *args: Any,

@@ -193,12 +193,12 @@ def save_market_data(
         )
     )
     #
-    _LOG.info("Saving ...")
+    _LOG.info("Saving data in '%s' ...", file_name)
     compression = None
     if file_name.endswith(".gz"):
         compression = "gzip"
     rt_df.to_csv(file_name, compression=compression, index=True)
-    _LOG.info("Saving done")
+    _LOG.info("Saving in '%s' done", file_name)
 
 
 def load_market_data(
