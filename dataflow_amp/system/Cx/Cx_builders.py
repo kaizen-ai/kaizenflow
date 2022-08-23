@@ -296,15 +296,14 @@ def _get_Cx_dag_prod_instance1(
         process_forecasts_node_dict
     )
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
-    # Convert to a dict to pass further after the ath/trading hours are applied.
-    updated_process_forecasts_node_dict = system.config[
-        "process_forecasts_node_dict"
-    ].to_dict()
     # Assemble.
     market_data = system.market_data
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
+    process_forecasts_node_dict = system.config[
+        "process_forecasts_node_dict"
+    ].to_dict()
     ts_col_name = "timestamp_db"
     # TODO(Grisha): should we use `add_real_time_data_source` and
     # `add_process_forecasts_node` from `system_builder_utils.py`?
@@ -312,7 +311,7 @@ def _get_Cx_dag_prod_instance1(
         dag,
         market_data,
         market_data_history_lookback,
-        updated_process_forecasts_node_dict,
+        process_forecasts_node_dict,
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
