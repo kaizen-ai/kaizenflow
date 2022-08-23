@@ -361,7 +361,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
 # TODO(gp): We should dump the state of the portfolio and load it back.
 # TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
 #  so we can generalize the class to be not E8 specific.
-def _get_Cx_portfolio(
+def get_Cx_portfolio(
     system: dtfsys.System,
 ) -> oms.Portfolio:
     # We prefer to configure code statically (e.g., without switches) but in this
