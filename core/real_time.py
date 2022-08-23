@@ -347,7 +347,7 @@ class Events(List[Event]):
 
 async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
-    sleep_interval_in_secs: float,
+    bar_duration_in_secs: float,
     # TODO(gp): -> exit_condition
     time_out_in_secs: Union[float, int, datetime.time, None],
     workload: Callable[[pd.Timestamp], Any],
@@ -356,7 +356,7 @@ async def execute_with_real_time_loop(
     Execute a function using an event loop.
 
     :param get_wall_clock_time: function returning the current true or simulated time
-    :param sleep_interval_in_secs: the loop wakes up every `sleep_interval_in_secs`
+    :param bar_duration_in_secs: the loop wakes up every `bar_duration_in_secs`
         true or simulated seconds
     :param time_out_in_secs: for how long to execute the loop
         - int: number of iterations to execute
@@ -369,13 +369,13 @@ async def execute_with_real_time_loop(
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
-    _LOG.debug(hprint.to_str("sleep_interval_in_secs time_out_in_secs"))
+    _LOG.debug(hprint.to_str("bar_duration_in_secs time_out_in_secs"))
     hdbg.dassert(
         callable(get_wall_clock_time),
         "get_wall_clock_time='%s' is not callable",
         str(get_wall_clock_time),
     )
-    hdbg.dassert_lt(0, sleep_interval_in_secs)
+    hdbg.dassert_lt(0, bar_duration_in_secs)
     # Number of iterations executed.
     num_it = 1
     while True:
@@ -400,7 +400,7 @@ async def execute_with_real_time_loop(
         _LOG.debug("await ...")
         # TODO(gp): Compensate for drift.
         result = await asyncio.gather(  # type: ignore[var-annotated]
-            asyncio.sleep(sleep_interval_in_secs),
+            asyncio.sleep(bar_duration_in_secs),
             # We need to use the passed `wall_clock_time` since that's what being
             # used as real, simulated, replayed time.
             workload(wall_clock_time),
@@ -411,7 +411,7 @@ async def execute_with_real_time_loop(
         # Exit, if needed.
         if time_out_in_secs is not None:
             if isinstance(time_out_in_secs, (int, float)):
-                num_iterations = int(time_out_in_secs / sleep_interval_in_secs)
+                num_iterations = int(time_out_in_secs / bar_duration_in_secs)
                 hdbg.dassert_lt(0, num_iterations)
                 _LOG.debug(hprint.to_str("num_it num_iterations"))
                 if num_it >= num_iterations:

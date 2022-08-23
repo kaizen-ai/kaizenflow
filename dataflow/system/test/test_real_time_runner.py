@@ -58,10 +58,10 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         config["load_prices"] = data_source_config
         dag.insert_at_head(node)
         # Set up the event loop.
-        sleep_interval_in_secs = 1.0
+        bar_duration_in_secs = 1.0
         execute_rt_loop_kwargs = (
             cretiexa.get_replayed_time_execute_rt_loop_kwargs(
-                sleep_interval_in_secs, event_loop=event_loop
+                bar_duration_in_secs, event_loop=event_loop
             )
         )
         # Align on a second boundary.

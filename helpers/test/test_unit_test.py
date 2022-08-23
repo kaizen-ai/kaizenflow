@@ -1044,7 +1044,7 @@ class Test_purify_object_representation1(hunitest.TestCase):
         """
         txt = """
         _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
-        <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 900} <dict>,
+        <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 900} <dict>,
         _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
         _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>,
         _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
@@ -1060,7 +1060,7 @@ class Test_purify_object_representation1(hunitest.TestCase):
         """
         exp = """
         _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
-        <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 900} <dict>,
+        <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 900} <dict>,
         _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
         _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>,
         _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
