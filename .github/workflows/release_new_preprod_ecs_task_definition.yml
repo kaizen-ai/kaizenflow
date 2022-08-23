@@ -1,10 +1,5 @@
-name: Update ECS Task definition to the latest master
+name: Release new ECS preprod task definition
 on:
-  # Run for every change in master.
-  push:
-    branches:
-      # Comment this out to run when committing on the branch.
-      - master
   # Run manually.
   workflow_dispatch:
   schedule:
@@ -12,10 +7,12 @@ on:
     - cron:  '0 */6 * * *'
 
 jobs:
-  create_new_ecs_task_def_revision:
+  run_release_new_ecs_preprod_task_definition:
     runs-on: ubuntu-latest
-    
+
     steps:
+      # Pass AWS credentials via GH secrets. This is needed to pull the Docker image
+      # that will be used to run the action.
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -23,28 +20,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AM_AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AM_AWS_DEFAULT_REGION }}
 
+      # This is needed to pull the Docker image.
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v1
 
+      # Make everything accessible by any user to avoid permission errors.
       - name: Cleanup
         run: sudo chmod 777 -R .
 
+      # Check out the code from GitHub so that we can run the action inside
+      # the Docker container.
       - name: Checkout code
         uses: actions/checkout@v2
         with:
           submodules: true
           token: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
 
-      - name: Authenticate GH
-        run: |
-          echo "${{ secrets.GH_ACTION_ACCESS_TOKEN }}" | gh auth login --hostname github.com --with-token
-
+      # Install packages that are required to run the job via GH.
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r .github/gh_requirements.txt
 
+      # Pull the latest Docker image to run the regressions on.
       - name: Pull image
         env:
           AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
@@ -52,6 +51,8 @@ jobs:
           # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
+      # Run the `invoke` target `docker_create_candidate_image` to create candidate.
+      # See the corresponding documentation for more information.
       - name: Run 'docker_create_candidate_image' workflow
         env:
           GH_ACTION_ACCESS_TOKEN: ${{ secrets.GH_ACTION_ACCESS_TOKEN }}
@@ -66,5 +67,23 @@ jobs:
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
-        # TODO(Juraj): change task definition once the action is ready
         run: invoke docker_create_candidate_image --task-definition "cmamp-preprod"
+
+      # Notify the team via Telegram in case of failure.
+      - name: Send Telegram notification for failure
+        # Need to use ref_name as it contains the branch that triggered the
+        # workflow run.
+        # Alternative, head_ref is only available when the event that triggers a
+        # workflow run is either pull_request or pull_request_target.
+        if: ${{ failure() }}
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.AM_TG_BUILDBOT_CHATID }}
+          token: ${{ secrets.AM_TG_BUILDBOT_TOKEN }}
+          message: |
+            🧨 ECS PREPROD TASK DEFINITION RELEASE FAILED
+            Build failure '${{ github.workflow }}'
+            Repo: '${{ github.repository }}'
+            Branch: '${{ github.ref_name }}'
+            Event: '${{ github.event_name }}'
+            https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
