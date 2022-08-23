@@ -6,7 +6,7 @@ import market_data.market_data_example as mdmadaex
 
 import asyncio
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 

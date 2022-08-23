@@ -2,7 +2,7 @@ import asyncio
 import datetime
 import logging
 import os
-from typing import Tuple
+from typing import Tuple, Union
 
 import pandas as pd
 import pytest
