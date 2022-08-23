@@ -35,7 +35,6 @@ def _check_get_data(
             end_datetime,
             replayed_delay_in_mins_or_timestamp,
             asset_ids
-            # TODO(gp): replayed_delay_in_mins_or_timestamp -> initial_delay_in_mins (or in secs).
         )
         # Execute function under test.
         actual_df = func(market_data)

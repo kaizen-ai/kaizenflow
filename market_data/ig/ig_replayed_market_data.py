@@ -39,7 +39,6 @@
 #        knowledge_datetime_col_name: str,
 #        event_loop: Optional[asyncio.AbstractEventLoop],
 #        delay_in_secs: int,
-#        # TODO(gp): -> replayed_delay_in_mins_or_timestamp_in_mins=
 #        replayed_delay_in_mins_or_timestamp: Union[int, str],
 #        *,
 #        asset_ids: Optional[List[int]] = None,
