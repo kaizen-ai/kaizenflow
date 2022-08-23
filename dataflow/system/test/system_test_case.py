@@ -429,7 +429,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         # period = "last_day"
         # period = pd.Timedelta("15D")
         limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
+        mdata.save_market_data(market_data, file_name, period) # limit
         _LOG.warning("Updated file '%s'", file_name)
         # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
