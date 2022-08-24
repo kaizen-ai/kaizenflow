@@ -111,7 +111,6 @@ def get_ReplayedTimeMarketData_from_df(
     return market_data, get_wall_clock_time
 
 
-# TODO(gp): replayed_delay_in_mins_or_timestamp -> initial_delay_in_mins (or in secs).
 def get_ReplayedTimeMarketData_example2(
     event_loop: asyncio.AbstractEventLoop,
     start_datetime: pd.Timestamp,
