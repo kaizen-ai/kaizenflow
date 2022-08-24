@@ -901,38 +901,98 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 class TestCryptoChassisExtractor2(hunitest.TestCase):
     def test_coerce_to_numeric(self) -> None:
         """
+        Test if the specified columns are converted to numeric values..
         """
         contract_type = "spot"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        pass
+        test_df = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "num": ["21347.98"],
+                "num2": ["346"],
+                "non_num": ["21350"],
+            }
+        )
+        # Define float `fields`.
+        num_fields = ["num", "num2"]
+        expected_df = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "num": [21347.98],
+                "num2": [346.0],
+                "non_num": [21350],
+            }
+        )
+        actual_df = client.coerce_to_numeric(test_df, num_fields)
+        hunitest.compare_df(actual_df, expected_df)
 
-
-    def test_convert_pair_spot(self) -> None:
+    def test_convert_pair_spot1(self) -> None:
         """
+        Test if currency pair is converted according to the contract type.
         """
         contract_type = "spot"
+        pair = "btc/usd"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        pass
+        expected = "btc-usd"
+        actual = client.convert_currency_pair(pair)
+        self.assertEqual(actual, expected)
 
-
-    def test_convert_pair_futures(self) -> None:
+    def test_convert_pair_spot2(self) -> None:
         """
+        Test if currency pair is converted according to the contract type.
+        """
+        contract_type = "spot"
+        pair = "btc_usd"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
+        expected = "btc-usd"
+        actual = client.convert_currency_pair(pair)
+        self.assertEqual(actual, expected)
+
+    def test_convert_pair_futures1(self) -> None:
+        """
+        Test if currency pair is converted according to the contract type.
         """
         contract_type = "futures"
+        pair = "btc/usd"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        pass
+        expected = "btcusd"
+        actual = client.convert_currency_pair(pair)
+        self.assertEqual(actual, expected)
+
+    def test_convert_pair_futures1(self) -> None:
+        """
+        Test if currency pair is converted according to the contract type.
+        """
+        contract_type = "futures"
+        pair = "btc_usd"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
+        expected = "btcusd"
+        actual = client.convert_currency_pair(pair)
+        self.assertEqual(actual, expected)
 
     def test_build_query_url(self) -> None:
         """
+        Test if the query URL is built correctly.
         """
         contract_type = "spot"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        pass
-
+        base_url = "https://api.cryptochassis.com/v1/trade/coinbase/btc-usd"
+        actual = client._build_query_url(
+            base_url, startTime=1660852800, endTime=1660939140, emptyArg=None
+        )
+        expected = (
+            "https://api.cryptochassis.com/v1/trade/coinbase/btc-usd?"
+            "startTime=1660852800&endTime=1660939140"
+        )
+        # Check that all valid parameters are used.
+        self.assert_equal(actual, expected)
 
     def test_build_base_url(self) -> None:
         """
+        Test if the base URL is built correctly.
         """
         contract_type = "spot"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
-        pass
+        expected = "https://api.cryptochassis.com/v1/trade/coinbase/btc-usd"
+        actual = client._build_base_url("trade", "coinbase", "btc-usd")
+        self.assert_equal(actual, expected)
