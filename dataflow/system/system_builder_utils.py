@@ -522,7 +522,7 @@ def get_OrderProcessorCoroutine_from_System(
 def _apply_dag_runner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
-    sleep_interval_in_secs: int,
+    bar_duration_in_secs: int,
     real_time_loop_time_out_in_secs: Optional[int],
     trading_period_str: str,
 ) -> dtfsyssyst.System:
@@ -547,7 +547,7 @@ def _apply_dag_runner_config(
     #
     real_time_config = {
         "wake_up_timestamp": wake_up_timestamp,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
+        "bar_duration_in_secs": bar_duration_in_secs,
         "real_time_loop_time_out_in_secs": real_time_loop_time_out_in_secs,
         # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
         "trading_period_str": trading_period_str,
@@ -559,7 +559,7 @@ def _apply_dag_runner_config(
     return system
 
 
-def _get_trading_period_str_and_sleep_interval_in_secs(
+def _get_trading_period_str_and_bar_duration_in_secs(
     system: dtfsyssyst.System,
 ) -> Tuple[str, int]:
     """
@@ -571,8 +571,8 @@ def _get_trading_period_str_and_sleep_interval_in_secs(
     trading_period_str = dag_builder.get_trading_period(dag_config)
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
     #
-    sleep_interval_in_secs = pd.Timedelta(trading_period_str).seconds
-    return trading_period_str, sleep_interval_in_secs
+    bar_duration_in_secs = pd.Timedelta(trading_period_str).seconds
+    return trading_period_str, bar_duration_in_secs
 
 
 def apply_dag_runner_config_for_crypto(
@@ -586,15 +586,15 @@ def apply_dag_runner_config_for_crypto(
     """
     (
         trading_period_str,
-        sleep_interval_in_secs,
-    ) = _get_trading_period_str_and_sleep_interval_in_secs(system)
+        bar_duration_in_secs,
+    ) = _get_trading_period_str_and_bar_duration_in_secs(system)
     wake_up_timestamp = None
     real_time_loop_time_out_in_secs = None
     #
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
-        sleep_interval_in_secs,
+        bar_duration_in_secs,
         real_time_loop_time_out_in_secs,
         trading_period_str,
     )
@@ -613,8 +613,8 @@ def apply_dag_runner_config_for_equities(
     """
     (
         trading_period_str,
-        sleep_interval_in_secs,
-    ) = _get_trading_period_str_and_sleep_interval_in_secs(system)
+        bar_duration_in_secs,
+    ) = _get_trading_period_str_and_bar_duration_in_secs(system)
     # Determine when start and stop trading.
     # The system should come up around 9:37am ET and then we align to the
     # next bar.
@@ -647,7 +647,9 @@ def apply_dag_runner_config_for_equities(
     # Get minutes for a time at which the real time loop should be terminated.
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
     # before the market closes, i.e. at 15:58.
-    real_time_loop_time_out_minutes = 60 - (sleep_interval_in_secs / 60)
+    # Ensure that bar_duration is a multiple of minutes.
+    hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
+    real_time_loop_time_out_minutes = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(real_time_loop_time_out_minutes)
     # TODO(gp): Horrible confusing name.
     real_time_loop_time_out_in_secs = datetime.time(
@@ -656,7 +658,7 @@ def apply_dag_runner_config_for_equities(
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
-        sleep_interval_in_secs,
+        bar_duration_in_secs,
         real_time_loop_time_out_in_secs,
         trading_period_str,
     )
@@ -674,7 +676,7 @@ def get_realtime_DagRunner_from_system(
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     dag = system.dag
     # TODO(gp): This should come from the config.
-    sleep_interval_in_secs = 5 * 60
+    bar_duration_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
     real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
@@ -682,7 +684,7 @@ def get_realtime_DagRunner_from_system(
     ]
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
+        "bar_duration_in_secs": bar_duration_in_secs,
         "time_out_in_secs": real_time_loop_time_out_in_secs,
     }
     dag_runner_kwargs = {
@@ -719,13 +721,13 @@ def get_RealTimeDagRunner_from_System(
     wake_up_timestamp = system.config.get(
         ("dag_runner_config", "wake_up_timestamp"), None
     )
-    grid_time_in_secs = system.config.get(
-        ("dag_runner_config", "sleep_interval_in_secs"), None
+    bar_duration_in_secs = system.config.get(
+        ("dag_runner_config", "bar_duration_in_secs"), None
     )
     execute_rt_loop_config = {
         "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": system.config[
-            "dag_runner_config", "sleep_interval_in_secs"
+        "bar_duration_in_secs": system.config[
+            "dag_runner_config", "bar_duration_in_secs"
         ],
         "time_out_in_secs": system.config[
             "dag_runner_config", "real_time_loop_time_out_in_secs"
@@ -739,7 +741,7 @@ def get_RealTimeDagRunner_from_System(
         "fit_at_beginning": fit_at_beginning,
         "get_wall_clock_time": get_wall_clock_time,
         "wake_up_timestamp": wake_up_timestamp,
-        "grid_time_in_secs": grid_time_in_secs,
+        "bar_duration_in_secs": bar_duration_in_secs,
     }
     # _LOG.debug("system=\n%s", str(system.config))
     dag_runner = dtfsrtdaru.RealTimeDagRunner(**dag_runner_kwargs)
