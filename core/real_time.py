@@ -401,8 +401,8 @@ async def execute_with_real_time_loop(
         # Execute workload.
         _LOG.debug("await ...")
         # TODO(gp): Compensate for drift.
+        hdbg.dassert_isinstance(bar_duration_in_secs, int)
         result = await asyncio.gather(  # type: ignore[var-annotated]
-            hdbg.dassert_isinstance(bar_duration_in_secs, int)
             asyncio.sleep(bar_duration_in_secs),
             # We need to use the passed `wall_clock_time` since that's what being
             # used as real, simulated, replayed time.
