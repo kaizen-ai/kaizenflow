@@ -396,13 +396,15 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # Check.
-            # 1) Check the system config.
-            # TODO(gp): Do this everywhere.
-            txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            txt = "\n".join(txt)
-            self.check_string(txt, tag="system_config", purify_text=True)
+            # TODO(Grisha): do we need this? Config is checked in inside
+            # `_get_signature_from_result_bundle`.
+            # # 1) Check the system config.
+            # # TODO(gp): Do this everywhere.
+            # txt = []
+            # txt.append(hprint.frame("system_config"))
+            # txt.append(str(system.config))
+            # txt = "\n".join(txt)
+            # self.check_string(txt, tag="system_config", purify_text=True)
             # 2) Check the run signature.
             # Pick the ResultBundle corresponding to the DagRunner execution.
             result_bundles = result_bundles[0]
