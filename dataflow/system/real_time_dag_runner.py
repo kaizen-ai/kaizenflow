@@ -99,8 +99,6 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         # align to a bar.
         # Align on the trading grid (e.g., 1, 5, 15 minutes).
         bar_duration_in_secs = self._bar_duration_in_secs
-        hdbg.dassert_isinstance(bar_duration_in_secs, int)
-        hdbg.dassert_lte(1, bar_duration_in_secs)
         _LOG.info("Aligning on a bar lasting %s secs ...", bar_duration_in_secs)
         # Add one second to make sure we are after the start trading time.
         add_buffer_in_secs = 1

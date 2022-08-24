@@ -275,7 +275,6 @@ def align_on_time_grid(
             _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
     # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
-    hdbg.dassert_isinstance(bar_duration_in_secs, int)
     target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
         bar_duration_in_secs, get_wall_clock_time
     )

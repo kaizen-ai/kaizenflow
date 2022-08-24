@@ -316,7 +316,7 @@ def get_seconds_to_align_to_grid(
     _LOG.debug("current_time=%s ...", current_time)
     # Align on the time grid.
     hdbg.dassert_isinstance(bar_duration_in_secs, int)
-    hdbg.dassert_lt(0, bar_duration_in_secs)
+    hdbg.dassert_lte(0, bar_duration_in_secs)
     freq = f"{bar_duration_in_secs}S"
     target_time = current_time.ceil(freq)
     hdbg.dassert_lte(current_time, target_time)
