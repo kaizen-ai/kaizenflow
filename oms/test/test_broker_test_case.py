@@ -54,9 +54,9 @@
 #        """
 #        # Build Broker object.
 #        asset_id = 17085
-#        initial_replayed_delay = 2 * 60
+#        replayed_delay_in_mins_or_timestamp = 2 * 60
 #        market_data = mdlime.get_IgReplayedMarketData_example1(
-#            event_loop, initial_replayed_delay=initial_replayed_delay
+#            event_loop, replayed_delay_in_mins_or_timestamp=replayed_delay_in_mins_or_timestamp
 #        )
 #        # Align on 5 mins.
 #        order_duration_in_mins = 5
