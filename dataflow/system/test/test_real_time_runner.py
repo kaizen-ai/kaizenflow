@@ -58,19 +58,19 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         config["load_prices"] = data_source_config
         dag.insert_at_head(node)
         # Set up the event loop.
-        sleep_interval_in_secs = 1.0
+        bar_duration_in_secs = 1
         execute_rt_loop_kwargs = (
             cretiexa.get_replayed_time_execute_rt_loop_kwargs(
-                sleep_interval_in_secs, event_loop=event_loop
+                bar_duration_in_secs, event_loop=event_loop
             )
         )
         # Align on a second boundary.
         get_wall_clock_time = lambda: hdateti.get_current_time(
             tz="ET", event_loop=event_loop
         )
-        grid_time_in_secs = 1
+        bar_duration_in_secs = 1
         creatime.align_on_time_grid(
-            get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
+            get_wall_clock_time, bar_duration_in_secs, event_loop=event_loop
         )
         dag_runner_kwargs = {
             "dag": dag,
@@ -78,7 +78,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
             "execute_rt_loop_kwargs": execute_rt_loop_kwargs,
             "dst_dir": None,
             "get_wall_clock_time": get_wall_clock_time,
-            "grid_time_in_secs": grid_time_in_secs,
+            "bar_duration_in_secs": bar_duration_in_secs,
             # We don't want to set the current bar in this test.
             "set_current_bar_timestamp": False,
         }

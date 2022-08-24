@@ -44,10 +44,10 @@ class Test_align_on_time_grid1(hunitest.TestCase):
             _LOG.debug(hprint.to_str("current_time1"))
             _ = current_time1
             # Align on an even second.
-            grid_time_in_secs = 2
+            bar_duration_in_secs = 2
             creatime.align_on_time_grid(
                 get_wall_clock_time,
-                grid_time_in_secs,
+                bar_duration_in_secs,
                 event_loop=event_loop,
                 use_high_resolution=use_high_resolution,
             )
@@ -147,7 +147,7 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         Do 3 iterations of 1.0s.
         """
         kwargs = {
-            "sleep_interval_in_secs": 1.0,
+            "bar_duration_in_secs": 1,
             "time_out_in_secs": 1.0 * 3 + 0.1,
         }
         return kwargs
@@ -159,7 +159,7 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         """
         exit_time = datetime.time(9, 30, 6)
         kwargs = {
-            "sleep_interval_in_secs": 1.0,
+            "bar_duration_in_secs": 1,
             "time_out_in_secs": exit_time,
         }
         return kwargs
@@ -178,9 +178,9 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         """
         # Align on a 2-second boundary, since we want to start always from an even
         # second.
-        grid_time_in_secs = 2
+        bar_duration_in_secs = 2
         creatime.align_on_time_grid(
-            get_wall_clock_time, grid_time_in_secs, event_loop=event_loop
+            get_wall_clock_time, bar_duration_in_secs, event_loop=event_loop
         )
         #
         coroutine = creatime.execute_all_with_real_time_loop(
