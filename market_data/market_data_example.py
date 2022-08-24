@@ -198,7 +198,7 @@ def get_ReplayedTimeMarketData_example4(
     end_datetime: pd.Timestamp,
     asset_ids: List[int],
     *,
-    replayed_delay_in_mins_or_timestamp: int = 0,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp] = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` with synthetic bar data.
@@ -227,7 +227,7 @@ def get_ReplayedTimeMarketData_example5(
     end_datetime: pd.Timestamp,
     asset_ids: List[int],
     *,
-    replayed_delay_in_mins_or_timestamp: int = 0,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp] = 0,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` with synthetic top-of-the-book data.

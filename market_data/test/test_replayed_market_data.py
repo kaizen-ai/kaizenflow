@@ -588,7 +588,7 @@ class TestReplayedMarketData3(hunitest.TestCase):
             self._run(replayed_delay_in_mins_or_timestamp)
 
     def _run(
-        self, replayed_delay_in_mins_or_timestamp: int
+        self, replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp]
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
         - Build a ReplayedMarketData
