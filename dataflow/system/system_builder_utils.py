@@ -647,7 +647,9 @@ def apply_dag_runner_config_for_equities(
     # Get minutes for a time at which the real time loop should be terminated.
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
     # before the market closes, i.e. at 15:58.
-    real_time_loop_time_out_minutes = 60 - (bar_duration_in_secs / 60)
+    # Ensure that bar_duration is a multiple of minutes.
+    hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
+    real_time_loop_time_out_minutes = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(real_time_loop_time_out_minutes)
     # TODO(gp): Horrible confusing name.
     real_time_loop_time_out_in_secs = datetime.time(

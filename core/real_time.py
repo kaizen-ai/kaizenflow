@@ -275,6 +275,7 @@ def align_on_time_grid(
             _LOG.debug("wall_clock=%s", get_wall_clock_time())
 
     # _LOG.debug("Aligning at wall_clock=%s ...", get_wall_clock_time())
+    hdbg.dassert_isinstance(bar_duration_in_secs, int)
     target_time, secs_to_wait = hasynci.get_seconds_to_align_to_grid(
         bar_duration_in_secs, get_wall_clock_time
     )
@@ -375,6 +376,7 @@ async def execute_with_real_time_loop(
         "get_wall_clock_time='%s' is not callable",
         str(get_wall_clock_time),
     )
+    hdbg.dassert_isinstance(bar_duration_in_secs, int)
     hdbg.dassert_lt(0, bar_duration_in_secs)
     # Number of iterations executed.
     num_it = 1
@@ -400,6 +402,7 @@ async def execute_with_real_time_loop(
         _LOG.debug("await ...")
         # TODO(gp): Compensate for drift.
         result = await asyncio.gather(  # type: ignore[var-annotated]
+            hdbg.dassert_isinstance(bar_duration_in_secs, int)
             asyncio.sleep(bar_duration_in_secs),
             # We need to use the passed `wall_clock_time` since that's what being
             # used as real, simulated, replayed time.
