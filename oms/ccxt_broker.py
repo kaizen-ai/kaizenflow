@@ -702,9 +702,11 @@ class CcxtBroker(ombroker.Broker):
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
-        #TODO(Juraj): extract all exchange specific configs into separate function.
+        # TODO(Juraj): extract all exchange specific configs into separate function.
         if self._exchange_id == "binance":
-            # Necessary option to avoid time out of sync error (CmTask #2670).
+            # Necessary option to avoid time out of sync error 
+            # (CmTask2670 Airflow system run error "Timestamp for this 
+            # request is outside of the recvWindow.")
             exchange.options["adjustForTimeDifference"] = True
         if self._account_type == "sandbox":
             exchange.set_sandbox_mode(True)
