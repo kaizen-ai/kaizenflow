@@ -353,6 +353,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         market_data,
         system.config["market_data_config", "asset_ids"],
         pricing_method,
+        system.config['secrets_config']
     )
     return portfolio
 
