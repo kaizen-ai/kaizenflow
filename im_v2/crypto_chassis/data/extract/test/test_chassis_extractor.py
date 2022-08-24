@@ -152,7 +152,17 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         actual_args = tuple(self.build_query_url_mock.call_args)
         expected_args = (
             ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usd",),
-            {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
+            {"depth": "1", 
+            "startTime": "2022-08-18T00:00:00Z", 
+            "endTime": "2022-08-18T23:59:00Z"},
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Check calls against `requests.get`.
+        self.assertEqual(self.requests_mock.get.call_count, 1)
+        actual_args = tuple(self.requests_mock.get.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usd?"\
+                "startTime=1660766400&endTime=1660852740",), {}
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
