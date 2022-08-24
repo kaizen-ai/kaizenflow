@@ -51,40 +51,6 @@ def get_Cx_HistoricalMarketData_example1(
     return market_data
 
 
-def get_Cx_ReplayedMarketData_example1(
-    system: dtfsys.System,
-) -> mdata.MarketData:
-    """
-    Build a MarketData backed with RealTimeImClient.
-    """
-    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
-    resample_1min = False
-    # Get environment variables with login info.
-    env_file = imvimlita.get_db_env_path("dev")
-    # Get login info.
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    # Login.
-    db_connection = hsql.get_connection(*connection_params)
-    # Get the real-time `ImClient`.
-    table_name = "ccxt_ohlcv"
-    im_client = imvcdccccl.CcxtSqlRealTimeImClient(
-        resample_1min, db_connection, table_name
-    )
-    # Get the real-time `MarketData`.
-    event_loop = system.config["event_loop_object"]
-    asset_ids = system.config["market_data_config", "asset_ids"]
-    initial_replayed_dt = system.config[
-        "market_data_config", "replayed_delay_in_mins_or_timestamp"
-    ]
-    market_data, _ = mdata.get_ReplayedImClientMarketData_example1(
-        im_client, event_loop, asset_ids, initial_replayed_dt
-    )
-    return market_data
-
-
-# TODO(Grisha): @Dan share some code with `get_Cx_ReplayedMarketData_example1` but
-# the difference will be that the prod `MarketData` should use the dev DB while
-# `get_Cx_ReplayedMarketData_example1` should use the local DB.
 def get_Cx_RealTimeMarketData_prod_instance1(
     system: dtfsys.System,
 ) -> mdata.MarketData:
