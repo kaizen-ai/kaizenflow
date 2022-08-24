@@ -98,13 +98,13 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         currency_pair = "btc/usdt"
         contract_type = "spot"
         # Mock the returns of the functions.
-        self.convert_currency_pair_mock.return_value = "btc-usd"
+        self.convert_currency_pair_mock.return_value = "btc-usdt"
         self.build_base_url_mock.return_value = (
-            "https://api.cryptochassis.com/v1/market-depth/binance/btc-usd"
+            "https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt"
         )
         self.build_query_url_mock.return_value = (
             "https://api.cryptochassis.com/v1/market-depth/binance/"
-            "btc-usd?startTime=1660766400&endTime=1660852740"
+            "btc-usdt?startTime=1660766400&endTime=1660852740"
         )
         response_mock = umock.MagicMock()
         response_mock.json = lambda: {"urls": [{"url": "https://mock-url.com"}]}
@@ -143,7 +143,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
             {
                 "data_type": "market-depth",
                 "exchange": "binance",
-                "currency_pair": "btc-usd",
+                "currency_pair": "btc-usdt",
             },
         )
         self.assertEqual(actual_args, expected_args)
@@ -151,17 +151,15 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         self.assertEqual(self.build_query_url_mock.call_count, 1)
         actual_args = tuple(self.build_query_url_mock.call_args)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usd",),
-            {"depth": "1", 
-            "startTime": "2022-08-18T00:00:00Z", 
-            "endTime": "2022-08-18T23:59:00Z"},
+            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt",),
+            {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `requests.get`.
         self.assertEqual(self.requests_mock.get.call_count, 1)
         actual_args = tuple(self.requests_mock.get.call_args)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usd?"\
+            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?"\
                 "startTime=1660766400&endTime=1660852740",), {}
         )
         self.assertEqual(actual_args, expected_args)
@@ -299,6 +297,14 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
                 "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp",
             ),
             {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Check calls against `requests.get`.
+        self.assertEqual(self.requests_mock.get.call_count, 1)
+        actual_args = tuple(self.requests_mock.get.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp?"\
+                "startTime=1660766400&endTime=1660852740",), {}
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
@@ -470,6 +476,14 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             },
         )
         self.assertEqual(actual_args, expected_args)
+        # Check calls against `requests.get`.
+        self.assertEqual(self.requests_mock.get.call_count, 1)
+        actual_args = tuple(self.requests_mock.get.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/ohlc/coinbase/btc-usd?"\
+                "startTime=1660852800&endTime=1660939140",), {}
+        )
+        self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
         self.assertEqual(self.coerce_to_numeric_mock.call_count, 1)
         actual_args = tuple(self.coerce_to_numeric_mock.call_args)
@@ -637,6 +651,14 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             },
         )
         self.assertEqual(actual_args, expected_args)
+        # Check calls against `requests.get`.
+        self.assertEqual(self.requests_mock.get.call_count, 1)
+        actual_args = tuple(self.requests_mock.get.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp?"\
+                "startTime=1660852800&endTime=1660939140",), {}
+        )
+        self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
         self.assertEqual(self.coerce_to_numeric_mock.call_count, 1)
         actual_args = tuple(self.coerce_to_numeric_mock.call_args)
@@ -768,6 +790,14 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
             {"startTime": "2022-08-18T00:00:00Z"},
         )
         self.assertEqual(actual_args, expected_args)
+        # Check calls against `requests.get`.
+        self.assertEqual(self.requests_mock.get.call_count, 1)
+        actual_args = tuple(self.requests_mock.get.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/trade/coinbase/btc-usd?"\
+                "startTime=1660766400",), {}
+        )
+        self.assertEqual(actual_args, expected_args)
         # Compare `float_columns` argument.
         self.assertEqual(actual_args[1], expected_args[1])
         # Check final `trade` data.
@@ -868,6 +898,14 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
                 "https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt",
             ),
             {"startTime": "2022-08-18T00:00:00Z"},
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Check calls against `requests.get`.
+        self.assertEqual(self.requests_mock.get.call_count, 1)
+        actual_args = tuple(self.requests_mock.get.call_args)
+        expected_args = (
+            ("https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt?"\
+                "startTime=1660766400",), {}
         )
         self.assertEqual(actual_args, expected_args)
         # Compare `float_columns` argument.
