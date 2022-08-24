@@ -15,16 +15,10 @@ import helpers.hs3 as hs3
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(Toma): to abstract the function to be able to instantiate client for
-#  any service so we don't have duplicate code.
-def get_ecs_client(aws_profile: str) -> BaseClient:
-    """
-    Return client to work with Elastic Container Service in the specific
-    region.
-    """
-    session = get_session(aws_profile)
-    client = session.client(service_name="ecs")
-    return client
+
+# #############################################################################
+# Utils
+# #############################################################################
 
 
 def get_session(aws_profile: str) -> boto3.session.Session:
@@ -44,3 +38,79 @@ def get_session(aws_profile: str) -> boto3.session.Session:
     _LOG.debug(hprint.to_str("credentials"))
     session = boto3.session.Session(**credentials)
     return session
+
+
+def get_service_client(aws_profile: str, service_name: str) -> BaseClient:
+    """
+    Return client to work with desired service in the specific region.
+    """
+    session = get_session(aws_profile)
+    client = session.client(service_name=service_name)
+    return client
+
+
+# #############################################################################
+# ECS
+# #############################################################################
+
+
+# TODO(Toma): Deprecate in favor of `get_service_client`.
+def get_ecs_client(aws_profile: str) -> BaseClient:
+    """
+    Return client to work with Elastic Container Service in the specific
+    region.
+    """
+    session = get_session(aws_profile)
+    client = session.client(service_name="ecs")
+    return client
+
+
+# TODO(Nikola): Pass a dict config instead, so any part can be updated.
+def update_task_definition(task_definition_name: str, new_image_url: str) -> None:
+    """
+    Create the new revision of specified ECS task definition.
+
+    :param task_definition_name: the name of the ECS task definition for which
+        an update to container image URL is made, e.g., cmamp-test
+    :param new_image_url: New image url for task definition.
+        e.g., `***.dkr.ecr.***/cmamp:prod`
+    """
+    client = get_ecs_client("ck")
+    # Get the last revision of the task definition.
+    task_description = client.describe_task_definition(
+        taskDefinition=task_definition_name
+    )
+    task_definition_json = task_description["taskDefinition"]
+    # Set new image.
+    old_image_url = task_definition_json["containerDefinitions"][0]["image"]
+    if old_image_url == new_image_url:
+        _LOG.info(
+            "New image url `%s` is already set for task definition `%s`!",
+            new_image_url,
+            task_definition_name,
+        )
+        return
+    task_definition_json["containerDefinitions"][0]["image"] = new_image_url
+    # Register the new revision with the new image.
+    response = client.register_task_definition(
+        family=task_definition_name,
+        taskRoleArn=task_definition_json.get("taskRoleArn", ""),
+        executionRoleArn=task_definition_json["executionRoleArn"],
+        networkMode=task_definition_json["networkMode"],
+        containerDefinitions=task_definition_json["containerDefinitions"],
+        volumes=task_definition_json["volumes"],
+        placementConstraints=task_definition_json["placementConstraints"],
+        requiresCompatibilities=task_definition_json["requiresCompatibilities"],
+        cpu=task_definition_json["cpu"],
+        memory=task_definition_json["memory"],
+    )
+    updated_image_url = response["taskDefinition"]["containerDefinitions"][0][
+        "image"
+    ]
+    # Check if the image URL is updated.
+    hdbg.dassert_eq(updated_image_url, new_image_url)
+    _LOG.info(
+        "The image URL of `%s` task definition is updated to `%s`",
+        task_definition_name,
+        updated_image_url,
+    )
