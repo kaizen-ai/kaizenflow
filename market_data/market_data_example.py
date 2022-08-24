@@ -35,6 +35,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Return only MarketData since the wall clock is inside it.
 def get_ReplayedTimeMarketData_from_df(
     event_loop: asyncio.AbstractEventLoop,
+    # TODO(Grisha): allow to pass timestamps directly.
     replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
     df: pd.DataFrame,
     *,
@@ -48,6 +49,12 @@ def get_ReplayedTimeMarketData_from_df(
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` backed by data stored in a dataframe.
+
+    The integer approach for `replayed_delay_in_mins_or_timestamp` is possible
+    only when there is a time reference (e.g., the initial or end of data) and 
+    then one can say "N minutes" before/after and in that case we want to use 
+    `replayed_delay_in_mins_or_timestamp` as int to resolve it. However, using
+    timestamp is preffered whenever possible since it is clearer.
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
@@ -67,8 +74,6 @@ def get_ReplayedTimeMarketData_from_df(
     # Find the initial timestamp of the data and shift by
     # `replayed_delay_in_mins_or_timestamp`.
     min_start_time_col_name = df[start_time_col_name].min()
-    # TODO(Dan): @Nina Add conditions to process integer and timestamp
-    # `replayed_delay_in_mins_or_timestamp`.
     hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
     # We can't enable this assertion since some tests 
     # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
