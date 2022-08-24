@@ -69,6 +69,8 @@ def get_ReplayedTimeMarketData_from_df(
     min_start_time_col_name = df[start_time_col_name].min()
     # TODO(Dan): @Nina Add conditions to process integer and timestamp
     # replayed_delay_in_mins_or_timestamp.
+    hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
+    hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
     initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
         minutes=replayed_delay_in_mins_or_timestamp
     )
