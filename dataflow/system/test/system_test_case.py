@@ -396,13 +396,15 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
             # Check.
-            # 1) Check the system config.
-            # TODO(gp): Do this everywhere.
-            txt = []
-            txt.append(hprint.frame("system_config"))
-            txt.append(str(system.config))
-            txt = "\n".join(txt)
-            self.check_string(txt, tag="system_config", purify_text=True)
+            # TODO(Grisha): do we need this? Config is checked in inside
+            # `_get_signature_from_result_bundle`.
+            # # 1) Check the system config.
+            # # TODO(gp): Do this everywhere.
+            # txt = []
+            # txt.append(hprint.frame("system_config"))
+            # txt.append(str(system.config))
+            # txt = "\n".join(txt)
+            # self.check_string(txt, tag="system_config", purify_text=True)
             # 2) Check the run signature.
             # Pick the ResultBundle corresponding to the DagRunner execution.
             result_bundles = result_bundles[0]
@@ -428,8 +430,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         # period = "last_day"
         # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
+        mdata.save_market_data(market_data, file_name, period)
         _LOG.warning("Updated file '%s'", file_name)
         # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
@@ -481,8 +482,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         # period = "last_day"
         # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period, limit)
+        mdata.save_market_data(market_data, file_name, period)
         _LOG.warning("Updated file '%s'", file_name)
         # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
