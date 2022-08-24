@@ -153,7 +153,7 @@ class Test_Mock1_Time_ForecastSystem1(
         system.config[
             "dag_runner_config", "real_time_loop_time_out_in_secs"
         ] = real_time_loop_time_out
-        system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+        system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
         #
         output_col_name = "vwap.ret_0.vol_adj.c"
         self._test1(
