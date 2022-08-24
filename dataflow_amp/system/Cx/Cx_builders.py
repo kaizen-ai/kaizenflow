@@ -73,9 +73,9 @@ def get_Cx_ReplayedMarketData_example1(
     # Get the real-time `MarketData`.
     event_loop = system.config["event_loop_object"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    initial_replayed_dt = pd.Timestamp(
-        "2022-07-21 09:30:00-04:00", tz="America/New_York"
-    )
+    initial_replayed_dt = system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ]
     market_data, _ = mdata.get_ReplayedImClientMarketData_example1(
         im_client, event_loop, asset_ids, initial_replayed_dt
     )

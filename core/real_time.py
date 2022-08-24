@@ -70,6 +70,8 @@ class ReplayedTime:
 
     def __init__(
         self,
+        # TODO(Grisha): either use timestamps everywhere or allow to pass minutes see
+        # `replayed_delay_in_mins_or_timestamp` in the codebase.
         initial_replayed_dt: pd.Timestamp,
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,
