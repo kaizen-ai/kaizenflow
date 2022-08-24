@@ -70,7 +70,10 @@ def get_ReplayedTimeMarketData_from_df(
     # TODO(Dan): @Nina Add conditions to process integer and timestamp
     # replayed_delay_in_mins_or_timestamp.
     hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
-    hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
+    # We can't enable this assertion since some tests 
+    # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
+    # use a negative offset to start replaying the data, before data is available.
+    # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
     initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
         minutes=replayed_delay_in_mins_or_timestamp
     )
@@ -476,6 +479,7 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     wall_clock_time: Optional[pd.Timestamp] = None,
     filter_data_mode: str = "assert",
 ) -> mdstmada.HorizontalStitchedMarketData:
+    # pylint: disable=line-too-long
     """
     Build a `HorizontalStitchedMarketData`:
 
@@ -492,6 +496,7 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     2022-04-30 20:02:00-04:00  1464553467  binance::ETH_USDT   2725.59   2730.42   2725.59   2730.04  1607.265   2728.7821              1295   2728.3652 2022-06-20 09:49:40.140622+00:00 2022-04-30 20:01:00-04:00   2728.740700   732.959   2728.834137  1293.961
     ```
     """
+    # pylint: enable=line-too-long
     contract_type = "futures"
     if universe_version2 is None:
         universe_version2 = universe_version1
