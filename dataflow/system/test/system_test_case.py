@@ -428,8 +428,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         """
         # period = "last_day"
         # period = pd.Timedelta("15D")
-        limit = None
-        mdata.save_market_data(market_data, file_name, period) # limit
+        mdata.save_market_data(market_data, file_name, period)
         _LOG.warning("Updated file '%s'", file_name)
         # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
@@ -441,7 +440,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         actual = self._test_dataframe_portfolio_helper(system)
         # TODO(Grisha): @Dan we should also freeze the config for all the tests
         # with a Portfolio.
-        print("ACTUAL OUTPUT:", actual)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
@@ -482,7 +480,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         # period = "last_day"
         # period = pd.Timedelta("15D")
-        limit = None
         mdata.save_market_data(market_data, file_name, period)
         _LOG.warning("Updated file '%s'", file_name)
         # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
