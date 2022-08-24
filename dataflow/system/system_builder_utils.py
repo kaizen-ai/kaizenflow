@@ -161,14 +161,14 @@ def get_EventLoop_MarketData_from_df(
     Config.
     """
     event_loop = system.config["event_loop_object"]
-    initial_replayed_delay = system.config[
-        "market_data_config", "initial_replayed_delay"
+    replayed_delay_in_mins_or_timestamp = system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
     ]
     data = system.config["market_data_config", "data"]
     delay_in_secs = system.config["market_data_config", "delay_in_secs"]
     market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
         event_loop,
-        initial_replayed_delay,
+        replayed_delay_in_mins_or_timestamp,
         data,
         delay_in_secs=delay_in_secs,
     )

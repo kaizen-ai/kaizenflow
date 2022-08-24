@@ -70,6 +70,7 @@ class ReplayedTime:
 
     def __init__(
         self,
+        # TODO(Grisha): @Nina -> `initial_timestamp`.
         initial_replayed_dt: pd.Timestamp,
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,

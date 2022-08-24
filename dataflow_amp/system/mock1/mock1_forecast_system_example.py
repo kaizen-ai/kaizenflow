@@ -69,7 +69,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 5
-    system.config["market_data_config", "initial_replayed_delay"] = 5
+    system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
@@ -116,7 +116,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 5
-    system.config["market_data_config", "initial_replayed_delay"] = 5
+    system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
