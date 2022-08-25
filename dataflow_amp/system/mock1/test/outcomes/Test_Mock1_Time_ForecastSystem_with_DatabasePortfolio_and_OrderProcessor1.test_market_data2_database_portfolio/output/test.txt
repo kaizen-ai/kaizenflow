@@ -51,7 +51,7 @@ system_class: Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
-  initial_replayed_delay: 5
+  replayed_delay_in_mins_or_timestamp: 5
   asset_ids: [101]
   data:
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
