@@ -52,7 +52,7 @@ system_log_dir: $GIT_ROOT/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_Tim
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
-  initial_replayed_delay: 5
+  replayed_delay_in_mins_or_timestamp: 5
   asset_ids: [101]
   data:
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
@@ -76,7 +76,7 @@ portfolio_config:
     midpoint: midpoint
     price: close
 dag_runner_config:
-  sleep_interval_in_secs: 300
+  bar_duration_in_secs: 300
   real_time_loop_time_out_in_secs: 2100
 research_forecast_evaluator_from_prices:
   style: cross_sectional
@@ -348,7 +348,8 @@ object.str:
       _column_to_tags_mapping='None' <NoneType>
       _result_nid='process_forecasts' <str>
       _execute_rt_loop_kwargs= <dict>
-        {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+        {'bar_duration_in_secs': 300,
+         'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
           _asset_id_col='asset_id' <str>
           _asset_ids='[101]' <list>
           _start_time_col_name='start_datetime' <str>
@@ -370,12 +371,11 @@ object.str:
             2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
           _knowledge_datetime_col_name='timestamp_db' <str>
           _delay_in_secs='5' <int>>,
-         'sleep_interval_in_secs': 300,
          'time_out_in_secs': 2100}
       _dst_dir='None' <NoneType>
       _fit_at_beginning='False' <bool>
       _wake_up_timestamp='None' <NoneType>
-      _grid_time_in_secs='300' <int>
+      _bar_duration_in_secs='300' <int>
       _set_current_bar_timestamp='True' <bool>
       _events='[]' <list>
 object.builder_function:
@@ -520,4 +520,4 @@ dag_runner_object:
       2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
       2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
-    _delay_in_secs='5' <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
+    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)

@@ -101,10 +101,10 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             parse_dates=["start_datetime", "end_datetime", "timestamp_db"],
         )
         market_data_df = market_data_df.convert_dtypes()
-        initial_replayed_delay = 5
+        replayed_delay_in_mins_or_timestamp = 5
         market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
             event_loop,
-            initial_replayed_delay,
+            replayed_delay_in_mins_or_timestamp,
             market_data_df,
         )
         return market_data

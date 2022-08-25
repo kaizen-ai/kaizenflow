@@ -47,7 +47,7 @@
 #def get_IgReplayedMarketData_example1(
 #    event_loop: Optional[asyncio.AbstractEventLoop],
 #    *,
-#    initial_replayed_delay: Union[int, str] = 0,
+#    replayed_delay_in_mins_or_timestamp: Union[int, str] = 0,
 #) -> mdlermada.IgReplayedMarketData:
 #    """
 #    Build a `IgReplayedMarketData` using an S3 file with 10 stocks.
@@ -72,7 +72,7 @@
 #        knowledge_datetime_col_name,
 #        event_loop,
 #        delay_in_secs,
-#        initial_replayed_delay,
+#        replayed_delay_in_mins_or_timestamp,
 #        asset_ids=asset_ids,
 #        columns=columns,
 #        s3fs=s3fs_,
