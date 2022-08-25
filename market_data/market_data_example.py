@@ -75,7 +75,7 @@ def get_ReplayedTimeMarketData_from_df(
     # `replayed_delay_in_mins_or_timestamp`.
     min_start_time_col_name = df[start_time_col_name].min()
     hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
-    # We can't enable this assertion since some tests 
+    # We can't enable this assertion since some tests
     # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
     # use a negative offset to start replaying the data, before data is available.
     # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
