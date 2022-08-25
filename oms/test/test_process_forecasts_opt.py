@@ -44,6 +44,7 @@ class TestDataFrameProcessForecasts1(hunitest.TestCase):
             "trading_start_time": datetime.time(9, 35),
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
+            "liquidate_at_trading_end_time": False,
         }
         config = cconfig.Config.from_dict(dict_)
         return config

@@ -6,7 +6,7 @@ import core.config.config_utils as ccocouti
 
 import collections
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional
 
 import pandas as pd
 
@@ -18,6 +18,8 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Configs.
 # #############################################################################
 
 
@@ -46,6 +48,7 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
 # #############################################################################
 
 
+# TODO(gp): This could be a method of Config to encapsulate.
 def check_no_dummy_values(config: cconconf.Config) -> bool:
     """
     Assert if there are no `cconconf.DUMMY` values.
@@ -164,6 +167,7 @@ def diff_configs(configs: Iterable[cconconf.Config]) -> List[cconconf.Config]:
 # #############################################################################
 
 
+# TODO(gp): Is this private?
 def convert_to_series(config: cconconf.Config) -> pd.Series:
     """
     Convert a config into a flattened series representation.
@@ -189,6 +193,7 @@ def convert_to_series(config: cconconf.Config) -> pd.Series:
     return srs
 
 
+# TODO(gp): Is this private?
 def convert_to_dataframe(configs: Iterable[cconconf.Config]) -> pd.DataFrame:
     """
     Convert multiple configs into flattened dataframe representation.

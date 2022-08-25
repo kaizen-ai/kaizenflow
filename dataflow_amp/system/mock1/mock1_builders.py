@@ -126,10 +126,18 @@ def get_Mock1_RealtimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
     system = dtfsys.apply_history_lookback(system, days=lookback_in_days)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    process_forecasts_node_config = get_Mock1_ProcessForecastsNode_dict_example1(system)
-    system.config[
-        "process_forecasts_node_dict"
-    ] = cconfig.Config.from_dict(process_forecasts_node_config)
+    # TODO(gp): Factor out this idiom in a function `config_update()`.
+    process_forecasts_node_dict = get_Mock1_ProcessForecastsNode_dict_example1(
+        system
+    )
+    process_forecasts_node_config = cconfig.Config.from_dict(
+        process_forecasts_node_dict
+    )
+    if "process_forecasts_node_dict" in system.config:
+        process_forecasts_node_config.update(
+            system.config["process_forecasts_node_dict"]
+        )
+    system.config["process_forecasts_node_dict"] = process_forecasts_node_config
     system = dtfsys.apply_ProcessForecastsNode_config_for_equities(system)
     # Append the `ProcessForecastNode`.
     dag = dtfsys.add_process_forecasts_node(system, dag)

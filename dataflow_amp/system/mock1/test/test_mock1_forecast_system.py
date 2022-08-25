@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Callable, Tuple
 
 import pandas as pd
 import pytest
@@ -196,6 +196,19 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
         )
         # Run.
         self._test1(system)
+        # Check some high level property of the Portfolio:
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        dtfsytsytc.check_portfolio_state(self, system, expected_last_timestamp)
+
+    @pytest.mark.slow("~7 seconds.")
+    def test_with_liquidate_at_end_of_day1(self) -> None:
+        # Build the system.
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        system = _get_test_System_with_DataFramePortfolio(
+            data, real_time_loop_time_out_in_secs
+        )
+        # Run.
+        self._test_with_liquidate_at_end_of_day1(system)
 
 
 # #############################################################################
@@ -265,15 +278,17 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
     dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
 ):
     """
-    Run a Mock1 system with DatabasePortfolio and DataFramePortfolio and
+    Run a Mock1 system with `DatabasePortfolio` and `DataFramePortfolio` and
     verify that the output is the same.
 
     See description in the parent class.
     """
 
-    @pytest.mark.slow("~10 seconds.")
-    def test1(self) -> None:
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+    def run_test(
+        self,
+        data: pd.DataFrame,
+        real_time_loop_time_out_in_secs: int,
+    ) -> Tuple[dtfsys.System, dtfsys.System]:
         # Build the systems to compare.
         system_with_dataframe_portfolio = (
             _get_test_System_with_DataFramePortfolio(
@@ -287,37 +302,28 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
         self._test1(
             system_with_dataframe_portfolio, system_with_database_portfolio
         )
+        return system_with_dataframe_portfolio, system_with_database_portfolio
+
+    @pytest.mark.slow("~10 seconds.")
+    def test1(self) -> None:
+        """
+        Run with a `cofinanc.get_market_data_df1()`.
+        """
+        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        self.run_test(data, real_time_loop_time_out_in_secs)
 
     @pytest.mark.slow("~10 seconds.")
     def test2(self) -> None:
+        """
+        Run with a `cofinanc.get_market_data_df2()`.
+        """
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
-        # Build the systems to compare.
-        system_with_dataframe_portfolio = (
-            _get_test_System_with_DataFramePortfolio(
-                data, real_time_loop_time_out_in_secs
-            )
-        )
-        system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
-        )
-        # Run.
-        self._test1(
-            system_with_dataframe_portfolio, system_with_database_portfolio
-        )
+        self.run_test(data, real_time_loop_time_out_in_secs)
 
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
+        """
+        Run with a `cofinanc.get_market_data_df3()`.
+        """
         data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
-        # Build the systems to compare.
-        system_with_dataframe_portfolio = (
-            _get_test_System_with_DataFramePortfolio(
-                data, real_time_loop_time_out_in_secs
-            )
-        )
-        system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
-        )
-        # Run.
-        self._test1(
-            system_with_dataframe_portfolio, system_with_database_portfolio
-        )
+        self.run_test(data, real_time_loop_time_out_in_secs)
