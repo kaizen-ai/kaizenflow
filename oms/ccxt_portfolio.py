@@ -50,7 +50,7 @@ def get_CcxtPortfolio_prod_instance1(
     )
     # Build CcxtPortfolio.
     mark_to_market_col = "close"
-    initial_cash = 1e6
+    initial_cash = 700
     portfolio = CcxtPortfolio.from_cash(
         broker,
         mark_to_market_col,

@@ -135,16 +135,22 @@ class CcxtBroker(ombroker.Broker):
                         filled_order = self._convert_ccxt_order_to_oms_order(
                             filled_order
                         )
-                        # Create a Fill object.
+                    # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
                             hdateti.convert_unix_epoch_to_timestamp(
                                 order["timestamp"]
                             ),
-                            num_shares=order["amount"],
+                            num_shares=filled_order.diff_num_shares,
                             price=order["price"],
                         )
                         fills.append(fill)
+                        # fill = ombroker.Fill(
+                        #     o,
+                        #     o.creation_timestamp,
+                        #     num_shares = o.diff_num_shares,
+
+                        # )
         return fills
 
     def get_total_balance(self) -> Dict[str, float]:
@@ -225,9 +231,8 @@ class CcxtBroker(ombroker.Broker):
                 open_positions.append(position)
         return open_positions
 
-    @staticmethod
     def _convert_ccxt_order_to_oms_order(
-        ccxt_order: Dict[Any, Any]
+        self, ccxt_order: Dict[Any, Any]
     ) -> omorder.Order:
         """
         Convert sent CCXT orders to oms.Order class.
@@ -296,8 +301,14 @@ class CcxtBroker(ombroker.Broker):
         # This is done since in CCXT testnet the orders are filled instantaneously.
         end_timestamp += pd.DateOffset(minutes=1)
         # Get the amount of shares filled.
-        curr_num_shares = float(ccxt_order["info"]["origQty"])
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        curr_num_shares = self._exchange.fetch_positions([symbol])[0]
+        curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
+        # Get the amount of shares filled.
         diff_num_shares = ccxt_order["filled"]
+        if ccxt_order["side"] == "sell":
+            diff_num_shares = -diff_num_shares
+        curr_num_shares = curr_num_shares + diff_num_shares
         oms_order = omorder.Order(
             creation_timestamp,
             asset_id,
@@ -350,15 +361,15 @@ class CcxtBroker(ombroker.Broker):
         required_amount = asset_limits["min_amount"]
         # Note: 10 is the minimal total cost of an order in testnet.
         min_cost = 10
-        # Get the last price for the asset.
-        last_price = self._get_last_market_price(order.asset_id)
+        # Get the high price for the asset.
+        high_price = self._get_high_market_price(order.asset_id)
         # Verify that the estimated total cost is above 10.
-        if last_price * required_amount <= min_cost:
+        if high_price * required_amount <= min_cost:
             # Set the amount of asset to above min cost.
             #  Note: the multiplication by 2 is done to give some
             #  buffer so the order does not go below
             #  the minimal amount of asset.
-            required_amount = (min_cost / last_price) * 2
+            required_amount = (min_cost / high_price) * 2
         if order.diff_num_shares < 0:
             order.diff_num_shares = -required_amount
         else:
@@ -381,7 +392,8 @@ class CcxtBroker(ombroker.Broker):
         min_amount = asset_limits["min_amount"]
         if abs(order_amount) < min_amount:
             _LOG.warning(
-                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
+                "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
+                str(order),
                 order_amount,
                 min_amount,
             )
@@ -392,35 +404,34 @@ class CcxtBroker(ombroker.Broker):
         # Check if the order is not below minimal cost.
         #
         # Get the last price for the asset.
-        last_price = self._get_last_market_price(order.asset_id)
+        last_price = self._get_high_market_price(order.asset_id)
         # Calculate the total cost of the order based on the last price.
-        total_cost = last_price * abs(order_amount)
+        total_cost = last_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
-        min_cost = asset_limits["min_cost"]
-        if total_cost < min_cost:
+        if total_cost <= 5.0:
             # Set amount based on minimal notional price.
             #  Note: the amount is rounded up to closest integer
             #  to cover for possible inaccuracy in market cost.
-            required_amount = round(min_cost / last_price, 0) + 1
+            required_amount = round(10.0 / last_price, 2)
+            if order.diff_num_shares < 0:
+                required_amount = -required_amount
             _LOG.warning(
-                "Amount of asset in order is below minimal base: %s. \
+                "Order: %s\nAmount of asset in order is below minimal base: %s. \
                     Setting to following amount based on notional limit: %s",
+                str(order),
                 order_amount,
                 required_amount,
             )
             # Change number of shares to minimal amount.
-            if order.diff_num_shares < 0:
-                order.diff_num_shares = -required_amount
-            else:
-                order.diff_num_shares = required_amount
+            order.diff_num_shares = required_amount
         return order
 
-    def _get_last_market_price(self, asset_id: int) -> float:
+    def _get_high_market_price(self, asset_id: int) -> float:
         """
         Load the latest price for the given ticker.
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["last"]
+        last_price = self._exchange.fetch_ticker(symbol)["high"]
         return last_price
 
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
@@ -558,7 +569,7 @@ class CcxtBroker(ombroker.Broker):
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
         submitted_order: Optional[omorder.Order] = None
-        if self._stage in ["local", "preprod"]:
+        if self._stage == "local":
             # Reduce order to a minimal possible amount.
             #  This is done to avoid "Margin is insufficient" error
             #  in testnet.
@@ -566,6 +577,7 @@ class CcxtBroker(ombroker.Broker):
         else:
             # Verify that order is not below the minimal amount.
             order = self._check_order_limit(order)
+        _LOG.info(str(order))
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
         #TODO(Juraj): separate the retry logic from the code that does the work.
@@ -588,7 +600,6 @@ class CcxtBroker(ombroker.Broker):
                 )
                 submitted_order = order
                 submitted_order.ccxt_id = order_resp["id"]
-                _LOG.info(hprint.to_str("order_resp"))
                 # If the submission was successful, don't retry.
                 break
             except Exception as e:
@@ -624,6 +635,7 @@ class CcxtBroker(ombroker.Broker):
         sent_orders: List[omorder.Order] = []
         for order in orders:
             sent_order = await self._submit_single_order(order)
+            _LOG.info(str(sent_order))
             # If order was submitted successfully append it to
             # the list of sent orders.
             if sent_order:
@@ -702,12 +714,6 @@ class CcxtBroker(ombroker.Broker):
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
-        # TODO(Juraj): extract all exchange specific configs into separate function.
-        if self._exchange_id == "binance":
-            # Necessary option to avoid time out of sync error 
-            # (CmTask2670 Airflow system run error "Timestamp for this 
-            # request is outside of the recvWindow.")
-            exchange.options["adjustForTimeDifference"] = True
         if self._account_type == "sandbox":
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")
@@ -727,8 +733,8 @@ def get_CcxtBroker_prod_instance1(
     """
     exchange_id = "binance"
     universe_version = "v5"
-    stage = "local"
-    account_type = "sandbox"
+    stage = "preprod"
+    account_type = "trading"
     contract_type = "futures"
     portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
