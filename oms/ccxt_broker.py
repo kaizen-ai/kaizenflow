@@ -408,7 +408,7 @@ class CcxtBroker(ombroker.Broker):
         high_price = self._get_high_market_price(order.asset_id)
         total_cost = high_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
-        min_cost = 5.0
+        min_cost = asset_limits["min_cost"]
         if total_cost <= min_cost:
             # Set amount based on minimal notional price.
             required_amount = round(min_cost * 2 / high_price, 2)
@@ -427,7 +427,7 @@ class CcxtBroker(ombroker.Broker):
 
     def _get_high_market_price(self, asset_id: int) -> float:
         """
-        Load the latest price for the given ticker.
+        Load the high price for the given ticker.
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         last_price = self._exchange.fetch_ticker(symbol)["high"]
@@ -698,8 +698,7 @@ class CcxtBroker(ombroker.Broker):
 
     def _log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into coinbasepro and return the corresponding `ccxt.Exchange`
-        object.
+        Log into the exchange and return the `ccxt.Exchange` object.
         """
         # Construct secrets ID, e.g. `***REMOVED***`.
         secrets_id = f"{self._exchange_id}.{self._stage}.{self._account_type}.{str(self._secret_id)}"
