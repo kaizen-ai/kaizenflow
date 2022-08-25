@@ -386,7 +386,7 @@ def get_mean_error(
 ) -> pd.Series:
     """
     - Calculate the error of difference between real and estimated values.
-    - Show the mean and Â± num_std*standard_deviation levels.
+    - Show the mean and +/- num_std*standard_deviation levels.
 
     :param df: data with real values and estimators
     :param column_name_actual: e.g., "spread", "volume")

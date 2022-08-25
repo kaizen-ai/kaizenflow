@@ -386,11 +386,11 @@ def apply_ProcessForecastsNode_config_for_equities(
         second=ath_end_time.second,
         microsecond=0,
     )
-    grid_time_in_secs = system.config[
-        "dag_runner_config", "sleep_interval_in_secs"
+    bar_duration_in_secs = system.config[
+        "dag_runner_config", "bar_duration_in_secs"
     ]
     trading_end_time = hdateti.find_current_bar(
-        trading_end_time - pd.Timedelta(minutes=1), grid_time_in_secs
+        trading_end_time - pd.Timedelta(minutes=1), bar_duration_in_secs
     )
     trading_end_time = trading_end_time.time()
     #

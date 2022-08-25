@@ -116,6 +116,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         # At each call to `mark_to_market()`, we capture `wall_clock_time` and
         # perform a sequence of updates to the following dictionaries.
         self._max_num_bars = max_num_bars
+        # We use `KeySortedOrderedDict` keyed `timestamp` to:
+        # - enforce that inserted new keys are always increasing according to the
+        #   key order (i.e., increasing in time)
+        # - simplify extracting the last timestamp
         # We initialize the collection of dictionaries from `holdings_df`.
         # - timestamp to pd.Series of holdings in shares (indexed by asset_id)
         self._asset_holdings = cksoordi.KeySortedOrderedDict(
@@ -154,7 +158,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         #
         _LOG.debug("After initialization:\n%s", repr(self))
 
-    def __str__(self) -> str:
+    def __str__(self, num_periods: Optional[int] = None) -> str:
         """
         Return the state of the Portfolio in terms of the holdings as a string.
         """
@@ -163,7 +167,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         txt.append(hprint.to_object_repr(self))
         act = []
         # Print the rest of the data in a more readable format.
-        num_periods = None
+        if num_periods:
+            hdbg.dassert_lte(1, num_periods)
         precision = 2
         act.append(
             "# historical holdings=\n%s"
@@ -343,6 +348,34 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         diff = idx.difference(self._initial_universe)
         return diff.to_list()
 
+    def has_no_holdings(self) -> bool:
+        """
+        Return whether the Portfolio contains only cash and no holdings.
+        """
+        # Get the dictionary of the last holdings, excluding cash.
+        num_periods = 1
+        asset_holdings_odict = self._asset_holdings.get_ordered_dict(num_periods)
+        _LOG.debug(hprint.to_str("asset_holdings_odict"))
+        # The
+        hdbg.dassert_isinstance(asset_holdings_odict, dict)
+        hdbg.dassert_eq(len(asset_holdings_odict), 1)
+        timestamp, holdings_srs = asset_holdings_odict.popitem()
+        _LOG.debug(hprint.to_str("timestamp"))
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        hdbg.dassert_isinstance(holdings_srs, pd.Series)
+        # Test whether all holdings in shares are exactly zero.
+        has_no_holdings_ = (holdings_srs == 0).all()
+        return has_no_holdings_
+
+    def get_last_timestamp(self) -> pd.Timestamp:
+        """
+        Return the last timestamp of Portfolio internal state.
+        """
+        num_periods = 1
+        asset_holdings_odict = self._asset_holdings.get_ordered_dict(num_periods)
+        timestamp, _ = asset_holdings_odict.popitem()
+        return timestamp
+
     def mark_to_market(self) -> pd.DataFrame:
         """
         Mark the portfolio of holdings to market.
@@ -438,7 +471,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         # ```
         # pnl = df["net_wealth"].diff().rename("pnl").to_frame()
         # ```
-        # In principle, thw twe PnL calculations should agree. However, if
+        # In principle, the PnL calculations should agree. However, if
         # a price for a bar is missing, this second method is more stable.
         pnl = (
             self.get_historical_pnl(num_periods=num_periods)

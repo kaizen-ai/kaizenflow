@@ -373,6 +373,43 @@ def get_current_date_as_string(tz: str) -> str:
 
 
 # #############################################################################
+# Bar-related utilities
+# #############################################################################
+
+
+# TODO(gp): bar_duration_in_secs -> bar_{length,period}_in_secs
+def find_current_bar(
+    current_timestamp: pd.Timestamp,
+    bar_duration_in_secs: int,
+) -> pd.Timestamp:
+    """
+    Compute the bar (a, b] with period `bar_duration_in_secs` including
+    `current_timestamp`.
+    """
+    hdbg.dassert_isinstance(current_timestamp, pd.Timestamp)
+    # Convert bar_duration_in_secs into minutes.
+    hdbg.dassert_lt(0, bar_duration_in_secs)
+    hdbg.dassert_eq(
+        bar_duration_in_secs % 60,
+        0,
+        "bar_duration_in_secs=%s is not an integer number of minutes",
+        bar_duration_in_secs,
+    )
+    grid_time_in_mins = int(bar_duration_in_secs / 60)
+    hdbg.dassert_lt(0, grid_time_in_mins)
+    _LOG.debug(hprint.to_str("grid_time_in_mins"))
+    #
+    bar_timestamp = current_timestamp.floor(f"{grid_time_in_mins}T")
+    hdbg.dassert_lte(bar_timestamp, current_timestamp)
+    _LOG.debug(
+        hprint.to_str(
+            "current_timestamp bar_duration_in_secs grid_time_in_mins bar_timestamp"
+        )
+    )
+    return bar_timestamp
+
+
+# #############################################################################
 
 
 def to_generalized_datetime(

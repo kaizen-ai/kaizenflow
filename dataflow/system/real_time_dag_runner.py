@@ -199,7 +199,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             _LOG.debug("Setting current bar time")
             current_timestamp = self._get_wall_clock_time()
             bar_timestamp = hdateti.find_current_bar(
-                current_timestamp, self._grid_time_in_secs
+                current_timestamp, self._bar_duration_in_secs
             )
             _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
             hwacltim.set_current_bar_timestamp(bar_timestamp)

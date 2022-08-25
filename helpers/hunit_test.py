@@ -744,7 +744,9 @@ def set_pd_default_values() -> None:
 # TODO(gp): -> txt: str
 def _remove_spaces(obj: Any) -> str:
     """
-    Remove spaces to implement fuzzy matching.
+    Remove leading / trailing spaces and empty lines.
+
+    This is used to implement fuzzy matching.
     """
     string = str(obj)
     string = string.replace("\\n", "\n").replace("\\t", "\t")
@@ -794,6 +796,20 @@ def _to_pretty_string(obj: str) -> str:
     return ret
 
 
+def _sort_lines(txt: str) -> str:
+    """
+    Sort the lines in alphabetical order.
+
+    This is used when we want to perform a comparison of equality but
+    without order. Of course there are false negatives, since the
+    relative order of lines might matter.
+    """
+    lines = txt.split("\n")
+    lines.sort()
+    lines = "\n".join(lines)
+    return lines
+
+
 def assert_equal(
     actual: str,
     expected: str,
@@ -805,6 +821,7 @@ def assert_equal(
     purify_text: bool = False,
     purify_expected_text: bool = False,
     fuzzy_match: bool = False,
+    sort: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
     error_msg: str = "",
@@ -846,6 +863,11 @@ def assert_equal(
     # Ensure that there is a single `\n` at the end of the strings.
     actual = actual.rstrip("\n") + "\n"
     expected = expected.rstrip("\n") + "\n"
+    # Sort the lines.
+    if sort:
+        _LOG.debug("# Sorting lines")
+        actual = _sort_lines(actual)
+        expected = _sort_lines(expected)
     # Fuzzy match, if needed.
     actual_orig = actual
     expected_orig = expected
@@ -868,7 +890,7 @@ def assert_equal(
         )
         if not check_string:
             # Print the correct output, like:
-            #   exp = r'""""
+            #   exp = r'"""
             #   2021-02-17 09:30:00-05:00
             #   2021-02-17 10:00:00-05:00
             #   2021-02-17 11:00:00-05:00
@@ -891,7 +913,7 @@ def assert_equal(
                 # txt.append(f"expected = r'''{actual_orig}'''")
                 if fuzzy_match:
                     # We can print in a more readable way since spaces don't matter.
-                    exp_var = f'exp = r""""\n{actual_orig}"""'
+                    exp_var = f'exp = r"""\n{actual_orig}"""'
                 else:
                     exp_var = f'exp = r"""{actual_orig}"""'
             # Save the expected variable to files.
@@ -1177,6 +1199,7 @@ class TestCase(unittest.TestCase):
         purify_text: bool = False,
         purify_expected_text: bool = False,
         fuzzy_match: bool = False,
+        sort: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
     ) -> bool:
@@ -1221,6 +1244,7 @@ class TestCase(unittest.TestCase):
             purify_text=purify_text,
             purify_expected_text=purify_expected_text,
             fuzzy_match=fuzzy_match,
+            sort=sort,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
         )
@@ -1261,6 +1285,7 @@ class TestCase(unittest.TestCase):
         dedent: bool = False,
         purify_text: bool = False,
         fuzzy_match: bool = False,
+        sort: bool = False,
         use_gzip: bool = False,
         tag: str = "test",
         abort_on_error: bool = True,
@@ -1271,16 +1296,18 @@ class TestCase(unittest.TestCase):
         contained in the file. If `--update_outcomes` is used, updates the
         golden reference file with the actual outcome.
 
-        :param fuzzy_match: ignore differences in spaces and end of lines (see
-          `_to_single_line_cmd`)
-        :param purify_text: remove some artifacts (e.g., user names,
-            directories, reference to Git client)
-        :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
-            the golden outcome is missing)
         :param dedent: call `dedent` on the expected string to align it to the
             beginning of the row
+        :param purify_text: remove some artifacts (e.g., user names,
+            directories, reference to Git client)
+        :param fuzzy_match: ignore differences in spaces and end of lines (see
+          `_to_single_line_cmd`)
+        :param sort: sort the text and then compare it. In other terms we check
+            whether the lines are the same although in different order
+        :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
+            the golden outcome is missing)
         :return: outcome_updated, file_exists, is_equal
-        :raises: `RuntimeError` if there is a mismatch. If `about_on_error` is False
+        :raises: `RuntimeError` if there is a mismatch. If `abort_on_error` is False
             (which should be used only for unit testing) return the result but do not
             assert
         """
@@ -1334,6 +1361,7 @@ class TestCase(unittest.TestCase):
                     # We have handled the purification of the output earlier.
                     purify_text=False,
                     fuzzy_match=fuzzy_match,
+                    sort=sort,
                     abort_on_error=abort_on_error,
                 )
             else:
