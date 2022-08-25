@@ -12,7 +12,6 @@ import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import im_v2.common.data.client as icdc
 
-
 # #############################################################################
 # Mock1_ForecastSystem_example
 # #############################################################################

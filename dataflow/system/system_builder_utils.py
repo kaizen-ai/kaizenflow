@@ -349,7 +349,8 @@ def add_process_forecasts_node(
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecastsNode(
-        stage, **system.config["process_forecasts_node_dict"].to_dict(),
+        stage,
+        **system.config["process_forecasts_node_dict"].to_dict(),
     )
     dag.append_to_tail(node)
     return dag
@@ -480,9 +481,9 @@ def apply_Portfolio_config(
         "midpoint": "midpoint",
         "price": "close",
     }
-    system.config[
-        "portfolio_config", "column_remap"
-    ] = cconfig.Config.from_dict(column_remap)
+    system.config["portfolio_config", "column_remap"] = cconfig.Config.from_dict(
+        column_remap
+    )
     return system
 
 
@@ -529,8 +530,8 @@ def _apply_dag_runner_config(
     """
     Apply `dag_runner_config` to the system config.
 
-    The parameters passed via `dag_runner_config` are required to initialize
-    a `DagRunner` (e.g., `RealtimeDagRunner`).
+    The parameters passed via `dag_runner_config` are required to
+    initialize a `DagRunner` (e.g., `RealtimeDagRunner`).
     """
     if ("dag_runner_config", "rt_time_out_in_secs_or_timestamp") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
@@ -608,8 +609,8 @@ def apply_dag_runner_config_for_equities(
     Apply `dag_runner_config` for equities.
 
     For equities `wake_up_timestamp` and
-    `rt_time_out_in_secs_or_timestamp` are aligned with the start
-    and end of a trading day for the equties market.
+    `rt_time_out_in_secs_or_timestamp` are aligned with the start and
+    end of a trading day for the equties market.
     """
     (
         trading_period_str,

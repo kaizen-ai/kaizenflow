@@ -10,7 +10,6 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 
-
 _LOG = logging.getLogger(__name__)
 
 
@@ -148,7 +147,9 @@ class Test_Mock1_Time_ForecastSystem1(
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
         # We need at least 7 bars to compute volatility.
-        system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 35
+        system.config[
+            "market_data_config", "replayed_delay_in_mins_or_timestamp"
+        ] = 35
         # Exercise the system for multiple 5 minute intervals.
         system.config[
             "dag_runner_config", "rt_time_out_in_secs_or_timestamp"
@@ -265,8 +266,8 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
     dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
 ):
     """
-    Run a Mock1 system with DatabasePortfolio and DataFramePortfolio and
-    verify that the output is the same.
+    Run a Mock1 system with DatabasePortfolio and DataFramePortfolio and verify
+    that the output is the same.
 
     See description in the parent class.
     """

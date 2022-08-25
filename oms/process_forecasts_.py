@@ -164,7 +164,10 @@ async def process_forecasts(
     )
     # Sanity check trading time.
     _validate_trading_time(
-        ath_start_time, ath_end_time, trading_start_time, trading_end_time,
+        ath_start_time,
+        ath_end_time,
+        trading_start_time,
+        trading_end_time,
         # TODO(gp): Pass liquidate_at_trading_end_time
     )
     # Get execution mode ("real_time" or "batch").
