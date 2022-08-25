@@ -163,6 +163,13 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
                 "startTime=1660766400&endTime=1660852740",), {}
         )
         self.assertEqual(actual_args, expected_args)
+        # Check calls against `pandas.read_csv`.
+        self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
+        actual_args = tuple(self.pandas_read_csv_mock.call_args)
+        expected_args = (
+            ("https://mock-url.com",), {"compression": "gzip"}
+        )
+        self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
         self.assertEqual(self.coerce_to_numeric_mock.call_count, 1)
         actual_args = tuple(self.coerce_to_numeric_mock.call_args)
@@ -305,6 +312,13 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         expected_args = (
             ("https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp?"\
                 "startTime=1660766400&endTime=1660852740",), {}
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Check calls against `pandas.read_csv`.
+        self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
+        actual_args = tuple(self.pandas_read_csv_mock.call_args)
+        expected_args = (
+            ("https://mock-url.com",), {"compression": "gzip"}
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
@@ -798,6 +812,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
                 "startTime=1660766400",), {}
         )
         self.assertEqual(actual_args, expected_args)
+        # Check calls against `pandas.read_csv`.
+        self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
+        actual_args = tuple(self.pandas_read_csv_mock.call_args)
+        expected_args = (
+            ("https://mock-url.com",), {"compression": "gzip"}
+        )
+        self.assertEqual(actual_args, expected_args)
         # Compare `float_columns` argument.
         self.assertEqual(actual_args[1], expected_args[1])
         # Check final `trade` data.
@@ -906,6 +927,13 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         expected_args = (
             ("https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt?"\
                 "startTime=1660766400",), {}
+        )
+        self.assertEqual(actual_args, expected_args)
+        # Check calls against `pandas.read_csv`.
+        self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
+        actual_args = tuple(self.pandas_read_csv_mock.call_args)
+        expected_args = (
+            ("https://mock-url.com",), {"compression": "gzip"}
         )
         self.assertEqual(actual_args, expected_args)
         # Compare `float_columns` argument.
