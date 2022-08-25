@@ -381,9 +381,9 @@ class CcxtBroker(ombroker.Broker):
         """
         Check if the order matches the minimum quantity for the asset.
 
-        The functions checks both the flat amount of the asset and the total
+        The functions check both the flat amount of the asset and the total
         cost of the asset in the order. If the order amount does not match,
-        he order is changed to be slightly above the minimal amount.
+        the order is changed to be slightly above the minimal amount.
 
         :param order: order to be submitted
         """
@@ -573,7 +573,7 @@ class CcxtBroker(ombroker.Broker):
             #  This is done to avoid "Margin is insufficient" error
             #  in testnet.
             order = self._force_minimal_order(order)
-        elif self._stage == "preprod":
+        elif self._stage in ["preprod", "prod"]:
             # Verify that order is not below the minimal amount.
             order = self._check_order_limit(order)
         else:
@@ -603,7 +603,7 @@ class CcxtBroker(ombroker.Broker):
                 # If the submission was successful, don't retry.
                 break
             except Exception as e:
-                # Check the Binance API err
+                # Check the Binance API error
                 if isinstance(e, ccxt.ExchangeNotAvailable):
                     # If there is a temporary server error, wait for
                     # a set amount of seconds and retry.
