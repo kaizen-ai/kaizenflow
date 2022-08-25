@@ -164,7 +164,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         end_datetime: pd.Timestamp,
         asset_ids: List[int],
     ) -> omportfo.DataFramePortfolio:
-        initial_replayed_delay = 5
+        replayed_delay_in_mins_or_timestamp = 5
         delay_in_secs = 0
         columns = ["price"]
         sleep_in_secs = 30
@@ -176,7 +176,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             event_loop,
             start_datetime,
             end_datetime,
-            initial_replayed_delay,
+            replayed_delay_in_mins_or_timestamp,
             asset_ids,
             delay_in_secs=delay_in_secs,
             columns=columns,
@@ -828,12 +828,12 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         ) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build MarketData.
-            initial_replayed_delay = 5
+            replayed_delay_in_mins_or_timestamp = 5
             asset_id_name = "asset_id"
             asset_id = [data[asset_id_name][0]]
             market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
                 event_loop,
-                initial_replayed_delay,
+                replayed_delay_in_mins_or_timestamp,
                 data,
                 asset_id_col_name=asset_id_name,
             )
