@@ -98,7 +98,6 @@ _LOG = logging.getLogger(__name__)
 #   ```
 #   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
 #   ```
-#
 
 # ## Integration
 #
