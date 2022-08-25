@@ -584,8 +584,8 @@ def get_market_data_df1() -> pd.DataFrame:
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
     data["feature1"] = feature
-    rt_time_out_in_secs_or_timestamp = 35 * 60
-    return data, rt_time_out_in_secs_or_timestamp
+    rt_timeout_in_secs_or_timestamp = 35 * 60
+    return data, rt_timeout_in_secs_or_timestamp
 
 
 def get_market_data_df2() -> pd.DataFrame:
@@ -618,8 +618,8 @@ def get_market_data_df2() -> pd.DataFrame:
     feature_pattern = [-1.0] * 5 + [1.0] * 5
     feature = feature_pattern * 4
     data["feature1"] = feature
-    rt_time_out_in_secs_or_timestamp = 35 * 60
-    return data, rt_time_out_in_secs_or_timestamp
+    rt_timeout_in_secs_or_timestamp = 35 * 60
+    return data, rt_timeout_in_secs_or_timestamp
 
 
 def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
@@ -652,8 +652,8 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     feature_pattern = [-1.0] * 5 + [1.0] * 5
     feature = feature_pattern * 12
     data["feature1"] = feature
-    rt_time_out_in_secs_or_timestamp = 115 * 60
-    return data, rt_time_out_in_secs_or_timestamp
+    rt_timeout_in_secs_or_timestamp = 115 * 60
+    return data, rt_timeout_in_secs_or_timestamp
 
 
 def get_market_data_df4() -> pd.DataFrame:
@@ -686,8 +686,8 @@ def get_market_data_df4() -> pd.DataFrame:
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 6
     data["feature1"] = feature
-    rt_time_out_in_secs_or_timestamp = 3 * 5 * 60
-    return data, rt_time_out_in_secs_or_timestamp
+    rt_timeout_in_secs_or_timestamp = 3 * 5 * 60
+    return data, rt_timeout_in_secs_or_timestamp
 
 
 # #############################################################################

@@ -66,7 +66,7 @@ market_data_config:
   replayed_delay_in_mins_or_timestamp: 35
   history_lookback: 1 days 00:00:00
 dag_runner_config:
-  rt_time_out_in_secs_or_timestamp: 900
+  rt_timeout_in_secs_or_timestamp: 900
   bar_duration_in_secs: 300
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((60, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=0 <int>)
