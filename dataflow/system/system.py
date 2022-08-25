@@ -104,7 +104,7 @@ _LOG = logging.getLogger(__name__)
 #     - ...
 #
 #   - dag_runner_object
-#     - real_time_loop_time_out_in_secs
+#     - rt_time_out_in_secs_or_timestamp
 #
 #   - backtest_config
 #     - """information about back testing"""

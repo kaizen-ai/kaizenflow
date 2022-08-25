@@ -44,7 +44,7 @@ _LOG = logging.getLogger(__name__)
 #   - when the system starts processing the DagRunner loop
 #   - E.g., the system can wake up at 9:00am to warm up some functions
 #
-# - `real_time_loop_time_out_in_secs`:
+# - `rt_time_out_in_secs_or_timestamp`:
 #   - used by `DagRunner`
 #   - when the system stops running the DagRunner loop
 #
