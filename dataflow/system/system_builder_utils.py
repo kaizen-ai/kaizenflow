@@ -171,8 +171,6 @@ def get_EventLoop_MarketData_from_df(
         initial_replayed_delay,
         data,
         delay_in_secs=delay_in_secs,
-        #knowledge_datetime_col_name: str = "timestamp_db",
-        #asset_id_col_name: str = "asset_id",
         start_time_col_name= "start_timestamp",
         end_time_col_name= "end_timestamp"
     )

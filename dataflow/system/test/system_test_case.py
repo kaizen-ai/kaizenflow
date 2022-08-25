@@ -105,7 +105,7 @@ def _get_signature_from_result_bundle(
     return actual
 
 
-# TODO(gp): remove _test_save_data from the TestCase
+# TODO(gp): @grisha remove _test_save_data from the TestCase
 #  and have callers from the tests directly call
 #  mdata.save_market_data(market_data, file_name, period) 
 #  like we are doing in Test_C1b_EOD_Reconciliation
@@ -688,6 +688,8 @@ class SystemTester:
         actual = "\n".join(map(str, actual))
         return actual, research_pnl
 
+    # TODO(gp): compute and log the portfolio. I don't like that we create
+    #  ForecastEvaluatorFromPrices multiple times.
     def log_forecast_evaluator_portfolio(
         self,
         result_bundle: dtfcore.ResultBundle,
