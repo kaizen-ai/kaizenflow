@@ -388,19 +388,18 @@ class CcxtBroker(ombroker.Broker):
         """
         # Load all limits for the asset.
         asset_limits = self._minimal_order_limits[order.asset_id]
-        order_amount = order.diff_num_shares
         min_amount = asset_limits["min_amount"]
-        if abs(order_amount) < min_amount:
-            _LOG.warning(
-                "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
-                str(order),
-                order_amount,
-                min_amount,
-            )
-            if order_amount < 0:
+        if abs(order.diff_num_shares) < min_amount:
+            if order.diff_num_shares < 0:
                 order.diff_num_shares = -min_amount
             else:
                 order.diff_num_shares = min_amount
+            _LOG.warning(
+                "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
+                str(order),
+                order.diff_num_shares,
+                min_amount,
+            )
         # Check if the order is not below minimal cost.
         #
         # Estimate the total cost of the order based on the high market price.
