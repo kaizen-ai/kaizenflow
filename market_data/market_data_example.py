@@ -79,25 +79,25 @@ def get_ReplayedTimeMarketData_from_df(
     # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
     # use a negative offset to start replaying the data, before data is available.
     # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
-    initial_replayed_dt = min_start_time_col_name + pd.Timedelta(
+    initial_timestamp = min_start_time_col_name + pd.Timedelta(
         minutes=replayed_delay_in_mins_or_timestamp
     )
     _LOG.debug(
         hprint.to_str(
-            "min_start_time_col_name replayed_delay_in_mins_or_timestamp initial_replayed_dt"
+            "min_start_time_col_name replayed_delay_in_mins_or_timestamp initial_timestamp"
         )
     )
     # The initial replayed datetime should be before the end of the data.
     end_of_data_dt = df[start_time_col_name].max()
-    if initial_replayed_dt > end_of_data_dt:
+    if initial_timestamp > end_of_data_dt:
         _LOG.warning(
-            f"The initial replayed datetime '{initial_replayed_dt}' "
+            f"The initial replayed datetime '{initial_timestamp}' "
             "should be before the end of the data '{end_of_data_dt}'"
         )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,
-        initial_replayed_dt,
+        initial_timestamp,
         event_loop=event_loop,
         speed_up_factor=speed_up_factor,
     )
@@ -330,7 +330,7 @@ def get_ReplayedImClientMarketData_example1(
     im_client: icdc.ImClient,
     event_loop: asyncio.AbstractEventLoop,
     asset_ids: List[int],
-    initial_replayed_dt: pd.Timestamp,
+    initial_timestamp: pd.Timestamp,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     # TODO(Max): Refactor mix of replay and realtime.
     """
@@ -346,7 +346,7 @@ def get_ReplayedImClientMarketData_example1(
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
         tz,
-        initial_replayed_dt,
+        initial_timestamp,
         event_loop=event_loop,
         speed_up_factor=speed_up_factor,
     )

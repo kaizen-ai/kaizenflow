@@ -111,10 +111,10 @@
 #        if isinstance(replayed_delay_in_mins_or_timestamp, str):
 #            hdbg.dassert_eq(replayed_delay_in_mins_or_timestamp, "last_timestamp")
 #            # Use the last available time.
-#            initial_replayed_dt = pd.Timestamp(max_time)
+#            initial_timestamp = pd.Timestamp(max_time)
 #        else:
 #            # Use a replayed real-time with respect to the beginning of the data.
-#            initial_replayed_dt = pd.Timestamp(min_time) + pd.Timedelta(
+#            initial_timestamp = pd.Timestamp(min_time) + pd.Timedelta(
 #                minutes=replayed_delay_in_mins_or_timestamp
 #            )
 #        asset_id_col = "asset_id"
@@ -129,7 +129,7 @@
 #        start_time_col_name = "start_time"
 #        end_time_col_name = "end_time"
 #        get_wall_clock_time = creatime.get_replayed_wall_clock_time(
-#            "ET", initial_replayed_dt, event_loop=event_loop
+#            "ET", initial_timestamp, event_loop=event_loop
 #        )
 #        sleep_in_secs = 1
 #        time_out_in_secs = 60 * 5

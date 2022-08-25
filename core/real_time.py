@@ -55,7 +55,7 @@ class ReplayedTime:
 
     A use case is the following:
     - Assume we have captured data in an interval starting on `2021-01-04 9:30am`
-      (called `initial_replayed_dt`) until the following day `2021-01-05 9:30am`
+      (called `initial_timestamp`) until the following day `2021-01-05 9:30am`
     - We want to replay this data in real-time starting now, which is by example
       `2021-06-04 10:30am` (called `initial_wall_clock_dt`)
     - We use this class to map times after `2021-06-04 10:30am` to the corresponding
@@ -65,13 +65,13 @@ class ReplayedTime:
       has passed since the `initial_wall_clock_dt`
 
     In other terms this class mocks `datetime.datetime.now()` so that the actual
-    wall clock time `initial_wall_clock_dt` corresponds to `initial_replayed_dt`.
+    wall clock time `initial_wall_clock_dt` corresponds to `initial_timestamp`.
     """
 
     def __init__(
         self,
         # TODO(Grisha): @Nina -> `initial_timestamp`.
-        initial_replayed_dt: pd.Timestamp,
+        initial_timestamp: pd.Timestamp,
         get_wall_clock_time: hdateti.GetWallClockTime,
         *,
         speed_up_factor: float = 1.0,
@@ -79,18 +79,18 @@ class ReplayedTime:
         """
         Construct the class instance.
 
-        If param `initial_replayed_dt` has timezone info then this class works in
+        If param `initial_timestamp` has timezone info then this class works in
         the same timezone.
 
-        :param initial_replayed_dt: the time that we want the current wall clock
+        :param initial_timestamp: the time that we want the current wall clock
             time to correspond to
         :param get_wall_clock_time: return the wall clock time. It is usually
             a closure of `hdateti.get_wall_clock_time()`. The returned time needs
-            to have the same timezone as `initial_replayed_dt`
+            to have the same timezone as `initial_timestamp`
         """
         # This is the original time we want to "rewind" to.
-        hdbg.dassert_isinstance(initial_replayed_dt, pd.Timestamp)
-        self._initial_replayed_dt = initial_replayed_dt
+        hdbg.dassert_isinstance(initial_timestamp, pd.Timestamp)
+        self._initial_timestamp = initial_timestamp
         hdbg.dassert_isinstance(get_wall_clock_time, Callable)
         self._get_wall_clock_time = get_wall_clock_time
         hdbg.dassert_lt(0, speed_up_factor)
@@ -98,14 +98,14 @@ class ReplayedTime:
         # This is when the experiment starts.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
-            hprint.to_str("self._initial_replayed_dt self._initial_wall_clock_dt")
+            hprint.to_str("self._initial_timestamp self._initial_wall_clock_dt")
         )
         hdateti.dassert_tz_compatible(
-            self._initial_replayed_dt, self._initial_wall_clock_dt
+            self._initial_timestamp, self._initial_wall_clock_dt
         )
         # TODO(gp): Difference between amp and cmamp.
         hdbg.dassert_lte(
-            self._initial_replayed_dt,
+            self._initial_timestamp,
             self._initial_wall_clock_dt,
             msg="Replaying time can be done only for the past. "
             "The future can't be replayed yet",
@@ -120,14 +120,14 @@ class ReplayedTime:
         hdbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
         current_replayed_dt = (
-            self._initial_replayed_dt + self._speed_up_factor * elapsed_time
+            self._initial_timestamp + self._speed_up_factor * elapsed_time
         )
         return current_replayed_dt
 
 
 def get_replayed_wall_clock_time(
     tz: str,
-    initial_replayed_dt: pd.Timestamp,
+    initial_timestamp: pd.Timestamp,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
     speed_up_factor: float = 1.0,
@@ -140,7 +140,7 @@ def get_replayed_wall_clock_time(
         tz, event_loop=event_loop
     )
     replayed_time = ReplayedTime(
-        initial_replayed_dt, get_wall_clock_time, speed_up_factor=speed_up_factor
+        initial_timestamp, get_wall_clock_time, speed_up_factor=speed_up_factor
     )
     return replayed_time.get_wall_clock_time
 
