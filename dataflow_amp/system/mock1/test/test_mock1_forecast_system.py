@@ -142,7 +142,10 @@ class Test_Mock1_Time_ForecastSystem1(
         Verify the contents of DAG prediction.
         """
         system = dtfasmmfosy.Mock1_Time_ForecastSystem()
-        market_data, real_time_loop_time_out = cofinanc.get_market_data_df4()
+        (
+            market_data,
+            rt_timeout_in_secs_or_timestamp,
+        ) = cofinanc.get_market_data_df4()
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
@@ -153,7 +156,7 @@ class Test_Mock1_Time_ForecastSystem1(
         # Exercise the system for multiple 5 minute intervals.
         system.config[
             "dag_runner_config", "rt_timeout_in_secs_or_timestamp"
-        ] = real_time_loop_time_out
+        ] = rt_timeout_in_secs_or_timestamp
         system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
         #
         output_col_name = "vwap.ret_0.vol_adj.c"
