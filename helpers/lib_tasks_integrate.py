@@ -254,7 +254,7 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     # Check that the current dir has the name `dir_basename`.
     _dassert_current_dir_matches(dir_basename)
     # Login in GitHub.
-    hlitagh.gh_login()
+    hlitagh.gh_login(ctx)
     # Create the integration branch with the current date, e.g.,
     # `AmpTask1786_Integrate_20211231`.
     date = datetime.datetime.now().date()
