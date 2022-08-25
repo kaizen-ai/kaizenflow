@@ -297,16 +297,16 @@ async def sleep(
 
 
 def get_seconds_to_align_to_grid(
-    grid_time_in_secs: float,
+    bar_duration_in_secs: int,
     get_wall_clock_time: hdateti.GetWallClockTime,
     *,
     add_buffer_in_secs: int = 0,
 ) -> Tuple[pd.Timestamp, int]:
     """
     Given the current time return the amount of seconds to wait to align on a
-    grid with period `grid_time_in_secs`.
+    grid with period `bar_duration_in_secs`.
 
-    E.g., current_time=9:31:02am, grid_time_in_secs=120 -> return 58
+    E.g., current_time=9:31:02am, bar_duration_in_secs=120 -> return 58
 
     :param add_buffer_in_secs: number of seconds to add to make sure we are right
         after the grid time
@@ -315,8 +315,9 @@ def get_seconds_to_align_to_grid(
     current_time = get_wall_clock_time()
     _LOG.debug("current_time=%s ...", current_time)
     # Align on the time grid.
-    hdbg.dassert_lt(0, grid_time_in_secs)
-    freq = f"{grid_time_in_secs}S"
+    hdbg.dassert_isinstance(bar_duration_in_secs, int)
+    hdbg.dassert_lt(0, bar_duration_in_secs)
+    freq = f"{bar_duration_in_secs}S"
     target_time = current_time.ceil(freq)
     hdbg.dassert_lte(current_time, target_time)
     _LOG.debug("target_time=%s", target_time)

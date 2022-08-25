@@ -51,40 +51,6 @@ def get_Cx_HistoricalMarketData_example1(
     return market_data
 
 
-def get_Cx_ReplayedMarketData_example1(
-    system: dtfsys.System,
-) -> mdata.MarketData:
-    """
-    Build a MarketData backed with RealTimeImClient.
-    """
-    # TODO(Grisha): @Dan pass as much as possible via `system.config`.
-    resample_1min = False
-    # Get environment variables with login info.
-    env_file = imvimlita.get_db_env_path("dev")
-    # Get login info.
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    # Login.
-    db_connection = hsql.get_connection(*connection_params)
-    # Get the real-time `ImClient`.
-    table_name = "ccxt_ohlcv"
-    im_client = imvcdccccl.CcxtSqlRealTimeImClient(
-        resample_1min, db_connection, table_name
-    )
-    # Get the real-time `MarketData`.
-    event_loop = system.config["event_loop_object"]
-    asset_ids = system.config["market_data_config", "asset_ids"]
-    initial_replayed_dt = pd.Timestamp(
-        "2022-07-21 09:30:00-04:00", tz="America/New_York"
-    )
-    market_data, _ = mdata.get_ReplayedImClientMarketData_example1(
-        im_client, event_loop, asset_ids, initial_replayed_dt
-    )
-    return market_data
-
-
-# TODO(Grisha): @Dan share some code with `get_Cx_ReplayedMarketData_example1` but
-# the difference will be that the prod `MarketData` should use the dev DB while
-# `get_Cx_ReplayedMarketData_example1` should use the local DB.
 def get_Cx_RealTimeMarketData_prod_instance1(
     #system: dtfsys.System,
     # TODO(gp): @grisha we should pass asset_ids and not system since we need
@@ -299,15 +265,14 @@ def _get_Cx_dag_prod_instance1(
         process_forecasts_node_dict
     )
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
-    # Convert to a dict to pass further after the ath/trading hours are applied.
-    updated_process_forecasts_node_dict = system.config[
-        "process_forecasts_node_dict"
-    ].to_dict()
     # Assemble.
     market_data = system.market_data
     market_data_history_lookback = system.config[
         "market_data_config", "history_lookback"
     ]
+    process_forecasts_node_dict = system.config[
+        "process_forecasts_node_dict"
+    ].to_dict()
     ts_col_name = "timestamp_db"
     # TODO(Grisha): should we use `add_real_time_data_source` and
     # `add_process_forecasts_node` from `system_builder_utils.py`?
@@ -315,7 +280,7 @@ def _get_Cx_dag_prod_instance1(
         dag,
         market_data,
         market_data_history_lookback,
-        updated_process_forecasts_node_dict,
+        process_forecasts_node_dict,
         ts_col_name,
     )
     _LOG.debug("dag=\n%s", dag)
@@ -364,7 +329,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
 # TODO(gp): We should dump the state of the portfolio and load it back.
 # TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
 #  so we can generalize the class to be not E8 specific.
-def _get_Cx_portfolio(
+def get_Cx_portfolio(
     system: dtfsys.System,
 ) -> oms.Portfolio:
     # We prefer to configure code statically (e.g., without switches) but in this

@@ -1044,9 +1044,9 @@ class Test_purify_object_representation1(hunitest.TestCase):
         """
         txt = """
         _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
-        <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 900} <dict>,
+        <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 900} <dict>,
         _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
-        _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>,
+        _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>,
         _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
         10:05:00-0500', tz='America/New_York'),
         wall_clock_time=Timestamp('2022-08-04 09:29:13.441715-0400',
@@ -1060,9 +1060,9 @@ class Test_purify_object_representation1(hunitest.TestCase):
         """
         exp = """
         _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
-        <int>>, 'sleep_interval_in_secs': 300, 'time_out_in_secs': 900} <dict>,
+        <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 900} <dict>,
         _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
-        _wake_up_timestamp=None <NoneType>, _grid_time_in_secs=300 <int>,
+        _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>,
         _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
         10:05:00-0500', tz='America/New_York'),
         wall_clock_time=Timestamp('xxx', tz='America/New_York')),

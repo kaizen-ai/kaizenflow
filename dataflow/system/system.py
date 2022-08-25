@@ -94,7 +94,7 @@ _LOG = logging.getLogger(__name__)
 #   - market_data_object
 #   - market_data_config
 #     - asset_ids
-#     - initial_replayed_delay
+#     - replayed_delay_in_mins_or_timestamp
 #
 #   - portfolio_object
 #     - ...

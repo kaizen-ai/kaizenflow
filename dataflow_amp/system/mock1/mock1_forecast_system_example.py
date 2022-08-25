@@ -69,13 +69,13 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 5
-    system.config["market_data_config", "initial_replayed_delay"] = 5
+    system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
     system = dtfsys.apply_Portfolio_config(system)
     # Dag runner config.
-    system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
     system.config[
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
@@ -116,13 +116,13 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     # Market data config.
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 5
-    system.config["market_data_config", "initial_replayed_delay"] = 5
+    system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 5
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
     system = dtfsys.apply_Portfolio_config(system)
     # Dag runner config.
-    system.config["dag_runner_config", "sleep_interval_in_secs"] = 60 * 5
+    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
     system.config[
         "dag_runner_config", "real_time_loop_time_out_in_secs"
     ] = real_time_loop_time_out_in_secs
@@ -143,11 +143,11 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "research_forecast_evaluator_from_prices"
     ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
     # If an order is not placed within a bar, then there is a timeout, so
-    # we add extra 5 seconds to `sleep_interval_in_secs` (which represents
+    # we add extra 5 seconds to `bar_duration_in_secs` (which represents
     # the length of a trading bar) to make sure that the `OrderProcessor`
     # waits long enough before timing out.
     max_wait_time_for_order_in_secs = (
-        system.config["dag_runner_config", "sleep_interval_in_secs"] + 5
+        system.config["dag_runner_config", "bar_duration_in_secs"] + 5
     )
     system.config[
         "order_processor_config", "max_wait_time_for_order_in_secs"
