@@ -7,7 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import datetime
 import logging
 import os
-from typing import Any, Callable, Coroutine, Optional, Tuple
+from typing import Any, Callable, Coroutine, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -524,7 +524,7 @@ def _apply_dag_runner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
     bar_duration_in_secs: int,
-    rt_time_out_in_secs_or_timestamp: Optional[int],
+    rt_time_out_in_secs_or_timestamp: Union[int, pd.Timestamp],
     trading_period_str: str,
 ) -> dtfsyssyst.System:
     """
