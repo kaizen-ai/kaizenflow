@@ -18,7 +18,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
-import im_v2.common.secrets.secret_identifier as imvcsseid
+import im_v2.common.secrets as imvcs
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
@@ -43,7 +43,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: imvcsseid.SecretIdentifier,
+        secret_id: imvcs.SecretIdentifier,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -125,19 +125,11 @@ class CcxtBroker(ombroker.Broker):
                 for order in orders:
                     if order["status"] == "closed":
                         # Select order matching to CCXT exchange id.
-                        try:
-                            filled_order = [
-                                order
-                                for sent_order in sent_orders
-                                if sent_order.ccxt_id == order["id"]
-                            ][0]
-                        except IndexError:
-                            _LOG.info("Looking for: %s", order["id"])
-                            _LOG.info(
-                                "Available %s",
-                                list(map(lambda x: x.ccxt_id, sent_orders)),
-                            )
-                            raise IndexError("list index out of range")
+                        filled_order = [
+                            order
+                            for sent_order in sent_orders
+                            if sent_order.ccxt_id == order["id"]
+                        ][0]
                         # Assign an `asset_id` to the filled order.
                         filled_order["asset_id"] = asset_id
                         # Convert CCXT `dict` order to oms.Order.
@@ -731,7 +723,7 @@ class CcxtBroker(ombroker.Broker):
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
-    secret_id: imvcsseid.SecretIdentifier
+    secret_id: imvcs.SecretIdentifier
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
