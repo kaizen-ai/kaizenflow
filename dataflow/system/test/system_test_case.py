@@ -327,18 +327,18 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     - a time DAG
     """
 
-    # def _test_save_data(
-    #     self,
-    #     market_data: mdata.MarketData,
-    #     period: pd.Timedelta,
-    #     file_path: str,
-    # ) -> None:
-    #     """
-    #     Generate test data and store it.
-    #     """
-    #     limit = None
-    #     mdata.save_market_data(market_data, file_path, period, limit)
-    #     _LOG.warning("Updated file '%s'", file_path)
+    def _test_save_data(
+        self,
+        market_data: mdata.MarketData,
+        period: pd.Timedelta,
+        file_path: str,
+    ) -> None:
+        """
+        Generate test data and store it.
+        """
+        limit = None
+        mdata.save_market_data(market_data, file_path, period, limit)
+        _LOG.warning("Updated file '%s'", file_path)
 
     def _test1(
         self,
