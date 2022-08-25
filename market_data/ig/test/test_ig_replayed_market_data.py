@@ -110,7 +110,7 @@
 #        knowledge_datetime_col_name = "timestamp_db"
 #        event_loop = None
 #        delay_in_secs = 0
-#        initial_replayed_delay = "last_timestamp"
+#        replayed_delay_in_mins_or_timestamp = "last_timestamp"
 #        asset_ids = market_data._asset_ids
 #        columns = "asset_id close start_time end_time timestamp_db volume".split()
 #        market_data = mdlime.IgReplayedMarketData(
@@ -118,7 +118,7 @@
 #            knowledge_datetime_col_name,
 #            event_loop,
 #            delay_in_secs,
-#            initial_replayed_delay,
+#            replayed_delay_in_mins_or_timestamp,
 #            asset_ids=asset_ids,
 #            columns=columns,
 #        )
