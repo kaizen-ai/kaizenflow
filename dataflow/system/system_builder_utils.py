@@ -652,7 +652,6 @@ def apply_dag_runner_config_for_equities(
     hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
     rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(rt_timeout_in_mins)
-    # TODO(gp): Horrible confusing name.
     rt_timeout_in_secs_or_timestamp = datetime.time(
         15, int(rt_timeout_in_mins)
     )
