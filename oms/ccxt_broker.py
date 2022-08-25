@@ -29,7 +29,6 @@ _LOG = logging.getLogger(__name__)
 # Max number of order submission retries.
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
-
 class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
