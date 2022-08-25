@@ -135,7 +135,7 @@ class CcxtBroker(ombroker.Broker):
                         filled_order = self._convert_ccxt_order_to_oms_order(
                             filled_order
                         )
-                    # Create a Fill object.
+                        # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
                             hdateti.convert_unix_epoch_to_timestamp(
@@ -145,12 +145,6 @@ class CcxtBroker(ombroker.Broker):
                             price=order["price"],
                         )
                         fills.append(fill)
-                        # fill = ombroker.Fill(
-                        #     o,
-                        #     o.creation_timestamp,
-                        #     num_shares = o.diff_num_shares,
-
-                        # )
         return fills
 
     def get_total_balance(self) -> Dict[str, float]:
@@ -298,17 +292,19 @@ class CcxtBroker(ombroker.Broker):
             int(ccxt_order["info"]["updateTime"])
         )
         # Add 1 minute to end timestamp.
-        # This is done since in CCXT testnet the orders are filled instantaneously.
+        # This is done since market orders are filled instantaneously.
         end_timestamp += pd.DateOffset(minutes=1)
-        # Get the amount of shares filled.
-        symbol = self._asset_id_to_symbol_mapping[asset_id]
-        curr_num_shares = self._exchange.fetch_positions([symbol])[0]
-        curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
-        # Get the amount of shares filled.
+        # Get the amount of shares in the filled order.
         diff_num_shares = ccxt_order["filled"]
         if ccxt_order["side"] == "sell":
             diff_num_shares = -diff_num_shares
-        curr_num_shares = curr_num_shares + diff_num_shares
+        # Get the amount of shares in the open position.
+        #  Note: This corresponds to the amount of assets
+        #  before the filled order has been executed.
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        curr_num_shares = self._exchange.fetch_positions([symbol])[0]
+        curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
+        curr_num_shares = curr_num_shares - diff_num_shares
         oms_order = omorder.Order(
             creation_timestamp,
             asset_id,
@@ -403,16 +399,16 @@ class CcxtBroker(ombroker.Broker):
                 order.diff_num_shares = min_amount
         # Check if the order is not below minimal cost.
         #
-        # Get the last price for the asset.
-        last_price = self._get_high_market_price(order.asset_id)
-        # Calculate the total cost of the order based on the last price.
-        total_cost = last_price * abs(order.diff_num_shares)
+        # Estimate the total cost of the order based on the high market price.
+        high_price = self._get_high_market_price(order.asset_id)
+        total_cost = high_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
-        if total_cost <= 5.0:
+        min_cost = 5.0
+        if total_cost <= min_cost:
             # Set amount based on minimal notional price.
             #  Note: the amount is rounded up to closest integer
             #  to cover for possible inaccuracy in market cost.
-            required_amount = round(10.0 / last_price, 2)
+            required_amount = round(min_cost * 2 / high_price, 2)
             if order.diff_num_shares < 0:
                 required_amount = -required_amount
             _LOG.warning(

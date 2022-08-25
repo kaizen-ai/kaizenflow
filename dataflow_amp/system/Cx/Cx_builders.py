@@ -133,7 +133,7 @@ def get_Cx_process_forecasts_node_dict_example1(
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
         "bulk_fill_method": "zero",
-        "target_gmv": 1e5,
+        "target_gmv": 700.0,
     }
     root_log_dir = None
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
