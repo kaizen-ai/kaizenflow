@@ -650,11 +650,11 @@ def apply_dag_runner_config_for_equities(
     # before the market closes, i.e. at 15:58.
     # Ensure that bar_duration is a multiple of minutes.
     hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
-    real_time_loop_time_out_minutes = 60 - int(bar_duration_in_secs / 60)
-    hdbg.dassert_is_integer(real_time_loop_time_out_minutes)
+    rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
+    hdbg.dassert_is_integer(rt_timeout_in_mins)
     # TODO(gp): Horrible confusing name.
     rt_timeout_in_secs_or_timestamp = datetime.time(
-        15, int(real_time_loop_time_out_minutes)
+        15, int(rt_timeout_in_mins)
     )
     system = _apply_dag_runner_config(
         system,
