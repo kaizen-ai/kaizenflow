@@ -1,5 +1,5 @@
 import logging
-from typing import Callable
+from typing import Callable, Union
 
 import pandas as pd
 import pytest
