@@ -1,6 +1,7 @@
 #!/bin/bash -xe
 
-script_name="dev_scripts/cleanup_scripts/CMTask2669_Rename_initial_replayed_delay.sh"
+#script_name="dev_scripts/cleanup_scripts/CMTask2669_Rename_initial_replayed_delay.sh"
+script_name="amp/dev_scripts/cleanup_scripts/CMTask2669_Rename_initial_replayed_delay.sh"
 
 replace_text.py \
   --old "initial_replayed_delay: int" \
