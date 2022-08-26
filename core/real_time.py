@@ -121,7 +121,7 @@ class ReplayedTime:
         current_replayed_timestamp = (
             self._initial_replayed_timestamp + self._speed_up_factor * elapsed_time
         )
-        return current_replayed_dt
+        return current_replayed_timestamp
 
 
 def get_replayed_wall_clock_time(
