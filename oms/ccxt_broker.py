@@ -17,6 +17,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
+import im_v2.common.secrets as imvcs
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
@@ -29,6 +30,7 @@ _LOG = logging.getLogger(__name__)
 # Max number of order submission retries.
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
+
 class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
@@ -40,7 +42,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: int = 1,
+        secret_id: imvcs.SecretIdentifier,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -59,7 +61,8 @@ class CcxtBroker(ombroker.Broker):
             - "sandbox" launches the broker in sandbox environment (not supported for
               every exchange)
         :param contract_type: "spot" or "futures"
-        :param secret_id: the number id of the secret
+        :param secret_id: a SecretIdentifier holding a full name of secret to look for in
+         AWS SecretsManager
         """
         super().__init__(*args, **kwargs)
         self.max_order_submit_retries = _MAX_ORDER_SUBMIT_RETRIES
@@ -698,8 +701,7 @@ class CcxtBroker(ombroker.Broker):
         """
         Log into the exchange and return the `ccxt.Exchange` object.
         """
-        # Construct secrets ID, e.g. `***REMOVED***`.
-        secrets_id = f"{self._exchange_id}.{self._stage}.{self._account_type}.{str(self._secret_id)}"
+        secrets_id = str(self._secret_id)
         # Select credentials for provided exchange.
         exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
@@ -710,6 +712,12 @@ class CcxtBroker(ombroker.Broker):
         # Create a CCXT Exchange class object.
         ccxt_exchange = getattr(ccxt, self._exchange_id)
         exchange = ccxt_exchange(exchange_params)
+        # TODO(Juraj): extract all exchange specific configs into separate function.
+        if self._exchange_id == "binance":
+            # Necessary option to avoid time out of sync error
+            # (CmTask2670 Airflow system run error "Timestamp for this
+            # request is outside of the recvWindow.")
+            exchange.options["adjustForTimeDifference"] = True
         if self._account_type == "sandbox":
             exchange.set_sandbox_mode(True)
             _LOG.warning("Running in sandbox mode")
@@ -723,14 +731,15 @@ class CcxtBroker(ombroker.Broker):
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
+    secret_id: imvcs.SecretIdentifier
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
-    exchange_id = "binance"
+    exchange_id = secret_id.exchange_id
     universe_version = "v5"
-    stage = "preprod"
-    account_type = "trading"
+    stage = secret_id.stage
+    account_type = secret_id.account_type
     contract_type = "futures"
     portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
@@ -740,6 +749,7 @@ def get_CcxtBroker_prod_instance1(
         account_type,
         portfolio_id,
         contract_type,
+        secret_id,
         strategy_id=strategy_id,
         market_data=market_data,
     )

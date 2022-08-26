@@ -118,7 +118,7 @@ def is_mac(*, version: Optional[str] = None) -> bool:
     elif version == "Monterey":
         # Darwin alpha.local 21.5.0 Darwin Kernel Version 21.5.0:
         # Tue Apr 26 21:08:37 PDT 2022; root:xnu-8020.121.3~4/RELEASE_ARM64_T6000 arm64```
-        macos_tag = "21.5"
+        macos_tag = "21."
     else:
         raise ValueError(f"Invalid version='{version}'")
     _LOG.debug("macos_tag=%s", macos_tag)

@@ -553,8 +553,8 @@ def build_timestamp_df(
 # #############################################################################
 
 
-# TODO(gp): -> get_MarketDataDf_example1()
-def get_market_data_df1() -> pd.DataFrame:
+# TODO(gp): @all -> get_MarketDataDf_example1()
+def get_market_data_df1() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
@@ -588,7 +588,7 @@ def get_market_data_df1() -> pd.DataFrame:
     return data, real_time_loop_time_out_in_secs
 
 
-def get_market_data_df2() -> pd.DataFrame:
+def get_market_data_df2() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
@@ -656,7 +656,7 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     return data, real_time_loop_time_out_in_secs
 
 
-def get_market_data_df4() -> pd.DataFrame:
+def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.

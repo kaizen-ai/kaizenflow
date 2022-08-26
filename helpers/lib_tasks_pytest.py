@@ -1229,7 +1229,9 @@ def pytest_buildmeister_check(ctx, print_output=False):  # type: ignore
 
 
 @task
-def pytest_buildmeister(ctx, opts="", pytest_opts="", docker_clean=False, test=False):  # type: ignore
+def pytest_buildmeister(  # type: ignore
+    ctx, opts="", pytest_opts="", docker_clean=False, test=False
+):
     """
     Run the regression tests.
 
@@ -1296,3 +1298,15 @@ def pytest_buildmeister(ctx, opts="", pytest_opts="", docker_clean=False, test=F
     _run_cmd_and_tg(cmd)
     #
     pytest_buildmeister_check(ctx)
+
+
+# #############################################################################
+# pytest_collect_only
+# #############################################################################
+
+
+@task
+def pytest_collect_only(ctx):  # type: ignore
+    _ = ctx
+    cmd = 'invoke docker_cmd --cmd "pytest --collect-only 2>&1"'
+    hsystem.system(cmd, suppress_output=False)
