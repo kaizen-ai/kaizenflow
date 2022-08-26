@@ -16,7 +16,6 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 import im_v2.common.secrets as imvcs
 import im_v2.common.universe.full_symbol as imvcufusy
@@ -144,7 +143,7 @@ class CcxtBroker(ombroker.Broker):
                             hdateti.convert_unix_epoch_to_timestamp(
                                 order["timestamp"]
                             ),
-                            num_shares=order["amount"],
+                            num_shares=filled_order.diff_num_shares,
                             price=order["price"],
                         )
                         fills.append(fill)
@@ -229,8 +228,34 @@ class CcxtBroker(ombroker.Broker):
         return open_positions
 
     @staticmethod
+    def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
+        """
+        Convert full symbol to CCXT format.
+
+        Example: "BTC_USDT" -> "BTC/USDT"
+        """
+        currency_pair = currency_pair.replace("_", "/")
+        return currency_pair
+
+    @staticmethod
+    def _check_binance_code_error(e: Exception, error_code: int) -> bool:
+        """
+        Check if the exception matches the expected error code.
+
+        Example of a Binance exception:
+        {"code":-4131,
+        "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
+
+        :param e: Binance exception raised by CCXT
+        :param error_code: expected error code, e.g. -4131
+        :return: whether error code is contained in error message
+        """
+        error_message = str(e)
+        error_regex = f'"code":{error_code},'
+        return bool(re.search(error_regex, error_message))
+
     def _convert_ccxt_order_to_oms_order(
-        ccxt_order: Dict[Any, Any]
+        self, ccxt_order: Dict[Any, Any]
     ) -> omorder.Order:
         """
         Convert sent CCXT orders to oms.Order class.
@@ -296,11 +321,23 @@ class CcxtBroker(ombroker.Broker):
             int(ccxt_order["info"]["updateTime"])
         )
         # Add 1 minute to end timestamp.
-        # This is done since in CCXT testnet the orders are filled instantaneously.
+        # This is done since market orders are filled instantaneously.
         end_timestamp += pd.DateOffset(minutes=1)
-        # Get the amount of shares filled.
-        curr_num_shares = float(ccxt_order["info"]["origQty"])
+        # Get the amount of shares in the filled order.
         diff_num_shares = ccxt_order["filled"]
+        if ccxt_order["side"] == "sell":
+            diff_num_shares = -diff_num_shares
+        #
+        # Get the amount of shares in the open position.
+        #  Note: This corresponds to the amount of assets
+        #  before the filled order has been executed.
+        #
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        # Select current position amount.
+        curr_num_shares = self._exchange.fetch_positions([symbol])[0]
+        curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
+        # Calculate position before the order has been filled.
+        curr_num_shares = curr_num_shares - diff_num_shares
         oms_order = omorder.Order(
             creation_timestamp,
             asset_id,
@@ -311,33 +348,6 @@ class CcxtBroker(ombroker.Broker):
             diff_num_shares,
         )
         return oms_order
-
-    @staticmethod
-    def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
-        """
-        Convert full symbol to CCXT format.
-
-        Example: "BTC_USDT" -> "BTC/USDT"
-        """
-        currency_pair = currency_pair.replace("_", "/")
-        return currency_pair
-
-    @staticmethod
-    def _check_binance_code_error(e: Exception, error_code: int) -> bool:
-        """
-        Check if the exception matches the expected error code.
-
-        Example of a Binance exception:
-        {"code":-4131,
-        "msg":"The counterparty's best price does not meet the PERCENT_PRICE filter limit."}
-
-        :param e: Binance exception raised by CCXT
-        :param error_code: expected error code, e.g. -4131
-        :return: whether error code is contained in error message
-        """
-        error_message = str(e)
-        error_regex = f'"code":{error_code},'
-        return bool(re.search(error_regex, error_message))
 
     def _force_minimal_order(self, order: omorder.Order) -> omorder.Order:
         """
@@ -353,15 +363,15 @@ class CcxtBroker(ombroker.Broker):
         required_amount = asset_limits["min_amount"]
         # Note: 10 is the minimal total cost of an order in testnet.
         min_cost = 10
-        # Get the last price for the asset.
-        last_price = self._get_last_market_price(order.asset_id)
+        # Get the high price for the asset.
+        high_price = self._get_high_market_price(order.asset_id)
         # Verify that the estimated total cost is above 10.
-        if last_price * required_amount <= min_cost:
+        if high_price * required_amount <= min_cost:
             # Set the amount of asset to above min cost.
             #  Note: the multiplication by 2 is done to give some
             #  buffer so the order does not go below
             #  the minimal amount of asset.
-            required_amount = (min_cost / last_price) * 2
+            required_amount = (min_cost / high_price) * 2
         if order.diff_num_shares < 0:
             order.diff_num_shares = -required_amount
         else:
@@ -380,50 +390,48 @@ class CcxtBroker(ombroker.Broker):
         """
         # Load all limits for the asset.
         asset_limits = self._minimal_order_limits[order.asset_id]
-        order_amount = order.diff_num_shares
         min_amount = asset_limits["min_amount"]
-        if abs(order_amount) < min_amount:
-            _LOG.warning(
-                "Amount of asset in order is below minimal: %s. Setting to min amount: %s",
-                order_amount,
-                min_amount,
-            )
-            if order_amount < 0:
+        if abs(order.diff_num_shares) < min_amount:
+            if order.diff_num_shares < 0:
                 order.diff_num_shares = -min_amount
             else:
                 order.diff_num_shares = min_amount
+            _LOG.warning(
+                "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
+                str(order),
+                order.diff_num_shares,
+                min_amount,
+            )
         # Check if the order is not below minimal cost.
         #
-        # Get the last price for the asset.
-        last_price = self._get_last_market_price(order.asset_id)
-        # Calculate the total cost of the order based on the last price.
-        total_cost = last_price * abs(order_amount)
+        # Estimate the total cost of the order based on the high market price.
+        #  Note: high price is chosen to account for possible price spikes.
+        high_price = self._get_high_market_price(order.asset_id)
+        total_cost = high_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
         min_cost = asset_limits["min_cost"]
-        if total_cost < min_cost:
+        if total_cost <= min_cost:
             # Set amount based on minimal notional price.
-            #  Note: the amount is rounded up to closest integer
-            #  to cover for possible inaccuracy in market cost.
-            required_amount = round(min_cost / last_price, 0) + 1
+            required_amount = round(min_cost * 2 / high_price, 2)
+            if order.diff_num_shares < 0:
+                required_amount = -required_amount
             _LOG.warning(
-                "Amount of asset in order is below minimal base: %s. \
+                "Order: %s\nAmount of asset in order is below minimal base: %s. \
                     Setting to following amount based on notional limit: %s",
+                str(order),
                 order_amount,
                 required_amount,
             )
             # Change number of shares to minimal amount.
-            if order.diff_num_shares < 0:
-                order.diff_num_shares = -required_amount
-            else:
-                order.diff_num_shares = required_amount
+            order.diff_num_shares = required_amount
         return order
 
-    def _get_last_market_price(self, asset_id: int) -> float:
+    def _get_high_market_price(self, asset_id: int) -> float:
         """
-        Load the latest price for the given ticker.
+        Load the high price for the given ticker.
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["last"]
+        last_price = self._exchange.fetch_ticker(symbol)["high"]
         return last_price
 
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
@@ -561,7 +569,7 @@ class CcxtBroker(ombroker.Broker):
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
         submitted_order: Optional[omorder.Order] = None
-        if self._stage in ["local", "preprod"]:
+        if self._stage == "local":
             # Reduce order to a minimal possible amount.
             #  This is done to avoid "Margin is insufficient" error
             #  in testnet.
@@ -569,6 +577,7 @@ class CcxtBroker(ombroker.Broker):
         else:
             # Verify that order is not below the minimal amount.
             order = self._check_order_limit(order)
+        _LOG.info("Submitting order:\n%s", str(order))
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
         # TODO(Juraj): separate the retry logic from the code that does the work.
@@ -591,7 +600,6 @@ class CcxtBroker(ombroker.Broker):
                 )
                 submitted_order = order
                 submitted_order.ccxt_id = order_resp["id"]
-                _LOG.info(hprint.to_str("order_resp"))
                 # If the submission was successful, don't retry.
                 break
             except Exception as e:
@@ -627,6 +635,7 @@ class CcxtBroker(ombroker.Broker):
         sent_orders: List[omorder.Order] = []
         for order in orders:
             sent_order = await self._submit_single_order(order)
+            _LOG.info(str(sent_order))
             # If order was submitted successfully append it to
             # the list of sent orders.
             if sent_order:
@@ -690,8 +699,7 @@ class CcxtBroker(ombroker.Broker):
 
     def _log_into_exchange(self) -> ccxt.Exchange:
         """
-        Log into coinbasepro and return the corresponding `ccxt.Exchange`
-        object.
+        Log into the exchange and return the `ccxt.Exchange` object.
         """
         secrets_id = str(self._secret_id)
         # Select credentials for provided exchange.
