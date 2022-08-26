@@ -208,11 +208,11 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         """
         # Create the replayed wall clock time.
         tz = "ET"
-        initial_timestamp = pd.Timestamp(
+        initial_replayed_timestamp = pd.Timestamp(
             "2010-01-04 09:30:01", tz=hdateti.get_ET_tz()
         )
         get_wall_clock_time = creatime.get_replayed_wall_clock_time(
-            tz, initial_timestamp, event_loop=event_loop
+            tz, initial_replayed_timestamp, event_loop=event_loop
         )
         # Run.
         events_as_str, results_as_str = self.run_workload(

@@ -53,7 +53,7 @@ class _EventLoop(async_solipsism.EventLoop):
     An `async_solipsism.EventLoop` returning also the wall-clock time.
     """
 
-    # TODO(gp): If we pass an `initial_timestamp` we could incorporate here also
+    # TODO(gp): If we pass an `initial_replayed_timestamp` we could incorporate here also
     #  the replayed time approach and can remove `ReplayedTime` object.
     def __init__(self) -> None:
         super().__init__()
