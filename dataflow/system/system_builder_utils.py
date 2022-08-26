@@ -546,7 +546,7 @@ def _apply_dag_runner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
     bar_duration_in_secs: int,
-    rt_timeout_in_secs_or_timestamp: Union[int, pd.Timestamp],
+    rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
     trading_period_str: str,
 ) -> dtfsyssyst.System:
     """
@@ -555,23 +555,23 @@ def _apply_dag_runner_config(
     The parameters passed via `dag_runner_config` are required to
     initialize a `DagRunner` (e.g., `RealtimeDagRunner`).
     """
-    if ("dag_runner_config", "rt_timeout_in_secs_or_timestamp") in system.config:
+    if ("dag_runner_config", "rt_timeout_in_secs_or_time") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
         # to run for a shorter period than the entire day, as the prod system does).
         val = system.config[
-            ("dag_runner_config", "rt_timeout_in_secs_or_timestamp")
+            ("dag_runner_config", "rt_timeout_in_secs_or_time")
         ]
         _LOG.warning(
-            "Overriding rt_timeout_in_secs_or_timestamp=%s with value %s",
-            rt_timeout_in_secs_or_timestamp,
+            "Overriding rt_timeout_in_secs_or_time=%s with value %s",
+            rt_timeout_in_secs_or_time,
             val,
         )
-        rt_timeout_in_secs_or_timestamp = val
+        rt_timeout_in_secs_or_time = val
     #
     real_time_config = {
         "wake_up_timestamp": wake_up_timestamp,
         "bar_duration_in_secs": bar_duration_in_secs,
-        "rt_timeout_in_secs_or_timestamp": rt_timeout_in_secs_or_timestamp,
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
         # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
         "trading_period_str": trading_period_str,
     }
@@ -612,13 +612,13 @@ def apply_dag_runner_config_for_crypto(
         bar_duration_in_secs,
     ) = _get_trading_period_str_and_bar_duration_in_secs(system)
     wake_up_timestamp = None
-    rt_timeout_in_secs_or_timestamp = None
+    rt_timeout_in_secs_or_time = None
     #
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
-        rt_timeout_in_secs_or_timestamp,
+        rt_timeout_in_secs_or_time,
         trading_period_str,
     )
     return system
@@ -631,7 +631,7 @@ def apply_dag_runner_config_for_equities(
     Apply `dag_runner_config` for equities.
 
     For equities `wake_up_timestamp` and
-    `rt_timeout_in_secs_or_timestamp` are aligned with the start and
+    `rt_timeout_in_secs_or_time` are aligned with the start and
     end of a trading day for the equties market.
     """
     (
@@ -674,14 +674,14 @@ def apply_dag_runner_config_for_equities(
     hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
     rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(rt_timeout_in_mins)
-    rt_timeout_in_secs_or_timestamp = datetime.time(
+    rt_timeout_in_secs_or_time = datetime.time(
         15, int(rt_timeout_in_mins)
     )
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
-        rt_timeout_in_secs_or_timestamp,
+        rt_timeout_in_secs_or_time,
         trading_period_str,
     )
     return system
@@ -701,13 +701,13 @@ def get_realtime_DagRunner_from_system(
     bar_duration_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
-    rt_timeout_in_secs_or_timestamp = system.config["dag_runner_config"][
-        "rt_timeout_in_secs_or_timestamp"
+    rt_timeout_in_secs_or_time = system.config["dag_runner_config"][
+        "rt_timeout_in_secs_or_time"
     ]
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
-        "time_out_in_secs": rt_timeout_in_secs_or_timestamp,
+        "time_out_in_secs": rt_timeout_in_secs_or_time,
     }
     dag_runner_kwargs = {
         "dag": dag,
@@ -752,7 +752,7 @@ def get_RealTimeDagRunner_from_System(
             "dag_runner_config", "bar_duration_in_secs"
         ],
         "time_out_in_secs": system.config[
-            "dag_runner_config", "rt_timeout_in_secs_or_timestamp"
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
         ],
     }
     dag_runner_kwargs = {
