@@ -43,8 +43,7 @@ def get_signature(
     Compute the signature of a test in terms of:
     
     - system signature
-    - result bundle
-    - signature
+    - result bundle signature
     """
     txt: List[str] = []
     #
