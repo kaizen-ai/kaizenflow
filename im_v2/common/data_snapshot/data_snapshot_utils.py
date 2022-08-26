@@ -10,23 +10,32 @@ import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
 
-def get_latest_data_snapshot(root_dir: str, aws_profile: Optional[str]) -> str:
+def get_latest_data_snapshot(
+    root_dir: str,
+    aws_profile: Optional[str]
+    *,
+    data_snapshot: str = None,
+) -> str:
     """
-    Get the latest numeric data snapshot.
+    Get the latest numeric data snapshot or daily updating snapshot if `latest`
+    is given.
     """
-    pattern = "*"
-    only_files = False
-    use_relatives_paths = True
-    dirs = hs3.listdir(
-        root_dir,
-        pattern,
-        only_files,
-        use_relatives_paths,
-        aws_profile=aws_profile,
-    )
-    dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
-    hdbg.dassert_lte(1, len(dirs))
-    data_snapshot = max(dirs)
+    if data_snapshot is None:
+        pattern = "*"
+        only_files = False
+        use_relatives_paths = True
+        dirs = hs3.listdir(
+            root_dir,
+            pattern,
+            only_files,
+            use_relatives_paths,
+            aws_profile=aws_profile,
+        )
+        dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
+        hdbg.dassert_lte(1, len(dirs))
+        data_snapshot = max(dirs)
+    elif data_snapshot == "latest":
+        data_snapshot = "binance"
     return data_snapshot
 
 
