@@ -5,8 +5,9 @@ import dataflow.system.test.system_test_case as dtfsytsytc
 """
 
 import asyncio
+import datetime
 import logging
-from typing import Any, Callable, Coroutine, Dict, List, Tuple, Union
+from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -34,9 +35,16 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): What is the difference with _get_signature_from_result_bundle?
+#  Can we unify?
 def get_signature(
     system_config: cconfig.Config, result_bundle: dtfcore.ResultBundle, col: str
 ) -> str:
+    """
+    Compute the signature of a test in terms of:
+    1) System signature
+    2) Result bundle signature
+    """
     txt: List[str] = []
     #
     txt.append(hprint.frame("system_config"))
@@ -58,14 +66,22 @@ def _get_signature_from_result_bundle(
     add_system_config: bool,
     add_run_signature: bool,
 ) -> str:
+    """
+    Compute the signature of a test in terms of:
+    1) System signature
+    2) Run signature
+    3) Output dir signature
+    """
     portfolio = system.portfolio
     dag_runner = system.dag_runner
     txt = []
-    # - Compute system signature.
+    # 1) Compute system signature.
+    hdbg.dassert(system.is_fully_built)
     if add_system_config:
+        # TODO(gp): Use check_system_config.
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))
-    # - Compute run signature.
+    # 2) Compute run signature.
     if add_run_signature:
         # TODO(gp): This should be factored out.
         txt.append(hprint.frame("compute_run_signature"))
@@ -84,7 +100,7 @@ def _get_signature_from_result_bundle(
             forecast_evaluator_from_prices_dict,
         )
         txt.append(txt_tmp)
-    # - Compute the signature of the output dir.
+    # 3) Compute the signature of the output dir.
     txt.append(hprint.frame("system_log_dir signature"))
     log_dir = system.config["system_log_dir"]
     txt_tmp = hunitest.get_dir_signature(
@@ -123,7 +139,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         dtfssybuut.apply_unit_test_log_dir(self, system)
         # Force building the DAG runner.
         _ = system.dag_runner
-        #
+        # TODO(gp): Use check_system_config.
         txt = []
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))
@@ -157,6 +173,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         # Force building the DAG runner.
         dag_runner = system.dag_runner
         hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
+        # 1) Check config.
         # Set the time boundaries.
         start_datetime = system.config[
             "backtest_config", "start_timestamp_with_lookback"
@@ -167,7 +184,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         )
         # Run.
         result_bundle = dag_runner.fit()
-        # Check outcome.
+        # 2) Check outcome.
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
@@ -287,6 +304,9 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
     ) -> None:
         dtfssybuut.apply_unit_test_log_dir(self, system)
         dag_runner = system.dag_runner
+        # 1) Check the system config.
+        tag = "forecast_system"
+        check_system_config(self, system, tag)
         # Set the time boundaries.
         start_datetime = system.config[
             "backtest_config", "start_timestamp_with_lookback"
@@ -297,7 +317,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         )
         # Run.
         result_bundle = dag_runner.fit()
-        # Check.
+        # 2) Check the pnl.
         system_tester = SystemTester()
         forecast_evaluator_from_prices_dict = system.config[
             "research_forecast_evaluator_from_prices"
@@ -330,8 +350,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         """
         Generate test data and store it.
         """
-        limit = None
-        mdata.save_market_data(market_data, file_path, period, limit)
+        mdata.save_market_data(market_data, file_path, period)
         _LOG.warning("Updated file '%s'", file_path)
 
     def _test1(
@@ -346,14 +365,18 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             system.config["event_loop_object"] = event_loop
             # Create DAG runner.
             dag_runner = system.dag_runner
+            # 1) Check the system config.
+            tag = "forecast_system"
+            check_system_config(self, system, tag)
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            result_bundle = result_bundles[0][-1]
-            actual = get_signature(system.config, result_bundle, output_col_name)
-            self.check_string(actual, fuzzy_match=True, purify_text=True)
+        # 2) Check the signature of the simulation.
+        result_bundle = result_bundles[0][-1]
+        actual = get_signature(system.config, result_bundle, output_col_name)
+        self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
 # #############################################################################
@@ -369,6 +392,8 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     - ReplayedMarketData
     - DataFrame portfolio
     - Simulated broker
+
+    Freeze the config and the output of the system.
     """
 
     # TODO(Grisha): there is some code that is common for
@@ -380,38 +405,63 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         self,
         system: dtfsyssyst.System,
         *,
+        trading_end_time: Optional[datetime.time] = None,
+        liquidate_at_trading_end_time: bool = False,
         add_system_config: bool = True,
         add_run_signature: bool = True,
     ) -> str:
         """
         Run a System with a DataframePortfolio.
         """
+        _LOG.debug(
+            hprint.to_str(
+                "trading_end_time liquidate_at_trading_end_time "
+                "add_system_config add_run_signature"
+            )
+        )
         dtfssybuut.apply_unit_test_log_dir(self, system)
+        # Set `trading_end_time`.
+        if trading_end_time is not None:
+            system.config[
+                "process_forecasts_node_dict",
+                "process_forecasts_dict",
+                "trading_end_time",
+            ] = trading_end_time
+        # Set `liquidate_at_trading_end_time`.
+        system.config[
+            "process_forecasts_node_dict",
+            "process_forecasts_dict",
+            "liquidate_at_trading_end_time",
+        ] = liquidate_at_trading_end_time
+        # Run the system.
         with hasynci.solipsism_context() as event_loop:
             system.config["event_loop_object"] = event_loop
             dag_runner = system.dag_runner
+            # 1) Check the system config.
+            # TODO(gp): Freeze the config after `dag_runner` in all the tests.
+            tag = "dataframe_portfolio"
+            check_system_config(self, system, tag)
             # Run.
             coroutines = [dag_runner.predict()]
             result_bundles = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-            # Check.
-            # TODO(Grisha): do we need this? Config is checked in inside
-            # `_get_signature_from_result_bundle`.
-            # # 1) Check the system config.
-            # # TODO(gp): Do this everywhere.
-            # txt = []
-            # txt.append(hprint.frame("system_config"))
-            # txt.append(str(system.config))
-            # txt = "\n".join(txt)
-            # self.check_string(txt, tag="system_config", purify_text=True)
-            # 2) Check the run signature.
-            # Pick the ResultBundle corresponding to the DagRunner execution.
-            result_bundles = result_bundles[0]
-            actual = _get_signature_from_result_bundle(
-                system, result_bundles, add_system_config, add_run_signature
-            )
-            return actual
+        # 2) Check the run signature.
+        # Pick the ResultBundle corresponding to the DagRunner execution.
+        result_bundles = result_bundles[0]
+        actual = _get_signature_from_result_bundle(
+            system, result_bundles, add_system_config, add_run_signature
+        )
+        # 3) Check the state of the Portfolio after forced liquidation.
+        if liquidate_at_trading_end_time:
+            # The Portfolio should have no holdings after the end of trading.
+            portfolio = system.portfolio
+            has_no_holdings = portfolio.has_no_holdings()
+            last_portfolio_timestamp = portfolio.get_last_timestamp()
+            _LOG.debug(hprint.to_str("last_portfolio_timestamp has_no_holdings"))
+            self.assertLess(trading_end_time, last_portfolio_timestamp.time())
+            self.assertTrue(has_no_holdings)
+        return actual
 
     def _test_save_data(
         self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
@@ -436,12 +486,40 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
 
     def _test1(self, system: dtfsyssyst.System) -> None:
         """
-        Run a system using the desired DataFramePortfolio and freeze the
-        output.
+        - Run a system:
+            - Using a DataFramePortfolio
+            - Freezing the output
         """
-        actual = self._test_dataframe_portfolio_helper(system)
+        liquidate_at_trading_end_time = False
+        actual = self._test_dataframe_portfolio_helper(
+            system,
+            liquidate_at_trading_end_time=liquidate_at_trading_end_time,
+        )
         # TODO(Grisha): @Dan we should also freeze the config for all the tests
-        # with a Portfolio.
+        #  with a Portfolio.
+        self.check_string(actual, fuzzy_match=True, purify_text=True)
+
+    def _test_with_liquidate_at_end_of_day1(
+        self, system: dtfsyssyst.System
+    ) -> None:
+        """
+        - Run a system:
+            - Using a DataFramePortfolio
+            - Liquidating at 10am
+            - Freezing the output
+
+        Like `_test1` but liquidating at 10am.
+        """
+        # Liquidate at 10am.
+        trading_end_time = datetime.time(10, 0)
+        liquidate_at_trading_end_time = True
+        actual = self._test_dataframe_portfolio_helper(
+            system,
+            trading_end_time=trading_end_time,
+            liquidate_at_trading_end_time=liquidate_at_trading_end_time,
+        )
+        # TODO(Grisha): @Dan we should also freeze the config for all the tests
+        #  with a Portfolio.
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
@@ -465,6 +543,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    # TODO(gp): @all order parameter so that it's the same as save_market_data.
+    #  Ideally file_name is last since it's an output, but we don't really
+    #  follow this convention.
     def _test_save_data(
         self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
     ) -> None:
@@ -507,6 +588,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # Complete system config.
             system.config["event_loop_object"] = event_loop
             system.config["db_connection_object"] = self.connection
+            # 1) Check the system config.
+            tag = "database_portfolio"
+            check_system_config(self, system, tag)
             # Create DAG runner.
             dag_runner = system.dag_runner
             coroutines.append(dag_runner.predict())
@@ -518,7 +602,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             coro_output = hasynci.run(
                 asyncio.gather(*coroutines), event_loop=event_loop
             )
-        # Check.
+        # 2) Check the signature from the result bundle.
         # Pick the result_bundle that corresponds to the DagRunner.
         result_bundles = coro_output[0]
         actual = _get_signature_from_result_bundle(
@@ -702,3 +786,44 @@ class SystemTester:
     ) -> None:
         data_str = hpandas.df_to_str(data, index=True, num_rows=None, decimals=3)
         list_.append(f"{label}=\n{data_str}")
+
+
+def check_system_config(self: Any, system: dtfsyssyst.System, tag: str) -> None:
+    txt = []
+    tag = "system_config." + tag
+    txt.append(hprint.frame(tag))
+    # Ensure that the System was built and thus the config is stable.
+    hdbg.dassert(system.is_fully_built)
+    txt.append(str(system.config))
+    txt = "\n".join(txt)
+    txt = hunitest.filter_text("db_connection_object", txt)
+    txt = hunitest.filter_text("log_dir:", txt)
+    txt = hunitest.filter_text("trade_date:", txt)
+    # Sometimes we want to check that the config has not changed, but it
+    # was just reordered. In this case we
+    # - set `sort=True`
+    # - make sure that there are no changes
+    # - set `sort=False`
+    # - update the golden outcomes with the updated config
+    # TODO(gp): Do not commit `sort = True`.
+    # sort = True
+    sort = False
+    self.check_string(txt, tag=tag, purify_text=True, sort=sort)
+
+
+def check_portfolio_state(
+    self: Any, system: dtfsyssyst.System, expected_last_timestamp: pd.Timestamp
+) -> None:
+    """
+    Check some high level property of the Portfolio, e.g.,
+
+    - It contains data up to a certain `expected_last_timestamp`
+    - It is not empty at the end of the simulation
+    """
+    portfolio = system.portfolio
+    # 1) The simulation runs up to the right time.
+    last_timestamp = portfolio.get_last_timestamp()
+    self.assert_equal(str(last_timestamp), str(expected_last_timestamp))
+    # 2) The portfolio has some holdings.
+    has_no_holdings = portfolio.has_no_holdings()
+    self.assertFalse(has_no_holdings)
