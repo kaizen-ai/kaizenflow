@@ -21,7 +21,6 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import market_data as mdata
 import oms as oms
 import oms.test.oms_db_helper as otodh
 
@@ -42,8 +41,9 @@ def get_signature(
 ) -> str:
     """
     Compute the signature of a test in terms of:
-    1) System signature
-    2) Result bundle signature
+    
+    - system signature
+    - result bundle signature
     """
     txt: List[str] = []
     #
@@ -68,9 +68,10 @@ def _get_signature_from_result_bundle(
 ) -> str:
     """
     Compute the signature of a test in terms of:
-    1) System signature
-    2) Run signature
-    3) Output dir signature
+
+    - system signature
+    - run signature
+    - output dir signature
     """
     portfolio = system.portfolio
     dag_runner = system.dag_runner
@@ -341,18 +342,6 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     - a time DAG
     """
 
-    def _test_save_data(
-        self,
-        market_data: mdata.MarketData,
-        period: pd.Timedelta,
-        file_path: str,
-    ) -> None:
-        """
-        Generate test data and store it.
-        """
-        mdata.save_market_data(market_data, file_path, period)
-        _LOG.warning("Updated file '%s'", file_path)
-
     def _test1(
         self,
         system: dtfsyssyst.System,
@@ -463,27 +452,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             self.assertTrue(has_no_holdings)
         return actual
 
-    def _test_save_data(
-        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
-    ) -> None:
-        """
-        Generate data used in this test.
-
-        E.g.,
-        ```
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
-        ```
-        """
-        # period = "last_day"
-        # period = pd.Timedelta("15D")
-        mdata.save_market_data(market_data, file_name, period)
-        _LOG.warning("Updated file '%s'", file_name)
-        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
-
     def _test1(self, system: dtfsyssyst.System) -> None:
         """
         - Run a system:
@@ -542,30 +510,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     @classmethod
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
-
-    # TODO(gp): @all order parameter so that it's the same as save_market_data.
-    #  Ideally file_name is last since it's an output, but we don't really
-    #  follow this convention.
-    def _test_save_data(
-        self, market_data: mdata.MarketData, period: pd.Timedelta, file_name: str
-    ) -> None:
-        """
-        Generate data used in this test.
-
-        E.g.,
-        ```
-        end_time,start_time,asset_id,close,volume,good_bid,good_ask,sided_bid_count,sided_ask_count,day_spread,day_num_spread
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,10971.0,,0.0,463.0,463.01,0.0,0.0,1.32,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,13684.0,,0.0,998.14,999.4,0.0,0.0,100.03,59.0
-        2022-01-10 09:01:00-05:00,2022-01-10 14:00:00+00:00,17085.0,,0.0,169.27,169.3,0.0,0.0,1.81,59.0
-        2022-01-10 09:02:00-05:00,2022-01-10 14:01:00+00:00,10971.0,,0.0,463.03,463.04,0.0,0.0,2.71,119.0
-        ```
-        """
-        # period = "last_day"
-        # period = pd.Timedelta("15D")
-        mdata.save_market_data(market_data, file_name, period)
-        _LOG.warning("Updated file '%s'", file_name)
-        # aws s3 cp dataflow_lime/system/test/TestReplayedE8dWithMockedOms1/input/real_time_bar_data.csv s3://eglp-spm-sasm/data/market_data.20220118.csv
 
     def _test_database_portfolio_helper(
         self,
