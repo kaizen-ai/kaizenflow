@@ -68,9 +68,9 @@ def _get_signature_from_result_bundle(
 ) -> str:
     """
     Compute the signature of a test in terms of:
-    - system signature
-    - run signature
-    - output dir signature
+    1) System signature
+    2) Run signature
+    3) Output dir signature
     """
     portfolio = system.portfolio
     dag_runner = system.dag_runner
