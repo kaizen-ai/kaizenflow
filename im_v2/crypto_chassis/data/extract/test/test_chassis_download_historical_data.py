@@ -9,10 +9,6 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.crypto_chassis.data.extract.download_historical_data as imvccdedhd
 
 
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
 class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_parser(self) -> None:
         """
@@ -47,8 +43,13 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         }
         self.assertDictEqual(actual, expected)
 
+
+    @umock.patch.object(
+        imvccdedhd.imvccdexex, "CryptoChassisExtractor", autospec=True, spec_set=True
+    )
     @umock.patch.object(imvcdeexut, "download_historical_data")
-    def test_main(self, mock_download_historical: umock.MagicMock) -> None:
+    def test_main(
+        self, mock_download_historical: umock.MagicMock, chassis_extractor_mock: umock.MagicMock) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
         """
@@ -75,6 +76,13 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         imvccdedhd._main(mock_argument_parser)
         # Check call.
         self.assertEqual(len(mock_download_historical.call_args), 2)
-        self.assertEqual(
-            mock_download_historical.call_args.args[1].vendor, "crypto_chassis"
-        )
+        actual_args = mock_download_historical.call_args.args
+        self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "s"}})
+        # Verify that `CryptoChassisExtractor` instance is passed.
+        self.assertEqual(actual_args[1]._extract_mock_name(), "CryptoChassisExtractor()")
+        # Verify that `CryptoChassisExtractor` instance creation is properly called.
+        self.assertEqual(chassis_extractor_mock.call_count, 1)
+        actual_args = tuple(chassis_extractor_mock.call_args)
+        expected_args = (("spot",), {})
+        self.assertEqual(actual_args, expected_args)
+        
