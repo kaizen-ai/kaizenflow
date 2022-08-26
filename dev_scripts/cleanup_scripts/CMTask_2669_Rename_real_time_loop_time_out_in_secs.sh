@@ -4,10 +4,10 @@
 
   replace_text.py \
     --old "real_time_loop_time_out_in_secs: int" \
-    --new "rt_timeout_in_secs_or_timestamp: Union[int, pd.Timestamp]" \
+    --new "rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]]" \
     --exclude_files $script_name \
 
   replace_text.py \
     --old "real_time_loop_time_out_in_secs" \
-    --new "rt_timeout_in_secs_or_timestamp" \
+    --new "rt_timeout_in_secs_or_time" \
     --exclude_files $script_name \
