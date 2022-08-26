@@ -113,12 +113,12 @@ class ReplayedTime:
     def get_wall_clock_time(self) -> pd.Timestamp:
         """
         Transform the current time into the time corresponding to the real-time
-        experiment starting at `initial_simulated_dt`.
+        experiment starting at `initial_replayed_timestamp`.
         """
         now = self._get_wall_clock_time()
         hdbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
-        current_replayed_dt = (
+        current_replayed_timestamp = (
             self._initial_replayed_timestamp + self._speed_up_factor * elapsed_time
         )
         return current_replayed_dt
