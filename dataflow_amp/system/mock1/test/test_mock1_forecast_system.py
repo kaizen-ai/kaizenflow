@@ -207,9 +207,9 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     @pytest.mark.slow("~7 seconds.")
     def test_with_liquidate_at_end_of_day1(self) -> None:
         # Build the system.
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_timestamp = cofinanc.get_market_data_df1()
         system = _get_test_System_with_DataFramePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_timestamp
         )
         # Run.
         self._test_with_liquidate_at_end_of_day1(system)
@@ -291,7 +291,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
     def run_test(
         self,
         data: pd.DataFrame,
-        real_time_loop_time_out_in_secs: int,
+        rt_timeout_in_secs_or_timestamp: Union[int, pd.Timestamp],
     ) -> Tuple[dtfsys.System, dtfsys.System]:
         # Build the systems to compare.
         system_with_dataframe_portfolio = (
