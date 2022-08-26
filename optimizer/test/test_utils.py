@@ -70,4 +70,3 @@ datetime,T1,T2,T3
         self.assert_dfs_close(
             actual_precision, actual_covariance, rtol=1e-5, atol=1e-5
         )
-

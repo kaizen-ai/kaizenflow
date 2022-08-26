@@ -13,9 +13,19 @@ echo "python -v="$(python --version 2>&1)
 echo "which python3="$(which python3)
 echo "python3 -v="$(python3 --version)
 
+# Resolve the dir containing the Git client.
+# For now let's keep using the central version of /venv independenly of where
+# the Git client is (e.g., `.../src` vs `.../src_vc`).
+AM_SRC_DIR="$HOME/src"
+echo "AM_SRC_DIR=$AM_SRC_DIR"
+if [[ ! -d $AM_SRC_DIR ]]; then
+    echo "ERROR: Dir AM_SRC_DIR='$AM_SRC_DIR' doesn't exist"
+    exit -1
+fi;
+
 # Keep this in sync with `dev_scripts/setenv_amp.sh`
 # TODO(gp): VENV_DIR should be shared among the scripts through a file.
-VENV_DIR="$HOME/src/venv/amp.client_venv"
+VENV_DIR="$AM_SRC_DIR/venv/amp.client_venv"
 echo "# VENV_DIR=$VENV_DIR"
 
 if [[ -d $VENV_DIR ]]; then

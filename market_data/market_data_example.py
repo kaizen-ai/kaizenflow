@@ -51,10 +51,10 @@ def get_ReplayedTimeMarketData_from_df(
     Build a `ReplayedMarketData` backed by data stored in a dataframe.
 
     The integer approach for `replayed_delay_in_mins_or_timestamp` is possible
-    only when there is a time reference (e.g., the initial or end of data) and 
-    then one can say "N minutes" before/after and in that case we want to use 
+    only when there is a time reference (e.g., the initial or end of data) and
+    then one can say "N minutes" before/after and in that case we want to use
     `replayed_delay_in_mins_or_timestamp` as int to resolve it. However, using
-    timestamp is preffered whenever possible since it is clearer.
+    timestamp is prefered whenever possible since it is clearer.
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
@@ -75,7 +75,7 @@ def get_ReplayedTimeMarketData_from_df(
     # `replayed_delay_in_mins_or_timestamp`.
     min_start_time_col_name = df[start_time_col_name].min()
     hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
-    # We can't enable this assertion since some tests 
+    # We can't enable this assertion since some tests
     # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
     # use a negative offset to start replaying the data, before data is available.
     # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)

@@ -80,4 +80,6 @@ class KeySortedOrderedDict(hobject.PrintableMixin):
         odict = collections.OrderedDict()
         for key in reversed(tmp_odict):
             odict[key] = tmp_odict[key]
+        #
+        hdbg.dassert_isinstance(odict, collections.OrderedDict)
         return odict
