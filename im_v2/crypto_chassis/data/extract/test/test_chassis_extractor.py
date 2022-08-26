@@ -89,7 +89,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         self,
     ) -> None:
         """
-        Verify that `_download_bid_ask` is called properly in `spot` mode.
+        Verify that `_download_bid_ask` is called properly.
         """
         #
         start_timestamp = pd.Timestamp("2022-08-18T00:00:00", tz="UTC")
