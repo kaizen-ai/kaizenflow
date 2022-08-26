@@ -51,13 +51,14 @@ hprint.config_notebook()
 
 # %%
 sim_dir = "../../../system_log_dir/forecast_evaluator"
-prod_dir = "/data/cf_production/CF_2022_08_15/job-sasm_job-jobid-1002348952/user_executable_run_0-1000005033091/cf_prod_system_log_dir"
+#prod_dir = "/data/cf_production/CF_2022_08_15/job-sasm_job-jobid-1002348952/user_executable_run_0-1000005033091/cf_prod_system_log_dir"
+prod_dir = "../../../prod/system_log_dir-20220825"
 prod_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 
 # Simulation data.
 print("# sim_dir")
 hdbg.dassert_dir_exists(sim_dir)
-# !ls {simulation_dir}
+# !ls {sim_dir}
 
 # Production data.
 print("# prod_dir")
@@ -65,16 +66,16 @@ hdbg.dassert_dir_exists(prod_dir)
 # !ls {prod_dir}
 
 # %%
-date = "2022-08-15"
+date = "2022-08-25"
 start_timestamp = pd.Timestamp(date + " 09:30:00", tz="America/New_York")
 end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
 
 # %%
-hdbg.dassert_dir_exists(root_dir)
 dict_ = {
     "portfolio_data_dir": prod_dir,
     "research_data_dir": sim_dir,
-    "freq": "15T",
+    #"freq": "15T",
+    "freq": "5T",
     "portfolio_file_name": None,
     "research_file_name": None,
     "start_timestamp": start_timestamp,
@@ -142,6 +143,7 @@ paper_stats_df = paper_stats_df.loc[start_timestamp:end_timestamp]
 
 
 # %%
+paper_df
 
 # %%
 print(research_df.columns.levels[0])
@@ -182,6 +184,10 @@ display(delay_stats)
 
 # Round paper_stats_df to bar
 paper_stats_df.index = paper_stats_df.index.round(config["freq"])
+
+# %%
+#research_stats_df
+paper_stats_df
 
 # %%
 bar_stats_df = pd.concat(
