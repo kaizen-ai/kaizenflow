@@ -134,13 +134,8 @@ def get_process_forecasts_node_dict_prod_instance1(
     #
     compute_target_positions_kwargs = {
         "bulk_frac_to_remove": 0.0,
-        "target_gmv": 500.0,
+        "target_gmv": 700.0,
     }
-    # TODO(Juraj): Temporary workaround so we can store
-    # all logs under single location.
-    root_log_dir = os.path.join(
-        root_log_dir, "process_forecasts", datetime.date.today().isoformat()
-    )
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         portfolio,
         prediction_col,
@@ -322,6 +317,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         market_data,
         system.config["market_data_config", "asset_ids"],
         pricing_method,
+        system.config["secret_identifier_config"]
     )
     return portfolio
 

@@ -74,6 +74,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         self._set_current_bar_timestamp = set_current_bar_timestamp
         # Store information about the real-time execution.
         self._events: creatime.Events = []
+        _LOG.debug("After RealTimeDagRunner ctor: \n%s", repr(self))
 
     async def wait_for_start_trading(self) -> None:
         """
@@ -81,15 +82,17 @@ class RealTimeDagRunner(dtfcore.DagRunner):
         """
         # The system should come up sometime before the first bar (e.g., around
         # 9:37am ET) and then we align to the next trading bar.
-        curr_timestamp = self._get_wall_clock_time()
-        _LOG.info("Current time=%s", curr_timestamp)
+        current_timestamp = self._get_wall_clock_time()
+        _LOG.info("Current time=%s", current_timestamp)
         wake_up_timestamp = self._wake_up_timestamp
         _LOG.info("Waiting until session start at %s ...", wake_up_timestamp)
-        await hasynci.async_wait_until(wake_up_timestamp, self._get_wall_clock_time)
-        curr_timestamp = self._get_wall_clock_time()
+        await hasynci.async_wait_until(
+            wake_up_timestamp, self._get_wall_clock_time
+        )
+        current_timestamp = self._get_wall_clock_time()
         _LOG.info(
             "Current time=%s: session started at %s",
-            curr_timestamp,
+            current_timestamp,
             wake_up_timestamp,
         )
 
@@ -134,10 +137,18 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             await self.wait_for_start_trading()
         # Align on the bar.
         await self.align_on_grid()
+        # Reset the current bar, if needed.
+        if self._set_current_bar_timestamp:
+            _LOG.debug("Resetting current bar time")
+            hwacltim.reset_current_bar_timestamp()
         # Start loop.
-        result_bundles = [
-            result_bundle async for result_bundle in self.predict_at_datetime()
-        ]
+        result_bundles: List[dtfcore.ResultBundle] = []
+        # We need to set the first bar outside the loop so that
+        # `predict_at_datetime()` can recover the current bar time.
+        self._apply_current_bar_timestamp()
+        async for result_bundle in self.predict_at_datetime():
+            self._apply_current_bar_timestamp()
+            result_bundles.append(result_bundle)
         return result_bundles
 
     async def predict_at_datetime(self) -> dtfcore.ResultBundle:
@@ -178,6 +189,20 @@ class RealTimeDagRunner(dtfcore.DagRunner):
             ret.append("result_bundle=\n%s" % str(result_bundle))
         ret = "\n".join(ret)
         return ret
+
+    # ///////////////////////////////////////////////////////////////////////////
+
+    def _apply_current_bar_timestamp(self) -> None:
+        if self._set_current_bar_timestamp:
+            # Compute the current bar by snapping the current timestamp to the
+            # grid.
+            _LOG.debug("Setting current bar time")
+            current_timestamp = self._get_wall_clock_time()
+            bar_timestamp = hdateti.find_current_bar(
+                current_timestamp, self._bar_duration_in_secs
+            )
+            _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+            hwacltim.set_current_bar_timestamp(bar_timestamp)
 
     async def _run_dag(self, method: dtfcore.Method) -> dtfcore.ResultBundle:
         # Wait until all the real-time source nodes are ready to compute.

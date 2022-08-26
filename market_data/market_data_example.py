@@ -54,7 +54,7 @@ def get_ReplayedTimeMarketData_from_df(
     only when there is a time reference (e.g., the initial or end of data) and
     then one can say "N minutes" before/after and in that case we want to use
     `replayed_delay_in_mins_or_timestamp` as int to resolve it. However, using
-    timestamp is preffered whenever possible since it is clearer.
+    timestamp is prefered whenever possible since it is clearer.
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]

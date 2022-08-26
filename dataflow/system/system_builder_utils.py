@@ -18,6 +18,7 @@ import dataflow.system.sink_nodes as dtfsysinod
 import dataflow.system.source_nodes as dtfsysonod
 import dataflow.system.system as dtfsyssyst
 import dataflow.universe as dtfuniver
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
@@ -347,11 +348,13 @@ def add_process_forecasts_node(
     """
     Append `ProcessForecastsNode` to a DAG.
     """
+    _LOG.debug("")
     hdbg.dassert_isinstance(system, dtfsyssyst.System)
     stage = "process_forecasts"
     _LOG.debug("stage=%s", stage)
     node = dtfsysinod.ProcessForecastsNode(
-        stage, **system.config["process_forecasts_node_dict"].to_dict(),
+        stage,
+        **system.config["process_forecasts_node_dict"].to_dict(),
     )
     dag.append_to_tail(node)
     return dag
@@ -375,15 +378,34 @@ def apply_ProcessForecastsNode_config_for_equities(
 
     Equities market is open only during certain hours.
     """
+    ath_start_time = datetime.time(9, 30)
+    # Compute the time of the last bar before 16:00 given the trading
+    # frequency.
+    ath_end_time = datetime.time(16, 00)
+    trading_end_time = pd.Timestamp.today().replace(
+        hour=ath_end_time.hour,
+        minute=ath_end_time.minute,
+        second=ath_end_time.second,
+        microsecond=0,
+    )
+    bar_duration_in_secs = system.config[
+        "dag_runner_config", "bar_duration_in_secs"
+    ]
+    trading_end_time = hdateti.find_current_bar(
+        trading_end_time - pd.Timedelta(minutes=1), bar_duration_in_secs
+    )
+    trading_end_time = trading_end_time.time()
+    #
     dict_ = {
-        "ath_start_time": datetime.time(9, 30),
-        "trading_start_time": datetime.time(9, 30),
-        "ath_end_time": datetime.time(16, 40),
-        "trading_end_time": datetime.time(16, 40),
+        "ath_start_time": ath_start_time,
+        "trading_start_time": ath_start_time,
+        "ath_end_time": ath_end_time,
+        "trading_end_time": trading_end_time,
+        "liquidate_at_trading_end_time": False,
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
-        config
+        config, update_mode="assign_if_missing"
     )
     return system
 
@@ -401,10 +423,11 @@ def apply_ProcessForecastsNode_config_for_crypto(
         "trading_start_time": None,
         "ath_end_time": None,
         "trading_end_time": None,
+        "liquidate_at_trading_end_time": False,
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
-        config
+        config, update_mode="assign_if_missing"
     )
     return system
 
