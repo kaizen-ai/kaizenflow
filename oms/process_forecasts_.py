@@ -58,6 +58,10 @@ _LOG = logging.getLogger(__name__)
 #   - used by `process_forecasts()`
 #   - we use it to filter the forecasts reaching the Optimizer when the system is
 #     producing forecasts
+#
+# Invariant: `ath_{start,end}_time` and `trading_{start,end}_time` are inclusive
+# so that we can use the usual times like 9:30 and 16:00 as boundaries of ATH
+# interval.
 
 
 async def process_forecasts(
@@ -88,7 +92,6 @@ async def process_forecasts(
     :param spread_df: like `prediction_df`, but for the bid-ask spread
     :param portfolio: initialized `Portfolio` object
     :param config: the required params are:
-          # TODO(gp): Is this updated?
           ```
           {
             "order_dict": dict,
@@ -162,13 +165,18 @@ async def process_forecasts(
     trading_end_time = hdict.typed_get(
         config, "trading_end_time", expected_type=(datetime.time, NoneType)
     )
+    liquidate_at_trading_end_time = hdict.typed_get(
+        config,
+        "liquidate_at_trading_end_time",
+        expected_type=bool,
+    )
     # Sanity check trading time.
     _validate_trading_time(
         ath_start_time,
         ath_end_time,
         trading_start_time,
         trading_end_time,
-        # TODO(gp): Pass liquidate_at_trading_end_time
+        liquidate_at_trading_end_time,
     )
     # Get execution mode ("real_time" or "batch").
     execution_mode = hdict.typed_get(config, "execution_mode", expected_type=str)
@@ -210,21 +218,30 @@ async def process_forecasts(
         restrictions_df,
         log_dir=log_dir,
     )
-    hwacltim.reset_current_bar_timestamp()
+    if execution_mode == "batch":
+        # In "batch" mode this function is in charge of advancing the bar.
+        hwacltim.reset_current_bar_timestamp()
     # `timestamp` is the time when the forecast is available and in the current
     #  setup is also when the order should begin.
     for idx, (timestamp, predictions) in tqdm(
         iter_, total=num_rows, file=tqdm_out
     ):
+        if execution_mode == "batch":
+            # Update the global state tracking the current bar.
+            # The loop in `RealTimeDagRunner` sets the bar based on align_on_grid.
+            # If we are running `run_process_forecasts.py`
+            hwacltim.set_current_bar_timestamp(timestamp)
+        #
+        current_bar_timestamp = hwacltim.get_current_bar_timestamp()
+        hdbg.dassert_is_not(current_bar_timestamp, None)
+        current_bar_time = current_bar_timestamp.time()
         _LOG.debug(
             "\n%s",
-            hprint.frame("# idx=%s timestamp=%s" % (idx, timestamp)),
+            hprint.frame(
+                "# idx=%s timestamp=%s current_bar_time=%s"
+                % (idx, timestamp, current_bar_time)
+            ),
         )
-        # Update the global state tracking the current bar.
-        # The loop in `RealTimeDagRunner` sets the bar based on align_on_grid.
-        # If we are running `run_process_forecasts.py`
-        if hwacltim.get_current_bar_timestamp(as_str=False) is None:
-            hwacltim.set_current_bar_timestamp(timestamp)
         # Wait until get_wall_clock_time() == timestamp.
         if get_wall_clock_time() > timestamp:
             # E.g., it's 10:21:51, we computed the forecast for [10:20, 10:25]
@@ -237,18 +254,6 @@ async def process_forecasts(
         # Get the wall clock timestamp.
         wall_clock_timestamp = get_wall_clock_time()
         _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
-        # Get the time of day of the wall clock timestamp.
-        time = wall_clock_timestamp.time()
-        skip_bar = _skip_bar(
-            time,
-            ath_start_time,
-            ath_end_time,
-            trading_start_time,
-            trading_end_time,
-        )
-        if skip_bar:
-            _LOG.warning("Skipping bar for time: `%s`", time)
-            continue
         # if execution_mode == "batch":
         #     if idx == len(predictions_df) - 1:
         #         # For the last timestamp we only need to mark to market, but not
@@ -258,19 +263,55 @@ async def process_forecasts(
         _LOG.debug("Event: awaiting asyncio.sleep()...")
         await asyncio.sleep(1)
         _LOG.debug("Event: awaiting asyncio.sleep() done.")
+        skip_generating_orders = _skip_generating_orders(
+            current_bar_time,
+            ath_start_time,
+            ath_end_time,
+            trading_start_time,
+            trading_end_time,
+        )
         # Compute the target positions.
         _LOG.debug(
             "\n%s",
             hprint.frame(
-                "Computing target positions: timestamp=%s" % wall_clock_timestamp,
+                "Computing target positions: timestamp=%s current_bar_time=%s"
+                % (wall_clock_timestamp, current_bar_time),
                 char1="#",
             ),
         )
+        if skip_generating_orders:
+            _LOG.warning("Skipping generating orders")
+            # Keep logging the state and marking to market even if we don't submit
+            # orders.
+            # `forecast_processor.submit_orders()` takes care of logging
+            # `forecast_processor.generate_orders()` takes care of marking to market
+            # the portfolio.
+            mark_to_market = True
+            forecast_processor.log_state(mark_to_market)
+            continue
+        # TODO(gp): Use an FSM to make the code more reliable.
+        # Compute whether to liquidate the holdings or not.
+        liquidate_holdings = False
+        if liquidate_at_trading_end_time:
+            hdbg.dassert_is_not(trading_end_time, None)
+            _LOG.debug(
+                "liquidate_at_trading_trading_trading_trading_trading_trading_trading_trading_end_time: "
+                + hprint.to_str("trading_end_time current_bar_time")
+            )
+            if current_bar_time >= trading_end_time:
+                _LOG.info(
+                    "Liquidating holdings: "
+                    + hprint.to_str("trading_end_time current_bar_time")
+                )
+                liquidate_holdings = True
         # Generate orders.
         volatility = volatility_df.loc[timestamp]
         spread = spread_df.loc[timestamp]
         orders = forecast_processor.generate_orders(
-            predictions, volatility, spread
+            predictions,
+            volatility,
+            spread,
+            liquidate_holdings,
         )
         # Submit orders.
         await forecast_processor.submit_orders(orders)
@@ -301,6 +342,7 @@ def _validate_trading_time(
     ath_end_time: Optional[datetime.time],
     trading_start_time: Optional[datetime.time],
     trading_end_time: Optional[datetime.time],
+    liquidate_at_trading_end_time: bool,
 ) -> None:
     """
     Check that trading hours are specified correctly.
@@ -308,14 +350,20 @@ def _validate_trading_time(
     dassert_all_defined_or_all_None(
         [ath_start_time, ath_end_time, trading_start_time, trading_end_time]
     )
+    # TODO(gp): Not sure about this. For equities it's possible that we
+    #  specify ath start/end time, but then we leave trading start/end time
+    #  equal to None.
     if ath_start_time is not None:
         hdbg.dassert_lte(ath_start_time, ath_end_time)
         hdbg.dassert_lte(trading_start_time, trading_end_time)
         hdbg.dassert_lte(ath_start_time, trading_start_time)
         hdbg.dassert_lte(trading_end_time, ath_end_time)
+    #
+    if liquidate_at_trading_end_time:
+        hdbg.dassert_is_not(trading_end_time, None)
 
 
-def _skip_bar(
+def _skip_generating_orders(
     time: datetime.time,
     ath_start_time: Optional[datetime.time],
     ath_end_time: Optional[datetime.time],
@@ -325,7 +373,13 @@ def _skip_bar(
     """
     Determine whether to skip a bar processing or not.
     """
-    skip_bar_cond = False
+    _LOG.debug(
+        hprint.to_str(
+            "time ath_start_time ath_end_time trading_start_time trading_end_time"
+        )
+    )
+    # TODO(gp): Not sure about this.
+    # Sanity check: all values are defined together or are all `None`.
     trading_time_list = [
         ath_start_time,
         ath_end_time,
@@ -333,25 +387,40 @@ def _skip_bar(
         trading_end_time,
     ]
     all_defined_cond = all(val is not None for val in trading_time_list)
+    #
+    skip_bar_cond = False
     if all_defined_cond:
-        # Perform trading time filtering.
+        # Filter based on ATH.
         if time < ath_start_time:
             _LOG.debug(
-                "time=`%s` < `ath_start_time=`%s`, skipping...",
+                "time=%s < ath_start_time=%s, skipping bar ...",
                 time,
                 ath_start_time,
             )
             skip_bar_cond = True
-        if time >= ath_end_time:
+        if time > ath_end_time:
             _LOG.debug(
-                "time=`%s` > `ath_end_time=`%s`, skipping...",
+                "time=%s > ath_end_time=%s, skipping bar ...",
                 time,
                 ath_end_time,
             )
             skip_bar_cond = True
-        # Continue if we are outside of our trading window.
-        if time < trading_start_time or time > trading_end_time:
+        # Filter based on trading times.
+        if time < trading_start_time:
+            _LOG.debug(
+                "time=%s < trading_start_time=%s, skipping bar ...",
+                time,
+                trading_start_time,
+            )
             skip_bar_cond = True
+        if time > trading_end_time:
+            _LOG.debug(
+                "time=%s > trading_end_time=%s, skipping bar ...",
+                time,
+                trading_end_time,
+            )
+            skip_bar_cond = True
+    _LOG.debug(hprint.to_str("skip_bar_cond"))
     return skip_bar_cond
 
 
@@ -507,37 +576,12 @@ class ForecastProcessor:
         df = df.set_index("order_id")
         return df
 
-    def log_state(self) -> None:
-        """
-        Log the most recent state of the object.
-        """
-        hdbg.dassert(self._log_dir, "Must specify `log_dir` to log state.")
-        #
-        wall_clock_time = self._get_wall_clock_time()
-        wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
-        filename = f"{wall_clock_time_str}.csv"
-        # Log the target position.
-        if self._target_positions:
-            last_key, last_target_positions = self._target_positions.peek()
-            last_target_positions_filename = os.path.join(
-                self._log_dir, "target_positions", filename
-            )
-            hio.create_enclosing_dir(
-                last_target_positions_filename, incremental=True
-            )
-            last_target_positions.to_csv(last_target_positions_filename)
-        # Log the orders.
-        if self._orders:
-            last_key, last_orders = self._orders.peek()
-            last_orders_filename = os.path.join(self._log_dir, "orders", filename)
-            hio.create_enclosing_dir(last_orders_filename, incremental=True)
-            hio.to_file(last_orders_filename, last_orders)
-
     def generate_orders(
         self,
         predictions: pd.Series,
         volatility: pd.Series,
         spread: pd.Series,
+        liquidate_holdings: bool,
     ) -> List[omorder.Order]:
         """
         Translate returns and volatility forecasts into a list of orders.
@@ -545,11 +589,13 @@ class ForecastProcessor:
         :param predictions: returns forecasts
         :param volatility: volatility forecasts
         :param spread: spread forecasts
+        :param liquidate_holdings: force liquidating all the current holdings
         :return: a list of orders to execute
         """
+        _LOG.debug(hprint.to_str("liquidate_holdings"))
         # Convert forecasts into target positions.
         target_positions = self._compute_target_positions_in_shares(
-            predictions, volatility, spread
+            predictions, volatility, spread, liquidate_holdings
         )
         # Get the wall clock timestamp and internally log `target_positions`.
         wall_clock_timestamp = self._get_wall_clock_time()
@@ -581,6 +627,16 @@ class ForecastProcessor:
         self._orders[wall_clock_timestamp] = orders_as_str
         return orders
 
+    # TODO(gp): mark_to_market -> mark_to_market_portfolio
+    def log_state(self, mark_to_market: bool):
+        _LOG.debug("log_state")
+        if mark_to_market:
+            self._portfolio.mark_to_market()
+        # Log the state of Portfolio.
+        if self._log_dir:
+            self._log_state()
+            self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+
     async def submit_orders(self, orders: List[omorder.Order]) -> None:
         """
         Submit `orders` to the broker and confirm receipt.
@@ -595,10 +651,13 @@ class ForecastProcessor:
             _LOG.debug("Event: awaiting broker.submit_orders() done.")
         else:
             _LOG.debug("No orders to submit to broker.")
-        # Log the state of Portfolio.
-        if self._log_dir:
-            self.log_state()
-            self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
+        # Log the entire state after submitting the orders.
+        # We don't need to mark to market since `generate_orders()` takes care of
+        # marking to market the Portfolio.
+        mark_to_market = False
+        self.log_state(mark_to_market)
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_files(log_dir: str, name: str) -> List[str]:
@@ -613,13 +672,39 @@ class ForecastProcessor:
         files = [os.path.join(dir_name, file_name) for file_name in files]
         return files
 
-    # /////////////////////////////////////////////////////////////////////////////
+    # TODO(gp): -> _log_internal_state?
+    def _log_state(self) -> None:
+        """
+        Log the most recent state of the object.
+        """
+        hdbg.dassert(self._log_dir, "Must specify `log_dir` to log state.")
+        #
+        wall_clock_time = self._get_wall_clock_time()
+        wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
+        filename = f"{wall_clock_time_str}.csv"
+        # Log the target position.
+        if self._target_positions:
+            last_key, last_target_positions = self._target_positions.peek()
+            last_target_positions_filename = os.path.join(
+                self._log_dir, "target_positions", filename
+            )
+            hio.create_enclosing_dir(
+                last_target_positions_filename, incremental=True
+            )
+            last_target_positions.to_csv(last_target_positions_filename)
+        # Log the orders.
+        if self._orders:
+            last_key, last_orders = self._orders.peek()
+            last_orders_filename = os.path.join(self._log_dir, "orders", filename)
+            hio.create_enclosing_dir(last_orders_filename, incremental=True)
+            hio.to_file(last_orders_filename, last_orders)
 
     def _compute_target_positions_in_shares(
         self,
         predictions: pd.Series,
         volatility: pd.Series,
         spread: pd.Series,
+        liquidate_holdings: bool,
     ) -> pd.DataFrame:
         """
         Compute target holdings in shares.
@@ -627,6 +712,7 @@ class ForecastProcessor:
         :param predictions: predictions indexed by `asset_id`
         :param volatility: volatility forecasts indexed by `asset_id`
         :param spread: spread forecasts indexed by `asset_id`
+        :param liquidate_holdings: force liquidating all the current holdings
         :return: the df with target_positions including `diff_num_shares`
         """
         assets_and_predictions = self._prepare_data_for_optimizer(
@@ -673,10 +759,19 @@ class ForecastProcessor:
             raise NotImplementedError
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
-        # Convert the target positions from cash values to target share counts.
-        # Round to nearest integer towards zero.
-        # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
-        diff_num_shares = df["target_notional_trade"] / df["price"]
+        #
+        if liquidate_holdings:
+            diff_num_shares = -df["curr_num_shares"]
+            _LOG.info(
+                "Liquidating holdings: diff_num_shares=\n%s",
+                hpandas.df_to_str(diff_num_shares),
+            )
+        else:
+            # Convert the target positions from cash values to target share counts.
+            # Round to nearest integer towards zero.
+            # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
+            diff_num_shares = df["target_notional_trade"] / df["price"]
+        # Make sure the diff_num_shares are well-formed.
         diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
         diff_num_shares = diff_num_shares.fillna(0)
         #

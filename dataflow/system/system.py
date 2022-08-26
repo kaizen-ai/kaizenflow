@@ -188,6 +188,10 @@ class System(abc.ABC):
         """
         self._config = config
 
+    def is_fully_built(self) -> bool:
+        key = "dag_runner_object"
+        return key in self.config
+
     @property
     def dag_runner(
         self,
