@@ -146,6 +146,7 @@ def evaluate_weighted_forecasts(
     asset_ids: Optional[List[int]] = None,
     annotate_forecasts_kwargs: Optional[dict] = None,
     target_freq_str: Optional[str] = None,
+    gaussian_rank_before_mixing: bool = False,
 ) -> pd.DataFrame:
     """
     Mix forecasts with weights and evaluate the portfolio.
@@ -248,7 +249,8 @@ def evaluate_weighted_forecasts(
                 val = val.resample(target_freq_str).ffill().reindex(idx)
                 val.index = idx
             # Cross-sectionally normalize.
-            val = csigproc.gaussian_rank(val)
+            if gaussian_rank_before_mixing:
+                val = csigproc.gaussian_rank(val)
             # TODO(Paul): Enable should we set `scale_factor` above.
             # if target_freq_str is not None:
             #     val *= scale_factor
