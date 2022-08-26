@@ -28,6 +28,7 @@ def get_process_forecasts_dict_example1() -> Dict[str, Any]:
         "trading_start_time": datetime.time(9, 35),
         "ath_end_time": datetime.time(16, 0),
         "trading_end_time": datetime.time(15, 55),
+        "liquidate_at_trading_end_time": False,
         "remove_weekends": True,
     }
     return dict_

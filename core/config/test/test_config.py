@@ -60,6 +60,17 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
     return act
 
 
+def _purify_assertion_string(txt: str) -> str:
+    # For some reason (probably the catch and re-raise of exceptions) the assertion
+    # has `\n` literally and not interpreted as new lines, e.g.,
+    # exp = r"""'"key=\'nrows_tmp\' not in:\\n  nrows: 10000\\n  nrows2: hello"\nconfig=\n  nrows: 10000\n  nrows2: hello'
+    txt = txt.replace(r"\\n", "\n")
+    txt = txt.replace(r"\n", "\n")
+    txt = txt.replace(r"\'", "\'")
+    txt = txt.replace(r"\\", "")
+    return txt
+
+
 # #############################################################################
 # TestFlatConfigSet1
 # #############################################################################
@@ -91,7 +102,7 @@ class TestFlatConfigSet1(hunitest.TestCase):
         foo: [1, 2, 3]
         # code=
         Config([('hello', 'world'), ('foo', [1, 2, 3])])
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_config_with_function(self) -> None:
@@ -185,12 +196,40 @@ class Test_flat_config_get1(hunitest.TestCase):
         Look up a non-existent key, not passing a default value.
         """
         config = _get_flat_config2(self)
+        # TODO(gp): There are nested exceptions here. Not sure it's a good idea or
+        # not.
+        # _________________ Test_flat_config_get1.test_non_existing_key2 _________________
+        # Traceback (most recent call last):
+        #   File "/app/amp/core/config/config_.py", line 163, in __getitem__
+        #     ret = self._get_item(key, level=level)
+        #   File "/app/amp/core/config/config_.py", line 626, in _get_item
+        #     raise KeyError(msg)
+        # KeyError: "key='nrows_tmp' not in:\n  nrows: 10000\n  nrows2: hello"
         #
+        # During handling of the above exception, another exception occurred:
+        #
+        # Traceback (most recent call last):
+        #   File "/app/amp/core/config/test/test_config.py", line 189, in test_non_existing_key2
+        #     config.get("nrows_tmp")
+        #   File "/app/amp/core/config/config_.py", line 372, in get
+        #     raise e
+        #   File "/app/amp/core/config/config_.py", line 361, in get
+        #     ret = self.__getitem__(
+        #   File "/app/amp/core/config/config_.py", line 173, in __getitem__
+        #     raise e
+        # KeyError: '"key=\'nrows_tmp\' not in:\n  nrows: 10000\n  nrows2: hello"\nconfig=\n  nrows: 10000\n  nrows2: hello'
         with self.assertRaises(KeyError) as cm:
-            config.get("nrows_tmp")
+            config.get("nrows_tmp", report_mode="verbose_exception")
         act = str(cm.exception)
-        exp = r'''"key='nrows_tmp' not in '['nrows', 'nrows2']'"'''
-        self.assert_equal(act, exp)
+        act = _purify_assertion_string(act)
+        exp = r"""
+        'exception="key='nrows_tmp' not in ['nrows', 'nrows2'] at level 0"
+        key='nrows_tmp not in:
+        config=
+          nrows: 10000
+          nrows2: hello'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_non_existing_key3(self) -> None:
         """
@@ -199,10 +238,17 @@ class Test_flat_config_get1(hunitest.TestCase):
         config = _get_flat_config2(self)
         #
         with self.assertRaises(KeyError) as cm:
-            config.get(("nrows2", "nrows_tmp"))
+            config.get(("nrows2", "nrows_tmp"), report_mode="verbose_exception")
         act = str(cm.exception)
-        exp = r'''"tail_key='('nrows_tmp',)' not in 'hello'"'''
-        self.assert_equal(act, exp)
+        act = _purify_assertion_string(act)
+        exp = r"""
+        'exception="tail_key=('nrows_tmp',) at level 0"
+        key='('nrows2', 'nrows_tmp') not in:
+        config=
+          nrows: 10000
+          nrows2: hello'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_non_existing_key4(self) -> None:
         """
@@ -211,10 +257,17 @@ class Test_flat_config_get1(hunitest.TestCase):
         config = _get_flat_config2(self)
         #
         with self.assertRaises(KeyError) as cm:
-            config.get(("nrows2", "hello"))
+            config.get(("nrows2", "hello"), report_mode="verbose_exception")
         act = str(cm.exception)
-        exp = r'''"tail_key='('hello',)' not in 'hello'"'''
-        self.assert_equal(act, exp)
+        act = _purify_assertion_string(act)
+        exp = r"""
+        'exception="tail_key=('hello',) at level 0"
+        key='('nrows2', 'hello') not in:
+        config=
+          nrows: 10000
+          nrows2: hello'
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -240,7 +293,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         """
         config = _get_flat_config2(self)
         with self.assertRaises(AssertionError) as cm:
-            self.assertEqual(config.get("nrows", None, str), 10000)
+            _ = config.get("nrows", None, str, report_mode="verbose_exception")
         act = str(cm.exception)
         exp = """
         * Failed assertion *
@@ -255,7 +308,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         """
         config = _get_flat_config2(self)
         with self.assertRaises(AssertionError) as cm:
-            self.assertEqual(config.get("nrows", "hello", str), 10000)
+            _ = config.get("nrows", "hello", str, report_mode="verbose_exception")
         act = str(cm.exception)
         exp = """
         * Failed assertion *
@@ -393,7 +446,10 @@ class TestNestedConfigGet1(hunitest.TestCase):
         with self.assertRaises(KeyError) as cm:
             _ = config["read_data2"]
         act = str(cm.exception)
-        exp = r'''"key='read_data2' not in '['nrows', 'read_data', 'single_val', 'zscore']'"'''
+        act = _purify_assertion_string(act)
+        exp = r"""
+        "key='read_data2' not in ['nrows', 'read_data', 'single_val', 'zscore'] at level 0"
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_non_existing_key2(self) -> None:
@@ -405,19 +461,25 @@ class TestNestedConfigGet1(hunitest.TestCase):
         with self.assertRaises(KeyError) as cm:
             _ = config["read_data"]["file_name2"]
         act = str(cm.exception)
-        exp = r'''"key='file_name2' not in '['file_name', 'nrows']'"'''
+        act = _purify_assertion_string(act)
+        exp = r"""
+        "key='file_name2' not in ['file_name', 'nrows'] at level 0"
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_non_existing_key3(self) -> None:
         """
-        Check a non-existent key at the second level.
+        Check a non-existent key at the first level.
         """
         config = _get_nested_config1(self)
         #
         with self.assertRaises(KeyError) as cm:
             _ = config["read_data2"]["file_name2"]
         act = str(cm.exception)
-        exp = r'''"key='read_data2' not in '['nrows', 'read_data', 'single_val', 'zscore']'"'''
+        act = _purify_assertion_string(act)
+        exp = r"""
+        "key='read_data2' not in ['nrows', 'read_data', 'single_val', 'zscore'] at level 0"
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -685,7 +747,7 @@ class TestNestedConfigMisc1(hunitest.TestCase):
         zscore:
           style: gaz
           com: 28
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_config_to_python1(self) -> None:
@@ -697,7 +759,7 @@ class TestNestedConfigMisc1(hunitest.TestCase):
         act = config.to_python()
         exp = r"""
         Config([('nrows', 10000), ('read_data', Config([('file_name', 'foo_bar.txt'), ('nrows', 999)])), ('single_val', 'hello'), ('zscore', Config([('style', 'gaz'), ('com', 28)]))])
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_roundtrip_transform1(self) -> None:
@@ -719,7 +781,7 @@ class TestNestedConfigMisc1(hunitest.TestCase):
           com: 28
         # code=
         Config([('nrows', 10000), ('read_data', Config([('file_name', 'foo_bar.txt'), ('nrows', 999)])), ('single_val', 'hello'), ('zscore', Config([('style', 'gaz'), ('com', 28)]))])
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_config1(self) -> None:
@@ -754,7 +816,7 @@ class TestNestedConfigIn1(hunitest.TestCase):
         zscore:
           style: gaz
           com: 28
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
         #
         self.assertTrue("nrows" in config)
@@ -789,11 +851,11 @@ class TestNestedConfigIn1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestNestedConfigUpdate1
+# Test_nested_config_update1
 # #############################################################################
 
 
-class TestNestedConfigUpdate1(hunitest.TestCase):
+class Test_nested_config_update1(hunitest.TestCase):
     def test_update1(self) -> None:
         config1 = _get_nested_config3()
         config2 = _get_nested_config4()
@@ -816,14 +878,14 @@ class TestNestedConfigUpdate1(hunitest.TestCase):
         zscore2:
           style: gaz
           com: 28
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_update2(self) -> None:
         config1 = _get_nested_config3()
         config2 = _get_nested_config5()
         #
-        config1.update(config2)
+        config1.update(config2, update_mode="overwrite")
         # Check.
         act = str(config1)
         exp = r"""
@@ -837,7 +899,7 @@ class TestNestedConfigUpdate1(hunitest.TestCase):
         extra_zscore:
           style: universal
           tau: 32
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_update3(self) -> None:
@@ -863,6 +925,170 @@ class TestNestedConfigUpdate1(hunitest.TestCase):
         """
         exp = hprint.dedent(exp)
         self.assert_equal(str(config), exp)
+
+
+# #############################################################################
+# Test_nested_config_update2
+# #############################################################################
+
+
+class Test_nested_config_update2(hunitest.TestCase):
+    """
+    Test the different update_modes for `config.update()`.
+    """
+
+    def test_assert_on_overwrite1(self) -> None:
+        """
+        Update with update_mode="assert_on_overwrite" and values that are not
+        present.
+        """
+        for update_mode in (
+            "assert_on_overwrite",
+            "overwrite",
+            "assign_if_missing",
+        ):
+            config1 = _get_nested_config3()
+            # Check the value of the config.
+            exp = """
+            read_data:
+              file_name: foo_bar.txt
+              nrows: 999
+            single_val: hello
+            zscore:
+              style: gaz
+              com: 28
+            """
+            self.assert_equal(str(config1), exp, fuzzy_match=True)
+            #
+            config2 = cconfig.Config()
+            config2["read_data", "file_name2"] = "hello"
+            config2["read_data2"] = "world"
+            # The new values don't exist so we should update the old config, no
+            # matter what update_mode we are using.
+            config1.update(config2, update_mode=update_mode)
+            # Check.
+            act = str(config1)
+            exp = r"""
+            read_data:
+              file_name: foo_bar.txt
+              nrows: 999
+              file_name2: hello
+            single_val: hello
+            zscore:
+              style: gaz
+              com: 28
+            read_data2: world
+            """
+            self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test_assert_on_overwrite2(self) -> None:
+        """
+        Update with update_mode="assert_on_overwrite" and values that are
+        present.
+        """
+        config1 = _get_nested_config3()
+        #
+        config2 = cconfig.Config()
+        config2["read_data", "file_name"] = "hello"
+        config2["read_data2"] = "world"
+        # The first value exists so we should assert.
+        with self.assertRaises(RuntimeError) as cm:
+            config1.update(config2)
+        act = str(cm.exception)
+        exp = """
+        Trying to overwrite old value 'foo_bar.txt' with new value 'hello' for key '('read_data', 'file_name')' when update_mode=assert_on_overwrite
+        self=
+          read_data:
+            file_name: foo_bar.txt
+            nrows: 999
+          single_val: hello
+          zscore:
+            style: gaz
+            com: 28
+        config=
+          read_data:
+            file_name: hello
+          read_data2: world
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    # /////////////////////////////////////////////////////////////////////////
+
+    def test_overwrite1(self) -> None:
+        """
+        Update with update_mode="overwrite".
+        """
+        config1 = _get_nested_config3()
+        # Check the value of the config.
+        exp = """
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        """
+        self.assert_equal(str(config1), exp, fuzzy_match=True)
+        #
+        config2 = cconfig.Config()
+        config2["read_data", "file_name"] = "hello"
+        config2["read_data2"] = "world"
+        # Just overwrite.
+        config1.update(config2, update_mode="overwrite")
+        # Check.
+        act = str(config1)
+        exp = r"""
+        read_data:
+          file_name: hello
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        read_data2: world
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    # /////////////////////////////////////////////////////////////////////////
+
+    def test_assign_if_missing1(self) -> None:
+        """
+        Update with update_mode="assert_on_overwrite" and values that are
+        present.
+        """
+        config1 = _get_nested_config3()
+        # Check the value of the config.
+        exp = """
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        """
+        self.assert_equal(str(config1), exp, fuzzy_match=True)
+        #
+        config2 = cconfig.Config()
+        config2["read_data", "file_name"] = "hello"
+        config2["read_data2"] = "world"
+        # Do not assign the first value since the key already exists, while assign
+        # the second since it doesn't exist.
+        config1.update(config2, update_mode="assign_if_missing")
+        # Check.
+        act = str(config1)
+        exp = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        read_data2: world
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
 
 # #############################################################################
@@ -892,7 +1118,7 @@ class TestNestedConfigFlatten1(hunitest.TestCase):
              (('single_val',), 'hello'),
              (('zscore', 'style'), 'gaz'),
              (('zscore', 'com'), 28)])
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_flatten2(self) -> None:
@@ -913,7 +1139,7 @@ class TestNestedConfigFlatten1(hunitest.TestCase):
              (('read_data', 'nrows'), 999),
              (('single_val',), 'hello'),
              (('zscore',), )])
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -939,7 +1165,7 @@ class TestSubtractConfig1(hunitest.TestCase):
         act = str(diff)
         exp = r"""
         l0: 1st_floor
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test2(self) -> None:
@@ -962,7 +1188,7 @@ class TestSubtractConfig1(hunitest.TestCase):
         r1:
           r2:
             r3: [1, 2, 3]
-        """.lstrip().rstrip()
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
@@ -1087,31 +1313,36 @@ class Test_make_read_only1(hunitest.TestCase):
         with self.assertRaises(RuntimeError) as cm:
             config["zscore", "style"] = "oil"
         act = str(cm.exception)
-        exp = r"""Trying to set key='('zscore', 'style')' to val='oil' in read-only config
-        'nrows: 10000
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gasoline
-          com: 28'
+        exp = r"""
+        Can't set key='('zscore', 'style')' to val='oil' in read-only config
+        self=
+          nrows: 10000
+          read_data:
+            file_name: foo_bar.txt
+            nrows: 999
+          single_val: hello
+          zscore:
+            style: gasoline
+            com: 28
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+        # TODO(gp): Consider splitting in two test methods.
         # Try to assign a new key and check it raises an error.
         self.assertEqual(config["zscore", "style"], "gasoline")
         with self.assertRaises(RuntimeError) as cm:
             config["zscore2"] = "gasoline"
         act = str(cm.exception)
-        exp = r"""Trying to set key='zscore2' to val='gasoline' in read-only config
-        'nrows: 10000
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gasoline
-          com: 28'
+        exp = r"""
+        Can't set key='zscore2' to val='gasoline' in read-only config
+        self=
+          nrows: 10000
+          read_data:
+            file_name: foo_bar.txt
+            nrows: 999
+          single_val: hello
+          zscore:
+            style: gasoline
+            com: 28
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -1122,27 +1353,29 @@ class Test_make_read_only1(hunitest.TestCase):
         config1 = _get_nested_config3()
         config2 = _get_nested_config4()
         config1.update(config2)
-        #
         # Mark as read-only.
         config1.mark_read_only()
+        # Check.
         with self.assertRaises(RuntimeError) as cm:
-            config1.update(config2)
+            config1.update(config2, update_mode="overwrite")
         act = str(cm.exception)
-        exp = r"""Trying to set key='('write_data', 'file_name')' to val='baz.txt' in read-only config
-        'read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28
-        write_data:
-          file_name: baz.txt
-          nrows: 999
-        single_val2: goodbye
-        zscore2:
-          style: gaz
-          com: 28'
+        exp = r"""
+        Can't set key='('write_data', 'file_name')' to val='baz.txt' in read-only config
+        self=
+          read_data:
+            file_name: foo_bar.txt
+            nrows: 999
+          single_val: hello
+          zscore:
+            style: gaz
+            com: 28
+          write_data:
+            file_name: baz.txt
+            nrows: 999
+          single_val2: goodbye
+          zscore2:
+            style: gaz
+            com: 28
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 

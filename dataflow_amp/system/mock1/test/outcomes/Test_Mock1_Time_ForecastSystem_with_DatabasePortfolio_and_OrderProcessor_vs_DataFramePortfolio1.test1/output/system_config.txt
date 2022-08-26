@@ -348,8 +348,7 @@ object.str:
       _column_to_tags_mapping='None' <NoneType>
       _result_nid='process_forecasts' <str>
       _execute_rt_loop_kwargs= <dict>
-        {'bar_duration_in_secs': 300,
-         'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+        {'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
           _asset_id_col='asset_id' <str>
           _asset_ids='[101]' <list>
           _start_time_col_name='start_datetime' <str>
@@ -371,6 +370,7 @@ object.str:
             2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
           _knowledge_datetime_col_name='timestamp_db' <str>
           _delay_in_secs='5' <int>>,
+         'bar_duration_in_secs': 300,
          'time_out_in_secs': 2100}
       _dst_dir='None' <NoneType>
       _fit_at_beginning='False' <bool>
@@ -495,8 +495,9 @@ process_forecasts_node_dict:
     log_dir: None
     ath_start_time: 09:30:00
     trading_start_time: 09:30:00
-    ath_end_time: 16:40:00
-    trading_end_time: 16:40:00
+    ath_end_time: 16:00:00
+    trading_end_time: 15:55:00
+    liquidate_at_trading_end_time: False
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 8 nodes and 7 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 8 nodes and 7 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
