@@ -82,23 +82,27 @@ _LOG = logging.getLogger(__name__)
 #   > i lint --only-format -f "$FILES"
 #   ```
 #
-# - Add end-of-file:
+# - To clean up the text files:
 #   ```
-#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs sed -i '' -e '$a\'
+#   > dev_scripts/clean_up_text_files.sh
+#   ```
 #
-#   # Remove end-of-file.
-#   > find . -name "*.txt" | xargs perl -pi -e 'chomp if eof'
-#   ```
-# - Remove trailing spaces
+# - Remove trailing spaces:
 #   ```
 #   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
 #   ```
+# - Add end-of-file:
+#   ```
+#   > find . -name "*.py" | xargs sed -i '' -e '$a\'
 #
+# - Remove end-of-file:
+#   ```
+#   > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
+#   ```
 # - Remove empty files:
 #   ```
 #   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
 #   ```
-#
 
 # ## Integration
 #

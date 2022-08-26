@@ -353,4 +353,3 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
         }
         self._test_create_table_helper(table_name, create_table_func,
                                        create_table_func_kwargs)
-

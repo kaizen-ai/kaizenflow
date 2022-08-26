@@ -133,8 +133,8 @@ def get_process_forecasts_node_dict_prod_instance1(
         "bulk_frac_to_remove": 0.0,
         "target_gmv": 500.0,
     }
-    # TODO(Juraj): Temporary workaround so we can store
-    # all logs under single location.
+    # TODO(Juraj): Temporary workaround so we can store all logs under single
+    # location.
     root_log_dir = os.path.join(
         root_log_dir, "process_forecasts", datetime.date.today().isoformat()
     )
