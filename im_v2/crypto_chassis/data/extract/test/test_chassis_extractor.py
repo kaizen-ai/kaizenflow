@@ -85,7 +85,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         expected = "Failed assertion *\n'dummy' in '['spot', 'futures']'\n"
         self.assertIn(expected, actual)
 
-    def test_download_bid_ask_spot(
+    def test_download_bid_ask(
         self,
     ) -> None:
         """
@@ -96,12 +96,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         end_timestamp = pd.Timestamp("2022-08-18T23:59:00", tz="UTC")
         exchange_id = "binance"
         currency_pair = "btc/usdt"
-        contract_type = "spot"
         # Mock the returns of the functions.
-        self.convert_currency_pair_mock.return_value = "btc-usdt"
-        self.build_base_url_mock.return_value = (
-            "https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt"
-        )
         self.build_query_url_mock.return_value = (
             "https://api.cryptochassis.com/v1/market-depth/binance/"
             "btc-usdt?startTime=1660766400&endTime=1660852740"
@@ -125,53 +120,72 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
                 "ask_size": [0.052201],
             }
         )
-        # Get the data.
-        client = imvccdexex.CryptoChassisExtractor(contract_type)
-        bidask_data = client._download_bid_ask(
+        # Set return values for `futures` contract type.
+        self.convert_currency_pair_mock.return_value = "btcusd"
+        self.build_base_url_mock.return_value = (
+            "https://api.cryptochassis.com/v1/market-depth/"
+            "binance-coin-futures/btcusd_perp"
+        )
+        client_futures = imvccdexex.CryptoChassisExtractor("futures")
+        client_futures._download_bid_ask(
             exchange_id, currency_pair, start_timestamp, end_timestamp
         )
+        # Set return values for `spot` contract type.
+        self.convert_currency_pair_mock.return_value = "btc-usdt"
+        self.build_base_url_mock.return_value = (
+            "https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt"
+        )
+        # Get the data for `spot` contract.
+        client = imvccdexex.CryptoChassisExtractor("spot")
+        bidask_data = client._download_bid_ask(
+            exchange_id,
+            currency_pair,
+            start_timestamp,
+            end_timestamp,
+            depth=10,
+        )
         # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 1)
-        actual_args = tuple(self.convert_currency_pair_mock.call_args)
-        expected_args = (("btc/usdt",), {})
+        self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
+        actual_args = str(self.convert_currency_pair_mock.call_args_list)
+        expected_args = "[call('btc/usdt'), call('btc/usdt')]"
         self.assertEqual(actual_args, expected_args)
         # Check calls against `build_base_url`.
-        self.assertEqual(self.build_base_url_mock.call_count, 1)
-        actual_args = tuple(self.build_base_url_mock.call_args)
+        self.assertEqual(self.build_base_url_mock.call_count, 2)
+        actual_args = str(self.build_base_url_mock.call_args_list)
         expected_args = (
-            (),
-            {
-                "data_type": "market-depth",
-                "exchange": "binance",
-                "currency_pair": "btc-usdt",
-            },
+            """[call(data_type='market-depth', exchange='binance-coin-futures',"""
+            """ currency_pair='btcusd_perp'),
+ call(data_type='market-depth', exchange='binance', currency_pair='btc-usdt')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `build_query_url`.
-        self.assertEqual(self.build_query_url_mock.call_count, 1)
-        actual_args = tuple(self.build_query_url_mock.call_args)
+        self.assertEqual(self.build_query_url_mock.call_count, 2)
+        actual_args = str(self.build_query_url_mock.call_args_list)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt",),
-            {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
+            """[call('https://api.cryptochassis.com/v1/market-depth/"""
+            """binance-coin-futures/btcusd_perp', startTime='2022-08-18T00:00:00Z', depth='1'),
+ call('https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt',"""
+            """ startTime='2022-08-18T00:00:00Z', depth='10')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `requests.get`.
-        self.assertEqual(self.requests_mock.get.call_count, 1)
-        actual_args = tuple(self.requests_mock.get.call_args)
+        self.assertEqual(self.requests_mock.get.call_count, 2)
+        actual_args = str(self.requests_mock.get.call_args_list)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?"\
-                "startTime=1660766400&endTime=1660852740",), {}
+            """[call('https://api.cryptochassis.com/v1/market-depth/binance/"""
+            """btc-usdt?startTime=1660766400&endTime=1660852740'),
+ call('https://api.cryptochassis.com/v1/market-depth/binance/btc-usdt?"""
+            """startTime=1660766400&endTime=1660852740')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `pandas.read_csv`.
-        self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
-        actual_args = tuple(self.pandas_read_csv_mock.call_args)
-        expected_args = (
-            ("https://mock-url.com",), {"compression": "gzip"}
-        )
+        self.assertEqual(self.pandas_read_csv_mock.call_count, 2)
+        actual_args = str(self.pandas_read_csv_mock.call_args_list)
+        expected_args = """[call('https://mock-url.com', compression='gzip'),
+ call('https://mock-url.com', compression='gzip')]"""
         self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
-        self.assertEqual(self.coerce_to_numeric_mock.call_count, 1)
+        self.assertEqual(self.coerce_to_numeric_mock.call_count, 2)
         actual_args = tuple(self.coerce_to_numeric_mock.call_args)
         # Reproduce the structure of the arguments.
         exp_arg_df = pd.DataFrame(
@@ -232,132 +246,6 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
-
-    def test_download_bid_ask_futures(
-        self,
-    ) -> None:
-        """
-        Verify that `_download_bid_ask` is called properly in `futures` mode.
-        """
-        #
-        start_timestamp = pd.Timestamp("2022-08-18T00:00:00", tz="UTC")
-        end_timestamp = pd.Timestamp("2022-08-18T23:59:00", tz="UTC")
-        exchange_id = "binance"
-        currency_pair = "btc/usd"
-        contract_type = "futures"
-        # Mock the returns of the functions.
-        self.convert_currency_pair_mock.return_value = "btcusd"
-        self.build_base_url_mock.return_value = (
-            "https://api.cryptochassis.com/v1/market-depth/"
-            "binance-coin-futures/btcusd_perp"
-        )
-        self.build_query_url_mock.return_value = (
-            "https://api.cryptochassis.com/v1/market-depth/"
-            "binance-coin-futures/btcusd_perp?startTime=1660766400&endTime=1660852740"
-        )
-        response_mock = umock.MagicMock()
-        response_mock.json = lambda: {"urls": [{"url": "https://mock-url.com"}]}
-        self.requests_mock.get.return_value = response_mock
-        self.pandas_read_csv_mock.return_value = pd.DataFrame(
-            {
-                "time_seconds": [1660780800],
-                "bid_price_bid_size": ["23341.25_0.003455"],
-                "ask_price_ask_size": ["23344.58_0.052201"],
-            }
-        )
-        self.coerce_to_numeric_mock.return_value = pd.DataFrame(
-            {
-                "time_seconds": [1660780800],
-                "bid_price": [23341.25],
-                "bid_size": [0.003455],
-                "ask_price": [23344.58],
-                "ask_size": [0.052201],
-            }
-        )
-        #
-        client = imvccdexex.CryptoChassisExtractor(contract_type)
-        bidask_data = client._download_bid_ask(
-            exchange_id, currency_pair, start_timestamp, end_timestamp
-        )
-        # Check calls against `convert_currency`.
-        self.assertEqual(self.convert_currency_pair_mock.call_count, 1)
-        actual_args = tuple(self.convert_currency_pair_mock.call_args)
-        expected_args = (("btc/usd",), {})
-        self.assertEqual(actual_args, expected_args)
-        # Check calls against `build_base_url`.
-        self.assertEqual(self.build_base_url_mock.call_count, 1)
-        actual_args = tuple(self.build_base_url_mock.call_args)
-        expected_args = (
-            (),
-            {
-                "data_type": "market-depth",
-                "exchange": "binance-coin-futures",
-                "currency_pair": "btcusd_perp",
-            },
-        )
-        self.assertEqual(actual_args, expected_args)
-        # Check calls against `build_query_url`.
-        self.assertEqual(self.build_query_url_mock.call_count, 1)
-        actual_args = tuple(self.build_query_url_mock.call_args)
-        expected_args = (
-            (
-                "https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp",
-            ),
-            {"depth": "1", "startTime": "2022-08-18T00:00:00Z"},
-        )
-        self.assertEqual(actual_args, expected_args)
-        # Check calls against `requests.get`.
-        self.assertEqual(self.requests_mock.get.call_count, 1)
-        actual_args = tuple(self.requests_mock.get.call_args)
-        expected_args = (
-            ("https://api.cryptochassis.com/v1/market-depth/binance-coin-futures/btcusd_perp?"\
-                "startTime=1660766400&endTime=1660852740",), {}
-        )
-        self.assertEqual(actual_args, expected_args)
-        # Check calls against `pandas.read_csv`.
-        self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
-        actual_args = tuple(self.pandas_read_csv_mock.call_args)
-        expected_args = (
-            ("https://mock-url.com",), {"compression": "gzip"}
-        )
-        self.assertEqual(actual_args, expected_args)
-        # Check calls against `coerce_to_numeric`.
-        self.assertEqual(self.coerce_to_numeric_mock.call_count, 1)
-        actual_args = tuple(self.coerce_to_numeric_mock.call_args)
-        # Reproduce the structure of the arguments.
-        exp_arg_df = pd.DataFrame(
-            {
-                "time_seconds": [1660780800],
-                "bid_price": ["23341.25"],
-                "bid_size": ["0.003455"],
-                "ask_price": ["23344.58"],
-                "ask_size": ["0.052201"],
-            }
-        )
-        expected_args = (
-            (exp_arg_df,),
-            {"float_columns": ["bid_price", "bid_size", "ask_price", "ask_size"]},
-        )
-        # Convert Dataframes to string.
-        expected_df_str = hpandas.df_to_str(expected_args[0][0])
-        actual_df_str = hpandas.df_to_str(actual_args[0][0])
-        # Compare Dataframes.
-        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
-        # Compare `float_columns` argument.
-        self.assertEqual(actual_args[1], expected_args[1])
-        # Check final `bid-ask` data.
-        bidask_expected = pd.DataFrame(
-            {
-                "timestamp": [1660780800],
-                "bid_price": [23341.25],
-                "bid_size": [0.003455],
-                "ask_price": [23344.58],
-                "ask_size": [0.052201],
-            }
-        )
-        expected_df_str = hpandas.df_to_str(bidask_expected)
-        actual_df_str = hpandas.df_to_str(bidask_data)
-        self.assert_equal(actual_df_str, expected_df_str, fuzzy_match=True)
 
     def test_download_bid_ask_invalid_input1(self) -> None:
         """
@@ -494,8 +382,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         self.assertEqual(self.requests_mock.get.call_count, 1)
         actual_args = tuple(self.requests_mock.get.call_args)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/ohlc/coinbase/btc-usd?"\
-                "startTime=1660852800&endTime=1660939140",), {}
+            (
+                "https://api.cryptochassis.com/v1/ohlc/coinbase/btc-usd?"
+                "startTime=1660852800&endTime=1660939140",
+            ),
+            {},
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
@@ -669,8 +560,11 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         self.assertEqual(self.requests_mock.get.call_count, 1)
         actual_args = tuple(self.requests_mock.get.call_args)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp?"\
-                "startTime=1660852800&endTime=1660939140",), {}
+            (
+                "https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp?"
+                "startTime=1660852800&endTime=1660939140",
+            ),
+            {},
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `coerce_to_numeric`.
@@ -808,16 +702,17 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         self.assertEqual(self.requests_mock.get.call_count, 1)
         actual_args = tuple(self.requests_mock.get.call_args)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/trade/coinbase/btc-usd?"\
-                "startTime=1660766400",), {}
+            (
+                "https://api.cryptochassis.com/v1/trade/coinbase/btc-usd?"
+                "startTime=1660766400",
+            ),
+            {},
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `pandas.read_csv`.
         self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
         actual_args = tuple(self.pandas_read_csv_mock.call_args)
-        expected_args = (
-            ("https://mock-url.com",), {"compression": "gzip"}
-        )
+        expected_args = (("https://mock-url.com",), {"compression": "gzip"})
         self.assertEqual(actual_args, expected_args)
         # Compare `float_columns` argument.
         self.assertEqual(actual_args[1], expected_args[1])
@@ -925,16 +820,17 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         self.assertEqual(self.requests_mock.get.call_count, 1)
         actual_args = tuple(self.requests_mock.get.call_args)
         expected_args = (
-            ("https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt?"\
-                "startTime=1660766400",), {}
+            (
+                "https://api.cryptochassis.com/v1/trade/binance-usds-futures/btcusdt?"
+                "startTime=1660766400",
+            ),
+            {},
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `pandas.read_csv`.
         self.assertEqual(self.pandas_read_csv_mock.call_count, 1)
         actual_args = tuple(self.pandas_read_csv_mock.call_args)
-        expected_args = (
-            ("https://mock-url.com",), {"compression": "gzip"}
-        )
+        expected_args = (("https://mock-url.com",), {"compression": "gzip"})
         self.assertEqual(actual_args, expected_args)
         # Compare `float_columns` argument.
         self.assertEqual(actual_args[1], expected_args[1])
@@ -975,9 +871,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
 
 
 class TestCryptoChassisExtractor2(hunitest.TestCase):
-    def test_coerce_to_numeric(self) -> None:
+    def test_coerce_to_numeric1(self) -> None:
         """
-        Test if the specified columns are converted to numeric values..
+        Test if the specified columns are converted to numeric values.
         """
         contract_type = "spot"
         client = imvccdexex.CryptoChassisExtractor(contract_type)
@@ -1000,6 +896,32 @@ class TestCryptoChassisExtractor2(hunitest.TestCase):
             }
         )
         actual_df = client.coerce_to_numeric(test_df, num_fields)
+        hunitest.compare_df(actual_df, expected_df)
+
+    def test_coerce_to_numeric2(self) -> None:
+        """
+        Test if the specified columns are converted to numeric values.
+        """
+        contract_type = "spot"
+        client = imvccdexex.CryptoChassisExtractor(contract_type)
+        test_df = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "non_num1": ["21347.98"],
+                "non_num2": ["346"],
+                "non_num3": ["21350"],
+            }
+        )
+        expected_df = pd.DataFrame(
+            {
+                "time_seconds": [1660922520],
+                "non_num1": [21347.98],
+                "non_num2": [346],
+                "non_num3": [21350],
+            }
+        )
+        actual_df = client.coerce_to_numeric(test_df)
+        # Dataframe should be unchanged.
         hunitest.compare_df(actual_df, expected_df)
 
     def test_convert_pair_spot1(self) -> None:
