@@ -1,3 +1,4 @@
+# NOTE(Juraj): Currently we run this workflow only from orange.
 name: Release new ECS prod task definition
 on:
   # Run manually.
