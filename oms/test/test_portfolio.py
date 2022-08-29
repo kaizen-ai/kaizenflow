@@ -193,12 +193,12 @@ class TestDataFramePortfolio2(hunitest.TestCase):
     def test_get_historical_statistics3(self) -> None:
         with hasynci.solipsism_context() as event_loop:
             tz = "ET"
-            initial_timestamp = pd.Timestamp(
+            initial_replayed_timestamp = pd.Timestamp(
                 "2000-01-01 09:35:00-05:00", tz="America/New_York"
             )
             get_wall_clock_time = creatime.get_replayed_wall_clock_time(
                 tz,
-                initial_timestamp,
+                initial_replayed_timestamp,
                 event_loop=event_loop,
             )
             price_txt = r"""
