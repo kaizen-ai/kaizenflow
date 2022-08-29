@@ -3,6 +3,8 @@ Import as:
 
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 """
+import datetime
+from typing import Optional, Union
 
 import pandas as pd
 
@@ -10,7 +12,6 @@ import core.config as cconfig
 import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import im_v2.common.data.client as icdc
-
 
 # #############################################################################
 # Mock1_ForecastSystem_example
@@ -60,7 +61,7 @@ def get_Mock1_ForecastSystem_for_simulation_example1(
 
 def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     market_data_df: pd.DataFrame,
-    real_time_loop_time_out_in_secs: int,
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 ) -> dtfsys.System:
     """
     The System is used for the corresponding unit tests.
@@ -77,8 +78,8 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     # Dag runner config.
     system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
     system.config[
-        "dag_runner_config", "real_time_loop_time_out_in_secs"
-    ] = real_time_loop_time_out_in_secs
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ] = rt_timeout_in_secs_or_time
     # PnL config.
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",
@@ -105,7 +106,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
 
 def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
     market_data_df: pd.DataFrame,
-    real_time_loop_time_out_in_secs: int,
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 ) -> dtfsys.System:
     """
     The System is used for the corresponding unit tests.
@@ -124,8 +125,8 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     # Dag runner config.
     system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
     system.config[
-        "dag_runner_config", "real_time_loop_time_out_in_secs"
-    ] = real_time_loop_time_out_in_secs
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ] = rt_timeout_in_secs_or_time
     # PnL config.
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",
@@ -154,10 +155,10 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     ] = max_wait_time_for_order_in_secs
     # We add extra 5 seconds for the `OrderProcessor` to account for the first bar
     # that the DAG spends in fit mode.
-    real_time_loop_time_out_in_secs = (
-        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] + 5
+    rt_timeout_in_secs_or_time = (
+        system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] + 5
     )
     system.config[
         "order_processor_config", "duration_in_secs"
-    ] = real_time_loop_time_out_in_secs
+    ] = rt_timeout_in_secs_or_time
     return system
