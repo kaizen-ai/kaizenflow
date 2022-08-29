@@ -59,6 +59,7 @@ class Config:
 
     # A simple or compound key that can be used to access a Config.
     Key = Union[str, Iterable[str], int, Iterable[int]]
+    _already_read = False
 
     def __init__(
         self,
@@ -110,11 +111,6 @@ class Config:
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
             raise RuntimeError(msg)
-        if check_already_read:
-            msg = "Value has already been read."
-            # hdbg.dassert_eq(self._already_read, False, msg)
-            if self._already_read:
-                raise RuntimeError(msg)
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
@@ -134,6 +130,12 @@ class Config:
                 hdbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
+        #
+        if check_already_read:
+            msg = f"Key {val} , Value {key} has already been read."
+            # hdbg.dassert_eq(self._already_read, False, msg)
+            if self._already_read:
+                raise RuntimeError(msg)
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
         self._config[key] = val  # type: ignore
