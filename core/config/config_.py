@@ -97,7 +97,6 @@ class Config:
         If `key` is an iterable of keys, then the key hierarchy is
         navigated/created and the leaf value added/updated with `val`.
         """
-        print("KEY VALUE", key, val)
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
@@ -174,10 +173,8 @@ class Config:
             self,
         )
         hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
-        try:
-            ret = self._get_item(key, level=0)
-            if mark_already_read:
-                self._already_read[key] = True
+        try:    
+            ret = self._get_item(key, level=0, mark_already_read=mark_already_read)
         except KeyError as e:
             # After the recursion is done, in case of error print information
             # about the offending config.
@@ -325,7 +322,7 @@ class Config:
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
         self._config[key] = config
-        self._already_read[key] = False
+        #self._already_read[key] = False
         return config
 
     def set_update_mode(self, update_mode: str) -> None:
@@ -621,11 +618,13 @@ class Config:
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         return update_mode
 
-    def _get_item(self, key: Key, *, level: int) -> Any:
+    def _get_item(self, key: Key, *, level: int, mark_already_read=True) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on `KeyError`.
         """
+        if mark_already_read:
+            self._already_read[key] = True
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is nested.
         if hintros.is_iterable(key):

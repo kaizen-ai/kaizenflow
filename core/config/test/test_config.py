@@ -369,16 +369,12 @@ def _get_nested_config1(self_: Any) -> cconfig.Config:
     config.add_subconfig("read_data")
     config["read_data"]["file_name"] = "foo_bar.txt"
     config["read_data"]["nrows"] = 999
-    # config["read_data", "file_name"] = "foo_bar.txt"
-    # config["read_data", "nrows"] = 999
     #
     config["single_val"] = "hello"
     #
     config.add_subconfig("zscore")
     config["zscore"]["style"] = "gaz"
     config["zscore"]["com"] = 28
-    # config["zscore", "style"] = "gaz"
-    # config["zscore", "com"] = 28
     #
     _LOG.debug("config=\n%s", config)
     exp = r"""
@@ -392,8 +388,6 @@ def _get_nested_config1(self_: Any) -> cconfig.Config:
       com: 28
     """
     self_.assert_equal(str(config), exp, fuzzy_match=True)
-    print("A", config._already_read)
-    assert 0
     return config
 
 
