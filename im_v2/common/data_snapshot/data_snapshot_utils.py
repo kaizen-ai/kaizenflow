@@ -17,11 +17,12 @@ def get_data_snapshot(
     data_snapshot: str = "latest",
 ) -> str:
     """
-    Get the latest numeric data snapshot or daily updating snapshot if "latest"
-    is given.
+    Get data snapshot:
+
+    - latest: return the latest numeric snapshot, e.g. "20220828"
+    - updated_daily: return the snapshot that is updated continuously
     """
-    dassert_is_valid_data_snapshot(data_snapshot)
-    if data_snapshot is None:
+    if data_snapshot == "latest":
         pattern = "*"
         only_files = False
         use_relatives_paths = True
@@ -35,8 +36,9 @@ def get_data_snapshot(
         dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
         hdbg.dassert_lte(1, len(dirs))
         data_snapshot = max(dirs)
-    elif data_snapshot == "latest":
+    elif data_snapshot == "«updated_daily»":
         data_snapshot = ""
+    dassert_is_valid_data_snapshot(data_snapshot)
     return data_snapshot
 
 
@@ -46,6 +48,5 @@ def dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
     """
     if not data_snapshot.isnumeric():
         hdbg.dassert_eq(data_snapshot, "")
-    else:
-        hdbg.dassert(data_snapshot.isnumeric())
-        hdbg.dassert_eq(len(data_snapshot), 8)
+    hdbg.dassert(data_snapshot.isnumeric())
+    hdbg.dassert_eq(len(data_snapshot), 8)
