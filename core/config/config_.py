@@ -86,7 +86,7 @@ class Config:
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         self._update_mode = update_mode
 
-    def __setitem__(self, key: Key, val: Any) -> None:
+    def __setitem__(self, key: Key, val: Any, check_already_read: bool = True) -> None:
         """
         Set/update `key` to `val`, equivalent to `dict[key] = val`.
 
@@ -110,6 +110,11 @@ class Config:
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
             raise RuntimeError(msg)
+        if check_already_read:
+            msg = "Value has already been read."
+            # hdbg.dassert_eq(self._already_read, False, msg)
+            if self._already_read:
+                raise RuntimeError(msg)
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
@@ -132,9 +137,10 @@ class Config:
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
         self._config[key] = val  # type: ignore
+        
 
     def __getitem__(
-        self, key: Key, *, report_mode:str="verbose_log_error"
+        self, key: Key, *, report_mode:str="verbose_log_error", mark_already_read: bool = True
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
@@ -161,9 +167,12 @@ class Config:
             report_mode,
             self,
         )
+        self._already_read = False
         hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
         try:
             ret = self._get_item(key, level=0)
+            if mark_already_read:
+                self._already_read = True
         except KeyError as e:
             # After the recursion is done, in case of error print information
             # about the offending config.
