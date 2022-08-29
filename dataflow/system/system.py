@@ -104,7 +104,11 @@ _LOG = logging.getLogger(__name__)
 #     - ...
 #
 #   - dag_runner_object
+<<<<<<< HEAD
 #     - rt_timeout_in_secs_or_time
+=======
+#     - real_time_loop_time_out_in_secs
+>>>>>>> parent of 56189952a... rename
 #
 #   - backtest_config
 #     - """information about back testing"""
