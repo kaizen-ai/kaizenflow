@@ -76,11 +76,7 @@ portfolio_config:
     price: close
 dag_runner_config:
   bar_duration_in_secs: 300
-<<<<<<< HEAD
   rt_timeout_in_secs_or_time: 6900
-=======
-  rt_timeout_in_secs_or_time: 6900
->>>>>>> parent of 56189952a... rename
 research_forecast_evaluator_from_prices:
   style: cross_sectional
   init:

@@ -1,5 +1,5 @@
 import logging
-from typing import Callable, Tuple, Union
+from typing import Callable, Tuple, Union, Optional
 
 import pandas as pd
 import pytest
@@ -173,7 +173,7 @@ class Test_Mock1_Time_ForecastSystem1(
 
 def _get_test_System_with_DataFramePortfolio(
     market_data_df: pd.DataFrame,
-    rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 ) -> dtfsys.System:
     """
     Get a System object with a DataFramePortfolio for unit testing.
@@ -291,7 +291,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
     def run_test(
         self,
         data: pd.DataFrame,
-        rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
+        rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
     ) -> Tuple[dtfsys.System, dtfsys.System]:
         # Build the systems to compare.
         system_with_dataframe_portfolio = (
