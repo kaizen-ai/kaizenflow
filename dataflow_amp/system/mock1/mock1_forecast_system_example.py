@@ -3,6 +3,7 @@ Import as:
 
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 """
+import datetime
 from typing import Union, Optional
 
 import pandas as pd
