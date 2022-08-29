@@ -80,7 +80,7 @@ dag_runner_config:
 <<<<<<< HEAD
   rt_timeout_in_secs_or_time: 2100
 =======
-  real_time_loop_time_out_in_secs: 2100
+  rt_timeout_in_secs_or_time: 2100
 >>>>>>> parent of 56189952a... rename
 research_forecast_evaluator_from_prices:
   style: cross_sectional

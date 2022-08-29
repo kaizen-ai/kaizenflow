@@ -159,7 +159,7 @@ class Test_Mock1_Time_ForecastSystem1(
             "dag_runner_config", "rt_timeout_in_secs_or_time"
         ] = rt_timeout_in_secs_or_time
 =======
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
         ] = real_time_loop_time_out
 >>>>>>> parent of 56189952a... rename
         system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
@@ -181,7 +181,7 @@ def _get_test_System_with_DataFramePortfolio(
 <<<<<<< HEAD
     rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
 =======
-    real_time_loop_time_out_in_secs: int,
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 >>>>>>> parent of 56189952a... rename
 ) -> dtfsys.System:
     """
@@ -191,7 +191,7 @@ def _get_test_System_with_DataFramePortfolio(
 <<<<<<< HEAD
         market_data_df, rt_timeout_in_secs_or_time
 =======
-        market_data_df, real_time_loop_time_out_in_secs
+        market_data_df, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
     )
     return system
@@ -212,9 +212,9 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
         system = _get_test_System_with_DataFramePortfolio(
             data, rt_timeout_in_secs_or_time
 =======
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
         system = _get_test_System_with_DataFramePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
         )
         # Run.
@@ -244,7 +244,7 @@ def _get_test_System_with_DatabasePortfolio(
 <<<<<<< HEAD
     rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
 =======
-    real_time_loop_time_out_in_secs: int,
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 >>>>>>> parent of 56189952a... rename
 ) -> dtfsys.System:
     """
@@ -254,7 +254,7 @@ def _get_test_System_with_DatabasePortfolio(
 <<<<<<< HEAD
         market_data_df, rt_timeout_in_secs_or_time
 =======
-        market_data_df, real_time_loop_time_out_in_secs
+        market_data_df, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
     )
     return system
@@ -277,9 +277,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         system = _get_test_System_with_DatabasePortfolio(
             data, rt_timeout_in_secs_or_time
 =======
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
         system = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
         )
         # Run.
@@ -293,9 +293,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         system = _get_test_System_with_DatabasePortfolio(
             data, rt_timeout_in_secs_or_time
 =======
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df2()
         system = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
         )
         # Run.
@@ -309,9 +309,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         system = _get_test_System_with_DatabasePortfolio(
             data, rt_timeout_in_secs_or_time
 =======
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()
         system = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
         )
         # Run.
@@ -350,15 +350,15 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
 =======
     @pytest.mark.slow("~10 seconds.")
     def test1(self) -> None:
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
         # Build the systems to compare.
         system_with_dataframe_portfolio = (
             _get_test_System_with_DataFramePortfolio(
-                data, real_time_loop_time_out_in_secs
+                data, rt_timeout_in_secs_or_time
             )
         )
         system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
         )
         # Run.
@@ -392,15 +392,15 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
         data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()
         self.run_test(data, rt_timeout_in_secs_or_time)
 =======
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df2()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df2()
         # Build the systems to compare.
         system_with_dataframe_portfolio = (
             _get_test_System_with_DataFramePortfolio(
-                data, real_time_loop_time_out_in_secs
+                data, rt_timeout_in_secs_or_time
             )
         )
         system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(
@@ -409,15 +409,15 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
 
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
-        data, real_time_loop_time_out_in_secs = cofinanc.get_market_data_df3()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()
         # Build the systems to compare.
         system_with_dataframe_portfolio = (
             _get_test_System_with_DataFramePortfolio(
-                data, real_time_loop_time_out_in_secs
+                data, rt_timeout_in_secs_or_time
             )
         )
         system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
-            data, real_time_loop_time_out_in_secs
+            data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(

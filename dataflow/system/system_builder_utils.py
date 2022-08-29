@@ -549,7 +549,7 @@ def _apply_dag_runner_config(
 <<<<<<< HEAD
     rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
 =======
-    real_time_loop_time_out_in_secs: Optional[int],
+    rt_timeout_in_secs_or_time: Optional[int],
 >>>>>>> parent of 56189952a... rename
     trading_period_str: str,
 ) -> dtfsyssyst.System:
@@ -573,18 +573,18 @@ def _apply_dag_runner_config(
         )
         rt_timeout_in_secs_or_time = val
 =======
-    if ("dag_runner_config", "real_time_loop_time_out_in_secs") in system.config:
+    if ("dag_runner_config", "rt_timeout_in_secs_or_time") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
         # to run for a shorter period than the entire day, as the prod system does).
         val = system.config[
-            ("dag_runner_config", "real_time_loop_time_out_in_secs")
+            ("dag_runner_config", "rt_timeout_in_secs_or_time")
         ]
         _LOG.warning(
-            "Overriding real_time_loop_time_out_in_secs=%s with value %s",
-            real_time_loop_time_out_in_secs,
+            "Overriding rt_timeout_in_secs_or_time=%s with value %s",
+            rt_timeout_in_secs_or_time,
             val,
         )
-        real_time_loop_time_out_in_secs = val
+        rt_timeout_in_secs_or_time = val
 >>>>>>> parent of 56189952a... rename
     #
     real_time_config = {
@@ -593,7 +593,7 @@ def _apply_dag_runner_config(
 <<<<<<< HEAD
         "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
 =======
-        "real_time_loop_time_out_in_secs": real_time_loop_time_out_in_secs,
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
 >>>>>>> parent of 56189952a... rename
         # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
         "trading_period_str": trading_period_str,
@@ -638,7 +638,7 @@ def apply_dag_runner_config_for_crypto(
 <<<<<<< HEAD
     rt_timeout_in_secs_or_time = None
 =======
-    real_time_loop_time_out_in_secs = None
+    rt_timeout_in_secs_or_time = None
 >>>>>>> parent of 56189952a... rename
     #
     system = _apply_dag_runner_config(
@@ -648,7 +648,7 @@ def apply_dag_runner_config_for_crypto(
 <<<<<<< HEAD
         rt_timeout_in_secs_or_time,
 =======
-        real_time_loop_time_out_in_secs,
+        rt_timeout_in_secs_or_time,
 >>>>>>> parent of 56189952a... rename
         trading_period_str,
     )
@@ -666,7 +666,7 @@ def apply_dag_runner_config_for_equities(
     `rt_timeout_in_secs_or_time` are aligned with the start and
     end of a trading day for the equties market.
 =======
-    `real_time_loop_time_out_in_secs` are aligned with the start
+    `rt_timeout_in_secs_or_time` are aligned with the start
     and end of a trading day for the equties market.
 >>>>>>> parent of 56189952a... rename
     """
@@ -717,7 +717,7 @@ def apply_dag_runner_config_for_equities(
     real_time_loop_time_out_minutes = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(real_time_loop_time_out_minutes)
     # TODO(gp): Horrible confusing name.
-    real_time_loop_time_out_in_secs = datetime.time(
+    rt_timeout_in_secs_or_time = datetime.time(
         15, int(real_time_loop_time_out_minutes)
 >>>>>>> parent of 56189952a... rename
     )
@@ -728,7 +728,7 @@ def apply_dag_runner_config_for_equities(
 <<<<<<< HEAD
         rt_timeout_in_secs_or_time,
 =======
-        real_time_loop_time_out_in_secs,
+        rt_timeout_in_secs_or_time,
 >>>>>>> parent of 56189952a... rename
         trading_period_str,
     )
@@ -753,8 +753,8 @@ def get_realtime_DagRunner_from_system(
     rt_timeout_in_secs_or_time = system.config["dag_runner_config"][
         "rt_timeout_in_secs_or_time"
 =======
-    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
-        "real_time_loop_time_out_in_secs"
+    rt_timeout_in_secs_or_time = system.config["dag_runner_config"][
+        "rt_timeout_in_secs_or_time"
 >>>>>>> parent of 56189952a... rename
     ]
     execute_rt_loop_kwargs = {
@@ -763,7 +763,7 @@ def get_realtime_DagRunner_from_system(
 <<<<<<< HEAD
         "time_out_in_secs": rt_timeout_in_secs_or_time,
 =======
-        "time_out_in_secs": real_time_loop_time_out_in_secs,
+        "time_out_in_secs": rt_timeout_in_secs_or_time,
 >>>>>>> parent of 56189952a... rename
     }
     dag_runner_kwargs = {
@@ -812,7 +812,7 @@ def get_RealTimeDagRunner_from_System(
 <<<<<<< HEAD
             "dag_runner_config", "rt_timeout_in_secs_or_time"
 =======
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
 >>>>>>> parent of 56189952a... rename
         ],
     }

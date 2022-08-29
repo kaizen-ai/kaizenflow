@@ -588,8 +588,8 @@ def get_market_data_df1() -> Tuple[pd.DataFrame, int]:
     rt_timeout_in_secs_or_time = 35 * 60
     return data, rt_timeout_in_secs_or_time
 =======
-    real_time_loop_time_out_in_secs = 35 * 60
-    return data, real_time_loop_time_out_in_secs
+    rt_timeout_in_secs_or_time = 35 * 60
+    return data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
 
 
@@ -627,8 +627,8 @@ def get_market_data_df2() -> Tuple[pd.DataFrame, int]:
     rt_timeout_in_secs_or_time = 35 * 60
     return data, rt_timeout_in_secs_or_time
 =======
-    real_time_loop_time_out_in_secs = 35 * 60
-    return data, real_time_loop_time_out_in_secs
+    rt_timeout_in_secs_or_time = 35 * 60
+    return data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
 
 
@@ -666,8 +666,8 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     rt_timeout_in_secs_or_time = 115 * 60
     return data, rt_timeout_in_secs_or_time
 =======
-    real_time_loop_time_out_in_secs = 115 * 60
-    return data, real_time_loop_time_out_in_secs
+    rt_timeout_in_secs_or_time = 115 * 60
+    return data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
 
 
@@ -705,8 +705,8 @@ def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
     rt_timeout_in_secs_or_time = 3 * 5 * 60
     return data, rt_timeout_in_secs_or_time
 =======
-    real_time_loop_time_out_in_secs = 3 * 5 * 60
-    return data, real_time_loop_time_out_in_secs
+    rt_timeout_in_secs_or_time = 3 * 5 * 60
+    return data, rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
 
 

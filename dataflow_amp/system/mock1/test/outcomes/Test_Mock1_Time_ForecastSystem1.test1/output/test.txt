@@ -69,7 +69,7 @@ dag_runner_config:
 <<<<<<< HEAD
   rt_timeout_in_secs_or_time: 900
 =======
-  real_time_loop_time_out_in_secs: 900
+  rt_timeout_in_secs_or_time: 900
 >>>>>>> parent of 56189952a... rename
   bar_duration_in_secs: 300
 event_loop_object: <_EventLoop running=False closed=True debug=False>

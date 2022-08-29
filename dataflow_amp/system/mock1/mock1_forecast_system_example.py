@@ -63,7 +63,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
 <<<<<<< HEAD
     rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
 =======
-    real_time_loop_time_out_in_secs: int,
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 >>>>>>> parent of 56189952a... rename
 ) -> dtfsys.System:
     """
@@ -85,8 +85,8 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
 =======
-        "dag_runner_config", "real_time_loop_time_out_in_secs"
-    ] = real_time_loop_time_out_in_secs
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ] = rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
     # PnL config.
     forecast_evaluator_from_prices_dict = {
@@ -117,7 +117,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
 <<<<<<< HEAD
     rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
 =======
-    real_time_loop_time_out_in_secs: int,
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 >>>>>>> parent of 56189952a... rename
 ) -> dtfsys.System:
     """
@@ -141,8 +141,8 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "dag_runner_config", "rt_timeout_in_secs_or_time"
     ] = rt_timeout_in_secs_or_time
 =======
-        "dag_runner_config", "real_time_loop_time_out_in_secs"
-    ] = real_time_loop_time_out_in_secs
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ] = rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
     # PnL config.
     forecast_evaluator_from_prices_dict = {
@@ -180,11 +180,11 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "order_processor_config", "duration_in_secs"
     ] = rt_timeout_in_secs_or_time
 =======
-    real_time_loop_time_out_in_secs = (
-        system.config["dag_runner_config", "real_time_loop_time_out_in_secs"] + 5
+    rt_timeout_in_secs_or_time = (
+        system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] + 5
     )
     system.config[
         "order_processor_config", "duration_in_secs"
-    ] = real_time_loop_time_out_in_secs
+    ] = rt_timeout_in_secs_or_time
 >>>>>>> parent of 56189952a... rename
     return system
