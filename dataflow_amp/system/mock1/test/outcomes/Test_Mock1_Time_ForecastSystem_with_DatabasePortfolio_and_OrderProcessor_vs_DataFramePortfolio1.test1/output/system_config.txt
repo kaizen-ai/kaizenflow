@@ -77,7 +77,7 @@ portfolio_config:
     price: close
 dag_runner_config:
   bar_duration_in_secs: 300
-  real_time_loop_time_out_in_secs: 2100
+  rt_timeout_in_secs_or_time: 2100
 research_forecast_evaluator_from_prices:
   style: cross_sectional
   init:
