@@ -205,7 +205,9 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Save the signature of the system
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        result_bundle = run_ForecastSystem_dag_from_backtest_config(system, "fit")
+        result_bundle = run_ForecastSystem_dag_from_backtest_config(
+            system, "fit"
+        )
         # Check outcome.
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
@@ -247,10 +249,14 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
         # Fit.
-        fit_result_bundle = run_ForecastSystem_dag_from_backtest_config(system, "fit")
+        fit_result_bundle = run_ForecastSystem_dag_from_backtest_config(
+            system, "fit"
+        )
         fit_df = fit_result_bundle.result_df
         # Predict.
-        predict_result_bundle = run_ForecastSystem_dag_from_backtest_config(system, "predict")
+        predict_result_bundle = run_ForecastSystem_dag_from_backtest_config(
+            system, "predict"
+        )
         predict_df = predict_result_bundle.result_df
         # Check.
         self.assert_dfs_close(fit_df, predict_df)
@@ -316,7 +322,9 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         tag = "forecast_system"
         check_system_config(self, system, tag)
         # 2) Run.
-        result_bundle = run_ForecastSystem_dag_from_backtest_config(system, "fit")
+        result_bundle = run_ForecastSystem_dag_from_backtest_config(
+            system, "fit"
+        )
         # 3) Check the pnl.
         system_tester = SystemTester()
         forecast_evaluator_from_prices_dict = system.config[
