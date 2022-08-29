@@ -52,7 +52,7 @@ hprint.config_notebook()
 # %%
 sim_dir = "../../../system_log_dir/forecast_evaluator"
 #prod_dir = "/data/cf_production/CF_2022_08_15/job-sasm_job-jobid-1002348952/user_executable_run_0-1000005033091/cf_prod_system_log_dir"
-prod_dir = "../../../prod/system_log_dir-20220825"
+prod_dir = "../../../system_log_dir-20220826.prod"
 prod_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 
 # Simulation data.
@@ -66,7 +66,7 @@ hdbg.dassert_dir_exists(prod_dir)
 # !ls {prod_dir}
 
 # %%
-date = "2022-08-25"
+date = "2022-08-26"
 start_timestamp = pd.Timestamp(date + " 09:30:00", tz="America/New_York")
 end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
 
@@ -187,7 +187,12 @@ paper_stats_df.index = paper_stats_df.index.round(config["freq"])
 
 # %%
 #research_stats_df
-paper_stats_dfts_df
+#paper_stats_df
+
+# %%
+df = bar_stats_df.dropna()[[("research", "pnl"), ("paper", "pnl")]]#.plot()
+df["paper", "pnl"] *= 20
+df.plot()
 
 # %%
 bar_stats_df = pd.concat(
