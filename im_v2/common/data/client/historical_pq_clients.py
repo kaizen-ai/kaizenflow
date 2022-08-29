@@ -278,7 +278,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         dataset: str,
         contract_type: str,
         *,
-        data_snapshot: Optional[str] = None,
+        data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """

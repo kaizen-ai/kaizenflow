@@ -165,7 +165,7 @@ class CcxtCddCsvParquetByAssetClient(
         extension: str,
         *,
         aws_profile: Optional[str] = None,
-        data_snapshot: Optional[str] = None,
+        data_snapshot: str = "latest",
     ) -> None:
         """
         Load `CCXT` data from local or S3 filesystem.
@@ -325,7 +325,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         dataset: str,
         contract_type: str,
         *,
-        data_snapshot: Optional[str] = None,
+        data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
