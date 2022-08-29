@@ -85,12 +85,17 @@ class Config:
         # TODO(gp): This should control also the __set_item__ and not only update.
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         self._update_mode = update_mode
-        #
-        self._already_read: collections.OrderedDict[
-            str, Any
+        # This data structure has the same structure as `self._config` but
+        # contains the value `True` to track whether the corresponding element
+        # in `self._config` was read from a client in order to build some object.
+        # When a value in the config is read from outside, it should not be 
+        # modified any more, to avoid that the config goes out-of-sync with 
+        # objects already built.
+        self._is_key_read: collections.OrderedDict[
+            str, bool
         ] = collections.OrderedDict()
 
-    def __setitem__(self, key: Key, val: Any, check_already_read: bool = True) -> None:
+    def __setitem__(self, key: Key, val: Any, do_not_clobber: bool = True) -> None:
         """
         Set/update `key` to `val`, equivalent to `dict[key] = val`.
 
@@ -127,7 +132,9 @@ class Config:
                     self._config,
                 )
                 if head_key in self:
-                    subconfig = self.__getitem__(head_key, report_mode="none", mark_already_read=False)
+                    # We mark a key as read only when it's read from a client of Config, not from the Config itself.
+                    mark_key_as_read = False
+                    subconfig = self.__getitem__(head_key, report_mode="none", mark_key_as_read=mark_key_as_read)
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
@@ -136,16 +143,16 @@ class Config:
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
         self._config[key] = val  # type: ignore
-        self._already_read[key] = False
+        self._is_key_read[key] = False
         #
-        if check_already_read:
+        if do_not_clobber:
             msg = f"Key {val} , Value {key} has already been read."
-            if self._already_read[key]:
+            if self._is_key_read[key]:
                 raise RuntimeError(msg)
         
 
     def __getitem__(
-        self, key: Key, *, report_mode:str="verbose_log_error", mark_already_read: bool = True
+        self, key: Key, *, report_mode:str="verbose_log_error", mark_key_as_read: bool = True
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
@@ -174,7 +181,9 @@ class Config:
         )
         hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
         try:    
-            ret = self._get_item(key, level=0, mark_already_read=mark_already_read)
+            ret = self._get_item(key, level=0)
+            if mark_key_as_read:
+                self._is_key_read[key] = True
         except KeyError as e:
             # After the recursion is done, in case of error print information
             # about the offending config.
@@ -246,8 +255,9 @@ class Config:
             # When we test for existence we don't want to report the config in case
             # of error.
             report_mode = "none"
+            mark_key_as_read = False
             val = self.__getitem__(
-                key, report_mode=report_mode, mark_already_read=False
+                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
             )
             _LOG.debug("Found val=%s", val)
             found = True
@@ -322,7 +332,6 @@ class Config:
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
         self._config[key] = config
-        #self._already_read[key] = False
         return config
 
     def set_update_mode(self, update_mode: str) -> None:
@@ -618,13 +627,11 @@ class Config:
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         return update_mode
 
-    def _get_item(self, key: Key, *, level: int, mark_already_read=True) -> Any:
+    def _get_item(self, key: Key, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on `KeyError`.
         """
-        if mark_already_read:
-            self._already_read[key] = True
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is nested.
         if hintros.is_iterable(key):

@@ -1704,3 +1704,17 @@ class Test_from_dict1(hunitest.TestCase):
         # Check the the value type.
         check = isinstance(test_config["key2"], cconfig.Config)
         self.assertTrue(check)
+
+
+# #############################################################################
+# Test_mark_key_as_read
+# #############################################################################
+
+
+class Test_mark_key_as_read(hunitest.TestCase):
+    def test1(self):
+        config = cconconf.Config()
+        config.add_subconfig("read_data")
+        config["read_data"]["file_name"] = "test_name.txt"
+        text = config._already_read
+        print(text)
