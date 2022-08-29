@@ -2,9 +2,9 @@ name: Release new ECS preprod task definition
 on:
   # Run manually.
   workflow_dispatch:
-  schedule:
-    # Run this once a day even if there are no commit.
-    - cron:  '0 */6 * * *'
+  # schedule:
+    # Currently we run this workflow from orange repo.
+    # - cron:  '0 */6 * * *'
 
 jobs:
   run_release_new_ecs_preprod_task_definition:
