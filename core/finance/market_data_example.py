@@ -584,13 +584,8 @@ def get_market_data_df1() -> Tuple[pd.DataFrame, int]:
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 4
     data["feature1"] = feature
-<<<<<<< HEAD
     rt_timeout_in_secs_or_time = 35 * 60
     return data, rt_timeout_in_secs_or_time
-=======
-    rt_timeout_in_secs_or_time = 35 * 60
-    return data, rt_timeout_in_secs_or_time
->>>>>>> parent of 56189952a... rename
 
 
 def get_market_data_df2() -> Tuple[pd.DataFrame, int]:
@@ -623,13 +618,8 @@ def get_market_data_df2() -> Tuple[pd.DataFrame, int]:
     feature_pattern = [-1.0] * 5 + [1.0] * 5
     feature = feature_pattern * 4
     data["feature1"] = feature
-<<<<<<< HEAD
     rt_timeout_in_secs_or_time = 35 * 60
     return data, rt_timeout_in_secs_or_time
-=======
-    rt_timeout_in_secs_or_time = 35 * 60
-    return data, rt_timeout_in_secs_or_time
->>>>>>> parent of 56189952a... rename
 
 
 def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
@@ -662,13 +652,8 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     feature_pattern = [-1.0] * 5 + [1.0] * 5
     feature = feature_pattern * 12
     data["feature1"] = feature
-<<<<<<< HEAD
     rt_timeout_in_secs_or_time = 115 * 60
     return data, rt_timeout_in_secs_or_time
-=======
-    rt_timeout_in_secs_or_time = 115 * 60
-    return data, rt_timeout_in_secs_or_time
->>>>>>> parent of 56189952a... rename
 
 
 def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
@@ -701,13 +686,8 @@ def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 6
     data["feature1"] = feature
-<<<<<<< HEAD
     rt_timeout_in_secs_or_time = 3 * 5 * 60
     return data, rt_timeout_in_secs_or_time
-=======
-    rt_timeout_in_secs_or_time = 3 * 5 * 60
-    return data, rt_timeout_in_secs_or_time
->>>>>>> parent of 56189952a... rename
 
 
 # #############################################################################
