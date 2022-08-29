@@ -102,6 +102,16 @@ class Config:
         If `key` is an iterable of keys, then the key hierarchy is
         navigated/created and the leaf value added/updated with `val`.
         """
+        # This is a new key so it should not be present.
+        hdbg.dassert_not_in(key, self._config)
+        hdbg.dassert_not_in(key, self._is_key_read)
+        self._is_key_read[key] = False
+        #
+        if do_not_clobber:
+            msg = f"Key {val} , Value {key} has already been read."
+            if self._is_key_read[key]:
+                raise RuntimeError(msg)
+        #
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
@@ -143,12 +153,6 @@ class Config:
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
         self._config[key] = val  # type: ignore
-        self._is_key_read[key] = False
-        #
-        if do_not_clobber:
-            msg = f"Key {val} , Value {key} has already been read."
-            if self._is_key_read[key]:
-                raise RuntimeError(msg)
         
 
     def __getitem__(
