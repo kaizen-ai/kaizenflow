@@ -222,7 +222,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
 
 def _get_test_System_with_DatabasePortfolio(
     market_data_df: pd.DataFrame,
-    rt_timeout_in_secs_or_time: Union[int, pd.Timestamp],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 ) -> dtfsys.System:
     """
     Get a System object with a DatabasePortfolio for unit testing.
