@@ -121,7 +121,7 @@ def _get_signature_from_result_bundle(
 
 
 def run_ForecastSystem_dag_from_backtest_config(
-    system: dtfsyssyst.System, method: str
+    self: Any, system: dtfsyssyst.System, method: str
 ) -> dtfcore.ResultBundle:
     """
     Run `ForecastSystem` DAG with the specified fit / predict method and using
@@ -209,7 +209,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Save the signature of the system
         """
         result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            system, "fit"
+            self, system, "fit"
         )
         # Check outcome.
         actual = get_signature(system.config, result_bundle, output_col_name)
@@ -252,12 +252,12 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         """
         # Fit.
         fit_result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            system, "fit"
+            self, system, "fit"
         )
         fit_df = fit_result_bundle.result_df
         # Predict.
         predict_result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            system, "predict"
+            self, system, "predict"
         )
         predict_df = predict_result_bundle.result_df
         # Check.
@@ -320,7 +320,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         system: dtfsyssyst.System,
     ) -> None:
         result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            system, "fit"
+            self, system, "fit"
         )
         # Check the pnl.
         system_tester = SystemTester()
