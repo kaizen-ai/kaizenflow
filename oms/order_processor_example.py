@@ -70,11 +70,11 @@ def get_order_processor_coroutine_example1(
     _LOG.debug(hprint.to_str("order_processor portfolio duration_in_secs"))
     # Compute the timestamp when the OrderProcessor should shut down.
     get_wall_clock_time = portfolio.broker.market_data.get_wall_clock_time
-    initial_timestamp = get_wall_clock_time()
+    initial_replayed_timestamp = get_wall_clock_time()
     hdbg.dassert_isinstance(duration_in_secs, (float, int))
     hdbg.dassert_lt(0, duration_in_secs)
     offset = pd.Timedelta(duration_in_secs, unit="seconds")
-    termination_timestamp = initial_timestamp + offset
+    termination_timestamp = initial_replayed_timestamp + offset
     # Build the Coroutine.
     order_processor_coroutine = order_processor.run_loop(termination_timestamp)
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
