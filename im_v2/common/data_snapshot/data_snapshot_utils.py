@@ -12,7 +12,7 @@ import helpers.hs3 as hs3
 
 def get_latest_data_snapshot(
     root_dir: str,
-    aws_profile: Optional[str]
+    aws_profile: Optional[str],
     *,
     data_snapshot: str = None,
 ) -> str:
