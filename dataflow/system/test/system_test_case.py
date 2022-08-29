@@ -132,9 +132,13 @@ def run_ForecastSystem_dag_from_backtest_config(
     :return: result bundle
     """
     hdbg.dassert_in(method, ["fit", "predict"])
+    dtfssybuut.apply_unit_test_log_dir(self, system)
     # Force building the DAG runner.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
+    # Check the system config.
+    tag = "forecast_system"
+    check_system_config(self, system, tag)
     # Set the time boundaries.
     start_datetime = system.config[
         "backtest_config", "start_timestamp_with_lookback"
@@ -204,7 +208,6 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the backtest_config period
         - Save the signature of the system
         """
-        dtfssybuut.apply_unit_test_log_dir(self, system)
         result_bundle = run_ForecastSystem_dag_from_backtest_config(
             system, "fit"
         )
@@ -247,7 +250,6 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
         """
-        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Fit.
         fit_result_bundle = run_ForecastSystem_dag_from_backtest_config(
             system, "fit"
@@ -317,15 +319,10 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self,
         system: dtfsyssyst.System,
     ) -> None:
-        dtfssybuut.apply_unit_test_log_dir(self, system)
-        # 1) Check the system config.
-        tag = "forecast_system"
-        check_system_config(self, system, tag)
-        # 2) Run.
         result_bundle = run_ForecastSystem_dag_from_backtest_config(
             system, "fit"
         )
-        # 3) Check the pnl.
+        # Check the pnl.
         system_tester = SystemTester()
         forecast_evaluator_from_prices_dict = system.config[
             "research_forecast_evaluator_from_prices"
