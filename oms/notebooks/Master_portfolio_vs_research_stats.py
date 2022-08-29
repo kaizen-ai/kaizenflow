@@ -187,7 +187,7 @@ paper_stats_df.index = paper_stats_df.index.round(config["freq"])
 
 # %%
 #research_stats_df
-paper_stats_df
+paper_stats_dfts_df
 
 # %%
 bar_stats_df = pd.concat(
