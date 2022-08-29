@@ -10,16 +10,17 @@ import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
 
-def get_latest_data_snapshot(
+def get_data_snapshot(
     root_dir: str,
     aws_profile: Optional[str],
     *,
     data_snapshot: str = None,
 ) -> str:
     """
-    Get the latest numeric data snapshot or daily updating snapshot if `latest`
+    Get the latest numeric data snapshot or daily updating snapshot if "latest"
     is given.
     """
+    dassert_is_valid_data_snapshot(data_snapshot)
     if data_snapshot is None:
         pattern = "*"
         only_files = False
@@ -35,7 +36,7 @@ def get_latest_data_snapshot(
         hdbg.dassert_lte(1, len(dirs))
         data_snapshot = max(dirs)
     elif data_snapshot == "latest":
-        data_snapshot = "binance"
+        data_snapshot = ""
     return data_snapshot
 
 
@@ -43,5 +44,8 @@ def dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
     """
     Check if data snapshot is valid.
     """
-    hdbg.dassert(data_snapshot.isnumeric())
-    hdbg.dassert_eq(len(data_snapshot), 8)
+    if not data_snapshot.isnumeric():
+        hdbg.dassert_eq(data_snapshot, "")
+    else:
+        hdbg.dassert(data_snapshot.isnumeric())
+        hdbg.dassert_eq(len(data_snapshot), 8)

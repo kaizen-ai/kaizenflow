@@ -190,7 +190,6 @@ class CcxtCddCsvParquetByAssetClient(
         data_snapshot = icdds.get_latest_data_snapshot(
             root_dir, aws_profile, data_snapshot=data_snapshot
         )
-        icdds.dassert_is_valid_data_snapshot(data_snapshot)
         self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
