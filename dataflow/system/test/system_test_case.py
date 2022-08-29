@@ -4,6 +4,7 @@ Import as:
 import dataflow.system.test.system_test_case as dtfsytsytc
 """
 
+import abc
 import asyncio
 import datetime
 import logging
@@ -627,13 +628,15 @@ class ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     """
 
     @abc.abstractmethod
-    def get_Time_ForecastSystem(self) -> dtfsys.System:
+    def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
         """
         Get the `Time_ForecastSystem` to be compared to the (non-time) `ForecastSystem`.
         """
 
     @abc.abstractmethod
-    def get_ForecastSystem(self, time_system: dtfsys.System) -> dtfsys.System:
+    def get_ForecastSystem(
+        self, time_system: dtfsyssyst.System
+    ) -> dtfsyssyst.System:
         """
         Get the (non-time) `ForecastSystem` via initiated `Time_ForecastSystem`.
         """
