@@ -27,14 +27,14 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
-_LOG.setLevel(logging.INFO)
+#_LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
 
 # Enable or disable _LOG.verb_debug
 # _LOG.verb_debug = lambda *_: 0
-# _LOG.verb_debug = _LOG.debug
+_LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -59,7 +59,6 @@ class Config:
 
     # A simple or compound key that can be used to access a Config.
     Key = Union[str, Iterable[str], int, Iterable[int]]
-    _already_read = False
 
     def __init__(
         self,
@@ -86,6 +85,10 @@ class Config:
         # TODO(gp): This should control also the __set_item__ and not only update.
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         self._update_mode = update_mode
+        #
+        self._already_read: collections.OrderedDict[
+            str, Any
+        ] = collections.OrderedDict()
 
     def __setitem__(self, key: Key, val: Any, check_already_read: bool = True) -> None:
         """
@@ -94,6 +97,7 @@ class Config:
         If `key` is an iterable of keys, then the key hierarchy is
         navigated/created and the leaf value added/updated with `val`.
         """
+        print("KEY VALUE", key, val)
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
@@ -124,21 +128,21 @@ class Config:
                     self._config,
                 )
                 if head_key in self:
-                    subconfig = self[head_key]
+                    subconfig = self.__getitem__(head_key, report_mode="none", mark_already_read=False)
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
                 subconfig.__setitem__(tail_key, val)
             return
-        #
-        if check_already_read:
-            msg = f"Key {val} , Value {key} has already been read."
-            # hdbg.dassert_eq(self._already_read, False, msg)
-            if self._already_read:
-                raise RuntimeError(msg)
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
         self._config[key] = val  # type: ignore
+        self._already_read[key] = False
+        #
+        if check_already_read:
+            msg = f"Key {val} , Value {key} has already been read."
+            if self._already_read[key]:
+                raise RuntimeError(msg)
         
 
     def __getitem__(
@@ -169,12 +173,11 @@ class Config:
             report_mode,
             self,
         )
-        self._already_read = False
         hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
         try:
             ret = self._get_item(key, level=0)
             if mark_already_read:
-                self._already_read = True
+                self._already_read[key] = True
         except KeyError as e:
             # After the recursion is done, in case of error print information
             # about the offending config.
@@ -247,7 +250,7 @@ class Config:
             # of error.
             report_mode = "none"
             val = self.__getitem__(
-                key, report_mode=report_mode
+                key, report_mode=report_mode, mark_already_read=False
             )
             _LOG.debug("Found val=%s", val)
             found = True
@@ -322,6 +325,7 @@ class Config:
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
         self._config[key] = config
+        self._already_read[key] = False
         return config
 
     def set_update_mode(self, update_mode: str) -> None:
