@@ -558,9 +558,7 @@ def _apply_dag_runner_config(
     if ("dag_runner_config", "rt_timeout_in_secs_or_time") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
         # to run for a shorter period than the entire day, as the prod system does).
-        val = system.config[
-            ("dag_runner_config", "rt_timeout_in_secs_or_time")
-        ]
+        val = system.config[("dag_runner_config", "rt_timeout_in_secs_or_time")]
         _LOG.warning(
             "Overriding rt_timeout_in_secs_or_time=%s with value %s",
             rt_timeout_in_secs_or_time,
@@ -630,9 +628,9 @@ def apply_dag_runner_config_for_equities(
     """
     Apply `dag_runner_config` for equities.
 
-    For equities `wake_up_timestamp` and
-    `rt_timeout_in_secs_or_time` are aligned with the start and
-    end of a trading day for the equties market.
+    For equities `wake_up_timestamp` and `rt_timeout_in_secs_or_time`
+    are aligned with the start and end of a trading day for the equties
+    market.
     """
     (
         trading_period_str,
@@ -674,9 +672,7 @@ def apply_dag_runner_config_for_equities(
     hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
     rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(rt_timeout_in_mins)
-    rt_timeout_in_secs_or_time = datetime.time(
-        15, int(rt_timeout_in_mins)
-    )
+    rt_timeout_in_secs_or_time = datetime.time(15, int(rt_timeout_in_mins))
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,

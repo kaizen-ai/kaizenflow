@@ -1,6 +1,6 @@
 import datetime
 import logging
-from typing import Callable, Tuple, Union, Optional
+from typing import Callable, Optional, Tuple, Union
 
 import pandas as pd
 import pytest
