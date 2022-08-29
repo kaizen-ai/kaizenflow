@@ -412,14 +412,14 @@ class CcxtBroker(ombroker.Broker):
         min_cost = asset_limits["min_cost"]
         if total_cost <= min_cost:
             # Set amount based on minimal notional price.
-            required_amount = round(min_cost * 2 / high_price, 2)
+            required_amount = round(min_cost * 3 / high_price, 2)
             if order.diff_num_shares < 0:
                 required_amount = -required_amount
             _LOG.warning(
                 "Order: %s\nAmount of asset in order is below minimal base: %s. \
                     Setting to following amount based on notional limit: %s",
                 str(order),
-                order_amount,
+                min_cost,
                 required_amount,
             )
             # Change number of shares to minimal amount.
