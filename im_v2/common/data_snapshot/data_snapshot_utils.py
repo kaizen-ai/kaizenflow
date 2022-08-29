@@ -14,7 +14,7 @@ def get_data_snapshot(
     root_dir: str,
     aws_profile: Optional[str],
     *,
-    data_snapshot: str = None,
+    data_snapshot: Optional[str] = None,
 ) -> str:
     """
     Get the latest numeric data snapshot or daily updating snapshot if "latest"
