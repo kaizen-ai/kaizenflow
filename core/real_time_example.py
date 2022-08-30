@@ -93,7 +93,7 @@ def get_replayed_time_execute_rt_loop_kwargs(
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
         # TODO(gp): -> timeout everywhere
-        "rt_timeout_in_secs_or_time": 3.0 * bar_duration_in_secs,
+        "rt_timeout_in_secs_or_time": 3 * bar_duration_in_secs,
     }
     return execute_rt_loop_kwargs
 
@@ -116,6 +116,6 @@ def get_real_time_execute_rt_loop_kwargs(
         "bar_duration_in_secs": bar_duration_in_secs,
         # TODO(gp): This is the number of seconds the real time loop runs for.
         #  Change the name to something more intuitive.
-        "rt_timeout_in_secs_or_time": 3.0 * bar_duration_in_secs,
+        "rt_timeout_in_secs_or_time": 3 * bar_duration_in_secs,
     }
     return execute_rt_loop_kwargs

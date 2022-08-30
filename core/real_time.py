@@ -349,7 +349,7 @@ async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
     bar_duration_in_secs: int,
     # TODO(gp): -> exit_condition
-    rt_timeout_in_secs_or_time: Union[float, int, datetime.time, None],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time],
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
@@ -411,7 +411,7 @@ async def execute_with_real_time_loop(
         yield event, workload_result
         # Exit, if needed.
         if rt_timeout_in_secs_or_time is not None:
-            if isinstance(rt_timeout_in_secs_or_time, (int, float)):
+            if isinstance(rt_timeout_in_secs_or_time, int):
                 num_iterations = int(rt_timeout_in_secs_or_time / bar_duration_in_secs)
                 hdbg.dassert_lt(0, num_iterations)
                 _LOG.debug(hprint.to_str("num_it num_iterations"))
