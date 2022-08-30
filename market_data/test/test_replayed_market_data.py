@@ -601,7 +601,7 @@ class TestReplayedMarketData3(hunitest.TestCase):
             asset_ids = [1000]
             delay_in_secs = 0
             sleep_in_secs = 30
-            time_out_in_secs = 60 * 5
+            rt_timeout_in_secs_or_time = 60 * 5
             (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example2(
                 event_loop,
                 start_datetime,
@@ -610,7 +610,7 @@ class TestReplayedMarketData3(hunitest.TestCase):
                 asset_ids,
                 delay_in_secs=delay_in_secs,
                 sleep_in_secs=sleep_in_secs,
-                time_out_in_secs=time_out_in_secs,
+                rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
             )
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(

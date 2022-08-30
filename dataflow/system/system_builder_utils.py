@@ -7,7 +7,7 @@ import dataflow.system.system_builder_utils as dtfssybuut
 import datetime
 import logging
 import os
-from typing import Any, Callable, Coroutine, Optional, Tuple
+from typing import Any, Callable, Coroutine, Optional, Tuple, Union
 
 import pandas as pd
 
@@ -520,9 +520,9 @@ def apply_Portfolio_config(
         "midpoint": "midpoint",
         "price": "close",
     }
-    system.config[
-        "portfolio_config", "column_remap"
-    ] = cconfig.Config.from_dict(column_remap)
+    system.config["portfolio_config", "column_remap"] = cconfig.Config.from_dict(
+        column_remap
+    )
     return system
 
 
@@ -563,32 +563,30 @@ def _apply_dag_runner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
     bar_duration_in_secs: int,
-    real_time_loop_time_out_in_secs: Optional[int],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
     trading_period_str: str,
 ) -> dtfsyssyst.System:
     """
     Apply `dag_runner_config` to the system config.
 
-    The parameters passed via `dag_runner_config` are required to initialize
-    a `DagRunner` (e.g., `RealtimeDagRunner`).
+    The parameters passed via `dag_runner_config` are required to
+    initialize a `DagRunner` (e.g., `RealtimeDagRunner`).
     """
-    if ("dag_runner_config", "real_time_loop_time_out_in_secs") in system.config:
+    if ("dag_runner_config", "rt_timeout_in_secs_or_time") in system.config:
         # Sometimes we want to override params from the test (e.g., if we want
         # to run for a shorter period than the entire day, as the prod system does).
-        val = system.config[
-            ("dag_runner_config", "real_time_loop_time_out_in_secs")
-        ]
+        val = system.config[("dag_runner_config", "rt_timeout_in_secs_or_time")]
         _LOG.warning(
-            "Overriding real_time_loop_time_out_in_secs=%s with value %s",
-            real_time_loop_time_out_in_secs,
+            "Overriding rt_timeout_in_secs_or_time=%s with value %s",
+            rt_timeout_in_secs_or_time,
             val,
         )
-        real_time_loop_time_out_in_secs = val
+        rt_timeout_in_secs_or_time = val
     #
     real_time_config = {
         "wake_up_timestamp": wake_up_timestamp,
         "bar_duration_in_secs": bar_duration_in_secs,
-        "real_time_loop_time_out_in_secs": real_time_loop_time_out_in_secs,
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
         # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
         "trading_period_str": trading_period_str,
     }
@@ -629,13 +627,13 @@ def apply_dag_runner_config_for_crypto(
         bar_duration_in_secs,
     ) = _get_trading_period_str_and_bar_duration_in_secs(system)
     wake_up_timestamp = None
-    real_time_loop_time_out_in_secs = None
+    rt_timeout_in_secs_or_time = None
     #
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
-        real_time_loop_time_out_in_secs,
+        rt_timeout_in_secs_or_time,
         trading_period_str,
     )
     return system
@@ -647,9 +645,9 @@ def apply_dag_runner_config_for_equities(
     """
     Apply `dag_runner_config` for equities.
 
-    For equities `wake_up_timestamp` and
-    `real_time_loop_time_out_in_secs` are aligned with the start
-    and end of a trading day for the equties market.
+    For equities `wake_up_timestamp` and `rt_timeout_in_secs_or_time`
+    are aligned with the start and end of a trading day for the equties
+    market.
     """
     (
         trading_period_str,
@@ -689,17 +687,14 @@ def apply_dag_runner_config_for_equities(
     # before the market closes, i.e. at 15:58.
     # Ensure that bar_duration is a multiple of minutes.
     hdbg.dassert_eq(bar_duration_in_secs % 60, 0)
-    real_time_loop_time_out_minutes = 60 - int(bar_duration_in_secs / 60)
-    hdbg.dassert_is_integer(real_time_loop_time_out_minutes)
-    # TODO(gp): Horrible confusing name.
-    real_time_loop_time_out_in_secs = datetime.time(
-        15, int(real_time_loop_time_out_minutes)
-    )
+    rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
+    hdbg.dassert_is_integer(rt_timeout_in_mins)
+    rt_timeout_in_secs_or_time = datetime.time(15, int(rt_timeout_in_mins))
     system = _apply_dag_runner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
-        real_time_loop_time_out_in_secs,
+        rt_timeout_in_secs_or_time,
         trading_period_str,
     )
     return system
@@ -719,13 +714,13 @@ def get_realtime_DagRunner_from_system(
     bar_duration_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
-    real_time_loop_time_out_in_secs = system.config["dag_runner_config"][
-        "real_time_loop_time_out_in_secs"
+    rt_timeout_in_secs_or_time = system.config["dag_runner_config"][
+        "rt_timeout_in_secs_or_time"
     ]
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
-        "time_out_in_secs": real_time_loop_time_out_in_secs,
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
     }
     dag_runner_kwargs = {
         "dag": dag,
@@ -769,8 +764,8 @@ def get_RealTimeDagRunner_from_System(
         "bar_duration_in_secs": system.config[
             "dag_runner_config", "bar_duration_in_secs"
         ],
-        "time_out_in_secs": system.config[
-            "dag_runner_config", "real_time_loop_time_out_in_secs"
+        "rt_timeout_in_secs_or_time": system.config[
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
         ],
     }
     dag_runner_kwargs = {
