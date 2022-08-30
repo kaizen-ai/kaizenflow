@@ -6,6 +6,7 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
+import im_v2.common.secrets.secret_identifier as imvcsseid
 
 
 
@@ -69,6 +70,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         exchange_id = "binance"
         universe_version = "v5"
         portfolio_id = "ccxt_portfolio_mock"
+        secret_id = imvcsseid.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
             universe_version,
@@ -76,6 +78,7 @@ class TestCcxtBroker1(hunitest.TestCase):
             account_type,
             portfolio_id,
             contract_type,
+            secret_id,
             strategy_id="dummy_strategy_id",
             market_data=umock.create_autospec(
                 spec=mdata.MarketData, instance=True
@@ -97,7 +100,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         self.assertEqual(broker._account_type, "trading")
         self.assertEqual(broker._portfolio_id, "ccxt_portfolio_mock")
         self.assertEqual(broker._contract_type, "spot")
-        self.assertEqual(broker._secret_id, 1)
+        self.assertEqual(str(broker._secret_id), "***REMOVED***")
         self.assertEqual(broker.strategy_id, "dummy_strategy_id")
         self.assertEqual(broker.max_order_submit_retries, 3)
         # Verify if maps are correct.
@@ -124,24 +127,6 @@ class TestCcxtBroker1(hunitest.TestCase):
             "[call.checkRequiredCredentials(), call.load_markets()]"
         )
         self.assertEqual(actual_method_calls, expected_method_calls)
-        # Wrong stage.
-        with self.assertRaises(AssertionError) as fail:
-            self.get_test_broker("dummy", contract_type, account_type)
-        actual = str(fail.exception)
-        expected = "Failed assertion *\n'dummy' in '['local', 'preprod']'"
-        self.assertIn(expected, actual)
-        # Wrong contract type.
-        with self.assertRaises(AssertionError) as fail:
-            self.get_test_broker(stage, "dummy", account_type)
-        actual = str(fail.exception)
-        expected = "Failed assertion *\n'dummy' in '['spot', 'futures']'"
-        self.assertIn(expected, actual)
-        # Wrong account type.
-        with self.assertRaises(AssertionError) as fail:
-            self.get_test_broker(stage, contract_type, "dummy")
-        actual = str(fail.exception)
-        expected = "Failed assertion *\n'dummy' in '['trading', 'sandbox']'"
-        self.assertIn(expected, actual)
 
     def test_log_into_exchange(self) -> None:
         """
@@ -153,13 +138,19 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Verify with `spot` contract type.
         _ = self.get_test_broker(stage, "spot", account_type)
         actual_args = pprint.pformat(tuple(exchange_mock.call_args))
-        expected_args = ""
-        self.assertEqual(actual_args, expected_args)
+        expected_args = "(({'apiKey': 'test', 'rateLimit': True, 'secret': 'test'},), {})"
+        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Verify with `futures` contract type.
         _ = self.get_test_broker(stage, "futures", account_type)
         actual_args = pprint.pformat(tuple(exchange_mock.call_args))
-        expected_args = ""
-        self.assertEqual(actual_args, expected_args)
+        expected_args = r"""
+            (({'apiKey': 'test',
+               'options': {'defaultType': 'future'},
+               'rateLimit': True,
+               'secret': 'test'},),
+             {})
+        """
+        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Verify constructed secret.
         broker_class = self.get_test_broker(stage, "futures", "sandbox")
         self.assertEqual(self.get_secret_mock.call_count, 3)
