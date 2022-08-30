@@ -4,9 +4,11 @@ Import as:
 import dataflow.system.test.system_test_case as dtfsytsytc
 """
 
+import abc
 import asyncio
 import datetime
 import logging
+import os
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -20,6 +22,7 @@ import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
@@ -616,6 +619,153 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             purify_text=True,
             purify_expected_text=True,
         )
+
+
+# #####################################################################################
+# Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+# #####################################################################################
+
+
+# TODO(Grisha): Use for the Mock1 pipeline.
+class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1(
+    hunitest.TestCase
+):
+    """
+    Reconcile `Time_ForecastSystem` and
+    `Time_ForecastSystem_with_DataFramePortfolio`.
+
+    It is expected that research PnL is strongly correlated with the PnL from Portfolio.
+    2 versions of PnL may differ by a constant so we use correlation to compare them
+    instead of comparing the values directly.
+
+    Add `ForecastEvaluatorFromPrices` to `Time_ForecastSystem` to compute research PnL.
+    """
+    # TODO(Grisha): factor out, it is common for all the tests that read data
+    # from S3.
+    def get_file_path(self) -> str:
+        """
+        Get path to a file with the market data to replay.
+
+        E.g., `s3://.../unit_test/outcomes/Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio1/input/data.csv.gz`.
+        """
+        input_dir = self.get_input_dir(
+            use_only_test_class=True,
+            use_absolute_path=False,
+        )
+        file_name = "data.csv.gz"
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        file_path = os.path.join(
+            s3_bucket_path,
+            "unit_test",
+            input_dir,
+            file_name,
+        )
+        return file_path
+
+    @abc.abstractmethod
+    def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
+        """
+        Get `Time_ForecastSystem` and fill the `system.config`.
+        """
+
+    def run_Time_ForecastSystem(self) -> Tuple[str, pd.Series]:
+        """
+        Run `Time_ForecastSystem` and compute research PnL.
+        """
+        time_system = self.get_Time_ForecastSystem()
+        with hasynci.solipsism_context() as event_loop:
+            # Complete system config.
+            time_system.config["event_loop_object"] = event_loop
+            # Build DAG runner.
+            time_system_dag_runner = time_system.dag_runner
+            # Config is complete: freeze it before running since we want to be
+            # notified of any config changes, before running.
+            tag = "time_forecast_system"
+            check_system_config(self, time_system, tag)
+            # Run.
+            coroutines = [time_system_dag_runner.predict()]
+            time_system_result_bundles = hasynci.run(
+                asyncio.gather(*coroutines), event_loop=event_loop
+            )
+            # Get the last result bundle data for comparison.
+            result_bundle = time_system_result_bundles[0][-1]
+            forecast_evaluator_from_prices_dict = time_system.config[
+                "research_forecast_evaluator_from_prices"
+            ].to_dict()
+            system_tester = SystemTester()
+            signature, research_pnl = system_tester.get_research_pnl_signature(
+                result_bundle,
+                forecast_evaluator_from_prices_dict,
+            )
+        return signature, research_pnl
+
+    @abc.abstractmethod
+    def get_Time_ForecastSystem_with_DataFramePortfolio(self) -> dtfsyssyst.System:
+        """
+        Get `Time_ForecastSystem_with_DataFramePortfolio` and fill the
+        `system.config`.
+        """
+
+    def run_Time_ForecastSystem_with_DataFramePortfolio(
+        self,
+    ) -> Tuple[str, pd.Series]:
+        """
+        Run `Time_ForecastSystem_with_DataFramePortfolio` and compute Portfolio
+        PnL.
+        """
+        time_system = self.get_Time_ForecastSystem_with_DataFramePortfolio()
+        with hasynci.solipsism_context() as event_loop:
+            # Complete system config.
+            time_system.config["event_loop_object"] = event_loop
+            # Build DAG runner.
+            time_system_dag_runner = time_system.dag_runner
+            # Config is complete: freeze it before running since we want to be
+            # notified of any config changes, before running.
+            tag = "dataframe_portfolio"
+            check_system_config(self, time_system, tag)
+            # Run.
+            coroutines = [time_system_dag_runner.predict()]
+            # TODO(Grisha): do we need run signature?
+            _ = hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+            system_tester = SystemTester()
+            # Compute Portfolio PnL.
+            signature, pnl = system_tester.get_portfolio_signature(
+                time_system.portfolio
+            )
+        return signature, pnl
+
+    def _test1(self) -> None:
+        actual = []
+        # Compute research PnL and check in the signature.
+        research_signature, research_pnl = self.run_Time_ForecastSystem()
+        actual.append(research_signature)
+        # Compute Portfolio PnL and check in the signature.
+        (
+            portfolio_signature,
+            pnl,
+        ) = self.run_Time_ForecastSystem_with_DataFramePortfolio()
+        actual.append(portfolio_signature)
+        # Compute correlation for research PnL vs Portfolio PnL.
+        # TODO(Grisha): copy-pasted from `system_test_case.py`, try to share code.
+        if min(pnl.count(), research_pnl.count()) > 1:
+            # Drop leading NaNs and burn the first PnL entry.
+            research_pnl = research_pnl.dropna().iloc[1:]
+            tail = research_pnl.size
+            # We create new series because the portfolio times may be
+            # disaligned from the research bar times.
+            pnl1 = pd.Series(pnl.tail(tail).values)
+            _LOG.debug("portfolio pnl=\n%s", pnl1)
+            corr_samples = min(tail, pnl1.size)
+            pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
+            _LOG.debug("research pnl=\n%s", pnl2)
+            correlation = pnl1.corr(pnl2)
+            actual.append("\n# pnl agreement with research pnl\n")
+            actual.append(f"corr = {correlation:.3f}")
+            actual.append(f"corr_samples = {corr_samples}")
+        # Check in the output.
+        actual = "\n".join(map(str, actual))
+        self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
 # #############################################################################
