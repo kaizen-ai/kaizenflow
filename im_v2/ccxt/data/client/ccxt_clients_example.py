@@ -44,8 +44,9 @@ def get_CcxtCsvClient_example1(
     universe_version = "small"
     root_dir = get_test_data_dir()
     extension = "csv.gz"
+    data_snapshot = "latest"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, universe_version, resample_1min, root_dir, extension
+        vendor, universe_version, resample_1min, root_dir, extension, data_snapshot,
     )
     return ccxt_file_client
 
@@ -61,8 +62,9 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     universe_version = "small"
     root_dir = get_test_data_dir()
     extension = "csv"
+    data_snapshot = "latest"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, universe_version, resample_1min, root_dir, extension
+        vendor, universe_version, resample_1min, root_dir, extension, data_snapshot,
     )
     return ccxt_file_client
 
@@ -84,8 +86,9 @@ def get_CcxtParquetByAssetClient_example1(
     universe_version = "small"
     root_dir = get_test_data_dir()
     extension = "pq"
+    data_snapshot = "latest"
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, universe_version, resample_1min, root_dir, extension
+        vendor, universe_version, resample_1min, root_dir, extension, data_snapshot,
     )
     return ccxt_client
 

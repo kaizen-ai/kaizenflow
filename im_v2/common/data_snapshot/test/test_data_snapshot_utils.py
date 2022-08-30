@@ -49,4 +49,4 @@ class TestGetDataSnapshot(hunitest.TestCase):
         aws_profile = None
         data_snapshot = "latest"
         with self.assertRaises(AssertionError):
-            imvcdsdsut.get_data_snapshot(test_dir, aws_profile)
+            imvcdsdsut.get_data_snapshot(test_dir, aws_profile, data_snapshot)
