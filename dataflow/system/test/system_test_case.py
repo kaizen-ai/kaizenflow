@@ -59,6 +59,7 @@ def get_signature(
 
 
 def _get_signature_from_result_bundle(
+    self,
     system: dtfsyssyst.System,
     result_bundles: List[dtfcore.ResultBundle],
     add_system_config: bool,
@@ -92,6 +93,7 @@ def _get_signature_from_result_bundle(
             "research_forecast_evaluator_from_prices"
         ].to_dict()
         txt_tmp = compute_run_signature(
+            self,
             dag_runner,
             portfolio,
             result_bundle,
@@ -441,7 +443,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         # Pick the ResultBundle corresponding to the DagRunner execution.
         result_bundles = result_bundles[0]
         actual = _get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature
+            self, system, result_bundles, add_system_config, add_run_signature
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -552,7 +554,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         # Pick the result_bundle that corresponds to the DagRunner.
         result_bundles = coro_output[0]
         actual = _get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature
+            self, system, result_bundles, add_system_config, add_run_signature
         )
         return actual
 
@@ -660,10 +662,11 @@ def compute_run_signature(
     actual = []
     #
     events = dag_runner.events
-    actual.append(self.get_events_signature(events))
-    signature, pnl = self.get_portfolio_signature(portfolio)
+    actual.append(get_events_signature(self, events))
+    signature, pnl = get_portfolio_signature(self, portfolio)
     actual.append(signature)
-    signature, research_pnl = self.get_research_pnl_signature(
+    signature, research_pnl = get_research_pnl_signature(
+        self,
         result_bundle,
         forecast_evaluator_from_prices_dict,
     )
