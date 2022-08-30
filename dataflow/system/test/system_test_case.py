@@ -87,12 +87,11 @@ def _get_signature_from_result_bundle(
         hdbg.dassert_isinstance(result_bundles, list)
         result_bundle = result_bundles[-1]
         # result_bundle.result_df = result_bundle.result_df.tail(40)
-        system_tester = SystemTester()
         # Check output.
         forecast_evaluator_from_prices_dict = system.config[
             "research_forecast_evaluator_from_prices"
         ].to_dict()
-        txt_tmp = system_tester.compute_run_signature(
+        txt_tmp = compute_run_signature(
             dag_runner,
             portfolio,
             result_bundle,
@@ -323,12 +322,11 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
             self, system, "fit"
         )
         # Check the pnl.
-        system_tester = SystemTester()
         forecast_evaluator_from_prices_dict = system.config[
             "research_forecast_evaluator_from_prices"
         ].to_dict()
-        signature, _ = system_tester.get_research_pnl_signature(
-            result_bundle, forecast_evaluator_from_prices_dict
+        signature, _ = get_research_pnl_signature(
+            self, result_bundle, forecast_evaluator_from_prices_dict
         )
         self.check_string(signature, fuzzy_match=True, purify_text=True)
 
@@ -623,117 +621,117 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
 # #############################################################################
 
 
-# TODO(gp): @all These functions should be free-standing.
-class SystemTester:
-    """
-    Test a System.
-    """
+# # TODO(gp): @all These functions should be free-standing.
+# class SystemTester:
+#     """
+#     Test a System.
+#     """
 
-    def get_events_signature(self, events) -> str:
-        # TODO(gp): Use events.to_str()
-        actual = ["# event signature=\n"]
-        events_as_str = "\n".join(
-            [
-                event.to_str(
-                    include_tenths_of_secs=False,
-                    include_wall_clock_time=False,
-                )
-                for event in events
-            ]
-        )
-        actual.append("events_as_str=\n%s" % events_as_str)
-        actual = "\n".join(actual)
-        return actual
+def get_events_signature(self, events) -> str:
+    # TODO(gp): Use events.to_str()
+    actual = ["# event signature=\n"]
+    events_as_str = "\n".join(
+        [
+            event.to_str(
+                include_tenths_of_secs=False,
+                include_wall_clock_time=False,
+            )
+            for event in events
+        ]
+    )
+    actual.append("events_as_str=\n%s" % events_as_str)
+    actual = "\n".join(actual)
+    return actual
 
-    def get_portfolio_signature(self, portfolio) -> Tuple[str, pd.Series]:
-        actual = ["\n# portfolio signature=\n"]
-        actual.append(str(portfolio))
-        actual = "\n".join(actual)
-        statistics = portfolio.get_historical_statistics()
-        pnl = statistics["pnl"]
-        _LOG.debug("pnl=\n%s", pnl)
-        return actual, pnl
+def get_portfolio_signature(self, portfolio) -> Tuple[str, pd.Series]:
+    actual = ["\n# portfolio signature=\n"]
+    actual.append(str(portfolio))
+    actual = "\n".join(actual)
+    statistics = portfolio.get_historical_statistics()
+    pnl = statistics["pnl"]
+    _LOG.debug("pnl=\n%s", pnl)
+    return actual, pnl
 
-    def compute_run_signature(
-        self,
-        dag_runner: dtfcore.DagRunner,
-        portfolio: oms.Portfolio,
-        result_bundle: dtfcore.ResultBundle,
-        forecast_evaluator_from_prices_dict: Dict[str, Any],
-    ) -> str:
-        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
-        # Check output.
-        actual = []
-        #
-        events = dag_runner.events
-        actual.append(self.get_events_signature(events))
-        signature, pnl = self.get_portfolio_signature(portfolio)
-        actual.append(signature)
-        signature, research_pnl = self.get_research_pnl_signature(
-            result_bundle,
-            forecast_evaluator_from_prices_dict,
-        )
-        actual.append(signature)
-        if min(pnl.count(), research_pnl.count()) > 1:
-            # Drop leading NaNs and burn the first PnL entry.
-            research_pnl = research_pnl.dropna().iloc[1:]
-            tail = research_pnl.size
-            # We create new series because the portfolio times may be
-            # disaligned from the research bar times.
-            pnl1 = pd.Series(pnl.tail(tail).values)
-            _LOG.debug("portfolio pnl=\n%s", pnl1)
-            corr_samples = min(tail, pnl1.size)
-            pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
-            _LOG.debug("research pnl=\n%s", pnl2)
-            correlation = pnl1.corr(pnl2)
-            actual.append("\n# pnl agreement with research pnl\n")
-            actual.append(f"corr = {correlation:.3f}")
-            actual.append(f"corr_samples = {corr_samples}")
-        actual = "\n".join(map(str, actual))
-        return actual
+def compute_run_signature(
+    self,
+    dag_runner: dtfcore.DagRunner,
+    portfolio: oms.Portfolio,
+    result_bundle: dtfcore.ResultBundle,
+    forecast_evaluator_from_prices_dict: Dict[str, Any],
+) -> str:
+    hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
+    # Check output.
+    actual = []
+    #
+    events = dag_runner.events
+    actual.append(self.get_events_signature(events))
+    signature, pnl = self.get_portfolio_signature(portfolio)
+    actual.append(signature)
+    signature, research_pnl = self.get_research_pnl_signature(
+        result_bundle,
+        forecast_evaluator_from_prices_dict,
+    )
+    actual.append(signature)
+    if min(pnl.count(), research_pnl.count()) > 1:
+        # Drop leading NaNs and burn the first PnL entry.
+        research_pnl = research_pnl.dropna().iloc[1:]
+        tail = research_pnl.size
+        # We create new series because the portfolio times may be
+        # disaligned from the research bar times.
+        pnl1 = pd.Series(pnl.tail(tail).values)
+        _LOG.debug("portfolio pnl=\n%s", pnl1)
+        corr_samples = min(tail, pnl1.size)
+        pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
+        _LOG.debug("research pnl=\n%s", pnl2)
+        correlation = pnl1.corr(pnl2)
+        actual.append("\n# pnl agreement with research pnl\n")
+        actual.append(f"corr = {correlation:.3f}")
+        actual.append(f"corr_samples = {corr_samples}")
+    actual = "\n".join(map(str, actual))
+    return actual
 
-    def get_research_pnl_signature(
-        self,
-        result_bundle: dtfcore.ResultBundle,
-        forecast_evaluator_from_prices_dict: Dict[str, Any],
-    ) -> Tuple[str, pd.Series]:
-        hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
-        # TODO(gp): @all use actual.append(hprint.frame("system_config"))
-        #  to separate the sections of the output.
-        actual = ["\n# forecast_evaluator_from_prices signature=\n"]
-        hdbg.dassert(
-            forecast_evaluator_from_prices_dict,
-            "`forecast_evaluator_from_prices_dict` must be nontrivial",
-        )
-        forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
-            **forecast_evaluator_from_prices_dict["init"],
-        )
-        result_df = result_bundle.result_df
-        _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
-        #
-        signature = forecast_evaluator.to_str(
-            result_df,
-            style=forecast_evaluator_from_prices_dict["style"],
-            **forecast_evaluator_from_prices_dict["kwargs"],
-        )
-        _LOG.debug("signature=\n%s", signature)
-        actual.append(signature)
-        #
-        _, _, _, _, stats = forecast_evaluator.compute_portfolio(
-            result_df,
-            style=forecast_evaluator_from_prices_dict["style"],
-            **forecast_evaluator_from_prices_dict["kwargs"],
-        )
-        research_pnl = stats["pnl"]
-        actual = "\n".join(map(str, actual))
-        return actual, research_pnl
+def get_research_pnl_signature(
+    self,
+    result_bundle: dtfcore.ResultBundle,
+    forecast_evaluator_from_prices_dict: Dict[str, Any],
+) -> Tuple[str, pd.Series]:
+    hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
+    # TODO(gp): @all use actual.append(hprint.frame("system_config"))
+    #  to separate the sections of the output.
+    actual = ["\n# forecast_evaluator_from_prices signature=\n"]
+    hdbg.dassert(
+        forecast_evaluator_from_prices_dict,
+        "`forecast_evaluator_from_prices_dict` must be nontrivial",
+    )
+    forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
+        **forecast_evaluator_from_prices_dict["init"],
+    )
+    result_df = result_bundle.result_df
+    _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
+    #
+    signature = forecast_evaluator.to_str(
+        result_df,
+        style=forecast_evaluator_from_prices_dict["style"],
+        **forecast_evaluator_from_prices_dict["kwargs"],
+    )
+    _LOG.debug("signature=\n%s", signature)
+    actual.append(signature)
+    #
+    _, _, _, _, stats = forecast_evaluator.compute_portfolio(
+        result_df,
+        style=forecast_evaluator_from_prices_dict["style"],
+        **forecast_evaluator_from_prices_dict["kwargs"],
+    )
+    research_pnl = stats["pnl"]
+    actual = "\n".join(map(str, actual))
+    return actual, research_pnl
 
-    @staticmethod
-    def _append(
-        list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
-    ) -> None:
-        data_str = hpandas.df_to_str(data, index=True, num_rows=None, decimals=3)
-        list_.append(f"{label}=\n{data_str}")
+@staticmethod
+def _append(
+    list_: List[str], label: str, data: Union[pd.Series, pd.DataFrame]
+) -> None:
+    data_str = hpandas.df_to_str(data, index=True, num_rows=None, decimals=3)
+    list_.append(f"{label}=\n{data_str}")
 
 
 def check_system_config(self: Any, system: dtfsyssyst.System, tag: str) -> None:
