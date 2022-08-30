@@ -79,7 +79,6 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     print_setup,
     print_tasks,
     pytest_clean,
-    pytest_collect_only,
     pytest_compare_logs,
     pytest_find_unused_goldens,
     pytest_rename_test,
@@ -110,6 +109,7 @@ try:
         git_branch_diff_with,
         pytest_buildmeister,
         pytest_buildmeister_check,
+        pytest_collect_only,
     )
 except ImportError:
     pass
