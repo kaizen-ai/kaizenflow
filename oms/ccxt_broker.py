@@ -737,7 +737,7 @@ def get_CcxtBroker_prod_instance1(
     Build an `CcxtBroker` for production.
     """
     exchange_id = secret_id.exchange_id
-    universe_version = "v5"
+    universe_version = "v7"
     stage = secret_id.stage
     account_type = secret_id.account_type
     contract_type = "futures"

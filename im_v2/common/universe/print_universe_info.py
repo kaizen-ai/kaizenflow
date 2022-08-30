@@ -50,7 +50,9 @@ def _get_ImClient(im_client: str) -> icdc.ImClient:
         # Login.
         db_connection = hsql.get_connection(*connection_params)
         # Get the real-time `ImClient`.
-        table_name = "ccxt_ohlcv"
+        # TODO(Grisha): this will print only the `futures` universe, allow also
+        # to print `spot` universe.
+        table_name = "ccxt_ohlcv_futures"
         #
         im_client = icdcl.CcxtSqlRealTimeImClient(
             resample_1min, db_connection, table_name
