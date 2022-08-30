@@ -18,8 +18,30 @@ def get_data_snapshot(
     """
     Get data snapshot:
 
-    - latest: return the latest numeric snapshot, e.g. "20220828"
-    - updated_daily: return the snapshot that is updated continuously
+    - Historical data -- latest snapshot
+
+        E.g.:
+        ```
+        root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq
+        data_snapshot = "latest"
+        im_client = ImClient(root_dir, ..., data_snapshot, ...)
+        ```
+    - Historical data -- numeric snapshot
+
+         E.g.:
+         ```
+         root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq
+         data_snapshot = "20220508"
+         im_client = ImClient(root_dir, ..., data_snapshot, ...)
+         ```
+    - Daily updated data
+
+         E.g.:
+         ```
+         root_dir = s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/
+         data_snapshot = ""
+         im_client = ImClient(root_dir, ..., data_snapshot, ...)
+         ```
     """
     if data_snapshot == "latest":
         pattern = "*"
