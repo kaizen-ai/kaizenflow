@@ -6,8 +6,9 @@ import market_data.abstract_market_data as mdabmada
 
 import abc
 import asyncio
+import datetime
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Tuple
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
