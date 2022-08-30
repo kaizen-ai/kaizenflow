@@ -39,7 +39,7 @@ def get_signature(
 ) -> str:
     """
     Compute the signature of a test in terms of:
-    
+
     - system signature
     - result bundle signature
     """
