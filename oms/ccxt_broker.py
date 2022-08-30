@@ -676,6 +676,16 @@ class CcxtBroker(ombroker.Broker):
                 lambda s: s.startswith(self._exchange_id), full_symbol_universe
             )
         )
+        # TODO(Grisha): should we exclude them from the trade universe?
+        # Cannot fetch the limit from the testnet `limits = exchange_markets[symbol]["limits"]`.
+        if "binance::BAKE_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::BAKE_USDT")
+        if "binance::CRV_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::CRV_USDT")
+        if "binance::CTK_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::CTK_USDT")
+        if "binance::DYDX_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::DYDX_USDT")
         # Build mapping.
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
@@ -737,6 +747,8 @@ def get_CcxtBroker_prod_instance1(
     Build an `CcxtBroker` for production.
     """
     exchange_id = secret_id.exchange_id
+    # TODO(Grisha): centralize the universe version, i.e. pass once (e.g., via cmd line)
+    # and then propagate everywhere via `system.config`.
     universe_version = "v7"
     stage = secret_id.stage
     account_type = secret_id.account_type
