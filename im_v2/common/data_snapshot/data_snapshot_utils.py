@@ -13,8 +13,7 @@ import helpers.hs3 as hs3
 def get_data_snapshot(
     root_dir: str,
     aws_profile: Optional[str],
-    *,
-    data_snapshot: str = "latest",
+    data_snapshot: str,
 ) -> str:
     """
     Get data snapshot:
@@ -36,7 +35,7 @@ def get_data_snapshot(
         dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
         hdbg.dassert_lte(1, len(dirs))
         data_snapshot = max(dirs)
-    elif data_snapshot == "«updated_daily»":
+    elif data_snapshot == "updated_daily":
         data_snapshot = ""
     dassert_is_valid_data_snapshot(data_snapshot)
     return data_snapshot

@@ -277,8 +277,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
         dataset: str,
         contract_type: str,
+        data_snapshot: str,
         *,
-        data_snapshot: str = "latest",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
