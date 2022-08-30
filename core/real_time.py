@@ -349,7 +349,7 @@ async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
     bar_duration_in_secs: int,
     # TODO(gp): -> exit_condition
-    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
