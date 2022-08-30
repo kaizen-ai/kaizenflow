@@ -39,7 +39,7 @@ def get_signature(
 ) -> str:
     """
     Compute the signature of a test in terms of:
-    
+
     - system signature
     - result bundle signature
     """
@@ -621,12 +621,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
 # #############################################################################
 
 
-# # TODO(gp): @all These functions should be free-standing.
-# class SystemTester:
-#     """
-#     Test a System.
-#     """
-
 def get_events_signature(self, events) -> str:
     # TODO(gp): Use events.to_str()
     actual = ["# event signature=\n"]
@@ -643,6 +637,7 @@ def get_events_signature(self, events) -> str:
     actual = "\n".join(actual)
     return actual
 
+
 def get_portfolio_signature(self, portfolio) -> Tuple[str, pd.Series]:
     actual = ["\n# portfolio signature=\n"]
     actual.append(str(portfolio))
@@ -651,6 +646,7 @@ def get_portfolio_signature(self, portfolio) -> Tuple[str, pd.Series]:
     pnl = statistics["pnl"]
     _LOG.debug("pnl=\n%s", pnl)
     return actual, pnl
+
 
 def compute_run_signature(
     self,
@@ -690,6 +686,7 @@ def compute_run_signature(
     actual = "\n".join(map(str, actual))
     return actual
 
+
 def get_research_pnl_signature(
     self,
     result_bundle: dtfcore.ResultBundle,
@@ -725,6 +722,7 @@ def get_research_pnl_signature(
     research_pnl = stats["pnl"]
     actual = "\n".join(map(str, actual))
     return actual, research_pnl
+
 
 @staticmethod
 def _append(
