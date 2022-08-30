@@ -59,7 +59,7 @@ def get_signature(
 
 
 def _get_signature_from_result_bundle(
-    self,
+    self: Any,
     system: dtfsyssyst.System,
     result_bundles: List[dtfcore.ResultBundle],
     add_system_config: bool,
