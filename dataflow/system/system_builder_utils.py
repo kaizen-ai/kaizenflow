@@ -703,7 +703,7 @@ def get_realtime_DagRunner_from_system(
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
-        "time_out_in_secs": rt_timeout_in_secs_or_time,
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
     }
     dag_runner_kwargs = {
         "dag": dag,
@@ -747,7 +747,7 @@ def get_RealTimeDagRunner_from_System(
         "bar_duration_in_secs": system.config[
             "dag_runner_config", "bar_duration_in_secs"
         ],
-        "time_out_in_secs": system.config[
+        "rt_timeout_in_secs_or_time": system.config[
             "dag_runner_config", "rt_timeout_in_secs_or_time"
         ],
     }

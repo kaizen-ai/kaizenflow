@@ -148,7 +148,7 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         """
         kwargs = {
             "bar_duration_in_secs": 1,
-            "time_out_in_secs": 1.0 * 3 + 0.1,
+            "rt_timeout_in_secs_or_time": 1 * 3,
         }
         return kwargs
 
@@ -160,7 +160,7 @@ class Test_execute_with_real_time_loop1(hunitest.TestCase):
         exit_time = datetime.time(9, 30, 6)
         kwargs = {
             "bar_duration_in_secs": 1,
-            "time_out_in_secs": exit_time,
+            "rt_timeout_in_secs_or_time": exit_time,
         }
         return kwargs
 
