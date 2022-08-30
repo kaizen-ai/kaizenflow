@@ -310,7 +310,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         )
         self._contract_type = contract_type
         data_snapshot = icdds.get_data_snapshot(
-            root_dir, aws_profile, data_snapshot=data_snapshot
+            root_dir, aws_profile, data_snapshot
         )
         self._data_snapshot = data_snapshot
 

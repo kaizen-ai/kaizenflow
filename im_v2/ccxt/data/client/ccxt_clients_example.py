@@ -116,7 +116,7 @@ def get_CcxtHistoricalPqByTileClient_example1(
         partition_mode,
         dataset,
         contract_type,
-        data_snapshot=data_snapshot,
+        data_snapshot,
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client
@@ -150,7 +150,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
         partition_mode,
         dataset,
         contract_type,
-        data_snapshot=data_snapshot,
+        data_snapshot,
         aws_profile=aws_profile,
     )
     return ccxt_parquet_client

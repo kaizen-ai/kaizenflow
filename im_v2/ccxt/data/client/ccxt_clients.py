@@ -188,7 +188,7 @@ class CcxtCddCsvParquetByAssetClient(
         )
         self._extension = extension
         data_snapshot = icdds.get_data_snapshot(
-            root_dir, aws_profile, data_snapshot=data_snapshot
+            root_dir, aws_profile, data_snapshot
         )
         self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.
@@ -342,6 +342,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
             partition_mode,
             dataset,
             contract_type,
-            data_snapshot=data_snapshot,
+            data_snapshot,
             aws_profile=aws_profile,
         )
