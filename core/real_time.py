@@ -97,7 +97,9 @@ class ReplayedTime:
         # This is when the experiment starts.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
-            hprint.to_str("self._initial_replayed_timestamp self._initial_wall_clock_dt")
+            hprint.to_str(
+                "self._initial_replayed_timestamp self._initial_wall_clock_dt"
+            )
         )
         hdateti.dassert_tz_compatible(
             self._initial_replayed_timestamp, self._initial_wall_clock_dt
@@ -119,7 +121,8 @@ class ReplayedTime:
         hdbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
         current_replayed_timestamp = (
-            self._initial_replayed_timestamp + self._speed_up_factor * elapsed_time
+            self._initial_replayed_timestamp
+            + self._speed_up_factor * elapsed_time
         )
         return current_replayed_timestamp
 
@@ -139,7 +142,9 @@ def get_replayed_wall_clock_time(
         tz, event_loop=event_loop
     )
     replayed_time = ReplayedTime(
-        initial_replayed_timestamp, get_wall_clock_time, speed_up_factor=speed_up_factor
+        initial_replayed_timestamp,
+        get_wall_clock_time,
+        speed_up_factor=speed_up_factor,
     )
     return replayed_time.get_wall_clock_time
 
@@ -255,7 +260,8 @@ def align_on_time_grid(
     use_high_resolution: bool = False,
 ) -> None:
     """
-    Wait until the current wall clock time is aligned on `bar_duration_in_secs`.
+    Wait until the current wall clock time is aligned on
+    `bar_duration_in_secs`.
 
     E.g., for `bar_duration_in_secs` = 2, if wall clock time is `2021-07-29 10:45:51`,
     then this function terminates when the wall clock is `2021-07-29 10:46:00`.
@@ -349,7 +355,7 @@ async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
     bar_duration_in_secs: int,
     # TODO(gp): -> exit_condition
-    time_out_in_secs: Union[float, int, datetime.time, None],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
@@ -369,7 +375,7 @@ async def execute_with_real_time_loop(
         - an execution trace representing the events in the real-time loop; and
         - a list of results returned by the workload function
     """
-    _LOG.debug(hprint.to_str("bar_duration_in_secs time_out_in_secs"))
+    _LOG.debug(hprint.to_str("bar_duration_in_secs rt_timeout_in_secs_or_time"))
     hdbg.dassert(
         callable(get_wall_clock_time),
         "get_wall_clock_time='%s' is not callable",
@@ -389,7 +395,7 @@ async def execute_with_real_time_loop(
             "Real-time loop: "
             + "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'",
             num_it,
-            time_out_in_secs,
+            rt_timeout_in_secs_or_time,
             wall_clock_time,
             real_wall_clock_time,
             level=1,
@@ -410,9 +416,11 @@ async def execute_with_real_time_loop(
         _, workload_result = result
         yield event, workload_result
         # Exit, if needed.
-        if time_out_in_secs is not None:
-            if isinstance(time_out_in_secs, (int, float)):
-                num_iterations = int(time_out_in_secs / bar_duration_in_secs)
+        if rt_timeout_in_secs_or_time is not None:
+            if isinstance(rt_timeout_in_secs_or_time, int):
+                num_iterations = int(
+                    rt_timeout_in_secs_or_time / bar_duration_in_secs
+                )
                 hdbg.dassert_lt(0, num_iterations)
                 _LOG.debug(hprint.to_str("num_it num_iterations"))
                 if num_it >= num_iterations:
@@ -420,19 +428,19 @@ async def execute_with_real_time_loop(
                         "Exiting loop: %s", hprint.to_str("num_it num_iterations")
                     )
                     break
-            elif isinstance(time_out_in_secs, datetime.time):
+            elif isinstance(rt_timeout_in_secs_or_time, datetime.time):
                 curr_time = wall_clock_time.time()
-                _LOG.debug(hprint.to_str("curr_time time_out_in_secs"))
-                if curr_time >= time_out_in_secs:
+                _LOG.debug(hprint.to_str("curr_time rt_timeout_in_secs_or_time"))
+                if curr_time >= rt_timeout_in_secs_or_time:
                     _LOG.debug(
                         "Exiting loop: %s",
-                        hprint.to_str("curr_time time_out_in_secs"),
+                        hprint.to_str("curr_time rt_timeout_in_secs_or_time"),
                     )
                     break
             else:
                 raise ValueError(
-                    f"Can't process time_out_in_secs={time_out_in_secs} of type "
-                    + f"'{type(time_out_in_secs)}'"
+                    f"Can't process rt_timeout_in_secs_or_time={rt_timeout_in_secs_or_time} of type "
+                    + f"'{type(rt_timeout_in_secs_or_time)}'"
                 )
         num_it += 1
 
