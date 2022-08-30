@@ -587,6 +587,10 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
         or hserver.is_dev_ck()
         or hserver.is_mac()
         or hserver.is_inside_ci()
+        # TODO(Juraj): Make this function less confusing.
+        # Note(Juraj): cmamp prod container is an exception since we
+        # actually want to access the prod s3 bucket.
+        or hserver.is_cmamp_prod()
     )
     if is_prod_machine:
         # On prod machines we let the Docker container infer the right AWS
