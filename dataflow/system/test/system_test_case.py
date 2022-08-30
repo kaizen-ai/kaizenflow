@@ -160,6 +160,47 @@ def run_ForecastSystem_dag_from_backtest_config(
     return result_bundle
 
 
+# TODO(Dan): Do we need to implement "fit" method here?
+def run_Time_ForecastSystem_dag(
+    self: Any,
+    system: dtfsyssyst.System,
+    tag: str,
+    *,
+    add_order_processor: bool = False,
+) -> List[dtfcore.ResultBundle]:
+    """
+    Run `Time_ForecastSystem` DAG with predict method.
+
+    :param system: system object to extract `DagRunner` from
+    :param tag: system config tag
+    :param add_order_processor: whether to add order processor to the run
+    :return: result bundles
+    """
+    dtfssybuut.apply_unit_test_log_dir(self, system)
+    #
+    with hasynci.solipsism_context() as event_loop:
+        coroutines = []
+        # Complete the system config.
+        system.config["event_loop_object"] = event_loop
+        # Create DAG runner.
+        dag_runner = system.dag_runner
+        # Check the system config.
+        check_system_config(self, system, tag)
+        coroutines.append(dag_runner.predict())
+        #
+        # TODO(Dan): Do we need to add order processor here?
+        if add_order_processor:
+            # Create and add order processor.
+            order_processor_coroutine = system.order_processor
+            hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
+            coroutines.append(order_processor_coroutine)
+        #
+        result_bundles = hasynci.run(
+            asyncio.gather(*coroutines), event_loop=event_loop
+        )
+    return result_bundles
+
+
 # #############################################################################
 # System_CheckConfig_TestCase1
 # #############################################################################
@@ -352,21 +393,11 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         *,
         output_col_name: str = "prediction",
     ) -> None:
-        dtfssybuut.apply_unit_test_log_dir(self, system)
-        with hasynci.solipsism_context() as event_loop:
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            # 1) Check the system config.
-            tag = "forecast_system"
-            check_system_config(self, system, tag)
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-        # 2) Check the signature of the simulation.
+        # Run the system.
+        result_bundles = run_Time_ForecastSystem_dag(
+            self, system, "forecast_system"
+        )
+        # Check the signature of the simulation.
         result_bundle = result_bundles[0][-1]
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
@@ -412,7 +443,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 "add_system_config add_run_signature"
             )
         )
-        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Set `trading_end_time`.
         if trading_end_time is not None:
             system.config[
@@ -426,19 +456,10 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             "process_forecasts_dict",
             "liquidate_at_trading_end_time",
         ] = liquidate_at_trading_end_time
-        # Run the system.
-        with hasynci.solipsism_context() as event_loop:
-            system.config["event_loop_object"] = event_loop
-            dag_runner = system.dag_runner
-            # 1) Check the system config.
-            # TODO(gp): Freeze the config after `dag_runner` in all the tests.
-            tag = "dataframe_portfolio"
-            check_system_config(self, system, tag)
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
+        # 1) Run the system.
+        result_bundles = run_Time_ForecastSystem_dag(
+            self, system, "dataframe_portfolio"
+        )
         # 2) Check the run signature.
         # Pick the ResultBundle corresponding to the DagRunner execution.
         result_bundles = result_bundles[0]
@@ -525,34 +546,18 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         Run a System with a DatabasePortfolio.
         """
-        dtfssybuut.apply_unit_test_log_dir(self, system)
-        #
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
-        #
-        with hasynci.solipsism_context() as event_loop:
-            coroutines = []
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            system.config["db_connection_object"] = self.connection
-            # 1) Check the system config.
-            tag = "database_portfolio"
-            check_system_config(self, system, tag)
-            # Create DAG runner.
-            dag_runner = system.dag_runner
-            coroutines.append(dag_runner.predict())
-            # Create and add order processor.
-            order_processor_coroutine = system.order_processor
-            hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
-            coroutines.append(order_processor_coroutine)
-            #
-            coro_output = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-        # 2) Check the signature from the result bundle.
-        # Pick the result_bundle that corresponds to the DagRunner.
-        result_bundles = coro_output[0]
+        system.config["db_connection_object"] = self.connection
+        # Run the system.
+        result_bundles = run_Time_ForecastSystem_dag(
+            self, system, "database_portfolio", add_order_processor=True
+        )
+        # Check the signature from the result bundle.
+        # Pick the result bundle that corresponds to the DagRunner.
+        # TODO(Dan): What is actually a result bundlle and what is a list of result bundles?
+        result_bundles = result_bundles[0]
         actual = _get_signature_from_result_bundle(
             system, result_bundles, add_system_config, add_run_signature
         )
