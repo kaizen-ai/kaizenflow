@@ -27,19 +27,32 @@ import oms
 
 _LOG = logging.getLogger(__name__)
 
-# There are different types of functions
-# - `apply_..._config(system, ...)`
-#   - Use parameters from `system` and other inputs to populate the System Config
-#     with values corresponding to a certain System object
-# TODO(gp): It's not clear if the `apply_...` functions should return System or
-#  just implicitly update System in place.
-#  - The explicit approach of assigning System as return value adds more code
-#    and creates ambiguity, since it works even if one doesn't assign it.
-#  - The implicit approach allows less code variation, requires less code, but
-#    it relies on a side effect.
-# - `build_..._from_System(system)`
-#   - Build objects using parameters from System Config
 
+# TODO(gp): -> system_builders.py
+
+# There are different types of functions:
+# 1) `apply_..._config(system, ...)`
+#    - Use parameters from `system` and other inputs to populate the System config
+#      with values corresponding to a certain System object
+# 2) `build_..._from_System(system)`
+#    - Build objects using parameters from System config
+
+# TODO(gp): It's not clear if the `apply_...` functions should return a System or
+#  just implicitly update System in place.
+#  - Explicit approach of assigning System as return value
+#    - Cons:
+#      - adds more code `system = apply_..._config(system)`
+#      - creates more code variability since we can assign the return value or not
+#      - creates ambiguity since it works even if one doesn't assign it
+#  - Implicit approach
+#    - Pros:
+#      - allows less code variation since the code is always
+#        `apply_..._config(system)`
+#      - requires less code
+#    - Cons
+#      - relies on a side effect
+#  It seems that the implicit approach is the best one
+#
 
 # Maintain the functions ordered to resemble the dependency / construction order
 # in a System:
@@ -60,13 +73,15 @@ def get_SystemConfig_template_from_DagBuilder(
     dag_builder: dtfcore.DagBuilder,
 ) -> cconfig.Config:
     """
-    Build a system config from a DAG builder.
+    Build a System config from a DAG builder.
     """
     system_config = cconfig.Config()
     # Save the `DagBuilder` and the `DagConfig` in the config object.
     hdbg.dassert_isinstance(dag_builder, dtfcore.DagBuilder)
+    #
     dag_config = dag_builder.get_config_template()
     system_config["dag_config"] = dag_config
+    #
     system_config["dag_builder_object"] = dag_builder
     # Track the name of the builder for book-keeping.
     system_config["dag_builder_class"] = dag_builder.__class__.__name__
