@@ -414,7 +414,7 @@ object.str:
             2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  102.0       101     100       1.0
           _knowledge_datetime_col_name='timestamp_db' <str>
           _delay_in_secs='5' <int>>,
-         'time_out_in_secs': 2100}
+         'rt_timeout_in_secs_or_time': 2100}
       _dst_dir='None' <NoneType>
       _fit_at_beginning='False' <bool>
       _wake_up_timestamp='None' <NoneType>
@@ -471,4 +471,4 @@ dag_runner_object:
       2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  102.0       101     100       1.0
       2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  102.0       101     100       1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
-    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)
+    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)
