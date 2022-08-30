@@ -62,6 +62,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     """
     Build a MarketData backed with RealTimeImClient.
     """
+    _LOG.debug(hprint.to_str("asset_ids"))
     # TODO(Grisha): @Dan pass as much as possible via `system.config`.
     resample_1min = False
     # Get environment variables with login info.
@@ -72,6 +73,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     db_connection = hsql.get_connection(*connection_params)
     # Get the real-time `ImClient`.
     table_name = "ccxt_ohlcv"
+    #table_name = "ccxt_ohlcv_futures"
     im_client = imvcdccccl.CcxtSqlRealTimeImClient(
         resample_1min, db_connection, table_name
     )

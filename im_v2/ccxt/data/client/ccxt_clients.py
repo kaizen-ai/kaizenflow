@@ -14,6 +14,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
@@ -125,6 +126,7 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         db_connection: hsql.DbConnection,
         table_name: str,
     ) -> None:
+        _LOG.debug(hprint.to_str("resample_1min db_connection table_name"))
         vendor = "ccxt"
         super().__init__(vendor, resample_1min, db_connection, table_name)
 

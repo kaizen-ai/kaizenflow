@@ -49,10 +49,13 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+# %% [markdown]
+# # Configure dirs
+
 # %%
 sim_dir = "../../../system_log_dir/forecast_evaluator"
 #prod_dir = "/data/cf_production/CF_2022_08_15/job-sasm_job-jobid-1002348952/user_executable_run_0-1000005033091/cf_prod_system_log_dir"
-prod_dir = "../../../system_log_dir-20220826.prod"
+prod_dir = "../../../system_log_dir.prod"
 prod_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 
 # Simulation data.
@@ -66,9 +69,9 @@ hdbg.dassert_dir_exists(prod_dir)
 # !ls {prod_dir}
 
 # %%
-date = "2022-08-26"
+date = "2022-08-29"
 start_timestamp = pd.Timestamp(date + " 09:30:00", tz="America/New_York")
-end_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 20:00:00", tz="America/New_York")
 
 # %%
 dict_ = {
@@ -138,28 +141,90 @@ paper_df, paper_stats_df = oms.Portfolio.read_state(
 )
 
 # %%
+import oms.process_forecasts_ as oprofore
+log_dir = "/app/system_log_dir.prod/process_forecasts"
+paper_target_positions_df = oprofore.ForecastProcessor.read_logged_target_positions(log_dir)
+paper_target_positions_df.head(3)
+
+# %%
+paper_df.head(3)
+
+# %%
+paper_stats_df.head(3)
+
+# %% [markdown]
+# # Align data
+
+# %%
+print(start_timestamp, end_timestamp)
 paper_df = paper_df.loc[start_timestamp:end_timestamp]
 paper_stats_df = paper_stats_df.loc[start_timestamp:end_timestamp]
 
 
 # %%
-paper_df
+paper_df.head(3)
 
 # %%
+research_df.head(3)
+
+# %% [markdown]
+# ## Universe comparison
+
+# %% [markdown]
+# ## Compare forecasts
+
+# %%
+#print(paper_df.columns.levels[0])
+print(paper_target_positions_df.columns.levels[0])
 print(research_df.columns.levels[0])
 
 #research_df["price"]
 #research
 
 # %%
-research_df["position"]
+paper_target_positions_df["prediction"].dropna()
+
+# %%
+research_df["prediction"].dropna()
+
+# %%
+display(paper_target_positions_df["prediction"].head(3))
+display(research_df["prediction"].head(3))
+
+# %%
+#asset_id = 1467591036
+asset_id = 1467591036
+
+# %%
+#print(paper_target_positions_df["prediction"][asset_id].index)
+#print(research_df["prediction"][asset_id].index)
+
+# %%
+#research_df["prediction"][asset_id].index = research_df["prediction"][asset_id].index.snap("5T")
+#paper_target_positions_df["prediction"][asset_id].index = 
+paper_target_positions_df.index = [dt.round("5T") for dt in paper_target_positions_df["prediction"][asset_id].index]
+
+# %%
+paper_target_positions_df["prediction"][asset_id].dropna()
+
+# %%
+#asset_id = 1467591036
+asset_id = 1467591036
+prediction_df = pd.merge(paper_target_positions_df["prediction"][asset_id],
+                         research_df["prediction"][asset_id],
+                         left_index=True, right_index=True, how="outer")
+
+# prediction_df
+prediction_df.dropna()
+
+#display(prediction_df.dropna())
+
+# %%
+research_df["prediction"]
+
 
 # %%
 #research_df
-
-# %%
-research_stats_df
-
 
 # %%
 def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
@@ -187,18 +252,19 @@ paper_stats_df.index = paper_stats_df.index.round(config["freq"])
 
 # %%
 #research_stats_df
-#paper_stats_df
-
-# %%
-df = bar_stats_df.dropna()[[("research", "pnl"), ("paper", "pnl")]]#.plot()
-df["paper", "pnl"] *= 20
-df.plot()
+paper_stats_df
 
 # %%
 bar_stats_df = pd.concat(
     [research_stats_df, paper_stats_df], axis=1, keys=["research", "paper"]
 )
-display(bar_stats_df.tail(100))
+#display(bar_stats_df.head(3))
+display(bar_stats_df.dropna().tail(3))
+
+# %%
+df = bar_stats_df.dropna()[[("research", "pnl"), ("paper", "pnl")]]#.plot()
+df["paper", "pnl"] *= 20
+df.plot()
 
 # %%
 stats_computer = dtfmod.StatsComputer()
