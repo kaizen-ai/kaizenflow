@@ -20,21 +20,23 @@ class TestGetDataSnapshot(hunitest.TestCase):
         base_dir = self.get_base_test_dir()
         test_dir = os.path.join(base_dir, "numeric_data_snapshots")
         aws_profile = None
+        data_snapshot = "latest"
         latest_data_snapshot = imvcdsdsut.get_data_snapshot(
-            test_dir, aws_profile
+            test_dir, aws_profile, data_snapshot
         )
         expected = "20220720"
         self.assert_equal(latest_data_snapshot, expected)
 
     def test_get_data_snapshot2(self) -> None:
         """
-        `root_dir` contains `latest` data snapshot.
+        `root_dir` contains alpha-numeric data snapshots.
         """
         base_dir = self.get_base_test_dir()
         test_dir = os.path.join(base_dir, "alpha_numeric_data_snapshots")
         aws_profile = None
+        data_snapshot = "latest"
         latest_data_snapshot = imvcdsdsut.get_data_snapshot(
-            test_dir, aws_profile
+            test_dir, aws_profile, data_snapshot
         )
         expected = "20220130"
         self.assert_equal(latest_data_snapshot, expected)
@@ -45,5 +47,6 @@ class TestGetDataSnapshot(hunitest.TestCase):
         """
         test_dir = self.get_base_test_dir()
         aws_profile = None
+        data_snapshot = "latest"
         with self.assertRaises(AssertionError):
             imvcdsdsut.get_data_snapshot(test_dir, aws_profile)
