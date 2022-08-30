@@ -100,7 +100,11 @@ class Config:
         Set/update `key` to `val`, equivalent to `dict[key] = val`.
 
         If `key` is an iterable of keys, then the key hierarchy is
-        navigated/created and the leaf value added/updated with `val`.
+        navigated / created and the leaf value added/updated with `val`.
+
+        :param do_not_clobber: assert in case we try to write some data that has
+            already been read
+        :param
         """
         # This is a new key so it should not be present.
         hdbg.dassert_not_in(key, self._config)
@@ -142,9 +146,12 @@ class Config:
                     self._config,
                 )
                 if head_key in self:
-                    # We mark a key as read only when it's read from a client of Config, not from the Config itself.
+                    # We mark a key as read only when it's read from a client of
+                    # Config, not from the Config itself.
                     mark_key_as_read = False
-                    subconfig = self.__getitem__(head_key, report_mode="none", mark_key_as_read=mark_key_as_read)
+                    subconfig = self.__getitem__(
+                        head_key, report_mode="none",
+                        mark_key_as_read=mark_key_as_read)
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
@@ -335,7 +342,9 @@ class Config:
     def add_subconfig(self, key: str) -> "Config":
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
-        self._config[key] = config
+        self.__setitem__(key, mark_key_as_read=False)
+        self._is_key_read[key] = False
+        hdbg.dassert_eq(sorted(self._config.keys()), sorted(self._is_key_read.keys()))
         return config
 
     def set_update_mode(self, update_mode: str) -> None:

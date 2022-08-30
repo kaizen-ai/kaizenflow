@@ -1719,7 +1719,9 @@ class Test_mark_key_as_read(hunitest.TestCase):
         - string keys
         """
         config = cconconf.Config()
+        _LOG.debug('## config.add_subconfig("read_data")')
         config.add_subconfig("read_data")
+        _LOG.debug('## config["read_data"]["file_name"] = "test_name.txt"')
         config["read_data"]["file_name"] = "test_name.txt"
         is_key_read = config._is_key_read
         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
