@@ -10,7 +10,8 @@ class TestGetDataSnapshot(hunitest.TestCase):
     def get_base_test_dir() -> str:
         base_dir = os.path.join(
             hgit.get_amp_abs_path(),
-            "im_v2/common/data_snapshot/test/test_data_snapshots")
+            "im_v2/common/data_snapshot/test/test_data_snapshots",
+        )
         return base_dir
 
     def test_get_data_snapshot1(self) -> None:

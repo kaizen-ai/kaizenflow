@@ -27,9 +27,10 @@ def get_test_data_dir() -> str:
     hdbg.dassert_dir_exists(test_data_dir)
     return test_data_dir
 
-# ################################################################################
+
+# #############################################################################
 # CcxtCsvClient
-# ################################################################################
+# #############################################################################
 
 
 def get_CcxtCsvClient_example1(
@@ -46,7 +47,12 @@ def get_CcxtCsvClient_example1(
     extension = "csv.gz"
     data_snapshot = "latest"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, universe_version, resample_1min, root_dir, extension, data_snapshot,
+        vendor,
+        universe_version,
+        resample_1min,
+        root_dir,
+        extension,
+        data_snapshot,
     )
     return ccxt_file_client
 
@@ -64,14 +70,19 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     extension = "csv"
     data_snapshot = "latest"
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, universe_version, resample_1min, root_dir, extension, data_snapshot,
+        vendor,
+        universe_version,
+        resample_1min,
+        root_dir,
+        extension,
+        data_snapshot,
     )
     return ccxt_file_client
 
 
-# ################################################################################
+# #############################################################################
 # CcxtParquetByAssetClient
-# ################################################################################
+# #############################################################################
 
 
 def get_CcxtParquetByAssetClient_example1(
@@ -88,14 +99,20 @@ def get_CcxtParquetByAssetClient_example1(
     extension = "pq"
     data_snapshot = "latest"
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
-        vendor, universe_version, resample_1min, root_dir, extension, data_snapshot,
+        vendor,
+        universe_version,
+        resample_1min,
+        root_dir,
+        extension,
+        data_snapshot,
     )
     return ccxt_client
 
 
-# ################################################################################
+# #############################################################################
 # CcxtHistoricalPqByTileClient
-# ################################################################################
+# #############################################################################
+
 
 def get_CcxtHistoricalPqByTileClient_example1(
     universe_version: str,
