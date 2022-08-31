@@ -23,7 +23,7 @@ class TestGetDataSnapshot(hunitest.TestCase):
         aws_profile = None
         data_snapshot = "latest"
         latest_data_snapshot = imvcdsdsut.get_data_snapshot(
-            test_dir, aws_profile, data_snapshot
+            test_dir, data_snapshot, aws_profile
         )
         expected = "20220720"
         self.assert_equal(latest_data_snapshot, expected)
@@ -37,7 +37,7 @@ class TestGetDataSnapshot(hunitest.TestCase):
         aws_profile = None
         data_snapshot = "latest"
         latest_data_snapshot = imvcdsdsut.get_data_snapshot(
-            test_dir, aws_profile, data_snapshot
+            test_dir, data_snapshot, aws_profile
         )
         expected = "20220130"
         self.assert_equal(latest_data_snapshot, expected)
@@ -50,4 +50,4 @@ class TestGetDataSnapshot(hunitest.TestCase):
         aws_profile = None
         data_snapshot = "latest"
         with self.assertRaises(AssertionError):
-            imvcdsdsut.get_data_snapshot(test_dir, aws_profile, data_snapshot)
+            imvcdsdsut.get_data_snapshot(test_dir, data_snapshot, aws_profile)
