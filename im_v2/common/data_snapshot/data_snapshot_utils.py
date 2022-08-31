@@ -4,7 +4,6 @@ Import as:
 import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 """
 
-import re
 from typing import Optional
 
 import helpers.hdbg as hdbg
@@ -66,7 +65,7 @@ def get_data_snapshot(
             use_relatives_paths,
             aws_profile=aws_profile,
         )
-        dirs = [snapshot for snapshot in dirs if re.match(r"\d{8}", snapshot)]
+        dirs = [snapshot for snapshot in dirs if snapshot.isnumeric()]
         hdbg.dassert_lte(1, len(dirs))
         data_snapshot = max(dirs)
     dassert_is_valid_data_snapshot(data_snapshot)
