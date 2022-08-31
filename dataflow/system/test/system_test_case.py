@@ -168,9 +168,9 @@ def run_Time_ForecastSystem(
     """
     Run `Time_ForecastSystem` with predict method.
 
-    :param system: system object
+    :param system: `Time_ForecastSystem` object
     :param config_tag: tag used to freeze the system config by `check_system_config()`
-    :return: DAG result bundles
+    :return: `DagRunner` result bundles
     """
     dtfssybuut.apply_unit_test_log_dir(self, system)
     #
@@ -178,13 +178,14 @@ def run_Time_ForecastSystem(
         coroutines = []
         # Complete the system config.
         system.config["event_loop_object"] = event_loop
-        # Create DAG runner.
+        # Create a `DagRunner`.
         dag_runner = system.dag_runner
         # Check the system config against the frozen value.
         check_system_config(self, system, config_tag)
         coroutines.append(dag_runner.predict())
-        # Create and add order processor if it is specified in the config.
+        #
         if "order_processor_config" in system.config:
+            # Get the `OrderProcessor` coroutine.
             order_processor_coroutine = system.order_processor
             hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
