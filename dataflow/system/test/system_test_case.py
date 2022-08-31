@@ -136,7 +136,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     """
     hdbg.dassert_in(method, ["fit", "predict"])
     dtfssybuut.apply_unit_test_log_dir(self, system)
-    # Force building the DAG runner.
+    # Build the DAG runner.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # Check the system config.
@@ -179,7 +179,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         """
         hdbg.dassert_isinstance(system, dtfsyssyst.System)
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        # Force building the DAG runner.
+        # Build the DAG runner.
         _ = system.dag_runner
         # TODO(gp): Use check_system_config.
         txt = []
@@ -231,7 +231,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Save the signature of the system
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        # Force building the DAG runner.
+        # Build the DAG runner.
         dag_runner = system.dag_runner
         # Set the time boundaries.
         dag_runner.set_fit_intervals(
@@ -622,13 +622,16 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
 
 
 # #############################################################################
-# ForecastSystem_vs_Time_ForecastSystem_TestCase1
+# NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     """
-    Reconcilate `ForecastSystem` and `Time_ForecastSystem`.
+    Reconcile (non-time) `ForecastSystem` and `Time_ForecastSystem`.
+
+    Make sure that (non-time) `ForecastSystem` and `Time_ForecastSystem`
+    produce the same predictions.
     """
 
     @abc.abstractmethod
@@ -638,13 +641,14 @@ class ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         """
 
     @abc.abstractmethod
-    def get_ForecastSystem(
+    def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
         self, time_system: dtfsyssyst.System
     ) -> dtfsyssyst.System:
         """
         Get the (non-time) `ForecastSystem` via initiated `Time_ForecastSystem`.
         """
 
+    # TODO(Grisha): @Dan make `get_file_path()` free-standing.
     def get_file_path(self) -> str:
         """
         Get path to a file with the market data to replay.
@@ -713,13 +717,13 @@ class ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             )
         return time_system_signature
 
-    def get_ForecastSystem_signature(
+    def get_NonTime_ForecastSystem_signature(
         self, non_time_system: dtfsyssyst.System, output_col_name: str
     ) -> str:
         """
-        Get `ForecastSystem` outcome signature.
+        Get (non-time) `ForecastSystem` outcome signature.
         """
-        # Force building the `Forecast_System` DAG runner.
+        # Build the `Forecast_System` DAG runner.
         non_time_system_dag_runner = non_time_system.dag_runner
         # Config is complete: freeze it before running since we want to be
         # notified of any config changes, before running.
@@ -751,7 +755,7 @@ class ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         result_bundle: dtfcore.ResultBundle
     ) -> dtfcore.ResultBundle:
         """
-        Postprocess result bundle for comparison.
+        Postprocess result bundle to unify system output format for comparison.
         """
         # Clear index column name in result dataframe.
         result_bundle_df = result_bundle.result_df
@@ -764,8 +768,8 @@ class ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         time_system_signature = self.get_Time_ForecastSystem_signature(
             time_system, output_col_name
         )
-        non_time_system = self.get_ForecastSystem(time_system)
-        non_time_system_signature = self.get_ForecastSystem_signature(
+        non_time_system = self.get_NonTime_ForecastSystem_from_Time_ForecastSystem(time_system)
+        non_time_system_signature = self.get_NonTime_ForecastSystem_signature(
             non_time_system, output_col_name
         )
         # Compare system results.
