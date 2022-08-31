@@ -798,21 +798,16 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         PnL.
         """
         time_system = self.get_Time_ForecastSystem_with_DataFramePortfolio()
-        with hasynci.solipsism_context() as event_loop:
-            # Complete system config.
-            time_system.config["event_loop_object"] = event_loop
-            # Once a `DagRunner` is built a config is complete.
-            _ = time_system.dag_runner
-            # Run the system and check the config against the frozen value.
-            config_tag = "dataframe_portfolio"
-            _ = run_Time_ForecastSystem(
-                self, time_system, config_tag
-            )
-            system_tester = SystemTester()
-            # Compute Portfolio PnL.
-            signature, pnl = system_tester.get_portfolio_signature(
-                time_system.portfolio
-            )
+        # Run the system and check the config against the frozen value.
+        config_tag = "dataframe_portfolio"
+        _ = run_Time_ForecastSystem(
+            self, time_system, config_tag
+        )
+        system_tester = SystemTester()
+        # Compute Portfolio PnL.
+        signature, pnl = system_tester.get_portfolio_signature(
+            time_system.portfolio
+        )
         return signature, pnl
 
     def _test1(self) -> None:

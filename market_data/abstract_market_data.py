@@ -147,10 +147,6 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         max_iterations = int(rt_timeout_in_secs_or_time / sleep_in_secs)
         hdbg.dassert_lte(1, max_iterations)
         self._max_iterations = max_iterations
-        # print("max_iterations", max_iterations)
-        # print("rt_timeout_in_secs_or_time", rt_timeout_in_secs_or_time)
-        # print("sleep_in_secs", sleep_in_secs)
-        # assert 0
 
     # /////////////////////////////////////////////////////////////////////////////
 
