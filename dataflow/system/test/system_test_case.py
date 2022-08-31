@@ -42,7 +42,7 @@ def get_signature(
 ) -> str:
     """
     Compute the signature of a test in terms of:
-    
+
     - system signature
     - result bundle signature
     """
@@ -634,10 +634,24 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
     produce the same predictions.
     """
 
+    @staticmethod
+    def postprocess_result_bundle(
+        result_bundle: dtfcore.ResultBundle,
+    ) -> dtfcore.ResultBundle:
+        """
+        Postprocess result bundle to unify system output format for comparison.
+        """
+        # Clear index column name in result dataframe.
+        result_bundle_df = result_bundle.result_df
+        result_bundle_df.index.name = None
+        result_bundle.result_df = result_bundle_df
+        return result_bundle
+
     @abc.abstractmethod
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
         """
-        Get the `Time_ForecastSystem` to be compared to the (non-time) `ForecastSystem`.
+        Get the `Time_ForecastSystem` to be compared to the (non-time)
+        `ForecastSystem`.
         """
 
     @abc.abstractmethod
@@ -645,7 +659,8 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self, time_system: dtfsyssyst.System
     ) -> dtfsyssyst.System:
         """
-        Get the (non-time) `ForecastSystem` via initiated `Time_ForecastSystem`.
+        Get the (non-time) `ForecastSystem` via initiated
+        `Time_ForecastSystem`.
         """
 
     # TODO(Grisha): @Dan make `get_file_path()` free-standing.
@@ -750,25 +765,14 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         )
         return non_time_system_signature
 
-    @staticmethod
-    def postprocess_result_bundle(
-        result_bundle: dtfcore.ResultBundle
-    ) -> dtfcore.ResultBundle:
-        """
-        Postprocess result bundle to unify system output format for comparison.
-        """
-        # Clear index column name in result dataframe.
-        result_bundle_df = result_bundle.result_df
-        result_bundle_df.index.name = None
-        result_bundle.result_df = result_bundle_df
-        return result_bundle
-
     def _test1(self, output_col_name: str) -> None:
         time_system = self.get_Time_ForecastSystem()
         time_system_signature = self.get_Time_ForecastSystem_signature(
             time_system, output_col_name
         )
-        non_time_system = self.get_NonTime_ForecastSystem_from_Time_ForecastSystem(time_system)
+        non_time_system = (
+            self.get_NonTime_ForecastSystem_from_Time_ForecastSystem(time_system)
+        )
         non_time_system_signature = self.get_NonTime_ForecastSystem_signature(
             non_time_system, output_col_name
         )
