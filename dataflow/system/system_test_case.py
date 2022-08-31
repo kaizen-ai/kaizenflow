@@ -7,16 +7,15 @@ import dataflow.system.system_test_case as dtfssyteca
 import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, Optional, Any, List
+from typing import Any, Callable, Coroutine, List, Optional
 
 import pandas as pd
 
-import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
-import dataflow.system.system_signature as dtfsysysig
 import dataflow.system.system_builder_utils as dtfssybuut
+import dataflow.system.system_signature as dtfsysysig
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -308,7 +307,9 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # Check the run signature.
         result_bundle = result_bundles[-1]
-        actual = dtfsys.get_signature(system.config, result_bundle, output_col_name)
+        actual = dtfsys.get_signature(
+            system.config, result_bundle, output_col_name
+        )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 

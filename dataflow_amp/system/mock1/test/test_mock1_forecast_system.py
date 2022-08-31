@@ -7,7 +7,6 @@ import pytest
 
 import core.finance as cofinanc
 import dataflow.system as dtfsys
-import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 
@@ -135,9 +134,7 @@ class Test_Mock1_ForecastSystem_CheckPnl(
 # #############################################################################
 
 
-class Test_Mock1_Time_ForecastSystem1(
-    dtfsys.Test_Time_ForecastSystem_TestCase1
-):
+class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1):
     def test1(self) -> None:
         """
         Verify the contents of DAG prediction.
