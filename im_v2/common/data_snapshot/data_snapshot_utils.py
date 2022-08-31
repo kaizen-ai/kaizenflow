@@ -9,6 +9,8 @@ from typing import Optional
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
+
+# Fixed data snapshots (e.g., `2022...
 FIXED_DATA_SNAPSHOTS_ROOT_DIR = (
     "s3://cryptokaizen-data/reorg/historical.manual.pq"
 )
