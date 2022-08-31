@@ -731,9 +731,11 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         """
         # Run the system.
         config_tag = "time_system_config"
-        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
+        time_system_result_bundles = run_Time_ForecastSystem(
+            self, time_system, config_tag
+        )
         # Get the last result bundle data for comparison.
-        time_system_result_bundle = time_system_result_bundles[0][-1]
+        time_system_result_bundle = time_system_result_bundles[-1]
         time_system_result_bundle = self.postprocess_result_bundle(
             time_system_result_bundle
         )
