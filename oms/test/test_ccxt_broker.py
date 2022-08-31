@@ -6,7 +6,7 @@ import unittest.mock as umock
 import pytest
 
 import helpers.hunit_test as hunitest
-import im_v2.common.secrets.secret_identifier as imvcsseid
+import im_v2.common.secrets.secret_identifier as omssecseid
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
@@ -40,7 +40,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         exchange_id = "binance"
         universe_version = "v5"
         portfolio_id = "ccxt_portfolio_mock"
-        secret_id = imvcsseid.SecretIdentifier(
+        secret_id = omssecseid.SecretIdentifier(
             exchange_id, stage, account_type, 1
         )
         broker = occxbrok.CcxtBroker(
