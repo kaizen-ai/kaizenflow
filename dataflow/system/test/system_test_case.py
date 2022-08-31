@@ -648,19 +648,19 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         return result_bundle
 
     @abc.abstractmethod
-    def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
-        """
-        Get the `Time_ForecastSystem` to be compared to the (non-time)
-        `ForecastSystem`.
-        """
-
-    @abc.abstractmethod
     def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
         self, time_system: dtfsyssyst.System
     ) -> dtfsyssyst.System:
         """
         Get the (non-time) `ForecastSystem` via initiated
         `Time_ForecastSystem`.
+        """
+
+    @abc.abstractmethod
+    def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
+        """
+        Get the `Time_ForecastSystem` to be compared to the (non-time)
+        `ForecastSystem`.
         """
 
     # TODO(Grisha): @Dan make `get_file_path()` free-standing.
@@ -698,6 +698,39 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         res = "\n".join(txt)
         return res
 
+    def get_NonTime_ForecastSystem_signature(
+        self, non_time_system: dtfsyssyst.System, output_col_name: str
+    ) -> str:
+        """
+        Get (non-time) `ForecastSystem` outcome signature.
+        """
+        # Build the `Forecast_System` DAG runner.
+        non_time_system_dag_runner = non_time_system.dag_runner
+        # Config is complete: freeze it before running since we want to be
+        # notified of any config changes, before running.
+        self.check_string(
+            str(non_time_system.config),
+            tag="non_time_system_config",
+            purify_text=True,
+        )
+        # Set the time boundaries.
+        start_timestamp = non_time_system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ]
+        end_timestamp = non_time_system.config["backtest_config", "end_timestamp"]
+        non_time_system_dag_runner.set_predict_intervals(
+            [(start_timestamp, end_timestamp)],
+        )
+        # Run.
+        non_time_system_result_bundle = non_time_system_dag_runner.predict()
+        non_time_system_result_bundle = self.postprocess_result_bundle(
+            non_time_system_result_bundle
+        )
+        non_time_system_signature = self.get_signature(
+            non_time_system_result_bundle, output_col_name
+        )
+        return non_time_system_signature
+
     # TODO(Grisha): @Dan factor out the code, given `system_test_case.py`.
     def get_Time_ForecastSystem_signature(
         self, time_system: dtfsyssyst.System, output_col_name: str
@@ -731,39 +764,6 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
                 time_system_result_bundle, output_col_name
             )
         return time_system_signature
-
-    def get_NonTime_ForecastSystem_signature(
-        self, non_time_system: dtfsyssyst.System, output_col_name: str
-    ) -> str:
-        """
-        Get (non-time) `ForecastSystem` outcome signature.
-        """
-        # Build the `Forecast_System` DAG runner.
-        non_time_system_dag_runner = non_time_system.dag_runner
-        # Config is complete: freeze it before running since we want to be
-        # notified of any config changes, before running.
-        self.check_string(
-            str(non_time_system.config),
-            tag="non_time_system_config",
-            purify_text=True,
-        )
-        # Set the time boundaries.
-        start_timestamp = non_time_system.config[
-            "backtest_config", "start_timestamp_with_lookback"
-        ]
-        end_timestamp = non_time_system.config["backtest_config", "end_timestamp"]
-        non_time_system_dag_runner.set_predict_intervals(
-            [(start_timestamp, end_timestamp)],
-        )
-        # Run.
-        non_time_system_result_bundle = non_time_system_dag_runner.predict()
-        non_time_system_result_bundle = self.postprocess_result_bundle(
-            non_time_system_result_bundle
-        )
-        non_time_system_signature = self.get_signature(
-            non_time_system_result_bundle, output_col_name
-        )
-        return non_time_system_signature
 
     def _test1(self, output_col_name: str) -> None:
         time_system = self.get_Time_ForecastSystem()
