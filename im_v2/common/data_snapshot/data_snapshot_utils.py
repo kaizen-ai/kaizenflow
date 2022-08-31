@@ -9,10 +9,13 @@ from typing import Optional
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
-ROOT_DIRS = [
-    "s3://cryptokaizen-data/reorg/historical.manual.pq/",
-    "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/",
-]
+FIXED_DATA_SNAPSHOTS_ROOT_DIR = (
+    "s3://cryptokaizen-data/reorg/historical.manual.pq"
+)
+# Contain `latest` data snapshot that is updated daily by Airflow.
+DAILY_DATA_SNAPSHOT_ROOT_DIR = (
+    "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq"
+)
 
 
 def get_data_snapshot(
@@ -27,7 +30,7 @@ def get_data_snapshot(
 
         E.g.:
         ```
-        root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq/
+        root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq
         data_snapshot = "latest"
         im_client = ImClient(root_dir, ..., data_snapshot, ...)
         ```
@@ -35,7 +38,7 @@ def get_data_snapshot(
 
          E.g.:
          ```
-         root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq/
+         root_dir = s3://cryptokaizen-data/reorg/historical.manual.pq
          data_snapshot = "20220508"
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
@@ -43,7 +46,7 @@ def get_data_snapshot(
 
          E.g.:
          ```
-         root_dir = s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/
+         root_dir = s3://cryptokaizen-data/reorg/daily_staged.airflow.pq
          data_snapshot = ""
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
@@ -82,4 +85,7 @@ def dassert_is_valid_aws_profile_and_root_dir(
 ) -> None:
     hs3.dassert_is_valid_aws_profile(root_dir, aws_profile)
     if aws_profile == "ck":
-        hdbg.dassert_in(root_dir, ROOT_DIRS)
+        hdbg.dassert_in(
+            root_dir,
+            [FIXED_DATA_SNAPSHOTS_ROOT_DIR, DAILY_DATA_SNAPSHOT_ROOT_DIR],
+        )
