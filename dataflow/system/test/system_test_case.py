@@ -136,7 +136,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     """
     hdbg.dassert_in(method, ["fit", "predict"])
     dtfssybuut.apply_unit_test_log_dir(self, system)
-    # Build the DAG runner.
+    # Build `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # Check the system config.
@@ -179,7 +179,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         """
         hdbg.dassert_isinstance(system, dtfsyssyst.System)
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        # Build the DAG runner.
+        # Build `DagRunner`.
         _ = system.dag_runner
         # TODO(gp): Use check_system_config.
         txt = []
@@ -231,7 +231,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Save the signature of the system
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        # Build the DAG runner.
+        # Build `DagRunner`.
         dag_runner = system.dag_runner
         # Set the time boundaries.
         dag_runner.set_fit_intervals(
@@ -359,7 +359,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             system.config["event_loop_object"] = event_loop
-            # Create DAG runner.
+            # Create `DagRunner`.
             dag_runner = system.dag_runner
             # 1) Check the system config.
             tag = "forecast_system"
@@ -542,7 +542,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
             # 1) Check the system config.
             tag = "database_portfolio"
             check_system_config(self, system, tag)
-            # Create DAG runner.
+            # Create `DagRunner`.
             dag_runner = system.dag_runner
             coroutines.append(dag_runner.predict())
             # Create and add order processor.
@@ -640,8 +640,10 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
     ) -> dtfcore.ResultBundle:
         """
         Postprocess result bundle to unify system output format for comparison.
+
+        - Clear index column name since it may differ for systems,
+          e.g. "start_ts" and "start_datetime"
         """
-        # Clear index column name in result dataframe.
         result_bundle_df = result_bundle.result_df
         result_bundle_df.index.name = None
         result_bundle.result_df = result_bundle_df
@@ -704,7 +706,8 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         """
         Get (non-time) `ForecastSystem` outcome signature.
         """
-        # Build the `Forecast_System` DAG runner.
+        # TODO(Grisha): @Dan Use `run_ForecastSystem_dag_from_backtest_config`.
+        # Build `DagRunner`.
         non_time_system_dag_runner = non_time_system.dag_runner
         # Config is complete: freeze it before running since we want to be
         # notified of any config changes, before running.
@@ -741,7 +744,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         with hasynci.solipsism_context() as event_loop:
             # Complete system config.
             time_system.config["event_loop_object"] = event_loop
-            # Build DAG runner.
+            # Build `DagRunner`.
             time_system_dag_runner = time_system.dag_runner
             # Config is complete: freeze it before running since we want to be
             # notified of any config changes, before running.
