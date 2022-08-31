@@ -160,21 +160,17 @@ def run_ForecastSystem_dag_from_backtest_config(
     return result_bundle
 
 
-# TODO(Dan): Do we need to implement "fit" method here?
-def run_Time_ForecastSystem_dag(
+def run_Time_ForecastSystem(
     self: Any,
     system: dtfsyssyst.System,
-    tag: str,
-    *,
-    add_order_processor: bool = False,
+    config_tag: str,
 ) -> List[dtfcore.ResultBundle]:
     """
-    Run `Time_ForecastSystem` DAG with predict method.
+    Run `Time_ForecastSystem` with predict method.
 
-    :param system: system object to extract `DagRunner` from
-    :param tag: system config tag
-    :param add_order_processor: whether to add order processor to the run
-    :return: result bundles
+    :param system: system object
+    :param config_tag: system config tag
+    :return: DAG result bundles
     """
     dtfssybuut.apply_unit_test_log_dir(self, system)
     #
@@ -185,19 +181,17 @@ def run_Time_ForecastSystem_dag(
         # Create DAG runner.
         dag_runner = system.dag_runner
         # Check the system config.
-        check_system_config(self, system, tag)
+        check_system_config(self, system, config_tag)
         coroutines.append(dag_runner.predict())
-        #
-        # TODO(Dan): Do we need to add order processor here?
-        if add_order_processor:
-            # Create and add order processor.
+        # Create and add order processor if it is specified in the config.
+        if "order_processor_config" in system.config:
             order_processor_coroutine = system.order_processor
             hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
-        #
+        # Get the result bundles corresponding to the `DagRunner` execution.
         result_bundles = hasynci.run(
             asyncio.gather(*coroutines), event_loop=event_loop
-        )
+        )[0]
     return result_bundles
 
 
@@ -394,11 +388,10 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         output_col_name: str = "prediction",
     ) -> None:
         # Run the system.
-        result_bundles = run_Time_ForecastSystem_dag(
-            self, system, "forecast_system"
-        )
-        # Check the signature of the simulation.
-        result_bundle = result_bundles[0][-1]
+        config_tag = "forecast_system"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
+        # Check the run signature.
+        result_bundle = result_bundles[-1]
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
@@ -457,12 +450,9 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             "liquidate_at_trading_end_time",
         ] = liquidate_at_trading_end_time
         # 1) Run the system.
-        result_bundles = run_Time_ForecastSystem_dag(
-            self, system, "dataframe_portfolio"
-        )
+        config_tag = "dataframe_portfolio"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # 2) Check the run signature.
-        # Pick the ResultBundle corresponding to the DagRunner execution.
-        result_bundles = result_bundles[0]
         actual = _get_signature_from_result_bundle(
             system, result_bundles, add_system_config, add_run_signature
         )
@@ -551,13 +541,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
         system.config["db_connection_object"] = self.connection
         # Run the system.
-        result_bundles = run_Time_ForecastSystem_dag(
-            self, system, "database_portfolio", add_order_processor=True
-        )
-        # Check the signature from the result bundle.
-        # Pick the result bundle that corresponds to the DagRunner.
-        # TODO(Dan): What is actually a result bundlle and what is a list of result bundles?
-        result_bundles = result_bundles[0]
+        config_tag = "database_portfolio"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
+        # Check the run signature.
         actual = _get_signature_from_result_bundle(
             system, result_bundles, add_system_config, add_run_signature
         )
