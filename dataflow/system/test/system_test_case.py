@@ -733,6 +733,7 @@ def check_system_config(self: Any, system: dtfsyssyst.System, tag: str) -> None:
     txt.append(str(system.config))
     txt = "\n".join(txt)
     txt = hunitest.filter_text("db_connection_object", txt)
+    # TODO(Grisha): Do we want to remove `system_log_dir` from a config?
     txt = hunitest.filter_text("log_dir:", txt)
     txt = hunitest.filter_text("trade_date:", txt)
     # Sometimes we want to check that the config has not changed, but it
