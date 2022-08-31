@@ -47,7 +47,7 @@ find . -name '*\.pyc' -o -name '*\.pyo' -o -name '.coverage' -o -name '.ipynb_ch
 Traceback (most recent call last):
   File "$GIT_ROOT/dataflow/system/example1/test/test_example1_forecast_system.py", line 50, in test_fit_over_backtest_period1
     self._test_fit_over_backtest_period1(system, output_col_name)
-  File "$GIT_ROOT/dataflow/system/dtfsys.py", line 114, in _test_fit_over_backtest_period1
+  File "$GIT_ROOT/dataflow/system/system_tester.py", line 114, in _test_fit_over_backtest_period1
     self.check_string(actual, fuzzy_match=True, purify_text=True)
   File "$GIT_ROOT/helpers/hunit_test.py", line 1266, in check_string
     is_equal = assert_equal(
@@ -223,7 +223,7 @@ end_ts
 Traceback (most recent call last):
   File "$GIT_ROOT/dataflow/system/example1/test/test_example1_forecast_system.py", line 57, in test_fit_over_period1
     self._test_fit_over_period1(
-  File "$GIT_ROOT/dataflow/system/dtfsys.py", line 137, in _test_fit_over_period1
+  File "$GIT_ROOT/dataflow/system/system_tester.py", line 137, in _test_fit_over_period1
     self.check_string(actual, fuzzy_match=True, purify_text=True)
   File "$GIT_ROOT/helpers/hunit_test.py", line 1266, in check_string
     is_equal = assert_equal(
