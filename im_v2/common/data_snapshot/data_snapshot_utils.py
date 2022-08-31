@@ -9,7 +9,6 @@ from typing import Optional
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
-
 # Fixed data snapshots (e.g., `2022...
 FIXED_DATA_SNAPSHOTS_ROOT_DIR = (
     "s3://cryptokaizen-data/reorg/historical.manual.pq"
@@ -18,6 +17,7 @@ FIXED_DATA_SNAPSHOTS_ROOT_DIR = (
 DAILY_DATA_SNAPSHOT_ROOT_DIR = (
     "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq"
 )
+UNIT_TEST_DATA_DIR = "s3://cryptokaizen-data/unit_test/historical.manual.pq"
 
 
 def get_data_snapshot(
@@ -89,5 +89,9 @@ def dassert_is_valid_aws_profile_and_root_dir(
     if aws_profile == "ck":
         hdbg.dassert_in(
             root_dir,
-            [FIXED_DATA_SNAPSHOTS_ROOT_DIR, DAILY_DATA_SNAPSHOT_ROOT_DIR],
+            [
+                FIXED_DATA_SNAPSHOTS_ROOT_DIR,
+                DAILY_DATA_SNAPSHOT_ROOT_DIR,
+                UNIT_TEST_DATA_DIR,
+            ],
         )
