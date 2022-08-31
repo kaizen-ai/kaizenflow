@@ -7,7 +7,7 @@ import pytest
 
 import core.finance as cofinanc
 import dataflow.system as dtfsys
-import dataflow.system.test.system_test_case as dtfsytsytc
+import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 
@@ -34,7 +34,7 @@ def _get_test_system_builder_func() -> Callable:
 # #############################################################################
 
 
-class Test_Mock1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
+class Test_Mock1_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
     def test_freeze_config1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
         system_builder = system_builder_func()
@@ -47,7 +47,7 @@ class Test_Mock1_System_CheckConfig(dtfsytsytc.System_CheckConfig_TestCase1):
 
 
 class Test_Mock1_ForecastSystem_FitPredict(
-    dtfsytsytc.ForecastSystem_FitPredict_TestCase1
+    dtfsys.ForecastSystem_FitPredict_TestCase1
 ):
     def get_system(self) -> dtfsys.System:
         """
@@ -91,7 +91,7 @@ class Test_Mock1_ForecastSystem_FitPredict(
 
 
 class Test_Mock1_ForecastSystem_FitInvariance(
-    dtfsytsytc.ForecastSystem_FitInvariance_TestCase1
+    dtfsys.ForecastSystem_FitInvariance_TestCase1
 ):
     def test_invariance1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -116,7 +116,7 @@ class Test_Mock1_ForecastSystem_FitInvariance(
 
 
 class Test_Mock1_ForecastSystem_CheckPnl(
-    dtfsytsytc.ForecastSystem_CheckPnl_TestCase1
+    dtfsys.ForecastSystem_CheckPnl_TestCase1
 ):
     def test_fit_run1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -136,7 +136,7 @@ class Test_Mock1_ForecastSystem_CheckPnl(
 
 
 class Test_Mock1_Time_ForecastSystem1(
-    dtfsytsytc.Test_Time_ForecastSystem_TestCase1
+    dtfsys.Test_Time_ForecastSystem_TestCase1
 ):
     def test1(self) -> None:
         """
@@ -186,7 +186,7 @@ def _get_test_System_with_DataFramePortfolio(
 
 
 class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
-    dtfsytsytc.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+    dtfsys.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
     """
     See description in the parent class.
@@ -235,7 +235,7 @@ def _get_test_System_with_DatabasePortfolio(
 
 
 class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
-    dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
+    dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
 ):
     """
     Test a Mock1 system with DatabasePortfolio.
@@ -280,7 +280,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
 
 
 class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio1(
-    dtfsytsytc.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
+    dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
 ):
     """
     Run a Mock1 system with DatabasePortfolio and DataFramePortfolio and verify
