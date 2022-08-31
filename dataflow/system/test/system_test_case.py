@@ -4,9 +4,11 @@ Import as:
 import dataflow.system.test.system_test_case as dtfsytsytc
 """
 
+import abc
 import asyncio
 import datetime
 import logging
+import os
 from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Union
 
 import pandas as pd
@@ -20,6 +22,7 @@ import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import oms as oms
 import oms.test.oms_db_helper as otodh
@@ -133,7 +136,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     """
     hdbg.dassert_in(method, ["fit", "predict"])
     dtfssybuut.apply_unit_test_log_dir(self, system)
-    # Force building the DAG runner.
+    # Build `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # Check the system config against the frozen value.
@@ -212,7 +215,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         """
         hdbg.dassert_isinstance(system, dtfsyssyst.System)
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        # Force building the DAG runner.
+        # Build `DagRunner`.
         _ = system.dag_runner
         # TODO(gp): Use check_system_config.
         txt = []
@@ -264,7 +267,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Save the signature of the system
         """
         dtfssybuut.apply_unit_test_log_dir(self, system)
-        # Force building the DAG runner.
+        # Build `DagRunner`.
         dag_runner = system.dag_runner
         # Set the time boundaries.
         dag_runner.set_fit_intervals(
@@ -600,6 +603,162 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         self.assert_equal(
             actual,
             expected,
+            fuzzy_match=True,
+            purify_text=True,
+            purify_expected_text=True,
+        )
+
+
+# #############################################################################
+# NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
+# #############################################################################
+
+
+class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
+    """
+    Reconcile (non-time) `ForecastSystem` and `Time_ForecastSystem`.
+
+    Make sure that (non-time) `ForecastSystem` and `Time_ForecastSystem`
+    produce the same predictions.
+    """
+
+    @staticmethod
+    def postprocess_result_bundle(
+        result_bundle: dtfcore.ResultBundle,
+    ) -> dtfcore.ResultBundle:
+        """
+        Postprocess result bundle to unify system output format for comparison.
+
+        - Clear index column name since it may differ for systems,
+          e.g. "start_ts" and "start_datetime"
+        """
+        result_bundle_df = result_bundle.result_df
+        result_bundle_df.index.name = None
+        result_bundle.result_df = result_bundle_df
+        return result_bundle
+
+    @abc.abstractmethod
+    def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
+        self, time_system: dtfsyssyst.System
+    ) -> dtfsyssyst.System:
+        """
+        Get the (non-time) `ForecastSystem` via initiated
+        `Time_ForecastSystem`.
+        """
+
+    @abc.abstractmethod
+    def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
+        """
+        Get the `Time_ForecastSystem` to be compared to the (non-time)
+        `ForecastSystem`.
+        """
+
+    # TODO(Grisha): @Dan make `get_file_path()` free-standing.
+    def get_file_path(self) -> str:
+        """
+        Get path to a file with the market data to replay.
+
+        E.g., `s3://.../unit_test/outcomes/Test_C1b_ForecastSystem_vs_Time_ForecastSystem1/input/data.csv.gz`.
+        """
+        input_dir = self.get_input_dir(
+            use_only_test_class=True,
+            use_absolute_path=False,
+        )
+        file_name = "data.csv.gz"
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        file_path = os.path.join(
+            s3_bucket_path,
+            "unit_test",
+            input_dir,
+            file_name,
+        )
+        return file_path
+
+    # TODO(Grisha): Consolidate into `SystemTester`.
+    def get_signature(self, result_bundle: dtfcore.ResultBundle, col: str) -> str:
+        txt: List[str] = []
+        #
+        txt.append(hprint.frame(col))
+        result_df = result_bundle.result_df
+        data = result_df[col].dropna(how="all").round(3)
+        data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
+        txt.append(data_str)
+        #
+        res = "\n".join(txt)
+        return res
+
+    def get_NonTime_ForecastSystem_signature(
+        self, non_time_system: dtfsyssyst.System, output_col_name: str
+    ) -> str:
+        """
+        Get (non-time) `ForecastSystem` outcome signature.
+        """
+        # TODO(Grisha): @Dan Use `run_ForecastSystem_dag_from_backtest_config`.
+        # Build `DagRunner`.
+        non_time_system_dag_runner = non_time_system.dag_runner
+        # Config is complete: freeze it before running since we want to be
+        # notified of any config changes, before running.
+        self.check_string(
+            str(non_time_system.config),
+            tag="non_time_system_config",
+            purify_text=True,
+        )
+        # Set the time boundaries.
+        start_timestamp = non_time_system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ]
+        end_timestamp = non_time_system.config["backtest_config", "end_timestamp"]
+        non_time_system_dag_runner.set_predict_intervals(
+            [(start_timestamp, end_timestamp)],
+        )
+        # Run.
+        non_time_system_result_bundle = non_time_system_dag_runner.predict()
+        non_time_system_result_bundle = self.postprocess_result_bundle(
+            non_time_system_result_bundle
+        )
+        non_time_system_signature = self.get_signature(
+            non_time_system_result_bundle, output_col_name
+        )
+        return non_time_system_signature
+
+    # TODO(Grisha): @Dan factor out the code, given `system_test_case.py`.
+    def get_Time_ForecastSystem_signature(
+        self, time_system: dtfsyssyst.System, output_col_name: str
+    ) -> str:
+        """
+        Get `Time_ForecastSystem` outcome signature.
+        """
+        # Run the system.
+        config_tag = "time_system_config"
+        time_system_result_bundles = run_Time_ForecastSystem(
+            self, time_system, config_tag
+        )
+        # Get the last result bundle data for comparison.
+        time_system_result_bundle = time_system_result_bundles[-1]
+        time_system_result_bundle = self.postprocess_result_bundle(
+            time_system_result_bundle
+        )
+        time_system_signature = self.get_signature(
+            time_system_result_bundle, output_col_name
+        )
+        return time_system_signature
+
+    def _test1(self, output_col_name: str) -> None:
+        time_system = self.get_Time_ForecastSystem()
+        time_system_signature = self.get_Time_ForecastSystem_signature(
+            time_system, output_col_name
+        )
+        non_time_system = (
+            self.get_NonTime_ForecastSystem_from_Time_ForecastSystem(time_system)
+        )
+        non_time_system_signature = self.get_NonTime_ForecastSystem_signature(
+            non_time_system, output_col_name
+        )
+        # Compare system results.
+        self.assert_equal(
+            time_system_signature,
+            non_time_system_signature,
             fuzzy_match=True,
             purify_text=True,
             purify_expected_text=True,
