@@ -53,7 +53,7 @@ def get_data_snapshot(
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
     """
-    dassert_is_valid_aws_profile_and_root_dir(aws_profile, root_dir)
+    _dassert_is_valid_aws_profile_and_root_dir(aws_profile, root_dir)
     if data_snapshot == "latest":
         pattern = "*"
         only_files = False
@@ -83,7 +83,7 @@ def dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
         hdbg.dassert_eq(len(data_snapshot), 8)
 
 
-def dassert_is_valid_aws_profile_and_root_dir(
+def _dassert_is_valid_aws_profile_and_root_dir(
     aws_profile: Optional[str], root_dir: str
 ) -> None:
     hs3.dassert_is_valid_aws_profile(root_dir, aws_profile)

@@ -60,15 +60,11 @@ class TestGetDataSnapshot(hunitest.TestCase):
         aws_profile = "ck"
         s3_bucket = hs3.get_s3_bucket_path(aws_profile)
         airflow_dir = "daily_staged.airflow.pq"
-        data_snapshot = ""
-        dataset_contract_type = "ohlcv-futures"
-        vendor = "ccxt"
         daily_data_snapshot_root_dir = os.path.join(
-            s3_bucket,
-            "reorg",
-            airflow_dir,
-            data_snapshot,
-            dataset_contract_type,
-            vendor,
+            s3_bucket, "reorg", airflow_dir
         )
-        hs3.dassert_path_exists(daily_data_snapshot_root_dir, aws_profile=aws_profile)
+        expected_data_snapshot = ""
+        data_snapshot = imvcdsdsut.get_data_snapshot(
+            daily_data_snapshot_root_dir, expected_data_snapshot, aws_profile
+        )
+        self.assert_equal(data_snapshot, expected_data_snapshot)
