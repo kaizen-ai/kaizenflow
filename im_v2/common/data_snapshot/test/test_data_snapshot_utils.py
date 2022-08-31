@@ -23,11 +23,11 @@ class TestGetDataSnapshot(hunitest.TestCase):
         test_dir = os.path.join(base_dir, "numeric_data_snapshots")
         aws_profile = None
         data_snapshot = "latest"
-        latest_data_snapshot = imvcdsdsut.get_data_snapshot(
+        actual = imvcdsdsut.get_data_snapshot(
             test_dir, data_snapshot, aws_profile
         )
         expected = "20220720"
-        self.assert_equal(latest_data_snapshot, expected)
+        self.assert_equal(actual, expected)
 
     def test_get_data_snapshot2(self) -> None:
         """
@@ -37,11 +37,11 @@ class TestGetDataSnapshot(hunitest.TestCase):
         test_dir = os.path.join(base_dir, "alpha_numeric_data_snapshots")
         aws_profile = None
         data_snapshot = "latest"
-        latest_data_snapshot = imvcdsdsut.get_data_snapshot(
+        actual = imvcdsdsut.get_data_snapshot(
             test_dir, data_snapshot, aws_profile
         )
         expected = "20220130"
-        self.assert_equal(latest_data_snapshot, expected)
+        self.assert_equal(actual, expected)
 
     def test_get_data_snapshot3(self) -> None:
         """
@@ -63,8 +63,9 @@ class TestGetDataSnapshot(hunitest.TestCase):
         daily_data_snapshot_root_dir = os.path.join(
             s3_bucket, "reorg", airflow_dir
         )
-        expected_data_snapshot = ""
-        data_snapshot = imvcdsdsut.get_data_snapshot(
-            daily_data_snapshot_root_dir, expected_data_snapshot, aws_profile
+        data_snapshot = ""
+        actual = imvcdsdsut.get_data_snapshot(
+            daily_data_snapshot_root_dir, data_snapshot, aws_profile
         )
-        self.assert_equal(data_snapshot, expected_data_snapshot)
+        expected = data_snapshot
+        self.assert_equal(actual, expected)
