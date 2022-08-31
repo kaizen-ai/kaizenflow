@@ -7,13 +7,15 @@ import dataflow.system.system_test_case as dtfssyteca
 import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, Optional
+from typing import Any, Callable, Coroutine, Optional, Any, List
 
 import pandas as pd
 
+import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
+import dataflow.system.system_signature as dtfsysysig
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
@@ -30,97 +32,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-<<<<<<< HEAD:dataflow/system/system_test_case.py
-=======
-# TODO(gp): What is the difference with _get_signature_from_result_bundle?
-#  Can we unify?
-def get_signature(
-    system_config: cconfig.Config, result_bundle: dtfcore.ResultBundle, col: str
-) -> str:
-    """
-    Compute the signature of a test in terms of:
-
-    - system signature
-    - result bundle signature
-    """
-    txt: List[str] = []
-    #
-    txt.append(hprint.frame("system_config"))
-    txt.append(str(system_config))
-    #
-    txt.append(hprint.frame(col))
-    result_df = result_bundle.result_df
-    data = result_df[col].dropna(how="all").round(3)
-    data_str = hunitest.convert_df_to_string(data, index=True, decimals=3)
-    txt.append(data_str)
-    #
-    res = "\n".join(txt)
-    return res
-
-
-def _get_signature_from_result_bundle(
-    system: dtfsyssyst.System,
-    result_bundles: List[dtfcore.ResultBundle],
-    add_system_config: bool,
-    add_run_signature: bool,
-) -> str:
-    """
-    Compute the signature of a test in terms of:
-
-    - system signature
-    - run signature
-    - output dir signature
-    """
-    portfolio = system.portfolio
-    dag_runner = system.dag_runner
-    txt = []
-    # 1) Compute system signature.
-    hdbg.dassert(system.is_fully_built)
-    if add_system_config:
-        # TODO(gp): Use check_system_config.
-        txt.append(hprint.frame("system_config"))
-        txt.append(str(system.config))
-    # 2) Compute run signature.
-    if add_run_signature:
-        # TODO(gp): This should be factored out.
-        txt.append(hprint.frame("compute_run_signature"))
-        hdbg.dassert_isinstance(result_bundles, list)
-        result_bundle = result_bundles[-1]
-        # result_bundle.result_df = result_bundle.result_df.tail(40)
-        system_tester = SystemTester()
-        # Check output.
-        forecast_evaluator_from_prices_dict = system.config[
-            "research_forecast_evaluator_from_prices"
-        ].to_dict()
-        txt_tmp = system_tester.compute_run_signature(
-            dag_runner,
-            portfolio,
-            result_bundle,
-            forecast_evaluator_from_prices_dict,
-        )
-        txt.append(txt_tmp)
-    # 3) Compute the signature of the output dir.
-    txt.append(hprint.frame("system_log_dir signature"))
-    log_dir = system.config["system_log_dir"]
-    txt_tmp = hunitest.get_dir_signature(
-        log_dir, include_file_content=False, remove_dir_name=True
-    )
-    txt.append(txt_tmp)
-    #
-    actual = "\n".join(txt)
-    # Remove the following line:
-    # ```
-    # db_connection_object: <connection object; dsn: 'user=aljsdalsd
-    #   password=xxx dbname=oms_postgres_db_local
-    #   host=cf-spm-dev4 port=12056', closed: 0>
-    # ```
-    actual = hunitest.filter_text("db_connection_object", actual)
-    actual = hunitest.filter_text("log_dir:", actual)
-    actual = hunitest.filter_text("trade_date:", actual)
-    return actual
-
-
->>>>>>> master:dataflow/system/test/system_test_case.py
 def run_ForecastSystem_dag_from_backtest_config(
     self: Any, system: dtfsyssyst.System, method: str
 ) -> dtfcore.ResultBundle:
@@ -182,7 +93,7 @@ def run_Time_ForecastSystem(
         # Create a `DagRunner`.
         dag_runner = system.dag_runner
         # Check the system config against the frozen value.
-        check_system_config(self, system, config_tag)
+        dtfsys.check_system_config(self, system, config_tag)
         coroutines.append(dag_runner.predict())
         #
         if "order_processor_config" in system.config:
@@ -397,7 +308,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # Check the run signature.
         result_bundle = result_bundles[-1]
-        actual = get_signature(system.config, result_bundle, output_col_name)
+        actual = dtfsys.get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
@@ -458,8 +369,8 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         config_tag = "dataframe_portfolio"
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # 2) Check the run signature.
-        actual = _get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature
+        actual = dtfsysysig._get_signature_from_result_bundle(
+            self, system, result_bundles, add_system_config, add_run_signature
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -545,8 +456,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         config_tag = "database_portfolio"
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # Check the run signature.
-        actual = _get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature
+        actual = dtfsysysig._get_signature_from_result_bundle(
+            self, system, result_bundles, add_system_config, add_run_signature
         )
         return actual
 
