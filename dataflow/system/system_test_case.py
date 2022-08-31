@@ -1,25 +1,22 @@
 """
 Import as:
 
-import dataflow.system.test.system_test_case as dtfsytsytc
+import dataflow.system.system_test_case as dtfssyteca
 """
 
 import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Coroutine, Optional
 
 import pandas as pd
 
-import core.config as cconfig
 import dataflow.core as dtfcore
-import dataflow.model as dtfmod
 import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import oms as oms
@@ -125,7 +122,9 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
             self, system, "fit"
         )
         # Check outcome.
-        actual = dtfsys.get_signature(system.config, result_bundle, output_col_name)
+        actual = dtfsys.get_signature(
+            system.config, result_bundle, output_col_name
+        )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
     def _test_fit_over_period1(
@@ -150,7 +149,9 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         # Run.
         result_bundle = dag_runner.fit()
         # Check outcome.
-        actual = dtfsys.get_signature(system.config, result_bundle, output_col_name)
+        actual = dtfsys.get_signature(
+            system.config, result_bundle, output_col_name
+        )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
     # TODO(Paul, gp): This should have the option to burn the last N elements
@@ -280,7 +281,9 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
             )
         # 2) Check the signature of the simulation.
         result_bundle = result_bundles[0][-1]
-        actual = dtfsys.get_signature(system.config, result_bundle, output_col_name)
+        actual = dtfsys.get_signature(
+            system.config, result_bundle, output_col_name
+        )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
