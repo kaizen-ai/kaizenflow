@@ -136,7 +136,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     # Force building the DAG runner.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
-    # Check the system config.
+    # Check the system config against the frozen value.
     tag = "forecast_system"
     check_system_config(self, system, tag)
     # Set the time boundaries.
@@ -169,7 +169,7 @@ def run_Time_ForecastSystem(
     Run `Time_ForecastSystem` with predict method.
 
     :param system: system object
-    :param config_tag: system config tag
+    :param config_tag: tag used to freeze the system config by `check_system_config()`
     :return: DAG result bundles
     """
     dtfssybuut.apply_unit_test_log_dir(self, system)
@@ -180,7 +180,7 @@ def run_Time_ForecastSystem(
         system.config["event_loop_object"] = event_loop
         # Create DAG runner.
         dag_runner = system.dag_runner
-        # Check the system config.
+        # Check the system config against the frozen value.
         check_system_config(self, system, config_tag)
         coroutines.append(dag_runner.predict())
         # Create and add order processor if it is specified in the config.
@@ -188,10 +188,10 @@ def run_Time_ForecastSystem(
             order_processor_coroutine = system.order_processor
             hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
-        # Get the result bundles corresponding to the `DagRunner` execution.
-        result_bundles = hasynci.run(
-            asyncio.gather(*coroutines), event_loop=event_loop
-        )[0]
+        #
+        results = hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+        # Extract the result bundles from the `DagRunner`.
+        result_bundles = results[0]
     return result_bundles
 
 
