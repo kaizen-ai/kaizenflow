@@ -139,7 +139,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     # Build `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
-    # Check the system config.
+    # Check the system config against the frozen value.
     tag = "forecast_system"
     check_system_config(self, system, tag)
     # Set the time boundaries.
@@ -161,6 +161,42 @@ def run_ForecastSystem_dag_from_backtest_config(
     else:
         raise ValueError("Invalid method='%s'" % method)
     return result_bundle
+
+
+def run_Time_ForecastSystem(
+    self: Any,
+    system: dtfsyssyst.System,
+    config_tag: str,
+) -> List[dtfcore.ResultBundle]:
+    """
+    Run `Time_ForecastSystem` with predict method.
+
+    :param system: `Time_ForecastSystem` object
+    :param config_tag: tag used to freeze the system config by `check_system_config()`
+    :return: `DagRunner` result bundles
+    """
+    dtfssybuut.apply_unit_test_log_dir(self, system)
+    #
+    with hasynci.solipsism_context() as event_loop:
+        coroutines = []
+        # Complete the system config.
+        system.config["event_loop_object"] = event_loop
+        # Create a `DagRunner`.
+        dag_runner = system.dag_runner
+        # Check the system config against the frozen value.
+        check_system_config(self, system, config_tag)
+        coroutines.append(dag_runner.predict())
+        #
+        if "order_processor_config" in system.config:
+            # Get the `OrderProcessor` coroutine.
+            order_processor_coroutine = system.order_processor
+            hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
+            coroutines.append(order_processor_coroutine)
+        #
+        results = hasynci.run(asyncio.gather(*coroutines), event_loop=event_loop)
+        # Extract the result bundles from the `DagRunner`.
+        result_bundles = results[0]
+    return result_bundles
 
 
 # #############################################################################
@@ -355,22 +391,11 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         *,
         output_col_name: str = "prediction",
     ) -> None:
-        dtfssybuut.apply_unit_test_log_dir(self, system)
-        with hasynci.solipsism_context() as event_loop:
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            # Create `DagRunner`.
-            dag_runner = system.dag_runner
-            # 1) Check the system config.
-            tag = "forecast_system"
-            check_system_config(self, system, tag)
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-        # 2) Check the signature of the simulation.
-        result_bundle = result_bundles[0][-1]
+        # Run the system.
+        config_tag = "forecast_system"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
+        # Check the run signature.
+        result_bundle = result_bundles[-1]
         actual = get_signature(system.config, result_bundle, output_col_name)
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
@@ -415,7 +440,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 "add_system_config add_run_signature"
             )
         )
-        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Set `trading_end_time`.
         if trading_end_time is not None:
             system.config[
@@ -429,22 +453,10 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             "process_forecasts_dict",
             "liquidate_at_trading_end_time",
         ] = liquidate_at_trading_end_time
-        # Run the system.
-        with hasynci.solipsism_context() as event_loop:
-            system.config["event_loop_object"] = event_loop
-            dag_runner = system.dag_runner
-            # 1) Check the system config.
-            # TODO(gp): Freeze the config after `dag_runner` in all the tests.
-            tag = "dataframe_portfolio"
-            check_system_config(self, system, tag)
-            # Run.
-            coroutines = [dag_runner.predict()]
-            result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
+        # 1) Run the system.
+        config_tag = "dataframe_portfolio"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # 2) Check the run signature.
-        # Pick the ResultBundle corresponding to the DagRunner execution.
-        result_bundles = result_bundles[0]
         actual = _get_signature_from_result_bundle(
             system, result_bundles, add_system_config, add_run_signature
         )
@@ -470,8 +482,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             system,
             liquidate_at_trading_end_time=liquidate_at_trading_end_time,
         )
-        # TODO(Grisha): @Dan we should also freeze the config for all the tests
-        #  with a Portfolio.
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
     def _test_with_liquidate_at_end_of_day1(
@@ -493,8 +503,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             trading_end_time=trading_end_time,
             liquidate_at_trading_end_time=liquidate_at_trading_end_time,
         )
-        # TODO(Grisha): @Dan we should also freeze the config for all the tests
-        #  with a Portfolio.
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
@@ -528,34 +536,14 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         Run a System with a DatabasePortfolio.
         """
-        dtfssybuut.apply_unit_test_log_dir(self, system)
-        #
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
-        #
-        with hasynci.solipsism_context() as event_loop:
-            coroutines = []
-            # Complete system config.
-            system.config["event_loop_object"] = event_loop
-            system.config["db_connection_object"] = self.connection
-            # 1) Check the system config.
-            tag = "database_portfolio"
-            check_system_config(self, system, tag)
-            # Create `DagRunner`.
-            dag_runner = system.dag_runner
-            coroutines.append(dag_runner.predict())
-            # Create and add order processor.
-            order_processor_coroutine = system.order_processor
-            hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
-            coroutines.append(order_processor_coroutine)
-            #
-            coro_output = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-        # 2) Check the signature from the result bundle.
-        # Pick the result_bundle that corresponds to the DagRunner.
-        result_bundles = coro_output[0]
+        system.config["db_connection_object"] = self.connection
+        # Run the system.
+        config_tag = "database_portfolio"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
+        # Check the run signature.
         actual = _get_signature_from_result_bundle(
             system, result_bundles, add_system_config, add_run_signature
         )
