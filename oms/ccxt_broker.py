@@ -399,7 +399,7 @@ class CcxtBroker(ombroker.Broker):
                 order.diff_num_shares,
                 min_amount,
             )
-        order.diff_num_shares = min_amount
+            order.diff_num_shares = min_amount
         # Check if the order is not below minimal cost.
         #
         # Estimate the total cost of the order based on the high market price.
