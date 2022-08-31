@@ -804,9 +804,11 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
             self, time_system, config_tag
         )
         system_tester = SystemTester()
-        # Compute Portfolio PnL.
+        # Compute Portfolio PnL. Get the number of data points
+        # that is sufficient for a reconciliation.
+        num_periods = 20
         signature, pnl = system_tester.get_portfolio_signature(
-            time_system.portfolio
+            time_system.portfolio, num_periods=num_periods
         )
         return signature, pnl
 
@@ -922,11 +924,13 @@ class SystemTester:
         actual = "\n".join(actual)
         return actual
 
-    def get_portfolio_signature(self, portfolio) -> Tuple[str, pd.Series]:
+    def get_portfolio_signature(
+        self, portfolio, num_periods: int = 10,
+    ) -> Tuple[str, pd.Series]:
         actual = ["\n# portfolio signature=\n"]
         actual.append(str(portfolio))
         actual = "\n".join(actual)
-        statistics = portfolio.get_historical_statistics()
+        statistics = portfolio.get_historical_statistics(num_periods=num_periods)
         pnl = statistics["pnl"]
         _LOG.debug("pnl=\n%s", pnl)
         return actual, pnl
