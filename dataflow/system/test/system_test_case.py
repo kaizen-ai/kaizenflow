@@ -729,31 +729,17 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         """
         Get `Time_ForecastSystem` outcome signature.
         """
-        with hasynci.solipsism_context() as event_loop:
-            # Complete system config.
-            time_system.config["event_loop_object"] = event_loop
-            # Build `DagRunner`.
-            time_system_dag_runner = time_system.dag_runner
-            # Config is complete: freeze it before running since we want to be
-            # notified of any config changes, before running.
-            self.check_string(
-                str(time_system.config),
-                tag="time_system_config",
-                purify_text=True,
-            )
-            # Run.
-            coroutines = [time_system_dag_runner.predict()]
-            time_system_result_bundles = hasynci.run(
-                asyncio.gather(*coroutines), event_loop=event_loop
-            )
-            # Get the last result bundle data for comparison.
-            time_system_result_bundle = time_system_result_bundles[0][-1]
-            time_system_result_bundle = self.postprocess_result_bundle(
-                time_system_result_bundle
-            )
-            time_system_signature = self.get_signature(
-                time_system_result_bundle, output_col_name
-            )
+        # Run the system.
+        config_tag = "time_system_config"
+        result_bundles = run_Time_ForecastSystem(self, system, config_tag)
+        # Get the last result bundle data for comparison.
+        time_system_result_bundle = time_system_result_bundles[0][-1]
+        time_system_result_bundle = self.postprocess_result_bundle(
+            time_system_result_bundle
+        )
+        time_system_signature = self.get_signature(
+            time_system_result_bundle, output_col_name
+        )
         return time_system_signature
 
     def _test1(self, output_col_name: str) -> None:
