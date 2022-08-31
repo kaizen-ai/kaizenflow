@@ -478,8 +478,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             system,
             liquidate_at_trading_end_time=liquidate_at_trading_end_time,
         )
-        # TODO(Grisha): @Dan we should also freeze the config for all the tests
-        #  with a Portfolio.
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
     def _test_with_liquidate_at_end_of_day1(
@@ -501,8 +499,6 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             trading_end_time=trading_end_time,
             liquidate_at_trading_end_time=liquidate_at_trading_end_time,
         )
-        # TODO(Grisha): @Dan we should also freeze the config for all the tests
-        #  with a Portfolio.
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
 
