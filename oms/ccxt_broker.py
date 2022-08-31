@@ -46,7 +46,6 @@ class CcxtBroker(ombroker.Broker):
         *args: Any,
         **kwargs: Any,
     ) -> None:
-        super().__init__(*args, **kwargs)
         """
         Constructor.
 
@@ -382,9 +381,9 @@ class CcxtBroker(ombroker.Broker):
         """
         Check if the order matches the minimum quantity for the asset.
 
-        The functions checks both the flat amount of the asset and the total
+        The functions check both the flat amount of the asset and the total
         cost of the asset in the order. If the order amount does not match,
-        he order is changed to be slightly above the minimal amount.
+        the order is changed to be slightly above the minimal amount.
 
         :param order: order to be submitted
         """
@@ -574,10 +573,11 @@ class CcxtBroker(ombroker.Broker):
             #  This is done to avoid "Margin is insufficient" error
             #  in testnet.
             order = self._force_minimal_order(order)
-        else:
+        elif self._stage in ["preprod", "prod"]:
             # Verify that order is not below the minimal amount.
             order = self._check_order_limit(order)
-        _LOG.info("Submitting order:\n%s", str(order))
+        else:
+            raise ValueError(f"Stage `{self._stage}` is not valid!")
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
         # TODO(Juraj): separate the retry logic from the code that does the work.
@@ -592,7 +592,7 @@ class CcxtBroker(ombroker.Broker):
                     # id=order.order_id,
                     # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
                     # but most likely the method will need to be overriden per each exchange
-                    # to accomodate endpoint specific behavior.
+                    # to accommodate endpoint specific behavior.
                     params={
                         "portfolio_id": self._portfolio_id,
                         "client_oid": order.order_id,
@@ -603,7 +603,7 @@ class CcxtBroker(ombroker.Broker):
                 # If the submission was successful, don't retry.
                 break
             except Exception as e:
-                # Check the Binance API er
+                # Check the Binance API error
                 if isinstance(e, ccxt.ExchangeNotAvailable):
                     # If there is a temporary server error, wait for
                     # a set amount of seconds and retry.
@@ -676,6 +676,16 @@ class CcxtBroker(ombroker.Broker):
                 lambda s: s.startswith(self._exchange_id), full_symbol_universe
             )
         )
+        # TODO(Grisha): should we exclude them from the trade universe?
+        # Cannot fetch the limit from the testnet `limits = exchange_markets[symbol]["limits"]`.
+        if "binance::BAKE_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::BAKE_USDT")
+        if "binance::CRV_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::CRV_USDT")
+        if "binance::CTK_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::CTK_USDT")
+        if "binance::DYDX_USDT" in full_symbol_universe:
+            full_symbol_universe.remove("binance::DYDX_USDT")
         # Build mapping.
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
@@ -737,7 +747,9 @@ def get_CcxtBroker_prod_instance1(
     Build an `CcxtBroker` for production.
     """
     exchange_id = secret_id.exchange_id
-    universe_version = "v5"
+    # TODO(Grisha): centralize the universe version, i.e. pass once (e.g., via cmd line)
+    # and then propagate everywhere via `system.config`.
+    universe_version = "v7"
     stage = secret_id.stage
     account_type = secret_id.account_type
     contract_type = "futures"
