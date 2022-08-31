@@ -363,7 +363,7 @@ class CcxtBroker(ombroker.Broker):
         # Note: 10 is the minimal total cost of an order in testnet.
         min_cost = 10
         # Get the high price for the asset.
-        high_price = self._get_high_market_price(order.asset_id)
+        high_price = self._get_low_market_price(order.asset_id)
         # Verify that the estimated total cost is above 10.
         if high_price * required_amount <= min_cost:
             # Set the amount of asset to above min cost.
@@ -392,20 +392,19 @@ class CcxtBroker(ombroker.Broker):
         min_amount = asset_limits["min_amount"]
         if abs(order.diff_num_shares) < min_amount:
             if order.diff_num_shares < 0:
-                order.diff_num_shares = -min_amount
-            else:
-                order.diff_num_shares = min_amount
+                min_amount = -min_amount
             _LOG.warning(
                 "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
                 str(order),
                 order.diff_num_shares,
                 min_amount,
             )
+            order.diff_num_shares = min_amount
         # Check if the order is not below minimal cost.
         #
         # Estimate the total cost of the order based on the high market price.
         #  Note: high price is chosen to account for possible price spikes.
-        high_price = self._get_high_market_price(order.asset_id)
+        high_price = self._get_low_market_price(order.asset_id)
         total_cost = high_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
         min_cost = asset_limits["min_cost"]
@@ -425,12 +424,12 @@ class CcxtBroker(ombroker.Broker):
             order.diff_num_shares = required_amount
         return order
 
-    def _get_high_market_price(self, asset_id: int) -> float:
+    def _get_low_market_price(self, asset_id: int) -> float:
         """
         Load the high price for the given ticker.
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["high"]
+        last_price = self._exchange.fetch_ticker(symbol)["low"]
         return last_price
 
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
@@ -634,6 +633,7 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[omorder.Order] = []
         for order in orders:
+            _LOG.info("Submitting %s", str(order))
             sent_order = await self._submit_single_order(order)
             _LOG.info(str(sent_order))
             # If order was submitted successfully append it to
