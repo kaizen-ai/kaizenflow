@@ -78,8 +78,9 @@ def dassert_is_valid_data_snapshot(data_snapshot: str) -> None:
     """
     if not data_snapshot.isnumeric():
         hdbg.dassert_eq(data_snapshot, "")
-    hdbg.dassert(data_snapshot.isnumeric())
-    hdbg.dassert_eq(len(data_snapshot), 8)
+    else:
+        hdbg.dassert(data_snapshot.isnumeric())
+        hdbg.dassert_eq(len(data_snapshot), 8)
 
 
 def dassert_is_valid_aws_profile_and_root_dir(

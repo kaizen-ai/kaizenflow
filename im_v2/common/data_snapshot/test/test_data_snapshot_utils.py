@@ -1,6 +1,7 @@
 import os
 
 import helpers.hgit as hgit
+import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 
@@ -51,3 +52,23 @@ class TestGetDataSnapshot(hunitest.TestCase):
         data_snapshot = "latest"
         with self.assertRaises(AssertionError):
             imvcdsdsut.get_data_snapshot(test_dir, data_snapshot, aws_profile)
+
+    def test_get_data_snapshot4(self) -> None:
+        """
+        Check if full path to daily updated data is correct.
+        """
+        aws_profile = "ck"
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
+        airflow_dir = "daily_staged.airflow.pq"
+        data_snapshot = ""
+        dataset_contract_type = "ohlcv-futures"
+        vendor = "ccxt"
+        daily_data_snapshot_root_dir = os.path.join(
+            s3_bucket,
+            "reorg",
+            airflow_dir,
+            data_snapshot,
+            dataset_contract_type,
+            vendor,
+        )
+        hs3.dassert_path_exists(daily_data_snapshot_root_dir, aws_profile=aws_profile)
