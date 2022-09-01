@@ -222,6 +222,63 @@ prediction_df.dropna()
 # %%
 research_df["prediction"]
 
+# %% [markdown]
+# ## Prices
+
+# %%
+research_df.columns.levels[0]
+
+# %%
+paper_target_positions_df.columns.levels[0]
+
+# %%
+target_col = "price"
+asset_id = 1467591036
+prediction_df = pd.merge(paper_target_positions_df[target_col][asset_id],
+                         research_df[target_col][asset_id],
+                         left_index=True, right_index=True, how="outer")
+
+# prediction_df
+prediction_df["2022-08-29"].plot()
+
+# %%
+prediction_df["2022-08-29"].pct_change().dropna().plot()
+
+# %%
+prediction_df[:"2022-08-29 20:20:00-04:00"].pct_change().dropna().corr()
+
+# %%
+research_df["holdings"]
+
+# %% [markdown]
+# ## Holdings
+
+# %% run_control={"marked": false}
+ts1 = "2022-08-29 15:20:00-04:00"
+ts2 = "2022-08-29 20:20:00-04:00"
+
+# %%
+target_col1 = "holdings"
+target_col2 = "curr_num_shares"
+asset_id = 1467591036
+prediction_df = pd.merge(paper_target_positions_df[target_col2][asset_id],
+                         research_df[target_col1][asset_id],
+                         left_index=True, right_index=True, how="outer")
+
+# prediction_df
+df = prediction_df[ts1:ts2]
+df /= prediction_df.dropna().iloc[-1]
+#df["1467591036_x"] *= -1
+df.plot()
+
+# %%
+df = prediction_df[ts1:ts2]
+df["1467591036_x"] *= -1
+df.plot()
+
+
+# %% [markdown]
+# ## Pnl
 
 # %%
 #research_df
