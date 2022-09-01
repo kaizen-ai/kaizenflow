@@ -37,7 +37,7 @@
                                         'min_cost': 10.0}},
  '_orders': OrderedDict(),
  '_portfolio_id': 'ccxt_portfolio_mock',
- '_secret_id': SecretIdentifier(exchange_id='binance', stage='preprod', account_type='trading', _id=1),
+ '_secret_identifier': SecretIdentifier(exchange_id='binance', stage='preprod', account_type='trading', id_=1),
  '_sent_orders': None,
  '_stage': 'preprod',
  '_strategy_id': 'dummy_strategy_id',

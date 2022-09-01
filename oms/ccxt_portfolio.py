@@ -10,7 +10,7 @@ from typing import Any, List, Optional
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.portfolio as omportfo
-import im_v2.common.secrets as imvcs
+import oms.secrets as omssec
 
 
 _LOG = logging.getLogger(__name__)
@@ -41,7 +41,7 @@ def get_CcxtPortfolio_prod_instance1(
     market_data: mdata.MarketData,
     asset_ids: Optional[List[int]],
     pricing_method: str,
-    secret_id: imvcs.SecretIdentifier
+        secret_identifier: omssec.SecretIdentifier
 ) -> CcxtPortfolio:
     """
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
@@ -50,7 +50,7 @@ def get_CcxtPortfolio_prod_instance1(
     broker = occxbrok.get_CcxtBroker_prod_instance1(
         market_data,
         strategy_id,
-        secret_id
+        secret_identifier
     )
     # Build CcxtPortfolio.
     mark_to_market_col = "close"
