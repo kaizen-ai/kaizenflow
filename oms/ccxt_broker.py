@@ -17,7 +17,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
-import im_v2.common.secrets as imvcs
+import oms.secrets as omssec
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
@@ -42,7 +42,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: imvcs.SecretIdentifier,
+        secret_identifier: omssec.SecretIdentifier,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -60,7 +60,7 @@ class CcxtBroker(ombroker.Broker):
             - "sandbox" launches the broker in sandbox environment (not supported for
               every exchange)
         :param contract_type: "spot" or "futures"
-        :param secret_id: a SecretIdentifier holding a full name of secret to look for in
+        :param secret_identifier: a SecretIdentifier holding a full name of secret to look for in
          AWS SecretsManager
         """
         super().__init__(*args, **kwargs)
@@ -71,7 +71,7 @@ class CcxtBroker(ombroker.Broker):
         self._stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
-        self._secret_id = secret_id
+        self._secret_identifier = secret_identifier
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -711,7 +711,7 @@ class CcxtBroker(ombroker.Broker):
         """
         Log into the exchange and return the `ccxt.Exchange` object.
         """
-        secrets_id = str(self._secret_id)
+        secrets_id = str(self._secret_identifier)
         # Select credentials for provided exchange.
         exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
@@ -741,17 +741,17 @@ class CcxtBroker(ombroker.Broker):
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
-    secret_id: imvcs.SecretIdentifier
+    secret_identifier: omssec.SecretIdentifier
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
-    exchange_id = secret_id.exchange_id
+    exchange_id = secret_identifier.exchange_id
     # TODO(Grisha): centralize the universe version, i.e. pass once (e.g., via cmd line)
     # and then propagate everywhere via `system.config`.
     universe_version = "v7"
-    stage = secret_id.stage
-    account_type = secret_id.account_type
+    stage = secret_identifier.stage
+    account_type = secret_identifier.account_type
     contract_type = "futures"
     portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
@@ -761,7 +761,7 @@ def get_CcxtBroker_prod_instance1(
         account_type,
         portfolio_id,
         contract_type,
-        secret_id,
+        secret_identifier,
         strategy_id=strategy_id,
         market_data=market_data,
     )
