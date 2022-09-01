@@ -27,7 +27,7 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 # There are 2 levels of debugging:
-# 1) _LOG.debug: which can be enabled or disabled for this method.
+# 1) _LOG.debug: which can be enabled or disabled for this module.
 
 # Mute this module unless we want to debug it.
 #_LOG.setLevel(logging.INFO)
@@ -35,8 +35,8 @@ _LOG = logging.getLogger(__name__)
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
 
-# 2) _LOG.verb_debug: reports even more detailed information, and it can be
-#    enabled or disabled.
+# 2) _LOG.verb_debug: reports even more detailed information. It can be
+#    enabled or disabled for this module.
 
 # Enable or disable _LOG.verb_debug
 # _LOG.verb_debug = lambda *_: 0
@@ -140,7 +140,10 @@ class Config:
         """
         # A Config is a recursive structure with:
         # - key of type str or int
-        # - value that can be any scalar, a Config (but not a dict), a list, a tuple
+        # - value that can be:
+        #   - a Config (but not a dict)
+        #   - any scalar
+        #   - any other Python data structure (e.g., list, tuple)
         # TODO(gp): Use MutableMapping instead of disabling the lint?
         # pylint: disable=unsubscriptable-object
         self._config: collections.OrderedDict[
