@@ -6,7 +6,7 @@ import unittest.mock as umock
 import pytest
 
 import helpers.hunit_test as hunitest
-import im_v2.common.secrets.secret_identifier as oseseide
+import omssec.secret_identifier as oseseide
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
