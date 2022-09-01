@@ -41,7 +41,7 @@ def get_CcxtPortfolio_prod_instance1(
     market_data: mdata.MarketData,
     asset_ids: Optional[List[int]],
     pricing_method: str,
-    secret_identifier: omssec.SecretIdentifier
+        secret_identifier: omssec.SecretIdentifier
 ) -> CcxtPortfolio:
     """
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
