@@ -312,6 +312,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
         system.config["cf_config", "strategy"],
         market_data,
+        system.config["market_data_config", "universe_version"],
         system.config["market_data_config", "asset_ids"],
         pricing_method,
         system.config["secret_identifier_config"]
