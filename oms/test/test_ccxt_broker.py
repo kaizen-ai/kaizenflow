@@ -156,6 +156,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker._minimal_order_limits = {
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
+        # Mock `get_low_market_price` of CcxtBroker as exchange class is mocked globally
+        # and `_exchange.fetch_ticker` can't be reached.
         get_low_market_price_mock.return_value = 2.0
         # Patch main external source.
         with umock.patch.object(
