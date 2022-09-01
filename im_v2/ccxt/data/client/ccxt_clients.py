@@ -175,8 +175,7 @@ class CcxtCddCsvParquetByAssetClient(
             an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
         :param extension: file extension, e.g., `csv.gz` or `parquet`
         :param aws_profile: AWS profile, e.g., `am`
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         """
         super().__init__(vendor, universe_version, resample_1min)
         self._root_dir = root_dir
@@ -284,8 +283,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`.
 
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         :param exchange_id: exchange id, e.g. "binance"
         :param currency_pair: currency pair `<currency1>_<currency2>`,
             e.g. "BTC_USDT"

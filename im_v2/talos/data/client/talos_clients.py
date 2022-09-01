@@ -61,7 +61,7 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
 
         See the parent class for parameters description.
 
-        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         """
         vendor = "talos"
         infer_exchange_id = False

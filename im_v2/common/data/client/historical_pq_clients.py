@@ -287,7 +287,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         See the parent class for parameters description.
 
         :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
-        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         """
         infer_exchange_id = True
         super().__init__(

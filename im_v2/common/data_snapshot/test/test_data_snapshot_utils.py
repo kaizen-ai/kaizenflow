@@ -6,7 +6,7 @@ import helpers.hunit_test as hunitest
 import im_v2.common.data_snapshot.data_snapshot_utils as imvcdsdsut
 
 
-class TestGetDataSnapshot(hunitest.TestCase):
+class Test_get_data_snapshot(hunitest.TestCase):
     @staticmethod
     def get_base_test_dir() -> str:
         base_dir = os.path.join(
@@ -55,7 +55,7 @@ class TestGetDataSnapshot(hunitest.TestCase):
 
     def test_get_data_snapshot4(self) -> None:
         """
-        Check if full path to daily updated data is correct.
+        Check that empty `data_snapshot` works for the daily staged Airflow data.
         """
         aws_profile = "ck"
         s3_bucket = hs3.get_s3_bucket_path(aws_profile)
