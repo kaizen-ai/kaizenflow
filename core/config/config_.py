@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
 # TODO(gp): Keep this enabled when committing.
-_LOG.setLevel(logging.INFO)
+#_LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
@@ -47,9 +47,43 @@ _LOG.setLevel(logging.INFO)
 # Placeholder value used in configs, when configs are built in multiple phases.
 DUMMY = "__DUMMY__"
 
-_NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
+
+# Design notes:
+# - A Config is a recursive structure of Configs
+#   - It handles compounded keys
+#   - Each Config uses internally an _OrderedDict
+# - A _OrderedDict enforces writing / reading policies
+#   - It only allow one key lookup
+#   - It can contain more Configs (but no dict)
+# - We use two different data structures to clearly separate when we want to use
+#   compounded keys or scalar keys
+
+# In practice we could have used a dict with default value to create the keys on
+# the fly, although without compound key notation
 
 
+# class _OrderedDict(
+#     collections.OrderedDict[
+#         ScalarKeyAsTypeHint, Any
+#     ]):
+class _OrderedDict(collections.OrderedDict):
+    """
+    A dict data structure that allows to read and write with strict policies.
+    """
+
+    # def __init__(self):
+    #     self._config: collections.OrderedDict[
+    #         ScalarKeyAsTypeHint, Any
+    #     ] = collections.OrderedDict()
+
+    def __setitem__(self, key, value):
+        super().__setitem__(key, value)
+
+    def __getitem__(self, key) -> Any:
+        return super().__getitem__(key)
+
+
+# TODO(gp): This handles a compound key, update_mode, clobber_mode
 class Config:
     """
     A nested ordered dictionary storing configuration information.
@@ -65,19 +99,55 @@ class Config:
     """
 
     # Valid type of each component of a key.
-    ScalarKey = Union[str, int]
+    # TODO(gp): -> ScalarKeyTypeHint
+    ScalarKeyAsTypeHint = Union[str, int]
+    # TODO(gp): -> ScalarKeyValidTypes
     ScalarKeyAsTypes = (str, int)
 
     # A simple or compound key that can be used to access a Config.
-    # TODO(gp): -> CompoundKey
+    # TODO(gp): -> CompoundKeyTypeHint
     Key = Union[str, int, Iterable[str], Iterable[int]]
+
+    #ValueTypeHint = Tuple[ValueType, Bool]
+    ValueTypeHint = Any
+
+    _NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
+
+    # `update_mode` specifies how values are written when a key already exists
+    #   inside a Config
+    #   - `None`: use the default behavior specified in the constructor
+    #   - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
+    #       - if a key already exists, then assert
+    #       - if a key doesn't exist, then assign the new value
+    #   - `overwrite`: assign the key, whether the key exists or not
+    #   - `assign_if_missing`: this mode is used to complete a config, preserving
+    #     what already exists
+    #       - if a key already exists, leave the old value and raise a warning
+    #       - if a key doesn't exist, then assign the new value
+    _VALID_UPDATE_MODES = (
+        "assert_on_overwrite",
+        "overwrite",
+        "assign_if_missing",
+    )
+
+    # `clobber_mode` specifies whether values can be updated after they have been
+    #   read
+    #   - `allow_write_after_read`: allow to write a key even after that key was
+    #     already read. A warning is issued in this case
+    #   - `assert_on_write_after_read`: assert if an outside user tries to write a
+    #     value that has already been read
+    _VALID_CLOBBER_MODES = (
+        "allow_write_after_read",
+        "assert_on_write_after_read",
+    )
 
     def __init__(
         self,
         # We can't make this as mandatory kwarg because of `Config.from_python()`.
-        array: Optional[List[Tuple[str, Any]]] = None,
+        array: Optional[List[Tuple[ScalarKeyAsTypeHint, Any]]] = None,
         *,
-        update_mode: Optional[str] = "assert_on_overwrite",
+        update_mode: str = "assert_on_overwrite",
+        clobber_mode: str = "assert_on_write_after_read",
     ) -> None:
         """
         Build a config from a list of (key, value).
@@ -96,20 +166,46 @@ class Config:
         #   - any other Python data structure (e.g., list, tuple)
         # TODO(gp): Use MutableMapping instead of disabling the lint?
         # pylint: disable=unsubscriptable-object
-        self._config: collections.OrderedDict[
-            ScalarKey, Any
-        ] = collections.OrderedDict()
+        # self._config: collections.OrderedDict[
+        #     ScalarKeyAsTypeHint, Any
+        # ] = collections.OrderedDict()
+        self._config = _OrderedDict()
+        # Control whether a config can be modified or not.
+        self._read_only = False
+        # Control the policy for updates.
+        # TODO(gp): This should control also the __set_item__ and not only update.
+        self.update_mode = update_mode
+        #hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
+        #self._update_mode = update_mode
+        #
+        self.clobber_mode = clobber_mode
+        #hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
+        #self._clobber_mode = clobber_mode
         # Initialize from array.
-        # TODO(gp): This might be a separate constructor.
+        # TODO(gp): This might be a separate constructor, but it gives problems
+        #  with `Config.from_python()`.
         if array is not None:
             for k, v in array:
                 hdbg.dassert_isinstance(k, self.ScalarKeyAsTypes)
-                self._config[k] = v
-        # Control whether a config can be modified or not.
-        self._read_only = False
-        # TODO(gp): This should control also the __set_item__ and not only update.
+                self.__setitem__(k, v)
+
+    @property
+    def update_mode(self) -> str:
+        return self._update_mode
+
+    @update_mode.setter
+    def update_mode(self, update_mode: str) -> None:
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         self._update_mode = update_mode
+
+    @property
+    def clobber_mode(self) -> str:
+        return self._clobber_mode
+
+    @clobber_mode.setter
+    def clobber_mode(self, clobber_mode: str) -> None:
+        hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
+        self._clobber_mode = clobber_mode
 
     # ////////////////////////////////////////////////////////////////////////////
     # Printing
@@ -195,16 +291,16 @@ class Config:
         hdbg.dassert_in(valid, valid_values)
         return value
 
-    def _resolve_clobber_mode(self, value: Optional[str]) -> str:
-        return _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
-
-    def _resolve_update_mode(self, value: Optional[str]) -> str:
-        return _resolve_mode(value, self._update_mode, _VALID_UPDATE_MODES)
-
-    def _check_clobber_mode(key: Key, clobber_mode: Optional[str]):
-        clobber_mode = _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
-        # was_key_read = ""
-        # if clobber_mode == "
+    # def _resolve_clobber_mode(self, value: Optional[str]) -> str:
+    #     return _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
+    #
+    # def _resolve_update_mode(self, value: Optional[str]) -> str:
+    #     return _resolve_mode(value, self._update_mode, _VALID_UPDATE_MODES)
+    #
+    # def _check_clobber_mode(key: Key, clobber_mode: Optional[str]):
+    #     clobber_mode = _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
+    #     # was_key_read = ""
+    #     # if clobber_mode == "
 
     def __setitem__(self, key: Key, val: Any,
         *,
@@ -218,8 +314,10 @@ class Config:
         created and the leaf value added/updated with `val`.
 
         :param update_mode: define the policy used for updates (see above)
+            - `None` to use the value set in the constructor
         :param clobber_mode: define the policy used for controlling
             write-after-read (see above)
+            - `None` to use the value set in the constructor
         """
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
@@ -239,16 +337,19 @@ class Config:
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
             raise RuntimeError(msg)
-        # Handle clobber mode.
-        if clobber_mode:
-            msg = f"key={key} val={key} has already been read."
-            if self._is_key_read[key]:
-                raise RuntimeError(msg)
+        # # Handle clobber mode.
+        # if self._is_key_read[key]:
+        #     msg = f"Modifying key={key} with val={key} after was already read."
+        #     if clobber_mode == "assert_on_write_after_read":
+        #         raise RuntimeError(msg)
+        #     elif clobber_mode == "allow_write_after_read":
+        #         _LOG.warning()
         # If the key is compound, then recurse.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
-                # Tuple of a single element, then set the value.
+                # There is no tail_key so __setitem__ was called on a tuple of a
+                # single element, then set the value.
                 self.__setitem__(head_key, val)
             else:
                 # Compound key: recurse on the tail of the key.
@@ -258,6 +359,7 @@ class Config:
                     self._config,
                 )
                 if head_key in self:
+                    # Remove the
                     # We mark a key as read only when it's read from a client of
                     # Config, not from the Config itself.
                     mark_key_as_read = False
@@ -304,8 +406,8 @@ class Config:
         hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
         try:
             ret = self._get_item(key, level=0)
-            if mark_key_as_read:
-                self._is_key_read[key] = True
+            # if mark_key_as_read:
+            #     self._is_key_read[key] = True
         except KeyError as e:
             # After the recursion is done, in case of error print information
             # about the offending config.
@@ -355,116 +457,26 @@ class Config:
             # No key: use the default val if it was passed or asserts.
             # We can't use None since None can be a valid default value, so we use
             # another value.
-            if default_value != _NO_VALUE_SPECIFIED:
+            if default_value != self._NO_VALUE_SPECIFIED:
                 ret = default_value
             else:
                 # No default value found, then raise.
                 raise e
-        if expected_type != _NO_VALUE_SPECIFIED:
+        if expected_type != self._NO_VALUE_SPECIFIED:
             hdbg.dassert_isinstance(ret, expected_type)
         return ret
-
-    def __contains__(self, key: Key) -> bool:
-        """
-        Implement membership operator like `key in config`.
-
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
-        """
-        _LOG.debug("key=%s self=\n%s", key, self)
-        # This is implemented lazily (or Pythonically) with a try-catch around
-        # accessing the key.
-        try:
-            # When we test for existence we don't want to report the config in case
-            # of error.
-            report_mode = "none"
-            val = self.__getitem__(
-                key, report_mode=report_mode
-            )
-            _LOG.debug("Found val=%s", val)
-            found = True
-        except KeyError as e:
-            _LOG.debug("e=%s", e)
-            found = False
-        return found
-
-    def __str__(self) -> str:
-        """
-        Return a short string representation of this `Config`.
-        """
-        txt = []
-        for k, v in self._config.items():
-            if isinstance(v, Config):
-                txt_tmp = str(v)
-                txt.append("%s:\n%s" % (k, hprint.indent(txt_tmp)))
-            else:
-                if isinstance(v, (pd.DataFrame, pd.Series, pd.Index)):
-                    v_as_str = hpandas.df_to_str(v, print_shape_info=True)
-                    v_as_str = "\n" + hprint.indent(v_as_str)
-                else:
-                    v_as_str = str(v)
-                    # Indent a string that spans multiple lines like:
-                    # ```
-                    # portfolio_object:
-                    #   # historical holdings=
-                    #   egid                        10365    -1
-                    #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
-                    #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
-                    #   ...
-                    #   # historical holdings marked to market=
-                    #   ...
-                    # ```
-                    if len(v_as_str.split("\n")) > 1:
-                        v_as_str = "\n" + hprint.indent(v_as_str)
-                txt.append("%s: %s" % (k, v_as_str))
-        ret = "\n".join(txt)
-        # Remove memory locations of functions, if config contains them, e.g.,
-        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
-        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        # Remove memory locations of objects, if config contains them, e.g.,
-        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
-        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        return ret
-
-    def __repr__(self) -> str:
-        """
-        Return an unambiguous representation of this `Config`
-
-        For now it's the same as `str()`. This is used by Jupyter
-        notebook when printing.
-        """
-        return str(self)
-
-    def __len__(self) -> int:
-        """
-        Return number of keys, i.e., the length of the underlying dict.
-
-        This enables calculating `len()` as with a dict and also enables
-        bool evaluation of a `Config` object for truth value testing.
-        """
-        return len(self._config)
-
-    # TODO(gp): Add also iteritems()
-    def keys(self) -> List[str]:
-        return self._config.keys()
 
     def add_subconfig(self, key: str) -> "Config":
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
-        self.__setitem__(key, mark_key_as_read=False)
-        self._is_key_read[key] = False
-        hdbg.dassert_eq(sorted(self._config.keys()), sorted(self._is_key_read.keys()))
+        self.__setitem__(key, config)  #, mark_key_as_read=False)
+        #self._is_key_read[key] = False
+        #hdbg.dassert_eq(sorted(self._config.keys()), sorted(self._is_key_read.keys()))
         return config
 
     # ////////////////////////////////////////////////////////////////////////////
     # Update.
     # ////////////////////////////////////////////////////////////////////////////
-
-    def set_update_mode(self, update_mode: str) -> None:
-        hdbg.dassert_in(update_mode, _VALID_UPDATE_MODES)
-        self._update_mode = update_mode
 
     def update(self, config: "Config", update_mode: Optional[str] = None) -> None:
         """
@@ -575,7 +587,6 @@ class Config:
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
         return self._config.keys()
-
 
     def pop(self, key: str) -> Any:
         """
@@ -721,52 +732,9 @@ class Config:
             # TODO(gp): This should be KeyError
             raise ValueError(msg)
 
-    # TODO(*): Standardize/allow to be configurable what to return if a value is
-    #     missing.
-    # TODO(gp): return a string
-    def print_config(self, keys: Iterable[str]) -> None:
-        """
-        Return a string representation of a subset of keys, assigning "na" when
-        there is no value.
-        """
-        if isinstance(keys, str):
-            keys = [keys]
-        for k in keys:
-            v = self._config.get(k, "na")
-            _LOG.info("%s='%s'", k, v)
-
     # /////////////////////////////////////////////////////////////////////////////
     # Private methods.
     # /////////////////////////////////////////////////////////////////////////////
-
-    # `update_mode` specifies how values are written when a key already exists
-    #   inside a Config
-    #   - `None`: use the default behavior specified in the constructor
-    #   - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
-    #       - if a key already exists, then assert
-    #       - if a key doesn't exist, then assign the new value
-    #   - `overwrite`: assign the key, whether the key exists or not
-    #   - `assign_if_missing`: this mode is used to complete a config, preserving
-    #     what already exists
-    #       - if a key already exists, leave the old value and raise a warning
-    #       - if a key doesn't exist, then assign the new value
-    _VALID_UPDATE_MODES = (
-        "assert_on_overwrite",
-        "overwrite",
-        "assign_if_missing",
-    )
-
-    # `clobber_mode` specifies whether values can be updated after they have been
-    #   read
-    #   - `allow_write_after_read`: allow to write a key even after that key was
-    #     already read. A warning is issued in this case
-    #   - `assert_on_write_after_read`: assert if an outside user tries to write a
-    #     value that has already been read
-    _VALID_CLOBBER_MODES = (
-        "allow_write_after_read",
-        "overwrite",
-        "assign_if_missing",
-    )
 
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
@@ -832,6 +800,9 @@ class Config:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on `KeyError`.
+
+        This method should be used only by `__getitem__()` since it's an helper
+        of that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is nested.
@@ -884,9 +855,10 @@ class Config:
         hdbg.dassert_isinstance(key, self.ScalarKeyAsTypes, "Keys can only be string or int")
         hdbg.dassert_isinstance(self._config, dict)
 
+    # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
     def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
         """
-        Convert as in `to_dict` except for leaf values.
+        Convert as in `to_dict()` except for leaf values.
         """
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()

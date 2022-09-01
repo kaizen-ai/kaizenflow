@@ -1706,36 +1706,36 @@ class Test_from_dict1(hunitest.TestCase):
         self.assertTrue(check)
 
 
-# #############################################################################
-# Test_mark_key_as_read
-# #############################################################################
-
-
-class Test_mark_key_as_read(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        - `__setitem__`
-        - nested config
-        - string keys
-        """
-        config = cconconf.Config()
-        _LOG.debug('## config.add_subconfig("read_data")')
-        config.add_subconfig("read_data")
-        _LOG.debug('## config["read_data"]["file_name"] = "test_name.txt"')
-        config["read_data"]["file_name"] = "test_name.txt"
-        is_key_read = config._is_key_read
-        expected = "OrderedDict([(('read_data', 'file_name'), False)])"
-        self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
-
-    def test2(self) -> None:
-        """
-        - `__setitem__`
-        - nested config
-        - iterable key
-        """
-        config = cconconf.Config()
-        config.add_subconfig("read_data")
-        config["read_data", "file_name"] = "test_name.txt"
-        is_key_read = config._is_key_read
-        expected = "OrderedDict([(('read_data', 'file_name'), False)])"
-        self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
+# # #############################################################################
+# # Test_mark_key_as_read
+# # #############################################################################
+#
+#
+# class Test_mark_key_as_read(hunitest.TestCase):
+#     def test1(self) -> None:
+#         """
+#         - `__setitem__`
+#         - nested config
+#         - string keys
+#         """
+#         config = cconconf.Config()
+#         _LOG.debug('## config.add_subconfig("read_data")')
+#         config.add_subconfig("read_data")
+#         _LOG.debug('## config["read_data"]["file_name"] = "test_name.txt"')
+#         config["read_data"]["file_name"] = "test_name.txt"
+#         is_key_read = config._is_key_read
+#         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
+#         self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
+#
+#     def test2(self) -> None:
+#         """
+#         - `__setitem__`
+#         - nested config
+#         - iterable key
+#         """
+#         config = cconconf.Config()
+#         config.add_subconfig("read_data")
+#         config["read_data", "file_name"] = "test_name.txt"
+#         is_key_read = config._is_key_read
+#         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
+#         self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
