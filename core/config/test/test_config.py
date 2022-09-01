@@ -66,7 +66,7 @@ def _purify_assertion_string(txt: str) -> str:
     # exp = r"""'"key=\'nrows_tmp\' not in:\\n  nrows: 10000\\n  nrows2: hello"\nconfig=\n  nrows: 10000\n  nrows2: hello'
     txt = txt.replace(r"\\n", "\n")
     txt = txt.replace(r"\n", "\n")
-    txt = txt.replace(r"\'", "\'")
+    txt = txt.replace(r"\'", "'")
     txt = txt.replace(r"\\", "")
     return txt
 

@@ -79,13 +79,20 @@ CompoundKey = Union[str, int, Iterable[str], Iterable[int]]
 ValueTypeHint = Any
 
 # TODO(gp): It seems that one can't derive from a typed data structure.
-#_OrderedDictType = collections.OrderedDict[ScalarKey, Any]
+# _OrderedDictType = collections.OrderedDict[ScalarKey, Any]
 _OrderedDictType = collections.OrderedDict
 
 
-class _OrderedDict(_OrderedDictType):
+class _OrderedConfig(_OrderedDictType):
     """
     A dict data structure that allows to read and write with strict policies.
+
+    A Config is a recursive structure with:
+    - key of type str or int
+    - value that can be:
+      - a Config (but not a dict)
+      - any scalar
+      - any other Python data structure (e.g., list, tuple)
     """
 
     def __setitem__(self, key: ScalarKey, value: ValueTypeHint) -> None:
@@ -101,8 +108,8 @@ class Config:
     """
     A nested ordered dictionary storing configuration information.
 
-    Keys can only be strings or ints.
-    Values can be a Python type or another `Config`.
+    - Keys can only be strings or ints.
+    - Values can be a Python type or another `Config`, but not a `dict`.
 
     We refer to configs as:
     - "flat" when they have a single level
@@ -152,25 +159,17 @@ class Config:
         """
         Build a config from a list of (key, value).
 
-        :param array: list of (key, value), where value can be a Python type or a
-            `Config` in case of a nested config
+        :param array: list of (compound key, value)
         :param update_mode: define the policy used for updates (see above)
         :param clobber_mode: define the policy used for controlling
             write-after-read (see above)
         """
-        # A Config is a recursive structure with:
-        # - key of type str or int
-        # - value that can be:
-        #   - a Config (but not a dict)
-        #   - any scalar
-        #   - any other Python data structure (e.g., list, tuple)
-        self._config = _OrderedDict()
+        self._config = _OrderedConfig()
         # Control whether a config can be modified or not.
         self._read_only = False
         # Control the policy for updates.
-        # TODO(gp): This should control also the __set_item__ and not only update.
         self.update_mode = update_mode
-        #
+        # Control whether writing after reading is possible or not.
         self.clobber_mode = clobber_mode
         # Initialize from array.
         # TODO(gp): This might be a separate constructor, but it gives problems
@@ -180,23 +179,44 @@ class Config:
                 hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
                 self.__setitem__(k, v)
 
-    @property
-    def update_mode(self) -> str:
-        return self._update_mode
+    # ////////////////////////////////////////////////////////////////////////////
+    # Dict-like methods.
+    # ////////////////////////////////////////////////////////////////////////////
 
-    @update_mode.setter
-    def update_mode(self, update_mode: str) -> None:
-        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
-        self._update_mode = update_mode
+    def __contains__(self, key: Key) -> bool:
+        """
+        Implement membership operator like `key in config`.
 
-    @property
-    def clobber_mode(self) -> str:
-        return self._clobber_mode
+        If `key` is nested, the hierarchy of Config objects is navigated.
+        """
+        _LOG.debug("key=%s self=\n%s", key, self)
+        # This is implemented lazily (or Pythonically) with a try-catch around
+        # accessing the key.
+        try:
+            # When we test for existence we don't want to report the config in case
+            # of error.
+            report_mode = "none"
+            # When we test for existence we don't want to mark a key as read by
+            # the client, since we don't introduce a dependency from its value.
+            mark_key_as_read = False
+            val = self.__getitem__(
+                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
+            )
+            _LOG.debug("Found val=%s", val)
+            found = True
+        except KeyError as e:
+            _LOG.debug("e=%s", e)
+            found = False
+        return found
 
-    @clobber_mode.setter
-    def clobber_mode(self, clobber_mode: str) -> None:
-        hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
-        self._clobber_mode = clobber_mode
+    def __len__(self) -> int:
+        """
+        Return number of keys, i.e., the length of the underlying dict.
+
+        This enables calculating `len()` as with a dict and also enables
+        bool evaluation of a `Config` object for truth value testing.
+        """
+        return len(self._config)
 
     # ////////////////////////////////////////////////////////////////////////////
     # Printing
@@ -251,58 +271,25 @@ class Config:
         """
         return str(self)
 
-    # TODO(gp): Is it used?
-    # TODO(*): Standardize/allow to be configurable what to return if a value is
-    #     missing.
-    # TODO(gp): return a string
-    def print_config(self, keys: Iterable[str]) -> None:
-        """
-        Return a string representation of a subset of keys, assigning "na" when
-        there is no value.
-        """
-        if isinstance(keys, str):
-            keys = [keys]
-        for k in keys:
-            v = self._config.get(k, "na")
-            _LOG.info("%s='%s'", k, v)
-
     # ////////////////////////////////////////////////////////////////////////////
     # Get / set.
     # ////////////////////////////////////////////////////////////////////////////
 
     # `__setitem__` and `__getitem__` accept a compound key.
 
-    @staticmethod
-    def _resolve_mode(value: Optional[str], ctor_value: str, valid_values: List[str]) -> str:
-        if value is None:
-            # Use the value from the constructor.
-            value = ctor_value
-        # The result should be a valid string.
-        hdbg.dassert_isinstance(valid, str)
-        hdbg.dassert_in(valid, valid_values)
-        return value
-
-    # def _resolve_clobber_mode(self, value: Optional[str]) -> str:
-    #     return _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
-    #
-    # def _resolve_update_mode(self, value: Optional[str]) -> str:
-    #     return _resolve_mode(value, self._update_mode, _VALID_UPDATE_MODES)
-    #
-    # def _check_clobber_mode(key: Key, clobber_mode: Optional[str]):
-    #     clobber_mode = _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
-    #     # was_key_read = ""
-    #     # if clobber_mode == "
-
-    def __setitem__(self, key: CompoundKey, val: Any,
+    def __setitem__(
+        self,
+        key: CompoundKey,
+        val: Any,
         *,
         update_mode: Optional[str] = None,
-        clobber_mode: Optional[str] = None
+        clobber_mode: Optional[str] = None,
     ) -> None:
         """
         Set / update `key` to `val`, equivalent to `dict[key] = val`.
 
         If `key` is an iterable of keys, then the key hierarchy is navigated /
-        created and the leaf value added/updated with `val`.
+        created and the leaf value added / updated with `val`.
 
         :param update_mode: define the policy used for updates (see above)
             - `None` to use the value set in the constructor
@@ -313,8 +300,10 @@ class Config:
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
-            hdbg.dfatal(f"For key='{key}' val='{val}' should be a Config and not a dict")
-        # # To debug who is setting a certain key.
+            hdbg.dfatal(
+                f"For key='{key}' val='{val}' should be a Config and not a dict"
+            )
+        # # Used to debug who is setting a certain key.
         # if False:
         #     _LOG.info("key.set=%s", str(key))
         #     if key == ("dag_runner_config", "wake_up_timestamp"):
@@ -355,8 +344,10 @@ class Config:
                     # Config, not from the Config itself.
                     mark_key_as_read = False
                     subconfig = self.__getitem__(
-                        head_key, report_mode="none",
-                        mark_key_as_read=mark_key_as_read)
+                        head_key,
+                        report_mode="none",
+                        mark_key_as_read=mark_key_as_read,
+                    )
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
@@ -367,7 +358,11 @@ class Config:
         self._config[key] = val  # type: ignore
 
     def __getitem__(
-        self, key: CompoundKey, *, report_mode:str="verbose_log_error", mark_key_as_read: bool = True
+        self,
+        key: CompoundKey,
+        *,
+        report_mode: str = "verbose_log_error",
+        mark_key_as_read: bool = True,
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
@@ -394,7 +389,9 @@ class Config:
             report_mode,
             self,
         )
-        hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
+        hdbg.dassert_in(
+            report_mode, ("verbose_log_error", "verbose_exception", "none")
+        )
         try:
             ret = self._get_item(key, level=0)
             # if mark_key_as_read:
@@ -418,7 +415,6 @@ class Config:
             raise e
         return ret
 
-    # This is similar to `hdict.typed_get()`.
     def get(
         self,
         key: Key,
@@ -426,7 +422,7 @@ class Config:
         expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
         *,
         # When we access a key we want to report the config in case of error.
-        report_mode: str = "verbose_log_error"
+        report_mode: str = "verbose_log_error",
     ) -> Any:
         """
         Equivalent to `dict.get(key, default_val)`.
@@ -439,11 +435,10 @@ class Config:
         :param report_mode:
         :return: config[key] if available, else `default_value`
         """
+        # This is similar to `hdict.typed_get()`.
         _LOG.debug(hprint.to_str("key default_value expected_type"))
         try:
-            ret = self.__getitem__(
-                key, report_mode=report_mode
-            )
+            ret = self.__getitem__(key, report_mode=report_mode)
         except KeyError as e:
             # No key: use the default val if it was passed or asserts.
             # We can't use None since None can be a valid default value, so we use
@@ -460,10 +455,32 @@ class Config:
     def add_subconfig(self, key: str) -> "Config":
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
-        self.__setitem__(key, config)  #, mark_key_as_read=False)
-        #self._is_key_read[key] = False
-        #hdbg.dassert_eq(sorted(self._config.keys()), sorted(self._is_key_read.keys()))
+        self.__setitem__(key, config)  # , mark_key_as_read=False)
+        # self._is_key_read[key] = False
+        # hdbg.dassert_eq(sorted(self._config.keys()), sorted(self._is_key_read.keys()))
         return config
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Accessors.
+    # ////////////////////////////////////////////////////////////////////////////
+
+    @property
+    def update_mode(self) -> str:
+        return self._update_mode
+
+    @update_mode.setter
+    def update_mode(self, update_mode: str) -> None:
+        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
+        self._update_mode = update_mode
+
+    @property
+    def clobber_mode(self) -> str:
+        return self._clobber_mode
+
+    @clobber_mode.setter
+    def clobber_mode(self, clobber_mode: str) -> None:
+        hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
+        self._clobber_mode = clobber_mode
 
     # ////////////////////////////////////////////////////////////////////////////
     # Update.
@@ -536,44 +553,6 @@ class Config:
             _LOG.debug(hprint.to_str("assign_new_value"))
             if assign_new_value:
                 self.__setitem__(key, val)
-
-    # ////////////////////////////////////////////////////////////////////////////
-    # Dict-like methods.
-    # ////////////////////////////////////////////////////////////////////////////
-
-    def __contains__(self, key: Key) -> bool:
-        """
-        Implement membership operator like `key in config`.
-
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
-        """
-        _LOG.debug("key=%s self=\n%s", key, self)
-        # This is implemented lazily (or Pythonically) with a try-catch around
-        # accessing the key.
-        try:
-            # When we test for existence we don't want to report the config in case
-            # of error.
-            report_mode = "none"
-            mark_key_as_read = False
-            val = self.__getitem__(
-                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
-            )
-            _LOG.debug("Found val=%s", val)
-            found = True
-        except KeyError as e:
-            _LOG.debug("e=%s", e)
-            found = False
-        return found
-
-    def __len__(self) -> int:
-        """
-        Return number of keys, i.e., the length of the underlying dict.
-
-        This enables calculating `len()` as with a dict and also enables
-        bool evaluation of a `Config` object for truth value testing.
-        """
-        return len(self._config)
 
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
@@ -723,6 +702,30 @@ class Config:
             # TODO(gp): This should be KeyError
             raise ValueError(msg)
 
+    # def _resolve_clobber_mode(self, value: Optional[str]) -> str:
+    #     return _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
+    #
+    # def _resolve_update_mode(self, value: Optional[str]) -> str:
+    #     return _resolve_mode(value, self._update_mode, _VALID_UPDATE_MODES)
+    #
+    # def _check_clobber_mode(key: Key, clobber_mode: Optional[str]):
+    #     clobber_mode = _resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
+    #     # was_key_read = ""
+    #     # if clobber_mode == "
+
+
+    @staticmethod
+    def _resolve_mode(
+        value: Optional[str], ctor_value: str, valid_values: List[str]
+    ) -> str:
+        if value is None:
+            # Use the value from the constructor.
+            value = ctor_value
+        # The result should be a valid string.
+        hdbg.dassert_isinstance(valid, str)
+        hdbg.dassert_in(valid, valid_values)
+        return value
+
     # /////////////////////////////////////////////////////////////////////////////
     # Private methods.
     # /////////////////////////////////////////////////////////////////////////////
@@ -790,10 +793,11 @@ class Config:
     def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
-        report an informative message reporting the entire config on `KeyError`.
+        report an informative message reporting the entire config on
+        `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's an helper
-        of that function.
+        This method should be used only by `__getitem__()` since it's an
+        helper of that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is nested.
@@ -843,7 +847,9 @@ class Config:
         Check that a leaf config is valid.
         """
         _LOG.debug("key=%s", key)
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes, "Keys can only be string or int")
+        hdbg.dassert_isinstance(
+            key, ScalarKeyValidTypes, "Keys can only be string or int"
+        )
         hdbg.dassert_isinstance(self._config, dict)
 
     # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
