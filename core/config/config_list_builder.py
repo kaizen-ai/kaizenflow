@@ -127,7 +127,7 @@ def parse_backtest_config(backtest_config: str) -> Tuple[str, str, str]:
 
 def set_asset_id(
     config: cconfig.Config,
-    asset_id_key: cconfig.Config.Key,
+    asset_id_key: cconfig.CompoundKey,
     asset_id: Union[List[int], int],
     *,
     allow_new_key: bool = True,
@@ -155,7 +155,7 @@ def set_asset_id(
 
 def build_config_list_varying_asset_id(
     config_list: cconfig.ConfigList,
-    asset_id_key: cconfig.Config.Key,
+    asset_id_key: cconfig.CompoundKey,
     asset_ids: List[int],
 ) -> cconfig.ConfigList:
     """
@@ -184,7 +184,7 @@ def build_config_list_varying_asset_id(
 # TODO(gp): -> ...varying_asset_tiles
 def build_config_list_varying_universe_tiles(
     config_list: cconfig.ConfigList,
-    universe_tile_id: cconfig.Config.Key,
+    universe_tile_id: cconfig.CompoundKey,
     # TODO(gp): -> asset_tiles
     universe_tiles: List[List[int]],
 ) -> cconfig.ConfigList:
