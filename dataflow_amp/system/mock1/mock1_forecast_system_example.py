@@ -162,3 +162,33 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "order_processor_config", "duration_in_secs"
     ] = rt_timeout_in_secs_or_time
     return system
+
+
+# #############################################################################
+# Mock1_Time_ForecastSystem1_example
+# #############################################################################
+
+
+def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
+    """
+    The System is used for the corresponding unit tests.
+    """
+    system = dtfasmmfosy.Mock1_Time_ForecastSystem()
+    #
+    # The test decides when to start the execution.
+    # The data inside the market data starts at 2021-12-19 19:00:00-05:00.
+    # We want to have 7 days of burn in for the model.
+    system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 7 * 24 * 60
+    # Market takes 10 seconds to send the bar.
+    system.config["market_data_config", "delay_in_secs"] = 10
+    #
+    system.config["dag_runner_config", "fit_at_beginning"] = system.config[
+        "dag_builder_object"
+    ].fit_at_beginning
+    # Exercise the system for 3 5-minute intervals.
+    system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
+        60 * 5 * 3
+    )
+    # Duration of the bar is 5 minutes.
+    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
+    return system

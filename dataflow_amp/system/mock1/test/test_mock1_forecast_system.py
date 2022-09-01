@@ -5,11 +5,14 @@ from typing import Callable, Optional, Tuple, Union
 import pandas as pd
 import pytest
 
+import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow.system.test.system_test_case as dtfsytsytc
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
+import im_v2.ccxt.data.client as icdcl
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -397,13 +400,13 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         Get the function building the (non-time) `ForecastSystem`.
         """
         # TODO(Grisha): @Dan Write a function that extracts the latest available universe.
-        universe_version = "v7"
+        universe_version = "v1"
         # In the current system, the time periods are set manually,
         # so the value of `time_interval_str` (e.g., "2022-01-01_2022-02-01")
         # doesn't affect tests.
-        backtest_config = f"ccxt_{universe_version}-all.5T.2022-01-01_2022-02-01"
+        backtest_config = f"mock1_{universe_version}-all.5T.2022-01-01_2022-02-01"
         non_time_system_builder_func = (
-            lambda: dtfosccfsex.get_C1b_ForecastSystem_for_unit_tests_example1(
+            lambda: dtfasmmfsex.get_Mock1_ForecastSystem_for_simulation_example1(
                 backtest_config
             )
         )
@@ -445,13 +448,22 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
             self.get_NonTime_ForecastSystem_builder_func()
         )
         non_time_system = non_time_system_builder_func()
+        im_client_config = {
+            "universe_version": "v1",
+            "resample_1min": True,
+            "dataset": "ohlcv",
+            "contract_type": "futures",
+            "data_snapshot": None,
+        }
+        non_time_system.config["market_data_config", "im_client_ctor"] = im_client_config
+        non_time_system.config["market_data_config", "im_client_config"] = cconfig.Config()
         non_time_system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = start_timestamp
         non_time_system.config["backtest_config", "end_timestamp"] = end_timestamp
         return non_time_system
 
-    def get_Time_ForecastSystem(self) -> dtfsys.System:
+    def get_Mock1_Time_ForecastSystem(self) -> dtfsys.System:
         """
         See description in the parent test case class.
         """
@@ -474,7 +486,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # TODO(Grisha): @Dan we should use separate example systems for
         # reconciliation otherwise we should keep the current ones in
         # sync.
-        time_system = dtfosccfsex.get_C1b_Time_ForecastSystem_example1()
+        time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1() 
         # TODO(Grisha): @Dan consider a way to pass the number of 5-minute intervals.
         # Make system to run for 20 5-minute intervals.
         time_system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
@@ -483,7 +495,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         time_system.config["market_data_config", "data"] = market_data_df
         return time_system
 
-    @pytest.mark.skip("Run manually")
+    # @pytest.mark.skip("Run manually")
     @pytest.mark.superslow("~200 seconds.")
     def test1(self) -> None:
         output_col_name = "vwap.ret_0.vol_adj_2_hat"
