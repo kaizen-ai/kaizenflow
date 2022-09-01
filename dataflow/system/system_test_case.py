@@ -572,7 +572,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         method = "predict"
         config_tag = "non_time_system_config"
         non_time_system_result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
-            self, system, method, config_tag
+            self, non_time_system, method, config_tag
         )
         non_time_system_result_bundle = self.postprocess_result_bundle(
             non_time_system_result_bundle
