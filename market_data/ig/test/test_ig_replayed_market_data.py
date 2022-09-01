@@ -13,7 +13,7 @@
 #import helpers.hunit_test as hunitest
 #import im_v2.ig.universe.ticker_igid_mapping as imviutigma
 #import market_data as mdata
-#import market_data.test.market_data_test_case as mdtmdtca
+#import market_data as mdata
 #import market_data_lime as mdlime
 #
 #_LOG = logging.getLogger(__name__)
@@ -151,7 +151,7 @@
 #        Execute the round-trip transformation.
 #        """
 #        market_data = self.get_IgRealTimeMarketData()
-#        if mdtmdtca.skip_test_since_not_online(market_data):
+#        if mdata.skip_test_since_not_online(market_data):
 #            pytest.skip("Market not on-line")
 #        market_data = self.get_IgReplayedMarketData(market_data)
 #        #
@@ -162,7 +162,7 @@
 #        Call get_data() on the `IgReplayedMarketData`.
 #        """
 #        market_data = self.get_IgRealTimeMarketData()
-#        if mdtmdtca.skip_test_since_not_online(market_data):
+#        if mdata.skip_test_since_not_online(market_data):
 #            pytest.skip("Market not on-line")
 #        market_data = self.get_IgReplayedMarketData(market_data)
 #        #
@@ -175,7 +175,7 @@
 #
 #    def test_get_data_at_timestamp1(self) -> None:
 #        market_data = self.get_IgRealTimeMarketData()
-#        if mdtmdtca.skip_test_since_not_online(market_data):
+#        if mdata.skip_test_since_not_online(market_data):
 #            pytest.skip("Market not on-line")
 #        market_data = self.get_IgReplayedMarketData(market_data)
 #        ts = market_data._df["end_time"].min()
@@ -183,7 +183,7 @@
 #
 #    def test_get_data_at_timestamp2(self) -> None:
 #        market_data = self.get_IgRealTimeMarketData()
-#        if mdtmdtca.skip_test_since_not_online(market_data):
+#        if mdata.skip_test_since_not_online(market_data):
 #            pytest.skip("Market not on-line")
 #        market_data = self.get_IgReplayedMarketData(market_data)
 #        ts = market_data._df["end_time"].max()
@@ -193,7 +193,7 @@
 #
 #    def test_get_data_for_interval1(self) -> None:
 #        market_data = self.get_IgRealTimeMarketData()
-#        if mdtmdtca.skip_test_since_not_online(market_data):
+#        if mdata.skip_test_since_not_online(market_data):
 #            pytest.skip("Market not on-line")
 #        market_data = self.get_IgReplayedMarketData(market_data)
 #        end_ts = market_data._df["end_time"].max()
@@ -247,7 +247,7 @@
 #        # Build a `IgReplayedMarketData`.
 #        hprint.log_frame(_LOG, "IgReplayedMarketData")
 #        market_data = mdlime.get_IgReplayedMarketData_example1(event_loop)
-#        if mdtmdtca.skip_test_since_not_online(market_data):
+#        if mdata.skip_test_since_not_online(market_data):
 #            return
 #        get_wall_clock_time = market_data.get_wall_clock_time
 #        # We are at the beginning of the data.
