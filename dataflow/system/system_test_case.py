@@ -8,7 +8,7 @@ import abc
 import asyncio
 import datetime
 import logging
-from typing import Any, Callable, Coroutine, List, Optional
+from typing import Any, Callable, Coroutine, List, Optional, Tuple
 
 import pandas as pd
 
