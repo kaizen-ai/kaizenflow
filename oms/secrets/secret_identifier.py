@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.secrets.secret_identifier as imvcsseid
+import oms.secrets.secret_identifier as oseseide
 """
 
 from dataclasses import dataclass
@@ -16,10 +16,16 @@ class SecretIdentifier:
     Wrapper class to store categorized secret identifier.
     """
 
+    # Identifier of the exchange (e.g., "binance").
     exchange_id: str
+    # Stage where the secret is used
+    # (e.g., "prod", "preprod", "test").
     stage: str
+    # Account type, broker related: "sandbox", "trading").
     account_type: str
-    _id: int
+    # Integer identification (e.g. to differentiate multiple
+    # binance accounts).
+    id_: int
 
     def __post_init__(self) -> None:
         hdbg.dassert_in(self.stage, ["local", "preprod", "prod"])
@@ -27,5 +33,5 @@ class SecretIdentifier:
 
     def __str__(self) -> str:
         return (
-            f"{self.exchange_id}.{self.stage}.{self.account_type}.{str(self._id)}"
+            f"{self.exchange_id}.{self.stage}.{self.account_type}.{str(self.id_)}"
         )
