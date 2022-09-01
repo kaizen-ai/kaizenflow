@@ -49,36 +49,6 @@ DUMMY = "__DUMMY__"
 _NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
 
 
-# `update_mode` specifies how values are written when a key already exists
-#   inside a Config
-#   - `None`: use the default behavior specified in the constructor
-#   - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
-#       - if a key already exists, then assert
-#       - if a key doesn't exist, then assign the new value
-#   - `overwrite`: assign the key, whether the key exists or not
-#   - `assign_if_missing`: this mode is used to complete a config, preserving
-#     what already exists
-#       - if a key already exists, leave the old value and raise a warning
-#       - if a key doesn't exist, then assign the new value
-_VALID_UPDATE_MODES = (
-    "assert_on_overwrite",
-    "overwrite",
-    "assign_if_missing",
-)
-
-# `clobber_mode` specifies whether values can be updated after they have been
-#   read
-#   - `allow_write_after_read`: allow to write a key even after that key was
-#     already read. A warning is issued in this case
-#   - `assert_on_write_after_read`: assert if an outside user tries to write a
-#     value that has already been read
-_VALID_CLOBBER_MODES = (
-    "allow_write_after_read",
-    "overwrite",
-    "assign_if_missing",
-)
-
-
 class Config:
     """
     A nested ordered dictionary storing configuration information.
@@ -103,8 +73,9 @@ class Config:
 
     def __init__(
         self,
-        *,
+        # We can't make this as mandatory kwarg because of `Config.from_python()`.
         array: Optional[List[Tuple[str, Any]]] = None,
+        *,
         update_mode: Optional[str] = "assert_on_overwrite",
     ) -> None:
         """
@@ -134,7 +105,7 @@ class Config:
         # Control whether a config can be modified or not.
         self._read_only = False
         # TODO(gp): This should control also the __set_item__ and not only update.
-        hdbg.dassert_in(update_mode, _VALID_UPDATE_MODES)
+        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         self._update_mode = update_mode
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -510,6 +481,7 @@ class Config:
         """
         Create an object from the code returned by `to_python()`.
         """
+        _LOG.debug("code=\n%s", code)
         hdbg.dassert_isinstance(code, str)
         try:
             # eval function need unknown globals to be set.
@@ -534,6 +506,7 @@ class Config:
             config_tmp = Config.from_python(config_as_str)
             # Compare.
             hdbg.dassert_eq(str(self), str(config_tmp))
+        _LOG.debug("config_as_str=\n%s", config_as_str)
         return config_as_str
 
     @classmethod
@@ -623,6 +596,35 @@ class Config:
     # Private methods.
     # /////////////////////////////////////////////////////////////////////////////
 
+    # `update_mode` specifies how values are written when a key already exists
+    #   inside a Config
+    #   - `None`: use the default behavior specified in the constructor
+    #   - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
+    #       - if a key already exists, then assert
+    #       - if a key doesn't exist, then assign the new value
+    #   - `overwrite`: assign the key, whether the key exists or not
+    #   - `assign_if_missing`: this mode is used to complete a config, preserving
+    #     what already exists
+    #       - if a key already exists, leave the old value and raise a warning
+    #       - if a key doesn't exist, then assign the new value
+    _VALID_UPDATE_MODES = (
+        "assert_on_overwrite",
+        "overwrite",
+        "assign_if_missing",
+    )
+
+    # `clobber_mode` specifies whether values can be updated after they have been
+    #   read
+    #   - `allow_write_after_read`: allow to write a key even after that key was
+    #     already read. A warning is issued in this case
+    #   - `assert_on_write_after_read`: assert if an outside user tries to write a
+    #     value that has already been read
+    _VALID_CLOBBER_MODES = (
+        "allow_write_after_read",
+        "overwrite",
+        "assign_if_missing",
+    )
+
     @staticmethod
     def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
         """
@@ -634,7 +636,7 @@ class Config:
             "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
         )
         hdbg.dassert_isinstance(
-            head_key, self.ScalarKeyAsTypes, "Keys can only be string or int"
+            head_key, Config.ScalarKeyAsTypes, "Keys can only be string or int"
         )
         # TODO(gp): -> head_scalar_key, tail_compound_key
         return head_key, tail_key
