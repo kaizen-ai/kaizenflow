@@ -1,3 +1,7 @@
+v7.1
+- 2022-09-01
+- Copy of v7 with only USDT currency pairs
+
 v7
 - 2022-07-14
 - Only `binance` futures
