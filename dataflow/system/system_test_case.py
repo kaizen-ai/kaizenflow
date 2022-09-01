@@ -473,58 +473,6 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
 
 # #############################################################################
-# Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
-# #############################################################################
-
-
-class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1(
-    Time_ForecastSystem_with_DataFramePortfolio_TestCase1,
-    Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
-):
-    def _test1(
-        self,
-        system_with_dataframe_portfolio: dtfsyssyst.System,
-        system_with_database_portfolio: dtfsyssyst.System,
-    ) -> None:
-        """
-        Test that the outcome is the same when running a System with a
-        DataFramePortfolio vs running one with a DatabasePortfolio.
-        """
-        # The config signature is different (since the systems are different) so
-        # we only compare the result of the run.
-        add_system_config = False
-        add_run_signature = True
-        actual = self._test_dataframe_portfolio_helper(
-            system_with_dataframe_portfolio,
-            add_system_config=add_system_config,
-            add_run_signature=add_run_signature,
-        )
-        # Make sure there is something in the actual outcome.
-        hdbg.dassert_lte(10, len(actual.split("\n")))
-        expected = self._test_database_portfolio_helper(
-            system_with_database_portfolio,
-            add_system_config=add_system_config,
-            add_run_signature=add_run_signature,
-        )
-        #
-        hdbg.dassert_lte(10, len(expected.split("\n")))
-        # Remove `DataFrame*` and `Database*` to avoid mismatches from the fact
-        # that the systems are different.
-        regex = (
-            "DataFramePortfolio|DatabasePortfolio|SimulatedBroker|DatabaseBroker"
-        )
-        actual = hunitest.filter_text(regex, actual)
-        expected = hunitest.filter_text(regex, expected)
-        self.assert_equal(
-            actual,
-            expected,
-            fuzzy_match=True,
-            purify_text=True,
-            purify_expected_text=True,
-        )
-
-
-# #############################################################################
 # NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
 # #############################################################################
 
@@ -674,6 +622,190 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self.assert_equal(
             time_system_signature,
             non_time_system_signature,
+            fuzzy_match=True,
+            purify_text=True,
+            purify_expected_text=True,
+        )
+
+
+# #####################################################################################
+# Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+# #####################################################################################
+
+
+# TODO(Grisha): Use for the Mock1 pipeline.
+class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1(
+    hunitest.TestCase
+):
+    """
+    Reconcile `Time_ForecastSystem` and
+    `Time_ForecastSystem_with_DataFramePortfolio`.
+
+    It is expected that research PnL is strongly correlated with the PnL from Portfolio.
+    2 versions of PnL may differ by a constant so we use correlation to compare them
+    instead of comparing the values directly.
+
+    Add `ForecastEvaluatorFromPrices` to `Time_ForecastSystem` to compute research PnL.
+    """
+    # TODO(Grisha): factor out, it is common for all the tests that read data
+    # from S3.
+    def get_file_path(self) -> str:
+        """
+        Get path to a file with the market data to replay.
+
+        E.g., `s3://.../unit_test/outcomes/Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio1/input/data.csv.gz`.
+        """
+        input_dir = self.get_input_dir(
+            use_only_test_class=True,
+            use_absolute_path=False,
+        )
+        file_name = "data.csv.gz"
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        file_path = os.path.join(
+            s3_bucket_path,
+            "unit_test",
+            input_dir,
+            file_name,
+        )
+        return file_path
+
+    @abc.abstractmethod
+    def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
+        """
+        Get `Time_ForecastSystem` and fill the `system.config`.
+        """
+
+    def run_Time_ForecastSystem(self) -> Tuple[str, pd.Series]:
+        """
+        Run `Time_ForecastSystem` and compute research PnL.
+        """
+        time_system = self.get_Time_ForecastSystem()
+        # Run the system and check the config against the frozen value.
+        config_tag = "time_system_config"
+        time_system_result_bundles = run_Time_ForecastSystem(
+            self, time_system, config_tag
+        )
+        # Get the last result bundle data for comparison.
+        result_bundle = time_system_result_bundles[-1]
+        forecast_evaluator_from_prices_dict = time_system.config[
+            "research_forecast_evaluator_from_prices"
+        ].to_dict()
+        system_tester = SystemTester()
+        signature, research_pnl = system_tester.get_research_pnl_signature(
+            result_bundle,
+            forecast_evaluator_from_prices_dict,
+        )
+        return signature, research_pnl
+
+    @abc.abstractmethod
+    def get_Time_ForecastSystem_with_DataFramePortfolio(self) -> dtfsyssyst.System:
+        """
+        Get `Time_ForecastSystem_with_DataFramePortfolio` and fill the
+        `system.config`.
+        """
+
+    def run_Time_ForecastSystem_with_DataFramePortfolio(
+        self,
+    ) -> Tuple[str, pd.Series]:
+        """
+        Run `Time_ForecastSystem_with_DataFramePortfolio` and compute Portfolio
+        PnL.
+        """
+        time_system = self.get_Time_ForecastSystem_with_DataFramePortfolio()
+        # Run the system and check the config against the frozen value.
+        config_tag = "dataframe_portfolio"
+        _ = run_Time_ForecastSystem(
+            self, time_system, config_tag
+        )
+        system_tester = SystemTester()
+        # Compute Portfolio PnL. Get the number of data points
+        # that is sufficient for a reconciliation.
+        num_periods = 20
+        signature, pnl = system_tester.get_portfolio_signature(
+            time_system.portfolio, num_periods=num_periods
+        )
+        return signature, pnl
+
+    def _test1(self) -> None:
+        actual = []
+        # Compute research PnL and check in the signature.
+        research_signature, research_pnl = self.run_Time_ForecastSystem()
+        actual.append(research_signature)
+        # Compute Portfolio PnL and check in the signature.
+        (
+            portfolio_signature,
+            pnl,
+        ) = self.run_Time_ForecastSystem_with_DataFramePortfolio()
+        actual.append(portfolio_signature)
+        # Compute correlation for research PnL vs Portfolio PnL.
+        # TODO(Grisha): copy-pasted from `system_test_case.py`, try to share code.
+        if min(pnl.count(), research_pnl.count()) > 1:
+            # Drop leading NaNs and burn the first PnL entry.
+            research_pnl = research_pnl.dropna().iloc[1:]
+            tail = research_pnl.size
+            # We create new series because the portfolio times may be
+            # disaligned from the research bar times.
+            pnl1 = pd.Series(pnl.tail(tail).values)
+            _LOG.debug("portfolio pnl=\n%s", pnl1)
+            corr_samples = min(tail, pnl1.size)
+            pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
+            _LOG.debug("research pnl=\n%s", pnl2)
+            correlation = pnl1.corr(pnl2)
+            actual.append("\n# pnl agreement with research pnl\n")
+            actual.append(f"corr = {correlation:.3f}")
+            actual.append(f"corr_samples = {corr_samples}")
+        # Check in the output.
+        actual = "\n".join(map(str, actual))
+        self.check_string(actual, fuzzy_match=True, purify_text=True)
+
+
+# #############################################################################
+# Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1
+# #############################################################################
+
+
+class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFramePortfolio_TestCase1(
+    Time_ForecastSystem_with_DataFramePortfolio_TestCase1,
+    Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1,
+):
+    def _test1(
+        self,
+        system_with_dataframe_portfolio: dtfsyssyst.System,
+        system_with_database_portfolio: dtfsyssyst.System,
+    ) -> None:
+        """
+        Test that the outcome is the same when running a System with a
+        DataFramePortfolio vs running one with a DatabasePortfolio.
+        """
+        # The config signature is different (since the systems are different) so
+        # we only compare the result of the run.
+        add_system_config = False
+        add_run_signature = True
+        actual = self._test_dataframe_portfolio_helper(
+            system_with_dataframe_portfolio,
+            add_system_config=add_system_config,
+            add_run_signature=add_run_signature,
+        )
+        # Make sure there is something in the actual outcome.
+        hdbg.dassert_lte(10, len(actual.split("\n")))
+        expected = self._test_database_portfolio_helper(
+            system_with_database_portfolio,
+            add_system_config=add_system_config,
+            add_run_signature=add_run_signature,
+        )
+        #
+        hdbg.dassert_lte(10, len(expected.split("\n")))
+        # Remove `DataFrame*` and `Database*` to avoid mismatches from the fact
+        # that the systems are different.
+        regex = (
+            "DataFramePortfolio|DatabasePortfolio|SimulatedBroker|DatabaseBroker"
+        )
+        actual = hunitest.filter_text(regex, actual)
+        expected = hunitest.filter_text(regex, expected)
+        self.assert_equal(
+            actual,
+            expected,
             fuzzy_match=True,
             purify_text=True,
             purify_expected_text=True,
