@@ -163,9 +163,12 @@ DATASET_SCHEMA = {
     "knowledge_timestamp": "datetime64[ns, UTC]",
     "low": "float64",
     "month": "int32",
+    "number_of_trades": "int32",
     "open": "float64",
     "timestamp": "int64",
+    "twap": "float64",
     "volume": "float64",
+    "vwap": "float64",
     "year": "int32", 
 }
 
