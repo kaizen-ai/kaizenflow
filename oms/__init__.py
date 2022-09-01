@@ -15,3 +15,4 @@ from oms.portfolio import *  # pylint: disable=unused-import # NOQA
 from oms.portfolio_example import *  # pylint: disable=unused-import # NOQA
 from oms.process_forecasts_ import *  # pylint: disable=unused-import # NOQA
 from oms.restrictions import *  # pylint: disable=unused-import # NOQA
+from oms.secrets import *  # pylint: disable=unused-import # NOQA

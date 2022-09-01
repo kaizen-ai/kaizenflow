@@ -33,15 +33,19 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def run_ForecastSystem_dag_from_backtest_config(
-    self: Any, system: dtfsyssyst.System, method: str
+def run_NonTime_ForecastSystem_from_backtest_config(
+    self: Any,
+    system: dtfsyssyst.System,
+    method: str,
+    config_tag: str,
 ) -> dtfcore.ResultBundle:
     """
-    Run `ForecastSystem` DAG with the specified fit / predict method and using
-    the backtest parameters from `SystemConfig`.
+    Run non-time `ForecastSystem` DAG with the specified fit / predict method
+    and using the backtest parameters from `SystemConfig`.
 
     :param system: system object to extract `DagRunner` from
     :param method: "fit" or "predict"
+    :param config_tag: tag used to freeze the system config by `check_system_config()`
     :return: result bundle
     """
     hdbg.dassert_in(method, ["fit", "predict"])
@@ -50,8 +54,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # Check the system config against the frozen value.
-    tag = "forecast_system"
-    dtfsysysig.check_system_config(self, system, tag)
+    dtfsysysig.check_system_config(self, system, config_tag)
     # Set the time boundaries.
     start_datetime = system.config[
         "backtest_config", "start_timestamp_with_lookback"
@@ -157,8 +160,10 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the backtest_config period
         - Save the signature of the system
         """
-        result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            self, system, "fit"
+        method = "fit"
+        config_tag = "forecast_system"
+        result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+            self, system, method, config_tag
         )
         # Check outcome.
         actual = dtfsysysig.get_signature(
@@ -204,13 +209,17 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         is frozen.
         """
         # Fit.
-        fit_result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            self, system, "fit"
+        method = "fit"
+        config_tag = "forecast_system"
+        result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+            self, system, method, config_tag
         )
         fit_df = fit_result_bundle.result_df
         # Predict.
-        predict_result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            self, system, "predict"
+        method = "predict"
+        config_tag = "forecast_system"
+        result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+            self, system, method, config_tag
         )
         predict_df = predict_result_bundle.result_df
         # Check.
@@ -272,8 +281,10 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self,
         system: dtfsyssyst.System,
     ) -> None:
-        result_bundle = run_ForecastSystem_dag_from_backtest_config(
-            self, system, "fit"
+        method = "fit"
+        config_tag = "forecast_system"
+        result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+            self, system, method, config_tag
         )
         # Check the pnl.
         forecast_evaluator_from_prices_dict = system.config[
@@ -557,26 +568,12 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         """
         Get (non-time) `ForecastSystem` outcome signature.
         """
-        # TODO(Grisha): @Dan Use `run_ForecastSystem_dag_from_backtest_config`.
-        # Build `DagRunner`.
-        non_time_system_dag_runner = non_time_system.dag_runner
-        # Config is complete: freeze it before running since we want to be
-        # notified of any config changes, before running.
-        self.check_string(
-            str(non_time_system.config),
-            tag="non_time_system_config",
-            purify_text=True,
+        # Run the system.
+        method = "predict"
+        config_tag = "non_time_system_config"
+        non_time_system_result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+            self, system, method, config_tag
         )
-        # Set the time boundaries.
-        start_timestamp = non_time_system.config[
-            "backtest_config", "start_timestamp_with_lookback"
-        ]
-        end_timestamp = non_time_system.config["backtest_config", "end_timestamp"]
-        non_time_system_dag_runner.set_predict_intervals(
-            [(start_timestamp, end_timestamp)],
-        )
-        # Run.
-        non_time_system_result_bundle = non_time_system_dag_runner.predict()
         non_time_system_result_bundle = self.postprocess_result_bundle(
             non_time_system_result_bundle
         )
