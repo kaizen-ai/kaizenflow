@@ -534,7 +534,7 @@ class CcxtBroker(ombroker.Broker):
             minimal_order_limits[asset_id]["min_amount"] = amount_limit
             # Set the minimal cost of asset in the order.
             #  Note: the notional limit can differ between symbols
-            #  and subject to fluctuations, so setting it manually to 10.
+            #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
         return minimal_order_limits
@@ -742,7 +742,7 @@ class CcxtBroker(ombroker.Broker):
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
     strategy_id: str,
-    secret_id: imvcs.SecretIdentifier
+    secret_id: imvcs.SecretIdentifier,
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
