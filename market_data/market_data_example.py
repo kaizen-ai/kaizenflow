@@ -5,7 +5,6 @@ import market_data.market_data_example as mdmadaex
 """
 
 import asyncio
-import datetime
 import logging
 from typing import Dict, List, Optional, Tuple, Union
 
@@ -46,7 +45,7 @@ def get_ReplayedTimeMarketData_from_df(
     end_time_col_name: str = "end_datetime",
     delay_in_secs: int = 0,
     sleep_in_secs: float = 1.0,
-    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]] = 60 * 2,
+    time_out_in_secs: int = 60 * 2,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` backed by data stored in a dataframe.
@@ -115,7 +114,7 @@ def get_ReplayedTimeMarketData_from_df(
         columns,
         get_wall_clock_time,
         sleep_in_secs=sleep_in_secs,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
@@ -130,7 +129,7 @@ def get_ReplayedTimeMarketData_example2(
     delay_in_secs: int = 0,
     columns: Optional[List[str]] = None,
     sleep_in_secs: float = 1.0,
-    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]] = 60 * 2,
+    time_out_in_secs: int = 60 * 2,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` backed by synthetic data.
@@ -156,7 +155,7 @@ def get_ReplayedTimeMarketData_example2(
         df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
@@ -188,14 +187,14 @@ def get_ReplayedTimeMarketData_example3(
     replayed_delay_in_mins_or_timestamp = 5
     delay_in_secs = 0
     sleep_in_secs = 30
-    rt_timeout_in_secs_or_time = 60 * 5
+    time_out_in_secs = 60 * 5
     (market_data, get_wall_clock_time,) = get_ReplayedTimeMarketData_from_df(
         event_loop,
         replayed_delay_in_mins_or_timestamp,
         df=df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
@@ -217,14 +216,14 @@ def get_ReplayedTimeMarketData_example4(
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30
-    rt_timeout_in_secs_or_time = 60 * 5
+    time_out_in_secs = 60 * 5
     market_data, get_wall_clock_time = get_ReplayedTimeMarketData_from_df(
         event_loop,
         replayed_delay_in_mins_or_timestamp,
         df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
@@ -248,14 +247,14 @@ def get_ReplayedTimeMarketData_example5(
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0
     sleep_in_secs = 30
-    rt_timeout_in_secs_or_time = 60 * 5
+    time_out_in_secs = 60 * 5
     market_data, get_wall_clock_time = get_ReplayedTimeMarketData_from_df(
         event_loop,
         replayed_delay_in_mins_or_timestamp,
         df,
         delay_in_secs=delay_in_secs,
         sleep_in_secs=sleep_in_secs,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
