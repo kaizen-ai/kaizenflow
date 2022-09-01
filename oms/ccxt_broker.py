@@ -425,7 +425,7 @@ class CcxtBroker(ombroker.Broker):
 
     def _get_low_market_price(self, asset_id: int) -> float:
         """
-        Load the high price for the given ticker.
+        Load the low price for the given ticker.
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         last_price = self._exchange.fetch_ticker(symbol)["low"]
