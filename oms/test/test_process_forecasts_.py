@@ -168,7 +168,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         delay_in_secs = 0
         columns = ["price"]
         sleep_in_secs = 30
-        rt_timeout_in_secs_or_time = 60 * 5
+        time_out_in_secs = 60 * 5
         (
             market_data,
             get_wall_clock_time,
@@ -181,7 +181,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             delay_in_secs=delay_in_secs,
             columns=columns,
             sleep_in_secs=sleep_in_secs,
-            rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+            time_out_in_secs=time_out_in_secs,
         )
         portfolio = oporexam.get_DataFramePortfolio_example1(
             event_loop,
@@ -279,8 +279,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
 class TestSimulatedProcessForecasts3(hunitest.TestCase):
     @staticmethod
     def get_portfolio(
-        event_loop: asyncio.AbstractEventLoop,
-        asset_ids: List[int]
+        event_loop: asyncio.AbstractEventLoop, asset_ids: List[int]
     ) -> omportfo.DataFramePortfolio:
         start_datetime = pd.Timestamp(
             "2000-01-01 09:30:00-05:00", tz="America/New_York"
