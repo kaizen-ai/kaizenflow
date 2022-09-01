@@ -8,12 +8,12 @@ import abc
 import asyncio
 import datetime
 import logging
+import os
 from typing import Any, Callable, Coroutine, List, Optional, Tuple
 
 import pandas as pd
 
 import dataflow.core as dtfcore
-import dataflow.system as dtfsys
 import dataflow.system.system as dtfsyssyst
 import dataflow.system.system_builder_utils as dtfssybuut
 import dataflow.system.system_signature as dtfsysysig
@@ -51,7 +51,7 @@ def run_ForecastSystem_dag_from_backtest_config(
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # Check the system config against the frozen value.
     tag = "forecast_system"
-    dtfsys.check_system_config(self, system, tag)
+    dtfsysysig.check_system_config(self, system, tag)
     # Set the time boundaries.
     start_datetime = system.config[
         "backtest_config", "start_timestamp_with_lookback"
@@ -94,7 +94,7 @@ def run_Time_ForecastSystem(
         # Create a `DagRunner`.
         dag_runner = system.dag_runner
         # Check the system config against the frozen value.
-        dtfsys.check_system_config(self, system, config_tag)
+        dtfsysysig.check_system_config(self, system, config_tag)
         coroutines.append(dag_runner.predict())
         #
         if "order_processor_config" in system.config:
@@ -161,7 +161,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
             self, system, "fit"
         )
         # Check outcome.
-        actual = dtfsys.get_signature(
+        actual = dtfsysysig.get_signature(
             system.config, result_bundle, output_col_name
         )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
@@ -188,7 +188,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         # Run.
         result_bundle = dag_runner.fit()
         # Check outcome.
-        actual = dtfsys.get_signature(
+        actual = dtfsysysig.get_signature(
             system.config, result_bundle, output_col_name
         )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
@@ -279,7 +279,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         forecast_evaluator_from_prices_dict = system.config[
             "research_forecast_evaluator_from_prices"
         ].to_dict()
-        signature, _ = dtfsys.get_research_pnl_signature(
+        signature, _ = dtfsysysig.get_research_pnl_signature(
             self, result_bundle, forecast_evaluator_from_prices_dict
         )
         self.check_string(signature, fuzzy_match=True, purify_text=True)
@@ -309,7 +309,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # Check the run signature.
         result_bundle = result_bundles[-1]
-        actual = dtfsys.get_signature(
+        actual = dtfsysysig.get_signature(
             system.config, result_bundle, output_col_name
         )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
@@ -628,9 +628,9 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         )
 
 
-# #####################################################################################
+# #############################################################################
 # Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1
-# #####################################################################################
+# #############################################################################
 
 
 # TODO(Grisha): Use for the Mock1 pipeline.
@@ -647,6 +647,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
 
     Add `ForecastEvaluatorFromPrices` to `Time_ForecastSystem` to compute research PnL.
     """
+
     # TODO(Grisha): factor out, it is common for all the tests that read data
     # from S3.
     def get_file_path(self) -> str:
@@ -699,7 +700,9 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         return signature, research_pnl
 
     @abc.abstractmethod
-    def get_Time_ForecastSystem_with_DataFramePortfolio(self) -> dtfsyssyst.System:
+    def get_Time_ForecastSystem_with_DataFramePortfolio(
+        self,
+    ) -> dtfsyssyst.System:
         """
         Get `Time_ForecastSystem_with_DataFramePortfolio` and fill the
         `system.config`.
@@ -715,9 +718,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         time_system = self.get_Time_ForecastSystem_with_DataFramePortfolio()
         # Run the system and check the config against the frozen value.
         config_tag = "dataframe_portfolio"
-        _ = run_Time_ForecastSystem(
-            self, time_system, config_tag
-        )
+        _ = run_Time_ForecastSystem(self, time_system, config_tag)
         system_tester = SystemTester()
         # Compute Portfolio PnL. Get the number of data points
         # that is sufficient for a reconciliation.
