@@ -117,6 +117,11 @@ _VALID_CLOBBER_MODES = (
 _OrderedDictType = collections.OrderedDict
 
 
+class OverwriteError(RuntimeError):
+
+    pass
+
+
 class _OrderedConfig(_OrderedDictType):
     """
     A dict data structure that allows to read and write with strict policies.
@@ -148,7 +153,7 @@ class _OrderedConfig(_OrderedDictType):
                 )
                 msg.append(f"self=\n" + hprint.indent(str(self)))
                 msg = "\n".join(msg)
-                raise RuntimeError(msg)
+                raise OverwriteError(msg)
             else:
                 # Key doesn't exist, then assign.
                 assign_new_value = True
