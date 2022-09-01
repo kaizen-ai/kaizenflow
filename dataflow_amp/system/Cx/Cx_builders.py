@@ -66,7 +66,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     # Login.
     db_connection = hsql.get_connection(*connection_params)
     # Get the real-time `ImClient`.
-    table_name = "ccxt_ohlcv"
+    table_name = "ccxt_ohlcv_futures"
     im_client = imvcdccccl.CcxtSqlRealTimeImClient(
         resample_1min, db_connection, table_name
     )

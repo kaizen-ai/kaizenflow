@@ -166,7 +166,7 @@ DATASET_SCHEMA = {
     "open": "float64",
     "timestamp": "int64",
     "volume": "float64",
-    "year": "int32",
+    "year": "int32", 
 }
 
 

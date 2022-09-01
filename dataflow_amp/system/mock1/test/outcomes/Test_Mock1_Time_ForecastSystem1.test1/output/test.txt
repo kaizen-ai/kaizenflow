@@ -66,7 +66,7 @@ market_data_config:
   replayed_delay_in_mins_or_timestamp: 35
   history_lookback: 1 days 00:00:00
 dag_runner_config:
-  real_time_loop_time_out_in_secs: 900
+  rt_timeout_in_secs_or_time: 900
   bar_duration_in_secs: 300
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((60, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=0 <int>)
@@ -281,7 +281,7 @@ object.str:
             2000-01-01 10:30:00-05:00 2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00 2000-01-01 10:30:00-05:00  100.0       101     100      -1.0
           _knowledge_datetime_col_name='timestamp_db' <str>
           _delay_in_secs='0' <int>>,
-         'time_out_in_secs': 900}
+         'rt_timeout_in_secs_or_time': 900}
       _dst_dir='None' <NoneType>
       _fit_at_beginning='False' <bool>
       _wake_up_timestamp='None' <NoneType>
@@ -315,7 +315,7 @@ dag_runner_object:
       2000-01-01 10:29:00-05:00 2000-01-01 10:28:00-05:00 2000-01-01 10:29:00-05:00 2000-01-01 10:29:00-05:00  100.0       101     100      -1.0
       2000-01-01 10:30:00-05:00 2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00 2000-01-01 10:30:00-05:00  100.0       101     100      -1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
-    _delay_in_secs='0' <int>>, 'bar_duration_in_secs': 300, 'time_out_in_secs': 900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 10:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
+    _delay_in_secs='0' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 900} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 10:10:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 10:15:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
 ################################################################################
 vwap.ret_0.vol_adj.c
 ################################################################################

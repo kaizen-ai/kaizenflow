@@ -614,7 +614,7 @@ def docker_create_candidate_image(ctx, task_definition, user_tag=""):  # type: i
 
 
 @task
-def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s3_path):  # type: ignore
+def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s3_path, task_definition):  # type: ignore
     """
     Update image in prod task definition to the desired version.
 
@@ -622,6 +622,8 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     :param preprod_tag: image that will be re-tagged with prod version
         e.g., `preprod-d8sf76s` -> `prod-1.1.1`
     :param airflow_dags_s3_path: S3 bucket from which airflow will load DAGs
+    :param task_definition: which ECS task definition to use
+     currently our prod ECS task definitions match short name of repos.
     """
     # TODO(Nikola): Convert `haws` part to script so it can be called via `docker_cmd`.
     #   https://github.com/cryptokaizen/cmamp/pull/2594/files#r948551787
@@ -631,7 +633,6 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     s3fs_ = hs3.get_s3fs(aws_profile="ck")
     super_module = not hgit.is_inside_submodule()
     full_repo_name = hgit.get_repo_full_name_from_client(super_module)
-    short_repo_name = os.path.split(full_repo_name)[-1]
     # Prepare params for listing DAGs.
     root_dir = hgit.get_client_root(super_module)
     # TODO(Nikola): Make dirname agnostic for each repo.
@@ -660,7 +661,7 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     # TODO(Nikola): Reiterate to previous versions to pick correct one, if needed.
     # client.list_task_definitions(familyPrefix=preprod_task_definition_name, sort="DESC")
     # TODO(Nikola): Use env var for CK profile.
-    preprod_task_definition_name = f"{short_repo_name}-preprod"
+    preprod_task_definition_name = f"{task_definition}-preprod"
     ecs_client = haws.get_service_client(aws_profile="ck", service_name="ecs")
     task_description = ecs_client.describe_task_definition(
         taskDefinition=preprod_task_definition_name
@@ -680,8 +681,7 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     # Upload new tag to ECS.
     docker_push_prod_image(ctx, prod_version)
     # Update prod task definition to the latest prod tag.
-    prod_task_definition_name = f"{short_repo_name}-prod"
-    haws.update_task_definition(prod_task_definition_name, new_prod_image_url)
+    haws.update_task_definition(task_definition, new_prod_image_url)
     # Add prod DAGs to airflow s3 bucket after all checks are passed.
     for dag_path in dag_paths:
         # Update prod DAGs.

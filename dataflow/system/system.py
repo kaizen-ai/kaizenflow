@@ -104,7 +104,7 @@ _LOG = logging.getLogger(__name__)
 #     - ...
 #
 #   - dag_runner_object
-#     - real_time_loop_time_out_in_secs
+#     - rt_timeout_in_secs_or_time
 #
 #   - backtest_config
 #     - """information about back testing"""
@@ -309,6 +309,7 @@ class System(abc.ABC):
 # #############################################################################
 
 
+# TODO(Grisha): @Dan CmTask2739 "Introduce `NonTime_ForecastSystem`."
 class ForecastSystem(System):
     """
     A System producing forecasts and comprised of:
