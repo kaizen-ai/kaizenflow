@@ -39,9 +39,10 @@ class CcxtPortfolio(omportfo.DataFramePortfolio):
 def get_CcxtPortfolio_prod_instance1(
     strategy_id: str,
     market_data: mdata.MarketData,
+    universe_version: str, 
     asset_ids: Optional[List[int]],
     pricing_method: str,
-        secret_identifier: omssec.SecretIdentifier
+    secret_identifier: omssec.SecretIdentifier,
 ) -> CcxtPortfolio:
     """
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
@@ -49,6 +50,7 @@ def get_CcxtPortfolio_prod_instance1(
     # Build CcxtBroker.
     broker = occxbrok.get_CcxtBroker_prod_instance1(
         market_data,
+        universe_version,
         strategy_id,
         secret_identifier
     )
