@@ -33,7 +33,7 @@ _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
 # NOTE: Keep this enabled when committing.
-_LOG.setLevel(logging.INFO)
+#_LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
@@ -140,6 +140,11 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("key val update_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         #
+#        if isinstance(val, dict):
+#            raise ValueError(
+#                f"For key='{key}' val='{val}' should be a Config and not a dict"
+#            )
+#        #
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
         if update_mode == "assert_on_overwrite":
@@ -204,6 +209,7 @@ class _OrderedConfig(_OrderedDictType):
                 txt.append(space + str(value))
         txt = "\n".join(txt)
         return txt
+
 
 class Config:
     """
@@ -348,6 +354,15 @@ class Config:
 
     # `__setitem__` and `__getitem__` accept a compound key.
 
+    def _setitem(self,
+                 key: CompoundKey,
+                 val: Any,
+                 *,
+                 update_mode: Optional[str] = None,
+                 clobber_mode: Optional[str] = None,
+                 ) -> None:
+        pass
+
     def __setitem__(
         self,
         key: CompoundKey,
@@ -430,6 +445,25 @@ class Config:
         self._dassert_base_case(key)
         self._config.__setitem__(key, val, update_mode=update_mode)
 
+    def _raise_exception(self, exception: Exception, key: CompoundKey, report_mode: str) -> None:
+        hdbg.dassert_in(
+            report_mode, ("verbose_log_error", "verbose_exception", "none")
+        )
+        # After the recursion is done, in case of error print information
+        # about the offending key.
+        if report_mode in ("verbose_log_error", "verbose_exception"):
+            msg = []
+            msg.append("exception=" + str(exception))
+            msg.append(f"key='{key}'")
+            msg.append("config=\n" + hprint.indent(str(self)))
+            msg = "\n".join(msg)
+            if report_mode == "verbose_log_error":
+                _LOG.error(msg)
+            elif report_mode == "verbose_exception":
+                exception = KeyError(msg)
+        #raise Exception(msg) from e
+        raise exception
+
     def __getitem__(
         self,
         key: CompoundKey,
@@ -453,9 +487,6 @@ class Config:
         :raises KeyError: if the (nested) key is not found in the `Config`
         """
         _LOG.debug(hprint.to_str("key report_mode self"))
-        hdbg.dassert_in(
-            report_mode, ("verbose_log_error", "verbose_exception", "none")
-        )
         try:
             ret = self._get_item(key, level=0)
             # if mark_key_as_read:
@@ -463,19 +494,7 @@ class Config:
         except KeyError as e:
             # After the recursion is done, in case of error print information
             # about the offending key.
-            if report_mode in ("verbose_log_error", "verbose_exception"):
-                msg = []
-                msg.append("exception=" + str(e))
-                msg.append(f"key='{key} not in:")
-                msg.append("config=\n" + hprint.indent(str(self)))
-                msg = "\n".join(msg)
-                if report_mode == "verbose_log_error":
-                    _LOG.error(msg)
-                elif report_mode == "verbose_exception":
-                    e = KeyError(msg)
-                else:
-                    raise ValueError("Invalid report_mode='%s'", report_mode)
-            raise e
+            self._raise_exception(e, key, report_mode)
         return ret
 
     def get(
@@ -658,6 +677,21 @@ class Config:
             config = None
         return config
 
+    @classmethod
+    def from_dict(cls, nested_dict: Dict[str, Any]) -> "Config":
+        """
+        Build a `Config` from a nested dict.
+
+        :param nested_dict: nested dict, with certain restrictions:
+          - only leaf nodes may not be a dict
+          - every nonempty dict must only have keys of type `str`
+        """
+        hdbg.dassert_isinstance(nested_dict, dict)
+        hdbg.dassert(nested_dict)
+        iter_ = hdict.get_nested_dict_iterator(nested_dict)
+        flattened_config = collections.OrderedDict(iter_)
+        return Config._get_config_from_flattened_dict(flattened_config)
+
     def to_dict(self) -> Dict[str, Any]:
         """
         Convert the Config to nested ordered dicts.
@@ -674,21 +708,6 @@ class Config:
             else:
                 dict_[k] = v
         return dict_
-
-    @classmethod
-    def from_dict(cls, nested: Dict[str, Any]) -> "Config":
-        """
-        Build a `Config` from a nested dict.
-
-        :param nested: nested dict, with certain restrictions:
-          - only leaf nodes may not be a dict
-          - every nonempty dict must only have keys of type `str`
-        """
-        hdbg.dassert_isinstance(nested, dict)
-        hdbg.dassert(nested)
-        iter_ = hdict.get_nested_dict_iterator(nested)
-        flattened = collections.OrderedDict(iter_)
-        return Config._get_config_from_flattened_dict(flattened)
 
     # /////////////////////////////////////////////////////////////////////////////
 

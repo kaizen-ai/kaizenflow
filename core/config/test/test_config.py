@@ -224,7 +224,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = _purify_assertion_string(act)
         exp = r"""
         'exception="key='nrows_tmp' not in ['nrows', 'nrows2'] at level 0"
-        key='nrows_tmp not in:
+        key='nrows_tmp'
         config=
           nrows: 10000
           nrows2: hello'
@@ -243,7 +243,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = _purify_assertion_string(act)
         exp = r"""
         'exception="tail_key=('nrows_tmp',) at level 0"
-        key='('nrows2', 'nrows_tmp') not in:
+        key='('nrows2', 'nrows_tmp')'
         config=
           nrows: 10000
           nrows2: hello'
@@ -262,7 +262,7 @@ class Test_flat_config_get1(hunitest.TestCase):
         act = _purify_assertion_string(act)
         exp = r"""
         'exception="tail_key=('hello',) at level 0"
-        key='('nrows2', 'hello') not in:
+        key='('nrows2', 'hello')'
         config=
           nrows: 10000
           nrows2: hello'
@@ -346,7 +346,7 @@ class Test_flat_config_in1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestNestedConfigGet1
+# Test_nested_config_get1
 # #############################################################################
 
 
@@ -391,7 +391,7 @@ def _get_nested_config1(self_: Any) -> cconfig.Config:
     return config
 
 
-class TestNestedConfigGet1(hunitest.TestCase):
+class Test_nested_config_get1(hunitest.TestCase):
     def test_existing_key1(self) -> None:
         """
         Check that a key exists.
@@ -484,11 +484,11 @@ class TestNestedConfigGet1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestNestedConfigSet1
+# Test_nested_config_set1
 # #############################################################################
 
 
-class TestNestedConfigSet1(hunitest.TestCase):
+class Test_nested_config_set1(hunitest.TestCase):
     def test_not_existing_key1(self) -> None:
         """
         Set a key that doesn't exist.
@@ -518,6 +518,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
                 "rets/read_data": cconfig.DUMMY,
             }
         )
+        config.update_mode = "overwrite"
         # Overwrite an existing value.
         config["rets/read_data"] = "hello world"
         # Check.
@@ -553,6 +554,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
                 "rets/read_data": cconfig.DUMMY,
             }
         )
+        config.update_mode = "overwrite"
         # Assign a config to an existing key.
         config["rets/read_data"] = cconfig.Config.from_dict(
             {"source_node_name": "data_downloader"}
@@ -572,6 +574,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
                 "rets/read_data": cconfig.DUMMY,
             }
         )
+        config.update_mode = "overwrite"
         # Assign a config.
         config["rets/read_data"] = cconfig.Config.from_dict(
             {
@@ -603,7 +606,7 @@ class TestNestedConfigSet1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestNestedConfigMisc1
+# Test_nested_config_misc1
 # #############################################################################
 
 
@@ -730,7 +733,7 @@ def _get_nested_config5() -> cconfig.Config:
     return config
 
 
-class TestNestedConfigMisc1(hunitest.TestCase):
+class Test_nested_config_misc1(hunitest.TestCase):
     def test_config_print1(self) -> None:
         """
         Test printing a config.
@@ -795,11 +798,11 @@ class TestNestedConfigMisc1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestNestedConfigIn1
+# Test_nested_config_in1
 # #############################################################################
 
 
-class TestNestedConfigIn1(hunitest.TestCase):
+class Test_nested_config_in1(hunitest.TestCase):
     def test_in1(self) -> None:
         """
         Test `in` with nested access.
