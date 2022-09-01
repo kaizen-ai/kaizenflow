@@ -11,11 +11,11 @@ from typing import Optional
 import helpers.hdbg as hdbg
 import helpers.hs3 as hs3
 
-# Fixed data snapshots (e.g., `2022...
+# Fixed data snapshots, e.g., "20220828".
 FIXED_DATA_SNAPSHOTS_ROOT_DIR = (
     "s3://cryptokaizen-data/reorg/historical.manual.pq"
 )
-# Contain `latest` data snapshot that is updated daily by Airflow.
+# Contain "latest" data snapshot that is updated daily by Airflow.
 DAILY_DATA_SNAPSHOT_ROOT_DIR = (
     "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq"
 )
