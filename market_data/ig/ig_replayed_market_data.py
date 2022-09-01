@@ -132,7 +132,7 @@
 #            "ET", initial_replayed_timestamp, event_loop=event_loop
 #        )
 #        sleep_in_secs = 1
-#        rt_timeout_in_secs_or_time = 60 * 5
+#        time_out_in_secs = 60 * 5
 #        # Build the object.
 #        super().__init__(
 #            df,
@@ -146,7 +146,7 @@
 #            columns,
 #            get_wall_clock_time,
 #            sleep_in_secs=sleep_in_secs,
-#            rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+#            time_out_in_secs=time_out_in_secs,
 #            column_remap=column_remap,
 #        )
 #
