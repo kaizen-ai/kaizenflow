@@ -211,14 +211,14 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         # Fit.
         method = "fit"
         config_tag = "forecast_system"
-        result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+        fit_result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
             self, system, method, config_tag
         )
         fit_df = fit_result_bundle.result_df
         # Predict.
         method = "predict"
         config_tag = "forecast_system"
-        result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
+        predict_result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
             self, system, method, config_tag
         )
         predict_df = predict_result_bundle.result_df
@@ -549,7 +549,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         )
         return file_path
 
-    # TODO(Grisha): Consolidate into `SystemTester`.
+    # TODO(Grisha): Consolidate with `dtfsysysig.get_signature()`.
     def get_signature(self, result_bundle: dtfcore.ResultBundle, col: str) -> str:
         txt: List[str] = []
         #
@@ -691,10 +691,8 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         forecast_evaluator_from_prices_dict = time_system.config[
             "research_forecast_evaluator_from_prices"
         ].to_dict()
-        system_tester = SystemTester()
-        signature, research_pnl = system_tester.get_research_pnl_signature(
-            result_bundle,
-            forecast_evaluator_from_prices_dict,
+        signature, research_pnl = dtfsysysig.get_research_pnl_signature(
+            self, result_bundle, forecast_evaluator_from_prices_dict
         )
         return signature, research_pnl
 
@@ -718,12 +716,9 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         # Run the system and check the config against the frozen value.
         config_tag = "dataframe_portfolio"
         _ = run_Time_ForecastSystem(self, time_system, config_tag)
-        system_tester = SystemTester()
-        # Compute Portfolio PnL. Get the number of data points
-        # that is sufficient for a reconciliation.
-        num_periods = 20
-        signature, pnl = system_tester.get_portfolio_signature(
-            time_system.portfolio, num_periods=num_periods
+        # Compute Portfolio PnL.
+        signature, pnl = dtfsysysig.get_portfolio_signature(
+            self, time_system.portfolio
         )
         return signature, pnl
 
