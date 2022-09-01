@@ -8,6 +8,10 @@ v7.2
 - A few coins were removed because they do not exist in the testnet, namely:
     - `binance::BAKE_USDT`, `binance::CRV_USDT`, `binance::CTK_USDT`, `binance::DYDX_USDT` 
 
+v7.1
+- 2022-09-01
+- Copy of v7 with only USDT currency pairs
+
 v7
 - 2022-07-14
 - Only `binance` futures
