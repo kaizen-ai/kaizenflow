@@ -9,7 +9,7 @@ Head:
         "start_timestamp":"2022-08-05T14:36:44Z",
         "end_timestamp":"2022-08-05T14:38:44Z",
         "curr_num_shares":0.0,
-        "diff_num_shares":2.14,
+        "diff_num_shares":15.0,
         "tz":"America\/New_York"
     }
 }
@@ -23,7 +23,7 @@ Tail:
         "start_timestamp":"2022-08-05T14:36:44Z",
         "end_timestamp":"2022-08-05T14:38:44Z",
         "curr_num_shares":0.0,
-        "diff_num_shares":2.14,
+        "diff_num_shares":15.0,
         "tz":"America\/New_York"
     }
 }

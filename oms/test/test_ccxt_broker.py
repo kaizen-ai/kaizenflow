@@ -3,10 +3,8 @@ import pprint
 import re
 import unittest.mock as umock
 
-import pytest
-
-import helpers.hunit_test as hunitest
 import helpers.hpandas as hpandas
+import helpers.hunit_test as hunitest
 import im_v2.common.secrets.secret_identifier as imvcsseid
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
@@ -131,21 +129,34 @@ class TestCcxtBroker1(hunitest.TestCase):
         expected_method_call = "call.set_sandbox_mode(True),"
         self.assertIn(expected_method_call, actual_method_calls)
 
-    def test_submit_orders(self) -> None:
+    @umock.patch.object(
+        occxbrok.CcxtBroker,
+        "_get_low_market_price",
+        spec=occxbrok.CcxtBroker._get_low_market_price,
+    )
+    def test_submit_orders(
+        self, get_low_market_price_mock: umock.MagicMock
+    ) -> None:
         """
         Verify that orders are properly submitted via mocked exchange.
         """
         # TODO(Nikola): Only one order is enough to test initial flow.
         # Prepare test data.
-        orders = omorder.orders_from_string("Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00 asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00 end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121 tz=America/New_York")
+        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
+        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
+        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
+        tz=America/New_York"
+        orders = omorder.orders_from_string(order_str)
         #
         stage = "preprod"
         contract_type = "spot"
         account_type = "trading"
         # Initialize class.
         broker = self.get_test_broker(stage, contract_type, account_type)
-        # TODO(Nikola): When possible, directly change vars instead mocking.
-        broker._minimal_order_limits = {1464553467: {'min_amount': 0.0001, 'min_cost': 10.0}}
+        broker._minimal_order_limits = {
+            1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
+        }
+        get_low_market_price_mock.return_value = 2.0
         # Patch main external source.
         with umock.patch.object(
             broker._exchange, "createOrder", create=True
@@ -155,7 +166,8 @@ class TestCcxtBroker1(hunitest.TestCase):
             receipt, order_df = asyncio.run(
                 broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
             )
+        # Check the receipt.
         self.assertEqual(receipt, "filename_0.txt")
+        # Check the order Dataframe.
         order_df_str = hpandas.convert_df_to_json_string(order_df)
         self.check_string(order_df_str)
-

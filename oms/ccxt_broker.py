@@ -408,7 +408,6 @@ class CcxtBroker(ombroker.Broker):
         total_cost = high_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
         min_cost = asset_limits["min_cost"]
-
         if total_cost <= min_cost:
             # Set amount based on minimal notional price.
             required_amount = round(min_cost * 3 / high_price, 2)
@@ -431,8 +430,7 @@ class CcxtBroker(ombroker.Broker):
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         last_price = self._exchange.fetch_ticker(symbol)["low"]
-        # Hardcode the last price temporarly.
-        return 14.0
+        return last_price
 
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
         """
@@ -599,7 +597,6 @@ class CcxtBroker(ombroker.Broker):
                         "client_oid": order.order_id,
                     },
                 )
-
                 submitted_order = order
                 submitted_order.ccxt_id = order_resp["id"]
                 # If the submission was successful, don't retry.
