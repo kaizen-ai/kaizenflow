@@ -67,7 +67,8 @@ def get_data_snapshot(
             use_relatives_paths,
             aws_profile=aws_profile,
         )
-        dirs = [snapshot for snapshot in dirs if re.match(r"^\d{8}$", snapshot)]
+        regex = r"^\d{8}$"
+        dirs = [snapshot for snapshot in dirs if re.match(regex, snapshot)]
         hdbg.dassert_lte(1, len(dirs))
         data_snapshot = max(dirs)
     dassert_is_valid_data_snapshot(data_snapshot)
