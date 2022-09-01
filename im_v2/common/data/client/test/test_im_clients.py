@@ -448,10 +448,13 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
     """
 
     def test1(self) -> None:
+        # Initialize client in order to get data for the previous day.
         resample_1min = False
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3(resample_1min)
-        full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
-        today = pd.Timestamp.today(tz="America/New_York")
+        full_symbols = ["binance::APE_USDT", "binance::BTC_USDT"]
+        # Get the current day to calculate start date. Use `pd.Timestamp` instead of
+        # `datetime.datetime` since dataset timestamps are pandas type.
+        today = pd.Timestamp.today(tz="UTC")
         start_ts = today - pd.Timedelta(days=1)
         end_ts = today
         columns = None
@@ -462,9 +465,8 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
             columns,
             filter_data_mode="assert",
         )
-        print(data)
-        data_min_max_ts = f"{data.index.min().strftime('%Y.%m.%d')}-{data.index.max().strftime('%Y.%m.%d')}"
-        actual = data_min_max_ts
+        # Check data timestamps with only year, month, day, beacause time for both values 
+        # won't be equal. So compare min and max timestamps.
+        actual = f"{data.index.min().strftime('%Y.%m.%d')}-{data.index.max().strftime('%Y.%m.%d')}"
         expected = f"{start_ts.strftime('%Y.%m.%d')}-{end_ts.strftime('%Y.%m.%d')}"
         self.assert_equal(actual, expected)
-
