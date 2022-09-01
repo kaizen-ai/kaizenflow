@@ -33,18 +33,18 @@ _MAX_ORDER_SUBMIT_RETRIES = 3
 
 class CcxtBroker(ombroker.Broker):
     def __init__(
-            self,
-            exchange_id: str,
-            universe_version: str,
-            stage: str,
-            account_type: str,
-            portfolio_id: str,
-            contract_type: str,
-            # TODO(gp): @all *args should go first according to our convention of
-            #  appending params to the parent class constructor.
-            secret_identifier: omssec.SecretIdentifier,
-            *args: Any,
-            **kwargs: Any,
+        self,
+        exchange_id: str,
+        universe_version: str,
+        stage: str,
+        account_type: str,
+        portfolio_id: str,
+        contract_type: str,
+        # TODO(gp): @all *args should go first according to our convention of
+        #  appending params to the parent class constructor.
+        secret_identifier: omssec.SecretIdentifier,
+        *args: Any,
+        **kwargs: Any,
     ) -> None:
         """
         Constructor.
@@ -677,16 +677,6 @@ class CcxtBroker(ombroker.Broker):
                 lambda s: s.startswith(self._exchange_id), full_symbol_universe
             )
         )
-        # TODO(Grisha): should we exclude them from the trade universe?
-        # Cannot fetch the limit from the testnet `limits = exchange_markets[symbol]["limits"]`.
-        if "binance::BAKE_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::BAKE_USDT")
-        if "binance::CRV_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::CRV_USDT")
-        if "binance::CTK_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::CTK_USDT")
-        if "binance::DYDX_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::DYDX_USDT")
         # Build mapping.
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
@@ -741,16 +731,14 @@ class CcxtBroker(ombroker.Broker):
 
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
+    universe_version: str, 
     strategy_id: str,
-        secret_identifier: omssec.SecretIdentifier
+    secret_identifier: omssec.SecretIdentifier,
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
     exchange_id = secret_identifier.exchange_id
-    # TODO(Grisha): centralize the universe version, i.e. pass once (e.g., via cmd line)
-    # and then propagate everywhere via `system.config`.
-    universe_version = "v7"
     stage = secret_identifier.stage
     account_type = secret_identifier.account_type
     contract_type = "futures"
