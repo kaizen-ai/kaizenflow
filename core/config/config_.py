@@ -55,22 +55,30 @@ DUMMY = "__DUMMY__"
 # - A _OrderedDict enforces writing / reading policies
 #   - It only allow one key lookup
 #   - It can contain more Configs (but no dict)
-# - We use two different data structures to clearly separate when we want to use
-#   compounded keys or scalar keys
+# - We use these two different data structures to clearly separate when we want
+#   to use compounded keys or scalar keys
+# - We don't allow `dict` in Config as leaves
+#   - We assume that a dict leaf represents a Config for an object
+#   - `dict` are valid in composed data structures, e.g., list, tuples
 
-# In practice we could have used a dict with default value to create the keys on
-# the fly, although without compound key notation
+# An alternative design could have been:
+# - Config derives from OrderedDict using default value to create the keys on
+#   the fly, although without compound key notation
 
+# Keys in a Config are strings or ints.
 ScalarKey = Union[str, int]
 
 # Valid type of each component of a key.
+# TODO(gp): Not sure if ScalarKeyValidTypes can be derived from ScalarKey.
 ScalarKeyValidTypes = (str, int)
 
-# A simple or compound key that can be used to access a Config.
+# A scalar or compound key can be used to access a Config.
 CompoundKey = Union[str, int, Iterable[str], Iterable[int]]
 
+# The key can be anything, besides a dict.
 ValueTypeHint = Any
 
+# TODO(gp): It seems that one can't derive from a typed data structure.
 #_OrderedDictType = collections.OrderedDict[ScalarKey, Any]
 _OrderedDictType = collections.OrderedDict
 
@@ -80,10 +88,12 @@ class _OrderedDict(_OrderedDictType):
     A dict data structure that allows to read and write with strict policies.
     """
 
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: ScalarKey, value: ValueTypeHint) -> None:
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         super().__setitem__(key, value)
 
-    def __getitem__(self, key) -> Any:
+    def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         return super().__getitem__(key)
 
 
@@ -134,7 +144,7 @@ class Config:
     def __init__(
         self,
         # We can't make this as mandatory kwarg because of `Config.from_python()`.
-        array: Optional[List[Tuple[ScalarKey, Any]]] = None,
+        array: Optional[List[Tuple[CompoundKey, Any]]] = None,
         *,
         update_mode: str = "assert_on_overwrite",
         clobber_mode: str = "assert_on_write_after_read",
