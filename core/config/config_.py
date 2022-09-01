@@ -61,20 +61,17 @@ DUMMY = "__DUMMY__"
 # In practice we could have used a dict with default value to create the keys on
 # the fly, although without compound key notation
 
-# TODO(gp): -> ScalarKeyTypeHint
-ScalarKeyAsTypeHint = Union[str, int]
+ScalarKey = Union[str, int]
 
 # Valid type of each component of a key.
-# TODO(gp): -> ScalarKeyValidTypes
-ScalarKeyAsTypes = (str, int)
+ScalarKeyValidTypes = (str, int)
 
 # A simple or compound key that can be used to access a Config.
-# TODO(gp): -> CompoundKeyTypeHint
-Key = Union[str, int, Iterable[str], Iterable[int]]
+CompoundKey = Union[str, int, Iterable[str], Iterable[int]]
 
 ValueTypeHint = Any
 
-#_OrderedDictType = collections.OrderedDict[ScalarKeyAsTypeHint, Any]
+#_OrderedDictType = collections.OrderedDict[ScalarKey, Any]
 _OrderedDictType = collections.OrderedDict
 
 
@@ -137,7 +134,7 @@ class Config:
     def __init__(
         self,
         # We can't make this as mandatory kwarg because of `Config.from_python()`.
-        array: Optional[List[Tuple[ScalarKeyAsTypeHint, Any]]] = None,
+        array: Optional[List[Tuple[ScalarKey, Any]]] = None,
         *,
         update_mode: str = "assert_on_overwrite",
         clobber_mode: str = "assert_on_write_after_read",
@@ -170,7 +167,7 @@ class Config:
         #  with `Config.from_python()`.
         if array is not None:
             for k, v in array:
-                hdbg.dassert_isinstance(k, self.ScalarKeyAsTypes)
+                hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
                 self.__setitem__(k, v)
 
     @property
@@ -265,7 +262,7 @@ class Config:
 
     # `__setitem__` and `__getitem__` accept a compound key.
 
-    def __setitem__(self, key: Key, val: Any,
+    def __setitem__(self, key: CompoundKey, val: Any,
         *,
         update_mode: Optional[str] = None,
         clobber_mode: Optional[str] = None
@@ -326,7 +323,7 @@ class Config:
         self._config[key] = val  # type: ignore
 
     def __getitem__(
-        self, key: Key, *, report_mode:str="verbose_log_error"
+        self, key: CompoundKey, *, report_mode:str="verbose_log_error"
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
@@ -378,7 +375,7 @@ class Config:
     # This is similar to `hdict.typed_get()`.
     def get(
         self,
-        key: Key,
+        key: CompoundKey,
         default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
         expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
         *,
@@ -414,7 +411,7 @@ class Config:
             hdbg.dassert_isinstance(ret, expected_type)
         return ret
 
-    def add_subconfig(self, key: ScalarKeyAsTypeHint) -> "Config":
+    def add_subconfig(self, key: ScalarKey) -> "Config":
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
         self.__setitem__(key, config)
@@ -496,7 +493,7 @@ class Config:
     # Dict-like methods.
     # ////////////////////////////////////////////////////////////////////////////
 
-    def __contains__(self, key: Key) -> bool:
+    def __contains__(self, key: CompoundKey) -> bool:
         """
         Implement membership operator like `key in config`.
 
@@ -682,7 +679,7 @@ class Config:
     # /////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
-    def _parse_compound_key(key: Key) -> Tuple[str, Iterable[str]]:
+    def _parse_compound_key(key: CompoundKey) -> Tuple[str, Iterable[str]]:
         """
         Separate the first element of a compound key from the rest.
         """
@@ -692,7 +689,7 @@ class Config:
             "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
         )
         hdbg.dassert_isinstance(
-            head_key, Config.ScalarKeyAsTypes, "Keys can only be string or int"
+            head_key, ScalarKeyValidTypes, "Keys can only be string or int"
         )
         # TODO(gp): -> head_scalar_key, tail_compound_key
         return head_key, tail_key
@@ -740,7 +737,7 @@ class Config:
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         return update_mode
 
-    def _get_item(self, key: Key, *, level: int) -> Any:
+    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on `KeyError`.
@@ -784,19 +781,19 @@ class Config:
         ret = self._config[key]  # type: ignore
         return ret
 
-    def _get_error_msg(self, tag: str, key: Key) -> str:
+    def _get_error_msg(self, tag: str, key: CompoundKey) -> str:
         msg = []
         msg.append(f"{tag}='{key}' not in:")
         msg.append(hprint.indent(str(self)))
         msg = "\n".join(msg)
         return msg
 
-    def _dassert_base_case(self, key: Key) -> None:
+    def _dassert_base_case(self, key: CompoundKey) -> None:
         """
         Check that a leaf config is valid.
         """
         _LOG.debug("key=%s", key)
-        hdbg.dassert_isinstance(key, self.ScalarKeyAsTypes, "Keys can only be string or int")
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes, "Keys can only be string or int")
         hdbg.dassert_isinstance(self._config, dict)
 
     # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
