@@ -161,6 +161,7 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Save the signature of the system
         """
         method = "fit"
+        # TODO(Grisha): @Dan Rename to "forecast_system" in CmTask2739 "Introduce `NonTime_ForecastSystem`."
         config_tag = "forecast_system"
         result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
             self, system, method, config_tag
@@ -570,7 +571,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         """
         # Run the system.
         method = "predict"
-        config_tag = "non_time_system_config"
+        config_tag = "non_time_system"
         non_time_system_result_bundle = (
             run_NonTime_ForecastSystem_from_backtest_config(
                 self, non_time_system, method, config_tag
@@ -592,7 +593,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         Get `Time_ForecastSystem` outcome signature.
         """
         # Run the system.
-        config_tag = "time_system_config"
+        config_tag = "time_system"
         time_system_result_bundles = run_Time_ForecastSystem(
             self, time_system, config_tag
         )
@@ -682,7 +683,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         """
         time_system = self.get_Time_ForecastSystem()
         # Run the system and check the config against the frozen value.
-        config_tag = "time_system_config"
+        config_tag = "time_system"
         time_system_result_bundles = run_Time_ForecastSystem(
             self, time_system, config_tag
         )
@@ -716,9 +717,11 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         # Run the system and check the config against the frozen value.
         config_tag = "dataframe_portfolio"
         _ = run_Time_ForecastSystem(self, time_system, config_tag)
-        # Compute Portfolio PnL.
+        # Compute Portfolio PnL. Get the number of data points
+        # that is sufficient for a reconciliation.
+        num_periods = 20
         signature, pnl = dtfsysysig.get_portfolio_signature(
-            self, time_system.portfolio
+            self, time_system.portfolio, num_periods=num_periods
         )
         return signature, pnl
 
