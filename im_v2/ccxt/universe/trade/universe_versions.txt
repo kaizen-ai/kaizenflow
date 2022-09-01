@@ -1,4 +1,4 @@
-v7_USDT_only
+USDT_only
 - 2022-09-01
 - Copy of v7 with only USDT currency pairs
 
