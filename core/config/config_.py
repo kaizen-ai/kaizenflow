@@ -30,8 +30,8 @@ _LOG = logging.getLogger(__name__)
 # 1) _LOG.debug: which can be enabled or disabled for this module.
 
 # Mute this module unless we want to debug it.
-# TODO(gp): Keep this enabled when committing.
-#_LOG.setLevel(logging.INFO)
+# NOTE: Keep this enabled when committing.
+_LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
@@ -50,40 +50,53 @@ DUMMY = "__DUMMY__"
 
 # Design notes:
 # - A Config is a recursive structure of Configs
-#   - It handles compounded keys
+#   - It handles compounded keys, update_mode, clobber_mode
 #   - Each Config uses internally an _OrderedDict
 # - A _OrderedDict enforces writing / reading policies
 #   - It only allow one key lookup
 #   - It can contain more Configs (but no dict)
-# - We use two different data structures to clearly separate when we want to use
-#   compounded keys or scalar keys
+# - We use these two different data structures to clearly separate when we want
+#   to use compounded keys or scalar keys
+# - We don't allow `dict` in Config as leaves
+#   - We assume that a dict leaf represents a Config for an object
+#   - `dict` are valid in composed data structures, e.g., list, tuples
 
-# In practice we could have used a dict with default value to create the keys on
-# the fly, although without compound key notation
+# An alternative design could have been:
+# - Config derives from OrderedDict using default value to create the keys on
+#   the fly, although without compound key notation
+
+# Keys in a Config are strings or ints.
+ScalarKey = Union[str, int]
+
+# Valid type of each component of a key.
+# TODO(gp): Not sure if ScalarKeyValidTypes can be derived from ScalarKey.
+ScalarKeyValidTypes = (str, int)
+
+# A scalar or compound key can be used to access a Config.
+CompoundKey = Union[str, int, Iterable[str], Iterable[int]]
+
+# The key can be anything, besides a dict.
+ValueTypeHint = Any
+
+# TODO(gp): It seems that one can't derive from a typed data structure.
+#_OrderedDictType = collections.OrderedDict[ScalarKey, Any]
+_OrderedDictType = collections.OrderedDict
 
 
-# class _OrderedDict(
-#     collections.OrderedDict[
-#         ScalarKeyAsTypeHint, Any
-#     ]):
-class _OrderedDict(collections.OrderedDict):
+class _OrderedDict(_OrderedDictType):
     """
     A dict data structure that allows to read and write with strict policies.
     """
 
-    # def __init__(self):
-    #     self._config: collections.OrderedDict[
-    #         ScalarKeyAsTypeHint, Any
-    #     ] = collections.OrderedDict()
-
-    def __setitem__(self, key, value):
+    def __setitem__(self, key: ScalarKey, value: ValueTypeHint) -> None:
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         super().__setitem__(key, value)
 
-    def __getitem__(self, key) -> Any:
+    def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         return super().__getitem__(key)
 
 
-# TODO(gp): This handles a compound key, update_mode, clobber_mode
 class Config:
     """
     A nested ordered dictionary storing configuration information.
@@ -97,19 +110,6 @@ class Config:
     - "nested" when there are multiple levels
         - E.g., `config = {"hello": {"cruel", "world"}}`
     """
-
-    # Valid type of each component of a key.
-    # TODO(gp): -> ScalarKeyTypeHint
-    ScalarKeyAsTypeHint = Union[str, int]
-    # TODO(gp): -> ScalarKeyValidTypes
-    ScalarKeyAsTypes = (str, int)
-
-    # A simple or compound key that can be used to access a Config.
-    # TODO(gp): -> CompoundKeyTypeHint
-    Key = Union[str, int, Iterable[str], Iterable[int]]
-
-    #ValueTypeHint = Tuple[ValueType, Bool]
-    ValueTypeHint = Any
 
     _NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
 
@@ -144,7 +144,7 @@ class Config:
     def __init__(
         self,
         # We can't make this as mandatory kwarg because of `Config.from_python()`.
-        array: Optional[List[Tuple[ScalarKeyAsTypeHint, Any]]] = None,
+        array: Optional[List[Tuple[CompoundKey, Any]]] = None,
         *,
         update_mode: str = "assert_on_overwrite",
         clobber_mode: str = "assert_on_write_after_read",
@@ -164,29 +164,20 @@ class Config:
         #   - a Config (but not a dict)
         #   - any scalar
         #   - any other Python data structure (e.g., list, tuple)
-        # TODO(gp): Use MutableMapping instead of disabling the lint?
-        # pylint: disable=unsubscriptable-object
-        # self._config: collections.OrderedDict[
-        #     ScalarKeyAsTypeHint, Any
-        # ] = collections.OrderedDict()
         self._config = _OrderedDict()
         # Control whether a config can be modified or not.
         self._read_only = False
         # Control the policy for updates.
         # TODO(gp): This should control also the __set_item__ and not only update.
         self.update_mode = update_mode
-        #hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
-        #self._update_mode = update_mode
         #
         self.clobber_mode = clobber_mode
-        #hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
-        #self._clobber_mode = clobber_mode
         # Initialize from array.
         # TODO(gp): This might be a separate constructor, but it gives problems
         #  with `Config.from_python()`.
         if array is not None:
             for k, v in array:
-                hdbg.dassert_isinstance(k, self.ScalarKeyAsTypes)
+                hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
                 self.__setitem__(k, v)
 
     @property
@@ -302,7 +293,7 @@ class Config:
     #     # was_key_read = ""
     #     # if clobber_mode == "
 
-    def __setitem__(self, key: Key, val: Any,
+    def __setitem__(self, key: CompoundKey, val: Any,
         *,
         update_mode: Optional[str] = None,
         clobber_mode: Optional[str] = None
@@ -376,7 +367,7 @@ class Config:
         self._config[key] = val  # type: ignore
 
     def __getitem__(
-        self, key: Key, *, report_mode:str="verbose_log_error", mark_key_as_read: bool = True
+        self, key: CompoundKey, *, report_mode:str="verbose_log_error", mark_key_as_read: bool = True
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
@@ -796,7 +787,7 @@ class Config:
         hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
         return update_mode
 
-    def _get_item(self, key: Key, *, level: int) -> Any:
+    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on `KeyError`.
@@ -840,19 +831,19 @@ class Config:
         ret = self._config[key]  # type: ignore
         return ret
 
-    def _get_error_msg(self, tag: str, key: Key) -> str:
+    def _get_error_msg(self, tag: str, key: CompoundKey) -> str:
         msg = []
         msg.append(f"{tag}='{key}' not in:")
         msg.append(hprint.indent(str(self)))
         msg = "\n".join(msg)
         return msg
 
-    def _dassert_base_case(self, key: Key) -> None:
+    def _dassert_base_case(self, key: CompoundKey) -> None:
         """
         Check that a leaf config is valid.
         """
         _LOG.debug("key=%s", key)
-        hdbg.dassert_isinstance(key, self.ScalarKeyAsTypes, "Keys can only be string or int")
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes, "Keys can only be string or int")
         hdbg.dassert_isinstance(self._config, dict)
 
     # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
