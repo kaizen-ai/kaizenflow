@@ -12,8 +12,6 @@ import collections
 import copy
 import logging
 import os
-import json
-import pprint
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -33,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
 # NOTE: Keep this enabled when committing.
-#_LOG.setLevel(logging.INFO)
+# _LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
@@ -141,17 +139,17 @@ class _OrderedConfig(_OrderedDictType):
       - any other Python data structure (e.g., list, tuple)
     """
 
-    def __setitem__(self, key: ScalarKey, val: ValueTypeHint,
-                    update_mode: str
-                    ) -> None:
+    def __setitem__(
+        self, key: ScalarKey, val: ValueTypeHint, update_mode: str
+    ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         #
-#        if isinstance(val, dict):
-#            raise ValueError(
-#                f"For key='{key}' val='{val}' should be a Config and not a dict"
-#            )
-#        #
+        #        if isinstance(val, dict):
+        #            raise ValueError(
+        #                f"For key='{key}' val='{val}' should be a Config and not a dict"
+        #            )
+        #        #
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
         if update_mode == "assert_on_overwrite":
@@ -227,14 +225,12 @@ class OverwriteError(RuntimeError):
     """
     Trying to overwrite a value.
     """
-    pass
 
 
 class ReadOnlyConfigError(RuntimeError):
     """
     Trying to write on a Config marked read-only.
     """
-    pass
 
 
 class Config:
@@ -291,7 +287,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -435,7 +432,7 @@ class Config:
         default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
         expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
         *,
-        report_mode: Optional[str] = None
+        report_mode: Optional[str] = None,
     ) -> Any:
         """
         Equivalent to `dict.get(key, default_val)`.
@@ -478,10 +475,13 @@ class Config:
     # Update.
     # ////////////////////////////////////////////////////////////////////////////
 
-    def update(self, config: "Config",
-               *,
-               update_mode: Optional[str] = None,
-               report_mode: Optional[str] = None) -> None:
+    def update(
+        self,
+        config: "Config",
+        *,
+        update_mode: Optional[str] = None,
+        report_mode: Optional[str] = None,
+    ) -> None:
         """
         Equivalent to `dict.update(config)`.
 
@@ -495,7 +495,9 @@ class Config:
         # `update()` is just a series of set.
         flattened_config = config.flatten()
         for key, val in flattened_config.items():
-            self.__setitem__(key, val, update_mode=update_mode, report_mode=report_mode)
+            self.__setitem__(
+                key, val, update_mode=update_mode, report_mode=report_mode
+            )
 
     # ////////////////////////////////////////////////////////////////////////////
     # Accessors.
@@ -643,7 +645,6 @@ class Config:
         """
         return copy.deepcopy(self)
 
-
     def is_serializable(self) -> bool:
         """
         Make sure the config can be serialized and deserialized correctly.
@@ -700,13 +701,55 @@ class Config:
         # TODO(gp): -> head_scalar_key, tail_compound_key
         return head_key, tail_key
 
-    def _set_item(self,
-                 key: CompoundKey,
-                 val: Any,
-                 update_mode: Optional[str],
-                 clobber_mode: Optional[str],
-                 report_mode: Optional[str],
-                 ) -> None:
+    @staticmethod
+    def _resolve_mode(
+        value: Optional[str], ctor_value: str, valid_values: List[str]
+    ) -> str:
+        if value is None:
+            # Use the value from the constructor.
+            value = ctor_value
+        # The result should be a valid string.
+        hdbg.dassert_isinstance(value, str)
+        hdbg.dassert_in(value, valid_values)
+        return value
+
+    @staticmethod
+    def _get_config_from_flattened_dict(
+        flattened_config: Dict[Tuple[str], Any]
+    ) -> "Config":
+        """
+        Build a config from the flattened config representation.
+
+        :param flattened_config: flattened config like result from `config.flatten()`
+        :return: `Config` object initialized from flattened representation
+        """
+        hdbg.dassert_isinstance(flattened_config, dict)
+        hdbg.dassert(flattened_config)
+        config = Config()
+        for k, v in flattened_config.items():
+            if isinstance(v, dict):
+                if v:
+                    # Convert each dict-value to `Config` recursively because we
+                    # cannot use dict as value in a `Config`.
+                    v = Config.from_dict(v)
+                else:
+                    # TODO(Grisha): maybe move to `from_dict`, i.e.
+                    # return empty `Config` right away without passing further.
+                    # If dictionary is empty convert to an empty `Config`.
+                    v = Config()
+            config[k] = v
+        return config
+
+    # /////////////////////////////////////////////////////////////////////////////
+
+    def _set_item(
+        self,
+        key: CompoundKey,
+        val: Any,
+        update_mode: Optional[str],
+        clobber_mode: Optional[str],
+        report_mode: Optional[str],
+    ) -> None:
         """
         Set / update `key` to `val`, equivalent to `dict[key] = val`.
 
@@ -756,7 +799,9 @@ class Config:
             if not tail_key:
                 # There is no tail_key so `__setitem__()` was called on a tuple of a
                 # single element, then set the value.
-                self._set_item(head_key, val, update_mode, clobber_mode, report_mode)
+                self._set_item(
+                    head_key, val, update_mode, clobber_mode, report_mode
+                )
             else:
                 # Compound key: recurse on the tail of the key.
                 _LOG.debug(
@@ -777,17 +822,19 @@ class Config:
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
-                subconfig._set_item(tail_key, val, update_mode, clobber_mode, report_mode)
+                subconfig._set_item(
+                    tail_key, val, update_mode, clobber_mode, report_mode
+                )
             return
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
         self._config.__setitem__(key, val, update_mode=update_mode)
 
-    def _raise_exception(self, exception: Exception, key: CompoundKey, report_mode: str) -> None:
+    def _raise_exception(
+        self, exception: Exception, key: CompoundKey, report_mode: str
+    ) -> None:
         _LOG.debug(hprint.to_str("exception key report_mode"))
-        hdbg.dassert_in(
-            report_mode, _VALID_REPORT_MODES
-        )
+        hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
         if report_mode in ("verbose_log_error", "verbose_exception"):
             msg = []
             msg.append("exception=" + str(exception))
@@ -809,40 +856,35 @@ class Config:
                     raise RuntimeError(f"Invalid exception: {exception}")
         raise exception
 
-    @staticmethod
-    def _resolve_mode(
-        value: Optional[str], ctor_value: str, valid_values: List[str]
-    ) -> str:
-        if value is None:
-            # Use the value from the constructor.
-            value = ctor_value
-        # The result should be a valid string.
-        hdbg.dassert_isinstance(value, str)
-        hdbg.dassert_in(value, valid_values)
-        return value
-
     def _resolve_update_mode(self, value: Optional[str]) -> str:
-        update_mode = self._resolve_mode(value, self._update_mode, _VALID_UPDATE_MODES)
+        update_mode = self._resolve_mode(
+            value, self._update_mode, _VALID_UPDATE_MODES
+        )
         _LOG.debug("resolved " + hprint.to_str("update_mode"))
         return update_mode
 
     def _resolve_clobber_mode(self, value: Optional[str]) -> str:
-        clobber_mode = self._resolve_mode(value, self._clobber_mode, _VALID_CLOBBER_MODES)
+        clobber_mode = self._resolve_mode(
+            value, self._clobber_mode, _VALID_CLOBBER_MODES
+        )
         _LOG.debug("resolved " + hprint.to_str("clobber_mode"))
         return clobber_mode
 
     def _resolve_report_mode(self, value: Optional[str]) -> str:
-        report_mode = self._resolve_mode(value, self._report_mode, _VALID_REPORT_MODES)
+        report_mode = self._resolve_mode(
+            value, self._report_mode, _VALID_REPORT_MODES
+        )
         _LOG.debug("resolved " + hprint.to_str("report_mode"))
         return report_mode
 
     def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
-        report an informative message reporting the entire config on `KeyError`.
+        report an informative message reporting the entire config on
+        `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's an helper of
-        that function.
+        This method should be used only by `__getitem__()` since it's an
+        helper of that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is compound.
@@ -896,36 +938,6 @@ class Config:
             key, ScalarKeyValidTypes, "Keys can only be string or int"
         )
         hdbg.dassert_isinstance(self._config, dict)
-
-    # //////////
-
-    @staticmethod
-    def _get_config_from_flattened_dict(
-            flattened_config: Dict[Tuple[str], Any]
-    ) -> "Config":
-        """
-        Build a config from the flattened config representation.
-
-        :param flattened_config: flattened config like result from `config.flatten()`
-        :return: `Config` object initialized from flattened representation
-        """
-        hdbg.dassert_isinstance(flattened_config, dict)
-        hdbg.dassert(flattened_config)
-        config = Config()
-        for k, v in flattened_config.items():
-            if isinstance(v, dict):
-                if v:
-                    # Convert each dict-value to `Config` recursively because we
-                    # cannot use dict as value in a `Config`.
-                    v = Config.from_dict(v)
-                else:
-                    # TODO(Grisha): maybe move to `from_dict`, i.e.
-                    # return empty `Config` right away without passing further.
-                    # If dictionary is empty convert to an empty `Config`.
-                    v = Config()
-            config[k] = v
-        return config
-
 
     # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
     def _to_dict_except_for_leaves(self) -> Dict[str, Any]:

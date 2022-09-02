@@ -995,7 +995,7 @@ class Test_nested_config_update2(hunitest.TestCase):
         config2["read_data", "file_name"] = "hello"
         config2["read_data2"] = "world"
         config1.report_mode = "verbose_exception"
-        #config1.update(config2)
+        # config1.update(config2)
         # The first value exists so we should assert.
         with self.assertRaises(cconfig.OverwriteError) as cm:
             config1.update(config2)
