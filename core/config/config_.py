@@ -370,8 +370,9 @@ class Config:
             report_mode: Optional[str] = None,
     ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
+        report_mode = self._resolve_report_mode(report_mode)
         try:
-            self._setitem(key, val, update_mode, clobber_mode, report_mode)
+            self._set_item(key, val, update_mode, clobber_mode, report_mode)
         except Exception as e:
             self._raise_exception(e, key, report_mode)
 
@@ -425,6 +426,7 @@ class Config:
         """
         _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
         # The implementation of this function is similar to `hdict.typed_get()`.
+        report_mode = self._resolve_report_mode(report_mode)
         try:
             ret = self.__getitem__(key, report_mode=report_mode)
         except KeyError as e:
@@ -502,42 +504,6 @@ class Config:
     def report_mode(self, report_mode: str) -> None:
         hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
         self._report_mode = report_mode
-
-    # ////////////////////////////////////////////////////////////////////////////
-    # Update.
-    # ////////////////////////////////////////////////////////////////////////////
-
-    def update(self, config: "Config",
-               *,
-               update_mode: Optional[str] = None) -> None:
-        """
-        Equivalent to `dict.update(config)`.
-
-        Some features of `update()`:
-        - updates leaf values in self from values in `config`
-        - recursively creates paths to leaf values if needed
-        - `config` values overwrite any existing values, assert depending on the
-          value of `mode`
-
-        :param update_mode:
-            - `None`: use the default behavior specified in the constructor
-            - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
-                - if a key already exists, then assert
-                - if a key doesn't exist, then assign the new value
-            - `overwrite`: assign the key, whether the key exists or not
-            - `assign_if_missing`: this mode is used to complete a config, preserving
-              what already exists
-                - if a key already exists, leave the old value and raise a warning
-                - if a key doesn't exist, then assign the new value
-        """
-        _LOG.debug(hprint.to_str("config update_mode"))
-        # Resolve which update mode to use.
-        update_mode = self._resolve_update_mode(update_mode)
-        _LOG.debug(hprint.to_str("update_mode"))
-        #
-        flattened_config = config.flatten()
-        for key, val in flattened_config.items():
-            self.__setitem__(key, val, update_mode=update_mode)
 
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
@@ -708,7 +674,7 @@ class Config:
         # TODO(gp): -> head_scalar_key, tail_compound_key
         return head_key, tail_key
 
-    def _setitem(self,
+    def _set_item(self,
                  key: CompoundKey,
                  val: Any,
                  update_mode: Optional[str],
@@ -764,7 +730,7 @@ class Config:
             if not tail_key:
                 # There is no tail_key so `__setitem__()` was called on a tuple of a
                 # single element, then set the value.
-                self._setitem(head_key, val, update_mode, clobber_mode, report_mode)
+                self._set_item(head_key, val, update_mode, clobber_mode, report_mode)
             else:
                 # Compound key: recurse on the tail of the key.
                 _LOG.debug(
@@ -785,7 +751,7 @@ class Config:
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
-                subconfig._setitem(tail_key, val, update_mode, clobber_mode, report_mode)
+                subconfig._set_item(tail_key, val, update_mode, clobber_mode, report_mode)
             return
         # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
