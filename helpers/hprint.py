@@ -329,7 +329,7 @@ def round_digits(
 # name of variables from the caller.
 
 
-def to_str(expression: str, frame_lev: int = 1) -> str:
+def to_str(expression: str, frame_lev: int = 1, mode: str = "str") -> str:
     """
     Return a string with the value of a variable / expression / multiple
     variables.
@@ -339,10 +339,13 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
 
     This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
     We don't want to force to use Python 3.8 just for this feature.
-
-    >>> x = 1
-    >>> to_str("x+1")
+    ```
+    > x = 1
+    > to_str("x+1")
     x+1=2
+    ```
+
+    :param mode: `str` or `repr` to determine how each object is printed
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -358,9 +361,14 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
     ret = (
         expression
-        + "="
-        + repr(eval(expression, frame_.f_globals, frame_.f_locals))
-    )
+        + "=")
+    eval_ = eval(expression, frame_.f_globals, frame_.f_locals)
+    if mode == "str":
+        ret += str(eval_)
+    elif mode == "repr":
+        ret += repr(eval_)
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
     return ret
 
 

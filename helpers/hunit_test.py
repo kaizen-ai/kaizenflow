@@ -935,7 +935,7 @@ def assert_equal(
             expected = expected_orig
         else:
             if fuzzy_match:
-                tag = "FUZZY ACTUAL vs EXPECTED"
+                tag = "FUZZY ACTUAL vs FUZZY EXPECTED"
             else:
                 tag = "ACTUAL vs EXPECTED"
         tag += f": {full_test_name}"
@@ -946,11 +946,11 @@ def assert_equal(
         exp_file_name = f"{test_dir}/tmp.expected.txt"
         save_with_fuzzy_clean = True
         if save_with_fuzzy_clean:
-            hio.to_file(act_file_name, actual_orig)
-            hio.to_file(exp_file_name, expected_orig)
-        else:
             hio.to_file(act_file_name, actual)
             hio.to_file(exp_file_name, expected)
+        else:
+            hio.to_file(act_file_name, actual_orig)
+            hio.to_file(exp_file_name, expected_orig)
         #
         _LOG.debug("Actual:\n'%s'", actual)
         _LOG.debug("Expected:\n'%s'", expected)

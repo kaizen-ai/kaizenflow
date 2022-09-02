@@ -20,20 +20,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _get_flat_config1() -> cconfig.Config:
-    """
-    Build a flat (i.e., non-nested) config, that looks like:
-        ```
-        nrows: 10000
-        nrows2: hello
-        ```
-    """
-    config = cconfig.Config()
-    config["hello"] = "world"
-    config["foo"] = [1, 2, 3]
-    #
+def _check_config(self: Any, config: cconfig.Config, exp: str) -> None:
     _LOG.debug("config=\n%s", config)
-    return config
+    self.assert_equal(str(config), exp, fuzzy_match=True)
 
 
 # #############################################################################
@@ -72,11 +61,24 @@ def _purify_assertion_string(txt: str) -> str:
 
 
 # #############################################################################
-# TestFlatConfigSet1
+# Test_flat_config_set1
 # #############################################################################
 
 
-class TestFlatConfigSet1(hunitest.TestCase):
+def _get_flat_config1(self: Any) -> cconfig.Config:
+    config = cconfig.Config()
+    config["hello"] = "world"
+    config["foo"] = [1, 2, 3]
+    # Check.
+    exp = """
+    hello: world
+    foo: [1, 2, 3]
+    """
+    _check_config(self, config, exp)
+    return config
+
+
+class Test_flat_config_set1(hunitest.TestCase):
     def test_set1(self) -> None:
         """
         Set a key and print a flat config.
@@ -93,7 +95,7 @@ class TestFlatConfigSet1(hunitest.TestCase):
         """
         Test serialization/deserialization for a flat config.
         """
-        config = _get_flat_config1()
+        config = _get_flat_config1(self)
         #
         act = _check_roundtrip_transformation(self, config)
         exp = r"""
@@ -131,24 +133,16 @@ class TestFlatConfigSet1(hunitest.TestCase):
 # #############################################################################
 
 
-def _get_flat_config2(self_: Any) -> cconfig.Config:
-    """
-    Build a flat (i.e., non-nested) config, that looks like:
-        ```
-        nrows: 10000
-        nrows2: hello
-        ```
-    """
+def _get_flat_config2(self: Any) -> cconfig.Config:
     config = cconfig.Config()
     config["nrows"] = 10000
     config["nrows2"] = "hello"
-    #
-    _LOG.debug("config=\n%s", config)
+    # Check.
     exp = r"""
     nrows: 10000
     nrows2: hello
     """
-    self_.assert_equal(str(config), exp, fuzzy_match=True)
+    _check_config(self, config, exp)
     return config
 
 
@@ -350,19 +344,7 @@ class Test_flat_config_in1(hunitest.TestCase):
 # #############################################################################
 
 
-def _get_nested_config1(self_: Any) -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        nrows: 10000
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-        ```
-    """
+def _get_nested_config1(self: Any) -> cconfig.Config:
     config = cconfig.Config()
     config["nrows"] = 10000
     #
@@ -375,8 +357,7 @@ def _get_nested_config1(self_: Any) -> cconfig.Config:
     config.add_subconfig("zscore")
     config["zscore"]["style"] = "gaz"
     config["zscore"]["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
+    # Check.
     exp = r"""
     nrows: 10000
     read_data:
@@ -387,7 +368,7 @@ def _get_nested_config1(self_: Any) -> cconfig.Config:
       style: gaz
       com: 28
     """
-    self_.assert_equal(str(config), exp, fuzzy_match=True)
+    _check_config(self, config, exp)
     return config
 
 
@@ -605,25 +586,67 @@ class Test_nested_config_set1(hunitest.TestCase):
         self.assert_equal(str(config), hprint.dedent(exp))
 
 
+class Test_nested_config_set2(hunitest.TestCase):
+
+    def step_through(self, stmt: str, globals: Any) -> None:
+        _LOG.debug("\n" + hprint.frame(stmt))
+        exec(stmt, globals)
+        _LOG.debug("config=\n%s", repr(config))
+
+    def test1(self) -> None:
+        """
+        Build a nested config, that looks like:
+            ```
+            nrows: 10000
+            read_data:
+              file_name: foo_bar.txt
+              nrows: 999
+            single_val: hello
+            zscore:
+              style: gaz
+            ```
+        """
+        stmt = 'config = cconfig.Config()'
+        self.step_through(stmt, globals())
+        #_LOG.debug("\n" + hprint.frame(txt))
+        #exec(txt, globals())
+        #_LOG.debug("config=\n%s", repr(config))
+        #
+        stmt = 'config["nrows"] = 10000'
+        self.step_through(stmt, globals())
+        #
+        stmt = 'config.add_subconfig("read_data")'
+        self.step_through(stmt, globals())
+        # config["read_data"]["file_name"] = "foo_bar.txt"
+        # config["read_data"]["nrows"] = 999
+        # #
+        # config["single_val"] = "hello"
+        # #
+        # config.add_subconfig("zscore")
+        # config["zscore"]["style"] = "gaz"
+        # config["zscore"]["com"] = 28
+        # #
+        # _LOG.debug("config=\n%s", config)
+        # exp = r"""
+        # nrows: 10000
+        # read_data:
+        #   file_name: foo_bar.txt
+        #   nrows: 999
+        # single_val: hello
+        # zscore:
+        #   style: gaz
+        #   com: 28
+        # """
+        # self_.assert_equal(str(config), exp, fuzzy_match=True)
+        # return config
+
+
 # #############################################################################
 # Test_nested_config_misc1
 # #############################################################################
 
 
-def _get_nested_config2() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        nrows: 10000
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28
-        ```
-    """
+def _get_nested_config2(self: Any) -> cconfig.Config:
     config = cconfig.Config()
     config["nrows"] = 10000
     #
@@ -636,24 +659,22 @@ def _get_nested_config2() -> cconfig.Config:
     config_tmp = config.add_subconfig("zscore")
     config_tmp["style"] = "gaz"
     config_tmp["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
+    # Check.
+    exp = r"""
+    nrows: 10000
+    read_data:
+      file_name: foo_bar.txt
+      nrows: 999
+    single_val: hello
+    zscore:
+      style: gaz
+      com: 28
+    """
+    _check_config(self, config, exp)
     return config
 
 
-def _get_nested_config3() -> cconfig.Config:
-    """
-    Build a nested config, that looks like:
-        ```
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28
-        ```
-    """
+def _get_nested_config3(self: Any) -> cconfig.Config:
     config = cconfig.Config()
     #
     config_tmp = config.add_subconfig("read_data")
@@ -665,23 +686,23 @@ def _get_nested_config3() -> cconfig.Config:
     config_tmp = config.add_subconfig("zscore")
     config_tmp["style"] = "gaz"
     config_tmp["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
+    # Check.
+    exp = r"""
+    read_data:
+      file_name: foo_bar.txt
+      nrows: 999
+    single_val: hello
+    zscore:
+      style: gaz
+      com: 28
+    """
+    _check_config(self, config, exp)
     return config
 
 
-def _get_nested_config4() -> cconfig.Config:
+def _get_nested_config4(self: Any) -> cconfig.Config:
     """
     Build a nested config, that looks like:
-        ```
-        write_data:
-          file_name: baz.txt
-          nrows: 999
-        single_val2: goodbye
-        zscore2:
-          style: gaz
-          com: 28
-        ```
     """
     config = cconfig.Config()
     #
@@ -694,25 +715,23 @@ def _get_nested_config4() -> cconfig.Config:
     config_tmp = config.add_subconfig("zscore2")
     config_tmp["style"] = "gaz"
     config_tmp["com"] = 28
-    #
-    _LOG.debug("config=\n%s", config)
+    # Check.
+    exp = """
+    write_data:
+      file_name: baz.txt
+      nrows: 999
+    single_val2: goodbye
+    zscore2:
+      style: gaz
+      com: 28
+    """
+    _check_config(self, config, exp)
     return config
 
 
-def _get_nested_config5() -> cconfig.Config:
+def _get_nested_config5(self: Any) -> cconfig.Config:
     """
     Build a nested config, that looks like:
-        ```
-        read_data:
-          file_name: baz.txt
-          nrows: 999
-        single_val: goodbye
-        zscore:
-          style: super
-        extra_zscore:
-          style: universal
-          tau: 32
-        ```
     """
     config = cconfig.Config()
     #
@@ -728,8 +747,19 @@ def _get_nested_config5() -> cconfig.Config:
     config_tmp = config.add_subconfig("extra_zscore")
     config_tmp["style"] = "universal"
     config_tmp["tau"] = 32
-    #
-    _LOG.debug("config=\n%s", config)
+    # Check.
+    exp = """
+    read_data:
+      file_name: baz.txt
+      nrows: 999
+    single_val: goodbye
+    zscore:
+      style: super
+    extra_zscore:
+      style: universal
+      tau: 32
+    """
+    _check_config(self, config, exp)
     return config
 
 
@@ -792,7 +822,7 @@ class Test_nested_config_misc1(hunitest.TestCase):
         Compare two different styles of building a nested config.
         """
         config1 = _get_nested_config1(self)
-        config2 = _get_nested_config2()
+        config2 = _get_nested_config2(self)
         #
         self.assert_equal(str(config1), str(config2))
 
@@ -860,8 +890,8 @@ class Test_nested_config_in1(hunitest.TestCase):
 
 class Test_nested_config_update1(hunitest.TestCase):
     def test_update1(self) -> None:
-        config1 = _get_nested_config3()
-        config2 = _get_nested_config4()
+        config1 = _get_nested_config3(self)
+        config2 = _get_nested_config4(self)
         #
         config1.update(config2)
         # Check.
@@ -885,8 +915,8 @@ class Test_nested_config_update1(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_update2(self) -> None:
-        config1 = _get_nested_config3()
-        config2 = _get_nested_config5()
+        config1 = _get_nested_config3(self)
+        config2 = _get_nested_config5(self)
         #
         config1.update(config2, update_mode="overwrite")
         # Check.
@@ -911,12 +941,22 @@ class Test_nested_config_update1(hunitest.TestCase):
         """
         config = cconfig.Config()
         config_tmp = config.add_subconfig("key1")
+        exp = """
+        key1:
+        """
+        _check_config(self, config, exp)
         #
         subconfig = cconfig.Config()
         subconfig.add_subconfig("key0")
+        exp = """
+        key0:
+        """
+        _check_config(self, subconfig, exp)
         #
+        _LOG.debug("\n" + hprint.frame("update"))
         config_tmp.update(subconfig)
         #
+        _LOG.debug("\n" + hprint.frame("check"))
         expected_result = cconfig.Config()
         config_tmp = expected_result.add_subconfig("key1")
         config_tmp.add_subconfig("key0")
@@ -950,7 +990,7 @@ class Test_nested_config_update2(hunitest.TestCase):
             "overwrite",
             "assign_if_missing",
         ):
-            config1 = _get_nested_config3()
+            config1 = _get_nested_config3(self)
             # Check the value of the config.
             exp = """
             read_data:
@@ -989,7 +1029,7 @@ class Test_nested_config_update2(hunitest.TestCase):
         Update with update_mode="assert_on_overwrite" and values that are
         present.
         """
-        config1 = _get_nested_config3()
+        config1 = _get_nested_config3(self)
         #
         config2 = cconfig.Config()
         config2["read_data", "file_name"] = "hello"
@@ -1025,7 +1065,7 @@ class Test_nested_config_update2(hunitest.TestCase):
         """
         Update with update_mode="overwrite".
         """
-        config1 = _get_nested_config3()
+        config1 = _get_nested_config3(self)
         # Check the value of the config.
         exp = """
         read_data:
@@ -1064,7 +1104,7 @@ class Test_nested_config_update2(hunitest.TestCase):
         Update with update_mode="assert_on_overwrite" and values that are
         present.
         """
-        config1 = _get_nested_config3()
+        config1 = _get_nested_config3(self)
         # Check the value of the config.
         exp = """
         read_data:
@@ -1099,12 +1139,36 @@ class Test_nested_config_update2(hunitest.TestCase):
 
 
 # #############################################################################
-# TestNestedConfigFlatten1
+# Test_nested_config_flatten1
 # #############################################################################
 
 
-class TestNestedConfigFlatten1(hunitest.TestCase):
+def _get_nested_config6(self: Any) -> cconfig.Config:
+    # Build config.
+    config = cconfig.Config()
+    #
+    config_tmp = config.add_subconfig("read_data")
+    config_tmp["file_name"] = "foo_bar.txt"
+    config_tmp["nrows"] = 999
+    #
+    config["single_val"] = "hello"
+    #
+    config.add_subconfig("zscore")
+    # Check.
+    exp = r"""
+    read_data:
+      file_name: foo_bar.txt
+      nrows: 999
+    single_val: hello
+    zscore:
+    """
+    _check_config(self, config, exp)
+    return config
+
+
+class Test_nested_config_flatten1(hunitest.TestCase):
     def test_flatten1(self) -> None:
+        # Build config.
         config = cconfig.Config()
         #
         config_tmp = config.add_subconfig("read_data")
@@ -1116,8 +1180,21 @@ class TestNestedConfigFlatten1(hunitest.TestCase):
         config_tmp = config.add_subconfig("zscore")
         config_tmp["style"] = "gaz"
         config_tmp["com"] = 28
-        #
+        # Check the representation.
+        act = str(config)
+        exp = r"""
+        read_data:
+          file_name: foo_bar.txt
+          nrows: 999
+        single_val: hello
+        zscore:
+          style: gaz
+          com: 28
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+        # Run.
         flattened = config.flatten()
+        # Check the output.
         act = pprint.pformat(flattened)
         exp = r"""
         OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
@@ -1129,33 +1206,26 @@ class TestNestedConfigFlatten1(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=True)
 
     def test_flatten2(self) -> None:
-        config = cconfig.Config()
-        #
-        config_tmp = config.add_subconfig("read_data")
-        config_tmp["file_name"] = "foo_bar.txt"
-        config_tmp["nrows"] = 999
-        #
-        config["single_val"] = "hello"
-        #
-        config.add_subconfig("zscore")
-        #
+        config = _get_nested_config6(self)
+        # Run.
         flattened = config.flatten()
+        # Check.
         act = pprint.pformat(flattened)
         exp = r"""
         OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
-             (('read_data', 'nrows'), 999),
-             (('single_val',), 'hello'),
-             (('zscore',), )])
+                     (('read_data', 'nrows'), 999),
+                     (('single_val',), 'hello'),
+                     (('zscore',), OrderedDict())])
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
 
 # #############################################################################
-# TestSubtractConfig1
+# Test_subtract_config1
 # #############################################################################
 
 
-class TestSubtractConfig1(hunitest.TestCase):
+class Test_subtract_config1(hunitest.TestCase):
     def test1(self) -> None:
         config1 = cconfig.Config()
         config1[("l0",)] = "1st_floor"
@@ -1200,11 +1270,11 @@ class TestSubtractConfig1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestDassertIsSerializable1
+# Test_dassert_is_serializable1
 # #############################################################################
 
 
-class TestDassertIsSerializable1(hunitest.TestCase):
+class Test_dassert_is_serializable1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Test a config that can be serialized correctly.
@@ -1267,11 +1337,11 @@ class TestDassertIsSerializable1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestFromEnvVar1
+# Test_from_env_var1
 # #############################################################################
 
 
-class TestFromEnvVar1(hunitest.TestCase):
+class Test_from_env_var1(hunitest.TestCase):
     def test1(self) -> None:
         eval_config = cconfig.Config.from_dict(
             {
@@ -1311,6 +1381,7 @@ class Test_make_read_only1(hunitest.TestCase):
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         config.update_mode = "overwrite"
+        config.clobber_mode = "allow_write_after_read"
         # Assigning values is not a problem, since the config is not read only.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
@@ -1365,8 +1436,8 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         Updating a read-only config raises.
         """
-        config1 = _get_nested_config3()
-        config2 = _get_nested_config4()
+        config1 = _get_nested_config3(self)
+        config2 = _get_nested_config4(self)
         config1.update(config2)
         # Mark as read-only.
         config1.mark_read_only()
@@ -1401,6 +1472,7 @@ class Test_make_read_only1(hunitest.TestCase):
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         config.update_mode = "overwrite"
+        config.clobber_mode = "allow_write_after_read"
         # Assign the value.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
@@ -1449,6 +1521,8 @@ class Test_to_dict1(hunitest.TestCase):
         self.assert_equal(act, expected_result_as_str, fuzzy_match=True)
         # Ensure that the round trip transform is correct.
         config_as_dict2 = config.to_dict()
+        _LOG.debug("type(config_as_dict)=%s", type(config_as_dict))
+        _LOG.debug("type(config_as_dict2)=%s", type(config_as_dict2))
         self.assert_equal(str(config_as_dict), str(config_as_dict2))
 
     def test1(self) -> None:
@@ -1571,7 +1645,34 @@ class Test_to_dict1(hunitest.TestCase):
     #     config.update(config_tail)
 
 
-# TODO(gp): Unit tests all the functions.
+class Test_to_dict2(hunitest.TestCase):
+
+    def test1(self) -> None:
+        config = _get_nested_config6(self)
+        # Run.
+        flattened = config.to_dict()
+        # Check.
+        act = pprint.pformat(flattened)
+        exp = r"""
+        OrderedDict([('read_data',
+                      OrderedDict([('file_name', 'foo_bar.txt'), ('nrows', 999)])),
+                     ('single_val', 'hello'),
+                     ('zscore', OrderedDict())])
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test2(self) -> None:
+        config = _get_nested_config6(self)
+        # Run.
+        flattened = config.to_dict(keep_leaves=False)
+        # Check.
+        act = pprint.pformat(flattened)
+        exp = r"""
+        OrderedDict([('read_data',
+              OrderedDict([('file_name', 'foo_bar.txt'), ('nrows', 999)])),
+             ('single_val', 'hello')])
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
 
 # #############################################################################
@@ -1755,3 +1856,7 @@ class Test_from_dict1(hunitest.TestCase):
 #         is_key_read = config._is_key_read
 #         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
 #         self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
+
+
+# TODO(gp): Unit tests all the functions.
+
