@@ -157,6 +157,7 @@ class ForecastEvaluatorFromPrices:
             "pnl": pnl,
         }
         portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(dfs)
+        #
         statistics_df = ForecastEvaluatorFromPrices._read_df(
             log_dir, "statistics", file_name, tz
         )

@@ -4,10 +4,8 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
-import datetime
 import logging
-import os
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
@@ -23,6 +21,9 @@ import market_data as mdata
 import oms
 
 _LOG = logging.getLogger(__name__)
+
+# TODO(gp): @all -> Cx_system_builders.py
+
 
 # #############################################################################
 # Market data instances
@@ -52,7 +53,7 @@ def get_Cx_HistoricalMarketData_example1(
 
 
 def get_Cx_RealTimeMarketData_prod_instance1(
-    system: dtfsys.System,
+    asset_ids: List[int]
 ) -> mdata.MarketData:
     """
     Build a MarketData backed with RealTimeImClient.
@@ -71,7 +72,6 @@ def get_Cx_RealTimeMarketData_prod_instance1(
         resample_1min, db_connection, table_name
     )
     # Get the real-time `MarketData`.
-    asset_ids = system.config["market_data_config", "asset_ids"]
     market_data, _ = mdata.get_RealTimeImClientMarketData_example2(
         im_client, asset_ids
     )
