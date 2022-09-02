@@ -152,16 +152,19 @@ class _OrderedConfig(_OrderedDictType):
     """
 
     def __setitem__(
-        self, key: ScalarKey, val: ValueTypeHint, update_mode: str,
-            clobber_mode: str
+        self,
+        key: ScalarKey,
+        val: ValueTypeHint,
+        update_mode: str,
+        clobber_mode: str,
     ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
-           raise ValueError(
-               f"For key='{key}' val='{val}' should be a Config and not a dict"
-           )
+            raise ValueError(
+                f"For key='{key}' val='{val}' should be a Config and not a dict"
+            )
         # 1) Handle `update_mode`.
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
@@ -228,7 +231,9 @@ class _OrderedConfig(_OrderedDictType):
                 was_read = False
             super().__setitem__(key, (was_read, val))
 
-    def __getitem__(self, key: ScalarKey, mark_as_read: bool = True) -> ValueTypeHint:
+    def __getitem__(
+        self, key: ScalarKey, mark_as_read: bool = True
+    ) -> ValueTypeHint:
         # Retrieve the value.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         _, val = super().__getitem__(key)
@@ -245,8 +250,7 @@ class _OrderedConfig(_OrderedDictType):
         return ret
 
     def __repr__(self) -> str:
-        #mode = "with_metadata"
-        mode = "only_values"
+        mode = "with_metadata"
         level = 0
         ret = self._to_pretty_string(self, mode, level)
         return ret
@@ -336,7 +340,9 @@ class Config:
         if array is not None:
             for k, v in array:
                 hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
-                self.__setitem__(k, v, update_mode=update_mode, clobber_mode=clobber_mode)
+                self.__setitem__(
+                    k, v, update_mode=update_mode, clobber_mode=clobber_mode
+                )
 
     # ////////////////////////////////////////////////////////////////////////////
     # Dict-like methods.
@@ -381,60 +387,6 @@ class Config:
     # ////////////////////////////////////////////////////////////////////////////
     # Printing
     # ////////////////////////////////////////////////////////////////////////////
-
-    def _to_string(self, mode: str) -> str:
-        """
-        Return a short string representation of this `Config`.
-        """
-        txt = []
-        for key, (was_read, val) in self._config.items():
-            # Process key.
-            if mode == "only_values":
-                key_as_str = str(key)
-            elif mode == "verbose":
-                key_as_str = f"{key} ({was_read})"
-            else:
-                raise ValueError(f"Invalid mode='{mode}")
-            # Process value.
-            if isinstance(val, Config):
-                # Recurse.
-                txt_tmp = str(val)
-                val_as_str = "\n" + hprint.indent(txt_tmp)
-            else:
-                if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
-                    # Data structures that can be printed in a fancy way.
-                    val_as_str = hpandas.df_to_str(val, print_shape_info=True)
-                    val_as_str = "\n" + hprint.indent(val_as_str)
-                else:
-                    # Normal Python data structures.
-                    val_as_str = str(val)
-                    if len(val_as_str.split("\n")) > 1:
-                        # Indent a string that spans multiple lines like:
-                        # ```
-                        # portfolio_object:
-                        #   # historical holdings=
-                        #   egid                        10365    -1
-                        #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
-                        #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
-                        #   ...
-                        #   # historical holdings marked to market=
-                        #   ...
-                        # ```
-                        val_as_str = "\n" + hprint.indent(val_as_str)
-            if mode == "verbose":
-                val_as_str += " %s " % str(type(val))
-            # Print.
-            txt.append(f"{key_as_str}: {val_as_str}")
-        ret = "\n".join(txt)
-        # Remove memory locations of functions, if config contains them, e.g.,
-        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
-        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        # Remove memory locations of objects, if config contains them, e.g.,
-        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
-        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        return ret
 
     def __str__(self) -> str:
         mode = "only_values"
@@ -572,8 +524,11 @@ class Config:
             if not val:
                 val = Config()
             self.__setitem__(
-                key, val, update_mode=update_mode, clobber_mode=clobber_mode,
-                report_mode=report_mode
+                key,
+                val,
+                update_mode=update_mode,
+                clobber_mode=clobber_mode,
+                report_mode=report_mode,
             )
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -829,6 +784,60 @@ class Config:
             config[k] = v
         return config
 
+    def _to_string(self, mode: str) -> str:
+        """
+        Return a short string representation of this `Config`.
+        """
+        txt = []
+        for key, (was_read, val) in self._config.items():
+            # Process key.
+            if mode == "only_values":
+                key_as_str = str(key)
+            elif mode == "verbose":
+                key_as_str = f"{key} ({was_read})"
+            else:
+                raise ValueError(f"Invalid mode='{mode}")
+            # Process value.
+            if isinstance(val, Config):
+                # Recurse.
+                txt_tmp = str(val)
+                val_as_str = "\n" + hprint.indent(txt_tmp)
+            else:
+                if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
+                    # Data structures that can be printed in a fancy way.
+                    val_as_str = hpandas.df_to_str(val, print_shape_info=True)
+                    val_as_str = "\n" + hprint.indent(val_as_str)
+                else:
+                    # Normal Python data structures.
+                    val_as_str = str(val)
+                    if len(val_as_str.split("\n")) > 1:
+                        # Indent a string that spans multiple lines like:
+                        # ```
+                        # portfolio_object:
+                        #   # historical holdings=
+                        #   egid                        10365    -1
+                        #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
+                        #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
+                        #   ...
+                        #   # historical holdings marked to market=
+                        #   ...
+                        # ```
+                        val_as_str = "\n" + hprint.indent(val_as_str)
+            if mode == "verbose":
+                val_as_str += " %s " % str(type(val))
+            # Print.
+            txt.append(f"{key_as_str}: {val_as_str}")
+        ret = "\n".join(txt)
+        # Remove memory locations of functions, if config contains them, e.g.,
+        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
+        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
+        # Remove memory locations of objects, if config contains them, e.g.,
+        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
+        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
+        return ret
+
     # /////////////////////////////////////////////////////////////////////////////
 
     def _set_item(
@@ -904,8 +913,9 @@ class Config:
             return
         # Base case: write the config.
         self._dassert_base_case(key)
-        self._config.__setitem__(key, val, update_mode=update_mode,
-                                 clobber_mode=clobber_mode)
+        self._config.__setitem__(
+            key, val, update_mode=update_mode, clobber_mode=clobber_mode
+        )
 
     def _raise_exception(
         self, exception: Exception, key: CompoundKey, report_mode: str

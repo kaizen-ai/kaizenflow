@@ -587,7 +587,6 @@ class Test_nested_config_set1(hunitest.TestCase):
 
 
 class Test_nested_config_set2(hunitest.TestCase):
-
     def step_through(self, stmt: str, globals: Any) -> None:
         _LOG.debug("\n" + hprint.frame(stmt))
         exec(stmt, globals)
@@ -606,11 +605,11 @@ class Test_nested_config_set2(hunitest.TestCase):
               style: gaz
             ```
         """
-        stmt = 'config = cconfig.Config()'
+        stmt = "config = cconfig.Config()"
         self.step_through(stmt, globals())
-        #_LOG.debug("\n" + hprint.frame(txt))
-        #exec(txt, globals())
-        #_LOG.debug("config=\n%s", repr(config))
+        # _LOG.debug("\n" + hprint.frame(txt))
+        # exec(txt, globals())
+        # _LOG.debug("config=\n%s", repr(config))
         #
         stmt = 'config["nrows"] = 10000'
         self.step_through(stmt, globals())
@@ -1646,7 +1645,6 @@ class Test_to_dict1(hunitest.TestCase):
 
 
 class Test_to_dict2(hunitest.TestCase):
-
     def test1(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1859,4 +1857,3 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 # TODO(gp): Unit tests all the functions.
-
