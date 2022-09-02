@@ -85,4 +85,3 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         actual_args = tuple(chassis_extractor_mock.call_args)
         expected_args = (("spot",), {})
         self.assertEqual(actual_args, expected_args)
-        
