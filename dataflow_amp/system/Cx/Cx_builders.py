@@ -53,7 +53,7 @@ def get_Cx_HistoricalMarketData_example1(
 
 
 def get_Cx_RealTimeMarketData_prod_instance1(
-    asset_ids: List[int]
+    asset_ids: List[int],
 ) -> mdata.MarketData:
     """
     Build a MarketData backed with RealTimeImClient.
@@ -315,7 +315,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         system.config["market_data_config", "universe_version"],
         system.config["market_data_config", "asset_ids"],
         pricing_method,
-        system.config["secret_identifier_config"]
+        system.config["secret_identifier_config"],
     )
     return portfolio
 

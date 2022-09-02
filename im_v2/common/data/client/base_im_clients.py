@@ -79,7 +79,7 @@ class ImClient(abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-            "vendor universe_version resample_1min full_symbol_col_name"
+                "vendor universe_version resample_1min full_symbol_col_name"
             )
         )
         hdbg.dassert_isinstance(vendor, str)
