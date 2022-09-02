@@ -210,8 +210,8 @@ class ImClient(abc.ABC):
             msg="Not all the requested symbols were retrieved",
             # TODO(Grisha): add param `assert_on_missing_asset_ids` that
             # allows to either assert or issues a warning.
-            # only_warning=True,
-            only_warning=False,
+            only_warning=True,
+            # only_warning=False,
         )
         # Rename index.
         df.index.name = "timestamp"
