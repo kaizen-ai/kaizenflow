@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-import im_v2.common.data.client as icdc
+import im_v2.common.data.client.im_client_test_case as imvcdcimctc
 import im_v2.kibot.data.client.kibot_clients_example as imvkdckcex
 
 # #############################################################################
@@ -10,7 +10,7 @@ import im_v2.kibot.data.client.kibot_clients_example as imvkdckcex
 # #############################################################################
 
 
-class TestKibotEquitiesCsvParquetByAssetClient(icdc.ImClientTestCase):
+class TestKibotEquitiesCsvParquetByAssetClient(imvcdcimctc.ImClientTestCase):
     def test_read_csv_data1(self) -> None:
         full_symbol = "kibot::HD"
         unadjusted = False
@@ -381,7 +381,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdc.ImClientTestCase):
 # #############################################################################
 
 
-class TestKibotFuturesCsvParquetByAssetClient(icdc.ImClientTestCase):
+class TestKibotFuturesCsvParquetByAssetClient(imvcdcimctc.ImClientTestCase):
     def test_read_csv_data1(self) -> None:
         full_symbol = "kibot::ZI"
         contract_type = "continuous"

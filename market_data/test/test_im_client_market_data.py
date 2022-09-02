@@ -6,7 +6,7 @@ import pytest
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import market_data as mdata
+import market_data.market_data_test_case as mdmdteca
 import market_data as mdata
 
 # #############################################################################
@@ -15,7 +15,7 @@ import market_data as mdata
 
 
 # TODO(Grisha): @Dan, can we use CcxtHistoricalPqByTileClient?
-class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
+class TestImClientMarketData1(mdmdteca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -530,7 +530,7 @@ class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
 # #############################################################################
 
 
-class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
+class TestImClientMarketData2(mdmdteca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -1036,7 +1036,7 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
     reason="Run only if CK S3 is available",
 )
 @pytest.mark.slow("~8 seconds by GH actions.")
-class TestImClientMarketData3(mdata.MarketData_get_data_TestCase):
+class TestImClientMarketData3(mdmdteca.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.

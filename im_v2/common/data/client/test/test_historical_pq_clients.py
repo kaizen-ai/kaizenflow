@@ -7,6 +7,7 @@ import pytest
 
 import helpers.hdatetime as hdateti
 import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
+import im_v2.common.data.client.im_client_test_case as imvcdcimctc
 import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 
@@ -18,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
+class TestHistoricalPqByTileClient1(imvcdcimctc.ImClientTestCase):
     def test_read_data1(self) -> None:
         # Generate Parquet test data and initialize client.
         full_symbol = "binance::BTC_USDT"
@@ -354,7 +355,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
 # #############################################################################
 
 
-class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
+class TestHistoricalPqByTileClient2(imvcdcimctc.ImClientTestCase):
     """
     Test that Parquet intervals are correctly filtered (corner cases).
     """
@@ -728,7 +729,7 @@ class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
 # #############################################################################
 
 
-class TestHistoricalPqByTileClient3(icdc.ImClientTestCase):
+class TestHistoricalPqByTileClient3(imvcdcimctc.ImClientTestCase):
     """
     Test that randomly generated Parquet intervals are correctly filtered.
     """

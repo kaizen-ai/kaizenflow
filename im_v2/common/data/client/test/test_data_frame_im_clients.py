@@ -3,6 +3,7 @@ from typing import List
 import pandas as pd
 
 import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
+import im_v2.common.data.client.im_client_test_case as imvcdcimctc
 import im_v2.common.data.client as icdc
 
 # #############################################################################
@@ -10,7 +11,7 @@ import im_v2.common.data.client as icdc
 # #############################################################################
 
 
-class TestDataFrameImClient1(icdc.ImClientTestCase):
+class TestDataFrameImClient1(imvcdcimctc.ImClientTestCase):
     @staticmethod
     def get_expected_column_names() -> List[str]:
         """
