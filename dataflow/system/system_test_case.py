@@ -292,7 +292,7 @@ class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
             "research_forecast_evaluator_from_prices"
         ].to_dict()
         signature, _ = dtfsysysig.get_research_pnl_signature(
-            self, result_bundle, forecast_evaluator_from_prices_dict
+            result_bundle, forecast_evaluator_from_prices_dict
         )
         self.check_string(signature, fuzzy_match=True, purify_text=True)
 
@@ -384,8 +384,8 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         config_tag = "dataframe_portfolio"
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # 2) Check the run signature.
-        actual = dtfsysysig._get_signature_from_result_bundle(
-            self, system, result_bundles, add_system_config, add_run_signature
+        actual = dtfsysysig.get_signature_from_result_bundle(
+            system, result_bundles, add_system_config, add_run_signature
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -471,8 +471,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         config_tag = "database_portfolio"
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # Check the run signature.
-        actual = dtfsysysig._get_signature_from_result_bundle(
-            self, system, result_bundles, add_system_config, add_run_signature
+        actual = dtfsysysig.get_signature_from_result_bundle(
+            system, result_bundles, add_system_config, add_run_signature
         )
         return actual
 
@@ -693,7 +693,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
             "research_forecast_evaluator_from_prices"
         ].to_dict()
         signature, research_pnl = dtfsysysig.get_research_pnl_signature(
-            self, result_bundle, forecast_evaluator_from_prices_dict
+            result_bundle, forecast_evaluator_from_prices_dict
         )
         return signature, research_pnl
 
@@ -721,7 +721,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         # that is sufficient for a reconciliation.
         num_periods = 20
         signature, pnl = dtfsysysig.get_portfolio_signature(
-            self, time_system.portfolio, num_periods=num_periods
+            time_system.portfolio, num_periods=num_periods
         )
         return signature, pnl
 

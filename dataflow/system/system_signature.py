@@ -51,8 +51,7 @@ def get_signature(
     return res
 
 
-def _get_signature_from_result_bundle(
-    self: Any,
+def get_signature_from_result_bundle(
     system: dtfsyssyst.System,
     result_bundles: List[dtfcore.ResultBundle],
     add_system_config: bool,
@@ -86,7 +85,6 @@ def _get_signature_from_result_bundle(
             "research_forecast_evaluator_from_prices"
         ].to_dict()
         txt_tmp = compute_run_signature(
-            self,
             dag_runner,
             portfolio,
             result_bundle,
@@ -114,7 +112,7 @@ def _get_signature_from_result_bundle(
     return actual
 
 
-def get_events_signature(self, events) -> str:
+def get_events_signature(events) -> str:
     # TODO(gp): Use events.to_str()
     actual = ["# event signature=\n"]
     events_as_str = "\n".join(
@@ -132,7 +130,7 @@ def get_events_signature(self, events) -> str:
 
 
 def get_portfolio_signature(
-    self, portfolio, num_periods: int = 10
+    portfolio, num_periods: int = 10
 ) -> Tuple[str, pd.Series]:
     actual = ["\n# portfolio signature=\n"]
     actual.append(str(portfolio))
@@ -144,7 +142,6 @@ def get_portfolio_signature(
 
 
 def compute_run_signature(
-    self,
     dag_runner: dtfcore.DagRunner,
     portfolio: oms.Portfolio,
     result_bundle: dtfcore.ResultBundle,
@@ -155,11 +152,10 @@ def compute_run_signature(
     actual = []
     #
     events = dag_runner.events
-    actual.append(get_events_signature(self, events))
-    signature, pnl = get_portfolio_signature(self, portfolio)
+    actual.append(get_events_signature(events))
+    signature, pnl = get_portfolio_signature(portfolio)
     actual.append(signature)
     signature, research_pnl = get_research_pnl_signature(
-        self,
         result_bundle,
         forecast_evaluator_from_prices_dict,
     )
@@ -184,7 +180,6 @@ def compute_run_signature(
 
 
 def get_research_pnl_signature(
-    self,
     result_bundle: dtfcore.ResultBundle,
     forecast_evaluator_from_prices_dict: Dict[str, Any],
 ) -> Tuple[str, pd.Series]:
