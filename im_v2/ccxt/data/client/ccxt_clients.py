@@ -126,7 +126,6 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         db_connection: hsql.DbConnection,
         table_name: str,
     ) -> None:
-        _LOG.debug(hprint.to_str("resample_1min db_connection table_name"))
         vendor = "ccxt"
         super().__init__(vendor, resample_1min, db_connection, table_name)
 
