@@ -3,7 +3,6 @@ import pytest
 
 import helpers.henv as henv
 import im_v2.common.data.client.im_client_test_case as imvcdcimctc
-import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients_example as imvccdcccce
 
 

@@ -4,7 +4,6 @@ import pandas as pd
 
 import im_v2.common.data.client.data_frame_im_clients_example as imvcdcdfimce
 import im_v2.common.data.client.im_client_test_case as imvcdcimctc
-import im_v2.common.data.client as icdc
 
 # #############################################################################
 # TestDataFrameImClient1

@@ -11,7 +11,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
 import im_v2.ccxt.db.utils as imvccdbut
-import im_v2.common.data.client as icdc
+import im_v2.common.data.client.im_client_test_case as imvcdcimctc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
 
@@ -36,7 +36,7 @@ def get_expected_column_names() -> List[str]:
 # #############################################################################
 
 
-class TestCcxtCsvClient1(icdc.ImClientTestCase):
+class TestCcxtCsvClient1(imvcdcimctc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -313,7 +313,7 @@ class TestCcxtCsvClient1(icdc.ImClientTestCase):
 # #############################################################################
 
 
-class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
+class TestCcxtPqByAssetClient1(imvcdcimctc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -616,7 +616,7 @@ class TestCcxtPqByAssetClient1(icdc.ImClientTestCase):
 
 # TODO(Dan): add example client for `CcxtSqlRealTimeImClient`.
 class TestCcxtSqlRealTimeImClient1(
-    icdc.ImClientTestCase, imvcddbut.TestImDbHelper
+    imvcdcimctc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
     """
     For all the test methods see description of corresponding private method in
@@ -1011,7 +1011,7 @@ class TestCcxtSqlRealTimeImClient1(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
-class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
+class TestCcxtHistoricalPqByTileClient1(imvcdcimctc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.

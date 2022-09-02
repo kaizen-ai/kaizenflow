@@ -8,7 +8,6 @@ import pytest
 import helpers.hdatetime as hdateti
 import im_v2.common.data.client.historical_pq_clients_example as imvcdchpce
 import im_v2.common.data.client.im_client_test_case as imvcdcimctc
-import im_v2.common.data.client as icdc
 import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)

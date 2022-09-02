@@ -6,7 +6,6 @@ import pytest
 
 import helpers.hpandas as hpandas
 import im_v2.common.data.client.im_client_test_case as imvcdcimctc
-import im_v2.common.data.client as icdc
 import im_v2.ig.data.client.ig_historical_pq_by_asset_taq_bar_client as imvidcihpbatbc
 
 _LOG = logging.getLogger(__name__)
