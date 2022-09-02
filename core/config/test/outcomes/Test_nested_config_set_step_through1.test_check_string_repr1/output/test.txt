@@ -6,9 +6,14 @@
 # config["nrows"] = 10000
 # ################################################################################
 nrows (was_read=False): 10000 <class 'int'>
+
+  10000 <class 'int'>
+
 # ################################################################################
 # config.add_subconfig("read_data")
 # ################################################################################
 nrows (was_read=False): 10000 <class 'int'>
+
+  10000 <class 'int'>
+
 read_data (was_read=False):
- <class 'core.config.config_.Config'>

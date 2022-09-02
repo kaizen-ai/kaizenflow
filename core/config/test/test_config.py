@@ -20,10 +20,15 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _check_config(self: Any, config: cconfig.Config, exp: str) -> None:
+def _check_config(self: Any, config: cconfig.Config, exp: str, mode: str = "str") -> None:
     _LOG.debug("config=\n%s", config)
+    if mode == "str":
+        act = str(config)
+    elif mode == "repr":
+        act = repr(config)
+    else:
+        raise ValueError(f"Invalid mode='{mode}')
     self.assert_equal(str(config), exp, fuzzy_match=True)
-
 
 
 def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
@@ -1766,39 +1771,6 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 # #############################################################################
-# Test_mark_key_as_read1
-# #############################################################################
-
-
-# class Test_mark_key_as_read1(hunitest.TestCase):
-#     def test1(self) -> None:
-#         """
-#         - `__setitem__`
-#         - nested config
-#         - string keys
-#         """
-#         config = cconconf.Config()
-#         config.add_subconfig("read_data")
-#         config["read_data"]["file_name"] = "test_name.txt"
-#         is_key_read = config._is_key_read
-#         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
-#         self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
-#
-#     def test2(self) -> None:
-#         """
-#         - `__setitem__`
-#         - nested config
-#         - iterable key
-#         """
-#         config = cconconf.Config()
-#         config.add_subconfig("read_data")
-#         config["read_data", "file_name"] = "test_name.txt"
-#         is_key_read = config._is_key_read
-#         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
-#         self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
-
-
-# #############################################################################
 # _Config_step_through_TestCase1
 # #############################################################################
 
@@ -1924,5 +1896,28 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
     def test_check_string_repr1(self) -> None:
         mode = "repr"
         self._test_check_string1(mode)
+
+
+# #############################################################################
+# Test_mark_key_as_read1
+# #############################################################################
+
+
+class Test_mark_key_as_read1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        - `__setitem__`
+        - nested config
+        - string keys
+        """
+        config = cconconf.Config()
+        config["read_data", "file_name"] = "test_name.txt"
+        # Check.
+        exp = ""
+        _check_config(self, config, exp)
+        #
+
+
+
 
 # TODO(gp): Unit tests all the functions.
