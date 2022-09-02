@@ -172,20 +172,22 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Check the args.
         actual_args = pprint.pformat(tuple(create_order_mock.call_args))
         expected_args = r"""
-((),
- {'amount': 15.0,
-  'params': {'client_oid': 0, 'portfolio_id': 'ccxt_portfolio_mock'},
-  'side': 'buy',
-  'symbol': 'ETH/USDT',
-  'type': 'market'})
-"""
+            ((),
+             {'amount': 15.0,
+              'params': {'client_oid': 0, 'portfolio_id': 'ccxt_portfolio_mock'},
+              'side': 'buy',
+              'symbol': 'ETH/USDT',
+              'type': 'market'})
+        """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
         self.assertEqual(receipt, "filename_1.txt")
         # Check the order Dataframe.
         act = hpandas.df_to_str(order_df)
-        exp = r"""
-   order_id               creation_timestamp    asset_id       type_                  start_timestamp                    end_timestamp  curr_num_shares  diff_num_shares                tz
-0         0 2022-08-05 10:36:44.976104-04:00  1464553467  price@twap 2022-08-05 10:36:44.976104-04:00 2022-08-05 10:38:44.976104-04:00              0.0             15.0  America/New_York
-"""
+        exp = """
+           order_id               creation_timestamp    asset_id       type_                  start_timestamp\
+                               end_timestamp  curr_num_shares  diff_num_shares                tz
+        0         0 2022-08-05 10:36:44.976104-04:00  1464553467  price@twap 2022-08-05 10:36:44.976104-04:00 2022-08-05\
+         10:38:44.976104-04:00              0.0             15.0  America/New_York
+        """
         self.assert_equal(act, exp, fuzzy_match=True)
