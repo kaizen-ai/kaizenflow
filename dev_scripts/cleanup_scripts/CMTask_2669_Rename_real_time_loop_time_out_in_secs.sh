@@ -1,6 +1,6 @@
 #!/bin/bash -xe
 
-script_name="dev_scripts/cleanup_scripts/CMTask_2669_Rename_real_time_loop_time_out_in_secs.sh"
+script_name="amp/dev_scripts/cleanup_scripts/CMTask_2669_Rename_real_time_loop_time_out_in_secs.sh"
 
 replace_text.py \
   --old "real_time_loop_time_out_in_secs: Optional[int]" \
