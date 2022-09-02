@@ -77,6 +77,11 @@ class ImClient(abc.ABC):
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
         """
+        _LOG.debug(
+            hprint.to_str(
+            "vendor universe_version resample_1min full_symbol_col_name"
+            )
+        )
         hdbg.dassert_isinstance(vendor, str)
         self._vendor = vendor
         if universe_version is not None:
@@ -203,6 +208,8 @@ class ImClient(abc.ABC):
             full_symbols,
             loaded_full_symbols,
             msg="Not all the requested symbols were retrieved",
+            # TODO(Grisha): add param `assert_on_missing_asset_ids` that
+            # allows to either assert or issues a warning.
             only_warning=True,
         )
         # Rename index.
@@ -615,6 +622,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         db_connection: hsql.DbConnection,
         table_name: str,
     ) -> None:
+        _LOG.debug(hprint.to_str("db_connection table_name"))
         # Real-time implementation has a different mechanism for getting universe.
         # Passing to make the parent class happy.
         universe_version = None
@@ -654,6 +662,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         # Convert to list.
         full_symbols = full_symbols.to_list()
+        _LOG.debug(hprint.to_str("full_symbols"))
         return full_symbols
 
     # TODO(Danya): Propagate usage of `columns` parameter here and in descendant
