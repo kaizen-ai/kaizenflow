@@ -155,6 +155,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker._minimal_order_limits = {
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
+        broker._submitted_order_id = 0
         # Mock `get_low_market_price` of CcxtBroker as the exchange class is mocked globally
         # and `_exchange.fetch_ticker` can't be reached.
         get_low_market_price_mock.return_value = 2.0
@@ -181,7 +182,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
-        self.assertEqual(receipt, "filename_1.txt")
+        self.assertEqual(receipt, "filename_0.txt")
         # Check the order Dataframe.
         act = hpandas.df_to_str(order_df)
         exp = """
