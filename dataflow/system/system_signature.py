@@ -131,11 +131,13 @@ def get_events_signature(self, events) -> str:
     return actual
 
 
-def get_portfolio_signature(self, portfolio) -> Tuple[str, pd.Series]:
+def get_portfolio_signature(
+    self, portfolio, num_periods: int = 10
+) -> Tuple[str, pd.Series]:
     actual = ["\n# portfolio signature=\n"]
     actual.append(str(portfolio))
     actual = "\n".join(actual)
-    statistics = portfolio.get_historical_statistics()
+    statistics = portfolio.get_historical_statistics(num_periods=num_periods)
     pnl = statistics["pnl"]
     _LOG.debug("pnl=\n%s", pnl)
     return actual, pnl
