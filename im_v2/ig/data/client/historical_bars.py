@@ -25,6 +25,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 import helpers.htqdm as htqdm
@@ -241,7 +242,13 @@ def get_raw_bar_data_from_file(
         # For some reason downloading with s3fs is 3-5x slower than using the
         # command directly.
         #s3fs_.download(path, tmp_file_name)
-        cmd = f"aws s3 cp --profile {aws_profile} {path} {tmp_file_name}"
+        if hserver.is_ig_prod():
+            # When running in production we let the Docker container decide
+            # the AWS profile to use.
+            opts = ""
+        else:
+            opts = f" --profile {aws_profile}"
+        cmd = f"aws s3 cp{opts} {path} {tmp_file_name}"
         hsystem.system(cmd)
         path = tmp_file_name
         s3fs_ = None

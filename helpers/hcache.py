@@ -360,9 +360,10 @@ class _Cached:
     """
 
     # TODO(gp): Either allow users to initialize `mem_cache_path` here or with
-    #  `set_function_cache_path()` but not both code paths. It's unclear which option is
-    #  better. On the one side `set_function_cache_path()` is more explicit, but it can't be
-    #  changed. On the other side the wrapper needs to be initialized in one shot.
+    #  `set_function_cache_path()` but not both code paths. It's unclear which option
+    #  is better. On the one side `set_function_cache_path()` is more explicit, but
+    #  it can't be changed. On the other side the wrapper needs to be initialized in
+    #  one shot.
     def __init__(
         self,
         func: Callable,

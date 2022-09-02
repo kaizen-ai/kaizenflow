@@ -26,10 +26,15 @@ def get_secrets_client(aws_profile: str) -> BaseClient:
 # TODO(Juraj): add support to access secrets for different profiles, not important rn
 def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     """
-    Fetch secret values(s) from AWS secrets manager, returns a dictionary of
-    key-value pairs. example: get_secret('binance') returns:
+    Fetch secret values(s) from AWS secrets manager.
 
-    { 'apiKey': '<secret_value>', 'secret': '<secret_value>' }
+    :return a dictionary of key-value pairs. E.g., `get_secret('binance')` returns
+    ```
+    {
+        'apiKey': '<secret_value>',
+        'secret': '<secret_value>'
+    }
+    ```
     """
     # Check if the secret name format is valid.
     dassert_valid_secret(secret_name)

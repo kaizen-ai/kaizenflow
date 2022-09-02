@@ -107,7 +107,7 @@ def compute_max_drawdown_approximate_cdf(
 
     - https://www.sciencedirect.com/science/article/pii/S0304414913001695
     - G. F. Newell, Asymptotic Extreme Value Distribution for One-dimensional
-      Diffusion Processes
+      Diffusion Processes: https://www.jstor.org/stable/24900722
 
     TODO(*): Revisit units and rescaling.
     TODO(*): Maybe normalize drawdown.

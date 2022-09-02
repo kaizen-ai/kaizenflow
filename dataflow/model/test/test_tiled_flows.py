@@ -87,7 +87,7 @@ class Test_evaluate_weighted_forecasts(hunitest.TestCase):
                 "liquidate_at_end_of_day": False,
             },
             target_freq_str="30T",
-            gaussian_rank_before_mixing=True,
+            preapply_gaussian_ranking=True,
         )
         actual = hpandas.df_to_str(bar_metrics, num_rows=10, precision=2)
         expected = r"""

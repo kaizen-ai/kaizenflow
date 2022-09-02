@@ -112,8 +112,8 @@ class ProcessForecastsNode(dtfcore.FitPredictNode):
 
 
 # TODO(Grisha): @all Move to `system_builder_utils.py` or sink_nodes_example.py
-#   This function can become `get_ProcessForecastsNode_dict_example` (without a number)
-#   which signify the innermost / most general builder.
+#   This function can become `get_ProcessForecastsNode_dict_example` (without a
+#   number) which signify the innermost / most general builder.
 def get_ProcessForecastsNode_dict_example1(
     portfolio: omportfo.Portfolio,
     prediction_col: str,

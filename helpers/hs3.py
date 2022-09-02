@@ -581,19 +581,8 @@ def get_s3fs(aws_profile: AwsProfile) -> s3fs.core.S3FileSystem:
 
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    # TODO(gp): Make this more robust.
-    is_prod_machine = not (
-        hserver.is_dev4()
-        or hserver.is_dev_ck()
-        or hserver.is_mac()
-        or hserver.is_inside_ci()
-        # TODO(Juraj): Make this function less confusing.
-        # Note(Juraj): cmamp prod container is an exception since we
-        # actually want to access the prod s3 bucket.
-        or hserver.is_cmamp_prod()
-    )
-    if is_prod_machine:
-        # On prod machines we let the Docker container infer the right AWS
+    if hserver.is_ig_prod():
+        # On IG prod machines we let the Docker container infer the right AWS
         # account.
         _LOG.warning("Not using AWS profile='%s'", aws_profile)
         s3fs_ = s3fs.core.S3FileSystem()

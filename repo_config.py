@@ -2,7 +2,7 @@
 Contain info specific of `//cmamp` repo.
 """
 
-# TODO(gp): Centrale all the common functions under hserver.py.
+# TODO(gp): Centralize all the common functions under hserver.py.
 
 import functools
 import logging
@@ -81,6 +81,7 @@ def get_docker_base_image_name() -> str:
 #   - A different user and group is used inside the container
 
 
+# Uncomment to run sibling containers on macOS Catalina.
 # _MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Catalina"
 _MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Monterey"
 
@@ -98,46 +99,50 @@ def enable_privileged_mode() -> bool:
     """
     Return whether an host supports privileged mode for its containers.
     """
+    ret = False
     if get_name() in ("//dev_tools",):
-        val = False
+        ret = False
     else:
-        # TODO(gp): Keep this in alphabetical order.
-        if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
-            val = False
-        elif hserver.is_mac(version="Catalina"):
-            val = True
-        elif hserver.is_cmamp_prod():
-            val = False
+        # Keep this in alphabetical order.
+        if hserver.is_cmamp_prod():
+            ret = False
+        elif hserver.is_dev4() or hserver.is_ig_prod():
+            ret = False
         elif hserver.is_dev_ck():
-            val = True
-        elif hserver.is_dev4():
-            val = False
+            ret = True
         elif hserver.is_inside_ci():
-            val = True
+            ret = True
+        elif hserver.is_mac(version="Catalina"):
+            # Docker for macOS Catalina supports dind.
+            ret = True
+        elif hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
+            # Docker for macOS Monterey doesn't seem to support dind.
+            ret = False
         else:
             _raise_invalid_host()
-    return val
+    return ret
 
 
 def has_docker_sudo() -> bool:
     """
     Return whether commands should be run with sudo or not.
     """
-    # TODO(gp): Keep this in alphabetical order.
-    if hserver.is_dev_ck():
-        val = True
-    elif hserver.is_dev4():
-        val = False
+    ret = False
+    # Keep this in alphabetical order.
+    if hserver.is_cmamp_prod():
+        ret = False
+    elif hserver.is_dev4() or hserver.is_ig_prod():
+        ret = False
+    elif hserver.is_dev_ck():
+        ret = True
     elif hserver.is_inside_ci():
-        val = False
+        ret = False
     elif hserver.is_mac():
         # macOS runs Docker with sudo by default.
-        val = True
-    elif hserver.is_cmamp_prod():
-        val = False
+        ret = True
     else:
         _raise_invalid_host()
-    return val
+    return ret
 
 
 # TODO(gp): -> has_docker_privileged_mode
@@ -154,16 +159,16 @@ def has_dind_support() -> bool:
         _print("-> ret = False")
         return False
     # TODO(gp): Not sure this is really needed since we do this check
-    # after enable_privileged_mode controls if we have dind or not.
+    #  after enable_privileged_mode controls if we have dind or not.
     if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
-    # processes try to run this code they interfere. A solution is to run `ip
-    # link` in the entrypoint and create a `has_docker_privileged_mode` file
-    # which contains the value.
-    # We rely on the approach from https://stackoverflow.com/questions/32144575
-    # to check if there is support for privileged mode.
-    # Sometimes there is some state left, so we need to clean it up.
+    #  processes try to run this code they interfere. A solution is to run `ip
+    #  link` in the entrypoint and create a `has_docker_privileged_mode` file
+    #  which contains the value.
+    #  We rely on the approach from https://stackoverflow.com/questions/32144575
+    #  to check if there is support for privileged mode.
+    #  Sometimes there is some state left, so we need to clean it up.
     cmd = "ip link delete dummy0 >/dev/null 2>&1"
     # TODO(gp): use `has_docker_sudo`.
     if hserver.is_mac() or hserver.is_dev_ck():
@@ -194,16 +199,10 @@ def has_dind_support() -> bool:
             if hserver.is_mac() or hserver.is_dev_ck() or hserver.is_inside_ci():
                 # dind should be supported on Mac, dev_ck, and GH Actions.
                 assert has_dind, (
-                    "Expected privileged mode: "
-                    + "has_dind=%s, is_mac=%s, is_dev_ck=%s is_inside_ci=%s"
-                    % (
-                        has_dind,
-                        hserver.is_mac(),
-                        hserver.is_dev_ck(),
-                        hserver.is_inside_ci(),
-                    )
+                    f"Expected privileged mode: has_dind={has_dind}\n" +
+                    hserver.setup_to_str()
                 )
-            elif hserver.is_dev4():
+            elif hserver.is_dev4() or hserver.is_ig_prod():
                 assert not has_dind, "Not expected privileged mode"
             else:
                 _raise_invalid_host()
@@ -246,7 +245,10 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     # TODO(gp): Keep this in alphabetical order.
     shared_data_dirs: Optional[Dict[str, str]] = None
     if hserver.is_dev4():
-        shared_data_dirs = {"/local/home/share/cache": "/cache"}
+        shared_data_dirs = {
+                "/local/home/share/cache": "/cache",
+                "/local/home/share/data": "/data",
+        }
     elif hserver.is_dev_ck():
         shared_data_dirs = {"/data/shared": "/shared_data"}
     elif hserver.is_mac() or hserver.is_inside_ci() or hserver.is_cmamp_prod():
@@ -260,7 +262,6 @@ def use_docker_network_mode_host() -> bool:
     # TODO(gp): Not sure this is needed any more, since we typically run in bridge
     # mode.
     ret = hserver.is_mac() or hserver.is_dev_ck()
-    ret = False
     if ret:
         assert use_docker_sibling_containers()
     return ret
@@ -274,13 +275,13 @@ def use_docker_db_container_name_to_connect() -> bool:
     if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
         # New Macs don't seem to see containers unless we connect with them
         # directly with their name.
-        val = True
+        ret = True
     else:
-        val = False
-    if val:
+        ret = False
+    if ret:
         # This implies that we are using Docker sibling containers.
         assert use_docker_sibling_containers()
-    return val
+    return ret
 
 
 def run_docker_as_root() -> bool:
@@ -289,30 +290,31 @@ def run_docker_as_root() -> bool:
 
     I.e., adding `--user $(id -u):$(id -g)` to docker compose or not.
     """
-    # TODO(gp): Keep this in alphabetical order.
-    if hserver.is_inside_ci():
+    ret = None
+    # Keep this in alphabetical order.
+    if hserver.is_cmamp_prod():
+        ret = False
+    elif hserver.is_dev4() or hserver.is_ig_prod():
+        # //lime runs on a system with Docker remap which assumes we don't
+        # specify user credentials.
+        ret = True
+    elif hserver.is_dev_ck():
+        # On dev1 / dev2 we run as users specifying the user / group id as
+        # outside.
+        ret = False
+    elif hserver.is_inside_ci():
         # When running as user in GH action we get an error:
         # ```
         # /home/.config/gh/config.yml: permission denied
         # ```
         # see https://github.com/alphamatic/amp/issues/1864
         # So we run as root in GH actions.
-        res = True
-    elif hserver.is_dev4():
-        # //lime runs on a system with Docker remap which assumes we don't
-        # specify user credentials.
-        res = True
-    elif hserver.is_dev_ck():
-        # On dev1 / dev2 we run as users specifying the user / group id as
-        # outside.
-        res = False
+        ret = True
     elif hserver.is_mac():
-        res = False
-    elif hserver.is_cmamp_prod():
-        res = False
+        ret = False
     else:
         _raise_invalid_host()
-    return res
+    return ret
 
 
 def get_docker_user() -> str:

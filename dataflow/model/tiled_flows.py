@@ -146,7 +146,7 @@ def evaluate_weighted_forecasts(
     asset_ids: Optional[List[int]] = None,
     annotate_forecasts_kwargs: Optional[dict] = None,
     target_freq_str: Optional[str] = None,
-    gaussian_rank_before_mixing: bool = False,
+    preapply_gaussian_ranking: bool = False,
 ) -> pd.DataFrame:
     """
     Mix forecasts with weights and evaluate the portfolio.
@@ -180,6 +180,9 @@ def evaluate_weighted_forecasts(
         `ForecastEvaluatorFromPrice.annotate_forecasts()`
     :param target_freq_str: if not `None`, resample all forecasts to target
         frequency
+    :param preapply_gaussian_ranking: whether to preprocess predictions with
+        Gaussian ranking. May be useful if predictions are on different
+        scales.
     :return: bar metrics dataframe
     """
     forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
@@ -249,7 +252,7 @@ def evaluate_weighted_forecasts(
                 val = val.resample(target_freq_str).ffill().reindex(idx)
                 val.index = idx
             # Cross-sectionally normalize.
-            if gaussian_rank_before_mixing:
+            if preapply_gaussian_ranking:
                 val = csigproc.gaussian_rank(val)
             # TODO(Paul): Enable should we set `scale_factor` above.
             # if target_freq_str is not None:
@@ -276,6 +279,80 @@ def evaluate_weighted_forecasts(
         bar_metrics.append(bar_metrics_df)
     bar_metrics = pd.concat(bar_metrics)
     return bar_metrics
+
+
+def compute_forecast_correlations(
+    simulations: pd.DataFrame,
+    start_date: datetime.date,
+    end_date: datetime.date,
+    asset_id_col: str,
+    *,
+    asset_ids: Optional[List[int]] = None,
+    target_freq_str: Optional[str] = None,
+    preapply_gaussian_ranking: bool = False,
+) -> List[pd.DataFrame]:
+    """
+    Compute per-asset correlations between forecasts and summarize.
+
+    :param simulations: df indexed by backtest id; columns are "dir_name" and
+        "prediction_col"
+    :param start_date: start date for tile loading
+    :param end_date: end date for tile loading
+    :param asset_id_col: name of column with asset ids in tiles
+    :param asset_ids: if `None`, select all available
+    :param target_freq_str: if not `None`, resample all forecasts to target
+        frequency
+    :param preapply_gaussian_ranking: whether to preprocess predictions with
+        Gaussian ranking before calculating correlations.
+    :return: list of correlation dataframes
+    """
+    pred_dict_iter = yield_processed_parquet_tile_dict(
+        simulations, start_date, end_date, asset_id_col, asset_ids=asset_ids
+    )
+    hdbg.dassert(not simulations.index.has_duplicates)
+    if target_freq_str is not None:
+        hdbg.dassert_isinstance(target_freq_str, str)
+    # Compute correlations across all simulations for each dictionary of
+    #  predictions in the iterator.
+    correlation_dfs = []
+    stats_dfs = []
+    for dfs in pred_dict_iter:
+        correlation_df = pd.DataFrame(
+            index=dfs.keys(),
+            columns=dfs.keys(),
+        )
+        stats_df = pd.DataFrame(
+            index=dfs.keys(),
+            columns=[
+                "mean_of_means",
+                "mean_of_std",
+                "mean_of_skew",
+                "mean_of_kurt",
+            ],
+        )
+        for key1, value1 in dfs.items():
+            if preapply_gaussian_ranking:
+                value1 = csigproc.gaussian_rank(value1)
+            for key2, value2 in dfs.items():
+                if preapply_gaussian_ranking:
+                    value2 = csigproc.gaussian_rank(value2)
+                # TODO(Paul): perform a Fisher transformation first, average,
+                #  then undo.
+                corr = value1.corrwith(value2).mean()
+                correlation_df.loc[key1, key2] = corr
+            mean_of_means = value1.mean(axis=0).mean()
+            mean_of_std = value1.std(axis=0).mean()
+            mean_of_skew = value1.skew(axis=0).mean()
+            mean_of_kurt = value1.kurt(axis=0).mean()
+            stats_df.loc[key1] = (
+                mean_of_means,
+                mean_of_std,
+                mean_of_skew,
+                mean_of_kurt,
+            )
+        correlation_dfs.append(correlation_df)
+        stats_dfs.append(stats_df)
+    return correlation_dfs, stats_dfs
 
 
 def process_parquet_read_df(

@@ -387,7 +387,7 @@ async def execute_with_real_time_loop(
         hprint.log_frame(
             _LOG,
             "Real-time loop: "
-            + "num_it=%s / %s: wall_clock_time='%s' real_wall_clock_time='%s'",
+            + "num_it=%s: rt_time_out_in_secs=%s wall_clock_time='%s' real_wall_clock_time='%s'",
             num_it,
             rt_timeout_in_secs_or_time,
             wall_clock_time,
@@ -398,7 +398,8 @@ async def execute_with_real_time_loop(
         event = Event(num_it, wall_clock_time, real_wall_clock_time)
         _LOG.debug("event='%s'", str(event))
         # Execute workload.
-        _LOG.debug("await ...")
+        _LOG.debug("await for next bar (bar_duration_in_secs=%s wall_clock_time=%s) ...",
+                bar_duration_in_secs, get_wall_clock_time())
         # TODO(gp): Compensate for drift.
         result = await asyncio.gather(  # type: ignore[var-annotated]
             asyncio.sleep(bar_duration_in_secs),
