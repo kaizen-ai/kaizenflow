@@ -140,7 +140,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         Verify that orders are properly submitted via mocked exchange.
         """
-        # TODO(Nikola): Only one order is enough to test initial flow.
         # Prepare test data.
         order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
         asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
@@ -156,7 +155,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker._minimal_order_limits = {
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
-        # Mock `get_low_market_price` of CcxtBroker as exchange class is mocked globally
+        # Mock `get_low_market_price` of CcxtBroker as the exchange class is mocked globally
         # and `_exchange.fetch_ticker` can't be reached.
         get_low_market_price_mock.return_value = 2.0
         # Patch main external source.
@@ -168,8 +167,25 @@ class TestCcxtBroker1(hunitest.TestCase):
             receipt, order_df = asyncio.run(
                 broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
             )
+        # Check the count of calls.
+        self.assertEqual(create_order_mock.call_count, 1)
+        # Check the args.
+        actual_args = pprint.pformat(tuple(create_order_mock.call_args))
+        expected_args = r"""
+((),
+ {'amount': 15.0,
+  'params': {'client_oid': 0, 'portfolio_id': 'ccxt_portfolio_mock'},
+  'side': 'buy',
+  'symbol': 'ETH/USDT',
+  'type': 'market'})
+"""
+        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
         self.assertEqual(receipt, "filename_0.txt")
         # Check the order Dataframe.
-        order_df_str = hpandas.convert_df_to_json_string(order_df)
-        self.check_string(order_df_str)
+        act = hpandas.df_to_str(order_df)
+        exp = r"""
+   order_id               creation_timestamp    asset_id       type_                  start_timestamp                    end_timestamp  curr_num_shares  diff_num_shares                tz
+0         0 2022-08-05 10:36:44.976104-04:00  1464553467  price@twap 2022-08-05 10:36:44.976104-04:00 2022-08-05 10:38:44.976104-04:00              0.0             15.0  America/New_York
+"""
+        self.assert_equal(act, exp, fuzzy_match=True)
