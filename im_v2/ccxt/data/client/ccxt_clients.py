@@ -163,9 +163,9 @@ class CcxtCddCsvParquetByAssetClient(
         root_dir: str,
         # TODO(gp): -> file_extension
         extension: str,
+        data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
-        data_snapshot: Optional[str] = None,
     ) -> None:
         """
         Load `CCXT` data from local or S3 filesystem.
@@ -175,8 +175,7 @@ class CcxtCddCsvParquetByAssetClient(
             an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
         :param extension: file extension, e.g., `csv.gz` or `parquet`
         :param aws_profile: AWS profile, e.g., `am`
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         """
         super().__init__(vendor, universe_version, resample_1min)
         self._root_dir = root_dir
@@ -187,9 +186,9 @@ class CcxtCddCsvParquetByAssetClient(
             extension,
         )
         self._extension = extension
-        if data_snapshot is None:
-            data_snapshot = icdds.get_latest_data_snapshot(root_dir, aws_profile)
-        icdds.dassert_is_valid_data_snapshot(data_snapshot)
+        data_snapshot = icdds.get_data_snapshot(
+            root_dir, data_snapshot, aws_profile
+        )
         self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
@@ -284,8 +283,7 @@ class CcxtCddCsvParquetByAssetClient(
 
         E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`.
 
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         :param exchange_id: exchange id, e.g. "binance"
         :param currency_pair: currency pair `<currency1>_<currency2>`,
             e.g. "BTC_USDT"
@@ -324,8 +322,8 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         partition_mode: str,
         dataset: str,
         contract_type: str,
+        data_snapshot: str,
         *,
-        data_snapshot: Optional[str] = None,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -342,6 +340,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
             partition_mode,
             dataset,
             contract_type,
-            data_snapshot=data_snapshot,
+            data_snapshot,
             aws_profile=aws_profile,
         )
