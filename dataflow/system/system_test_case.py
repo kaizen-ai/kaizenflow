@@ -22,6 +22,9 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
+import im_v2.ccxt.data.client as icdcl
+import im_v2.common.universe as ivcu
+import market_data as mdata
 import oms as oms
 import oms.test.oms_db_helper as otodh
 
@@ -110,6 +113,56 @@ def run_Time_ForecastSystem(
         # Extract the result bundles from the `DagRunner`.
         result_bundles = results[0]
     return result_bundles
+
+
+# TODO(Grisha): @Dan Deprecate `self` param after `get_file_path()` is generalized.
+# TODO(Grisha): @Dan Should we expose `period` as a param?
+def test_save_data(
+    self: Any,
+    full_symbols: Optional[List[ivcu.FullSymbol]],
+    im_client_params: Any,
+    wall_clock_time: pd.Timestamp,
+) -> None:
+    # pylint: disable=line-too-long
+    """
+    Dump data from a MarketData so that it can be used as ReplayedMarketData.
+
+    :param full_symbols: full symbols to load data for
+    :param im_client_params: params to initialize `ImClient`
+    :param wall_clock_time: wall clock time
+
+    ```
+      index                    end_ts   asset_id       full_symbol      open       high        low     close   volume              knowledge_timestamp                  start_ts
+    0     0 2021-12-19 19:00:00-05:00 1182743717 binance::BTC_BUSD 46681.500 46687.4000 46620.0000 46678.400   47.621 2022-07-09 16:21:44.328375+00:00 2021-12-19 18:59:00-05:00
+    1     1 2021-12-19 19:00:00-05:00 1464553467 binance::ETH_USDT  3922.510  3927.4500  3920.1900  3927.060 1473.723 2022-06-24 11:10:10.287766+00:00 2021-12-19 18:59:00-05:00
+    2     2 2021-12-19 19:00:00-05:00 1467591036 binance::BTC_USDT 46668.650 46677.2200 46575.0000 46670.340  620.659 2022-07-09 12:07:51.240219+00:00 2021-12-19 18:59:00-05:00
+    ```
+    """
+    # pylint: disable=line-too-long
+    im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
+        **im_client_params
+    )
+    # Get all full symbols in the universe if `None` is passed.
+    if full_symbols is None:
+        full_symbols = im_client.get_universe()
+    # Convert full symbols to asset ids.
+    asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
+    # We dump data from an historical market data and then we can replay the
+    # data with a ReplayedMarket data.
+    columns = None
+    columns_remap = None
+    market_data_client = mdata.get_HistoricalImClientMarketData_example1(
+        im_client,
+        asset_ids,
+        columns,
+        columns_remap,
+        wall_clock_time=wall_clock_time,
+    )
+    # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`].
+    file_path = self.get_file_path()
+    period = pd.Timedelta("15D")
+    mdata.save_market_data(market_data_client, file_path, period)
+    _LOG.warning("Updated file '%s'", file_path)
 
 
 # #############################################################################
