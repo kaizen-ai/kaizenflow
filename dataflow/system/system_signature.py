@@ -51,7 +51,7 @@ def get_signature(
     return res
 
 
-def _get_signature_from_result_bundle(
+def get_signature_from_result_bundle(
     system: dtfsyssyst.System,
     result_bundles: List[dtfcore.ResultBundle],
     add_system_config: bool,
