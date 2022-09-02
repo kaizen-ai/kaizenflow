@@ -119,23 +119,14 @@ _VALID_CLOBBER_MODES = (
 _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 
 
+# #############################################################################
+# _OrderedDictType
+# #############################################################################
+
+
 # TODO(gp): It seems that one can't derive from a typed data structure.
 # _OrderedDictType = collections.OrderedDict[ScalarKey, Any]
 _OrderedDictType = collections.OrderedDict
-
-
-class OverwriteError(RuntimeError):
-    """
-    Trying to overwrite a value.
-    """
-    pass
-
-
-class ReadOnlyConfigError(RuntimeError):
-    """
-    Trying to write on a Config marked read-only.
-    """
-    pass
 
 
 class _OrderedConfig(_OrderedDictType):
@@ -225,6 +216,25 @@ class _OrderedConfig(_OrderedDictType):
                 txt.append(space + str(value))
         txt = "\n".join(txt)
         return txt
+
+
+# #############################################################################
+# Config
+# #############################################################################
+
+
+class OverwriteError(RuntimeError):
+    """
+    Trying to overwrite a value.
+    """
+    pass
+
+
+class ReadOnlyConfigError(RuntimeError):
+    """
+    Trying to write on a Config marked read-only.
+    """
+    pass
 
 
 class Config:
@@ -369,7 +379,11 @@ class Config:
     # Get / set.
     # ////////////////////////////////////////////////////////////////////////////
 
-    # `__setitem__` and `__getitem__` accept a compound key.
+    # `__setitem__` and `__getitem__`
+    #   - accept a compound key
+    #   - invoke the internal method `_set_item`, `_get_item` to the actual work
+    #     and handle exceptions based on `report_mode`
+
     def __setitem__(
         self,
         key: CompoundKey,
@@ -401,7 +415,7 @@ class Config:
 
         :param mark_key_as_read: control whether we mark the key as read by the
             client. It is True since clients use the `config[...]` notation
-        :raises KeyError: if the (nested) key is not found in the `Config`
+        :raises KeyError: if the compound key is not found in the `Config`
         """
         _LOG.debug(hprint.to_str("key report_mode self"))
         report_mode = self._resolve_report_mode(report_mode)
@@ -514,22 +528,7 @@ class Config:
         hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
         self._report_mode = report_mode
 
-    # TODO(gp): Add also iteritems()
-    def keys(self) -> List[str]:
-        return self._config.keys()
-
-    def pop(self, key: str) -> Any:
-        """
-        Equivalent to `dict.pop()`.
-        """
-        return self._config.pop(key)
-
-    def copy(self) -> "Config":
-        """
-        Create a deep copy of the Config object.
-        """
-        return copy.deepcopy(self)
-
+    # TODO(gp): Consider turning this into a property.
     def mark_read_only(self, value: bool = True) -> None:
         """
         Force a Config object to become read-only.
@@ -625,6 +624,25 @@ class Config:
         return dict_
 
     # /////////////////////////////////////////////////////////////////////////////
+    # Misc.
+    # /////////////////////////////////////////////////////////////////////////////
+
+    # TODO(gp): Add also iteritems()
+    def keys(self) -> List[str]:
+        return self._config.keys()
+
+    def pop(self, key: str) -> Any:
+        """
+        Equivalent to `dict.pop()`.
+        """
+        return self._config.pop(key)
+
+    def copy(self) -> "Config":
+        """
+        Create a deep copy of the Config object.
+        """
+        return copy.deepcopy(self)
+
 
     def is_serializable(self) -> bool:
         """
@@ -661,7 +679,6 @@ class Config:
             _LOG.error(msg)
             # TODO(gp): This should be KeyError
             raise ValueError(msg)
-
 
     # /////////////////////////////////////////////////////////////////////////////
     # Private methods.
@@ -828,7 +845,7 @@ class Config:
         that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
-        # Check if the key is nested.
+        # Check if the key is compound.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:

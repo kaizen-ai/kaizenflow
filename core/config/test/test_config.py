@@ -1306,7 +1306,7 @@ class TestFromEnvVar1(hunitest.TestCase):
 class Test_make_read_only1(hunitest.TestCase):
     def test_set1(self) -> None:
         """
-        Show that setting a value that already exists on a read-only config raises.
+        Setting a value that already exists on a read-only config raises.
         """
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
@@ -1337,7 +1337,7 @@ class Test_make_read_only1(hunitest.TestCase):
 
     def test_set2(self) -> None:
         """
-        Show that setting a value that doesn't exists on a read-only config raises.
+        Setting a value that doesn't exists on a read-only config raises.
         """
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
@@ -1363,7 +1363,7 @@ class Test_make_read_only1(hunitest.TestCase):
 
     def test_set3(self) -> None:
         """
-        Show that updating a read-only config raises.
+        Updating a read-only config raises.
         """
         config1 = _get_nested_config3()
         config2 = _get_nested_config4()
