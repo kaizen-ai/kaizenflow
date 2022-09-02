@@ -17,7 +17,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
-import im_v2.common.secrets as imvcs
+import oms.secrets as omssec
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
@@ -42,7 +42,7 @@ class CcxtBroker(ombroker.Broker):
         contract_type: str,
         # TODO(gp): @all *args should go first according to our convention of
         #  appending params to the parent class constructor.
-        secret_id: imvcs.SecretIdentifier,
+        secret_identifier: omssec.SecretIdentifier,
         *args: Any,
         **kwargs: Any,
     ) -> None:
@@ -60,7 +60,7 @@ class CcxtBroker(ombroker.Broker):
             - "sandbox" launches the broker in sandbox environment (not supported for
               every exchange)
         :param contract_type: "spot" or "futures"
-        :param secret_id: a SecretIdentifier holding a full name of secret to look for in
+        :param secret_identifier: a SecretIdentifier holding a full name of secret to look for in
          AWS SecretsManager
         """
         super().__init__(*args, **kwargs)
@@ -71,7 +71,7 @@ class CcxtBroker(ombroker.Broker):
         self._stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
-        self._secret_id = secret_id
+        self._secret_identifier = secret_identifier
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -360,17 +360,16 @@ class CcxtBroker(ombroker.Broker):
         """
         asset_limits = self._minimal_order_limits[order.asset_id]
         required_amount = asset_limits["min_amount"]
-        # Note: 10 is the minimal total cost of an order in testnet.
-        min_cost = 10
-        # Get the high price for the asset.
-        high_price = self._get_low_market_price(order.asset_id)
+        min_cost = asset_limits["min_cost"]
+        # Get the low price for the asset.
+        low_price = self._get_low_market_price(order.asset_id)
         # Verify that the estimated total cost is above 10.
-        if high_price * required_amount <= min_cost:
+        if low_price * required_amount <= min_cost:
             # Set the amount of asset to above min cost.
             #  Note: the multiplication by 2 is done to give some
             #  buffer so the order does not go below
             #  the minimal amount of asset.
-            required_amount = (min_cost / high_price) * 2
+            required_amount = (min_cost / low_price) * 2
         if order.diff_num_shares < 0:
             order.diff_num_shares = -required_amount
         else:
@@ -402,15 +401,15 @@ class CcxtBroker(ombroker.Broker):
             order.diff_num_shares = min_amount
         # Check if the order is not below minimal cost.
         #
-        # Estimate the total cost of the order based on the high market price.
-        #  Note: high price is chosen to account for possible price spikes.
-        high_price = self._get_low_market_price(order.asset_id)
-        total_cost = high_price * abs(order.diff_num_shares)
+        # Estimate the total cost of the order based on the low market price.
+        #  Note: low price is chosen to account for possible price spikes.
+        low_price = self._get_low_market_price(order.asset_id)
+        total_cost = low_price * abs(order.diff_num_shares)
         # Verify that the order total cost is not below minimum.
         min_cost = asset_limits["min_cost"]
         if total_cost <= min_cost:
             # Set amount based on minimal notional price.
-            required_amount = round(min_cost * 3 / high_price, 2)
+            required_amount = round(min_cost * 3 / low_price, 2)
             if order.diff_num_shares < 0:
                 required_amount = -required_amount
             _LOG.warning(
@@ -426,7 +425,7 @@ class CcxtBroker(ombroker.Broker):
 
     def _get_low_market_price(self, asset_id: int) -> float:
         """
-        Load the high price for the given ticker.
+        Load the low price for the given ticker.
         """
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         last_price = self._exchange.fetch_ticker(symbol)["low"]
@@ -533,8 +532,10 @@ class CcxtBroker(ombroker.Broker):
             # Get the minimal amount of asset in the order.
             amount_limit = limits["amount"]["min"]
             minimal_order_limits[asset_id]["min_amount"] = amount_limit
-            # Get the minimal cost of asset in the order.
-            notional_limit = limits["cost"]["min"]
+            # Set the minimal cost of asset in the order.
+            #  Note: the notional limit can differ between symbols
+            #  and subject to fluctuations, so it is set manually to 10.
+            notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
         return minimal_order_limits
 
@@ -676,16 +677,6 @@ class CcxtBroker(ombroker.Broker):
                 lambda s: s.startswith(self._exchange_id), full_symbol_universe
             )
         )
-        # TODO(Grisha): should we exclude them from the trade universe?
-        # Cannot fetch the limit from the testnet `limits = exchange_markets[symbol]["limits"]`.
-        if "binance::BAKE_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::BAKE_USDT")
-        if "binance::CRV_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::CRV_USDT")
-        if "binance::CTK_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::CTK_USDT")
-        if "binance::DYDX_USDT" in full_symbol_universe:
-            full_symbol_universe.remove("binance::DYDX_USDT")
         # Build mapping.
         asset_id_to_full_symbol_mapping = (
             imvcuunut.build_numerical_to_string_id_mapping(full_symbol_universe)
@@ -711,7 +702,7 @@ class CcxtBroker(ombroker.Broker):
         """
         Log into the exchange and return the `ccxt.Exchange` object.
         """
-        secrets_id = str(self._secret_id)
+        secrets_id = str(self._secret_identifier)
         # Select credentials for provided exchange.
         exchange_params = hsecret.get_secret(secrets_id)
         # Enable rate limit.
@@ -740,18 +731,16 @@ class CcxtBroker(ombroker.Broker):
 
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
+    universe_version: str, 
     strategy_id: str,
-    secret_id: imvcs.SecretIdentifier
+    secret_identifier: omssec.SecretIdentifier,
 ) -> CcxtBroker:
     """
     Build an `CcxtBroker` for production.
     """
-    exchange_id = secret_id.exchange_id
-    # TODO(Grisha): centralize the universe version, i.e. pass once (e.g., via cmd line)
-    # and then propagate everywhere via `system.config`.
-    universe_version = "v7"
-    stage = secret_id.stage
-    account_type = secret_id.account_type
+    exchange_id = secret_identifier.exchange_id
+    stage = secret_identifier.stage
+    account_type = secret_identifier.account_type
     contract_type = "futures"
     portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
@@ -761,7 +750,7 @@ def get_CcxtBroker_prod_instance1(
         account_type,
         portfolio_id,
         contract_type,
-        secret_id,
+        secret_identifier,
         strategy_id=strategy_id,
         market_data=market_data,
     )
