@@ -27,6 +27,31 @@ import oms
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): -> system_builders.py
+
+# There are different types of functions:
+# 1) `apply_..._config(system, ...)`
+#    - Use parameters from `system` and other inputs to populate the System config
+#      with values corresponding to a certain System object
+# 2) `build_..._from_System(system)`
+#    - Build objects using parameters from System config
+
+# TODO(gp): It's not clear if the `apply_...` functions should return a System or
+#  just implicitly update System in place.
+#  - Explicit approach of assigning System as return value
+#    - Cons:
+#      - adds more code `system = apply_..._config(system)`
+#      - creates more code variability since we can assign the return value or not
+#      - creates ambiguity since it works even if one doesn't assign it
+#  - Implicit approach
+#    - Pros:
+#      - allows less code variation since the code is always
+#        `apply_..._config(system)`
+#      - requires less code
+#    - Cons
+#      - relies on a side effect
+#  It seems that the implicit approach is the best one
+#
 
 # TODO(gp): -> system_builders.py
 
@@ -168,7 +193,7 @@ def apply_history_lookback(
     return system
 
 
-# TODO(gp): -> build_EventLoop_MarketData_from_df, get_ReplayedMarketData_from_df
+# TODO(gp): -> get_ReplayedMarketData_from_df.
 def get_EventLoop_MarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:

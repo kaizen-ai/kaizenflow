@@ -4,10 +4,8 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
-import datetime
 import logging
-import os
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
@@ -25,6 +23,7 @@ import oms
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): @all -> Cx_system_builders.py
+
 
 # #############################################################################
 # Market data instances
@@ -54,10 +53,7 @@ def get_Cx_HistoricalMarketData_example1(
 
 
 def get_Cx_RealTimeMarketData_prod_instance1(
-    #system: dtfsys.System,
-    # TODO(gp): @grisha we should pass asset_ids and not system since we need
-    # only that.
-    asset_ids,
+    asset_ids: List[int],
 ) -> mdata.MarketData:
     """
     Build a MarketData backed with RealTimeImClient.
@@ -72,13 +68,11 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     # Login.
     db_connection = hsql.get_connection(*connection_params)
     # Get the real-time `ImClient`.
-    table_name = "ccxt_ohlcv"
-    #table_name = "ccxt_ohlcv_futures"
+    table_name = "ccxt_ohlcv_futures"
     im_client = imvcdccccl.CcxtSqlRealTimeImClient(
         resample_1min, db_connection, table_name
     )
     # Get the real-time `MarketData`.
-    #asset_ids = system.config["market_data_config", "asset_ids"]
     market_data, _ = mdata.get_RealTimeImClientMarketData_example2(
         im_client, asset_ids
     )
@@ -319,9 +313,10 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
         system.config["cf_config", "strategy"],
         market_data,
+        system.config["market_data_config", "universe_version"],
         system.config["market_data_config", "asset_ids"],
         pricing_method,
-        system.config["secret_identifier_config"]
+        system.config["secret_identifier_config"],
     )
     return portfolio
 
