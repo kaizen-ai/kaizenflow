@@ -407,7 +407,7 @@ async def execute_with_real_time_loop(
             # used as real, simulated, replayed time.
             workload(wall_clock_time),
         )
-        _LOG.debug("await done")
+        _LOG.debug("await done (wall_clock_time=%s)", get_wall_clock_time())
         _, workload_result = result
         yield event, workload_result
         # Exit, if needed.
