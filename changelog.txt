@@ -1,3 +1,8 @@
+# cmamp-1.1.1
+- 2022-09-02
+- Updates to production DAGs (All DAGs now use /amp as submodule)
+- Add daily data reconciliation DAG
+
 # cmamp-1.1.0
 - 2022-04-18
 - Generate `docker-compose` programmatically instead of composing different files
