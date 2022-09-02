@@ -790,16 +790,17 @@ class Config:
         """
         txt = []
         for key, (was_read, val) in self._config.items():
-            # Process key.
+            # 1) Process key.
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
-                key_as_str = f"{key} ({was_read})"
+                # E.g., nrows (was_read=False): 10000 <class 'int'>
+                key_as_str = f"{key} (was_read={was_read})"
             else:
                 raise ValueError(f"Invalid mode='{mode}")
-            # Process value.
+            # 2) Process value.
             if isinstance(val, Config):
-                # Recurse.
+                # Found a Config thus recurse on it.
                 txt_tmp = str(val)
                 val_as_str = "\n" + hprint.indent(txt_tmp)
             else:
@@ -824,9 +825,12 @@ class Config:
                         # ```
                         val_as_str = "\n" + hprint.indent(val_as_str)
             if mode == "verbose":
-                val_as_str += " %s " % str(type(val))
-            # Print.
+                # Add also the type.
+                # E.g., nrows (was_read=False): 10000 <class 'int'>
+                val_as_str += " %s" % str(type(val))
+            # 3) Print.
             txt.append(f"{key_as_str}: {val_as_str}")
+        # Assemble the result.
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
         #   `<function _filter_relevance at 0x7fe4e35b1a70>`.

@@ -2,7 +2,7 @@ import collections
 import datetime
 import logging
 import pprint
-from typing import Any, Dict
+from typing import Any, Dict, List, Optional, Tuple
 
 import pytest
 
@@ -24,8 +24,6 @@ def _check_config(self: Any, config: cconfig.Config, exp: str) -> None:
     _LOG.debug("config=\n%s", config)
     self.assert_equal(str(config), exp, fuzzy_match=True)
 
-
-# #############################################################################
 
 
 def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
@@ -584,60 +582,6 @@ class Test_nested_config_set1(hunitest.TestCase):
             nrows: None
             columns: None"""
         self.assert_equal(str(config), hprint.dedent(exp))
-
-
-class Test_nested_config_set2(hunitest.TestCase):
-    def step_through(self, stmt: str, globals: Any) -> None:
-        _LOG.debug("\n" + hprint.frame(stmt))
-        exec(stmt, globals)
-        _LOG.debug("config=\n%s", repr(config))
-
-    def test1(self) -> None:
-        """
-        Build a nested config, that looks like:
-            ```
-            nrows: 10000
-            read_data:
-              file_name: foo_bar.txt
-              nrows: 999
-            single_val: hello
-            zscore:
-              style: gaz
-            ```
-        """
-        stmt = "config = cconfig.Config()"
-        self.step_through(stmt, globals())
-        # _LOG.debug("\n" + hprint.frame(txt))
-        # exec(txt, globals())
-        # _LOG.debug("config=\n%s", repr(config))
-        #
-        stmt = 'config["nrows"] = 10000'
-        self.step_through(stmt, globals())
-        #
-        stmt = 'config.add_subconfig("read_data")'
-        self.step_through(stmt, globals())
-        # config["read_data"]["file_name"] = "foo_bar.txt"
-        # config["read_data"]["nrows"] = 999
-        # #
-        # config["single_val"] = "hello"
-        # #
-        # config.add_subconfig("zscore")
-        # config["zscore"]["style"] = "gaz"
-        # config["zscore"]["com"] = 28
-        # #
-        # _LOG.debug("config=\n%s", config)
-        # exp = r"""
-        # nrows: 10000
-        # read_data:
-        #   file_name: foo_bar.txt
-        #   nrows: 999
-        # single_val: hello
-        # zscore:
-        #   style: gaz
-        #   com: 28
-        # """
-        # self_.assert_equal(str(config), exp, fuzzy_match=True)
-        # return config
 
 
 # #############################################################################
@@ -1821,12 +1765,12 @@ class Test_from_dict1(hunitest.TestCase):
         self.assertTrue(check)
 
 
-# # #############################################################################
-# # Test_mark_key_as_read
-# # #############################################################################
-#
-#
-# class Test_mark_key_as_read(hunitest.TestCase):
+# #############################################################################
+# Test_mark_key_as_read1
+# #############################################################################
+
+
+# class Test_mark_key_as_read1(hunitest.TestCase):
 #     def test1(self) -> None:
 #         """
 #         - `__setitem__`
@@ -1834,9 +1778,7 @@ class Test_from_dict1(hunitest.TestCase):
 #         - string keys
 #         """
 #         config = cconconf.Config()
-#         _LOG.debug('## config.add_subconfig("read_data")')
 #         config.add_subconfig("read_data")
-#         _LOG.debug('## config["read_data"]["file_name"] = "test_name.txt"')
 #         config["read_data"]["file_name"] = "test_name.txt"
 #         is_key_read = config._is_key_read
 #         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
@@ -1855,5 +1797,132 @@ class Test_from_dict1(hunitest.TestCase):
 #         expected = "OrderedDict([(('read_data', 'file_name'), False)])"
 #         self.assert_equal(str(is_key_read), expected, fuzzy_match=False)
 
+
+# #############################################################################
+# _Config_step_through_TestCase1
+# #############################################################################
+
+
+class _Config_step_through_TestCase1(hunitest.TestCase):
+    """
+    A class to apply transformations to a Config one-by-one checking its result.
+    """
+
+    def step_through(self, stmt: str, exp: Optional[str], mode: str, globals: Dict) -> str:
+        """
+        - Execute statement stmt
+        - Print the resulting config
+        - Check that config is what's expected, if exp is not `None`
+        """
+        _LOG.debug("\n" + hprint.frame(stmt))
+        exec(stmt, globals)
+        #
+        if mode == "str":
+            act = str(config)
+        elif mode == "repr":
+            act = repr(config)
+        else:
+            raise ValueError(f"Invalid mode={mode}")
+        _LOG.debug("config=\n%s", act)
+        if exp is not None:
+            self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+        # Package the output.
+        act = hprint.frame(stmt) + "\n" + act
+        return act
+
+    def run_steps_assert_string(self, workload: List[Tuple[str, Optional[str]]], mode: str, globals: Dict) -> None:
+        for stmt, exp in workload:
+            self.step_through(stmt, exp, mode, globals)
+
+    def run_steps_check_string(self, workload: List[str], mode: str, globals: Dict) -> None:
+        exp = None
+        res = []
+        for stmt in workload:
+            res_tmp = self.step_through(stmt, exp, mode, globals)
+            res.append(res_tmp)
+        txt = "\n".join(res)
+        self.check_string(txt, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_nested_config_set_step_through1
+# #############################################################################
+
+
+class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
+    """
+    Test that _Config_step_through_TestCase1 works properly.
+    """
+
+    def test_assert_string_str1(self) -> None:
+        workload = []
+        #
+        stmt = "config = cconfig.Config()"
+        exp = ""
+        workload.append((stmt, exp))
+        #
+        stmt = 'config["nrows"] = 10000'
+        exp = r"""
+        nrows: 10000
+        """
+        workload.append((stmt, exp))
+        #
+        stmt = 'config.add_subconfig("read_data")'
+        exp = r"""
+        nrows: 10000
+        read_data:
+        """
+        workload.append((stmt, exp))
+        #
+        mode = "str"
+        self.run_steps_assert_string(workload, mode, globals())
+
+    def test_assert_string_repr1(self) -> None:
+        workload = []
+        #
+        stmt = "config = cconfig.Config()"
+        exp = ""
+        workload.append((stmt, exp))
+        #
+        stmt = 'config["nrows"] = 10000'
+        exp = """
+        nrows (was_read=False): 10000 <class 'int'>
+        """
+        workload.append((stmt, exp))
+        #
+        stmt = 'config.add_subconfig("read_data")'
+        exp = """
+        nrows (was_read=False): 10000 <class 'int'>
+        read_data (was_read=False):
+          <class 'core.config.config_.Config'>
+        """
+        workload.append((stmt, exp))
+        #
+        mode = "repr"
+        self.run_steps_assert_string(workload, mode, globals())
+
+    # ////////////////////////////////////////////////////////////////////////////
+
+    def _test_check_string1(self, mode: str) -> None:
+        workload = []
+        #
+        stmt = "config = cconfig.Config()"
+        workload.append(stmt)
+        #
+        stmt = 'config["nrows"] = 10000'
+        workload.append(stmt)
+        #
+        stmt = 'config.add_subconfig("read_data")'
+        workload.append(stmt)
+        #
+        self.run_steps_check_string(workload, mode, globals())
+
+    def test_check_string_str1(self) -> None:
+        mode = "str"
+        self._test_check_string1(mode)
+
+    def test_check_string_repr1(self) -> None:
+        mode = "repr"
+        self._test_check_string1(mode)
 
 # TODO(gp): Unit tests all the functions.
