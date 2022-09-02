@@ -14,7 +14,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -38,7 +38,7 @@ _DATA_TYPES = ["ohlcv"]
 # Specify how long should the DAG be running for (in minutes).
 _RUN_FOR = 60
 # Specify how much in advance should the DAG be scheduled (in minutes).
-# We leave a couple minutes to account for delay in container setup 
+# We leave a couple minutes to account for delay in container setup
 # such that the download can start at a precise point in time.
 _DAG_STANDBY = 6
 _DAG_DESCRIPTION = f"Realtime {_DATA_TYPES} data download, contracts:" \
@@ -61,11 +61,11 @@ _TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -125,7 +125,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
     curr_bash_command[3] = curr_bash_command[3].format(table_name)
     curr_bash_command[4] = curr_bash_command[4].format(data_type)
     curr_bash_command[5] = curr_bash_command[5].format(contract)
-    
+
     # At this point we set up a logic for real time execution
     # Start date is postponed by _DAG_STANDBY minutes.
     start_date = datetime.datetime.now() + datetime.timedelta(minutes=_DAG_STANDBY)
