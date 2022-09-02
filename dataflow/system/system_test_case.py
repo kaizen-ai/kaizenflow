@@ -385,7 +385,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # 2) Check the run signature.
         actual = dtfsysysig._get_signature_from_result_bundle(
-            self, system, result_bundles, add_system_config, add_run_signature
+            system, result_bundles, add_system_config, add_run_signature
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -472,7 +472,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
         # Check the run signature.
         actual = dtfsysysig._get_signature_from_result_bundle(
-            self, system, result_bundles, add_system_config, add_run_signature
+            system, result_bundles, add_system_config, add_run_signature
         )
         return actual
 
@@ -693,7 +693,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
             "research_forecast_evaluator_from_prices"
         ].to_dict()
         signature, research_pnl = dtfsysysig.get_research_pnl_signature(
-            self, result_bundle, forecast_evaluator_from_prices_dict
+            result_bundle, forecast_evaluator_from_prices_dict
         )
         return signature, research_pnl
 
