@@ -182,7 +182,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
-        self.assertEqual(receipt, "filename_0.txt")
+        self.assertEqual(receipt, "filename_1.txt")
         # Check the order Dataframe.
         act = hpandas.df_to_str(order_df)
         exp = """
