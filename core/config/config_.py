@@ -122,6 +122,18 @@ _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 # #############################################################################
 
 
+class OverwriteError(RuntimeError):
+    """
+    Trying to overwrite a value.
+    """
+
+
+class ClobberError(RuntimeError):
+    """
+    Trying to overwrite a value that has already been read.
+    """
+
+
 # TODO(gp): It seems that one can't derive from a typed data structure.
 # _OrderedDictType = collections.OrderedDict[ScalarKey, Any]
 _OrderedDictType = collections.OrderedDict
@@ -140,7 +152,8 @@ class _OrderedConfig(_OrderedDictType):
     """
 
     def __setitem__(
-        self, key: ScalarKey, val: ValueTypeHint, update_mode: str
+        self, key: ScalarKey, val: ValueTypeHint, update_mode: str,
+            clobber_mode: str
     ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
@@ -149,7 +162,7 @@ class _OrderedConfig(_OrderedDictType):
            raise ValueError(
                f"For key='{key}' val='{val}' should be a Config and not a dict"
            )
-        #
+        # 1) Handle `update_mode`.
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
         if update_mode == "assert_on_overwrite":
@@ -187,31 +200,81 @@ class _OrderedConfig(_OrderedDictType):
                 assign_new_value = True
         else:
             raise RuntimeError(f"Invalid update_mode='{update_mode}'")
-        # Assign the value, if needed.
+        # 2) Handle `clobber_mode`.
+        if clobber_mode == "assert_on_write_after_read":
+            _LOG.debug("Checking clobber_mode...")
+            if is_key_present:
+                was_read, old_val = super().__getitem__(key)
+                is_been_changed = old_val != val
+                _LOG.debug(hprint.to_str("was_read old_val is_been_changed"))
+                if was_read and is_been_changed:
+                    # The value has already been read and we are trying to change
+                    # it, so we need to assert.
+                    msg = []
+                    msg.append(
+                        f"Trying to overwrite old value '{old_val}' with new value '{val}'"
+                        f" for key '{key}' with clobber_mode={clobber_mode}"
+                    )
+                    msg.append(f"self=\n" + hprint.indent(str(self)))
+                    msg = "\n".join(msg)
+                    raise ClobberError(msg)
+        # 3) Assign the value, if needed.
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
-            super().__setitem__(key, val)
+            if is_key_present:
+                was_read, _ = super().__getitem__(key)
+            else:
+                # The key was not present, so we just mark it no read yet.
+                was_read = False
+            super().__setitem__(key, (was_read, val))
 
-    def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
+    def __getitem__(self, key: ScalarKey, mark_as_read: bool = True) -> ValueTypeHint:
+        # Retrieve the value.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        return super().__getitem__(key)
+        _, val = super().__getitem__(key)
+        if mark_as_read:
+            # Update the metadata, accounting that this data was read.
+            was_read = True
+            super().__setitem__(key, (was_read, val))
+        return val
 
     def __str__(self) -> str:
-        ret = self._to_pretty_string(self)
+        mode = "only_values"
+        level = 0
+        ret = self._to_pretty_string(self, mode, level)
+        return ret
+
+    def __repr__(self) -> str:
+        #mode = "with_metadata"
+        mode = "only_values"
+        level = 0
+        ret = self._to_pretty_string(self, mode, level)
         return ret
 
     @staticmethod
-    def _to_pretty_string(dict_: Dict, level: int = 0) -> str:
+    def _to_pretty_string(dict_: Dict, mode: str, level: int) -> str:
+        assert 0
         indent = "  "
         txt = []
-        for key, value in dict_.items():
+        for key, (was_read, val) in dict_.items():
+            # Process the key.
             space = indent * level
-            txt.append(space + str(key) + ":")
-            if isinstance(value, dict):
-                txt.append(_OrderedConfig._to_pretty_string(value, level + 1))
+            if mode == "only_values":
+                txt_tmp = str(key)
+            elif mode == "with_metadata":
+                txt_tmp = f"{key} ({was_read})"
+            else:
+                raise ValueError(f"Invalid mode='{mode}")
+            txt_tmp = space + txt_tmp + ":"
+            txt.append(txt_tmp)
+            # Process the value.
+            if isinstance(val, dict):
+                txt_tmp = _OrderedConfig._to_pretty_string(val, mode, level + 1)
+                txt.append(txt_tmp)
             else:
                 space = indent * (level + 1)
-                txt.append(space + str(value))
+                txt_tmp = space + str(val)
+                txt.append(txt_tmp)
         txt = "\n".join(txt)
         return txt
 
@@ -219,12 +282,6 @@ class _OrderedConfig(_OrderedDictType):
 # #############################################################################
 # Config
 # #############################################################################
-
-
-class OverwriteError(RuntimeError):
-    """
-    Trying to overwrite a value.
-    """
 
 
 class ReadOnlyConfigError(RuntimeError):
@@ -277,7 +334,7 @@ class Config:
         if array is not None:
             for k, v in array:
                 hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
-                self.__setitem__(k, v, update_mode=update_mode)
+                self.__setitem__(k, v, update_mode=update_mode, clobber_mode=clobber_mode)
 
     # ////////////////////////////////////////////////////////////////////////////
     # Dict-like methods.
@@ -323,35 +380,47 @@ class Config:
     # Printing
     # ////////////////////////////////////////////////////////////////////////////
 
-    def __str__(self) -> str:
+    def _to_string(self, mode: str) -> str:
         """
         Return a short string representation of this `Config`.
         """
         txt = []
-        for k, v in self._config.items():
-            if isinstance(v, Config):
-                txt_tmp = str(v)
-                txt.append("%s:\n%s" % (k, hprint.indent(txt_tmp)))
+        for key, (was_read, val) in self._config.items():
+            # Process key.
+            if mode == "only_values":
+                key_as_str = str(key)
+            elif mode == "with_metadata":
+                key_as_str = f"{key} ({was_read})"
             else:
-                if isinstance(v, (pd.DataFrame, pd.Series, pd.Index)):
-                    v_as_str = hpandas.df_to_str(v, print_shape_info=True)
-                    v_as_str = "\n" + hprint.indent(v_as_str)
+                raise ValueError(f"Invalid mode='{mode}")
+            # Process value.
+            if isinstance(val, Config):
+                # Recurse.
+                txt_tmp = str(val)
+                txt.append("%s:\n%s" % (key, hprint.indent(txt_tmp)))
+            else:
+                if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
+                    # Data structures that can be printed in a fancy way.
+                    val_as_str = hpandas.df_to_str(val, print_shape_info=True)
+                    val_as_str = "\n" + hprint.indent(val_as_str)
                 else:
-                    v_as_str = str(v)
-                    # Indent a string that spans multiple lines like:
-                    # ```
-                    # portfolio_object:
-                    #   # historical holdings=
-                    #   egid                        10365    -1
-                    #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
-                    #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
-                    #   ...
-                    #   # historical holdings marked to market=
-                    #   ...
-                    # ```
-                    if len(v_as_str.split("\n")) > 1:
-                        v_as_str = "\n" + hprint.indent(v_as_str)
-                txt.append("%s: %s" % (k, v_as_str))
+                    # Normal Python data structures.
+                    val_as_str = str(val)
+                    if len(val_as_str.split("\n")) > 1:
+                        # Indent a string that spans multiple lines like:
+                        # ```
+                        # portfolio_object:
+                        #   # historical holdings=
+                        #   egid                        10365    -1
+                        #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
+                        #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
+                        #   ...
+                        #   # historical holdings marked to market=
+                        #   ...
+                        # ```
+                        val_as_str = "\n" + hprint.indent(val_as_str)
+            # Print.
+            txt.append(f"{key_as_str}: {val_as_str}")
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
         #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
@@ -363,14 +432,16 @@ class Config:
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
 
+    def __str__(self) -> str:
+        mode = "only_values"
+        return self._to_string(mode)
+
     def __repr__(self) -> str:
         """
         Return an unambiguous representation of this `Config`
-
-        For now it's the same as `str()`. This is used by Jupyter
-        notebook when printing.
         """
-        return str(self)
+        mode = "with_metadata"
+        return self._to_string(mode)
 
     # ////////////////////////////////////////////////////////////////////////////
     # Get / set.
@@ -378,7 +449,7 @@ class Config:
 
     # `__setitem__` and `__getitem__`
     #   - accept a compound key
-    #   - invoke the internal method `_set_item`, `_get_item` to the actual work
+    #   - invoke the internal methods `_set_item`, `_get_item` to do the actual work
     #     and handle exceptions based on `report_mode`
 
     def __setitem__(
@@ -391,6 +462,7 @@ class Config:
         report_mode: Optional[str] = None,
     ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
+        clobber_mode = self._resolve_clobber_mode(clobber_mode)
         report_mode = self._resolve_report_mode(report_mode)
         try:
             self._set_item(key, val, update_mode, clobber_mode, report_mode)
@@ -418,8 +490,6 @@ class Config:
         report_mode = self._resolve_report_mode(report_mode)
         try:
             ret = self._get_item(key, level=0)
-            # if mark_key_as_read:
-            #     self._is_key_read[key] = True
         except Exception as e:
             # After the recursion is done, in case of error print information
             # about the offending key.
@@ -466,9 +536,7 @@ class Config:
         _LOG.debug(hprint.to_str("key"))
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config()
-        self.__setitem__(key, config)  # , mark_key_as_read=False)
-        # self._is_key_read[key] = False
-        # hdbg.dassert_eq(sorted(self._config.keys()), sorted(self._is_key_read.keys()))
+        self.__setitem__(key, config)
         return config
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -480,6 +548,7 @@ class Config:
         config: "Config",
         *,
         update_mode: Optional[str] = None,
+        clobber_mode: Optional[str] = None,
         report_mode: Optional[str] = None,
     ) -> None:
         """
@@ -496,7 +565,8 @@ class Config:
         flattened_config = config.flatten()
         for key, val in flattened_config.items():
             self.__setitem__(
-                key, val, update_mode=update_mode, report_mode=report_mode
+                key, val, update_mode=update_mode, clobber_mode=clobber_mode,
+                report_mode=report_mode
             )
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -608,7 +678,7 @@ class Config:
         flattened_config = collections.OrderedDict(iter_)
         return Config._get_config_from_flattened_dict(flattened_config)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, *, except_for_leaves: bool = False) -> Dict[ScalarKey, Any]:
         """
         Convert the Config to nested ordered dicts.
 
@@ -617,12 +687,14 @@ class Config:
         """
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        for k, v in self._config.items():
-            if isinstance(v, Config):
+        for key, (was_read, val) in self._config.items():
+            _ = was_read
+            recurse = (except_for_leaves and val) and isinstance(val, Config)
+            if recurse:
                 # If a value is a `Config` convert to dictionary recursively.
-                dict_[k] = v.to_dict()
+                dict_[key] = val.to_dict(except_for_leaves=except_for_leaves)
             else:
-                dict_[k] = v
+                dict_[key] = val
         return dict_
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -658,7 +730,7 @@ class Config:
         """
         Key leaves by tuple representing path to leaf.
         """
-        dict_ = self._to_dict_except_for_leaves()
+        dict_ = self.to_dict(except_for_leaves=True)
         iter_ = hdict.get_nested_dict_iterator(dict_)
         return collections.OrderedDict(iter_)
 
@@ -780,13 +852,6 @@ class Config:
         update_mode = self._resolve_update_mode(update_mode)
         clobber_mode = self._resolve_clobber_mode(clobber_mode)
         report_mode = self._resolve_report_mode(report_mode)
-        # # Handle clobber mode.
-        # if self._is_key_read[key]:
-        #     msg = f"Modifying key={key} with val={key} after was already read."
-        #     if clobber_mode == "assert_on_write_after_read":
-        #         raise RuntimeError(msg)
-        #     elif clobber_mode == "allow_write_after_read":
-        #         _LOG.warning()
         # If the key is compound, then recurse.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
@@ -820,9 +885,10 @@ class Config:
                     tail_key, val, update_mode, clobber_mode, report_mode
                 )
             return
-        # Base case: key is valid, config is a dict.
+        # Base case: write the config.
         self._dassert_base_case(key)
-        self._config.__setitem__(key, val, update_mode=update_mode)
+        self._config.__setitem__(key, val, update_mode=update_mode,
+                                 clobber_mode=clobber_mode)
 
     def _raise_exception(
         self, exception: Exception, key: CompoundKey, report_mode: str
@@ -932,17 +998,3 @@ class Config:
             key, ScalarKeyValidTypes, "Keys can only be string or int"
         )
         hdbg.dassert_isinstance(self._config, dict)
-
-    # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
-    def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
-        """
-        Convert as in `to_dict()` except for leaf values.
-        """
-        # pylint: disable=unsubscriptable-object
-        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        for k, v in self._config.items():
-            if v and isinstance(v, Config):
-                dict_[k] = v.to_dict()
-            else:
-                dict_[k] = v
-        return dict_
