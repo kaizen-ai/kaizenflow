@@ -144,12 +144,12 @@ class _OrderedConfig(_OrderedDictType):
     ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        # TODO(gp): Difference between amp and cmamp.
+        if isinstance(val, dict):
+           raise ValueError(
+               f"For key='{key}' val='{val}' should be a Config and not a dict"
+           )
         #
-        #        if isinstance(val, dict):
-        #            raise ValueError(
-        #                f"For key='{key}' val='{val}' should be a Config and not a dict"
-        #            )
-        #        #
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
         if update_mode == "assert_on_overwrite":
@@ -197,18 +197,18 @@ class _OrderedConfig(_OrderedDictType):
         return super().__getitem__(key)
 
     def __str__(self) -> str:
-        ret = self._pretty(self)
+        ret = self._to_pretty_string(self)
         return ret
 
     @staticmethod
-    def _pretty(dict_: Dict, level: int = 0) -> str:
+    def _to_pretty_string(dict_: Dict, level: int = 0) -> str:
         indent = "  "
         txt = []
         for key, value in dict_.items():
             space = indent * level
             txt.append(space + str(key) + ":")
             if isinstance(value, dict):
-                txt.append(_OrderedConfig._pretty(value, level + 1))
+                txt.append(_OrderedConfig._to_pretty_string(value, level + 1))
             else:
                 space = indent * (level + 1)
                 txt.append(space + str(value))
@@ -763,12 +763,6 @@ class Config:
             - `None` to use the value set in the constructor
         """
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
-        # TODO(gp): Move this to _OrderedConfig
-        # TODO(gp): Difference between amp and cmamp.
-        if isinstance(val, dict):
-            hdbg.dfatal(
-                f"For key='{key}' val='{val}' should be a Config and not a dict"
-            )
         # # Used to debug who is setting a certain key.
         # if False:
         #     _LOG.info("key.set=%s", str(key))
