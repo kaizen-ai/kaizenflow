@@ -40,8 +40,13 @@ def get_TalosHistoricalPqByTileClient_example1(
     universe_version = "small"
     root_dir = get_test_data_dir()
     partition_mode = "by_year_month"
+    data_snapshot = "latest"
     talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
-        universe_version, resample_1min, root_dir, partition_mode
+        universe_version,
+        resample_1min,
+        root_dir,
+        partition_mode,
+        data_snapshot,
     )
     return talos_file_client
 
@@ -57,11 +62,13 @@ def get_TalosHistoricalPqByTileClient_example2(
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
+    data_snapshot = "latest"
     talos_parquet_client = imvtdctacl.TalosHistoricalPqByTileClient(
         universe_version,
         resample_1min,
         root_dir,
         partition_mode,
+        data_snapshot,
         aws_profile="ck",
     )
     return talos_parquet_client
