@@ -994,26 +994,30 @@ class Test_nested_config_update2(hunitest.TestCase):
         config2 = cconfig.Config()
         config2["read_data", "file_name"] = "hello"
         config2["read_data2"] = "world"
+        config1.report_mode = "verbose_exception"
+        #config1.update(config2)
         # The first value exists so we should assert.
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(cconfig.OverwriteError) as cm:
             config1.update(config2)
-        # act = str(cm.exception)
-        # exp = """
-        # Trying to overwrite old value 'foo_bar.txt' with new value 'hello' for key '('read_data', 'file_name')' when update_mode=assert_on_overwrite
-        # self=
-        #   read_data:
-        #     file_name: foo_bar.txt
-        #     nrows: 999
-        #   single_val: hello
-        #   zscore:
-        #     style: gaz
-        #     com: 28
-        # config=
-        #   read_data:
-        #     file_name: hello
-        #   read_data2: world
-        # """
-        # self.assert_equal(act, exp, fuzzy_match=True)
+        act = str(cm.exception)
+        exp = r"""
+        exception=Trying to overwrite old value 'foo_bar.txt' with new value 'hello' for key 'file_name' when update_mode=assert_on_overwrite
+        self=
+          file_name:
+            foo_bar.txt
+          nrows:
+            999
+        key='('read_data', 'file_name')'
+        config=
+          read_data:
+            file_name: foo_bar.txt
+            nrows: 999
+          single_val: hello
+          zscore:
+            style: gaz
+            com: 28
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # /////////////////////////////////////////////////////////////////////////
 
@@ -1302,18 +1306,19 @@ class TestFromEnvVar1(hunitest.TestCase):
 class Test_make_read_only1(hunitest.TestCase):
     def test_set1(self) -> None:
         """
-        Show that setting a value on a read-only config raises.
+        Show that setting a value that already exists on a read-only config raises.
         """
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
-        # Assign the value.
+        config.update_mode = "overwrite"
+        # Assigning values is not a problem, since the config is not read only.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
         self.assertEqual(config["zscore", "style"], "gasoline")
         # Mark as read-only.
         config.mark_read_only()
         # Try to assign an existing key and check it raises an error.
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(cconfig.ReadOnlyConfigError) as cm:
             config["zscore", "style"] = "oil"
         act = str(cm.exception)
         exp = r"""
@@ -1329,10 +1334,17 @@ class Test_make_read_only1(hunitest.TestCase):
             com: 28
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-        # TODO(gp): Consider splitting in two test methods.
+
+    def test_set2(self) -> None:
+        """
+        Show that setting a value that doesn't exists on a read-only config raises.
+        """
+        config = _get_nested_config1(self)
+        _LOG.debug("config=\n%s", config)
+        # Mark as read-only.
+        config.mark_read_only()
         # Try to assign a new key and check it raises an error.
-        self.assertEqual(config["zscore", "style"], "gasoline")
-        with self.assertRaises(RuntimeError) as cm:
+        with self.assertRaises(cconfig.ReadOnlyConfigError) as cm:
             config["zscore2"] = "gasoline"
         act = str(cm.exception)
         exp = r"""
@@ -1344,12 +1356,12 @@ class Test_make_read_only1(hunitest.TestCase):
             nrows: 999
           single_val: hello
           zscore:
-            style: gasoline
+            style: gaz
             com: 28
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_set2(self) -> None:
+    def test_set3(self) -> None:
         """
         Show that updating a read-only config raises.
         """
@@ -1382,12 +1394,13 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_set3(self) -> None:
+    def test_set4(self) -> None:
         """
         Show that by setting `value=False` config can be updated.
         """
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
+        config.update_mode = "overwrite"
         # Assign the value.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"

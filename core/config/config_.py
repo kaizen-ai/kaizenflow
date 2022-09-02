@@ -125,6 +125,16 @@ _OrderedDictType = collections.OrderedDict
 
 
 class OverwriteError(RuntimeError):
+    """
+    Trying to overwrite a value.
+    """
+    pass
+
+
+class ReadOnlyConfigError(RuntimeError):
+    """
+    Trying to write on a Config marked read-only.
+    """
     pass
 
 
@@ -361,13 +371,13 @@ class Config:
 
     # `__setitem__` and `__getitem__` accept a compound key.
     def __setitem__(
-            self,
-            key: CompoundKey,
-            val: Any,
-            *,
-            update_mode: Optional[str] = None,
-            clobber_mode: Optional[str] = None,
-            report_mode: Optional[str] = None,
+        self,
+        key: CompoundKey,
+        val: Any,
+        *,
+        update_mode: Optional[str] = None,
+        clobber_mode: Optional[str] = None,
+        report_mode: Optional[str] = None,
     ) -> None:
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
         report_mode = self._resolve_report_mode(report_mode)
@@ -421,7 +431,6 @@ class Config:
 
         :param default_value: default value to return if key is not in `config`
         :param expected_type: expected type of `value`
-        :param report_mode: same as `__getitem__()`
         :return: config[key] if available, else `default_value`
         """
         _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
@@ -713,7 +722,7 @@ class Config:
             )
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
-            raise RuntimeError(msg)
+            raise ReadOnlyConfigError(msg)
         update_mode = self._resolve_update_mode(update_mode)
         clobber_mode = self._resolve_clobber_mode(clobber_mode)
         report_mode = self._resolve_report_mode(report_mode)
@@ -758,11 +767,10 @@ class Config:
         self._config.__setitem__(key, val, update_mode=update_mode)
 
     def _raise_exception(self, exception: Exception, key: CompoundKey, report_mode: str) -> None:
+        _LOG.debug(hprint.to_str("exception key report_mode"))
         hdbg.dassert_in(
             report_mode, _VALID_REPORT_MODES
         )
-        # After the recursion is done, in case of error print information
-        # about the offending key.
         if report_mode in ("verbose_log_error", "verbose_exception"):
             msg = []
             msg.append("exception=" + str(exception))
@@ -772,8 +780,16 @@ class Config:
             if report_mode == "verbose_log_error":
                 _LOG.error(msg)
             elif report_mode == "verbose_exception":
-                exception = KeyError(msg)
-        #raise Exception(msg) from e
+                # TODO(gp): It's not clear how to create an exception with a
+                #  different message, so we resort to an ugly switch.
+                if isinstance(exception, KeyError):
+                    exception = KeyError(msg)
+                elif isinstance(exception, OverwriteError):
+                    exception = OverwriteError(msg)
+                elif isinstance(exception, ReadOnlyConfigError):
+                    exception = ReadOnlyConfigError(msg)
+                else:
+                    raise RuntimeError(f"Invalid exception: {exception}")
         raise exception
 
     @staticmethod
