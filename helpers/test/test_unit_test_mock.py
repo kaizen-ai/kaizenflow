@@ -245,7 +245,7 @@ class Test_Mock_Class_with_context_manager1(_TestCase):
         # Outside the context manager everything is normal.
         obj = _Class()
         # Check.
-        self.check("obj.get_a", 
+        self.check("obj.get_a",
                 "<bound method _Class.get_a of <helpers.test.test_unit_test_mock._Class object at 0x>>")
         self.assertEqual(obj.get_a(), 3)
 
