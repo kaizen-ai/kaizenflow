@@ -192,3 +192,4 @@ class TestCcxtBroker1(hunitest.TestCase):
          10:38:44.976104-04:00              0.0             15.0  America/New_York
         """
         self.assert_equal(act, exp, fuzzy_match=True)
+

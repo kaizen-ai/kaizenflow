@@ -169,7 +169,7 @@ DATASET_SCHEMA = {
     "twap": "float64",
     "volume": "float64",
     "vwap": "float64",
-    "year": "int32", 
+    "year": "int32",
 }
 
 
