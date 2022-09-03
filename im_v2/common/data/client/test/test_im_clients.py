@@ -8,7 +8,6 @@ import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client as iccdc
 
-
 # TODO(Grisha): factor out `ImClient` calls in a helper function.
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
@@ -465,8 +464,10 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
             columns,
             filter_data_mode="assert",
         )
-        # Check data timestamps with only year, month, day, beacause time for both values 
+        # Check data timestamps with only year, month, day, beacause time for both values
         # won't be equal. So compare min and max timestamps.
         actual = f"{data.index.min().strftime('%Y.%m.%d')}-{data.index.max().strftime('%Y.%m.%d')}"
-        expected = f"{start_ts.strftime('%Y.%m.%d')}-{end_ts.strftime('%Y.%m.%d')}"
+        expected = (
+            f"{start_ts.strftime('%Y.%m.%d')}-{end_ts.strftime('%Y.%m.%d')}"
+        )
         self.assert_equal(actual, expected)
