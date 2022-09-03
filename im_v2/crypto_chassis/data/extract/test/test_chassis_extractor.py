@@ -773,4 +773,3 @@ class TestCryptoChassisExtractor2(hunitest.TestCase):
         expected = "https://api.cryptochassis.com/v1/trade/coinbase/btc-usd"
         actual = client._build_base_url("trade", "coinbase", "btc-usd")
         self.assert_equal(actual, expected)
-

@@ -39,7 +39,7 @@ class CcxtPortfolio(omportfo.DataFramePortfolio):
 def get_CcxtPortfolio_prod_instance1(
     strategy_id: str,
     market_data: mdata.MarketData,
-    universe_version: str, 
+    universe_version: str,
     asset_ids: Optional[List[int]],
     pricing_method: str,
     secret_identifier: omssec.SecretIdentifier,
