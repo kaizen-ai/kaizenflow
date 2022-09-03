@@ -156,9 +156,8 @@ class TestCcxtBroker1(hunitest.TestCase):
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
         broker._submitted_order_id = 1
-        # Mock `get_low_market_price` of CcxtBroker as the exchange class is mocked globally
-        # and `_exchange.fetch_ticker` can't be reached.
-        get_low_market_price_mock.return_value = 2.0
+        # Mock low market price for order limit calculation.
+        get_low_market_price_mock.return_value = 0.001
         # Patch main external source.
         with umock.patch.object(
             broker._exchange, "createOrder", create=True
@@ -174,7 +173,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         actual_args = pprint.pformat(tuple(create_order_mock.call_args))
         expected_args = r"""
             ((),
-             {'amount': 15.0,
+             {'amount': 30000.0,
               'params': {'client_oid': 0, 'portfolio_id': 'ccxt_portfolio_mock'},
               'side': 'buy',
               'symbol': 'ETH/USDT',
@@ -182,13 +181,25 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
-        self.assertEqual(receipt, "filename_1.txt")
+        self.assert_equal(receipt, "filename_1.txt")
         # Check the order Dataframe.
-        act = hpandas.df_to_str(order_df)
-        exp = """
-           order_id               creation_timestamp    asset_id       type_                  start_timestamp\
-                               end_timestamp  curr_num_shares  diff_num_shares                tz
-        0         0 2022-08-05 10:36:44.976104-04:00  1464553467  price@twap 2022-08-05 10:36:44.976104-04:00 2022-08-05\
-         10:38:44.976104-04:00              0.0             15.0  America/New_York
+        act = hpandas.convert_df_to_json_string(order_df, n_tail=None)
+        exp = r"""
+            original shape=(1, 9)
+            Head:
+            {
+                "0":{
+                    "order_id":0,
+                    "creation_timestamp":"2022-08-05T14:36:44Z",
+                    "asset_id":1464553467,
+                    "type_":"price@twap",
+                    "start_timestamp":"2022-08-05T14:36:44Z",
+                    "end_timestamp":"2022-08-05T14:38:44Z",
+                    "curr_num_shares":0.0,
+                    "diff_num_shares":30000.0,
+                    "tz":"America\/New_York"
+                }
+            }
+            Tail:
         """
         self.assert_equal(act, exp, fuzzy_match=True)
