@@ -2,6 +2,7 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
@@ -439,3 +440,31 @@ class TestDataFrameImClients1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
+
+
+class TestHistoricalPqByTileClients2(hunitest.TestCase):
+    """
+    Check daily updated data timestamps are the latest.
+    """
+
+    def test1(self) -> None:
+        resample_1min = False
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3(resample_1min)
+        full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
+        today = pd.Timestamp.today(tz="America/New_York")
+        start_ts = today - pd.Timedelta(days=1)
+        end_ts = today
+        columns = None
+        data = im_client.read_data(
+            full_symbols,
+            start_ts,
+            end_ts,
+            columns,
+            filter_data_mode="assert",
+        )
+        print(data)
+        data_min_max_ts = f"{data.index.min().strftime('%Y.%m.%d')}-{data.index.max().strftime('%Y.%m.%d')}"
+        actual = data_min_max_ts
+        expected = f"{start_ts.strftime('%Y.%m.%d')}-{end_ts.strftime('%Y.%m.%d')}"
+        self.assert_equal(actual, expected)
+
