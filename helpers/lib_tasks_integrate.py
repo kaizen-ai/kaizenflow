@@ -67,6 +67,12 @@ _LOG = logging.getLogger(__name__)
 
 # ## Preparation
 #
+# - Remove white spaces
+#   ```
+#   > dev_scripts/clean_up_text_files.sh
+#   > git commit -am "Remove white spaces"; git push
+#   ```
+#
 # - Lint both dirs:
 #   ```
 #   > cd amp1
@@ -80,11 +86,6 @@ _LOG = logging.getLogger(__name__)
 #   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
 #   > FILES=$(cat files.txt)
 #   > i lint --only-format -f "$FILES"
-#   ```
-#
-# - To clean up the text files:
-#   ```
-#   > dev_scripts/clean_up_text_files.sh
 #   ```
 #
 # - Remove trailing spaces:
