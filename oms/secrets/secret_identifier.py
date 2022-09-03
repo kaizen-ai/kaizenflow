@@ -4,13 +4,13 @@ Import as:
 import oms.secrets.secret_identifier as oseseide
 """
 
-from dataclasses import dataclass
+import dataclasses
 
 import helpers.hdbg as hdbg
 
 # TODO(Juraj): possibly extend the behavior to fetch the secret values
-# themselves from AWS instead of acting as a pure dataclass.
-@dataclass(frozen=True)
+#  themselves from AWS instead of acting as a pure dataclass.
+@dataclasses.dataclass(frozen=True)
 class SecretIdentifier:
     """
     Wrapper class to store categorized secret identifier.

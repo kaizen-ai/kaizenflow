@@ -10,7 +10,7 @@ import inspect
 import json
 import logging
 import os
-from typing import Any, List, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 import jsonpickle  # type: ignore
 import jsonpickle.ext.pandas as jepand  # type: ignore
@@ -26,6 +26,10 @@ jepand.register_handlers()
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Use repr to serialize:
+# >>> a = {"hello": [1, 2, (3, 4)]}
+# >>> repr(a)
+# "{'hello': [1, 2, (3, 4)]}"
 # TODO(gp): Add more types.
 # TODO(gp): -> _to_python_code
 def to_python_code(obj: Any) -> str:
@@ -49,6 +53,13 @@ def to_python_code(obj: Any) -> str:
         for el in obj:
             output_tmp += to_python_code(el) + ", "
         output_tmp = output_tmp.rstrip(", ") + "]"
+        output.append(output_tmp)
+    elif isinstance(obj, tuple):
+        # Tuple ["a", 1] -> '["a", 1]'.
+        output_tmp = "("
+        for el in obj:
+            output_tmp += to_python_code(el) + ", "
+        output_tmp = output_tmp.rstrip(", ") + ")"
         output.append(output_tmp)
     elif isinstance(obj, dict):
         # Dict {"a": 1} -> '{"a": 1}'.
@@ -85,6 +96,11 @@ def to_python_code(obj: Any) -> str:
     return output
 
 
+# #############################################################################
+# Playback
+# #############################################################################
+
+
 class Playback:
     def __init__(
         self,
@@ -102,8 +118,11 @@ class Playback:
             function. Can be useful if the function is called a lot of times
             during the execution.
         """
+        _LOG.debug(hprint.to_str("mode to_file max_tests"))
         hdbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
+        # TODO(gp): Factor out in a function but need to discard one more level
+        #  in the stack trace.
         cur_frame = inspect.currentframe()
         self._func_name = cur_frame.f_back.f_code.co_name  # type: ignore
         # We can use kw arguments for all args. Python supports this.
@@ -114,6 +133,7 @@ class Playback:
         expected_arg_count = cur_frame.f_back.f_code.co_argcount  # type: ignore
         if "kwargs" in self._kwargs:
             expected_arg_count += 1
+        _LOG.debug(hprint.to_str("expected_arg_count"))
         # TODO(gp): Is this necessary?
         # hdbg.dassert_eq(
         #    expected_arg_count,
@@ -122,7 +142,7 @@ class Playback:
         #       " a function.",
         # )
         # If the function is a method, store the parent class so we can also
-        # create that in the test
+        # create that in the test.
         if "self" in self._kwargs:
             x = self._kwargs.pop("self")
             self._parent_class = x
@@ -185,6 +205,8 @@ class Playback:
         self._add_function_call()
         self._check_code(func_output)
         return self._gen_code()
+
+    # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_test_file_name(file_with_code: str) -> str:
@@ -360,12 +382,15 @@ class Playback:
         self._code.append(hprint.indent(string, num_tabs * 4))
 
 
+# ################################################################################
+
+
 def json_pretty_print(parsed: Any) -> str:
     """
-    Pretty print a json object.
+    Pretty print a JSON object.
 
-    :param parsed: a json object
-    :return: a prettified json object
+    :param parsed: a JSON object
+    :return: a prettified JSON object
     """
     if isinstance(parsed, str):
         parsed = json.loads(parsed)
@@ -403,18 +428,58 @@ def round_trip_convert(obj1: Any, log_level: int) -> Any:
     return obj2
 
 
-# TODO(gp): Implement decorator like:
-# import helpers.hplayback as hpk
+# ################################################################################
+# Decorator
+# ################################################################################
+
+
+# TODO(gp): This approach doesn't work since we use introspection and so we probably
+#  need to skip one level in the stack trace.
+
+
+# Use the `playback` decorator as:
+# ```
+# import helpers.hplayback as hplayba
 #
-# def playback(func: Callable) -> Callable:
+# @hplayba.playback
+# def target_function(...):
+#   ...
+# ```
+
+
+def playback(func: Callable) -> Callable:
+
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        import helpers.hplayback as hplayb
+        playback = hplayb.Playback("assert_equal")
+        res = func(*args, **kwargs)
+        code = playback.run(res)
+        print(code)
+        return res
+
+    return wrapper(func)
+
+
+# Inline the decorator as:
 #
-#     def wrapper(*args: Any, **kwargs: Any) -> Any:
-#         import helpers.hplayback as hplayb
-#         playback = hplayb.Playback("assert_equal")
-#         res = func(*args, **kwargs)
-#         code = playback.run(res)
-#         print(code)
-#         assert 0
-#         return res
+# 1) Rename `target_func` -> `target_func_tmp`
+# ```
+# def target_function_tmp(...):
+#   ...
+# ```
 #
-#     return wrapper(func)
+# 2) Add wrapper:
+# ```
+# def target_function_tmp(...):
+#   ...
+#
+# from typing import Any
+#
+# def target_function(*args: Any, **kwargs: Any) -> Any:
+#     import helpers.hplayback as hplayb
+#     playback = hplayb.Playback("assert_equal")
+#     res = target_func_tmp(*args, **kwargs)
+#     code = playback.run(res)
+#     print(code)
+#     return res
+# ```

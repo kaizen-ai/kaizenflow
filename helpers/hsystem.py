@@ -147,9 +147,11 @@ def _system(
         `output_file`
     :param dry_run: print the final command but not execute it
     :param log_level: print the command to execute at level "log_level".
-        - If `echo` then print the command line to screen as print and not
+        - If `echo` then print the command line to screen as `print()` and not
           logging
-    :return: return code (int), output of the command (str)
+    :return:
+        - return code as int
+        - output of the command as str
     """
     _LOG.debug("##> %s", cmd)
     _LOG.debug(
@@ -208,7 +210,7 @@ def _system(
     output = ""
     # Handle `dry_run`.
     if dry_run:
-        _LOG.warning("Not executing cmd\n%s\nas per user request", cmd)
+        _LOG.warning("As per user request, not executing command:\n%s", cmd)
         rc = 0
         return rc, output
     # Execute the command.

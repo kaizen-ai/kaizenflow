@@ -70,6 +70,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     integrate_files,
     integrate_find_files,
     integrate_find_files_touched_since_last_integration,
+    integrate_rsync,
     lint,
     lint_check_python_files,
     lint_check_python_files_in_docker,

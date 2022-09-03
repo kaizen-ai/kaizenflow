@@ -25,10 +25,6 @@ _LOG = logging.getLogger(__name__)
 
 # pylint: disable=protected-access
 
-# #############################################################################
-# Integrate.
-# #############################################################################
-
 # pylint: disable=line-too-long
 
 # ## Concepts
@@ -754,3 +750,88 @@ def integrate_diff_overlapping_files(  # type: ignore
     script_txt = "\n".join(script_txt)
     hio.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
+
+
+# TODO(gp): Add
+
+# cp -a /Users/saggese/src/cmamp1/dataflow_amp/system/mock1/test/outcomes/Test_Mock1_ForecastSystem_FitPredict.test_fit_vs_predict1 /Users/saggese/src/amp1/dataflow_amp/system/mock1/test/outcomes/
+
+#   ... Only in /Users/saggese/src/cmamp1/im_v2/common/data_snapshot/test/test_data_snapshots/alpha_numeric_data_snapshots: alpha
+#   ... Only in /Users/saggese/src/amp1/im_v2/common/data_snapshot/test/test_data_snapshots/alpha_numeric_data_snapshots: latest
+
+# rsync --delete -a -r /Users/saggese/src/cmamp1/im_v2/common/data_snapshot/test/test_data_snapshots/alpha_numeric_data_snapshots/ /Users/saggese/src/amp1/im_v2/common/data_snapshot/test/test_data_snapshots/alpha_numeric_data_snapshots/
+#
+# git add git add im_v2/common/data_snapshot/test/test_data_snapshots/alpha_numeric_data_snapshots
+
+
+
+def _infer_dst_dir(src_dir: str) -> Tuple[str, str]:
+    """
+    Convert a dir such as
+
+    ```
+    .../src/cmamp1/.../test_data_snapshots/alpha_numeric_data_snapshots
+    ```
+    into
+
+    ```
+    .../src/amp1/.../test_data_snapshots/alpha_numeric_data_snapshots
+    ```
+    """
+    _LOG.debug(hprint.to_str("src_dir"))
+    src_dir = os.path.normpath(src_dir)
+    # Extract the repo dir name, by looking for `cmamp1` or `amp1`.
+    target_dir = "/cmamp1/"
+    idx = src_dir.find(target_dir)
+    if idx >= 0:
+        src_dir_basename = "cmamp1"
+        dst_dir_basename = "amp1"
+        subdir = src_dir[idx + len(target_dir):]
+    else:
+        idx = src_dir.find("/amp1/")
+        if idx >= 0:
+            src_dir_basename = "amp1"
+            dst_dir_basename = "cmamp1"
+            subdir = src_dir[idx + len(target_dir):]
+        else:
+            raise ValueError(f"Can't parse src_dir='{src_dir}")
+    # Replace `cmamp1` with `amp1`
+    dst_dir = src_dir.replace("/" + src_dir_basename + "/", "/" + dst_dir_basename + "/")
+    _LOG.debug(hprint.to_str("src_dir dst_dir subdir"))
+    return dst_dir, subdir
+
+
+@task
+def integrate_rsync(  # type: ignore
+    ctx, src_dir, dst_dir="", check_dir=True, dry_run=False
+):
+    """
+    Use `rsync` to bring two dirs to sync
+
+    E.g.,
+    ```
+    > invoke integrate_diff_dirs
+    ...
+      ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+      ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+
+    > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+    ```
+
+    """
+    hlitauti.report_task()
+    _ = ctx
+    # Resolve
+    if check_dir:
+        _dassert_is_integration_branch(src_dir)
+    if dst_dir == "":
+        dst_dir, _ = _infer_dst_dir(src_dir)
+    if check_dir:
+        _dassert_is_integration_branch(dst_dir)
+    #
+    src_dir = os.path.normpath(src_dir)
+    dst_dir = os.path.normpath(dst_dir)
+    _LOG.info("Syncing:\n'%s'\nto\n'%s'", src_dir, dst_dir)
+    #
+    cmd = f"rsync --delete -a -r {src_dir}/ {dst_dir}/"
+    hsystem.system(cmd, log_level=logging.INFO, dry_run=dry_run)
