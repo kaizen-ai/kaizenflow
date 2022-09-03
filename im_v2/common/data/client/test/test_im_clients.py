@@ -446,6 +446,7 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
     Check daily updated data timestamps are the latest.
     """
 
+    @pytest.mark.slow("Slow via GH, fast on server.")
     def test1(self) -> None:
         # Initialize client in order to get data for the previous day.
         resample_1min = False
