@@ -1310,3 +1310,23 @@ def pytest_collect_only(ctx):  # type: ignore
     _ = ctx
     cmd = 'invoke docker_cmd --cmd "pytest --collect-only 2>&1"'
     hsystem.system(cmd, suppress_output=False)
+
+
+# #############################################################################
+# pytest_add_untracked_golden_outcomes
+# #############################################################################
+
+
+@task
+def pytest_add_untracked_golden_outcomes(ctx):  # type: ignore
+    """
+    Add the golden outcomes files that are not tracked under git.
+    """
+    _ = ctx
+    cmd = 'git add $(git ls-files . --exclude-standard --others | \grep "output" | grep -v tmp)'
+    hsystem.system(cmd, suppress_output=False)
+
+
+# #############################################################################
+# TO_ADD
+# #############################################################################
