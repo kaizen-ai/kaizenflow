@@ -132,9 +132,9 @@ def frame(
     # Build the return value.
     prefix = "#" * (level + 1) + " "
     ret = (
-        prefix + (line(char1, num_chars) + "\n") * thickness
-        + prefix + message + "\n"
-        + prefix + (line(char2, num_chars) + "\n") * thickness
+        (prefix + (line(char1, num_chars) + "\n") * thickness)
+        + (prefix + message + "\n")
+        + (prefix + (line(char2, num_chars) + "\n") * thickness)
     ).rstrip("\n")
     return ret
 

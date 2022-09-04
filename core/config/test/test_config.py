@@ -1777,7 +1777,8 @@ class Test_from_dict1(hunitest.TestCase):
 
 class _Config_step_through_TestCase1(hunitest.TestCase):
     """
-    A class to apply transformations to a Config one-by-one checking its result.
+    A class to apply transformations to a Config one-by-one checking its
+    result.
     """
 
     def step_through(self, stmt: str, exp: Optional[str], mode: str, globals: Dict) -> str:

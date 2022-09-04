@@ -628,7 +628,8 @@ def _git_diff_with_branch(
     _LOG.debug(
         hprint.to_str(
             "hash_ tag dir_name diff_type subdir keep_extensions skip_extensions"
-            " file_name only_print_files dry_run")
+            " file_name only_print_files dry_run"
+        )
     )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
@@ -902,6 +903,7 @@ def git_branch_diff_with(  # type: ignore
         only_print_files,
         dry_run,
     )
+
 
 # pylint: disable=line-too-long
 
