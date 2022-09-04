@@ -366,33 +366,33 @@ class TestDryRunTasks2(_LibTasksTestCase, _CheckDryRunTestCase):
         target = "git_branch_files(ctx)"
         self._check_output(target)
 
-    def test_git_create_branch1(self) -> None:
+    def test_git_branch_create1(self) -> None:
         _gh_login()
         target = (
-            "git_create_branch(ctx, branch_name='AmpTask123_test', "
+            "git_branch_create(ctx, branch_name='AmpTask123_test', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)
 
-    def test_git_create_branch2(self) -> None:
+    def test_git_branch_create2(self) -> None:
         _gh_login()
         target = (
-            "git_create_branch(ctx, issue_id=1, repo_short_name='amp', "
+            "git_branch_create(ctx, issue_id=1, repo_short_name='amp', "
             "only_branch_from_master=False)"
         )
         self._check_output(target)
 
-    def test_git_create_branch3(self) -> None:
+    def test_git_branch_create3(self) -> None:
         with self.assertRaises(AssertionError):
             target = (
-                "git_create_branch(ctx, branch_name='test', issue_id=1, "
+                "git_branch_create(ctx, branch_name='test', issue_id=1, "
                 "only_branch_from_master=False)"
             )
             self._check_output(target, check=False)
 
     # This is an action with side effects so we can't test it.
-    # def test_git_delete_merged_branches(self) -> None:
-    #     target = "git_delete_merged_branches(ctx)"
+    # def test_git_branch_delete_merged(self) -> None:
+    #     target = "git_branch_delete_merged(ctx)"
     #     self._check_output(target)
 
     def test_git_merge_master(self) -> None:

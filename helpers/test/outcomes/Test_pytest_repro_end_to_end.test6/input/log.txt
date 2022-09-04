@@ -231,7 +231,7 @@ amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_gh_workflow_list [33
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_files (0.15 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_clean (0.00 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_clean2 (0.00 s) [32mPASSED[0m[32m [  5%][0m
-amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_create_branch3 (0.00 s) [32mPASSED[0m[32m [  5%][0m
+amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_create3 (0.00 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_fetch_master (0.00 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_merge_master (0.08 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_pull (0.00 s) [32mPASSED[0m[32m [  6%][0m
@@ -2236,8 +2236,8 @@ amp/helpers/test/test_sql.py::TestSql1::test_duplicate_removal2 [33mSKIPPED[0m
 amp/helpers/test/test_sql.py::TestSql1::test_execute_insert_query1 [33mSKIPPED[0m[32m [  9%][0m
 amp/helpers/test/test_sql.py::TestSql1::test_remove_database1 [33mSKIPPED[0m[32m    [ 11%][0m
 amp/helpers/test/test_sql.py::TestSql1::test_remove_database_invalid [33mSKIPPED[0m[32m [ 12%][0m
-amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_create_branch1 (0.84 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_create_branch2 (0.47 s) [32mPASSED[0m[32m [ 15%][0m
+amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_create1 (0.84 s) [32mPASSED[0m[32m [ 14%][0m
+amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_create2 (0.47 s) [32mPASSED[0m[32m [ 15%][0m
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data1_database_portfolio [33mSKIPPED[0m[32m [ 16%][0m
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data1_database_vs_dataframe_portfolio [33mSKIPPED[0m[32m [ 18%][0m
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data2_database_portfolio [33mSKIPPED[0m[32m [ 19%][0m
