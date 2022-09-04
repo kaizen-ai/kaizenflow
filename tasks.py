@@ -42,6 +42,8 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     fix_perms,
     git_add_all_untracked,
     git_branch_copy,
+    git_branch_create,
+    git_branch_delete_merged,
     git_branch_files,
     git_branch_next_name,
     git_clean,
