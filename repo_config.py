@@ -262,6 +262,7 @@ def use_docker_network_mode_host() -> bool:
     # TODO(gp): Not sure this is needed any more, since we typically run in bridge
     # mode.
     ret = hserver.is_mac() or hserver.is_dev_ck()
+    ret = False
     if ret:
         assert use_docker_sibling_containers()
     return ret
