@@ -911,7 +911,3 @@ def git_branch_diff_with(  # type: ignore
 # dev_scripts/git/git_branch.sh
 # dev_scripts/git/git_branch_point.sh
 # dev_scripts/create_class_diagram.sh
-
-
-# TODO(gp): To find the golden outcomes not under source control
-# > git ls-files . --exclude-standard --others | grep "test.txt$"

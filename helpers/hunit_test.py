@@ -930,7 +930,7 @@ def assert_equal(
         # Select what to save.
         compare_orig = False
         if compare_orig:
-            tag = "ORIGINAL ACTUAL vs EXPECTED"
+            tag = "ORIGINAL ACTUAL vs ORIGINAL EXPECTED"
             actual = actual_orig
             expected = expected_orig
         else:
