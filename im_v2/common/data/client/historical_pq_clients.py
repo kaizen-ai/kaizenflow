@@ -277,8 +277,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
         dataset: str,
         contract_type: str,
+        data_snapshot: str,
         *,
-        data_snapshot: Optional[str] = None,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -287,7 +287,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         See the parent class for parameters description.
 
         :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
-        :param data_snapshot: data snapshot at a particular time point, e.g., "20220210"
+        :param data_snapshot: same format used in `get_data_snapshot()`
         """
         infer_exchange_id = True
         super().__init__(
@@ -309,11 +309,9 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             f"Invalid dataset type='{contract_type}'",
         )
         self._contract_type = contract_type
-        if data_snapshot is None:
-            data_snapshot = icdds.get_latest_data_snapshot(
-                root_dir, aws_profile
-            )
-        icdds.dassert_is_valid_data_snapshot(data_snapshot)
+        data_snapshot = icdds.get_data_snapshot(
+            root_dir, data_snapshot, aws_profile
+        )
         self._data_snapshot = data_snapshot
 
     @staticmethod

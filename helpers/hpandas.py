@@ -286,6 +286,8 @@ def dassert_indices_equal(
 def dassert_columns_equal(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
+    sort_cols: bool = False,
 ) -> None:
     """
     Ensure that `df1` and `df2` have the same columns.
@@ -294,6 +296,10 @@ def dassert_columns_equal(
     """
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
+    if sort_cols:
+        _LOG.debug("Sorting dataframe columns.")
+        df1 = df1.sort_index(axis=1)
+        df2 = df2.sort_index(axis=1)
     hdbg.dassert(
         df1.columns.equals(df2.columns),
         "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
@@ -303,14 +309,13 @@ def dassert_columns_equal(
 
 
 def dassert_axes_equal(
-    df1: pd.DataFrame,
-    df2: pd.DataFrame,
+    df1: pd.DataFrame, df2: pd.DataFrame, *, sort_cols: bool = False
 ) -> None:
     """
     Ensure that `df1` and `df2` have the same index and same columns.
     """
     dassert_indices_equal(df1, df2)
-    dassert_columns_equal(df1, df2)
+    dassert_columns_equal(df1, df2, sort_cols=sort_cols)
 
 
 # #############################################################################
@@ -710,6 +715,7 @@ def trim_df(
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
+    _LOG.debug("df=\n%s", df_to_str(df))
     if df.empty:
         # If the df is empty, there is nothing to trim.
         return df
@@ -736,6 +742,7 @@ def trim_df(
         else:
             # There is nothing to filter, so the left index is the first one.
             left_idx = 0
+        _LOG.debug(hprint.to_str("start_ts left_idx"))
         # Find the index corresponding to the right boundary of the interval.
         if end_ts is not None:
             side = "right" if right_close else "left"
@@ -743,6 +750,7 @@ def trim_df(
         else:
             # There is nothing to filter, so the right index is None.
             right_idx = None
+        _LOG.debug(hprint.to_str("end_ts right_idx"))
         hdbg.dassert_lte(0, left_idx)
         if right_idx is not None:
             hdbg.dassert_lte(left_idx, right_idx)

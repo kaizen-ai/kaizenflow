@@ -139,7 +139,7 @@ def git_add_all_untracked(ctx):  # type: ignore
 
 
 @task
-def git_create_patch(  # type: ignore
+def git_patch_create(  # type: ignore
     ctx, mode="diff", modified=False, branch=False, last_commit=False, files=""
 ):
     """
@@ -349,9 +349,8 @@ def git_branch_files(ctx):  # type: ignore
     )
 
 
-# TODO(gp): @all -> git_branch_rename
 @task
-def git_create_branch(  # type: ignore
+def git_branch_create(  # type: ignore
     ctx,
     branch_name="",
     issue_id=0,
@@ -476,9 +475,8 @@ def _delete_branches(ctx: Any, tag: str, confirm_delete: bool) -> None:
         hlitauti.run(ctx, cmd_tmp)
 
 
-# TODO(gp): @all -> git_branch_delete_merged
 @task
-def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
+def git_branch_delete_merged(ctx, confirm_delete=True):  # type: ignore
     """
     Remove (both local and remote) branches that have been merged into master.
     """
@@ -499,9 +497,8 @@ def git_delete_merged_branches(ctx, confirm_delete=True):  # type: ignore
     hlitauti.run(ctx, cmd)
 
 
-# TODO(gp): @all -> git_branch_rename
 @task
-def git_rename_branch(ctx, new_branch_name):  # type: ignore
+def git_branch_rename(ctx, new_branch_name):  # type: ignore
     """
     Rename current branch both locally and remotely.
     """
@@ -594,7 +591,7 @@ def git_branch_copy(ctx, new_branch_name="", skip_git_merge_master=False, use_pa
     if new_branch_exists:
         cmd = f"git checkout {new_branch_name}"
     else:
-        cmd = f"git checkout master && invoke git_create_branch -b '{new_branch_name}'"
+        cmd = f"git checkout master && invoke git_branch_create -b '{new_branch_name}'"
     hlitauti.run(ctx, cmd)
     if use_patch:
         # TODO(gp): Apply the patch.

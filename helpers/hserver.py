@@ -117,13 +117,15 @@ def is_mac(*, version: Optional[str] = None) -> bool:
         macos_tag = "19.6"
     elif version == "Monterey":
         # Darwin alpha.local 21.5.0 Darwin Kernel Version 21.5.0:
-        # Tue Apr 26 21:08:37 PDT 2022; root:xnu-8020.121.3~4/RELEASE_ARM64_T6000 arm64```
+        # Tue Apr 26 21:08:37 PDT 2022;
+        #   root:xnu-8020.121.3~4/RELEASE_ARM64_T6000 arm64```
         macos_tag = "21."
     else:
         raise ValueError(f"Invalid version='{version}'")
     _LOG.debug("macos_tag=%s", macos_tag)
     host_os_version = os.uname()[2]
-    # 'Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020; root:xnu-6153.141.2~1/RELEASE_X86_64'
+    # 'Darwin Kernel Version 19.6.0: Mon Aug 31 22:12:52 PDT 2020;
+    #   root:xnu-6153.141.2~1/RELEASE_X86_64'
     am_host_os_version = os.environ.get("AM_HOST_VERSION", "")
     _LOG.debug(
         "host_os_version=%s am_host_os_version=%s",
@@ -137,33 +139,67 @@ def is_mac(*, version: Optional[str] = None) -> bool:
 
 def is_cmamp_prod() -> bool:
     """
-    Detect whether we are running in a production container.
+    Detect whether we are running in a CK production container.
 
     This env var is set inside `devops/docker_build/prod.Dockerfile`.
     """
     return bool(os.environ.get("CK_IN_PROD_CMAMP_CONTAINER", False))
 
 
+def is_ig_prod() -> bool:
+    """
+    Detect whether we are running in an IG production container.
+
+    This env var is set inside `//lime/devops_cf/setenv.sh`
+    """
+    # CF sets up `DOCKER_BUILD` so we can use it to determine if we are inside
+    # a CF container or not.
+    #print("os.environ\n", str(os.environ))
+    return bool(os.environ.get("DOCKER_BUILD", False))
+
+
+def setup_to_str() -> str:
+    txt = []
+    #
+    is_cmamp_prod_ = is_cmamp_prod()
+    txt.append(f"is_cmamp_prod={is_cmamp_prod_}")
+    #
+    is_dev4_ = is_dev4()
+    txt.append(f"is_dev4={is_dev4_}")
+    #
+    is_dev_ck_ = is_dev_ck()
+    txt.append(f"is_dev_ck={is_dev_ck_}")
+    #
+    is_ig_prod_ = is_ig_prod()
+    txt.append(f"is_ig_prod={is_ig_prod_}")
+    #
+    is_inside_ci_ = is_inside_ci()
+    txt.append(f"is_inside_ci={is_inside_ci_}")
+    #
+    is_mac_ = is_mac()
+    txt.append(f"is_mac={is_mac_}")
+    #
+    txt = "\n".join(txt)
+    return txt
+
+
 def _dassert_setup_consistency() -> None:
     """
     Check that one and only one set up config should be true.
     """
+    is_cmamp_prod_ = is_cmamp_prod()
     is_dev4_ = is_dev4()
     is_dev_ck_ = is_dev_ck()
+    is_ig_prod_ = is_ig_prod()
     is_inside_ci_ = is_inside_ci()
     is_mac_ = is_mac()
-    is_cmamp_prod_ = is_cmamp_prod()
     # One and only one set-up should be true.
-    sum_ = is_dev4_ + is_dev_ck_ + is_inside_ci_ + is_mac_ + is_cmamp_prod_
+    sum_ = sum([is_dev4_, is_dev_ck_, is_inside_ci_, is_mac_, is_cmamp_prod_,
+                is_ig_prod_])
     if sum_ != 1:
         msg = (
-            "One and only one set-up config should be true: "
-            + f"is_dev4={is_dev4_}"
-            + f"is_dev_ck={is_dev_ck_}"
-            + f"is_inside={is_inside_ci_}"
-            + f"is_mac={is_mac_}"
-            + f"is_cmamp_prod={is_cmamp_prod_}"
-        )
+            "One and only one set-up config should be true:\n"
+            + setup_to_str())
         raise ValueError(msg)
 
 

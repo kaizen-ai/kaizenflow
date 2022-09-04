@@ -16,7 +16,7 @@
 
     # Create the branch with the changes.
     #TARGET_BRANCH=CmTask1074_numeric_to_numerical_1
-    #i git_create_branch -b $TARGET_BRANCH
+    #i git_branch_create -b $TARGET_BRANCH
     #git checkout -B $TARGET_BRANCH
 
     # Clean up.
