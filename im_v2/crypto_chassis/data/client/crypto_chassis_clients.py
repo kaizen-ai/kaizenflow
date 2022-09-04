@@ -34,8 +34,8 @@ class CryptoChassisHistoricalPqByTileClient(
         partition_mode: str,
         dataset: str,
         contract_type: str,
+        data_snapshot: str,
         *,
-        data_snapshot: Optional[str] = None,
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -52,6 +52,6 @@ class CryptoChassisHistoricalPqByTileClient(
             partition_mode,
             dataset,
             contract_type,
-            data_snapshot=data_snapshot,
+            data_snapshot,
             aws_profile=aws_profile,
         )

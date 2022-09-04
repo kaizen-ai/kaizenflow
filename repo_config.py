@@ -2,7 +2,7 @@
 Contain info specific of `//cmamp` repo.
 """
 
-# TODO(gp): Consider centralizing all the common functions under hserver.py.
+# TODO(gp): Centrale all the common functions under hserver.py.
 
 import functools
 import logging
@@ -353,8 +353,9 @@ def skip_submodules_test() -> bool:
 
     E.g. while running `i run_fast_tests`.
     """
-    if get_name() in ("//dev_tools", "//orange"):
-        # Skip running `amp` tests from `dev_tools` and `orange`.
+    # TODO(gp): Why do we want to skip running tests?
+    if get_name() in ("//dev_tools", ):
+        # Skip running `amp` tests from `dev_tools`.
         return True
     return False
 

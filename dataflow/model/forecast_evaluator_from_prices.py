@@ -54,10 +54,12 @@ class ForecastEvaluatorFromPrices:
             - the `prediction_col` is a prediction of vol-adjusted returns
               (presumably with volatility given by `volatility_col`)
         """
-        _LOG.debug(hprint.to_str(
-            "price_col volatility_col prediction_col spread_col buy_price_col"
-            " sell_price_col"
-            ))
+        _LOG.debug(
+            hprint.to_str(
+                "price_col volatility_col prediction_col spread_col buy_price_col"
+                " sell_price_col"
+            )
+        )
         # Initialize dataframe columns.
         hdbg.dassert_isinstance(price_col, str)
         self._price_col = price_col
@@ -157,6 +159,7 @@ class ForecastEvaluatorFromPrices:
             "pnl": pnl,
         }
         portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(dfs)
+        #
         statistics_df = ForecastEvaluatorFromPrices._read_df(
             log_dir, "statistics", file_name, tz
         )
@@ -554,11 +557,15 @@ class ForecastEvaluatorFromPrices:
         _LOG.debug("after active_index: df.shape=%s", df.shape)
         # Drop indices with prices that precede any returns prediction or
         # volatility computation.
-        first_valid_prediction_index = df[self._prediction_col].first_valid_index()
+        first_valid_prediction_index = df[
+            self._prediction_col
+        ].first_valid_index()
         hdbg.dassert_is_not(first_valid_prediction_index, None)
         _LOG.debug(hprint.to_str("first_valid_prediction_index"))
         #
-        first_valid_volatility_index = df[self._volatility_col].first_valid_index()
+        first_valid_volatility_index = df[
+            self._volatility_col
+        ].first_valid_index()
         hdbg.dassert_is_not(first_valid_volatility_index, None)
         _LOG.debug(hprint.to_str("first_valid_volatility_index"))
         #
@@ -872,7 +879,7 @@ class ForecastEvaluatorFromPrices:
         return holdings, positions, flows, pnl, stats
 
 
-# ##################################################################################
+# #############################################################################
 
 
 def cross_check_portfolio_pnl(df: pd.DataFrame) -> pd.DataFrame:

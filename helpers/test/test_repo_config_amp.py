@@ -66,7 +66,7 @@ class TestRepoConfig_Amp(hunitest.TestCase):
 
     def test_is_CK_S3_available(self) -> None:
         """
-        When running Amp on dev_ck there CK bucket should be available.
+        When running Amp on dev_ck, the CK bucket should be available.
         """
         if hserver.is_dev_ck():
             act = henv.execute_repo_config_code("is_CK_S3_available()")

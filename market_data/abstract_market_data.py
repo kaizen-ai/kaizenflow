@@ -6,9 +6,8 @@ import market_data.abstract_market_data as mdabmada
 
 import abc
 import asyncio
-import datetime
 import logging
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -88,7 +87,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         #  CMTask217).
         timezone: str = "America/New_York",
         sleep_in_secs: float = 1.0,
-        rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]] = 60 * 2,
+        time_out_in_secs: int = 60 * 2,
         column_remap: Optional[Dict[str, str]] = None,
         filter_data_mode: str = "assert",
     ):
@@ -109,8 +108,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         :param columns: columns to return. `None` means all available
         :param get_wall_clock_time: the wall clock
         :param timezone: timezone to convert normalized output timestamps to
-        :param sleep_in_secs, rt_timeout_in_secs_or_time: sample every `sleep_in_secs`
-            seconds waiting up to `rt_timeout_in_secs_or_time` seconds
+        :param sleep_in_secs, time_out_in_secs: sample every `sleep_in_secs`
+            seconds waiting up to `time_out_in_secs` seconds
         :param column_remap: dict of columns to remap the output data or `None` for
             no remapping
         :param filter_data_mode: control class behavior with respect to extra
@@ -120,7 +119,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             hprint.to_str(
                 "asset_id_col asset_ids start_time_col_name "
                 "end_time_col_name columns get_wall_clock_time "
-                "timezone sleep_in_secs rt_timeout_in_secs_or_time column_remap filter_data_mode"
+                "timezone sleep_in_secs time_out_in_secs column_remap filter_data_mode"
             )
         )
         self._asset_id_col = asset_id_col
@@ -143,8 +142,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         #
         self._filter_data_mode = filter_data_mode
         # Compute the max number of iterations.
-        hdbg.dassert_lt(0, rt_timeout_in_secs_or_time)
-        max_iterations = int(rt_timeout_in_secs_or_time / sleep_in_secs)
+        hdbg.dassert_lt(0, time_out_in_secs)
+        max_iterations = int(time_out_in_secs / sleep_in_secs)
         hdbg.dassert_lte(1, max_iterations)
         self._max_iterations = max_iterations
 

@@ -1,9 +1,12 @@
-from datetime import timedelta
+import datetime
+import os
 
 import pandas as pd
 import pytest
 
+import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hgit as hgit
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 import im_v2.talos.utils as imv2tauti
@@ -19,7 +22,12 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         """
         Test Python script call, check return value and amount of downloads.
         """
-        cmd = "im_v2/talos/data/extract/download_realtime_for_one_exchange_periodically.py \
+        amp_dir = hgit.get_amp_abs_path()
+        cmd = "im_v2/talos/data/extract/download_realtime_for_one_exchange_periodically.py"
+        cmd = os.path.join(amp_dir, cmd)
+        hdbg.dassert_file_exists(cmd)
+        #
+        cmd += " \
         --data_type 'ohlcv' \
         --exchange_id 'binance' \
         --universe 'v1' \
@@ -35,10 +43,10 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         download_started_marker = "Starting data download"
         # Amount of downloads depends on the start time and stop time.
         expected_downloads_amount = stop_delay - start_delay
-        start_time = pd.Timestamp.now(tz="UTC") + timedelta(
+        start_time = pd.Timestamp.now(tz="UTC") + datetime.timedelta(
             minutes=start_delay, seconds=5
         )
-        stop_time = pd.Timestamp.now(tz="UTC") + timedelta(
+        stop_time = pd.Timestamp.now(tz="UTC") + datetime.timedelta(
             minutes=stop_delay, seconds=5
         )
         # Call Python script in order to get output.

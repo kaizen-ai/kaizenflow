@@ -1,6 +1,14 @@
 # This is a utility DAG to conduct QA on real time data download
-# DAG task downloads data for last N minutes in one batch
+# The first task compares the downloaded data with the contents of
+# of the database, to confirm a match or show discrepancies
 
+# IMPORTANT NOTES:
+# Make sure to set correct dag schedule `schedule_interval`` parameter.
+# Make sure to set the correct timedelta for `start_timestamp` cmd line
+# argument in all variables representing bash commands.
+
+# This DAG's configuration deploys tasks to AWS Fargate to offload the EC2s
+# mainly utilized for rt download
 import datetime
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
@@ -20,7 +28,7 @@ assert _STAGE in ["prod", "preprod", "test"]
 
 # Used for seperations of deployment environments
 # ignored when executing on prod/preprod.
-_USERNAME = ""
+_USERNAME = "juraj"
 
 # Deployment type, if the task should be run via fargate (serverless execution)
 # or EC2 (machines deployed in our auto-scaling group)
@@ -29,13 +37,15 @@ assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
-_PROVIDERS = ["crypto_chassis"]
-_UNIVERSES = { "crypto_chassis": "v2"}
+_PROVIDERS = ["ccxt"]
+_UNIVERSES = {"ccxt" : "v7"}
+#_CONTRACTS = ["spot", "futures"]
 _CONTRACTS = ["spot", "futures"]
-_DATA_TYPES = ["bid_ask"]
+#_DATA_TYPES = ["bid_ask", "ohlcv"]
+_DATA_TYPES = ["ohlcv"]
 _DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data download, contracts:" \
                 + f"{_CONTRACTS}, using {_PROVIDERS} from {_EXCHANGES}."
-_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
+_SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
@@ -54,18 +64,15 @@ ecs_task_definition = _CONTAINER_NAME
 
 # Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
-ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
+ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
 ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
-s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_daily_staged_data_bid_ask_folder')}"
+s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_daily_staged_data_folder')}"
 
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 1,
-    # CryptoChassis might throw
-    # too many request error, wait a couple min to retry.
-    "retry_delay": datetime.timedelta(minutes=5),
     "email": [Variable.get(f'{_STAGE}_notification_email')],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
@@ -83,39 +90,36 @@ dag = airflow.DAG(
     start_date=datetime.datetime(2022, 7, 1, 0, 0, 0),
 )
 
-download_command = [
-    "/app/amp/im_v2/{}/data/extract/download_historical_data.py",
-     "--end_timestamp '{{ execution_date + macros.timedelta(minutes=1440) }}'",
-     "--start_timestamp '{{ execution_date }}'",
-     "--exchange_id '{}'",
-     "--universe '{}'",
-     "--aws_profile 'ck'",
-     "--data_type '{}'",
-     "--file_format 'parquet'",
-     # The command needs to be executed manually first because --incremental
-     # assumes appending to existing folder.
-     "--incremental",
-     "--contract_type '{}'",
-     "--s3_path '{}{}/{}'"
+compare_command = [
+    "/app/amp/im_v2/{}/data/extract/compare_realtime_and_historical.py",
+    "--end_timestamp '{{ execution_date - macros.timedelta(minutes=45) }}'",
+    "--start_timestamp '{{ execution_date - macros.timedelta(hours=24, minutes=45) }}'",
+    "--db_stage 'dev'",
+    "--exchange_id '{}'",
+    "--db_table '{}'",
+    "--aws_profile 'ck'",
+    "--s3_path '{}{}/{}'"
 ]
 
-start_task = DummyOperator(task_id='start_dag', dag=dag)
-end_download = DummyOperator(task_id='end_dag', dag=dag)
+start_comparison = DummyOperator(task_id='start_comparison', dag=dag)
+end_comparison = DummyOperator(task_id='end_comparison', dag=dag)
 
-for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
+for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _DATA_TYPES, _CONTRACTS):
+
+    db_table = f"{provider}_{data_type}"
+    db_table += "_futures" if contract == "futures" else ""
+    db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
-    curr_bash_command = copy.deepcopy(download_command)
+    curr_bash_command = copy.deepcopy(compare_command)
     curr_bash_command[0] = curr_bash_command[0].format(provider)
-    curr_bash_command[3] = curr_bash_command[3].format(exchange)
-    curr_bash_command[4] = curr_bash_command[4].format(_UNIVERSES[provider])
-    curr_bash_command[6] = curr_bash_command[6].format(data_type)
-    curr_bash_command[-2] = curr_bash_command[-2].format(contract)
+    curr_bash_command[4] = curr_bash_command[4].format(exchange)
+    curr_bash_command[5] = curr_bash_command[5].format(db_table)
     curr_bash_command[-1] = curr_bash_command[-1].format(
         s3_daily_staged_data_path,
         # For futures we need to suffix the folder.
-        "-futures" if contract == "futures" else "",
+        f"{data_type}-futures" if contract == "futures" else data_type,
         provider
     )
 
@@ -127,8 +131,8 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
         },
     }
 
-    downloading_task = ECSOperator(
-        task_id=f"download_{provider}_{exchange}_{contract}",
+    comparing_task = ECSOperator(
+        task_id=f"compare_{provider}_{exchange}_{data_type}_{contract}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
@@ -140,10 +144,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
                     "name": _CONTAINER_NAME,
                     "command": curr_bash_command,
                 }
-            ],
-            # For uknown reason bid-ask task needs more resources.
-            "cpu": "512",
-            "memory": "1024"
+            ]
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
@@ -151,4 +152,4 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
         **kwargs
     )
 
-    start_task >> downloading_task >> end_download
+    start_comparison >> comparing_task >> end_comparison
