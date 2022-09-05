@@ -505,11 +505,11 @@ def purify_object_representation(txt: str) -> str:
     txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
     txt = re.sub(r" id='\d+'>", " id='xxx'>", txt, flags=re.MULTILINE)
     txt = re.sub(r"port=\d+", "port=xxx", txt, flags=re.MULTILINE)
-    txt = re.sub("host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
     # wall_clock_time=Timestamp('2022-08-04 09:25:04.830746-0400'
     txt = re.sub(
-        "wall_clock_time=Timestamp\('.*?',",
-        "wall_clock_time=Timestamp('xxx',",
+        r"wall_clock_time=Timestamp\('.*?',",
+        r"wall_clock_time=Timestamp('xxx',",
         txt,
         flags=re.MULTILINE,
     )

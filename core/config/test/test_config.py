@@ -27,8 +27,8 @@ def _check_config(self: Any, config: cconfig.Config, exp: str, mode: str = "str"
     elif mode == "repr":
         act = repr(config)
     else:
-        raise ValueError(f"Invalid mode='{mode}')
-    self.assert_equal(str(config), exp, fuzzy_match=True)
+        raise ValueError(f"Invalid mode='{mode}'")
+    self.assert_equal(act, exp, fuzzy_match=True)
 
 
 def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
@@ -1917,8 +1917,6 @@ class Test_mark_key_as_read1(hunitest.TestCase):
         exp = ""
         _check_config(self, config, exp)
         #
-
-
 
 
 # TODO(gp): Unit tests all the functions.

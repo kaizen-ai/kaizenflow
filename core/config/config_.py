@@ -177,7 +177,7 @@ class _OrderedConfig(_OrderedDictType):
                     f"Trying to overwrite old value '{old_val}' with new value '{val}'"
                     f" for key '{key}' when update_mode={update_mode}"
                 )
-                msg.append(f"self=\n" + hprint.indent(str(self)))
+                msg.append("self=\n" + hprint.indent(str(self)))
                 msg = "\n".join(msg)
                 raise OverwriteError(msg)
             else:
@@ -190,7 +190,7 @@ class _OrderedConfig(_OrderedDictType):
             if is_key_present:
                 # Key already exists, then keep the old value and issue a warning.
                 _, old_val = super().__getitem__(key)
-                msg = []
+                msg: List[str] = []
                 msg.append(
                     f"Overwriting old value '{old_val}' with new value '{val}'"
                     f" for key '{key}' since update_mode={update_mode}"
@@ -213,12 +213,12 @@ class _OrderedConfig(_OrderedDictType):
                 if was_read and is_been_changed:
                     # The value has already been read and we are trying to change
                     # it, so we need to assert.
-                    msg = []
+                    msg: List[str] = []
                     msg.append(
                         f"Trying to overwrite old value '{old_val}' with new value '{val}'"
                         f" for key '{key}' with clobber_mode={clobber_mode}"
                     )
-                    msg.append(f"self=\n" + hprint.indent(str(self)))
+                    msg.append("self=\n" + hprint.indent(str(self)))
                     msg = "\n".join(msg)
                     raise ClobberError(msg)
         # 3) Assign the value, if needed.
@@ -338,10 +338,10 @@ class Config:
         # TODO(gp): This might be a separate constructor, but it gives problems
         #  with `Config.from_python()`.
         if array is not None:
-            for k, v in array:
-                hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
+            for key, val in array:
+                hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
                 self.__setitem__(
-                    k, v, update_mode=update_mode, clobber_mode=clobber_mode
+                    key, val, update_mode=update_mode, clobber_mode=clobber_mode
                 )
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -648,7 +648,7 @@ class Config:
         """
         _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
-        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
+        dict_: collections.OrderedDict[ScalarKey, Any] = collections.OrderedDict()
         for key, (was_read, val) in self._config.items():
             _ = was_read
             if keep_leaves:
@@ -673,7 +673,7 @@ class Config:
     # /////////////////////////////////////////////////////////////////////////////
 
     # TODO(gp): Add also iteritems()
-    def keys(self) -> List[str]:
+    def keys(self) -> List[ScalarKey]:
         return self._config.keys()
 
     def pop(self, key: str) -> Any:
@@ -746,7 +746,7 @@ class Config:
 
     @staticmethod
     def _resolve_mode(
-        value: Optional[str], ctor_value: str, valid_values: List[str], tag: str
+        value: Optional[str], ctor_value: str, valid_values: Iterable[str], tag: str
     ) -> str:
         if value is None:
             # Use the value from the constructor.
