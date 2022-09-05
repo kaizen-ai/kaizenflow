@@ -204,3 +204,74 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+
+    @umock.patch.object(
+        occxbrok.CcxtBroker,
+        "_get_low_market_price",
+        spec=occxbrok.CcxtBroker._get_low_market_price,
+    )
+    def test_get_fills(
+            self, get_low_market_price_mock: umock.MagicMock
+    ) -> None:
+        """
+        Verify that orders are properly submitted via mocked exchange.
+        """
+        # Prepare test data.
+        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
+        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
+        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
+        tz=America/New_York"
+        orders = omorder.orders_from_string(order_str)
+        #
+        stage = "preprod"
+        contract_type = "spot"
+        account_type = "trading"
+        # Initialize class.
+        broker = self.get_test_broker(stage, contract_type, account_type)
+        broker._minimal_order_limits = {
+            1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
+        }
+        broker._submitted_order_id = 1
+        # Mock low market price for order limit calculation.
+        get_low_market_price_mock.return_value = 0.001
+        # Patch main external source.
+        with umock.patch.object(
+                broker._exchange, "createOrder", create=True
+        ) as create_order_mock:
+            create_order_mock.side_effect = [{"id": 0}]
+            # Run.
+            asyncio.run(
+                broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
+            )
+        with umock.patch.object(
+            broker._exchange, "fetch_orders", create=True
+        ) as fetch_orders_mock:
+            fetch_orders_mock.return_value = [{'info': {'orderId': 0,
+                          'symbol': 'BTCUSDT',
+                          'status': 'FILLED',
+                          'time': '1662242460466',
+                          'updateTime': '1662242460466'},
+                         'id': 0,
+                         'timestamp': 1662242460466,
+                         'symbol': 'BTC/USDT',
+                         'type': 'market',
+                         'side': 'sell',
+                         'price': 19749.8,
+                         'filled': 0.004,
+                         'status': 'closed'}]
+            #
+            fills = broker.get_fills()
+        fill = fills[0]
+        # Check the count of calls.
+        self.assertEqual(fetch_orders_mock.call_count, 1)
+        # Check the args.
+        actual_args = pprint.pformat(tuple(fetch_orders_mock.call_args))
+        expected_args = r"""
+((), {'since': 1662401563623, 'symbol': 'ETH/USDT'})
+"""
+        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
+        # Check fill.
+        self.assert_equal(fill.price, 19749.8)
+        self.assert_equal(fill.num_shares, -0.004)
+        self.assert_equal(fill._fill_id, 0)
+        self.assert_equal(fill.timestamp, 1662242460466)
