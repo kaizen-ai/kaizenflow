@@ -646,14 +646,15 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data1(self) -> None:
         resample_1min = True
+        contract_type = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", contract_type
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         #
         expected_length = 5
         expected_column_names = self.get_expected_column_names()
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        expected_column_unique_values = {"full_symbol": ["binance::spot::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -662,11 +663,11 @@ class TestCcxtSqlRealTimeImClient1(
         shape=(5, 9)
                                     id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00  1.0  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:01:00+00:00  2.0  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:02:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::BTC_USDT
-        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::BTC_USDT
-        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
+        2021-09-09 00:00:00+00:00  1.0  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:01:00+00:00  2.0  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:02:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::spot::BTC_USDT
+        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::spot::BTC_USDT
+        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data1(

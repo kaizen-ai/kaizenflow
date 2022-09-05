@@ -28,7 +28,7 @@ def dassert_is_full_symbol_valid(
 ) -> None:
     """
     Check that a full symbol or all the symbols in a series have valid format,
-    i.e. `exchange::symbol`.
+    i.e. `exchange::contract_type::symbol`.
 
     Note: digits and special symbols (except underscore) are not allowed.
     """
@@ -36,7 +36,7 @@ def dassert_is_full_symbol_valid(
     # TODO(gp): I think we might need non-leading numbers.
     letter_underscore_pattern = "[a-zA-Z_]"
     # Exchanges and symbols must be separated by `::`.
-    regex_pattern = rf"{letter_underscore_pattern}*::{letter_underscore_pattern}*"
+    regex_pattern = rf"{letter_underscore_pattern}*::{letter_underscore_pattern}*::{letter_underscore_pattern}*"
     # Set match pattern.
     if isinstance(full_symbol, pd.Series):
         full_match = full_symbol.str.fullmatch(
@@ -52,7 +52,7 @@ def dassert_is_full_symbol_valid(
     # Valid full symbols must match the pattern.
     hdbg.dassert(
         full_match,
-        "Incorrect full_symbol '%s', it must be `exchange::symbol`",
+        "Incorrect full_symbol '%s', it must be `exchange::contract_type::symbol`",
         full_symbol,
     )
 
@@ -61,28 +61,29 @@ def parse_full_symbol(
     full_symbol: Union[pd.Series, FullSymbol]
 ) -> Tuple[Union[pd.Series, str], Union[pd.Series, str]]:
     """
-    Split a full symbol into exchange and symbol or a series of full symbols
-    into series of exchanges and symbols.
+    Split a full symbol into exchange, contract type and symbol or a series of full symbols
+    into series of exchanges, contract types and symbols.
     """
     dassert_is_full_symbol_valid(full_symbol)
     if isinstance(full_symbol, pd.Series):
         # Get a dataframe with exchange and symbol columns.
         df_exchange_symbol = full_symbol.str.split("::", expand=True)
-        hdbg.dassert_eq(2, df_exchange_symbol.shape[1])
+        hdbg.dassert_eq(3, df_exchange_symbol.shape[1])
         # Get exchange and symbol series.
         exchange = df_exchange_symbol[0]
-        symbol = df_exchange_symbol[1]
+        contract_type = df_exchange_symbol[1]
+        symbol = df_exchange_symbol[2]
     else:
         # Split full symbol on exchange and symbol.
-        exchange, symbol = full_symbol.split("::")
-    return exchange, symbol
+        exchange, contract_type, symbol = full_symbol.split("::")
+    return exchange, contract_type, symbol
 
 
 def build_full_symbol(
-    exchange: Union[pd.Series, str], symbol: Union[pd.Series, str], contract_type: Union[pd.Series, str]
+    exchange: Union[pd.Series, str], contract_type: Union[pd.Series, str], symbol: Union[pd.Series, str]
 ) -> Union[pd.Series, FullSymbol]:
     """
-    Combine exchange and symbol in a full symbol or exchange and symbol series
+    Combine exchange, contract type and symbol in a full symbol or exchange, contract type and symbol series
     in a full symbol series.
     """
     if isinstance(exchange, pd.Series) and isinstance(symbol, pd.Series):

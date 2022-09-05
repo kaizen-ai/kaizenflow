@@ -621,6 +621,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        contract_type: str,
     ) -> None:
         _LOG.debug(hprint.to_str("db_connection table_name"))
         # Real-time implementation has a different mechanism for getting universe.
@@ -630,6 +631,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # the parent class so they go before the parent's init.
         self._table_name = table_name
         self._db_connection = db_connection
+        self._contract_type = contract_type
         super().__init__(vendor, universe_version, resample_1min)
 
     @staticmethod
@@ -655,9 +657,11 @@ class SqlRealTimeImClient(RealTimeImClient):
         currency_exchange_df = hsql.execute_query_to_df(
             self._db_connection, query
         )
+        currency_exchange_df["asset_class"] = self._contract_type
         # Merge these columns to the general `full_symbol` format.
         full_symbols = ivcu.build_full_symbol(
             currency_exchange_df["exchange_id"],
+            currency_exchange_df["asset_class"],
             currency_exchange_df["currency_pair"],
         )
         # Convert to list.
@@ -673,7 +677,6 @@ class SqlRealTimeImClient(RealTimeImClient):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         columns: Optional[List[str]],
-        contract_type: str,
         *,
         full_symbol_col_name: Optional[str] = None,
         # Extra arguments for building a query.
@@ -685,7 +688,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         Extra parameters for building a query can also be passed,
         see keyword args for `_build_select_query`.
 
-        :param full_symbols: a list of full symbols, e.g., `["ftx::BTC_USDT"]`
+        :param full_symbols: a list of full symbols, e.g., `["ftx::spot::BTC_USDT"]`
         :param start_ts: beginning of the time interval
         :param end_ts: end of the time interval
         :param full_symbol_col_name: name of column containing full symbols
@@ -712,10 +715,10 @@ class SqlRealTimeImClient(RealTimeImClient):
             full_symbol_col_name
         )
         # Add asset class column.
-        data["asset_class"] = contract_type
+        data["asset_class"] = self._contract_type
         # Construct a `full_symbol` column.
         data[full_symbol_col_name] = ivcu.build_full_symbol(
-            data["exchange_id"], data["currency_pair"], data["asset_class"]
+            data["exchange_id"], data["asset_class"], data["currency_pair"]
         )
         data = data.drop(["exchange_id", "currency_pair", "asset_class"], axis=1)
         # Convert timestamp column with Unix epoch to timestamp format.
@@ -811,7 +814,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT') # pylint: disable=line-too-long
         exchange_currency_conditions = [
             f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
-            for exchange_id, currency_pair in parsed_symbols
+            for exchange_id, contract_type, currency_pair in parsed_symbols
             if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:
