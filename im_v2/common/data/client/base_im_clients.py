@@ -673,6 +673,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         columns: Optional[List[str]],
+        contract_type: str,
         *,
         full_symbol_col_name: Optional[str] = None,
         # Extra arguments for building a query.
@@ -710,10 +711,13 @@ class SqlRealTimeImClient(RealTimeImClient):
         full_symbol_col_name = self._get_full_symbol_col_name(
             full_symbol_col_name
         )
+        # Add asset class column.
+        data["asset_class"] = contract_type
+        # Construct a `full_symbol` column.
         data[full_symbol_col_name] = ivcu.build_full_symbol(
-            data["exchange_id"], data["currency_pair"]
+            data["exchange_id"], data["currency_pair"], data["asset_class"]
         )
-        data = data.drop(["exchange_id", "currency_pair"], axis=1)
+        data = data.drop(["exchange_id", "currency_pair", "asset_class"], axis=1)
         # Convert timestamp column with Unix epoch to timestamp format.
         data["timestamp"] = data["timestamp"].apply(
             hdateti.convert_unix_epoch_to_timestamp

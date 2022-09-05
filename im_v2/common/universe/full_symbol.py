@@ -79,7 +79,7 @@ def parse_full_symbol(
 
 
 def build_full_symbol(
-    exchange: Union[pd.Series, str], symbol: Union[pd.Series, str]
+    exchange: Union[pd.Series, str], symbol: Union[pd.Series, str], contract_type: Union[pd.Series, str]
 ) -> Union[pd.Series, FullSymbol]:
     """
     Combine exchange and symbol in a full symbol or exchange and symbol series
@@ -87,9 +87,9 @@ def build_full_symbol(
     """
     if isinstance(exchange, pd.Series) and isinstance(symbol, pd.Series):
         hdbg.dassert_eq(exchange.shape[0], symbol.shape[0])
-        full_symbol = exchange + "::" + symbol
+        full_symbol = exchange + "::" + contract_type + "::" + symbol
     elif isinstance(exchange, str) and isinstance(symbol, str):
-        full_symbol = f"{exchange}::{symbol}"
+        full_symbol = f"{exchange}::{contract_type}::{symbol}"
     else:
         raise TypeError(
             f"type(exchange) = `{type(exchange)}`,"
