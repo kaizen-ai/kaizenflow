@@ -408,9 +408,6 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         """
         # Load market data for replaying.
         market_data_df = cofinanc.get_market_data_df5()
-        # TODO(Grisha): @Dan we should use separate example systems for
-        # reconciliation otherwise we should keep the current ones in
-        # sync.
         time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
         # TODO(Grisha): @Dan consider a way to pass the number of 5-minute intervals.
         # Make system to run for 3 5-minute intervals.
