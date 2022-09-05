@@ -2,7 +2,7 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
-import im_v2.common.data.client.im_client_test_case as imvcdcimctc
+import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client.crypto_chassis_clients_example as imvccdcccce
 
 
@@ -10,7 +10,7 @@ import im_v2.crypto_chassis.data.client.crypto_chassis_clients_example as imvccd
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
-class TestCryptoChassisHistoricalPqByTileClient1(imvcdcimctc.ImClientTestCase):
+class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
     @pytest.mark.slow("Slow via GH, fast on the server")
     def test1(self) -> None:
         """

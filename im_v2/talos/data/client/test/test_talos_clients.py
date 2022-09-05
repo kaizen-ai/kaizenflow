@@ -5,7 +5,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hsql as hsql
-import im_v2.common.data.client.im_client_test_case as imvcdcimctc
+import im_v2.common.data.client as icdc
 import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
@@ -33,7 +33,7 @@ def get_expected_column_names() -> List[str]:
 # #############################################################################
 
 # TODO(Grisha): "Update Talos code CmTask #1967".
-class TestTalosHistoricalPqByTileClient1(imvcdcimctc.ImClientTestCase):
+class TestTalosHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
 
@@ -348,7 +348,7 @@ class TestTalosHistoricalPqByTileClient1(imvcdcimctc.ImClientTestCase):
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
-class TestTalosHistoricalPqByTileClient2(imvcdcimctc.ImClientTestCase):
+class TestTalosHistoricalPqByTileClient2(icdc.ImClientTestCase):
     """
     TODO(Grisha): Test multiple exchanges CmTask #1533.
 
@@ -667,7 +667,7 @@ class TestTalosHistoricalPqByTileClient2(imvcdcimctc.ImClientTestCase):
 
 
 class TestTalosSqlRealTimeImClient1(
-    imvcdcimctc.ImClientTestCase, imvcddbut.TestImDbHelper
+    icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
     @classmethod
     def get_id(cls) -> int:
@@ -1351,7 +1351,7 @@ class TestTalosSqlRealTimeImClient1(
 
 
 class TestMockSqlRealTimeImClient1(
-    imvcdcimctc.ImClientTestCase, imvcddbut.TestImDbHelper
+    icdc.ImClientTestCase, imvcddbut.TestImDbHelper
 ):
     """
     For all the test methods see description of corresponding private method in
