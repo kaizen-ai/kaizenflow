@@ -286,6 +286,8 @@ def dassert_indices_equal(
 def dassert_columns_equal(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
+    sort_cols: bool = False,
 ) -> None:
     """
     Ensure that `df1` and `df2` have the same columns.
@@ -294,6 +296,10 @@ def dassert_columns_equal(
     """
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
+    if sort_cols:
+        _LOG.debug("Sorting dataframe columns.")
+        df1 = df1.sort_index(axis=1)
+        df2 = df2.sort_index(axis=1)
     hdbg.dassert(
         df1.columns.equals(df2.columns),
         "df1.columns.difference(df2.columns)=\n%s\ndf2.columns.difference(df1.columns)=\n%s",
@@ -303,14 +309,13 @@ def dassert_columns_equal(
 
 
 def dassert_axes_equal(
-    df1: pd.DataFrame,
-    df2: pd.DataFrame,
+    df1: pd.DataFrame, df2: pd.DataFrame, *, sort_cols: bool = False
 ) -> None:
     """
     Ensure that `df1` and `df2` have the same index and same columns.
     """
     dassert_indices_equal(df1, df2)
-    dassert_columns_equal(df1, df2)
+    dassert_columns_equal(df1, df2, sort_cols=sort_cols)
 
 
 # #############################################################################

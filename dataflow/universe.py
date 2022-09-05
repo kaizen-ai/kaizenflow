@@ -336,7 +336,7 @@ def get_universe(universe_str: str) -> List[Amid]:
 
 # def set_amid(
 #    config: cconfig.Config,
-#    amid_key: cconfig.Config.Key,
+#    amid_key: cconfig.CompoundKey,
 #    amid: Amid,
 #    assume_dummy: bool = True,
 # ) -> cconfig.Config:
@@ -357,7 +357,7 @@ def get_universe(universe_str: str) -> List[Amid]:
 #
 #
 # def build_universe_variants(
-#    config: cconfig.Config, amid_key: cconfig.Config.Key, universe_str: str
+#    config: cconfig.Config, amid_key: cconfig.CompoundKey, universe_str: str
 # ) -> cconfig.Config:
 #    """
 #    Add instrument to model.

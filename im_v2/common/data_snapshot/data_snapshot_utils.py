@@ -20,7 +20,7 @@ def get_data_snapshot(
     """
     Get data snapshot:
 
-    - Historical data -- latest snapshot
+    - Historical data: the latest available historical snapshot
 
         E.g.:
         ```
@@ -28,7 +28,8 @@ def get_data_snapshot(
         data_snapshot = "latest"
         im_client = ImClient(root_dir, ..., data_snapshot, ...)
         ```
-    - Historical data -- numeric snapshot
+    - Historical specific snapshot: identified by a date in the format
+      "YYYYMMDD"
 
          E.g.:
          ```
@@ -36,7 +37,8 @@ def get_data_snapshot(
          data_snapshot = "20220508"
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
-    - Daily updated data -- has no snapshot, `data_snapshot` param is an empty string
+    - Daily updated data: a snapshot updated daily. `data_snapshot` param
+      is an empty string
 
          E.g.:
          ```
