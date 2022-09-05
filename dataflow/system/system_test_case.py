@@ -122,7 +122,7 @@ def save_ccxt_market_data(
     im_client_params: Any,
     wall_clock_time: pd.Timestamp,
     *,
-    period: str = "15D"
+    period: pd.Timedelta = pd.Timedelta("15D")
 ) -> None:
     # pylint: disable=line-too-long
     """
@@ -133,7 +133,7 @@ def save_ccxt_market_data(
         If `None`, all the symbols from the universe are taken
     :param im_client_params: params to initialize `ImClient`
     :param wall_clock_time: wall clock time
-    :param period: how much of data is needed.
+    :param period: how much of data is needed
 
     ```
       index                    end_ts   asset_id       full_symbol      open       high        low     close   volume              knowledge_timestamp                  start_ts
@@ -161,7 +161,6 @@ def save_ccxt_market_data(
     )
     # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`].
     file_path = self.get_file_path()
-    period = pd.Timedelta(period)
     mdata.save_market_data(market_data_client, file_path, period)
     _LOG.warning("Updated file '%s'", file_path)
 
