@@ -28,7 +28,7 @@ def dassert_is_full_symbol_valid(
 ) -> None:
     """
     Check that a full symbol or all the symbols in a series have valid format,
-    i.e. `exchange::contract_type::symbol`.
+    i.e. `exchange::asset_class::symbol`.
 
     Note: digits and special symbols (except underscore) are not allowed.
     """
@@ -52,7 +52,7 @@ def dassert_is_full_symbol_valid(
     # Valid full symbols must match the pattern.
     hdbg.dassert(
         full_match,
-        "Incorrect full_symbol '%s', it must be `exchange::contract_type::symbol`",
+        "Incorrect full_symbol '%s', it must be `exchange::asset_class::symbol`",
         full_symbol,
     )
 
@@ -61,8 +61,8 @@ def parse_full_symbol(
     full_symbol: Union[pd.Series, FullSymbol]
 ) -> Tuple[Union[pd.Series, str], Union[pd.Series, str]]:
     """
-    Split a full symbol into exchange, contract type and symbol or a series of full symbols
-    into series of exchanges, contract types and symbols.
+    Split a full symbol into exchange, asset class and symbol or a series of full symbols
+    into series of exchanges, asset class and symbols.
     """
     dassert_is_full_symbol_valid(full_symbol)
     if isinstance(full_symbol, pd.Series):
@@ -71,26 +71,26 @@ def parse_full_symbol(
         hdbg.dassert_eq(3, df_exchange_symbol.shape[1])
         # Get exchange and symbol series.
         exchange = df_exchange_symbol[0]
-        contract_type = df_exchange_symbol[1]
+        asset_class = df_exchange_symbol[1]
         symbol = df_exchange_symbol[2]
     else:
         # Split full symbol on exchange and symbol.
-        exchange, contract_type, symbol = full_symbol.split("::")
-    return exchange, contract_type, symbol
+        exchange, asset_class, symbol = full_symbol.split("::")
+    return exchange, asset_class, symbol
 
 
 def build_full_symbol(
-    exchange: Union[pd.Series, str], contract_type: Union[pd.Series, str], symbol: Union[pd.Series, str]
+    exchange: Union[pd.Series, str], asset_class: Union[pd.Series, str], symbol: Union[pd.Series, str]
 ) -> Union[pd.Series, FullSymbol]:
     """
-    Combine exchange, contract type and symbol in a full symbol or exchange, contract type and symbol series
+    Combine exchange, asset class and symbol in a full symbol or exchange, asset class and symbol series
     in a full symbol series.
     """
     if isinstance(exchange, pd.Series) and isinstance(symbol, pd.Series):
         hdbg.dassert_eq(exchange.shape[0], symbol.shape[0])
-        full_symbol = exchange + "::" + contract_type + "::" + symbol
+        full_symbol = exchange + "::" + asset_class + "::" + symbol
     elif isinstance(exchange, str) and isinstance(symbol, str):
-        full_symbol = f"{exchange}::{contract_type}::{symbol}"
+        full_symbol = f"{exchange}::{asset_class}::{symbol}"
     else:
         raise TypeError(
             f"type(exchange) = `{type(exchange)}`,"
