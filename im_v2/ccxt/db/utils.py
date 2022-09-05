@@ -68,8 +68,8 @@ def get_ccxt_create_bid_ask_table_query() -> str:
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
-            bid_ask NUMERIC,
             bid_size NUMERIC,
+            bid_price NUMERIC,
             ask_size NUMERIC,
             ask_price NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
@@ -90,8 +90,8 @@ def get_ccxt_create_bid_ask_futures_table_query() -> str:
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
-            bid_ask NUMERIC,
             bid_size NUMERIC,
+            bid_price NUMERIC,
             ask_size NUMERIC,
             ask_price NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
