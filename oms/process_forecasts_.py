@@ -734,6 +734,14 @@ class ForecastProcessor:
                 style=style,
                 **kwargs,
             )
+        elif backend == "cc_pomo":
+            style = self._optimizer_dict["params"]["style"]
+            kwargs = self._optimizer_dict["params"]["kwargs"]
+            df = ocalopti.compute_target_positions_in_cash(
+                assets_and_predictions,
+                style=style,
+                **kwargs,
+            )
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 

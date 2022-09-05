@@ -23,6 +23,83 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+def compute_target_cc_positions_in_cash(
+    df: pd.DataFrame,
+    *,
+    style: str,
+    **kwargs,
+) -> pd.DataFrame:
+    """
+    Compute target trades from holdings (dollar-valued) and predictions.
+
+    This is a stand-in for optimization. This function does not have access to
+    prices and so does not perform any conversions to or from shares. It also
+    needs to be told the id associated with cash.
+
+    :param df: a dataframe with current positions (in dollars) and predictions
+    :return: a dataframe with target positions and trades
+        (denominated in dollars)
+    """
+    # Sanity-check the dataframe.
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert(not df.empty)
+    hdbg.dassert_is_subset(
+        ["asset_id", "prediction", "volatility", "position"], df.columns
+    )
+    hdbg.dassert_not_in("target_position", df.columns)
+    hdbg.dassert_not_in("target_trade", df.columns)
+    #
+    hdbg.dassert(not df["prediction"].isna().any())
+    hdbg.dassert(not df["volatility"].isna().any())
+    hdbg.dassert(not df["position"].isna().any())
+    #
+    df = df.set_index("asset_id")
+    hdbg.dassert(not df.index.has_duplicates)
+    #
+    predictions = df["prediction"].rename(0).to_frame().T
+    volatility = df["volatility"].rename(0).to_frame().T
+    if style == "cross_sectional":
+        target_positions = cofinanc.compute_target_positions_cross_sectionally(
+            predictions,
+            volatility,
+            **kwargs,
+        )
+    elif style == "longitudinal":
+        target_positions = cofinanc.compute_target_positions_longitudinally(
+            predictions,
+            volatility,
+            spread=None,
+            **kwargs,
+        )
+    else:
+        raise ValueError("Unsupported `style`=%s", style)
+    hdbg.dassert_eq(target_positions.shape[0], 1)
+    target_positions = pd.Series(
+        target_positions.values[0],
+        index=target_positions.columns,
+        name="target_position",
+        dtype="float",
+    )
+    _LOG.debug(
+        "`target_positions`=\n%s",
+        hpandas.df_to_str(
+            target_positions, print_dtypes=True, print_shape_info=True
+        ),
+    )
+    # These positions are expressed in dollars.
+    current_positions = df["position"]
+    _LOG.debug(
+        "`current_positions`=\n%s",
+        hpandas.df_to_str(
+            current_positions, print_dtypes=True, print_shape_info=True
+        ),
+    )
+    target_trades = target_positions - current_positions
+    df["target_position"] = target_positions
+    df["target_notional_trade"] = target_trades
+    return df
+
+
 def compute_target_positions_in_cash(
     df: pd.DataFrame,
     *,
