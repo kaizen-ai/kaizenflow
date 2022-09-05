@@ -59,6 +59,51 @@ def get_ccxt_ohlcv_futures_create_table_query() -> str:
             """
     return query
 
+
+def get_ccxt_create_bid_ask_table_query() -> str:
+    """
+    Get SQL query to create CCXT OHLCV futures table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            bid_ask NUMERIC,
+            bid_size NUMERIC,
+            ask_size NUMERIC,
+            ask_price NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
+            end_download_timestamp TIMESTAMP WITH TIME ZONE,
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE,
+            UNIQUE(timestamp, exchange_id, currency_pair)
+            )
+            """
+    return query
+
+
+def get_ccxt_create_bid_ask_futures_table_query() -> str:
+    """
+    Get SQL query to create CCXT OHLCV futures table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            bid_ask NUMERIC,
+            bid_size NUMERIC,
+            ask_size NUMERIC,
+            ask_price NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
+            end_download_timestamp TIMESTAMP WITH TIME ZONE,
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE,
+            UNIQUE(timestamp, exchange_id, currency_pair)
+            )
+            """
+    return query
+
+
 def get_exchange_name_create_table_query() -> str:
     """
     Get SQL query to define CCXT crypto exchange names.
