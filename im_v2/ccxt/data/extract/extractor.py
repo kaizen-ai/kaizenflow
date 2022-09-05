@@ -208,11 +208,11 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Assign exchange_id to make it symmetrical to other vendors.
         _ = exchange_id
         # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
-        currency_pair = self.convert_currency_pair(currency_pair)
+        currency_pair = self.convert_currency_pair(currency_pair, )
         # Download order book data.
-        order_book = self._exchange.fetch_order_book(currency_pair)
+        order_book = self._exchange.fetch_order_book(currency_pair, depth)
+        order_book["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
         order_book = pd.DataFrame.from_dict(order_book)
-        order_book = order_book.loc[:depth]
         # Separate price and size into columns.
         order_book[["bid_price", "bid_size"]] = pd.DataFrame(
             order_book.bids.to_list(), index=order_book.index
@@ -220,6 +220,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         order_book[["ask_price", "ask_size"]] = pd.DataFrame(
             order_book.asks.to_list(), index=order_book.index
         )
+        order_book["level"] = order_book.index + 1
         # Select bid/ask columns.
         bid_ask_columns = [
             "timestamp",
@@ -227,6 +228,8 @@ class CcxtExtractor(imvcdexex.Extractor):
             "bid_size",
             "ask_price",
             "ask_size",
+            "end_download_timestamp",
+            "level"
         ]
         bid_ask = order_book[bid_ask_columns]
         return bid_ask
