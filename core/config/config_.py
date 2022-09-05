@@ -746,7 +746,10 @@ class Config:
 
     @staticmethod
     def _resolve_mode(
-        value: Optional[str], ctor_value: str, valid_values: Iterable[str], tag: str
+        value: Optional[str],
+        ctor_value: str,
+        valid_values: Iterable[str],
+        tag: str,
     ) -> str:
         if value is None:
             # Use the value from the constructor.

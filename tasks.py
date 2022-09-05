@@ -104,8 +104,8 @@ try:
         pytest_buildmeister_check,
         pytest_collect_only,
     )
-except ImportError as e:
-    #print(e)
+except ImportError:
+    # print(e)
     pass
 
 

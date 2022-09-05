@@ -20,7 +20,9 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _check_config(self: Any, config: cconfig.Config, exp: str, mode: str = "str") -> None:
+def _check_config(
+    self: Any, config: cconfig.Config, exp: str, mode: str = "str"
+) -> None:
     _LOG.debug("config=\n%s", config)
     if mode == "str":
         act = str(config)
@@ -1781,7 +1783,9 @@ class _Config_step_through_TestCase1(hunitest.TestCase):
     result.
     """
 
-    def step_through(self, stmt: str, exp: Optional[str], mode: str, globals: Dict) -> str:
+    def step_through(
+        self, stmt: str, exp: Optional[str], mode: str, globals: Dict
+    ) -> str:
         """
         - Execute statement stmt
         - Print the resulting config
@@ -1803,11 +1807,15 @@ class _Config_step_through_TestCase1(hunitest.TestCase):
         act = hprint.frame(stmt) + "\n" + act
         return act
 
-    def run_steps_assert_string(self, workload: List[Tuple[str, Optional[str]]], mode: str, globals: Dict) -> None:
+    def run_steps_assert_string(
+        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals: Dict
+    ) -> None:
         for stmt, exp in workload:
             self.step_through(stmt, exp, mode, globals)
 
-    def run_steps_check_string(self, workload: List[str], mode: str, globals: Dict) -> None:
+    def run_steps_check_string(
+        self, workload: List[str], mode: str, globals: Dict
+    ) -> None:
         exp = None
         res = []
         for stmt in workload:
@@ -1874,6 +1882,14 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
         mode = "repr"
         self.run_steps_assert_string(workload, mode, globals())
 
+    def test_check_string_str1(self) -> None:
+        mode = "str"
+        self._test_check_string1(mode)
+
+    def test_check_string_repr1(self) -> None:
+        mode = "repr"
+        self._test_check_string1(mode)
+
     # ////////////////////////////////////////////////////////////////////////////
 
     def _test_check_string1(self, mode: str) -> None:
@@ -1889,14 +1905,6 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
         workload.append(stmt)
         #
         self.run_steps_check_string(workload, mode, globals())
-
-    def test_check_string_str1(self) -> None:
-        mode = "str"
-        self._test_check_string1(mode)
-
-    def test_check_string_repr1(self) -> None:
-        mode = "repr"
-        self._test_check_string1(mode)
 
 
 # #############################################################################
