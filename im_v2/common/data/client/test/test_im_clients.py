@@ -448,9 +448,14 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
 
     @pytest.mark.slow("Slow via GH, fast on server.")
     def test1(self) -> None:
+        """
+        Compare daily updating data min and max timestamps are in the yesterday-today
+        time range.
+        
+        E.g., "2022.08.28-2022.08.29".
+        """
         # Initialize client in order to get data for the previous day.
-        resample_1min = False
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3(resample_1min)
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3()
         full_symbols = ["binance::APE_USDT", "binance::BTC_USDT"]
         # Get the current day to calculate start date. Use `pd.Timestamp` instead of
         # `datetime.datetime` since dataset timestamps are pandas type.
@@ -467,8 +472,13 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
         )
         # Check data timestamps with only year, month, day, beacause time for both values
         # won't be equal. So compare min and max timestamps.
-        actual = f"{data.index.min().strftime('%Y.%m.%d')}-{data.index.max().strftime('%Y.%m.%d')}"
+        data_min_timestamp = data.index.min().strftime('%Y.%m.%d')
+        data_max_timestamp = data.index.max().strftime('%Y.%m.%d') 
+        actual = f"{data_min_timestamp}-{data_min_timestamp}"
+        #
+        expected_min_timestamp = start_ts.strftime('%Y.%m.%d')
+        expected_max_timestamp = end_ts.strftime('%Y.%m.%d')
         expected = (
-            f"{start_ts.strftime('%Y.%m.%d')}-{end_ts.strftime('%Y.%m.%d')}"
+            f"{expected_min_timestamp}-{expected_max_timestamp}"
         )
         self.assert_equal(actual, expected)

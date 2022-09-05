@@ -176,17 +176,15 @@ def get_CcxtHistoricalPqByTileClient_example2(
     return ccxt_parquet_client
 
 
-def get_CcxtHistoricalPqByTileClient_example3(
-    resample_1min: bool,
-) -> imvcdccccl.CcxtHistoricalPqByTileClient:
+def get_CcxtHistoricalPqByTileClient_example3() -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Client is initialized to process CCXT data for:
 
-    - universe version: "v7"
     - contract type: "futures"
     - data_snapshot: ""
     """
-    universe_version = "v7"
+    resample_1min = False
+    universe_version = None
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
     root_dir = os.path.join(s3_bucket_path, "reorg", "daily_staged.airflow.pq")
