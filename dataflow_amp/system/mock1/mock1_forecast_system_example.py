@@ -12,6 +12,7 @@ import core.config as cconfig
 import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import im_v2.common.data.client as icdc
+import im_v2.ccxt.data.client as icdcl
 
 # #############################################################################
 # Mock1_ForecastSystem_example
@@ -182,13 +183,45 @@ def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
     # Market takes 10 seconds to send the bar.
     system.config["market_data_config", "delay_in_secs"] = 10
     #
-    system.config["dag_runner_config", "fit_at_beginning"] = system.config[
-        "dag_builder_object"
-    ].fit_at_beginning
     # Exercise the system for 3 5-minute intervals.
     system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
         60 * 5 * 3
     )
     # Duration of the bar is 5 minutes.
     system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
+    return system
+
+
+def get_Mock1_Time_ForesactSystem_for_unit_tests_example1(backtest_config) -> dtfsys.System:
+    """
+    Build C1b_ForecastSystem and fill the `System.config`.
+    """
+    system = dtfasmmfosy.Mock1_ForecastSystem()
+    #
+    system = dtfsys.apply_backtest_config(system, backtest_config)
+    # Fill pipeline-specific backtest config parameters.
+    # TODO(gp): These 2 params should go inside apply_backtest_config.
+    system.config["backtest_config", "freq_as_pd_str"] = "M"
+    system.config["backtest_config", "lookback_as_pd_str"] = "90D"
+    # Fill `MarketData` related config.
+    system.config[
+        "market_data_config", "im_client_ctor"
+    ] = icdcl.get_CcxtHistoricalPqByTileClient_example1
+    im_client_config = {
+        "universe_version": None,
+        "resample_1min": True,
+        "dataset": "ohlcv",
+        "contract_type": "futures",
+        "data_snapshot": "latest",
+    }
+    system.config[
+        "market_data_config", "im_client_config"
+    ] = cconfig.Config.from_dict(im_client_config)
+    #
+    system = dtfsys.apply_market_data_config(system)
+    # Set the research PNL parameters.
+    # TODO(gp): Create `apply_research_pnl` and pass these params.
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj"
     return system

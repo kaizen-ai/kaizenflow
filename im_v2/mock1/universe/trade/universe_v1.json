@@ -1,7 +1,7 @@
 {
   "mock1": {
     "binance": [
-      "ADA_USDT",
+      "ETH_USDT",
       "BTC_USDT"
     ]
   }

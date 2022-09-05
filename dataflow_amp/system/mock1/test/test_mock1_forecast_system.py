@@ -11,7 +11,7 @@ import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
 import im_v2.ccxt.data.client as icdcl
-
+import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
@@ -340,7 +340,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
 
 
 class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
-    dtfsytsytc.NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
+    dtfsys.NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
 ):
     """
     See the parent class for description.
@@ -365,7 +365,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         resample_1min = True
         dataset = "ohlcv"
         contract_type = "futures"
-        data_snapshot = None
+        data_snapshot = "latest"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
             resample_1min,
@@ -392,7 +392,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         mdata.save_market_data(market_data_df, file_path, period)
         _LOG.warning("Updated file '%s'", file_path)
 
-    def get_Mock1_NonTime_ForecastSystem_builder_func(self) -> Callable:
+    def get_NonTime_ForecastSystem_builder_func(self) -> Callable:
         """
         Get the function building the (non-time) `ForecastSystem`.
         """
@@ -401,15 +401,15 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # In the current system, the time periods are set manually,
         # so the value of `time_interval_str` (e.g., "2022-01-01_2022-02-01")
         # doesn't affect tests.
-        backtest_config = f"mock1_{universe_version}-all.5T.2022-01-01_2022-02-01"
+        backtest_config = f"mock1_{universe_version}-top2.5T.2022-01-01_2022-02-01"
         non_time_system_builder_func = (
-            lambda: dtfasmmfsex.get_Mock1_ForecastSystem_for_simulation_example1(
+            lambda: dtfasmmfsex.get_Mock1_Time_ForesactSystem_for_unit_tests_example1(
                 backtest_config
             )
         )
         return non_time_system_builder_func
 
-    def get_Mock1_NonTime_ForecastSystem_from_Time_ForecastSystem(
+    def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
         self, time_system: dtfsys.System
     ) -> dtfsys.System:
         """
@@ -445,22 +445,13 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
             self.get_NonTime_ForecastSystem_builder_func()
         )
         non_time_system = non_time_system_builder_func()
-        im_client_config = {
-            "universe_version": "v1",
-            "resample_1min": True,
-            "dataset": "ohlcv",
-            "contract_type": "futures",
-            "data_snapshot": None,
-        }
-        non_time_system.config["market_data_config", "im_client_ctor"] = im_client_config
-        non_time_system.config["market_data_config", "im_client_config"] = cconfig.Config()
         non_time_system.config[
             "backtest_config", "start_timestamp_with_lookback"
         ] = start_timestamp
         non_time_system.config["backtest_config", "end_timestamp"] = end_timestamp
         return non_time_system
 
-    def get_Mock1_Time_ForecastSystem(self) -> dtfsys.System:
+    def get_Time_ForecastSystem(self) -> dtfsys.System:
         """
         See description in the parent test case class.
         """
@@ -495,5 +486,5 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
     # @pytest.mark.skip("Run manually")
     @pytest.mark.superslow("~200 seconds.")
     def test1(self) -> None:
-        output_col_name = "vwap.ret_0.vol_adj_2_hat"
+        output_col_name = "vwap.ret_0.vol_adj"
         self._test1(output_col_name)
