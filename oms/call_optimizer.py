@@ -6,7 +6,7 @@ import oms.call_optimizer as ocalopti
 
 import logging
 import os
-from typing import List
+from typing import Any, List
 
 import invoke
 import pandas as pd
@@ -23,10 +23,61 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
+def check_notional_limits(broker: Any, target_trades: Any):
+    return target_trades
+
+
+def _check_notional_limit(broker: Any, order: Any):
+    """
+    Check if the order matches the minimum quantity for the asset.
+
+    The functions check both the flat amount of the asset and the total
+    cost of the asset in the order. If the order amount does not match,
+    the order is changed to be slightly above the minimal amount.
+
+    :param order: order to be submitted
+    """
+    asset_limits = broker.minimal_order_limits[order.asset_id]
+    min_amount = asset_limits["min_amount"]
+    if abs(order.diff_num_shares) < min_amount:
+        if order.diff_num_shares < 0:
+            min_amount = -min_amount
+        _LOG.warning(
+            "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
+            str(order),
+            order.diff_num_shares,
+            min_amount,
+        )
+        order.diff_num_shares = min_amount
+    # Check if the order is not below minimal cost.
+    #
+    # Estimate the total cost of the order based on the low market price.
+    #  Note: low price is chosen to account for possible price spikes.
+    low_price = broker.get_low_market_price(order.asset_id)
+    total_cost = low_price * abs(order.diff_num_shares)
+    min_cost = asset_limits["min_cost"]
+    if total_cost <= min_cost:
+        # Set amount based on minimal notional price.
+        required_amount = round(min_cost * 3 / low_price, 2)
+        if order.diff_num_shares < 0:
+            required_amount = -required_amount
+        _LOG.warning(
+            "Order: %s\nAmount of asset in order is below minimal base: %s. \
+                Setting to following amount based on notional limit: %s",
+            str(order),
+            min_cost,
+            required_amount,
+        )
+        # Change number of shares to minimal amount.
+        order.diff_num_shares = required_amount
+    return order
+
+
 def compute_target_cc_positions_in_cash(
     df: pd.DataFrame,
     *,
     style: str,
+    broker: Any,
     **kwargs,
 ) -> pd.DataFrame:
     """
@@ -95,6 +146,7 @@ def compute_target_cc_positions_in_cash(
         ),
     )
     target_trades = target_positions - current_positions
+    # Check the target trades for matching the minimal notional limit.
     df["target_position"] = target_positions
     df["target_notional_trade"] = target_trades
     return df
@@ -172,6 +224,7 @@ def compute_target_positions_in_cash(
         ),
     )
     target_trades = target_positions - current_positions
+    target_trades = check_notional_limits(target_trades)
     df["target_position"] = target_positions
     df["target_notional_trade"] = target_trades
     return df

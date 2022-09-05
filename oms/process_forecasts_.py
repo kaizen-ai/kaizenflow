@@ -737,9 +737,10 @@ class ForecastProcessor:
         elif backend == "cc_pomo":
             style = self._optimizer_dict["params"]["style"]
             kwargs = self._optimizer_dict["params"]["kwargs"]
-            df = ocalopti.compute_target_positions_in_cash(
+            df = ocalopti.compute_target_cc_positions_in_cash(
                 assets_and_predictions,
                 style=style,
+                broker=self._portfolio.broker,
                 **kwargs,
             )
         elif backend == "batch_optimizer":

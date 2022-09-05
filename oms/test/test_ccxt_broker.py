@@ -132,7 +132,7 @@ class TestCcxtBroker1(hunitest.TestCase):
     @umock.patch.object(
         occxbrok.CcxtBroker,
         "_get_low_market_price",
-        spec=occxbrok.CcxtBroker._get_low_market_price,
+        spec=occxbrok.CcxtBroker.get_low_market_price,
     )
     def test_submit_orders(
         self, get_low_market_price_mock: umock.MagicMock
@@ -152,7 +152,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         account_type = "trading"
         # Initialize class.
         broker = self.get_test_broker(stage, contract_type, account_type)
-        broker._minimal_order_limits = {
+        broker.minimal_order_limits = {
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
         broker._submitted_order_id = 1
