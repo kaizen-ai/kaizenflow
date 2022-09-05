@@ -122,7 +122,7 @@ def save_ccxt_market_data(
     im_client_params: Any,
     wall_clock_time: pd.Timestamp,
     *,
-    period: pd.Timedelta = pd.Timedelta("15D")
+    period: pd.Timedelta = pd.Timedelta("15D"),
 ) -> None:
     # pylint: disable=line-too-long
     """
