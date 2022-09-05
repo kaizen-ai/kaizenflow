@@ -5,7 +5,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
 import logging
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 import pandas as pd
 
@@ -14,6 +14,7 @@ import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import im_v2.im_lib_tasks as imvimlita
@@ -56,7 +57,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     asset_ids: List[int],
 ) -> mdata.MarketData:
     """
-    Build a MarketData backed with RealTimeImClient.
+    Build a `MarketData` backed with `RealTimeImClient`.
     """
     # TODO(Grisha): @Dan pass as much as possible via `system.config`.
     resample_1min = False
@@ -76,6 +77,34 @@ def get_Cx_RealTimeMarketData_prod_instance1(
         im_client, asset_ids
     )
     return market_data
+
+
+def get_Cx_ReplayedMarketData_df_instance1(
+    file_path: str, aws_profile: Optional[str] = None
+) -> pd.DataFrame:
+    """
+    Get data for `ReplayedMarketData`.
+
+    :param file_path: either s3 or a local root path to the file with data
+    :param aws_profile: AWS profile, e.g., "ck"
+    :return: data for replaying
+    """
+    hs3.dassert_is_valid_aws_profile(root_dir, aws_profile)
+    # `get_ReplayedTimeMarketData_from_df()` is looking for "start_datetime"
+    # and "end_datetime" columns by default and we do not have a way to
+    # change it yet since `get_EventLoop_MarketData_from_df` has no kwargs.
+    column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
+    timestamp_db_column = "end_datetime"
+    datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
+    # Get market data for replaying.
+    market_data_df = mdata.load_market_data(
+        file_path,
+        aws_profile=aws_profile,
+        column_remap=column_remap,
+        timestamp_db_column=timestamp_db_column,
+        datetime_columns=datetime_columns,
+    )
+    return market_data_df
 
 
 # #############################################################################
