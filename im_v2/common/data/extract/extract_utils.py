@@ -30,91 +30,13 @@ from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
 
-
-def add_exchange_download_args(
+def _add_common_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
-    Add the command line options exchange download.
-    """
-    parser.add_argument(
-        "--start_timestamp",
-        required=True,
-        action="store",
-        type=str,
-        help="Beginning of the downloaded period",
-    )
-    parser.add_argument(
-        "--exchange_id",
-        action="store",
-        required=True,
-        type=str,
-        help="Name of exchange to download data from",
-    )
-    parser.add_argument(
-        "--universe",
-        action="store",
-        required=True,
-        type=str,
-        help="Trade universe to download data for",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=False,
-        type=str,
-        help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--file_format",
-        action="store",
-        required=False,
-        default="parquet",
-        type=str,
-        help="File format to save files on disk",
-    )
-    parser.add_argument(
-        "--contract_type",
-        action="store",
-        required=False,
-        default="spot",
-        type=str,
-        help="Type of contract, spot or futures",
-    )
-    parser.add_argument(
-        "--incremental",
-        action="store_true",
-        required=False,
-        help="Append data instead of overwriting it",
-    )
-    return parser
+    Add command line arguments common to all downloaders.
 
-
-def add_periodical_download_args(
-    parser: argparse.ArgumentParser,
-) -> argparse.ArgumentParser:
     """
-    Add the command line options exchange download.
-    """
-    parser.add_argument(
-        "--start_time",
-        action="store",
-        required=True,
-        type=str,
-        help="Timestamp when the download should start (e.g., '2022-05-03 00:40:00')",
-    )
-    parser.add_argument(
-        "--stop_time",
-        action="store",
-        required=True,
-        type=str,
-        help="Timestamp when the script should stop (e.g., '2022-05-03 00:30:00')",
-    )
-    parser.add_argument(
-        "--interval_min",
-        type=int,
-        help="Interval between download attempts, in minutes",
-    )
     parser.add_argument(
         "--exchange_id",
         action="store",
@@ -134,6 +56,7 @@ def add_periodical_download_args(
         action="store",
         required=True,
         type=str,
+        choices=["ohlcv", "bid_ask", "trades"],
         help="OHLCV, bid/ask or trades data.",
     )
     parser.add_argument(
@@ -143,6 +66,81 @@ def add_periodical_download_args(
         default="spot",
         type=str,
         help="Type of contract, spot or futures",
+    )
+    parser.add_argument(
+        "--bid_ask_depth",
+        action="store",
+        required=False,
+        default=10,
+        type=int,
+        help="Specifies depth of order book to \
+            download (applies when data_type=bid_ask).",
+    )
+    return parser
+
+def add_exchange_download_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options exchange download.
+    """
+    parser = _add_common_download_args(parser)
+    parser.add_argument(
+        "--start_timestamp",
+        required=False,
+        action="store",
+        type=str,
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=False,
+        type=str,
+        help="End of the downloaded period",
+    )
+    parser.add_argument(
+        "--file_format",
+        action="store",
+        required=False,
+        default="parquet",
+        type=str,
+        help="File format to save files on disk",
+    )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        required=False,
+        help="Append data instead of overwriting it",
+    )
+    return parser
+
+
+def add_periodical_download_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options exchange download.
+    """
+    parser = _add_common_download_args(parser)
+    parser.add_argument(
+        "--start_time",
+        action="store",
+        required=True,
+        type=str,
+        help="Timestamp when the download should start (e.g., '2022-05-03 00:40:00')",
+    )
+    parser.add_argument(
+        "--stop_time",
+        action="store",
+        required=True,
+        type=str,
+        help="Timestamp when the script should stop (e.g., '2022-05-03 00:30:00')",
+    )
+    parser.add_argument(
+        "--interval_min",
+        type=int,
+        help="Interval between download attempts, in minutes",
     )
     return parser
 
@@ -171,7 +169,6 @@ DATASET_SCHEMA = {
     "vwap": "float64",
     "year": "int32",
 }
-
 
 def download_realtime_for_one_exchange(
     args: Dict[str, Any], exchange: imvcdexex.Extractor
@@ -205,23 +202,26 @@ def download_realtime_for_one_exchange(
             password=actual_details["password"],
         )
         db_connection = hsql.get_connection(*connection_params)
-    # Load DB table to work with
+    # Load DB table to work with.
     db_table = args["db_table"]
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args["start_timestamp"])
-    start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
-        start_timestamp
-    )
-    end_timestamp = pd.Timestamp(args["end_timestamp"])
-    end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
     data_type = args["data_type"]
     exchange_id = args["exchange_id"]
+    # If data type is bid/ask, timestamps get ignored.
+    start_timestamp, end_timestamp = None, None
+    if data_type == "ohlcv":
+        # Convert timestamps.
+        start_timestamp = pd.Timestamp(args["start_timestamp"])
+        start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
+            start_timestamp
+        )
+        end_timestamp = pd.Timestamp(args["end_timestamp"])
+        end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
     # Download data for specified time period.
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
         currency_pair_for_download = exchange.convert_currency_pair(currency_pair)
-        # Download data.
+        # Download data: timestamp arguments are ignored for bid_ask.
         data = exchange.download_data(
             data_type=data_type,
             currency_pair=currency_pair_for_download,
@@ -235,15 +235,18 @@ def download_realtime_for_one_exchange(
         # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Remove duplicated entries.
-        data = remove_duplicates(
-            db_connection,
-            data,
-            db_table,
-            start_timestamp_as_unix,
-            end_timestamp_as_unix,
-            exchange_id,
-            currency_pair,
-        )
+        # TODO(Juraj): handle duplicates for when the decision
+        #  on CmTask2782 is made.
+        if data_type == "ohlcv":
+            data = remove_duplicates(
+                db_connection,
+                data,
+                db_table,
+                start_timestamp_as_unix,
+                end_timestamp_as_unix,
+                exchange_id,
+                currency_pair,
+            )
         # Insert data into the DB.
         hsql.execute_insert_query(
             connection=db_connection,
