@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Tuple
 import pandas as pd
 
 import core.config as cconfig
+import core.real_time as creatime
 import dataflow.core as dtfcore
 import dataflow.model as dtfmod
 import dataflow.system.system as dtfsyssyst
@@ -25,22 +26,37 @@ _LOG = logging.getLogger(__name__)
 # Utils
 # #############################################################################
 
-# TODO(gp): What is the difference with _get_signature_from_result_bundle?
+# There are various layers in the code:
+# 1) functions checking invariants
+#    - E.g., check_system_config, check_portfolio_stats
+# 2) functions that compute signature of various pieces (currently inside
+#    SystemTester)
+#    - E.g., get_..._signature
+# 3) get_signature, get_signature_from_result_bundle
+#    - Compute a more complex signature putting together smaller pieces
+
+# TODO(gp): The difference between get_signature and _get_signature_from_result_bundle
+#  is that in the first we use the signature of ResultBundle instead of research_pnl.
+#  (when we don't have a ForecastEvaluator to compute the research PnL).
 #  Can we unify?
+
+# TODO(gp): This doesn't freeze the research PnL but freezes part of the result
+#  bundle.
+# TODO(gp): Can we use directly _get_signature_from_result_bundle()?
 def get_signature(
     system_config: cconfig.Config, result_bundle: dtfcore.ResultBundle, col: str
 ) -> str:
     """
     Compute the signature of a test in terms of:
 
-    - system signature
-    - result bundle signature
+    - System signature
+    - Result bundle signature
     """
     txt: List[str] = []
-    #
+    # 1) System config signature.
     txt.append(hprint.frame("system_config"))
     txt.append(str(system_config))
-    #
+    # 2) Result bundle signature.
     txt.append(hprint.frame(col))
     result_df = result_bundle.result_df
     data = result_df[col].dropna(how="all").round(3)
@@ -51,6 +67,8 @@ def get_signature(
     return res
 
 
+# TODO(gp): This uses the System config for the ForecastEvaluator.
+# TODO(gp): Should we add also the signature of result bundle as from get_signature()?
 def get_signature_from_result_bundle(
     system: dtfsyssyst.System,
     result_bundles: List[dtfcore.ResultBundle],
@@ -60,20 +78,20 @@ def get_signature_from_result_bundle(
     """
     Compute the signature of a test in terms of:
 
-    - system signature
-    - run signature
-    - output dir signature
+    - System config signature
+    - Run signature
+    - System log dir signature
     """
     portfolio = system.portfolio
     dag_runner = system.dag_runner
     txt = []
-    # 1) Compute system signature.
+    # 1) System config signature.
     hdbg.dassert(system.is_fully_built)
     if add_system_config:
         # TODO(gp): Use check_system_config.
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))
-    # 2) Compute run signature.
+    # 2) Run signature.
     if add_run_signature:
         # TODO(gp): This should be factored out.
         txt.append(hprint.frame("compute_run_signature"))
@@ -91,7 +109,7 @@ def get_signature_from_result_bundle(
             forecast_evaluator_from_prices_dict,
         )
         txt.append(txt_tmp)
-    # 3) Compute the signature of the output dir.
+    # 3) System log dir signature.
     txt.append(hprint.frame("system_log_dir signature"))
     log_dir = system.config["system_log_dir"]
     txt_tmp = hunitest.get_dir_signature(
@@ -112,8 +130,10 @@ def get_signature_from_result_bundle(
     return actual
 
 
-def get_events_signature(events) -> str:
+def get_events_signature(events: List[creatime.Event]) -> str:
+    # TODO(gp): Add a short snippet in the docstring of how the output looks like.
     # TODO(gp): Use events.to_str()
+    # TODO(gp): actual -> txt
     actual = ["# event signature=\n"]
     events_as_str = "\n".join(
         [
@@ -130,36 +150,59 @@ def get_events_signature(events) -> str:
 
 
 def get_portfolio_signature(
-    portfolio, num_periods: int = 10
+    portfolio: oms.Portfolio, num_periods: int = 10
 ) -> Tuple[str, pd.Series]:
+    """
+    Return the portfolio signature in terms of:
+
+    - portfolio historical statistics
+    """
+    # TODO(gp): Add a short snippet in the docstring of how the output looks like.
+    # TODO(gp): actual -> txt
+    # 1) Portfolio signature.
     actual = ["\n# portfolio signature=\n"]
     actual.append(str(portfolio))
     actual = "\n".join(actual)
+    # 2) Portfolio historical statistics.
     statistics = portfolio.get_historical_statistics(num_periods=num_periods)
     pnl = statistics["pnl"]
     _LOG.debug("pnl=\n%s", pnl)
     return actual, pnl
 
 
+# TODO(gp): -> get_historical_simulation_run
 def compute_run_signature(
     dag_runner: dtfcore.DagRunner,
     portfolio: oms.Portfolio,
     result_bundle: dtfcore.ResultBundle,
     forecast_evaluator_from_prices_dict: Dict[str, Any],
 ) -> str:
+    """
+    Return the signature of an historical simulation in terms of:
+
+    - Signature of the DagRunner events
+    - Portfolio signature
+    - Research PnL signature
+    - Correlation between
+    """
+    # TODO(gp): Add a short snippet in the docstring of how the output looks like.
+    # TODO(gp): actual -> txt
     hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
     # Check output.
     actual = []
-    #
+    # 1) Signature of the DagRunner events.
     events = dag_runner.events
     actual.append(get_events_signature(events))
+    # 2) Portfolio signature.
     signature, pnl = get_portfolio_signature(portfolio)
     actual.append(signature)
+    # 3) Research PnL signature using the ForecastEvaluator.
     signature, research_pnl = get_research_pnl_signature(
         result_bundle,
         forecast_evaluator_from_prices_dict,
     )
     actual.append(signature)
+    # 4) Compute correlation between simulated PnL and research PnL.
     if min(pnl.count(), research_pnl.count()) > 1:
         # Drop leading NaNs and burn the first PnL entry.
         research_pnl = research_pnl.dropna().iloc[1:]
@@ -168,35 +211,40 @@ def compute_run_signature(
         # disaligned from the research bar times.
         pnl1 = pd.Series(pnl.tail(tail).values)
         _LOG.debug("portfolio pnl=\n%s", pnl1)
+        #
         corr_samples = min(tail, pnl1.size)
         pnl2 = pd.Series(research_pnl.tail(corr_samples).values)
         _LOG.debug("research pnl=\n%s", pnl2)
+        #
         correlation = pnl1.corr(pnl2)
         actual.append("\n# pnl agreement with research pnl\n")
         actual.append(f"corr = {correlation:.3f}")
         actual.append(f"corr_samples = {corr_samples}")
+    # Assemble retsult.
     actual = "\n".join(map(str, actual))
     return actual
 
 
+# TODO(gp): This should go first.
 def get_research_pnl_signature(
     result_bundle: dtfcore.ResultBundle,
     forecast_evaluator_from_prices_dict: Dict[str, Any],
 ) -> Tuple[str, pd.Series]:
     hdbg.dassert_isinstance(result_bundle, dtfcore.ResultBundle)
-    # TODO(gp): @all use actual.append(hprint.frame("system_config"))
-    #  to separate the sections of the output.
-    actual = ["\n# forecast_evaluator_from_prices signature=\n"]
     hdbg.dassert(
         forecast_evaluator_from_prices_dict,
         "`forecast_evaluator_from_prices_dict` must be nontrivial",
     )
+    # TODO(gp): @all use actual.append(hprint.frame("system_config"))
+    #  to separate the sections of the output.
+    actual = ["\n# forecast_evaluator_from_prices signature=\n"]
+    # Build the ForecastEvaluator.
     forecast_evaluator = dtfmod.ForecastEvaluatorFromPrices(
         **forecast_evaluator_from_prices_dict["init"],
     )
     result_df = result_bundle.result_df
     _LOG.debug("result_df=\n%s", hpandas.df_to_str(result_df))
-    #
+    # 1) Get the signature of the ForecastEvaluator.
     signature = forecast_evaluator.to_str(
         result_df,
         style=forecast_evaluator_from_prices_dict["style"],
@@ -204,59 +252,20 @@ def get_research_pnl_signature(
     )
     _LOG.debug("signature=\n%s", signature)
     actual.append(signature)
-    #
+    # 2) Get the portfolio.
     _, _, _, _, stats = forecast_evaluator.compute_portfolio(
         result_df,
         style=forecast_evaluator_from_prices_dict["style"],
         **forecast_evaluator_from_prices_dict["kwargs"],
     )
-    research_pnl = stats["pnl"]
+    # Assemble.
     actual = "\n".join(map(str, actual))
+    research_pnl = stats["pnl"]
     return actual, research_pnl
 
 
-def check_system_config(self: Any, system: dtfsyssyst.System, tag: str) -> None:
-    txt = []
-    tag = "system_config." + tag
-    txt.append(hprint.frame(tag))
-    # Ensure that the System was built and thus the config is stable.
-    hdbg.dassert(system.is_fully_built)
-    txt.append(str(system.config))
-    txt = "\n".join(txt)
-    txt = hunitest.filter_text("db_connection_object", txt)
-    txt = hunitest.filter_text("log_dir:", txt)
-    txt = hunitest.filter_text("trade_date:", txt)
-    # Sometimes we want to check that the config has not changed, but it
-    # was just reordered. In this case we
-    # - set `sort=True`
-    # - make sure that there are no changes
-    # - set `sort=False`
-    # - update the golden outcomes with the updated config
-    # TODO(gp): Do not commit `sort = True`.
-    # sort = True
-    sort = False
-    self.check_string(txt, tag=tag, purify_text=True, sort=sort)
-
-
-def check_portfolio_state(
-    self: Any, system: dtfsyssyst.System, expected_last_timestamp: pd.Timestamp
-) -> None:
-    """
-    Check some high level property of the Portfolio, e.g.,
-
-    - It contains data up to a certain `expected_last_timestamp`
-    - It is not empty at the end of the simulation
-    """
-    portfolio = system.portfolio
-    # 1) The simulation runs up to the right time.
-    last_timestamp = portfolio.get_last_timestamp()
-    self.assert_equal(str(last_timestamp), str(expected_last_timestamp))
-    # 2) The portfolio has some holdings.
-    has_no_holdings = portfolio.has_no_holdings()
-    self.assertFalse(has_no_holdings)
-
-
 def log_forecast_evaluator_portfolio(
+    self,
     result_bundle: dtfcore.ResultBundle,
     forecast_evaluator_from_prices_dict: Dict[str, Any],
     log_dir: str,
@@ -277,5 +286,58 @@ def log_forecast_evaluator_portfolio(
         result_df,
         log_dir,
         style=forecast_evaluator_from_prices_dict["style"],
-        **forecast_evaluator_from_prices_dict["kwargs"]
-    )
+        **forecast_evaluator_from_prices_dict["kwargs"])
+
+
+# TODO(gp): This should be used in all TestCase right after the dag_runner is
+#  complete.
+def check_system_config(self: Any, system: dtfsyssyst.System, tag: str) -> None:
+    """
+    Check the signature of a System config against a golden reference.
+
+    :param tag: it is used to distinguish multiple configs (e.g., when a test
+        builds multiple Systems and we want to freeze all of them)
+    """
+    # Ensure that the System was built and thus the config is stable.
+    hdbg.dassert(system.is_fully_built)
+    txt = []
+    # Add the config.
+    tag = "system_config." + tag
+    txt.append(hprint.frame(tag))
+    txt.append(str(system.config))
+    #
+    txt = "\n".join(txt)
+    # Remove artifacts that are specific of a run and unstable.
+    txt = hunitest.filter_text("db_connection_object", txt)
+    txt = hunitest.filter_text("log_dir:", txt)
+    txt = hunitest.filter_text("trade_date:", txt)
+    # Sometimes we want to check that the config has not changed, but it
+    # was just reordered. In this case we:
+    # - set `sort=True`
+    # - make sure that there are no changes
+    # - set `sort=False`
+    # - update the golden outcomes with the updated config
+    # TODO(gp): Do not commit `sort = True`.
+    # sort = True
+    sort = False
+    self.check_string(txt, tag=tag, purify_text=True, sort=sort)
+
+
+# TODO(gp): Consider passing system.portfolio directly to reduce the interface
+#  surface.
+def check_portfolio_state(
+    self: Any, system: dtfsyssyst.System, expected_last_timestamp: pd.Timestamp
+) -> None:
+    """
+    Check some high level property of the Portfolio, e.g., that Portfolio:
+
+    - Contains data up to a certain `expected_last_timestamp`
+    - Is not empty at the end of the simulation
+    """
+    portfolio = system.portfolio
+    # 1) The simulation runs up to the expected time.
+    last_timestamp = portfolio.get_last_timestamp()
+    self.assert_equal(str(last_timestamp), str(expected_last_timestamp))
+    # 2) The portfolio has some holdings.
+    has_no_holdings = portfolio.has_no_holdings()
+    self.assertFalse(has_no_holdings)
