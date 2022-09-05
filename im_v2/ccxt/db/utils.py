@@ -74,7 +74,7 @@ def get_ccxt_create_bid_ask_table_query() -> str:
             ask_price NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
-            level INTEGER,
+            level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE,
             UNIQUE(timestamp, exchange_id, currency_pair, level)
@@ -97,7 +97,7 @@ def get_ccxt_create_bid_ask_futures_table_query() -> str:
             ask_price NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
-            level INTEGER,
+            level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE,
             UNIQUE(timestamp, exchange_id, currency_pair, level)
