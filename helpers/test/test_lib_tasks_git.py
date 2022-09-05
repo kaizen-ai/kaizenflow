@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 )
 class TestLibTasksGitCreatePatch1(hunitest.TestCase):
     """
-    Test `git_create_patch()`.
+    Test `git_patch_create()`.
     """
 
     @staticmethod
@@ -29,16 +29,16 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         ctx = httestlib._build_mock_context_returning_ok()
         #
         mode = "tar"
-        hlitagit.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        hlitagit.git_patch_create(ctx, mode, modified, branch, last_commit, files)
         #
         mode = "diff"
-        hlitagit.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        hlitagit.git_patch_create(ctx, mode, modified, branch, last_commit, files)
 
     def test_tar_modified1(self) -> None:
         """
         Exercise the code for:
 
-        > invoke git_create_patch ... --branch
+        > invoke git_patch_create ... --branch
         """
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
@@ -53,7 +53,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         """
         Exercise the code for:
 
-        > invoke git_create_patch ... --modified
+        > invoke git_patch_create ... --modified
         """
         modified = False
         branch = True
@@ -65,7 +65,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         """
         Exercise the code for:
 
-        > invoke git_create_patch ... --last-commit
+        > invoke git_patch_create ... --last-commit
         """
         # This test needs a reference to Git master branch.
         hgit.fetch_origin_master_if_needed()
@@ -80,7 +80,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         """
         Exercise the code for:
 
-        > invoke git_create_patch \
+        > invoke git_patch_create \
                 --mode="tar" \
                 --files "this file" \
                 --modified
@@ -94,13 +94,13 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         branch = False
         last_commit = False
         files = __file__
-        hlitagit.git_create_patch(ctx, mode, modified, branch, last_commit, files)
+        hlitagit.git_patch_create(ctx, mode, modified, branch, last_commit, files)
 
     def test_diff_files_abort1(self) -> None:
         """
         Exercise the code for:
 
-        > invoke git_create_patch --mode="diff" --files "this file"
+        > invoke git_patch_create --mode="diff" --files "this file"
 
         In this case one needs to specify at least one --branch, --modified,
         --last-commit option.
@@ -115,7 +115,7 @@ class TestLibTasksGitCreatePatch1(hunitest.TestCase):
         last_commit = False
         files = __file__
         with self.assertRaises(AssertionError) as cm:
-            hlitagit.git_create_patch(
+            hlitagit.git_patch_create(
                 ctx, mode, modified, branch, last_commit, files
             )
         act = str(cm.exception)

@@ -1,8 +1,8 @@
 #!/bin/bash -xe
 
-script_name="amp/dev_scripts/cleanup_scripts/CMTask2669_Rename_initial_replayed_dt.sh"
+dir_names="amp/dev_scripts/cleanup_scripts dev_scripts/cleanup_scripts"
 
 replace_text.py \
   --old "initial_replayed_dt" \
   --new "initial_replayed_timestamp" \
-  --exclude_files $script_name
+  --exclude_dirs "$dir_names"

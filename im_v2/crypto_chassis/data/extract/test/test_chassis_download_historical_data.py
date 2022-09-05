@@ -9,6 +9,10 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.crypto_chassis.data.extract.download_historical_data as imvccdedhd
 
 
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestDownloadHistoricalData1(hunitest.TestCase):
     def test_parser(self) -> None:
         """
