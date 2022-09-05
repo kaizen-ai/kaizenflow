@@ -129,7 +129,7 @@ def save_ccxt_market_data(
     Dump data from a CCXT `MarketData` for the last `period` and ending to
     the current wall clock so that it can be used as `ReplayedMarketData`.
 
-    :param full_symbols: full symbols to load data for.
+    :param full_symbols: full symbols to load data for
         If `None`, all the symbols from the universe are taken
     :param im_client_params: params to initialize `ImClient`
     :param wall_clock_time: wall clock time
