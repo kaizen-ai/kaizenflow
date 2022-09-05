@@ -116,20 +116,24 @@ def run_Time_ForecastSystem(
 
 
 # TODO(Grisha): @Dan Deprecate `self` param after `get_file_path()` is generalized.
-# TODO(Grisha): @Dan Should we expose `period` as a param?
-def test_save_data(
+def save_ccxt_market_data(
     self: Any,
     full_symbols: Optional[List[ivcu.FullSymbol]],
     im_client_params: Any,
     wall_clock_time: pd.Timestamp,
+    *,
+    period: str = "15D"
 ) -> None:
     # pylint: disable=line-too-long
     """
-    Dump data from a MarketData so that it can be used as ReplayedMarketData.
+    Dump data from a CCXT `MarketData` for the last period and ending to current
+    wall clock so that it can be used as `ReplayedMarketData`.
 
-    :param full_symbols: full symbols to load data for
+    :param full_symbols: full symbols to load data for.
+        If `None`, all the symbols from the universe are taken
     :param im_client_params: params to initialize `ImClient`
     :param wall_clock_time: wall clock time
+    :param period: how much of data is needed.
 
     ```
       index                    end_ts   asset_id       full_symbol      open       high        low     close   volume              knowledge_timestamp                  start_ts
@@ -145,10 +149,7 @@ def test_save_data(
     # Get all full symbols in the universe if `None` is passed.
     if full_symbols is None:
         full_symbols = im_client.get_universe()
-    # Convert full symbols to asset ids.
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
-    # We dump data from an historical market data and then we can replay the
-    # data with a ReplayedMarket data.
     columns = None
     columns_remap = None
     market_data_client = mdata.get_HistoricalImClientMarketData_example1(
@@ -160,7 +161,7 @@ def test_save_data(
     )
     # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`].
     file_path = self.get_file_path()
-    period = pd.Timedelta("15D")
+    period = pd.Timedelta(period)
     mdata.save_market_data(market_data_client, file_path, period)
     _LOG.warning("Updated file '%s'", file_path)
 
