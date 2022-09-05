@@ -79,8 +79,8 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     return market_data
 
 
-def get_Cx_ReplayedMarketData_df_instance1(
-    file_path: str, aws_profile: Optional[str] = None
+def get_Cx_ReplayedMarketData_from_file(
+    file_path: str, *, aws_profile: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Get data for `ReplayedMarketData`.
