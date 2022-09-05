@@ -159,7 +159,7 @@ def save_ccxt_market_data(
         columns_remap,
         wall_clock_time=wall_clock_time,
     )
-    # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`].
+    # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`).
     file_path = self.get_file_path()
     mdata.save_market_data(market_data_client, file_path, period)
     _LOG.warning("Updated file '%s'", file_path)
