@@ -124,10 +124,10 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
-        contract_type: str,
+        asset_class: str,
     ) -> None:
         vendor = "ccxt"
-        super().__init__(vendor, resample_1min, db_connection, table_name, contract_type)
+        super().__init__(vendor, resample_1min, db_connection, table_name, asset_class)
 
     @staticmethod
     def should_be_online() -> bool:  # pylint: disable=arguments-differ'

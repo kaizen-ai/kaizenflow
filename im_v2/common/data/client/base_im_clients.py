@@ -621,7 +621,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
-        contract_type: str,
+        asset_class: str,
     ) -> None:
         _LOG.debug(hprint.to_str("db_connection table_name"))
         # Real-time implementation has a different mechanism for getting universe.
@@ -631,7 +631,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # the parent class so they go before the parent's init.
         self._table_name = table_name
         self._db_connection = db_connection
-        self._contract_type = contract_type
+        self._asset_class = asset_class
         super().__init__(vendor, universe_version, resample_1min)
 
     @staticmethod
@@ -715,7 +715,7 @@ class SqlRealTimeImClient(RealTimeImClient):
             full_symbol_col_name
         )
         # Add asset class column.
-        data["asset_class"] = self._contract_type
+        data["asset_class"] = self._asset_class
         # Construct a `full_symbol` column.
         data[full_symbol_col_name] = ivcu.build_full_symbol(
             data["exchange_id"], data["asset_class"], data["currency_pair"]
@@ -814,7 +814,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # (exchange_id='binance' AND currency_pair='ADA_USDT') OR (exchange_id='ftx' AND currency_pair='BTC_USDT') # pylint: disable=line-too-long
         exchange_currency_conditions = [
             f"(exchange_id='{exchange_id}' AND currency_pair='{currency_pair}')"
-            for exchange_id, contract_type, currency_pair in parsed_symbols
+            for exchange_id, asset_class, currency_pair in parsed_symbols
             if exchange_id and currency_pair
         ]
         if exchange_currency_conditions:

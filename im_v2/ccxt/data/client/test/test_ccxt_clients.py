@@ -646,9 +646,9 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data1(self) -> None:
         resample_1min = True
-        contract_type = "spot"
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv", contract_type
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
         full_symbol = "binance::spot::BTC_USDT"
         #
