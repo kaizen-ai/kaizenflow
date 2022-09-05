@@ -657,7 +657,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         currency_exchange_df = hsql.execute_query_to_df(
             self._db_connection, query
         )
-        currency_exchange_df["asset_class"] = self._contract_type
+        currency_exchange_df["asset_class"] = self._asset_class
         # Merge these columns to the general `full_symbol` format.
         full_symbols = ivcu.build_full_symbol(
             currency_exchange_df["exchange_id"],
