@@ -17,7 +17,7 @@ cd $TARGET_REPO
 
 # Create the branch with the changes.
 TARGET_BRANCH=CMTask1292_ck_profile_authentication_2
-#i git_create_branch -b $TARGET_BRANCH
+#i git_branch_create -b $TARGET_BRANCH
 git checkout -B $TARGET_BRANCH
 
 # Clean up.

@@ -1,5 +1,8 @@
 import os
 
+import pytest
+
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
@@ -53,6 +56,10 @@ class Test_get_data_snapshot(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             imvcdsdsut.get_data_snapshot(test_dir, data_snapshot, aws_profile)
 
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("is_CK_S3_available()"),
+        reason="Run only if CK S3 is available",
+    )
     def test_get_data_snapshot4(self) -> None:
         """
         Check that empty `data_snapshot` works for the daily staged Airflow data.
