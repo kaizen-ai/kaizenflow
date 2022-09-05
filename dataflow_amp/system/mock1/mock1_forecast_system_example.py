@@ -12,7 +12,6 @@ import core.config as cconfig
 import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import im_v2.common.data.client as icdc
-import im_v2.ccxt.data.client as icdcl
 
 # #############################################################################
 # Mock1_ForecastSystem_example
@@ -179,22 +178,27 @@ def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
     # The test decides when to start the execution.
     # The data inside the market data starts at 2021-12-19 19:00:00-05:00.
     # We want to have 7 days of burn in for the model.
-    system.config["market_data_config", "replayed_delay_in_mins_or_timestamp"] = 7 * 24 * 60
+    system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ] = 10
     # Market takes 10 seconds to send the bar.
     system.config["market_data_config", "delay_in_secs"] = 10
     #
     # Exercise the system for 3 5-minute intervals.
-    system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
-        60 * 5 * 3
-    )
+    system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = 60 * 5 * 3
     # Duration of the bar is 5 minutes.
     system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
     return system
 
 
-def get_Mock1_Time_ForesactSystem_for_unit_tests_example1(backtest_config) -> dtfsys.System:
+# #############################################################################
+# Mock1_NonTime_ForecastSystem1_example
+# #############################################################################
+
+
+def get_Mock1_NonTime_ForesactSystem_example1(backtest_config) -> dtfsys.System:
     """
-    Build C1b_ForecastSystem and fill the `System.config`.
+    Build Mock1_ForecastSystem and fill the `System.config`.
     """
     system = dtfasmmfosy.Mock1_ForecastSystem()
     #
@@ -202,21 +206,13 @@ def get_Mock1_Time_ForesactSystem_for_unit_tests_example1(backtest_config) -> dt
     # Fill pipeline-specific backtest config parameters.
     # TODO(gp): These 2 params should go inside apply_backtest_config.
     system.config["backtest_config", "freq_as_pd_str"] = "M"
-    system.config["backtest_config", "lookback_as_pd_str"] = "90D"
+    system.config["backtest_config", "lookback_as_pd_str"] = "10D"
     # Fill `MarketData` related config.
     system.config[
         "market_data_config", "im_client_ctor"
-    ] = icdcl.get_CcxtHistoricalPqByTileClient_example1
-    im_client_config = {
-        "universe_version": None,
-        "resample_1min": True,
-        "dataset": "ohlcv",
-        "contract_type": "futures",
-        "data_snapshot": "latest",
-    }
-    system.config[
-        "market_data_config", "im_client_config"
-    ] = cconfig.Config.from_dict(im_client_config)
+    ] = icdc.get_DataFrameImClient_example1
+    im_client_config = cconfig.Config()
+    system.config["market_data_config", "im_client_config"] = im_client_config
     #
     system = dtfsys.apply_market_data_config(system)
     # Set the research PNL parameters.

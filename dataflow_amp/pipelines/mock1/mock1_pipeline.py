@@ -36,7 +36,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
                 "in_col_groups": [
                     ("close",),
                     ("volume",),
-                    # ("feature1",),
+                    ("feature1",),
                 ],
                 "out_col_group": (),
                 "transformer_kwargs": {
@@ -46,7 +46,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
                         (
                             {
                                 "close": "twap",
-                                # "feature1": "feature1",
+                                "feature1": "feature1",
                             },
                             "mean",
                             {},

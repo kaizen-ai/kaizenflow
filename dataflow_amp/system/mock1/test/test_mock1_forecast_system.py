@@ -5,13 +5,10 @@ from typing import Callable, Optional, Tuple, Union
 import pandas as pd
 import pytest
 
-import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
-import im_v2.ccxt.data.client as icdcl
-import market_data as mdata
 
 _LOG = logging.getLogger(__name__)
 
@@ -346,52 +343,6 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
     See the parent class for description.
     """
 
-    # TODO(Grisha): @Dan Add a test for 1 asset id.
-    @pytest.mark.skip("Run manually")
-    def test_save_data(self) -> None:
-        # pylint: disable=line-too-long
-        """
-        Dump data from a `MarketData` to feed both non-time and time systems
-        to `ReplayedMarketData`.
-        ```
-          index                    end_ts   asset_id       full_symbol      open       high        low     close   volume              knowledge_timestamp                  start_ts
-        0     0 2021-12-19 19:00:00-05:00 1182743717 binance::BTC_BUSD 46681.500 46687.4000 46620.0000 46678.400   47.621 2022-07-09 16:21:44.328375+00:00 2021-12-19 18:59:00-05:00
-        1     1 2021-12-19 19:00:00-05:00 1464553467 binance::ETH_USDT  3922.510  3927.4500  3920.1900  3927.060 1473.723 2022-06-24 11:10:10.287766+00:00 2021-12-19 18:59:00-05:00
-        2     2 2021-12-19 19:00:00-05:00 1467591036 binance::BTC_USDT 46668.650 46677.2200 46575.0000 46670.340  620.659 2022-07-09 12:07:51.240219+00:00 2021-12-19 18:59:00-05:00
-        ```
-        """
-        # pylint: enable=line-too-long
-        universe_version = None
-        resample_1min = True
-        dataset = "ohlcv"
-        contract_type = "futures"
-        data_snapshot = "latest"
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
-            universe_version,
-            resample_1min,
-            dataset,
-            contract_type,
-            data_snapshot,
-        )
-        full_symbols = im_client.get_universe()
-        asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
-        columns = None
-        columns_remap = None
-        wall_clock_time = pd.Timestamp("2022-01-04T00:00:00+00:00")
-        # We dump data from an historical market data and then we can replay the
-        # data with a ReplayedMarket data.
-        market_data_df = mdata.get_HistoricalImClientMarketData_example1(
-            im_client,
-            asset_ids,
-            columns,
-            columns_remap,
-            wall_clock_time=wall_clock_time,
-        )
-        file_path = self.get_file_path()
-        period = pd.Timedelta("15D")
-        mdata.save_market_data(market_data_df, file_path, period)
-        _LOG.warning("Updated file '%s'", file_path)
-
     def get_NonTime_ForecastSystem_builder_func(self) -> Callable:
         """
         Get the function building the (non-time) `ForecastSystem`.
@@ -401,9 +352,9 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # In the current system, the time periods are set manually,
         # so the value of `time_interval_str` (e.g., "2022-01-01_2022-02-01")
         # doesn't affect tests.
-        backtest_config = f"mock1_{universe_version}-top2.5T.2022-01-01_2022-02-01"
+        backtest_config = f"mock1_{universe_version}-all.5T.Jan2000"
         non_time_system_builder_func = (
-            lambda: dtfasmmfsex.get_Mock1_Time_ForesactSystem_for_unit_tests_example1(
+            lambda: dtfasmmfsex.get_Mock1_NonTime_ForesactSystem_example1(
                 backtest_config
             )
         )
@@ -455,36 +406,21 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         """
         See description in the parent test case class.
         """
-        file_path = self.get_file_path()
-        aws_profile = "ck"
-        # `get_ReplayedTimeMarketData_from_df()` is looking for "start_datetime"
-        # and "end_datetime" columns by default and we do not have a way to
-        # change it yet since `get_EventLoop_MarketData_from_df` has no kwargs.
-        column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
-        timestamp_db_column = "end_datetime"
-        datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
         # Load market data for replaying.
-        market_data_df = mdata.load_market_data(
-            file_path,
-            aws_profile=aws_profile,
-            column_remap=column_remap,
-            timestamp_db_column=timestamp_db_column,
-            datetime_columns=datetime_columns,
-        )
+        market_data_df = cofinanc.get_market_data_df5()
         # TODO(Grisha): @Dan we should use separate example systems for
         # reconciliation otherwise we should keep the current ones in
         # sync.
-        time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1() 
+        time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
         # TODO(Grisha): @Dan consider a way to pass the number of 5-minute intervals.
-        # Make system to run for 20 5-minute intervals.
+        # Make system to run for 3 5-minute intervals.
         time_system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
-            60 * 5 * 20
+            60 * 5 * 3
         )
         time_system.config["market_data_config", "data"] = market_data_df
         return time_system
 
-    # @pytest.mark.skip("Run manually")
-    @pytest.mark.superslow("~200 seconds.")
+    @pytest.mark.slow("~8 seconds.")
     def test1(self) -> None:
         output_col_name = "vwap.ret_0.vol_adj"
         self._test1(output_col_name)
