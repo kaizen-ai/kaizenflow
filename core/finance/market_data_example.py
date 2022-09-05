@@ -690,7 +690,7 @@ def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
     return data, rt_timeout_in_secs_or_time
 
 
-def get_market_data_df5() -> Tuple[pd.DataFrame, int]:
+def get_market_data_df5() -> pd.DataFrame:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
