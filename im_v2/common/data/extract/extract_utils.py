@@ -206,6 +206,7 @@ def download_realtime_for_one_exchange(
     db_table = args["db_table"]
     data_type = args["data_type"]
     exchange_id = args["exchange_id"]
+    bid_ask_depth = args.get("bid_ask_depth")
     # If data type is bid/ask, timestamps get ignored.
     start_timestamp, end_timestamp = None, None
     if data_type == "ohlcv":
@@ -228,6 +229,7 @@ def download_realtime_for_one_exchange(
             exchange_id=exchange_id,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
+            depth=bid_ask_depth
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
