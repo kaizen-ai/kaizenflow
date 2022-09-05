@@ -7,7 +7,6 @@ import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import market_data as mdata
-import market_data as mdata
 
 # #############################################################################
 # TestImClientMarketData1

@@ -4,7 +4,6 @@ import pytest
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
 
 

@@ -6,7 +6,6 @@ import pytest
 import helpers.henv as henv
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client as icdc
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 import im_v2.talos.data.client.talos_clients_example as imvtdctcex

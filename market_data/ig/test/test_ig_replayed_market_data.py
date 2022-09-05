@@ -13,7 +13,6 @@
 #import helpers.hunit_test as hunitest
 #import im_v2.ig.universe.ticker_igid_mapping as imviutigma
 #import market_data as mdata
-#import market_data as mdata
 #import market_data_lime as mdlime
 #
 #_LOG = logging.getLogger(__name__)
