@@ -89,7 +89,7 @@ def get_Cx_ReplayedMarketData_df_instance1(
     :param aws_profile: AWS profile, e.g., "ck"
     :return: data for replaying
     """
-    hs3.dassert_is_valid_aws_profile(root_dir, aws_profile)
+    hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     # `get_ReplayedTimeMarketData_from_df()` is looking for "start_datetime"
     # and "end_datetime" columns by default and we do not have a way to
     # change it yet since `get_EventLoop_MarketData_from_df` has no kwargs.
