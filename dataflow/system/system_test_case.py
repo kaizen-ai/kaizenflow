@@ -146,8 +146,8 @@ def save_ccxt_market_data(
     im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
         **im_client_params
     )
-    # Get all full symbols in the universe if `None` is passed.
     if full_symbols is None:
+        # Get all full symbols in the universe.
         full_symbols = im_client.get_universe()
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
     columns = None
