@@ -23,173 +23,6 @@ import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
 
-# pylint: disable=protected-access
-
-# #############################################################################
-# Integrate.
-# #############################################################################
-
-# pylint: disable=line-too-long
-
-# ## Concepts
-#
-# - We have two dirs storing two forks of the same repo
-#   - Files are touched, e.g., added, modified, deleted in each forks
-#   - The most problematic files are the files that are modified in both forks
-#   - Files that are added or deleted in one fork, should be added / deleted also
-#     in the other fork
-# - Often we can integrate "by directory", i.e., finding entire directories that
-#   we were touched in one branch but not the other
-#   - In this case we can simply copy the entire dir from one dir to the other
-# - Other times we need to integrate "by file"
-#
-# - There are various interesting Git reference points:
-#   1) the branch point for each branch, at which the integration branch was started
-#   2) the last integration point for each branch, at which the repos are the same,
-#      or at least aligned
-
-# ## Create integration branches
-#
-# - Pull master
-#
-# - Align `lib_tasks.py`:
-#   ```
-#   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
-#   ```
-#
-# - Create the integration branches
-#   ```
-#   > cd amp1
-#   > i integrate_create_branch --dir-basename amp1
-#   > cd cmamp1
-#   > i integrate_create_branch --dir-basename cmamp1
-#   ```
-
-# ## Preparation
-#
-# - Lint both dirs:
-#   ```
-#   > cd amp1
-#   > i lint --dir-name . --only-format
-#   > cd cmamp1
-#   > i lint --dir-name . --only-format
-#   ```
-#   or at least the files touched by both repos:
-#   ```
-#   > i integrate_files --file-direction only_files_in_src
-#   > cat tmp.integrate_find_files_touched_since_last_integration.cmamp1.txt tmp.integrate_find_files_touched_since_last_integration.amp1.txt | sort | uniq >files.txt
-#   > FILES=$(cat files.txt)
-#   > i lint --only-format -f "$FILES"
-#   ```
-#
-# - To clean up the text files:
-#   ```
-#   > dev_scripts/clean_up_text_files.sh
-#   ```
-#
-# - Remove trailing spaces:
-#   ```
-#   > find . -name "*.py" -o -name "*.txt" -o -name "*.json" | xargs perl -pi -e 's/\s+$/\n/'
-#   ```
-# - Add end-of-file:
-#   ```
-#   > find . -name "*.py" | xargs sed -i '' -e '$a\'
-#
-# - Remove end-of-file:
-#   ```
-#   > find . -name -name "*.txt" | xargs perl -pi -e 'chomp if eof'
-#   ```
-# - Remove empty files:
-#   ```
-#   > find . -type f -empty -print | grep -v .git | grep -v __init__ | grep -v ".log$" | grep -v ".txt$" | xargs git rm
-#   ```
-
-# ## Integration
-#
-# 1) Check what files were modified since the last integration in each fork:
-#   ```
-#   > i integrate_files --file-direction common_files
-#   > i integrate_files --file-direction only_files_in_src
-#   > i integrate_files --file-direction only_files_in_dst
-#   ```
-#
-# 2) Look for directory touched on only one branch:
-#   ```
-#   > i integrate_files --file-direction common_files --mode "print_dirs"
-#   > i integrate_files --file-direction only_files_in_src --mode "print_dirs"
-#   > i integrate_files --file-direction only_files_in_dst --mode "print_dirs"
-#   ```
-# - If we find dirs that are touched in one branch but not in the other we can
-#   copy / merge without running risks
-#   ```
-#   > i integrate_diff_dirs --subdir $SUBDIR -c
-#   ```
-#
-# 3) Check which change was made in each side since the last integration
-#    ```
-#    # Find the integration point:
-#    > i integrate_files --file-direction common_files
-#    ...
-#    last_integration_hash='813c7e763'
-#
-#    # Diff the changes in each side from the integration point:
-#    > i git_branch_diff_with -t hash -h 813c7e763 -f ...
-#    ```
-#
-# 4) Check which files are different between the dirs:
-#   ```
-#   > i integrate_diff_dirs
-#   ```
-#
-# 5) Diff dir by dir
-#   ```
-#   > i integrate_diff_dirs --subdir dataflow/system
-#   ```
-#
-# - Copy by dir
-#   ```
-#   > i integrate_diff_dirs --subdir market_data -c
-#   ```
-#
-# - Copy a dir
-#   ```
-#   > rsync --delete -a -r /Users/saggese/src/cmamp1/research_amp/ /Users/saggese/src/amp1/research_amp
-#   ```
-
-# ## Double check the integration
-#
-# - Check that the regressions are passing on GH
-#   ```
-#   > i gh_create_pr --no-draft
-#   ```
-#
-# - Check the files that were changed in both branches (i.e., the "problematic ones")
-#   since the last integration and compare them to the base in each branch
-#   ```
-#   > cd amp1
-#   > i integrate_diff_overlapping_files --src-dir-basename "amp1" --dst-dir-basename "cmamp1"
-#   > cd cmamp1
-#   > i integrate_diff_overlapping_files --src-dir-basename "cmamp1" --dst-dir-basename "amp1"
-#   ```
-#
-# - Quickly scan all the changes in the branch compared to the base
-#   ```
-#   > cd amp1
-#   > i git_branch_diff_with -t base
-#   > cd cmamp1
-#   > i git_branch_diff_with -t base
-#   ```
-
-
-# Invariants for the integration set-up
-#
-# - The user runs commands in a abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
-# - The user refers in the command line to `dir_basename`, which is the basename of
-#   the integration directories (e.g., `amp1`, `cmamp1`)
-#   - The "src_dir_basename" is the one where the command is issued
-#   - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
-# - The dirs are then transformed in absolute dirs "abs_src_dir"
-
 
 def _dassert_current_dir_matches(expected_dir_basename: str) -> None:
     """
@@ -266,11 +99,11 @@ def integrate_create_branch(ctx, dir_basename, dry_run=False):  # type: ignore
     branch_name = f"AmpTask1786_Integrate_{date_as_str}"
     # query_yes_no("Are you sure you want to create the branch ")
     _LOG.info("Creating branch '%s'", branch_name)
-    cmd = f"invoke git_create_branch -b '{branch_name}'"
+    cmd = f"invoke git_branch_create -b '{branch_name}'"
     hlitauti.run(ctx, cmd, dry_run=dry_run)
 
 
-# //////////////////////////////////////////////////////////////////////////////
+# ##################################################################################
 
 
 def _resolve_src_dst_names(
@@ -394,7 +227,7 @@ def integrate_diff_dirs(  # type: ignore
         os.system(cmd)
 
 
-# //////////////////////////////////////////////////////////////////////////////
+# ##################################################################################
 
 
 def _find_files_touched_since_last_integration(
@@ -416,7 +249,8 @@ def _find_files_touched_since_last_integration(
         os.chdir(abs_dir)
         # Find the hash of all integration commits.
         cmd = "git log --date=local --oneline --date-order | grep AmpTask1786_Integrate"
-        # Remove integrations like "'... Merge branch 'master' into AmpTask1786_Integrate_20220113'"
+        # Remove integrations like "'... Merge branch 'master' into
+        # AmpTask1786_Integrate_20220113'"
         cmd += " | grep -v \"Merge branch 'master' into \""
         _, txt = hsystem.system_to_string(cmd)
         _LOG.debug("integration commits=\n%s", txt)
@@ -486,7 +320,7 @@ def integrate_find_files_touched_since_last_integration(  # type: ignore
     print("\n".join(files))
 
 
-# //////////////////////////////////////////////////////////////////////////////
+# ##################################################################################
 
 
 def _integrate_files(
@@ -753,3 +587,78 @@ def integrate_diff_overlapping_files(  # type: ignore
     script_txt = "\n".join(script_txt)
     hio.create_executable_script(script_file_name, script_txt)
     print(f"# To diff against the base run:\n> {script_file_name}")
+
+
+# ##################################################################################
+
+
+def _infer_dst_dir(src_dir: str) -> Tuple[str, str]:
+    """
+    Convert a dir such as
+
+    ```
+    .../src/cmamp1/.../test_data_snapshots/alpha_numeric_data_snapshots
+    ```
+    into
+
+    ```
+    .../src/amp1/.../test_data_snapshots/alpha_numeric_data_snapshots
+    ```
+    """
+    _LOG.debug(hprint.to_str("src_dir"))
+    src_dir = os.path.normpath(src_dir)
+    # Extract the repo dir name, by looking for `cmamp1` or `amp1`.
+    target_dir = "/cmamp1/"
+    idx = src_dir.find(target_dir)
+    if idx >= 0:
+        src_dir_basename = "cmamp1"
+        dst_dir_basename = "amp1"
+        subdir = src_dir[idx + len(target_dir):]
+    else:
+        idx = src_dir.find("/amp1/")
+        if idx >= 0:
+            src_dir_basename = "amp1"
+            dst_dir_basename = "cmamp1"
+            subdir = src_dir[idx + len(target_dir):]
+        else:
+            raise ValueError(f"Can't parse src_dir='{src_dir}")
+    # Replace `cmamp1` with `amp1`
+    dst_dir = src_dir.replace("/" + src_dir_basename + "/", "/" + dst_dir_basename + "/")
+    _LOG.debug(hprint.to_str("src_dir dst_dir subdir"))
+    return dst_dir, subdir
+
+
+@task
+def integrate_rsync(  # type: ignore
+    ctx, src_dir, dst_dir="", check_dir=True, dry_run=False
+):
+    """
+    Use `rsync` to bring two dirs to sync
+
+    E.g.,
+    ```
+    > invoke integrate_diff_dirs
+    ...
+      ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+      ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+
+    > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+    ```
+
+    """
+    hlitauti.report_task()
+    _ = ctx
+    # Resolve
+    if check_dir:
+        _dassert_is_integration_branch(src_dir)
+    if dst_dir == "":
+        dst_dir, _ = _infer_dst_dir(src_dir)
+    if check_dir:
+        _dassert_is_integration_branch(dst_dir)
+    #
+    src_dir = os.path.normpath(src_dir)
+    dst_dir = os.path.normpath(dst_dir)
+    _LOG.info("Syncing:\n'%s'\nto\n'%s'", src_dir, dst_dir)
+    #
+    cmd = f"rsync --delete -a -r {src_dir}/ {dst_dir}/"
+    hsystem.system(cmd, log_level=logging.INFO, dry_run=dry_run)

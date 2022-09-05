@@ -260,7 +260,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         # Run.
         self._test1(system)
 
-    @pytest.mark.slow("~15 seconds.")
+    @pytest.mark.superslow("~30 seconds.")
     def test_market_data3_database_portfolio(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()

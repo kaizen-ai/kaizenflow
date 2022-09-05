@@ -109,7 +109,7 @@ fep_dict = {
     # "dollar_neutrality": "gaussian_rank",
     "quantization": "nearest_share",
     "burn_in_bars": 3,
-    "style": "longitudinal"
+    "style": "longitudinal",
 }
 fep_config = cconfig.Config.from_dict(fep_dict)
 

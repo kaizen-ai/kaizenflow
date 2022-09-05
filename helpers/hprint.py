@@ -329,20 +329,25 @@ def round_digits(
 # name of variables from the caller.
 
 
-def to_str(expression: str, frame_lev: int = 1) -> str:
+def to_str(expression: str, frame_lev: int = 1, print_lhs: bool = True) -> str:
     """
-    Return a string with the value of a variable / expression / multiple
-    variables.
-
-    If expression is a space-separated compound expression, convert it into
-    `exp1=val1, exp2=val2, ...`.
+    Return a string with the value of one or more variables / expressions.
 
     This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
     We don't want to force to use Python 3.8 just for this feature.
 
-    >>> x = 1
-    >>> to_str("x+1")
+    ```
+    > x = 1
+    > print(to_str("x+1"))
     x+1=2
+    ```
+
+    :param expression: the variable / expression to evaluate and print. E.g.,
+        `to_str("exp1")` is converted into `exp1=val1`.
+        If expression is a space-separated compound expression, e.g.,
+        `to_str("exp1 exp2 ...")`, it is converted into:
+        `exp1=val1, exp2=val2, ...`
+    :param print_lhs: whether we want to print the left hand side (i.e., exp1)
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -356,11 +361,10 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
         return ", ".join(list(map(_to_str, exprs)))
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
-    ret = (
-        expression
-        + "="
-        + repr(eval(expression, frame_.f_globals, frame_.f_locals))
-    )
+    ret = ""
+    if print_lhs:
+        ret += expression + "="
+    ret += repr(eval(expression, frame_.f_globals, frame_.f_locals))
     return ret
 
 

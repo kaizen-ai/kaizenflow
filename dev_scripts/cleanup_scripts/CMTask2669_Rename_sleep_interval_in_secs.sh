@@ -1,23 +1,23 @@
 #!/bin/bash -xe
 
-script_name="amp/dev_scripts/cleanup_scripts/CMTask2669_Rename_sleep_interval_in_secs.sh"
+dir_names="amp/dev_scripts/cleanup_scripts dev_scripts/cleanup_scripts"
 
 replace_text.py \
   --old "sleep_interval_in_secs: float" \
   --new "bar_duration_in_secs: int" \
-  --exclude_files $script_name \
+  --exclude_dirs "$dir_names"
 
 replace_text.py \
   --old "sleep_interval_in_secs" \
   --new "bar_duration_in_secs" \
-  --exclude_files $script_name \
+  --exclude_dirs "$dir_names"
 
 replace_text.py \
   --old "grid_time_in_secs: float" \
   --new "bar_duration_in_secs: int" \
-  --exclude_files $script_name \
+  --exclude_dirs "$dir_names"
 
 replace_text.py \
   --old "grid_time_in_secs" \
   --new "bar_duration_in_secs" \
-  --exclude_files $script_name \
+  --exclude_dirs "$dir_names"
