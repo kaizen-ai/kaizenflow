@@ -1,7 +1,7 @@
 """
 Import as:
 
-import market_data as mdata
+import market_data.market_data_test_case as mdmdteca
 """
 
 import abc
