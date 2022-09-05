@@ -731,7 +731,7 @@ class CcxtBroker(ombroker.Broker):
 
 def get_CcxtBroker_prod_instance1(
     market_data: mdata.MarketData,
-    universe_version: str, 
+    universe_version: str,
     strategy_id: str,
     secret_identifier: omssec.SecretIdentifier,
 ) -> CcxtBroker:

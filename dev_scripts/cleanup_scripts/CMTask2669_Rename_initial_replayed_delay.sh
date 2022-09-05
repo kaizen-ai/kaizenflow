@@ -1,13 +1,13 @@
 #!/bin/bash -xe
 
-script_name="amp/dev_scripts/cleanup_scripts/CMTask2669_Rename_initial_replayed_delay.sh"
+dir_names="amp/dev_scripts/cleanup_scripts dev_scripts/cleanup_scripts"
 
 replace_text.py \
   --old "initial_replayed_delay: int" \
   --new "replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp]" \
-  --exclude_files $script_name \
+  --exclude_dirs "$dir_names"
 
 replace_text.py \
   --old "initial_replayed_delay" \
   --new "replayed_delay_in_mins_or_timestamp" \
-  --exclude_files $script_name \
+  --exclude_dirs "$dir_names"
