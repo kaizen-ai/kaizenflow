@@ -104,7 +104,8 @@ def get_Cx_ReplayedMarketData_from_file(
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
     )
-    # TODO(Grisha): @Dan Pass asset ids as params in `ForecastSystem` examples.
+    # TODO(Grisha): @Dan Pass asset ids as params in `ForecastSystem` examples
+    # and then pass it via `system.config`.
     # Get a list of all the asset ids if specified in the config.
     if ("market_data_config", "asset_ids") in system.config:
         if system.config["market_data_config", "asset_ids"] == "all":
