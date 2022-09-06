@@ -5,7 +5,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_Cx_HistoricalMarketData_example1(
-    system: dtfsys.System
+    system: dtfsys.System,
 ) -> mdata.ImClientMarketData:
     """
     Build a `MarketData` client backed with the data defined by `ImClient`.
@@ -54,7 +54,7 @@ def get_Cx_HistoricalMarketData_example1(
 
 
 def get_Cx_RealTimeMarketData_prod_instance1(
-    asset_ids: List[int]
+    asset_ids: List[int],
 ) -> mdata.MarketData:
     """
     Build a `MarketData` backed with `RealTimeImClient`.
@@ -80,7 +80,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
 
 
 def get_Cx_ReplayedMarketData_from_file(
-    system: dtfsys.System
+    system: dtfsys.System,
 ) -> mdata.ReplayedMarketData:
     """
     Build a `ReplayedMarketData` backed with data from the specified file.
