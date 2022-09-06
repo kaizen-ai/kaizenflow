@@ -449,8 +449,7 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
     @pytest.mark.slow("Slow via GH, fast on server.")
     def test1(self) -> None:
         """
-        Compare daily updating data min and max timestamps are in the yesterday-today
-        time range.
+        Compare daily updating data min and max timestamps are in the same time range.
         
         E.g., "2022.08.28-2022.08.29".
         """
@@ -460,8 +459,10 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
         # Get the current day to calculate start date. Use `pd.Timestamp` instead of
         # `datetime.datetime` since dataset timestamps are pandas type.
         today = pd.Timestamp.today(tz="UTC")
-        start_ts = today - pd.Timedelta(days=1)
-        end_ts = today
+        # To avoid test failure because of non-uploaded yet data, pick 2 days and 1 day 
+        # before today as start and end date respectively.
+        start_ts = today - pd.Timedelta(days=2)
+        end_ts = today - pd.Timedelta(days=1)
         columns = None
         data = im_client.read_data(
             full_symbols,
@@ -474,7 +475,7 @@ class TestHistoricalPqByTileClients2(hunitest.TestCase):
         # won't be equal. So compare min and max timestamps.
         data_min_timestamp = data.index.min().strftime('%Y.%m.%d')
         data_max_timestamp = data.index.max().strftime('%Y.%m.%d') 
-        actual = f"{data_min_timestamp}-{data_min_timestamp}"
+        actual = f"{data_min_timestamp}-{data_max_timestamp}"
         #
         expected_min_timestamp = start_ts.strftime('%Y.%m.%d')
         expected_max_timestamp = end_ts.strftime('%Y.%m.%d')

@@ -178,7 +178,7 @@ def get_CcxtHistoricalPqByTileClient_example2(
 
 def get_CcxtHistoricalPqByTileClient_example3() -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
-    Client is initialized to process CCXT data for:
+    Client is initialized to process real-time CCXT data for:
 
     - contract type: "futures"
     - data_snapshot: ""
