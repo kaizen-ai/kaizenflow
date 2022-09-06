@@ -146,7 +146,7 @@ def get_ProcessForecastsNode_dict_example1(
             "order_duration_in_mins": order_duration_in_mins,
         },
         "optimizer_config": {
-            "backend": "pomo",
+            "backend": "cc_pomo",
             "params": {
                 "style": style,
                 "kwargs": compute_target_positions_kwargs,
