@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def get_Cx_HistoricalMarketData_example1(
-    system: dtfsys.System,
+    system: dtfsys.System
 ) -> mdata.ImClientMarketData:
     """
     Build a `MarketData` client backed with the data defined by `ImClient`.
@@ -54,7 +54,7 @@ def get_Cx_HistoricalMarketData_example1(
 
 
 def get_Cx_RealTimeMarketData_prod_instance1(
-    asset_ids: List[int],
+    asset_ids: List[int]
 ) -> mdata.MarketData:
     """
     Build a `MarketData` backed with `RealTimeImClient`.
@@ -80,15 +80,13 @@ def get_Cx_RealTimeMarketData_prod_instance1(
 
 
 def get_Cx_ReplayedMarketData_from_file(
-    file_path: str, *, aws_profile: Optional[str] = None
-) -> pd.DataFrame:
+    system: dtfsys.System
+) -> mdata.ReplayedMarketData:
     """
-    Get data for `ReplayedMarketData`.
-
-    :param file_path: either s3 or a local root path to the file with data
-    :param aws_profile: AWS profile, e.g., "ck"
-    :return: data for replaying
+    Build a `ReplayedMarketData` backed with data from the specified file.
     """
+    file_path = system.config["market_data_config", "file_path"]
+    aws_profile = "ck"
     hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     # `get_ReplayedTimeMarketData_from_df()` is looking for "start_datetime"
     # and "end_datetime" columns by default and we do not have a way to
@@ -104,7 +102,16 @@ def get_Cx_ReplayedMarketData_from_file(
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
     )
-    return market_data_df
+    system.config["market_data_config", "data"] = market_data_df
+    # Get a list of all the asset ids if specified in the config.
+    if ("market_data_config", "asset_ids") in system.config:
+        if system.config["market_data_config", "asset_ids"] == "all":
+            system.config["market_data_config", "asset_ids"] = (
+                market_data_df["asset_id"].unique().tolist()
+            )
+    # Initialize market data client.
+    market_data = dtfsys.get_EventLoop_MarketData_from_df(system)
+    return market_data
 
 
 # #############################################################################
