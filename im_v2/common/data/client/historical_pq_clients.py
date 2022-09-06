@@ -343,6 +343,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             query_columns = columns
         return query_columns
 
+    @staticmethod
     def _apply_transformations(
         self, df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any
     ) -> pd.DataFrame:

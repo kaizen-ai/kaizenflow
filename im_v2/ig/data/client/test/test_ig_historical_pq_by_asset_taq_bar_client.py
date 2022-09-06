@@ -21,6 +21,7 @@ class TestIgHistoricalPqByTileTaqBarClient1(icdcttch.ImClientTestCase):
     @staticmethod
     def get_IgHistoricalPqByTileTaqBarClient_example1():
         vendor = "ig"
+        asset_class = "spot"
         # TODO(gp): Use the weekly data once they also support the shorter
         # Parquet condition filtering since it's faster.
         # root_dir_name = "/cache/tiled.bar_data.all.2010.weekofyear"
@@ -30,7 +31,7 @@ class TestIgHistoricalPqByTileTaqBarClient1(icdcttch.ImClientTestCase):
         aws_profile = "am"
         partition_mode = "by_year_month"
         im_client = imvidcihpbatbc.IgHistoricalPqByTileTaqBarClient(
-            vendor, root_dir_name, aws_profile, partition_mode
+            vendor, asset_class, root_dir_name, aws_profile, partition_mode
         )
         return im_client
 

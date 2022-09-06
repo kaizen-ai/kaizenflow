@@ -29,6 +29,7 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
     def __init__(
         self,
         vendor: str,
+        asset_class: str,
         root_dir_name: str,
         aws_profile: Optional[str],
         partition_mode: str,
@@ -43,6 +44,7 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
             vendor,
             universe_version,
             resample_1min,
+            asset_class,
             root_dir_name,
             partition_mode,
             infer_exchange_id=infer_exchange_id,
@@ -91,7 +93,7 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
         Same as abstract method.
         """
         df = super()._read_data_for_multiple_symbols(
-            full_symbols, start_ts, end_ts, columns, full_symbol_col_name
+            self, full_symbols, start_ts, end_ts, columns, full_symbol_col_name
         )
         _LOG.debug("before df=\n%s", hpandas.df_to_str(df, print_dtypes=True))
         # IG historical data doesn't have a knowledge time so we use the end of the
