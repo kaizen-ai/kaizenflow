@@ -727,14 +727,14 @@ class ForecastProcessor:
         # compute_target_positions_kwargs
         backend = self._optimizer_dict["backend"]
         if backend == "pomo":
-            style = self._optimizer_dict["params"]["style"]
-            kwargs = self._optimizer_dict["params"]["kwargs"]
-            df = ocalopti.compute_target_positions_in_cash(
-                assets_and_predictions,
-                style=style,
-                **kwargs,
-            )
-        elif backend == "cc_pomo":
+        #     style = self._optimizer_dict["params"]["style"]
+        #     kwargs = self._optimizer_dict["params"]["kwargs"]
+        #     df = ocalopti.compute_target_positions_in_cash(
+        #         assets_and_predictions,
+        #         style=style,
+        #         **kwargs,
+        #     )
+        # elif backend == "cc_pomo":
             style = self._optimizer_dict["params"]["style"]
             kwargs = self._optimizer_dict["params"]["kwargs"]
             df = ocalopti.compute_target_positions_in_cash(
@@ -774,7 +774,7 @@ class ForecastProcessor:
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
         #
-        if backend == "cc_pomo":
+        if backend == "pomo":
             diff_num_shares = df["curr_num_shares"]
         else:
             # Convert the target positions from cash values to target share counts.
