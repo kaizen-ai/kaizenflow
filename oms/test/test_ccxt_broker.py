@@ -171,7 +171,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
-        self.assert_equal(receipt, "filename_0.txt")
+        self.assert_equal(receipt, "filename_1.txt")
         # Check the order Dataframe.
         act = hpandas.convert_df_to_json_string(order_df, n_tail=None)
         exp = r"""
