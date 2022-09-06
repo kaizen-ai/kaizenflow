@@ -8,6 +8,6 @@ replace_text.py \
   --exclude_dirs "$dir_names" 
 
 replace_text.py \
-  --old "Time_NonTime_ForecastSystem" \
-  --new "Time_ForecastSystem" \
+  --old "ForecastSystem" \
+  --new "NonTime_ForecastSystem" \
   --exclude_dirs "$dir_names" 
