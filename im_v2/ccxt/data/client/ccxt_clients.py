@@ -37,12 +37,12 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
 
     def __init__(
-        self, vendor: str, universe_version: str, resample_1min: bool
+        self, vendor: str, universe_version: str, resample_1min: bool, asset_class: str,
     ) -> None:
         """
         Constructor.
         """
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min, asset_class)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 
@@ -162,6 +162,7 @@ class CcxtCddCsvParquetByAssetClient(
         universe_version: str,
         resample_1min: bool,
         root_dir: str,
+        asset_class: str,
         # TODO(gp): -> file_extension
         extension: str,
         data_snapshot: str,
@@ -178,7 +179,7 @@ class CcxtCddCsvParquetByAssetClient(
         :param aws_profile: AWS profile, e.g., `am`
         :param data_snapshot: same format used in `get_data_snapshot()`
         """
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min, asset_class)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -214,7 +215,7 @@ class CcxtCddCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
+        exchange_id, asset_class, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with crypto price data.
         file_path = self._get_file_path(
             self._data_snapshot, exchange_id, currency_pair
@@ -337,10 +338,10 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
             vendor,
             universe_version,
             resample_1min,
+            contract_type,
             root_dir,
             partition_mode,
             dataset,
-            contract_type,
             data_snapshot,
             aws_profile=aws_profile,
         )

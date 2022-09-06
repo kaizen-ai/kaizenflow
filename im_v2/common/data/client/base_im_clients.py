@@ -65,6 +65,7 @@ class ImClient(abc.ABC):
         vendor: str,
         universe_version: Optional[str],
         resample_1min: bool,
+        asset_class: str, 
         *,
         full_symbol_col_name: Optional[str] = None,
     ) -> None:
@@ -89,6 +90,7 @@ class ImClient(abc.ABC):
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
+        self._asset_class = asset_class
         # TODO(gp): This is the name of the column of the asset_id in the data
         #  as it is read by the derived classes (e.g., `igid`, `asset_id`).
         #  We should rename this as "full_symbol" so that all the code downstream
@@ -132,9 +134,11 @@ class ImClient(abc.ABC):
         """
         # We use only `trade` universe for `ImClient`.
         universe_mode = "trade"
+        # Asset class is fixed since it now only supports `spot` data.
         universe = ivcu.get_vendor_universe(
             self._vendor,
             universe_mode,
+            self._asset_class,
             version=self._universe_version,
             as_full_symbol=True,
         )
@@ -632,7 +636,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         self._table_name = table_name
         self._db_connection = db_connection
         self._asset_class = asset_class
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min, asset_class)
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -872,7 +876,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         :return: min or max value of 'timestamp' column.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
-        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
+        exchange, asset_class, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
             query = (

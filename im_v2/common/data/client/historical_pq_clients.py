@@ -47,6 +47,7 @@ class HistoricalPqByTileClient(
         # the child classes, e.g., by `CcxtHistoricalPqByTileClient`.
         universe_version: str,
         resample_1min: bool,
+        asset_class: str,
         root_dir: str,
         partition_mode: str,
         infer_exchange_id: bool,
@@ -72,6 +73,7 @@ class HistoricalPqByTileClient(
             vendor,
             universe_version,
             resample_1min,
+            asset_class,
             full_symbol_col_name=full_symbol_col_name,
         )
         hdbg.dassert_isinstance(root_dir, str)
@@ -197,7 +199,7 @@ class HistoricalPqByTileClient(
                 transformation_kwargs["exchange_id"] = root_dir.split("/")[-1]
             # Transform data.
             root_dir_df = self._apply_transformations(
-                root_dir_df, full_symbol_col_name, **transformation_kwargs
+                self, root_dir_df, full_symbol_col_name, **transformation_kwargs
             )
             # The columns are used just to partition the data but these columns
             # are not included in the `ImClient` output.
@@ -272,11 +274,11 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         vendor: str,
         universe_version: str,
         resample_1min: bool,
+        contract_type: str,
         root_dir: str,
         partition_mode: str,
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
         dataset: str,
-        contract_type: str,
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
@@ -294,6 +296,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             vendor,
             universe_version,
             resample_1min,
+            contract_type,
             root_dir,
             partition_mode,
             infer_exchange_id,
@@ -342,7 +345,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
     @staticmethod
     def _apply_transformations(
-        df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any
+        self, df: pd.DataFrame, full_symbol_col_name: str, **kwargs: Any
     ) -> pd.DataFrame:
         """
         See description in the parent class.
@@ -351,10 +354,11 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             df["exchange_id"] = kwargs["exchange_id"]
         # Convert to string, see the parent class for details.
         df["exchange_id"] = df["exchange_id"].astype(str)
+        df["asset_class"] = self._contract_type
         df["currency_pair"] = df["currency_pair"].astype(str)
         # Add full symbol column at first position in data.
         full_symbol_col = ivcu.build_full_symbol(
-            df["exchange_id"], df["currency_pair"]
+            df["exchange_id"], df["asset_class"], df["currency_pair"]
         )
         if df.columns[0] != full_symbol_col_name:
             # Insert if it doesn't already exist.
@@ -364,7 +368,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             df[full_symbol_col_name] = full_symbol_col.values
         # The columns are used just to partition the data but these columns
         # are not included in the `ImClient` output.
-        df = df.drop(["exchange_id", "currency_pair"], axis=1)
+        df = df.drop(["exchange_id", "currency_pair", "asset_class"], axis=1)
         # Round up float values in case values in raw data are rounded up incorrectly
         # when being read from a file.
         df = df.round(8)

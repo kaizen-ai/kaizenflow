@@ -44,11 +44,11 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
 
     def test_read_data1(self) -> None:
         im_client = imvcdcccex.get_CcxtCsvClient_example2()
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         #
         expected_length = 100
         expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        expected_column_unique_values = {"full_symbol": ["binance::spot::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -57,13 +57,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         shape=(100, 6)
                                          full_symbol     open     high      low    close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
         ...
-        2018-08-17 01:37:00+00:00  binance::BTC_USDT  6346.96  6347.00  6343.00  6343.14  10.787817
-        2018-08-17 01:38:00+00:00  binance::BTC_USDT  6345.98  6345.98  6335.04  6339.25  38.197244
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.25  6348.91  6339.00  6342.95  16.394692
+        2018-08-17 01:37:00+00:00  binance::spot::BTC_USDT  6346.96  6347.00  6343.00  6343.14  10.787817
+        2018-08-17 01:38:00+00:00  binance::spot::BTC_USDT  6345.98  6345.98  6335.04  6339.25  38.197244
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.25  6348.91  6339.00  6342.95  16.394692
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -78,12 +78,12 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     def test_read_data2(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         #
         expected_length = 199
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -93,13 +93,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         shape=(199, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
-        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        2018-08-17 01:38:00+00:00   kucoin::spot::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::spot::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -114,13 +114,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     def test_read_data3(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
         expected_length = 196
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -130,13 +130,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         shape=(196, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
-        2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255
-        2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        2018-08-17 00:02:00+00:00   kucoin::spot::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255
+        2018-08-17 00:03:00+00:00  binance::spot::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797
         ...
-        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
-        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        2018-08-17 01:38:00+00:00   kucoin::spot::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::spot::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -152,13 +152,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     def test_read_data4(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -168,13 +168,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         shape=(9, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        2018-08-17 00:03:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::spot::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -190,14 +190,14 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     def test_read_data5(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -207,13 +207,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         shape=(8, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        2018-08-17 00:03:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::spot::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -230,18 +230,18 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
     def test_read_data6(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-        full_symbol = "unsupported_exchange::unsupported_currency"
+        full_symbol = "unsupported_exchange::spot::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
         resample_1min = False
         im_client = imvcdcccex.get_CcxtCsvClient_example1(resample_1min)
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         #
         expected_length = 174
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -251,13 +251,13 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         shape=(174, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
-        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        2018-08-17 01:38:00+00:00   kucoin::spot::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::spot::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
                 """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -273,7 +273,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
 
     def test_get_start_ts_for_symbol1(self) -> None:
         im_client = imvcdcccex.get_CcxtCsvClient_example2()
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
@@ -281,7 +281,7 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
 
     def test_get_end_ts_for_symbol1(self) -> None:
         im_client = imvcdcccex.get_CcxtCsvClient_example2()
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
@@ -291,14 +291,14 @@ class TestCcxtCsvClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtCsvClient_example2()
         expected_length = 3
         expected_first_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
-            "kucoin::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "gateio::spot::XRP_USDT",
+            "kucoin::spot::ETH_USDT",
         ]
         expected_last_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
-            "kucoin::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "gateio::spot::XRP_USDT",
+            "kucoin::spot::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -324,11 +324,11 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         #
         expected_length = 100
         expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        expected_column_unique_values = {"full_symbol": ["binance::spot::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -337,13 +337,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         shape=(100, 6)
                                          full_symbol     open     high      low    close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
         ...
-        2018-08-17 01:37:00+00:00  binance::BTC_USDT  6346.96  6347.00  6343.00  6343.14  10.787817
-        2018-08-17 01:38:00+00:00  binance::BTC_USDT  6345.98  6345.98  6335.04  6339.25  38.197244
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.25  6348.91  6339.00  6342.95  16.394692
+        2018-08-17 01:37:00+00:00  binance::spot::BTC_USDT  6346.96  6347.00  6343.00  6343.14  10.787817
+        2018-08-17 01:38:00+00:00  binance::spot::BTC_USDT  6345.98  6345.98  6335.04  6339.25  38.197244
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.25  6348.91  6339.00  6342.95  16.394692
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -360,12 +360,12 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         #
         expected_length = 199
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -375,13 +375,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         shape=(199, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
-        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        2018-08-17 01:38:00+00:00   kucoin::spot::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::spot::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -398,13 +398,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:02:00-00:00")
         #
         expected_length = 196
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -414,13 +414,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         shape=(196, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
-        2018-08-17 00:02:00+00:00   kucoin::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255
-        2018-08-17 00:03:00+00:00  binance::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        2018-08-17 00:02:00+00:00   kucoin::spot::ETH_USDT   286.405988   286.405988   285.400193   285.400197   0.162255
+        2018-08-17 00:03:00+00:00  binance::spot::BTC_USDT  6299.970000  6299.970000  6286.930000  6294.520000  34.611797
         ...
-        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
-        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        2018-08-17 01:38:00+00:00   kucoin::spot::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::spot::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -438,13 +438,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -454,13 +454,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         shape=(9, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        2018-08-17 00:03:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::spot::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -478,14 +478,14 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -495,13 +495,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         shape=(8, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        2018-08-17 00:03:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::spot::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -520,7 +520,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbol = "unsupported_exchange::unsupported_currency"
+        full_symbol = "unsupported_exchange::spot::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
@@ -528,12 +528,12 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         #
         expected_length = 174
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -543,13 +543,13 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         shape=(174, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 01:38:00+00:00   kucoin::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
-        2018-08-17 01:39:00+00:00  binance::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
-        2018-08-17 01:39:00+00:00   kucoin::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
+        2018-08-17 01:38:00+00:00   kucoin::spot::ETH_USDT   292.158945   293.007409   292.158945   293.007409   0.001164
+        2018-08-17 01:39:00+00:00  binance::spot::BTC_USDT  6339.250000  6348.910000  6339.000000  6342.950000  16.394692
+        2018-08-17 01:39:00+00:00   kucoin::spot::ETH_USDT   292.158945   292.158946   292.158945   292.158946   0.235161
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -568,7 +568,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
@@ -579,7 +579,7 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtParquetByAssetClient_example1(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-17 01:39:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
@@ -592,14 +592,14 @@ class TestCcxtPqByAssetClient1(icdctictc.ImClientTestCase):
         )
         expected_length = 3
         expected_first_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
-            "kucoin::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "gateio::spot::XRP_USDT",
+            "kucoin::spot::ETH_USDT",
         ]
         expected_last_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
-            "kucoin::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "gateio::spot::XRP_USDT",
+            "kucoin::spot::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -681,15 +681,16 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data2(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         #
         expected_length = 8
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -699,13 +700,13 @@ class TestCcxtSqlRealTimeImClient1(
         shape=(8, 9)
                                     id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00  1.0  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:01:00+00:00  2.0  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:02:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::BTC_USDT
+        2021-09-09 00:00:00+00:00  1.0  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:01:00+00:00  2.0  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:02:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::spot::BTC_USDT
         ...
-        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::ETH_USDT
-        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:04:00+00:00  5.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::spot::ETH_USDT
+        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:04:00+00:00  5.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -719,16 +720,17 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data3(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 4
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -738,10 +740,10 @@ class TestCcxtSqlRealTimeImClient1(
         shape=(4, 9)
                                     id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:02:00+00:00  3.0  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
-        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::ETH_USDT
-        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:04:00+00:00  5.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:02:00+00:00  3.0  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
+        2021-09-09 00:03:00+00:00  NaN   NaN   NaN   NaN    NaN     NaN                       NaT                       NaT  binance::spot::ETH_USDT
+        2021-09-09 00:04:00+00:00  4.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:04:00+00:00  5.0  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -756,16 +758,17 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data4(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 3
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -775,9 +778,9 @@ class TestCcxtSqlRealTimeImClient1(
         shape=(3, 9)
                                 id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00   1  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:00:00+00:00   1  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -792,17 +795,18 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data5(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         start_ts = pd.Timestamp("2021-09-09T00:01:00-00:00")
         end_ts = pd.Timestamp("2021-09-09T00:02:00-00:00")
         #
         expected_length = 2
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -812,8 +816,8 @@ class TestCcxtSqlRealTimeImClient1(
         shape=(2, 9)
                                 id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -829,23 +833,25 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_read_data6(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbol = "unsupported_exchange::unsupported_currency"
+        full_symbol = "unsupported_exchange::spot::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     def test_read_data7(self) -> None:
         resample_1min = False
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbols = ["binance::BTC_USDT", "binance::ETH_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         #
         expected_length = 5
         expected_column_names = self.get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""# df=
@@ -854,11 +860,11 @@ class TestCcxtSqlRealTimeImClient1(
         shape=(5, 9)
                                 id  open  high   low  close  volume    end_download_timestamp       knowledge_timestamp        full_symbol
         timestamp
-        2021-09-09 00:00:00+00:00   1  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
-        2021-09-09 00:04:00+00:00   4  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::BTC_USDT
-        2021-09-09 00:04:00+00:00   5  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::ETH_USDT
+        2021-09-09 00:00:00+00:00   1  30.0  40.0  50.0   60.0    70.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:01:00+00:00   2  31.0  41.0  51.0   61.0    71.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:02:00+00:00   3  32.0  42.0  52.0   62.0    72.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
+        2021-09-09 00:04:00+00:00   4  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::BTC_USDT
+        2021-09-09 00:04:00+00:00   5  34.0  44.0  54.0   64.0    74.0 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00  binance::spot::ETH_USDT
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -874,10 +880,11 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_get_start_ts_for_symbol1(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_start_ts = pd.to_datetime("2021-09-09 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
@@ -885,10 +892,11 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_get_end_ts_for_symbol1(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_end_ts = pd.to_datetime("2021-09-09 00:04:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
@@ -896,19 +904,20 @@ class TestCcxtSqlRealTimeImClient1(
 
     def test_get_universe1(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
         expected_length = 3
         expected_first_elements = [
-            "kucoin::ETH_USDT",
-            "binance::BTC_USDT",
-            "binance::ETH_USDT",
+            "kucoin::spot::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "binance::spot::ETH_USDT",
         ]
         expected_last_elements = [
-            "kucoin::ETH_USDT",
-            "binance::BTC_USDT",
-            "binance::ETH_USDT",
+            "kucoin::spot::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "binance::spot::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -921,30 +930,33 @@ class TestCcxtSqlRealTimeImClient1(
     @pytest.mark.slow
     def test_filter_columns1(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         columns = ["full_symbol", "open", "high", "low", "close", "volume"]
         self._test_filter_columns1(im_client, full_symbols, columns)
 
     @pytest.mark.slow
     def test_filter_columns2(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, columns)
 
     @pytest.mark.slow
     def test_filter_columns3(self) -> None:
         resample_1min = True
+        asset_class = "spot"
         im_client = icdcl.CcxtSqlRealTimeImClient(
-            resample_1min, self.connection, "ccxt_ohlcv"
+            resample_1min, self.connection, "ccxt_ohlcv", asset_class
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
 
@@ -1021,13 +1033,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
     def test_read_data1(self) -> None:
         resample_1min = True
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
-            resample_1min
+            resample_1min, 
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         #
         expected_length = 2881
         expected_column_names = get_expected_column_names()
-        expected_column_unique_values = {"full_symbol": ["binance::BTC_USDT"]}
+        expected_column_unique_values = {"full_symbol": ["binance::spot::BTC_USDT"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
@@ -1036,13 +1048,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         shape=(2881, 6)
                                          full_symbol     open     high      low    close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.00  6319.04  6310.32  6311.64   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.64  6311.77  6302.81  6302.81  16.781206
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.81  6306.00  6292.79  6297.26  55.373226
         ...
-        2018-08-18 23:58:00+00:00  binance::BTC_USDT  6385.48  6390.00  6385.48  6387.01  37.459319
-        2018-08-18 23:59:00+00:00  binance::BTC_USDT  6390.00  6390.00  6386.82  6387.96  10.584910
-        2018-08-19 00:00:00+00:00  binance::BTC_USDT  6387.96  6387.97  6375.64  6377.25  39.426236
+        2018-08-18 23:58:00+00:00  binance::spot::BTC_USDT  6385.48  6390.00  6385.48  6387.01  37.459319
+        2018-08-18 23:59:00+00:00  binance::spot::BTC_USDT  6390.00  6390.00  6386.82  6387.96  10.584910
+        2018-08-19 00:00:00+00:00  binance::spot::BTC_USDT  6387.96  6387.97  6375.64  6377.25  39.426236
         """
         # pylint: enable=line-too-long
         self._test_read_data1(
@@ -1060,12 +1072,12 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         #
         expected_length = 5761
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+            "full_symbol": ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -1075,13 +1087,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         shape=(5761, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-18 23:59:00+00:00   kucoin::ETH_USDT          NaN      NaN          NaN      NaN        NaN
-        2018-08-19 00:00:00+00:00  binance::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
-        2018-08-19 00:00:00+00:00   kucoin::ETH_USDT   293.870469   294.00   293.870469   294.00   0.704782
+        2018-08-18 23:59:00+00:00   kucoin::spot::ETH_USDT          NaN      NaN          NaN      NaN        NaN
+        2018-08-19 00:00:00+00:00  binance::spot::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
+        2018-08-19 00:00:00+00:00   kucoin::spot::ETH_USDT   293.870469   294.00   293.870469   294.00   0.704782
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -1099,13 +1111,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-18T00:23:00-00:00")
         #
         expected_length = 2836
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+            "full_symbol": ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -1115,13 +1127,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         shape=(2836, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-18 00:23:00+00:00  binance::BTC_USDT  6570.830000  6573.800000  6567.980000  6573.800000  43.493238
-        2018-08-18 00:23:00+00:00   kucoin::ETH_USDT   316.138881   316.138881   316.021676   316.021676   0.800971
-        2018-08-18 00:24:00+00:00  binance::BTC_USDT  6573.560000  6575.000000  6564.470000  6567.010000  58.972297
+        2018-08-18 00:23:00+00:00  binance::spot::BTC_USDT  6570.830000  6573.800000  6567.980000  6573.800000  43.493238
+        2018-08-18 00:23:00+00:00   kucoin::spot::ETH_USDT   316.138881   316.138881   316.021676   316.021676   0.800971
+        2018-08-18 00:24:00+00:00  binance::spot::BTC_USDT  6573.560000  6575.000000  6564.470000  6567.010000  58.972297
         ...
-        2018-08-18 23:59:00+00:00   kucoin::ETH_USDT          NaN      NaN          NaN      NaN        NaN
-        2018-08-19 00:00:00+00:00  binance::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
-        2018-08-19 00:00:00+00:00   kucoin::ETH_USDT   293.870469   294.00   293.870469   294.00   0.704782
+        2018-08-18 23:59:00+00:00   kucoin::spot::ETH_USDT          NaN      NaN          NaN      NaN        NaN
+        2018-08-19 00:00:00+00:00  binance::spot::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
+        2018-08-19 00:00:00+00:00   kucoin::spot::ETH_USDT   293.870469   294.00   293.870469   294.00   0.704782
         """
         # pylint: enable=line-too-long
         self._test_read_data3(
@@ -1140,13 +1152,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 9
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+            "full_symbol": ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -1156,13 +1168,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         shape=(9, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        2018-08-17 00:03:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::spot::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
                 """
         # pylint: enable=line-too-long
         self._test_read_data4(
@@ -1181,14 +1193,14 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.Timestamp("2018-08-17T00:01:00-00:00")
         end_ts = pd.Timestamp("2018-08-17T00:04:00-00:00")
         #
         expected_length = 8
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "kucoin::ETH_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "kucoin::spot::ETH_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -1198,13 +1210,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         shape=(8, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
-        2018-08-17 00:02:00+00:00  binance::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:02:00+00:00  binance::spot::BTC_USDT  6302.810000  6306.000000  6292.790000  6297.260000  55.373226
         ...
-        2018-08-17 00:03:00+00:00   kucoin::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
-        2018-08-17 00:04:00+00:00  binance::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
-        2018-08-17 00:04:00+00:00   kucoin::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
+        2018-08-17 00:03:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.400193   285.400193   285.400193   0.020260
+        2018-08-17 00:04:00+00:00  binance::spot::BTC_USDT  6294.520000  6299.980000  6290.000000  6296.100000  22.088586
+        2018-08-17 00:04:00+00:00   kucoin::spot::ETH_USDT   285.400193   285.884638   285.400193   285.884638   0.074655
         """
         # pylint: enable=line-too-long
         self._test_read_data5(
@@ -1223,7 +1235,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbol = "unsupported_exchange::unsupported_currency"
+        full_symbol = "unsupported_exchange::spot::unsupported_currency"
         self._test_read_data6(im_client, full_symbol)
 
     @pytest.mark.slow("Slow via GH, but fast on the server")
@@ -1232,12 +1244,12 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         #
         expected_length = 4791
         expected_column_names = get_expected_column_names()
         expected_column_unique_values = {
-            "full_symbol": ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+            "full_symbol": ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         }
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -1247,13 +1259,13 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         shape=(4791, 6)
                                          full_symbol         open         high          low        close     volume
         timestamp
-        2018-08-17 00:00:00+00:00  binance::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
-        2018-08-17 00:01:00+00:00  binance::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
-        2018-08-17 00:01:00+00:00   kucoin::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
+        2018-08-17 00:00:00+00:00  binance::spot::BTC_USDT  6316.000000  6319.040000  6310.320000  6311.640000   9.967395
+        2018-08-17 00:01:00+00:00  binance::spot::BTC_USDT  6311.640000  6311.770000  6302.810000  6302.810000  16.781206
+        2018-08-17 00:01:00+00:00   kucoin::spot::ETH_USDT   286.712987   286.712987   286.712987   286.712987   0.017500
         ...
-        2018-08-18 23:59:00+00:00  binance::BTC_USDT  6390.000000  6390.00  6386.820000  6387.96  10.584910
-        2018-08-19 00:00:00+00:00  binance::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
-        2018-08-19 00:00:00+00:00   kucoin::ETH_USDT   293.870469   294.00   293.870469   294.00   0.704782
+        2018-08-18 23:59:00+00:00  binance::spot::BTC_USDT  6390.000000  6390.00  6386.820000  6387.96  10.584910
+        2018-08-19 00:00:00+00:00  binance::spot::BTC_USDT  6387.960000  6387.97  6375.640000  6377.25  39.426236
+        2018-08-19 00:00:00+00:00   kucoin::spot::ETH_USDT   293.870469   294.00   293.870469   294.00   0.704782
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -1273,7 +1285,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         columns = ["full_symbol", "open", "close"]
         self._test_filter_columns1(im_client, full_symbols, columns)
 
@@ -1282,7 +1294,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         columns = ["full_symbol", "whatever"]
         self._test_filter_columns2(im_client, full_symbol, columns)
 
@@ -1291,7 +1303,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
 
@@ -1300,7 +1312,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         columns = ["open", "close"]
         self._test_filter_columns4(
             im_client,
@@ -1315,7 +1327,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         self._test_get_start_ts_for_symbol1(
             im_client, full_symbol, expected_start_ts
@@ -1326,7 +1338,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example2(
             resample_1min
         )
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         expected_end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         self._test_get_end_ts_for_symbol1(im_client, full_symbol, expected_end_ts)
 
@@ -1339,14 +1351,14 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         )
         expected_length = 3
         expected_first_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
-            "kucoin::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "gateio::spot::XRP_USDT",
+            "kucoin::spot::ETH_USDT",
         ]
         expected_last_elements = [
-            "binance::BTC_USDT",
-            "gateio::XRP_USDT",
-            "kucoin::ETH_USDT",
+            "binance::spot::BTC_USDT",
+            "gateio::spot::XRP_USDT",
+            "kucoin::spot::ETH_USDT",
         ]
         self._test_get_universe1(
             im_client,
@@ -1405,7 +1417,7 @@ class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
         im_client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
             universe_version, resample_1min, dataset, contract_type, data_snapshot
         )
-        full_symbols = ["kucoin::ETH_USDT", "binance::BTC_USDT"]
+        full_symbols = ["kucoin::spot::ETH_USDT", "binance::spot::BTC_USDT"]
         start_ts = pd.to_datetime("2018-08-17 00:00:00", utc=True)
         end_ts = pd.to_datetime("2018-08-19 00:00:00", utc=True)
         columns = None

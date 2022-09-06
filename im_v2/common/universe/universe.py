@@ -111,6 +111,7 @@ def _get_vedor_universe(
 def get_vendor_universe(
     vendor: str,
     mode: str,
+    asset_class: str,
     *,
     version: Optional[str] = None,
     as_full_symbol: bool = False,
@@ -143,7 +144,7 @@ def get_vendor_universe(
     if as_full_symbol:
         # Convert vendor universe dict to a sorted list of full symbols.
         vendor_universe = [
-            imvcufusy.build_full_symbol(exchange_id, currency_pair)
+            imvcufusy.build_full_symbol(exchange_id, asset_class, currency_pair)
             for exchange_id, currency_pairs in vendor_universe.items()
             for currency_pair in currency_pairs
         ]
