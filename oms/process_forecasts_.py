@@ -742,6 +742,7 @@ class ForecastProcessor:
                 style=style,
                 **kwargs,
             )
+            # TODO(gp): @all move this to
             # Add diff_num_shares to calculate notional limit.
             df["diff_num_shares"] = df["target_notional_trade"] / df["price"]
             # Verify that all orders are above the notional limit.
