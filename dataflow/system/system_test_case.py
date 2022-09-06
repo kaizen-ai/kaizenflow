@@ -43,7 +43,7 @@ def run_NonTime_ForecastSystem_from_backtest_config(
     config_tag: str,
 ) -> dtfcore.ResultBundle:
     """
-    Run non-time `ForecastSystem` DAG with the specified fit / predict method
+    Run non-time `NonTime_ForecastSystem` DAG with the specified fit / predict method
     and using the backtest parameters from `SystemConfig`.
 
     :param system: system object to extract `DagRunner` from
@@ -195,11 +195,11 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# ForecastSystem1_FitPredict_TestCase1
+# NonTime_ForecastSystem1_FitPredict_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
     """
     Test fit() and predict() methods on a System.
     """
@@ -281,11 +281,11 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# ForecastSystem_FitInvariance_TestCase1
+# NonTime_ForecastSystem_FitInvariance_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
     """
     Check the behavior of a System for different amount of passed data history.
     """
@@ -326,11 +326,11 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# ForecastSystem_CheckPnl_TestCase1
+# NonTime_ForecastSystem_CheckPnl_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
     def _test_fit_run1(
         self,
         system: dtfsyssyst.System,
@@ -570,7 +570,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self, time_system: dtfsyssyst.System
     ) -> dtfsyssyst.System:
         """
-        Get the (non-time) `ForecastSystem` via initiated
+        Get the (non-time) `NonTime_ForecastSystem` via initiated
         `Time_ForecastSystem`.
         """
 
@@ -578,7 +578,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
         """
         Get the `Time_ForecastSystem` to be compared to the (non-time)
-        `ForecastSystem`.
+        `NonTime_ForecastSystem`.
         """
 
     # TODO(Grisha): @Dan make `get_file_path()` free-standing.
@@ -586,7 +586,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         """
         Get path to a file with the market data to replay.
 
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_ForecastSystem_vs_Time_ForecastSystem1/input/data.csv.gz`.
+        E.g., `s3://.../unit_test/outcomes/Test_C1b_NonTime_ForecastSystem_vs_Time_ForecastSystem1/input/data.csv.gz`.
         """
         input_dir = self.get_input_dir(
             use_only_test_class=True,
@@ -620,7 +620,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self, non_time_system: dtfsyssyst.System, output_col_name: str
     ) -> str:
         """
-        Get (non-time) `ForecastSystem` outcome signature.
+        Get (non-time) `NonTime_ForecastSystem` outcome signature.
         """
         # Run the system.
         method = "predict"

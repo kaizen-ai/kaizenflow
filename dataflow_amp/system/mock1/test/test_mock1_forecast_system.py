@@ -21,7 +21,7 @@ def _get_test_system_builder_func() -> Callable:
     # so the value of `time_interval_str` doesn't affect tests.
     backtest_config = "mock1_v1-top2.5T.Jan2000"
     system_builder_func = (
-        lambda: dtfasmmfsex.get_Mock1_ForecastSystem_for_simulation_example1(
+        lambda: dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
             backtest_config
         )
     )
@@ -41,12 +41,12 @@ class Test_Mock1_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
 
 
 # #############################################################################
-# Test_Mock1_ForecastSystem_FitPredict
+# Test_Mock1_NonTime_ForecastSystem_FitPredict
 # #############################################################################
 
 
-class Test_Mock1_ForecastSystem_FitPredict(
-    dtfsys.ForecastSystem_FitPredict_TestCase1
+class Test_Mock1_NonTime_ForecastSystem_FitPredict(
+    dtfsys.NonTime_ForecastSystem_FitPredict_TestCase1
 ):
     def get_system(self) -> dtfsys.System:
         """
@@ -85,12 +85,12 @@ class Test_Mock1_ForecastSystem_FitPredict(
 
 
 # #############################################################################
-# Test_Mock1_ForecastSystem_FitInvariance
+# Test_Mock1_NonTime_ForecastSystem_FitInvariance
 # #############################################################################
 
 
-class Test_Mock1_ForecastSystem_FitInvariance(
-    dtfsys.ForecastSystem_FitInvariance_TestCase1
+class Test_Mock1_NonTime_ForecastSystem_FitInvariance(
+    dtfsys.NonTime_ForecastSystem_FitInvariance_TestCase1
 ):
     def test_invariance1(self) -> None:
         system_builder_func = _get_test_system_builder_func()
@@ -110,12 +110,12 @@ class Test_Mock1_ForecastSystem_FitInvariance(
 
 
 # #############################################################################
-# Test_Mock1_ForecastSystem_CheckPnl
+# Test_Mock1_NonTime_ForecastSystem_CheckPnl
 # #############################################################################
 
 
-class Test_Mock1_ForecastSystem_CheckPnl(
-    dtfsys.ForecastSystem_CheckPnl_TestCase1
+class Test_Mock1_NonTime_ForecastSystem_CheckPnl(
+    dtfsys.NonTime_ForecastSystem_CheckPnl_TestCase1
 ):
     def test_fit_run1(self) -> None:
         system_builder_func = _get_test_system_builder_func()

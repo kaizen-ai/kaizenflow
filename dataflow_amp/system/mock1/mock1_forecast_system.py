@@ -21,11 +21,11 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Mock1_ForecastSystem
+# Mock1_NonTime_ForecastSystem
 # #############################################################################
 
 
-class Mock1_ForecastSystem(dtfsys.ForecastSystem):
+class Mock1_NonTime_ForecastSystem(dtfsys.NonTime_ForecastSystem):
     """
     Create a System with:
 

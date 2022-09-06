@@ -9,7 +9,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): -> test_mock1_tiled_backtest.py
 
 
-class Test_Mock1_ForecastSystem_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
+class Test_Mock1_NonTime_ForecastSystem_TiledBacktest(dtfmrpmofl.TiledBacktest_TestCase):
     """
     Run end-to-end backtest for a Mock1 pipeline:
 
