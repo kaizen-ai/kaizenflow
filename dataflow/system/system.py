@@ -594,5 +594,10 @@ class Time_ForecastSystem_with_DatabasePortfolio(
         ...
 
 
+# #############################################################################
+# NonTime_ForecastSystem
+# #############################################################################
+
+
 class NonTime_ForecastSystem(ForecastSystem):
     pass
