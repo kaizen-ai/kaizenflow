@@ -225,24 +225,26 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "high",
             "knowledge_timestamp",
             "low",
+            "number_of_trades",
             "open",
+            "twap",
             "volume",
+            "vwap",
         ]
         # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
-        index=[2022-08-28 15:45:00+00:00, 2022-08-28 15:50:00+00:00]
-        columns=full_symbol,open,high,low,close,volume,knowledge_timestamp
-        shape=(12, 7)
-                                       full_symbol       open       high        low      close      volume              knowledge_timestamp
+        expected_signature = r"""# df=
+        index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
+        columns=full_symbol,open,high,low,close,volume,vwap,number_of_trades,twap,knowledge_timestamp
+        shape=(12, 10)
+                                         full_symbol        open        high         low       close      volume          vwap  number_of_trades          twap              knowledge_timestamp
         timestamp
-        2022-08-28 15:45:00+00:00  binance::APE_USDT      4.824      4.828      4.820      4.825   77085.000 2022-08-29 00:17:46.587224+00:00
-        2022-08-28 15:45:00+00:00  binance::BTC_USDT  19991.900  19993.000  19982.800  19986.100     412.385 2022-08-29 00:17:05.280470+00:00
-        2022-08-28 15:46:00+00:00  binance::APE_USDT      4.824      4.837      4.824      4.835  133384.000 2022-08-29 00:17:46.587224+00:00
+        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000      0.773474               152      0.773473 2022-06-20 09:48:13.737310+00:00
+        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37959.2000  37987.8000  37959.1000  37973.9000     146.115  37974.469000               694  37974.598000 2022-06-20 09:48:46.910826+00:00
+        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7736      0.7736      0.7727      0.7734  188093.000      0.773096                79      0.773120 2022-06-20 09:48:13.737310+00:00
         ...
-        2022-08-28 15:49:00+00:00  binance::BTC_USDT  19991.100  19992.000  19987.900  19991.500    175.287 2022-08-29 00:17:05.280470+00:00
-        2022-08-28 15:50:00+00:00  binance::APE_USDT      4.862      4.863      4.856      4.862  60928.000 2022-08-29 00:17:46.587224+00:00
-        2022-08-28 15:50:00+00:00  binance::BTC_USDT  19991.500  19997.600  19988.300  19996.100    246.412 2022-08-29 00:17:05.280470+00:00
+        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37933.300  37936.5000  37920.0000  37921.4000     58.987  37925.266000               406  37926.456000 2022-06-20 09:48:46.910826+00:00
+        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772      0.7726      0.7717      0.7722  83315.000      0.772204                71      0.772199 2022-06-20 09:48:13.737310+00:00
+        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37921.400  37938.5000  37918.4000  37931.3000     48.736  37925.609000               404  37925.788000 2022-06-20 09:48:46.910826+00:00
         """
         # pylint: enable=line-too-long
         # Check.
