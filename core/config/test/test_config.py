@@ -8,6 +8,7 @@ import pytest
 
 import core.config as cconfig
 import core.config.config_ as cconconf
+import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
@@ -1773,17 +1774,17 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 # #############################################################################
-# _Config_step_through_TestCase1
+# _Config_execute_stmt_TestCase1
 # #############################################################################
 
 
-class _Config_step_through_TestCase1(hunitest.TestCase):
+class _Config_execute_stmt_TestCase1(hunitest.TestCase):
     """
     A class to apply transformations to a Config one-by-one checking its
     result.
     """
 
-    def step_through(
+    def execute_stmt(
         self, stmt: str, exp: Optional[str], mode: str, globals: Dict
     ) -> str:
         """
@@ -1807,11 +1808,22 @@ class _Config_step_through_TestCase1(hunitest.TestCase):
         act = hprint.frame(stmt) + "\n" + act
         return act
 
+    def raise_stmt(
+        self, stmt: str, assertion_type: Any, exp: Optional[str], globals: Dict
+    ) -> str:
+        _LOG.debug("\n" + hprint.frame(stmt))
+        with self.assertRaises(assertion_type) as cm:
+            exec(stmt, globals)
+        act = str(cm.exception)
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
     def run_steps_assert_string(
         self, workload: List[Tuple[str, Optional[str]]], mode: str, globals: Dict
     ) -> None:
-        for stmt, exp in workload:
-            self.step_through(stmt, exp, mode, globals)
+        for data in workload:
+            hdbg.dassert_eq(len(data), 2, "Invalid data='%s'", str(data))
+            stmt, exp = data
+            self.execute_stmt(stmt, exp, mode, globals)
 
     def run_steps_check_string(
         self, workload: List[str], mode: str, globals: Dict
@@ -1819,20 +1831,20 @@ class _Config_step_through_TestCase1(hunitest.TestCase):
         exp = None
         res = []
         for stmt in workload:
-            res_tmp = self.step_through(stmt, exp, mode, globals)
+            res_tmp = self.execute_stmt(stmt, exp, mode, globals)
             res.append(res_tmp)
         txt = "\n".join(res)
         self.check_string(txt, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
-# Test_nested_config_set_step_through1
+# Test_nested_config_set_execute_stmt1
 # #############################################################################
 
 
-class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
+class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
     """
-    Test that _Config_step_through_TestCase1 works properly.
+    Test that _Config_execute_stmt_TestCase1 works properly.
     """
 
     def test_assert_string_str1(self) -> None:
@@ -1898,7 +1910,6 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
         #
         self.run_steps_check_string(workload, mode, globals())
 
-
     def test_check_string_str1(self) -> None:
         mode = "str"
         self.check_string_helper1(mode)
@@ -1907,25 +1918,242 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
         mode = "repr"
         self.check_string_helper1(mode)
 
+
 # #############################################################################
-# Test_mark_key_as_read1
+# Test_basic1
 # #############################################################################
 
 
-class Test_mark_key_as_read1(hunitest.TestCase):
+class Test_basic1(_Config_execute_stmt_TestCase1):
 
-    def test1(self, mode: str) -> None:
-        workload = []
-        #
-        stmt = "config = cconfig.Config()"
-        exp = ""
-        workload.append((stmt, exp))
-        #
-        stmt = 'config["read_data", "file_name"] = "test_name.txt"'
-        exp = ""
-        workload.append((stmt, exp))
-        #
+    def test1(self) -> None:
         mode = "repr"
-        self.run_steps_check_string(workload, mode, globals())
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "allow_write_after_read"
+        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+        exp = ""
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign a value.
+        stmt = 'config["read_data"] = "hello.txt"'
+        exp = r"""
+        read_data (was_read=False): hello.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Invalid access.
+        stmt = 'config["read_data"]["filename"] = "world.txt"'
+        exp = """
+        'str' object does not support item assignment
+        """
+        self.raise_stmt(stmt, TypeError, exp, globals())
+        # Invalid access.
+        stmt = 'config["read_data", "filename"] = "world.txt"'
+        exp = """
+        * Failed assertion *
+        Instance of 'hello.txt' is '<class 'str'>' instead of '<class 'core.config.config_.Config'>'
+        """
+        self.raise_stmt(stmt, AssertionError, exp, globals())
+
+
+# #############################################################################
+# Test_flat_config_clobber1
+# #############################################################################
+
+
+class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
+
+    # TODO(gp): It's not easy to factor out the code around the `exec()` so
+    #  we copy-paste it for now.
+
+    def test1(self) -> None:
+        """
+        Test the following scenario:
+
+        - a flat config
+        - clobber_mode='assert_on_write_after_read'
+        - writing-after-reading asserts
+        """
+        mode = "repr"
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "assert_on_write_after_read"
+        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+        exp = ""
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign a value.
+        stmt = 'config["read_data"] = "hello.txt"'
+        exp = r"""
+        read_data (was_read=False): hello.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Overwrite a value.
+        stmt = 'config["read_data"] = "test_name.txt"'
+        exp = r"""
+        read_data (was_read=False): test_name.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Read the value.
+        stmt = '_ = config["read_data"]'
+        exp = r"""
+        read_data (was_read=True): test_name.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Write after read asserts.
+        stmt = 'config["read_data"] = "new_name.txt"'
+        exp = """
+        Trying to overwrite old value 'test_name.txt' with new value 'new_name.txt' for key 'read_data' with clobber_mode=assert_on_write_after_read
+        self=
+          read_data:
+            test_name.txt
+        """
+        self.raise_stmt(stmt, cconfig.ClobberError, exp, globals())
+
+    def test2(self) -> None:
+        """
+        Test the following scenario:
+
+        - a flat config
+        - clobber_mode='allow_write_after_read'
+        - writing-after-reading doesn't asserts
+
+        Like test_flat_config_assert_on_write_after_read1 but allowing to write
+        after read.
+        """
+        mode = "repr"
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "allow_write_after_read"
+        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+        exp = ""
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign a value.
+        stmt = 'config["read_data"] = "hello.txt"'
+        exp = r"""
+        read_data (was_read=False): hello.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Overwrite a value.
+        stmt = 'config["read_data"] = "test_name.txt"'
+        exp = r"""
+        read_data (was_read=False): test_name.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Read the value.
+        stmt = '_ = config["read_data"]'
+        exp = r"""
+        read_data (was_read=True): test_name.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Write after read doesn't asserts.
+        stmt = 'config["read_data"] = "new_name.txt"'
+        exp = """
+        read_data (was_read=True): new_name.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+
+
+# #############################################################################
+# Test_nested_config_clobber1
+# #############################################################################
+
+
+class Test_nested_config_clobber1(_Config_execute_stmt_TestCase1):
+
+    def test0(self) -> None:
+        mode = "repr"
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "assert_on_write_after_read"
+        config = cconfig.Config(update_mode=update_mode, clobber_mode=clobber_mode)
+        config["read_data", "filename"] = "hello.txt"
+        #_LOG.info("config=\n" + repr(config))
+        _LOG.info("config=\n" + repr(config["read_data"]))
+
+    def test1(self) -> None:
+        """
+        Test the following scenario:
+
+        - a nested config
+        - clobber_mode='assert_on_write_after_read'
+        - writing-after-reading asserts
+        """
+        mode = "repr"
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "assert_on_write_after_read"
+        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+        exp = ""
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign a value.
+        stmt = 'config["read_data", "filename"] = "hello.txt"'
+        exp = r"""
+        read_data (was_read=False): hello.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+    #     # Overwrite a value.
+    #     stmt = 'config["read_data"] = "test_name.txt"'
+    #     exp = r"""
+    #     read_data (was_read=False): test_name.txt <class 'str'>
+    #     """
+    #     self.execute_stmt(stmt, exp, mode, globals())
+    #     # Read the value.
+    #     stmt = '_ = config["read_data"]'
+    #     exp = r"""
+    #     read_data (was_read=True): test_name.txt <class 'str'>
+    #     """
+    #     self.execute_stmt(stmt, exp, mode, globals())
+    #     # Write after read asserts.
+    #     stmt = 'config["read_data"] = "new_name.txt"'
+    #     exp = """
+    #     Trying to overwrite old value 'test_name.txt' with new value 'new_name.txt' for key 'read_data' with clobber_mode=assert_on_write_after_read
+    #     self=
+    #       read_data:
+    #         test_name.txt
+    #     """
+    #     self.raise_stmt(stmt, cconfig.ClobberError, exp, globals())
+    #
+    # def test2(self) -> None:
+    #     """
+    #     Test the following scenario:
+    #
+    #     - a nested config
+    #     - clobber_mode='allow_write_after_read'
+    #     - writing-after-reading doesn't asserts
+    #
+    #     Like test_flat_config_assert_on_write_after_read1 but allowing to write
+    #     after read.
+    #     """
+    #     mode = "repr"
+    #     # Create a Config.
+    #     update_mode = "overwrite"
+    #     clobber_mode = "allow_write_after_read"
+    #     stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+    #     exp = ""
+    #     self.execute_stmt(stmt, exp, mode, globals())
+    #     # Assign a value.
+    #     stmt = 'config["read_data"] = "hello.txt"'
+    #     exp = r"""
+    #     read_data (was_read=False): hello.txt <class 'str'>
+    #     """
+    #     self.execute_stmt(stmt, exp, mode, globals())
+    #     # Overwrite a value.
+    #     stmt = 'config["read_data"] = "test_name.txt"'
+    #     exp = r"""
+    #     read_data (was_read=False): test_name.txt <class 'str'>
+    #     """
+    #     self.execute_stmt(stmt, exp, mode, globals())
+    #     # Read the value.
+    #     stmt = '_ = config["read_data"]'
+    #     exp = r"""
+    #     read_data (was_read=True): test_name.txt <class 'str'>
+    #     """
+    #     self.execute_stmt(stmt, exp, mode, globals())
+    #     # Write after read doesn't asserts.
+    #     stmt = 'config["read_data"] = "new_name.txt"'
+    #     exp = """
+    #     read_data (was_read=True): new_name.txt <class 'str'>
+    #     """
+    #     self.execute_stmt(stmt, exp, mode, globals())
+
 
 # TODO(gp): Unit tests all the functions.

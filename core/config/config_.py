@@ -65,6 +65,14 @@ DUMMY = "__DUMMY__"
 # - Config derives from OrderedDict using default value to create the keys on
 #   the fly, although without compound key notation
 
+# Issues with tracking accurately write-after-read:
+# - nested config add extra complexity mixing Dict and Config
+#   - it would be simpler if everything was a dict
+# - how to handle **to_dict?
+#   - is it all read?
+# - what happens if one does read["data"] and that is a Config, is it all read?
+# - how to distinguish printing from actually reading?
+
 # Keys in a Config are strings or ints.
 ScalarKey = Union[str, int]
 
@@ -348,12 +356,11 @@ class Config:
     # Dict-like methods.
     # ////////////////////////////////////////////////////////////////////////////
 
-    def __contains__(self, key: ScalarKey) -> bool:
+    def __contains__(self, key: CompoundKey) -> bool:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        If `key` is nested, the hierarchy of Config objects is navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -754,7 +761,7 @@ class Config:
         if value is None:
             # Use the value from the constructor.
             value = ctor_value
-            _LOG.debug("resolved: %s=%s", tag, value)
+            #_LOG.debug("resolved: %s=%s", tag, value)
         # The result should be a valid string.
         hdbg.dassert_isinstance(value, str)
         hdbg.dassert_in(value, valid_values)
