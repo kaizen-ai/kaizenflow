@@ -718,8 +718,6 @@ class ForecastProcessor:
         assets_and_predictions = self._prepare_data_for_optimizer(
             predictions, volatility, spread
         )
-        _LOG.warning("assets_and_predictions=%s", str(assets_and_predictions))
-        assets_and_predictions.to_csv("example_assets_and_predictions.csv")
         hdbg.dassert_not_in(
             self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
         )
@@ -728,15 +726,6 @@ class ForecastProcessor:
         # compute_target_positions_func
         # compute_target_positions_kwargs
         backend = self._optimizer_dict["backend"]
-        # if backend == "pomo":
-        #     style = self._optimizer_dict["params"]["style"]
-        #     kwargs = self._optimizer_dict["params"]["kwargs"]
-        #     df = ocalopti.compute_target_positions_in_cash(
-        #         assets_and_predictions,
-        #         style=style,
-        #         **kwargs,
-        #     )
-        # elif backend == "cc_pomo":
         if backend == "pomo":
             style = self._optimizer_dict["params"]["style"]
             kwargs = self._optimizer_dict["params"]["kwargs"]
@@ -745,7 +734,15 @@ class ForecastProcessor:
                 style=style,
                 **kwargs,
             )
-            # Add diff_num_shares to calculate notional limit
+        elif backend == "cc_pomo":
+            style = self._optimizer_dict["params"]["style"]
+            kwargs = self._optimizer_dict["params"]["kwargs"]
+            df = ocalopti.compute_target_positions_in_cash(
+                assets_and_predictions,
+                style=style,
+                **kwargs,
+            )
+            # Add diff_num_shares to calculate notional limit.
             df["diff_num_shares"] = df["target_notional_trade"] / df["price"]
             # Verify that all orders are above the notional limit.
             #  Note: orders that are below the minimal amount of asset
@@ -777,15 +774,7 @@ class ForecastProcessor:
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
         #
-        if liquidate_holdings:
-            diff_num_shares = -df["curr_num_shares"]
-            _LOG.info(
-                "Liquidating holdings: diff_num_shares=\n%s",
-                hpandas.df_to_str(diff_num_shares),
-            )
-        elif backend == "pomo":
-            # TODO (Danya): simplify the `if-else` clause to allow for
-            #  liqudation of holdings with cc_pomo backend.
+        if backend == "cc_pomo":
             diff_num_shares = df["curr_num_shares"]
         else:
             # Convert the target positions from cash values to target share counts.
@@ -795,6 +784,13 @@ class ForecastProcessor:
         # Make sure the diff_num_shares are well-formed.
         diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
         diff_num_shares = diff_num_shares.fillna(0)
+        #
+        if liquidate_holdings:
+            diff_num_shares = -df["curr_num_shares"]
+            _LOG.info(
+                "Liquidating holdings: diff_num_shares=\n%s",
+                hpandas.df_to_str(diff_num_shares),
+            )
         #
         df["diff_num_shares"] = diff_num_shares
         df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
