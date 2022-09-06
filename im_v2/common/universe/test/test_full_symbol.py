@@ -9,14 +9,14 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         """
         Test correct format.
         """
-        full_symbol = "binance::BTC_USDT"
+        full_symbol = "binance::spot::BTC_USDT"
         imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
     def test2(self) -> None:
         """
         Test incorrect format: `/` symbol.
         """
-        full_symbol = "binance::BTC/USDT"
+        full_symbol = "binance::spot::BTC/USDT"
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
@@ -24,7 +24,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         """
         Test incorrect format: whitespace symbol.
         """
-        full_symbol = "bi nance::BTC_USDT"
+        full_symbol = "bi nance::spot::BTC_USDT"
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
@@ -32,7 +32,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         """
         Test incorrect format: digit.
         """
-        full_symbol = "bi1nance::BTC2USDT"
+        full_symbol = "bi1nance::spot::BTC2USDT"
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
@@ -65,7 +65,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         Test correct format series.
         """
         full_symbol = pd.Series(
-            ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
+            ["binance::spot::BTC_USDT", "ftx::spot::ETH_USDT", "exchange::spot::symbol"]
         )
         imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
@@ -74,7 +74,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         Test series with an incorrectly formatted full symbol.
         """
         full_symbol = pd.Series(
-            ["binance::BTC_USDT", "ftx::ETH_USDT", "bi nance::BTC USDT"]
+            ["binance::spot::BTC_USDT", "ftx::spot::ETH_USDT", "bi nance::spot::BTC USDT"]
         )
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
@@ -83,7 +83,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         """
         Test series with an empty string.
         """
-        full_symbol = pd.Series(["binance::BTC_USDT", "ftx::ETH_USDT", ""])
+        full_symbol = pd.Series(["binance::spot::BTC_USDT", "ftx::spot::ETH_USDT", ""])
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
@@ -91,7 +91,7 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
         """
         Test series with an integer.
         """
-        full_symbol = pd.Series(["binance::BTC_USDT", "ftx::ETH_USDT", 123])
+        full_symbol = pd.Series(["binance::spot::BTC_USDT", "ftx::spot::ETH_USDT", 123])
         with self.assertRaises(AssertionError):
             imvcufusy.dassert_is_full_symbol_valid(full_symbol)
 
@@ -99,33 +99,39 @@ class TestDassertIsFullSymbolValid(hunitest.TestCase):
 class TestParseFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test split full symbol into exchange, symbol.
+        Test split full symbol into exchange, asset class and symbol.
         """
-        full_symbol = "ftx::ADA_USDT"
-        exchange, symbol = imvcufusy.parse_full_symbol(full_symbol)
+        full_symbol = "ftx::spot::ADA_USDT"
+        exchange, asset_class, symbol = imvcufusy.parse_full_symbol(full_symbol)
         self.assert_equal(exchange, "ftx")
+        self.assert_equal(asset_class, "spot")
         self.assert_equal(symbol, "ADA_USDT")
 
     def test2(self) -> None:
         """
-        Test split full symbol into exchange, symbol.
+        Test split full symbol into exchange, asset class and symbol.
         """
-        full_symbol = "kucoin::XPR_USDT"
-        exchange, symbol = imvcufusy.parse_full_symbol(full_symbol)
+        full_symbol = "kucoin::spot::XPR_USDT"
+        exchange, asset_class, symbol = imvcufusy.parse_full_symbol(full_symbol)
         self.assert_equal(exchange, "kucoin")
+        self.assert_equal(asset_class, "spot")
         self.assert_equal(symbol, "XPR_USDT")
 
     def test3(self) -> None:
         """
-        Test split full symbol column into exchange and symbol columns.
+        Test split full symbol column into exchange, asset class and symbol columns.
         """
         full_symbol = pd.Series(
-            ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
+            ["binance::spot::BTC_USDT", "ftx::futures::ETH_USDT", "exchange::asset_class::symbol"]
         )
-        exchange, symbol = imvcufusy.parse_full_symbol(full_symbol)
+        exchange, asset_class, symbol = imvcufusy.parse_full_symbol(full_symbol)
         self.assert_equal(
             exchange.to_string(),
             pd.Series(["binance", "ftx", "exchange"]).to_string(),
+        )
+        self.assert_equal(
+            asset_class.to_string(),
+            pd.Series(["spot", "futures", "asset_class"]).to_string(),
         )
         self.assert_equal(
             symbol.to_string(),
@@ -136,39 +142,43 @@ class TestParseFullSymbol(hunitest.TestCase):
 class TestBuildFullSymbol(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test construct full symbol from exchange, symbol.
+        Test construct full symbol from exchange, asset class and symbol.
         """
         exchange = "bitfinex"
+        asset_class = "futures"
         symbol = "SOL_USDT"
-        full_symbol = imvcufusy.build_full_symbol(exchange, symbol)
-        self.assert_equal(full_symbol, "bitfinex::SOL_USDT")
+        full_symbol = imvcufusy.build_full_symbol(exchange, asset_class, symbol)
+        self.assert_equal(full_symbol, "bitfinex::futures::SOL_USDT")
 
     def test2(self) -> None:
         """
-        Test construct full symbol from exchange, symbol.
+        Test construct full symbol from exchange, asset class and symbol.
         """
         exchange = "exchange"
+        asset_class = "asset_class"
         symbol = "symbol"
-        full_symbol = imvcufusy.build_full_symbol(exchange, symbol)
-        self.assert_equal(full_symbol, "exchange::symbol")
+        full_symbol = imvcufusy.build_full_symbol(exchange, asset_class, symbol)
+        self.assert_equal(full_symbol, "exchange::asset_class::symbol")
 
     def test3(self) -> None:
         """
-        Test construct full symbol column from exchange and symbol columns.
+        Test construct full symbol column from exchange, asset class and symbol columns.
         """
         exchange = pd.Series(["binance", "ftx", "exchange"])
+        asset_class = pd.Series(["spot", "futures", "asset_class"])
         symbol = pd.Series(["BTC_USDT", "ETH_USDT", "symbol"])
-        actual = imvcufusy.build_full_symbol(exchange, symbol)
+        actual = imvcufusy.build_full_symbol(exchange, asset_class, symbol)
         expected = pd.Series(
-            ["binance::BTC_USDT", "ftx::ETH_USDT", "exchange::symbol"]
+            ["binance::spot::BTC_USDT", "ftx::futures::ETH_USDT", "exchange::asset_class::symbol"]
         )
         self.assert_equal(actual.to_string(), expected.to_string())
 
     def test4(self) -> None:
         """
-        Test exchange and symbol have different formats.
+        Test exchange, asset class and symbol have different formats.
         """
         exchange = "binance"
+        asset_class = pd.Series(["spot", "futures"])
         symbol = pd.Series(["BTC_USDT", "ETH_USDT", "symbol"])
         with self.assertRaises(TypeError):
-            imvcufusy.build_full_symbol(exchange, symbol)
+            imvcufusy.build_full_symbol(exchange, asset_class, symbol)

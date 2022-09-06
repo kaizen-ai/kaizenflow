@@ -36,13 +36,15 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         Test that vendor universe is loaded correctly as dict using small
         universe file.
         """
-        self._test_get_vendor_universe_small("CCXT", "kucoin", "ETH_USDT")
+        asset_class = "spot"
+        self._test_get_vendor_universe_small("CCXT", "kucoin", "ETH_USDT", asset_class)
 
     def test_get_vendor_universe_as_full_symbol(self) -> None:
         """
         Test that universe as full symbols is received correctly from small
         universal.
         """
+        asset_class = "spot"
         self._test_get_vendor_universe_as_full_symbol(
-            "CCXT", ["binance::BTC_USDT", "gateio::XRP_USDT", "kucoin::ETH_USDT"]
+            "CCXT", ["binance::spot::BTC_USDT", "gateio::spot::XRP_USDT", "kucoin::spot::ETH_USDT"], asset_class,
         )

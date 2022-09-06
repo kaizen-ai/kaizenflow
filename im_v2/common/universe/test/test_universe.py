@@ -192,7 +192,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
             )
 
     def _test_get_vendor_universe_small(
-        self, vendor: str, exchange: str, currency_pair: str
+        self, vendor: str, exchange: str, currency_pair: str, asset_class: str,
     ) -> None:
         """
         Test that vendor universe is loaded correctly as dict using small
@@ -202,20 +202,20 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
         :param exchange: exchange to load currency pairs for
         :param currency_pair: currency pair in format: SYMBOL_SYMBOL
         """
-        self._get_vendor_universe_small(vendor, exchange, currency_pair)
+        self._get_vendor_universe_small(vendor, exchange, currency_pair, asset_class)
 
     def _get_vendor_universe_small(
-        self, vendor: str, exchange: str, currency_pair: str
+        self, vendor: str, exchange: str, currency_pair: str, asset_class: str,
     ) -> None:
         """
         Helper function to test universe is loaded correctly as dict.
         """
-        universe = imvcounun.get_vendor_universe(vendor, "trade", version="small")
+        universe = imvcounun.get_vendor_universe(vendor, "trade", asset_class, version="small")
         self.assertIn(exchange, universe)
         self.assertEqual([currency_pair], universe[exchange])
 
     def _test_get_vendor_universe_as_full_symbol(
-        self, vendor: str, universe_as_full_symbols: List[imvcufusy.FullSymbol]
+        self, vendor: str, universe_as_full_symbols: List[imvcufusy.FullSymbol], asset_class: str,
     ) -> None:
         """
         Test that universe as full symbols is received correctly from small
@@ -226,7 +226,7 @@ class TestGetUniverse1_TestCase(hunitest.TestCase):
             full symbols in format exchange_id::SYMBOL_SYMBOL
         """
         actual = imvcounun.get_vendor_universe(
-            vendor, "trade", version="small", as_full_symbol=True
+            vendor, "trade", asset_class, version="small", as_full_symbol=True,
         )
         self.assertEqual(len(universe_as_full_symbols), len(actual))
         self.assertEqual(actual[0], universe_as_full_symbols[0])
