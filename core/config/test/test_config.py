@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-def _check_config(
+def _check_config_string(
     self: Any, config: cconfig.Config, exp: str, mode: str = "str"
 ) -> None:
     _LOG.debug("config=\n%s", config)
@@ -79,7 +79,7 @@ def _get_flat_config1(self: Any) -> cconfig.Config:
     hello: world
     foo: [1, 2, 3]
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -147,7 +147,7 @@ def _get_flat_config2(self: Any) -> cconfig.Config:
     nrows: 10000
     nrows2: hello
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -373,7 +373,7 @@ def _get_nested_config1(self: Any) -> cconfig.Config:
       style: gaz
       com: 28
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -620,7 +620,7 @@ def _get_nested_config2(self: Any) -> cconfig.Config:
       style: gaz
       com: 28
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -646,7 +646,7 @@ def _get_nested_config3(self: Any) -> cconfig.Config:
       style: gaz
       com: 28
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -675,7 +675,7 @@ def _get_nested_config4(self: Any) -> cconfig.Config:
       style: gaz
       com: 28
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -709,7 +709,7 @@ def _get_nested_config5(self: Any) -> cconfig.Config:
       style: universal
       tau: 32
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -894,14 +894,14 @@ class Test_nested_config_update1(hunitest.TestCase):
         exp = """
         key1:
         """
-        _check_config(self, config, exp)
+        _check_config_string(self, config, exp)
         #
         subconfig = cconfig.Config()
         subconfig.add_subconfig("key0")
         exp = """
         key0:
         """
-        _check_config(self, subconfig, exp)
+        _check_config_string(self, subconfig, exp)
         #
         _LOG.debug("\n" + hprint.frame("update"))
         config_tmp.update(subconfig)
@@ -1112,7 +1112,7 @@ def _get_nested_config6(self: Any) -> cconfig.Config:
     single_val: hello
     zscore:
     """
-    _check_config(self, config, exp)
+    _check_config_string(self, config, exp)
     return config
 
 
@@ -1882,17 +1882,9 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
         mode = "repr"
         self.run_steps_assert_string(workload, mode, globals())
 
-    def test_check_string_str1(self) -> None:
-        mode = "str"
-        self._test_check_string1(mode)
-
-    def test_check_string_repr1(self) -> None:
-        mode = "repr"
-        self._test_check_string1(mode)
-
     # ////////////////////////////////////////////////////////////////////////////
 
-    def _test_check_string1(self, mode: str) -> None:
+    def check_string_helper1(self, mode: str) -> None:
         workload = []
         #
         stmt = "config = cconfig.Config()"
@@ -1907,24 +1899,33 @@ class Test_nested_config_set_step_through1(_Config_step_through_TestCase1):
         self.run_steps_check_string(workload, mode, globals())
 
 
+    def test_check_string_str1(self) -> None:
+        mode = "str"
+        self.check_string_helper1(mode)
+
+    def test_check_string_repr1(self) -> None:
+        mode = "repr"
+        self.check_string_helper1(mode)
+
 # #############################################################################
 # Test_mark_key_as_read1
 # #############################################################################
 
 
 class Test_mark_key_as_read1(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        - `__setitem__`
-        - nested config
-        - string keys
-        """
-        config = cconconf.Config()
-        config["read_data", "file_name"] = "test_name.txt"
-        # Check.
-        exp = ""
-        _check_config(self, config, exp)
-        #
 
+    def test1(self, mode: str) -> None:
+        workload = []
+        #
+        stmt = "config = cconfig.Config()"
+        exp = ""
+        workload.append((stmt, exp))
+        #
+        stmt = 'config["read_data", "file_name"] = "test_name.txt"'
+        exp = ""
+        workload.append((stmt, exp))
+        #
+        mode = "repr"
+        self.run_steps_check_string(workload, mode, globals())
 
 # TODO(gp): Unit tests all the functions.
