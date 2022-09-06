@@ -37,12 +37,12 @@ class KibotClient(icdc.ImClient):
     we do not forget about it.
     """
 
-    def __init__(self, universe_version: str, resample_1min: bool) -> None:
+    def __init__(self, universe_version: str, resample_1min: bool, asset_class: str) -> None:
         """
         Constructor.
         """
         vendor = "kibot"
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min, asset_class)
 
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """
@@ -151,7 +151,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             required for all asset classes except for "forex"
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__(universe_version, resample_1min)
+        super().__init__(universe_version, resample_1min, asset_class)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -196,7 +196,7 @@ class KibotEquitiesCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and trade symbol.
-        exchange_id, trade_symbol = ivcu.parse_full_symbol(full_symbol)
+        exchange_id, asset_class, trade_symbol = ivcu.parse_full_symbol(full_symbol)
         hdbg.dassert_eq(exchange_id, "kibot")
         # Get absolute file path for a file with equity data.
         file_path = self._get_file_path(trade_symbol)
@@ -339,7 +339,7 @@ class KibotFuturesCsvParquetByAssetClient(
         :param contract_type: futures contract type (e.g., "continuous", "expiry")
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__(universe_version, resample_1min)
+        super().__init__(universe_version, resample_1min, contract_type)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -398,7 +398,7 @@ class KibotFuturesCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and trade symbol.
-        exchange_id, trade_symbol = ivcu.parse_full_symbol(full_symbol)
+        exchange_id, asset_class, trade_symbol = ivcu.parse_full_symbol(full_symbol)
         hdbg.dassert_eq(exchange_id, "kibot")
         # Get absolute file path for a file with futures data.
         file_path = self._get_file_path(trade_symbol)
