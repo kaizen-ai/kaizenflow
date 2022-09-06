@@ -23,49 +23,83 @@ import oms.broker as ombroker
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): @all move this to cc_optimizer_utils.py
 
-def check_notional_limits(
-    broker: ombroker.Broker, forecast_df: pd.DataFrame
-) -> pd.DataFrame:
+# TODO(gp): @all move Broker first
+# TODO(gp): @all -> _apply_prod_limits
+# TODO(gp): @all add unit tests for these functions
+def _check_notional_limit(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     """
-    Check notional limits for DataFrame of multiple orders.
+    Enforce that `order` verifies the minimum quantity set by the exchange for
+    prod account.
 
-    Updates orders if their quantity falls below the limit.
+    The function checks that:
+    1) the order quantity of the asset is above the minimum required
+    2) the total cost of the asset is above the minimum required.
+    If either of these conditions is not verified, the order is changed to be above
+    the required minimal amount.
 
-    :param broker: Broker class instance
-    :param forecast_df: DataFrame with forecasts
-    :return: DataFrame with updated orders
+    :param order: order to be submitted represented as a row from the forecast
+        DataFrame
+    :return: updated order
     """
-    stage = broker.stage
-    if stage in ["preprod", "prod"]:
-        # Update orders falling below minimal limit.
-        updated_forecast_df = forecast_df.apply(
-            _check_notional_limit, args=(broker,), axis=1
-        )
-    elif stage == "local":
-        # Force all orders to be of minimal amount.
-        updated_forecast_df = forecast_df.apply(
-            _force_minimal_order, args=(broker,), axis=1
-        )
-        _LOG.info("Stage: %s\nForcing minimal orders.", stage)
-    else:
-        hdbg.dfatal(f"Unknown mode: {stage}")
-    return updated_forecast_df
-
-
-def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
-    """
-    Force a minimal possible order quantity.
-
-    Changes the order to buy/sell the minimal possible quantity of an asset.
-    Required for running the system in testnet.
-
-    :param order: order to be submitted
-    :param broker: broker class instance
-    :return: an order with minimal quantity of asset
-    """
+    hdbg.dassert_isinstance(order, pd.Series)
     asset_id = order.name
     asset_limits = broker.minimal_order_limits[asset_id]
+    # 1) Ensure that the amount of shares is above the minimum required.
+    min_amount = asset_limits["min_amount"]
+    diff_num_shares = order["diff_num_shares"]
+    if abs(order["diff_num_shares"]) < min_amount:
+        if diff_num_shares < 0:
+            min_amount = -min_amount
+        _LOG.warning(
+            "Order: %s\nAmount of asset in order is below minimal value: %s. " +
+            "Setting to min amount: %s",
+            str(order),
+            diff_num_shares,
+            min_amount,
+        )
+        diff_num_shares = min_amount
+    # 2) Ensure that the order value is above the minimal cost.
+    # Estimate the total value of the order. We use the low price since this is a
+    # more conservative estimate of the order value.
+    price = broker.get_low_market_price(asset_id)
+    total_cost = price * abs(diff_num_shares)
+    min_cost = asset_limits["min_cost"]
+    if total_cost <= min_cost:
+        # Set amount based on minimal notional price.
+        min_amount = round(min_cost * 3 / price, 2)
+        if diff_num_shares < 0:
+            min_amount = -min_amount
+        _LOG.warning(
+            "Order: %s\nAmount of asset in order is below minimal value: %s. " +
+            "Setting to following amount based on notional limit: %s",
+            str(order),
+            diff_num_shares,
+            min_amount,
+        )
+        # Update the number of shares.
+        diff_num_shares = min_amount
+    order["diff_num_shares"] = diff_num_shares
+    return order
+
+
+# TODO(gp): @all move Broker first for symmetry with the check_notional_limits.
+# TODO(gp): -> _apply_testnet_limits
+def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
+    """
+    Enforce that `order` verifies the minimum quantity set by the exchange for
+    testnet account.
+
+    Note that the constraints for testnet are more stringent than for the prod
+    account.
+
+    Same interface as `_apply_prod_limits()`.
+    """
+    hdbg.dassert_isinstance(order, pd.Series)
+    asset_id = order.name
+    asset_limits = broker.minimal_order_limits[asset_id]
+    #
     required_amount = asset_limits["min_amount"]
     min_cost = asset_limits["min_cost"]
     # Get the low price for the asset.
@@ -77,6 +111,7 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
         #  buffer so the order does not go below
         #  the minimal amount of asset.
         required_amount = (min_cost / low_price) * 2
+    # Apply back the sign.
     if order["diff_num_shares"] < 0:
         order["diff_num_shares"] = -required_amount
     else:
@@ -84,55 +119,32 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
     return order
 
 
-def _check_notional_limit(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
+# TODO(gp): -> apply_cc_limits
+def check_notional_limits(
+    broker: ombroker.Broker, forecast_df: pd.DataFrame
+) -> pd.DataFrame:
     """
-    Check if the order matches the minimum quantity set by the exchange.
+    Apply notional limits for DataFrame of multiple orders.
 
-    The functions check both the flat amount of the asset and the total
-    cost of the asset in the order. If the order amount does not match,
-    the order is changed to be slightly above the minimal amount.
-
-    The format is a row from a forecast DataFrame.
-
-    :param order: order to be submitted
+    :param broker: Broker class instance
+    :param forecast_df: DataFrame with forecasts
+    :return: DataFrame with updated orders
     """
-    asset_id = order.name
-    asset_limits = broker.minimal_order_limits[asset_id]
-    min_amount = asset_limits["min_amount"]
-    diff_num_shares = order["diff_num_shares"]
-    if abs(order["diff_num_shares"]) < min_amount:
-        if diff_num_shares < 0:
-            min_amount = -min_amount
-        _LOG.warning(
-            "Order: %s\nAmount of asset in order is below minimal: %s. Setting to min amount: %s",
-            str(order),
-            diff_num_shares,
-            min_amount,
+    stage = broker.stage
+    if stage in ["preprod", "prod"]:
+        forecast_df = forecast_df.apply(
+            _check_notional_limit, args=(broker,), axis=1
         )
-        diff_num_shares = min_amount
-    # Check if the order is not below minimal cost.
-    #
-    # Estimate the total cost of the order based on the low market price.
-    #  Note: low price is chosen to account for possible price spikes.
-    price = broker.get_low_market_price(asset_id)
-    total_cost = price * abs(diff_num_shares)
-    min_cost = asset_limits["min_cost"]
-    if total_cost <= min_cost:
-        # Set amount based on minimal notional price.
-        required_amount = round(min_cost * 3 / price, 2)
-        if order.diff_num_shares < 0:
-            required_amount = -required_amount
-        _LOG.warning(
-            "Order: %s\nAmount of asset in order is below minimal base: %s. \
-                Setting to following amount based on notional limit: %s",
-            str(order),
-            diff_num_shares,
-            required_amount,
+    elif stage == "local":
+        forecast_df = forecast_df.apply(
+            _force_minimal_order, args=(broker,), axis=1
         )
-        # Change number of shares to minimal amount.
-        diff_num_shares = required_amount
-    order["diff_num_shares"] = diff_num_shares
-    return order
+    else:
+        hdbg.dfatal(f"Unknown mode: {stage}")
+    return forecast_df
+
+
+# ##############################################################################
 
 
 def compute_target_positions_in_cash(
@@ -149,8 +161,7 @@ def compute_target_positions_in_cash(
     needs to be told the id associated with cash.
 
     :param df: a dataframe with current positions (in dollars) and predictions
-    :return: a dataframe with target positions and trades
-        (denominated in dollars)
+    :return: a dataframe with target positions and trades (denominated in dollars)
     """
     # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
@@ -207,7 +218,6 @@ def compute_target_positions_in_cash(
         ),
     )
     target_trades = target_positions - current_positions
-    # target_trades = check_notional_limits(target_trades)
     df["target_position"] = target_positions
     df["target_notional_trade"] = target_trades
     return df
