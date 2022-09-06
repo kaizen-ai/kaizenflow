@@ -1,17 +1,17 @@
 import asyncio
 import pprint
-from typing import List
 import re
 import unittest.mock as umock
+from typing import List
 
-import pandas as pd 
+import pandas as pd
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
-import oms.secrets.secret_identifier as oseseide
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
+import oms.secrets.secret_identifier as oseseide
 
 
 class TestCcxtBroker1(hunitest.TestCase):
@@ -42,9 +42,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         exchange_id = "binance"
         universe_version = "v5"
         portfolio_id = "ccxt_portfolio_mock"
-        secret_id = oseseide.SecretIdentifier(
-            exchange_id, stage, account_type, 1
-        )
+        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
             universe_version,
@@ -215,15 +213,12 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-
     @umock.patch.object(
         occxbrok.CcxtBroker,
         "_get_low_market_price",
         spec=occxbrok.CcxtBroker._get_low_market_price,
     )
-    def test_get_fills(
-            self, get_low_market_price_mock: umock.MagicMock
-    ) -> None:
+    def test_get_fills(self, get_low_market_price_mock: umock.MagicMock) -> None:
         """
         Verify that orders are filled properly via mocked exchange.
         """
@@ -241,7 +236,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         get_low_market_price_mock.return_value = 0.001
         # Patch main external source.
         with umock.patch.object(
-                broker._exchange, "createOrder", create=True
+            broker._exchange, "createOrder", create=True
         ) as create_order_mock:
             create_order_mock.side_effect = [{"id": 0}]
             # Run.
@@ -249,19 +244,24 @@ class TestCcxtBroker1(hunitest.TestCase):
                 broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
             )
         # Mock last order execution time.
-        broker.last_order_execution_ts = pd.to_datetime(1662242460466, unit='ms')
+        broker.last_order_execution_ts = pd.to_datetime(1662242460466, unit="ms")
         with umock.patch.object(
             broker._exchange, "fetch_orders", create=True
         ) as fetch_orders_mock:
-            fetch_orders_mock.return_value = [{'info': {
-                        'time': '1662242460466',
-                        'updateTime': '1662242460466'},
-                        'id': 0,
-                        'timestamp': 1662242460466,
-                        'side': 'sell',
-                        'price': 19749.8,
-                        'filled': 0.004,
-                        'status': 'closed'}]
+            fetch_orders_mock.return_value = [
+                {
+                    "info": {
+                        "time": "1662242460466",
+                        "updateTime": "1662242460466",
+                    },
+                    "id": 0,
+                    "timestamp": 1662242460466,
+                    "side": "sell",
+                    "price": 19749.8,
+                    "filled": 0.004,
+                    "status": "closed",
+                }
+            ]
             # Run.
             fills = broker.get_fills()
         fill = fills[0]
@@ -278,7 +278,9 @@ class TestCcxtBroker1(hunitest.TestCase):
         self.assertEqual(fill.num_shares, -0.004)
         self.assertEqual(fill._fill_id, 0)
         # Convert timestamps to string.
-        actual_time = fill.timestamp.strftime('%Y-%m-%d %X')
-        expected_time = pd.to_datetime(1662242460466, unit='ms').strftime('%Y-%m-%d %X')
+        actual_time = fill.timestamp.strftime("%Y-%m-%d %X")
+        expected_time = pd.to_datetime(1662242460466, unit="ms").strftime(
+            "%Y-%m-%d %X"
+        )
         # Check timestamps.
         self.assertEqual(actual_time, expected_time)
