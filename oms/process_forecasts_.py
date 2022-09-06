@@ -718,6 +718,8 @@ class ForecastProcessor:
         assets_and_predictions = self._prepare_data_for_optimizer(
             predictions, volatility, spread
         )
+        _LOG.warning("assets_and_predictions=%s", str(assets_and_predictions))
+        assets_and_predictions.to_csv("example_assets_and_predictions.csv")
         hdbg.dassert_not_in(
             self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
         )
@@ -726,6 +728,15 @@ class ForecastProcessor:
         # compute_target_positions_func
         # compute_target_positions_kwargs
         backend = self._optimizer_dict["backend"]
+        # if backend == "pomo":
+        #     style = self._optimizer_dict["params"]["style"]
+        #     kwargs = self._optimizer_dict["params"]["kwargs"]
+        #     df = ocalopti.compute_target_positions_in_cash(
+        #         assets_and_predictions,
+        #         style=style,
+        #         **kwargs,
+        #     )
+        # elif backend == "cc_pomo":
         if backend == "pomo":
             style = self._optimizer_dict["params"]["style"]
             kwargs = self._optimizer_dict["params"]["kwargs"]
@@ -734,15 +745,12 @@ class ForecastProcessor:
                 style=style,
                 **kwargs,
             )
-        elif backend == "cc_pomo":
-            style = self._optimizer_dict["params"]["style"]
-            kwargs = self._optimizer_dict["params"]["kwargs"]
-            df = ocalopti.compute_target_cc_positions_in_cash(
-                assets_and_predictions,
-                style=style,
-                broker=self._portfolio.broker,
-                **kwargs,
-            )
+            # Add diff_num_shares to calculate notional limit
+            df["diff_num_shares"] = df["target_notional_trade"] / df["price"]
+            # Verify that all orders are above the notional limit.
+            #  Note: orders that are below the minimal amount of asset
+            #  for the exchange are modified to go slightly above the limit.
+            df = ocalopti.check_notional_limits(self._portfolio.broker, df)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
@@ -775,6 +783,10 @@ class ForecastProcessor:
                 "Liquidating holdings: diff_num_shares=\n%s",
                 hpandas.df_to_str(diff_num_shares),
             )
+        elif backend == "pomo":
+            # TODO (Danya): simplify the `if-else` clause to allow for
+            #  liqudation of holdings with cc_pomo backend.
+            diff_num_shares = df["curr_num_shares"]
         else:
             # Convert the target positions from cash values to target share counts.
             # Round to nearest integer towards zero.
