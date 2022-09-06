@@ -134,7 +134,6 @@ class ImClient(abc.ABC):
         """
         # We use only `trade` universe for `ImClient`.
         universe_mode = "trade"
-        # Asset class is fixed since it now only supports `spot` data.
         universe = ivcu.get_vendor_universe(
             self._vendor,
             universe_mode,
