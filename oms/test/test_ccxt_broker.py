@@ -190,7 +190,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
-        self.assert_equal(receipt, "filename_1.txt")
+        self.assert_equal(receipt, "filename_2.txt")
         # Check the order Dataframe.
         act = hpandas.convert_df_to_json_string(order_df, n_tail=None)
         exp = r"""
@@ -276,7 +276,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Check fill.
         self.assertEqual(fill.price, 19749.8)
         self.assertEqual(fill.num_shares, -0.004)
-        self.assertEqual(fill._fill_id, 0)
+        self.assertEqual(fill._fill_id, 10)
         # Convert timestamps to string.
         actual_time = fill.timestamp.strftime("%Y-%m-%d %X")
         expected_time = pd.to_datetime(1662242460466, unit="ms").strftime(
