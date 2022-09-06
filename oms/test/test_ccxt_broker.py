@@ -1,7 +1,10 @@
 import asyncio
 import pprint
+from typing import List
 import re
 import unittest.mock as umock
+
+import pandas as pd 
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -56,6 +59,19 @@ class TestCcxtBroker1(hunitest.TestCase):
             ),
         )
         return broker
+
+    def get_test_orders(self) -> List[omorder.Order]:
+        """
+        Build toy orders for tests.
+        """
+        # Prepare test data.
+        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
+        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
+        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
+        tz=America/New_York"
+        # Get orders.
+        orders = omorder.orders_from_string(order_str)
+        return orders
 
     def test_initialize_class(self) -> None:
         """
@@ -140,13 +156,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         Verify that orders are properly submitted via mocked exchange.
         """
-        # Prepare test data.
-        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
-        tz=America/New_York"
-        orders = omorder.orders_from_string(order_str)
-        #
+        orders = self.get_test_orders()
+        # Define broker parameters.
         stage = "preprod"
         contract_type = "spot"
         account_type = "trading"
@@ -214,15 +225,10 @@ class TestCcxtBroker1(hunitest.TestCase):
             self, get_low_market_price_mock: umock.MagicMock
     ) -> None:
         """
-        Verify that orders are properly submitted via mocked exchange.
+        Verify that orders are filled properly via mocked exchange.
         """
-        # Prepare test data.
-        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
-        tz=America/New_York"
-        orders = omorder.orders_from_string(order_str)
-        #
+        orders = self.get_test_orders()
+        # Define broker parameters.
         stage = "preprod"
         contract_type = "spot"
         account_type = "trading"
@@ -231,7 +237,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker._minimal_order_limits = {
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
-        broker._submitted_order_id = 1
         # Mock low market price for order limit calculation.
         get_low_market_price_mock.return_value = 0.001
         # Patch main external source.
@@ -243,23 +248,21 @@ class TestCcxtBroker1(hunitest.TestCase):
             asyncio.run(
                 broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
             )
+        # Mock last order execution time.
+        broker.last_order_execution_ts = pd.to_datetime(1662242460466, unit='ms')
         with umock.patch.object(
             broker._exchange, "fetch_orders", create=True
         ) as fetch_orders_mock:
-            fetch_orders_mock.return_value = [{'info': {'orderId': 0,
-                          'symbol': 'BTCUSDT',
-                          'status': 'FILLED',
-                          'time': '1662242460466',
-                          'updateTime': '1662242460466'},
-                         'id': 0,
-                         'timestamp': 1662242460466,
-                         'symbol': 'BTC/USDT',
-                         'type': 'market',
-                         'side': 'sell',
-                         'price': 19749.8,
-                         'filled': 0.004,
-                         'status': 'closed'}]
-            #
+            fetch_orders_mock.return_value = [{'info': {
+                        'time': '1662242460466',
+                        'updateTime': '1662242460466'},
+                        'id': 0,
+                        'timestamp': 1662242460466,
+                        'side': 'sell',
+                        'price': 19749.8,
+                        'filled': 0.004,
+                        'status': 'closed'}]
+            # Run.
             fills = broker.get_fills()
         fill = fills[0]
         # Check the count of calls.
@@ -267,11 +270,15 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Check the args.
         actual_args = pprint.pformat(tuple(fetch_orders_mock.call_args))
         expected_args = r"""
-((), {'since': 1662401563623, 'symbol': 'ETH/USDT'})
-"""
+            ((), {'since': 1662242460466, 'symbol': 'ETH/USDT'})
+        """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check fill.
-        self.assert_equal(fill.price, 19749.8)
-        self.assert_equal(fill.num_shares, -0.004)
-        self.assert_equal(fill._fill_id, 0)
-        self.assert_equal(fill.timestamp, 1662242460466)
+        self.assertEqual(fill.price, 19749.8)
+        self.assertEqual(fill.num_shares, -0.004)
+        self.assertEqual(fill._fill_id, 0)
+        # Convert timestamps to string.
+        actual_time = fill.timestamp.strftime('%Y-%m-%d %X')
+        expected_time = pd.to_datetime(1662242460466, unit='ms').strftime('%Y-%m-%d %X')
+        # Check timestamps.
+        self.assertEqual(actual_time, expected_time)
