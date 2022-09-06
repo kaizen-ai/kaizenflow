@@ -2,7 +2,6 @@ import pandas as pd
 import pytest
 
 import helpers.henv as henv
-import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
 import im_v2.common.data.client.test.im_client_test_case as icdctictc
@@ -140,7 +139,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
-    
+
     def test_CcxtHistoricalPqByTileClient3(self) -> None:
         """
         - dataset = ohlcv
@@ -191,7 +190,6 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
-
 
     def test_CryptoChassisHistoricalPqByTileClient1(self) -> None:
         """
