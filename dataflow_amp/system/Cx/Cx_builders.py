@@ -131,7 +131,7 @@ def get_Cx_process_forecasts_node_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    root_log_dir = None
+    root_log_dir = system.config.get("system_log_dir")
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
