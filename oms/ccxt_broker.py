@@ -17,13 +17,13 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
-import oms.secrets as omssec
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
+import oms.secrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ class CcxtBroker(ombroker.Broker):
         self._exchange_id = exchange_id
         #
         hdbg.dassert_in(stage, ["local", "preprod"])
-        self._stage = stage
+        self.stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
         self._secret_identifier = secret_identifier
@@ -226,6 +226,14 @@ class CcxtBroker(ombroker.Broker):
                 open_positions.append(position)
         return open_positions
 
+    def get_low_market_price(self, asset_id: int) -> float:
+        """
+        Load the low price for the given ticker.
+        """
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        last_price = self._exchange.fetch_ticker(symbol)["low"]
+        return last_price
+
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
         """
@@ -347,42 +355,6 @@ class CcxtBroker(ombroker.Broker):
             diff_num_shares,
         )
         return oms_order
-
-    def _force_minimal_order(self, order: omorder.Order) -> omorder.Order:
-        """
-        Force a minimal possible order quantity.
-
-        Changes the order to buy/sell the minimal possible quantity of an asset.
-        Required for running the system in testnet.
-
-        :param order: order to be submitted
-        :return: an order with minimal quantity of asset
-        """
-        asset_limits = self.minimal_order_limits[order.asset_id]
-        required_amount = asset_limits["min_amount"]
-        min_cost = asset_limits["min_cost"]
-        # Get the low price for the asset.
-        low_price = self.get_low_market_price(order.asset_id)
-        # Verify that the estimated total cost is above 10.
-        if low_price * required_amount <= min_cost:
-            # Set the amount of asset to above min cost.
-            #  Note: the multiplication by 2 is done to give some
-            #  buffer so the order does not go below
-            #  the minimal amount of asset.
-            required_amount = (min_cost / low_price) * 2
-        if order.diff_num_shares < 0:
-            order.diff_num_shares = -required_amount
-        else:
-            order.diff_num_shares = required_amount
-        return order
-
-    def get_low_market_price(self, asset_id: int) -> float:
-        """
-        Load the low price for the given ticker.
-        """
-        symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["low"]
-        return last_price
 
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
         """
@@ -521,11 +493,6 @@ class CcxtBroker(ombroker.Broker):
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
         submitted_order: Optional[omorder.Order] = None
-        if self._stage == "local":
-            # Reduce order to a minimal possible amount.
-            #  This is done to avoid "Margin is insufficient" error
-            #  in testnet.
-            order = self._force_minimal_order(order)
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
         # TODO(Juraj): separate the retry logic from the code that does the work.
