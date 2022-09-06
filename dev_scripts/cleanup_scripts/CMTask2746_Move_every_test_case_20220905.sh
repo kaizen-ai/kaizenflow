@@ -4,7 +4,7 @@ im_client_test_case_dirs="amp/dev_scripts/cleanup_scripts dev_scripts/cleanup_sc
 mdata_test_case_dirs="dev_scripts/cleanup_scripts" # amp/dev_scripts/cleanup_scripts market_data amp/market_data
 
 replace_text.py \
- --old "import im_v2.common.data.client.test.im_client_test_case as icdctictc" \
+  --old "import im_v2.common.data.client.test.im_client_test_case as icdctictc" \
   --new "import im_v2.common.data.client as icdc" \
   --exclude_dirs "$im_client_test_case_dirs"
 
