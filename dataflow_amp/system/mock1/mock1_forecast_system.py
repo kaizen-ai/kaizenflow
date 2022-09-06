@@ -7,8 +7,6 @@ import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import logging
 from typing import Coroutine
 
-import pandas as pd
-
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys

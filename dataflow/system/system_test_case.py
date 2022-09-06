@@ -126,8 +126,8 @@ def save_ccxt_market_data(
 ) -> None:
     # pylint: disable=line-too-long
     """
-    Dump data from a CCXT `MarketData` for the last `period` and ending to
-    the current wall clock so that it can be used as `ReplayedMarketData`.
+    Dump data from a CCXT `MarketData` for the last `period` and ending to the
+    current wall clock so that it can be used as `ReplayedMarketData`.
 
     :param full_symbols: full symbols to load data for
         If `None`, all the symbols from the universe are taken
@@ -546,8 +546,8 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
     """
     Reconcile `ForecastSystem` and `Time_ForecastSystem`.
 
-    Make sure that `ForecastSystem` and `Time_ForecastSystem`
-    produce the same predictions.
+    Make sure that `ForecastSystem` and `Time_ForecastSystem` produce
+    the same predictions.
     """
 
     @staticmethod
@@ -570,14 +570,14 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self, time_system: dtfsyssyst.System
     ) -> dtfsyssyst.System:
         """
-        Get the `NonTime_ForecastSystem` via initiated
-        `Time_ForecastSystem`.
+        Get the `NonTime_ForecastSystem` via initiated `Time_ForecastSystem`.
         """
 
     @abc.abstractmethod
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
         """
-        Get the `Time_ForecastSystem` to be compared to the `NonTime_ForecastSystem`.
+        Get the `Time_ForecastSystem` to be compared to the
+        `NonTime_ForecastSystem`.
         """
 
     # TODO(Grisha): @Dan make `get_file_path()` free-standing.
