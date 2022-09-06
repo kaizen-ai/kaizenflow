@@ -82,7 +82,7 @@ def add_exchange_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
-    Add the command line options exchange download.
+    Add the command line options for exchange download.
     """
     parser = _add_common_download_args(parser)
     parser.add_argument(
@@ -105,6 +105,7 @@ def add_exchange_download_args(
         required=False,
         default="parquet",
         type=str,
+        choices=["csv", "parquet"],
         help="File format to save files on disk",
     )
     parser.add_argument(
@@ -202,13 +203,11 @@ def download_realtime_for_one_exchange(
             password=actual_details["password"],
         )
         db_connection = hsql.get_connection(*connection_params)
-    # Load DB table to work with.
+    # Load DB table to save data to.
     db_table = args["db_table"]
     data_type = args["data_type"]
     exchange_id = args["exchange_id"]
     bid_ask_depth = args.get("bid_ask_depth")
-    # If data type is bid/ask, timestamps get ignored.
-    start_timestamp, end_timestamp = None, None
     if data_type == "ohlcv":
         # Convert timestamps.
         start_timestamp = pd.Timestamp(args["start_timestamp"])
@@ -217,12 +216,20 @@ def download_realtime_for_one_exchange(
         )
         end_timestamp = pd.Timestamp(args["end_timestamp"])
         end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    elif:
+        # When downloading bid / ask data, CCXT returns the last data 
+        # ignoring the requested timestamp, so we set them to None.
+        start_timestamp, end_timestamp = None, None
+    else:
+        raise ValueError("Downloading for %s data_type is not implemented.", data_type)
     # Download data for specified time period.
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
         # as column value as it can slightly differ.
         currency_pair_for_download = exchange.convert_currency_pair(currency_pair)
-        # Download data: timestamp arguments are ignored for bid_ask.
+        # Download data.
+        #  Note: timestamp arguments are ignored since historical data is absent
+        #  from CCXT and only current state can be downloaded.
         data = exchange.download_data(
             data_type=data_type,
             currency_pair=currency_pair_for_download,
@@ -237,8 +244,7 @@ def download_realtime_for_one_exchange(
         # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Remove duplicated entries.
-        # TODO(Juraj): handle duplicates for when the decision
-        #  on CmTask2782 is made.
+        # TODO (Juraj): Update duplicates removal (CMTask2782).
         if data_type == "ohlcv":
             data = remove_duplicates(
                 db_connection,

@@ -194,12 +194,12 @@ class CcxtExtractor(imvcdexex.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def _download_bid_ask(self, exchange_id: str, currency_pair: str, *, depth: int = 10, **kwargs) -> pd.DataFrame:
+    def _download_bid_ask(self, exchange_id: str, currency_pair: str, *, depth: int = 10, **kwargs: Any) -> pd.DataFrame:
         """
         Download bid-ask data from CCXT.
 
         :param exchange_id: exchange to download from
-         (kept for compatibility with parent class).
+         (not used, kept for compatibility with parent class).
         :param currency_pair: currency pair to download, i.e. BTC_USDT.
         :param depth: depth of the order book to download.
         """
