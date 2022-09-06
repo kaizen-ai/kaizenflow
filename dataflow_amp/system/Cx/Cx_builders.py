@@ -79,6 +79,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     return market_data
 
 
+# TODO(Grisha): @Dan Move to `system_builder_utils.py`.
 def get_Cx_ReplayedMarketData_from_file(
     system: dtfsys.System,
 ) -> mdata.ReplayedMarketData:
@@ -88,7 +89,7 @@ def get_Cx_ReplayedMarketData_from_file(
     file_path = system.config["market_data_config", "file_path"]
     aws_profile = "ck"
     hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
-    # TODO(Grisha): @Dan pass as much as possible via config.
+    # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
     # TODO(Grisha): @Dan Refactor default column names in system related functions.
     # Multiple functions that build the system are looking for "start_datetime"
     # and "end_datetime" columns by default.
@@ -103,8 +104,7 @@ def get_Cx_ReplayedMarketData_from_file(
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
     )
-    # TODO(Grisha): @Dan Consider a wiser approach to extract all the asset ids
-    # and pass it via system config.
+    # TODO(Grisha): @Dan Pass asset ids as params in `ForecastSystem` examples.
     # Get a list of all the asset ids if specified in the config.
     if ("market_data_config", "asset_ids") in system.config:
         if system.config["market_data_config", "asset_ids"] == "all":
