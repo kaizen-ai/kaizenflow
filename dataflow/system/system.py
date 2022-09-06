@@ -592,3 +592,7 @@ class Time_ForecastSystem_with_DatabasePortfolio(
         self,
     ) -> oms.DatabasePortfolio:
         ...
+
+
+class NonTime_ForecastSystem(ForecastSystem):
+    pass
