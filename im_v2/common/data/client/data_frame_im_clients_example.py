@@ -17,9 +17,10 @@ def get_DataFrameImClient_example1() -> imvcdcdfimc.DataFrameImClient:
     # Generate input dataframe and universe for client initialization.
     vendor = "mock1"
     mode = "trade"
-    universe = ivcu.get_vendor_universe(vendor, mode, version="v1", as_full_symbol=True)
+    asset_class = "spot"
+    universe = ivcu.get_vendor_universe(vendor, mode, asset_class, version="v1", as_full_symbol=True)
     df = cofinanc.get_im_client_market_data_df1(universe)
     # Init the client for testing.
     resample_1min = False
-    im_client = imvcdcdfimc.DataFrameImClient(df, universe, resample_1min)
+    im_client = imvcdcdfimc.DataFrameImClient(df, universe, resample_1min, asset_class)
     return im_client

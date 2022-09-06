@@ -37,7 +37,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             data_snapshot,
         )
         # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        full_symbols = ["binance::futures::BTC_USDT", "binance::futures::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
@@ -51,7 +51,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "knowledge_timestamp",
         ]
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+            "full_symbol": ["binance::futures::BTC_USDT", "binance::futures::ADA_USDT"]
         }
         expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
@@ -59,13 +59,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 7)
                                          full_symbol        open        high         low       close      volume              knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000 2022-06-24 00:18:14.550505+00:00
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37959.2000  37987.8000  37959.1000  37973.9000     146.115 2022-06-24 05:47:16.075108+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7736      0.7736      0.7727      0.7734  188093.000 2022-06-24 00:18:14.550505+00:00
+        2022-05-01 13:00:00+00:00  binance::futures::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000 2022-06-24 00:18:14.550505+00:00
+        2022-05-01 13:00:00+00:00  binance::futures::BTC_USDT  37959.2000  37987.8000  37959.1000  37973.9000     146.115 2022-06-24 05:47:16.075108+00:00
+        2022-05-01 13:01:00+00:00  binance::futures::ADA_USDT      0.7736      0.7736      0.7727      0.7734  188093.000 2022-06-24 00:18:14.550505+00:00
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37933.300  37936.5000  37920.0000  37921.4000     58.987 2022-06-24 05:47:16.075108+00:00
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772      0.7726      0.7717      0.7722  83315.000 2022-06-24 00:18:14.550505+00:00
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37921.400  37938.5000  37918.4000  37931.3000     48.736 2022-06-24 05:47:16.075108+00:00
+        2022-05-01 13:04:00+00:00  binance::futures::BTC_USDT  37933.300  37936.5000  37920.0000  37921.4000     58.987 2022-06-24 05:47:16.075108+00:00
+        2022-05-01 13:05:00+00:00  binance::futures::ADA_USDT      0.772      0.7726      0.7717      0.7722  83315.000 2022-06-24 00:18:14.550505+00:00
+        2022-05-01 13:05:00+00:00  binance::futures::BTC_USDT  37921.400  37938.5000  37918.4000  37931.3000     48.736 2022-06-24 05:47:16.075108+00:00
         """
         # Check.
         self._test_read_data5(
@@ -98,7 +98,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             data_snapshot,
         )
         # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
@@ -112,7 +112,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "knowledge_timestamp",
         ]
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ADA_USDT"]
         }
         expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
@@ -120,13 +120,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 7)
                                          full_symbol        open        high         low       close       volume knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731      0.7745      0.7731      0.7741  40082.50000          2022-05-10
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900  37998.2500  37969.9900  37987.2000     14.82533          2022-05-10
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740      0.7741      0.7732      0.7739  14064.20000          2022-05-10
+        2022-05-01 13:00:00+00:00  binance::spot::ADA_USDT      0.7731      0.7745      0.7731      0.7741  40082.50000          2022-05-10
+        2022-05-01 13:00:00+00:00  binance::spot::BTC_USDT  37969.9900  37998.2500  37969.9900  37987.2000     14.82533          2022-05-10
+        2022-05-01 13:01:00+00:00  binance::spot::ADA_USDT      0.7740      0.7741      0.7732      0.7739  14064.20000          2022-05-10
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479          2022-05-10
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000          2022-05-10
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911          2022-05-10
+        2022-05-01 13:04:00+00:00  binance::spot::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479          2022-05-10
+        2022-05-01 13:05:00+00:00  binance::spot::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000          2022-05-10
+        2022-05-01 13:05:00+00:00  binance::spot::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911          2022-05-10
         """
         # Check.
         self._test_read_data5(
@@ -148,7 +148,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         """
         # Initialize client.
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3()
-        full_symbols = ["binance::APE_USDT", "binance::BTC_USDT"]
+        full_symbols = ["binance::futures::APE_USDT", "binance::futures::BTC_USDT"]
         start_ts = pd.Timestamp("2022-08-28 15:45:00+00:00")
         end_ts = pd.Timestamp("2022-08-28 15:50:00+00:00")
         expected_length = 12
@@ -162,7 +162,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             "knowledge_timestamp",
         ]
         expected_column_unique_values = {
-            "full_symbol": ["binance::APE_USDT", "binance::BTC_USDT"]
+            "full_symbol": ["binance::futures::APE_USDT", "binance::futures::BTC_USDT"]
         }
         expected_signature = r"""
         # df=
@@ -171,13 +171,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 7)
                                        full_symbol       open       high        low      close      volume              knowledge_timestamp
         timestamp
-        2022-08-28 15:45:00+00:00  binance::APE_USDT      4.824      4.828      4.820      4.825   77085.000 2022-08-29 00:17:46.587224+00:00
-        2022-08-28 15:45:00+00:00  binance::BTC_USDT  19991.900  19993.000  19982.800  19986.100     412.385 2022-08-29 00:17:05.280470+00:00
-        2022-08-28 15:46:00+00:00  binance::APE_USDT      4.824      4.837      4.824      4.835  133384.000 2022-08-29 00:17:46.587224+00:00
+        2022-08-28 15:45:00+00:00  binance::futures::APE_USDT      4.824      4.828      4.820      4.825   77085.000 2022-08-29 00:17:46.587224+00:00
+        2022-08-28 15:45:00+00:00  binance::futures::BTC_USDT  19991.900  19993.000  19982.800  19986.100     412.385 2022-08-29 00:17:05.280470+00:00
+        2022-08-28 15:46:00+00:00  binance::futures::APE_USDT      4.824      4.837      4.824      4.835  133384.000 2022-08-29 00:17:46.587224+00:00
         ...
-        2022-08-28 15:49:00+00:00  binance::BTC_USDT  19991.100  19992.000  19987.900  19991.500    175.287 2022-08-29 00:17:05.280470+00:00
-        2022-08-28 15:50:00+00:00  binance::APE_USDT      4.862      4.863      4.856      4.862  60928.000 2022-08-29 00:17:46.587224+00:00
-        2022-08-28 15:50:00+00:00  binance::BTC_USDT  19991.500  19997.600  19988.300  19996.100    246.412 2022-08-29 00:17:05.280470+00:00
+        2022-08-28 15:49:00+00:00  binance::futures::BTC_USDT  19991.100  19992.000  19987.900  19991.500    175.287 2022-08-29 00:17:05.280470+00:00
+        2022-08-28 15:50:00+00:00  binance::futures::APE_USDT      4.862      4.863      4.856      4.862  60928.000 2022-08-29 00:17:46.587224+00:00
+        2022-08-28 15:50:00+00:00  binance::futures::BTC_USDT  19991.500  19997.600  19988.300  19996.100    246.412 2022-08-29 00:17:05.280470+00:00
         """
         # Check.
         self._test_read_data5(
@@ -210,12 +210,12 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             data_snapshot,
         )
         # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        full_symbols = ["binance::futures::BTC_USDT", "binance::futures::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+            "full_symbol": ["binance::futures::BTC_USDT", "binance::futures::ADA_USDT"]
         }
         expected_column_names = [
             "close",
@@ -236,13 +236,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 10)
                                          full_symbol        open        high         low       close      volume          vwap  number_of_trades          twap              knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000      0.773474               152      0.773473 2022-06-20 09:48:13.737310+00:00
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37959.2000  37987.8000  37959.1000  37973.9000     146.115  37974.469000               694  37974.598000 2022-06-20 09:48:46.910826+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7736      0.7736      0.7727      0.7734  188093.000      0.773096                79      0.773120 2022-06-20 09:48:13.737310+00:00
+        2022-05-01 13:00:00+00:00  binance::futures::ADA_USDT      0.7727      0.7740      0.7727      0.7735  399952.000      0.773474               152      0.773473 2022-06-20 09:48:13.737310+00:00
+        2022-05-01 13:00:00+00:00  binance::futures::BTC_USDT  37959.2000  37987.8000  37959.1000  37973.9000     146.115  37974.469000               694  37974.598000 2022-06-20 09:48:46.910826+00:00
+        2022-05-01 13:01:00+00:00  binance::futures::ADA_USDT      0.7736      0.7736      0.7727      0.7734  188093.000      0.773096                79      0.773120 2022-06-20 09:48:13.737310+00:00
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37933.300  37936.5000  37920.0000  37921.4000     58.987  37925.266000               406  37926.456000 2022-06-20 09:48:46.910826+00:00
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772      0.7726      0.7717      0.7722  83315.000      0.772204                71      0.772199 2022-06-20 09:48:13.737310+00:00
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37921.400  37938.5000  37918.4000  37931.3000     48.736  37925.609000               404  37925.788000 2022-06-20 09:48:46.910826+00:00
+        2022-05-01 13:04:00+00:00  binance::futures::BTC_USDT  37933.300  37936.5000  37920.0000  37921.4000     58.987  37925.266000               406  37926.456000 2022-06-20 09:48:46.910826+00:00
+        2022-05-01 13:05:00+00:00  binance::futures::ADA_USDT      0.772      0.7726      0.7717      0.7722  83315.000      0.772204                71      0.772199 2022-06-20 09:48:13.737310+00:00
+        2022-05-01 13:05:00+00:00  binance::futures::BTC_USDT  37921.400  37938.5000  37918.4000  37931.3000     48.736  37925.609000               404  37925.788000 2022-06-20 09:48:46.910826+00:00
         """
         # pylint: enable=line-too-long
         # Check.
@@ -276,12 +276,12 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             data_snapshot,
         )
         # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ADA_USDT"]
         }
         expected_column_names = [
             "close",
@@ -301,13 +301,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 10)
                                          full_symbol        open        high         low       close       volume          vwap  number_of_trades          twap              knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731      0.7745      0.7731      0.7741  40082.50000      0.773899                59      0.773944 2022-05-18 10:05:55.699321+00:00
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900  37998.2500  37969.9900  37987.2000     14.82533  37989.163000               565  37985.203200 2022-05-18 10:06:14.692939+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740      0.7741      0.7732      0.7739  14064.20000      0.773764                39      0.773687 2022-05-18 10:05:55.699321+00:00
+        2022-05-01 13:00:00+00:00  binance::spot::ADA_USDT      0.7731      0.7745      0.7731      0.7741  40082.50000      0.773899                59      0.773944 2022-05-18 10:05:55.699321+00:00
+        2022-05-01 13:00:00+00:00  binance::spot::BTC_USDT  37969.9900  37998.2500  37969.9900  37987.2000     14.82533  37989.163000               565  37985.203200 2022-05-18 10:06:14.692939+00:00
+        2022-05-01 13:01:00+00:00  binance::spot::ADA_USDT      0.7740      0.7741      0.7732      0.7739  14064.20000      0.773764                39      0.773687 2022-05-18 10:05:55.699321+00:00
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479  37946.983900               405  37944.26480 2022-05-18 10:06:14.692939+00:00
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000      0.772769                40      0.77277 2022-05-18 10:05:55.699321+00:00
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911  37943.278000               557  37942.54040 2022-05-18 10:06:14.692939+00:00
+        2022-05-01 13:04:00+00:00  binance::spot::BTC_USDT  37951.8100  37951.8100  37938.4900  37939.3600     10.20479  37946.983900               405  37944.26480 2022-05-18 10:06:14.692939+00:00
+        2022-05-01 13:05:00+00:00  binance::spot::ADA_USDT      0.7726      0.7731      0.7724      0.7727  42522.60000      0.772769                40      0.77277 2022-05-18 10:05:55.699321+00:00
+        2022-05-01 13:05:00+00:00  binance::spot::BTC_USDT  37939.3600  37956.1000  37936.0400  37950.7500     15.30911  37943.278000               557  37942.54040 2022-05-18 10:06:14.692939+00:00
         """
         # Check.
         self._test_read_data5(
@@ -340,12 +340,12 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             data_snapshot,
         )
         # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        full_symbols = ["binance::futures::BTC_USDT", "binance::futures::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+            "full_symbol": ["binance::futures::BTC_USDT", "binance::futures::ADA_USDT"]
         }
         expected_column_names = [
             "full_symbol",
@@ -360,13 +360,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 5)
                                          full_symbol     bid_price     bid_size     ask_price     ask_size
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.773418  1577685.000      0.773433   741874.000
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37973.770035      228.977  37974.633461      175.528
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.773116   599395.000      0.773162  1076322.000
+        2022-05-01 13:00:00+00:00  binance::futures::ADA_USDT      0.773418  1577685.000      0.773433   741874.000
+        2022-05-01 13:00:00+00:00  binance::futures::BTC_USDT  37973.770035      228.977  37974.633461      175.528
+        2022-05-01 13:01:00+00:00  binance::futures::ADA_USDT      0.773116   599395.000      0.773162  1076322.000
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37925.827424     165.176  37926.802980     192.241
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.772086  852299.000      0.772323  817526.000
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37925.604266     254.863  37925.031683     183.618
+        2022-05-01 13:04:00+00:00  binance::futures::BTC_USDT  37925.827424     165.176  37926.802980     192.241
+        2022-05-01 13:05:00+00:00  binance::futures::ADA_USDT      0.772086  852299.000      0.772323  817526.000
+        2022-05-01 13:05:00+00:00  binance::futures::BTC_USDT  37925.604266     254.863  37925.031683     183.618
         """
         # Check.
         self._test_read_data5(
@@ -399,12 +399,12 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
             data_snapshot,
         )
         # Set expected values.
-        full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
+        full_symbols = ["binance::spot::BTC_USDT", "binance::spot::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
         expected_length = 12
         expected_column_unique_values = {
-            "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
+            "full_symbol": ["binance::spot::BTC_USDT", "binance::spot::ADA_USDT"]
         }
         expected_column_names = [
             "full_symbol",
@@ -420,13 +420,13 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         shape=(12, 6)
                                          full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
         timestamp
-        2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731  22296.50000      0.7732  404.60000 2022-05-24 15:04:20.110341+00:00
-        2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900      4.10126  37970.0000    0.16837 2022-05-24 15:58:40.729661+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740  11602.90000      0.7741  455.40000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:00:00+00:00  binance::spot::ADA_USDT      0.7731  22296.50000      0.7732  404.60000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:00:00+00:00  binance::spot::BTC_USDT  37969.9900      4.10126  37970.0000    0.16837 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:01:00+00:00  binance::spot::ADA_USDT      0.7740  11602.90000      0.7741  455.40000 2022-05-24 15:04:20.110341+00:00
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8000   5.38906  37951.8100      2.46727 2022-05-24 15:58:40.729661+00:00
-        2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726  51.70000      0.7727  20467.60000 2022-05-24 15:04:20.110341+00:00
-        2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600   5.72901  37939.3700      4.35547 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:04:00+00:00  binance::spot::BTC_USDT  37951.8000   5.38906  37951.8100      2.46727 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:05:00+00:00  binance::spot::ADA_USDT      0.7726  51.70000      0.7727  20467.60000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:05:00+00:00  binance::spot::BTC_USDT  37939.3600   5.72901  37939.3700      4.35547 2022-05-24 15:58:40.729661+00:00
         """
         # Check.
         self._test_read_data5(
@@ -450,7 +450,7 @@ class TestDataFrameImClients1(icdctictc.ImClientTestCase):
         # Initialize client.
         im_client = icdc.get_DataFrameImClient_example1()
         # Set expected values.
-        full_symbols = ["binance::ADA_USDT", "binance::BTC_USDT"]
+        full_symbols = ["binance::spot::ADA_USDT", "binance::spot::BTC_USDT"]
         start_timestamp = pd.Timestamp("2000-01-01 14:34:00+00:00")
         end_timestamp = pd.Timestamp("2000-01-01 14:38:00+00:00")
         expected_length = 10
@@ -464,7 +464,7 @@ class TestDataFrameImClients1(icdctictc.ImClientTestCase):
             "feature1",
         ]
         expected_column_unique_values = {
-            "full_symbol": ["binance::ADA_USDT", "binance::BTC_USDT"]
+            "full_symbol": ["binance::spot::ADA_USDT", "binance::spot::BTC_USDT"]
         }
         expected_signature = r"""# df=
         index=[2000-01-01 14:34:00+00:00, 2000-01-01 14:38:00+00:00]
@@ -472,13 +472,13 @@ class TestDataFrameImClients1(icdctictc.ImClientTestCase):
         shape=(10, 7)
                                          full_symbol  open  high  low  close  volume  feature1
         timestamp
-        2000-01-01 14:34:00+00:00  binance::ADA_USDT   100   101   99  101.0       3       1.0
-        2000-01-01 14:34:00+00:00  binance::BTC_USDT   100   101   99  101.0       3       1.0
-        2000-01-01 14:35:00+00:00  binance::ADA_USDT   100   101   99  101.0       4       1.0
+        2000-01-01 14:34:00+00:00  binance::spot::ADA_USDT   100   101   99  101.0       3       1.0
+        2000-01-01 14:34:00+00:00  binance::spot::BTC_USDT   100   101   99  101.0       3       1.0
+        2000-01-01 14:35:00+00:00  binance::spot::ADA_USDT   100   101   99  101.0       4       1.0
         ...
-        2000-01-01 14:37:00+00:00  binance::BTC_USDT   100   101   99  100.0       6      -1.0
-        2000-01-01 14:38:00+00:00  binance::ADA_USDT   100   101   99  100.0       7      -1.0
-        2000-01-01 14:38:00+00:00  binance::BTC_USDT   100   101   99  100.0       7      -1.0
+        2000-01-01 14:37:00+00:00  binance::spot::BTC_USDT   100   101   99  100.0       6      -1.0
+        2000-01-01 14:38:00+00:00  binance::spot::ADA_USDT   100   101   99  100.0       7      -1.0
+        2000-01-01 14:38:00+00:00  binance::spot::BTC_USDT   100   101   99  100.0       7      -1.0
         """
         # Run test.
         self._test_read_data5(

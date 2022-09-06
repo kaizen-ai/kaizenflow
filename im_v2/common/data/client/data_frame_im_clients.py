@@ -25,6 +25,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         df: pd.DataFrame,
         universe: List[ivcu.FullSymbol],
         resample_1min: bool,
+        asset_class: str,
         *,
         full_symbol_col_name: Optional[str] = None,
     ) -> None:
@@ -58,6 +59,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
             vendor,
             universe_version,
             resample_1min,
+            asset_class,
             full_symbol_col_name=full_symbol_col_name,
         )
         # Validate and set input dataframe.

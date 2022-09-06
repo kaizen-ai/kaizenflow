@@ -48,10 +48,10 @@ class CryptoChassisHistoricalPqByTileClient(
             vendor,
             universe_version,
             resample_1min,
+            contract_type,
             root_dir,
             partition_mode,
             dataset,
-            contract_type,
             data_snapshot,
             aws_profile=aws_profile,
         )
