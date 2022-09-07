@@ -45,7 +45,7 @@ hprint.config_notebook()
 # %%
 import market_data as mdata
 
-file_path = "/app/test_save_data.csv.gz"
+file_path = "/shared_data/test_save_data.csv.gz"
 column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
@@ -66,7 +66,7 @@ max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="Am
 max_start_time_col_name
 
 # %%
-replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 60 * 20
+replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 7 * 60 + 12
 initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
     minutes=replayed_delay_in_mins_or_timestamp
 )
@@ -74,17 +74,17 @@ initial_replayed_timestamp
 
 # %%
 date = "2022-09-06"
-start_timestamp = pd.Timestamp(date + " 09:35:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 11:30:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 19:55:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 prod_dir = (
     #"/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
-    "/shared_data/system_log_dir_20220906_09:20:00"
+    "/shared_data/system_log_dir_2022-09-06_15:56:09"
 )
-sim_dir = "/app/system_log_dir"
+sim_dir = "/shared_data/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
@@ -160,7 +160,7 @@ prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
 hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
-prod_forecast_df.index
+prod_forecast_df["diff_num_shares"].plot()
 
 # %%
 prod_forecast_df.index.min()
@@ -245,6 +245,9 @@ prod_portfolio_df, prod_portfolio_stats_df = load_portfolio(
 )
 
 # %%
+prod_portfolio_df["pnl"]
+
+# %%
 hpandas.df_to_str(prod_portfolio_df, log_level=logging.INFO)
 
 # %%
@@ -260,6 +263,9 @@ sim_portfolio_df, sim_portfolio_stats_df = load_portfolio(
     config["end_timestamp"],
     config["freq"],
 )
+
+# %%
+sim_portfolio_df
 
 # %%
 hpandas.df_to_str(sim_portfolio_df, log_level=logging.INFO)
