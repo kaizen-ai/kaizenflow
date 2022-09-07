@@ -28,6 +28,7 @@ import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
 import oms.order as omorder
 import oms.portfolio as omportfo
+import oms.cc_optimizer_utils as occoputi
 
 _LOG = logging.getLogger(__name__)
 
@@ -745,7 +746,7 @@ class ForecastProcessor:
             # Verify that all orders are above the notional limit.
             #  Note: orders that are below the minimal amount of asset
             #  for the exchange are modified to go slightly above the limit.
-            df = ocalopti.apply_cc_limits(df, self._portfolio.broker)
+            df = occoputi.apply_cc_limits(df, self._portfolio.broker)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
