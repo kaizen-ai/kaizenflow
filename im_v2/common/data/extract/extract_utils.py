@@ -216,7 +216,7 @@ def download_realtime_for_one_exchange(
         )
         end_timestamp = pd.Timestamp(args["end_timestamp"])
         end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
-    elif:
+    elif data_type == "bid_ask":
         # When downloading bid / ask data, CCXT returns the last data 
         # ignoring the requested timestamp, so we set them to None.
         start_timestamp, end_timestamp = None, None
