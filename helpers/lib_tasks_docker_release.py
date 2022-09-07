@@ -653,7 +653,11 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
             msg=f"Preprod file `{dag_name}` is out of sync with `{airflow_dags_s3_path}`!",
         )
     # Prepare params to compose new prod image url.
-    prod_version = hlitadoc._resolve_version_value(version)
+    container_dir_name = "."
+    if task_definition == "cmamp" and hgit.is_amp_present():
+        # If `cmamp` is released from `orange`, ensure version is from the submodule.
+        container_dir_name = os.path.join(root_dir, "amp")
+    prod_version = hlitadoc._resolve_version_value(version, container_dir_name=container_dir_name)
     base_image = ""
     stage = "prod"
     # Compose new prod image url.
@@ -673,6 +677,10 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     preprod_tag_from_image = preprod_image_url.split(":")[-1]
     msg = f"Preprod tag is different in the image url `{preprod_tag_from_image}`!"
     hdbg.dassert_eq(preprod_tag_from_image, preprod_tag, msg=msg)
+    # Pull preprod image for re-tag.
+    hlitadoc.docker_login(ctx)
+    cmd = f"docker pull {preprod_image_url}"
+    hlitauti.run(ctx, cmd)
     # Re-tag preprod image to prod.
     cmd = f"docker tag {preprod_image_url} {new_prod_image_url}"
     hlitauti.run(ctx, cmd)
