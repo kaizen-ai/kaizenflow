@@ -157,7 +157,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def _download_bid_ask(self, exchange_id: str, currency_pair: str, *, depth: int = 10, **kwargs: Any) -> pd.DataFrame:
+    def _download_bid_ask(self, exchange_id: str, currency_pair: str, depth: int, **kwargs: Any) -> pd.DataFrame:
         """
         Download bid-ask data from CCXT.
 

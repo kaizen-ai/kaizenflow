@@ -381,7 +381,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
             }
             # Run.
             order_book = exchange_class._download_bid_ask(
-                exchange, symbol, depth=depth
+                exchange, symbol, depth
             )
             #
             self.assertEqual(fetch_order_book_mock.call_count, 1)
