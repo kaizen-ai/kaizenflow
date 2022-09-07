@@ -1927,6 +1927,9 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 class Test_basic1(_Config_execute_stmt_TestCase1):
 
     def test1(self) -> None:
+        """
+        Various assignments and their representations.
+        """
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
@@ -1934,25 +1937,66 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
-        # Assign a value.
-        stmt = 'config["read_data"] = "hello.txt"'
+        # Assign with a flat key.
+        stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        read_data (was_read=False): hello.txt <class 'str'>
+        key1 (was_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Invalid access.
-        stmt = 'config["read_data"]["filename"] = "world.txt"'
+        stmt = 'config["key1"]["key2"] = "world.txt"'
         exp = """
         'str' object does not support item assignment
         """
         self.raise_stmt(stmt, TypeError, exp, globals())
         # Invalid access.
-        stmt = 'config["read_data", "filename"] = "world.txt"'
+        stmt = 'config["key1", "key2"] = "world.txt"'
         exp = """
         * Failed assertion *
         Instance of 'hello.txt' is '<class 'str'>' instead of '<class 'core.config.config_.Config'>'
         """
         self.raise_stmt(stmt, AssertionError, exp, globals())
+
+    def test2(self) -> None:
+        """
+        Various assignments and their representations.
+        """
+        mode = "repr"
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "allow_write_after_read"
+        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+        exp = ""
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign with a compound key.
+        stmt = 'config["key1", "key2"] = "hello.txt"'
+        exp = r"""
+        key1 (was_read=False, val_type=core.config.config_.Config):
+          key2 (was_read=False, val_type=str): hello.txt
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign with a compound key.
+        stmt = 'config["key1"]["key2"] = "hello2.txt"'
+        exp = r"""
+        key1 (was_read=False, val_type=core.config.config_.Config):
+          key2 (was_read=False, val_type=str): hello2.txt
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
+
+    def test3(self) -> None:
+        mode = "repr"
+        # Create a Config.
+        update_mode = "overwrite"
+        clobber_mode = "assert_on_write_after_read"
+        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
+        exp = ""
+        self.execute_stmt(stmt, exp, mode, globals())
+        # Assign a value.
+        stmt = 'config["key1"] = "hello.txt"'
+        exp = r"""
+        key1 (was_read=False): hello.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
 
 
 # #############################################################################
@@ -1981,29 +2025,29 @@ class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign a value.
-        stmt = 'config["read_data"] = "hello.txt"'
+        stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        read_data (was_read=False): hello.txt <class 'str'>
+        key1 (was_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Overwrite a value.
-        stmt = 'config["read_data"] = "test_name.txt"'
+        stmt = 'config["key1"] = "test_name.txt"'
         exp = r"""
-        read_data (was_read=False): test_name.txt <class 'str'>
+        key1 (was_read=False, val_type=str): test_name.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Read the value.
-        stmt = '_ = config["read_data"]'
+        stmt = 'config.mark_as_read()'
         exp = r"""
-        read_data (was_read=True): test_name.txt <class 'str'>
+        key1 (was_read=False, val_type=str): test_name.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Write after read asserts.
-        stmt = 'config["read_data"] = "new_name.txt"'
+        stmt = 'config["key1"] = "new_name.txt"'
         exp = """
-        Trying to overwrite old value 'test_name.txt' with new value 'new_name.txt' for key 'read_data' with clobber_mode=assert_on_write_after_read
+        Trying to overwrite old value 'test_name.txt' with new value 'new_name.txt' for key 'key1' with clobber_mode=assert_on_write_after_read
         self=
-          read_data:
+          key1:
             test_name.txt
         """
         self.raise_stmt(stmt, cconfig.ClobberError, exp, globals())
@@ -2027,27 +2071,27 @@ class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign a value.
-        stmt = 'config["read_data"] = "hello.txt"'
+        stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        read_data (was_read=False): hello.txt <class 'str'>
+        key1 (was_read=False): hello.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Overwrite a value.
-        stmt = 'config["read_data"] = "test_name.txt"'
+        stmt = 'config["key1"] = "test_name.txt"'
         exp = r"""
-        read_data (was_read=False): test_name.txt <class 'str'>
+        key1 (was_read=False): test_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Read the value.
-        stmt = '_ = config["read_data"]'
+        stmt = '_ = config["key1"]'
         exp = r"""
-        read_data (was_read=True): test_name.txt <class 'str'>
+        key1 (was_read=True): test_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Write after read doesn't asserts.
-        stmt = 'config["read_data"] = "new_name.txt"'
+        stmt = 'config["key1"] = "new_name.txt"'
         exp = """
-        read_data (was_read=True): new_name.txt <class 'str'>
+        key1 (was_read=True): new_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
@@ -2058,16 +2102,6 @@ class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
 
 
 class Test_nested_config_clobber1(_Config_execute_stmt_TestCase1):
-
-    def test0(self) -> None:
-        mode = "repr"
-        # Create a Config.
-        update_mode = "overwrite"
-        clobber_mode = "assert_on_write_after_read"
-        config = cconfig.Config(update_mode=update_mode, clobber_mode=clobber_mode)
-        config["read_data", "filename"] = "hello.txt"
-        #_LOG.info("config=\n" + repr(config))
-        _LOG.info("config=\n" + repr(config["read_data"]))
 
     def test1(self) -> None:
         """
@@ -2087,15 +2121,16 @@ class Test_nested_config_clobber1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["read_data", "filename"] = "hello.txt"'
         exp = r"""
-        read_data (was_read=False): hello.txt <class 'str'>
+        read_data (was_read=False, val_type=core.config.config_.Config):
+          filename (was_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
-    #     # Overwrite a value.
-    #     stmt = 'config["read_data"] = "test_name.txt"'
-    #     exp = r"""
-    #     read_data (was_read=False): test_name.txt <class 'str'>
-    #     """
-    #     self.execute_stmt(stmt, exp, mode, globals())
+        # Overwrite a value.
+        stmt = 'config["read_data"] = "test_name.txt"'
+        exp = r"""
+        read_data (was_read=False): test_name.txt <class 'str'>
+        """
+        self.execute_stmt(stmt, exp, mode, globals())
     #     # Read the value.
     #     stmt = '_ = config["read_data"]'
     #     exp = r"""

@@ -61,10 +61,6 @@ DUMMY = "__DUMMY__"
 #   - We assume that a dict leaf represents a Config for an object
 #   - `dict` are valid in composed data structures, e.g., list, tuples
 
-# An alternative design could have been:
-# - Config derives from OrderedDict using default value to create the keys on
-#   the fly, although without compound key notation
-
 # Issues with tracking accurately write-after-read:
 # - nested config add extra complexity mixing Dict and Config
 #   - it would be simpler if everything was a dict
@@ -72,6 +68,11 @@ DUMMY = "__DUMMY__"
 #   - is it all read?
 # - what happens if one does read["data"] and that is a Config, is it all read?
 # - how to distinguish printing from actually reading?
+
+# An alternative design could have been:
+# - Config derives from `_OrderedConfig` using default value to create the keys on
+#   the fly without compound key notation
+
 
 # Keys in a Config are strings or ints.
 ScalarKey = Union[str, int]
@@ -240,7 +241,7 @@ class _OrderedConfig(_OrderedDictType):
             super().__setitem__(key, (was_read, val))
 
     def __getitem__(
-        self, key: ScalarKey, mark_as_read: bool = True
+        self, key: ScalarKey, mark_as_read: bool = False
     ) -> ValueTypeHint:
         # Retrieve the value.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
@@ -251,43 +252,90 @@ class _OrderedConfig(_OrderedDictType):
             super().__setitem__(key, (was_read, val))
         return val
 
+    def mark_as_read(
+        self,
+            key: ScalarKey,
+            mark_as_read: bool = False) -> None:
+        # Update the metadata, accounting that this data was read.
+        super().__setitem__(key, (mark_as_read, val))
+        if hasattr(val, "mark_as_read"):
+            val.mark_as_read(mark_as_read)
+
     def __str__(self) -> str:
         mode = "only_values"
-        level = 0
-        ret = self._to_pretty_string(self, mode, level)
+        ret = self.to_string(mode)
         return ret
 
     def __repr__(self) -> str:
-        mode = "with_metadata"
-        level = 0
-        ret = self._to_pretty_string(self, mode, level)
+        mode = "verbose"
+        ret = self.to_string(mode)
         return ret
 
-    @staticmethod
-    def _to_pretty_string(dict_: Dict, mode: str, level: int) -> str:
-        indent = "  "
+    # @staticmethod
+    # def _to_string(dict_: Dict, mode: str) -> str:
+    #     txt = []
+    #     for key, (was_read, val) in dict_.items():
+    #         # Process the key.
+    #         if mode == "only_values":
+    #             txt_tmp = str(key)
+    #         elif mode == "with_metadata":
+    #             txt_tmp = f"{key} (was_read={was_read})"
+    #         else:
+    #             raise ValueError(f"Invalid mode='{mode}")
+    #
+    #     txt = "\n".join(txt)
+    #     return txt
+
+    def to_string(self, mode: str) -> str:
+        """
+        Return a short string representation of this `Config`.
+        """
         txt = []
-        for key, (was_read, val) in dict_.items():
-            # Process the key.
-            space = indent * level
+        for key, (was_read, val) in self.items():
+            # 1) Process key.
             if mode == "only_values":
-                txt_tmp = str(key)
-            elif mode == "with_metadata":
-                txt_tmp = f"{key} ({was_read})"
+                key_as_str = str(key)
+            elif mode == "verbose":
+                # E.g., `nrows (was_read=False, val_type=core.config.config_.Config)`
+                key_as_str = f"{key} (was_read={was_read}, "
+                key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
+            # 2) Process value.
+            if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
+                # Data structures that can be printed in a fancy way.
+                val_as_str = hpandas.df_to_str(val, print_shape_info=True)
+                val_as_str = "\n" + hprint.indent(val_as_str)
+            elif isinstance(val, Config):
+                val_as_str = val.to_string(mode)
+                val_as_str = "\n" + hprint.indent(val_as_str)
             else:
-                raise ValueError(f"Invalid mode='{mode}")
-            txt_tmp = space + txt_tmp + ":"
-            txt.append(txt_tmp)
-            # Process the value.
-            if isinstance(val, dict):
-                txt_tmp = _OrderedConfig._to_pretty_string(val, mode, level + 1)
-                txt.append(txt_tmp)
-            else:
-                space = indent * (level + 1)
-                txt_tmp = space + str(val)
-                txt.append(txt_tmp)
-        txt = "\n".join(txt)
-        return txt
+                # Normal Python data structures.
+                val_as_str = str(val)
+                if len(val_as_str.split("\n")) > 1:
+                    # Indent a string that spans multiple lines like:
+                    # ```
+                    # portfolio_object:
+                    #   # historical holdings=
+                    #   egid                        10365    -1
+                    #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
+                    #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
+                    #   ...
+                    #   # historical holdings marked to market=
+                    #   ...
+                    # ```
+                    val_as_str = "\n" + hprint.indent(val_as_str)
+            # 3) Print.
+            txt.append(f"{key_as_str}: {val_as_str}")
+        # Assemble the result.
+        ret = "\n".join(txt)
+        # Remove memory locations of functions, if config contains them, e.g.,
+        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
+        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
+        # Remove memory locations of objects, if config contains them, e.g.,
+        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
+        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
+        return ret
 
 
 # #############################################################################
@@ -334,6 +382,7 @@ class Config:
             write-after-read (see above)
         :param report_mode: define the policy used for reporting errors (see above)
         """
+        _LOG.debug(hprint.to_str("update_mode clobber_mode report_mode"))
         self._config = _OrderedConfig()
         self.update_mode = update_mode
         self.clobber_mode = clobber_mode
@@ -397,14 +446,14 @@ class Config:
 
     def __str__(self) -> str:
         mode = "only_values"
-        return self._to_string(mode)
+        return self.to_string(mode)
 
     def __repr__(self) -> str:
-        """
-        Return an unambiguous representation of this `Config`
-        """
         mode = "verbose"
-        return self._to_string(mode)
+        return self.to_string(mode)
+
+    def to_string(self, mode: str) -> str:
+        return self._config.to_string(mode)
 
     # ////////////////////////////////////////////////////////////////////////////
     # Get / set.
@@ -462,8 +511,7 @@ class Config:
     def get(
         self,
         key: CompoundKey,
-        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
-        expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
+        default_value: Optional[Any] = _NO_VALUE_SPECIFIED, expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
         *,
         report_mode: Optional[str] = None,
     ) -> Any:
@@ -498,8 +546,14 @@ class Config:
     def add_subconfig(self, key: CompoundKey) -> "Config":
         _LOG.debug(hprint.to_str("key"))
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
-        config = Config()
-        self.__setitem__(key, config)
+        config = Config(
+            update_mode = self._update_mode,
+            clobber_mode = self._clobber_mode,
+            report_mode = self._report_mode)
+        self.__setitem__(key, config,
+            update_mode = self._update_mode,
+            clobber_mode = self._clobber_mode,
+            report_mode = self._report_mode)
         return config
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -761,7 +815,7 @@ class Config:
         if value is None:
             # Use the value from the constructor.
             value = ctor_value
-            #_LOG.debug("resolved: %s=%s", tag, value)
+            _LOG.debug("resolved: %s=%s", tag, value)
         # The result should be a valid string.
         hdbg.dassert_isinstance(value, str)
         hdbg.dassert_in(value, valid_values)
@@ -794,63 +848,63 @@ class Config:
             config[k] = v
         return config
 
-    def _to_string(self, mode: str) -> str:
-        """
-        Return a short string representation of this `Config`.
-        """
-        txt = []
-        for key, (was_read, val) in self._config.items():
-            # 1) Process key.
-            if mode == "only_values":
-                key_as_str = str(key)
-            elif mode == "verbose":
-                # E.g., nrows (was_read=False): 10000 <class 'int'>
-                key_as_str = f"{key} (was_read={was_read})"
-            else:
-                raise ValueError(f"Invalid mode='{mode}")
-            # 2) Process value.
-            if isinstance(val, Config):
-                # Found a Config thus recurse on it.
-                txt_tmp = str(val)
-                val_as_str = "\n" + hprint.indent(txt_tmp)
-            else:
-                if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
-                    # Data structures that can be printed in a fancy way.
-                    val_as_str = hpandas.df_to_str(val, print_shape_info=True)
-                    val_as_str = "\n" + hprint.indent(val_as_str)
-                else:
-                    # Normal Python data structures.
-                    val_as_str = str(val)
-                    if len(val_as_str.split("\n")) > 1:
-                        # Indent a string that spans multiple lines like:
-                        # ```
-                        # portfolio_object:
-                        #   # historical holdings=
-                        #   egid                        10365    -1
-                        #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
-                        #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
-                        #   ...
-                        #   # historical holdings marked to market=
-                        #   ...
-                        # ```
-                        val_as_str = "\n" + hprint.indent(val_as_str)
-            if mode == "verbose":
-                # Add also the type.
-                # E.g., nrows (was_read=False): 10000 <class 'int'>
-                val_as_str += " %s" % str(type(val))
-            # 3) Print.
-            txt.append(f"{key_as_str}: {val_as_str}")
-        # Assemble the result.
-        ret = "\n".join(txt)
-        # Remove memory locations of functions, if config contains them, e.g.,
-        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
-        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        # Remove memory locations of objects, if config contains them, e.g.,
-        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
-        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        return ret
+    # def _to_string(self, mode: str) -> str:
+    #     """
+    #     Return a short string representation of this `Config`.
+    #     """
+    #     txt = []
+    #     for key, (was_read, val) in self._config.items():
+    #         # 1) Process key.
+    #         if mode == "only_values":
+    #             key_as_str = str(key)
+    #         elif mode == "verbose":
+    #             # E.g., `nrows (was_read=False): 10000 <class 'int'>`
+    #             key_as_str = f"{key} (was_read={was_read})"
+    #         else:
+    #             raise ValueError(f"Invalid mode='{mode}")
+    #         # 2) Process value.
+    #         if isinstance(val, Config):
+    #             # Found a Config thus recurse on it.
+    #             txt_tmp = str(val)
+    #             val_as_str = "\n" + hprint.indent(txt_tmp)
+    #         else:
+    #             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
+    #                 # Data structures that can be printed in a fancy way.
+    #                 val_as_str = hpandas.df_to_str(val, print_shape_info=True)
+    #                 val_as_str = "\n" + hprint.indent(val_as_str)
+    #             else:
+    #                 # Normal Python data structures.
+    #                 val_as_str = str(val)
+    #                 if len(val_as_str.split("\n")) > 1:
+    #                     # Indent a string that spans multiple lines like:
+    #                     # ```
+    #                     # portfolio_object:
+    #                     #   # historical holdings=
+    #                     #   egid                        10365    -1
+    #                     #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
+    #                     #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
+    #                     #   ...
+    #                     #   # historical holdings marked to market=
+    #                     #   ...
+    #                     # ```
+    #                     val_as_str = "\n" + hprint.indent(val_as_str)
+    #         if mode == "verbose":
+    #             # Add also the type.
+    #             # E.g., nrows (was_read=False): 10000 <class 'int'>
+    #             val_as_str += " %s" % str(type(val))
+    #         # 3) Print.
+    #         txt.append(f"{key_as_str}: {val_as_str}")
+    #     # Assemble the result.
+    #     ret = "\n".join(txt)
+    #     # Remove memory locations of functions, if config contains them, e.g.,
+    #     #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
+    #     memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
+    #     ret = re.sub(memory_loc_pattern, r"\1", ret)
+    #     # Remove memory locations of objects, if config contains them, e.g.,
+    #     #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
+    #     memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
+    #     ret = re.sub(memory_loc_pattern, r"\1", ret)
+    #     return ret
 
     # /////////////////////////////////////////////////////////////////////////////
 
