@@ -31,7 +31,7 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
         expected = sorted(
             [
                 "ccxt_bid_ask",
-                "ccxt_bid_ask_futures"
+                "ccxt_bid_ask_futures",
                 "ccxt_ohlcv",
                 "ccxt_ohlcv_futures",
                 "currency_pair",
