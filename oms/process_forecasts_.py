@@ -742,13 +742,10 @@ class ForecastProcessor:
                 style=style,
                 **kwargs,
             )
-            # TODO(gp): @all move this to
-            # Add diff_num_shares to calculate notional limit.
-            df["diff_num_shares"] = df["target_notional_trade"] / df["price"]
             # Verify that all orders are above the notional limit.
             #  Note: orders that are below the minimal amount of asset
             #  for the exchange are modified to go slightly above the limit.
-            df = ocalopti.check_notional_limits(self._portfolio.broker, df)
+            df = ocalopti.apply_cc_limits(df, self._portfolio.broker)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
