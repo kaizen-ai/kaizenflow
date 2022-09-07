@@ -357,6 +357,15 @@ class ForecastSystem(System):
 
 
 # #############################################################################
+# NonTime_ForecastSystem
+# #############################################################################
+
+
+class NonTime_ForecastSystem(ForecastSystem):
+    pass
+
+
+# #############################################################################
 # _Time_ForecastSystem_Mixin
 # #############################################################################
 
@@ -592,12 +601,3 @@ class Time_ForecastSystem_with_DatabasePortfolio(
         self,
     ) -> oms.DatabasePortfolio:
         ...
-
-
-# #############################################################################
-# NonTime_ForecastSystem
-# #############################################################################
-
-
-class NonTime_ForecastSystem(ForecastSystem):
-    pass

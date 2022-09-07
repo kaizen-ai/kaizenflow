@@ -544,9 +544,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
 class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     """
-    Reconcile `ForecastSystem` and `Time_ForecastSystem`.
+    Reconcile `NonTime_ForecastSystem` and `Time_ForecastSystem`.
 
-    Make sure that `ForecastSystem` and `Time_ForecastSystem` produce
+    Make sure that `NonTime_ForecastSystem` and `Time_ForecastSystem` produce
     the same predictions.
     """
 
