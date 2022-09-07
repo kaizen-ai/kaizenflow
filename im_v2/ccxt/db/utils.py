@@ -62,7 +62,7 @@ def get_ccxt_ohlcv_futures_create_table_query() -> str:
 
 def get_ccxt_create_bid_ask_table_query() -> str:
     """
-    Get SQL query to create CCXT OHLCV futures table.
+    Get SQL query to create CCXT bid/ask futures table.
     """
     query = """
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask(
@@ -85,7 +85,7 @@ def get_ccxt_create_bid_ask_table_query() -> str:
 
 def get_ccxt_create_bid_ask_futures_table_query() -> str:
     """
-    Get SQL query to create CCXT OHLCV futures table.
+    Get SQL query to create CCXT bid/ask futures table.
     """
     query = """
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures(
