@@ -410,7 +410,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
-            exchange_class._download_bid_ask(exchange, "NON_EXIST")
+            exchange_class._download_bid_ask(exchange, "NON_EXIST", 10)
         # Check output for error.
         actual = str(fail.value)
         expected = "Currency pair is not present in exchange"
