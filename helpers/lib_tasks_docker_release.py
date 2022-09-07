@@ -628,15 +628,17 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     # TODO(Nikola): Convert `haws` part to script so it can be called via `docker_cmd`.
     #   https://github.com/cryptokaizen/cmamp/pull/2594/files#r948551787
     import helpers.haws as haws
+
     #
     # TODO(Nikola): Use env var for CK profile.
     s3fs_ = hs3.get_s3fs(aws_profile="ck")
     super_module = not hgit.is_inside_submodule()
-    full_repo_name = hgit.get_repo_full_name_from_client(super_module)
     # Prepare params for listing DAGs.
     root_dir = hgit.get_client_root(super_module)
-    # TODO(Nikola): Make dirname agnostic for each repo.
-    dir_name = os.path.join(root_dir, "im_v2", "airflow", "dags")
+    dags_path = [root_dir, "im_v2", "airflow", "dags"]
+    if super_module and hgit.is_amp_present():
+        dags_path.insert(1, "amp")
+    dir_name = os.path.join(*dags_path)
     pattern = "preprod.*.py"
     only_files = True
     use_relative_paths = False
@@ -681,7 +683,8 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     # Upload new tag to ECS.
     docker_push_prod_image(ctx, prod_version)
     # Update prod task definition to the latest prod tag.
-    haws.update_task_definition(task_definition, new_prod_image_url)
+    prod_task_definition_name = f"{task_definition}-prod"
+    haws.update_task_definition(prod_task_definition_name, new_prod_image_url)
     # Add prod DAGs to airflow s3 bucket after all checks are passed.
     for dag_path in dag_paths:
         # Update prod DAGs.
