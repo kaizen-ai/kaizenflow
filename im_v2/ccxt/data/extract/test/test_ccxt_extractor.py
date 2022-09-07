@@ -339,40 +339,78 @@ class TestCcxtExtractor1(hunitest.TestCase):
         expected = "Currency pair is not present in exchange"
         self.assertIn(expected, actual)
 
-    def test_download_order_book1(self) -> None:
+    @umock.patch.object(ivcdexex.hdateti, "get_current_time")
+    def test_download_bid_ask1(
+        self, mock_get_current_time: umock.MagicMock
+    ) -> None:
         """
         Verify that order book is downloaded correctly.
         """
-        exchange_class = ivcdexex.CcxtExtractor("gateio", "spot")
-        exchange_class.currency_pairs = ["BTC/USDT"]
+        # Prepare test data.
+        current_time = "2022-02-24 00:00:00"
+        mock_get_current_time.return_value = current_time
+        symbol = "BTC/BUSD"
+        depth = 5
+        exchange = "binance"
+        exchange_class = ivcdexex.CcxtExtractor("binance", "futures")
+        exchange_class.currency_pairs = [symbol]
         self.assertEqual(
-            exchange_class._exchange._extract_mock_name(), "ccxt.gateio()"
+            exchange_class._exchange._extract_mock_name(), f"ccxt.{exchange}()"
         )
-        # Mock a call to ccxt's `fetch_order_book` method called inside `download_order_book`.
+        # Mock a call to ccxt's `fetch_order_book` method called inside `_download_bid_ask`.
         with umock.patch.object(
             exchange_class._exchange, "fetch_order_book", create=True
         ) as fetch_order_book_mock:
-            fetch_order_book_mock.return_value = {"dummy": "dummy"}
+            fetch_order_book_mock.return_value = {
+                "symbol": symbol,
+                "bids": [
+                    [18904.6, 15.996],
+                    [18904.5, 0.457],
+                    [18904.4, 0.148],
+                    [18904.3, 0.25],
+                    [18904.2, 0.016],
+                ],
+                "asks": [
+                    [18904.7, 6.286],
+                    [18904.8, 0.023],
+                    [18904.9, 0.016],
+                    [18905.0, 0.331],
+                    [18905.1, 0.071],
+                ],
+                "timestamp": 1662561646753,
+            }
             # Run.
-            order_book = exchange_class.download_order_book("BTC_USDT")
+            order_book = exchange_class._download_bid_ask(
+                exchange, symbol, depth=depth
+            )
             #
             self.assertEqual(fetch_order_book_mock.call_count, 1)
             actual_args = tuple(fetch_order_book_mock.call_args)
-            expected_args = (("BTC/USDT",), {})
+            expected_args = ((symbol, depth), {})
             self.assertEqual(actual_args, expected_args)
             # Check output.
-            self.assertDictEqual(order_book, {"dummy": "dummy"})
+            actual_output = hpandas.df_to_str(order_book)
+            expected_output = r"""
+            timestamp  bid_price  bid_size  ask_price  ask_size  end_download_timestamp  level
+            0  1662561646753    18904.6    15.996    18904.7     6.286  2022-02-24 00:00:00      1
+            1  1662561646753    18904.5     0.457    18904.8     0.023  2022-02-24 00:00:00      2
+            2  1662561646753    18904.4     0.148    18904.9     0.016  2022-02-24 00:00:00      3
+            3  1662561646753    18904.3     0.250    18905.0     0.331  2022-02-24 00:00:00      4
+            4  1662561646753    18904.2     0.016    18905.1     0.071  2022-02-24 00:00:00      5
+            """
+            self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
-    def test_download_order_book_invalid_input1(self) -> None:
+    def test_download_bid_ask_invalid_input1(self) -> None:
         """
         Run with invalid currency pair.
         """
         # Initialize class.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange = "binance"
+        exchange_class = ivcdexex.CcxtExtractor(exchange, "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
-            exchange_class.download_order_book("invalid_currency_pair")
+            exchange_class._download_bid_ask(exchange, "NON_EXIST")
         # Check output for error.
         actual = str(fail.value)
         expected = "Currency pair is not present in exchange"
