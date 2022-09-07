@@ -71,7 +71,6 @@ def _add_common_download_args(
         "--bid_ask_depth",
         action="store",
         required=False,
-        default=10,
         type=int,
         help="Specifies depth of order book to \
             download (applies when data_type=bid_ask).",
