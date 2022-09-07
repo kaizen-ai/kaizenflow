@@ -5,7 +5,7 @@ import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List
 
 import pandas as pd
 
@@ -79,20 +79,20 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     return market_data
 
 
+# TODO(Grisha): @Dan Move to `system_builder_utils.py`.
 def get_Cx_ReplayedMarketData_from_file(
-    file_path: str, *, aws_profile: Optional[str] = None
-) -> pd.DataFrame:
+    system: dtfsys.System,
+) -> mdata.ReplayedMarketData:
     """
-    Get data for `ReplayedMarketData`.
-
-    :param file_path: either s3 or a local root path to the file with data
-    :param aws_profile: AWS profile, e.g., "ck"
-    :return: data for replaying
+    Build a `ReplayedMarketData` backed with data from the specified file.
     """
+    file_path = system.config["market_data_config", "file_path"]
+    aws_profile = "ck"
     hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
-    # `get_ReplayedTimeMarketData_from_df()` is looking for "start_datetime"
-    # and "end_datetime" columns by default and we do not have a way to
-    # change it yet since `get_EventLoop_MarketData_from_df` has no kwargs.
+    # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
+    # TODO(Grisha): @Dan Refactor default column names in system related functions.
+    # Multiple functions that build the system are looking for "start_datetime"
+    # and "end_datetime" columns by default.
     column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
     timestamp_db_column = "end_datetime"
     datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
@@ -104,7 +104,27 @@ def get_Cx_ReplayedMarketData_from_file(
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
     )
-    return market_data_df
+    # TODO(Grisha): @Dan Pass asset ids as params in `ForecastSystem` examples
+    # and then pass it via `system.config`.
+    # Get a list of all the asset ids if specified in the config.
+    if ("market_data_config", "asset_ids") in system.config:
+        if system.config["market_data_config", "asset_ids"] == "all":
+            system.config["market_data_config", "asset_ids"] = (
+                market_data_df["asset_id"].unique().tolist()
+            )
+    # Initialize market data client.
+    event_loop = system.config["event_loop_object"]
+    replayed_delay_in_mins_or_timestamp = system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ]
+    delay_in_secs = system.config["market_data_config", "delay_in_secs"]
+    market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+        event_loop,
+        replayed_delay_in_mins_or_timestamp,
+        market_data_df,
+        delay_in_secs=delay_in_secs,
+    )
+    return market_data
 
 
 # #############################################################################
