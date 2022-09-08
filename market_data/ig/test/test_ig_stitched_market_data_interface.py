@@ -10,7 +10,7 @@
 #import helpers.hpandas as hpandas
 #import helpers.hsystem as hsystem
 #import helpers.hunit_test as hunitest
-#import market_data.test.market_data_test_case as mdtmdtca
+#import market_data as mdata
 #import market_data_lime.ig_market_data_example as mdlemdaex
 #import market_data_lime.ig_stitched_market_data as mdlesmada
 #
@@ -38,7 +38,7 @@
 #        ig_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
 #            asset_ids
 #        )
-#        if mdtmdtca.skip_test_since_not_online(ig_stitched_market_data):
+#        if mdata.skip_test_since_not_online(ig_stitched_market_data):
 #            pytest.skip("Market not on-line")
 #        # Query.
 #        # timedelta = pd.tseries.offsets.BDay(2)
@@ -62,7 +62,7 @@
 #        ig_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
 #            asset_ids
 #        )
-#        if mdtmdtca.skip_test_since_not_online(ig_stitched_market_data):
+#        if mdata.skip_test_since_not_online(ig_stitched_market_data):
 #            pytest.skip("Market not on-line")
 #        # Query.
 #        timedelta = pd.Timedelta("10D")
@@ -84,7 +84,7 @@
 #        ig_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
 #            asset_ids
 #        )
-#        if mdtmdtca.skip_test_since_not_online(ig_stitched_market_data):
+#        if mdata.skip_test_since_not_online(ig_stitched_market_data):
 #            pytest.skip("Market not on-line")
 #        # Query.
 #        # timedelta = pd.tseries.offsets.BDay(2)
@@ -107,7 +107,7 @@
 #        asset_ids = [17085]
 #        # Build the RT market data interface.
 #        ig_rt_market_data = mdlemdaex.get_IgRealTimeMarketData_example1(asset_ids)
-#        if mdtmdtca.skip_test_since_not_online(ig_rt_market_data):
+#        if mdata.skip_test_since_not_online(ig_rt_market_data):
 #            pytest.skip("Market not on-line")
 #        #
 #        ig_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(

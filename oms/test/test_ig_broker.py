@@ -8,7 +8,7 @@
 #
 # import helpers.hasyncio as hasynci
 # import helpers.hunit_test as hunitest
-# import market_data.test.market_data_test_case as mdtmdtca
+# import market_data as mdata
 # import market_data_lime as mdlime
 # import oms
 # import oms_lime.ig_broker_example as olegbrex
@@ -27,7 +27,7 @@
 #         asset_id = 15151
 #         asset_ids = [asset_id]
 #         market_data = mdlime.get_IgRealTimeMarketData_example1(asset_ids)
-#         if mdtmdtca.skip_test_since_not_online(market_data):
+#         if mdata.skip_test_since_not_online(market_data):
 #             pytest.skip("Market not on-line")
 #         # Real-time.
 #         broker = olegbrex.get_ig_broker_example1(event_loop, market_data)
