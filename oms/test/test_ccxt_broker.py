@@ -129,13 +129,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         expected_method_call = "call.set_sandbox_mode(True),"
         self.assertIn(expected_method_call, actual_method_calls)
 
-    @umock.patch.object(
-        occxbrok.CcxtBroker,
-        "_get_low_market_price",
-        spec=occxbrok.CcxtBroker._get_low_market_price,
-    )
     def test_submit_orders(
-        self, get_low_market_price_mock: umock.MagicMock
+        self,
     ) -> None:
         """
         Verify that orders are properly submitted via mocked exchange.
@@ -152,12 +147,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         account_type = "trading"
         # Initialize class.
         broker = self.get_test_broker(stage, contract_type, account_type)
-        broker._minimal_order_limits = {
-            1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
-        }
         broker._submitted_order_id = 1
-        # Mock low market price for order limit calculation.
-        get_low_market_price_mock.return_value = 0.001
         # Patch main external source.
         with umock.patch.object(
             broker._exchange, "createOrder", create=True
@@ -173,7 +163,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         actual_args = pprint.pformat(tuple(create_order_mock.call_args))
         expected_args = r"""
             ((),
-             {'amount': 30000.0,
+             {'amount': 0.121,
               'params': {'client_oid': 0, 'portfolio_id': 'ccxt_portfolio_mock'},
               'side': 'buy',
               'symbol': 'ETH/USDT',
@@ -196,7 +186,7 @@ class TestCcxtBroker1(hunitest.TestCase):
                     "start_timestamp":"2022-08-05T14:36:44Z",
                     "end_timestamp":"2022-08-05T14:38:44Z",
                     "curr_num_shares":0.0,
-                    "diff_num_shares":30000.0,
+                    "diff_num_shares":0.121,
                     "tz":"America\/New_York"
                 }
             }
