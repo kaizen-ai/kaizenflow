@@ -4,7 +4,6 @@ import pytest
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client.test.im_client_test_case as icdctictc
 import im_v2.crypto_chassis.data.client as iccdc
 
 # TODO(Grisha): factor out `ImClient` calls in a helper function.
@@ -13,7 +12,7 @@ import im_v2.crypto_chassis.data.client as iccdc
     reason="Run only if CK S3 is available",
 )
 @pytest.mark.slow("Slow via GH, fast on server.")
-class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
+class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
     """
     The purpose is to demonstrate possible output formats.
     """
@@ -441,7 +440,7 @@ class TestHistoricalPqByTileClients1(icdctictc.ImClientTestCase):
         )
 
 
-class TestDataFrameImClients1(icdctictc.ImClientTestCase):
+class TestDataFrameImClients1(icdc.ImClientTestCase):
     """
     The purpose is to demonstrate possible output formats.
     """
