@@ -16,6 +16,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hs3 as hs3
 import helpers.hserver as hserver
 import helpers.hstring as hstring
 import helpers.hsystem as hsystem
@@ -374,7 +375,7 @@ def get_test_directories(root_dir: str) -> List[str]:
     return paths
 
 
-# ############################################################################
+# #############################################################################
 
 
 def _get_repo_short_name() -> str:
@@ -431,3 +432,16 @@ def check_env_to_str(
             "AM_AWS_|CK_AWS_|AM_TELEGRAM_TOKEN|GH_ACTION_ACCESS_TOKEN", act
         )
     self_.assert_equal(act, exp, fuzzy_match=True, purify_text=True)
+
+
+def get_file_path(test_name: str) -> str:
+    file_name = "data.csv.gz"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    file_path = os.path.join(
+        s3_bucket_path,
+        "unit_test",
+        test_name,
+        file_name,
+    )
+    return file_path
