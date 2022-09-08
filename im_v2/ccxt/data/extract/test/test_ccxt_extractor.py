@@ -404,13 +404,14 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Run with invalid currency pair.
         """
-        # Initialize class.
+        # Initialize test data.
         exchange = "binance"
         exchange_class = ivcdexex.CcxtExtractor(exchange, "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
+        fake_currency_pair = "NON_EXIST"
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
-            exchange_class._download_bid_ask(exchange, "NON_EXIST", 10)
+            exchange_class._download_bid_ask(exchange, fake_currency_pair, 10)
         # Check output for error.
         actual = str(fail.value)
         expected = "Currency pair is not present in exchange"
