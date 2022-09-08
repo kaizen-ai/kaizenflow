@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im_v2.common.data.client.test.im_client_test_case as icdctictc
+import im_v2.common.data.client.im_client_test_case as imvcdcimctc
 """
 
 from typing import Any, List
