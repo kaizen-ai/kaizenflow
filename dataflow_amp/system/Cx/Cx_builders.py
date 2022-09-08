@@ -106,7 +106,9 @@ def get_Cx_ReplayedMarketData_from_file(
     )
     # Fill system config with asset ids from data for Portfolio.
     hdbg.dassert_not_in(("market_data_config", "asset_ids"), system.config)
-    system.config["market_data_config", "asset_ids"] = market_data_df["asset_id"].unique().tolist()
+    system.config["market_data_config", "asset_ids"] = (
+        market_data_df["asset_id"].unique().tolist()
+    )
     # Initialize market data client.
     event_loop = system.config["event_loop_object"]
     replayed_delay_in_mins_or_timestamp = system.config[
