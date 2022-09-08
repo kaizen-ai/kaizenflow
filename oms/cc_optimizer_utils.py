@@ -115,7 +115,7 @@ def apply_cc_limits(
     :param broker: Broker class instance
     :return: DataFrame with updated orders
     """
-    _LOG.info('Order df before adjustments: %s', forecast_df)
+    _LOG.info('Order df before adjustments: %s', forecast_df.to_string())
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -135,5 +135,5 @@ def apply_cc_limits(
         )
     else:
         hdbg.dfatal(f"Unknown mode: {stage}")
-    _LOG.info('Order df after adjustments: %s', forecast_df)
+    _LOG.info('Order df after adjustments: %s', forecast_df.to_string())
     return forecast_df
