@@ -5,6 +5,7 @@ import helpers.test.test_unit_test as ttutes
 """
 
 import logging
+import os
 import tempfile
 import unittest.mock as umock
 from typing import Optional, Tuple
@@ -974,6 +975,43 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
         txt = "['amp/helpers/test/test_system_interaction.py']"
         exp = "['helpers/test/test_system_interaction.py']"
         self.helper(txt, exp)
+
+
+class Test_purify_from_env_vars(hunitest.TestCase):
+    def helper(self, env_var: str) -> None:
+        env_var_value = os.environ[env_var]
+        input = f"s3://{env_var_value}/"
+        act = hunitest.purify_from_env_vars(input)
+        exp = f"s3://${env_var}/"
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test1(self) -> None:
+        """
+        Test the process of CK AWS putification.
+        """
+        env_var = "CK_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test2(self) -> None:
+        """
+        Test the process of Telegram token putification.
+        """
+        env_var = "AM_TELEGRAM_TOKEN"
+        self.helper(env_var)
+
+    def test3(self) -> None:
+        """
+        Test the process of AM AWS putification.
+        """
+        env_var = "AM_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test4(self) -> None:
+        """
+        Test the process of AM ECR putification.
+        """
+        env_var = "AM_ECR_BASE_PATH"
+        self.helper(env_var)
 
 
 # #############################################################################
