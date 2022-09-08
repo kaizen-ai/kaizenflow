@@ -20,7 +20,7 @@ class TestCcxtBroker1(hunitest.TestCase):
     ccxt_patch = umock.patch.object(occxbrok, "ccxt", spec=occxbrok.ccxt)
 
     @staticmethod
-    def get_test_orders(self) -> List[omorder.Order]:
+    def get_test_orders() -> List[omorder.Order]:
         """
         Build toy orders for tests.
         """
@@ -204,12 +204,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @umock.patch.object(
-        occxbrok.CcxtBroker,
-        "_get_low_market_price",
-        spec=occxbrok.CcxtBroker._get_low_market_price,
-    )
-    def test_get_fills(self, get_low_market_price_mock: umock.MagicMock) -> None:
+
+    def test_get_fills(self) -> None:
         """
         Verify that orders are filled properly via mocked exchange.
         """
@@ -220,12 +216,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         account_type = "trading"
         # Initialize class.
         broker = self.get_test_broker(stage, contract_type, account_type)
-        broker._minimal_order_limits = {
-            1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
-        }
         broker._submitted_order_id = 1
-        # Mock low market price for order limit calculation.
-        get_low_market_price_mock.return_value = 0.001
         # Patch main external source.
         with umock.patch.object(
             broker._exchange, "createOrder", create=True
