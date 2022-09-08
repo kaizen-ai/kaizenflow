@@ -657,7 +657,8 @@ def create_insert_on_conflict_do_nothing_query(df: pd.DataFrame, table_name: str
     # of the DataFrame.
     hdbg.dassert_is_subset(unique_cols, list(df.columns))
     columns = ",".join(list(df.columns))
-    query = f"INSERT INTO {table_name}({columns}) VALUES %s ON CONFLICT ({unique_cols}) DO NOTHING"
+    unique_cols_str = ",".join(unique_cols)
+    query = f"INSERT INTO {table_name}({columns}) VALUES %s ON CONFLICT ({unique_cols_str}) DO NOTHING"
     _LOG.debug("query=%s", query)
     return query
 
