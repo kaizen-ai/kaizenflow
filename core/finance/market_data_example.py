@@ -40,7 +40,7 @@ def generate_random_ohlcv_bars(
     seed: int = 10,
 ) -> pd.DataFrame:
     """
-    Wraps `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
+    Wrap `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
 
     :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
         concatenated along the index, sorted by timestamp then by asset it
@@ -161,7 +161,7 @@ def generate_random_top_of_book_bars(
     seed: int = 10,
 ) -> pd.DataFrame:
     """
-    Wraps `generate_random_top_of_book_bars_for_asset()` for multiple
+    Wrap `generate_random_top_of_book_bars_for_asset()` for multiple
     instruments.
 
     Output example:
@@ -364,7 +364,7 @@ def generate_random_bars(
     seed: int = 10,
 ) -> pd.DataFrame:
     """
-    Wraps `generate_random_bars_for_asset()` for multiple instruments.
+    Wrap `generate_random_bars_for_asset()` for multiple instruments.
 
     Output example:
 

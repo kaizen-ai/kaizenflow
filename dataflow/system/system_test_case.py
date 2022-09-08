@@ -126,8 +126,8 @@ def save_ccxt_market_data(
 ) -> None:
     # pylint: disable=line-too-long
     """
-    Dump data from a CCXT `MarketData` for the last `period` and ending to
-    the current wall clock so that it can be used as `ReplayedMarketData`.
+    Dump data from a CCXT `MarketData` for the last `period` and ending to the
+    current wall clock so that it can be used as `ReplayedMarketData`.
 
     :param full_symbols: full symbols to load data for
         If `None`, all the symbols from the universe are taken
