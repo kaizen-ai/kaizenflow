@@ -22,7 +22,6 @@ import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
-import helpers.hunit_test_utils as hunteuti
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.universe as ivcu
 import market_data as mdata
@@ -116,9 +115,31 @@ def run_Time_ForecastSystem(
     return result_bundles
 
 
+def get_test_file_path(
+    self,
+    aws_profile,
+    *,
+    use_only_test_class: bool = True,
+    use_absolute_path: bool = False,
+) -> str:
+    input_dir = self.get_input_dir(
+        use_only_test_class,
+        use_absolute_path,
+    )
+    file_name = "data.csv.gz"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    file_path = os.path.join(
+        s3_bucket_path,
+        "unit_test",
+        input_dir,
+        file_name,
+    )
+    return file_path
+
+
 # TODO(Grisha): @Dan Deprecate `self` param after `get_file_path()` is generalized.
 def save_ccxt_market_data(
-    test_name: str,
+    file_path: str,
     full_symbols: Optional[List[ivcu.FullSymbol]],
     im_client_params: Any,
     wall_clock_time: pd.Timestamp,
@@ -161,7 +182,6 @@ def save_ccxt_market_data(
         wall_clock_time=wall_clock_time,
     )
     # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`).
-    file_path = hunteuti.get_file_path(test_name)
     mdata.save_market_data(market_data_client, file_path, period)
     _LOG.warning("Updated file '%s'", file_path)
 
