@@ -309,7 +309,6 @@ class System(abc.ABC):
 # #############################################################################
 
 
-# TODO(Grisha): @Dan CmTask2739 "Introduce `NonTime_ForecastSystem`."
 class ForecastSystem(System):
     """
     A System producing forecasts and comprised of:
