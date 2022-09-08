@@ -30,6 +30,7 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     :return: updated order
     """
     hdbg.dassert_isinstance(order, pd.Series)
+    _LOG.info('Order before adjustments: %s', order)
     asset_id = order.name
     asset_limits = broker.minimal_order_limits[asset_id]
     # 1) Ensure that the amount of shares is above the minimum required.
@@ -67,6 +68,7 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
         # Update the number of shares.
         diff_num_shares = min_amount
     order["diff_num_shares"] = diff_num_shares
+    _LOG.info('Order after adjustments: %s', order)
     return order
 
 
@@ -113,6 +115,7 @@ def apply_cc_limits(
     :param broker: Broker class instance
     :return: DataFrame with updated orders
     """
+    _LOG.info('Order df before adjustments: %s', forecast_df)
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -132,4 +135,5 @@ def apply_cc_limits(
         )
     else:
         hdbg.dfatal(f"Unknown mode: {stage}")
+    _LOG.info('Order df after adjustments: %s', forecast_df)
     return forecast_df
