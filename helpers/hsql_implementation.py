@@ -115,7 +115,7 @@ def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
         "host": db_config["POSTGRES_HOST"],
         "dbname": db_config["POSTGRES_DB"],
         "user": db_config["POSTGRES_USER"],
-        "password": db_config["POSTGRES_PASSWORD"]
+        "password": db_config["POSTGRES_PASSWORD"],
     }
     key = "POSTGRES_PORT"
     if key in db_config:
@@ -635,12 +635,14 @@ def create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     _LOG.debug("query=%s", query)
     return query
 
+
 # TODO(gp): -> table_name, df
-def create_insert_on_conflict_do_nothing_query(df: pd.DataFrame, table_name: str, unique_columns: List[str]) -> str:
+def create_insert_on_conflict_do_nothing_query(
+    df: pd.DataFrame, table_name: str, unique_columns: List[str]
+) -> str:
     """
-    Create an INSERT query to insert data into a DB, if a unique constraint
-     is violated for a provided set of columns, the query does not insert
-     duplicates.
+    Create an INSERT query to insert data into a DB. If a unique constraint is
+    violated for a provided set of columns, duplicates are not inserted.
 
     :param df: data to insert into DB
     :param table_name: name of the table for insertion
@@ -658,7 +660,8 @@ def create_insert_on_conflict_do_nothing_query(df: pd.DataFrame, table_name: str
     hdbg.dassert_is_subset(unique_columns, list(df.columns))
     columns = ",".join(list(df.columns))
     unique_columns_str = ",".join(unique_columns)
-    query = f"INSERT INTO {table_name}({columns}) VALUES %s ON CONFLICT ({unique_columns_str}) DO NOTHING"
+    query = f"INSERT INTO {table_name}({columns}) VALUES %s ON CONFLICT ({unique_columns_str}) \
+            DO NOTHING"
     _LOG.debug("query=%s", query)
     return query
 
@@ -693,11 +696,14 @@ def execute_insert_query(
 
 # TODO(gp): -> connection, table_name, obj
 def execute_insert_on_conflict_do_nothing_query(
-    connection: DbConnection, obj: Union[pd.DataFrame, pd.Series], table_name: str, unique_columns: List[str]
+    connection: DbConnection,
+    obj: Union[pd.DataFrame, pd.Series],
+    table_name: str,
+    unique_columns: List[str],
 ) -> None:
     """
-    Insert a DB as multiple rows into the database. if a a UNIQUE constraint
-     is violated for a provided set of columns, we do not insert duplicates.
+    Insert a DB as multiple rows into the database. If a a UNIQUE constraint is
+    violated for a provided set of columns, duplicates are not inserted.
 
     :param connection: connection to the DB
     :param obj: data to insert
@@ -714,7 +720,9 @@ def execute_insert_on_conflict_do_nothing_query(
     # Transform dataframe into list of tuples.
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.
-    query = create_insert_on_conflict_do_nothing_query(df, table_name, unique_columns)
+    query = create_insert_on_conflict_do_nothing_query(
+        df, table_name, unique_columns
+    )
     # Execute query for each provided row.
     cur = connection.cursor()
     extras.execute_values(cur, query, values)
