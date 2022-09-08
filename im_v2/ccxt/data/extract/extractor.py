@@ -92,6 +92,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         end_timestamp: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
         sleep_time_in_secs: int = 1,
+        **kwargs: Any
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars.
