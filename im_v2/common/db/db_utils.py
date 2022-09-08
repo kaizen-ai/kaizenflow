@@ -103,6 +103,9 @@ def create_all_tables(db_connection: hsql.DbConnection) -> None:
         imibsqwri.get_create_table_query(),
         imkisqwri.get_create_table_query(),
         imvccdbut.get_ccxt_ohlcv_create_table_query(),
+        imvccdbut.get_ccxt_ohlcv_futures_create_table_query(),
+        imvccdbut.get_ccxt_create_bid_ask_table_query(),
+        imvccdbut.get_ccxt_create_bid_ask_futures_table_query(),
         imvccdbut.get_exchange_name_create_table_query(),
         imvccdbut.get_currency_pair_create_table_query(),
     ]
