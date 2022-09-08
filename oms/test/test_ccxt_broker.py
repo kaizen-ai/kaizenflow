@@ -19,6 +19,20 @@ class TestCcxtBroker1(hunitest.TestCase):
     get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
     ccxt_patch = umock.patch.object(occxbrok, "ccxt", spec=occxbrok.ccxt)
 
+    @staticmethod
+    def get_test_orders(self) -> List[omorder.Order]:
+        """
+        Build toy orders for tests.
+        """
+        # Prepare test data.
+        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
+        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
+        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
+        tz=America/New_York"
+        # Get orders.
+        orders = omorder.orders_from_string(order_str)
+        return orders
+
     def setUp(self) -> None:
         super().setUp()
         # Create new mocks from patch's `start()` method.
@@ -57,19 +71,6 @@ class TestCcxtBroker1(hunitest.TestCase):
             ),
         )
         return broker
-
-    def get_test_orders(self) -> List[omorder.Order]:
-        """
-        Build toy orders for tests.
-        """
-        # Prepare test data.
-        order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-        asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-        end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
-        tz=America/New_York"
-        # Get orders.
-        orders = omorder.orders_from_string(order_str)
-        return orders
 
     def test_initialize_class(self) -> None:
         """
