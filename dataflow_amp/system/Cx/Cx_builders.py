@@ -104,14 +104,9 @@ def get_Cx_ReplayedMarketData_from_file(
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
     )
-    # TODO(Grisha): @Dan Pass asset ids as params in `ForecastSystem` examples
-    # and then pass it via `system.config`.
-    # Get a list of all the asset ids if specified in the config.
-    if ("market_data_config", "asset_ids") in system.config:
-        if system.config["market_data_config", "asset_ids"] == "all":
-            system.config["market_data_config", "asset_ids"] = (
-                market_data_df["asset_id"].unique().tolist()
-            )
+    # Fill system config with asset ids from data for Portfolio.
+    hdbg.dassert_not_in(("market_data_config", "asset_ids"), system.config)
+    system.config["market_data_config", "asset_ids"] = market_data_df["asset_id"].unique().tolist()
     # Initialize market data client.
     event_loop = system.config["event_loop_object"]
     replayed_delay_in_mins_or_timestamp = system.config[
