@@ -5,6 +5,7 @@ import unittest.mock as umock
 from typing import List
 
 import pandas as pd
+import pytest
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
@@ -14,6 +15,7 @@ import oms.order as omorder
 import oms.secrets.secret_identifier as oseseide
 
 
+@pytest.mark.skip(reason="Enable after CmTask #2816")
 class TestCcxtBroker1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
@@ -203,7 +205,6 @@ class TestCcxtBroker1(hunitest.TestCase):
             Tail:
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
 
     def test_get_fills(self) -> None:
         """
