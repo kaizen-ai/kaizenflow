@@ -692,7 +692,7 @@ def execute_insert_query(
 
 # TODO(gp): -> connection, table_name, obj
 def execute_insert_on_conflict_do_nothing_query(
-    connection: DbConnection, obj: Union[pd.DataFrame, pd.Series], table_name: str, unique_cols: str
+    connection: DbConnection, obj: Union[pd.DataFrame, pd.Series], table_name: str, unique_cols: List[str]
 ) -> None:
     """
     Insert a DB as multiple rows into the database. if a a UNIQUE constraint
