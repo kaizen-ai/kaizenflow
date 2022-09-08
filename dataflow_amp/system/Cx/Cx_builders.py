@@ -192,6 +192,10 @@ def get_process_forecasts_node_dict_prod_instance1(
         compute_target_positions_kwargs,
         root_log_dir,
     )
+    # Set backend suitable for working with Binance.
+    process_forecasts_node_dict["process_forecasts_dict"]["optimizer_config"][
+        "backend"
+    ] = "cc_pomo"
     return process_forecasts_node_dict
 
 
