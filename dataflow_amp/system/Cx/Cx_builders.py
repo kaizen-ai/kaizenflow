@@ -252,8 +252,10 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    process_forecasts_node_dict = get_Cx_process_forecasts_node_dict_example1(
-        system
+    root_log_dir = system.config.get("system_log_dir")
+    order_duration_in_mins = 5
+    process_forecasts_node_dict = get_process_forecasts_node_dict_prod_instance1(
+        system.portfolio, order_duration_in_mins, root_log_dir
     )
     system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
         process_forecasts_node_dict

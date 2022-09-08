@@ -66,7 +66,7 @@ max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="Am
 max_start_time_col_name
 
 # %%
-replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 7 * 60 + 12
+replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 18 * 60 + 55
 initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
     minutes=replayed_delay_in_mins_or_timestamp
 )
@@ -82,7 +82,9 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # %%
 prod_dir = (
     #"/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
-    "/shared_data/system_log_dir_2022-09-06_15:56:09"
+    #"/shared_data/system_log_dir_2022-09-06_15:56:09"
+    #"/shared_data/system_log_dir_20220908_095612/"
+    "/shared_data/system_log_dir_20220908_095626/"
 )
 sim_dir = "/shared_data/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
@@ -147,6 +149,20 @@ def compute_delay(df, freq):
     return delay
 
 
+# %%
+def print_stats(df: pd.DataFrame) -> None:
+    """
+    Basic stats and sanity checks before doing heavy computations.
+    """
+    hpandas.dassert_monotonic_index(df)
+    _LOG.info("min timestamp=%s", df.index.min())
+    _LOG.info("max timestamp=%s", df.index.max())
+    n_zeros = sum(df["diff_num_shares"].sum(axis=1) == 0)
+    _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_zeros, df["diff_num_shares"].shape[0]))
+    n_nans = df["diff_num_shares"].sum(axis=1).isna().sum()
+    _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_nans, df["diff_num_shares"].shape[0]))
+
+
 # %% [markdown]
 # # Forecasts
 
@@ -154,31 +170,21 @@ def compute_delay(df, freq):
 # ## Load prod and sim forecasts
 
 # %%
-prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
-    config["prod_forecast_dir"]
-)
-hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
-
-# %%
 prod_forecast_df["diff_num_shares"].plot()
 
 # %%
-prod_forecast_df.index.min()
-
-# %%
-prod_forecast_df.index.max()
+prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
+    config["prod_forecast_dir"]
+)
+print_stats(prod_forecast_df)
+hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
 sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["sim_forecast_dir"]
 )
+print_stats(sim_forecast_df)
 hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
-
-# %%
-sim_forecast_df.index.min()
-
-# %%
-sim_forecast_df.index.max()
 
 # %% [markdown]
 # ## Compute forecast prod delay
@@ -245,9 +251,6 @@ prod_portfolio_df, prod_portfolio_stats_df = load_portfolio(
 )
 
 # %%
-prod_portfolio_df["pnl"]
-
-# %%
 hpandas.df_to_str(prod_portfolio_df, log_level=logging.INFO)
 
 # %%
@@ -263,9 +266,6 @@ sim_portfolio_df, sim_portfolio_stats_df = load_portfolio(
     config["end_timestamp"],
     config["freq"],
 )
-
-# %%
-sim_portfolio_df
 
 # %%
 hpandas.df_to_str(sim_portfolio_df, log_level=logging.INFO)
