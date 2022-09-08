@@ -30,12 +30,12 @@ from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
 
+
 def _add_common_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
     Add command line arguments common to all downloaders.
-
     """
     parser.add_argument(
         "--exchange_id",
@@ -76,6 +76,7 @@ def _add_common_download_args(
             download (applies when data_type=bid_ask).",
     )
     return parser
+
 
 def add_exchange_download_args(
     parser: argparse.ArgumentParser,
@@ -170,6 +171,9 @@ DATASET_SCHEMA = {
     "year": "int32",
 }
 
+
+# TODO(Juraj): Refactor the method, divide into submethods
+# by data type.
 def download_realtime_for_one_exchange(
     args: Dict[str, Any], exchange: imvcdexex.Extractor
 ) -> None:
@@ -214,15 +218,19 @@ def download_realtime_for_one_exchange(
             start_timestamp
         )
         end_timestamp = pd.Timestamp(args["end_timestamp"])
-        end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+        end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
+            end_timestamp
+        )
     elif data_type == "bid_ask":
         # Make sure depth is set for bid/ask data.
         hdbg.dassert_lt(0, bid_ask_depth)
-        # When downloading bid / ask data, CCXT returns the last data 
+        # When downloading bid / ask data, CCXT returns the last data
         # ignoring the requested timestamp, so we set them to None.
         start_timestamp, end_timestamp = None, None
     else:
-        raise ValueError("Downloading for %s data_type is not implemented.", data_type)
+        raise ValueError(
+            "Downloading for %s data_type is not implemented.", data_type
+        )
     # Download data for specified time period.
     for currency_pair in currency_pairs:
         # Currency pair used for getting data from exchange should not be used
@@ -237,7 +245,7 @@ def download_realtime_for_one_exchange(
             exchange_id=exchange_id,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
-            depth=bid_ask_depth
+            depth=bid_ask_depth,
         )
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
@@ -245,7 +253,7 @@ def download_realtime_for_one_exchange(
         # Get timestamp of insertion in UTC.
         data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
         # Remove duplicated entries.
-        # TODO (Juraj): Update duplicates removal (CMTask2782).
+        # TODO(Juraj): Update duplicates removal (CMTask2782).
         if data_type == "ohlcv":
             data = remove_duplicates(
                 db_connection,
@@ -256,12 +264,27 @@ def download_realtime_for_one_exchange(
                 exchange_id,
                 currency_pair,
             )
-        # Insert data into the DB.
-        hsql.execute_insert_query(
-            connection=db_connection,
-            obj=data,
-            table_name=db_table,
-        )
+            # Insert data into the DB.
+            hsql.execute_insert_query(
+                connection=db_connection,
+                obj=data,
+                table_name=db_table,
+            )
+        elif data_type == "bid_ask":
+            # Skip insertion of duplicate rows represented by
+            # this subset of columns.
+            unique_columns = [
+                "timestamp",
+                "exchange_id",
+                "currency_pair",
+                "level",
+            ]
+            hsql.execute_insert_on_conflict_do_nothing_query(
+                connection=db_connection,
+                obj=data,
+                table_name=db_table,
+                unique_columns=unique_columns,
+            )
         # Save data to S3 bucket.
         if args["s3_path"]:
             # Connect to S3 filesystem.
