@@ -5,7 +5,7 @@ import pytest
 
 import helpers.henv as henv
 import market_data.market_data_example as mdmadaex
-import market_data.test.market_data_test_case as mdtmdtca
+import market_data as mdata
 # import market_data_lime.ig_market_data_example as mdlemdaex
 # import market_data_lime.ig_stitched_market_data as mdlesmada
 
@@ -16,7 +16,7 @@ _LOG = logging.getLogger(__name__)
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
-class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
+class TestStitchedMarketData1(mdata.MarketData_get_data_TestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
@@ -113,7 +113,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
 #         eg_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
 #             asset_ids
 #         )
-#         if mdtmdtca.skip_test_since_not_online(eg_stitched_market_data):
+#         if mdata.skip_test_since_not_online(eg_stitched_market_data):
 #             pytest.skip("Market not on-line")
 #         # Query.
 #         # timedelta = pd.tseries.offsets.BDay(2)
@@ -137,7 +137,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
 #         eg_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
 #             asset_ids
 #         )
-#         if mdtmdtca.skip_test_since_not_online(eg_stitched_market_data):
+#         if mdata.skip_test_since_not_online(eg_stitched_market_data):
 #             pytest.skip("Market not on-line")
 #         # Query.
 #         timedelta = pd.Timedelta("10D")
@@ -159,7 +159,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
 #         eg_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
 #             asset_ids
 #         )
-#         if mdtmdtca.skip_test_since_not_online(eg_stitched_market_data):
+#         if mdata.skip_test_since_not_online(eg_stitched_market_data):
 #             pytest.skip("Market not on-line")
 #         # Query.
 #         # timedelta = pd.tseries.offsets.BDay(2)
@@ -182,7 +182,7 @@ class TestStitchedMarketData1(mdtmdtca.MarketData_get_data_TestCase):
 #         asset_ids = [17085]
 #         # Build the RT market data interface.
 #         eg_rt_market_data = mdlemdaex.get_IgRealTimeMarketData_example1(asset_ids)
-#         if mdtmdtca.skip_test_since_not_online(eg_rt_market_data):
+#         if mdata.skip_test_since_not_online(eg_rt_market_data):
 #             pytest.skip("Market not on-line")
 #         #
 #         eg_stitched_market_data = mdlemdaex.get_IgStitchedMarketData_example1(
