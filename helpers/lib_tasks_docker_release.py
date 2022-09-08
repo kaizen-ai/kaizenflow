@@ -637,12 +637,13 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     root_dir = hgit.get_client_root(super_module)
     dags_path = [root_dir, "im_v2", "airflow", "dags"]
     if super_module and hgit.is_amp_present():
+        # Main DAGs location is always in `cmamp`.
         dags_path.insert(1, "amp")
     dir_name = os.path.join(*dags_path)
     pattern = "preprod.*.py"
     only_files = True
     use_relative_paths = False
-    # List DAGs.
+    # List preprod DAGs.
     dag_paths = hs3.listdir(dir_name, pattern, only_files, use_relative_paths)
     for dag_path in dag_paths:
         # Abort in case one of the preprod DAGs is out of sync.
@@ -653,27 +654,15 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
             msg=f"Preprod file `{dag_name}` is out of sync with `{airflow_dags_s3_path}`!",
         )
     # Prepare params to compose new prod image url.
-    container_dir_name = "."
-    if task_definition == "cmamp" and hgit.is_amp_present():
-        # If `cmamp` is released from `orange`, ensure version is from the submodule.
-        container_dir_name = os.path.join(root_dir, "amp")
-    prod_version = hlitadoc._resolve_version_value(version, container_dir_name=container_dir_name)
+    prod_version = hlitadoc._resolve_version_value(version)
     base_image = ""
     stage = "prod"
     # Compose new prod image url.
     new_prod_image_url = hlitadoc.get_image(base_image, stage, prod_version)
     new_prod_image_url_no_version = hlitadoc.get_image(base_image, stage, None)
     # Check if preprod tag exist in preprod task definition as precaution.
-    # TODO(Nikola): Reiterate to previous versions to pick correct one, if needed.
-    # client.list_task_definitions(familyPrefix=preprod_task_definition_name, sort="DESC")
-    # TODO(Nikola): Use env var for CK profile.
     preprod_task_definition_name = f"{task_definition}-preprod"
-    ecs_client = haws.get_service_client(aws_profile="ck", service_name="ecs")
-    task_description = ecs_client.describe_task_definition(
-        taskDefinition=preprod_task_definition_name
-    )
-    task_definition_json = task_description["taskDefinition"]
-    preprod_image_url = task_definition_json["containerDefinitions"][0]["image"]
+    preprod_image_url = haws.get_task_definition_image_url(preprod_task_definition_name)
     preprod_tag_from_image = preprod_image_url.split(":")[-1]
     msg = f"Preprod tag is different in the image url `{preprod_tag_from_image}`!"
     hdbg.dassert_eq(preprod_tag_from_image, preprod_tag, msg=msg)
@@ -688,15 +677,31 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     hlitauti.run(ctx, cmd)
     cmd = f"docker rmi {preprod_image_url}"
     hlitauti.run(ctx, cmd)
-    # Upload new tag to ECS.
-    docker_push_prod_image(ctx, prod_version)
-    # Update prod task definition to the latest prod tag.
-    prod_task_definition_name = f"{task_definition}-prod"
-    haws.update_task_definition(prod_task_definition_name, new_prod_image_url)
-    # Add prod DAGs to airflow s3 bucket after all checks are passed.
-    for dag_path in dag_paths:
-        # Update prod DAGs.
-        _, dag_name = os.path.split(dag_path)
-        prod_dag_name = dag_name.replace("preprod.", "prod.")
-        # TODO(Nikola): Ensure that files are uploaded.
-        s3fs_.put(dag_path, airflow_dags_s3_path + prod_dag_name)
+    # Get original prod image for potential rollback.
+    original_prod_image_url = haws.get_task_definition_image_url(task_definition)
+    # Track successful uploads for potential rollback.
+    successful_uploads = []
+    try:
+        # Update prod task definition to the latest prod tag.
+        haws.update_task_definition(task_definition, new_prod_image_url)
+        # Add prod DAGs to airflow s3 bucket after all checks are passed.
+        for dag_path in dag_paths:
+            # Update prod DAGs.
+            _, dag_name = os.path.split(dag_path)
+            prod_dag_name = dag_name.replace("preprod.", "new.prod.")
+            dag_s3_path = airflow_dags_s3_path + prod_dag_name
+            s3fs_.put(dag_path, dag_s3_path)
+            successful_uploads.append(dag_s3_path)
+        # Upload new tag to ECS.
+        docker_push_prod_image(ctx, prod_version)
+    except Exception as ex:
+        _LOG.info("Rollback started!")
+        # Rollback prod task definition image url.
+        haws.update_task_definition(task_definition, original_prod_image_url)
+        _LOG.info("Reverted prod task definition image url to `%s`!", original_prod_image_url)
+        # Notify for potential rollback for airflow s3 bucket, if any.
+        if successful_uploads:
+            # TODO(Nikola): If we simply add new file `new.prod...` will airflow register it and run it?
+            #   Idea is have new, current, old... can we exclude some files in airflow s3 bucket?
+            pass
+        raise ex
