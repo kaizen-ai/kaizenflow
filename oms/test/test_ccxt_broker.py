@@ -232,6 +232,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker._minimal_order_limits = {
             1464553467: {"min_amount": 0.0001, "min_cost": 10.0}
         }
+        broker._submitted_order_id = 1
         # Mock low market price for order limit calculation.
         get_low_market_price_mock.return_value = 0.001
         # Patch main external source.
