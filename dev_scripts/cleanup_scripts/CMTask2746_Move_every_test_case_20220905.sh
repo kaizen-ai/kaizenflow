@@ -1,7 +1,7 @@
 #!/bin/bash -xe
 
 im_client_test_case_dirs="amp/dev_scripts/cleanup_scripts dev_scripts/cleanup_scripts im_v2/common/data/client amp/im_v2/common/data/client"
-mdata_test_case_dirs="dev_scripts/cleanup_scripts" # amp/dev_scripts/cleanup_scripts market_data amp/market_data
+mdata_test_case_dirs="dev_scripts/cleanup_scripts amp/dev_scripts/cleanup_scripts"
 
 replace_text.py \
   --old "import im_v2.common.data.client.test.im_client_test_case as icdctictc" \
