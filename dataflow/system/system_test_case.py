@@ -137,7 +137,6 @@ def get_test_file_path(
     return file_path
 
 
-# TODO(Grisha): @Dan Deprecate `self` param after `get_file_path()` is generalized.
 def save_ccxt_market_data(
     file_path: str,
     full_symbols: Optional[List[ivcu.FullSymbol]],
@@ -602,28 +601,6 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         `ForecastSystem`.
         """
 
-    # TODO(Grisha): @Dan make `get_file_path()` free-standing.
-    def get_file_path(self) -> str:
-        """
-        Get path to a file with the market data to replay.
-
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_ForecastSystem_vs_Time_ForecastSystem1/input/data.csv.gz`.
-        """
-        input_dir = self.get_input_dir(
-            use_only_test_class=True,
-            use_absolute_path=False,
-        )
-        file_name = "data.csv.gz"
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        file_path = os.path.join(
-            s3_bucket_path,
-            "unit_test",
-            input_dir,
-            file_name,
-        )
-        return file_path
-
     # TODO(Grisha): Consolidate with `dtfsysysig.get_signature()`.
     def get_signature(self, result_bundle: dtfcore.ResultBundle, col: str) -> str:
         txt: List[str] = []
@@ -721,29 +698,6 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
 
     Add `ForecastEvaluatorFromPrices` to `Time_ForecastSystem` to compute research PnL.
     """
-
-    # TODO(Grisha): factor out, it is common for all the tests that read data
-    # from S3.
-    def get_file_path(self) -> str:
-        """
-        Get path to a file with the market data to replay.
-
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio1/input/data.csv.gz`.
-        """
-        input_dir = self.get_input_dir(
-            use_only_test_class=True,
-            use_absolute_path=False,
-        )
-        file_name = "data.csv.gz"
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        file_path = os.path.join(
-            s3_bucket_path,
-            "unit_test",
-            input_dir,
-            file_name,
-        )
-        return file_path
 
     @abc.abstractmethod
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
