@@ -30,7 +30,10 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
         imvcddbut.create_all_tables(self.connection)
         expected = sorted(
             [
+                "ccxt_bid_ask",
+                "ccxt_bid_ask_futures",
                 "ccxt_ohlcv",
+                "ccxt_ohlcv_futures",
                 "currency_pair",
                 "exchange",
                 "exchange_name",
