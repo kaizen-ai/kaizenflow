@@ -409,11 +409,6 @@ def apply_Cx_MarketData_config(
 ) -> dtfsys.System:
     """
     Extend system config with parameters for `MarketData` init.
-
-    :param system: system to extend config for
-    :param replayed_delay_in_mins_or_timestamp: how many minutes after
-        the beginning of the data the replayed time starts or when the replayed
-        wall-clock time starts with respect to the beginning of the data
     """
     system.config["market_data_config", "asset_id_col_name"] = "asset_id"
     system.config["market_data_config", "delay_in_secs"] = 10
@@ -429,10 +424,6 @@ def apply_Cx_DagRunner_config(
 ) -> dtfsys.System:
     """
     Extend system config with parameters for `DagRunner` init.
-
-    :param system: system to extend config for
-    :param rt_timeout_in_secs_or_time: for how long or until what time to
-        execute the loop
     """
     # TODO(Grisha): infer bar duration from `DagBuilder`.
     system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
