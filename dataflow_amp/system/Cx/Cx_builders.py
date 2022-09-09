@@ -4,8 +4,9 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
+import datetime
 import logging
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Union
 
 import pandas as pd
 
@@ -27,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Market data instances
+# Market data instances.
 # #############################################################################
 
 
@@ -395,3 +396,106 @@ def get_Cx_portfolio(
         # )
         pass
     return portfolio
+
+
+# #############################################################################
+# Apply config utils.
+# #############################################################################
+
+
+def apply_Cx_MarketData_config(
+    system: dtfsys.System,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
+) -> dtfsys.System:
+    """
+    Extend system config with parameters for `MarketData` init.
+
+    :param system: system to extend config for
+    :param replayed_delay_in_mins_or_timestamp: how many minutes after
+        the beginning of the data the replayed time starts or when the replayed
+        wall-clock time starts with respect to the beginning of the data
+    """
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    system.config["market_data_config", "delay_in_secs"] = 10
+    system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ] = replayed_delay_in_mins_or_timestamp
+    return system
+
+
+def apply_Cx_DagRunner_config(
+    system: dtfsys.System,
+    rt_timeout_in_secs_or_time: Union[int, datetime.time],
+) -> dtfsys.System:
+    """
+    Extend system config with parameters for `DagRunner` init.
+
+    :param system: system to extend config for
+    :param rt_timeout_in_secs_or_time: for how long or until what time to
+        execute the loop
+    """
+    # TODO(Grisha): infer bar duration from `DagBuilder`.
+    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
+    system.config["dag_runner_config", "fit_at_beginning"] = system.config[
+        "dag_builder_object"
+    ].fit_at_beginning
+    system.config[
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ] = rt_timeout_in_secs_or_time
+    return system
+
+
+# TODO(Grisha): @Dan pass values as params.
+def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
+    """
+    Extend system config with parameters for research PNL computations.
+    """
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj_2_hat"
+    return system
+
+
+def apply_Cx_ForecastEvaluatorFromPrices_config(
+    system: dtfsys.System,
+) -> dtfsys.System:
+    """
+    Extend system config with parameters for `ForecastEvaluatorFromPrices`
+    init.
+    """
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": system.config["research_pnl", "price_col"],
+            "volatility_col": system.config["research_pnl", "volatility_col"],
+            "prediction_col": system.config["research_pnl", "prediction_col"],
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
+    return system
+
+
+def apply_Cx_OrderProcessor_config(system: dtfsys.System) -> dtfsys.System:
+    """
+    Extend system config with parameters for `OrderProcessor` init.
+    """
+    # If an order is not placed within a bar, then there is a timeout, so
+    # we add extra 5 seconds to `bar_duration_in_secs` (which represents
+    # the length of a trading bar) to make sure that the `OrderProcessor`
+    # waits long enough before timing out.
+    max_wait_time_for_order_in_secs = (
+        system.config["dag_runner_config", "bar_duration_in_secs"] + 5
+    )
+    system.config[
+        "order_processor_config", "max_wait_time_for_order_in_secs"
+    ] = max_wait_time_for_order_in_secs
+    system.config["order_processor_config", "duration_in_secs"] = system.config[
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ]
+    return system
