@@ -106,6 +106,8 @@ def get_Cx_ReplayedMarketData_from_file(
     )
     # Fill system config with asset ids from data for Portfolio.
     hdbg.dassert_not_in(("market_data_config", "asset_ids"), system.config)
+    # TODO(Grisha): @Dan Add a method to `MarketData.get_asset_ids()` that does
+    #  `list(df[asset_id_col_name].unique())`.
     system.config["market_data_config", "asset_ids"] = (
         market_data_df["asset_id"].unique().tolist()
     )
