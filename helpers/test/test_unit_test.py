@@ -5,6 +5,7 @@ import helpers.test.test_unit_test as ttutes
 """
 
 import logging
+import os
 import tempfile
 import unittest.mock as umock
 from typing import Optional, Tuple
@@ -977,35 +978,63 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
 
 
 class Test_purify_from_env_vars(hunitest.TestCase):
-    def helper(self, test_path: str, exp: str) -> None:
-        actual = hunitest.purify_from_env_vars(test_path)
-        self.assert_equal(actual, exp, fuzzy_match=True)
+    """
+    Test purification from env vars.
+    """
+
+    def helper(self, env_var: str) -> None:
+        env_var_value = os.environ[env_var]
+        input = f"s3://{env_var_value}/"
+        act = hunitest.purify_from_env_vars(input)
+        exp = f"s3://${env_var}/"
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     def test1(self) -> None:
         """
-        Test the process of AM ECR purification.
+        - $CK_AWS_S3_BUCKET
         """
-        test_path = "Amazon path is 665840871993.dkr.ecr.us-east-1.amazonaws.com"
-        exp = "Amazon path is $AM_ECR_BASE_PATH"
-        self.helper(test_path, exp)
+        env_var = "CK_AWS_S3_BUCKET"
+        self.helper(env_var)
 
     def test2(self) -> None:
         """
-        Test the process of Telegram token purification.
+        - $AM_TELEGRAM_TOKEN
         """
-        test_path = (
-            "Telegram token is ***REMOVED***"
-        )
-        exp = "Telegram token is $AM_TELEGRAM_TOKEN"
-        self.helper(test_path, exp)
+        env_var = "AM_TELEGRAM_TOKEN"
+        self.helper(env_var)
 
     def test3(self) -> None:
         """
-        Test the process of CK AWS and AM AWS purification.
+        - $AM_AWS_S3_BUCKET
         """
-        test_path = "s3://alphamatic-data/blah/cryptokaizen-data"
-        exp = "s3://$AM_AWS_S3_BUCKET/blah/$CK_AWS_S3_BUCKET"
-        self.helper(test_path, exp)
+        env_var = "AM_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test4(self) -> None:
+        """
+        - $AM_ECR_BASE_PATH
+        """
+        env_var = "AM_ECR_BASE_PATH"
+        self.helper(env_var)
+
+    def test_end_to_end(self) -> None:
+        """
+        - Multiple env vars.
+        """
+        am_aws_s3_bucket = os.environ["AM_AWS_S3_BUCKET"]
+        ck_aws_s3_bucket = os.environ["CK_AWS_S3_BUCKET"]
+        am_telegram_token = os.environ["AM_TELEGRAM_TOKEN"]
+        am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+        #
+        text = f"""
+        $AM_AWS_S3_BUCKET = {am_aws_s3_bucket}
+        $CK_AWS_S3_BUCKET = {ck_aws_s3_bucket}
+        $AM_TELEGRAM_TOKEN = {am_telegram_token}
+        $AM_ECR_BASE_PATH = {am_ecr_base_path}
+        """
+        #
+        actual = hunitest.purify_from_env_vars(text)
+        self.check_string(actual, fuzzy_match=True)
 
 
 # #############################################################################
