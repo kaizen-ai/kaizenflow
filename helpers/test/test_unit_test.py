@@ -238,6 +238,7 @@ class TestTestCase1(hunitest.TestCase):
 
 
 class Test_AssertEqual1(hunitest.TestCase):
+
     def test_equal1(self) -> None:
         """
         Matching act and exp without fuzzy matching.
@@ -361,6 +362,7 @@ end
 
 
 class TestCheckString1(hunitest.TestCase):
+
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
@@ -848,6 +850,7 @@ class TestCheckDataFrame1(hunitest.TestCase):
 
 
 class Test_check_string_debug1(hunitest.TestCase):
+
     def test1(self) -> None:
         act = "hello"
         # action_on_missing_golden = "assert"
@@ -867,6 +870,7 @@ class Test_check_string_debug1(hunitest.TestCase):
 
 
 class Test_unit_test1(hunitest.TestCase):
+
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = hgit.get_client_root(super_module=True)
         # TODO(gp): We should remove the current path.
@@ -913,6 +917,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
 
 
 class Test_get_dir_signature1(hunitest.TestCase):
+
     def helper(self, include_file_content: bool) -> str:
         in_dir = self.get_input_dir()
         act = hunitest.get_dir_signature(
@@ -957,6 +962,7 @@ class Test_get_dir_signature1(hunitest.TestCase):
 
 
 class Test_purify_txt_from_client1(hunitest.TestCase):
+
     def helper(self, txt: str, exp: str) -> None:
         act = hunitest.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
@@ -1041,6 +1047,7 @@ class Test_purify_from_env_vars(hunitest.TestCase):
 
 
 class Test_purify_object_representation1(hunitest.TestCase):
+
     def helper(self, txt: str, exp: str) -> None:
         txt = hprint.dedent(txt)
         act = hunitest.purify_object_representation(txt)
@@ -1143,6 +1150,7 @@ class Test_purify_object_representation1(hunitest.TestCase):
 
 
 class Test_purify_amp_reference1(hunitest.TestCase):
+
     def helper(self, txt: str, exp: str) -> None:
         txt = hprint.dedent(txt)
         act = hunitest.purify_amp_references(txt)
