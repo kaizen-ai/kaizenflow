@@ -35,7 +35,10 @@ class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
         exchange_id: str,
+        # TODO(gp): move this to Broker and assign a default value or wire it
+        #  everywhere. IMO default value is a better approach.
         universe_version: str,
+        # TODO(gp): move this to Broker.
         stage: str,
         account_type: str,
         portfolio_id: str,
@@ -81,6 +84,7 @@ class CcxtBroker(ombroker.Broker):
         #
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
+        # TODO(gp): @all -> Move this to the Broker class.
         # Enable mapping back from asset ids when placing orders.
         self._universe_version = universe_version
         self._asset_id_to_symbol_mapping = (
@@ -227,6 +231,7 @@ class CcxtBroker(ombroker.Broker):
                 open_positions.append(position)
         return open_positions
 
+    # TODO(gp): Implement this method in Broker in terms of MarketData.
     def get_low_market_price(self, asset_id: int) -> float:
         """
         Load the low price for the given ticker.
@@ -464,6 +469,8 @@ class CcxtBroker(ombroker.Broker):
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
 
+        # TODO(gp): @all add a manual unit test to save this data in the repo
+        # or in scratch. Check in the limits in the repo.
         import helpers.hio as hio
 
         file_name = "/shared_data/minimal_order_limits.json"
@@ -678,3 +685,12 @@ def get_CcxtBroker_prod_instance1(
         market_data=market_data,
     )
     return broker
+
+
+
+# class SimulatedCcxtBroker(SimulatedBroker):
+#
+#     def __init__(self, stage, limit_...):
+
+
+# def get_SimulatedCcxt_prod_instance1():
