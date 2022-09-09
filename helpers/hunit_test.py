@@ -1188,6 +1188,29 @@ class TestCase(unittest.TestCase):
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
 
+    def get_s3_input_dir(
+        self,
+        aws_profile: str,
+        *,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
+    ) -> str:
+        # Make the path unique for the test.
+        use_only_test_class = False
+        use_absolute_path = False
+        test_path = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
+        )
+        # Assemble everything in a single path.
+        import helpers.hs3 as hs3
+
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
+        input_dir = os.path.join(s3_bucket, "unit_test", test_path, "input")
+        return input_dir
+
     # ///////////////////////////////////////////////////////////////////////
 
     def assert_equal(

@@ -115,28 +115,6 @@ def run_Time_ForecastSystem(
     return result_bundles
 
 
-def get_test_file_path(
-    self,
-    aws_profile,
-    *,
-    use_only_test_class: bool = True,
-    use_absolute_path: bool = False,
-) -> str:
-    input_dir = self.get_input_dir(
-        use_only_test_class,
-        use_absolute_path,
-    )
-    file_name = "data.csv.gz"
-    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    file_path = os.path.join(
-        s3_bucket_path,
-        "unit_test",
-        input_dir,
-        file_name,
-    )
-    return file_path
-
-
 def save_ccxt_market_data(
     file_path: str,
     full_symbols: Optional[List[ivcu.FullSymbol]],
