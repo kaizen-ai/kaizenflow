@@ -7,8 +7,6 @@ import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import logging
 from typing import Coroutine
 
-import pandas as pd
-
 import core.config as cconfig
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
@@ -21,11 +19,11 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Mock1_ForecastSystem
+# Mock1_NonTime_ForecastSystem
 # #############################################################################
 
 
-class Mock1_ForecastSystem(dtfsys.ForecastSystem):
+class Mock1_NonTime_ForecastSystem(dtfsys.NonTime_ForecastSystem):
     """
     Create a System with:
 
