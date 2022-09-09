@@ -309,7 +309,6 @@ class System(abc.ABC):
 # #############################################################################
 
 
-# TODO(Grisha): @Dan CmTask2739 "Introduce `NonTime_ForecastSystem`."
 class ForecastSystem(System):
     """
     A System producing forecasts and comprised of:
@@ -354,6 +353,15 @@ class ForecastSystem(System):
         Given a completely filled `system_config` build and return the DAG.
         """
         ...
+
+
+# #############################################################################
+# NonTime_ForecastSystem
+# #############################################################################
+
+
+class NonTime_ForecastSystem(ForecastSystem):
+    pass
 
 
 # #############################################################################
