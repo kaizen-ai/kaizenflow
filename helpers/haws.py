@@ -7,6 +7,7 @@ import helpers.haws as haws
 import logging
 
 import boto3
+from boto3.resources.base import ServiceResource
 from botocore.client import BaseClient
 
 import helpers.hdbg as hdbg
@@ -49,6 +50,15 @@ def get_service_client(aws_profile: str, service_name: str) -> BaseClient:
     return client
 
 
+def get_service_resource(aws_profile: str, service_name: str) -> ServiceResource:
+    """
+    Return resource to work with desired service in the specific region.
+    """
+    session = get_session(aws_profile)
+    resource = session.resource(service_name=service_name)
+    return resource
+
+
 # #############################################################################
 # ECS
 # #############################################################################
@@ -67,7 +77,7 @@ def get_ecs_client(aws_profile: str) -> BaseClient:
 
 def get_task_definition_image_url(task_definition_name: str) -> str:
     """
-    Get ECS task definition by name and return only image url.
+    Get ECS task definition by name and return only image URL.
 
     :param task_definition_name: the name of the ECS task definition, e.g., cmamp-test
     """

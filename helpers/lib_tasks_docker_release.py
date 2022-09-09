@@ -6,6 +6,7 @@ import helpers.lib_tasks_docker_release as hltadore
 
 import logging
 import os
+from operator import attrgetter
 from typing import Any
 
 from invoke import task
@@ -662,7 +663,9 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     new_prod_image_url_no_version = hlitadoc.get_image(base_image, stage, None)
     # Check if preprod tag exist in preprod task definition as precaution.
     preprod_task_definition_name = f"{task_definition}-preprod"
-    preprod_image_url = haws.get_task_definition_image_url(preprod_task_definition_name)
+    preprod_image_url = haws.get_task_definition_image_url(
+        preprod_task_definition_name
+    )
     preprod_tag_from_image = preprod_image_url.split(":")[-1]
     msg = f"Preprod tag is different in the image url `{preprod_tag_from_image}`!"
     hdbg.dassert_eq(preprod_tag_from_image, preprod_tag, msg=msg)
@@ -688,7 +691,7 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
         for dag_path in dag_paths:
             # Update prod DAGs.
             _, dag_name = os.path.split(dag_path)
-            prod_dag_name = dag_name.replace("preprod.", "new.prod.")
+            prod_dag_name = dag_name.replace("preprod.", "prod.")
             dag_s3_path = airflow_dags_s3_path + prod_dag_name
             s3fs_.put(dag_path, dag_s3_path)
             successful_uploads.append(dag_s3_path)
@@ -698,10 +701,46 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
         _LOG.info("Rollback started!")
         # Rollback prod task definition image url.
         haws.update_task_definition(task_definition, original_prod_image_url)
-        _LOG.info("Reverted prod task definition image url to `%s`!", original_prod_image_url)
+        _LOG.info(
+            "Reverted prod task definition image url to `%s`!",
+            original_prod_image_url,
+        )
         # Notify for potential rollback for airflow s3 bucket, if any.
         if successful_uploads:
-            # TODO(Nikola): If we simply add new file `new.prod...` will airflow register it and run it?
-            #   Idea is have new, current, old... can we exclude some files in airflow s3 bucket?
-            pass
+            _LOG.info("Starting S3 rollback!")
+            # Prepare bucket resource.
+            s3 = haws.get_service_resource(aws_profile="ck", service_name="s3")
+            bucket_name, _ = hs3.split_path(airflow_dags_s3_path)
+            bucket = s3.Bucket(bucket_name)
+            for successful_upload in successful_uploads:
+                # TODO(Nikola): Maybe even Telegram notification?
+                # Rollback successful upload.
+                _, prefix = hs3.split_path(successful_upload)
+                prefix = prefix.lstrip(os.sep)
+                versions = sorted(
+                    bucket.object_versions.filter(Prefix=prefix),
+                    key=attrgetter("last_modified"),
+                    reverse=True,
+                )
+                latest_version = versions[-1]
+                latest_version.delete()
+                _LOG.info("Deleted version `%s`.", latest_version.version_id)
+                if len(versions) > 1:
+                    rollback_version = versions[-2]
+                    _LOG.info(
+                        "Active version is now `%s`!", rollback_version.version_id
+                    )
+                elif len(versions) == 1:
+                    _LOG.info(
+                        "Deleted version was also the only version. Nothing to rollback."
+                    )
+                else:
+                    # TODO(Nikola): Do we need custom exception?
+                    raise NotImplementedError
+        s3_rollback_message = (
+            f"S3 uploads reverted: {successful_uploads}"
+            if successful_uploads
+            else "No S3 uploads."
+        )
+        _LOG.info("Rollback completed! %s", s3_rollback_message)
         raise ex
