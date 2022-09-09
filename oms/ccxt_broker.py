@@ -71,6 +71,7 @@ class CcxtBroker(ombroker.Broker):
         self.stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
+        _LOG.warning("secret_identifier=%s", secret_identifier)
         self._secret_identifier = secret_identifier
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
@@ -462,6 +463,13 @@ class CcxtBroker(ombroker.Broker):
             #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
+
+        import helpers.hio as hio
+
+        file_name = "/shared_data/minimal_order_limits.json"
+        hio.to_json(file_name, minimal_order_limits)
+        _LOG.warning("Saved file_name=%s", file_name)
+        assert 0
         return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:

@@ -62,6 +62,11 @@ min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="Am
 min_start_time_col_name
 
 # %%
+dct = {"1": "b", "2": "b"}
+dct2 = {int(k):v for k,v in dct.items()}
+dct2
+
+# %%
 max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
 max_start_time_col_name
 
