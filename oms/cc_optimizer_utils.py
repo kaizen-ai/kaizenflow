@@ -124,8 +124,7 @@ def apply_cc_limits(
         forecast_df["target_notional_trade"] / forecast_df["price"]
     )
     #
-    stage = "preprod"
-    #stage = broker.stage
+    stage = broker.stage
     if stage in ["preprod", "prod"]:
         forecast_df = forecast_df.apply(
             _apply_prod_limits, args=(broker,), axis=1

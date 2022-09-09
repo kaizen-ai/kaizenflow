@@ -687,10 +687,38 @@ def get_CcxtBroker_prod_instance1(
     return broker
 
 
+class SimulatedCcxtBroker(ombroker.SimulatedBroker):
 
-# class SimulatedCcxtBroker(SimulatedBroker):
-#
-#     def __init__(self, stage, limit_...):
+    def __init__(
+        self, 
+        *args,
+        stage: str, 
+        minimal_order_limits: Dict[int, Any],
+        **kwargs,
+    ) -> None:
+        super.__init__(*args, **kwargs)
+        self.stage = stage
+        self.minimal_order_limits = minimal_order_limits
+
+    def get_low_market_price(self, asset_id):
+        last_price_srs = self.market_data.get_last_price("low")
+        last_price = last_price_srs[asset_id]
+        return last_price
 
 
-# def get_SimulatedCcxt_prod_instance1():
+def get_SimulatedCcxt_prod_instance1(market_data: pd.DataFrame):
+    import helpers.hio as hio
+    
+    # Load pre-saved minimal order limits.
+    file_name = "/shared_data/minimal_order_limits.json"
+    minimal_order_limits = hio.from_json(file_name)
+    # Convert to int, because asset_ids are integers.
+    minimal_order_limits = {int(k):v for k,v in minimal_order_limits.items()}
+    stage = "preprod"
+    broker = SimulatedCcxtBroker(
+        stage,
+        minimal_order_limits,
+        market_data=market_data,
+
+    )
+    return broker
