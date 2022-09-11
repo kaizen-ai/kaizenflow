@@ -692,21 +692,31 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
     def __init__(
         self, 
         *args,
-        stage: str, 
-        minimal_order_limits: Dict[int, Any],
+        stage,
+        minimal_order_limits,
         **kwargs,
     ) -> None:
-        super.__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.stage = stage
         self.minimal_order_limits = minimal_order_limits
 
     def get_low_market_price(self, asset_id):
-        last_price_srs = self.market_data.get_last_price("low")
-        last_price = last_price_srs[asset_id]
+        col_name = "low"
+        asset_ids = [asset_id]
+        last_price_srs = self.market_data.get_last_price(col_name, asset_ids)
+        print("asset_id", asset_id)
+        print("last_price_srs", last_price_srs)
+        print("last_price_srs.index", last_price_srs.index)
+        print("last_price_srs.values", last_price_srs.values)
+        if last_price_srs.empty:
+            # E.g., there is a missing for asset_id = 1464553467 at 2022-09-08 09:58:00+00:00.
+            last_price = 1
+        else:
+            last_price = last_price_srs.loc[asset_id]
         return last_price
 
 
-def get_SimulatedCcxt_prod_instance1(market_data: pd.DataFrame):
+def get_SimulatedCcxtBroker_prod_instance1(market_data: pd.DataFrame):
     import helpers.hio as hio
     
     # Load pre-saved minimal order limits.
@@ -715,10 +725,12 @@ def get_SimulatedCcxt_prod_instance1(market_data: pd.DataFrame):
     # Convert to int, because asset_ids are integers.
     minimal_order_limits = {int(k):v for k,v in minimal_order_limits.items()}
     stage = "preprod"
+    account_type = "trading"
+    strategy_id = "C1b"
     broker = SimulatedCcxtBroker(
-        stage,
-        minimal_order_limits,
-        market_data=market_data,
-
+        strategy_id,
+        market_data, 
+        stage=stage,
+        minimal_order_limits=minimal_order_limits,
     )
     return broker

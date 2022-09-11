@@ -17,6 +17,7 @@ import oms.broker as ombroker
 import oms.broker_example as obroexam
 import oms.oms_db as oomsdb
 import oms.portfolio as omportfo
+import oms.ccxt_broker as occxbrok
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,15 +42,21 @@ def get_DataFramePortfolio_example1(
       track of the state)
     - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
     """
+    _ = event_loop
+    _ = timestamp_col
     # Build a SimulatedBroker.
-    broker = obroexam.get_SimulatedBroker_example1(
-        event_loop,
-        market_data=market_data,
-        timestamp_col=timestamp_col,
-    )
+    # broker = obroexam.get_SimulatedBroker_example1(
+    #     event_loop,
+    #     market_data=market_data,
+    #     timestamp_col=timestamp_col,
+    # )
+    broker = occxbrok.get_SimulatedCcxtBroker_prod_instance1(market_data)
     # Build a DataFramePortfolio.
     mark_to_market_col = mark_to_market_col
-    initial_cash = 1e6
+    initial_cash = 700
+    mark_to_market_col = "close"
+    trading_period_str = "5T"
+    pricing_method = "twap." + trading_period_str
     portfolio = omportfo.DataFramePortfolio.from_cash(
         broker,
         mark_to_market_col,

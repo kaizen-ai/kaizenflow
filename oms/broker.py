@@ -394,14 +394,6 @@ class SimulatedBroker(Broker):
     ) -> None:
         super().__init__(*args, **kwargs)
 
-        import helpers.hio as hio
-        
-        # Load pre-saved minimal order limits.
-        file_name = "/shared_data/minimal_order_limits.json"
-        minimal_order_limits = hio.from_json(file_name)
-        # Convert to int, because asset_ids are integers.
-        self.minimal_order_limits = {int(k):v for k,v in minimal_order_limits.items()}
-
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()
 

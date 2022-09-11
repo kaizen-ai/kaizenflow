@@ -58,30 +58,54 @@ market_data_df = mdata.load_market_data(
 )
 
 # %%
-min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
-min_start_time_col_name
+# event_loop = None
+# replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 18 * 60 + 55
+# market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(event_loop, replayed_delay_in_mins_or_timestamp, market_data_df, delay_in_secs=10)
+
+# %% run_control={"marked": true}
+# tmp = market_data._df[market_data._df["asset_id"] == 1464553467]
+# tmp["end_datetime"] = tmp["end_datetime"].dt.tz_convert("America/New_York")
+# tmp1 = tmp.set_index("end_datetime").sort_index()
+# tmp1.loc["2022-09-08 09:58:00"::]
 
 # %%
-dct = {"1": "b", "2": "b"}
-dct2 = {int(k):v for k,v in dct.items()}
-dct2
+# start_time = pd.Timestamp("2022-09-08 09:59:00-04:00", tz='America/New_York')
+# ts_col_name = "start_datetime"
+# asset_ids = [1464553467]
+# market_data.get_data_at_timestamp(start_time, ts_col_name, asset_ids)
 
 # %%
-max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
-max_start_time_col_name
+# start_ts=pd.Timestamp('2022-09-08 09:58:59-0400', tz='America/New_York')
+# end_ts=pd.Timestamp('2022-09-08 09:59:01-0400', tz='America/New_York')
+# ts_col_name='start_datetime'
+# asset_ids=[1464553467]
+# market_data.get_data_for_interval
 
 # %%
-replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 18 * 60 + 55
-initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
-    minutes=replayed_delay_in_mins_or_timestamp
-)
-initial_replayed_timestamp
+# min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
+# min_start_time_col_name
 
 # %%
-date = "2022-09-06"
-start_timestamp = pd.Timestamp(date + " 16:00:00", tz="America/New_York")
+# dct = {"1": "b", "2": "b"}
+# dct2 = {int(k):v for k,v in dct.items()}
+# dct2
+
+# %%
+# max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
+# max_start_time_col_name
+
+# %%
+# replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 18 * 60 + 55
+# initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
+#     minutes=replayed_delay_in_mins_or_timestamp
+# )
+# initial_replayed_timestamp
+
+# %%
+date = "2022-09-08"
+start_timestamp = pd.Timestamp(date + " 09:55:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 19:55:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 10:50:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
@@ -175,7 +199,7 @@ def print_stats(df: pd.DataFrame) -> None:
 # ## Load prod and sim forecasts
 
 # %%
-prod_forecast_df["diff_num_shares"].plot()
+prod_forecast_df.head(15)#index#.round(config["freq"])
 
 # %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
