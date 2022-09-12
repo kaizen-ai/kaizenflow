@@ -6,7 +6,6 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
-import oms.order as omorder
 import oms.secrets.secret_identifier as oseseide
 
 
@@ -15,49 +14,100 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
     ccxt_patch = umock.patch.object(occxbrok, "ccxt", spec=occxbrok.ccxt)
 
     @staticmethod
-    def get_test_order(below_min: bool = False):
+    def get_test_orders(below_min: bool = False):
         """
         Build toy orders for tests.
         """
+        df_columns = [
+            "asset_id",
+            "curr_num_shares",
+            "price",
+            "position",
+            "wall_clock_timestamp",
+            "prediction",
+            "volatility",
+            "spread",
+            "target_position",
+            "target_notional_trade",
+        ]
         if below_min:
-            order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-            asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-            end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.001\
-            tz=America/New_York\nOrder: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-            asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-            end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=0.121\
-            tz=America/New_York"
+            order_df = pd.DataFrame(
+                columns=df_columns,
+                data=[
+                    [
+                        8717633868,
+                        -1.000,
+                        21.696667,
+                        -21.696667,
+                        pd.Timestamp("2022-09-12 11:06:09.144373-04:00"),
+                        -0.133962,
+                        0.002366,
+                        0,
+                        -1.01,
+                        -0.01,
+                    ],
+                    [
+                        6051632686,
+                        -2.000,
+                        5.429500,
+                        -10.859000,
+                        pd.Timestamp("2022-09-12 11:06:09.144373-04:00"),
+                        0.001705,
+                        0.002121,
+                        0,
+                        -2.01,
+                        0.01,
+                    ],
+                ],
+            )
         else:
-            order_str = "Order: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-            asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-            end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=10\
-            tz=America/New_York\nOrder: order_id=0 creation_timestamp=2022-08-05 10:36:44.976104-04:00\
-            asset_id=1464553467 type_=price@twap start_timestamp=2022-08-05 10:36:44.976104-04:00\
-            end_timestamp=2022-08-05 10:38:44.976104-04:00 curr_num_shares=0.0 diff_num_shares=20\
-            tz=America/New_York"
-        # Get orders.
-        orders = omorder.orders_from_string(order_str)
-        order_df = pd.DataFrame(
-            [omorder.Order.to_dict(order) for order in orders]
-        )
+            order_df = pd.DataFrame(
+                columns=df_columns,
+                data=[
+                    [
+                        8717633868,
+                        -1.000,
+                        21.696667,
+                        -21.696667,
+                        pd.Timestamp("2022-09-12 11:06:09.144373-04:00"),
+                        -0.133962,
+                        0.002366,
+                        0,
+                        -27.075329,
+                        -5.378662,
+                    ],
+                    [
+                        6051632686,
+                        -2.000,
+                        5.429500,
+                        -10.859000,
+                        pd.Timestamp("2022-09-12 11:06:09.144373-04:00"),
+                        0.001705,
+                        0.002121,
+                        0,
+                        -33.701572,
+                        -22.8425729,
+                    ],
+                ],
+            )
+        order_df = order_df.set_index("asset_id")
         return order_df
-
-
-        pd.DataFrame({"price": [19256.86, 1.139667], "position": [0, 0],
-        })
 
     @staticmethod
     def get_test_broker() -> occxbrok.CcxtBroker:
         """
         Build `CcxtBroker` for tests.
         """
-        exchange_id = "binance"
         universe_version = "v7"
         portfolio_id = "ccxt_portfolio_mock"
         exchange_id = "binance"
         account_type = "trading"
         stage = "preprod"
         contract_type = "futures"
+        strategy_id = "dummy_strategy_id"
+        market_data = umock.create_autospec(
+            spec=mdata.MarketData, instance=True
+        )
         secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
@@ -67,11 +117,11 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
             portfolio_id,
             contract_type,
             secret_id,
-            strategy_id="dummy_strategy_id",
-            market_data=umock.create_autospec(
-                spec=mdata.MarketData, instance=True
-            ),
+            strategy_id=strategy_id,
+            market_data=market_data
         )
+        broker.minimal_order_limits = {8717633868: {'min_amount': 1.0, 'min_cost': 10.0},
+                                       6051632686: {'min_amount': 1.0, 'min_cost': 10.0}}
         return broker
 
     def setUp(self) -> None:
@@ -92,25 +142,28 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         """
         Verify that a correct order is not altered.
         """
-        order_df = self.get_test_order()
+        order_df = self.get_test_orders()
         broker = self.get_test_broker()
-        low_market_price_patch = umock.patch.object(occoputi.apply_cc_limits, "get_low_market_price")
-        low_market_price_patch.return_value = 10.0
-        # with umock.patch.object(
-        #     broker, "get_low_market_price", create=True
-        # ) as fetch_orders_mock:
-        #     fetch_orders_mock.return_value = 100.0
-        #     # Run.
-        actual = occoputi.apply_cc_limits(order_df, broker)
+        with umock.patch.object(
+            broker, "get_low_market_price", create=True
+        ) as market_price_mock:
+            market_price_mock.return_value = 100.0
+            # Run.
+            actual = occoputi.apply_cc_limits(order_df, broker)
+            actual = str(actual)
         self.check_string(actual)
 
-    # def test_apply_prod_limits2(self):
-    #     """
-    #     Verify that an order below limit is updated.
-    #     """
-    #     ...
-
-    # def test_apply_testnet_limits(self):
-    #     """
-    #     Verify that an order is altered to have a minimal amount.
-    #     """
+    def test_apply_prod_limits2(self):
+        """
+        Verify that an order below limit is updated.
+        """
+        order_df = self.get_test_orders(below_min=True)
+        broker = self.get_test_broker()
+        with umock.patch.object(
+                broker, "get_low_market_price", create=True
+        ) as market_price_mock:
+            market_price_mock.return_value = 100.0
+            # Run.
+            actual = occoputi.apply_cc_limits(order_df, broker)
+            actual = str(actual)
+        self.check_string(actual)
