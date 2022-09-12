@@ -115,9 +115,8 @@ def run_Time_ForecastSystem(
     return result_bundles
 
 
-# TODO(Grisha): @Dan Deprecate `self` param after `get_file_path()` is generalized.
 def save_ccxt_market_data(
-    self: Any,
+    file_path: str,
     full_symbols: Optional[List[ivcu.FullSymbol]],
     im_client_params: Any,
     wall_clock_time: pd.Timestamp,
@@ -160,7 +159,6 @@ def save_ccxt_market_data(
         wall_clock_time=wall_clock_time,
     )
     # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`).
-    file_path = self.get_file_path()
     mdata.save_market_data(market_data_client, file_path, period)
     _LOG.warning("Updated file '%s'", file_path)
 
@@ -580,28 +578,6 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         `NonTime_ForecastSystem`.
         """
 
-    # TODO(Grisha): @Dan make `get_file_path()` free-standing.
-    def get_file_path(self) -> str:
-        """
-        Get path to a file with the market data to replay.
-
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_NonTime_ForecastSystem_vs_Time_ForecastSystem1/input/data.csv.gz`.
-        """
-        input_dir = self.get_input_dir(
-            use_only_test_class=True,
-            use_absolute_path=False,
-        )
-        file_name = "data.csv.gz"
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        file_path = os.path.join(
-            s3_bucket_path,
-            "unit_test",
-            input_dir,
-            file_name,
-        )
-        return file_path
-
     # TODO(Grisha): Consolidate with `dtfsysysig.get_signature()`.
     def get_signature(self, result_bundle: dtfcore.ResultBundle, col: str) -> str:
         txt: List[str] = []
@@ -699,29 +675,6 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
 
     Add `ForecastEvaluatorFromPrices` to `Time_ForecastSystem` to compute research PnL.
     """
-
-    # TODO(Grisha): factor out, it is common for all the tests that read data
-    # from S3.
-    def get_file_path(self) -> str:
-        """
-        Get path to a file with the market data to replay.
-
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio1/input/data.csv.gz`.
-        """
-        input_dir = self.get_input_dir(
-            use_only_test_class=True,
-            use_absolute_path=False,
-        )
-        file_name = "data.csv.gz"
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        file_path = os.path.join(
-            s3_bucket_path,
-            "unit_test",
-            input_dir,
-            file_name,
-        )
-        return file_path
 
     @abc.abstractmethod
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:

@@ -489,7 +489,7 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
+    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN", "CK_AWS_S3_BUCKET"]:
         if env_var in os.environ:
             val = os.environ[env_var]
             hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
@@ -1187,6 +1187,29 @@ class TestCase(unittest.TestCase):
         s3_bucket = hs3.get_s3_bucket_path(aws_profile)
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
+
+    def get_s3_input_dir(
+        self,
+        aws_profile: str,
+        *,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
+    ) -> str:
+        # Make the path unique for the test.
+        use_only_test_class = True
+        use_absolute_path = False
+        test_path = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
+        )
+        # Assemble everything in a single path.
+        import helpers.hs3 as hs3
+
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
+        input_dir = os.path.join(s3_bucket, "unit_test", test_path, "input")
+        return input_dir
 
     # ///////////////////////////////////////////////////////////////////////
 
