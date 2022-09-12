@@ -53,6 +53,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "s3_path": "s3://cryptokaizen-data/realtime/",
             "file_format": "parquet",
             "data_type": "ohlcv",
+            "bid_ask_depth": None, 
         }
         self.assertDictEqual(actual, expected)
 
