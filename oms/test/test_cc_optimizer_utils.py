@@ -6,6 +6,7 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
+import helpers.hpandas as hpandas
 import oms.secrets.secret_identifier as oseseide
 
 
@@ -159,7 +160,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
             market_price_mock.return_value = 100.0
             # Run.
             actual = occoputi.apply_cc_limits(order_df, broker)
-            actual = str(actual)
+            actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
     def test_apply_prod_limits2(self) -> None:
@@ -176,7 +177,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
             market_price_mock.return_value = 100.0
             # Run.
             actual = occoputi.apply_cc_limits(order_df, broker)
-            actual = actual.to_string
+            actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
     def test_apply_testnet_limits1(self) -> None:
@@ -195,5 +196,5 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
             market_price_mock.return_value = 100.0
             # Run.
             actual = occoputi.apply_cc_limits(order_df, broker)
-            actual = actual.to_string
+            actual = hpandas.df_to_str(actual)
         self.check_string(actual)

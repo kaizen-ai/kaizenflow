@@ -1,14 +1,4 @@
-            curr_num_shares      price   position  \
-asset_id                                            
-8717633868             -1.0  21.696667 -21.696667   
-6051632686             -2.0   5.429500 -10.859000   
-
-                       wall_clock_timestamp  prediction  volatility  spread  \
-asset_id                                                                      
-8717633868 2022-09-12 11:06:09.144373-04:00   -0.133962    0.002366       0   
-6051632686 2022-09-12 11:06:09.144373-04:00    0.001705    0.002121       0   
-
-            target_position  target_notional_trade  diff_num_shares  
-asset_id                                                             
-8717633868       -27.075329              -5.378662        -1.000000  
-6051632686       -33.701572             -22.842573        -4.207123  
+            curr_num_shares      price   position             wall_clock_timestamp  prediction  volatility  spread  target_position  target_notional_trade  diff_num_shares
+asset_id                                                                                                                                                                   
+8717633868             -1.0  21.696667 -21.696667 2022-09-12 11:06:09.144373-04:00   -0.133962    0.002366       0       -27.075329              -5.378662        -1.000000
+6051632686             -2.0   5.429500 -10.859000 2022-09-12 11:06:09.144373-04:00    0.001705    0.002121       0       -33.701572             -22.842573        -4.207123
