@@ -45,6 +45,30 @@ dag_config:
     out_col_group: ()
     col_mapping:
       vwap.ret_0.vol_adj: vwap.ret_0.vol_adj.c
+  add_lags:
+    in_col_groups: [('vwap.ret_0.vol_adj.c',)]
+    out_col_group: ()
+    transformer_kwargs:
+      lag_delay: 0
+      num_lags: 4
+      first_lag: 0
+      separator: .
+    drop_nans: True
+  predict:
+    in_col_groups: [('vwap.ret_0.vol_adj.c.lag0',), ('vwap.ret_0.vol_adj.c.lag1',), ('vwap.ret_0.vol_adj.c.lag2',), ('vwap.ret_0.vol_adj.c.lag3',)]
+    out_col_group: ()
+    transformer_kwargs:
+      weights:
+        index=[vwap.ret_0.vol_adj.c.lag0, vwap.ret_0.vol_adj.c.lag3]
+        columns=vwap.ret_0.vol_adj_2_hat
+        shape=(4, 1)
+                                   vwap.ret_0.vol_adj_2_hat
+        vwap.ret_0.vol_adj.c.lag0                    -0.209
+        vwap.ret_0.vol_adj.c.lag1                    -0.223
+        vwap.ret_0.vol_adj.c.lag2                     0.304
+        vwap.ret_0.vol_adj.c.lag3                    -0.264
+      convert_to_dataframe: True
+    drop_nans: True
 dag_builder_object: nid_prefix=
 dag_builder_class: Mock1_DagBuilder
 system_class: Mock1_Time_ForecastSystem
@@ -95,15 +119,15 @@ object.str:
       _delay_in_secs='0' <int>
   dag_object:
     <dataflow.core.dag.DAG at 0x>:
-      _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+      _nx_dag='DiGraph with 9 nodes and 8 edges' <networkx.classes.digraph.DiGraph>
       _name='None' <NoneType>
       _mode='strict' <str>
       _save_node_io='' <str>
       _profile_execution='False' <bool>
       _dst_dir='None' <NoneType>
       force_free_nodes='False' <bool>
-      nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
-      edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
+      nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('add_lags', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('predict', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
+      edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'add_lags', {'df_in': 'df_out'}), ('add_lags', 'predict', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
       json=
       {
           "directed": true,
@@ -133,6 +157,16 @@ object.str:
                   "df_in": "df_out",
                   "source": "adjust_rets",
                   "target": "compress_rets"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "compress_rets",
+                  "target": "add_lags"
+              },
+              {
+                  "df_in": "df_out",
+                  "source": "add_lags",
+                  "target": "predict"
               },
               {
                   "df_in": "df_out",
@@ -167,6 +201,14 @@ object.str:
                   "stage": "GroupedColDfToDfTransformer"
               },
               {
+                  "id": "add_lags",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
+                  "id": "predict",
+                  "stage": "GroupedColDfToDfTransformer"
+              },
+              {
                   "id": "read_data",
                   "stage": "RealTimeDataSource"
               }
@@ -176,15 +218,15 @@ object.str:
     <dataflow.system.real_time_dag_runner.RealTimeDagRunner at 0x>:
       dag= <dataflow.core.dag.DAG>
         <dataflow.core.dag.DAG at 0x>:
-          _nx_dag='DiGraph with 7 nodes and 6 edges' <networkx.classes.digraph.DiGraph>
+          _nx_dag='DiGraph with 9 nodes and 8 edges' <networkx.classes.digraph.DiGraph>
           _name='None' <NoneType>
           _mode='strict' <str>
           _save_node_io='' <str>
           _profile_execution='False' <bool>
           _dst_dir='None' <NoneType>
           force_free_nodes='False' <bool>
-          nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
-          edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
+          nodes=[('filter_ath', {'stage': <dataflow.core.nodes.transformers.ColumnTransformer object at 0x>}), ('resample', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_ret_0', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compute_vol', {'stage': <dataflow.core.nodes.transformers.SeriesToSeriesTransformer object at 0x>}), ('adjust_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('compress_rets', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('add_lags', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object at 0x>}), ('predict', {'stage': <dataflow.core.nodes.transformers.GroupedColDfToDfTransformer object>}), ('read_data', {'stage': <dataflow.system.source_nodes.RealTimeDataSource object>})]
+          edges=[('filter_ath', 'resample', {'df_in': 'df_out'}), ('resample', 'compute_ret_0', {'df_in': 'df_out'}), ('compute_ret_0', 'compute_vol', {'df_in': 'df_out'}), ('compute_vol', 'adjust_rets', {'df_in': 'df_out'}), ('adjust_rets', 'compress_rets', {'df_in': 'df_out'}), ('compress_rets', 'add_lags', {'df_in': 'df_out'}), ('add_lags', 'predict', {'df_in': 'df_out'}), ('read_data', 'filter_ath', {'df_in': 'df_out'})]
           json=
           {
               "directed": true,
@@ -214,6 +256,16 @@ object.str:
                       "df_in": "df_out",
                       "source": "adjust_rets",
                       "target": "compress_rets"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "compress_rets",
+                      "target": "add_lags"
+                  },
+                  {
+                      "df_in": "df_out",
+                      "source": "add_lags",
+                      "target": "predict"
                   },
                   {
                       "df_in": "df_out",
@@ -248,6 +300,14 @@ object.str:
                       "stage": "GroupedColDfToDfTransformer"
                   },
                   {
+                      "id": "add_lags",
+                      "stage": "GroupedColDfToDfTransformer"
+                  },
+                  {
+                      "id": "predict",
+                      "stage": "GroupedColDfToDfTransformer"
+                  },
+                  {
                       "id": "read_data",
                       "stage": "RealTimeDataSource"
                   }
@@ -255,7 +315,7 @@ object.str:
           }
       config='' <core.config.config_.Config>
       _column_to_tags_mapping='None' <NoneType>
-      _result_nid='compress_rets' <str>
+      _result_nid='predict' <str>
       _execute_rt_loop_kwargs= <dict>
         {'bar_duration_in_secs': 300,
          'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
@@ -291,9 +351,9 @@ object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
-dag_object: DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
+dag_object: DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
-  RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 7 nodes and 6 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=compress_rets <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
+  RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=predict <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
     _asset_id_col='asset_id' <str>
     _asset_ids='[101]' <list>
     _start_time_col_name='start_datetime' <str>
