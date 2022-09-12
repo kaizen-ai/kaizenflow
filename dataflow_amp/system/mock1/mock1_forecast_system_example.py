@@ -200,7 +200,7 @@ def get_Mock1_NonTime_ForesactSystem_example1(backtest_config) -> dtfsys.System:
     """
     Build Mock1_ForecastSystem and fill the `System.config`.
     """
-    system = dtfasmmfosy.Mock1_ForecastSystem()
+    system = dtfasmmfosy.Mock1_NonTime_ForecastSystem()
     #
     system = dtfsys.apply_backtest_config(system, backtest_config)
     # Fill pipeline-specific backtest config parameters.
