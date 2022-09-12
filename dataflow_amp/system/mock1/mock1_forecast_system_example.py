@@ -14,17 +14,17 @@ import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import im_v2.common.data.client as icdc
 
 # #############################################################################
-# Mock1_ForecastSystem_example
+# Mock1_NonTime_ForecastSystem_example
 # #############################################################################
 
 
-def get_Mock1_ForecastSystem_for_simulation_example1(
+def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
     backtest_config: str,
-) -> dtfsys.ForecastSystem:
+) -> dtfsys.NonTime_ForecastSystem:
     """
-    Get Mock1_ForecastSystem object for backtest simulation.
+    Get Mock1_NonTime_ForecastSystem object for backtest simulation.
     """
-    system = dtfasmmfosy.Mock1_ForecastSystem()
+    system = dtfasmmfosy.Mock1_NonTime_ForecastSystem()
     system = dtfsys.apply_backtest_config(system, backtest_config)
     # Fill pipeline-specific backtest config parameters.
     system.config["backtest_config", "freq_as_pd_str"] = "M"

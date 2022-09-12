@@ -28,6 +28,7 @@ import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
 import oms.order as omorder
 import oms.portfolio as omportfo
+import oms.cc_optimizer_utils as occoputi
 
 _LOG = logging.getLogger(__name__)
 
@@ -734,6 +735,18 @@ class ForecastProcessor:
                 style=style,
                 **kwargs,
             )
+        elif backend == "cc_pomo":
+            style = self._optimizer_dict["params"]["style"]
+            kwargs = self._optimizer_dict["params"]["kwargs"]
+            df = ocalopti.compute_target_positions_in_cash(
+                assets_and_predictions,
+                style=style,
+                **kwargs,
+            )
+            # Verify that all orders are above the notional limit.
+            #  Note: orders that are below the minimal amount of asset
+            #  for the exchange are modified to go slightly above the limit.
+            df = occoputi.apply_cc_limits(df, self._portfolio.broker)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
@@ -760,20 +773,25 @@ class ForecastProcessor:
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
         #
-        if liquidate_holdings:
-            diff_num_shares = -df["curr_num_shares"]
-            _LOG.info(
-                "Liquidating holdings: diff_num_shares=\n%s",
-                hpandas.df_to_str(diff_num_shares),
-            )
+        if backend == "cc_pomo":
+            diff_num_shares = df["diff_num_shares"]
         else:
             # Convert the target positions from cash values to target share counts.
             # Round to nearest integer towards zero.
             # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
             diff_num_shares = df["target_notional_trade"] / df["price"]
         # Make sure the diff_num_shares are well-formed.
+        _LOG.debug("after applying backend: %s", str(diff_num_shares))
         diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
         diff_num_shares = diff_num_shares.fillna(0)
+        _LOG.debug("after filling zeroes: %s", str(diff_num_shares))
+        #
+        if liquidate_holdings:
+            diff_num_shares = -df["curr_num_shares"]
+            _LOG.info(
+                "Liquidating holdings: diff_num_shares=\n%s",
+                hpandas.df_to_str(diff_num_shares),
+            )
         #
         df["diff_num_shares"] = diff_num_shares
         df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
