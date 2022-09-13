@@ -15,7 +15,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
     ccxt_patch = umock.patch.object(occxbrok, "ccxt", spec=occxbrok.ccxt)
 
     @staticmethod
-    def get_test_orders(below_min: bool = False) -> pd.DataFrame:
+    def get_test_orders(below_min: bool) -> pd.DataFrame:
         """
         Create orders for testing.
 
@@ -151,7 +151,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         Verify that a correct order is not altered.
         """
         # Build orders and broker.
-        order_df = self.get_test_orders()
+        below_min = False
+        order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         with umock.patch.object(
             broker, "get_low_market_price", create=True
@@ -168,7 +169,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         Verify that an order below limit is updated.
         """
         # Build orders and broker.
-        order_df = self.get_test_orders(below_min=True)
+        below_min = True
+        order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         with umock.patch.object(
             broker, "get_low_market_price", create=True
@@ -185,7 +187,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         Verify that orders are altered on testnet.
         """
         # Build orders and broker.
-        order_df = self.get_test_orders(below_min=True)
+        below_min = True
+        order_df = self.get_test_orders()
         broker = self.get_mock_broker()
         # Set broker stage to imitate testnet.
         broker.stage = "local"
