@@ -699,15 +699,15 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
         docker_push_prod_image(ctx, prod_version)
     except Exception as ex:
         _LOG.info("Rollback started!")
-        # Rollback prod task definition image url.
+        # Rollback prod task definition image URL.
         haws.update_task_definition(task_definition, original_prod_image_url)
         _LOG.info(
             "Reverted prod task definition image url to `%s`!",
             original_prod_image_url,
         )
-        # Notify for potential rollback for airflow s3 bucket, if any.
+        # Notify for potential rollback for airflow S3 bucket, if any.
         if successful_uploads:
-            _LOG.info("Starting S3 rollback!")
+            _LOG.warning("Starting S3 rollback!")
             # Prepare bucket resource.
             s3 = haws.get_service_resource(aws_profile="ck", service_name="s3")
             bucket_name, _ = hs3.split_path(airflow_dags_s3_path)
