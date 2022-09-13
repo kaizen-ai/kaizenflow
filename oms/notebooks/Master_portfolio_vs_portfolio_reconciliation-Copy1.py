@@ -113,7 +113,8 @@ prod_dir = (
     #"/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
     #"/shared_data/system_log_dir_2022-09-06_15:56:09"
     #"/shared_data/system_log_dir_20220908_095612/"
-    "/shared_data/system_log_dir_20220908_095626/"
+    #"/shared_data/system_log_dir_20220908_095626/"
+    "/shared_data/system_log_dir_20220913_1hour"
 )
 sim_dir = "/shared_data/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
@@ -179,13 +180,26 @@ def compute_delay(df, freq):
 
 
 # %%
-def print_stats(df: pd.DataFrame) -> None:
+def check_missing_bars(df, config):
+    _LOG.info("Actual index=%s", df.index)
+    actual_index = df.index.round(config["freq"])
+    min_ts = df.index.min()
+    max_ts = df.index.max()
+    expected_index = pd.date_range(
+        start=min_ts,
+        end=max_ts,
+        freq=config["freq"]
+    ).round(config["freq"])
+    hdbg.dassert_set_eq(actual_index, expected_index)
+
+def print_stats(df: pd.DataFrame, config) -> None:
     """
     Basic stats and sanity checks before doing heavy computations.
     """
     hpandas.dassert_monotonic_index(df)
     _LOG.info("min timestamp=%s", df.index.min())
     _LOG.info("max timestamp=%s", df.index.max())
+    check_missing_bars(df, config)
     n_zeros = sum(df["diff_num_shares"].sum(axis=1) == 0)
     _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_zeros, df["diff_num_shares"].shape[0]))
     n_nans = df["diff_num_shares"].sum(axis=1).isna().sum()
@@ -199,20 +213,17 @@ def print_stats(df: pd.DataFrame) -> None:
 # ## Load prod and sim forecasts
 
 # %%
-prod_forecast_df.head(15)#index#.round(config["freq"])
-
-# %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["prod_forecast_dir"]
 )
-print_stats(prod_forecast_df)
+print_stats(prod_forecast_df, config)
 hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
 sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["sim_forecast_dir"]
 )
-print_stats(sim_forecast_df)
+print_stats(sim_forecast_df, config)
 hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 
 # %% [markdown]
