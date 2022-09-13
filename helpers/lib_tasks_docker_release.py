@@ -6,6 +6,7 @@ import helpers.lib_tasks_docker_release as hltadore
 
 import logging
 import os
+from operator import attrgetter
 from typing import Any
 
 from invoke import task
@@ -628,19 +629,22 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     # TODO(Nikola): Convert `haws` part to script so it can be called via `docker_cmd`.
     #   https://github.com/cryptokaizen/cmamp/pull/2594/files#r948551787
     import helpers.haws as haws
+
     #
     # TODO(Nikola): Use env var for CK profile.
     s3fs_ = hs3.get_s3fs(aws_profile="ck")
     super_module = not hgit.is_inside_submodule()
-    full_repo_name = hgit.get_repo_full_name_from_client(super_module)
     # Prepare params for listing DAGs.
     root_dir = hgit.get_client_root(super_module)
-    # TODO(Nikola): Make dirname agnostic for each repo.
-    dir_name = os.path.join(root_dir, "im_v2", "airflow", "dags")
+    dags_path = [root_dir, "im_v2", "airflow", "dags"]
+    if super_module and hgit.is_amp_present():
+        # Main DAGs location is always in `cmamp`.
+        dags_path.insert(1, "amp")
+    dir_name = os.path.join(*dags_path)
     pattern = "preprod.*.py"
     only_files = True
     use_relative_paths = False
-    # List DAGs.
+    # List preprod DAGs.
     dag_paths = hs3.listdir(dir_name, pattern, only_files, use_relative_paths)
     for dag_path in dag_paths:
         # Abort in case one of the preprod DAGs is out of sync.
@@ -658,19 +662,17 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     new_prod_image_url = hlitadoc.get_image(base_image, stage, prod_version)
     new_prod_image_url_no_version = hlitadoc.get_image(base_image, stage, None)
     # Check if preprod tag exist in preprod task definition as precaution.
-    # TODO(Nikola): Reiterate to previous versions to pick correct one, if needed.
-    # client.list_task_definitions(familyPrefix=preprod_task_definition_name, sort="DESC")
-    # TODO(Nikola): Use env var for CK profile.
     preprod_task_definition_name = f"{task_definition}-preprod"
-    ecs_client = haws.get_service_client(aws_profile="ck", service_name="ecs")
-    task_description = ecs_client.describe_task_definition(
-        taskDefinition=preprod_task_definition_name
+    preprod_image_url = haws.get_task_definition_image_url(
+        preprod_task_definition_name
     )
-    task_definition_json = task_description["taskDefinition"]
-    preprod_image_url = task_definition_json["containerDefinitions"][0]["image"]
     preprod_tag_from_image = preprod_image_url.split(":")[-1]
     msg = f"Preprod tag is different in the image url `{preprod_tag_from_image}`!"
     hdbg.dassert_eq(preprod_tag_from_image, preprod_tag, msg=msg)
+    # Pull preprod image for re-tag.
+    hlitadoc.docker_login(ctx)
+    cmd = f"docker pull {preprod_image_url}"
+    hlitauti.run(ctx, cmd)
     # Re-tag preprod image to prod.
     cmd = f"docker tag {preprod_image_url} {new_prod_image_url}"
     hlitauti.run(ctx, cmd)
@@ -678,14 +680,67 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
     hlitauti.run(ctx, cmd)
     cmd = f"docker rmi {preprod_image_url}"
     hlitauti.run(ctx, cmd)
-    # Upload new tag to ECS.
-    docker_push_prod_image(ctx, prod_version)
-    # Update prod task definition to the latest prod tag.
-    haws.update_task_definition(task_definition, new_prod_image_url)
-    # Add prod DAGs to airflow s3 bucket after all checks are passed.
-    for dag_path in dag_paths:
-        # Update prod DAGs.
-        _, dag_name = os.path.split(dag_path)
-        prod_dag_name = dag_name.replace("preprod.", "prod.")
-        # TODO(Nikola): Ensure that files are uploaded.
-        s3fs_.put(dag_path, airflow_dags_s3_path + prod_dag_name)
+    # Get original prod image for potential rollback.
+    original_prod_image_url = haws.get_task_definition_image_url(task_definition)
+    # Track successful uploads for potential rollback.
+    successful_uploads = []
+    try:
+        # Update prod task definition to the latest prod tag.
+        haws.update_task_definition(task_definition, new_prod_image_url)
+        # Add prod DAGs to airflow s3 bucket after all checks are passed.
+        for dag_path in dag_paths:
+            # Update prod DAGs.
+            _, dag_name = os.path.split(dag_path)
+            prod_dag_name = dag_name.replace("preprod.", "prod.")
+            dag_s3_path = airflow_dags_s3_path + prod_dag_name
+            s3fs_.put(dag_path, dag_s3_path)
+            successful_uploads.append(dag_s3_path)
+        # Upload new tag to ECS.
+        docker_push_prod_image(ctx, prod_version)
+    except Exception as ex:
+        _LOG.info("Rollback started!")
+        # Rollback prod task definition image URL.
+        haws.update_task_definition(task_definition, original_prod_image_url)
+        _LOG.info(
+            "Reverted prod task definition image url to `%s`!",
+            original_prod_image_url,
+        )
+        # Notify for potential rollback for airflow S3 bucket, if any.
+        if successful_uploads:
+            _LOG.warning("Starting S3 rollback!")
+            # Prepare bucket resource.
+            s3 = haws.get_service_resource(aws_profile="ck", service_name="s3")
+            bucket_name, _ = hs3.split_path(airflow_dags_s3_path)
+            bucket = s3.Bucket(bucket_name)
+            for successful_upload in successful_uploads:
+                # TODO(Nikola): Maybe even Telegram notification?
+                # Rollback successful upload.
+                _, prefix = hs3.split_path(successful_upload)
+                prefix = prefix.lstrip(os.sep)
+                versions = sorted(
+                    bucket.object_versions.filter(Prefix=prefix),
+                    key=attrgetter("last_modified"),
+                    reverse=True,
+                )
+                latest_version = versions[-1]
+                latest_version.delete()
+                _LOG.info("Deleted version `%s`.", latest_version.version_id)
+                if len(versions) > 1:
+                    rollback_version = versions[-2]
+                    _LOG.info(
+                        "Active version is now `%s`!", rollback_version.version_id
+                    )
+                elif len(versions) == 1:
+                    _LOG.info(
+                        "Deleted version was also the only version. Nothing to rollback."
+                    )
+                else:
+                    # TODO(Nikola): Do we need custom exception?
+                    raise NotImplementedError
+        s3_rollback_message = (
+            f"S3 uploads reverted: {successful_uploads}"
+            if successful_uploads
+            else "No S3 uploads."
+        )
+        _LOG.info("Rollback completed! %s", s3_rollback_message)
+        raise ex
