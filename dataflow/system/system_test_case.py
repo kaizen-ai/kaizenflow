@@ -43,7 +43,7 @@ def run_NonTime_ForecastSystem_from_backtest_config(
     config_tag: str,
 ) -> dtfcore.ResultBundle:
     """
-    Run non-time `ForecastSystem` DAG with the specified fit / predict method
+    Run `NonTime_ForecastSystem` DAG with the specified fit / predict method
     and using the backtest parameters from `SystemConfig`.
 
     :param system: system object to extract `DagRunner` from
@@ -115,9 +115,8 @@ def run_Time_ForecastSystem(
     return result_bundles
 
 
-# TODO(Grisha): @Dan Deprecate `self` param after `get_file_path()` is generalized.
 def save_ccxt_market_data(
-    self: Any,
+    file_path: str,
     full_symbols: Optional[List[ivcu.FullSymbol]],
     im_client_params: Any,
     wall_clock_time: pd.Timestamp,
@@ -126,8 +125,8 @@ def save_ccxt_market_data(
 ) -> None:
     # pylint: disable=line-too-long
     """
-    Dump data from a CCXT `MarketData` for the last `period` and ending to
-    the current wall clock so that it can be used as `ReplayedMarketData`.
+    Dump data from a CCXT `MarketData` for the last `period` and ending to the
+    current wall clock so that it can be used as `ReplayedMarketData`.
 
     :param full_symbols: full symbols to load data for
         If `None`, all the symbols from the universe are taken
@@ -160,7 +159,6 @@ def save_ccxt_market_data(
         wall_clock_time=wall_clock_time,
     )
     # We should have data available for the period [`wall_clock_time` - `period`, `wall_clock_time`).
-    file_path = self.get_file_path()
     mdata.save_market_data(market_data_client, file_path, period)
     _LOG.warning("Updated file '%s'", file_path)
 
@@ -195,11 +193,11 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# ForecastSystem1_FitPredict_TestCase1
+# NonTime_ForecastSystem1_FitPredict_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
     """
     Test fit() and predict() methods on a System.
     """
@@ -281,11 +279,11 @@ class ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# ForecastSystem_FitInvariance_TestCase1
+# NonTime_ForecastSystem_FitInvariance_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
     """
     Check the behavior of a System for different amount of passed data history.
     """
@@ -326,11 +324,11 @@ class ForecastSystem_FitInvariance_TestCase1(hunitest.TestCase):
 
 
 # #############################################################################
-# ForecastSystem_CheckPnl_TestCase1
+# NonTime_ForecastSystem_CheckPnl_TestCase1
 # #############################################################################
 
 
-class ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
+class NonTime_ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
     def _test_fit_run1(
         self,
         system: dtfsyssyst.System,
@@ -544,10 +542,10 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
 
 class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase):
     """
-    Reconcile (non-time) `ForecastSystem` and `Time_ForecastSystem`.
+    Reconcile `NonTime_ForecastSystem` and `Time_ForecastSystem`.
 
-    Make sure that (non-time) `ForecastSystem` and `Time_ForecastSystem`
-    produce the same predictions.
+    Make sure that `NonTime_ForecastSystem` and `Time_ForecastSystem` produce
+    the same predictions.
     """
 
     @staticmethod
@@ -570,38 +568,15 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self, time_system: dtfsyssyst.System
     ) -> dtfsyssyst.System:
         """
-        Get the (non-time) `ForecastSystem` via initiated
-        `Time_ForecastSystem`.
+        Get the `NonTime_ForecastSystem` via initiated `Time_ForecastSystem`.
         """
 
     @abc.abstractmethod
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:
         """
-        Get the `Time_ForecastSystem` to be compared to the (non-time)
-        `ForecastSystem`.
+        Get the `Time_ForecastSystem` to be compared to the
+        `NonTime_ForecastSystem`.
         """
-
-    # TODO(Grisha): @Dan make `get_file_path()` free-standing.
-    def get_file_path(self) -> str:
-        """
-        Get path to a file with the market data to replay.
-
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_ForecastSystem_vs_Time_ForecastSystem1/input/data.csv.gz`.
-        """
-        input_dir = self.get_input_dir(
-            use_only_test_class=True,
-            use_absolute_path=False,
-        )
-        file_name = "data.csv.gz"
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        file_path = os.path.join(
-            s3_bucket_path,
-            "unit_test",
-            input_dir,
-            file_name,
-        )
-        return file_path
 
     # TODO(Grisha): Consolidate with `dtfsysysig.get_signature()`.
     def get_signature(self, result_bundle: dtfcore.ResultBundle, col: str) -> str:
@@ -620,7 +595,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
         self, non_time_system: dtfsyssyst.System, output_col_name: str
     ) -> str:
         """
-        Get (non-time) `ForecastSystem` outcome signature.
+        Get `NonTime_ForecastSystem` outcome signature.
         """
         # Run the system.
         method = "predict"
@@ -700,29 +675,6 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
 
     Add `ForecastEvaluatorFromPrices` to `Time_ForecastSystem` to compute research PnL.
     """
-
-    # TODO(Grisha): factor out, it is common for all the tests that read data
-    # from S3.
-    def get_file_path(self) -> str:
-        """
-        Get path to a file with the market data to replay.
-
-        E.g., `s3://.../unit_test/outcomes/Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio1/input/data.csv.gz`.
-        """
-        input_dir = self.get_input_dir(
-            use_only_test_class=True,
-            use_absolute_path=False,
-        )
-        file_name = "data.csv.gz"
-        aws_profile = "ck"
-        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-        file_path = os.path.join(
-            s3_bucket_path,
-            "unit_test",
-            input_dir,
-            file_name,
-        )
-        return file_path
 
     @abc.abstractmethod
     def get_Time_ForecastSystem(self) -> dtfsyssyst.System:

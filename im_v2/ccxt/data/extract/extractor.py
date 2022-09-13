@@ -83,41 +83,6 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         return list(self._exchange.load_markets().keys())
 
-    def download_order_book(self, currency_pair: str) -> Dict[str, Any]:
-        """
-        Download order book for a currency pair.
-
-        :param currency_pair: a currency pair, e.g. 'BTC_USDT'
-        :return: order book status. output is a nested dictionary with order book
-        at the moment of request. E.g.,
-            ```
-            {
-                'symbol': 'BTC/USDT',
-                'bids': [[62715.84, 0.002], [62714.0, 0.002], [62712.55, 0.0094]],
-                'asks': [[62715.85, 0.002], [62717.25, 0.1674]],
-                'timestamp': 1635248738159,
-                'datetime': '2021-10-26T11:45:38.159Z',
-                'nonce': None
-            }
-            ```
-        """
-        # Change currency pair to CCXT format.
-        currency_pair = currency_pair.replace("_", "/")
-        hdbg.dassert(
-            self._exchange.has["fetchOrderBook"],
-            "Exchange %s doesn't have fetchOrderBook",
-            self._exchange,
-        )
-        hdbg.dassert_in(
-            currency_pair,
-            self.currency_pairs,
-            "Currency pair is not present in exchange",
-        )
-        # Download current order book.
-        # TODO(Grisha): use `_` instead of `/` as currencies separator in `symbol`.
-        order_book = self._exchange.fetch_order_book(currency_pair)
-        return order_book
-
     def _download_ohlcv(
         self,
         exchange_id: str,
@@ -127,6 +92,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         end_timestamp: Optional[pd.Timestamp] = None,
         bar_per_iteration: Optional[int] = 500,
         sleep_time_in_secs: int = 1,
+        **kwargs: Any
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars.
@@ -192,8 +158,55 @@ class CcxtExtractor(imvcdexex.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return pd.concat(all_bars)
 
-    def _download_bid_ask(self, **kwargs) -> pd.DataFrame:
-        raise NotImplementedError("Bid_ask data is not available for CCXT vendor")
+    def _download_bid_ask(self, exchange_id: str, currency_pair: str, depth: int, **kwargs: Any) -> pd.DataFrame:
+        """
+        Download bid-ask data from CCXT.
+
+        :param exchange_id: exchange to download from
+         (not used, kept for compatibility with parent class).
+        :param currency_pair: currency pair to download, i.e. BTC_USDT.
+        :param depth: depth of the order book to download.
+        """
+        # TODO(Juraj): can we get rid of this duplication of information?
+        # exchange_id is set in constructor.
+        # Assign exchange_id to make it symmetrical to other vendors.
+        _ = exchange_id
+        hdbg.dassert(
+            self._exchange.has["fetchOrderBook"],
+            "Exchange %s doesn't has fetchOrderBook method",
+            self._exchange,
+        )
+        # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
+        currency_pair = self.convert_currency_pair(currency_pair, )
+        hdbg.dassert_in(
+            currency_pair,
+            self.currency_pairs,
+            "Currency pair is not present in exchange",
+        )
+        # Download order book data.
+        order_book = self._exchange.fetch_order_book(currency_pair, depth)
+        order_book["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        order_book = pd.DataFrame.from_dict(order_book)
+        # Separate price and size into columns.
+        order_book[["bid_price", "bid_size"]] = pd.DataFrame(
+            order_book.bids.to_list(), index=order_book.index
+        )
+        order_book[["ask_price", "ask_size"]] = pd.DataFrame(
+            order_book.asks.to_list(), index=order_book.index
+        )
+        order_book["level"] = order_book.index + 1
+        # Select bid/ask columns.
+        bid_ask_columns = [
+            "timestamp",
+            "bid_price",
+            "bid_size",
+            "ask_price",
+            "ask_size",
+            "end_download_timestamp",
+            "level"
+        ]
+        bid_ask = order_book[bid_ask_columns]
+        return bid_ask
 
     def _download_trades(self, **kwargs) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for CCXT vendor")

@@ -4,8 +4,9 @@ Import as:
 import dataflow_amp.system.Cx.Cx_builders as dtfasccxbu
 """
 
+import datetime
 import logging
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Union
 
 import pandas as pd
 
@@ -27,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # #############################################################################
-# Market data instances
+# Market data instances.
 # #############################################################################
 
 
@@ -79,20 +80,20 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     return market_data
 
 
+# TODO(Grisha): @Dan Move to `system_builder_utils.py`.
 def get_Cx_ReplayedMarketData_from_file(
-    file_path: str, *, aws_profile: Optional[str] = None
-) -> pd.DataFrame:
+    system: dtfsys.System,
+) -> mdata.ReplayedMarketData:
     """
-    Get data for `ReplayedMarketData`.
-
-    :param file_path: either s3 or a local root path to the file with data
-    :param aws_profile: AWS profile, e.g., "ck"
-    :return: data for replaying
+    Build a `ReplayedMarketData` backed with data from the specified file.
     """
+    file_path = system.config["market_data_config", "file_path"]
+    aws_profile = "ck"
     hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
-    # `get_ReplayedTimeMarketData_from_df()` is looking for "start_datetime"
-    # and "end_datetime" columns by default and we do not have a way to
-    # change it yet since `get_EventLoop_MarketData_from_df` has no kwargs.
+    # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
+    # TODO(Grisha): @Dan Refactor default column names in system related functions.
+    # Multiple functions that build the system are looking for "start_datetime"
+    # and "end_datetime" columns by default.
     column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
     timestamp_db_column = "end_datetime"
     datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
@@ -104,7 +105,26 @@ def get_Cx_ReplayedMarketData_from_file(
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
     )
-    return market_data_df
+    # Fill system config with asset ids from data for Portfolio.
+    hdbg.dassert_not_in(("market_data_config", "asset_ids"), system.config)
+    # TODO(Grisha): @Dan Add a method to `MarketData.get_asset_ids()` that does
+    #  `list(df[asset_id_col_name].unique())`.
+    system.config["market_data_config", "asset_ids"] = (
+        market_data_df["asset_id"].unique().tolist()
+    )
+    # Initialize market data client.
+    event_loop = system.config["event_loop_object"]
+    replayed_delay_in_mins_or_timestamp = system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ]
+    delay_in_secs = system.config["market_data_config", "delay_in_secs"]
+    market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+        event_loop,
+        replayed_delay_in_mins_or_timestamp,
+        market_data_df,
+        delay_in_secs=delay_in_secs,
+    )
+    return market_data
 
 
 # #############################################################################
@@ -172,6 +192,10 @@ def get_process_forecasts_node_dict_prod_instance1(
         compute_target_positions_kwargs,
         root_log_dir,
     )
+    # Set backend suitable for working with Binance.
+    process_forecasts_node_dict["process_forecasts_dict"]["optimizer_config"][
+        "backend"
+    ] = "cc_pomo"
     return process_forecasts_node_dict
 
 
@@ -372,3 +396,97 @@ def get_Cx_portfolio(
         # )
         pass
     return portfolio
+
+
+# #############################################################################
+# Apply config utils.
+# #############################################################################
+
+
+def apply_Cx_MarketData_config(
+    system: dtfsys.System,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
+) -> dtfsys.System:
+    """
+    Extend system config with parameters for `MarketData` init.
+    """
+    system.config["market_data_config", "asset_id_col_name"] = "asset_id"
+    system.config["market_data_config", "delay_in_secs"] = 10
+    system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ] = replayed_delay_in_mins_or_timestamp
+    return system
+
+
+def apply_Cx_DagRunner_config(
+    system: dtfsys.System,
+    rt_timeout_in_secs_or_time: Union[int, datetime.time],
+) -> dtfsys.System:
+    """
+    Extend system config with parameters for `DagRunner` init.
+    """
+    # TODO(Grisha): infer bar duration from `DagBuilder`.
+    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
+    system.config["dag_runner_config", "fit_at_beginning"] = system.config[
+        "dag_builder_object"
+    ].fit_at_beginning
+    system.config[
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ] = rt_timeout_in_secs_or_time
+    return system
+
+
+# TODO(Grisha): @Dan pass values as params.
+def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
+    """
+    Extend system config with parameters for research PNL computations.
+    """
+    system.config["research_pnl", "price_col"] = "vwap"
+    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
+    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj_2_hat"
+    return system
+
+
+def apply_Cx_ForecastEvaluatorFromPrices_config(
+    system: dtfsys.System,
+) -> dtfsys.System:
+    """
+    Extend system config with parameters for `ForecastEvaluatorFromPrices`
+    init.
+    """
+    forecast_evaluator_from_prices_dict = {
+        "style": "cross_sectional",
+        "init": {
+            "price_col": system.config["research_pnl", "price_col"],
+            "volatility_col": system.config["research_pnl", "volatility_col"],
+            "prediction_col": system.config["research_pnl", "prediction_col"],
+        },
+        "kwargs": {
+            "target_gmv": 1e5,
+            "liquidate_at_end_of_day": False,
+        },
+    }
+    system.config[
+        "research_forecast_evaluator_from_prices"
+    ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
+    return system
+
+
+def apply_Cx_OrderProcessor_config(system: dtfsys.System) -> dtfsys.System:
+    """
+    Extend system config with parameters for `OrderProcessor` init.
+    """
+    # If an order is not placed within a bar, then there is a timeout, so
+    # we add extra 5 seconds to `bar_duration_in_secs` (which represents
+    # the length of a trading bar) to make sure that the `OrderProcessor`
+    # waits long enough before timing out.
+    max_wait_time_for_order_in_secs = (
+        system.config["dag_runner_config", "bar_duration_in_secs"] + 5
+    )
+    system.config[
+        "order_processor_config", "max_wait_time_for_order_in_secs"
+    ] = max_wait_time_for_order_in_secs
+    system.config["order_processor_config", "duration_in_secs"] = system.config[
+        "dag_runner_config", "rt_timeout_in_secs_or_time"
+    ]
+    return system
