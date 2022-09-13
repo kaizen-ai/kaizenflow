@@ -142,7 +142,7 @@ def get_Cx_ReplayedMarketData_from_file_prod(
     # TODO(Grisha): @Dan Refactor default column names in system related functions.
     # Multiple functions that build the system are looking for "start_datetime"
     # and "end_datetime" columns by default.
-    column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
+    column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
     timestamp_db_column = "end_datetime"
     datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
     # Get market data for replaying.

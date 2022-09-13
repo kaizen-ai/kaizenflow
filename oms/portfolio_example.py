@@ -15,6 +15,7 @@ import helpers.hsql as hsql
 import market_data as mdata
 import oms.broker as ombroker
 import oms.broker_example as obroexam
+import oms.ccxt_broker as occxbrok
 import oms.oms_db as oomsdb
 import oms.portfolio as omportfo
 
@@ -117,7 +118,7 @@ def get_DataFramePortfolio_example3(
     _ = event_loop
     _ = timestamp_col
     # Build a SimulatedBroker.
-    broker = ombroker.get_SimulatedCcxtBroker_prod_instance1(market_data)
+    broker = occxbrok.get_SimulatedCcxtBroker_prod_instance1(market_data)
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.
     initial_cash = 700
