@@ -475,6 +475,32 @@ def get_DataFramePortfolio_from_System(
     return portfolio
 
 
+def get_DataFramePortfolio_from_System_prod(
+    system: dtfsyssyst.System,
+) -> oms.Portfolio:
+    """
+    Build a `DataFramePortfolio` from a system config.
+    """
+    event_loop = system.config["event_loop_object"]
+    market_data = system.market_data
+    mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
+    pricing_method = system.config["portfolio_config", "pricing_method"]
+    asset_ids = system.config["market_data_config", "asset_ids"]
+    portfolio = oms.get_DataFramePortfolio_example3(
+        event_loop,
+        market_data=market_data,
+        mark_to_market_col=mark_to_market_col,
+        pricing_method=pricing_method,
+        asset_ids=asset_ids,
+    )
+    # TODO(gp): We should pass the column_remap to the Portfolio builder,
+    # instead of injecting it after the fact.
+    portfolio.broker._column_remap = system.config[
+        "portfolio_config", "column_remap"
+    ]
+    return portfolio
+
+
 # TODO(Grisha): Generalize `get_DatabasePortfolio_from_System` and
 #  `get_DataFramePortfolio_from_System`.
 def get_DatabasePortfolio_from_System(

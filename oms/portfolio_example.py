@@ -98,6 +98,43 @@ def get_DataFramePortfolio_example2(
     return portfolio
 
 
+# TODO(Grisha): @Dan Combine with other examples.
+def get_DataFramePortfolio_example3(
+    event_loop: Optional[asyncio.AbstractEventLoop],
+    *,
+    market_data: Optional[mdata.MarketData] = None,
+    mark_to_market_col: str = "price",
+    pricing_method: str = "last",
+    timestamp_col: str = "end_datetime",
+    asset_ids: Optional[List[int]] = None,
+) -> omportfo.DataFramePortfolio:
+    """
+    Contain:
+    - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
+      track of the state)
+    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
+    """
+    _ = event_loop
+    _ = timestamp_col
+    # Build a SimulatedBroker.
+    broker = ombroker.get_SimulatedCcxtBroker_prod_instance1(market_data)
+    # TODO(Grisha): @Dan Pass parameters via config.
+    # Build a DataFramePortfolio.
+    initial_cash = 700
+    mark_to_market_col = "close"
+    trading_period_str = "5T"
+    pricing_method = "twap." + trading_period_str
+    portfolio = omportfo.DataFramePortfolio.from_cash(
+        broker,
+        mark_to_market_col,
+        pricing_method,
+        #
+        initial_cash=initial_cash,
+        asset_ids=asset_ids,
+    )
+    return portfolio
+
+
 # #############################################################################
 # DatabasePortfolio
 # #############################################################################

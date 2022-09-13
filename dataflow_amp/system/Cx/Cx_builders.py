@@ -60,6 +60,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
     """
     Build a `MarketData` backed with `RealTimeImClient`.
     """
+    _LOG.debug(hprint.to_str("asset_ids"))
     # TODO(Grisha): @Dan pass as much as possible via `system.config`.
     resample_1min = False
     # Get environment variables with login info.
@@ -127,6 +128,45 @@ def get_Cx_ReplayedMarketData_from_file(
     return market_data
 
 
+def get_Cx_ReplayedMarketData_from_file_prod(
+    system: dtfsys.System,
+) -> mdata.ReplayedMarketData:
+    """
+    Build a `ReplayedMarketData` backed with data from the specified file.
+    """
+    file_path = system.config["market_data_config", "file_path"]
+    aws_profile = "ck"
+    hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
+    # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
+    # TODO(Grisha): @Dan Refactor default column names in system related functions.
+    # Multiple functions that build the system are looking for "start_datetime"
+    # and "end_datetime" columns by default.
+    column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
+    timestamp_db_column = "end_datetime"
+    datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
+    # Get market data for replaying.
+    market_data_df = mdata.load_market_data(
+        file_path,
+        aws_profile=aws_profile,
+        column_remap=column_remap,
+        timestamp_db_column=timestamp_db_column,
+        datetime_columns=datetime_columns,
+    )
+    # Initialize market data client.
+    event_loop = system.config["event_loop_object"]
+    replayed_delay_in_mins_or_timestamp = system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ]
+    delay_in_secs = system.config["market_data_config", "delay_in_secs"]
+    market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(
+        event_loop,
+        replayed_delay_in_mins_or_timestamp,
+        market_data_df,
+        delay_in_secs=delay_in_secs,
+    )
+    return market_data
+
+
 # #############################################################################
 # Process forecasts configs.
 # #############################################################################
@@ -137,8 +177,7 @@ def get_Cx_process_forecasts_node_dict_example1(
     system: dtfsys.System,
 ) -> Dict[str, Any]:
     """
-    Get the dictionary with `ProcessForecastsNode` config params for C1b
-    pipeline.
+    Build the `ProcessForecastsNode` dictionary for simulation.
     """
     prediction_col = "vwap.ret_0.vol_adj_2_hat"
     volatility_col = "vwap.ret_0.vol"
@@ -150,7 +189,7 @@ def get_Cx_process_forecasts_node_dict_example1(
         "bulk_fill_method": "zero",
         "target_gmv": 1e5,
     }
-    root_log_dir = None
+    root_log_dir = system.config.get("system_log_dir")
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
@@ -161,6 +200,41 @@ def get_Cx_process_forecasts_node_dict_example1(
         compute_target_positions_kwargs,
         root_log_dir,
     )
+    return process_forecasts_node_dict
+
+
+# TODO(Grisha): @Dan Combine with `get_Cx_process_forecasts_node_dict_example1`.
+# TODO(gp): -> ...ProcessForecastsNode...
+def get_Cx_process_forecasts_node_dict_example2(
+    system: dtfsys.System,
+) -> Dict[str, Any]:
+    """
+    Build the `ProcessForecastsNode` dictionary for production system.
+    """
+    prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    volatility_col = "vwap.ret_0.vol"
+    spread_col = None
+    order_duration_in_mins = 5
+    style = "cross_sectional"
+    compute_target_positions_kwargs = {
+        "bulk_frac_to_remove": 0.0,
+        "target_gmv": 700.0,
+    }
+    root_log_dir = system.config.get("system_log_dir")
+    process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
+        system.portfolio,
+        prediction_col,
+        volatility_col,
+        spread_col,
+        order_duration_in_mins,
+        style,
+        compute_target_positions_kwargs,
+        root_log_dir,
+    )
+    # Set backend suitable for working with Binance.
+    process_forecasts_node_dict["process_forecasts_dict"]["optimizer_config"][
+        "backend"
+    ] = "cc_pomo"
     return process_forecasts_node_dict
 
 
@@ -252,6 +326,28 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
     process_forecasts_node_dict = get_Cx_process_forecasts_node_dict_example1(
+        system
+    )
+    system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
+        process_forecasts_node_dict
+    )
+    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
+    # Append the `ProcessForecastNode`.
+    dag = dtfsys.add_process_forecasts_node(system, dag)
+    return dag
+
+
+# TODO(Grisha): @Dan Combine with `get_Cx_RealTimeDag_example3`.
+def get_Cx_RealTimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
+    """
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode` for
+    a production system.
+    """
+    hdbg.dassert_isinstance(system, dtfsys.System)
+    system = dtfsys.apply_history_lookback(system)
+    dag = dtfsys.add_real_time_data_source(system)
+    # Configure a `ProcessForecastNode`.
+    process_forecasts_node_dict = get_Cx_process_forecasts_node_dict_example2(
         system
     )
     system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
