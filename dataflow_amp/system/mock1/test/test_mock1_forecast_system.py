@@ -388,8 +388,6 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # Get start time for `ForecastSystem` using history lookback
         # and by adding 1 min to exclude the end of 5 min interval.
         start_timestamp = end_timestamp - history_lookback + pd.Timedelta("1T")
-        # TODO(Grisha): @Dan Use different system builder func since the used
-        # one is intended to load data for 2 asset ids.
         non_time_system_builder_func = (
             self.get_NonTime_ForecastSystem_builder_func()
         )

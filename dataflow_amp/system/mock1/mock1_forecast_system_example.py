@@ -176,8 +176,8 @@ def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
     system = dtfasmmfosy.Mock1_Time_ForecastSystem()
     #
     # The test decides when to start the execution.
-    # The data inside the market data starts at 2021-12-19 19:00:00-05:00.
-    # We want to have 7 days of burn in for the model.
+    # The data inside the market data starts at 2000-01-01 09:31:00-05:00.
+    # We want to have 10 minutes of burn in for the model.
     system.config[
         "market_data_config", "replayed_delay_in_mins_or_timestamp"
     ] = 10
