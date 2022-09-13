@@ -58,54 +58,25 @@ market_data_df = mdata.load_market_data(
 )
 
 # %%
-# event_loop = None
-# replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 18 * 60 + 55
-# market_data, _ = mdata.get_ReplayedTimeMarketData_from_df(event_loop, replayed_delay_in_mins_or_timestamp, market_data_df, delay_in_secs=10)
-
-# %% run_control={"marked": true}
-# tmp = market_data._df[market_data._df["asset_id"] == 1464553467]
-# tmp["end_datetime"] = tmp["end_datetime"].dt.tz_convert("America/New_York")
-# tmp1 = tmp.set_index("end_datetime").sort_index()
-# tmp1.loc["2022-09-08 09:58:00"::]
+min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
+min_start_time_col_name
 
 # %%
-# start_time = pd.Timestamp("2022-09-08 09:59:00-04:00", tz='America/New_York')
-# ts_col_name = "start_datetime"
-# asset_ids = [1464553467]
-# market_data.get_data_at_timestamp(start_time, ts_col_name, asset_ids)
+max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
+max_start_time_col_name
 
 # %%
-# start_ts=pd.Timestamp('2022-09-08 09:58:59-0400', tz='America/New_York')
-# end_ts=pd.Timestamp('2022-09-08 09:59:01-0400', tz='America/New_York')
-# ts_col_name='start_datetime'
-# asset_ids=[1464553467]
-# market_data.get_data_for_interval
+replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 21 * 60 + 7
+initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
+    minutes=replayed_delay_in_mins_or_timestamp
+)
+initial_replayed_timestamp
 
 # %%
-# min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
-# min_start_time_col_name
-
-# %%
-# dct = {"1": "b", "2": "b"}
-# dct2 = {int(k):v for k,v in dct.items()}
-# dct2
-
-# %%
-# max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
-# max_start_time_col_name
-
-# %%
-# replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 18 * 60 + 55
-# initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
-#     minutes=replayed_delay_in_mins_or_timestamp
-# )
-# initial_replayed_timestamp
-
-# %%
-date = "2022-09-08"
-start_timestamp = pd.Timestamp(date + " 09:55:00", tz="America/New_York")
+date = "2022-09-13"
+start_timestamp = pd.Timestamp(date + " 09:20:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 10:50:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 11:45:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
@@ -114,9 +85,10 @@ prod_dir = (
     #"/shared_data/system_log_dir_2022-09-06_15:56:09"
     #"/shared_data/system_log_dir_20220908_095612/"
     #"/shared_data/system_log_dir_20220908_095626/"
-    "/shared_data/system_log_dir_20220913_1hour"
+    #"/shared_data/system_log_dir_20220913_1hour"
+    "/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
 )
-sim_dir = "/shared_data/system_log_dir"
+sim_dir = "/shared_data/prod_reconciliation/20220913/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
@@ -213,6 +185,20 @@ def print_stats(df: pd.DataFrame, config) -> None:
 # ## Load prod and sim forecasts
 
 # %%
+import oms.portfolio as omportfo
+
+holdings = omportfo.Portfolio._load_df_from_files(prod_portfolio_dir, "holdings", "America/New_York")
+holdings.head(3)
+
+# %%
+holdings_mtm = omportfo.Portfolio._load_df_from_files(prod_portfolio_dir, "holdings_marked_to_market", "America/New_York")
+holdings_mtm.head(3)
+
+# %%
+flows = omportfo.Portfolio._load_df_from_files(prod_portfolio_dir, "flows", "America/New_York")
+flows.head(3)
+
+# %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["prod_forecast_dir"]
 )
@@ -234,7 +220,8 @@ prod_forecast_delay = compute_delay(prod_forecast_df, config["freq"])
 hpandas.df_to_str(prod_forecast_delay, log_level=logging.INFO)
 
 # %%
-prod_forecast_delay.plot()
+# Plot delay in seconds.
+prod_forecast_delay.dt.total_seconds().plot(title="delay in seconds")
 
 # %%
 prod_forecast_df.index = prod_forecast_df.index.round(config["freq"])
@@ -323,7 +310,7 @@ prod_portfolio_delay = compute_delay(prod_portfolio_df, config["freq"])
 hpandas.df_to_str(prod_portfolio_delay, log_level=logging.INFO)
 
 # %%
-prod_portfolio_delay.plot()
+prod_portfolio_delay.dt.total_seconds().plot(title="delay in seconds")
 
 # %%
 _LOG.info("prod portfolio delay mean=%s", prod_portfolio_delay.mean())
