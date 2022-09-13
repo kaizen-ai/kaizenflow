@@ -48,7 +48,7 @@ hprint.config_notebook()
 # # Functions
 
 # %%
-def load_the_data(
+def load_and_transform_the_data(
     universe, start_ts, end_ts, columns, filter_data_mode, cols, is_db: bool
 ):
     if is_db:
@@ -62,7 +62,7 @@ def load_the_data(
         df.index = df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="T")
         )
-    df = df[bid_ask_cols]
+    df = df[cols]
     df = df.reset_index().set_index(["timestamp", "full_symbol"])
     return df
 
@@ -124,7 +124,8 @@ print("\n", "Intersected universe:", "\n", universe)
 # ## Adjust universe
 
 # %%
-# Not in CC:
+# Even though they're in the intersected universe,
+# they are not downloaded in CC.
 universe.remove("binance::XRP_USDT")
 universe.remove("binance::DOT_USDT")
 
@@ -136,8 +137,7 @@ universe
 # %%
 # DB data starts from here.
 start_ts = pd.Timestamp("2022-09-08 22:06:00+00:00")
-end_ts = None
-columns = None
+end_ts = columns = None
 filter_data_mode = "assert"
 bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size", "full_symbol"]
 
@@ -145,7 +145,7 @@ bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size", "full_symbol"]
 # ## Load data
 
 # %%
-data_cc = load_the_data(
+data_cc = load_and_transform_the_data(
     universe,
     start_ts,
     end_ts,
@@ -154,7 +154,7 @@ data_cc = load_the_data(
     bid_ask_cols,
     is_db=False,
 )
-data_db = load_the_data(
+data_db = load_and_transform_the_data(
     universe,
     start_ts,
     end_ts,
@@ -166,18 +166,6 @@ data_db = load_the_data(
 
 # %% [markdown]
 # # Analysis
-
-# %%
-# bid_ask_cols = ['bid_price', 'bid_size', 'ask_price', 'ask_size', 'full_symbol']
-
-# data_cc = cc_parquet_client.read_data(universe, start_ts, end_ts, columns, filter_data_mode)
-# data_cc = data_cc[bid_ask_cols]
-# data_cc = data_cc.reset_index().set_index(["timestamp", "full_symbol"])
-# #
-# data_db = db_im_client.read_data(universe, start_ts, end_ts, columns, filter_data_mode)
-# data_db = transform_db_data(data_db)
-# data_db = data_db[bid_ask_cols]
-# data_db = data_db.reset_index().set_index(["timestamp", "full_symbol"])
 
 # %% [markdown]
 # ## Merge CC and DB data into one DataFrame
@@ -198,17 +186,21 @@ display(data.tail())
 # ## Calculate differences
 
 # %%
-bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
-
+# Full symbol will not be relevant in calculation loops below.
+bid_ask_cols.remove("full_symbol")
+# Each bid ask value will have a notional and a relative difference between two sources. 
 for col in bid_ask_cols:
+    # Notional difference: CC value - DB value.
     data[f"{col}_diff"] = data[f"{col}_cc"] - data[f"{col}_db"]
+    # Relative value: (CC value - DB value)/DB value.
     data[f"{col}_relative_diff"] = (data[f"{col}_cc"] - data[f"{col}_db"]) / data[
-        f"{col}_cc"
+        f"{col}_db"
     ]
 
 data.head()
 
 # %%
+# Calculate the mean value of differences for each coin.
 diff_stats = []
 grouper = data.groupby(["full_symbol"])
 for col in bid_ask_cols:
@@ -218,9 +210,7 @@ for col in bid_ask_cols:
 diff_stats = pd.concat(diff_stats, axis=1)
 
 # %% [markdown]
-# ## Show differences
-
-# %%
+# ## Show stats for differences
 
 # %% [markdown]
 # ### Prices
@@ -229,10 +219,16 @@ diff_stats = pd.concat(diff_stats, axis=1)
 diff_stats[["bid_price_relative_diff", "ask_price_relative_diff"]]
 
 # %% [markdown]
+# As one can see, the difference between bid and ask prices in DB and CC are less than 1%.
+
+# %% [markdown]
 # ### Sizes
 
 # %%
 diff_stats[["bid_size_relative_diff", "ask_size_relative_diff"]]
+
+# %% [markdown]
+# The difference between bid and ask sizes in DB and CC is solid and accounts for more than 100% for each full symbol.
 
 # %% [markdown]
 # ## Correlations
@@ -241,28 +237,38 @@ diff_stats[["bid_size_relative_diff", "ask_size_relative_diff"]]
 # ### Bid price
 
 # %%
-corr_matrix = data[["ask_price_cc", "ask_price_db"]].groupby(level=1).corr()
-corr_matrix
+bid_price_corr_matrix = data[["bid_price_cc", "bid_price_db"]].groupby(level=1).corr()
+bid_price_corr_matrix
+
+# %% [markdown]
+# Correlation stats confirms the stats above: bid prices in DB and CC are highly correlated.
 
 # %% [markdown]
 # ### Ask price
 
 # %%
-corr_matrix = data[["bid_price_cc", "bid_price_db"]].groupby(level=1).corr()
-corr_matrix
+ask_price_corr_matrix = data[["ask_price_cc", "ask_price_db"]].groupby(level=1).corr()
+ask_price_corr_matrix
+
+# %% [markdown]
+# Correlation stats confirms the stats above: ask prices in DB and CC are highly correlated.
 
 # %% [markdown]
 # ### Bid size
 
 # %%
-corr_matrix = data[["bid_size_cc", "bid_size_db"]].groupby(level=1).corr()
-corr_matrix
+bid_size_corr_matrix = data[["bid_size_cc", "bid_size_db"]].groupby(level=1).corr()
+bid_size_corr_matrix
+
+# %% [markdown]
+# Correlation stats confirms the stats above: bid sizes in DB and CC are not correlated.
 
 # %% [markdown]
 # ### Ask size
 
 # %%
-corr_matrix = data[["ask_size_cc", "ask_size_db"]].groupby(level=1).corr()
-corr_matrix
+ask_size_corr_matrix = data[["ask_size_cc", "ask_size_db"]].groupby(level=1).corr()
+ask_size_corr_matrix
 
-# %%
+# %% [markdown]
+# Correlation stats confirms the stats above: ask sizes in DB and CC are not correlated.
