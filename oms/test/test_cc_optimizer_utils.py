@@ -2,11 +2,11 @@ import unittest.mock as umock
 
 import pandas as pd
 
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
-import helpers.hpandas as hpandas
 import oms.secrets.secret_identifier as oseseide
 
 
@@ -156,7 +156,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         with umock.patch.object(
             broker, "get_low_market_price", create=True
         ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API.
+            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
             market_price_mock.return_value = 100.0
             # Run.
             actual = occoputi.apply_cc_limits(order_df, broker)
@@ -173,7 +173,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         with umock.patch.object(
             broker, "get_low_market_price", create=True
         ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API.
+            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
             market_price_mock.return_value = 100.0
             # Run.
             actual = occoputi.apply_cc_limits(order_df, broker)
@@ -192,7 +192,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         with umock.patch.object(
             broker, "get_low_market_price", create=True
         ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API.
+            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
             market_price_mock.return_value = 100.0
             # Run.
             actual = occoputi.apply_cc_limits(order_df, broker)
