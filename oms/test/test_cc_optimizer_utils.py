@@ -188,7 +188,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         """
         # Build orders and broker.
         below_min = True
-        order_df = self.get_test_orders()
+        order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         # Set broker stage to imitate testnet.
         broker.stage = "local"
