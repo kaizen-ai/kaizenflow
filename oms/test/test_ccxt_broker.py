@@ -15,7 +15,7 @@ import oms.order as omorder
 import oms.secrets.secret_identifier as oseseide
 
 
-#@pytest.mark.skip(reason="Enable after CmTask #2816")
+@pytest.mark.skip(reason="Enable after CmTask #2816")
 class TestCcxtBroker1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
