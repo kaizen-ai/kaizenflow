@@ -475,6 +475,7 @@ def get_DataFramePortfolio_from_System(
     return portfolio
 
 
+# TODO(Grisha): @Dan Combine with `get_DataFramePortfolio_from_System()`.
 def get_DataFramePortfolio_from_System_prod(
     system: dtfsyssyst.System,
 ) -> oms.Portfolio:

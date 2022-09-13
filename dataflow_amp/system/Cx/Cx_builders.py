@@ -128,7 +128,7 @@ def get_Cx_ReplayedMarketData_from_file(
     return market_data
 
 
-# TODO(Grisha): @Dan Combine with `get_Cx_ReplayedMarketData_from_file`.
+# TODO(Grisha): @Dan Combine with `get_Cx_ReplayedMarketData_from_file()`.
 def get_Cx_ReplayedMarketData_from_file_prod(
     system: dtfsys.System,
 ) -> mdata.ReplayedMarketData:
