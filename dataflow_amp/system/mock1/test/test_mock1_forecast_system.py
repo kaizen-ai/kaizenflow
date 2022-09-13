@@ -62,14 +62,14 @@ class Test_Mock1_NonTime_ForecastSystem_FitPredict(
 
     def test_fit_over_backtest_period1(self) -> None:
         system = self.get_system()
-        output_col_name = "vwap.ret_0.vol_adj.c"
+        output_col_name = "vwap.ret_0.vol_adj_2_hat"
         self._test_fit_over_backtest_period1(system, output_col_name)
 
     def test_fit_over_period1(self) -> None:
         system = self.get_system()
         start_timestamp = pd.Timestamp("2000-01-01 00:00:00+0000", tz="UTC")
         end_timestamp = pd.Timestamp("2000-01-31 00:00:00+0000", tz="UTC")
-        output_col_name = "vwap.ret_0.vol_adj.c"
+        output_col_name = "vwap.ret_0.vol_adj_2_hat"
         self._test_fit_over_period1(
             system,
             start_timestamp,
@@ -155,7 +155,7 @@ class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1)
         ] = rt_timeout_in_secs_or_time
         system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
         #
-        output_col_name = "vwap.ret_0.vol_adj.c"
+        output_col_name = "vwap.ret_0.vol_adj_2_hat"
         self._test1(
             system,
             output_col_name=output_col_name,
