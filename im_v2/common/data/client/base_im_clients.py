@@ -724,6 +724,9 @@ class SqlRealTimeImClient(RealTimeImClient):
             columns = data.columns
         hdbg.dassert_is_subset(columns, data.columns.to_list())
         data = data[columns]
+        # Hack for assertion, see `CMTask2826 - Pseudo-duplicates in ccxt_bid_ask_futures_test DB table`.
+        if "level" in data.columns:
+            data = data[data["level"]==1]
         return data
 
     def _build_select_query(
