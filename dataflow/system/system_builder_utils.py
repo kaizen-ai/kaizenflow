@@ -463,11 +463,13 @@ def get_DataFramePortfolio_from_System(
     asset_ids = system.config["market_data_config", "asset_ids"]
     if is_prod:
         portfolio = oms.get_DataFramePortfolio_example3(
-        market_data=market_data, asset_ids=asset_ids
-    )
+            market_data=market_data, asset_ids=asset_ids
+        )
     else:
         event_loop = system.config["event_loop_object"]
-        mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
+        mark_to_market_col = system.config[
+            "portfolio_config", "mark_to_market_col"
+        ]
         pricing_method = system.config["portfolio_config", "pricing_method"]
         portfolio = oms.get_DataFramePortfolio_example1(
             event_loop,

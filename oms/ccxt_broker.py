@@ -680,9 +680,8 @@ def get_CcxtBroker_prod_instance1(
 
 
 class SimulatedCcxtBroker(ombroker.SimulatedBroker):
-
     def __init__(
-        self, 
+        self,
         *args: Any,
         stage: str,
         minimal_order_limits: Dict[int, float],
@@ -700,13 +699,12 @@ def get_SimulatedCcxtBroker_prod_instance1(market_data: pd.DataFrame):
     file_name = "/shared_data/minimal_order_limits.json"
     minimal_order_limits = hio.from_json(file_name)
     # Convert to int, because asset_ids are integers.
-    minimal_order_limits = {int(k):v for k,v in minimal_order_limits.items()}
+    minimal_order_limits = {int(k): v for k, v in minimal_order_limits.items()}
     stage = "preprod"
-    account_type = "trading"
     strategy_id = "C1b"
     broker = SimulatedCcxtBroker(
         strategy_id,
-        market_data, 
+        market_data,
         stage=stage,
         minimal_order_limits=minimal_order_limits,
     )

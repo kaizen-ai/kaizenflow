@@ -98,7 +98,10 @@ def get_Cx_ReplayedMarketData_from_file(
     # Multiple functions that build the system are looking for "start_datetime"
     # and "end_datetime" columns by default.
     if is_prod:
-        column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
+        column_remap = {
+            "start_timestamp": "start_datetime",
+            "end_timestamp": "end_datetime",
+        }
     else:
         column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
     timestamp_db_column = "end_datetime"
@@ -177,7 +180,9 @@ def get_ProcessForecastsNode_dict_instance1(
     )
     if is_prod:
         # Set backend suitable for working with Binance.
-        process_forecasts_node_dict["process_forecasts_dict"]["optimizer_config"]["backend"] = "cc_pomo"
+        process_forecasts_node_dict["process_forecasts_dict"]["optimizer_config"][
+            "backend"
+        ] = "cc_pomo"
     return process_forecasts_node_dict
 
 
@@ -250,8 +255,8 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
 # TODO(Grisha): @Dan Combine with `get_Cx_RealTimeDag_example2`.
 def get_Cx_RealTimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
     """
-    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode` for
-    a production system.
+    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode` for a
+    production system.
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     system = dtfsys.apply_history_lookback(system)
@@ -346,9 +351,7 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
     # TODO(gp): It seems that we inlined the code somewhere so we should factor it
     #  out.
     # get_process_forecasts_node_dict_func = dtfsys.get_process_forecasts_dict_example3
-    get_process_forecasts_node_dict_func = (
-        get_ProcessForecastsNode_dict_instance1
-    )
+    get_process_forecasts_node_dict_func = get_ProcessForecastsNode_dict_instance1
     dag = _get_Cx_dag_prod_instance1(system, get_process_forecasts_node_dict_func)
     return dag
 
