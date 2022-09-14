@@ -163,6 +163,7 @@ def get_ProcessForecastsNode_dict_instance1(
             "bulk_fill_method": "zero",
             "target_gmv": 1e5,
         }
+        # TODO(Grisha): @Dan Consider passing `system.config.get("system_log_dir")`.
         root_log_dir = None
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
