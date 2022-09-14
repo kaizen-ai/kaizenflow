@@ -78,7 +78,8 @@ def _resample_bid_ask_data(
         {
             "bid_size": "sum",
             "ask_size": "sum",
-            "exchange_id": "last",
+            # "exchange_id": "last",
+            "full_symbol": "last",
         }
     )
     df.insert(0, "bid_price", bid_ask_price_df["bid_size"])

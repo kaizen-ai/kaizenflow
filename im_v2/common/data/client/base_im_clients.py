@@ -324,7 +324,9 @@ class ImClient(abc.ABC):
         )
         # 3) Resample index to 1 min frequency if specified.
         if resample_1min:
-            df = hpandas.resample_df(df, "T")
+            # df = hpandas.resample_df(df, "T")
+            import im_v2.common.data.transform.resample_bid_ask_data as imvcdtrbad
+            df = imvcdtrbad._resample_bid_ask_data(df)
             # Fill NaN values appeared after resampling in full symbol column.
             # Combination of full symbol and timestamp is a unique identifier,
             # so full symbol cannot be NaN.

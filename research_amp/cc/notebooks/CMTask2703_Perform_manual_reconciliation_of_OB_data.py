@@ -20,6 +20,9 @@
 # # Imports
 
 # %%
+# %load_ext autoreload
+# %autoreload 2
+
 import logging
 import os
 
@@ -85,7 +88,7 @@ def get_cmtask2703_config() -> cconconf.Config:
             "read_data": {
                 # DB data starts from here.
                 "start_ts": pd.Timestamp("2022-09-08 22:06:00+00:00"),
-                "end_ts": pd.Timestamp("2022-09-12 00:00:00+00:00"),
+                "end_ts": pd.Timestamp("2022-09-13 00:00:00+00:00"),
                 "columns": None,
                 "filter_data_mode": "assert",
             },
@@ -122,15 +125,15 @@ def load_and_transform_the_data(
     filter_data_mode,
 ):
     if is_ccxt:
-        df = cc_parquet_client.read_data(
-            universe, start_ts, end_ts, columns, filter_data_mode
-        )
-    else:
         df = ccxt_im_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
         df.index = df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="T")
+        )
+    else:
+        df = cc_parquet_client.read_data(
+            universe, start_ts, end_ts, columns, filter_data_mode
         )
     df = df[bid_ask_cols]
     df = df.reset_index().set_index(["timestamp", "full_symbol"])
@@ -262,7 +265,7 @@ for col in bid_ask_cols:
 diff_stats = pd.concat(diff_stats, axis=1)
 
 # %% [markdown]
-# ## Show stats for differences
+# ## Show stats for differences (in %)
 
 # %% [markdown]
 # ### Prices
