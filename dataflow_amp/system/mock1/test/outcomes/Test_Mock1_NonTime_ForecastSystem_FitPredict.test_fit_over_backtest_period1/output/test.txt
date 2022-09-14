@@ -60,13 +60,13 @@ dag_config:
     transformer_kwargs:
       weights:
         index=[vwap.ret_0.vol_adj.c.lag0, vwap.ret_0.vol_adj.c.lag3]
-        columns=vwap.ret_0.vol_adj_2_hat
+        columns=prediction
         shape=(4, 1)
-                                   vwap.ret_0.vol_adj_2_hat
-        vwap.ret_0.vol_adj.c.lag0                    -0.209
-        vwap.ret_0.vol_adj.c.lag1                    -0.223
-        vwap.ret_0.vol_adj.c.lag2                     0.304
-        vwap.ret_0.vol_adj.c.lag3                    -0.264
+                                   prediction
+        vwap.ret_0.vol_adj.c.lag0      -0.209
+        vwap.ret_0.vol_adj.c.lag1      -0.223
+        vwap.ret_0.vol_adj.c.lag2       0.304
+        vwap.ret_0.vol_adj.c.lag3      -0.264
       convert_to_dataframe: True
     drop_nans: True
 dag_builder_object: nid_prefix=
@@ -93,7 +93,7 @@ research_forecast_evaluator_from_prices:
   init:
     price_col: vwap
     volatility_col: vwap.ret_0.vol
-    prediction_col: vwap.ret_0.vol_adj_2_hat
+    prediction_col: prediction
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
@@ -318,7 +318,7 @@ object.builder_function:
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object: FitPredictDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 9 nodes and 8 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=predict <str>)
 ################################################################################
-vwap.ret_0.vol_adj_2_hat
+prediction
 ################################################################################
                            1467591036  3303714233
 end_ts
