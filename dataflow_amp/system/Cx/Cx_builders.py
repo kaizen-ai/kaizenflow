@@ -93,16 +93,16 @@ def get_Cx_ReplayedMarketData_from_file(
     hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
     # TODO(Grisha): @Dan Refactor default column names in system related functions.
+    # TODO(Grisha): @Dan Since remapping is different for prod and simulation,
+    # their data scheme is different so we need to fix it.
     # Multiple functions that build the system are looking for "start_datetime"
     # and "end_datetime" columns by default.
     if is_prod:
         column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
-        timestamp_db_column = "end_datetime"
-        datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
     else:
         column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
-        timestamp_db_column = "end_datetime"
-        datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
+    timestamp_db_column = "end_datetime"
+    datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
     # Get market data for replaying.
     market_data_df = mdata.load_market_data(
         file_path,
@@ -112,7 +112,8 @@ def get_Cx_ReplayedMarketData_from_file(
         datetime_columns=datetime_columns,
     )
     if not is_prod:
-        # Fill system config with asset ids from data for `Portfolio`.
+        # Asset ids are passed as params in prod, but for simulation we have to
+        # fill system config with asset ids from data for `Portfolio`.
         hdbg.dassert_not_in(("market_data_config", "asset_ids"), system.config)
         # TODO(Grisha): @Dan Add a method to `MarketData.get_asset_ids()` that does
         #  `list(df[asset_id_col_name].unique())`.
@@ -149,7 +150,7 @@ def get_ProcessForecastsNode_dict_instance1(
     volatility_col = "vwap.ret_0.vol"
     spread_col = None
     style = "cross_sectional"
-    #
+    # Fill config with simulation and prod specific parameters.
     if is_prod:
         compute_target_positions_kwargs = {
             "bulk_frac_to_remove": 0.0,
