@@ -180,6 +180,20 @@ class Broker(abc.ABC, hobject.PrintableMixin):
     def timestamp_col(self) -> str:
         return self._timestamp_col
 
+    def get_low_market_price(self, asset_id: int) -> float:
+        """
+        Load the low price for the given ticker.
+        """
+        # Load last low price from market data.
+        col_name = "low"
+        low_price = self.market_data.get_last_price(col_name, [asset_id])
+        low_price = low_price.loc[asset_id]
+        if isinstance(low_price, pd.Series):
+            # Select topmost price if there are multiple entries.
+            _LOG.warning("Length of price series is >1: %s", low_price)
+            low_price = low_price.iloc[0]
+        return low_price
+
     async def submit_orders(
         self,
         orders: List[omorder.Order],

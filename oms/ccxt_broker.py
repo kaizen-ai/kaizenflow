@@ -96,6 +96,15 @@ class CcxtBroker(ombroker.Broker):
         # Set up empty sent orders for the first run of the system.
         self._sent_orders = None
 
+    def get_low_market_price(self, asset_id: int) -> float:
+        """
+        Load the low price for the given ticker.
+        """
+        # TODO(Danya): Overrides parent class until CMTask2842 is resolved.
+        symbol = self._asset_id_to_symbol_mapping[asset_id]
+        last_price = self._exchange.fetch_ticker(symbol)["low"]
+        return last_price
+
     def get_fills(self) -> List[ombroker.Fill]:
         """
         Return list of fills from the last order execution.
@@ -225,14 +234,6 @@ class CcxtBroker(ombroker.Broker):
             if position_amount != 0:
                 open_positions.append(position)
         return open_positions
-
-    def get_low_market_price(self, asset_id: int) -> float:
-        """
-        Load the low price for the given ticker.
-        """
-        symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["low"]
-        return last_price
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
