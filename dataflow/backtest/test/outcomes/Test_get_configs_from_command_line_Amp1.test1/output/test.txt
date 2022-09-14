@@ -59,13 +59,13 @@
         transformer_kwargs:
           weights:
             index=[vwap.ret_0.vol_adj.c.lag0, vwap.ret_0.vol_adj.c.lag3]
-            columns=vwap.ret_0.vol_adj_2_hat
+            columns=prediction
             shape=(4, 1)
-                                       vwap.ret_0.vol_adj_2_hat
-            vwap.ret_0.vol_adj.c.lag0                    -0.209
-            vwap.ret_0.vol_adj.c.lag1                    -0.223
-            vwap.ret_0.vol_adj.c.lag2                     0.304
-            vwap.ret_0.vol_adj.c.lag3                    -0.264
+                                       prediction
+            vwap.ret_0.vol_adj.c.lag0      -0.209
+            vwap.ret_0.vol_adj.c.lag1      -0.223
+            vwap.ret_0.vol_adj.c.lag2       0.304
+            vwap.ret_0.vol_adj.c.lag3      -0.264
           convert_to_dataframe: True
         drop_nans: True
     dag_builder_object: nid_prefix=
