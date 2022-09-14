@@ -226,14 +226,6 @@ class CcxtBroker(ombroker.Broker):
                 open_positions.append(position)
         return open_positions
 
-    def get_low_market_price(self, asset_id: int) -> float:
-        """
-        Load the low price for the given ticker.
-        """
-        symbol = self._asset_id_to_symbol_mapping[asset_id]
-        last_price = self._exchange.fetch_ticker(symbol)["low"]
-        return last_price
-
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
         """
