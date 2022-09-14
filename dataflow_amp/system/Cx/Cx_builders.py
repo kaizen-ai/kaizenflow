@@ -155,13 +155,14 @@ def get_ProcessForecastsNode_dict_instance1(
             "bulk_frac_to_remove": 0.0,
             "target_gmv": 700.0,
         }
+        root_log_dir = system.config.get("system_log_dir")
     else:
         compute_target_positions_kwargs = {
             "bulk_frac_to_remove": 0.0,
             "bulk_fill_method": "zero",
             "target_gmv": 1e5,
         }
-    root_log_dir = system.config.get("system_log_dir")
+        root_log_dir = None
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
