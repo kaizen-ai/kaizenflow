@@ -48,7 +48,8 @@ _LOG = logging.getLogger(__name__)
 DUMMY = "__DUMMY__"
 
 
-# Design notes:
+# # Design notes:
+#
 # - A Config is a recursive structure of Configs
 #   - It handles compounded keys, update_mode, clobber_mode
 #   - Each Config uses internally an _OrderedDict
@@ -61,17 +62,24 @@ DUMMY = "__DUMMY__"
 #   - We assume that a dict leaf represents a Config for an object
 #   - `dict` are valid in composed data structures, e.g., list, tuples
 
-# Issues with tracking accurately write-after-read:
-# - nested config add extra complexity mixing Dict and Config
-#   - it would be simpler if everything was a dict
-# - how to handle **to_dict?
-#   - is it all read?
-# - what happens if one does read["data"] and that is a Config, is it all read?
-# - how to distinguish printing from actually reading?
+# # Issues with tracking accurately write-after-read:
+#
+# - Nested config add extra complexity mixing Dict and Config
+#   - An alternative design could have been that `Config` derives from
+#     `_OrderedConfig` using default value to create the keys on the fly without
+#     compound key notation
+#   - it would be simpler if a `Config` held a `_OrderedConfig` and that
+#     contained only other `_OrderedConfig` (instead of `dict`)
+# - What happens when the user does `**...to_dict()`, should it be considered
+#   all read?
+#   - Probably yes, and that's what the user likely intend
+# - What happens if the user does `read["key1"]` and that is a Config, should
+#   be considerd all read?
+#   - Probably yes, but that's not what the user intends to do when doing
+#     `read["key1"]["key2"]` instead of `read["key1", "key2"]`?
+# - What happens when printing a `Config`?
+#   - That would be considered a read, but it's not what the user intends
 
-# An alternative design could have been:
-# - Config derives from `_OrderedConfig` using default value to create the keys on
-#   the fly without compound key notation
 
 
 # Keys in a Config are strings or ints.
@@ -127,7 +135,7 @@ _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 
 
 # #############################################################################
-# _OrderedDictType
+# _OrderedConfig
 # #############################################################################
 
 
@@ -145,6 +153,7 @@ class ClobberError(RuntimeError):
 
 # TODO(gp): It seems that one can't derive from a typed data structure.
 # _OrderedDictType = collections.OrderedDict[ScalarKey, Any]
+# TODO(gp): Consider using a dict since after Python3.6 it is ordered.
 _OrderedDictType = collections.OrderedDict
 
 
@@ -152,10 +161,10 @@ class _OrderedConfig(_OrderedDictType):
     """
     A dict data structure that allows to read and write with strict policies.
 
-    A Config is a recursive structure with:
+    An `_OrderedConfig` is a recursive structure with:
     - key of type str or int
     - value that can be:
-      - a Config (but not a dict)
+      - a `Config` which stores another `_OrderedConfig` (but not a dict)
       - any scalar
       - any other Python data structure (e.g., list, tuple)
     """
@@ -167,7 +176,14 @@ class _OrderedConfig(_OrderedDictType):
         update_mode: str,
         clobber_mode: str,
     ) -> None:
-        _LOG.debug(hprint.to_str("key val update_mode"))
+        """
+        A value is encoded internally as a pair (was_read, value) where:
+        - was_read: stores whether the value has been already read and thus
+          needs to be protected from successive writes, depending on
+          clobber_mode
+        - value: stores the actual value
+        """
+        _LOG.debug(hprint.to_str("key val update_mode clobber_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
@@ -178,6 +194,7 @@ class _OrderedConfig(_OrderedDictType):
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
         if update_mode == "assert_on_overwrite":
+            # It is not allowed to overwrite a value.
             if is_key_present:
                 # Key already exists, thus we need to assert.
                 _, old_val = super().__getitem__(key)
@@ -190,14 +207,15 @@ class _OrderedConfig(_OrderedDictType):
                 msg = "\n".join(msg)
                 raise OverwriteError(msg)
             else:
-                # Key doesn't exist, then assign.
+                # Key doesn't exist, thus assign the value.
                 assign_new_value = True
         elif update_mode == "overwrite":
             # Assign the value in any case.
             assign_new_value = True
         elif update_mode == "assign_if_missing":
             if is_key_present:
-                # Key already exists, then keep the old value and issue a warning.
+                # Key already exists, thus keep the old value and issue a warning
+                # that we are not writing.
                 _, old_val = super().__getitem__(key)
                 msg: List[str] = []
                 msg.append(
@@ -208,12 +226,15 @@ class _OrderedConfig(_OrderedDictType):
                 _LOG.warning(msg)
                 assign_new_value = False
             else:
-                # Key doesn't exist, assign the value.
+                # Key doesn't exist, thus assign the value.
                 assign_new_value = True
         else:
             raise RuntimeError(f"Invalid update_mode='{update_mode}'")
         # 2) Handle `clobber_mode`.
-        if clobber_mode == "assert_on_write_after_read":
+        if clobber_mode == "allow_write_after_read":
+            # Nothing to do.
+            pass
+        elif clobber_mode == "assert_on_write_after_read":
             _LOG.debug("Checking clobber_mode...")
             if is_key_present:
                 was_read, old_val = super().__getitem__(key)
@@ -230,13 +251,15 @@ class _OrderedConfig(_OrderedDictType):
                     msg.append("self=\n" + hprint.indent(str(self)))
                     msg = "\n".join(msg)
                     raise ClobberError(msg)
+        else:
+            raise RuntimeError(f"Invalid clobber_mode='{clobber_mode}'")
         # 3) Assign the value, if needed.
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
                 was_read, _ = super().__getitem__(key)
             else:
-                # The key was not present, so we just mark it no read yet.
+                # The key was not present, so we just mark it not read yet.
                 was_read = False
             super().__setitem__(key, (was_read, val))
 
@@ -270,21 +293,6 @@ class _OrderedConfig(_OrderedDictType):
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
-
-    # @staticmethod
-    # def _to_string(dict_: Dict, mode: str) -> str:
-    #     txt = []
-    #     for key, (was_read, val) in dict_.items():
-    #         # Process the key.
-    #         if mode == "only_values":
-    #             txt_tmp = str(key)
-    #         elif mode == "with_metadata":
-    #             txt_tmp = f"{key} (was_read={was_read})"
-    #         else:
-    #             raise ValueError(f"Invalid mode='{mode}")
-    #
-    #     txt = "\n".join(txt)
-    #     return txt
 
     def to_string(self, mode: str) -> str:
         """
