@@ -8,6 +8,7 @@ import datetime
 import logging
 
 import numpy as np
+import pandas as pd
 
 import core.config as cconfig
 import core.features as cofeatur
@@ -105,6 +106,45 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
                     "vwap.ret_0.vol_adj": "vwap.ret_0.vol_adj.c",
                 },
             },
+            self._get_nid("add_lags"): {
+                "in_col_groups": [("vwap.ret_0.vol_adj.c",)],
+                "out_col_group": (),
+                "transformer_kwargs": {
+                    "lag_delay": 0,
+                    "num_lags": 4,
+                    "first_lag": 0,
+                    "separator": ".",
+                },
+                "drop_nans": True,
+            },
+            self._get_nid("predict"): {
+                "in_col_groups": [
+                    ("vwap.ret_0.vol_adj.c.lag0",),
+                    ("vwap.ret_0.vol_adj.c.lag1",),
+                    ("vwap.ret_0.vol_adj.c.lag2",),
+                    ("vwap.ret_0.vol_adj.c.lag3",),
+                ],
+                "out_col_group": (),
+                "transformer_kwargs": {
+                    "weights": pd.Series(
+                        [
+                            -0.209,
+                            -0.223,
+                            0.304,
+                            -0.264,
+                        ],
+                        [
+                            "vwap.ret_0.vol_adj.c.lag0",
+                            "vwap.ret_0.vol_adj.c.lag1",
+                            "vwap.ret_0.vol_adj.c.lag2",
+                            "vwap.ret_0.vol_adj.c.lag3",
+                        ],
+                        name="prediction",
+                    ),
+                    "convert_to_dataframe": True,
+                },
+                "drop_nans": True,
+            },
         }
         config = cconfig.Config.from_dict(dict_)
         return config
@@ -169,6 +209,26 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         node = dtfcore.GroupedColDfToDfTransformer(
             nid,
             transformer_func=lambda x: csigproc.compress_tails(x, 4),
+            **config[nid].to_dict(),
+        )
+        dag.append_to_tail(node)
+        #
+        stage = "add_lags"
+        _LOG.debug("stage=%s", stage)
+        nid = self._get_nid(stage)
+        node = dtfcore.GroupedColDfToDfTransformer(
+            nid,
+            transformer_func=cofeatur.compute_lagged_columns,
+            **config[nid].to_dict(),
+        )
+        dag.append_to_tail(node)
+        #
+        stage = "predict"
+        _LOG.debug("stage=%s", stage)
+        nid = self._get_nid(stage)
+        node = dtfcore.GroupedColDfToDfTransformer(
+            nid,
+            transformer_func=csigproc.compute_weighted_sum,
             **config[nid].to_dict(),
         )
         dag.append_to_tail(node)
