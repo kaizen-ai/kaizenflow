@@ -86,7 +86,8 @@ prod_dir = (
     #"/shared_data/system_log_dir_20220908_095612/"
     #"/shared_data/system_log_dir_20220908_095626/"
     #"/shared_data/system_log_dir_20220913_1hour"
-    "/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
+    #"/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
+    "/shared_data/prod_reconciliation/20220914/prod/system_log_dir_20220914_1hour"
 )
 sim_dir = "/shared_data/prod_reconciliation/20220913/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
