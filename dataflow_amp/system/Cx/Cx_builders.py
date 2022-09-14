@@ -259,7 +259,7 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     )
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Append the `ProcessForecastNode`.
-    dag = dtfsys.add_process_forecasts_node(system, dag)
+    dag = dtfsys.add_ProcessForecastsNode(system, dag)
     return dag
 
 
@@ -320,7 +320,7 @@ def _get_Cx_dag_prod_instance1(
     ].to_dict()
     ts_col_name = "timestamp_db"
     # TODO(Grisha): should we use `add_real_time_data_source` and
-    # `add_process_forecasts_node` from `system_builder_utils.py`?
+    # `add_ProcessForecastsNode` from `system_builder_utils.py`?
     dag = dtfsys.adapt_dag_to_real_time(
         dag,
         market_data,

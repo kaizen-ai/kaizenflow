@@ -554,7 +554,7 @@ def build_timestamp_df(
 
 
 # TODO(gp): @all -> get_MarketDataDf_example1()
-def get_market_data_df1() -> Tuple[pd.DataFrame, int]:
+def get_MarketData_df1() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
@@ -588,7 +588,7 @@ def get_market_data_df1() -> Tuple[pd.DataFrame, int]:
     return data, rt_timeout_in_secs_or_time
 
 
-def get_market_data_df2() -> Tuple[pd.DataFrame, int]:
+def get_MarketData_df2() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
@@ -622,7 +622,7 @@ def get_market_data_df2() -> Tuple[pd.DataFrame, int]:
     return data, rt_timeout_in_secs_or_time
 
 
-def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
+def get_MarketData_df3() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
@@ -656,7 +656,7 @@ def get_market_data_df3() -> Tuple[pd.DataFrame, int]:
     return data, rt_timeout_in_secs_or_time
 
 
-def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
+def get_MarketData_df4() -> Tuple[pd.DataFrame, int]:
     """
     Generate price series with a price pattern and a real-time loop timeout in
     seconds to test model.
@@ -693,7 +693,7 @@ def get_market_data_df4() -> Tuple[pd.DataFrame, int]:
 # #############################################################################
 
 
-def get_im_client_market_data_df1(full_symbols: List[str]) -> pd.DataFrame:
+def get_im_client_MarketData_df1(full_symbols: List[str]) -> pd.DataFrame:
     """
     Generate `ImClient` output example with price data that alternates every 5
     minutes.

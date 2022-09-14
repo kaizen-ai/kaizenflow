@@ -115,14 +115,13 @@ def apply_backtest_config(
 # #############################################################################
 
 
-# TODO(gp): @all -> apply_MarketData_config
-def apply_market_data_config(
+def apply_MarketData_config(
     system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
     """
     Convert full symbol universe to asset ids and fill market data config.
     """
-    im_client = build_im_client_from_config(system)
+    im_client = build_ImClient_from_System(system)
     universe_str = system.config["backtest_config", "universe_str"]
     full_symbols = dtfuniver.get_universe(universe_str)
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
@@ -133,8 +132,7 @@ def apply_market_data_config(
     return system
 
 
-# TODO(gp): build_ImClient_from_System
-def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
+def build_ImClient_from_System(system: dtfsyssyst.System) -> icdc.ImClient:
     """
     Build an IM client from params in the system Config.
     """
@@ -167,8 +165,7 @@ def apply_history_lookback(
     return system
 
 
-# TODO(gp): -> get_ReplayedMarketData_from_df.
-def get_EventLoop_MarketData_from_df(
+def get_ReplayedMarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
@@ -195,8 +192,7 @@ def get_EventLoop_MarketData_from_df(
 # #############################################################################
 
 
-# TODO(gp): -> get_RealTimeDag_from_System
-def adapt_dag_to_real_time_from_config(
+def get_RealTimeDag_from_System(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     # Assemble.
@@ -218,8 +214,7 @@ def adapt_dag_to_real_time_from_config(
     # TODO(gp): Why is this not returning anything? Is this even used?
 
 
-# TODO(gp): -> build...from_System
-def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
+def build_HistoricalDag_from_System(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
     """
@@ -353,8 +348,7 @@ def add_real_time_data_source(
     return dag
 
 
-# TODO(gp): -> ...ProcessForecastsNode...
-def add_process_forecasts_node(
+def add_ProcessForecastsNode(
     system: dtfsyssyst.System, dag: dtfcore.DAG
 ) -> dtfcore.DAG:
     """
@@ -556,7 +550,7 @@ def get_OrderProcessorCoroutine_from_System(
 # #############################################################################
 
 
-def _apply_dag_runner_config(
+def _apply_DagRunner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
     bar_duration_in_secs: int,
@@ -610,7 +604,7 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     return trading_period_str, bar_duration_in_secs
 
 
-def apply_dag_runner_config_for_crypto(
+def apply_DagRunner_config_for_crypto(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -636,7 +630,7 @@ def apply_dag_runner_config_for_crypto(
     return system
 
 
-def apply_dag_runner_config_for_equities(
+def apply_DagRunner_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """

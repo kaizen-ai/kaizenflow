@@ -50,7 +50,7 @@ def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
     system.config[
         "research_forecast_evaluator_from_prices"
     ] = cconfig.Config.from_dict(forecast_evaluator_from_prices_dict)
-    system = dtfsys.apply_market_data_config(system)
+    system = dtfsys.apply_MarketData_config(system)
     return system
 
 

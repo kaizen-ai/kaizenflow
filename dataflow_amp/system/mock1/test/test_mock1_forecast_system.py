@@ -141,7 +141,7 @@ class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1)
         (
             market_data,
             rt_timeout_in_secs_or_time,
-        ) = cofinanc.get_market_data_df4()
+        ) = cofinanc.get_MarketData_df4()
         # Since we are reading from a df there is no delay.
         system.config["market_data_config", "delay_in_secs"] = 0
         system.config["market_data_config", "data"] = market_data
@@ -190,7 +190,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     @pytest.mark.slow("~7 seconds.")
     def test1(self) -> None:
         # Build the system.
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
         system = _get_test_System_with_DataFramePortfolio(
             data, rt_timeout_in_secs_or_time
         )
@@ -203,7 +203,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     @pytest.mark.slow("~7 seconds.")
     def test_with_liquidate_at_end_of_day1(self) -> None:
         # Build the system.
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
         system = _get_test_System_with_DataFramePortfolio(
             data, rt_timeout_in_secs_or_time
         )
@@ -239,9 +239,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     """
 
     @pytest.mark.slow("~6 seconds.")
-    def test_market_data1_database_portfolio(self) -> None:
+    def test_MarketData1_database_portfolio(self) -> None:
         # Build the system.
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
         system = _get_test_System_with_DatabasePortfolio(
             data, rt_timeout_in_secs_or_time
         )
@@ -249,9 +249,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         self._test1(system)
 
     @pytest.mark.slow("~6 seconds.")
-    def test_market_data2_database_portfolio(self) -> None:
+    def test_MarketData2_database_portfolio(self) -> None:
         # Build the system.
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df2()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df2()
         system = _get_test_System_with_DatabasePortfolio(
             data, rt_timeout_in_secs_or_time
         )
@@ -259,9 +259,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         self._test1(system)
 
     @pytest.mark.superslow("~30 seconds.")
-    def test_market_data3_database_portfolio(self) -> None:
+    def test_MarketData3_database_portfolio(self) -> None:
         # Build the system.
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df3()
         system = _get_test_System_with_DatabasePortfolio(
             data, rt_timeout_in_secs_or_time
         )
@@ -307,23 +307,23 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
     @pytest.mark.slow("~10 seconds.")
     def test1(self) -> None:
         """
-        Run with a `cofinanc.get_market_data_df1()`.
+        Run with a `cofinanc.get_MarketData_df1()`.
         """
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df1()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
         self.run_test(data, rt_timeout_in_secs_or_time)
 
     @pytest.mark.slow("~10 seconds.")
     def test2(self) -> None:
         """
-        Run with a `cofinanc.get_market_data_df2()`.
+        Run with a `cofinanc.get_MarketData_df2()`.
         """
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df2()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df2()
         self.run_test(data, rt_timeout_in_secs_or_time)
 
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
         """
-        Run with a `cofinanc.get_market_data_df3()`.
+        Run with a `cofinanc.get_MarketData_df3()`.
         """
-        data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df3()
         self.run_test(data, rt_timeout_in_secs_or_time)
