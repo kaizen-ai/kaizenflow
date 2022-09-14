@@ -98,11 +98,13 @@ def get_Cx_ReplayedMarketData_from_file(
     # Multiple functions that build the system are looking for "start_datetime"
     # and "end_datetime" columns by default.
     if is_prod:
+        # Set remapping for database data used in production.
         column_remap = {
             "start_timestamp": "start_datetime",
             "end_timestamp": "end_datetime",
         }
     else:
+        # Set remapping for file system data used in simulation.
         column_remap = {"start_ts": "start_datetime", "end_ts": "end_datetime"}
     timestamp_db_column = "end_datetime"
     datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
@@ -153,7 +155,8 @@ def get_ProcessForecastsNode_dict_instance1(
     volatility_col = "vwap.ret_0.vol"
     spread_col = None
     style = "cross_sectional"
-    # Fill config with simulation and prod specific parameters.
+    # For prod we use smaller GMV so that we can trade at low capacity while
+    # for simulation we do not trade with real money.
     if is_prod:
         compute_target_positions_kwargs = {
             "bulk_frac_to_remove": 0.0,
@@ -166,7 +169,7 @@ def get_ProcessForecastsNode_dict_instance1(
             "bulk_fill_method": "zero",
             "target_gmv": 1e5,
         }
-        # TODO(Grisha): @Dan Consider passing `system.config.get("system_log_dir")`.
+        # TODO(Grisha): @Dan CmTask2849 "Pass an actual `system_log_dir` for simulation".
         root_log_dir = None
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
@@ -230,7 +233,9 @@ def get_Cx_RealTimeDag_example1(system: dtfsys.System) -> dtfcore.DAG:
     return dag
 
 
-def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
+def get_Cx_RealTimeDag_example2(
+    system: dtfsys.System, is_prod: bool
+) -> dtfcore.DAG:
     """
     Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode`.
     """
@@ -238,31 +243,6 @@ def get_Cx_RealTimeDag_example2(system: dtfsys.System) -> dtfcore.DAG:
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    is_prod = False
-    order_duration_in_mins = 5
-    process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
-        system, order_duration_in_mins, is_prod
-    )
-    system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
-        process_forecasts_node_dict
-    )
-    system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
-    # Append the `ProcessForecastNode`.
-    dag = dtfsys.add_process_forecasts_node(system, dag)
-    return dag
-
-
-# TODO(Grisha): @Dan Combine with `get_Cx_RealTimeDag_example2`.
-def get_Cx_RealTimeDag_example3(system: dtfsys.System) -> dtfcore.DAG:
-    """
-    Build a DAG with `RealTimeDataSource` and `ForecastProcessorNode` for a
-    production system.
-    """
-    hdbg.dassert_isinstance(system, dtfsys.System)
-    system = dtfsys.apply_history_lookback(system)
-    dag = dtfsys.add_real_time_data_source(system)
-    # Configure a `ProcessForecastNode`.
-    is_prod = True
     order_duration_in_mins = 5
     process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
         system, order_duration_in_mins, is_prod

@@ -16,6 +16,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -692,9 +693,8 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self.minimal_order_limits = minimal_order_limits
 
 
+# TODO(Grisha): @Dan CmTask2848 "Save minimal order limits data using a unit test".
 def get_SimulatedCcxtBroker_prod_instance1(market_data: pd.DataFrame):
-    import helpers.hio as hio
-
     # Load pre-saved minimal order limits.
     file_name = "/shared_data/minimal_order_limits.json"
     minimal_order_limits = hio.from_json(file_name)

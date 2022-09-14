@@ -457,16 +457,19 @@ def get_DataFramePortfolio_from_System(
 
     :param system: the system to build a portfolio from
     :param is_prod: whether the system is going to be used for production or
-        simulation
+        for simulation
     """
     market_data = system.market_data
     asset_ids = system.config["market_data_config", "asset_ids"]
     if is_prod:
+        # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
             market_data=market_data, asset_ids=asset_ids
         )
     else:
+        # Set event loop object for `SimulatedBroker` used in simulation.
         event_loop = system.config["event_loop_object"]
+        # Initialize `Portfolio` with parameters from the system config.
         mark_to_market_col = system.config[
             "portfolio_config", "mark_to_market_col"
         ]
