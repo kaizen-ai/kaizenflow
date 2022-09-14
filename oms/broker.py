@@ -186,15 +186,12 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         # Load last low price from market data.
         col_name = "low"
-        low_price_srs = self.market_data.get_last_price(col_name, [asset_id])
-        # TODO(Grisha): @Dan or @Danya Refactor to fix the behavior.
-        if low_price_srs.empty:
-            # E.g., there is a missing for asset_id = 1464553467 at 2022-09-08 09:58:00+00:00.
-            low_price = 1
-        else:
-            low_price = low_price_srs.loc[asset_id]
-            if len(low_price_srs) > 1:
-                _LOG.warning("Length of price series is >1: %s", low_price_srs)
+        low_price = self.market_data.get_last_price(col_name, [asset_id])
+        low_price = low_price.loc[asset_id]
+        if isinstance(low_price, pd.Series):
+            # Select topmost price if there are multiple entries.
+            _LOG.warning("Length of price series is >1: %s", low_price)
+            low_price = low_price.iloc[0]
         return low_price
 
     async def submit_orders(
