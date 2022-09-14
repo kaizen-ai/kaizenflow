@@ -373,7 +373,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # Since time forecast system is run for multiple 5 min intervals,
         # we need to compute the number of minutes the system will go beyond
         # its wall clock time.
-        # In this case the wall clock time is `2021-12-26 18:59:00-05:00`,
+        # In this case the wall clock time is `2000-01-01 09:55:00-05:00`,
         # so the system goes 1 min forward from the wall clock time until
         # the first 5 min interval and then goes by the number of the remaining
         # 5 min cycles. This will be the end time for `ForecastSystem`.
@@ -403,12 +403,12 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         See description in the parent test case class.
         """
         # Load market data for replaying.
-        market_data_df = cofinanc.get_market_data_df5()
+        market_data_df, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df5()
         time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
         # TODO(Grisha): @Dan consider a way to pass the number of 5-minute intervals.
         # Make system to run for 3 5-minute intervals.
         time_system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
-            60 * 5 * 3
+            rt_timeout_in_secs_or_time
         )
         time_system.config["market_data_config", "data"] = market_data_df
         return time_system

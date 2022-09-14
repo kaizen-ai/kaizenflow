@@ -720,7 +720,8 @@ def get_market_data_df5() -> pd.DataFrame:
     feature_pattern = [1.0] * 5 + [-1.0] * 5
     feature = feature_pattern * 6
     data["feature1"] = feature
-    return data
+    rt_timeout_in_secs_or_time = 3 * 5 * 60
+    return data, rt_timeout_in_secs_or_time
 
 
 # #############################################################################

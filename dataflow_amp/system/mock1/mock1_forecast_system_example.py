@@ -165,33 +165,6 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
 
 
 # #############################################################################
-# Mock1_Time_ForecastSystem1_example
-# #############################################################################
-
-
-def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
-    """
-    The System is used for the corresponding unit tests.
-    """
-    system = dtfasmmfosy.Mock1_Time_ForecastSystem()
-    #
-    # The test decides when to start the execution.
-    # The data inside the market data starts at 2000-01-01 09:31:00-05:00.
-    # We want to have 10 minutes of burn in for the model.
-    system.config[
-        "market_data_config", "replayed_delay_in_mins_or_timestamp"
-    ] = 10
-    # Market takes 10 seconds to send the bar.
-    system.config["market_data_config", "delay_in_secs"] = 10
-    #
-    # Exercise the system for 3 5-minute intervals.
-    system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = 60 * 5 * 3
-    # Duration of the bar is 5 minutes.
-    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
-    return system
-
-
-# #############################################################################
 # Mock1_NonTime_ForecastSystem1_example
 # #############################################################################
 
@@ -220,4 +193,32 @@ def get_Mock1_NonTime_ForesactSystem_example1(backtest_config) -> dtfsys.System:
     system.config["research_pnl", "price_col"] = "vwap"
     system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
     system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj"
+    return system
+
+
+# #############################################################################
+# Mock1_Time_ForecastSystem1_example
+# #############################################################################
+
+
+# TODO(Nina): Factor out the exaples to pass params into it.
+def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
+    """
+    The System is used for the corresponding unit tests.
+    """
+    system = dtfasmmfosy.Mock1_Time_ForecastSystem()
+    #
+    # The test decides when to start the execution.
+    # The data inside the market data starts at 2000-01-01 09:31:00-05:00.
+    # We want to have 10 minutes of burn in for the model.
+    system.config[
+        "market_data_config", "replayed_delay_in_mins_or_timestamp"
+    ] = 10
+    # Market takes 10 seconds to send the bar.
+    system.config["market_data_config", "delay_in_secs"] = 10
+    #
+    # Exercise the system for 3 5-minute intervals.
+    system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = 60 * 5 * 3
+    # Duration of the bar is 5 minutes.
+    system.config["dag_runner_config", "bar_duration_in_secs"] = 60 * 5
     return system
