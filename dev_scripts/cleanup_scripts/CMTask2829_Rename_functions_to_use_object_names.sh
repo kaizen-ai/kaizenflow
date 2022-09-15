@@ -3,18 +3,23 @@
 dir_names="amp/dev_scripts/cleanup_scripts dev_scripts/cleanup_scripts"
 
 replace_text.py \
+  --old "get_market_data_df" \
+  --new "get_MarketData_df" \
+  --exclude_dirs "$dir_names"
+
+replace_text.py \
+  --old "get_im_client_market_data_df" \
+  --new "get_im_client_MarketData_df1" \
+  --exclude_dirs "$dir_names"
+
+replace_text.py \
+  --old "apply_market_data_config" \
+  --new "apply_MarketData_config" \
+  --exclude_dirs "$dir_names"
+#
+replace_text.py \
   --old "build_im_client_from_config" \
   --new "build_ImClient_from_System" \
-  --exclude_dirs "$dir_names"
-
-replace_text.py \
-  --old "(?=\w+)_market_data_(?!\w+\(self)" \
-  --new "_MarketData_" \
-  --exclude_dirs "$dir_names"
-
-replace_text.py \
-  --old "(?=\w+)_im_client_(?!\w+\(self)" \
-  --new "_ImClient_" \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
@@ -31,15 +36,20 @@ replace_text.py \
   --old "get_HistoricalDag_from_system" \
   --new "build_HistoricalDag_from_System" \
   --exclude_dirs "$dir_names"
-
+#
 replace_text.py \
-  --old "add_process_forecasts_node" \
-  --new "add_ProcessForecastsNode" \
+  --old "_apply_dag_runner_config" \
+  --new "_apply_DagRunner_config" \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
-  --old "(?=\w+)_dag_runner_(?!\w+\(self)" \
-  --new "_DagRunner_" \
+  --old "apply_dag_runner_config_for" \
+  --new "_apply_DagRunner_config_for" \
+  --exclude_dirs "$dir_names"
+#
+replace_text.py \
+  --old "add_process_forecasts_node" \
+  --new "add_ProcessForecastsNode" \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
