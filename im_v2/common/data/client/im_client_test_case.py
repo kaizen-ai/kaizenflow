@@ -283,7 +283,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that the earliest timestamp available is computed correctly.
         """
-        actual_start_ts = im_client.get_start_ts_for_symbols(full_symbol)
+        actual_start_ts = im_client.get_start_ts_for_symbols([full_symbol])
         self.assertEqual(actual_start_ts, expected_start_ts)
 
     def _test_get_end_ts_for_symbol1(
@@ -295,7 +295,7 @@ class ImClientTestCase(hunitest.TestCase):
         """
         Test that the latest timestamp available is computed correctly.
         """
-        actual_end_ts = im_client.get_end_ts_for_symbols(full_symbol)
+        actual_end_ts = im_client.get_end_ts_for_symbols([full_symbol])
         # TODO(Grisha): use `assertGreater` when start downloading more data.
         self.assertEqual(actual_end_ts, expected_end_ts)
 
