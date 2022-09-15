@@ -40,7 +40,7 @@ def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
         "init": {
             "price_col": "vwap",
             "volatility_col": "vwap.ret_0.vol",
-            "prediction_col": "vwap.ret_0.vol_adj.c",
+            "prediction_col": "prediction",
         },
         "kwargs": {
             "target_gmv": 1e5,

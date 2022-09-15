@@ -265,7 +265,6 @@ def get_research_pnl_signature(
 
 
 def log_forecast_evaluator_portfolio(
-    self,
     result_bundle: dtfcore.ResultBundle,
     forecast_evaluator_from_prices_dict: Dict[str, Any],
     log_dir: str,
