@@ -155,7 +155,7 @@ def shutup_chatty_modules(
         "boto",
         "boto3",
         "botocore",
-        # "ccxt",
+        "ccxt",
         "fsspec",
         "hooks",
         # "ib_insync",

@@ -17,6 +17,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hlogging as hloggin
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -471,15 +472,6 @@ class CcxtBroker(ombroker.Broker):
             #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
-
-        # TODO(gp): @all add a manual unit test to save this data in the repo
-        # or in scratch. Check in the limits in the repo.
-        import helpers.hio as hio
-
-        file_name = "/shared_data/minimal_order_limits.json"
-        hio.to_json(file_name, minimal_order_limits)
-        _LOG.warning("Saved file_name=%s", file_name)
-        assert 0
         return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:
@@ -659,6 +651,7 @@ class CcxtBroker(ombroker.Broker):
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
+        hloggin.shutup_chatty_modules()
         return exchange
 
 

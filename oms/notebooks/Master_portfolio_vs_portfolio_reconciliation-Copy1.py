@@ -45,7 +45,9 @@ hprint.config_notebook()
 # %%
 import market_data as mdata
 
-file_path = "/shared_data/prod_reconciliation/20220914/simulation/test_save_data.csv.gz"
+aws_profile = "ck"
+file_path = "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
+#file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
 column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
@@ -56,6 +58,7 @@ market_data_df = mdata.load_market_data(
     timestamp_db_column=timestamp_db_column,
     datetime_columns=datetime_columns,
 )
+market_data_df
 
 # %%
 min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
@@ -66,17 +69,17 @@ max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="Am
 max_start_time_col_name
 
 # %%
-replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 22 * 60 + 52
+replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 20 * 60 + 26
 initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
     minutes=replayed_delay_in_mins_or_timestamp
 )
 initial_replayed_timestamp
 
 # %%
-date = "2022-09-14"
-start_timestamp = pd.Timestamp(date + " 16:25:00", tz="America/New_York")
+date = "2022-09-15"
+start_timestamp = pd.Timestamp(date + " 09:10:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 17:20:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 11:15:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
@@ -87,9 +90,9 @@ prod_dir = (
     #"/shared_data/system_log_dir_20220908_095626/"
     #"/shared_data/system_log_dir_20220913_1hour"
     #"/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
-    "/shared_data/prod_reconciliation/20220914/prod/system_log_dir_20220914_1hour_v2"
+    "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
 )
-sim_dir = "/shared_data/prod_reconciliation/20220914/simulation/system_log_dir"
+sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
@@ -330,6 +333,12 @@ portfolio_stats_dfs = {
     "sim": sim_portfolio_stats_df,
 }
 portfolio_stats_dfs = pd.concat(portfolio_stats_dfs, axis=1)
+
+# %%
+prod_portfolio_stats_df["pnl"].plot()
+
+# %%
+sim_portfolio_stats_df["pnl"].plot()
 
 # %%
 hpandas.df_to_str(portfolio_stats_dfs, log_level=logging.INFO)
