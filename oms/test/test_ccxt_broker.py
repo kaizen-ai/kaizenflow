@@ -15,7 +15,7 @@ import oms.order as omorder
 import oms.secrets.secret_identifier as oseseide
 
 
-#@pytest.mark.skip(reason="Enable after CmTask #2816")
+@pytest.mark.skip(reason="Enable after CmTask #2816")
 class TestCcxtBroker1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
@@ -146,7 +146,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         expected_method_call = "call.set_sandbox_mode(True),"
         self.assertIn(expected_method_call, actual_method_calls)
 
-    @pytest.mark.skip(reason="Enable after CmTask #2816")
     def test_submit_orders(
         self,
     ) -> None:
@@ -280,7 +279,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Order df should be empty.
         self.assertEqual(order_df.empty, True)
 
-    @pytest.mark.skip(reason="Enable after CmTask #2816")
     def test_get_fills(self) -> None:
         """
         Verify that orders are filled properly via mocked exchange.
