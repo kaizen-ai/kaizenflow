@@ -16,6 +16,11 @@ replace_text.py \
   --old "apply_market_data_config" \
   --new "apply_MarketData_config" \
   --exclude_dirs "$dir_names"
+
+replace_text.py \
+  --old "save_ccxt_market_data" \
+  --new "save_Ccxt_MarketData" \
+  --exclude_dirs "$dir_names"
 #
 replace_text.py \
   --old "build_im_client_from_config" \
@@ -56,3 +61,4 @@ replace_text.py \
   --old "check_system_config" \
   --new "check_SystemConfig" \
   --exclude_dirs "$dir_names"
+

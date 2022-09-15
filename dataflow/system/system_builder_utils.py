@@ -634,7 +634,7 @@ def apply_DagRunner_config_for_crypto(
     wake_up_timestamp = None
     rt_timeout_in_secs_or_time = None
     #
-    system = _apply_dag_runner_config(
+    system = _apply_DagRunner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
@@ -695,7 +695,7 @@ def apply_DagRunner_config_for_equities(
     rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(rt_timeout_in_mins)
     rt_timeout_in_secs_or_time = datetime.time(15, int(rt_timeout_in_mins))
-    system = _apply_dag_runner_config(
+    system = _apply_DagRunner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
