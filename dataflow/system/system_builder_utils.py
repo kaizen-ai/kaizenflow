@@ -451,23 +451,37 @@ def apply_ProcessForecastsNode_config_for_crypto(
 
 
 def get_DataFramePortfolio_from_System(
-    system: dtfsyssyst.System,
+    system: dtfsyssyst.System, is_prod: bool
 ) -> oms.Portfolio:
     """
     Build a `DataFramePortfolio` from a system config.
+
+    :param system: the system to build a portfolio from
+    :param is_prod: whether the system is going to be used for production or
+        for simulation
     """
-    event_loop = system.config["event_loop_object"]
     market_data = system.market_data
-    mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
-    pricing_method = system.config["portfolio_config", "pricing_method"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    portfolio = oms.get_DataFramePortfolio_example1(
-        event_loop,
-        market_data=market_data,
-        mark_to_market_col=mark_to_market_col,
-        pricing_method=pricing_method,
-        asset_ids=asset_ids,
-    )
+    if is_prod:
+        # Initialize `Portfolio` with parameters that are set in the example.
+        portfolio = oms.get_DataFramePortfolio_example3(
+            market_data=market_data, asset_ids=asset_ids
+        )
+    else:
+        # Set event loop object for `SimulatedBroker` used in simulation.
+        event_loop = system.config["event_loop_object"]
+        # Initialize `Portfolio` with parameters from the system config.
+        mark_to_market_col = system.config[
+            "portfolio_config", "mark_to_market_col"
+        ]
+        pricing_method = system.config["portfolio_config", "pricing_method"]
+        portfolio = oms.get_DataFramePortfolio_example1(
+            event_loop,
+            market_data=market_data,
+            mark_to_market_col=mark_to_market_col,
+            pricing_method=pricing_method,
+            asset_ids=asset_ids,
+        )
     # TODO(gp): We should pass the column_remap to the Portfolio builder,
     # instead of injecting it after the fact.
     portfolio.broker._column_remap = system.config[

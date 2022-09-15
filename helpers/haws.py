@@ -7,6 +7,7 @@ import helpers.haws as haws
 import logging
 
 import boto3
+from boto3.resources.base import ServiceResource
 from botocore.client import BaseClient
 
 import helpers.hdbg as hdbg
@@ -49,6 +50,15 @@ def get_service_client(aws_profile: str, service_name: str) -> BaseClient:
     return client
 
 
+def get_service_resource(aws_profile: str, service_name: str) -> ServiceResource:
+    """
+    Return resource to work with desired service in the specific region.
+    """
+    session = get_session(aws_profile)
+    resource = session.resource(service_name=service_name)
+    return resource
+
+
 # #############################################################################
 # ECS
 # #############################################################################
@@ -63,6 +73,24 @@ def get_ecs_client(aws_profile: str) -> BaseClient:
     session = get_session(aws_profile)
     client = session.client(service_name="ecs")
     return client
+
+
+def get_task_definition_image_url(task_definition_name: str) -> str:
+    """
+    Get ECS task definition by name and return only image URL.
+
+    :param task_definition_name: the name of the ECS task definition, e.g., cmamp-test
+    """
+    aws_profile = "ck"
+    service_name = "ecs"
+    with get_service_client(aws_profile, service_name) as client:
+        # Get the last revision of the task definition.
+        task_description = client.describe_task_definition(
+            taskDefinition=task_definition_name
+        )
+        task_definition_json = task_description["taskDefinition"]
+        image_url = task_definition_json["containerDefinitions"][0]["image"]
+    return image_url
 
 
 # TODO(Nikola): Pass a dict config instead, so any part can be updated.
