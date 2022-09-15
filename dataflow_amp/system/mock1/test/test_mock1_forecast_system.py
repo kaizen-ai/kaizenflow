@@ -415,5 +415,5 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
 
     @pytest.mark.slow("~8 seconds.")
     def test1(self) -> None:
-        output_col_name = "vwap.ret_0.vol_adj"
+        output_col_name = "prediction"
         self._test1(output_col_name)
