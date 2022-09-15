@@ -15,6 +15,7 @@ import helpers.hsql as hsql
 import market_data as mdata
 import oms.broker as ombroker
 import oms.broker_example as obroexam
+import oms.ccxt_broker as occxbrok
 import oms.oms_db as oomsdb
 import oms.portfolio as omportfo
 
@@ -94,6 +95,37 @@ def get_DataFramePortfolio_example2(
         mark_to_market_col,
         pricing_method,
         initial_holdings,
+    )
+    return portfolio
+
+
+# TODO(Grisha): @Dan Combine with other examples.
+def get_DataFramePortfolio_example3(
+    *,
+    market_data: Optional[mdata.MarketData] = None,
+    asset_ids: Optional[List[int]] = None,
+) -> omportfo.DataFramePortfolio:
+    """
+    Contain:
+    - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
+      track of the state)
+    - a `SimulatedBroker` for prod (i.e., a broker that executes the orders immediately)
+    """
+    # Build a SimulatedBroker.
+    broker = occxbrok.get_SimulatedCcxtBroker_prod_instance1(market_data)
+    # TODO(Grisha): @Dan Pass parameters via config.
+    # Build a DataFramePortfolio.
+    initial_cash = 700
+    mark_to_market_col = "close"
+    trading_period_str = "5T"
+    pricing_method = "twap." + trading_period_str
+    portfolio = omportfo.DataFramePortfolio.from_cash(
+        broker,
+        mark_to_market_col,
+        pricing_method,
+        #
+        initial_cash=initial_cash,
+        asset_ids=asset_ids,
     )
     return portfolio
 
