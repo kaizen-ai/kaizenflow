@@ -227,36 +227,28 @@ class TestCcxtBroker1(hunitest.TestCase):
             self.ccxt_patch.stop()
             # Check the Binance API error.
             from ccxt.base.errors import ExchangeNotAvailable
-
             create_order_mock.side_effect = [
-                ExchangeNotAvailable(umock.Mock(), "")
+                ExchangeNotAvailable(umock.Mock(), ""),
+                Exception("MockException")
             ]
-            # Run.
-            with self.assertRaises(RuntimeError) as cm:
-                asyncio.run(
-                    broker._submit_orders(
-                        orders, "dummy_timestamp", dry_run=False
+            with umock.patch.object(
+                occxbrok.time, "sleep", create=True
+            ) as time_sleep_mock:
+                # Run.
+                with self.assertRaises(Exception) as cm:
+                    asyncio.run(
+                        broker._submit_orders(
+                            orders, "dummy_timestamp", dry_run=False
+                        )
                     )
-                )
             # Enable CCXT patch.
             self.ccxt_patch.start()
         act = str(cm.exception)
-        exp = r"""coroutine raised StopIteration
-        """
-        self.assert_equal(act, exp)
+        self.assert_equal(act, "MockException")
         # Check the count of calls.
-        self.assertEqual(create_order_mock.call_count, 2)
-        # Check the args.
-        actual_args = pprint.pformat(tuple(create_order_mock.call_args_list))
-        expected_args = """
-        (call(symbol='ETH/USDT', type='market', side='buy', amount=0.121, """\
-        """params={'portfolio_id': 'ccxt_portfolio_mock', 'client_oid': 0}),
-        call(symbol='ETH/USDT', type='market', side='buy', amount=0.121, """\
-        """params={'portfolio_id': 'ccxt_portfolio_mock', 'client_oid': 0}))
-        """
-        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
+        self.assertEqual(time_sleep_mock.call_count, 1)
 
-    @pytest.mark.skip(reason="Enable after CmTask #2816")
+
     def test_submit_orders_errors2(self) -> None:
         """
         Verify that the order is not submitted if the error is connected to liquidity.
@@ -271,40 +263,22 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker._submitted_order_id = 1
         # Patch main external source.
         with umock.patch.object(
-            broker._exchange, "createOrder", create=True
+            broker._exchange, "createOrder", create=True  
         ) as create_order_mock:
-            # Disable CCXT patch.
-            self.ccxt_patch.stop()
             # Check that the order is not submitted if the error is connected to liquidity.
-            from ccxt.base.errors import OrderNotFillable
-
+            from ccxt.base.errors import OrderNotFillable, ExchangeNotAvailable
             create_order_mock.side_effect = [
                 OrderNotFillable(umock.Mock(status=-4131), '"code":-4131,')
             ]
-            # Run.
-            receipt, order_df = asyncio.run(
-                broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
-            )
-            # Enable CCXT patch.
-            self.ccxt_patch.start()
+            with umock.patch.object(
+                    self.ccxt_mock, "ExchangeNotAvailable", ExchangeNotAvailable
+            ):
+                # Run.
+                _, order_df = asyncio.run(
+                    broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
+                )
         # Order df should be empty.
-        act = hpandas.convert_df_to_json_string(order_df, n_tail=None)
-        exp = r"""original shape=(0, 0)
-            Head:
-            {
-
-            }
-            Tail:
-        """
-        self.assert_equal(act, exp, fuzzy_match=True)
-        self.assert_equal(receipt, "filename_2.txt")
-        # Check the count of calls.
-        self.assertEqual(create_order_mock.call_count, 1)
-        # Check the args.
-        actual_args = pprint.pformat(tuple(create_order_mock.call_args_list))
-        expected_args = """(call(symbol='ETH/USDT', type='market', side='buy', amount=0.121, """\
-            """params={'portfolio_id': 'ccxt_portfolio_mock', 'client_oid': 0}),)"""
-        self.assert_equal(actual_args, expected_args, fuzzy_match=True)
+        self.assertEqual(order_df.empty, True)
 
     @pytest.mark.skip(reason="Enable after CmTask #2816")
     def test_get_fills(self) -> None:
