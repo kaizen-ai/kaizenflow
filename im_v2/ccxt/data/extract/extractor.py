@@ -90,7 +90,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
-        bar_per_iteration: Optional[int] = 50,
+        bar_per_iteration: Optional[int] = 500,
         sleep_time_in_secs: float = 0.5,
         **kwargs: Any,
     ) -> pd.DataFrame:
@@ -162,6 +162,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             (all_bars_df["timestamp"] >= start_timestamp)
             & (all_bars_df["timestamp"] <= end_timestamp)
         ]
+        hdbg.dassert(all_bars_df.timestamp.is_monotonic)
         # TODO(gp): Double check if dataframes are properly concatenated.
         return all_bars_df
 
