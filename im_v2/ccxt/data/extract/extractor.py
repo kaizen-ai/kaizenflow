@@ -162,10 +162,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             (all_bars_df["timestamp"] >= start_timestamp)
             & (all_bars_df["timestamp"] <= end_timestamp)
         ]
-        # print(all_bars_df)
         # TODO(gp): Double check if dataframes are properly concatenated.
-        print("In extractor")
-        print(all_bars_df)
         return all_bars_df
 
     def _download_bid_ask(
