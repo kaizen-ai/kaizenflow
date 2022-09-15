@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import os
 import pprint
 import re
 import unittest.mock as umock
@@ -8,11 +10,14 @@ import pandas as pd
 import pytest
 
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 import oms.secrets.secret_identifier as oseseide
+
+_LOG = logging.getLogger(__name__)
 
 
 @pytest.mark.skip(reason="Enable after CmTask #2816")
@@ -268,3 +273,60 @@ class TestCcxtBroker1(hunitest.TestCase):
         )
         # Check timestamps.
         self.assertEqual(actual_time, expected_time)
+
+
+@pytest.mark.skip(reason="Run manually.")
+class TestCcxtBroker2(hunitest.TestCase):
+    def get_test_broker(
+        self,
+        universe_version: str,
+        stage: str,
+        contract_type: str,
+        account_type: str,
+    ) -> occxbrok.CcxtBroker:
+        """
+        Build `CcxtBroker` for tests.
+        """
+        exchange_id = "binance"
+        universe_version = "v7.1"
+        portfolio_id = "ccxt_portfolio_mock"
+        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        broker = occxbrok.CcxtBroker(
+            exchange_id,
+            universe_version,
+            stage,
+            account_type,
+            portfolio_id,
+            contract_type,
+            secret_id,
+            strategy_id="dummy_strategy_id",
+            market_data=umock.create_autospec(
+                spec=mdata.MarketData, instance=True
+            ),
+        )
+        return broker
+
+    def test_save_minimal_order_limits(self) -> None:
+        """
+        Save minimal order limits on s3 for simulated broker run.
+        """
+        # Initialize broker.
+        universe_version = "v7.1"
+        stage = "preprod"
+        contract_type = "futures"
+        account_type = "trading"
+        broker = self.get_test_broker(
+            universe_version, stage, contract_type, account_type
+        )
+        # Get minimal order limits.
+        minimal_order_limits = broker._get_minimal_order_limits()
+        _LOG.debug("minimal_order_limits dict '%s' ...", minimal_order_limits)
+        # TODO(Grisha): @Dan Should we save it on s3 or some other dir locally?
+        # Build file path.
+        dst_dir = self.get_input_dir(use_only_test_class=True)
+        file_name = "minimal_order_limits.json"
+        file_path = os.path.join(dst_dir, file_name)
+        # Save data.
+        _LOG.info("Saving data in '%s' ...", file_path)
+        hpickle.to_json(file_path, minimal_order_limits)
+        _LOG.info("Saving in '%s' done", file_path)
