@@ -176,7 +176,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         # Check output.
         self.assertEqual(fetch_ohlcv_mock.call_count, 1)
         actual_args = tuple(fetch_ohlcv_mock.call_args)
-        expected_args = (("BTC/USDT",), {"bar_per_iteration": 50})
+        expected_args = (("BTC/USDT",), {"bar_per_iteration": 500})
         self.assertEqual(actual_args, expected_args)
         actual_output = hpandas.df_to_str(ohlcv_data)
         expected_output = r"""dummy
