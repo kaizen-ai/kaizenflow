@@ -724,6 +724,41 @@ class SqlRealTimeImClient(RealTimeImClient):
             columns = data.columns
         hdbg.dassert_is_subset(columns, data.columns.to_list())
         data = data[columns]
+        if "level" in data.columns:
+            # Get rid of irrelevant column.
+            if "id" in data.columns:
+                data = data.drop(["id"], axis=1)
+            # Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
+            pivoted_data = data.reset_index().pivot(
+                index=["timestamp", "full_symbol"], columns=["level"]
+            )
+            # Rename the columns for a desired {value}_{level} format.
+            pivoted_data.columns = pivoted_data.columns.map(
+                "{0[0]}_{0[1]}".format
+            )
+            # Drop irrelevant columns.
+            # TODO(Max): Create an assertion that all values for levels are identical, so we are dropping safely.
+            kt_columns = [
+                col
+                for col in pivoted_data.columns
+                if col.startswith("knowledge_timestamp")
+            ]
+            edt_columns = [
+                col
+                for col in pivoted_data.columns
+                if col.startswith("end_download_timestamp")
+            ]
+            pivoted_data = pivoted_data.drop(
+                kt_columns[1:] + edt_columns[1:], axis=1
+            )
+            pivoted_data = pivoted_data.rename(
+                columns={
+                    "knowledge_timestamp_1": "knowledge_timestamp",
+                    "end_download_timestamp_1": "end_download_timestamp",
+                }
+            )
+            # Transform to the desired format.
+            data = pivoted_data.reset_index("full_symbol")
         return data
 
     def _build_select_query(
