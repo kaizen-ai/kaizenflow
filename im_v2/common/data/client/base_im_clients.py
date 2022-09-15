@@ -853,7 +853,7 @@ class SqlRealTimeImClient(RealTimeImClient):
 
     def _get_start_end_ts_for_symbols(
         self, full_symbol: List[ivcu.FullSymbol], mode: str
-    ) -> pd.DataFrame:
+    ) -> pd.Series:
         """
         Select a maximum/minimum timestamp for the given symbol.
 
@@ -883,4 +883,6 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = data.rename({"min": "timestamp", "max": "timestamp"}, axis=1)
         data["full_symbol"] = ivcu.build_full_symbol(data.exchange_id, data.currency_pair)
         data = data.loc[(data.full_symbol.isin(full_symbol))][["timestamp", "full_symbol"]]
-        return data
+        data["timestamp"] = data["timestamp"].apply(hdateti.convert_unix_epoch_to_timestamp)
+        data = data.set_index("full_symbol")
+        return data.timestamp

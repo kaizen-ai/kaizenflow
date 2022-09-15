@@ -5,7 +5,7 @@ import market_data.im_client_market_data as mdimcmada
 """
 
 import logging
-from typing import Any, Dict, List, Optional, cast
+from typing import Any, List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -35,6 +35,24 @@ class ImClientMarketData(mdabmada.MarketData):
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
         self._im_client = im_client
 
+    # TODO(Danya): Temporarily overwriting the parent method to keep
+    #  other child classes functioning. (CMTask2842).
+    def get_last_end_time(self, asset_ids: List[int]) -> Optional[pd.Timestamp]:
+        """
+        Return the last `end_time` present in the RT DB.
+
+        In the actual RT DB there is always some data, so we return a
+        timestamp. We return `None` only for replayed time when there is
+        no time (e.g., before the market opens).
+        """
+        ret = self._get_last_end_time(asset_ids)
+        if ret is not None:
+            # Convert to ET.
+            # TODO(Dan): Pass timezone from ctor in CmTask1000.
+            ret = ret.dt.tz_convert("America/New_York")
+        _LOG.verb_debug("-> ret=%s", ret)
+        return ret
+
     def get_last_price(
         self,
         col_name: str,
@@ -48,13 +66,33 @@ class ImClientMarketData(mdabmada.MarketData):
         filtering.
         """
         last_end_time = self.get_last_end_time(asset_ids)
-        _LOG.info("last_end_time=%s", last_end_time)
-        # Get the data.
-        df = self.get_data_at_timestamp(
-            last_end_time,
-            self._end_time_col_name,
-            asset_ids,
+        last_end_time.index = last_end_time.index.apply(
+            self._im_client.get_asset_ids_from_full_symbols
         )
+        _LOG.info("last_end_time=%s", last_end_time)
+        # Get the data for each timestamp.
+        if last_end_time.nunique() == 1:
+            end_timestamp = last_end_time.iloc[0]
+            df = self.get_data_at_timestamp(
+                end_timestamp,
+                self._end_time_col_name,
+                asset_ids,
+            )
+        else:
+            # Get latest data for each asset_id separately.
+            df = []
+            df_by_timestamp = (
+                last_end_time.reset_index().groupby("timestamp").agg(list)
+            )
+            for end_timestamp in df_by_timestamp.index:
+                asset_ids = df_by_timestamp.at[end_timestamp, "full_symbol"]
+                df_tmp = self.get_data_at_timestamp(
+                    end_timestamp,
+                    self._end_time_col_name,
+                    asset_ids,
+                )
+                df.append(df_tmp)
+            df = pd.concat(df)
         # Convert the df of data into a series.
         hdbg.dassert_in(col_name, df.columns)
         last_price = df[[col_name, self._asset_id_col]]
@@ -207,6 +245,8 @@ class ImClientMarketData(mdabmada.MarketData):
         ] - pd.Timedelta(minutes=1)
         return df
 
+    # TODO(Danya): Overriding the parent class signature to get individual end time
+    #  by asset id. (CMTask2842).
     def _get_last_end_time(self, asset_ids: List[int]) -> Optional[pd.Timestamp]:
         full_symbols = self._im_client.get_full_symbols_from_asset_ids(asset_ids)
         ret = self._im_client.get_end_ts_for_symbols(full_symbols)
