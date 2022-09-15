@@ -45,7 +45,7 @@ hprint.config_notebook()
 # %%
 import market_data as mdata
 
-file_path = "/shared_data/test_save_data.csv.gz"
+file_path = "/shared_data/prod_reconciliation/20220914/simulation/test_save_data.csv.gz"
 column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
@@ -66,17 +66,17 @@ max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="Am
 max_start_time_col_name
 
 # %%
-replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 21 * 60 + 7
+replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 22 * 60 + 52
 initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
     minutes=replayed_delay_in_mins_or_timestamp
 )
 initial_replayed_timestamp
 
 # %%
-date = "2022-09-13"
-start_timestamp = pd.Timestamp(date + " 09:20:00", tz="America/New_York")
+date = "2022-09-14"
+start_timestamp = pd.Timestamp(date + " 16:25:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 11:45:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 17:20:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
@@ -87,9 +87,9 @@ prod_dir = (
     #"/shared_data/system_log_dir_20220908_095626/"
     #"/shared_data/system_log_dir_20220913_1hour"
     #"/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
-    "/shared_data/prod_reconciliation/20220914/prod/system_log_dir_20220914_1hour"
+    "/shared_data/prod_reconciliation/20220914/prod/system_log_dir_20220914_1hour_v2"
 )
-sim_dir = "/shared_data/prod_reconciliation/20220913/simulation/system_log_dir"
+sim_dir = "/shared_data/prod_reconciliation/20220914/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
@@ -186,20 +186,6 @@ def print_stats(df: pd.DataFrame, config) -> None:
 # ## Load prod and sim forecasts
 
 # %%
-import oms.portfolio as omportfo
-
-holdings = omportfo.Portfolio._load_df_from_files(prod_portfolio_dir, "holdings", "America/New_York")
-holdings.head(3)
-
-# %%
-holdings_mtm = omportfo.Portfolio._load_df_from_files(prod_portfolio_dir, "holdings_marked_to_market", "America/New_York")
-holdings_mtm.head(3)
-
-# %%
-flows = omportfo.Portfolio._load_df_from_files(prod_portfolio_dir, "flows", "America/New_York")
-flows.head(3)
-
-# %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["prod_forecast_dir"]
 )
@@ -219,6 +205,9 @@ hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 # %%
 prod_forecast_delay = compute_delay(prod_forecast_df, config["freq"])
 hpandas.df_to_str(prod_forecast_delay, log_level=logging.INFO)
+
+# %%
+prod_forecast_delay
 
 # %%
 # Plot delay in seconds.
