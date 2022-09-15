@@ -255,25 +255,25 @@ class ImClient(abc.ABC):
 
     # /////////////////////////////////////////////////////////////////////////
 
-    def get_start_ts_for_symbol(
-        self, full_symbol: ivcu.FullSymbol
+    def get_start_ts_for_symbols(
+        self, full_symbol: List[ivcu.FullSymbol]
     ) -> pd.Timestamp:
         """
-        Return the earliest timestamp available for a given `full_symbol`.
+        Return the earliest timestamp available for given list of `full_symbol`.
 
         This implementation relies on reading all the data and then
         finding the min. Derived classes can override this method if
         there is a more efficient way to get this information.
         """
         mode = "start"
-        return self._get_start_end_ts_for_symbol(full_symbol, mode)
+        return self._get_start_end_ts_for_symbols(full_symbol, mode)
 
-    def get_end_ts_for_symbol(self, full_symbol: ivcu.FullSymbol) -> pd.Timestamp:
+    def get_end_ts_for_symbols(self, full_symbol: List[ivcu.FullSymbol]) -> pd.Timestamp:
         """
         Same as `get_start_ts_for_symbol()`.
         """
         mode = "end"
-        return self._get_start_end_ts_for_symbol(full_symbol, mode)
+        return self._get_start_end_ts_for_symbols(full_symbol, mode)
 
     def get_full_symbols_from_asset_ids(
         self, asset_ids: List[int]
@@ -429,8 +429,8 @@ class ImClient(abc.ABC):
         )
         return asset_id_to_full_symbol_mapping  # type: ignore[no-any-return]
 
-    def _get_start_end_ts_for_symbol(
-        self, full_symbol: ivcu.FullSymbol, mode: str
+    def _get_start_end_ts_for_symbols(
+        self, full_symbol: List[ivcu.FullSymbol], mode: str
     ) -> pd.Timestamp:
         _LOG.debug(hprint.to_str("full_symbol"))
         # Read data for the entire period of time available.
@@ -440,7 +440,7 @@ class ImClient(abc.ABC):
         columns = None
         filter_data_mode = "assert"
         data = self.read_data(
-            [full_symbol],
+            full_symbol,
             start_timestamp,
             end_timestamp,
             columns,
@@ -851,9 +851,9 @@ class SqlRealTimeImClient(RealTimeImClient):
         # TODO(Danya): add a full symbol column to the output
         raise NotImplementedError
 
-    def _get_start_end_ts_for_symbol(
-        self, full_symbol: ivcu.FullSymbol, mode: str
-    ) -> pd.Timestamp:
+    def _get_start_end_ts_for_symbols(
+        self, full_symbol: List[ivcu.FullSymbol], mode: str
+    ) -> pd.DataFrame:
         """
         Select a maximum/minimum timestamp for the given symbol.
 
@@ -865,26 +865,22 @@ class SqlRealTimeImClient(RealTimeImClient):
         :return: min or max value of 'timestamp' column.
         """
         _LOG.debug(hprint.to_str("full_symbol"))
-        exchange, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Build a MIN/MAX query.
         if mode == "start":
             query = (
-                f"SELECT MIN(timestamp) from {self._table_name}"
-                f" WHERE currency_pair='{currency_pair}'"
-                f" AND exchange_id='{exchange}'"
+                f"SELECT exchange_id, currency_pair, MIN(timestamp) from {self._table_name}"
+                f" GROUP BY exchange_id, currency_pair"
             )
         elif mode == "end":
             query = (
-                f"SELECT MAX(timestamp) from {self._table_name}"
-                f" WHERE currency_pair='{currency_pair}'"
-                f" AND exchange_id='{exchange}'"
+                f"SELECT exchange_id, currency_pair, MAX(timestamp) from {self._table_name}"
+                f" GROUP BY exchange_id, currency_pair"
             )
         else:
             raise ValueError("Invalid mode='%s'" % mode)
-        # TODO(Danya): factor out min/max as helper function.
         # Load the target timestamp as unix epoch.
-        timestamp = hsql.execute_query_to_df(self._db_connection, query).loc[0][0]
-        # Convert to `pd.Timestamp` type.
-        timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
-        hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
-        return timestamp
+        data = hsql.execute_query_to_df(self._db_connection, query)
+        data = data.rename({"min": "timestamp", "max": "timestamp"}, axis=1)
+        data["full_symbol"] = ivcu.build_full_symbol(data.exchange_id, data.currency_pair)
+        data = data.loc[(data.full_symbol.isin(full_symbol))][["timestamp", "full_symbol"]]
+        return data

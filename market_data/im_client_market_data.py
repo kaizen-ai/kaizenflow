@@ -5,7 +5,7 @@ import market_data.im_client_market_data as mdimcmada
 """
 
 import logging
-from typing import Any, List, Optional, cast
+from typing import Any, Dict, List, Optional, cast
 
 import numpy as np
 import pandas as pd
@@ -47,7 +47,7 @@ class ImClientMarketData(mdabmada.MarketData):
         `ImClientMarketData` uses the end of interval for date
         filtering.
         """
-        last_end_time = self.get_last_end_time()
+        last_end_time = self.get_last_end_time(asset_ids)
         _LOG.info("last_end_time=%s", last_end_time)
         # Get the data.
         df = self.get_data_at_timestamp(
@@ -207,19 +207,7 @@ class ImClientMarketData(mdabmada.MarketData):
         ] - pd.Timedelta(minutes=1)
         return df
 
-    def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        # We need to find the last timestamp before the current time. We use
-        # `7D` but could also use all the data since we don't call the DB.
-        # TODO(gp): SELECT MAX(start_time) instead of getting all the data
-        #  and then find the max and use `start_time`
-        timedelta = pd.Timedelta("7D")
-        df = self.get_data_for_last_period(timedelta)
-        _LOG.debug(
-            hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
-        )
-        if df.empty:
-            ret = None
-        else:
-            ret = df.index.max()
-        _LOG.debug("-> ret=%s", ret)
+    def _get_last_end_time(self, asset_ids: List[int]) -> Optional[pd.Timestamp]:
+        full_symbols = self._im_client.get_full_symbols_from_asset_ids(asset_ids)
+        ret = self._im_client.get_end_ts_for_symbols(full_symbols)
         return ret
