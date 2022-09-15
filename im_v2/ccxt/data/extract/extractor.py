@@ -90,9 +90,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
-        bar_per_iteration: Optional[int] = 500,
-        sleep_time_in_secs: int = 1,
-        **kwargs: Any
+        bar_per_iteration: Optional[int] = 50,
+        sleep_time_in_secs: float = 0.5,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Download minute OHLCV bars.
@@ -155,10 +155,22 @@ class CcxtExtractor(imvcdexex.Extractor):
             )
             all_bars.append(bars)
             time.sleep(sleep_time_in_secs)
+        all_bars_df = pd.concat(all_bars)
+        # Remove bars which are not part of the requested timerange to
+        #  avoid confusion of receiving unsolicited data.
+        all_bars_df = all_bars_df[
+            (all_bars_df["timestamp"] >= start_timestamp)
+            & (all_bars_df["timestamp"] <= end_timestamp)
+        ]
+        # print(all_bars_df)
         # TODO(gp): Double check if dataframes are properly concatenated.
-        return pd.concat(all_bars)
+        print("In extractor")
+        print(all_bars_df)
+        return all_bars_df
 
-    def _download_bid_ask(self, exchange_id: str, currency_pair: str, depth: int, **kwargs: Any) -> pd.DataFrame:
+    def _download_bid_ask(
+        self, exchange_id: str, currency_pair: str, depth: int, **kwargs: Any
+    ) -> pd.DataFrame:
         """
         Download bid-ask data from CCXT.
 
@@ -177,7 +189,9 @@ class CcxtExtractor(imvcdexex.Extractor):
             self._exchange,
         )
         # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
-        currency_pair = self.convert_currency_pair(currency_pair, )
+        currency_pair = self.convert_currency_pair(
+            currency_pair,
+        )
         hdbg.dassert_in(
             currency_pair,
             self.currency_pairs,
@@ -185,7 +199,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         )
         # Download order book data.
         order_book = self._exchange.fetch_order_book(currency_pair, depth)
-        order_book["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+        order_book["end_download_timestamp"] = str(
+            hdateti.get_current_time("UTC")
+        )
         order_book = pd.DataFrame.from_dict(order_book)
         # Separate price and size into columns.
         order_book[["bid_price", "bid_size"]] = pd.DataFrame(
@@ -203,12 +219,12 @@ class CcxtExtractor(imvcdexex.Extractor):
             "ask_price",
             "ask_size",
             "end_download_timestamp",
-            "level"
+            "level",
         ]
         bid_ask = order_book[bid_ask_columns]
         return bid_ask
 
-    def _download_trades(self, **kwargs) -> pd.DataFrame:
+    def _download_trades(self, **kwargs: Any) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for CCXT vendor")
 
     def _fetch_ohlcv(
