@@ -695,14 +695,19 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self.minimal_order_limits = minimal_order_limits
 
 
-def get_SimulatedCcxtBroker_prod_instance1(market_data: pd.DataFrame):
-    # Load pre-saved minimal order limits.
+def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
+    # Load pre-saved minimal order limits generated with
+    # `TestSaveMinimalOrderLimits`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
         "oms/test/outcomes/TestCcxtBroker2/input/minimal_order_limits.json",
     )
+    # The data looks like
+    # {"6051632686":
+    #     {"min_amount": 1.0, "min_cost": 10.0},
+    # ...
     minimal_order_limits = hio.from_json(file_path)
-    # Convert to int, because asset_ids are integers.
+    # Convert to int, because asset ids are integers.
     minimal_order_limits = {int(k): v for k, v in minimal_order_limits.items()}
     stage = "preprod"
     strategy_id = "C1b"

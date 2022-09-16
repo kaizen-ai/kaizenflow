@@ -9,8 +9,8 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hio as hio
 import helpers.hpandas as hpandas
-import helpers.hpickle as hpickle
 import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
@@ -276,7 +276,12 @@ class TestCcxtBroker1(hunitest.TestCase):
 
 
 @pytest.mark.skip(reason="Run manually.")
-class TestCcxtBroker2(hunitest.TestCase):
+class TestSaveMinimalOrderLimits(hunitest.TestCase):
+    """
+    Capture minimal order limits data from a CCXT broker so that it can be
+    reused in other tests and code.
+    """
+
     def get_test_broker(
         self,
         universe_version: str,
@@ -306,7 +311,7 @@ class TestCcxtBroker2(hunitest.TestCase):
         )
         return broker
 
-    def test_save_minimal_order_limits(self) -> None:
+    def test1(self) -> None:
         """
         Save minimal order limits on s3 for simulated broker run.
         """
@@ -319,14 +324,13 @@ class TestCcxtBroker2(hunitest.TestCase):
             universe_version, stage, contract_type, account_type
         )
         # Get minimal order limits.
-        minimal_order_limits = broker._get_minimal_order_limits()
+        minimal_order_limits = broker.minimal_order_limits
         _LOG.debug("minimal_order_limits dict '%s' ...", minimal_order_limits)
-        # TODO(Grisha): @Dan Should we save it on s3 or some other dir locally?
         # Build file path.
         dst_dir = self.get_input_dir(use_only_test_class=True)
         file_name = "minimal_order_limits.json"
         file_path = os.path.join(dst_dir, file_name)
         # Save data.
         _LOG.info("Saving data in '%s' ...", file_path)
-        hpickle.to_json(file_path, minimal_order_limits)
+        hio.to_json(file_path, minimal_order_limits)
         _LOG.info("Saving in '%s' done", file_path)
