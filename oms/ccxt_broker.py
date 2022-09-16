@@ -19,6 +19,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hlogging as hloggin
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -651,6 +652,7 @@ class CcxtBroker(ombroker.Broker):
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
+        hloggin.shutup_chatty_modules()
         return exchange
 
 

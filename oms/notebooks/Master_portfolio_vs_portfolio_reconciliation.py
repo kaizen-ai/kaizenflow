@@ -43,17 +43,56 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-date = "2022-08-31"
-start_timestamp = pd.Timestamp(date + " 10:15:00", tz="America/New_York")
+import market_data as mdata
+
+aws_profile = "ck"
+file_path = "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
+#file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
+column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
+timestamp_db_column = "end_datetime"
+datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
+market_data_df = mdata.load_market_data(
+    file_path,
+    #aws_profile=aws_profile,
+    column_remap=column_remap,
+    timestamp_db_column=timestamp_db_column,
+    datetime_columns=datetime_columns,
+)
+market_data_df
+
+# %%
+min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
+min_start_time_col_name
+
+# %%
+max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
+max_start_time_col_name
+
+# %%
+replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 20 * 60 + 26
+initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
+    minutes=replayed_delay_in_mins_or_timestamp
+)
+initial_replayed_timestamp
+
+# %%
+date = "2022-09-15"
+start_timestamp = pd.Timestamp(date + " 09:10:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 15:45:00", tz="America/New_York")
-_LOG.info("end_timestamp=%s", start_timestamp)
+end_timestamp = pd.Timestamp(date + " 11:15:00", tz="America/New_York")
+_LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 prod_dir = (
-    "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.prod"
+    #"/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
+    #"/shared_data/system_log_dir_2022-09-06_15:56:09"
+    #"/shared_data/system_log_dir_20220908_095612/"
+    #"/shared_data/system_log_dir_20220908_095626/"
+    #"/shared_data/system_log_dir_20220913_1hour"
+    #"/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
+    "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
 )
-sim_dir = "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.sim"
+sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
@@ -66,7 +105,7 @@ dict_ = {
     "sim_forecast_dir": sim_forecast_dir,
     "prod_portfolio_dir": prod_portfolio_dir,
     "sim_portfolio_dir": sim_portfolio_dir,
-    "freq": "15T",
+    "freq": "5T",
     "start_timestamp": start_timestamp,
     "end_timestamp": end_timestamp,
 }
@@ -116,6 +155,33 @@ def compute_delay(df, freq):
     return delay
 
 
+# %%
+def check_missing_bars(df, config):
+    _LOG.info("Actual index=%s", df.index)
+    actual_index = df.index.round(config["freq"])
+    min_ts = df.index.min()
+    max_ts = df.index.max()
+    expected_index = pd.date_range(
+        start=min_ts,
+        end=max_ts,
+        freq=config["freq"]
+    ).round(config["freq"])
+    hdbg.dassert_set_eq(actual_index, expected_index)
+
+def print_stats(df: pd.DataFrame, config) -> None:
+    """
+    Basic stats and sanity checks before doing heavy computations.
+    """
+    hpandas.dassert_monotonic_index(df)
+    _LOG.info("min timestamp=%s", df.index.min())
+    _LOG.info("max timestamp=%s", df.index.max())
+    check_missing_bars(df, config)
+    n_zeros = sum(df["diff_num_shares"].sum(axis=1) == 0)
+    _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_zeros, df["diff_num_shares"].shape[0]))
+    n_nans = df["diff_num_shares"].sum(axis=1).isna().sum()
+    _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_nans, df["diff_num_shares"].shape[0]))
+
+
 # %% [markdown]
 # # Forecasts
 
@@ -126,12 +192,14 @@ def compute_delay(df, freq):
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["prod_forecast_dir"]
 )
+print_stats(prod_forecast_df, config)
 hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
 sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["sim_forecast_dir"]
 )
+print_stats(sim_forecast_df, config)
 hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 
 # %% [markdown]
@@ -142,7 +210,11 @@ prod_forecast_delay = compute_delay(prod_forecast_df, config["freq"])
 hpandas.df_to_str(prod_forecast_delay, log_level=logging.INFO)
 
 # %%
-prod_forecast_delay.plot()
+prod_forecast_delay
+
+# %%
+# Plot delay in seconds.
+prod_forecast_delay.dt.total_seconds().plot(title="delay in seconds")
 
 # %%
 prod_forecast_df.index = prod_forecast_df.index.round(config["freq"])
@@ -231,7 +303,7 @@ prod_portfolio_delay = compute_delay(prod_portfolio_df, config["freq"])
 hpandas.df_to_str(prod_portfolio_delay, log_level=logging.INFO)
 
 # %%
-prod_portfolio_delay.plot()
+prod_portfolio_delay.dt.total_seconds().plot(title="delay in seconds")
 
 # %%
 _LOG.info("prod portfolio delay mean=%s", prod_portfolio_delay.mean())
@@ -261,6 +333,12 @@ portfolio_stats_dfs = {
     "sim": sim_portfolio_stats_df,
 }
 portfolio_stats_dfs = pd.concat(portfolio_stats_dfs, axis=1)
+
+# %%
+prod_portfolio_stats_df["pnl"].plot()
+
+# %%
+sim_portfolio_stats_df["pnl"].plot()
 
 # %%
 hpandas.df_to_str(portfolio_stats_dfs, log_level=logging.INFO)

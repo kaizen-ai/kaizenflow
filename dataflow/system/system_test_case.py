@@ -52,7 +52,6 @@ def run_NonTime_ForecastSystem_from_backtest_config(
     :return: result bundle
     """
     hdbg.dassert_in(method, ["fit", "predict"])
-    dtfssybuut.apply_unit_test_log_dir(self, system)
     # Build `DagRunner`.
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
@@ -91,8 +90,6 @@ def run_Time_ForecastSystem(
     :param config_tag: tag used to freeze the system config by `check_SystemConfig()`
     :return: `DagRunner` result bundles
     """
-    dtfssybuut.apply_unit_test_log_dir(self, system)
-    #
     with hasynci.solipsism_context() as event_loop:
         coroutines = []
         # Complete the system config.
@@ -211,6 +208,7 @@ class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         - Fit a System over the backtest_config period
         - Save the signature of the system
         """
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         method = "fit"
         # TODO(Grisha): @Dan Rename to "forecast_system" in CmTask2739 "Introduce `NonTime_ForecastSystem`."
         config_tag = "forecast_system"
@@ -252,14 +250,12 @@ class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
 
     # TODO(Paul, gp): This should have the option to burn the last N elements
     #  of the fit/predict dataframes.
-    def _test_fit_vs_predict1(
-        self,
-        system: dtfsyssyst.System,
-    ) -> None:
+    def _test_fit_vs_predict1(self, system: dtfsyssyst.System) -> None:
         """
         Check that `predict()` matches `fit()` on the same data, when the model
         is frozen.
         """
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Fit.
         method = "fit"
         config_tag = "forecast_system"
@@ -333,6 +329,7 @@ class NonTime_ForecastSystem_CheckPnl_TestCase1(hunitest.TestCase):
         self,
         system: dtfsyssyst.System,
     ) -> None:
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         method = "fit"
         config_tag = "forecast_system"
         result_bundle = run_NonTime_ForecastSystem_from_backtest_config(
@@ -367,6 +364,7 @@ class Test_Time_ForecastSystem_TestCase1(hunitest.TestCase):
         *,
         output_col_name: str = "prediction",
     ) -> None:
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Run the system.
         config_tag = "forecast_system"
         result_bundles = run_Time_ForecastSystem(self, system, config_tag)
@@ -418,6 +416,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
                 "add_system_config add_run_signature"
             )
         )
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         # Set `trading_end_time`.
         if trading_end_time is not None:
             system.config[
@@ -514,6 +513,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         Run a System with a DatabasePortfolio.
         """
+        dtfssybuut.apply_unit_test_log_dir(self, system)
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
@@ -637,12 +637,14 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
 
     def _test1(self, output_col_name: str) -> None:
         time_system = self.get_Time_ForecastSystem()
+        dtfssybuut.apply_unit_test_log_dir(self, time_system)
         time_system_signature = self.get_Time_ForecastSystem_signature(
             time_system, output_col_name
         )
         non_time_system = (
             self.get_NonTime_ForecastSystem_from_Time_ForecastSystem(time_system)
         )
+        dtfssybuut.apply_unit_test_log_dir(self, non_time_system)
         non_time_system_signature = self.get_NonTime_ForecastSystem_signature(
             non_time_system, output_col_name
         )
@@ -687,6 +689,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         Run `Time_ForecastSystem` and compute research PnL.
         """
         time_system = self.get_Time_ForecastSystem()
+        dtfssybuut.apply_unit_test_log_dir(self, time_system)
         # Run the system and check the config against the frozen value.
         config_tag = "time_system"
         time_system_result_bundles = run_Time_ForecastSystem(
@@ -719,6 +722,7 @@ class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfoli
         PnL.
         """
         time_system = self.get_Time_ForecastSystem_with_DataFramePortfolio()
+        dtfssybuut.apply_unit_test_log_dir(self, time_system)
         # Run the system and check the config against the frozen value.
         config_tag = "dataframe_portfolio"
         _ = run_Time_ForecastSystem(self, time_system, config_tag)
@@ -781,6 +785,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         Test that the outcome is the same when running a System with a
         DataFramePortfolio vs running one with a DatabasePortfolio.
         """
+        dtfssybuut.apply_unit_test_log_dir(self, system_with_dataframe_portfolio)
+        dtfssybuut.apply_unit_test_log_dir(self, system_with_database_portfolio)
         # The config signature is different (since the systems are different) so
         # we only compare the result of the run.
         add_system_config = False
