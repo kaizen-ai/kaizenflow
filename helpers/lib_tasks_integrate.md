@@ -17,27 +17,27 @@
 
 # Integration process
 
+## Preparation
+
 - Pull master
+
+- Remove white spaces from both `amp` and `cmamp`:
+  ```
+  > dev_scripts/clean_up_text_files.sh
+  > git commit -am "Remove white spaces"; git push
+  ```
 
 - Align `lib_tasks.py`:
   ```
   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
   ```
 
-- Create the integration branches
+- Create the integration branches:
   ```
   > cd amp1
   > i integrate_create_branch --dir-basename amp1
   > cd cmamp1
   > i integrate_create_branch --dir-basename cmamp1
-  ```
-
-## Preparation
-
-- Remove white spaces
-  ```
-  > dev_scripts/clean_up_text_files.sh
-  > git commit -am "Remove white spaces"; git push
   ```
 
 - Lint both dirs:
