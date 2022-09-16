@@ -189,7 +189,7 @@ def get_Mock1_NonTime_ForesactSystem_example1(
     im_client_config = cconfig.Config()
     system.config["market_data_config", "im_client_config"] = im_client_config
     #
-    system = dtfsys.apply_market_data_config(system)
+    system = dtfsys.apply_MarketData_config(system)
     # Set the research PNL parameters.
     # TODO(gp): Create `apply_research_pnl` and pass these params.
     system.config["research_pnl", "price_col"] = "vwap"
