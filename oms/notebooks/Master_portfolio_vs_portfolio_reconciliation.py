@@ -46,14 +46,19 @@ hprint.config_notebook()
 import market_data as mdata
 
 aws_profile = "ck"
-file_path = "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
-#file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
-column_remap = {"start_timestamp": "start_datetime", "end_timestamp": "end_datetime"}
+file_path = (
+    "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
+)
+# file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
+column_remap = {
+    "start_timestamp": "start_datetime",
+    "end_timestamp": "end_datetime",
+}
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
 market_data_df = mdata.load_market_data(
     file_path,
-    #aws_profile=aws_profile,
+    # aws_profile=aws_profile,
     column_remap=column_remap,
     timestamp_db_column=timestamp_db_column,
     datetime_columns=datetime_columns,
@@ -61,11 +66,15 @@ market_data_df = mdata.load_market_data(
 market_data_df
 
 # %%
-min_start_time_col_name = market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
+min_start_time_col_name = (
+    market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
+)
 min_start_time_col_name
 
 # %%
-max_start_time_col_name = market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
+max_start_time_col_name = (
+    market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
+)
 max_start_time_col_name
 
 # %%
@@ -84,12 +93,12 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 prod_dir = (
-    #"/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
-    #"/shared_data/system_log_dir_2022-09-06_15:56:09"
-    #"/shared_data/system_log_dir_20220908_095612/"
-    #"/shared_data/system_log_dir_20220908_095626/"
-    #"/shared_data/system_log_dir_20220913_1hour"
-    #"/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
+    # "/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
+    # "/shared_data/system_log_dir_2022-09-06_15:56:09"
+    # "/shared_data/system_log_dir_20220908_095612/"
+    # "/shared_data/system_log_dir_20220908_095626/"
+    # "/shared_data/system_log_dir_20220913_1hour"
+    # "/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
     "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
 )
 sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
@@ -162,11 +171,10 @@ def check_missing_bars(df, config):
     min_ts = df.index.min()
     max_ts = df.index.max()
     expected_index = pd.date_range(
-        start=min_ts,
-        end=max_ts,
-        freq=config["freq"]
+        start=min_ts, end=max_ts, freq=config["freq"]
     ).round(config["freq"])
     hdbg.dassert_set_eq(actual_index, expected_index)
+
 
 def print_stats(df: pd.DataFrame, config) -> None:
     """
@@ -177,9 +185,15 @@ def print_stats(df: pd.DataFrame, config) -> None:
     _LOG.info("max timestamp=%s", df.index.max())
     check_missing_bars(df, config)
     n_zeros = sum(df["diff_num_shares"].sum(axis=1) == 0)
-    _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_zeros, df["diff_num_shares"].shape[0]))
+    _LOG.info(
+        "fraction of diff_nam_shares=0 is %s",
+        hprint.perc(n_zeros, df["diff_num_shares"].shape[0]),
+    )
     n_nans = df["diff_num_shares"].sum(axis=1).isna().sum()
-    _LOG.info("fraction of diff_nam_shares=0 is %s", hprint.perc(n_nans, df["diff_num_shares"].shape[0]))
+    _LOG.info(
+        "fraction of diff_nam_shares=0 is %s",
+        hprint.perc(n_nans, df["diff_num_shares"].shape[0]),
+    )
 
 
 # %% [markdown]
