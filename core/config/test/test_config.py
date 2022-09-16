@@ -1879,15 +1879,14 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         #
         stmt = 'config["nrows"] = 10000'
         exp = """
-        nrows (was_read=False): 10000 <class 'int'>
+        nrows (marked_as_read=False, val_type=int): 10000
         """
         workload.append((stmt, exp))
         #
         stmt = 'config.add_subconfig("read_data")'
-        exp = """
-        nrows (was_read=False): 10000 <class 'int'>
-        read_data (was_read=False):
-          <class 'core.config.config_.Config'>
+        exp = r"""
+        nrows (marked_as_read=False, val_type=int): 10000
+        read_data (marked_as_read=False, val_type=core.config.config_.Config):
         """
         workload.append((stmt, exp))
         #
@@ -1940,7 +1939,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign with a flat key.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (was_read=False, val_type=str): hello.txt
+        key1 (marked_as_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Invalid access.
@@ -1971,15 +1970,15 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign with a compound key.
         stmt = 'config["key1", "key2"] = "hello.txt"'
         exp = r"""
-        key1 (was_read=False, val_type=core.config.config_.Config):
-          key2 (was_read=False, val_type=str): hello.txt
+        key1 (marked_as_read=False, val_type=core.config.config_.Config):
+          key2 (marked_as_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign with a compound key.
         stmt = 'config["key1"]["key2"] = "hello2.txt"'
         exp = r"""
-        key1 (was_read=False, val_type=core.config.config_.Config):
-          key2 (was_read=False, val_type=str): hello2.txt
+        key1 (marked_as_read=False, val_type=core.config.config_.Config):
+          key2 (marked_as_read=False, val_type=str): hello2.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
@@ -1994,7 +1993,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (was_read=False): hello.txt <class 'str'>
+        key1 (marked_as_read=False): hello.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
@@ -2027,19 +2026,19 @@ class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (was_read=False, val_type=str): hello.txt
+        key1 (marked_as_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Overwrite a value.
         stmt = 'config["key1"] = "test_name.txt"'
         exp = r"""
-        key1 (was_read=False, val_type=str): test_name.txt
+        key1 (marked_as_read=False, val_type=str): test_name.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Read the value.
         stmt = 'config.mark_as_read()'
         exp = r"""
-        key1 (was_read=False, val_type=str): test_name.txt
+        key1 (marked_as_read=False, val_type=str): test_name.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Write after read asserts.
@@ -2073,25 +2072,25 @@ class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (was_read=False): hello.txt <class 'str'>
+        key1 (marked_as_read=False): hello.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Overwrite a value.
         stmt = 'config["key1"] = "test_name.txt"'
         exp = r"""
-        key1 (was_read=False): test_name.txt <class 'str'>
+        key1 (marked_as_read=False): test_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Read the value.
         stmt = '_ = config["key1"]'
         exp = r"""
-        key1 (was_read=True): test_name.txt <class 'str'>
+        key1 (marked_as_read=True): test_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Write after read doesn't asserts.
         stmt = 'config["key1"] = "new_name.txt"'
         exp = """
-        key1 (was_read=True): new_name.txt <class 'str'>
+        key1 (marked_as_read=True): new_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
@@ -2121,20 +2120,20 @@ class Test_nested_config_clobber1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["read_data", "filename"] = "hello.txt"'
         exp = r"""
-        read_data (was_read=False, val_type=core.config.config_.Config):
-          filename (was_read=False, val_type=str): hello.txt
+        read_data (marked_as_read=False, val_type=core.config.config_.Config):
+          filename (marked_as_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Overwrite a value.
         stmt = 'config["read_data"] = "test_name.txt"'
         exp = r"""
-        read_data (was_read=False): test_name.txt <class 'str'>
+        read_data (marked_as_read=False): test_name.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
     #     # Read the value.
     #     stmt = '_ = config["read_data"]'
     #     exp = r"""
-    #     read_data (was_read=True): test_name.txt <class 'str'>
+    #     read_data (marked_as_read=True): test_name.txt <class 'str'>
     #     """
     #     self.execute_stmt(stmt, exp, mode, globals())
     #     # Write after read asserts.
@@ -2168,25 +2167,25 @@ class Test_nested_config_clobber1(_Config_execute_stmt_TestCase1):
     #     # Assign a value.
     #     stmt = 'config["read_data"] = "hello.txt"'
     #     exp = r"""
-    #     read_data (was_read=False): hello.txt <class 'str'>
+    #     read_data (marked_as_read=False): hello.txt <class 'str'>
     #     """
     #     self.execute_stmt(stmt, exp, mode, globals())
     #     # Overwrite a value.
     #     stmt = 'config["read_data"] = "test_name.txt"'
     #     exp = r"""
-    #     read_data (was_read=False): test_name.txt <class 'str'>
+    #     read_data (marked_as_read=False): test_name.txt <class 'str'>
     #     """
     #     self.execute_stmt(stmt, exp, mode, globals())
     #     # Read the value.
     #     stmt = '_ = config["read_data"]'
     #     exp = r"""
-    #     read_data (was_read=True): test_name.txt <class 'str'>
+    #     read_data (marked_as_read=True): test_name.txt <class 'str'>
     #     """
     #     self.execute_stmt(stmt, exp, mode, globals())
     #     # Write after read doesn't asserts.
     #     stmt = 'config["read_data"] = "new_name.txt"'
     #     exp = """
-    #     read_data (was_read=True): new_name.txt <class 'str'>
+    #     read_data (marked_as_read=True): new_name.txt <class 'str'>
     #     """
     #     self.execute_stmt(stmt, exp, mode, globals())
 

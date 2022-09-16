@@ -527,6 +527,7 @@ def purify_today_date(txt: str) -> str:
     return txt
 
 
+# TODO(gp): -> purify_trailing_white_spaces
 def purify_white_spaces(txt: str) -> str:
     """
     Remove trailing white spaces.
@@ -786,28 +787,63 @@ def _fuzzy_clean(txt: str) -> str:
     return txt
 
 
-# TODO(gp): Use the one in hprint. Is it even needed?
-def _to_pretty_string(obj: str) -> str:
-    if isinstance(obj, dict):
-        ret = pprint.pformat(obj)
-    else:
-        ret = str(obj)
-    ret = ret.rstrip("\n")
-    return ret
+# # TODO(gp): Use the one in hprint. Is it even needed?
+# def _to_pretty_string(obj: str) -> str:
+#     if isinstance(obj, dict):
+#         ret = pprint.pformat(obj)
+#     else:
+#         ret = str(obj)
+#     ret = ret.rstrip("\n")
+#     return ret
 
 
 def _sort_lines(txt: str) -> str:
     """
     Sort the lines in alphabetical order.
 
-    This is used when we want to perform a comparison of equality but
-    without order. Of course there are false negatives, since the
-    relative order of lines might matter.
+    This is used when we want to perform a comparison of equality but without order.
+    Of course there are false negatives, since the relative order of lines might
+    matter.
     """
     lines = txt.split("\n")
     lines.sort()
     lines = "\n".join(lines)
     return lines
+
+
+def _save_diff(
+    actual: str,
+    expected: str,
+    tag: str,
+    full_test_name: str,
+    test_dir: str,
+    *,
+    abort_on_error: bool = True,
+    dst_dir: str = ".",
+    error_msg: str = ""
+) -> None:
+    # Save and expected strings to dir.
+    act_file_name = f"{test_dir}/tmp.{tag}.actual.txt"
+    exp_file_name = f"{test_dir}/tmp.{tag}.expected.txt"
+    hio.to_file(act_file_name, actual)
+    hio.to_file(exp_file_name, expected)
+    # Save and expected strings to files (before or after fuzzy_clean).
+    act_file_name = f"./tmp.{tag}.actual.txt"
+    exp_file_name = f"./tmp.{tag}.expected.txt"
+    hio.to_file(act_file_name, actual)
+    hio.to_file(exp_file_name, expected)
+    #
+    _LOG.debug("Actual:\n'%s'", actual)
+    _LOG.debug("Expected:\n'%s'", expected)
+    banner = f"{tag}: ACTUAL vs EXPECTED: {full_test_name}"
+    diff_files(
+        act_file_name,
+        exp_file_name,
+        tag=tag,
+        abort_on_exit=abort_on_error,
+        dst_dir=dst_dir,
+        error_msg=error_msg,
+    )
 
 
 def assert_equal(
@@ -838,20 +874,25 @@ def assert_equal(
             "dst_dir"
         )
     )
+    values = collections.OrderDict()
     #
     _LOG.debug("Before any transformation:")
     _LOG.debug("act='\n%s'", actual)
     _LOG.debug("exp='\n%s'", expected)
-    # Remove white spaces.
+    values["original"] = (actual, expected)
+    # actual_orig = actual
+    # expected_orig = expected
+    # 1) Remove white spaces.
     actual = purify_white_spaces(actual)
     expected = purify_white_spaces(expected)
-    # Dedent expected, if needed.
+    values["purify_white_spaces"] = (actual, expected)
+    # Dedent only expected since we often align it to make it look more readable
+    # in the Python code, if needed.
     if dedent:
         _LOG.debug("# Dedent expected")
-        # actual = hprint.dedent(actual)
         expected = hprint.dedent(expected)
         _LOG.debug("exp='\n%s'", expected)
-    # Purify actual text, if needed.
+    # Purify text, if needed.
     if purify_text:
         _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
@@ -860,6 +901,7 @@ def assert_equal(
             _LOG.debug("# Purify expected")
             expected = purify_txt_from_client(expected)
             _LOG.debug("exp='\n%s'", expected)
+        values["purify_expected_text"] = (actual, expected)
     # Ensure that there is a single `\n` at the end of the strings.
     actual = actual.rstrip("\n") + "\n"
     expected = expected.rstrip("\n") + "\n"
@@ -868,17 +910,18 @@ def assert_equal(
         _LOG.debug("# Sorting lines")
         actual = _sort_lines(actual)
         expected = _sort_lines(expected)
+        values["sort"] = (actual, expected)
     # Fuzzy match, if needed.
-    actual_orig = actual
-    expected_orig = expected
     if fuzzy_match:
         _LOG.debug("# Use fuzzy match")
         actual = _fuzzy_clean(actual)
         expected = _fuzzy_clean(expected)
+        values["fuzzy_clean"] = (actual, expected)
     # Check.
     _LOG.debug("The values being compared are:")
     _LOG.debug("act='\n%s'", actual)
     _LOG.debug("exp='\n%s'", expected)
+    values["final"] = (actual, expected)
     is_equal = expected == actual
     if not is_equal:
         _LOG.error(
@@ -889,7 +932,8 @@ def assert_equal(
             ),
         )
         if not check_string:
-            # Print the correct output, like:
+            # If this is a `self.assert_equal()` and not a `self.check_string()`,
+            # then print the correct output, like:
             #   exp = r'"""
             #   2021-02-17 09:30:00-05:00
             #   2021-02-17 10:00:00-05:00
@@ -927,41 +971,46 @@ def assert_equal(
             txt.append(exp_var)
             txt = "\n".join(txt)
             error_msg += txt
-        # Select what to save.
-        compare_orig = False
-        if compare_orig:
-            tag = "ORIGINAL ACTUAL vs ORIGINAL EXPECTED"
-            actual = actual_orig
-            expected = expected_orig
-        else:
-            if fuzzy_match:
-                tag = "FUZZY ACTUAL vs FUZZY EXPECTED"
-            else:
-                tag = "ACTUAL vs EXPECTED"
-        tag += f": {full_test_name}"
-        # Save actual and expected strings to files (before or after fuzzy_clean).
-        # TODO(gp): It might be useful to save also the files without any
-        #  purification.
-        act_file_name = f"{test_dir}/tmp.actual.txt"
-        exp_file_name = f"{test_dir}/tmp.expected.txt"
-        save_with_fuzzy_clean = True
-        if save_with_fuzzy_clean:
-            hio.to_file(act_file_name, actual)
-            hio.to_file(exp_file_name, expected)
-        else:
-            hio.to_file(act_file_name, actual_orig)
-            hio.to_file(exp_file_name, expected_orig)
         #
-        _LOG.debug("Actual:\n'%s'", actual)
-        _LOG.debug("Expected:\n'%s'", expected)
-        diff_files(
-            act_file_name,
-            exp_file_name,
-            tag=tag,
-            abort_on_exit=abort_on_error,
-            dst_dir=dst_dir,
-            error_msg=error_msg,
-        )
+        for key in values.items():
+            actual_tmp, expected_tmp = values[key]
+
+
+        # # Select what to save.
+        # compare_orig = False
+        # if compare_orig:
+        #     tag = "ORIGINAL ACTUAL vs ORIGINAL EXPECTED"
+        #     actual = actual_orig
+        #     expected = expected_orig
+        # else:
+        #     if fuzzy_match:
+        #         tag = "FUZZY ACTUAL vs FUZZY EXPECTED"
+        #     else:
+        #         tag = "ACTUAL vs EXPECTED"
+        # tag += f": {full_test_name}"
+        # # Save actual and expected strings to files (before or after fuzzy_clean).
+        # # TODO(gp): It might be useful to save also the files without any
+        # #  purification.
+        # act_file_name = f"{test_dir}/tmp.actual.txt"
+        # exp_file_name = f"{test_dir}/tmp.expected.txt"
+        # save_with_fuzzy_clean = True
+        # if save_with_fuzzy_clean:
+        #     hio.to_file(act_file_name, actual)
+        #     hio.to_file(exp_file_name, expected)
+        # else:
+        #     hio.to_file(act_file_name, actual_orig)
+        #     hio.to_file(exp_file_name, expected_orig)
+        # #
+        # _LOG.debug("Actual:\n'%s'", actual)
+        # _LOG.debug("Expected:\n'%s'", expected)
+        # diff_files(
+        #     act_file_name,
+        #     exp_file_name,
+        #     tag=tag,
+        #     abort_on_exit=abort_on_error,
+        #     dst_dir=dst_dir,
+        #     error_msg=error_msg,
+        # )
     _LOG.debug("-> is_equal=%s", is_equal)
     return is_equal
 

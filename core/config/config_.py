@@ -169,6 +169,10 @@ class _OrderedConfig(_OrderedDictType):
       - any other Python data structure (e.g., list, tuple)
     """
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Set.
+    # /////////////////////////////////////////////////////////////////////////////
+
     def __setitem__(
         self,
         key: ScalarKey,
@@ -177,8 +181,8 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: str,
     ) -> None:
         """
-        A value is encoded internally as a pair (was_read, value) where:
-        - was_read: stores whether the value has been already read and thus
+        A value is encoded internally as a pair (marked_as_read, value) where:
+        - marked_as_read: stores whether the value has been already read and thus
           needs to be protected from successive writes, depending on
           clobber_mode
         - value: stores the actual value
@@ -237,10 +241,10 @@ class _OrderedConfig(_OrderedDictType):
         elif clobber_mode == "assert_on_write_after_read":
             _LOG.debug("Checking clobber_mode...")
             if is_key_present:
-                was_read, old_val = super().__getitem__(key)
+                marked_as_read, old_val = super().__getitem__(key)
                 is_been_changed = old_val != val
-                _LOG.debug(hprint.to_str("was_read old_val is_been_changed"))
-                if was_read and is_been_changed:
+                _LOG.debug(hprint.to_str("marked_as_read old_val is_been_changed"))
+                if marked_as_read and is_been_changed:
                     # The value has already been read and we are trying to change
                     # it, so we need to assert.
                     msg: List[str] = []
@@ -257,32 +261,57 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
-                was_read, _ = super().__getitem__(key)
+                marked_as_read, old_val = super().__getitem__(key)
+                _ = old_val
             else:
                 # The key was not present, so we just mark it not read yet.
-                was_read = False
-            super().__setitem__(key, (was_read, val))
+                marked_as_read = False
+            super().__setitem__(key, (marked_as_read, val))
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Get.
+    # /////////////////////////////////////////////////////////////////////////////
 
     def __getitem__(
-        self, key: ScalarKey, mark_as_read: bool = False
+        self, key: ScalarKey
     ) -> ValueTypeHint:
-        # Retrieve the value.
+        """
+        Retrieve the value corresponding to `key`.
+
+        :param read_state: what value to mark
+        """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        _, val = super().__getitem__(key)
-        if mark_as_read:
-            # Update the metadata, accounting that this data was read.
-            was_read = True
-            super().__setitem__(key, (was_read, val))
+        # Retrieve the value from the dictionary itself.
+        marked_as_read, val = super().__getitem__(key)
         return val
 
     def mark_as_read(
         self,
-            key: ScalarKey,
-            mark_as_read: bool = False) -> None:
-        # Update the metadata, accounting that this data was read.
-        super().__setitem__(key, (mark_as_read, val))
-        if hasattr(val, "mark_as_read"):
-            val.mark_as_read(mark_as_read)
+        key: ScalarKey,
+        read_state: bool = True
+    ) -> None:
+        # Retrieve the value and the metadata.
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        marked_as_read, val = super().__getitem__(key)
+        _LOG.debug(hprint.to_str("marked_as_read val read_state"))
+        #
+        if read_state:
+            # Update the metadata, accounting that this data was read.
+            marked_as_read = True
+            super().__setitem__(key, (marked_as_read, val))
+        # If the value is an iterable then we need to propagate the read state.
+        if hintros.is_iterable(val):
+            for elem in val:
+                if hasattr(elem, "mark_as_read"):
+                    elem.mark_as_read(mark_as_read)
+        else:
+            if hasattr(val, "mark_as_read"):
+                val.mark_as_read(mark_as_read)
+
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Print.
+    # /////////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
         mode = "only_values"
@@ -299,13 +328,13 @@ class _OrderedConfig(_OrderedDictType):
         Return a short string representation of this `Config`.
         """
         txt = []
-        for key, (was_read, val) in self.items():
+        for key, (marked_as_read, val) in self.items():
             # 1) Process key.
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
-                # E.g., `nrows (was_read=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (was_read={was_read}, "
+                # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
+                key_as_str = f"{key} (marked_as_read={marked_as_read}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
@@ -449,7 +478,7 @@ class Config:
         return len(self._config)
 
     # ////////////////////////////////////////////////////////////////////////////
-    # Printing
+    # Print
     # ////////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
@@ -718,8 +747,8 @@ class Config:
         _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[ScalarKey, Any] = collections.OrderedDict()
-        for key, (was_read, val) in self._config.items():
-            _ = was_read
+        for key, (marked_as_read, val) in self._config.items():
+            _ = marked_as_read
             if keep_leaves:
                 if isinstance(val, Config):
                     # If a value is a `Config` convert to dictionary recursively.
@@ -855,64 +884,6 @@ class Config:
                     v = Config()
             config[k] = v
         return config
-
-    # def _to_string(self, mode: str) -> str:
-    #     """
-    #     Return a short string representation of this `Config`.
-    #     """
-    #     txt = []
-    #     for key, (was_read, val) in self._config.items():
-    #         # 1) Process key.
-    #         if mode == "only_values":
-    #             key_as_str = str(key)
-    #         elif mode == "verbose":
-    #             # E.g., `nrows (was_read=False): 10000 <class 'int'>`
-    #             key_as_str = f"{key} (was_read={was_read})"
-    #         else:
-    #             raise ValueError(f"Invalid mode='{mode}")
-    #         # 2) Process value.
-    #         if isinstance(val, Config):
-    #             # Found a Config thus recurse on it.
-    #             txt_tmp = str(val)
-    #             val_as_str = "\n" + hprint.indent(txt_tmp)
-    #         else:
-    #             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
-    #                 # Data structures that can be printed in a fancy way.
-    #                 val_as_str = hpandas.df_to_str(val, print_shape_info=True)
-    #                 val_as_str = "\n" + hprint.indent(val_as_str)
-    #             else:
-    #                 # Normal Python data structures.
-    #                 val_as_str = str(val)
-    #                 if len(val_as_str.split("\n")) > 1:
-    #                     # Indent a string that spans multiple lines like:
-    #                     # ```
-    #                     # portfolio_object:
-    #                     #   # historical holdings=
-    #                     #   egid                        10365    -1
-    #                     #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
-    #                     #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
-    #                     #   ...
-    #                     #   # historical holdings marked to market=
-    #                     #   ...
-    #                     # ```
-    #                     val_as_str = "\n" + hprint.indent(val_as_str)
-    #         if mode == "verbose":
-    #             # Add also the type.
-    #             # E.g., nrows (was_read=False): 10000 <class 'int'>
-    #             val_as_str += " %s" % str(type(val))
-    #         # 3) Print.
-    #         txt.append(f"{key_as_str}: {val_as_str}")
-    #     # Assemble the result.
-    #     ret = "\n".join(txt)
-    #     # Remove memory locations of functions, if config contains them, e.g.,
-    #     #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
-    #     memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
-    #     ret = re.sub(memory_loc_pattern, r"\1", ret)
-    #     # Remove memory locations of objects, if config contains them, e.g.,
-    #     #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
-    #     memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
-    #     ret = re.sub(memory_loc_pattern, r"\1", ret)
-    #     return ret
 
     # /////////////////////////////////////////////////////////////////////////////
 
