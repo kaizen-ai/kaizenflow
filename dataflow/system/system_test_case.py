@@ -8,7 +8,6 @@ import abc
 import asyncio
 import datetime
 import logging
-import os
 from typing import Any, Callable, Coroutine, List, Optional, Tuple
 
 import pandas as pd
@@ -20,7 +19,6 @@ import dataflow.system.system_signature as dtfsysysig
 import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.universe as ivcu
@@ -544,8 +542,8 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
     """
     Reconcile `NonTime_ForecastSystem` and `Time_ForecastSystem`.
 
-    Make sure that `NonTime_ForecastSystem` and `Time_ForecastSystem` produce
-    the same predictions.
+    Make sure that `NonTime_ForecastSystem` and `Time_ForecastSystem`
+    produce the same predictions.
     """
 
     @staticmethod
