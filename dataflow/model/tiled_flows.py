@@ -83,7 +83,7 @@ def yield_processed_parquet_tile_dict(
     """
     Yield a dictionary of processed dataframes, keyed by simulation.
 
-    `simulations` should like like:
+    `simulations` should look like:
 
     ```
              dir_name   prediction_col
@@ -366,7 +366,7 @@ def process_parquet_read_df(
     :param asset_id_col: asset id column to pivot on
     :return: multiindexed dataframe with asset id's at the inner column level
     """
-    # Convert the asset it column to an integer column.
+    # Convert the asset id column to an integer column.
     df = hpandas.convert_col_to_int(df, asset_id_col)
     # If a (non-asset id) column can be represented as an int, then do so.
     df = df.rename(columns=hparque.maybe_cast_to_int)
