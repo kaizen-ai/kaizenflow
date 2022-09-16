@@ -9,7 +9,7 @@ replace_text.py \
 
 replace_text.py \
   --old "get_im_client_market_data_df" \
-  --new "get_im_client_MarketData_df1" \
+  --new "get_MarketData_df" \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
@@ -49,7 +49,7 @@ replace_text.py \
 
 replace_text.py \
   --old "apply_dag_runner_config_for" \
-  --new "_apply_DagRunner_config_for" \
+  --new "apply_DagRunner_config_for" \
   --exclude_dirs "$dir_names"
 #
 replace_text.py \
