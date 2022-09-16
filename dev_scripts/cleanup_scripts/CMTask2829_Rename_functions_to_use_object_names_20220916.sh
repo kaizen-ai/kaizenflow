@@ -9,7 +9,7 @@ replace_text.py \
 
 replace_text.py \
   --old "get_im_client_market_data_df1" \
-  --new "get_MarketData_df5" \
+  --new "get_MarketData_df6" \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
