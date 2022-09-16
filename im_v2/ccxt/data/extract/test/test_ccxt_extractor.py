@@ -113,7 +113,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
         start_timestamp = pd.Timestamp("2022-02-24T00:00:00Z")
-        # _download_ohlcv filters out bars which are within bounds 
+        # _download_ohlcv filters out bars which are within bounds
         #  of the provided time intervals.
         mid_timestamp = hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp("2022-02-24T12:00:00Z"))
         end_timestamp = pd.Timestamp("2022-02-25T00:00:00Z")
