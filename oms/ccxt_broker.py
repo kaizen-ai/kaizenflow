@@ -700,7 +700,7 @@ def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     # `TestSaveMinimalOrderLimits`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestCcxtBroker2/input/minimal_order_limits.json",
+        "oms/test/outcomes/TestSaveMinimalOrderLimits/input/minimal_order_limits.json",
     )
     # The data looks like
     # {"6051632686":
