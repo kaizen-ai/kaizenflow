@@ -358,6 +358,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         )
         return non_time_system_builder_func
 
+    # TODO(Grisha): @Dan Factor out to `system_test_case.py`.
     def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
         self, time_system: dtfsys.System
     ) -> dtfsys.System:
@@ -405,7 +406,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # Load market data for replaying.
         market_data_df, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df5()
         time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
-        # TODO(Grisha): @Dan consider a way to pass the number of 5-minute intervals.
+        # TODO(Grisha): @Dan Pass "rt_timeout_in_secs_or_time" through kwargs.
         # Make system to run for 3 5-minute intervals.
         time_system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
             rt_timeout_in_secs_or_time
