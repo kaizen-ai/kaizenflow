@@ -22,7 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.common.data.extract.extractor as imvcdexex
+import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
@@ -175,7 +175,7 @@ DATASET_SCHEMA = {
 # TODO(Juraj): Refactor the method, divide into submethods
 # by data type.
 def download_realtime_for_one_exchange(
-    args: Dict[str, Any], exchange: imvcdexex.Extractor
+    args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading exchange data.
@@ -307,7 +307,7 @@ def download_realtime_for_one_exchange(
 @timeout(TIMEOUT_SEC)
 def _download_realtime_for_one_exchange_with_timeout(
     args: Dict[str, Any],
-    exchange_class: imvcdexex.Extractor,
+    exchange_class: ivcdexex.Extractor,
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
@@ -332,7 +332,7 @@ def _download_realtime_for_one_exchange_with_timeout(
 
 
 def download_realtime_for_one_exchange_periodically(
-    args: Dict[str, Any], exchange: imvcdexex.Extractor
+    args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for periodical exchange data download.
@@ -374,7 +374,10 @@ def download_realtime_for_one_exchange_periodically(
         start_timestamp = iteration_start_time - timedelta(
             minutes=time_window_min
         )
-        end_timestamp = datetime.now(tz)
+        # The floor function does a cosmetic change to the parameters
+        # so the logs are completely clear.
+        start_timestamp = start_timestamp.floor("min")
+        end_timestamp = pd.to_datetime(datetime.now(tz)).floor("min")
         try:
             _download_realtime_for_one_exchange_with_timeout(
                 args, exchange, start_timestamp, end_timestamp
@@ -502,7 +505,7 @@ def save_parquet(
 
 
 def download_historical_data(
-    args: Dict[str, Any], exchange: imvcdexex.Extractor
+    args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for downloading historical exchange data.
@@ -601,7 +604,7 @@ def remove_duplicates(
     # Remove final unfinished tick.
     #  E.g. at 19:02:11 the candle will have a smaller volume than at 19:02:59.
     if (end_timestamp_as_unix - data.timestamp.max()) < 60000:
-        data = data.loc[data.timestamp == data.timestamp.max()]
+        data = data.loc[data.timestamp != data.timestamp.max()]
     return data
 
 
