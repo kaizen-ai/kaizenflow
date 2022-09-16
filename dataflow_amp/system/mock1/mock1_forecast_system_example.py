@@ -165,11 +165,11 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
 
 
 # #############################################################################
-# Mock1_NonTime_ForecastSystem1_example
+# Mock1_NonTime_ForecastSystem_example1
 # #############################################################################
 
 
-def get_Mock1_NonTime_ForesactSystem_example1(backtest_config) -> dtfsys.System:
+def get_Mock1_NonTime_ForesactSystem_example1(backtest_config) -> dtfsys.ForesactSystem:
     """
     Build Mock1_ForecastSystem and fill the `System.config`.
     """
@@ -197,11 +197,11 @@ def get_Mock1_NonTime_ForesactSystem_example1(backtest_config) -> dtfsys.System:
 
 
 # #############################################################################
-# Mock1_Time_ForecastSystem1_example
+# Mock1_Time_ForecastSystem_example1
 # #############################################################################
 
 
-# TODO(Nina): Factor out the exaples to pass params into it.
+# TODO(Nina): Factor out the examples to pass params into it.
 def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.System:
     """
     The System is used for the corresponding unit tests.
