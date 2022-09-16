@@ -7,6 +7,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hpandas as hpandas
+import helpers.hdatetime as hdateti
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 
@@ -108,12 +109,15 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Verify that wrapper around `ccxt.binance` download is properly called.
         """
-        fetch_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         # Prepare data and initialize class before run.
         exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
         exchange_class.currency_pairs = ["BTC/USDT"]
         start_timestamp = pd.Timestamp("2022-02-24T00:00:00Z")
+        # _download_ohlcv filters out bars which are within bounds 
+        #  of the provided time intervals.
+        mid_timestamp = hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp("2022-02-24T12:00:00Z"))
         end_timestamp = pd.Timestamp("2022-02-25T00:00:00Z")
+        fetch_ohlcv_mock.return_value = pd.DataFrame([["dummy", mid_timestamp]], columns=["dummy", "timestamp"])
         # Mock a call to ccxt's `parse_timeframe method` called inside `_fetch_ohlcv`.
         with umock.patch.object(
             exchange_class._exchange, "parse_timeframe", create=True
@@ -125,6 +129,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
+                bar_per_iteration=500
             )
             #
             self.assertEqual(parse_timeframe_mock.call_count, 1)
@@ -143,10 +148,10 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         actual_output = hpandas.df_to_str(ohlcv_data)
-        expected_output = r"""dummy
-            0  dummy
-            0  dummy
-            0  dummy
+        expected_output = rf"""dummy timestamp
+            0  dummy {mid_timestamp}
+            0  dummy {mid_timestamp}
+            0  dummy {mid_timestamp}
         """
         self.assert_equal(actual_output, expected_output, fuzzy_match=True)
 
