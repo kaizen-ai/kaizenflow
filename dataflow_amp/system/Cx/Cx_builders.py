@@ -252,7 +252,7 @@ def get_Cx_RealTimeDag_example2(
     )
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system)
     # Append the `ProcessForecastNode`.
-    dag = dtfsys.add_process_forecasts_node(system, dag)
+    dag = dtfsys.add_ProcessForecastsNode(system, dag)
     return dag
 
 
@@ -283,7 +283,7 @@ def _get_Cx_dag_prod_instance1(
     dag = dag_builder.get_dag(dag_config)
     system = dtfsys.apply_dag_property(dag, system)
     #
-    system = dtfsys.apply_dag_runner_config_for_crypto(system)
+    system = dtfsys.apply_DagRunner_config_for_crypto(system)
     # Build Portfolio.
     trading_period_str = dag_builder.get_trading_period(dag_config)
     # TODO(gp): Add a param to get_trading_period to return the int.
@@ -312,7 +312,7 @@ def _get_Cx_dag_prod_instance1(
     ].to_dict()
     ts_col_name = "timestamp_db"
     # TODO(Grisha): should we use `add_real_time_data_source` and
-    # `add_process_forecasts_node` from `system_builder_utils.py`?
+    # `add_ProcessForecastsNode` from `system_builder_utils.py`?
     dag = dtfsys.adapt_dag_to_real_time(
         dag,
         market_data,
