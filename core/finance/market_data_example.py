@@ -690,10 +690,7 @@ def get_MarketData_df4() -> Tuple[pd.DataFrame, int]:
     return data, rt_timeout_in_secs_or_time
 
 
-# #############################################################################
-
-
-def get_im_client_MarketData_df1(full_symbols: List[str]) -> pd.DataFrame:
+def get_MarketData_df5(full_symbols: List[str]) -> pd.DataFrame:
     """
     Generate `ImClient` output example with price data that alternates every 5
     minutes.
