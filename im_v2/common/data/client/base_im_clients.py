@@ -301,32 +301,36 @@ class ImClient(abc.ABC):
         Transform bid-ask data with multiple levels.
 
         E.g., from:
-                                level	bid_price
-        		
-        2022-09-08 21:01:00+00:00	1	2.32
-        2022-09-08 21:01:00+00:00	2	3.23
-        2022-09-08 21:01:00+00:00	3	2.33 
+                                level    bid_price
+
+        2022-09-08 21:01:00+00:00    1    2.32
+        2022-09-08 21:01:00+00:00    2    3.23
+        2022-09-08 21:01:00+00:00    3    2.33
 
         to:
-                            bid_price_1	bid_price_2	bid_price_3
-    			
-        2022-09-08 21:01:00+00:00	2.32	3.23	2.33
+                            bid_price_1    bid_price_2    bid_price_3
+
+        2022-09-08 21:01:00+00:00    2.32    3.23    2.33
         """
         # Get rid of irrelevant column.
         if "id" in df.columns:
             df = df.drop(["id"], axis=1)
         # Specify bid ask columns.
-        bid_ask_cols = [col for col in df.columns if col.startswith("bid") or col.startswith("ask")]
-        # TODO(Max): Create an assertion that all values for levels are identical, 
+        bid_ask_cols = [
+            col
+            for col in df.columns
+            if col.startswith("bid") or col.startswith("ask")
+        ]
+        # TODO(Max): Create an assertion that all values for levels are identical,
         # so we are dropping safely (e.g., "knowledge_timestamp").
         # Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
         pivoted_data = df.reset_index().pivot(
-            index=["timestamp", "full_symbol"], columns=["level"], values=bid_ask_cols
+            index=["timestamp", "full_symbol"],
+            columns=["level"],
+            values=bid_ask_cols,
         )
         # Rename the columns for a desired {value}_{level} format.
-        pivoted_data.columns = pivoted_data.columns.map(
-            "{0[0]}_{0[1]}".format
-        )
+        pivoted_data.columns = pivoted_data.columns.map("{0[0]}_{0[1]}".format)
         # Transform to the desired format.
         df = pivoted_data.reset_index("full_symbol")
         return df
