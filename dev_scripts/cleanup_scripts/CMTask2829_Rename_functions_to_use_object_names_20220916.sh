@@ -8,8 +8,8 @@ replace_text.py \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
-  --old "get_im_client_market_data_df" \
-  --new "get_MarketData_df" \
+  --old "get_im_client_market_data_df1" \
+  --new "get_MarketData_df5" \
   --exclude_dirs "$dir_names"
 
 replace_text.py \
