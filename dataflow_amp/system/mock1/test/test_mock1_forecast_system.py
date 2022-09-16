@@ -327,3 +327,94 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
         """
         data, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df3()
         self.run_test(data, rt_timeout_in_secs_or_time)
+
+
+# #############################################################################
+# Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1
+# #############################################################################
+
+
+class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
+    dtfsys.NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1
+):
+    """
+    See the parent class for description.
+    """
+
+    def get_NonTime_ForecastSystem_builder_func(self) -> Callable:
+        """
+        Get the function building the (non-time) `ForecastSystem`.
+        """
+        # TODO(Grisha): @Dan Write a function that extracts the latest available universe.
+        universe_version = "v1"
+        # In the current system, the time periods are set manually,
+        # so the value of `time_interval_str` (e.g., "2022-01-01_2022-02-01")
+        # doesn't affect tests.
+        backtest_config = f"mock1_{universe_version}-all.5T.Jan2000"
+        non_time_system_builder_func = (
+            lambda: dtfasmmfsex.get_Mock1_NonTime_ForesactSystem_example1(
+                backtest_config
+            )
+        )
+        return non_time_system_builder_func
+
+    # TODO(Grisha): @Dan Factor out to `system_test_case.py`.
+    def get_NonTime_ForecastSystem_from_Time_ForecastSystem(
+        self, time_system: dtfsys.System
+    ) -> dtfsys.System:
+        """
+        See description in the parent test case class.
+        """
+        # Get wall clock time and history lookback from `Time_Forecast_System`
+        # to pass them to `Forecast_System` so that the values are in sync.
+        wall_clock_time = time_system.market_data.get_wall_clock_time()
+        history_lookback = time_system.config[
+            "market_data_config", "history_lookback"
+        ]
+        # Since time forecast system is run for multiple 5 min intervals,
+        # we need to compute the number of minutes the system will go beyond
+        # its wall clock time.
+        # In this case the wall clock time is `2000-01-01 09:55:00-05:00`,
+        # so the system goes 1 min forward from the wall clock time until
+        # the first 5 min interval and then goes by the number of the remaining
+        # 5 min cycles. This will be the end time for `ForecastSystem`.
+        rt_timeout_in_secs_or_time = time_system.config[
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
+        ]
+        n_5min_intervals = rt_timeout_in_secs_or_time / 60 / 5
+        intervals_delay_in_mins = 1 + (n_5min_intervals - 1) * 5
+        end_timestamp = wall_clock_time + pd.Timedelta(
+            intervals_delay_in_mins, "minutes"
+        )
+        # Get start time for `ForecastSystem` using history lookback
+        # and by adding 1 min to exclude the end of 5 min interval.
+        start_timestamp = end_timestamp - history_lookback + pd.Timedelta("1T")
+        non_time_system_builder_func = (
+            self.get_NonTime_ForecastSystem_builder_func()
+        )
+        non_time_system = non_time_system_builder_func()
+        non_time_system.config[
+            "backtest_config", "start_timestamp_with_lookback"
+        ] = start_timestamp
+        non_time_system.config["backtest_config", "end_timestamp"] = end_timestamp
+        return non_time_system
+
+    def get_Time_ForecastSystem(self) -> dtfsys.System:
+        """
+        See description in the parent test case class.
+        """
+        # Load market data for replaying.
+        market_data_df, rt_timeout_in_secs_or_time = cofinanc.get_market_data_df5()
+        time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
+        # TODO(Grisha): @Dan Pass "rt_timeout_in_secs_or_time" through kwargs.
+        # Make system to run for 3 5-minute intervals.
+        time_system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
+            rt_timeout_in_secs_or_time
+        )
+        time_system.config["market_data_config", "data"] = market_data_df
+        return time_system
+
+    @pytest.mark.slow("~8 seconds.")
+    def test1(self) -> None:
+        output_col_name = "prediction"
+        self._test1(output_col_name)
