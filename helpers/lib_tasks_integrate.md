@@ -170,4 +170,29 @@
   ```
 
 ## Run tests
-- 
+1) Check `amp` / `cmamp` using GH actions:
+  ```
+  > i gh_create_pr --no-draft
+  > i pytest_collect_only
+  > i gh_workflow_list
+  ```
+
+2) Check `lem` on dev1
+  ```
+  # Clean everything.
+  > git reset --hard; git clean -fd; git pull; (cd amp; git reset --hard; git clean -fd; git pull)
+  ```
+
+3) Check `lime` on dev4
+  ```
+  > AM_BRANCH=AmpTask1786_Integrate_20220916
+  > (cd amp; gco $AM_BRANCH)
+  > i git_pull
+  > i git_branch_create -b $AM_BRANCH
+  > i pytest_buildmeister
+
+```
+
+4) Check `orange` on dev1
+ 
+5) Check `dev_tools` on dev1

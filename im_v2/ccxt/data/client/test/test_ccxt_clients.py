@@ -1016,7 +1016,7 @@ class TestCcxtSqlRealTimeImClient1(
     not henv.execute_repo_config_code("get_name()") == "//amp",
     reason="Run only in //amp",
 )
-class TestCcxtHistoricalPqByTileClient1(icdctictc.ImClientTestCase):
+class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in
     the parent class.
