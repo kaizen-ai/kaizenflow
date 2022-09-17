@@ -77,7 +77,7 @@ class Mock1_Time_ForecastSystem(dtfsys.Time_ForecastSystem):
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfsys.get_EventLoop_MarketData_from_df(self)
+        market_data = dtfsys.get_ReplayedMarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
@@ -114,7 +114,7 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfsys.get_EventLoop_MarketData_from_df(self)
+        market_data = dtfsys.get_ReplayedMarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:
@@ -122,7 +122,8 @@ class Mock1_Time_ForecastSystem_with_DataFramePortfolio(
         return dag
 
     def _get_portfolio(self) -> oms.Portfolio:
-        portfolio = dtfsys.get_DataFramePortfolio_from_System(self)
+        is_prod = False
+        portfolio = dtfsys.get_DataFramePortfolio_from_System(self, is_prod)
         return portfolio
 
     def _get_dag_runner(self) -> dtfsys.RealTimeDagRunner:
@@ -156,7 +157,7 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         return system_config
 
     def _get_market_data(self) -> mdata.ReplayedMarketData:
-        market_data = dtfsys.get_EventLoop_MarketData_from_df(self)
+        market_data = dtfsys.get_ReplayedMarketData_from_df(self)
         return market_data
 
     def _get_dag(self) -> dtfcore.DAG:

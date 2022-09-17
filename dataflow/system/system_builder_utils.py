@@ -115,14 +115,13 @@ def apply_backtest_config(
 # #############################################################################
 
 
-# TODO(gp): @all -> apply_MarketData_config
-def apply_market_data_config(
+def apply_MarketData_config(
     system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
     """
     Convert full symbol universe to asset ids and fill market data config.
     """
-    im_client = build_im_client_from_config(system)
+    im_client = build_ImClient_from_System(system)
     universe_str = system.config["backtest_config", "universe_str"]
     full_symbols = dtfuniver.get_universe(universe_str)
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
@@ -133,8 +132,7 @@ def apply_market_data_config(
     return system
 
 
-# TODO(gp): build_ImClient_from_System
-def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
+def build_ImClient_from_System(system: dtfsyssyst.System) -> icdc.ImClient:
     """
     Build an IM client from params in the system Config.
     """
@@ -167,8 +165,7 @@ def apply_history_lookback(
     return system
 
 
-# TODO(gp): -> get_ReplayedMarketData_from_df.
-def get_EventLoop_MarketData_from_df(
+def get_ReplayedMarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
@@ -195,8 +192,7 @@ def get_EventLoop_MarketData_from_df(
 # #############################################################################
 
 
-# TODO(gp): -> get_RealTimeDag_from_System
-def adapt_dag_to_real_time_from_config(
+def get_RealTimeDag_from_System(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     # Assemble.
@@ -218,8 +214,7 @@ def adapt_dag_to_real_time_from_config(
     # TODO(gp): Why is this not returning anything? Is this even used?
 
 
-# TODO(gp): -> build...from_System
-def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
+def build_HistoricalDag_from_System(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
     """
@@ -353,8 +348,7 @@ def add_real_time_data_source(
     return dag
 
 
-# TODO(gp): -> ...ProcessForecastsNode...
-def add_process_forecasts_node(
+def add_ProcessForecastsNode(
     system: dtfsyssyst.System, dag: dtfcore.DAG
 ) -> dtfcore.DAG:
     """
@@ -450,23 +444,37 @@ def apply_ProcessForecastsNode_config_for_crypto(
 
 
 def get_DataFramePortfolio_from_System(
-    system: dtfsyssyst.System,
+    system: dtfsyssyst.System, is_prod: bool
 ) -> oms.Portfolio:
     """
     Build a `DataFramePortfolio` from a system config.
+
+    :param system: the system to build a portfolio from
+    :param is_prod: whether the system is going to be used for production or
+        for simulation
     """
-    event_loop = system.config["event_loop_object"]
     market_data = system.market_data
-    mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
-    pricing_method = system.config["portfolio_config", "pricing_method"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    portfolio = oms.get_DataFramePortfolio_example1(
-        event_loop,
-        market_data=market_data,
-        mark_to_market_col=mark_to_market_col,
-        pricing_method=pricing_method,
-        asset_ids=asset_ids,
-    )
+    if is_prod:
+        # Initialize `Portfolio` with parameters that are set in the example.
+        portfolio = oms.get_DataFramePortfolio_example3(
+            market_data=market_data, asset_ids=asset_ids
+        )
+    else:
+        # Set event loop object for `SimulatedBroker` used in simulation.
+        event_loop = system.config["event_loop_object"]
+        # Initialize `Portfolio` with parameters from the system config.
+        mark_to_market_col = system.config[
+            "portfolio_config", "mark_to_market_col"
+        ]
+        pricing_method = system.config["portfolio_config", "pricing_method"]
+        portfolio = oms.get_DataFramePortfolio_example1(
+            event_loop,
+            market_data=market_data,
+            mark_to_market_col=mark_to_market_col,
+            pricing_method=pricing_method,
+            asset_ids=asset_ids,
+        )
     # TODO(gp): We should pass the column_remap to the Portfolio builder,
     # instead of injecting it after the fact.
     portfolio.broker._column_remap = system.config[
@@ -556,7 +564,7 @@ def get_OrderProcessorCoroutine_from_System(
 # #############################################################################
 
 
-def _apply_dag_runner_config(
+def _apply_DagRunner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
     bar_duration_in_secs: int,
@@ -610,7 +618,7 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     return trading_period_str, bar_duration_in_secs
 
 
-def apply_dag_runner_config_for_crypto(
+def apply_DagRunner_config_for_crypto(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -626,7 +634,7 @@ def apply_dag_runner_config_for_crypto(
     wake_up_timestamp = None
     rt_timeout_in_secs_or_time = None
     #
-    system = _apply_dag_runner_config(
+    system = _apply_DagRunner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
@@ -636,7 +644,7 @@ def apply_dag_runner_config_for_crypto(
     return system
 
 
-def apply_dag_runner_config_for_equities(
+def apply_DagRunner_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -687,7 +695,7 @@ def apply_dag_runner_config_for_equities(
     rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(rt_timeout_in_mins)
     rt_timeout_in_secs_or_time = datetime.time(15, int(rt_timeout_in_mins))
-    system = _apply_dag_runner_config(
+    system = _apply_DagRunner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,

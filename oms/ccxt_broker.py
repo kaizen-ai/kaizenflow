@@ -7,6 +7,7 @@ import oms.ccxt_broker as occxbrok
 """
 
 import logging
+import os
 import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,6 +17,8 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -35,7 +38,10 @@ class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
         exchange_id: str,
+        # TODO(gp): move this to `Broker` and assign a default value or wire it
+        #  everywhere. IMO default value is a better approach.
         universe_version: str,
+        # TODO(gp): move this to Broker.
         stage: str,
         account_type: str,
         portfolio_id: str,
@@ -80,6 +86,7 @@ class CcxtBroker(ombroker.Broker):
         #
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
+        # TODO(gp): @all -> Move this to the `Broker` class.
         # Enable mapping back from asset ids when placing orders.
         self._universe_version = universe_version
         self._asset_id_to_symbol_mapping = (
@@ -357,6 +364,8 @@ class CcxtBroker(ombroker.Broker):
         )
         return oms_order
 
+    # TODO(gp): @all add a manual unit test to save this data in the repo
+    # or in scratch. Check in the limits in the repo.
     def _get_minimal_order_limits(self) -> Dict[int, Any]:
         """
         Load minimal amount and total cost for the given exchange.
@@ -669,5 +678,43 @@ def get_CcxtBroker_prod_instance1(
         secret_identifier,
         strategy_id=strategy_id,
         market_data=market_data,
+    )
+    return broker
+
+
+class SimulatedCcxtBroker(ombroker.SimulatedBroker):
+    def __init__(
+        self,
+        *args: Any,
+        stage: str,
+        minimal_order_limits: Dict[int, float],
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.stage = stage
+        self.minimal_order_limits = minimal_order_limits
+
+
+def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
+    # Load pre-saved minimal order limits generated with
+    # `TestSaveMinimalOrderLimits`.
+    file_path = os.path.join(
+        hgit.get_amp_abs_path(),
+        "oms/test/outcomes/TestSaveMinimalOrderLimits/input/minimal_order_limits.json",
+    )
+    # The data looks like
+    # {"6051632686":
+    #     {"min_amount": 1.0, "min_cost": 10.0},
+    # ...
+    minimal_order_limits = hio.from_json(file_path)
+    # Convert to int, because asset ids are integers.
+    minimal_order_limits = {int(k): v for k, v in minimal_order_limits.items()}
+    stage = "preprod"
+    strategy_id = "C1b"
+    broker = SimulatedCcxtBroker(
+        strategy_id,
+        market_data,
+        stage=stage,
+        minimal_order_limits=minimal_order_limits,
     )
     return broker
