@@ -15,6 +15,15 @@
     2) the last integration point for each branch, at which the repos are the same,
        or at least aligned
 
+# Invariants for the integration set-up
+
+- The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
+- The user refers in the command line to `dir_basename`, which is the basename of
+  the integration directories (e.g., `amp1`, `cmamp1`)
+  - The "src_dir_basename" is the one where the command is issued
+  - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
+- The dirs are then transformed in absolute dirs "abs_src_dir"
+
 # Integration process
 
 ## Preparation
@@ -119,9 +128,21 @@
   > i integrate_diff_dirs --subdir market_data -c
   ```
 
-- Copy a dir
+6) Sync a dir to handle moved files
+- Assume that there is a dir where files were moved
   ```
-  > rsync --delete -a -r /Users/saggese/src/cmamp1/research_amp/ /Users/saggese/src/amp1/research_amp
+    > invoke integrate_diff_dirs
+    ...
+    ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+    ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+  ```
+- You can accept the `cmamp1` side with:
+  ```
+  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  ```
+- This corresponds to:
+  ```
+  > rsync --delete -a -r {src_dir}/ {dst_dir}/"
   ```
 
 ## Double-check the integration
@@ -148,11 +169,5 @@
   > i git_branch_diff_with -t base
   ```
 
-# Invariants for the integration set-up
-
-- The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
-- The user refers in the command line to `dir_basename`, which is the basename of
-  the integration directories (e.g., `amp1`, `cmamp1`)
-    - The "src_dir_basename" is the one where the command is issued
-    - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
-- The dirs are then transformed in absolute dirs "abs_src_dir"
+## Run tests
+- 
