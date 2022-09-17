@@ -397,8 +397,12 @@ def apply_ProcessForecastsNode_config_for_equities(
     bar_duration_in_secs = system.config[
         "dag_runner_config", "bar_duration_in_secs"
     ]
-    trading_end_time = hdateti.find_current_bar(
-        trading_end_time - pd.Timedelta(minutes=1), bar_duration_in_secs
+    # We need to find the bar that includes 1 minute before the trading end
+    # time.
+    mode = "floor"
+    trading_end_time = hdateti.find_bar_timestamp(
+        trading_end_time - pd.Timedelta(minutes=1), bar_duration_in_secs,
+        mode=mode,
     )
     trading_end_time = trading_end_time.time()
     #
