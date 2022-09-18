@@ -181,17 +181,19 @@
   ```
   # Clean everything.
   > git reset --hard; git clean -fd; git pull; (cd amp; git reset --hard; git clean -fd; git pull)
+  
+  > i git_pull
+  
+  > AM_BRANCH=AmpTask1786_Integrate_20220916
+  > (cd amp; gco $AM_BRANCH)
+  
+  > i pytest_collect_only
+  > i pytest_buildmeister
+  
+  > i git_branch_create -b $AM_BRANCH
   ```
 
 3) Check `lime` on dev4
-  ```
-  > AM_BRANCH=AmpTask1786_Integrate_20220916
-  > (cd amp; gco $AM_BRANCH)
-  > i git_pull
-  > i git_branch_create -b $AM_BRANCH
-  > i pytest_buildmeister
-
-```
 
 4) Check `orange` on dev1
  
