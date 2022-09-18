@@ -7,6 +7,7 @@ import oms.ccxt_broker as occxbrok
 """
 
 import logging
+import os
 import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,6 +17,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
@@ -693,12 +695,19 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self.minimal_order_limits = minimal_order_limits
 
 
-# TODO(Grisha): @Dan CmTask2848 "Save minimal order limits data using a unit test".
-def get_SimulatedCcxtBroker_prod_instance1(market_data: pd.DataFrame):
-    # Load pre-saved minimal order limits.
-    file_name = "/shared_data/minimal_order_limits.json"
-    minimal_order_limits = hio.from_json(file_name)
-    # Convert to int, because asset_ids are integers.
+def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
+    # Load pre-saved minimal order limits generated with
+    # `TestSaveMinimalOrderLimits`.
+    file_path = os.path.join(
+        hgit.get_amp_abs_path(),
+        "oms/test/outcomes/TestSaveMinimalOrderLimits/input/minimal_order_limits.json",
+    )
+    # The data looks like
+    # {"6051632686":
+    #     {"min_amount": 1.0, "min_cost": 10.0},
+    # ...
+    minimal_order_limits = hio.from_json(file_path)
+    # Convert to int, because asset ids are integers.
     minimal_order_limits = {int(k): v for k, v in minimal_order_limits.items()}
     stage = "preprod"
     strategy_id = "C1b"
