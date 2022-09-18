@@ -168,6 +168,7 @@ def save_market_data(
     file_name: str,
     timedelta: pd.Timedelta,
     *,
+    asset_id_col: str = "asset_id",
     limit: Optional[int] = None,
 ) -> None:
     """
@@ -188,7 +189,8 @@ def save_market_data(
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
     #
     _LOG.info("index=%s, %s", rt_df.index.min(), rt_df.index.max())
-    asset_ids = rt_df["asset_id"].unique()
+    hdbg.dassert_in(asset_id_col, rt_df.columns)
+    asset_ids = rt_df[asset_id_col].unique()
     _LOG.info("asset_id=%s %s", len(asset_ids), str(asset_ids))
     #
     _LOG.debug(

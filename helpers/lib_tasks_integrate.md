@@ -15,29 +15,38 @@
     2) the last integration point for each branch, at which the repos are the same,
        or at least aligned
 
+# Invariants for the integration set-up
+
+- The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
+- The user refers in the command line to `dir_basename`, which is the basename of
+  the integration directories (e.g., `amp1`, `cmamp1`)
+  - The "src_dir_basename" is the one where the command is issued
+  - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
+- The dirs are then transformed in absolute dirs "abs_src_dir"
+
 # Integration process
 
+## Preparation
+
 - Pull master
+
+- Remove white spaces from both `amp` and `cmamp`:
+  ```
+  > dev_scripts/clean_up_text_files.sh
+  > git commit -am "Remove white spaces"; git push
+  ```
 
 - Align `lib_tasks.py`:
   ```
   > vimdiff ~/src/{amp1,cmamp1}/tasks.py; diff_to_vimdiff.py --dir1 ~/src/amp1 --dir2 ~/src/cmamp1 --subdir helpers
   ```
 
-- Create the integration branches
+- Create the integration branches:
   ```
   > cd amp1
   > i integrate_create_branch --dir-basename amp1
   > cd cmamp1
   > i integrate_create_branch --dir-basename cmamp1
-  ```
-
-## Preparation
-
-- Remove white spaces
-  ```
-  > dev_scripts/clean_up_text_files.sh
-  > git commit -am "Remove white spaces"; git push
   ```
 
 - Lint both dirs:
@@ -119,9 +128,21 @@
   > i integrate_diff_dirs --subdir market_data -c
   ```
 
-- Copy a dir
+6) Sync a dir to handle moved files
+- Assume that there is a dir where files were moved
   ```
-  > rsync --delete -a -r /Users/saggese/src/cmamp1/research_amp/ /Users/saggese/src/amp1/research_amp
+    > invoke integrate_diff_dirs
+    ...
+    ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+    ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+  ```
+- You can accept the `cmamp1` side with:
+  ```
+  > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
+  ```
+- This corresponds to:
+  ```
+  > rsync --delete -a -r {src_dir}/ {dst_dir}/"
   ```
 
 ## Double-check the integration
@@ -148,11 +169,32 @@
   > i git_branch_diff_with -t base
   ```
 
-# Invariants for the integration set-up
+## Run tests
+1) Check `amp` / `cmamp` using GH actions:
+  ```
+  > i gh_create_pr --no-draft
+  > i pytest_collect_only
+  > i gh_workflow_list
+  ```
 
-- The user runs commands in an abs_dir, e.g., `/Users/saggese/src/{amp1,cmamp1}`
-- The user refers in the command line to `dir_basename`, which is the basename of
-  the integration directories (e.g., `amp1`, `cmamp1`)
-    - The "src_dir_basename" is the one where the command is issued
-    - The "dst_dir_basename" is assumed to be parallel to the "src_dir_basename"
-- The dirs are then transformed in absolute dirs "abs_src_dir"
+2) Check `lem` on dev1
+  ```
+  # Clean everything.
+  > git reset --hard; git clean -fd; git pull; (cd amp; git reset --hard; git clean -fd; git pull)
+  
+  > i git_pull
+  
+  > AM_BRANCH=AmpTask1786_Integrate_20220916
+  > (cd amp; gco $AM_BRANCH)
+  
+  > i pytest_collect_only
+  > i pytest_buildmeister
+  
+  > i git_branch_create -b $AM_BRANCH
+  ```
+
+3) Check `lime` on dev4
+
+4) Check `orange` on dev1
+ 
+5) Check `dev_tools` on dev1
