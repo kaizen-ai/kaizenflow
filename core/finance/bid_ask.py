@@ -130,6 +130,7 @@ def process_bid_ask(
 def handle_orderbook_levels(
     df: pd.DataFrame,
     timestamp_col: str,
+    *,
     bid_prefix: str = "bid_",
     ask_prefix: str = "ask_",
 ) -> pd.DataFrame:
