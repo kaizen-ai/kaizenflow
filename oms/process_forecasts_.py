@@ -38,6 +38,7 @@ _LOG = logging.getLogger(__name__)
 # `process_forecasts()`
 # - Contains the loop processing the predictions
 # - Instantiates `ForecastProcessor` to do the actual work every bar
+# `ForecastProcessor`
 
 
 # - `wake_up_timestamp`:
@@ -90,8 +91,6 @@ async def process_forecasts(
     :param prediction_df: a dataframe indexed by timestamps with one column for the
         predictions for each asset
     :param volatility_df: like `prediction_df`, but for volatility
-    :param spread_df: like `prediction_df`, but for the bid-ask spread
-    :param portfolio: initialized `Portfolio` object
     :param config: the required params are:
           ```
           {
@@ -103,18 +102,25 @@ async def process_forecasts(
             "trading_end_time": Optional[datetime.time],
             "execution_mode": str ["real_time", "batch"],
             "remove_weekends": Optional[bool],
-            # - Force liquidating the holdings in the bar that corresponds to
-            #   trading_end_time, which must be not None.
             "liquidate_at_trading_end_time": bool
             "log_dir": Optional[str],
           }
           ```
+        where:
+        - `order_dict`, `optimizer_dict` passed to `ForecastProcessor`
+        - `ath_start_time`, `ath_end_time`: describe when the market is open
+        - `trading_start_time`, `trading_end_time`: used it to filter the forecasts
+            reaching the Optimizer when the system is producing forecasts
         - `execution_mode`:
             - `batch`: place the trades for all the predictions (used in historical
                mode)
             - `real_time`: place the trades only for the last prediction in the df
               (used in real-time mode)
+        - `liquidate_at_trading_end_time`: force liquidating the holdings in the
+            bar that corresponds to `trading_end_time` (which needs to be specified)
         - `log_dir`: directory for logging state
+    :param spread_df: like `prediction_df`, but for the bid-ask spread
+    :param portfolio: initialized `Portfolio` object
     """
     # TODO(gp): Move all this in a _validate method
     # Check `predictions_df`.
@@ -190,14 +196,14 @@ async def process_forecasts(
     # TODO(Paul): Pass in a trading calendar explicitly instead of simply
     #   filtering out weekends.
     if "remove_weekends" in config and config["remove_weekends"]:
+        _LOG.debug("Removing weekends")
         prediction_df = cofinanc.remove_weekends(prediction_df)
         volatility_df = cofinanc.remove_weekends(volatility_df)
         spread_df = cofinanc.remove_weekends(spread_df)
     # Get log dir.
     log_dir = config.get("log_dir", None)
     _LOG.info("log_dir=%s", log_dir)
-    # We should not have anything left in the config that we didn't extract.
-    # hdbg.dassert(not config, "config=%s", str(config))
+    #
     _LOG.debug(
         "predictions_df=%s\n%s",
         str(prediction_df.shape),
@@ -444,9 +450,7 @@ class ForecastProcessor:
     def __init__(
         self,
         portfolio: omportfo.Portfolio,
-        # TODO(gp): -> order_dict?
         order_dict: cconfig.Config,
-        # TODO(gp): -> optimizer_dict
         optimizer_dict: cconfig.Config,
         # TODO(gp): -> restrictions_df like the process_forecast
         restrictions: Optional[pd.DataFrame],
