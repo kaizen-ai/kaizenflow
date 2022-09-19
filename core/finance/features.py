@@ -14,6 +14,68 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+def compute_midrange(
+    df: pd.DataFrame,
+    high_col: str,
+    low_col: str,
+    apply_log: bool = False,
+) -> pd.DataFrame:
+    """
+    Return midrange price.
+
+    :param df: dataframe of high, low, and volume values
+    :param high_col: name of high-value col
+    :param low_col: name of low-value col
+    :param apply_log: apply `log()` to data prior to calculation iff True
+    :return: 1-col dataframe
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    cols = [high_col, low_col]
+    hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
+    hdbg.dassert_is_subset(cols, df.columns)
+    #
+    hl = df[cols]
+    if apply_log:
+        hl = np.log(hl)
+    high = hl[high_col]
+    low = hl[low_col]
+    midrange = 0.5 * (high + low)
+    if apply_log:
+        midrange.name = "log_midrange"
+    else:
+        midrange.name = "midrange"
+    return midrange.to_frame()
+
+
+def compute_money_transacted(
+    df: pd.DataFrame,
+    high_col: str,
+    low_col: str,
+    volume_col: str,
+) -> pd.DataFrame:
+    """
+    Return estimated amount of money transacted in bar.
+
+    :param df: dataframe of high, low, and volume values
+    :param high_col: name of high-value col
+    :param low_col:  name of low-value col
+    :param volume_col: name of volume value col
+    :return: 1-col dataframe
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    cols = [high_col, low_col, volume_col]
+    hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
+    hdbg.dassert_is_subset(cols, df.columns)
+    #
+    hlv = df[cols]
+    high = hlv[high_col]
+    low = hlv[low_col]
+    volume = hlv[volume_col]
+    money = 0.5 * (high + low) * volume
+    money.name = "money_transacted"
+    return money.to_frame()
+
+
 def compute_stochastic(
     df: pd.DataFrame,
     high_col: str,

@@ -1011,6 +1011,11 @@ class TestCcxtSqlRealTimeImClient1(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
+# TODO(gp): This is due to one of the discrepancies between amp and cmamp.
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("get_name()") == "//amp",
+    reason="Run only in //amp",
+)
 class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """
     For all the test methods see description of corresponding private method in

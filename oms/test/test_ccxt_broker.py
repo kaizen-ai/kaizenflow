@@ -211,6 +211,79 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    def test_submit_orders_errors1(self) -> None:
+        """
+        Verify that Binance API error is raised correctly.
+        """
+        orders = self.get_test_orders()
+        # Define broker parameters.
+        stage = "preprod"
+        contract_type = "spot"
+        account_type = "trading"
+        # Initialize class.
+        broker = self.get_test_broker(stage, contract_type, account_type)
+        broker._submitted_order_id = 1
+        # Patch main external source.
+        with umock.patch.object(
+            broker._exchange, "createOrder", create=True
+        ) as create_order_mock:
+            # Disable CCXT patch.
+            self.ccxt_patch.stop()
+            # Check the Binance API error.
+            from ccxt.base.errors import ExchangeNotAvailable
+            create_order_mock.side_effect = [
+                ExchangeNotAvailable(umock.Mock(), ""),
+                Exception("MockException")
+            ]
+            with umock.patch.object(
+                occxbrok.time, "sleep", create=True
+            ) as time_sleep_mock:
+                # Run.
+                with self.assertRaises(Exception) as cm:
+                    asyncio.run(
+                        broker._submit_orders(
+                            orders, "dummy_timestamp", dry_run=False
+                        )
+                    )
+            # Enable CCXT patch.
+            self.ccxt_patch.start()
+        act = str(cm.exception)
+        self.assert_equal(act, "MockException")
+        # Check the count of calls.
+        self.assertEqual(time_sleep_mock.call_count, 1)
+
+
+    def test_submit_orders_errors2(self) -> None:
+        """
+        Verify that the order is not submitted if the error is connected to liquidity.
+        """
+        orders = self.get_test_orders()
+        # Define broker parameters.
+        stage = "preprod"
+        contract_type = "spot"
+        account_type = "trading"
+        # Initialize class.
+        broker = self.get_test_broker(stage, contract_type, account_type)
+        broker._submitted_order_id = 1
+        # Patch main external source.
+        with umock.patch.object(
+            broker._exchange, "createOrder", create=True  
+        ) as create_order_mock:
+            # Check that the order is not submitted if the error is connected to liquidity.
+            from ccxt.base.errors import OrderNotFillable, ExchangeNotAvailable
+            create_order_mock.side_effect = [
+                OrderNotFillable(umock.Mock(status=-4131), '"code":-4131,')
+            ]
+            with umock.patch.object(
+                    self.ccxt_mock, "ExchangeNotAvailable", ExchangeNotAvailable
+            ):
+                # Run.
+                _, order_df = asyncio.run(
+                    broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
+                )
+        # Order df should be empty.
+        self.assertEqual(order_df.empty, True)
+
     def test_get_fills(self) -> None:
         """
         Verify that orders are filled properly via mocked exchange.
