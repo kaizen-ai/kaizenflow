@@ -396,14 +396,14 @@ class TestSaveMinimalOrderLimits(hunitest.TestCase):
         broker = self.get_test_broker(
             universe_version, stage, contract_type, account_type
         )
-        # Get minimal order limits.
-        minimal_order_limits = broker.minimal_order_limits
-        _LOG.debug("minimal_order_limits dict '%s' ...", minimal_order_limits)
+        # Get market information from the exchange.
+        market_info = broker.market_info
+        _LOG.debug("market_info dict '%s' ...", market_info)
         # Build file path.
         dst_dir = self.get_input_dir(use_only_test_class=True)
-        file_name = "minimal_order_limits.json"
+        file_name = "market_info.json"
         file_path = os.path.join(dst_dir, file_name)
         # Save data.
         _LOG.info("Saving data in '%s' ...", file_path)
-        hio.to_json(file_path, minimal_order_limits)
+        hio.to_json(file_path, market_info)
         _LOG.info("Saving in '%s' done", file_path)

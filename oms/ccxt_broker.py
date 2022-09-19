@@ -102,7 +102,7 @@ class CcxtBroker(ombroker.Broker):
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
         # Set minimal order limits.
-        self.minimal_order_limits = self._get_minimal_order_limits()
+        self.market_info = self._get_market_info()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # Set up empty sent orders for the first run of the system.
@@ -371,7 +371,7 @@ class CcxtBroker(ombroker.Broker):
 
     # TODO(gp): @all add a manual unit test to save this data in the repo
     # or in scratch. Check in the limits in the repo.
-    def _get_minimal_order_limits(self) -> Dict[int, Any]:
+    def _get_market_info(self) -> Dict[int, Any]:
         """
         Load minimal amount and total cost for the given exchange.
 
@@ -707,10 +707,10 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
 
 def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     # Load pre-saved minimal order limits generated with
-    # `TestSaveMinimalOrderLimits`.
+    # `TestSaveMarketInfo`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestSaveMinimalOrderLimits/input/minimal_order_limits.json",
+        "oms/test/outcomes/TestSaveMarketInfo/market_info.json",
     )
     # The data looks like
     # {"6051632686":
