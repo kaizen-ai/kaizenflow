@@ -191,7 +191,7 @@ class CcxtBroker(ombroker.Broker):
         Select all open futures positions.
 
         Selects all possible positions and filters out those
-        with a non-0 amount.
+        with a non-zero amount.
         Example of an output:
 
         [{'info': {'symbol': 'BTCUSDT',
@@ -369,8 +369,6 @@ class CcxtBroker(ombroker.Broker):
         )
         return oms_order
 
-    # TODO(gp): @all add a manual unit test to save this data in the repo
-    # or in scratch. Check in the limits in the repo.
     def _get_market_info(self) -> Dict[int, Any]:
         """
         Load market information from the given exchange and map to asset ids.
@@ -705,34 +703,34 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self,
         *args: Any,
         stage: str,
-        minimal_order_limits: Dict[int, float],
+        market_info: Dict[int, float],
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.stage = stage
-        self.minimal_order_limits = minimal_order_limits
+        self.market_info = market_info
 
 
 def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
-    # Load pre-saved minimal order limits generated with
+    # Load pre-saved market info generated with
     # `TestSaveMarketInfo`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestSaveMarketInfo/market_info.json",
+        "oms/test/outcomes/TestSaveMarketInfo/input/binance.binance.market_info.json",
     )
     # The data looks like
     # {"6051632686":
-    #     {"min_amount": 1.0, "min_cost": 10.0},
+    #     {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
     # ...
-    minimal_order_limits = hio.from_json(file_path)
+    market_info = hio.from_json(file_path)
     # Convert to int, because asset ids are integers.
-    minimal_order_limits = {int(k): v for k, v in minimal_order_limits.items()}
+    market_info = {int(k): v for k, v in market_info.items()}
     stage = "preprod"
     strategy_id = "C1b"
     broker = SimulatedCcxtBroker(
         strategy_id,
         market_data,
         stage=stage,
-        minimal_order_limits=minimal_order_limits,
+        market_info=market_info,
     )
     return broker
