@@ -4,6 +4,7 @@ The script performs several actions:
 
     - converts asset id to a full symbol
     - prints universe as a list of asset ids
+    - prints universe mapping as full symbols and asset ids
 
 The following command converts asset id to a full symbol:
     ```
@@ -19,6 +20,13 @@ The command below prints the universe as asset ids:
         --action print_universe \
         --im_client ccxt_realtime
     ```
+
+The command below prints the universe mapping:
+    ```
+    > im_v2/common/universe/print_universe_info.py \
+        --action print_universe_mapping \
+        --im_client ccxt_realtime
+    ```
 """
 import argparse
 import logging
@@ -29,11 +37,12 @@ import helpers.hprint as hprint
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.common.universe.universe_utils as imvcuunut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
-_ACTIONS = ["print_universe", "convert_to_full_symbol"]
+_ACTIONS = ["print_universe", "convert_to_full_symbol", "print_universe_mapping"]
 
 
 def _get_ImClient(im_client: str) -> icdc.ImClient:
@@ -110,6 +119,19 @@ def _run(args: argparse.Namespace) -> None:
         asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
         # Print all asset ids.
         _LOG.info("Asset ids: %s ", hprint.format_list(asset_ids, max_n=100))
+    if args.action == "print_universe_mapping":
+        full_symbols = im_client.get_universe()
+        universe_mapping = imvcuunut.build_numerical_to_string_id_mapping(
+            full_symbols
+        )
+        # Swap asset ids and full symbols to get sorted by full symbol mapping.
+        universe_mapping = dict(
+            (full_symbol, asset_id)
+            for asset_id, full_symbol in universe_mapping.items()
+        )
+        _LOG.info(
+            "\nUniverse mapping:\n%s", hprint.to_pretty_str(universe_mapping)
+        )
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
