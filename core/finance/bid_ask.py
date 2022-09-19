@@ -128,25 +128,25 @@ def process_bid_ask(
 
 
 def handle_orderbook_levels(
-    df: pd.DataFrame, 
+    df: pd.DataFrame,
     timestamp_col: str,
     bid_prefix: str = "bid_",
-    ask_prefix: str = "ask_"
-    ) -> pd.DataFrame:
+    ask_prefix: str = "ask_",
+) -> pd.DataFrame:
     """
-    Transform bid-ask data with multiple levels from a long form to a wide form.
+    Transform bid-ask data with multiple levels from a long form to a wide
+    form.
 
-    E.g., from:
-                            level    bid_price
-
-    2022-09-08 21:01:00+00:00    1    2.32
-    2022-09-08 21:01:00+00:00    2    3.23
-    2022-09-08 21:01:00+00:00    3    2.33
+                                        knowledge_timestamp    level  bid_price
+        timestamp
+        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        1       2.31
+        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        2       3.22
+        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        3       2.33
 
     to:
-                        bid_price_1    bid_price_2    bid_price_3
-
-    2022-09-08 21:01:00+00:00    2.32    3.23    2.33
+                                        knowledge_timestamp  bid_price_1  bid_price_2  bid_price_3
+        timestamp
+        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33
     """
     hdbg.dassert_in(timestamp_col, df.reset_index().columns)
     # Specify bid-ask and non-bid-ask columns.
@@ -155,8 +155,12 @@ def handle_orderbook_levels(
         for col in df.columns
         if col.startswith(bid_prefix) or col.startswith(ask_prefix)
     ]
-    # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates). 
-    non_bid_ask_cols = [col for col in df.reset_index().columns if col not in bid_ask_cols+["level", "id"]]
+    # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates).
+    non_bid_ask_cols = [
+        col
+        for col in df.reset_index().columns
+        if col not in bid_ask_cols + ["level", "id"]
+    ]
     # TODO(Max): Create an assertion that all values for levels are identical,
     # so we are merging the rows without duplicates (i.e., "knowledge_timestamp" and "end_download_timestamp").
     # Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
