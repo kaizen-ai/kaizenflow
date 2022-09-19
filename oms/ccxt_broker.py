@@ -657,6 +657,8 @@ class CcxtBroker(ombroker.Broker):
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
+        # CCXT registers the logger after it's built, so we need to reduce its
+        # logger verbosity here.
         hloggin.shutup_chatty_modules()
         return exchange
 
