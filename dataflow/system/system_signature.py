@@ -28,7 +28,7 @@ _LOG = logging.getLogger(__name__)
 
 # There are various layers in the code:
 # 1) functions checking invariants
-#    - E.g., check_system_config, check_portfolio_stats
+#    - E.g., check_SystemConfig, check_portfolio_stats
 # 2) functions that compute signature of various pieces (currently inside
 #    SystemTester)
 #    - E.g., get_..._signature
@@ -88,7 +88,7 @@ def get_signature_from_result_bundle(
     # 1) System config signature.
     hdbg.dassert(system.is_fully_built)
     if add_system_config:
-        # TODO(gp): Use check_system_config.
+        # TODO(gp): Use `check_SystemConfig`.
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))
     # 2) Run signature.
@@ -290,7 +290,7 @@ def log_forecast_evaluator_portfolio(
 
 # TODO(gp): This should be used in all TestCase right after the dag_runner is
 #  complete.
-def check_system_config(self: Any, system: dtfsyssyst.System, tag: str) -> None:
+def check_SystemConfig(self: Any, system: dtfsyssyst.System, tag: str) -> None:
     """
     Check the signature of a System config against a golden reference.
 
