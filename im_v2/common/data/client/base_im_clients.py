@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 import helpers.hdatetime as hdateti
+import core.finance.bid_ask as cfibiask
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -200,10 +201,10 @@ class ImClient(abc.ABC):
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
-        # Transform bid ask data with multiple order book levels.
         if "level" in df.columns:
+            # Transform bid ask data with multiple order book levels.
             timestamp_col = "timestamp"
-            df = self.handle_orderbook_levels(df, timestamp_col)
+            df = cfibiask.handle_orderbook_levels(df, timestamp_col)
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
@@ -301,9 +302,11 @@ class ImClient(abc.ABC):
         self, 
         df: pd.DataFrame, 
         timestamp_col: str,
+        bid_prefix: str = "bid_",
+        ask_prefix: str = "ask_"
         ) -> pd.DataFrame:
         """
-        Transform bid-ask data with multiple levels.
+        Transform bid-ask data with multiple levels from a long form to a wide form.
 
         E.g., from:
                                 level    bid_price
@@ -322,7 +325,7 @@ class ImClient(abc.ABC):
         bid_ask_cols = [
             col
             for col in df.columns
-            if col.startswith("bid") or col.startswith("ask")
+            if col.startswith(bid_prefix) or col.startswith(ask_prefix)
         ]
         # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates). 
         non_bid_ask_cols = [col for col in df.reset_index().columns if col not in bid_ask_cols+["level", "id"]]
