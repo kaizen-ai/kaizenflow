@@ -373,7 +373,11 @@ class CcxtBroker(ombroker.Broker):
     # or in scratch. Check in the limits in the repo.
     def _get_market_info(self) -> Dict[int, Any]:
         """
-        Load minimal amount and total cost for the given exchange.
+        Load market information from the given exchange and map to asset ids.
+
+        Currently the following data is saved:
+        - minimal order limits (notional and quantity)
+        - asset quantity precision (for rounding of orders)
 
         The numbers are determined by loading the market metadata from CCXT.
 
@@ -477,6 +481,8 @@ class CcxtBroker(ombroker.Broker):
             #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
+            amount_precision = limits["precision"]["amount"]
+            minimal_order_limits[asset_id]["amount_precision"] = amount_precision
         return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:

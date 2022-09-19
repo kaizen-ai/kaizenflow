@@ -30,11 +30,11 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     :return: updated order
     """
     hdbg.dassert_isinstance(order, pd.Series)
-    _LOG.info('Order before adjustments: %s', order)
+    _LOG.info("Order before adjustments: %s", order)
     asset_id = order.name
-    asset_limits = broker.minimal_order_limits[asset_id]
+    market_info = broker.market_info[asset_id]
     # 1) Ensure that the amount of shares is above the minimum required.
-    min_amount = asset_limits["min_amount"]
+    min_amount = market_info["min_amount"]
     diff_num_shares = order["diff_num_shares"]
     if abs(order["diff_num_shares"]) < min_amount:
         if diff_num_shares < 0:
@@ -52,10 +52,10 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     # more conservative estimate of the order value.
     price = broker.get_low_market_price(asset_id)
     total_cost = price * abs(diff_num_shares)
-    min_cost = asset_limits["min_cost"]
+    min_cost = market_info["min_cost"]
     if total_cost <= min_cost:
         # Set amount based on minimal notional price.
-        min_amount = round(min_cost * 3 / price, 2)
+        min_amount = min_cost * 3 / price
         if diff_num_shares < 0:
             min_amount = -min_amount
         _LOG.warning(
@@ -67,8 +67,17 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
         )
         # Update the number of shares.
         diff_num_shares = min_amount
+    # Round the order amount in accordance with exchange rules.
+    amount_precision = market_info["amount_precision"]
+    diff_num_shares = round(diff_num_shares, amount_precision)
+    _LOG.info(
+        "Rounding order amount to %s decimal points. Result: %s",
+        amount_precision,
+        diff_num_shares,
+    )
+    #
     order["diff_num_shares"] = diff_num_shares
-    _LOG.info('Order after adjustments: %s', order)
+    _LOG.info("Order after adjustments: %s", order)
     return order
 
 
@@ -82,12 +91,13 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
 
     Same interface as `_apply_prod_limits()`.
     """
+    _LOG.info("Order before adjustments: %s", order)
     hdbg.dassert_isinstance(order, pd.Series)
     asset_id = order.name
-    asset_limits = broker.minimal_order_limits[asset_id]
+    market_info = broker.market_info[asset_id]
     #
-    required_amount = asset_limits["min_amount"]
-    min_cost = asset_limits["min_cost"]
+    required_amount = market_info["min_amount"]
+    min_cost = market_info["min_cost"]
     # Get the low price for the asset.
     low_price = broker.get_low_market_price(asset_id)
     # Verify that the estimated total cost is above 10.
@@ -97,11 +107,20 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
         #  buffer so the order does not go below
         #  the minimal amount of asset.
         required_amount = (min_cost / low_price) * 2
+    # Round the order amount in accordance with exchange rules.
+    amount_precision = market_info["amount_precision"]
+    required_amount = round(required_amount, amount_precision)
+    _LOG.info(
+        "Rounding order amount to %s decimal points. Result: %s",
+        amount_precision,
+        required_amount,
+    )
     # Apply back the sign.
     if order["diff_num_shares"] < 0:
         order["diff_num_shares"] = -required_amount
     else:
         order["diff_num_shares"] = required_amount
+    _LOG.info("Order after adjustments: %s", order)
     return order
 
 
@@ -115,7 +134,7 @@ def apply_cc_limits(
     :param broker: Broker class instance
     :return: DataFrame with updated orders
     """
-    _LOG.info('Order df before adjustments: %s', forecast_df.to_string())
+    _LOG.info("Order df before adjustments: %s", forecast_df.to_string())
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -135,5 +154,5 @@ def apply_cc_limits(
         )
     else:
         hdbg.dfatal(f"Unknown mode: {stage}")
-    _LOG.info('Order df after adjustments: %s', forecast_df.to_string())
+    _LOG.info("Order df after adjustments: %s", forecast_df.to_string())
     return forecast_df
