@@ -45,6 +45,52 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
     return res
 
 
+# TODO(gp): Add unit tests.
+def sort_config_string(txt: str) -> str:
+    """
+    Sort a string representing a Config in alphabetical order by the first level.
+
+    This function can be used to diff two Configs serialized as strings.
+    """
+    lines = [line.rstrip("\n") for line in txt]
+    # Parse.
+    chunks = {}
+    state = "look_for_start"
+    start_idx = end_idx = None
+    for i, line in enumerate(lines):
+        _LOG.debug("i=%s state=%s start_idx=%s end_idx=%s line=%s" % (i, state, start_idx, end_idx, line))
+        if state == "look_for_start" and line[0] != " " and lines[i+1][0] != " ":
+            _LOG.debug("Found single line")
+            # Single line.
+            key = lines[i]
+            val = " "
+            chunks[key] = val
+            _LOG.debug("Single line -> %s %s", key, val)
+        elif state == "look_for_start" and line[0] != " " :
+            _LOG.debug("Found first line")
+            start_idx = i
+            end_idx = None
+            state = "look_for_end"
+        elif state == "look_for_end" and line[0] != " ":
+            _LOG.debug("Found last line")
+            end_idx = i - 1
+            hdbg.dassert_lte(start_idx, end_idx)
+            key = lines[start_idx]
+            _LOG.debug("start_idx=%s end_idx=%s key=%s", start_idx, end_idx, key)
+            val = lines[start_idx+ 1:end_idx + 1]
+            chunks[key] = val
+            _LOG.debug("-> %s %s", key, val)
+            #
+            state = "look_for_start"
+            start_idx = i
+            end_idx = None
+    # Sort.
+    chunks = {k: chunks[k] for k in sorted(chunks.keys())}
+    # Assemble with proper indentation.
+    chunks = "\n".join([k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()])
+    return chunks
+
+
 # #############################################################################
 
 

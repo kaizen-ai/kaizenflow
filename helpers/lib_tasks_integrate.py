@@ -642,6 +642,7 @@ def integrate_rsync(  # type: ignore
       ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
       ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
 
+    # Accept the `cmamp1` side vs the `amp1` side with:
     > invoke integrate_rsync .../cmamp1/.../alpha_numeric_data_snapshots/
     ```
 
