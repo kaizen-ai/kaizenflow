@@ -170,7 +170,7 @@ def get_ProcessForecastsNode_dict_instance1(
             "target_gmv": 1e5,
         }
         # TODO(Grisha): @Dan CmTask2849 "Pass an actual `system_log_dir` for simulation".
-        root_log_dir = None
+        root_log_dir = system.config.get("system_log_dir")
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
@@ -243,9 +243,10 @@ def get_Cx_RealTimeDag_example2(
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
+    root_log_dir = system.config.get("system_log_dir")
     order_duration_in_mins = 5
-    process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
-        system, order_duration_in_mins, is_prod
+    process_forecasts_node_dict = get_process_forecasts_node_dict_prod_instance1(
+        system.portfolio, order_duration_in_mins, root_log_dir
     )
     system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
         process_forecasts_node_dict

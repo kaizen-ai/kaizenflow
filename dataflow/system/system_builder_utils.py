@@ -53,7 +53,6 @@ _LOG = logging.getLogger(__name__)
 #  It seems that the implicit approach is the best one
 #
 
-
 # Maintain the functions ordered to resemble the dependency / construction order
 # in a System:
 # - System config
@@ -183,6 +182,8 @@ def get_ReplayedMarketData_from_df(
         replayed_delay_in_mins_or_timestamp,
         data,
         delay_in_secs=delay_in_secs,
+        # start_time_col_name= "start_timestamp",
+        # end_time_col_name= "end_timestamp"
     )
     return market_data
 
