@@ -35,6 +35,11 @@ _LOG = logging.getLogger(__name__)
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
 
+# ##################################################################################
+# CcxtBroker
+# ##################################################################################
+
+
 class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
@@ -682,6 +687,11 @@ def get_CcxtBroker_prod_instance1(
         market_data=market_data,
     )
     return broker
+
+
+# ##################################################################################
+# SimulatedCcxtBroker
+# ##################################################################################
 
 
 class SimulatedCcxtBroker(ombroker.SimulatedBroker):

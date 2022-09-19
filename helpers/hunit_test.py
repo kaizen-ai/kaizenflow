@@ -489,11 +489,14 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN", "CK_AWS_S3_BUCKET"]:
+    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN",
+                    "CK_AWS_S3_BUCKET"]:
         if env_var in os.environ:
             val = os.environ[env_var]
-            hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
-            txt = txt.replace(val, f"${env_var}")
+            if val == "":
+                _LOG.debug("Env var '%s' is empty", env_var)
+            else:
+                txt = txt.replace(val, f"${env_var}")
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 

@@ -26,6 +26,8 @@ _DT_DT_ET = pytz.timezone("US/Eastern").localize(_DT_DT_NAIVE)
 
 
 # #############################################################################
+# Test_dassert_is_datetime1
+# #############################################################################
 
 
 class Test_dassert_is_datetime1(hunitest.TestCase):
@@ -85,6 +87,8 @@ class Test_dassert_is_datetime1(hunitest.TestCase):
                 hdateti.dassert_is_strict_datetime(obj)
 
 
+# #############################################################################
+# Test_dassert_tz1
 # #############################################################################
 
 
@@ -195,6 +199,8 @@ class Test_dassert_tz1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_dassert_tz_compatible1
+# #############################################################################
 
 
 class Test_dassert_tz_compatible1(hunitest.TestCase):
@@ -245,6 +251,8 @@ class Test_dassert_tz_compatible1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_get_current_time1
+# #############################################################################
 
 
 class Test_get_current_time1(hunitest.TestCase):
@@ -273,6 +281,8 @@ class Test_get_current_time1(hunitest.TestCase):
         hdateti.dassert_is_tz_naive(dt)
 
 
+# #############################################################################
+# Test_to_generalized_datetime
 # #############################################################################
 
 
@@ -407,6 +417,91 @@ class Test_to_generalized_datetime(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_find_bar_timestamp1
+# #############################################################################
+
+
+class Test_find_bar_timestamp1(hunitest.TestCase):
+    """
+    Use mode="round".
+    """
+
+    def helper1(self, current_timestamp: pd.Timestamp) -> None:
+        bar_duration_in_secs = 15 * 60
+        max_distance_in_secs = 10
+        act = hdateti.find_bar_timestamp(current_timestamp, bar_duration_in_secs,
+                                       max_distance_in_secs=max_distance_in_secs)
+        exp = pd.Timestamp("2021-09-09T08:00:00", tz="UTC")
+        self.assert_equal(str(act), str(exp))
+
+    def test1(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T08:00:00", tz="UTC")
+        self.helper1(current_timestamp)
+
+    def test2(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T08:00:05", tz="UTC")
+        self.helper1(current_timestamp)
+
+    def test3(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T07:59:55", tz="UTC")
+        self.helper1(current_timestamp)
+
+    # ///////////////////////////////////////////////////////////////////////////
+
+    def test4(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T07:59:20", tz="UTC")
+        with self.assertRaises(AssertionError) as cm:
+            self.helper1(current_timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        40 <= 10
+        current_timestamp=2021-09-09 07:59:20+00:00 is too distant from bar_timestamp=2021-09-09 08:00:00+00:00
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    def test5(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T08:10:20", tz="UTC")
+        with self.assertRaises(AssertionError) as cm:
+            self.helper1(current_timestamp)
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        280 <= 10
+        current_timestamp=2021-09-09 08:10:20+00:00 is too distant from bar_timestamp=2021-09-09 08:15:00+00:00
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+
+class Test_find_bar_timestamp2(hunitest.TestCase):
+    """
+    Use mode="floor".
+    """
+
+    def test1(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T07:59:55", tz="UTC")
+        bar_duration_in_secs = 15 * 60
+        #
+        act = hdateti.find_bar_timestamp(
+            current_timestamp, bar_duration_in_secs, mode="floor"
+        )
+        exp = pd.Timestamp("2021-09-09T07:45:00", tz="UTC")
+        self.assert_equal(str(act), str(exp))
+
+    def test2(self) -> None:
+        current_timestamp = pd.Timestamp("2021-09-09T08:01:55", tz="UTC")
+        bar_duration_in_secs = 15 * 60
+        #
+        act = hdateti.find_bar_timestamp(
+            current_timestamp, bar_duration_in_secs, mode="floor"
+        )
+        exp = pd.Timestamp("2021-09-09T08:00:00", tz="UTC")
+        self.assert_equal(str(act), str(exp))
+
+
+# #############################################################################
+# Test_convert_unix_epoch_to_timestamp
+# #############################################################################
 
 
 class Test_convert_unix_epoch_to_timestamp(hunitest.TestCase):
@@ -438,6 +533,11 @@ class Test_convert_unix_epoch_to_timestamp(hunitest.TestCase):
         actual = hdateti.convert_unix_epoch_to_timestamp(epoch=epoch, tz=tz)
         expected = pd.Timestamp("2021-09-08T17:00:00", tz="US/Pacific")
         self.assert_equal(str(actual), str(expected))
+
+
+# #############################################################################
+# Test_convert_timestamp_to_unix_epoch
+# #############################################################################
 
 
 class Test_convert_timestamp_to_unix_epoch(hunitest.TestCase):

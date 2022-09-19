@@ -37,7 +37,8 @@ def compute_target_positions_in_cash(
     needs to be told the id associated with cash.
 
     :param df: a dataframe with current positions (in dollars) and predictions
-    :return: a dataframe with target positions and trades (denominated in dollars)
+    :return: a dataframe with target positions and trades (denominated in
+        dollars)
     """
     # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
