@@ -4,7 +4,7 @@ The script performs several actions:
 
     - converts asset id to a full symbol
     - prints universe as a list of asset ids
-    - prints universe mapping as full symbols and asset ids
+    - prints universe mapping as `{full_symbol1: asset_id1, full_symbol2: asset_id2, ...}`
 
 The following command converts asset id to a full symbol:
     ```
@@ -124,11 +124,13 @@ def _run(args: argparse.Namespace) -> None:
         universe_mapping = imvcuunut.build_numerical_to_string_id_mapping(
             full_symbols
         )
-        # Swap asset ids and full symbols to get sorted by full symbol mapping.
+        # Swap asset ids and full symbols to get `{full_symbol: asset_id}` mapping.
         universe_mapping = dict(
             (full_symbol, asset_id)
             for asset_id, full_symbol in universe_mapping.items()
         )
+        # Sort for readability.
+        universe_mapping = dict(sorted(universe_mapping.items()))
         _LOG.info(
             "\nUniverse mapping:\n%s", hprint.to_pretty_str(universe_mapping)
         )
