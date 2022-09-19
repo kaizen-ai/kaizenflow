@@ -202,7 +202,8 @@ class ImClient(abc.ABC):
         # hpandas.dassert_increasing_index(df)
         # Transform bid ask data with multiple order book levels.
         if "level" in df.columns:
-            df = self.handle_orderbook_levels(df)
+            timestamp_col = "timestamp"
+            df = self.handle_orderbook_levels(df, timestamp_col)
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
@@ -296,7 +297,11 @@ class ImClient(abc.ABC):
         ]
         return full_symbols
 
-    def handle_orderbook_levels(self, df: pd.DataFrame) -> pd.DataFrame:
+    def handle_orderbook_levels(
+        self, 
+        df: pd.DataFrame, 
+        timestamp_col: str,
+        ) -> pd.DataFrame:
         """
         Transform bid-ask data with multiple levels.
 
@@ -312,27 +317,28 @@ class ImClient(abc.ABC):
 
         2022-09-08 21:01:00+00:00    2.32    3.23    2.33
         """
-        # Get rid of irrelevant column.
-        if "id" in df.columns:
-            df = df.drop(["id"], axis=1)
-        # Specify bid ask columns.
+        hdbg.dassert_in(timestamp_col, df.reset_index().columns)
+        # Specify bid-ask and non-bid-ask columns.
         bid_ask_cols = [
             col
             for col in df.columns
             if col.startswith("bid") or col.startswith("ask")
         ]
+        # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates). 
+        non_bid_ask_cols = [col for col in df.reset_index().columns if col not in bid_ask_cols+["level", "id"]]
         # TODO(Max): Create an assertion that all values for levels are identical,
-        # so we are dropping safely (e.g., "knowledge_timestamp").
+        # so we are merging the rows without duplicates (i.e., "knowledge_timestamp" and "end_download_timestamp").
         # Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
         pivoted_data = df.reset_index().pivot(
-            index=["timestamp", "full_symbol"],
+            index=non_bid_ask_cols,
             columns=["level"],
             values=bid_ask_cols,
         )
-        # Rename the columns for a desired {value}_{level} format.
+        # Rename the columns to a desired {value}_{level} format.
         pivoted_data.columns = pivoted_data.columns.map("{0[0]}_{0[1]}".format)
-        # Transform to the desired format.
-        df = pivoted_data.reset_index("full_symbol")
+        # Fix indices.
+        df = pivoted_data.reset_index(non_bid_ask_cols)
+        df = df.set_index(timestamp_col)
         return df
 
     # /////////////////////////////////////////////////////////////////////////
