@@ -212,3 +212,47 @@ datetime,bid,ask,bid_volume,ask_volume
 """
         df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
         return df
+
+
+class Test_handle_orderbook_levels(hunitest.TestCase):
+    def _get_df_with_long_levels(self) -> pd.DataFrame:
+        timestamp_index=[
+            pd.Timestamp("2022-09-08 21:01:00+00:00"),
+            pd.Timestamp("2022-09-08 21:01:00+00:00"),
+            pd.Timestamp("2022-09-08 21:01:00+00:00")]
+        knowledge_timestamp=[
+            pd.Timestamp("2022-09-08 21:01:15+00:00"),
+            pd.Timestamp("2022-09-08 21:01:15+00:00"),
+            pd.Timestamp("2022-09-08 21:01:15+00:00")]
+        values = {'level': [1, 2, 3], 
+            'bid_price': pd.Series([2.31, 3.22, 2.33]), 
+            'bid_size': pd.Series([1.1, 2.2, 3.3]), 
+            'ask_price': pd.Series([2.34, 3.24, 2.35]), 
+            'ask_size': pd.Series([4.4, 5.5, 6.6]), 
+            'knowledge_timestamp': knowledge_timestamp,
+            'timestamp': timestamp_index,
+            }
+        df = pd.DataFrame(data=values)
+        df = df.set_index("timestamp")
+        return df
+
+    def test1(self) -> None:
+        long_levels_df = self._get_df_with_long_levels()
+        #
+        timestamp_col = "timestamp"
+        wide_levels_df = cfibiask.handle_orderbook_levels(long_levels_df, timestamp_col)
+        #
+        expected_outcome = r"""
+                                        knowledge_timestamp  bid_price_1  bid_price_2  bid_price_3  bid_size_1  bid_size_2  bid_size_3  ask_price_1  ask_price_2  ask_price_3  ask_size_1  ask_size_2  ask_size_3
+        timestamp
+        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33         1.1         2.2         3.3         2.34         3.24         2.35         4.4         5.5         6.6
+        """
+        #
+        import helpers.hpandas as hpandas
+        actual_df = hpandas.df_to_str(wide_levels_df)
+        self.assert_equal(
+                actual_df,
+                expected_outcome,
+                dedent=True,
+                fuzzy_match=True,
+            )
