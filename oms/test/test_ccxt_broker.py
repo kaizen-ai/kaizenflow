@@ -349,9 +349,9 @@ class TestCcxtBroker1(hunitest.TestCase):
 
 
 @pytest.mark.skip(reason="Run manually.")
-class TestSaveMinimalOrderLimits(hunitest.TestCase):
+class TestSaveMarketInfo(hunitest.TestCase):
     """
-    Capture minimal order limits data from a CCXT broker so that it can be
+    Capture market info data from a CCXT broker so that it can be
     reused in other tests and code.
     """
 
@@ -366,7 +366,6 @@ class TestSaveMinimalOrderLimits(hunitest.TestCase):
         Build `CcxtBroker` for tests.
         """
         exchange_id = "binance"
-        universe_version = "v7.1"
         portfolio_id = "ccxt_portfolio_mock"
         secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(

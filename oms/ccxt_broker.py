@@ -467,12 +467,13 @@ class CcxtBroker(ombroker.Broker):
         'tierBased': False,
         'type': 'future'}
         """
-        minimal_order_limits: Dict[str, Any] = {}
+        minimal_order_limits: Dict[int, Any] = {}
         # Load market information from CCXT.
         exchange_markets = self._exchange.load_markets()
         for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
             minimal_order_limits[asset_id] = {}
-            limits = exchange_markets[symbol]["limits"]
+            currency_market = exchange_markets[symbol]
+            limits = currency_market["limits"]
             # Get the minimal amount of asset in the order.
             amount_limit = limits["amount"]["min"]
             minimal_order_limits[asset_id]["min_amount"] = amount_limit
@@ -481,7 +482,8 @@ class CcxtBroker(ombroker.Broker):
             #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
-            amount_precision = limits["precision"]["amount"]
+            # Set the rounding precision for amount of the asset.
+            amount_precision = currency_market["precision"]["amount"]
             minimal_order_limits[asset_id]["amount_precision"] = amount_precision
         return minimal_order_limits
 
