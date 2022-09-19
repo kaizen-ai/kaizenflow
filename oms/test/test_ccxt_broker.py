@@ -13,6 +13,7 @@ import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import market_data as mdata
+import oms
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 import oms.secrets.secret_identifier as oseseide
@@ -20,7 +21,6 @@ import oms.secrets.secret_identifier as oseseide
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skip(reason="Enable after CmTask #2816")
 class TestCcxtBroker1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(occxbrok.hsecret, "get_secret")
@@ -47,6 +47,9 @@ class TestCcxtBroker1(hunitest.TestCase):
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
         # Set dummy credentials for all tests.
         self.get_secret_mock.return_value = {"apiKey": "test", "secret": "test"}
+        # Reset static variables on each test run.
+        oms.Broker._submitted_order_id = 1
+        oms.Fill._fill_id = 1
 
     def tearDown(self) -> None:
         self.get_secret_patch.stop()
@@ -164,7 +167,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         account_type = "trading"
         # Initialize class.
         broker = self.get_test_broker(stage, contract_type, account_type)
-        broker._submitted_order_id = 1
         # Patch main external source.
         with umock.patch.object(
             broker._exchange, "createOrder", create=True
@@ -188,7 +190,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(actual_args, expected_args, fuzzy_match=True)
         # Check the receipt.
-        self.assert_equal(receipt, "filename_2.txt")
+        self.assert_equal(receipt, "filename_1.txt")
         # Check the order Dataframe.
         act = hpandas.convert_df_to_json_string(order_df, n_tail=None)
         exp = r"""
@@ -211,7 +213,8 @@ class TestCcxtBroker1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    def test_submit_orders_errors1(self) -> None:
+    @umock.patch.object(occxbrok.time, "sleep")
+    def test_submit_orders_errors1(self, sleep_mock: umock.MagicMock) -> None:
         """
         Verify that Binance API error is raised correctly.
         """
@@ -227,17 +230,16 @@ class TestCcxtBroker1(hunitest.TestCase):
         with umock.patch.object(
             broker._exchange, "createOrder", create=True
         ) as create_order_mock:
-            # Disable CCXT patch.
-            self.ccxt_patch.stop()
             # Check the Binance API error.
             from ccxt.base.errors import ExchangeNotAvailable
+
             create_order_mock.side_effect = [
                 ExchangeNotAvailable(umock.Mock(), ""),
-                Exception("MockException")
+                Exception("MockException"),
             ]
             with umock.patch.object(
-                occxbrok.time, "sleep", create=True
-            ) as time_sleep_mock:
+                self.ccxt_mock, "ExchangeNotAvailable", ExchangeNotAvailable
+            ):
                 # Run.
                 with self.assertRaises(Exception) as cm:
                     asyncio.run(
@@ -245,17 +247,13 @@ class TestCcxtBroker1(hunitest.TestCase):
                             orders, "dummy_timestamp", dry_run=False
                         )
                     )
-            # Enable CCXT patch.
-            self.ccxt_patch.start()
-        act = str(cm.exception)
-        self.assert_equal(act, "MockException")
+        self.assert_equal(str(cm.exception), "MockException")
         # Check the count of calls.
-        self.assertEqual(time_sleep_mock.call_count, 1)
-
+        self.assertEqual(sleep_mock.call_count, 1)
 
     def test_submit_orders_errors2(self) -> None:
         """
-        Verify that the order is not submitted if the error is connected to liquidity.
+        Verify that the order is not submitted, if connected to liquidity.
         """
         orders = self.get_test_orders()
         # Define broker parameters.
@@ -264,22 +262,24 @@ class TestCcxtBroker1(hunitest.TestCase):
         account_type = "trading"
         # Initialize class.
         broker = self.get_test_broker(stage, contract_type, account_type)
-        broker._submitted_order_id = 1
         # Patch main external source.
         with umock.patch.object(
-            broker._exchange, "createOrder", create=True  
+            broker._exchange, "createOrder", create=True
         ) as create_order_mock:
             # Check that the order is not submitted if the error is connected to liquidity.
-            from ccxt.base.errors import OrderNotFillable, ExchangeNotAvailable
+            from ccxt.base.errors import ExchangeNotAvailable, OrderNotFillable
+
             create_order_mock.side_effect = [
                 OrderNotFillable(umock.Mock(status=-4131), '"code":-4131,')
             ]
             with umock.patch.object(
-                    self.ccxt_mock, "ExchangeNotAvailable", ExchangeNotAvailable
+                self.ccxt_mock, "ExchangeNotAvailable", ExchangeNotAvailable
             ):
                 # Run.
                 _, order_df = asyncio.run(
-                    broker._submit_orders(orders, "dummy_timestamp", dry_run=False)
+                    broker._submit_orders(
+                        orders, "dummy_timestamp", dry_run=False
+                    )
                 )
         # Order df should be empty.
         self.assertEqual(order_df.empty, True)
@@ -338,7 +338,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Check fill.
         self.assertEqual(fill.price, 19749.8)
         self.assertEqual(fill.num_shares, -0.004)
-        self.assertEqual(fill._fill_id, 10)
+        self.assertEqual(fill._fill_id, 1)
         # Convert timestamps to string.
         actual_time = fill.timestamp.strftime("%Y-%m-%d %X")
         expected_time = pd.to_datetime(1662242460466, unit="ms").strftime(
@@ -366,7 +366,6 @@ class TestSaveMinimalOrderLimits(hunitest.TestCase):
         Build `CcxtBroker` for tests.
         """
         exchange_id = "binance"
-        universe_version = "v7.1"
         portfolio_id = "ccxt_portfolio_mock"
         secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
