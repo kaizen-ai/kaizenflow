@@ -1,6 +1,6 @@
 # This is a utility DAG to conduct QA on real time data download
-# The first task compares the downloaded data with the contents of
-# of the database, to confirm a match or show discrepancies
+# The task compares the downloaded data with the contents of
+# of the database, to confirm a match or show discrepancies.
 
 # IMPORTANT NOTES:
 # Make sure to set correct dag schedule `schedule_interval`` parameter.
@@ -20,7 +20,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to
+# This variable will be propagated throughout DAG definition as a prefix to 
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -28,7 +28,7 @@ assert _STAGE in ["prod", "preprod", "test"]
 
 # Used for seperations of deployment environments
 # ignored when executing on prod/preprod.
-_USERNAME = "juraj"
+_USERNAME = ""
 
 # Deployment type, if the task should be run via fargate (serverless execution)
 # or EC2 (machines deployed in our auto-scaling group)
@@ -36,14 +36,14 @@ _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
-_EXCHANGES = ["binance"]
+_EXCHANGES = ["binance"] 
 _PROVIDERS = ["ccxt"]
 _UNIVERSES = {"ccxt" : "v7"}
 #_CONTRACTS = ["spot", "futures"]
 _CONTRACTS = ["spot", "futures"]
 #_DATA_TYPES = ["bid_ask", "ohlcv"]
 _DATA_TYPES = ["ohlcv"]
-_DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data download, contracts:" \
+_DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data reconciliation, contracts:" \
                 + f"{_CONTRACTS}, using {_PROVIDERS} from {_EXCHANGES}."
 _SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
@@ -58,11 +58,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize
+# in log groups, stream prefixes and container names to minimize 
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but
+# Subnets and security group is not needed for EC2 deployment but 
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -73,6 +73,7 @@ s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{V
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 1,
+    "retry_delay": datetime.timedelta(minutes=5),
     "email": [Variable.get(f'{_STAGE}_notification_email')],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
@@ -89,11 +90,11 @@ dag = airflow.DAG(
     catchup=False,
     start_date=datetime.datetime(2022, 7, 1, 0, 0, 0),
 )
-
+    
 compare_command = [
     "/app/amp/im_v2/{}/data/extract/compare_realtime_and_historical.py",
-    "--end_timestamp '{{ execution_date - macros.timedelta(minutes=45) }}'",
-    "--start_timestamp '{{ execution_date - macros.timedelta(hours=24, minutes=45) }}'",
+    "--end_timestamp '{{ execution_date + macros.timedelta(hours=24) - macros.timedelta(minutes=var.value.daily_data_download_reconciliation_delay_min | int) }}'",
+    "--start_timestamp '{{ execution_date - macros.timedelta(minutes=var.value.daily_data_download_reconciliation_delay_min | int) }}'",
     "--db_stage 'dev'",
     "--exchange_id '{}'",
     "--db_table '{}'",
@@ -109,7 +110,7 @@ for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _
     db_table = f"{provider}_{data_type}"
     db_table += "_futures" if contract == "futures" else ""
     db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-
+    
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(compare_command)
@@ -130,7 +131,7 @@ for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _
             "subnets": ecs_subnets,
         },
     }
-
+    
     comparing_task = ECSOperator(
         task_id=f"compare_{provider}_{exchange}_{data_type}_{contract}",
         dag=dag,
@@ -151,5 +152,5 @@ for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _
         execution_timeout=datetime.timedelta(minutes=15),
         **kwargs
     )
-
+    
     start_comparison >> comparing_task >> end_comparison
