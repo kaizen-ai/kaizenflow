@@ -46,7 +46,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "s3_path": "s3://cryptokaizen-data/historical.manual.pq/",
             "log_level": "INFO",
             "file_format": "parquet",
-            "bid_ask_depth": None, 
+            "bid_ask_depth": None,
         }
         self.assertDictEqual(actual, expected)
 

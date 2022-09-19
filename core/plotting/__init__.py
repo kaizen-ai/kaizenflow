@@ -7,6 +7,7 @@ import core.plotting as coplotti
 from core.plotting.correlation import *  # pylint: disable=unused-import # NOQA
 from core.plotting.counts import *  # pylint: disable=unused-import # NOQA
 from core.plotting.drawdown import *  # pylint: disable=unused-import # NOQA
+from core.plotting.extreme_value_distributions import *  # pylint: disable=unused-import # NOQA
 from core.plotting.misc_plotting import *  # pylint: disable=unused-import # NOQA
 from core.plotting.normality import *  # pylint: disable=unused-import # NOQA
 from core.plotting.p_values import *  # pylint: disable=unused-import # NOQA

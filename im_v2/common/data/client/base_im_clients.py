@@ -11,6 +11,7 @@ from typing import Any, Dict, List, Optional, Tuple
 import pandas as pd
 
 import helpers.hdatetime as hdateti
+import core.finance.bid_ask as cfibiask
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -200,6 +201,11 @@ class ImClient(abc.ABC):
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
+        if "level" in df.columns:
+            _LOG.debug("Detected level column and calling handle_orderbook_levels")
+            # Transform bid ask data with multiple order book levels.
+            timestamp_col = "timestamp"
+            df = cfibiask.handle_orderbook_levels(df, timestamp_col)
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()

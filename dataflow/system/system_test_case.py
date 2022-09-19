@@ -48,7 +48,7 @@ def run_NonTime_ForecastSystem_from_backtest_config(
 
     :param system: system object to extract `DagRunner` from
     :param method: "fit" or "predict"
-    :param config_tag: tag used to freeze the system config by `check_system_config()`
+    :param config_tag: tag used to freeze the system config by `check_SystemConfig()`
     :return: result bundle
     """
     hdbg.dassert_in(method, ["fit", "predict"])
@@ -57,7 +57,7 @@ def run_NonTime_ForecastSystem_from_backtest_config(
     dag_runner = system.dag_runner
     hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
     # Check the system config against the frozen value.
-    dtfsysysig.check_system_config(self, system, config_tag)
+    dtfsysysig.check_SystemConfig(self, system, config_tag)
     # Set the time boundaries.
     start_datetime = system.config[
         "backtest_config", "start_timestamp_with_lookback"
@@ -88,7 +88,7 @@ def run_Time_ForecastSystem(
     Run `Time_ForecastSystem` with predict method.
 
     :param system: `Time_ForecastSystem` object
-    :param config_tag: tag used to freeze the system config by `check_system_config()`
+    :param config_tag: tag used to freeze the system config by `check_SystemConfig()`
     :return: `DagRunner` result bundles
     """
     #dtfssybuut.apply_unit_test_log_dir(self, system)
@@ -100,7 +100,7 @@ def run_Time_ForecastSystem(
         # Create a `DagRunner`.
         dag_runner = system.dag_runner
         # Check the system config against the frozen value.
-        dtfsysysig.check_system_config(self, system, config_tag)
+        dtfsysysig.check_SystemConfig(self, system, config_tag)
         coroutines.append(dag_runner.predict())
         #
         if "order_processor_config" in system.config:
@@ -115,7 +115,7 @@ def run_Time_ForecastSystem(
     return result_bundles
 
 
-def save_ccxt_market_data(
+def save_Ccxt_MarketData(
     file_path: str,
     full_symbols: Optional[List[ivcu.FullSymbol]],
     im_client_params: Any,
@@ -181,7 +181,7 @@ class System_CheckConfig_TestCase1(hunitest.TestCase):
         dtfssybuut.apply_unit_test_log_dir(self, system)
         # Build `DagRunner`.
         _ = system.dag_runner
-        # TODO(gp): Use check_system_config.
+        # TODO(gp): Use check_SystemConfig.
         txt = []
         txt.append(hprint.frame("system_config"))
         txt.append(str(system.config))

@@ -102,6 +102,8 @@ class Test_generate_random_bars(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+# TODO(Paul): Move this to market_data.
+
 # #############################################################################
 # Test_MarketData_builders1
 # #############################################################################
