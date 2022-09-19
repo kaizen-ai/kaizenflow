@@ -89,8 +89,8 @@ def get_Cx_ReplayedMarketData_from_file(
     Build a `ReplayedMarketData` backed with data from the specified file.
     """
     file_path = system.config["market_data_config", "file_path"]
-    aws_profile = "ck"
-    hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
+    #aws_profile = "ck"
+    #hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
     # TODO(Grisha): @Dan Refactor default column names in system related functions.
     # TODO(Grisha): @Dan Since remapping is different for prod and simulation,
@@ -111,7 +111,7 @@ def get_Cx_ReplayedMarketData_from_file(
     # Get market data for replaying.
     market_data_df = mdata.load_market_data(
         file_path,
-        aws_profile=aws_profile,
+        #aws_profile=aws_profile,
         column_remap=column_remap,
         timestamp_db_column=timestamp_db_column,
         datetime_columns=datetime_columns,
@@ -243,10 +243,9 @@ def get_Cx_RealTimeDag_example2(
     system = dtfsys.apply_history_lookback(system)
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    root_log_dir = system.config.get("system_log_dir")
     order_duration_in_mins = 5
-    process_forecasts_node_dict = get_process_forecasts_node_dict_prod_instance1(
-        system.portfolio, order_duration_in_mins, root_log_dir
+    process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
+        system, order_duration_in_mins, is_prod
     )
     system.config["process_forecasts_node_dict"] = cconfig.Config.from_dict(
         process_forecasts_node_dict
