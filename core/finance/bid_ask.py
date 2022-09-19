@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -149,6 +150,7 @@ def handle_orderbook_levels(
         timestamp
         2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33
     """
+    _LOG.debug(hprint.to_str("timestamp_col bid_prefix ask_prefix"))
     hdbg.dassert_in(timestamp_col, df.reset_index().columns)
     # Specify bid-ask and non-bid-ask columns.
     bid_ask_cols = [

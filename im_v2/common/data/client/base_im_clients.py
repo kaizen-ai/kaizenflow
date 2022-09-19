@@ -202,6 +202,7 @@ class ImClient(abc.ABC):
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
         if "level" in df.columns:
+            _LOG.debug("Detected level column and calling handle_orderbook_levels")
             # Transform bid ask data with multiple order book levels.
             timestamp_col = "timestamp"
             df = cfibiask.handle_orderbook_levels(df, timestamp_col)

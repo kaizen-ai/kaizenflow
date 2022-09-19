@@ -217,7 +217,10 @@ datetime,bid,ask,bid_volume,ask_volume
 
 
 class Test_handle_orderbook_levels(hunitest.TestCase):
-    def _get_df_with_long_levels(self) -> pd.DataFrame:
+    """
+    Apply the test data from `get_df_with_long_levels()` to check that the output is in wide form.
+    """
+    def get_df_with_long_levels(self) -> pd.DataFrame:
         timestamp_index=[
             pd.Timestamp("2022-09-08 21:01:00+00:00"),
             pd.Timestamp("2022-09-08 21:01:00+00:00"),
@@ -239,7 +242,7 @@ class Test_handle_orderbook_levels(hunitest.TestCase):
         return df
 
     def test1(self) -> None:
-        long_levels_df = self._get_df_with_long_levels()
+        long_levels_df = self.get_df_with_long_levels()
         #
         timestamp_col = "timestamp"
         wide_levels_df = cfibiask.handle_orderbook_levels(long_levels_df, timestamp_col)
