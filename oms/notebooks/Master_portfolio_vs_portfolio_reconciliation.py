@@ -43,21 +43,33 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %%
-date = "2022-08-31"
-start_timestamp = pd.Timestamp(date + " 10:15:00", tz="America/New_York")
+date = "2022-09-15"
+start_timestamp = pd.Timestamp(date + " 09:15:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 15:45:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 11:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", start_timestamp)
 
 # %%
+# !ls /shared_data/prod_reconciliation/20220915/simulation/system_log_dir
+
+# %%
 prod_dir = (
-    "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.prod"
+    "/data/shared/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
 )
-sim_dir = "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.sim"
+prod_dir = prod_dir.replace("/data/shared/", "/shared_data/")
+print(prod_dir)
+
+sim_dir = "/data/shared/prod_reconciliation/20220915/simulation/system_log_dir"
+sim_dir = sim_dir.replace("/data/shared/", "/shared_data/")
+print(sim_dir)
+
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
+hdbg.dassert_dir_exists(prod_forecast_dir)
+
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
 sim_forecast_dir = os.path.join(sim_dir, "process_forecasts")
+hdbg.dassert_dir_exists(sim_forecast_dir)
 
 # %%
 # hdbg.dassert_dir_exists(root_dir)
@@ -66,7 +78,7 @@ dict_ = {
     "sim_forecast_dir": sim_forecast_dir,
     "prod_portfolio_dir": prod_portfolio_dir,
     "sim_portfolio_dir": sim_portfolio_dir,
-    "freq": "15T",
+    "freq": "5T",
     "start_timestamp": start_timestamp,
     "end_timestamp": end_timestamp,
 }
@@ -158,7 +170,8 @@ forecast_corrs = dtfmod.compute_correlations(prod_forecast_df, sim_forecast_df)
 hpandas.df_to_str(forecast_corrs, precision=3, log_level=logging.INFO)
 
 # %%
-sort_col = "prediction"
+#sort_col = "prediction"
+sort_col = "curr_num_shares"
 hpandas.df_to_str(
     forecast_corrs.sort_values(sort_col, ascending=False),
     num_rows=10,
@@ -206,6 +219,10 @@ hpandas.df_to_str(prod_portfolio_stats_df, log_level=logging.INFO)
 
 # %% [markdown]
 # ## Load sim portfolio
+
+# %%
+#display(prod_portfolio_df["holdings"].head(3))
+#display(sim_portfolio_df["holdings"].head(3))
 
 # %%
 sim_portfolio_df, sim_portfolio_stats_df = load_portfolio(
@@ -263,6 +280,33 @@ portfolio_stats_dfs = {
 portfolio_stats_dfs = pd.concat(portfolio_stats_dfs, axis=1)
 
 # %%
+#mask = portfolio_stats_dfs["sim", "pnl"] < -45
+mask = portfolio_stats_dfs["sim", "pnl"] >-1000
+portfolio_stats_dfs[mask]
+
+# %%
+#display(portfolio_stats_dfs["prod", "pnl"])
+
+mask = portfolio_stats_dfs["sim", "pnl"] > -45
+
+portfolio_stats_dfs[mask][[("prod", "pnl"), ("sim", "pnl")]].plot()
+
+# %%
+mask
+
+# %%
+#idx = "2022-09-15 09:40:00-04:00"
+idx = "2022-09-15 10:35:00-04:00"
+#display(sim_portfolio_df["holdings"].loc[idx])
+#display(prod_portfolio_df["holdings"].loc[idx])
+
+df1 = sim_portfolio_df["holdings"].loc[idx]
+df2 = prod_portfolio_df["holdings"].loc[idx]
+pd.concat([df1, df2], axis=1).astype(int)
+              
+#(sim_portfolio_df["holdings"][mask] - prod_portfolio_df["holdings"][mask]) / prod_portfolio_df["holdings"][mask]
+
+# %%
 hpandas.df_to_str(portfolio_stats_dfs, log_level=logging.INFO)
 
 # %%
@@ -311,16 +355,16 @@ def load_config_as_list(path):
 
 
 # %%
-def diff_lines(list1, list2) -> Tuple[List[str], List[str]]:
-    list1_only = list(set(list1) - set(list2))
-    list2_only = list(set(list2) - set(list1))
-    return list1_only, list2_only
-
+# def diff_lines(list1, list2) -> Tuple[List[str], List[str]]:
+#     list1_only = list(set(list1) - set(list2))
+#     list2_only = list(set(list2) - set(list1))
+#     return list1_only, list2_only
 
 # %%
 prod_system_config_output = load_config_as_list(
     prod_dir + "/system_config.output.txt"
 )
+print(prod_dir + "/system_config.output.txt")
 sim_system_config_output = load_config_as_list(
     sim_dir + "/system_config.output.txt"
 )
@@ -330,6 +374,47 @@ prod_system_config_input = load_config_as_list(
 sim_system_config_input = load_config_as_list(
     sim_dir + "/system_config.input.txt"
 )
+
+# %%
+# %%
+print(sim_dir + "/system_config.output.txt")
+print(prod_dir + "/system_config.output.txt")
+
+# %%
+if True:
+    chunks1 = cconfig.sort_config_string(sim_system_config_output)
+    chunks2 = cconfig.sort_config_string(prod_system_config_output)
+else:
+    chunks1 = cconfig.sort_config_string(sim_system_config_input)
+    chunks2 = cconfig.sort_config_string(prod_system_config_input)
+
+import helpers.hio as hio
+file_name = "sim_system_config.txt"
+hio.to_file(file_name, chunks1)
+print(file_name)
+file_name = "prod_system_config.txt"
+hio.to_file(file_name, chunks2)
+print(file_name)
+
+# %%
+# # %%
+# iile_name = "txt1.txt"
+# hio.to_file(file_name, chunks1)
+# prod_system_config_output
+
+
+
+# # %%
+# prod_output_only, sim_output_only = diff_lines(
+#     prod_system_config_output, sim_system_config_output
+# )
+
+# # %%
+# prod_output_only
+
+# # %%
+# sim_output_only
+
 
 # %%
 prod_output_only, sim_output_only = diff_lines(

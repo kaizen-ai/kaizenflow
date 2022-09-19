@@ -59,6 +59,8 @@ def sort_config_string(txt: str) -> str:
     start_idx = end_idx = None
     for i, line in enumerate(lines):
         _LOG.debug("i=%s state=%s start_idx=%s end_idx=%s line=%s" % (i, state, start_idx, end_idx, line))
+        if not line:
+            continue
         if state == "look_for_start" and line[0] != " " and lines[i+1][0] != " ":
             _LOG.debug("Found single line")
             # Single line.
