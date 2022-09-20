@@ -103,7 +103,7 @@ class CcxtBroker(ombroker.Broker):
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
         # Set minimal order limits.
-        self.minimal_order_limits = self._get_minimal_order_limits()
+        self.market_info = self._get_market_info()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # Set up empty sent orders for the first run of the system.
@@ -192,7 +192,7 @@ class CcxtBroker(ombroker.Broker):
         Select all open futures positions.
 
         Selects all possible positions and filters out those
-        with a non-0 amount.
+        with a non-zero amount.
         Example of an output:
 
         [{'info': {'symbol': 'BTCUSDT',
@@ -370,11 +370,13 @@ class CcxtBroker(ombroker.Broker):
         )
         return oms_order
 
-    # TODO(gp): @all add a manual unit test to save this data in the repo
-    # or in scratch. Check in the limits in the repo.
-    def _get_minimal_order_limits(self) -> Dict[int, Any]:
+    def _get_market_info(self) -> Dict[int, Any]:
         """
-        Load minimal amount and total cost for the given exchange.
+        Load market information from the given exchange and map to asset ids.
+
+        Currently the following data is saved:
+        - minimal order limits (notional and quantity)
+        - asset quantity precision (for rounding of orders)
 
         The numbers are determined by loading the market metadata from CCXT.
 
@@ -464,12 +466,13 @@ class CcxtBroker(ombroker.Broker):
         'tierBased': False,
         'type': 'future'}
         """
-        minimal_order_limits: Dict[str, Any] = {}
+        minimal_order_limits: Dict[int, Any] = {}
         # Load market information from CCXT.
         exchange_markets = self._exchange.load_markets()
         for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
             minimal_order_limits[asset_id] = {}
-            limits = exchange_markets[symbol]["limits"]
+            currency_market = exchange_markets[symbol]
+            limits = currency_market["limits"]
             # Get the minimal amount of asset in the order.
             amount_limit = limits["amount"]["min"]
             minimal_order_limits[asset_id]["min_amount"] = amount_limit
@@ -478,6 +481,9 @@ class CcxtBroker(ombroker.Broker):
             #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
+            # Set the rounding precision for amount of the asset.
+            amount_precision = currency_market["precision"]["amount"]
+            minimal_order_limits[asset_id]["amount_precision"] = amount_precision
         return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:
@@ -701,34 +707,34 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self,
         *args: Any,
         stage: str,
-        minimal_order_limits: Dict[int, float],
+        market_info: Dict[int, float],
         **kwargs: Any,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.stage = stage
-        self.minimal_order_limits = minimal_order_limits
+        self.market_info = market_info
 
 
 def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
-    # Load pre-saved minimal order limits generated with
-    # `TestSaveMinimalOrderLimits`.
+    # Load pre-saved market info generated with
+    # `TestSaveMarketInfo`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestSaveMinimalOrderLimits/input/minimal_order_limits.json",
+        "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
     )
     # The data looks like
     # {"6051632686":
-    #     {"min_amount": 1.0, "min_cost": 10.0},
+    #     {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
     # ...
-    minimal_order_limits = hio.from_json(file_path)
+    market_info = hio.from_json(file_path)
     # Convert to int, because asset ids are integers.
-    minimal_order_limits = {int(k): v for k, v in minimal_order_limits.items()}
+    market_info = {int(k): v for k, v in market_info.items()}
     stage = "preprod"
     strategy_id = "C1b"
     broker = SimulatedCcxtBroker(
         strategy_id,
         market_data,
         stage=stage,
-        minimal_order_limits=minimal_order_limits,
+        market_info=market_info,
     )
     return broker
