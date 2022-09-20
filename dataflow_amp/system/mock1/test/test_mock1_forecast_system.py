@@ -148,7 +148,7 @@ class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1)
         # We need at least 7 bars to compute volatility.
         system.config[
             "market_data_config", "replayed_delay_in_mins_or_timestamp"
-        ] = 35
+        ] = pd.Timestamp("2000-01-01 10:06:00-05:00")
         # Exercise the system for multiple 5 minute intervals.
         system.config[
             "dag_runner_config", "rt_timeout_in_secs_or_time"
