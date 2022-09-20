@@ -74,14 +74,21 @@ def get_ReplayedTimeMarketData_from_df(
     # Find the initial timestamp of the data and shift by
     # `replayed_delay_in_mins_or_timestamp`.
     min_start_time_col_name = df[start_time_col_name].min()
-    hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
+#    hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
     # We can't enable this assertion since some tests
     # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
     # use a negative offset to start replaying the data, before data is available.
     # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
-    initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
-        minutes=replayed_delay_in_mins_or_timestamp
-    )
+    if isinstance(replayed_delay_in_mins_or_timestamp, int):
+        initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
+            minutes=replayed_delay_in_mins_or_timestamp
+        )
+    elif isinstance(replayed_delay_in_mins_or_timestamp, pd.Timestamp):
+        initial_replayed_timestamp = replayed_delay_in_mins_or_timestamp
+    else:
+        raise ValueError(
+            f"replayed_delay_in_mins_or_timestamp is {type(replayed_delay_in_mins_or_timestamp)} instead of Union[int, pd.Timestamp]"
+        )
     _LOG.debug(
         hprint.to_str(
             "min_start_time_col_name replayed_delay_in_mins_or_timestamp initial_replayed_timestamp"
