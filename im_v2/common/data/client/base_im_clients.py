@@ -78,6 +78,7 @@ class ImClient(abc.ABC):
         :param resample_1min: whether to resample data to 1 minute or not
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
+        :param timestamp_col_name: the name of the column storing timestamp
         """
         _LOG.debug(
             hprint.to_str(
@@ -91,6 +92,7 @@ class ImClient(abc.ABC):
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
+        hdbg.dassert_isinstance(timestamp_col_name, str)
         self._timestamp_col_name = timestamp_col_name
         # TODO(gp): This is the name of the column of the asset_id in the data
         #  as it is read by the derived classes (e.g., `igid`, `asset_id`).
@@ -99,6 +101,12 @@ class ImClient(abc.ABC):
         if full_symbol_col_name is not None:
             hdbg.dassert_isinstance(full_symbol_col_name, str)
         self._full_symbol_col_name = full_symbol_col_name
+        #
+        _LOG.debug(
+            hprint.to_str(
+                "vendor universe_version resample_1min full_symbol_col_name"
+            )
+        )
         #
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
