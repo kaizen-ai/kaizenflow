@@ -1,7 +1,5 @@
-"""
-This DAG is used to download realtime data to the
-ohlcv tables in the database.
-"""
+# This DAG is used to download realtime data to the database.
+
 
 import airflow
 from airflow.contrib.operators.ecs_operator import ECSOperator
@@ -14,7 +12,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to
+# This variable will be propagated throughout DAG definition as a prefix to 
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -33,12 +31,21 @@ _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
 _PROVIDERS = ["ccxt"]
 _UNIVERSES = {"ccxt": "v7"}
+#_CONTRACTS = ["spot", "futures"]
 _CONTRACTS = ["spot", "futures"]
+#_DATA_TYPES = ["ohlcv", "bid_ask"]
 _DATA_TYPES = ["ohlcv"]
+# How many levels deep in to order book
+# to downlaod per iteration per symbol
+_BID_ASK_DEPTH = 10
+# How often should a downloader within a single container run.
+# TODO{Juraj): change to seconds after # CmTask2817.
+# (In minutes)
+_DOWNLOAD_INTERVAL = {"ohlcv": 1, "bid_ask": 1}
 # Specify how long should the DAG be running for (in minutes).
 _RUN_FOR = 60
 # Specify how much in advance should the DAG be scheduled (in minutes).
-# We leave a couple minutes to account for delay in container setup
+# We leave a couple minutes to account for delay in container setup 
 # such that the download can start at a precise point in time.
 _DAG_STANDBY = 6
 _DAG_DESCRIPTION = f"Realtime {_DATA_TYPES} data download, contracts:" \
@@ -61,22 +68,22 @@ _TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize
+# in log groups, stream prefixes and container names to minimize 
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but
+# Subnets and security group is not needed for EC2 deployment but 
 # we keep the configuration header unified for convenience/reusability.
-ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
+ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
 ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
 
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 2,
+    "retries": 0,
     "email": [Variable.get(f'{_STAGE}_notification_email')],
-    "email_on_failure": True if _STAGE == ["prod", "preprod"]else False,
+    "email_on_failure": True if _STAGE == ["prod", "preprod"] else False,
     "owner": "airflow",
 }
 
@@ -89,10 +96,15 @@ bash_command = [
     "--data_type '{}'",
     "--contract_type '{}'",
     "--db_stage 'dev'",
-    "--interval_min '1'",
+    "--interval_min '{}'",
+    # This argument gets ignored for OHLCV data type.
+    f"--bid_ask_depth '{_BID_ASK_DEPTH}'",
     "--aws_profile 'ck'",
-    "--start_time '{}'",
-    "--stop_time '{}'",
+    # At this point we set up a logic for real time execution
+    # Start date is postponed by _DAG_STANDBY minutes and a short
+    # few seconds delay to ensure the bars from the nearest minute are finished.
+    "--start_time '{{ execution_date + macros.timedelta(minutes=var.value.rt_data_download_run_for_min | int + var.value.rt_data_download_standby_min | int, seconds=5) }}'",
+    "--stop_time '{{ execution_date + macros.timedelta(minutes=2*(var.value.rt_data_download_run_for_min | int) + var.value.rt_data_download_standby_min | int, seconds=15) }}'",
 ]
 
 # Create a DAG.
@@ -113,6 +125,7 @@ end_task = DummyOperator(task_id="end", dag=dag)
 for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
 
     table_name = f"{provider}_{data_type}"
+    #TODO(Juraj): CmTask2804.
     if contract == "futures":
         table_name += "_futures"
     table_name += _TABLE_SUFFIX
@@ -125,13 +138,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
     curr_bash_command[3] = curr_bash_command[3].format(table_name)
     curr_bash_command[4] = curr_bash_command[4].format(data_type)
     curr_bash_command[5] = curr_bash_command[5].format(contract)
-
-    # At this point we set up a logic for real time execution
-    # Start date is postponed by _DAG_STANDBY minutes.
-    start_date = datetime.datetime.now() + datetime.timedelta(minutes=_DAG_STANDBY)
-    curr_bash_command[-2] = curr_bash_command[-2].format(start_date.strftime("%Y-%m-%d %H:%M:%S+00:00"))
-    end_date = datetime.datetime.now() + datetime.timedelta(minutes=_RUN_FOR + _DAG_STANDBY)
-    curr_bash_command[-1] = curr_bash_command[-1].format(end_date.strftime("%Y-%m-%d %H:%M:%S+00:00"))
+    curr_bash_command[7] = curr_bash_command[7].format(_DOWNLOAD_INTERVAL[data_type])
 
     kwargs = {}
     kwargs["network_configuration"] = {
@@ -142,7 +149,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
     }
 
     downloading_task = ECSOperator(
-        task_id=f"rt_download_{provider}_{exchange}_{contract}",
+        task_id=f"rt_download_{provider}_{exchange}_{data_type}_{contract}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
