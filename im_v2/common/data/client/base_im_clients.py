@@ -90,6 +90,7 @@ class ImClient(abc.ABC):
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
+        self._timestamp_col_name = "timestamp"
         # TODO(gp): This is the name of the column of the asset_id in the data
         #  as it is read by the derived classes (e.g., `igid`, `asset_id`).
         #  We should rename this as "full_symbol" so that all the code downstream
@@ -204,7 +205,7 @@ class ImClient(abc.ABC):
         if "level" in df.columns:
             _LOG.debug("Detected level column and calling handle_orderbook_levels")
             # Transform bid ask data with multiple order book levels.
-            timestamp_col = "timestamp"
+            timestamp_col = self._timestamp_col_name
             df = cfibiask.handle_orderbook_levels(df, timestamp_col)
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
@@ -219,7 +220,7 @@ class ImClient(abc.ABC):
             only_warning=True,
         )
         # Rename index.
-        df.index.name = "timestamp"
+        df.index.name = self._timestamp_col_name
         # Normalize data for each symbol.
         _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
         dfs = []
@@ -238,6 +239,7 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
+                self._timestamp_col_name,
             )
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
@@ -247,8 +249,8 @@ class ImClient(abc.ABC):
         # There is not a simple way to sort by index and columns in Pandas,
         # so we convert the index into a column, sort, and convert back.
         df = df.reset_index()
-        df = df.sort_values(by=["timestamp", full_symbol_col_name])
-        df = df.set_index("timestamp", drop=True)
+        df = df.sort_values(by=[self._timestamp_col_name, full_symbol_col_name])
+        df = df.set_index(self._timestamp_col_name, drop=True)
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
@@ -348,6 +350,7 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        timestamp_col_name: str,
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -371,7 +374,7 @@ class ImClient(abc.ABC):
         # Check that there are no duplicates in data by index and full symbol.
         n_duplicated_rows = (
             df.reset_index()
-            .duplicated(subset=["timestamp", full_symbol_col_name])
+            .duplicated(subset=[timestamp_col_name, full_symbol_col_name])
             .sum()
         )
         hdbg.dassert_eq(
@@ -721,10 +724,10 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         data = data.drop(["exchange_id", "currency_pair"], axis=1)
         # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
+        data[self._timestamp_col_name,] = data[self._timestamp_col_name,].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        data = data.set_index("timestamp")
+        data = data.set_index(self._timestamp_col_name,)
         # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
