@@ -17,6 +17,9 @@
 # %autoreload 2
 # %matplotlib inline
 
+# %% [markdown]
+# # Imports
+
 # %%
 import logging
 import os
@@ -31,6 +34,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import market_data as mdata
 import oms as oms
 
 # %%
@@ -42,91 +46,32 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
-# %%
-import market_data as mdata
 
-aws_profile = "ck"
-file_path = (
-    "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
-)
-# file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
-column_remap = {
-    "start_timestamp": "start_datetime",
-    "end_timestamp": "end_datetime",
-}
-timestamp_db_column = "end_datetime"
-datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
-market_data_df = mdata.load_market_data(
-    file_path,
-    # aws_profile=aws_profile,
-    column_remap=column_remap,
-    timestamp_db_column=timestamp_db_column,
-    datetime_columns=datetime_columns,
-)
-market_data_df
+# %% [markdown]
+# # Functions
 
 # %%
-min_start_time_col_name = (
-    market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
-)
-min_start_time_col_name
-
-# %%
-max_start_time_col_name = (
-    market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
-)
-max_start_time_col_name
-
-# %%
-replayed_delay_in_mins_or_timestamp = 60 * 24 * 6 + 20 * 60 + 26
-initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
-    minutes=replayed_delay_in_mins_or_timestamp
-)
-initial_replayed_timestamp
-
-# %%
-date = "2022-09-15"
-start_timestamp = pd.Timestamp(date + " 09:10:00", tz="America/New_York")
-_LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 11:15:00", tz="America/New_York")
-_LOG.info("end_timestamp=%s", end_timestamp)
-
-# %%
-prod_dir = (
-    # "/shared_data/ecs/preprod/system_log_dir_scheduled__2022-09-05T00:15:00+00:00"
-    # "/shared_data/system_log_dir_2022-09-06_15:56:09"
-    # "/shared_data/system_log_dir_20220908_095612/"
-    # "/shared_data/system_log_dir_20220908_095626/"
-    # "/shared_data/system_log_dir_20220913_1hour"
-    # "/shared_data/prod_reconciliation/20220913/prod/system_log_dir_20220913_2hours"
-    "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
-)
-sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
-prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
-prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
-sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
-sim_forecast_dir = os.path.join(sim_dir, "process_forecasts")
-
-# %%
-# hdbg.dassert_dir_exists(root_dir)
-dict_ = {
-    "prod_forecast_dir": prod_forecast_dir,
-    "sim_forecast_dir": sim_forecast_dir,
-    "prod_portfolio_dir": prod_portfolio_dir,
-    "sim_portfolio_dir": sim_portfolio_dir,
-    "freq": "5T",
-    "start_timestamp": start_timestamp,
-    "end_timestamp": end_timestamp,
-}
-#
-config = cconfig.Config.from_dict(dict_)
-display(config)
+def get_replayed_delay_in_mins(
+    min_timestamp_from_file: pd.Timestamp,
+    min_timestamp_from_prod: pd.Timestamp,
+) -> int:
+    """
+    Compute replayed delay in minutes from minimal time in
+    market data from file and prod system start time.
+    """
+    time_diff_in_secs = (
+        min_timestamp_from_prod - min_timestamp_from_file
+    ).total_seconds()
+    replayed_delay_in_mins = int(time_diff_in_secs / 60)
+    return replayed_delay_in_mins
 
 
-# %%
 def load_portfolio(
     portfolio_dir, start_timestamp, end_timestamp, freq
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Load portfolio and related stats.
+    """
     # Make sure the directory exists.
     hdbg.dassert_dir_exists(portfolio_dir)
     # Sanity-check timestamps.
@@ -156,45 +101,153 @@ def load_portfolio(
     return portfolio_df, portfolio_stats_df
 
 
-# %%
-def compute_delay(df, freq):
-    bar_index = df.index.round(config["freq"])
+def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
+    """
+    Compute forecast delays from bar timestamps.
+    """
+    bar_index = df.index.round(freq)
     delay_vals = df.index - bar_index
     delay = pd.Series(delay_vals, bar_index, name="delay")
     return delay
 
 
-# %%
-def check_missing_bars(df, config):
+def check_for_missing_bars(
+    df: pd.DataFrame, freq: str
+) -> None:
+    """
+    Check that no data bars are missed.
+    """
     _LOG.info("Actual index=%s", df.index)
-    actual_index = df.index.round(config["freq"])
+    hpandas.dassert_monotonic_index(df)
+    actual_index = df.index.round(freq)
     min_ts = df.index.min()
     max_ts = df.index.max()
     expected_index = pd.date_range(
-        start=min_ts, end=max_ts, freq=config["freq"]
-    ).round(config["freq"])
+        start=min_ts, end=max_ts, freq=freq
+    ).round(freq)
     hdbg.dassert_set_eq(actual_index, expected_index)
 
 
-def print_stats(df: pd.DataFrame, config) -> None:
+# TODO(Grisha): @Dan Provide correct stats descriptions.
+def print_stats(df: pd.DataFrame) -> None:
     """
-    Basic stats and sanity checks before doing heavy computations.
+    Print basic stats and sanity checks before doing heavy computations.
+    
+    Stats include:
+    - minimal index timestamp
+    - maximum index timestamp
+    - fraction of assets with no difference in num shares
+    - fraction of assets with empty num shares
     """
-    hpandas.dassert_monotonic_index(df)
     _LOG.info("min timestamp=%s", df.index.min())
     _LOG.info("max timestamp=%s", df.index.max())
-    check_missing_bars(df, config)
     n_zeros = sum(df["diff_num_shares"].sum(axis=1) == 0)
     _LOG.info(
-        "fraction of diff_nam_shares=0 is %s",
+        "fraction of diff_num_shares=0 is %s",
         hprint.perc(n_zeros, df["diff_num_shares"].shape[0]),
     )
     n_nans = df["diff_num_shares"].sum(axis=1).isna().sum()
     _LOG.info(
-        "fraction of diff_nam_shares=0 is %s",
+        "fraction of diff_num_shares=0 is %s",
         hprint.perc(n_nans, df["diff_num_shares"].shape[0]),
     )
 
+
+# TODO(Paul): Clean up the system config handling.
+def load_config_as_list(path: str) -> List[str]:
+    """
+    Load config as a list of string lines.
+    """
+    with open(path) as f:
+        lines = f.readlines()
+    _LOG.debug("Lines read=%d", len(lines))
+    return lines
+
+
+def diff_lines(
+    list1: List[str], list2: List[str]
+) -> Tuple[List[str], List[str]]:
+    """
+    Get output lines that differ.
+    """
+    list1_only = list(set(list1) - set(list2))
+    list2_only = list(set(list2) - set(list1))
+    return list1_only, list2_only
+
+
+# %% [markdown]
+# # Set system parameters
+
+# %%
+aws_profile = "ck"
+file_path = (
+    "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
+)
+# file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
+column_remap = {
+    "start_timestamp": "start_datetime",
+    "end_timestamp": "end_datetime",
+}
+timestamp_db_column = "end_datetime"
+datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
+market_data_df = mdata.load_market_data(
+    file_path,
+    # aws_profile=aws_profile,
+    column_remap=column_remap,
+    timestamp_db_column=timestamp_db_column,
+    datetime_columns=datetime_columns,
+)
+market_data_df.head()
+
+# %%
+min_market_data_end_time = (
+    market_data_df["end_datetime"].min().tz_convert(tz="America/New_York")
+)
+min_market_data_end_time
+
+# %%
+max_market_data_end_time = (
+    market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
+)
+max_market_data_end_time
+
+# %%
+date = "2022-09-15"
+start_timestamp = pd.Timestamp(date + " 09:10:00", tz="America/New_York")
+_LOG.info("start_timestamp=%s", start_timestamp)
+end_timestamp = pd.Timestamp(date + " 11:15:00", tz="America/New_York")
+_LOG.info("end_timestamp=%s", end_timestamp)
+
+# %%
+replayed_delay_in_mins_or_timestamp = get_replayed_delay_in_mins(
+    min_market_data_end_time,
+    start_timestamp,
+)
+replayed_delay_in_mins_or_timestamp
+
+# %%
+prod_dir = (
+    "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
+)
+sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
+prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
+prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
+sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
+sim_forecast_dir = os.path.join(sim_dir, "process_forecasts")
+
+# %%
+dict_ = {
+    "prod_forecast_dir": prod_forecast_dir,
+    "sim_forecast_dir": sim_forecast_dir,
+    "prod_portfolio_dir": prod_portfolio_dir,
+    "sim_portfolio_dir": sim_portfolio_dir,
+    "freq": "5T",
+    "start_timestamp": start_timestamp,
+    "end_timestamp": end_timestamp,
+}
+#
+config = cconfig.Config.from_dict(dict_)
+display(config)
 
 # %% [markdown]
 # # Forecasts
@@ -206,14 +259,16 @@ def print_stats(df: pd.DataFrame, config) -> None:
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["prod_forecast_dir"]
 )
-print_stats(prod_forecast_df, config)
+check_for_missing_bars(prod_forecast_df, config["freq"])
+print_stats(prod_forecast_df)
 hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
 sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
     config["sim_forecast_dir"]
 )
-print_stats(sim_forecast_df, config)
+check_for_missing_bars(sim_forecast_df, config["freq"])
+print_stats(sim_forecast_df)
 hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 
 # %% [markdown]
@@ -222,9 +277,6 @@ hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 # %%
 prod_forecast_delay = compute_delay(prod_forecast_df, config["freq"])
 hpandas.df_to_str(prod_forecast_delay, log_level=logging.INFO)
-
-# %%
-prod_forecast_delay
 
 # %%
 # Plot delay in seconds.
@@ -312,8 +364,6 @@ hpandas.df_to_str(sim_portfolio_stats_df, log_level=logging.INFO)
 
 # %%
 prod_portfolio_delay = compute_delay(prod_portfolio_df, config["freq"])
-
-# %%
 hpandas.df_to_str(prod_portfolio_delay, log_level=logging.INFO)
 
 # %%
@@ -389,25 +439,8 @@ hpandas.df_to_str(
     log_level=logging.INFO,
 )
 
-
 # %% [markdown]
 # # System configs
-
-# %%
-# TODO(Paul): Clean up the system config handling.
-def load_config_as_list(path):
-    with open(path) as f:
-        lines = f.readlines()
-    _LOG.debug("Lines read=%d", len(lines))
-    return lines
-
-
-# %%
-def diff_lines(list1, list2) -> Tuple[List[str], List[str]]:
-    list1_only = list(set(list1) - set(list2))
-    list2_only = list(set(list2) - set(list1))
-    return list1_only, list2_only
-
 
 # %%
 prod_system_config_output = load_config_as_list(
