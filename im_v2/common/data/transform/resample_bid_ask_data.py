@@ -147,17 +147,17 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--start_timestamp",
-        required=False,
+        required=True,
         action="store",
         type=str,
-        help="Beginning of the downloaded period",
+        help="Beginning of the downloaded data period",
     )
     parser.add_argument(
         "--end_timestamp",
         action="store",
-        required=False,
+        required=True,
         type=str,
-        help="End of the downloaded period",
+        help="End of the downloaded data period",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser
