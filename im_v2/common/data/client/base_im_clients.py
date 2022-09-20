@@ -724,7 +724,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         data = data.drop(["exchange_id", "currency_pair"], axis=1)
         # Convert timestamp column with Unix epoch to timestamp format.
-        data[self._timestamp_col_name,] = data[self._timestamp_col_name,].apply(
+        data[self._timestamp_col_name] = data[self._timestamp_col_name].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
         data = data.set_index(self._timestamp_col_name,)
