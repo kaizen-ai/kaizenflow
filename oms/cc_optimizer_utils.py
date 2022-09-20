@@ -16,11 +16,11 @@ import oms.broker as ombroker
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @all add unit tests for these functions
+# TODO(gp): @all add unit tests for these functions.
 # TODO(gp): Pass the broker.minimal_order_limits instead of broker so testing is
-#  easier.
+# easier.
 # TODO(gp): Compute the constraints on the df directly.
-# TODO(gp): Dump this data before and after in log_dir
+# TODO(gp): Dump this data before and after in log_dir.
 def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     """
     Enforce that `order` verifies the minimum quantity set by the exchange for
