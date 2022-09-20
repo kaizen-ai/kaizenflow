@@ -107,10 +107,15 @@ def _run(args: argparse.Namespace) -> None:
         "ask_size",
         "exchange_id",
     ]
+    # Convert dates to unix timestamps.
+    start = pd.Timestamp(args.start_timestamp).timestamp()
+    end = pd.Timestamp(args.end_timestamp).timestamp()
+    # Define filters for data period.
+    filters = [("timestamp", ">=", int(start)), ("timestamp", "<", int(end))]
     for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
         df = hparque.from_parquet(
-            file_path, columns=columns, aws_profile=aws_profile
+            file_path, columns=columns, filters=filters, aws_profile=aws_profile
         )
         df = _resample_bid_ask_data(df)
         dst_path = os.path.join(args.dst_dir, file)
@@ -139,6 +144,20 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         required=True,
         help="Destination dir where to save resampled parquet files",
+    )
+    parser.add_argument(
+        "--start_timestamp",
+        required=False,
+        action="store",
+        type=str,
+        help="Beginning of the downloaded period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=False,
+        type=str,
+        help="End of the downloaded period",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser
