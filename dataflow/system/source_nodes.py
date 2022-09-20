@@ -546,8 +546,7 @@ class HistoricalDataSource(dtfcore.DataSource):
             right_close=right_close,
         )
         # Remove the columns that are not needed.
-        # TODO(gp): @grisha not needed any more.
-        if False and self._col_names_to_remove is not None:
+        if self._col_names_to_remove is not None:
             _LOG.debug(
                 "Before column removal\n:%s",
                 hpandas.df_to_str(df.head()),

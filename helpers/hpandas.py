@@ -25,8 +25,7 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
-#_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
-#_LOG.verb_debug = _LOG.debug
+_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 
 # #############################################################################

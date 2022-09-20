@@ -95,6 +95,7 @@ def get_Cx_ReplayedMarketData_from_file(
         hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     else:
         aws_profile = None
+    hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
     # TODO(Grisha): @Dan Refactor default column names in system related functions.
     # TODO(Grisha): @Dan Since remapping is different for prod and simulation,
