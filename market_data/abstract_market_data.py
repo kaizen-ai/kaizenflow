@@ -421,18 +421,15 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._dassert_valid_asset_ids(asset_ids)
         # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.
         last_end_time = self.get_last_end_time()
-        print("last_end_time", last_end_time)
-        _LOG.info("last_end_time=%s", last_end_time)
+        _LOG.debug("last_end_time=%s", last_end_time)
         # Get the data.
         # TODO(Paul): Remove the hard-coded 1-minute.
         start_time = last_end_time - pd.Timedelta("1T")
-        print("start_time", start_time)
         df = self.get_data_at_timestamp(
             start_time,
             self._start_time_col_name,
             asset_ids,
         )
-        print("df", df)
         # Convert the df of data into a series.
         hdbg.dassert_in(col_name, df.columns)
         last_price = df[[col_name, self._asset_id_col]]
