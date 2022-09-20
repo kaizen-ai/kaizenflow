@@ -65,7 +65,7 @@ def get_cmtask2703_config() -> cconconf.Config:
                 "universe_version": None,
                 "resample_1min": True,
                 "root_dir": os.path.join(
-                    hs3.get_s3_bucket_path("ck"),
+                     hs3.get_s3_bucket_path("ck"),
                     "reorg",
                     "daily_staged.airflow.pq",
                 ),
@@ -131,12 +131,25 @@ def load_and_transform_the_data(
         df.index = df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="T")
         )
+        #
+        df = clean_data_for_orderbook_level(df, 1)
     else:
         df = cc_parquet_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
     df = df[bid_ask_cols]
     df = df.reset_index().set_index(["timestamp", "full_symbol"])
+    return df
+
+def clean_data_for_orderbook_level(df: pd.DataFrame, level: int):
+    level_cols = [col for col in df.columns if col.endswith(f"_{level}")]
+    level_cols_cleaned = [elem[:-2] for elem in level_cols]
+    #
+    zip_iterator = zip(level_cols, level_cols_cleaned)
+    col_dict = dict(zip_iterator)
+    #
+    df = df.rename(columns=col_dict)
+    #
     return df
 
 
@@ -179,6 +192,10 @@ print(compare_universe)
 # they are not downloaded in CC.
 universe.remove("binance::XRP_USDT")
 universe.remove("binance::DOT_USDT")
+# These two symbols crashes the downloads on `tz-conversion` stage.
+universe.remove("binance::BTC_USDT")
+universe.remove("binance::BNB_USDT")
+#
 universe
 
 # %% [markdown]
@@ -335,3 +352,5 @@ ask_size_corr_matrix
 
 # %% [markdown]
 # Correlation stats confirms the stats above: ask sizes in DB and CC are not correlated.
+
+# %%
