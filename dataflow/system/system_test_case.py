@@ -48,8 +48,7 @@ def run_NonTime_ForecastSystem_from_backtest_config(
     :param system: system object to extract `DagRunner` from
     :param method: "fit" or "predict"
     :param config_tag: tag used to freeze the system config by `check_SystemConfig()`
-    :param use_unit_test_log_dir: whether to use unit test log dir or check
-        that it is already passed
+    :param use_unit_test_log_dir: whether to use unit test log dir or not
     :return: result bundle
     """
     hdbg.dassert_in(method, ["fit", "predict"])
@@ -94,8 +93,7 @@ def run_Time_ForecastSystem(
 
     :param system: `Time_ForecastSystem` object
     :param config_tag: tag used to freeze the system config by `check_SystemConfig()`
-    :param use_unit_test_log_dir: whether to use unit test log dir or check
-        that it is already passed
+    :param use_unit_test_log_dir: whether to use unit test log dir or not
     :return: `DagRunner` result bundles
     """
     if use_unit_test_log_dir:

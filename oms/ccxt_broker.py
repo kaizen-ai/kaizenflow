@@ -84,6 +84,7 @@ class CcxtBroker(ombroker.Broker):
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
         self._secret_identifier = secret_identifier
+        _LOG.warning("secret_identifier=%s", secret_identifier)
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #

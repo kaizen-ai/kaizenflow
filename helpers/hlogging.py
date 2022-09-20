@@ -155,6 +155,7 @@ def shutup_chatty_modules(
         "boto",
         "boto3",
         "botocore",
+        # CCXT also needs to be shut up after the `exchange` is built.
         "ccxt",
         "fsspec",
         "hooks",
