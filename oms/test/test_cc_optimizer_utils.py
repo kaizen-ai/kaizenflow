@@ -126,9 +126,9 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
             market_data=market_data,
         )
         # Set order limits manually, bypassing the API.
-        broker.minimal_order_limits = {
-            8717633868: {"min_amount": 1.0, "min_cost": 10.0},
-            6051632686: {"min_amount": 1.0, "min_cost": 10.0},
+        broker.market_info = {
+            8717633868: {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
+            6051632686: {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
         }
         return broker
 

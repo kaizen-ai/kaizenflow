@@ -15,6 +15,7 @@ import oms.broker as ombroker
 
 _LOG = logging.getLogger(__name__)
 
+
 # TODO(gp): @all add unit tests for these functions
 # TODO(gp): Pass the broker.minimal_order_limits instead of broker so testing is
 #  easier.
@@ -38,9 +39,9 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     hdbg.dassert_isinstance(order, pd.Series)
     _LOG.debug('Order before adjustments:\n%s', order)
     asset_id = order.name
-    asset_limits = broker.minimal_order_limits[asset_id]
+    market_info = broker.market_info[asset_id]
     # 1) Ensure that the amount of shares is above the minimum required.
-    min_amount = asset_limits["min_amount"]
+    min_amount = market_info["min_amount"]
     diff_num_shares = order["diff_num_shares"]
     if abs(order["diff_num_shares"]) < min_amount:
         if diff_num_shares < 0:
@@ -59,10 +60,10 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     #low_price = broker.get_low_market_price(asset_id)
     price = order["price"]
     total_cost = price * abs(diff_num_shares)
-    min_cost = asset_limits["min_cost"]
+    min_cost = market_info["min_cost"]
     if total_cost <= min_cost:
         # Set amount based on minimal notional price.
-        min_amount = round(min_cost * 3 / price, 2)
+        min_amount = min_cost * 3 / price
         if diff_num_shares < 0:
             min_amount = -min_amount
         _LOG.warning(
@@ -74,6 +75,15 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
         )
         # Update the number of shares.
         diff_num_shares = min_amount
+    # Round the order amount in accordance with exchange rules.
+    amount_precision = market_info["amount_precision"]
+    diff_num_shares = round(diff_num_shares, amount_precision)
+    _LOG.info(
+        "Rounding order amount to %s decimal points. Result: %s",
+        amount_precision,
+        diff_num_shares,
+    )
+    #
     order["diff_num_shares"] = diff_num_shares
     _LOG.debug('Order after adjustments:\n%s', order)
     return order
@@ -91,10 +101,10 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
     """
     hdbg.dassert_isinstance(order, pd.Series)
     asset_id = order.name
-    asset_limits = broker.minimal_order_limits[asset_id]
+    market_info = broker.market_info[asset_id]
     #
-    required_amount = asset_limits["min_amount"]
-    min_cost = asset_limits["min_cost"]
+    required_amount = market_info["min_amount"]
+    min_cost = market_info["min_cost"]
     # Get the low price for the asset.
     low_price = broker.get_low_market_price(asset_id)
     # Verify that the estimated total cost is above 10.
@@ -104,6 +114,14 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
         #  buffer so the order does not go below
         #  the minimal amount of asset.
         required_amount = (min_cost / low_price) * 2
+    # Round the order amount in accordance with exchange rules.
+    amount_precision = market_info["amount_precision"]
+    required_amount = round(required_amount, amount_precision)
+    _LOG.info(
+        "Rounding order amount to %s decimal points. Result: %s",
+        amount_precision,
+        required_amount,
+    )
     # Apply back the sign.
     if order["diff_num_shares"] < 0:
         order["diff_num_shares"] = -required_amount
