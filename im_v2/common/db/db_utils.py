@@ -163,15 +163,20 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     env_file = imvimlita.get_db_env_path(db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     db_connection = hsql.get_connection(*connection_params)
-    delete_query = f"DELETE FROM {db_table} \
-                   WHERE id IN ( \
-                   SELECT t1.id \
-                   FROM {db_table} AS t1 JOIN {db_table} AS t2 \
-                   ON t1.timestamp = t2.timestamp \
-                   AND t1.currency_pair = t2.currency_pair \
-                   AND t1.exchange_id = t2.exchange_id \
-                   WHERE t1.id < t2.id \
-                   AND t1.knowledge_timestamp < t2.knowledge_timestamp)"
+    # delete_query = f"DELETE FROM {db_table} \
+    #                WHERE id IN ( \
+    #                SELECT t1.id \
+    #                FROM {db_table} AS t1 JOIN {db_table} AS t2 \
+    #                ON t1.timestamp = t2.timestamp \
+    #                AND t1.currency_pair = t2.currency_pair \
+    #                AND t1.exchange_id = t2.exchange_id \
+    #                WHERE t1.id < t2.id \
+    #                AND t1.knowledge_timestamp < t2.knowledge_timestamp)"
+    delete_query = hsql.get_remove_duplicates_query(
+        table_name=db_table,
+        id_col_name="id",
+        column_names=["timestamp", "exchange_id", "currency_pair"],
+    )
     num_before = hsql.get_num_rows(db_connection, db_table)
     hsql.execute_query(db_connection, delete_query)
     num_after = hsql.get_num_rows(db_connection, db_table)
