@@ -217,7 +217,6 @@ class ImClient(abc.ABC):
             # TODO(Grisha): add param `assert_on_missing_asset_ids` that
             # allows to either assert or issues a warning.
             only_warning=True,
-            # only_warning=False,
         )
         # Rename index.
         df.index.name = "timestamp"

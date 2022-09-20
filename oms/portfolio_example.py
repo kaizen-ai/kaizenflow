@@ -28,6 +28,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(gp): @grisha remove this and give priority from master.
 def get_DataFramePortfolio_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,

@@ -180,6 +180,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
     def timestamp_col(self) -> str:
         return self._timestamp_col
 
+    # TODO(gp): @Danya, let's remove this method since not used anymore.
     def get_low_market_price(self, asset_id: int) -> float:
         """
         Load the low price for the given ticker.
