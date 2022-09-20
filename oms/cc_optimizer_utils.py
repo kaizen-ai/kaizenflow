@@ -131,16 +131,24 @@ def _force_minimal_order(
 
 
 def apply_cc_limits(
-    forecast_df: pd.DataFrame, broker: ombroker.Broker
+    forecast_df: pd.DataFrame, broker: ombroker.Broker, log_dir: str
 ) -> pd.DataFrame:
     """
     Apply notional limits for DataFrame of multiple orders.
 
-    :param forecast_df: DataFrame with forecasts
+    :param forecast_df: DataFrame with forecasts, e.g.
+        ```
+                    curr_num_shares      price   position      wall_clock_timestamp  prediction  volatility  spread  target_position  target_notional_trade  diff_num_shares
+        asset_id
+        6051632686         2.524753   5.040333  12.725596 2022-09-15 10:35:11-04:00    0.475591    0.004876       0        12.018895              -0.706701        -0.140209
+        8717633868              0.0      18.77        0.0 2022-09-15 10:35:11-04:00   -0.134599     0.00312       0       -29.341767             -29.341767        -1.563227
+        2540896331              0.0  12.958333        0.0 2022-09-15 10:35:11-04:00    0.103423    0.002859       0         0.000000                    0.0              0.0
+        ```
     :param broker: Broker class instance
     :return: DataFrame with updated orders
     """
-    _LOG.info("Order df before adjustments: %s", forecast_df.to_string())
+    _LOG.info("Order df before adjustments: forecast_df=%s", hpandas.df_to_str(forecast_df, num_rows=None))
+    forecast_df.to_csv(log_dir+f"forecast_df_before_constraints.csv")
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -164,6 +172,7 @@ def apply_cc_limits(
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
     forecast_df = forecast_df_tmp
     _LOG.info(
-        "after forecast_df=\n%s", hpandas.df_to_str(forecast_df, num_rows=None)
+        "Order df after adjustments: forecast_df=%s", hpandas.df_to_str(forecast_df, num_rows=None)
     )
+    forecast_df.to_csv(log_dir + f"forecast_df_after_constraints.csv")
     return forecast_df

@@ -746,7 +746,7 @@ class ForecastProcessor:
             # Verify that all orders are above the notional limit.
             #  Note: orders that are below the minimal amount of asset
             #  for the exchange are modified to go slightly above the limit.
-            df = occoputi.apply_cc_limits(df, self._portfolio.broker)
+            df = occoputi.apply_cc_limits(df, self._portfolio.broker, log_dir)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
