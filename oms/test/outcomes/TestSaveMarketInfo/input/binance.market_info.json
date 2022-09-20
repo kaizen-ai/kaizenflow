@@ -1,0 +1,127 @@
+{
+    "6051632686": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "8717633868": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "2540896331": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "1528092593": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "8968126878": {
+        "min_amount": 0.01,
+        "min_cost": 10.0,
+        "amount_precision": 2
+    },
+    "1467591036": {
+        "min_amount": 0.001,
+        "min_cost": 10.0,
+        "amount_precision": 3
+    },
+    "2476706208": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1
+    },
+    "5115052901": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "3065029174": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "1891737434": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1
+    },
+    "3401245610": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1
+    },
+    "1464553467": {
+        "min_amount": 0.001,
+        "min_cost": 10.0,
+        "amount_precision": 3
+    },
+    "1966583502": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "1030828978": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "2601760471": {
+        "min_amount": 0.01,
+        "min_cost": 10.0,
+        "amount_precision": 2
+    },
+    "2683705052": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "9872743573": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "2484635488": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "2099673105": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "4516629366": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "2237530510": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "2425308589": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0
+    },
+    "1776791608": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1
+    },
+    "2384892553": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1
+    },
+    "5118394986": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1
+    }
+}
