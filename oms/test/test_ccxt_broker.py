@@ -397,10 +397,10 @@ class TestSaveMarketInfo(hunitest.TestCase):
         )
         # Get market information from the exchange.
         market_info = broker.market_info
-        _LOG.debug("market_info dict '%s' ...", market_info)
+        _LOG.debug("asset_market_info dict '%s' ...", market_info)
         # Build file path.
         dst_dir = self.get_input_dir(use_only_test_class=True)
-        file_name = "binance.market_info.json"
+        file_name = "binance.asset_market_info.json"
         file_path = os.path.join(dst_dir, file_name)
         # Save data.
         _LOG.info("Saving data in '%s' ...", file_path)

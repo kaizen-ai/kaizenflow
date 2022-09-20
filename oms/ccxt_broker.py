@@ -17,6 +17,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hlogging as hloggin
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsecrets as hsecret
@@ -82,6 +83,7 @@ class CcxtBroker(ombroker.Broker):
         self.stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
+        _LOG.debug("secret_identifier=%s", secret_identifier)
         self._secret_identifier = secret_identifier
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
@@ -716,7 +718,7 @@ def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     # `TestSaveMarketInfo`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
+        "oms/test/outcomes/TestSaveMarketInfo/input/binance.asset_market_info.json",
     )
     # The data looks like
     # {"6051632686":

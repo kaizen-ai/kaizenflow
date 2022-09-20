@@ -5,17 +5,21 @@ import oms.cc_optimizer_utils as occoputi
 """
 
 import logging
+from typing import Any, Dict
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import oms.broker as ombroker
 
 _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): @all add unit tests for these functions
-def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
+def _apply_prod_limits(
+    order: pd.Series, asset_market_info: Dict[int, Any]
+) -> pd.Series:
     """
     Enforce that `order` verifies the minimum quantity set by the exchange for
     prod account.
@@ -28,14 +32,14 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
 
     :param order: order to be submitted represented as a row from the forecast
         DataFrame
+    :param asset_market_info: market info for the particular asset
     :return: updated order
     """
     hdbg.dassert_isinstance(order, pd.Series)
     _LOG.info("Order before adjustments: %s", order)
-    asset_id = order.name
-    market_info = broker.market_info[asset_id]
+    order.name
     # 1) Ensure that the amount of shares is above the minimum required.
-    min_amount = market_info["min_amount"]
+    min_amount = asset_market_info["min_amount"]
     diff_num_shares = order["diff_num_shares"]
     if abs(order["diff_num_shares"]) < min_amount:
         if diff_num_shares < 0:
@@ -51,9 +55,9 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     # 2) Ensure that the order value is above the minimal cost.
     # Estimate the total value of the order. We use the low price since this is a
     # more conservative estimate of the order value.
-    price = broker.get_low_market_price(asset_id)
+    price = order["price"]
     total_cost = price * abs(diff_num_shares)
-    min_cost = market_info["min_cost"]
+    min_cost = asset_market_info["min_cost"]
     if total_cost <= min_cost:
         # Set amount based on minimal notional price.
         min_amount = min_cost * 3 / price
@@ -69,7 +73,7 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
         # Update the number of shares.
         diff_num_shares = min_amount
     # Round the order amount in accordance with exchange rules.
-    amount_precision = market_info["amount_precision"]
+    amount_precision = asset_market_info["amount_precision"]
     diff_num_shares = round(diff_num_shares, amount_precision)
     _LOG.info(
         "Rounding order amount to %s decimal points. Result: %s",
@@ -82,7 +86,9 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     return order
 
 
-def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
+def _force_minimal_order(
+    order: pd.Series, market_info: Dict[int, Any]
+) -> pd.Series:
     """
     Enforce that `order` verifies the minimum quantity set by the exchange for
     testnet account.
@@ -94,13 +100,12 @@ def _force_minimal_order(order: pd.Series, broker: ombroker.Broker) -> pd.Series
     """
     _LOG.info("Order before adjustments: %s", order)
     hdbg.dassert_isinstance(order, pd.Series)
-    asset_id = order.name
-    market_info = broker.market_info[asset_id]
+    order.name
     #
     required_amount = market_info["min_amount"]
     min_cost = market_info["min_cost"]
     # Get the low price for the asset.
-    low_price = broker.get_low_market_price(asset_id)
+    low_price = order["price"]
     # Verify that the estimated total cost is above 10.
     if low_price * required_amount <= min_cost:
         # Set the amount of asset to above min cost.
@@ -145,15 +150,20 @@ def apply_cc_limits(
     )
     #
     stage = broker.stage
-    if stage in ["preprod", "prod"]:
-        forecast_df = forecast_df.apply(
-            _apply_prod_limits, args=(broker,), axis=1
-        )
-    elif stage == "local":
-        forecast_df = forecast_df.apply(
-            _force_minimal_order, args=(broker,), axis=1
-        )
-    else:
-        hdbg.dfatal(f"Unknown mode: {stage}")
-    _LOG.info("Order df after adjustments: %s", forecast_df.to_string())
+    market_info = broker.market_info
+    forecast_df_tmp = []
+    for idx, row in forecast_df.iterrows():
+        if stage in ["preprod", "prod"]:
+            row_tmp = _apply_prod_limits(row, market_info[idx])
+        elif stage == "local":
+            row_tmp = _force_minimal_order(row, market_info[idx])
+        else:
+            raise ValueError(f"Unknown stage='{stage}'")
+        forecast_df_tmp.append(row_tmp)
+    forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
+    hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
+    forecast_df = forecast_df_tmp
+    _LOG.info(
+        "after forecast_df=\n%s", hpandas.df_to_str(forecast_df, num_rows=None)
+    )
     return forecast_df
