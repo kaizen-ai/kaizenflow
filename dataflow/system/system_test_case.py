@@ -98,7 +98,6 @@ def run_Time_ForecastSystem(
         that it is already passed
     :return: `DagRunner` result bundles
     """
-    hdbg.dassert_in(method, ["fit", "predict"])
     if use_unit_test_log_dir:
         dtfssybuut.apply_unit_test_log_dir(self, system)
     else:
