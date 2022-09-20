@@ -718,7 +718,7 @@ def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     # `TestSaveMarketInfo`.
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestSaveMarketInfo/input/binance.asset_market_info.json",
+        "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
     )
     # The data looks like
     # {"6051632686":

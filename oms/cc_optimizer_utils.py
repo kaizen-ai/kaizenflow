@@ -145,10 +145,17 @@ def apply_cc_limits(
         2540896331              0.0  12.958333        0.0 2022-09-15 10:35:11-04:00    0.103423    0.002859       0         0.000000                    0.0              0.0
         ```
     :param broker: Broker class instance
+    :param log_dir: directory to store order transformations
     :return: DataFrame with updated orders
     """
-    _LOG.info("Order df before adjustments: forecast_df=%s", hpandas.df_to_str(forecast_df, num_rows=None))
-    forecast_df.to_csv(log_dir+f"forecast_df_before_constraints.csv")
+    _LOG.info(
+        "Order df before adjustments: forecast_df=%s",
+        hpandas.df_to_str(forecast_df, num_rows=None),
+    )
+    log_timestamp = forecast_df.loc[0, "wall_clock_timestamp"]
+    forecast_df.to_csv(
+        log_dir + f"forecast_df_before_constraints{log_timestamp}.csv"
+    )
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -172,7 +179,10 @@ def apply_cc_limits(
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
     forecast_df = forecast_df_tmp
     _LOG.info(
-        "Order df after adjustments: forecast_df=%s", hpandas.df_to_str(forecast_df, num_rows=None)
+        "Order df after adjustments: forecast_df=%s",
+        hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    forecast_df.to_csv(log_dir + f"forecast_df_after_constraints.csv")
+    forecast_df.to_csv(
+        log_dir + f"forecast_df_after_constraints{log_timestamp}.csv"
+    )
     return forecast_df
