@@ -100,6 +100,7 @@ def setup_experiment_dir(config: cconfig.Config) -> None:
     file_name = os.path.join(experiment_result_dir, "config.pkl")
     _LOG.debug("Saving '%s'", file_name)
     # Remove un-pickleable pieces.
+    # TODO(gp): Call
     for key in ("dag_runner_object", ):
         if key in config:
             if not hintros.is_pickleable(config[key]):

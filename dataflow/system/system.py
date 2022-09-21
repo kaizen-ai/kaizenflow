@@ -212,9 +212,26 @@ class System(abc.ABC):
         #
         log_dir = self.config["system_log_dir"]
         hio.create_dir(log_dir, incremental=False)
-        #
-        file_name = os.path.join(log_dir, "system_config.input.txt")
-        hio.to_file(file_name, repr(self.config))
+        # Save the config.
+        # TODO(gp): Refactor this logic in a method.
+        tag = "system_config.input"
+        cconfig.save_to_file(self._config, log_dir, tag)
+        # # 1) As a string.
+        # file_name = os.path.join(log_dir, "system_config.input.txt")
+        # hio.to_file(file_name, repr(self.config))
+        # # 2) As a pickle.
+        # file_name = os.path.join(log_dir, "system_config.input.pkl")
+        # try:
+        #     force_strings = False
+        #     config = self.config.to_pickleable_config(force_strings)
+        #     hpickle.to_pickle(config, file_name)
+        # except XYZ:
+        #     _LOG.warning("Config can't be pickled as it is so converting as strings")
+        # # 3) As a pickle-able
+        # file_name = os.path.join(log_dir, "system_config.input.force_strings.pkl")
+        # force_strings = True
+        # config = self.config.to_pickleable_config(force_strings)
+        # hpickle.to_pickle(config, file_name)
         #
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
             key, self._get_dag_runner
@@ -235,8 +252,10 @@ class System(abc.ABC):
             + hprint.frame("End config after dag_runner")
         )
         #
-        file_name = os.path.join(log_dir, "system_config.output.txt")
-        hio.to_file(file_name, repr(self.config))
+        tag = "system_config.output"
+        cconfig.save_to_file(self._config, log_dir, tag)
+        # file_name = os.path.join(log_dir, "system_config.output.txt")
+        # hio.to_file(file_name, repr(self.config))
         return dag_runner
 
     @abc.abstractmethod

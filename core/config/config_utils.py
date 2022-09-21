@@ -91,6 +91,37 @@ def sort_config_string(txt: str) -> str:
     return chunks
 
 
+# tag="system_config.input"
+def save_to_file(config: Config, dir_name, tag):
+    # TODO(gp): Refactor this logic in a method.
+    # 1) As a string.
+    file_name = os.path.join(log_dir, f"{tag}.txt")
+    hio.to_file(file_name, repr(self.config))
+    # 2) As a pickle.
+    file_name = os.path.join(log_dir, f"{tag}.pkl")
+    try:
+        force_strings = False
+        config = self.config.to_pickleable_config(force_strings)
+        hpickle.to_pickle(config, file_name)
+    except XYZ:
+        _LOG.warning("Config can't be pickled as it is so converting as strings")
+    # 3) As a pickle-able
+    file_name = os.path.join(log_dir, f"{tag}.force_strings.pkl")
+    force_strings = True
+    config = self.config.to_pickleable_config(force_strings)
+    hpickle.to_pickle(config, file_name)
+
+
+def reorder_first_level_config(config: Config) -> Config:
+    """
+    Create a new Config where the first level is ordered in alphabetical order.
+    """
+    config_out = Config()
+    for k in sorted(config.keys()):
+        config_out[k] = config[k]
+    return config_out
+
+
 # #############################################################################
 
 

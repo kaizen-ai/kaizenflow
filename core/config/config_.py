@@ -584,6 +584,24 @@ class Config:
             return None
         return val  # type: ignore
 
+    def to_pickleable_config(self, force_strings: bool) -> "Config":
+        """
+        Transform this Config into a pickle-able one where non pickle-able objects
+        are replaced with strings.
+
+        :param force_strings: force all values to become strings, even if they are
+            pickle-able.
+        """
+        config_out = {}
+        for k, v in self._config.items():
+            if isinstance(v, Config):
+                config_out[k] = v.to_pickleable_config(force_strings)
+            else:
+                if force_all_strings or not is_pickleable(v):
+                    v = str(v)
+            config_out[k] = v
+        return config_out
+
     def to_python(self, check: bool = True) -> str:
         """
         Return python code that builds, when executed, the current object.
