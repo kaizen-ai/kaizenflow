@@ -265,7 +265,6 @@ class TestRunNotebook1(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 @pytest.mark.flaky(reruns=2)
 class TestRunNotebook2(hunitest.TestCase):
     """
