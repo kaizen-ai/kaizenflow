@@ -188,11 +188,12 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         # Load last low price from market data.
         col_name = "low"
         low_price = self.market_data.get_last_price(col_name, [asset_id])
-        if len(low_price) == 0:
+        if low_price.empty:
             # Return empty value if there is no price.
             low_price = np.nan
-            # Select topmost price if there are multiple entries.
-            _LOG.warning("Length of price series is >1: %s", low_price)
+            _LOG.warning("Length of price series is 0: %s", low_price)
+            return low_price
+        low_price = low_price.loc[asset_id]
         if isinstance(low_price, pd.Series):
             # Select topmost price if there are multiple entries.
             _LOG.warning("Length of price series is >1: %s", low_price)
