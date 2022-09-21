@@ -107,7 +107,7 @@ def apply_cc_limits(
         log_dir = os.path.join(log_dir, "apply_cc_limits")
         hio.create_dir(log_dir, incremental=True)
     # Select the timestamp of order creation for logging.
-    log_timestamp = forecast_df.loc[0, "wall_clock_timestamp"]
+    log_timestamp = forecast_df["wall_clock_timestamp"].iat[0]
     # Save orders before applying the constraints.
     if log_dir is not None:
         file_name = os.path.join(
