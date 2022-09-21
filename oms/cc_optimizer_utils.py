@@ -146,7 +146,7 @@ def _apply_prod_limits(
     )
     #
     order["diff_num_shares"] = diff_num_shares
-    _LOG.info("Order after adjustments: %s", order)
+    _LOG.debug('Order after adjustments:\n%s', order)
     return order
 
 

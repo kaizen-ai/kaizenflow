@@ -20,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hlogging as hloggin
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hlogging as hloggin
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -85,6 +86,7 @@ class CcxtBroker(ombroker.Broker):
         self._account_type = account_type
         _LOG.debug("secret_identifier=%s", secret_identifier)
         self._secret_identifier = secret_identifier
+        _LOG.warning("secret_identifier=%s", secret_identifier)
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -664,6 +666,9 @@ class CcxtBroker(ombroker.Broker):
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
+        # CCXT registers the logger after it's built, so we need to reduce its
+        # logger verbosity here.
+        hloggin.shutup_chatty_modules()
         return exchange
 
 
