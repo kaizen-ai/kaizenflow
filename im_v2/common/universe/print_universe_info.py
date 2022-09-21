@@ -114,12 +114,12 @@ def _run(args: argparse.Namespace) -> None:
         # TODO(gp): Catch a stricter exception.
         except Exception as e:
             _LOG.error("Asset id is not a part of the universe or invalid: %s", e)
-    if args.action == "print_universe":
+    elif args.action == "print_universe":
         full_symbols = im_client.get_universe()
         asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
         # Print all asset ids.
         _LOG.info("Asset ids: %s ", hprint.format_list(asset_ids, max_n=100))
-    if args.action == "print_universe_mapping":
+    elif args.action == "print_universe_mapping":
         full_symbols = im_client.get_universe()
         universe_mapping = imvcuunut.build_numerical_to_string_id_mapping(
             full_symbols
