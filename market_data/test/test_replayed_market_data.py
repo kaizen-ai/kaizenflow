@@ -467,6 +467,36 @@ class TestReplayedMarketData2(hunitest.TestCase):
         # pylint: enable=line-too-long
         _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
 
+    def test_get_data_for_interval3(self) -> None:
+        """
+        - Current time is 9:45
+        - Ask data in [9:35, 9:40]
+        - The returned data is [9:30, 9:40].
+        """
+        replayed_delay_in_mins_or_timestamp = pd.Timestamp("2000-01-01 09:45:00-05:00")
+        start_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01 09:40:00-05:00")
+        ts_col_name = "start_datetime"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:36:00-05:00, 2000-01-01 09:40:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
+                                   asset_id  last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:36:00-05:00      1000   999.967920  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00
+        2000-01-01 09:37:00-05:00      1000   999.526004  2000-01-01 09:36:00-05:00 2000-01-01 09:37:00-05:00
+        2000-01-01 09:38:00-05:00      1000   999.892180  2000-01-01 09:37:00-05:00 2000-01-01 09:38:00-05:00
+        2000-01-01 09:39:00-05:00      1000   999.993295  2000-01-01 09:38:00-05:00 2000-01-01 09:39:00-05:00
+        2000-01-01 09:40:00-05:00      1000   1000.201367 2000-01-01 09:39:00-05:00 2000-01-01 09:40:00-05:00"""
+        # pylint: enable=line-too-long
+        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+
     def test_get_data_at_timestamp1(self) -> None:
         """
         - Current time is 9:45
