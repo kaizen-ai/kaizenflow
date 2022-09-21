@@ -100,8 +100,10 @@ def get_ReplayedTimeMarketData_from_df(
     )
     if initial_replayed_timestamp > max_timestamp:
         _LOG.warning(
-            f"The initial replayed datetime '{initial_replayed_timestamp}' "
-            "should be before the end of the data '{max_timestamp}'"
+            "The initial replayed datetime %s "
+            "should be before the end of the data %s",
+            initial_replayed_timestamp,
+            max_timestamp,
         )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
