@@ -45,7 +45,6 @@ def _run_config_list_helper(
 
 # TODO(gp): We could factor out more common code between here and the corresponding
 #  unit tests in TestRunNotebook*. The difference is only in the command lines.
-@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 @pytest.mark.flaky(reruns=2)
 class TestRunExperimentSuccess1(hunitest.TestCase):
     """
@@ -84,6 +83,7 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
         exp_pass = True
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
+    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
@@ -106,7 +106,6 @@ class TestRunExperimentSuccess1(hunitest.TestCase):
 # #############################################################################
 
 
-@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 @pytest.mark.flaky(reruns=2)
 class TestRunExperimentFail2(hunitest.TestCase):
     """
@@ -165,7 +164,8 @@ class TestRunExperimentFail2(hunitest.TestCase):
         #
         exp_pass = True
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
+    
+    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
@@ -186,6 +186,7 @@ class TestRunExperimentFail2(hunitest.TestCase):
         _LOG.warning("This command is supposed to fail")
         _run_config_list_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
+    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel2(self) -> None:
         """
