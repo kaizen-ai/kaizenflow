@@ -5,15 +5,79 @@ import oms.cc_optimizer_utils as occoputi
 """
 
 import logging
-from typing import Any, Dict
+import os
+from typing import Any, Dict, Optional
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hpandas as hpandas
 import oms.broker as ombroker
 
 _LOG = logging.getLogger(__name__)
+
+
+def _apply_cc_limits(
+    order: pd.Series, asset_market_info: Dict[int, any], stage: str
+):
+    hdbg.dassert_isinstance(order, pd.Series)
+    _LOG.debug("Order before adjustments: %s", order)
+    #
+    min_amount = asset_market_info["min_amount"]
+    price = order["price"]
+    min_cost = asset_market_info["min_cost"]
+    final_order_amount = order["diff_num_shares"]
+    #
+    if stage == "local":
+        # Force minimum order amount for testnet.
+        min_amount = min_cost * 3 / price
+        # Apply back the sign.
+        if final_order_amount < 0:
+            final_order_amount = -min_amount
+    elif stage in ["preprod", "prod"]:
+        # 1) Ensure that the amount of shares is above the minimum required.
+        if abs(final_order_amount) < min_amount:
+            if final_order_amount < 0:
+                min_amount = -min_amount
+            _LOG.warning(
+                "Order: %s\nAmount of asset in order is below minimal value: %s. "
+                + "Setting to min amount: %s",
+                str(order),
+                final_order_amount,
+                min_amount,
+            )
+            final_order_amount = min_amount
+        # 2) Ensure that the order value is above the minimal cost.
+        # We estimate the total value of the order using the order's `price`.
+        total_cost = price * abs(order["diff_num_shares"])
+        if total_cost <= min_cost:
+            # Set amount based on minimal notional price.
+            min_amount = min_cost * 3 / price
+            # Apply back the sign.
+            if final_order_amount < 0:
+                min_amount = -min_amount
+            _LOG.warning(
+                "Order: %s\nAmount of asset in order is below minimal value: %s. "
+                + "Setting to following amount based on notional limit: %s",
+                str(order),
+                final_order_amount,
+                min_amount,
+            )
+            # Update the number of shares.
+            final_order_amount = min_amount
+    # 3) Round the order amount in accordance with exchange rules.
+    amount_precision = asset_market_info["amount_precision"]
+    final_order_amount = round(final_order_amount, amount_precision)
+    _LOG.debug(
+        "Rounding order amount to %s decimal points. Result: %s",
+        amount_precision,
+        final_order_amount,
+    )
+    #
+    order["diff_num_shares"] = final_order_amount
+    _LOG.debug("Order after adjustments: %s", order)
+    return order
 
 
 # TODO(gp): @all add unit tests for these functions
@@ -27,8 +91,9 @@ def _apply_prod_limits(
     The function checks that:
     1) the order quantity of the asset is above the minimum required
     2) the total cost of the asset is above the minimum required.
-    If either of these conditions is not verified, the order is changed to be above
+      - If either of these conditions is not verified, the order is changed to be above
     the required minimal amount.
+    3) Rounds the diff_num_shares to precision required by the exchange.
 
     :param order: order to be submitted represented as a row from the forecast
         DataFrame
@@ -37,7 +102,6 @@ def _apply_prod_limits(
     """
     hdbg.dassert_isinstance(order, pd.Series)
     _LOG.info("Order before adjustments: %s", order)
-    order.name
     # 1) Ensure that the amount of shares is above the minimum required.
     min_amount = asset_market_info["min_amount"]
     diff_num_shares = order["diff_num_shares"]
@@ -72,7 +136,7 @@ def _apply_prod_limits(
         )
         # Update the number of shares.
         diff_num_shares = min_amount
-    # Round the order amount in accordance with exchange rules.
+    # 3) Round the order amount in accordance with exchange rules.
     amount_precision = asset_market_info["amount_precision"]
     diff_num_shares = round(diff_num_shares, amount_precision)
     _LOG.info(
@@ -100,7 +164,6 @@ def _force_minimal_order(
     """
     _LOG.info("Order before adjustments: %s", order)
     hdbg.dassert_isinstance(order, pd.Series)
-    order.name
     #
     required_amount = market_info["min_amount"]
     min_cost = market_info["min_cost"]
@@ -131,7 +194,7 @@ def _force_minimal_order(
 
 
 def apply_cc_limits(
-    forecast_df: pd.DataFrame, broker: ombroker.Broker, log_dir: str
+    forecast_df: pd.DataFrame, broker: ombroker.Broker, *, log_dir: Optional[str]
 ) -> pd.DataFrame:
     """
     Apply notional limits for DataFrame of multiple orders.
@@ -148,14 +211,23 @@ def apply_cc_limits(
     :param log_dir: directory to store order transformations
     :return: DataFrame with updated orders
     """
-    _LOG.info(
-        "Order df before adjustments: forecast_df=%s",
+    _LOG.debug(
+        "Order df before adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
+    # Create a logging directory.
+    if log_dir is not None:
+        log_dir = os.path.join(log_dir, "apply_cc_limits")
+        hio.create_dir(log_dir, incremental=True)
+    # Select the timestamp of order creation for logging.
     log_timestamp = forecast_df.loc[0, "wall_clock_timestamp"]
-    forecast_df.to_csv(
-        log_dir + f"forecast_df_before_constraints{log_timestamp}.csv"
-    )
+    # Save orders before applying the constraints.
+    if log_dir is not None:
+        file_name = os.path.join(
+            log_dir, f"forecast_df_before_apply_cc_limits.{log_timestamp}".csv
+        )
+        forecast_df.to_csv(file_name)
+        _LOG.debug("Saved orders after adjustments to %s", file_name)
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -165,24 +237,37 @@ def apply_cc_limits(
     )
     #
     stage = broker.stage
+    hdbg.dassert_in(stage, ["local", "prod", "preprod"])
     market_info = broker.market_info
+    #
     forecast_df_tmp = []
     for idx, row in forecast_df.iterrows():
-        if stage in ["preprod", "prod"]:
-            row_tmp = _apply_prod_limits(row, market_info[idx])
-        elif stage == "local":
-            row_tmp = _force_minimal_order(row, market_info[idx])
-        else:
-            raise ValueError(f"Unknown stage='{stage}'")
+        row_tmp = _apply_cc_limits(row, market_info[idx], stage)
+        # if stage in ["preprod", "prod"]:
+        #     row_tmp = _apply_prod_limits(row, market_info[idx])
+        # elif stage == "local":
+        #     row_tmp = _force_minimal_order(row, market_info[idx])
+        # else:
+        #     raise ValueError(f"Unknown stage='{stage}'")
         forecast_df_tmp.append(row_tmp)
     forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
     forecast_df = forecast_df_tmp
-    _LOG.info(
-        "Order df after adjustments: forecast_df=%s",
+    _LOG.debug(
+        "Order df after adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    forecast_df.to_csv(
-        log_dir + f"forecast_df_after_constraints{log_timestamp}.csv"
-    )
+    if log_dir is not None:
+        file_name = os.path.join(
+            log_dir, f"forecast_df_after_apply_cc_limits.{log_timestamp}".csv
+        )
+        forecast_df.to_csv(file_name)
+        _LOG.debug("Saved orders after adjustments to %s", file_name)
     return forecast_df
+
+
+# def read_apply_cc_limits_logs(log_dir: str) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+#     # Get the dates.
+#     file_names = glob.glob("forecast_df*.csv")
+#
+#     return forecast_df_before, forecast_df_after
