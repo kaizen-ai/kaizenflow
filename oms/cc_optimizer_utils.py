@@ -14,7 +14,11 @@ import oms.broker as ombroker
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(gp): @all add unit tests for these functions
+# TODO(gp): @all add unit tests for these functions.
+# TODO(gp): Pass the broker.minimal_order_limits instead of broker so testing is
+# easier.
+# TODO(gp): Compute the constraints on the df directly.
+# TODO(gp): Dump this data before and after in log_dir.
 def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     """
     Enforce that `order` verifies the minimum quantity set by the exchange for
@@ -31,7 +35,7 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     :return: updated order
     """
     hdbg.dassert_isinstance(order, pd.Series)
-    _LOG.info("Order before adjustments: %s", order)
+    _LOG.debug('Order before adjustments:\n%s', order)
     asset_id = order.name
     market_info = broker.market_info[asset_id]
     # 1) Ensure that the amount of shares is above the minimum required.
@@ -78,7 +82,7 @@ def _apply_prod_limits(order: pd.Series, broker: ombroker.Broker) -> pd.Series:
     )
     #
     order["diff_num_shares"] = diff_num_shares
-    _LOG.info("Order after adjustments: %s", order)
+    _LOG.debug('Order after adjustments:\n%s', order)
     return order
 
 
