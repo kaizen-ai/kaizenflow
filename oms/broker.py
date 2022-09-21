@@ -111,12 +111,13 @@ class Broker(abc.ABC, hobject.PrintableMixin):
     """
     Represent a broker to which we can place orders and receive fills back.
 
-    The broker: 1) keeps an internal book keeping of orders submitted
-    and deadlines when they    are supposed to be executed 2) passes the
-    orders to the actual Order Management System (OMS) through an
-    interface (e.g., DB, file system) 3) waits for an acknowledgement of
-    orders being submitted successfully by the OMS 4) reports the order
-    fills from the market
+    The broker:
+    1) keeps an internal book keeping of orders submitted and deadlines when they
+       are supposed to be executed
+    2) passes the orders to the actual Order Management System (OMS) through an
+       interface (e.g., DB, file system)
+    3) waits for an acknowledgement of orders being submitted successfully by the OMS
+    4) reports the order fills from the market
     """
 
     _submitted_order_id: int = 0
@@ -395,9 +396,10 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 
 class SimulatedBroker(Broker):
     """
-    Represent a broker to which we place orders and receive back fills: 1)
-    completely 2) as soon as their deadline comes 3) at the price from the
-    Market.
+    Represent a broker to which we place orders and receive back fills:
+    1) completely
+    2) as soon as their deadline comes
+    3) at the price from the Market
 
     There is no interaction with an OMS (e.g., no need to waiting for
     acceptance and execution).
