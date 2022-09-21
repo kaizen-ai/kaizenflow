@@ -205,6 +205,7 @@ class RealTimeDagRunner(dtfcore.DagRunner):
                 mode=mode, max_distance_in_secs=max_distance_in_secs
             )
             _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+            _LOG.info("\n%s", hprint.frame("bar_timestamp=%s" % bar_timestamp))
             hwacltim.set_current_bar_timestamp(bar_timestamp)
 
     async def _run_dag(self, method: dtfcore.Method) -> dtfcore.ResultBundle:
