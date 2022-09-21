@@ -27,6 +27,18 @@ The command below prints the universe mapping:
         --action print_universe_mapping \
         --im_client ccxt_realtime
     ```
+
+   Output:
+   ```
+   {
+     'binance::ADA_USDT': 3303714233,
+     'binance::APE_USDT': 6051632686,
+      ...
+     'binance::BAKE_USDT': 1528092593,
+     'binance::BNB_USDT': 8968126878,
+      ...
+   }
+   ```
 """
 import argparse
 import logging
