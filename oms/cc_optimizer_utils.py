@@ -81,7 +81,7 @@ def _apply_cc_limits(
 
 
 def apply_cc_limits(
-    forecast_df: pd.DataFrame, broker: ombroker.Broker, *, log_dir: Optional[str]
+    forecast_df: pd.DataFrame, broker: ombroker.Broker, log_dir: Optional[str]
 ) -> pd.DataFrame:
     """
     Apply notional limits for DataFrame of multiple orders.
