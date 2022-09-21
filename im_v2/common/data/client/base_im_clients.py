@@ -82,7 +82,7 @@ class ImClient(abc.ABC):
         """
         _LOG.debug(
             hprint.to_str(
-                "vendor universe_version resample_1min full_symbol_col_name"
+                "vendor universe_version resample_1min full_symbol_col_name timestamp_col_name"
             )
         )
         hdbg.dassert_isinstance(vendor, str)
@@ -101,12 +101,6 @@ class ImClient(abc.ABC):
         if full_symbol_col_name is not None:
             hdbg.dassert_isinstance(full_symbol_col_name, str)
         self._full_symbol_col_name = full_symbol_col_name
-        #
-        _LOG.debug(
-            hprint.to_str(
-                "vendor universe_version resample_1min full_symbol_col_name"
-            )
-        )
         #
         self._asset_id_to_full_symbol_mapping = (
             self._build_asset_id_to_full_symbol_mapping()
