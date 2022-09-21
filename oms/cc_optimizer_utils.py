@@ -4,9 +4,10 @@ Import as:
 import oms.cc_optimizer_utils as occoputi
 """
 
+import glob
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
@@ -107,7 +108,8 @@ def apply_cc_limits(
         log_dir = os.path.join(log_dir, "apply_cc_limits")
         hio.create_dir(log_dir, incremental=True)
     # Select the timestamp of order creation for logging.
-    log_timestamp = forecast_df["wall_clock_timestamp"].iat[0]
+    log_timestamp = broker.market_data.get_wall_clock_time()
+    log_timestamp = log_timestamp.strftime("%Y%m%d_%H%M%S")
     # Save orders before applying the constraints.
     if log_dir is not None:
         file_name = os.path.join(
@@ -149,8 +151,30 @@ def apply_cc_limits(
     return forecast_df
 
 
-# def read_apply_cc_limits_logs(log_dir: str) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-#     # Get the dates.
-#     file_names = glob.glob("forecast_df*.csv")
-#
-#     return forecast_df_before, forecast_df_after
+def read_apply_cc_limits_logs(
+    log_dir: str,
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    Read logs for logs on application of cc limits.
+
+    The function reads orders before and after application of
+    constraints, each type combined into a separate dataframe.
+    """
+    # Get the file names.
+    log_pattern = os.path.join(log_dir, "forecast_df*.csv")
+    file_names = glob.glob(log_pattern)
+    # Read orders before exchange constraints.
+    file_names_before = [f for f in file_names if "before_apply_cc_limits" in f]
+    forecast_df_before = []
+    for file_name in file_names_before:
+        df_tmp = pd.read_csv(file_name)
+        forecast_df_before.append(df_tmp)
+    forecast_df_before = pd.concat(forecast_df_before)
+    # Read orders after exchange constraints.
+    file_names_after = [f for f in file_names if "after_apply_cc_limits" in f]
+    forecast_df_after = []
+    for file_name in file_names_after:
+        df_tmp = pd.read_csv(file_name)
+        forecast_df_after.append(df_tmp)
+    forecast_df_after = pd.concat(forecast_df_after)
+    return forecast_df_before, forecast_df_after
