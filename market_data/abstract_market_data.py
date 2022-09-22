@@ -485,8 +485,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `current_bar_timestamp` is present in
-        the RT DB.
+        Wait until the bar with `end_time` == `current_bar_timestamp` is
+        present in the RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started
@@ -518,7 +518,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
                 last_db_end_time,
             )
             if last_db_end_time and (
-                last_db_end_time.floor("Min") >= current_bar_timestamp.floor("Min")
+                last_db_end_time.floor("Min")
+                >= current_bar_timestamp.floor("Min")
             ):
                 # Get the current timestamp when the call was finally executed.
                 hprint.log_frame(_LOG, "Waiting on last bar: done")
