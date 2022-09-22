@@ -89,7 +89,12 @@ def get_Cx_ReplayedMarketData_from_file(
     Build a `ReplayedMarketData` backed with data from the specified file.
     """
     file_path = system.config["market_data_config", "file_path"]
-    aws_profile = "ck"
+    # TODO(Grisha): ideally we want to pass `aws_profile` via config.
+    if hs3.is_s3_path(file_path):
+        aws_profile = "ck"
+        hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
+    else:
+        aws_profile = None
     hs3.dassert_is_valid_aws_profile(file_path, aws_profile)
     # TODO(Grisha): @Dan pass `column_remap` and column name parameters via `system.config`.
     # TODO(Grisha): @Dan Refactor default column names in system related functions.
