@@ -129,6 +129,10 @@ def apply_cc_limits(
     hdbg.dassert_in(stage, ["local", "prod", "preprod"])
     market_info = broker.market_info
     #
+    # Save shares before limits application.
+    forecast_df["diff_num_shares.before_apply_cc_limits"] = forecast_df[
+        "diff_num_shares"
+    ]
     forecast_df_tmp = []
     # Apply exchange restrictions to individual orders.
     for idx, row in forecast_df.iterrows():
