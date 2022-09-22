@@ -4,8 +4,10 @@ from typing import Any, Callable, Tuple, Union
 import pandas as pd
 
 import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
+import helpers.hwall_clock_time as hwacltim
 import market_data.market_data_example as mdmadaex
 import market_data.replayed_market_data as mdremada
 
@@ -612,6 +614,17 @@ class TestReplayedMarketData3(hunitest.TestCase):
                 sleep_in_secs=sleep_in_secs,
                 time_out_in_secs=time_out_in_secs,
             )
+            # Set the `current_bar_timestamp` that is needed inside
+            # `wait_for_latest_data()`.
+            current_timestamp = market_data.get_wall_clock_time()
+            mode = "round"
+            max_distance_in_secs = 60 * 5
+            bar_duration_in_secs = 60 * 5
+            bar_timestamp = hdateti.find_bar_timestamp(
+                current_timestamp, bar_duration_in_secs,
+                mode=mode, max_distance_in_secs=max_distance_in_secs
+            )
+            hwacltim.set_current_bar_timestamp(bar_timestamp)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
