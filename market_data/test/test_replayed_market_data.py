@@ -37,7 +37,7 @@ def _check_get_data(
             start_datetime,
             end_datetime,
             replayed_delay_in_mins_or_timestamp,
-            asset_ids
+            asset_ids,
         )
         # Execute function under test.
         actual_df = func(market_data)
@@ -59,7 +59,7 @@ def _check_get_data(
 def _set_current_bar_timestamp(
     current_timestamp: pd.Timestamp,
     bar_duration_in_secs: int,
-    ) -> None:
+) -> None:
     """
     Compute the current bar by snapping the current timestamp to the grid.
     """
@@ -70,8 +70,10 @@ def _set_current_bar_timestamp(
     # length.
     max_distance_in_secs = bar_duration_in_secs
     bar_timestamp = hdateti.find_bar_timestamp(
-        current_timestamp, bar_duration_in_secs,
-        mode=mode, max_distance_in_secs=max_distance_in_secs
+        current_timestamp,
+        bar_duration_in_secs,
+        mode=mode,
+        max_distance_in_secs=max_distance_in_secs,
     )
     _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
     hwacltim.set_current_bar_timestamp(bar_timestamp)
@@ -459,7 +461,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:34:00-05:00      1000    1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00      1000    1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_for_interval2(self) -> None:
         """
@@ -489,7 +493,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:39:00-05:00      1000   999.993295  2000-01-01 09:38:00-05:00 2000-01-01 09:39:00-05:00
         2000-01-01 09:40:00-05:00      1000   1000.201367 2000-01-01 09:39:00-05:00 2000-01-01 09:40:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_at_timestamp1(self) -> None:
         """
@@ -514,7 +520,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         end_datetime
         2000-01-01 09:36:00-05:00      1000   999.96792  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_at_timestamp2(self) -> None:
         """
@@ -536,7 +544,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         Columns: [asset_id, last_price, start_datetime, timestamp_db]
         Index: []"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
 
 # #############################################################################
@@ -576,7 +586,9 @@ class TestReplayedMarketData3(hunitest.TestCase):
         Wait for the market to open.
         """
         replayed_delay_in_mins_or_timestamp = -2
-        start_time, end_time, num_iter = self._run(replayed_delay_in_mins_or_timestamp)
+        start_time, end_time, num_iter = self._run(
+            replayed_delay_in_mins_or_timestamp
+        )
         # Check.
         expected_start_time = pd.Timestamp("2000-01-01 09:28:00-05:00")
         self.assertEqual(start_time, expected_start_time)
@@ -592,7 +604,9 @@ class TestReplayedMarketData3(hunitest.TestCase):
         The market is already opened.
         """
         replayed_delay_in_mins_or_timestamp = 5
-        start_time, end_time, num_iter = self._run(replayed_delay_in_mins_or_timestamp)
+        start_time, end_time, num_iter = self._run(
+            replayed_delay_in_mins_or_timestamp
+        )
         # Check.
         expected_start_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         self.assertEqual(start_time, expected_start_time)
