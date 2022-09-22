@@ -596,10 +596,10 @@ class Config:
         for k, v in self._config.items():
             if isinstance(v, Config):
                 config_out[k] = v.to_pickleable_config(force_strings)
-            elif force_all_strings or not is_pickleable(v):
+            elif force_strings or not hintros.is_pickleable(v):
                 v = str(v)
             config_out[k] = v
-         return config_out
+        return config_out
 
     def to_python(self, check: bool = True) -> str:
         """

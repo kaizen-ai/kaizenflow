@@ -8,6 +8,7 @@ import pytest
 
 import core.config as cconfig
 import core.config.config_ as cconconf
+import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
@@ -1703,4 +1704,17 @@ class Test_from_dict1(hunitest.TestCase):
         self.assert_equal(act, exp, fuzzy_match=False)
         # Check the the value type.
         check = isinstance(test_config["key2"], cconfig.Config)
+        self.assertTrue(check)
+
+
+class Test_to_pickleable_config(hunitest.TestCase):
+    def test1(self) -> None:
+        force_strings = False
+        nested = {
+           "key1": "val1",
+           "key2": {"key3": {"key4": {}}},
+        }
+        config = cconfig.Config.from_dict(nested)
+        config = config.to_pickleable_config(force_strings)
+        check = hintros.is_pickleable(config)
         self.assertTrue(check)
