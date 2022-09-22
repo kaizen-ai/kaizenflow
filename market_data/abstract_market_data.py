@@ -485,7 +485,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `wall_clock_time` is present in
+        Wait until the bar with `end_time` == `current_bar_timestamp` is present in
         the RT DB.
 
         :return:
