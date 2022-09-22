@@ -6,6 +6,7 @@ import pandas as pd
 import helpers.hasyncio as hasynci
 import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import helpers.hwall_clock_time as hwacltim
 import market_data.market_data_example as mdmadaex
@@ -53,6 +54,27 @@ def _check_get_data(
         fuzzy_match=True,
     )
     return market_data
+
+
+def _set_current_bar_timestamp(
+    current_timestamp: pd.Timestamp,
+    bar_duration_in_secs: int,
+    ) -> None:
+    """
+    Compute the current bar by snapping the current timestamp to the grid.
+    """
+    mode = "round"
+    bar_duration_in_secs = bar_duration_in_secs
+    # E.g., `current_timestamp` is 09:26 and the next bar is at 09:30, so
+    # the distance is 4 minutes, i.e. max distance should be within a bar's
+    # length.
+    max_distance_in_secs = bar_duration_in_secs
+    bar_timestamp = hdateti.find_bar_timestamp(
+        current_timestamp, bar_duration_in_secs,
+        mode=mode, max_distance_in_secs=max_distance_in_secs
+    )
+    _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+    hwacltim.set_current_bar_timestamp(bar_timestamp)
 
 
 class TestReplayedMarketData1(hunitest.TestCase):
@@ -617,14 +639,8 @@ class TestReplayedMarketData3(hunitest.TestCase):
             # Set the `current_bar_timestamp` that is needed inside
             # `wait_for_latest_data()`.
             current_timestamp = market_data.get_wall_clock_time()
-            mode = "round"
-            max_distance_in_secs = 60 * 5
             bar_duration_in_secs = 60 * 5
-            bar_timestamp = hdateti.find_bar_timestamp(
-                current_timestamp, bar_duration_in_secs,
-                mode=mode, max_distance_in_secs=max_distance_in_secs
-            )
-            hwacltim.set_current_bar_timestamp(bar_timestamp)
+            _set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
@@ -666,6 +682,7 @@ class TestReplayedMarketData4(hunitest.TestCase):
             # Build a ReplayedMarketData.
             (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example4(
                 event_loop,
+                # Replay data starting at `2000-01-03 09:32:00-05:00`.
                 replayed_delay_in_mins_or_timestamp=1,
                 start_datetime=pd.Timestamp(
                     "2000-01-03 09:31:00-05:00", tz="America/New_York"
@@ -675,6 +692,11 @@ class TestReplayedMarketData4(hunitest.TestCase):
                 ),
                 asset_ids=[101, 202, 303],
             )
+            # Set the `current_bar_timestamp` that is needed inside
+            # `wait_for_latest_data()`.
+            current_timestamp = market_data.get_wall_clock_time()
+            bar_duration_in_secs = 60
+            _set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
