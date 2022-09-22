@@ -283,10 +283,9 @@ def docker_login(ctx):  # type: ignore
     #   -p eyJ... \
     #   -e none \
     #   https://*****.dkr.ecr.us-east-1.amazonaws.com
-    # TODO(gp): We should get this programmatically from ~/aws/.credentials
-    region = "us-east-1"
     # TODO(Nikola): Temporary, until `dev_tools` is ported to `CK`.
     profile = "am" if hgit.is_dev_tools() else "ck"
+    region = "us-east-1" if hgit.is_dev_tools() else "eu-north-1"
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile {profile} --no-include-email --region {region})"
     elif major_version == 2:
