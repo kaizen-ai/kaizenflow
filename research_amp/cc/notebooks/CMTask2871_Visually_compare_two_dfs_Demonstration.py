@@ -54,37 +54,8 @@ display(df2)
 
 
 # %%
-def merge_and_calculate_difference(df1, df2, diff_mode):
-    suffixes = ("_1", "_2")
-    merged_df = df1.merge(
-        df2,
-        how="outer",
-        left_index=True,
-        right_index=True,
-        suffixes=suffixes,
-    )
-    merged_df = merged_df.reindex(sorted(merged_df.columns), axis=1)
-    #
-    i = 0
-    num_initial_cols = len(merged_df.columns)
-    while i != num_initial_cols:
-        col_diff_name = f"{merged_df.columns[i][:-len(suffixes[0])]}_{diff_mode}"
-        if diff_mode == "diff":
-            merged_df[f"{col_diff_name}"] = (
-                merged_df.iloc[:, i] - merged_df.iloc[:, i + 1]
-            )
-        elif diff_mode == "pct_change":
-            merged_df[f"{col_diff_name}"] = (
-                100
-                * (merged_df.iloc[:, i] - merged_df.iloc[:, i + 1])
-                / merged_df.iloc[:, i + 1]
-            )
-        i = i + 2
-    return merged_df
-
-
 def compare_visually_dataframes(
-    df1, df2, row_mode="equal", column_mode="equal", diff_mode="diff"
+    df1, df2, column_mode="equal", row_mode="equal", diff_mode="diff"
 ):
     """
     :param row_mode: controls how the rows are handled
@@ -95,29 +66,30 @@ def compare_visually_dataframes(
      - "diff": compute the difference between dataframes
      - "pct_change": compute the percentage change between dataframes
     """
-    final_df = None
-    if column_mode == "equal":
-        msg = "Columns of two DataFrames are not the same!"
-        hdbg.dassert_eq(list(df1.columns), list(df2.columns), msg)
-    elif column_mode == "inner":
-        same_cols = list(set(list(df1.columns)) & set(list(df2.columns)))
-        df1 = df1[same_cols]
-        df2 = df2[same_cols]
-    else:
-        raise ValueError("Invalid column_mode='%s'" % column_mode)
-
     if row_mode == "equal":
-        msg = "Rows of two DataFrames are not the same!"
-        hdbg.dassert_eq(list(df1.index), list(df2.index), msg)
+        hdbg.dassert_eq(list(df1.index), list(df2.index))
     elif row_mode == "inner":
-        same_rows = list(set(list(df1.index)) & set(list(df2.index)))
+        same_rows = list((set(df1.index)).intersection(set(df2.index)))
         df1 = df1[df1.index.isin(same_rows)]
         df2 = df2[df2.index.isin(same_rows)]
     else:
-        raise ValueError("Invalid row_mode='%s'" % column_mode)
-
-    final_df = merge_and_calculate_difference(df1, df2, diff_mode)
-    return final_df
+        raise ValueError("Invalid row_mode='%s'" % row_mode)
+    #
+    if column_mode == "equal":
+        hdbg.dassert_eq(sorted(df1.columns), sorted(df2.columns))
+        col_names = df1.columns
+    elif column_mode == "inner":
+        col_names = list(set(df1.columns).intersection(set(df2.columns)))
+    else:
+        raise ValueError("Invalid column_mode='%s'" % column_mode)
+    #
+    if diff_mode == "diff":
+        df_diff = df1[col_names] - df2[col_names]
+    elif diff_mode == "pct_change":
+        df_diff = 100 * (df1[col_names] - df2[col_names]) / df2[col_names]
+    df_diff = df_diff.add_suffix(f"_{diff_mode}")
+    #
+    return df_diff
 
 
 # %%
