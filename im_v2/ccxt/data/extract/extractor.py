@@ -16,6 +16,7 @@ import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hsecrets as hsecret
 import im_v2.common.data.extract.extractor as imvcdexex
+import oms.secrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
@@ -29,12 +30,14 @@ class CcxtExtractor(imvcdexex.Extractor):
     - retrieves data in multiple chunks to avoid throttling
     """
 
-    def __init__(self, exchange_id: str, contract_type: str) -> None:
+    def __init__(self, exchange_id: str, contract_type: str, secret_identifier: omssec.SecretIdentifier) -> None:
         """
         Construct CCXT extractor.
 
         :param exchange_id: CCXT exchange id to log into (e.g., 'binance')
         :param contract_type: spot or futures contracts to extract
+        :param secret_identifier: a SecretIdentifier holding a full name of secret to look for in
+         AWS SecretsManager
         """
         super().__init__()
         hdbg.dassert_in(
@@ -44,6 +47,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         )
         self.contract_type = contract_type
         self.exchange_id = exchange_id
+        self._secret_identifier = secret_identifier
         self._exchange = self.log_into_exchange()
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
@@ -61,7 +65,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         `ccxt.Exchange` object.
         """
         exchange_params: Dict[str, Any] = {}
-        secret_id = f"{self.exchange_id}.preprod.trading.1"
+        secret_id = str(self._secret_identifier)
         # Select credentials for provided exchange.
         credentials = hsecret.get_secret(secret_id)
         exchange_params.update(credentials)
