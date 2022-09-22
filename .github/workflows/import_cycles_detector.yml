@@ -17,9 +17,9 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
-          aws-access-key-id: ${{ secrets.AM_AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AM_AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ secrets.AM_AWS_DEFAULT_REGION }}
+          aws-access-key-id: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.CK_AWS_DEFAULT_REGION }}
 
       # This is needed to pull the Docker image.
       - name: Login to Amazon ECR
@@ -47,9 +47,7 @@ jobs:
       # Pull the latest Docker image to run the coverage on.
       - name: Pull image
         env:
-          AM_ECR_BASE_PATH: ${{ secrets.AM_ECR_BASE_PATH }}
-          # For now, we always get Docker images from AM account, so we don't need `CK_ECR_BASE_PATH`.
-          # CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
+          CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
         run: invoke docker_pull
 
       # Run the `invoke` target `lint_detect_cycles` to detect import cycles.
@@ -66,6 +64,7 @@ jobs:
           CK_AWS_ACCESS_KEY_ID: ${{ secrets.CK_AWS_ACCESS_KEY_ID }}
           CK_AWS_SECRET_ACCESS_KEY: ${{ secrets.CK_AWS_SECRET_ACCESS_KEY }}
           CK_AWS_DEFAULT_REGION: ${{ secrets.CK_AWS_DEFAULT_REGION }}
+          CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
         run: invoke lint_detect_cycles

@@ -285,15 +285,17 @@ def docker_login(ctx):  # type: ignore
     #   https://*****.dkr.ecr.us-east-1.amazonaws.com
     # TODO(gp): We should get this programmatically from ~/aws/.credentials
     region = "us-east-1"
+    # TODO(Nikola): Temporary, until `dev_tools` is ported to `CK`.
+    profile = "am" if hgit.is_dev_tools() else "ck"
     if major_version == 1:
-        cmd = f"eval $(aws ecr get-login --profile am --no-include-email --region {region})"
+        cmd = f"eval $(aws ecr get-login --profile {profile} --no-include-email --region {region})"
     elif major_version == 2:
-        ecr_base_path = hlitauti.get_default_param("AM_ECR_BASE_PATH")
+        ecr_base_path = hlitauti.get_default_param(f"{profile.upper()}_ECR_BASE_PATH")
         # TODO(Nikola): Remove `_get_aws_cli_version()` and use only `aws ecr get-login-password`
         #  as it is present in both versions of `awscli`.
         cmd = (
             f"docker login -u AWS -p "
-            f"$(aws ecr get-login-password --profile am) "
+            f"$(aws ecr get-login-password --profile {profile}) "
             f"https://{ecr_base_path}"
         )
     else:
