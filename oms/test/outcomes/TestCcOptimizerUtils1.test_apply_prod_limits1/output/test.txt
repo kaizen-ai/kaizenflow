@@ -1,3 +1,3 @@
-           curr_num_shares      price   position             wall_clock_timestamp prediction volatility spread target_position target_notional_trade diff_num_shares
-8717633868            -1.0  21.696667 -21.696667 2022-09-12 11:06:09.144373-04:00  -0.133962   0.002366      0      -27.075329             -5.378662          -1.383
-6051632686            -2.0     5.4295    -10.859 2022-09-12 11:06:09.144373-04:00   0.001705   0.002121      0      -33.701572            -22.842573          -4.207
+           curr_num_shares      price   position             wall_clock_timestamp prediction volatility spread target_position target_notional_trade diff_num_shares diff_num_shares.before_apply_cc_limits
+8717633868            -1.0  21.696667 -21.696667 2022-09-12 11:06:09.144373-04:00  -0.133962   0.002366      0      -27.075329             -5.378662          -1.383                              -0.247903
+6051632686            -2.0     5.4295    -10.859 2022-09-12 11:06:09.144373-04:00   0.001705   0.002121      0      -33.701572            -22.842573          -4.207                              -4.207123
