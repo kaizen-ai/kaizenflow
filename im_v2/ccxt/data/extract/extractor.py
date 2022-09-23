@@ -30,7 +30,12 @@ class CcxtExtractor(imvcdexex.Extractor):
     - retrieves data in multiple chunks to avoid throttling
     """
 
-    def __init__(self, exchange_id: str, contract_type: str, secret_identifier: omssec.SecretIdentifier) -> None:
+    def __init__(
+        self, 
+        exchange_id: str, 
+        contract_type: str, 
+        secret_identifier: omssec.SecretIdentifier
+        ) -> None:
         """
         Construct CCXT extractor.
 
