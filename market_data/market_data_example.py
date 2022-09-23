@@ -71,28 +71,40 @@ def get_ReplayedTimeMarketData_from_df(
     columns = None
     # Build the wall clock.
     tz = "ET"
-    # Find the initial timestamp of the data and shift by
-    # `replayed_delay_in_mins_or_timestamp`.
-    min_start_time_col_name = df[start_time_col_name].min()
-    hdbg.dassert_isinstance(replayed_delay_in_mins_or_timestamp, int)
-    # We can't enable this assertion since some tests
-    # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
-    # use a negative offset to start replaying the data, before data is available.
-    # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
-    initial_replayed_timestamp = min_start_time_col_name + pd.Timedelta(
-        minutes=replayed_delay_in_mins_or_timestamp
-    )
+    # Find min and max timestamps.
+    # TODO(Grisha): use `end_time_col_name` Cm Task #2908.
+    min_timestamp = df[start_time_col_name].min()
+    max_timestamp = df[start_time_col_name].max()
+    _LOG.debug(hprint.to_str("min_timestamp, max_timestamp"))
+    if isinstance(replayed_delay_in_mins_or_timestamp, int):
+        # We can't enable this assertion since some tests
+        # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
+        # use a negative offset to start replaying the data, before data is available.
+        # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
+        # Shift the minimum timestamp by the specified number of minutes.
+        initial_replayed_timestamp = min_timestamp + pd.Timedelta(
+            minutes=replayed_delay_in_mins_or_timestamp
+        )
+    elif isinstance(replayed_delay_in_mins_or_timestamp, pd.Timestamp):
+        hdateti.dassert_tz_compatible_timestamp_with_df(
+            replayed_delay_in_mins_or_timestamp, df, start_time_col_name
+        )
+        initial_replayed_timestamp = replayed_delay_in_mins_or_timestamp
+    else:
+        raise ValueError(
+            f"replayed_delay_in_mins_or_timestamp is {type(replayed_delay_in_mins_or_timestamp)} instead of Union[int, pd.Timestamp]"
+        )
     _LOG.debug(
         hprint.to_str(
-            "min_start_time_col_name replayed_delay_in_mins_or_timestamp initial_replayed_timestamp"
+            "replayed_delay_in_mins_or_timestamp initial_replayed_timestamp"
         )
     )
-    # The initial replayed datetime should be before the end of the data.
-    end_of_data_dt = df[start_time_col_name].max()
-    if initial_replayed_timestamp > end_of_data_dt:
+    if initial_replayed_timestamp > max_timestamp:
         _LOG.warning(
-            f"The initial replayed datetime '{initial_replayed_timestamp}' "
-            "should be before the end of the data '{end_of_data_dt}'"
+            "The initial replayed datetime %s "
+            "should be before the end of the data %s",
+            initial_replayed_timestamp,
+            max_timestamp,
         )
     speed_up_factor = 1.0
     get_wall_clock_time = creatime.get_replayed_wall_clock_time(
