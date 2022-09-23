@@ -2,7 +2,7 @@ import collections
 import datetime
 import logging
 import pprint
-from typing import Any, Dict
+from typing import Any, Callable, Dict, Optional
 
 import pytest
 
@@ -1708,49 +1708,75 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 class Test_to_pickleable_config(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        Test when config is pickle-able before applying the function.
-        """
+    def helper(
+        self,
+        value: Optional[str],
+        expected: str,
+        assert_func: Callable,
+        *,
+        force_strings: bool = False,
+    ) -> str:
         # Set config.
-        force_strings = False
         nested = {
-            "key1": "val1",
+            "key1": value,
             "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
         # Check if config is pickle-able before.
-        check = hintros.is_pickleable(config)
-        self.assertTrue(check)
+        check = hintros.is_pickleable(config["key1"])
+        assert_func(check)
         # Check if function was succesfully applied on config.
-        config = config.to_pickleable_config(force_strings)
-        check = hintros.is_pickleable(config)
+        actual = config.to_pickleable_config(force_strings)
+        check = hintros.is_pickleable(actual["key1"])
         self.assertTrue(check)
+        # Convert `actual` to string since `assert_equal` comparing
+        # within strings and bytes.
+        actual = str(actual)
+        return actual
+
+    def test1(self) -> None:
+        """
+        Test when config is pickle-able before applying the function.
+        """
+        value = "val1"
+        expected = r"""{'key1': 'val1', 'key2': key3:
+          key4:
+        }
+        """
+        assert_func = self.assertTrue
+        actual = self.helper(
+            value,
+            expected,
+            assert_func,
+        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
         """
         Test when config is not pickle-able before applying the function.
         """
-        # Set config.
-        force_strings = False
-        lambda_ = lambda x: x
-        func = lambda_
-        nested = {
-            "key1": func,
-            "key2": {"key3": {"key4": {}}},
+        value = lambda x: x
+        expected = r"""{'key1': '<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>', 'key2': key3:
+          key4:
         }
-        config = cconfig.Config.from_dict(nested)
-        # Check `func` because `to_pickleable_config` checks type only of
-        # config values.
-        check = hintros.is_pickleable(func)
-        self.assertFalse(check)
-        # Check if function was succesfully applied on config.
-        config = config.to_pickleable_config(force_strings)
-        actual = config["key1"]
-        check = hintros.is_pickleable(actual)
-        self.assertTrue(check)
-        # Set expected outcome for config["key1"] and compare.
-        expected = (
-            r"<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>"
+        """
+        assert_func = self.assertFalse
+        actual = self.helper(
+            value,
+            expected,
+            assert_func,
         )
-        self.assert_equal(actual, expected, purify_text=True)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test when config is pickle-able before applying the function and `force_strings = True`.
+        """
+        value = "val3"
+        expected = r"""{'key1': 'val3', 'key2': key3:
+          key4:
+        }
+        """
+        assert_func = self.assertTrue
+        actual = self.helper(value, expected, assert_func, force_strings=True)
+        self.assert_equal(actual, expected, fuzzy_match=True)
