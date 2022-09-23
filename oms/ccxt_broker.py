@@ -10,14 +10,13 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ccxt
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hlogging as hloggin
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlogging as hloggin
@@ -36,9 +35,9 @@ _LOG = logging.getLogger(__name__)
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
 
-# ##################################################################################
+# #############################################################################
 # CcxtBroker
-# ##################################################################################
+# #############################################################################
 
 
 class CcxtBroker(ombroker.Broker):
@@ -250,6 +249,25 @@ class CcxtBroker(ombroker.Broker):
             if position_amount != 0:
                 open_positions.append(position)
         return open_positions
+
+    def get_fills_since_timestamp(
+        self, start_timestamp: Union[int, pd.Timestamp]
+    ) -> List[Dict[str, Any]]:
+        """
+        Get a list of fills since given timestamp in JSON format.
+        """
+        symbols = list(self._symbol_to_asset_id_mapping.keys())
+        fills = []
+        if isinstance(start_timestamp, pd.Timestamp):
+            start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
+                start_timestamp
+            )
+        for symbol in symbols:
+            symbol_fills = self._exchange.fetchMyTrades(
+                symbol=symbol, since=start_timestamp
+            )
+            fills.append(symbol_fills)
+        return fills
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
@@ -700,9 +718,9 @@ def get_CcxtBroker_prod_instance1(
     return broker
 
 
-# ##################################################################################
+# #############################################################################
 # SimulatedCcxtBroker
-# ##################################################################################
+# #############################################################################
 
 
 class SimulatedCcxtBroker(ombroker.SimulatedBroker):
