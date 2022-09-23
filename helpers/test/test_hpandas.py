@@ -1906,6 +1906,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
     - Define two DataFrames that can be either equal or different in terms of columns or rows
     - Compare its values by calculating the difference
     """
+
     def get_test_dfs_equal(self) -> pd.DataFrame:
         """
         Both DataFrames have only equal rows and columns names.
@@ -1943,18 +1944,16 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         # }
         return df1, df2
 
-
     def get_test_dfs_different(self) -> pd.DataFrame:
         """
         DataFrames have both unique and equal rows and columns.
         """
-        df1,df2 = self.get_test_dfs_equal()
+        df1, df2 = self.get_test_dfs_equal()
         df2 = df2.rename(
-            columns={"tsC":"extra_col"},
-            index = {pd.Timestamp("2022-01-01 21:03:00+00:00"): 'extra_row'}
-            )
+            columns={"tsC": "extra_col"},
+            index={pd.Timestamp("2022-01-01 21:03:00+00:00"): "extra_row"},
+        )
         return df1, df2
-
 
     def test1(self) -> None:
         """
@@ -1962,13 +1961,18 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - Column and row modes are `equal`
         - diff_mode = "diff"
         """
-        df1,df2 = self.get_test_dfs_equal()
+        df1, df2 = self.get_test_dfs_equal()
         df_diff = hpandas.compare_visually_dataframes(
-            df1, df2, row_mode="equal", column_mode="equal", diff_mode="diff", background_gradient=False
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="diff",
+            background_gradient=False,
         )
         expected_length = 3
-        expected_column_names = ['tsA_diff', 'tsB_diff', 'tsC_diff']
-        expected_column_unique_values= None
+        expected_column_names = ["tsA_diff", "tsB_diff", "tsC_diff"]
+        expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
         columns=tsA_diff,tsB_diff,tsC_diff
@@ -1979,13 +1983,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         2022-01-01 21:02:00+00:00      0.10       0.0     -0.60
         2022-01-01 21:03:00+00:00     -0.15       0.2     -0.07
         """
-        self.check_df_output(df_diff, 
-        expected_length, 
-        expected_column_names, 
-        expected_column_unique_values,
-        expected_signature
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
         )
-
 
     def test2(self) -> None:
         """
@@ -1993,13 +1997,22 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
         """
-        df1,df2 = self.get_test_dfs_equal()
+        df1, df2 = self.get_test_dfs_equal()
         df_diff = hpandas.compare_visually_dataframes(
-            df1, df2, row_mode="equal", column_mode="equal", diff_mode="pct_change", background_gradient=False
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="pct_change",
+            background_gradient=False,
         )
         expected_length = 3
-        expected_column_names = ['tsA_pct_change', 'tsB_pct_change', 'tsC_pct_change']
-        expected_column_unique_values= None
+        expected_column_names = [
+            "tsA_pct_change",
+            "tsB_pct_change",
+            "tsC_pct_change",
+        ]
+        expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
         columns=tsA_pct_change,tsB_pct_change,tsC_pct_change
@@ -2010,13 +2023,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         2022-01-01 21:02:00+00:00      5.263158        0.000000       -6.976744
         2022-01-01 21:03:00+00:00     -4.761905        3.448276       -0.771775
         """
-        self.check_df_output(df_diff, 
-        expected_length, 
-        expected_column_names, 
-        expected_column_unique_values,
-        expected_signature
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
         )
-
 
     def test3(self) -> None:
         """
@@ -2024,13 +2037,18 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - Column and row modes are `inner`
         - diff_mode = "diff"
         """
-        df1,df2 = self.get_test_dfs_different()
+        df1, df2 = self.get_test_dfs_different()
         df_diff = hpandas.compare_visually_dataframes(
-            df1, df2, row_mode="inner", column_mode="inner", diff_mode="diff", background_gradient=False
+            df1,
+            df2,
+            row_mode="inner",
+            column_mode="inner",
+            diff_mode="diff",
+            background_gradient=False,
         )
         expected_length = 2
-        expected_column_names = ['tsA_diff', 'tsB_diff']
-        expected_column_unique_values= None
+        expected_column_names = ["tsA_diff", "tsB_diff"]
+        expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
         columns=tsA_diff,tsB_diff
@@ -2040,13 +2058,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         2022-01-01 21:01:00+00:00      -0.1      -0.2
         2022-01-01 21:02:00+00:00       0.1       0.0
         """
-        self.check_df_output(df_diff, 
-        expected_length, 
-        expected_column_names, 
-        expected_column_unique_values,
-        expected_signature
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
         )
-
 
     def test4(self) -> None:
         """
@@ -2054,13 +2072,18 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - Column and row modes are `inner`
         - diff_mode = "pct_change"
         """
-        df1,df2 = self.get_test_dfs_different()
+        df1, df2 = self.get_test_dfs_different()
         df_diff = hpandas.compare_visually_dataframes(
-            df1, df2, row_mode="inner", column_mode="inner", diff_mode="pct_change", background_gradient=False
+            df1,
+            df2,
+            row_mode="inner",
+            column_mode="inner",
+            diff_mode="pct_change",
+            background_gradient=False,
         )
         expected_length = 2
-        expected_column_names = ['tsA_pct_change', 'tsB_pct_change']
-        expected_column_unique_values= None
+        expected_column_names = ["tsA_pct_change", "tsB_pct_change"]
+        expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
         columns=tsA_pct_change,tsB_pct_change
@@ -2070,18 +2093,25 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         2022-01-01 21:01:00+00:00       -9.090909       -4.761905
         2022-01-01 21:02:00+00:00        5.263158        0.000000
         """
-        self.check_df_output(df_diff, 
-        expected_length, 
-        expected_column_names, 
-        expected_column_unique_values,
-        expected_signature
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
         )
 
-
-    def test_invalid_input(self)->None:
+    def test_invalid_input(self) -> None:
         """
         Put two different DataFrames with `equal` mode.
         """
-        df1,df2 = self.get_test_dfs_different()
+        df1, df2 = self.get_test_dfs_different()
         with self.assertRaises(AssertionError):
-            hpandas.compare_visually_dataframes(df1, df2, row_mode="equal", column_mode="equal", diff_mode="pct_change", background_gradient=False)
+            hpandas.compare_visually_dataframes(
+                df1,
+                df2,
+                row_mode="equal",
+                column_mode="equal",
+                diff_mode="pct_change",
+                background_gradient=False,
+            )
