@@ -2,7 +2,6 @@
 # Setup
 # #############################################################################
 
-# TODO(Nikola): Can we freely delete old files?
 ECR_BASE_PATH=083233266530.dkr.ecr.us-east-2.amazonaws.com
 
 IM_REPO_BASE_PATH=$(ECR_BASE_PATH)/im

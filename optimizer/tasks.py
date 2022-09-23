@@ -29,6 +29,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
+# TODO(Nikola): Remove AM after `dev_tools` is ported to CK.
 AM_ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 CK_ECR_BASE_PATH = os.environ["CK_ECR_BASE_PATH"]
 
