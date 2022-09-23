@@ -73,7 +73,7 @@ async def start_order_book_socket():
 await start_order_book_socket()
 
 # %% [markdown]
-# ## Received message example
+# ### Received message example
 # - From binance forum https://dev.binance.vision/t/meaning-of-event-time-transaction-time-fields/5449
 # - The transaction time T records the time that the data (e.g. account, order related) got updated and the event time E represents the time a certain data was pushed out from the server
 # - "When calculating server-to-client latency, I would suggest to consider using event time since the transaction time can be viewed as the internal operation time at the server side."
@@ -97,6 +97,7 @@ from datetime import datetime, timedelta
 import time
 import threading
 import json
+import pandas as pd
 
 # %%
 universe = imvcounun.get_vendor_universe("CCXT", "download", version="v7")
@@ -115,8 +116,9 @@ bn_websocket_manager = bnwam.BinanceWebSocketApiManager(exchange="binance.com-fu
 # %%
 # Setup callback function
 data = []
+run_for = 10 #seconds
 def process_stream_data(websocket_manager: bnwam.BinanceWebSocketApiManager) -> None:
-    end_time = datetime.now() + timedelta(seconds=10)
+    end_time = datetime.now() + timedelta(seconds=run_for)
     while datetime.now() < end_time:
         if websocket_manager.is_manager_stopping():
             break
@@ -146,12 +148,172 @@ bn_websocket_manager.create_stream(channels, markets, output="dict")
 worker_thread = threading.Thread(target=process_stream_data, args=(bn_websocket_manager,))
 worker_thread.start()
 # wait until the worker finishes
-time.sleep(10)
+time.sleep(run_for)
 
 # %% [markdown]
-# ## Received message example
+# ### Received message example
 
 # %% run_control={"marked": true}
 data[0]
 
+# %% [markdown]
+# ## Full universe demo
+
 # %%
+freq = 500 # miliseconds
+depth = 5
+channels = [f"depth{depth}@{freq}ms"]
+# Reset the data list
+data = []
+# Set running time
+run_for = 20 # seconds
+markets = universe
+# There is a limit of maximum 1024 subscriptions calculated as no. of streams * no. of markets
+# output="dict" has to be set, otherwise we get raw data as string
+bn_websocket_manager = bnwam.BinanceWebSocketApiManager(exchange="binance.com-futures")
+bn_websocket_manager.create_stream(channels, markets, output="dict")
+
+# %%
+worker_thread = threading.Thread(target=process_stream_data, args=(bn_websocket_manager,))
+
+# %% [markdown]
+# ### Monitoring example
+#
+# We can get monitoring of the websocket status and stats through python or also webserver based (not available in the curreny docker jupyter setup)
+# https://github.com/LUCIT-Systems-and-Development/unicorn-binance-websocket-api/wiki/UNICORN-Monitoring-API-Service
+
+# %%
+worker_thread.start()
+for _ in range(run_for):
+    print("Plain monitoring status:")
+    print(bn_websocket_manager.get_monitoring_status_plain())
+    print("-----")
+    print("Icinga monitoring status")
+    print(bn_websocket_manager.get_monitoring_status_icinga())
+    print("-----")
+    time.sleep(1)
+
+# %% [markdown]
+# ### Received data transformation
+#
+# First received message is sometimes '{'id': 1, 'result': None}' reason is unclear at the moment
+
+# %%
+# Clean noise
+print(len(data))
+data = list(filter(lambda x: "data" in x, data))
+print(len(data))
+
+# %%
+df_full = pd.concat(list(map(pd.json_normalize, data)))
+df_full = df_full.explode(["data.a", "data.b"])
+df_full[["bid_price", "bid_size"]] = pd.DataFrame(
+df_full["data.b"].to_list(), index=df_full.index)
+df_full[["ask_price", "ask_size"]] = pd.DataFrame(
+df_full["data.a"].to_list(), index=df_full.index)
+df_full["level"] = df_full.groupby(["data.s", "data.T"])[["data.s", "data.T"]].cumcount().add(1)
+
+# %%
+df_full.head()
+
+# %%
+df_full['data.s'].value_counts()
+
+# %% [markdown]
+# # Saving to the DB flow proposal
+
+# %%
+import helpers.hsql as hsql
+import im_v2.im_lib_tasks as imvimlita
+import helpers.hdatetime as hdateti
+from typing import Dict, List
+
+# %%
+env_file = imvimlita.get_db_env_path("dev")
+connection_params = hsql.get_connection_info_from_env_file(env_file)
+db_connection = hsql.get_connection(*connection_params)
+
+
+# %%
+def clean_websocket_message(msg: Dict) -> Dict:
+    # Remove useless columns
+    return msg
+
+def rename_websocket_message_keys(msg: Dict) -> Dict:
+    # Rename data to internal conventions
+    return msg
+
+def transform_dict_data_to_df(raw_data: List[Dict]) -> pd.DataFrame:
+    df_full = pd.concat(list(map(pd.json_normalize, raw_data)))
+    df_full = df_full.explode(["data.a", "data.b"])
+    df_full[["bid_price", "bid_size"]] = pd.DataFrame(
+    df_full["data.b"].to_list(), index=df_full.index)
+    df_full[["ask_price", "ask_size"]] = pd.DataFrame(
+    df_full["data.a"].to_list(), index=df_full.index)
+    df_full["level"] = df_full.groupby(["data.s", "data.T"])[["data.s", "data.T"]].cumcount().add(1)
+
+
+# %%
+# Setup callback function
+run_for = 20 # seconds
+max_db_buffer_size = 100
+db_table = "ccxt_bid_ask_futures_test"
+def buffer_and_save_stream_data(websocket_manager: bnwam.BinanceWebSocketApiManager) -> None:
+    end_time = datetime.now() + timedelta(seconds=run_for)
+    # TO avoid overhead of inserting few data points at a time we can buffer to a larger size
+    db_buffer = []
+    while datetime.now() < end_time:
+        if websocket_manager.is_manager_stopping():
+            break
+        oldest_stream_data = websocket_manager.pop_stream_data_from_stream_buffer()
+        # If the dict is the above mentioned: '{'id': 1, 'result': None}'
+        if oldest_stream_data is False or "data" not in oldest_stream_data:
+            time.sleep(0.01)
+        # TODO(Juraj): handle error messages
+        else:
+            oldest_stream_data["end_download_timestamp"] = hdateti.get_current_time("UTC")
+            oldest_stream_data = clean_websocket_message(oldest_stream_data)
+            oldest_stream_data = rename_websocket_message_keys(oldest_stream_data)
+            db_buffer.append(oldest_stream_data)
+            if len(db_buffer) >= max_db_buffer_size:
+                df = transform_dict_data_to_df(db_buffer)
+                df["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+                hsql.execute_insert_query(
+                    connection=db_connection,
+                    obj=df,
+                    table_name=db_table,
+                )
+                db_buffer = []
+    # Save also the last buffer content.
+    df = transform_dict_data_to_df(db_buffer)
+    df["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+    hsql.execute_insert_query(
+        connection=db_connection,
+        obj=df,
+        table_name=db_table,
+    )
+    websocket_manager.stop_manager_with_all_streams()
+
+
+# %%
+freq = 500 # miliseconds
+depth = 5
+channels = [f"depth{depth}@{freq}ms"]
+# Reset the data list
+data = []
+# Set running time
+run_for = 20 # seconds
+markets = universe
+# There is a limit of maximum 1024 subscriptions calculated as no. of streams * no. of markets
+# output="dict" has to be set, otherwise we get raw data as string
+bn_websocket_manager = bnwam.BinanceWebSocketApiManager(exchange="binance.com-futures")
+bn_websocket_manager.create_stream(channels, markets, output="dict")
+
+# %%
+worker_thread = threading.Thread(target=process_stream_data, args=(bn_websocket_manager,))
+worker_thread.start()
+for _ in range(run_for):
+    print("Plain monitoring status:")
+    print(bn_websocket_manager.get_monitoring_status_plain())
+    print("-----")
+    time.sleep(1)
