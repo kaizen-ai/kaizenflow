@@ -245,7 +245,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     Pull latest prod image of `dev_tools` from the registry.
     """
     hlitauti.report_task()
-    #
+    # TODO(Nikola): `dev_tools` is still on AM.
     base_image = hlitauti.get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
@@ -452,7 +452,7 @@ def _generate_docker_compose_file(
           - CK_AWS_PROFILE=$CK_AWS_PROFILE
           - CK_AWS_S3_BUCKET=$CK_AWS_S3_BUCKET
           - CK_AWS_SECRET_ACCESS_KEY=$CK_AWS_SECRET_ACCESS_KEY
-          # - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
+          - CK_ECR_BASE_PATH=$CK_ECR_BASE_PATH
           # - CK_ENABLE_DIND=
           # - CK_FORCE_TEST_FAIL=$CK_FORCE_TEST_FAIL
           # - CK_HOST_NAME=
@@ -877,7 +877,9 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            hlitauti.get_default_param("AM_ECR_BASE_PATH")
+            hlitauti.get_default_param(
+                "AM_ECR_BASE_PATH" if hgit.is_dev_tools() else "CK_ECR_BASE_PATH"
+            )
             + "/"
             + hlitauti.get_default_param("BASE_IMAGE")
         )
@@ -1205,6 +1207,7 @@ def _get_lint_docker_cmd(
     :return: the full command to run
     """
     # Get an image to run the linter on.
+    # TODO(Nikola): `dev_tools` is still on AM.
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     linter_image = f"{ecr_base_path}/dev_tools"
     # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
