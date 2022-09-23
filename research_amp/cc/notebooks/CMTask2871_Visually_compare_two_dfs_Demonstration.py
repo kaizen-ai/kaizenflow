@@ -13,6 +13,7 @@
 # ---
 
 # %%
+import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -52,6 +53,13 @@ df2 = df2.set_index("timestamp")
 display(df1)
 display(df2)
 
+df3 = pd.DataFrame(
+    data=0,
+    index=timestamp_index,
+    columns=["bid_price", "bid_size", "ask_price", "ask_size"],
+)
+display(df3)
+
 
 # %%
 def compare_visually_dataframes(
@@ -89,12 +97,37 @@ def compare_visually_dataframes(
         df_diff = 100 * (df1[col_names] - df2[col_names]) / df2[col_names]
     df_diff = df_diff.add_suffix(f"_{diff_mode}")
     #
+    df_diff = df_diff.style.background_gradient(axis=0)
     return df_diff
 
 
 # %%
-compare_visually_dataframes(
+df_diff = compare_visually_dataframes(
     df1, df2, row_mode="inner", column_mode="inner", diff_mode="diff"
 )
+df_diff
+
+# %%
+## Gradient testing with "real" data.
+
+# %%
+# Part of real data.
+path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance/currency_pair=BTC_USDT/year=2022/month=9/data.parquet"
+btc_test = pd.read_parquet(path)
+btc_test = btc_test[["bid_price", "bid_size", "ask_price", "ask_size"]][:20]
+df1 = btc_test.copy()
+# Synthetic data that differs a bit from the data above.
+df_new = pd.DataFrame(
+    np.random.normal(1, 0.1, size=btc_test.shape),
+    columns=list(btc_test.columns),
+    index=btc_test.index,
+)
+df2 = df_new * btc_test
+
+# %%
+df_diff = compare_visually_dataframes(
+    df1, df2, row_mode="inner", column_mode="inner", diff_mode="pct_change"
+)
+df_diff
 
 # %%
