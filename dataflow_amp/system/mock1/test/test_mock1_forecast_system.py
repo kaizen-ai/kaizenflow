@@ -197,7 +197,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
         # Run.
         self._test1(system)
         # Check some high level property of the Portfolio:
-        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:10:06-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
     @pytest.mark.slow("~7 seconds.")
