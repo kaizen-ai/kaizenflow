@@ -5,27 +5,37 @@ Example use:
 # Get filled orders from binance from 2022-09-22 to 2022-09-23.
 > oms/flatten_ccxt_account.py \
     --start_timestamp '2022-09-22' \
-    --end_timestamp '2022-09-23' \
     --dst_dir '/shared_data/filled_orders/' \
     --exchange_id 'binance' \
     --contract_type 'futures' \
     --stage 'preprod' \
     --account_type 'trading' \
-    --secret_identifer '1'
+    --secrets_id '1' \
+    --universe 'v7.1'
+    --incremental
+
+Import as:
+
+import oms.get_ccxt_fills as ogeccfil
 """
 
-import logging
-import helpers.hio as hio
-import helpers.hdbg as hdbg
-import helpers.hparser as hparser
 import argparse
+import logging
 import os
-import oms.secrets as omssec
+
+import pandas as pd
+
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
+import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
-import helpers.hsecrets as s
-import ccxt
+import oms.oms_ccxt_utils as oomccuti
+import oms.secrets as omssec
+
 _LOG = logging.getLogger(__name__)
 
 
@@ -40,13 +50,6 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Beginning of the time period, e.g. '2022-09-22'",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the time period, e.g. '2022-09-23'",
     )
     parser.add_argument(
         "--dst_dir",
@@ -84,6 +87,18 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
     )
     parser.add_argument(
+        "--universe",
+        type=str,
+        required=True,
+        help="Version of the universe, e.g. 'v7.1'",
+    )
+    parser.add_argument(
+        "--secrets_id",
+        type=int,
+        default=1,
+        help="Integer ID of the secret key, 1 by default.",
+    )
+    parser.add_argument(
         "--incremental",
         help="Whether to overwrite the existing data in dst_dir",
         action="store_true",
@@ -97,14 +112,40 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Create dst dir incrementally.
     hio.create_dir(args.dst_dir, incremental=args.incremental)
-    # Initialize exchange.
-    secrets_id = str(args.secret_identifier)
-    exchange_params = hsecret.get_secret(secrets_id)
-    if args.contract_type == "futures":
-        exchange_params["options"] = {"defaultType": "future"}
-    ccxt_exchange = getattr(ccxt, args.exchange_id)
-    exchange = ccxt_exchange(exchange_params)
+    # Get argument for the broker initialization.
+    exchange_id = args.exchange_id
+    universe_version = args.universe
+    stage = args.stage
+    account_type = args.account_type
+    portfolio_id = "get_fills_portfolio"
+    contract_type = args.contract_type
+    secrets_id = args.secrets_id
+    secret_identifier = omssec.SecretIdentifier(
+        exchange_id, stage, account_type, secrets_id
+    )
+    # Initialize market data for the Broker.
+    env_file = imvimlita.get_db_env_path("dev")
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    im_client = icdc.get_mock_realtime_client(connection)
+    market_data = oomccuti.get_RealTimeImClientMarketData_example2(im_client)
+    # Initialize broker.
+    broker = occxbrok.CcxtBroker(
+        exchange_id,
+        universe_version,
+        stage,
+        account_type,
+        portfolio_id,
+        contract_type,
+        secret_identifier,
+        strategy_id="SAU1",
+        market_data=market_data,
+    )
     # Get all trades.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    fills = broker.get_fills_since_timestamp(start_timestamp)
     # File name as fills_{timestamp-timestamp}.json
-    # Save.
-    ...
+    timestamp = hdateti.get_current_timestamp_as_string("ET")
+    file_name = os.path.join(args.dst_dir, f"fills_{timestamp}.json")
+    # Save file.
+    hio.to_json(file_name, fills)

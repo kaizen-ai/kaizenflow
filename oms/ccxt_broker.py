@@ -258,10 +258,12 @@ class CcxtBroker(ombroker.Broker):
         """
         symbols = list(self._symbol_to_asset_id_mapping.keys())
         fills = []
+        # Convert unix epoch to timestamp if necessary.
         if isinstance(start_timestamp, pd.Timestamp):
             start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
                 start_timestamp
             )
+        # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
             symbol_fills = self._exchange.fetchMyTrades(
                 symbol=symbol, since=start_timestamp
