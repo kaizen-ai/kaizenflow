@@ -587,10 +587,10 @@ class Config:
     def to_pickleable_config(self, force_strings: bool) -> "Config":
         """
         Transform this Config into a pickle-able one where non pickle-able
-        objects are replaced with strings.
+        objects are replaced with their string representation.
 
         :param force_strings: force all values to become strings, even if they are
-            pickle-able.
+            pickle-able
         """
         config_out = {}
         for k, v in self._config.items():

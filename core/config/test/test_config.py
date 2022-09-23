@@ -67,7 +67,7 @@ def _purify_assertion_string(txt: str) -> str:
     # exp = r"""'"key=\'nrows_tmp\' not in:\\n  nrows: 10000\\n  nrows2: hello"\nconfig=\n  nrows: 10000\n  nrows2: hello'
     txt = txt.replace(r"\\n", "\n")
     txt = txt.replace(r"\n", "\n")
-    txt = txt.replace(r"\'", "\'")
+    txt = txt.replace(r"\'", "'")
     txt = txt.replace(r"\\", "")
     return txt
 
@@ -1709,12 +1709,48 @@ class Test_from_dict1(hunitest.TestCase):
 
 class Test_to_pickleable_config(hunitest.TestCase):
     def test1(self) -> None:
+        """
+        Test when config is pickle-able before applying the function.
+        """
+        # Set config.
         force_strings = False
         nested = {
-           "key1": "val1",
-           "key2": {"key3": {"key4": {}}},
+            "key1": "val1",
+            "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
+        # Check if config is pickle-able before.
+        check = hintros.is_pickleable(config)
+        self.assertTrue(check)
+        # Check if function was succesfully applied on config.
         config = config.to_pickleable_config(force_strings)
         check = hintros.is_pickleable(config)
         self.assertTrue(check)
+
+    def test2(self) -> None:
+        """
+        Test when config is not pickle-able before applying the function.
+        """
+        # Set config.
+        force_strings = False
+        lambda_ = lambda x: x
+        func = lambda_
+        nested = {
+            "key1": func,
+            "key2": {"key3": {"key4": {}}},
+        }
+        config = cconfig.Config.from_dict(nested)
+        # Check `func` because `to_pickleable_config` checks type only of
+        # config values.
+        check = hintros.is_pickleable(func)
+        self.assertFalse(check)
+        # Check if function was succesfully applied on config.
+        config = config.to_pickleable_config(force_strings)
+        actual = config["key1"]
+        check = hintros.is_pickleable(actual)
+        self.assertTrue(check)
+        # Set expected outcome for config["key1"] and compare.
+        expected = (
+            r"<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>"
+        )
+        self.assert_equal(actual, expected, purify_text=True)
