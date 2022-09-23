@@ -22,9 +22,11 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+import helpers.hsecrets as hsecret
 import helpers.hs3 as hs3
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -44,7 +46,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
+    exchange_id, stage, account_type, id_ = hsecret.parse_secret_id(args.secret_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type, args.secret_id)
     # Assign extractor-specific variables.
     args = vars(args)
     args["unit"] = "ms"

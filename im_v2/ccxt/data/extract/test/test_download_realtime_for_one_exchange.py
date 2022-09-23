@@ -30,13 +30,14 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         cmd.extend(["--start_timestamp", "20211110-101100"])
         cmd.extend(["--end_timestamp", "20211110-101200"])
         cmd.extend(["--exchange_id", "binance"])
-        cmd.extend(["--contract_type", "spot"])
+        cmd.extend(["--contract_type", "spot"]) 
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--db_stage", "dev"])
         cmd.extend(["--db_table", "ccxt_ohlcv"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
         cmd.extend(["--data_type", "ohlcv"])
+        cmd.extend(["--secret_id", "binance.local.trading.1"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
@@ -54,6 +55,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "file_format": "parquet",
             "data_type": "ohlcv",
             "bid_ask_depth": None,
+            "secret_id": "binance.local.trading.1",
         }
         self.assertDictEqual(actual, expected)
 
@@ -79,6 +81,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "log_level": "INFO",
             "aws_profile": "ck",
             "s3_path": "s3://mock_bucket",
+            "secret_id": "binance.local.trading.1",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace

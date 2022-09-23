@@ -29,6 +29,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--aws_profile", "ck"])
         cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
+        cmd.extend(["--secret_id", "binance.local.trading.1"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
@@ -41,9 +42,10 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "incremental": False,
             "aws_profile": "ck",
             "s3_path": "s3://cryptokaizen-data/realtime/",
-            "log_level": "INFO",
+            "log_level": "INFO", 
             "file_format": "parquet",
             "bid_ask_depth": None,
+            "secret_id": "binance.local.trading.1",
         }
         self.assertDictEqual(actual, expected)
 
@@ -77,6 +79,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
             "aws_profile": "ck",
+            "secret_id": "binance.local.trading.1",
         }
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace

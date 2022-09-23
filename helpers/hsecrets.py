@@ -5,7 +5,7 @@ import helpers.hsecrets as hsecret
 """
 
 import json
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
@@ -125,3 +125,15 @@ def dassert_valid_secret(secret_id: str) -> None:
     hdbg.dassert_in(values[1], ["local", "preprod"])
     hdbg.dassert_in(values[2], ["trading", "sandbox"])
     hdbg.dassert_is(values[3].isnumeric(), True)
+
+def parse_secret_id(secret_id: str) -> List[str]:
+    """
+    Separate secret identifier into .
+
+    :param secret_id: 
+    :return: exchange_id, stage, account_type, id_
+    """
+    # Validate secret format.
+    dassert_valid_secret(secret_id)
+    #
+    return secret_id.split(".")

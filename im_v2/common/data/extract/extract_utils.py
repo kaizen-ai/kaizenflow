@@ -84,7 +84,7 @@ def add_exchange_download_args(
     """
     Add the command line options for exchange download.
     """
-    parser = _add_common_download_args(parser)
+    parser = _add_common_download_args(parser)  
     parser.add_argument(
         "--start_timestamp",
         required=False,
@@ -113,7 +113,14 @@ def add_exchange_download_args(
         action="store_true",
         required=False,
         help="Append data instead of overwriting it",
-    )
+    )    
+    parser.add_argument(
+        "--secret_id",
+        required=False,
+        action="store",
+        type=str,
+        help="The key of secret id",
+    ) 
     return parser
 
 
