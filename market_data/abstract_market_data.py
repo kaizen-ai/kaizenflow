@@ -497,9 +497,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         start_sampling_time = self.get_wall_clock_time()
         current_bar_timestamp = hwacltim.get_current_bar_timestamp()
         _LOG.debug(hprint.to_str("start_sampling_time current_bar_timestamp"))
-        # We should start sampling for a bar inside the bar interval. Sometimes we start
-        # a second before due to wall-clock drift so we round up to the next minute.
-        hdbg.dassert_lte(start_sampling_time.ceil("1T"), current_bar_timestamp)
+        # We should start sampling for a bar inside the bar interval. Sometimes we start a
+        # second before or after due to wall-clock drift so we round to the nearest minute.
+        hdbg.dassert_lte(start_sampling_time.round("1T"), current_bar_timestamp)
         _LOG.verb_debug("DB on-line: %s", self.is_online())
         #
         hprint.log_frame(_LOG, "Waiting on last bar ...")
