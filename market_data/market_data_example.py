@@ -72,6 +72,7 @@ def get_ReplayedTimeMarketData_from_df(
     # Build the wall clock.
     tz = "ET"
     # Find min and max timestamps.
+    # TODO(Grisha): use `end_time_col_name` Cm Task #2908.
     min_timestamp = df[start_time_col_name].min()
     max_timestamp = df[start_time_col_name].max()
     _LOG.debug(hprint.to_str("min_timestamp, max_timestamp"))

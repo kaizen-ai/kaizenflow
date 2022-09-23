@@ -72,7 +72,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     system.config["market_data_config", "delay_in_secs"] = 5
     system.config[
         "market_data_config", "replayed_delay_in_mins_or_timestamp"
-    ] = pd.Timestamp("2000-01-01 09:36:00-05:00", tz="America/New_York")
+    ] = pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York")
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
@@ -121,7 +121,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     system.config["market_data_config", "delay_in_secs"] = 5
     system.config[
         "market_data_config", "replayed_delay_in_mins_or_timestamp"
-    ] = pd.Timestamp("2000-01-01 09:36:00-05:00", tz="America/New_York")
+    ] = pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York")
     system.config["market_data_config", "asset_ids"] = [101]
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
