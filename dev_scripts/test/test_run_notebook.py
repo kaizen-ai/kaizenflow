@@ -244,6 +244,7 @@ class TestRunNotebook1(hunitest.TestCase):
         exp_pass = True
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
+    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
@@ -323,6 +324,7 @@ class TestRunNotebook2(hunitest.TestCase):
         exp_pass = True
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
+    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
@@ -340,6 +342,7 @@ class TestRunNotebook2(hunitest.TestCase):
         _LOG.warning("This command is supposed to fail")
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
+    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel2(self) -> None:
         """
