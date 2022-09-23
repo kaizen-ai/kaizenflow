@@ -10,6 +10,7 @@ import helpers.hpandas as hpandas
 import helpers.hdatetime as hdateti
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as ivcdexex
+import oms.secrets.secret_identifier as oseseide
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +42,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Smoke test that the class is being initialized correctly.
         """
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         self.assertEqual(exchange_class.exchange_id, "binance")
         self.assertEqual(exchange_class.contract_type, "spot")
         self.assertEqual(exchange_class.vendor, "CCXT")
@@ -58,7 +61,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
         with pytest.raises(AssertionError) as fail:
-            ivcdexex.CcxtExtractor("binance", "dummy")
+            ivcdexex.CcxtExtractor(exchange_id, "dummy", secret_id)
         actual = str(fail.value)
         expected = (
             "Failed assertion *\n'dummy' in '['futures', 'spot']'\n"
@@ -72,7 +75,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         exchange_mock = self.ccxt_mock.binance
         # Verify with `spot` contract type.
-        _ = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        _ = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         actual_args = tuple(exchange_mock.call_args)
         expected_args = (
             ({"apiKey": "test", "rateLimit": True, "secret": "test"},),
@@ -80,7 +85,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         )
         self.assertEqual(actual_args, expected_args)
         # Verify with `futures` contract type.
-        _ = ivcdexex.CcxtExtractor("binance", "futures")
+        _ = ivcdexex.CcxtExtractor(exchange_id, "futures", secret_id)
         actual_args = tuple(exchange_mock.call_args)
         expected_args = (
             (
@@ -110,7 +115,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Verify that wrapper around `ccxt.binance` download is properly called.
         """
         # Prepare data and initialize class before run.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         start_timestamp = pd.Timestamp("2022-02-24T00:00:00Z")
         # _download_ohlcv filters out bars which are within bounds
@@ -125,7 +132,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
             parse_timeframe_mock.return_value = 60
             # Run.
             ohlcv_data = exchange_class._download_ohlcv(
-                exchange_id="binance",
+                exchange_id=exchange_id,
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -166,11 +173,13 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         fetch_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         # Prepare data and initialize class before run.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Run.
         ohlcv_data = exchange_class._download_ohlcv(
-            exchange_id="binance",
+            exchange_id=exchange_id,
             currency_pair="BTC/USDT",
         )
         # Check output.
@@ -204,7 +213,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         expected_df["end_download_timestamp"] = current_time
         expected_df = hpandas.df_to_str(expected_df)
         # Initialize class.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Mock a call to ccxt's `fetch_ohlcv` method called inside `_fetch_ohlcv`.
         with umock.patch.object(
@@ -237,7 +248,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         """
         Test that a non-empty list of exchange currencies is loaded.
         """
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         # Mock a call to ccxt's `load_markets` method called inside `get_exchange_currency_pairs`.
         with umock.patch.object(
             exchange_class._exchange, "load_markets", create=True
@@ -256,14 +269,16 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid start timestamp.
         """
         # Initialize class.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Run with invalid input.
         start_timestamp = "invalid"
         end_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
-                exchange_id="binance",
+                exchange_id=exchange_id,
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -281,14 +296,16 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid end timestamp.
         """
         # Initialize class.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         end_timestamp = "invalid"
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
-                exchange_id="binance",
+                exchange_id=exchange_id,
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -308,14 +325,16 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Start greater than the end.
         """
         # Initialize class.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Run with invalid input.
         start_timestamp = pd.Timestamp("2021-09-10T00:00:00Z")
         end_timestamp = pd.Timestamp("2021-09-09T00:00:00Z")
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
-                exchange_id="binance",
+                exchange_id=exchange_id,
                 currency_pair="BTC/USDT",
                 start_timestamp=start_timestamp,
                 end_timestamp=end_timestamp,
@@ -330,7 +349,9 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid currency pair.
         """
         # Initialize class.
-        exchange_class = ivcdexex.CcxtExtractor("binance", "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
             exchange_class._download_ohlcv(
@@ -356,11 +377,12 @@ class TestCcxtExtractor1(hunitest.TestCase):
         mock_get_current_time.return_value = current_time
         symbol = "BTC/BUSD"
         depth = 5
-        exchange = "binance"
-        exchange_class = ivcdexex.CcxtExtractor("binance", "futures")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "futures", secret_id)
         exchange_class.currency_pairs = [symbol]
         self.assertEqual(
-            exchange_class._exchange._extract_mock_name(), f"ccxt.{exchange}()"
+            exchange_class._exchange._extract_mock_name(), f"ccxt.{exchange_id}()"
         )
         # Mock a call to ccxt's `fetch_order_book` method called inside `_download_bid_ask`.
         with umock.patch.object(
@@ -386,7 +408,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
             }
             # Run.
             order_book = exchange_class._download_bid_ask(
-                exchange, symbol, depth
+                exchange_id, symbol, depth
             )
             #
             self.assertEqual(fetch_order_book_mock.call_count, 1)
@@ -410,13 +432,14 @@ class TestCcxtExtractor1(hunitest.TestCase):
         Run with invalid currency pair.
         """
         # Initialize test data.
-        exchange = "binance"
-        exchange_class = ivcdexex.CcxtExtractor(exchange, "spot")
+        exchange_id = "binance"
+        secret_id = oseseide.SecretIdentifier(exchange_id, "local", "trading", 1)
+        exchange_class = ivcdexex.CcxtExtractor(exchange_id, "spot", secret_id)
         exchange_class.currency_pairs = ["BTC/USDT"]
         fake_currency_pair = "NON_EXIST"
         # Run with invalid input.
         with pytest.raises(AssertionError) as fail:
-            exchange_class._download_bid_ask(exchange, fake_currency_pair, 10)
+            exchange_class._download_bid_ask(exchange_id, fake_currency_pair, 10)
         # Check output for error.
         actual = str(fail.value)
         expected = "Currency pair is not present in exchange"
