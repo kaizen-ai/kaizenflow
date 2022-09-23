@@ -17,6 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 
 _LOG = logging.getLogger(__name__)
 
@@ -484,8 +485,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `wall_clock_time` is present in
-        the RT DB.
+        Wait until the bar with `end_time` == `current_bar_timestamp` is
+        present in the RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started
@@ -494,6 +495,11 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             - num_iter: number of iterations before the last bar was ready
         """
         start_sampling_time = self.get_wall_clock_time()
+        current_bar_timestamp = hwacltim.get_current_bar_timestamp()
+        _LOG.debug(hprint.to_str("start_sampling_time current_bar_timestamp"))
+        # We should start sampling for a bar inside the bar interval. Sometimes we start
+        # a second before due to wall-clock drift so we round up to the next minute.
+        hdbg.dassert_lte(start_sampling_time.ceil("1T"), current_bar_timestamp)
         _LOG.verb_debug("DB on-line: %s", self.is_online())
         #
         hprint.log_frame(_LOG, "Waiting on last bar ...")
@@ -504,14 +510,16 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
                 "\n### waiting on last bar: "
-                "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
+                "num_iter=%s/%s: current_bar_timestamp=%s wall_clock_time=%s last_db_end_time=%s",
                 num_iter,
                 self._max_iterations,
+                current_bar_timestamp,
                 wall_clock_time,
                 last_db_end_time,
             )
             if last_db_end_time and (
-                last_db_end_time.floor("Min") >= wall_clock_time.floor("Min")
+                last_db_end_time.floor("Min")
+                >= current_bar_timestamp.floor("Min")
             ):
                 # Get the current timestamp when the call was finally executed.
                 hprint.log_frame(_LOG, "Waiting on last bar: done")
