@@ -127,7 +127,7 @@ def process_stream_data(websocket_manager: bnwam.BinanceWebSocketApiManager) -> 
 
 
 # %% [markdown]
-# ## Single symbol demo
+# ## Bid/Ask Single symbol demo
 
 # %%
 markets = universe[0:1]
@@ -153,7 +153,7 @@ time.sleep(run_for)
 data[0]
 
 # %% [markdown]
-# ## Full universe demo
+# ## Bid/Ask Full universe demo
 
 # %%
 freq = 500 # miliseconds
@@ -283,7 +283,6 @@ def insert_buffered_data_into_db(db_buffer: List[Dict], exchange_id: str, db_con
 run_for = 20 # seconds
 max_db_buffer_size = 100
 db_table = "ccxt_bid_ask_futures_test"
-df_example = None
 def buffer_and_save_stream_data(websocket_manager: bnwam.BinanceWebSocketApiManager) -> None:
     end_time = datetime.now() + timedelta(seconds=run_for)
     # TO avoid overhead of inserting few data points at a time we can buffer to a larger size
@@ -317,7 +316,7 @@ channels = [f"depth{depth}@{freq}ms"]
 # Reset the data list
 data = []
 # Set running time
-run_for = 5 # seconds
+run_for = 10 # seconds
 markets = universe
 # There is a limit of maximum 1024 subscriptions calculated as no. of streams * no. of markets
 # output="dict" has to be set, otherwise we get raw data as string
@@ -327,19 +326,144 @@ bn_websocket_manager.create_stream(channels, markets, output="dict")
 # %%
 worker_thread = threading.Thread(target=buffer_and_save_stream_data, args=(bn_websocket_manager,))
 worker_thread.start()
+print(hdateti.get_current_time("UTC"))
 for _ in range(run_for):
-    print("Plain monitoring status:")
-    print(bn_websocket_manager.get_monitoring_status_plain())
-    print("-----")
+    #print("Plain monitoring status:")
+    #print(bn_websocket_manager.get_monitoring_status_plain())
+    #print("-----")
     time.sleep(1)
+print(hdateti.get_current_time("UTC"))
 
 # %% [markdown]
 # # Error Handling
 
 # %% [markdown]
-# # OHLCV Example
+# # OHLCV Single Symbol Demo
+
+# %%
+ohlcv_freq = 1 # minutes
+channels = [f"kline_{ohlcv_freq}m"]
+# Reset the data list
+data = []
+# Set running time
+run_for = 360 # seconds
+markets = ["ethusdt"]
+# There is a limit of maximum 1024 subscriptions calculated as no. of streams * no. of markets
+# output="dict" has to be set, otherwise we get raw data as string
+bn_websocket_manager_ohlcv = bnwam.BinanceWebSocketApiManager(exchange="binance.com-futures")
+bn_websocket_manager_ohlcv.create_stream(channels, markets, output="dict")
+
+# %%
+worker_thread = threading.Thread(target=process_stream_data, args=(bn_websocket_manager_ohlcv,))
+worker_thread.start()
+
+# %% [markdown]
+# ## Received message example
+
+# %%
+data[0]
+
+# %% [markdown]
+# We are interested only in the finished klines (denoted by field "x" in the API)
+
+# %% run_control={"marked": true}
+finished_klines = list(filter(lambda x: x.get("data") and x["data"]["k"]["x"], data))
+
+# %%
+finished_klines[0]
 
 # %% [markdown]
 # # Saving OHLCV data to DB: flow proposal
+
+# %%
+# Mapping of the keys of the message relevant to us
+# to our internal naming convention.
+# end_download_timestamp is added by us upon receival of the data
+relevant_column_mapping = {"t": "timestamp", 
+                           "o": "open", 
+                           "h": "high", 
+                           "l": "low",
+                           "c": "close",
+                           "v": "volume"}
+def format_websocket_message(msg: Dict) -> Dict:
+    """
+    TODO(Juraj): add example of before and after
+    """
+    currency_pair = msg["data"]["s"]
+    msg = msg["data"]["k"]
+    formatted_msg = { relevant_column_mapping[k]:msg[k] for k in relevant_column_mapping.keys() }
+    formatted_msg["currency_pair"] = currency_pair
+    return formatted_msg
+
+
+
+# %%
+def is_finished_kline_data(stream_data) -> bool:
+    return stream_data != False and "data" in stream_data and stream_data["data"]["k"].get("x")
+
+
+# %%
+def insert_buffered_data_into_db(db_buffer: List[Dict], exchange_id: str, db_connection, db_table: str) -> None:
+    df = pd.DataFrame(db_buffer)
+    df["exchange_id"] = exchange_id
+    df["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+    hsql.execute_insert_query(
+        connection=db_connection,
+        obj=df,
+        table_name=db_table,
+    )
+
+
+# %%
+# Setup callback function
+max_db_buffer_size = len(universe)
+db_table = "ccxt_ohlcv_futures_test"
+def buffer_and_save_stream_data(websocket_manager: bnwam.BinanceWebSocketApiManager) -> None:
+    end_time = datetime.now() + timedelta(seconds=run_for)
+    # TO avoid overhead of inserting few data points at a time we can buffer to a larger size
+    db_buffer = []
+    while datetime.now() < end_time:
+        if websocket_manager.is_manager_stopping():
+            break
+        oldest_stream_data = websocket_manager.pop_stream_data_from_stream_buffer()
+        # If the dict is the above mentioned: '{'id': 1, 'result': None}'
+        if not is_finished_kline_data(oldest_stream_data):
+            time.sleep(0.01)
+        # TODO(Juraj): handle error messages
+        else:
+            end_download_timestamp = hdateti.get_current_time("UTC")
+            oldest_stream_data = format_websocket_message(oldest_stream_data)
+            oldest_stream_data["end_download_timestamp"] = end_download_timestamp
+            db_buffer.append(oldest_stream_data)
+            if len(db_buffer) >= max_db_buffer_size:
+                insert_buffered_data_into_db(db_buffer, "binance", db_connection, db_table)
+                # Empty the buffer for next batch.
+                db_buffer = []
+    # Insert also the last buffer content.
+    insert_buffered_data_into_db(db_buffer, "binance", db_connection, db_table)
+    websocket_manager.stop_manager_with_all_streams()
+
+
+# %%
+ohlcv_freq = 1 # minutes
+channels = [f"kline_{ohlcv_freq}m"]
+# Reset the data list
+data = []
+# Set running time
+run_for = 360 # seconds
+markets = universe
+# There is a limit of maximum 1024 subscriptions calculated as no. of streams * no. of markets
+# output="dict" has to be set, otherwise we get raw data as string
+bn_websocket_manager_ohlcv = bnwam.BinanceWebSocketApiManager(exchange="binance.com-futures")
+bn_websocket_manager_ohlcv.create_stream(channels, markets, output="dict")
+
+# %%
+worker_thread = threading.Thread(target=buffer_and_save_stream_data, args=(bn_websocket_manager_ohlcv,))
+worker_thread.start()
+for _ in range(run_for / 10):
+    print("Plain monitoring status:")
+    print(bn_websocket_manager.get_monitoring_status_plain())
+    print("-----")
+    time.sleep(10)
 
 # %%
