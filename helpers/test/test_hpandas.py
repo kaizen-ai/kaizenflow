@@ -2101,6 +2101,49 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             expected_signature,
         )
 
+    def test5(self) -> None:
+        """
+        - DataFrames are equal
+        - Column and row modes are `equal`
+        - diff_mode = "diff"
+        - All values of the second DataFrame are zeros
+
+        Check that if the second DataFrame consists of zeros,
+        the function will perform comparison to the initial DataFrame.
+        """
+        df1, df2 = self.get_test_dfs_different()
+        # Create DataFrame with zeros.
+        df2 = df1 * 0
+        # Compare.
+        df_diff = hpandas.compare_visually_dataframes(
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="diff",
+            background_gradient=False,
+        )
+        expected_length = 3
+        expected_column_names = ["tsA_diff", "tsB_diff", "tsC_diff"]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
+        columns=tsA_diff,tsB_diff,tsC_diff
+        shape=(3, 3)
+                                tsA_diff  tsB_diff  tsC_diff
+        timestamp
+        2022-01-01 21:01:00+00:00         1         4         7
+        2022-01-01 21:02:00+00:00         2         5         8
+        2022-01-01 21:03:00+00:00         3         6         9
+        """
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     def test_invalid_input(self) -> None:
         """
         Put two different DataFrames with `equal` mode.
