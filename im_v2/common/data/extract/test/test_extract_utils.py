@@ -359,6 +359,7 @@ class TestDownloadRealtimeForOneExchange1(
             "aws_profile": None,
             "s3_path": None,
             "connection": self.connection,
+            "secret_id": "binance.preprod.sandbox.1",
         }
         extractor = ivcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
