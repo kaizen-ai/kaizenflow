@@ -94,5 +94,5 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         # Verify that `CcxtExtractor` instance creation is properly called.
         self.assertEqual(ccxt_extractor_mock.call_count, 1)
         actual_args = tuple(ccxt_extractor_mock.call_args)
-        expected_args = (("binance", "spot"), {})
+        expected_args = (("binance", "spot", "binance.preprod.sandbox.1"), {})
         self.assertEqual(actual_args, expected_args)
