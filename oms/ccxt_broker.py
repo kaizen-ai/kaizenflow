@@ -251,18 +251,45 @@ class CcxtBroker(ombroker.Broker):
         return open_positions
 
     def get_fills_since_timestamp(
-        self, start_timestamp: Union[int, pd.Timestamp]
+        self, start_timestamp: pd.Timestamp
     ) -> List[Dict[str, Any]]:
         """
         Get a list of fills since given timestamp in JSON format.
+
+        Example of output:
+
+            {'info': {'symbol': 'ETHUSDT',
+               'id': '2271885264',
+               'orderId': '8389765544333791328',
+               'side': 'SELL',
+               'price': '1263.68',
+               'qty': '0.016',
+               'realizedPnl': '-3.52385454',
+               'marginAsset': 'USDT',
+               'quoteQty': '20.21888',
+               'commission': '0.00808755',
+               'commissionAsset': 'USDT',
+               'time': '1663859837554',
+               'positionSide': 'BOTH',
+               'buyer': False,
+               'maker': False},
+      'timestamp': 1663859837554,
+      'datetime': '2022-09-22T15:17:17.554Z',
+      'symbol': 'ETH/USDT',
+      'id': '2271885264',
+      'order': '8389765544333791328',
+      'type': None,
+      'side': 'sell',
+      'takerOrMaker': 'taker',
+      'price': 1263.68,
+      'amount': 0.016,
+      'cost': 20.21888,
+      'fee': {'cost': 0.00808755, 'currency': 'USDT'},
+      'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
         """
+        hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
         symbols = list(self._symbol_to_asset_id_mapping.keys())
         fills = []
-        # Convert unix epoch to timestamp if necessary.
-        if isinstance(start_timestamp, pd.Timestamp):
-            start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
-                start_timestamp
-            )
         # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
             symbol_fills = self._exchange.fetchMyTrades(

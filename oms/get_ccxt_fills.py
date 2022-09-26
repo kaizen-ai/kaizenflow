@@ -124,6 +124,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         exchange_id, stage, account_type, secrets_id
     )
     # Initialize market data for the Broker.
+    #  Note: It is a mock required to initialize CcxtBroker class.
     env_file = imvimlita.get_db_env_path("dev")
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
@@ -141,11 +142,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
         strategy_id="SAU1",
         market_data=market_data,
     )
-    # Get all trades.
+    #
     start_timestamp = pd.Timestamp(args.start_timestamp)
+    # Get timestamp of execution.
+    current_timestamp = hdateti.get_current_timestamp_as_string("ET")
+    # Get all trades.
     fills = broker.get_fills_since_timestamp(start_timestamp)
-    # File name as fills_{timestamp-timestamp}.json
-    timestamp = hdateti.get_current_timestamp_as_string("ET")
-    file_name = os.path.join(args.dst_dir, f"fills_{timestamp}.json")
     # Save file.
+    start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
+    file_name = os.path.join(args.dst_dir, f"fills_{start_timestamp_str}_{current_timestamp}.json")
     hio.to_json(file_name, fills)
