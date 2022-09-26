@@ -539,6 +539,8 @@ class ForecastProcessor:
             )
             # Change the index from `asset_id` to the timestamp.
             df = df.reset_index().set_index("wall_clock_timestamp")
+            # TODO(Dan): For whatever reason "asset_id" column is named as "index" - fix.
+            df = df.rename(columns={"index": "asset_id"})
             hpandas.dassert_series_type_is(df["asset_id"], np.int64)
             if not isinstance(df.index, pd.DatetimeIndex):
                 _LOG.info("Skipping file_name=%s", path)
