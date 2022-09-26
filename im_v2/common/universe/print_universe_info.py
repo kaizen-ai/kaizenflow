@@ -154,7 +154,7 @@ def _run(args: argparse.Namespace) -> None:
         _LOG.info(
             "\nUniverse mapping:\n%s", hprint.to_pretty_str(universe_mapping)
         )
-     else:
+    else:
         raise ValueError(f"Unsupported action={args.action}")
 
 
