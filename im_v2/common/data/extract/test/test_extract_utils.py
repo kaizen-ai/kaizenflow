@@ -501,9 +501,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "log_level": "INFO",
             "file_format": "parquet",
             "unit": "ms",
+            "secret_id": "binance.local.trading.1",
         }
         exchange = ivcdexex.CcxtExtractor(
-            args["exchange_id"], args["contract_type"]
+            args["exchange_id"], args["contract_type"], args["secret_id"]
         )
         imvcdeexut.download_historical_data(args, exchange)
 
