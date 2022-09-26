@@ -584,6 +584,23 @@ class Config:
             return None
         return val  # type: ignore
 
+    def to_pickleable_config(self, force_strings: bool) -> "Config":
+        """
+        Transform this Config into a pickle-able one where non pickle-able
+        objects are replaced with their string representation.
+
+        :param force_strings: force all values to become strings, even if they are
+            pickle-able
+        """
+        config_out = {}
+        for k, v in self._config.items():
+            if isinstance(v, Config):
+                config_out[k] = v.to_pickleable_config(force_strings)
+            elif force_strings or not hintros.is_pickleable(v):
+                v = str(v)
+            config_out[k] = v
+        return config_out
+
     def to_python(self, check: bool = True) -> str:
         """
         Return python code that builds, when executed, the current object.
@@ -750,10 +767,11 @@ class Config:
     def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
-        report an informative message reporting the entire config on `KeyError`.
+        report an informative message reporting the entire config on
+        `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's an helper
-        of that function.
+        This method should be used only by `__getitem__()` since it's an
+        helper of that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is nested.
