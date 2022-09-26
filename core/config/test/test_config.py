@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import pprint
-from typing import Any, Callable, Dict, Optional, Tuple
+from typing import Any, Callable, Dict, Optional
 
 import pytest
 
@@ -1787,21 +1787,6 @@ class Test_to_pickleable_config(hunitest.TestCase):
 
 
 class Test_save_to_file(hunitest.TestCase):
-    @staticmethod
-    def get_expected_paths() -> Tuple:
-        log_dir = "./pickle_log_dir"
-        tag = "system_config.input"
-        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
-        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
-        expected_force_strings_pkl_path = os.path.join(
-            log_dir, f"{tag}.force_strings.pkl"
-        )
-        return (
-            expected_txt_path,
-            expected_pkl_path,
-            expected_force_strings_pkl_path,
-        )
-
     @staticmethod
     def helper(is_str: bool) -> None:
         # Set config.
