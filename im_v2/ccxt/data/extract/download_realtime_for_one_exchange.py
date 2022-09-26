@@ -15,7 +15,8 @@ Use as:
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data-test/realtime/' \
     --data_type 'ohlcv' \
-    --contract_type 'spot'
+    --contract_type 'spot' \
+    --secret_id '***REMOVED***'
 """
 
 import argparse
@@ -24,9 +25,11 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import helpers.hsecrets as hsecret
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -46,8 +49,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Build `SecretIdentifier` instance. 
+    secret_id = hsecret.parse_secret_id(args.secret_id)
     # Initialize the CCXT Extractor class.
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type, args.secret_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type, secret_id)
     args = vars(args)
     imvcdeexut.download_realtime_for_one_exchange(args, exchange)
 

@@ -14,7 +14,8 @@ Use as:
     --contract_type 'spot' \
     --interval_min '1' \
     --start_time '2022-05-16 00:45:00' \
-    --stop_time '2022-05-16 00:55:00'
+    --stop_time '2022-05-16 00:55:00' \
+    --secret_id '***REMOVED***'
 """
 
 import argparse
@@ -22,6 +23,7 @@ import argparse
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import helpers.hsecrets as hsecret
 import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
@@ -42,8 +44,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Build `SecretIdentifier` instance. 
+    secret_id = hsecret.parse_secret_id(args.secret_id)
     # Initialize the CCXT Extractor class.
-    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type)
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type, secret_id)
     args = vars(args)
     imvcdeexut.download_realtime_for_one_exchange_periodically(
         args, exchange

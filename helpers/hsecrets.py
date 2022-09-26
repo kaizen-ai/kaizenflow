@@ -12,6 +12,7 @@ from botocore.exceptions import ClientError
 
 import helpers.haws as haws
 import helpers.hdbg as hdbg
+import oms.secrets.secret_identifier as omssec
 
 
 def get_secrets_client(aws_profile: str) -> BaseClient:
@@ -126,14 +127,15 @@ def dassert_valid_secret(secret_id: str) -> None:
     hdbg.dassert_in(values[2], ["trading", "sandbox"])
     hdbg.dassert_is(values[3].isnumeric(), True)
 
-def parse_secret_id(secret_id: str) -> List[str]:
+def parse_secret_id(secret_id: str) -> omssec.SecretIdentifier:
     """
-    Separate secret identifier into .
+    Parse 
 
-    :param secret_id: 
-    :return: exchange_id, stage, account_type, id_
+    :param secret_id: secret identifier, e.g. `***REMOVED***`
+    :return: `SecretIdentifier` instance
     """
     # Validate secret format.
     dassert_valid_secret(secret_id)
-    #
-    return secret_id.split(".")
+    exchange_id, stage, account_type, id_ = secret_id.split(".")
+    secret_id = omssec.SecretIdentifier(exchange_id, stage, account_type, id_)
+    return secret_id

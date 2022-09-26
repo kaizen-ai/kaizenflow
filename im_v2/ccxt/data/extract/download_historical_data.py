@@ -14,7 +14,8 @@ Use as:
      --contract_type 'spot' \
      --universe 'v3' \
      --aws_profile 'ck' \
-     --s3_path 's3://<ck-data>/historical/'
+     --s3_path 's3://<ck-data>/historical/' \
+     --secret_id '***REMOVED***'
 """
 
 import argparse
@@ -45,9 +46,10 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Build `SecretIdentifier` instance. 
+    secret_id = hsecret.parse_secret_id(args.secret_id)
     # Initialize the CCXT Extractor class.
-    exchange_id, stage, account_type, id_ = hsecret.parse_secret_id(args.secret_id)
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type, args.secret_id)
+    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type, secret_id)
     # Assign extractor-specific variables.
     args = vars(args)
     args["unit"] = "ms"
