@@ -1,13 +1,15 @@
 import collections
 import datetime
 import logging
+import os
 import pprint
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Callable, Dict, Optional, Tuple
 
 import pytest
 
 import core.config as cconfig
 import core.config.config_ as cconconf
+import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -1708,9 +1710,11 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 class Test_to_pickleable_config(hunitest.TestCase):
+    # TODO(gp): @Nina make it readable https://github.com/cryptokaizen/cmamp/pull/2903#discussion_r979023147
     def helper(
         self,
         value: Optional[str],
+        # TODO(Nina): remove `expected` since it's not used.`
         expected: str,
         assert_func: Callable,
         *,
@@ -1780,3 +1784,53 @@ class Test_to_pickleable_config(hunitest.TestCase):
         assert_func = self.assertTrue
         actual = self.helper(value, expected, assert_func, force_strings=True)
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_save_to_file(hunitest.TestCase):
+    @staticmethod
+    def get_expected_paths() -> Tuple:
+        log_dir = "./pickle_log_dir"
+        tag = "system_config.input"
+        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
+        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
+        expected_force_strings_pkl_path = os.path.join(
+            log_dir, f"{tag}.force_strings.pkl"
+        )
+        return (
+            expected_txt_path,
+            expected_pkl_path,
+            expected_force_strings_pkl_path,
+        )
+
+    @staticmethod
+    def helper(is_str: bool) -> None:
+        # Set config.
+        log_dir = "./pickle_log_dir"
+        tag = "system_config.input"
+        nested = {
+            "key1": "value",
+            "key2": {"key3": {"key4": {}}},
+        }
+        config = cconfig.Config.from_dict(nested)
+        # Save config.
+        if is_str:
+            str(config)
+            config.save_to_file(log_dir, tag)
+        else:
+            config.save_to_file(log_dir, tag)
+
+    def test1(self) -> None:
+        # TODO(Nina): Add docstring.
+        self.helper(is_str=True)
+        # Set expected values.
+        log_dir = "./pickle_log_dir"
+        tag = "system_config.input"
+        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
+        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
+        expected_force_strings_pkl_path = os.path.join(
+            log_dir, f"{tag}.force_strings.pkl"
+        )
+        # Check. `save_to_file` doesn't return anything so need to check if file path exists.
+        hdbg.dassert_path_exists(expected_txt_path)
+        hdbg.dassert_path_exists(expected_pkl_path)
+        hdbg.dassert_path_exists(expected_force_strings_pkl_path)
