@@ -360,6 +360,7 @@ def docker_build_prod_image(  # type: ignore
         --tag {image_versioned_prod} \
         --file {dockerfile} \
         --build-arg VERSION={dev_version} \
+        --build-arg ECR_BASE_PATH={os.environ["CK_ECR_BASE_PATH"]} \
         .
     """
     hlitauti.run(ctx, cmd)
