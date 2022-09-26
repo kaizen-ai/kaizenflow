@@ -362,7 +362,7 @@ class TestDownloadRealtimeForOneExchange1(
             "secret_id": "binance.preprod.sandbox.1",
         }
         extractor = ivcdexex.CcxtExtractor(
-            kwargs["exchange_id"], kwargs["contract_type"]
+            kwargs["exchange_id"], kwargs["contract_type"], kwargs["secret_id"]
         )
         if use_s3:
             # Update kwargs.
