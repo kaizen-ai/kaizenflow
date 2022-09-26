@@ -61,20 +61,12 @@ class CcxtExtractor(imvcdexex.Extractor):
         `ccxt.Exchange` object.
         """
         exchange_params: Dict[str, Any] = {}
-        secret_id = f"{self.exchange_id}.preprod.trading.1"
-        # Select credentials for provided exchange.
-        credentials = hsecret.get_secret(secret_id)
-        exchange_params.update(credentials)
         # Enable rate limit.
         exchange_params["rateLimit"] = True
         if self.contract_type == "futures":
             exchange_params["options"] = {"defaultType": "future"}
         exchange_class = getattr(ccxt, self.exchange_id)
         exchange = exchange_class(exchange_params)
-        hdbg.dassert(
-            exchange.checkRequiredCredentials(),
-            msg="Required credentials not passed",
-        )
         return exchange
 
     def get_exchange_currency_pairs(self) -> List[str]:
