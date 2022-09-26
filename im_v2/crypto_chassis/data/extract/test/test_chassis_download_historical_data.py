@@ -45,6 +45,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "log_level": "INFO",
             "file_format": "parquet",
             "bid_ask_depth": None,
+            "secret_id": None,
         }
         self.assertDictEqual(actual, expected)
 
