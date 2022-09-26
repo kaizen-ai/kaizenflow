@@ -46,6 +46,114 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+# %% [markdown]
+# # System configs
+
+# %%
+prod_system_config_output = load_config_as_list(
+    prod_dir + "/system_config.output.txt"
+)
+sim_system_config_output = load_config_as_list(
+    sim_dir + "/system_config.output.txt"
+)
+prod_system_config_input = load_config_as_list(
+    prod_dir + "/system_config.input.txt"
+)
+sim_system_config_input = load_config_as_list(
+    sim_dir + "/system_config.input.txt"
+)
+
+# %%
+prod_output_only, sim_output_only = diff_lines(
+    prod_system_config_output, sim_system_config_output
+)
+
+# %%
+# prod_output_only
+
+# %%
+# sim_output_only
+
+# %% [markdown]
+# # DAG compare
+
+# %%
+prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
+hdbg.dassert_dir_exists(prod_dag_dir)
+print(prod_dag_dir)
+sim_dag_dir = os.path.join(sim_dir, "dag/node_io/node_io.data")
+hdbg.dassert_dir_exists(sim_dag_dir)
+print(sim_dag_dir)
+
+# %%
+# Read CSV which is multi-index
+#stage = "0.read_data"
+#stage = "2.zscore"
+#target_cols = ['ask', 'bid', 'close', 'day_num_spread', 'day_spread', 'high', 'low', 'notional', 'open', 'sided_ask_count', 'sided_bid_count', 'start_time', 'volume']
+
+stage = "7.process_forecasts"
+target_cols = ['close', 'close_vwap', 'day_num_spread', 'day_spread', 'garman_klass_vol', 'high', 'low', 'notional', 'open', 'prediction', 'twap', 'volume']
+#timestamp = "20220915_154500"
+timestamp = "20220915_100000"
+
+file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = os.path.join(prod_dag_dir, file_name)
+print("prod_file_name=", file_name)
+prod_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
+
+prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
+
+#display(prod_dag_df.head(3))
+
+file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = os.path.join(sim_dag_dir, file_name)
+print("sim_file_name=", file_name)
+sim_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
+sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
+#display(sim_dag_df.head(3))
+
+#print(prod_dag_df.columns.levels[0])
+#print(sim_dag_df.columns.levels[0])
+#prod_dag_df.drop(labels=["end_time"], axis=1, level=0, inplace=True, errors="raise")
+asset_ids = prod_dag_df.columns.levels[1].tolist()
+# for col in prod_dag_df.columns:
+#     if col[0] in target_cols:
+#     columns.append()
+import itertools
+columns = list(itertools.product(target_cols, asset_ids))
+prod_dag_df = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
+prod_dag_df.to_csv("prod_tmp.csv")
+prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
+
+#
+#sim_dag_df = sim_dag_df.drop(labels="end_time.1 timestamp_db index".split(), axis=1, level=0)
+sim_dag_df = sim_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
+#
+sim_dag_df.to_csv("sim_tmp.csv")
+sim_dag_df = pd.read_csv("sim_tmp.csv", index_col=0, header=[0, 1])
+#
+print(list(prod_dag_df.columns.levels[0]))
+print(list(sim_dag_df.columns.levels[0]))
+
+
+# %%
+# Compare output
+dag_corrs = dtfmod.compute_correlations(prod_dag_df, sim_dag_df.shift(0))
+#hpandas.df_to_str(dag_corrs, precision=3, log_level=logging.INFO)
+
+#sort_col = "close"
+sort_col = "prediction"
+#sort_col = "price"
+#sort_col = "volatility"
+hpandas.df_to_str(
+    dag_corrs.sort_values(sort_col, ascending=False),
+    num_rows=None,
+    precision=3,
+    log_level=logging.INFO,
+)
+
 
 # %% [markdown]
 # # Functions
@@ -438,33 +546,3 @@ hpandas.df_to_str(
     precision=3,
     log_level=logging.INFO,
 )
-
-# %% [markdown]
-# # System configs
-
-# %%
-prod_system_config_output = load_config_as_list(
-    prod_dir + "/system_config.output.txt"
-)
-sim_system_config_output = load_config_as_list(
-    sim_dir + "/system_config.output.txt"
-)
-prod_system_config_input = load_config_as_list(
-    prod_dir + "/system_config.input.txt"
-)
-sim_system_config_input = load_config_as_list(
-    sim_dir + "/system_config.input.txt"
-)
-
-# %%
-prod_output_only, sim_output_only = diff_lines(
-    prod_system_config_output, sim_system_config_output
-)
-
-# %%
-# prod_output_only
-
-# %%
-# sim_output_only
-
-# %%

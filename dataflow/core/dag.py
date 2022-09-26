@@ -599,6 +599,7 @@ class DAG(hobject.PrintableMixin):
         """
         dst_dir = cast(str, self._dst_dir)
         bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        # TODO: Add wallclock timestamp
         basename = (
             f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}"
         )
@@ -618,10 +619,9 @@ class DAG(hobject.PrintableMixin):
             )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
-            if self._save_node_io == "df_as_csv":
-                file_name += ".csv"
+            if self._save_node_io == "df_as_csv_and_parquet":
+                file_name += ".csv.gz"
                 df.to_csv(file_name)
-            elif self._save_node_io == "df_as_parquet":
                 file_name += ".parquet"
                 hparque.to_parquet(df, file_name)
             else:
