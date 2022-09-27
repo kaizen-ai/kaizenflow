@@ -1785,8 +1785,7 @@ class Test_to_pickleable_config(hunitest.TestCase):
 
 
 class Test_save_to_file(hunitest.TestCase):
-    @staticmethod
-    def helper(value: Optional[str]) -> None:
+    def helper(self, value: Optional[str]) -> None:
         # Set config.
         log_dir = self.get_scratch_space()
         tag = "system_config.input"
