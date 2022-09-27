@@ -38,7 +38,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
+import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
 
 # %%
@@ -127,19 +127,48 @@ def load_and_transform_the_data(
     columns,
     filter_data_mode,
 ):
+    """
+    - Load the data through ImClient
+       - For CCXT data also choose the order level data
+    - Transform to the desired multiindex format with specific format
+    
+    :param bid_ask_cols: specify cols with bid-ask data
+    """
+    # Load the data.
     if is_ccxt:
         df = ccxt_im_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
+        # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes. 
         df.index = df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="T")
         )
+        # Choose the specific order level (first level by default).
+        df = clean_data_for_orderbook_level(df)
     else:
         df = cc_parquet_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
+    # Apply transformation.
     df = df[bid_ask_cols]
     df = df.reset_index().set_index(["timestamp", "full_symbol"])
+    return df
+
+def clean_data_for_orderbook_level(df: pd.DataFrame, level: int = 1) -> pd.DataFrame:
+    """
+    Specify the order level in CCXT bid ask data. 
+    
+    :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
+    :return: Data where specific level has common name (i.e., bid_price)
+    """
+    level_cols = [col for col in df.columns if col.endswith(f"_{level}")]
+    level_cols_cleaned = [elem[:-2] for elem in level_cols]
+    #
+    zip_iterator = zip(level_cols, level_cols_cleaned)
+    col_dict = dict(zip_iterator)
+    #
+    df = df.rename(columns=col_dict)
+    #
     return df
 
 
@@ -150,7 +179,7 @@ def load_and_transform_the_data(
 # CCXT client.
 ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**config["data"]["ccxt_im_client"])
 # CC client.
-cc_parquet_client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+cc_parquet_client = iccdc.CryptoChassisHistoricalPqByTileClient(
     **config["data"]["cc_im_client"]
 )
 
@@ -188,24 +217,18 @@ universe = ["binance::ETH_USDT"]
 # CCXT data.
 bid_ask_cols = config["column_names"]["bid_ask_cols"]
 is_ccxt = True
-
+#
 data_ccxt = load_and_transform_the_data(
     universe, bid_ask_cols, is_ccxt, **config["data"]["read_data"]
 )
 
 # %%
-data_ccxt
-
-# %%
 # CC data.
 is_ccxt = False
-
+#
 data_cc = load_and_transform_the_data(
     universe, bid_ask_cols, is_ccxt, **config["data"]["read_data"]
 )
-
-# %%
-data_cc
 
 # %% [markdown]
 # # Analysis
@@ -240,7 +263,7 @@ _LOG.info(
 )
 # Remove NaNs.
 data = hpandas.dropna(data, report_stats=True)
-
+#
 display(data.tail())
 
 # %% [markdown]
@@ -257,7 +280,7 @@ for col in bid_ask_cols:
     data[f"{col}_relative_diff_pct"] = (
         100 * (data[f"{col}_cc"] - data[f"{col}_ccxt"]) / data[f"{col}_ccxt"]
     )
-
+#
 data.head()
 
 # %%
@@ -267,7 +290,7 @@ grouper = data.groupby(["full_symbol"])
 for col in bid_ask_cols:
     diff_stats.append(grouper[f"{col}_diff"].mean())
     diff_stats.append(grouper[f"{col}_relative_diff_pct"].mean())
-
+#
 diff_stats = pd.concat(diff_stats, axis=1)
 
 # %% [markdown]
@@ -289,7 +312,7 @@ diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]]
 diff_stats[["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]]
 
 # %% [markdown]
-# The difference between bid and ask sizes in DB and CC is solid and accounts for more than 100% for each full symbol.
+# The difference between bid and ask sizes in DB and CC is no more than 10% which is an acceptable level.
 
 # %% [markdown]
 # ## Correlations
@@ -328,7 +351,7 @@ bid_size_corr_matrix = (
 bid_size_corr_matrix
 
 # %% [markdown]
-# Correlation stats confirms the stats above: bid sizes in DB and CC are not correlated.
+# Correlation stats confirms the stats above: bid sizes in DB and CC are highly correlated.
 
 # %% [markdown]
 # ### Ask size
@@ -340,8 +363,4 @@ ask_size_corr_matrix = (
 ask_size_corr_matrix
 
 # %% [markdown]
-# Correlation stats confirms the stats above: ask sizes in DB and CC are not correlated.
-
-# %%
-
-# %%
+# Correlation stats confirms the stats above: ask sizes in DB and CC are moderately correlated.

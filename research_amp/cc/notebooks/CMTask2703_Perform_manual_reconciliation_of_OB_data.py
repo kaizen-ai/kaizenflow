@@ -14,6 +14,7 @@
 
 # %%
 # TODO(Max): convert to master notebook.
+# TODO(Max): the notebook is runnable only from branch: `CMTask2703_Perform_manual_reconciliation_of_OB_data`.
 
 # %% [markdown]
 # - CCXT data = CCXT real-time DB bid-ask data collection for futures
@@ -68,7 +69,7 @@ def get_cmtask2703_config() -> cconconf.Config:
                 "universe_version": None,
                 "resample_1min": True,
                 "root_dir": os.path.join(
-                     hs3.get_s3_bucket_path("ck"),
+                    hs3.get_s3_bucket_path("ck"),
                     "reorg",
                     "daily_staged.airflow.pq",
                 ),
@@ -105,7 +106,7 @@ def get_cmtask2703_config() -> cconconf.Config:
                 "full_symbol",
             ],
         },
-        "order_level" : 1
+        "order_level": 1,
     }
     config = cconconf.Config.from_dict(param_dict)
     return config
@@ -132,7 +133,7 @@ def load_and_transform_the_data(
     - Load the data through ImClient
        - For CCXT data also choose the order level data
     - Transform to the desired multiindex format with specific format
-    
+
     :param bid_ask_cols: specify cols with bid-ask data
     """
     # Load the data.
@@ -140,7 +141,7 @@ def load_and_transform_the_data(
         df = ccxt_im_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
-        # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes. 
+        # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
         df.index = df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="T")
         )
@@ -155,10 +156,13 @@ def load_and_transform_the_data(
     df = df.reset_index().set_index(["timestamp", "full_symbol"])
     return df
 
-def clean_data_for_orderbook_level(df: pd.DataFrame, level: int = 1) -> pd.DataFrame:
+
+def clean_data_for_orderbook_level(
+    df: pd.DataFrame, level: int = 1
+) -> pd.DataFrame:
     """
-    Specify the order level in CCXT bid ask data. 
-    
+    Specify the order level in CCXT bid ask data.
+
     :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
     :return: Data where specific level has common name (i.e., bid_price)
     """
@@ -369,5 +373,3 @@ ask_size_corr_matrix
 
 # %% [markdown]
 # Correlation stats confirms the stats above: ask sizes in DB and CC are not correlated.
-
-# %%
