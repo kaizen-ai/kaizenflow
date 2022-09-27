@@ -599,9 +599,9 @@ class DAG(hobject.PrintableMixin):
         """
         dst_dir = cast(str, self._dst_dir)
         bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
-        # TODO: Add wallclock timestamp
+        wall_clock_time = hwacltim.get_machine_wall_clock_time(as_str=True)
         basename = (
-            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}"
+            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.{wall_clock_time}"
         )
         file_name = os.path.join(dst_dir, "node_io.data", basename)
         #

@@ -21,6 +21,7 @@
 # # Imports
 
 # %%
+import itertools
 import logging
 import os
 from typing import List, Tuple
@@ -34,6 +35,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 import market_data as mdata
 import oms as oms
 
@@ -87,40 +89,44 @@ print(sim_dag_dir)
 
 # %%
 # Read CSV which is multi-index
-#stage = "0.read_data"
-#stage = "2.zscore"
-#target_cols = ['ask', 'bid', 'close', 'day_num_spread', 'day_spread', 'high', 'low', 'notional', 'open', 'sided_ask_count', 'sided_bid_count', 'start_time', 'volume']
+# stage = "0.read_data"
+# stage = "2.zscore"
+# target_cols = ['ask', 'bid', 'close', 'day_num_spread', 'day_spread', 'high', 'low', 'notional', 'open', 'sided_ask_count', 'sided_bid_count', 'start_time', 'volume']
 
 stage = "7.process_forecasts"
-target_cols = ['close', 'close_vwap', 'day_num_spread', 'day_spread', 'garman_klass_vol', 'high', 'low', 'notional', 'open', 'prediction', 'twap', 'volume']
-#timestamp = "20220915_154500"
+target_cols = [
+    "close",
+    "close_vwap",
+    "day_num_spread",
+    "day_spread",
+    "garman_klass_vol",
+    "high",
+    "low",
+    "notional",
+    "open",
+    "prediction",
+    "twap",
+    "volume",
+]
+# timestamp = "20220915_154500"
 timestamp = "20220915_100000"
-current_timestamp = pd.Timestamp.now(tz="America/New_York").strftime('%Y%m%d_%H%M%S')
+current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
 
-file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.csv"
 file_name = os.path.join(prod_dag_dir, file_name)
 print("prod_file_name=", file_name)
 prod_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
 
 prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
 
-#display(prod_dag_df.head(3))
-
 file_name = f"predict.{stage}.df_out.{timestamp}.csv"
 file_name = os.path.join(sim_dag_dir, file_name)
 print("sim_file_name=", file_name)
 sim_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
 sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
-#display(sim_dag_df.head(3))
 
-#print(prod_dag_df.columns.levels[0])
-#print(sim_dag_df.columns.levels[0])
-#prod_dag_df.drop(labels=["end_time"], axis=1, level=0, inplace=True, errors="raise")
 asset_ids = prod_dag_df.columns.levels[1].tolist()
-# for col in prod_dag_df.columns:
-#     if col[0] in target_cols:
-#     columns.append()
-import itertools
+
 columns = list(itertools.product(target_cols, asset_ids))
 prod_dag_df = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
 hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
@@ -128,7 +134,7 @@ prod_dag_df.to_csv("prod_tmp.csv")
 prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
 
 #
-#sim_dag_df = sim_dag_df.drop(labels="end_time.1 timestamp_db index".split(), axis=1, level=0)
+# sim_dag_df = sim_dag_df.drop(labels="end_time.1 timestamp_db index".split(), axis=1, level=0)
 sim_dag_df = sim_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
 hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
 #
@@ -142,12 +148,12 @@ print(list(sim_dag_df.columns.levels[0]))
 # %%
 # Compare output
 dag_corrs = dtfmod.compute_correlations(prod_dag_df, sim_dag_df.shift(0))
-#hpandas.df_to_str(dag_corrs, precision=3, log_level=logging.INFO)
+# hpandas.df_to_str(dag_corrs, precision=3, log_level=logging.INFO)
 
-#sort_col = "close"
+# sort_col = "close"
 sort_col = "prediction"
-#sort_col = "price"
-#sort_col = "volatility"
+# sort_col = "price"
+# sort_col = "volatility"
 hpandas.df_to_str(
     dag_corrs.sort_values(sort_col, ascending=False),
     num_rows=None,
@@ -165,8 +171,8 @@ def get_replayed_delay_in_mins(
     min_timestamp_from_prod: pd.Timestamp,
 ) -> int:
     """
-    Compute replayed delay in minutes from minimal time in
-    market data from file and prod system start time.
+    Compute replayed delay in minutes from minimal time in market data from
+    file and prod system start time.
     """
     time_diff_in_secs = (
         min_timestamp_from_prod - min_timestamp_from_file
@@ -220,9 +226,7 @@ def compute_delay(df: pd.DataFrame, freq: str) -> pd.Series:
     return delay
 
 
-def check_for_missing_bars(
-    df: pd.DataFrame, freq: str
-) -> None:
+def check_for_missing_bars(df: pd.DataFrame, freq: str) -> None:
     """
     Check that no data bars are missed.
     """
@@ -231,9 +235,9 @@ def check_for_missing_bars(
     actual_index = df.index.round(freq)
     min_ts = df.index.min()
     max_ts = df.index.max()
-    expected_index = pd.date_range(
-        start=min_ts, end=max_ts, freq=freq
-    ).round(freq)
+    expected_index = pd.date_range(start=min_ts, end=max_ts, freq=freq).round(
+        freq
+    )
     hdbg.dassert_set_eq(actual_index, expected_index)
 
 
@@ -241,7 +245,7 @@ def check_for_missing_bars(
 def print_stats(df: pd.DataFrame) -> None:
     """
     Print basic stats and sanity checks before doing heavy computations.
-    
+
     Stats include:
     - minimal index timestamp
     - maximum index timestamp
@@ -273,9 +277,7 @@ def load_config_as_list(path: str) -> List[str]:
     return lines
 
 
-def diff_lines(
-    list1: List[str], list2: List[str]
-) -> Tuple[List[str], List[str]]:
+def diff_lines(list1: List[str], list2: List[str]) -> Tuple[List[str], List[str]]:
     """
     Get output lines that differ.
     """
@@ -335,9 +337,7 @@ replayed_delay_in_mins_or_timestamp = get_replayed_delay_in_mins(
 replayed_delay_in_mins_or_timestamp
 
 # %%
-prod_dir = (
-    "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
-)
+prod_dir = "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
 sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
