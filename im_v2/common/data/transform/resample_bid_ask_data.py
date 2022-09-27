@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Load bid/ask parquet data from S3 exchange dir, resample to 1 minute and upload
 back.
