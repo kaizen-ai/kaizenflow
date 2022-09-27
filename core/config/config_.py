@@ -556,9 +556,15 @@ class Config:
             if isinstance(v, Config):
                 v.mark_read_only(value)
 
-    # tag="system_config.input"
     def save_to_file(self, log_dir: str, tag: str) -> None:
-        # TODO(Nina): Add docstring.
+        """
+        Save config as a string and pickle, as a result put 3 files in a log dir:
+        - ../system_config.input.txt
+        - ../system_config.input.pkl
+        - ../system_config.input.force_strings.pkl
+
+        :param tag: "system_config.input"
+        """
         # 1) As a string.
         file_name = os.path.join(log_dir, f"{tag}.txt")
         hio.to_file(file_name, repr(self))
