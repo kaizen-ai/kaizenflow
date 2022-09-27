@@ -560,12 +560,12 @@ class Config:
         """
         Save config as a string and pickle.
 
-        Put 3 files in a log dir:
-        - ../system_config.input.txt
-        - ../system_config.input.pkl
-        - ../system_config.input.force_strings.pkl
+        Save 3 files in a log dir:
+        - ${log_dir}/{tag}.txt
+        - ${log_dir}/{tag}.pkl
+        - ${log_dir}/{tag}.force_strings.pkl
 
-        :param tag: "system_config.input"
+        :param tag: basename of the files to save (e.g., "system_config.input")
         """
         # 1) As a string.
         file_name = os.path.join(log_dir, f"{tag}.txt")
@@ -575,7 +575,7 @@ class Config:
         force_strings = False
         config = self.to_pickleable_config(force_strings)
         hpickle.to_pickle(config, file_name)
-        # 3) As a pickle-able.
+        # 3) As a pickle containing all strings.
         file_name = os.path.join(log_dir, f"{tag}.force_strings.pkl")
         force_strings = True
         config = self.to_pickleable_config(force_strings)
