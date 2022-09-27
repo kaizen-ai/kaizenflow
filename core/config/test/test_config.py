@@ -3,7 +3,7 @@ import datetime
 import logging
 import os
 import pprint
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
@@ -1710,11 +1710,10 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 class Test_to_pickleable_config(hunitest.TestCase):
-    # TODO(gp): @Nina make it readable https://github.com/cryptokaizen/cmamp/pull/2903#discussion_r979023147
     def helper(
         self,
         value: Optional[str],
-        assert_func: Callable,
+        should_be_pickleable_before: bool,
         *,
         force_strings: bool = False,
     ) -> str:
@@ -1725,12 +1724,12 @@ class Test_to_pickleable_config(hunitest.TestCase):
         }
         config = cconfig.Config.from_dict(nested)
         # Check if config is pickle-able before.
-        check = hintros.is_pickleable(config["key1"])
-        assert_func(check)
+        is_pickleable_before = hintros.is_pickleable(config["key1"])
+        self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
         actual = config.to_pickleable_config(force_strings)
-        check = hintros.is_pickleable(actual["key1"])
-        self.assertTrue(check)
+        is_pickleable_after = hintros.is_pickleable(actual["key1"])
+        self.assertTrue(is_pickleable_after)
         # Convert `actual` to string since `assert_equal` comparing
         # within strings and bytes.
         actual = str(actual)
@@ -1745,10 +1744,10 @@ class Test_to_pickleable_config(hunitest.TestCase):
           key4:
         }
         """
-        assert_func = self.assertTrue
+        should_be_pickleable_before = True
         actual = self.helper(
             value,
-            assert_func,
+            should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -1761,10 +1760,10 @@ class Test_to_pickleable_config(hunitest.TestCase):
           key4:
         }
         """
-        assert_func = self.assertFalse
+        should_be_pickleable_before = False
         actual = self.helper(
             value,
-            assert_func,
+            should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
@@ -1777,8 +1776,10 @@ class Test_to_pickleable_config(hunitest.TestCase):
           key4:
         }
         """
-        assert_func = self.assertTrue
-        actual = self.helper(value, assert_func, force_strings=True)
+        should_be_pickleable_before = True
+        actual = self.helper(
+            value, should_be_pickleable_before, force_strings=True
+        )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
