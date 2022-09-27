@@ -95,7 +95,7 @@ stage = "7.process_forecasts"
 target_cols = ['close', 'close_vwap', 'day_num_spread', 'day_spread', 'garman_klass_vol', 'high', 'low', 'notional', 'open', 'prediction', 'twap', 'volume']
 #timestamp = "20220915_154500"
 timestamp = "20220915_100000"
-timestamp = # wall_clock_time value use get wall clock time func
+current_timestamp = pd.Timestamp.now(tz="America/New_York").strftime('%Y%m%d_%H%M%S')
 
 file_name = f"predict.{stage}.df_out.{timestamp}.csv"
 file_name = os.path.join(prod_dag_dir, file_name)
