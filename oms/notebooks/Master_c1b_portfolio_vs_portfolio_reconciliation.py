@@ -34,6 +34,7 @@ import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hwall_clock_time as hwacltim
 import market_data as mdata
@@ -119,7 +120,7 @@ prod_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1
 
 prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
 
-file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.csv"
 file_name = os.path.join(sim_dag_dir, file_name)
 print("sim_file_name=", file_name)
 sim_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
@@ -286,24 +287,41 @@ def diff_lines(list1: List[str], list2: List[str]) -> Tuple[List[str], List[str]
     return list1_only, list2_only
 
 
+def load_parquet_data(
+    file_path: str,
+    column_remap: dict,
+    timestamp_db_column: str,
+    datetime_columns: list,
+) -> pd.DataFrame:
+    # Modified `load_market_data`. Actually the nex line can be added
+    # to `load_market_data` if we're gonna use it for reading parquet 
+    # more than few times.
+    df = hparque.from_parquet(file_path)
+    df = df.rename(columns=column_remap)
+    df["timestamp_db"] = df[timestamp_db_column]
+    for col_name in datetime_columns:
+        hdbg.dassert_in(col_name, df.columns)
+        df[col_name] = pd.to_datetime(df[col_name], utc=True)
+    df.reset_index(inplace=True)
+    return df
+
+
 # %% [markdown]
 # # Set system parameters
 
 # %%
-aws_profile = "ck"
 file_path = (
     "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
 )
-# file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
 column_remap = {
     "start_timestamp": "start_datetime",
     "end_timestamp": "end_datetime",
 }
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
+
 market_data_df = mdata.load_market_data(
     file_path,
-    # aws_profile=aws_profile,
     column_remap=column_remap,
     timestamp_db_column=timestamp_db_column,
     datetime_columns=datetime_columns,
