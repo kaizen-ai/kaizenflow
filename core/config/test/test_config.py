@@ -1788,7 +1788,7 @@ class Test_save_to_file(hunitest.TestCase):
     @staticmethod
     def helper(value: Optional[str]) -> None:
         # Set config.
-        log_dir = "./pickle_log_dir"
+        log_dir = self.get_scratch_space()
         tag = "system_config.input"
         nested = {
             "key1": value,
@@ -1797,42 +1797,28 @@ class Test_save_to_file(hunitest.TestCase):
         config = cconfig.Config.from_dict(nested)
         # Save config.
         config.save_to_file(log_dir, tag)
+        # Set expected values.
+        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
+        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
+        expected_force_strings_pkl_path = os.path.join(
+            log_dir, f"{tag}.force_strings.pkl"
+        )
+        # Check that file paths exist.
+        hdbg.dassert_path_exists(expected_txt_path)
+        hdbg.dassert_path_exists(expected_pkl_path)
+        hdbg.dassert_path_exists(expected_force_strings_pkl_path)
 
     def test1(self) -> None:
         """
-        Test if it saves when config values are pickle-able.
+        Test saving a Config that is pickle-able.
         """
         value = "value1"
-        _ = self.helper(value)
-        # Set expected values.
-        log_dir = "./pickle_log_dir"
-        tag = "system_config.input"
-        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
-        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
-        expected_force_strings_pkl_path = os.path.join(
-            log_dir, f"{tag}.force_strings.pkl"
-        )
-        # Check that file paths exist.
-        hdbg.dassert_path_exists(expected_txt_path)
-        hdbg.dassert_path_exists(expected_pkl_path)
-        hdbg.dassert_path_exists(expected_force_strings_pkl_path)
+        self.helper(value)
 
     def test2(self) -> None:
         """
-        Test if it saves when some config values are not pickle-able.
+        Test saving a Config that is not pickle-able.
         """
         # Set non-pickle-able value.
         value = lambda x: x
-        _ = self.helper(value)
-        # Set expected values.
-        log_dir = "./pickle_log_dir"
-        tag = "system_config.input"
-        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
-        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
-        expected_force_strings_pkl_path = os.path.join(
-            log_dir, f"{tag}.force_strings.pkl"
-        )
-        # Check that file paths exist.
-        hdbg.dassert_path_exists(expected_txt_path)
-        hdbg.dassert_path_exists(expected_pkl_path)
-        hdbg.dassert_path_exists(expected_force_strings_pkl_path)
+        self.helper(value)
