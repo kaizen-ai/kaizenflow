@@ -22,6 +22,7 @@ import pyarrow.parquet as pq
 import tqdm
 
 import core.finance.resampling as cfinresa
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
@@ -108,11 +109,28 @@ def _run(args: argparse.Namespace) -> None:
         "ask_size",
         "exchange_id",
     ]
+    # Convert dates to unix timestamps.
+    start = hdateti.convert_timestamp_to_unix_epoch(
+        pd.Timestamp(args.start_timestamp), unit="s"
+    )
+    end = hdateti.convert_timestamp_to_unix_epoch(
+        pd.Timestamp(args.end_timestamp), unit="s"
+    )
+    # Define filters for data period.
+    filters = [("timestamp", ">=", start), ("timestamp", "<", end)]
     for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
         df = hparque.from_parquet(
-            file_path, columns=columns, aws_profile=aws_profile
+            file_path, columns=columns, filters=filters, aws_profile=aws_profile
         )
+        if df.empty:
+            _LOG.warning(
+                "Empty Dataframe: no data in %s for %s-%s time period",
+                file_path,
+                args.start_timestamp,
+                args.end_timestamp,
+            )
+            continue
         df = _resample_bid_ask_data(df)
         dst_path = os.path.join(args.dst_dir, file)
         pq.write_table(
@@ -140,6 +158,20 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         required=True,
         help="Destination dir where to save resampled parquet files",
+    )
+    parser.add_argument(
+        "--start_timestamp",
+        required=True,
+        action="store",
+        type=str,
+        help="Beginning of the downloaded data period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded data period",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser

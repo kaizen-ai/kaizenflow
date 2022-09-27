@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import s3fs
+import seaborn as sns
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -1345,3 +1346,52 @@ def get_random_df(
     dt = pd.date_range(**date_range_kwargs)
     df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
     return df
+
+
+# #############################################################################
+
+
+def compare_visually_dataframes(
+    df1,
+    df2,
+    column_mode="equal",
+    row_mode="equal",
+    diff_mode="diff",
+    background_gradient: bool = True,
+):
+    """
+    :param row_mode: controls how the rows are handled
+     - "equal": rows need to be the same
+     - "inner": compute the intersection
+    :param column_mode: same as row_mode
+    :param diff_mode: control how the dataframes are computed
+     - "diff": compute the difference between dataframes
+     - "pct_change": compute the percentage change between dataframes
+    """
+    if row_mode == "equal":
+        hdbg.dassert_eq(list(df1.index), list(df2.index))
+    elif row_mode == "inner":
+        same_rows = list((set(df1.index)).intersection(set(df2.index)))
+        df1 = df1[df1.index.isin(same_rows)]
+        df2 = df2[df2.index.isin(same_rows)]
+    else:
+        raise ValueError("Invalid row_mode='%s'" % row_mode)
+    #
+    if column_mode == "equal":
+        hdbg.dassert_eq(sorted(df1.columns), sorted(df2.columns))
+        col_names = df1.columns
+    elif column_mode == "inner":
+        col_names = sorted(list(set(df1.columns).intersection(set(df2.columns))))
+    else:
+        raise ValueError("Invalid column_mode='%s'" % column_mode)
+    #
+    if diff_mode == "diff":
+        df_diff = df1[col_names] - df2[col_names]
+    elif diff_mode == "pct_change":
+        df_diff = 100 * (df1[col_names] - df2[col_names]) / df2[col_names]
+    df_diff = df_diff.add_suffix(f"_{diff_mode}")
+    #
+    if background_gradient:
+        cm = sns.diverging_palette(5, 250, as_cmap=True)
+        df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
+    return df_diff
