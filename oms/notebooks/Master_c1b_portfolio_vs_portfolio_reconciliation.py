@@ -244,6 +244,7 @@ dict_ = {
     "freq": "5T",
     "start_timestamp": start_timestamp,
     "end_timestamp": end_timestamp,
+    "rename_col_map": {"index": "asset_id"},
 }
 #
 config = cconfig.Config.from_dict(dict_)
@@ -257,7 +258,7 @@ display(config)
 
 # %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
-    config["prod_forecast_dir"]
+    config["prod_forecast_dir"], rename_col_map=config["rename_col_map"].to_dict()
 )
 check_for_missing_bars(prod_forecast_df, config["freq"])
 print_stats(prod_forecast_df)
@@ -265,7 +266,7 @@ hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
 sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
-    config["sim_forecast_dir"]
+    config["sim_forecast_dir"], rename_col_map=config["rename_col_map"].to_dict()
 )
 check_for_missing_bars(sim_forecast_df, config["freq"])
 print_stats(sim_forecast_df)
