@@ -12,9 +12,12 @@
 #     name: python3
 # ---
 
+# %%
+# TODO(Max): convert to master notebook.
+
 # %% [markdown]
-# - CCXT data = CCXT realtime bid-ask data collection for futures
-# - CC data = CryptoChassis bid ask futures data
+# - CCXT data = CCXT real-time DB bid-ask data collection for futures
+# - CC data = CryptoChassis historical Parquet bid-ask futures data
 
 # %% [markdown]
 # # Imports
@@ -36,7 +39,7 @@ import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
+import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
 
 # %%
@@ -102,6 +105,7 @@ def get_cmtask2703_config() -> cconconf.Config:
                 "full_symbol",
             ],
         },
+        "order_level" : 1
     }
     config = cconconf.Config.from_dict(param_dict)
     return config
@@ -124,24 +128,40 @@ def load_and_transform_the_data(
     columns,
     filter_data_mode,
 ):
+    """
+    - Load the data through ImClient
+       - For CCXT data also choose the order level data
+    - Transform to the desired multiindex format with specific format
+    
+    :param bid_ask_cols: specify cols with bid-ask data
+    """
+    # Load the data.
     if is_ccxt:
         df = ccxt_im_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
+        # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes. 
         df.index = df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="T")
         )
-        #
-        df = clean_data_for_orderbook_level(df, 1)
+        # Choose the specific order level (first level by default).
+        df = clean_data_for_orderbook_level(df)
     else:
         df = cc_parquet_client.read_data(
             universe, start_ts, end_ts, columns, filter_data_mode
         )
+    # Apply transformation.
     df = df[bid_ask_cols]
     df = df.reset_index().set_index(["timestamp", "full_symbol"])
     return df
 
-def clean_data_for_orderbook_level(df: pd.DataFrame, level: int):
+def clean_data_for_orderbook_level(df: pd.DataFrame, level: int = 1) -> pd.DataFrame:
+    """
+    Specify the order level in CCXT bid ask data. 
+    
+    :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
+    :return: Data where specific level has common name (i.e., bid_price)
+    """
     level_cols = [col for col in df.columns if col.endswith(f"_{level}")]
     level_cols_cleaned = [elem[:-2] for elem in level_cols]
     #
@@ -154,13 +174,13 @@ def clean_data_for_orderbook_level(df: pd.DataFrame, level: int):
 
 
 # %% [markdown]
-# # Initiate clients
+# # Initialize clients
 
 # %% run_control={"marked": false}
 # CCXT client.
 ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**config["data"]["ccxt_im_client"])
 # CC client.
-cc_parquet_client = imvccdcccc.CryptoChassisHistoricalPqByTileClient(
+cc_parquet_client = iccdc.CryptoChassisHistoricalPqByTileClient(
     **config["data"]["cc_im_client"]
 )
 
@@ -193,9 +213,6 @@ print(compare_universe)
 universe.remove("binance::XRP_USDT")
 universe.remove("binance::DOT_USDT")
 # These two symbols crashes the downloads on `tz-conversion` stage.
-universe.remove("binance::BTC_USDT")
-universe.remove("binance::BNB_USDT")
-#
 universe
 
 # %% [markdown]
@@ -205,7 +222,7 @@ universe
 # CCXT data.
 bid_ask_cols = config["column_names"]["bid_ask_cols"]
 is_ccxt = True
-
+#
 data_ccxt = load_and_transform_the_data(
     universe, bid_ask_cols, is_ccxt, **config["data"]["read_data"]
 )
@@ -213,7 +230,7 @@ data_ccxt = load_and_transform_the_data(
 # %%
 # CC data.
 is_ccxt = False
-
+#
 data_cc = load_and_transform_the_data(
     universe, bid_ask_cols, is_ccxt, **config["data"]["read_data"]
 )
@@ -251,7 +268,7 @@ _LOG.info(
 )
 # Remove NaNs.
 data = hpandas.dropna(data, report_stats=True)
-
+#
 display(data.tail())
 
 # %% [markdown]
@@ -268,7 +285,7 @@ for col in bid_ask_cols:
     data[f"{col}_relative_diff_pct"] = (
         100 * (data[f"{col}_cc"] - data[f"{col}_ccxt"]) / data[f"{col}_ccxt"]
     )
-
+#
 data.head()
 
 # %%
@@ -278,7 +295,7 @@ grouper = data.groupby(["full_symbol"])
 for col in bid_ask_cols:
     diff_stats.append(grouper[f"{col}_diff"].mean())
     diff_stats.append(grouper[f"{col}_relative_diff_pct"].mean())
-
+#
 diff_stats = pd.concat(diff_stats, axis=1)
 
 # %% [markdown]
