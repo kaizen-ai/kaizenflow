@@ -256,9 +256,12 @@ class CcxtBroker(ombroker.Broker):
         """
         Get a list of fills for given time period in JSON format.
 
-          Example of output:
+        The time period is treated as [a, b].
+        Note that in case of longer time periods (>24h) the pagination
+        is done by day, which can lead to more data being downloaded than expected.
 
-              {'info': {'symbol': 'ETHUSDT',
+        Example of output:
+        {'info': {'symbol': 'ETHUSDT',
                  'id': '2271885264',
                  'orderId': '8389765544333791328',
                  'side': 'SELL',
@@ -288,6 +291,8 @@ class CcxtBroker(ombroker.Broker):
         'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
         """
         hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
+        hdbg.dassert_isinstance(end_timestamp, pd.Timestamp)
+        hdbg.dassert_lte(start_timestamp, end_timestamp)
         symbols = list(self._symbol_to_asset_id_mapping.keys())
         fills = []
         start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
@@ -296,7 +301,10 @@ class CcxtBroker(ombroker.Broker):
         for symbol in symbols:
             symbol_fills = []
             # Download all trades if period is less than 24 hours.
-            if start_timestamp - end_timestamp < 86400000:
+            # TODO(Danya): Maybe return a dataframe so we can trim the df
+            #  at the output and avoid downloading extra data?
+            if end_timestamp - start_timestamp < 86400000:
+                _LOG.debug("Downloading period=%s, %s", start_timestamp, end_timestamp)
                 day_fills = self._exchange.fetchMyTrades(
                     symbol=symbol,
                     since=start_timestamp,
@@ -304,7 +312,8 @@ class CcxtBroker(ombroker.Broker):
                 )
                 symbol_fills.extend(day_fills)
             # Download day-by-day for longer time periods.
-            for timestamp in range(start_timestamp, end_timestamp, 86400000):
+            for timestamp in range(start_timestamp, end_timestamp + 1, 86400000):
+                _LOG.debug("Downloading period=%s, %s", timestamp, 86400000)
                 day_fills = self._exchange.fetchMyTrades(
                     symbol=symbol,
                     since=timestamp,
