@@ -27,12 +27,11 @@ import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
-import im_v2.common.data.client as icdc
+import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
-import oms.oms_ccxt_utils as oomccuti
 import oms.hsecrets as omssec
-import im_v2.ccxt.data.client as icdcl
+import oms.oms_ccxt_utils as oomccuti
 
 _LOG = logging.getLogger(__name__)
 
@@ -135,8 +134,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     connection = hsql.get_connection(*connection_params)
     resample_1min = False
     im_client = icdcl.CcxtSqlRealTimeImClient(
-    resample_1min, connection, "ccxt_ohlcv_futures"
-)
+        resample_1min, connection, "ccxt_ohlcv_futures"
+    )
     market_data = oomccuti.get_RealTimeImClientMarketData_example2(im_client)
     # Initialize broker.
     broker = occxbrok.CcxtBroker(
@@ -154,11 +153,13 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
     # Get all trades.
-    fills = broker.get_fills_since_timestamp(start_timestamp, end_timestamp)
+    fills = broker.get_fills_for_time_period(start_timestamp, end_timestamp)
     # Save file.
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
-    file_name = os.path.join(args.dst_dir, f"fills_{start_timestamp_str}_{end_timestamp_str}.json")
+    file_name = os.path.join(
+        args.dst_dir, f"fills_{start_timestamp_str}_{end_timestamp_str}.json"
+    )
     hio.to_json(file_name, fills)
 
 

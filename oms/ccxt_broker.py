@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import ccxt
 import pandas as pd
@@ -26,8 +26,8 @@ import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
 import oms.broker as ombroker
-import oms.order as omorder
 import oms.hsecrets as omssec
+import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
 
@@ -250,42 +250,42 @@ class CcxtBroker(ombroker.Broker):
                 open_positions.append(position)
         return open_positions
 
-    def get_fills_since_timestamp(
+    def get_fills_for_time_period(
         self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
     ) -> List[Dict[str, Any]]:
         """
-        Get a list of fills since given timestamp in JSON format.
+        Get a list of fills for given time period in JSON format.
 
-        Example of output:
+          Example of output:
 
-            {'info': {'symbol': 'ETHUSDT',
-               'id': '2271885264',
-               'orderId': '8389765544333791328',
-               'side': 'SELL',
-               'price': '1263.68',
-               'qty': '0.016',
-               'realizedPnl': '-3.52385454',
-               'marginAsset': 'USDT',
-               'quoteQty': '20.21888',
-               'commission': '0.00808755',
-               'commissionAsset': 'USDT',
-               'time': '1663859837554',
-               'positionSide': 'BOTH',
-               'buyer': False,
-               'maker': False},
-      'timestamp': 1663859837554,
-      'datetime': '2022-09-22T15:17:17.554Z',
-      'symbol': 'ETH/USDT',
-      'id': '2271885264',
-      'order': '8389765544333791328',
-      'type': None,
-      'side': 'sell',
-      'takerOrMaker': 'taker',
-      'price': 1263.68,
-      'amount': 0.016,
-      'cost': 20.21888,
-      'fee': {'cost': 0.00808755, 'currency': 'USDT'},
-      'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
+              {'info': {'symbol': 'ETHUSDT',
+                 'id': '2271885264',
+                 'orderId': '8389765544333791328',
+                 'side': 'SELL',
+                 'price': '1263.68',
+                 'qty': '0.016',
+                 'realizedPnl': '-3.52385454',
+                 'marginAsset': 'USDT',
+                 'quoteQty': '20.21888',
+                 'commission': '0.00808755',
+                 'commissionAsset': 'USDT',
+                 'time': '1663859837554',
+                 'positionSide': 'BOTH',
+                 'buyer': False,
+                 'maker': False},
+        'timestamp': 1663859837554,
+        'datetime': '2022-09-22T15:17:17.554Z',
+        'symbol': 'ETH/USDT',
+        'id': '2271885264',
+        'order': '8389765544333791328',
+        'type': None,
+        'side': 'sell',
+        'takerOrMaker': 'taker',
+        'price': 1263.68,
+        'amount': 0.016,
+        'cost': 20.21888,
+        'fee': {'cost': 0.00808755, 'currency': 'USDT'},
+        'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
         """
         hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
         symbols = list(self._symbol_to_asset_id_mapping.keys())
@@ -294,13 +294,24 @@ class CcxtBroker(ombroker.Broker):
         end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
         # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
-            tmp = []
-            for t in range(start_timestamp, end_timestamp, 86400000):
-                symbol_fills = self._exchange.fetchMyTrades(
-                    symbol=symbol, since=t, params={"endTime": t+86400000}
+            symbol_fills = []
+            # Download all trades if period is less than 24 hours.
+            if start_timestamp - end_timestamp < 86400000:
+                day_fills = self._exchange.fetchMyTrades(
+                    symbol=symbol,
+                    since=start_timestamp,
+                    params={"endTime": end_timestamp},
                 )
-                tmp.extend(symbol_fills)
-            fills.extend(tmp)
+                symbol_fills.extend(day_fills)
+            # Download day-by-day for longer time periods.
+            for timestamp in range(start_timestamp, end_timestamp, 86400000):
+                day_fills = self._exchange.fetchMyTrades(
+                    symbol=symbol,
+                    since=timestamp,
+                    params={"endTime": timestamp + 86400000},
+                )
+                symbol_fills.extend(day_fills)
+            fills.extend(symbol_fills)
         return fills
 
     @staticmethod
