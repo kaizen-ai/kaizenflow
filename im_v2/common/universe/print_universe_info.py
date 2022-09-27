@@ -13,12 +13,21 @@ The following command converts asset id to a full symbol:
         --asset_id 3065029174 \
         --im_client ccxt_realtime
     ```
+    Output: `Full symbol: ['binance::DOGE_USDT']`
 
 The command below prints the universe as asset ids:
     ```
     > im_v2/common/universe/print_universe_info.py \
         --action print_universe \
         --im_client ccxt_realtime
+    ```
+    Output:
+    ```
+    Asset ids: (29) 1528092593 2601760471 4939988068 2476706208 1030828978 2540896331
+    9872743573 3065029174 5118394986 1966583502 5115052901 2384892553 1776791608
+    3303714233 8717633868 2425308589 3401245610 2061507978 1467591036 2683705052
+    2099673105 4516629366 2484635488 1464553467 1891737434 8968126878 2237530510
+    6051632686 1182743717
     ```
 
 The command below prints the universe mapping:
@@ -27,6 +36,17 @@ The command below prints the universe mapping:
         --action print_universe_mapping \
         --im_client ccxt_realtime
     ```
+   Output:
+   ```
+   {
+     'binance::ADA_USDT': 3303714233,
+     'binance::APE_USDT': 6051632686,
+      ...
+     'binance::BAKE_USDT': 1528092593,
+     'binance::BNB_USDT': 8968126878,
+      ...
+   }
+   ```
 """
 import argparse
 import logging
@@ -114,12 +134,12 @@ def _run(args: argparse.Namespace) -> None:
         # TODO(gp): Catch a stricter exception.
         except Exception as e:
             _LOG.error("Asset id is not a part of the universe or invalid: %s", e)
-    if args.action == "print_universe":
+    elif args.action == "print_universe":
         full_symbols = im_client.get_universe()
         asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
         # Print all asset ids.
         _LOG.info("Asset ids: %s ", hprint.format_list(asset_ids, max_n=100))
-    if args.action == "print_universe_mapping":
+    elif args.action == "print_universe_mapping":
         full_symbols = im_client.get_universe()
         universe_mapping = imvcuunut.build_numerical_to_string_id_mapping(
             full_symbols
@@ -134,6 +154,8 @@ def _run(args: argparse.Namespace) -> None:
         _LOG.info(
             "\nUniverse mapping:\n%s", hprint.to_pretty_str(universe_mapping)
         )
+    else:
+        raise ValueError(f"Unsupported action={args.action}")
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

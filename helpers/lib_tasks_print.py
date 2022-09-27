@@ -34,7 +34,7 @@ def print_setup(ctx):  # type: ignore
     """
     hlitauti.report_task()
     _ = ctx
-    var_names = "AM_ECR_BASE_PATH BASE_IMAGE".split()
+    var_names = "CK_ECR_BASE_PATH BASE_IMAGE".split()
     for v in var_names:
         print(f"{v}={hlitauti.get_default_param(v)}")
 
