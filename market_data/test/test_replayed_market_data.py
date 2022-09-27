@@ -4,8 +4,11 @@ from typing import Any, Callable, Tuple, Union
 import pandas as pd
 
 import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+import helpers.hwall_clock_time as hwacltim
 import market_data.market_data_example as mdmadaex
 import market_data.replayed_market_data as mdremada
 
@@ -34,7 +37,7 @@ def _check_get_data(
             start_datetime,
             end_datetime,
             replayed_delay_in_mins_or_timestamp,
-            asset_ids
+            asset_ids,
         )
         # Execute function under test.
         actual_df = func(market_data)
@@ -51,6 +54,29 @@ def _check_get_data(
         fuzzy_match=True,
     )
     return market_data
+
+
+def _set_current_bar_timestamp(
+    current_timestamp: pd.Timestamp,
+    bar_duration_in_secs: int,
+) -> None:
+    """
+    Compute the current bar by snapping the current timestamp to the grid.
+    """
+    mode = "round"
+    bar_duration_in_secs = bar_duration_in_secs
+    # E.g., `current_timestamp` is 09:26 and the next bar is at 09:30, so
+    # the distance is 4 minutes, i.e. max distance should be within a bar's
+    # length.
+    max_distance_in_secs = bar_duration_in_secs
+    bar_timestamp = hdateti.find_bar_timestamp(
+        current_timestamp,
+        bar_duration_in_secs,
+        mode=mode,
+        max_distance_in_secs=max_distance_in_secs,
+    )
+    _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+    hwacltim.set_current_bar_timestamp(bar_timestamp)
 
 
 class TestReplayedMarketData1(hunitest.TestCase):
@@ -408,7 +434,7 @@ class TestReplayedMarketData2(hunitest.TestCase):
         - Start replaying time 5 minutes after the beginning of the day, i.e., the
           current time is 9:35.
         - Ask data for [9:30, 9:45]
-        - The returned data is [9:30, 9:35].
+        - The returned data is [9:30, 9:35]
         """
         # Start replaying time 5 minutes after the beginning of the day, so the
         # current time is 9:35.
@@ -435,13 +461,15 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:34:00-05:00      1000    1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00      1000    1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_for_interval2(self) -> None:
         """
         - Current time is 9:45
         - Ask data in [9:35, 9:40]
-        - The returned data is [9:30, 9:40].
+        - The returned data is [9:30, 9:40]
         """
         replayed_delay_in_mins_or_timestamp = 15
         start_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
@@ -464,6 +492,39 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:38:00-05:00      1000   999.892180  2000-01-01 09:37:00-05:00 2000-01-01 09:38:00-05:00
         2000-01-01 09:39:00-05:00      1000   999.993295  2000-01-01 09:38:00-05:00 2000-01-01 09:39:00-05:00
         2000-01-01 09:40:00-05:00      1000   1000.201367 2000-01-01 09:39:00-05:00 2000-01-01 09:40:00-05:00"""
+        # pylint: enable=line-too-long
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
+
+    def test_get_data_for_interval3(self) -> None:
+        """
+        - Current time is 9:35
+        - Ask data in [9:00, 9:40)
+        - The returned data is [9:30, 9:40)
+        """
+        replayed_delay_in_mins_or_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        start_ts = pd.Timestamp("2000-01-01 09:30:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        ts_col_name = "start_datetime"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
+                           asset_id   last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        2000-01-01 09:32:00-05:00      1000  1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
+        2000-01-01 09:33:00-05:00      1000  1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        2000-01-01 09:34:00-05:00      1000  1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00
+        """
         # pylint: enable=line-too-long
         _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
 
@@ -490,7 +551,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         end_datetime
         2000-01-01 09:36:00-05:00      1000   999.96792  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_at_timestamp2(self) -> None:
         """
@@ -512,7 +575,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         Columns: [asset_id, last_price, start_datetime, timestamp_db]
         Index: []"""
         # pylint: enable=line-too-long
-        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
 
 # #############################################################################
@@ -552,7 +617,9 @@ class TestReplayedMarketData3(hunitest.TestCase):
         Wait for the market to open.
         """
         replayed_delay_in_mins_or_timestamp = -2
-        start_time, end_time, num_iter = self._run(replayed_delay_in_mins_or_timestamp)
+        start_time, end_time, num_iter = self._run(
+            replayed_delay_in_mins_or_timestamp
+        )
         # Check.
         expected_start_time = pd.Timestamp("2000-01-01 09:28:00-05:00")
         self.assertEqual(start_time, expected_start_time)
@@ -568,7 +635,9 @@ class TestReplayedMarketData3(hunitest.TestCase):
         The market is already opened.
         """
         replayed_delay_in_mins_or_timestamp = 5
-        start_time, end_time, num_iter = self._run(replayed_delay_in_mins_or_timestamp)
+        start_time, end_time, num_iter = self._run(
+            replayed_delay_in_mins_or_timestamp
+        )
         # Check.
         expected_start_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         self.assertEqual(start_time, expected_start_time)
@@ -612,6 +681,11 @@ class TestReplayedMarketData3(hunitest.TestCase):
                 sleep_in_secs=sleep_in_secs,
                 time_out_in_secs=time_out_in_secs,
             )
+            # Set the `current_bar_timestamp` that is needed inside
+            # `wait_for_latest_data()`.
+            current_timestamp = market_data.get_wall_clock_time()
+            bar_duration_in_secs = 60 * 5
+            _set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
@@ -653,6 +727,7 @@ class TestReplayedMarketData4(hunitest.TestCase):
             # Build a ReplayedMarketData.
             (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example4(
                 event_loop,
+                # Replay data starting at `2000-01-03 09:32:00-05:00`.
                 replayed_delay_in_mins_or_timestamp=1,
                 start_datetime=pd.Timestamp(
                     "2000-01-03 09:31:00-05:00", tz="America/New_York"
@@ -662,6 +737,11 @@ class TestReplayedMarketData4(hunitest.TestCase):
                 ),
                 asset_ids=[101, 202, 303],
             )
+            # Set the `current_bar_timestamp` that is needed inside
+            # `wait_for_latest_data()`.
+            current_timestamp = market_data.get_wall_clock_time()
+            bar_duration_in_secs = 60
+            _set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
