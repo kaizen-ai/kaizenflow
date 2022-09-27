@@ -27,7 +27,7 @@ import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
-import oms.secrets as omssec
+import oms.hsecrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
@@ -251,7 +251,7 @@ class CcxtBroker(ombroker.Broker):
         return open_positions
 
     def get_fills_since_timestamp(
-        self, start_timestamp: pd.Timestamp
+        self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
     ) -> List[Dict[str, Any]]:
         """
         Get a list of fills since given timestamp in JSON format.
@@ -290,12 +290,17 @@ class CcxtBroker(ombroker.Broker):
         hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
         symbols = list(self._symbol_to_asset_id_mapping.keys())
         fills = []
+        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
+        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
         # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
-            symbol_fills = self._exchange.fetchMyTrades(
-                symbol=symbol, since=start_timestamp
-            )
-            fills.append(symbol_fills)
+            tmp = []
+            for t in range(start_timestamp, end_timestamp, 86400000):
+                symbol_fills = self._exchange.fetchMyTrades(
+                    symbol=symbol, since=t, params={"endTime": t+86400000}
+                )
+                tmp.extend(symbol_fills)
+            fills.extend(tmp)
         return fills
 
     @staticmethod
