@@ -284,6 +284,23 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Order df should be empty.
         self.assertEqual(order_df.empty, True)
 
+    def test_get_fills_for_time_period(self) -> None:
+        """
+        Verify that fills for conducted trades are requested properly.
+        """
+        # Define broker parameters.
+        stage = "preprod"
+        contract_type = "spot"
+        account_type = "trading"
+        # Initialize class.
+        broker = self.get_test_broker(stage, contract_type, account_type)
+        with umock.patch.object(
+            broker._exchange, "fetchMyTrades", create=True
+        ):
+            ...
+            # Count calls (make it be 2).
+            # Check out the format is correct.
+
     def test_get_fills(self) -> None:
         """
         Verify that orders are filled properly via mocked exchange.
