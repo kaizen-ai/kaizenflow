@@ -53,6 +53,10 @@ hprint.config_notebook()
 # # System configs
 
 # %%
+prod_dir = "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
+sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
+
+# %%
 prod_system_config_output = load_config_as_list(
     prod_dir + "/system_config.output.txt"
 )
@@ -89,12 +93,22 @@ hdbg.dassert_dir_exists(sim_dag_dir)
 print(sim_dag_dir)
 
 # %%
-# Read CSV which is multi-index
-# stage = "0.read_data"
-# stage = "2.zscore"
-# target_cols = ['ask', 'bid', 'close', 'day_num_spread', 'day_spread', 'high', 'low', 'notional', 'open', 'sided_ask_count', 'sided_bid_count', 'start_time', 'volume']
-
 stage = "7.process_forecasts"
+timestamp = "20220915_100000"
+
+# Get prod_dag_df.
+file_path = get_file_path(stage, timestamp, prod_dag_dir)
+prod_dag_df = load_parquet_data(file_path)
+# start_timestamp:end_timestamp are not defined so which ones should be?
+prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
+
+# Get sim_dag_df
+file_path = get_file_name(stage, timestamp, sim_dag_dir)
+sim_dag_df = load_parquet_data(file_path)
+# start_timestamp:end_timestamp are not defined so which ones should be?
+sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
+
+# %%
 target_cols = [
     "close",
     "close_vwap",
@@ -109,39 +123,17 @@ target_cols = [
     "twap",
     "volume",
 ]
-# timestamp = "20220915_154500"
-timestamp = "20220915_100000"
-current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
 
-file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.csv"
-file_name = os.path.join(prod_dag_dir, file_name)
-print("prod_file_name=", file_name)
-prod_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
+# Not sure if we need this when we use parquet.
+# prod_dag_df.to_csv("prod_tmp.csv")
+# prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
 
-prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
-
-file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.csv"
-file_name = os.path.join(sim_dag_dir, file_name)
-print("sim_file_name=", file_name)
-sim_dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
-sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
-
-asset_ids = prod_dag_df.columns.levels[1].tolist()
-
-columns = list(itertools.product(target_cols, asset_ids))
-prod_dag_df = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+prod_dag_df = get_df_to_compare(prod_dag_df, target_cols)
 hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
-prod_dag_df.to_csv("prod_tmp.csv")
-prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
-
-#
-# sim_dag_df = sim_dag_df.drop(labels="end_time.1 timestamp_db index".split(), axis=1, level=0)
-sim_dag_df = sim_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+# 
+sim_dag_df = get_df_to_compare(sim_dag_df, target_cols)
 hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
-#
-sim_dag_df.to_csv("sim_tmp.csv")
-sim_dag_df = pd.read_csv("sim_tmp.csv", index_col=0, header=[0, 1])
-#
+
 print(list(prod_dag_df.columns.levels[0]))
 print(list(sim_dag_df.columns.levels[0]))
 
@@ -289,27 +281,42 @@ def diff_lines(list1: List[str], list2: List[str]) -> Tuple[List[str], List[str]
 
 def load_parquet_data(
     file_path: str,
-    column_remap: dict,
-    timestamp_db_column: str,
-    datetime_columns: list,
+    *,
+    column_remap: dict = None,
+    timestamp_db_column: str = None,
+    datetime_columns: list = None,
 ) -> pd.DataFrame:
-    # Modified `load_market_data`. Actually the nex line can be added
-    # to `load_market_data` if we're gonna use it for reading parquet 
-    # more than few times.
     df = hparque.from_parquet(file_path)
-    df = df.rename(columns=column_remap)
-    df["timestamp_db"] = df[timestamp_db_column]
-    for col_name in datetime_columns:
-        hdbg.dassert_in(col_name, df.columns)
-        df[col_name] = pd.to_datetime(df[col_name], utc=True)
-    df.reset_index(inplace=True)
+    if column_remap:
+        df = df.rename(columns=column_remap)
+    if timestamp_db_column:
+        df["timestamp_db"] = df[timestamp_db_column]
+        df.reset_index(inplace=True)
+    if datetime_columns:
+        for col_name in datetime_columns:
+            hdbg.dassert_in(col_name, df.columns)
+            df[col_name] = pd.to_datetime(df[col_name], utc=True)
     return df
+
+def get_file_path(stage: str, timestamp: str, target_dir: str) -> str:
+    current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
+    file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
+    file_path = os.path.join(target_dir, file_name)   
+    return file_path
+
+def get_df_to_compare(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+    asset_ids = df.columns.levels[1].tolist()
+    columns = list(itertools.product(columns, asset_ids))
+    df_to_compare = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+    return df_to_compare
+    
 
 
 # %% [markdown]
 # # Set system parameters
 
 # %%
+# TODO(Nina): should be a parquet file.
 file_path = (
     "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
 )
@@ -320,7 +327,7 @@ column_remap = {
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
 
-market_data_df = mdata.load_market_data(
+market_data_df = load_parquet_data(
     file_path,
     column_remap=column_remap,
     timestamp_db_column=timestamp_db_column,
@@ -355,8 +362,6 @@ replayed_delay_in_mins_or_timestamp = get_replayed_delay_in_mins(
 replayed_delay_in_mins_or_timestamp
 
 # %%
-prod_dir = "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
-sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")

@@ -599,6 +599,9 @@ class DAG(hobject.PrintableMixin):
         """
         dst_dir = cast(str, self._dst_dir)
         bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        # TODO(gp): We should use get_wall_clock_time() to allow simulation, but DAG doesn't have a market data.
+        # We could pass a wall clock time func, use the singleton `get_wall_clock_time_func`, or better separate 
+        # the clock from MarketData and pass it around.
         wall_clock_time = hwacltim.get_machine_wall_clock_time(as_str=True)
         basename = (
             f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.{wall_clock_time}"
@@ -620,10 +623,10 @@ class DAG(hobject.PrintableMixin):
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
             if self._save_node_io == "df_as_csv_and_parquet":
-                file_name += ".csv.gz"
-                df.to_csv(file_name)
-                file_name += ".parquet"
-                hparque.to_parquet(df, file_name)
+                csv_file_name += ".csv.gz"
+                df.to_csv(csv_file_name)
+                parquet_file_name += ".parquet"
+                hparque.to_parquet(df, parquet_file_name)
             else:
                 raise ValueError(f"Invalid save_node_io='{self._save_node_io}'")
             _LOG.debug("Saved log dir in '%s'", file_name)
