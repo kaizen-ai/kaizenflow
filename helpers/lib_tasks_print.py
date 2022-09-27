@@ -34,10 +34,7 @@ def print_setup(ctx):  # type: ignore
     """
     hlitauti.report_task()
     _ = ctx
-    # TODO(Nikola): `dev_tools` is still on AM.
     var_names = "CK_ECR_BASE_PATH BASE_IMAGE".split()
-    if hgit.is_dev_tools():
-        var_names[0] = "AM_ECR_BASE_PATH"
     for v in var_names:
         print(f"{v}={hlitauti.get_default_param(v)}")
 
