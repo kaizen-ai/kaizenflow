@@ -32,7 +32,9 @@ def get_ccxt_ohlcv_create_table_query() -> str:
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
-            knowledge_timestamp TIMESTAMP WITH TIME ZONE
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE,
+            CONSTRAINT identical_data UNIQUE(timestamp, exchange_id,
+            currency_pair, open, high, low, close, volume)
             )
             """
     return query
@@ -54,7 +56,9 @@ def get_ccxt_ohlcv_futures_create_table_query() -> str:
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
-            knowledge_timestamp TIMESTAMP WITH TIME ZONE
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE,
+            CONSTRAINT identical_data UNIQUE(timestamp, exchange_id,
+            currency_pair, open, high, low, close, volume)
             )
             """
     return query
