@@ -1714,8 +1714,6 @@ class Test_to_pickleable_config(hunitest.TestCase):
     def helper(
         self,
         value: Optional[str],
-        # TODO(Nina): remove `expected` since it's not used.`
-        expected: str,
         assert_func: Callable,
         *,
         force_strings: bool = False,
@@ -1750,7 +1748,6 @@ class Test_to_pickleable_config(hunitest.TestCase):
         assert_func = self.assertTrue
         actual = self.helper(
             value,
-            expected,
             assert_func,
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -1767,7 +1764,6 @@ class Test_to_pickleable_config(hunitest.TestCase):
         assert_func = self.assertFalse
         actual = self.helper(
             value,
-            expected,
             assert_func,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
@@ -1782,31 +1778,30 @@ class Test_to_pickleable_config(hunitest.TestCase):
         }
         """
         assert_func = self.assertTrue
-        actual = self.helper(value, expected, assert_func, force_strings=True)
+        actual = self.helper(value, assert_func, force_strings=True)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class Test_save_to_file(hunitest.TestCase):
     @staticmethod
-    def helper(is_str: bool) -> None:
+    def helper(value: Optional[str]) -> None:
         # Set config.
         log_dir = "./pickle_log_dir"
         tag = "system_config.input"
         nested = {
-            "key1": "value",
+            "key1": value,
             "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
         # Save config.
-        if is_str:
-            str(config)
-            config.save_to_file(log_dir, tag)
-        else:
-            config.save_to_file(log_dir, tag)
+        config.save_to_file(log_dir, tag)
 
     def test1(self) -> None:
-        # TODO(Nina): Add docstring.
-        self.helper(is_str=True)
+        """
+        Test if it saves when config values are pickle-able.
+        """
+        value = "value1"
+        _ = self.helper(value)
         # Set expected values.
         log_dir = "./pickle_log_dir"
         tag = "system_config.input"
@@ -1815,7 +1810,26 @@ class Test_save_to_file(hunitest.TestCase):
         expected_force_strings_pkl_path = os.path.join(
             log_dir, f"{tag}.force_strings.pkl"
         )
-        # Check. `save_to_file` doesn't return anything so need to check if file path exists.
+        # Check that file paths exist.
+        hdbg.dassert_path_exists(expected_txt_path)
+        hdbg.dassert_path_exists(expected_pkl_path)
+        hdbg.dassert_path_exists(expected_force_strings_pkl_path)
+
+    def test2(self) -> None:
+        """
+        Test if it saves when not some config values are not pickle-able.
+        """
+        value = lambda x: x
+        _ = self.helper(value)
+        # Set expected values.
+        log_dir = "./pickle_log_dir"
+        tag = "system_config.input"
+        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
+        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
+        expected_force_strings_pkl_path = os.path.join(
+            log_dir, f"{tag}.force_strings.pkl"
+        )
+        # Check that file paths exist.
         hdbg.dassert_path_exists(expected_txt_path)
         hdbg.dassert_path_exists(expected_pkl_path)
         hdbg.dassert_path_exists(expected_force_strings_pkl_path)

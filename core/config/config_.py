@@ -391,6 +391,12 @@ class Config:
         """
         return len(self._config)
 
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Accessor
+    # ////////////////////////////////////////////////////////////////////////////
+
+
     @property
     def update_mode(self) -> str:
         return self._update_mode
@@ -408,21 +414,6 @@ class Config:
     def clobber_mode(self, clobber_mode: str) -> None:
         hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
         self._clobber_mode = clobber_mode
-
-    # TODO(gp): Is it used?
-    # TODO(*): Standardize/allow to be configurable what to return if a value is
-    #     missing.
-    # TODO(gp): return a string
-    def print_config(self, keys: Iterable[str]) -> None:
-        """
-        Return a string representation of a subset of keys, assigning "na" when
-        there is no value.
-        """
-        if isinstance(keys, str):
-            keys = [keys]
-        for k in keys:
-            v = self._config.get(k, "na")
-            _LOG.info("%s='%s'", k, v)
 
     # This is similar to `hdict.typed_get()`.
     def get(
