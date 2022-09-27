@@ -558,7 +558,9 @@ class Config:
 
     def save_to_file(self, log_dir: str, tag: str) -> None:
         """
-        Save config as a string and pickle, as a result put 3 files in a log dir:
+        Save config as a string and pickle.
+
+        Put 3 files in a log dir:
         - ../system_config.input.txt
         - ../system_config.input.pkl
         - ../system_config.input.force_strings.pkl

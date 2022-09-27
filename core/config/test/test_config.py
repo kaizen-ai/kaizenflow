@@ -1755,6 +1755,7 @@ class Test_to_pickleable_config(hunitest.TestCase):
         """
         Test when config is not pickle-able before applying the function.
         """
+        # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""{'key1': '<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>', 'key2': key3:
           key4:
@@ -1818,8 +1819,9 @@ class Test_save_to_file(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test if it saves when not some config values are not pickle-able.
+        Test if it saves when some config values are not pickle-able.
         """
+        # Set non-pickle-able value.
         value = lambda x: x
         _ = self.helper(value)
         # Set expected values.
