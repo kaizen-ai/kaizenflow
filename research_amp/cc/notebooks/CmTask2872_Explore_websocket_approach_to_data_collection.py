@@ -466,4 +466,70 @@ for _ in range(run_for / 10):
     print("-----")
     time.sleep(10)
 
+# %% [markdown]
+# # CCXT Bid/Ask and OHLCV demo
+
+# %%
+import ccxtpro
+import im_v2.common.universe.universe as imvcounun
+from datetime import datetime, timedelta
+from typing import List
+import helpers.hdatetime as hdateti
+import time
+import threading
+import json
+import pandas as pd
+import asyncio
+
+# %%
+binance = ccxtpro.binance()
+
+# %%
+universe = imvcounun.get_vendor_universe("CCXT", "download", version="v7")
+universe = list(map(lambda x: x.replace("_", "/"), universe))
+universe = ["ETH/USDT"]
+
+# %% run_control={"marked": true}
+msgs = []
+def process_websocket_msg(msg):
+    msgs.append(msg)
+   
+# Implemented using throttling mode
+# https://docs.ccxt.com/en/latest/ccxt.pro.manual.html#real-time-vs-throttling
+async def watchOrderBooks(exchange, universe: List[str], run_for: int = 5, limit: int = 5):
+    for currency_pair in universe:
+        await exchange.watchOrderBook(currency_pair, 5)
+    print(datetime.now())
+    end_time = datetime.now() + timedelta(seconds=run_for)
+    while datetime.now() < end_time:
+        for currency_pair in universe:
+            print(exchange.orderbooks[currency_pair].limit (limit))
+        await exchange.sleep(250) #miliseconds
+
+# Implemented using real-time mode
+# https://docs.ccxt.com/en/latest/ccxt.pro.manual.html#real-time-vs-throttling
+async def watchOHLCVs(exchange: List[str], universe: List[str], run_for: int = 10, limit: int = 1):
+    print(datetime.now())
+    end_time = datetime.now() + timedelta(seconds=run_for)
+    while datetime.now() < end_time:
+        try:
+            for currency_pair in universe:
+                since = hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now().floor("min")
+                                                                - timedelta(minutes=2))
+                candles = await exchange.watch_ohlcv(currency_pair, timeframe="1m", since=since, limit=3)
+                print(exchange.iso8601(exchange.milliseconds()), candles)
+        except Exception as e:
+            print(e)
+            # stop the loop on exception or leave it commented to retry
+            # raise e
+
+# %%
+await watchOrderBooks(binance, universe)
+
+# %%
+await watchOHLCVs(binance, universe)
+
+# %%
+dir(binance)
+
 # %%
