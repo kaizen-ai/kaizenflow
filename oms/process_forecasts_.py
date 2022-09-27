@@ -524,6 +524,7 @@ class ForecastProcessor:
         log_dir: str,
         *,
         tz: str = "America/New_York",
+        rename_col_map: Optional[Dict[str, str]] = None,
     ) -> pd.DataFrame:
         """
         Parse logged `target_position` dataframes.
@@ -539,6 +540,10 @@ class ForecastProcessor:
             )
             # Change the index from `asset_id` to the timestamp.
             df = df.reset_index().set_index("wall_clock_timestamp")
+            # TODO(Dan): Research why column names are being incorrect sometimes
+            #  and save the data with the proper names.
+            if rename_col_map:
+                df = df.rename(columns=rename_col_map)
             hpandas.dassert_series_type_is(df["asset_id"], np.int64)
             if not isinstance(df.index, pd.DatetimeIndex):
                 _LOG.info("Skipping file_name=%s", path)
@@ -746,7 +751,7 @@ class ForecastProcessor:
             # Verify that all orders are above the notional limit.
             #  Note: orders that are below the minimal amount of asset
             #  for the exchange are modified to go slightly above the limit.
-            df = occoputi.apply_cc_limits(df, self._portfolio.broker)
+            df = occoputi.apply_cc_limits(df, self._portfolio.broker, self._log_dir)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
