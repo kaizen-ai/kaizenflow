@@ -15,8 +15,8 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms
 import oms.ccxt_broker as occxbrok
+import oms.hsecrets.secret_identifier as ohsseide
 import oms.order as omorder
-import oms.hsecrets.secret_identifier as oseseide
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         exchange_id = "binance"
         universe_version = "v5"
         portfolio_id = "ccxt_portfolio_mock"
-        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
             universe_version,
@@ -305,8 +305,60 @@ class TestCcxtBroker1(hunitest.TestCase):
             fetch_trades_mock.return_value = hio.from_json(return_value_path)
             start_timestamp = pd.Timestamp("2022-09-01T00:00:00.000Z")
             end_timestamp = pd.Timestamp("2022-09-01T00:10:00.000Z")
-            fills = broker.get_fills_since_timestamp(start_timestamp, end_timestamp)
-
+            fills = broker.get_fills_for_time_period(
+                start_timestamp, end_timestamp
+            )
+            # Verify that trades are fetched for each asset in the universe.
+            self.assertEqual(fetch_trades_mock.call_count, 9)
+            # Verify that the arguments are called correctly.
+            expected_calls = [
+                umock.call(
+                    symbol="ADA/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="AVAX/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="BNB/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="BTC/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="DOGE/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="EOS/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="ETH/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="LINK/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="SOL/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+            ]
+            fetch_trades_mock.assert_has_calls(expected_calls)
 
     def test_get_fills(self) -> None:
         """
@@ -375,8 +427,8 @@ class TestCcxtBroker1(hunitest.TestCase):
 @pytest.mark.skip(reason="Run manually.")
 class TestSaveMarketInfo(hunitest.TestCase):
     """
-    Capture market info data from a CCXT broker so that it can be
-    reused in other tests and code.
+    Capture market info data from a CCXT broker so that it can be reused in
+    other tests and code.
     """
 
     def get_test_broker(
@@ -391,7 +443,7 @@ class TestSaveMarketInfo(hunitest.TestCase):
         """
         exchange_id = "binance"
         portfolio_id = "ccxt_portfolio_mock"
-        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
             universe_version,

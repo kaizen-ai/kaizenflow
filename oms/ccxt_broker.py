@@ -312,15 +312,16 @@ class CcxtBroker(ombroker.Broker):
                 )
                 symbol_fills.extend(day_fills)
             # Download day-by-day for longer time periods.
-            for timestamp in range(start_timestamp, end_timestamp + 1, 86400000):
-                _LOG.debug("Downloading period=%s, %s", timestamp, 86400000)
-                day_fills = self._exchange.fetchMyTrades(
-                    symbol=symbol,
-                    since=timestamp,
-                    params={"endTime": timestamp + 86400000},
-                )
-                symbol_fills.extend(day_fills)
-            fills.extend(symbol_fills)
+            else:
+                for timestamp in range(start_timestamp, end_timestamp + 1, 86400000):
+                    _LOG.debug("Downloading period=%s, %s", timestamp, 86400000)
+                    day_fills = self._exchange.fetchMyTrades(
+                        symbol=symbol,
+                        since=timestamp,
+                        params={"endTime": timestamp + 86400000},
+                    )
+                    symbol_fills.extend(day_fills)
+                fills.extend(symbol_fills)
         return fills
 
     @staticmethod
