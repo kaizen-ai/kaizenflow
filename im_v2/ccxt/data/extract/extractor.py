@@ -66,6 +66,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         if self.contract_type == "futures":
             exchange_params["options"] = {"defaultType": "future"}
         exchange_class = getattr(ccxt, self.exchange_id)
+        # Using API keys was deprecated in #2919.
         exchange = exchange_class(exchange_params)
         return exchange
 
