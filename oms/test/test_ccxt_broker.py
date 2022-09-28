@@ -57,10 +57,6 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Deallocate in reverse order to avoid race conditions.
         super().tearDown()
 
-    def get_my_trades_return_value(self):
-
-        return my_trades
-
     def get_test_broker(
         self, stage: str, contract_type: str, account_type: str
     ) -> occxbrok.CcxtBroker:
@@ -301,6 +297,21 @@ class TestCcxtBroker1(hunitest.TestCase):
         with umock.patch.object(
             broker._exchange, "fetchMyTrades", create=True
         ) as fetch_trades_mock:
+            # Load an example of a return value.
+            # Command to generate:
+            #  oms/get_ccxt_fills.py \
+            #  --start_timestamp 2022-09-01T00:00:00.000Z \
+            #  --end_timestamp 2022-09-01T00:10:00.000Z \
+            #  --dst_dir oms/test/outcomes/TestCcxtBroker1.test_get_fills_for_time_period/input/ \
+            #  --exchange_id binance \
+            #  --contract_type futures \
+            #  --stage preprod \
+            #  --account_type trading \
+            #  --secrets_id 1 \
+            #  --universe v5
+            # Note: the return value is generated via the script rather than
+            #  the mocked CCXT function, so the test covers only the format of
+            #  the data, and not the content.
             return_value_path = os.path.join(self.get_input_dir(), "trades.json")
             fetch_trades_mock.return_value = hio.from_json(return_value_path)
             start_timestamp = pd.Timestamp("2022-09-01T00:00:00.000Z")
@@ -308,6 +319,10 @@ class TestCcxtBroker1(hunitest.TestCase):
             fills = broker.get_fills_for_time_period(
                 start_timestamp, end_timestamp
             )
+            # Verify that the format of the data output is correct.
+            self.assertEqual(len(fills), 1548)
+            self.assertIsInstance(fills, list)
+            self.assertIsInstance(fills[0], dict)
             # Verify that trades are fetched for each asset in the universe.
             self.assertEqual(fetch_trades_mock.call_count, 9)
             # Verify that the arguments are called correctly.

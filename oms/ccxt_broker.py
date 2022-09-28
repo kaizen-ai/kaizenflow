@@ -299,20 +299,20 @@ class CcxtBroker(ombroker.Broker):
         end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
         # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
-            symbol_fills = []
             # Download all trades if period is less than 24 hours.
             # TODO(Danya): Maybe return a dataframe so we can trim the df
             #  at the output and avoid downloading extra data?
             if end_timestamp - start_timestamp < 86400000:
                 _LOG.debug("Downloading period=%s, %s", start_timestamp, end_timestamp)
-                day_fills = self._exchange.fetchMyTrades(
+                symbol_fills = self._exchange.fetchMyTrades(
                     symbol=symbol,
                     since=start_timestamp,
                     params={"endTime": end_timestamp},
                 )
-                symbol_fills.extend(day_fills)
+                fills.extend(symbol_fills)
             # Download day-by-day for longer time periods.
             else:
+                symbol_fills = []
                 for timestamp in range(start_timestamp, end_timestamp + 1, 86400000):
                     _LOG.debug("Downloading period=%s, %s", timestamp, 86400000)
                     day_fills = self._exchange.fetchMyTrades(
@@ -321,7 +321,7 @@ class CcxtBroker(ombroker.Broker):
                         params={"endTime": timestamp + 86400000},
                     )
                     symbol_fills.extend(day_fills)
-                fills.extend(symbol_fills)
+            fills.extend(symbol_fills)
         return fills
 
     @staticmethod
