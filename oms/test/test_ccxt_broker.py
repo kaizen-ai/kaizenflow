@@ -16,7 +16,7 @@ import market_data as mdata
 import oms
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
-import oms.secrets.secret_identifier as oseseide
+import oms.hsecrets.secret_identifier as oseseide
 
 _LOG = logging.getLogger(__name__)
 
