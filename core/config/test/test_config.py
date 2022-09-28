@@ -1755,7 +1755,7 @@ class Test_to_pickleable_config(hunitest.TestCase):
         # Set non-pickle-able value.
         value = self.test1
         expected = r"""
-        {'key1': '<bound method Test_to_pickleable_config.test1 of <amp.core.config.test.test_config.Test_to_pickleable_config testMethod=test2>>', 'key2': {'key3': {'key4': {}}}}
+        {'key1': '<bound method Test_to_pickleable_config.test1 of <core.config.test.test_config.Test_to_pickleable_config testMethod=test2>>', 'key2': {'key3': {'key4': {}}}}
         """
         should_be_pickleable_before = False
         actual = self.helper(
