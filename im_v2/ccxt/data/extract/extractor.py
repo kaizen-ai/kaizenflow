@@ -8,7 +8,7 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-import ccxt
+import ccxtpro
 import pandas as pd
 import tqdm
 
@@ -55,10 +55,10 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         return currency_pair.replace("_", "/")
 
-    def log_into_exchange(self) -> ccxt.Exchange:
+    def log_into_exchange(self) -> ccxtpro.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding
-        `ccxt.Exchange` object.
+        `ccxtpro.Exchange` object.
         """
         exchange_params: Dict[str, Any] = {}
         secret_id = f"{self.exchange_id}.preprod.trading.1"
@@ -69,7 +69,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         exchange_params["rateLimit"] = True
         if self.contract_type == "futures":
             exchange_params["options"] = {"defaultType": "future"}
-        exchange_class = getattr(ccxt, self.exchange_id)
+        exchange_class = getattr(ccxtpro, self.exchange_id)
         exchange = exchange_class(exchange_params)
         hdbg.dassert(
             exchange.checkRequiredCredentials(),
@@ -166,6 +166,94 @@ class CcxtExtractor(imvcdexex.Extractor):
         # TODO(gp): Double check if dataframes are properly concatenated.
         return all_bars_df
 
+    async def _subscribe_to_websocket_ohlcv(
+        self,
+        currency_pair: str,
+        since: int,
+        *,
+        timeframe: str = "1m",
+        limit: Optional[int] = 3,
+    ) -> None:
+        """
+        Wrapper to subscribe to OHLCV data via watchOHLCV
+         websocket based approach.
+
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
+        :param since: from when is data fetched in UNIX epoch milliseconds
+        :param timeframe: fetch data for certain timeframe
+        :param limit: number of bars to return when getting OHLCV data from the
+         websocket stream via ohlcvs dict, e.g. exchange.ohlcvs['currency_pair']
+        """
+        converted_pair = self.convert_currency_pair(
+            currency_pair,
+        )
+        await self.exchange.watchOHLCV(converted_pair, timeframe=timeframe, since=since, limit=limit)
+
+    async def _subscribe_to_websocket_bid_ask(
+        self,
+        currency_pair: str
+    ) -> None:
+        """
+        Wrapper to subscribe to bid/ask (order book) data via CCXTpro watchOrderBook
+         websocket based approach.
+
+        :param currency_pair: currency pair, e.g. "BTC_USDT"
+        """
+        currency_pair = self.convert_currency_pair(
+            currency_pair,
+        )
+        await self.exchange.watchOrderBook(currency_pair,limit)
+
+    def _download_websocket_ohlcv(
+        self,
+        exchange_id: str,
+        currency_pair: str
+    ) -> Dict:
+        """
+        Get the most recent OHLCV data for a given currency pair
+        
+        :return Dict representing snapshot of the OHLCV candles for a specified symbol
+        TODO(Juraj): show example
+        """
+        try: 
+            pair = self.convert_currency_pair(currency_pair)
+            data = self.exchange.ohlcvs[pair]
+            data["end_download_timestamp"] = str(
+                hdateti.get_current_time("UTC")
+            )
+            return data
+        except KeyError as e:
+            _LOG.error(f"Websocket OHLCV data for {exchange_id} and {currency_pair} is not available. Have \
+            you subscribed to the websocket?")
+            raise e
+
+    def _download_websocket_bid_ask(
+        self,
+        exchange_id: str,
+        currency_pair: str,
+        limit: int,
+    ) -> Dict:
+        """
+        Get the most recent bid/ask (order book) data for a given currency pair
+        for levels up to the specified limit.
+
+        :param limit: number of levels to receive starting from the top of the book.
+        :return Dict representing snapshot of the order book
+         for a specified currency pair up to limit-th level.
+        TODO(Juraj): show example 
+        """
+        try: 
+            pair = self.convert_currency_pair(currency_pair)
+            data = self.exchange.exchange.orderbooks[pair].limit(limit)
+            data["end_download_timestamp"] = str(
+                hdateti.get_current_time("UTC")
+            )
+            return data
+        except KeyError as e:
+            _LOG.error(f"Websocket bid/ask data for {exchange_id} and {currency_pair} is not available. Have \
+            you subscribed to the websocket?")
+            raise e
+
     def _download_bid_ask(
         self, exchange_id: str, currency_pair: str, depth: int, **kwargs: Any
     ) -> pd.DataFrame:
@@ -221,6 +309,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         ]
         bid_ask = order_book[bid_ask_columns]
         return bid_ask
+
+    def _download_websocket_trades(self, **kwargs: Any) -> Dict:
+        raise NotImplementedError("Trades websocket data is not implemented for CCXT vendor yet.")
 
     def _download_trades(self, **kwargs: Any) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for CCXT vendor")

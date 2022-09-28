@@ -31,6 +31,8 @@ from helpers.hthreading import timeout
 _LOG = logging.getLogger(__name__)
 
 
+SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
+
 def _add_common_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -139,9 +141,17 @@ def add_periodical_download_args(
         help="Timestamp when the script should stop (e.g., '2022-05-03 00:30:00')",
     )
     parser.add_argument(
+        "--method",
+        action="store",
+        required=True,
+        type=str,
+        choices=SUPPORTED_DOWNLOAD_METHODS,
+        help="Method used to download the data: rest (for http based download), or websocket"
+    )
+    parser.add_argument(
         "--interval_min",
         type=int,
-        help="Interval between download attempts, in minutes",
+        help="Interval between download attempts, in minutes (applicable for --method=rest)",
     )
     return parser
 
@@ -330,12 +340,26 @@ def _download_realtime_for_one_exchange_with_timeout(
     )
     download_realtime_for_one_exchange(args, exchange_class)
 
-
-def download_realtime_for_one_exchange_periodically(
+# TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
+#  functions' names since it spreads across the codebase. Docstring and the
+# method signature should sufficiently explain what the function does. 
+def _download_websocket_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
-    Encapsulate common logic for periodical exchange data download.
+    Encapsulate common logic for periodical exchange data download
+    using websocket based download.
+
+    :param args: arguments passed on script run
+    :param exchange: name of exchange used in script run
+    """
+
+def _download_rest_realtime_for_one_exchange_periodically(
+    args: Dict[str, Any], exchange: ivcdexex.Extractor
+) -> None:
+    """
+    Encapsulate common logic for periodical exchange data download
+    using REST API based download.
 
     :param args: arguments passed on script run
     :param exchange: name of exchange used in script run
@@ -434,6 +458,23 @@ def download_realtime_for_one_exchange_periodically(
                 download_duration_sec,
             )
 
+def download_realtime_for_one_exchange_periodically(
+    args: Dict[str, Any], exchange: ivcdexex.Extractor, method: str
+) -> None:
+    """
+    Encapsulate common logic for periodical exchange data download via 
+    REST API or websocket.
+
+    :param args: arguments passed on script run
+    :param exchange: name of exchange used in script run
+    """
+    if method == "rest":
+        _download_rest_realtime_for_one_exchange_periodically(args, exchange)
+    elif method == "websocket":
+        _download_websocket_realtime_for_one_exchange_periodically(args, exchange)
+    else:
+        raise ValueError(f"Method: {method} is not a valid method for periodical download, " +
+                          f"supported methods are: {SUPPORTED_DOWNLOAD_METHODS}")
 
 def save_csv(
     data: pd.DataFrame,
