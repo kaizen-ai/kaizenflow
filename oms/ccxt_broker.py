@@ -10,14 +10,13 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ccxt
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hlogging as hloggin
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlogging as hloggin
@@ -36,9 +35,9 @@ _LOG = logging.getLogger(__name__)
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
 
-# ##################################################################################
+# #############################################################################
 # CcxtBroker
-# ##################################################################################
+# #############################################################################
 
 
 class CcxtBroker(ombroker.Broker):
@@ -250,6 +249,54 @@ class CcxtBroker(ombroker.Broker):
             if position_amount != 0:
                 open_positions.append(position)
         return open_positions
+
+    def get_fills_since_timestamp(
+        self, start_timestamp: pd.Timestamp
+    ) -> List[Dict[str, Any]]:
+        """
+        Get a list of fills since given timestamp in JSON format.
+
+        Example of output:
+
+            {'info': {'symbol': 'ETHUSDT',
+               'id': '2271885264',
+               'orderId': '8389765544333791328',
+               'side': 'SELL',
+               'price': '1263.68',
+               'qty': '0.016',
+               'realizedPnl': '-3.52385454',
+               'marginAsset': 'USDT',
+               'quoteQty': '20.21888',
+               'commission': '0.00808755',
+               'commissionAsset': 'USDT',
+               'time': '1663859837554',
+               'positionSide': 'BOTH',
+               'buyer': False,
+               'maker': False},
+      'timestamp': 1663859837554,
+      'datetime': '2022-09-22T15:17:17.554Z',
+      'symbol': 'ETH/USDT',
+      'id': '2271885264',
+      'order': '8389765544333791328',
+      'type': None,
+      'side': 'sell',
+      'takerOrMaker': 'taker',
+      'price': 1263.68,
+      'amount': 0.016,
+      'cost': 20.21888,
+      'fee': {'cost': 0.00808755, 'currency': 'USDT'},
+      'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
+        """
+        hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
+        symbols = list(self._symbol_to_asset_id_mapping.keys())
+        fills = []
+        # Get conducted trades (fills) symbol by symbol.
+        for symbol in symbols:
+            symbol_fills = self._exchange.fetchMyTrades(
+                symbol=symbol, since=start_timestamp
+            )
+            fills.append(symbol_fills)
+        return fills
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
@@ -700,9 +747,9 @@ def get_CcxtBroker_prod_instance1(
     return broker
 
 
-# ##################################################################################
+# #############################################################################
 # SimulatedCcxtBroker
-# ##################################################################################
+# #############################################################################
 
 
 class SimulatedCcxtBroker(ombroker.SimulatedBroker):
