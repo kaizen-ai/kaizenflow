@@ -1278,8 +1278,12 @@ def does_branch_exist(
         for line in txt.split("\n"):
             # number, GH branch name, Git branch name, status.
             fields = line.split("\t")
-            hdbg.dassert_eq(len(fields), 4, "fields=%s", fields)
-            number, gh_branch_name, git_branch_name, _ = fields
+            # fields=['179', 
+            #   'CmTask2914: Add end-to-end unit test for prod reconcile',
+            #   'CmTask2914_Add_end_to_end_unit_test_around_the_prod_reconciliation',
+            #   'DRAFT', '2022-09-27 19:56:50 +0000 UTC']
+            hdbg.dassert_lte(4, len(fields), "fields=%s", fields)
+            number, gh_branch_name, git_branch_name = fields[:3]
             _ = number, gh_branch_name
             if branch_name == git_branch_name:
                 exists = True
