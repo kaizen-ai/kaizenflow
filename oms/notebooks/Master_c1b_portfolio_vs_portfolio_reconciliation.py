@@ -318,7 +318,7 @@ def get_df_to_compare(df: pd.DataFrame, columns: list) -> pd.DataFrame:
 # %%
 # TODO(Nina): should be a parquet file.
 file_path = (
-    "/shared_data/prod_reconciliation/20220915/simulation/test_data.csv.gz"
+    "/shared_data/prod_reconciliation/20220923/simulation/test_data.csv.gz"
 )
 column_remap = {
     "start_timestamp": "start_datetime",
@@ -348,10 +348,10 @@ max_market_data_end_time = (
 max_market_data_end_time
 
 # %%
-date = "2022-09-15"
-start_timestamp = pd.Timestamp(date + " 09:10:00", tz="America/New_York")
+date = "2022-09-23"
+start_timestamp = pd.Timestamp(date + " 07:40:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 11:15:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 10:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
@@ -376,6 +376,7 @@ dict_ = {
     "freq": "5T",
     "start_timestamp": start_timestamp,
     "end_timestamp": end_timestamp,
+    "rename_col_map": {"index": "asset_id"},
 }
 #
 config = cconfig.Config.from_dict(dict_)
@@ -389,7 +390,7 @@ display(config)
 
 # %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
-    config["prod_forecast_dir"]
+    config["prod_forecast_dir"], rename_col_map=config["rename_col_map"].to_dict()
 )
 check_for_missing_bars(prod_forecast_df, config["freq"])
 print_stats(prod_forecast_df)
@@ -397,7 +398,7 @@ hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
 
 # %%
 sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
-    config["sim_forecast_dir"]
+    config["sim_forecast_dir"], rename_col_map=config["rename_col_map"].to_dict()
 )
 check_for_missing_bars(sim_forecast_df, config["freq"])
 print_stats(sim_forecast_df)
