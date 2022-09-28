@@ -71,6 +71,7 @@ class DAG(hobject.PrintableMixin):
         hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
         # Set default debug/logging parameters.
+        # TODO(Nina): Decide whether to change to "df_as_csv_and_parquet".
         self._save_node_io = ""
         self._profile_execution = False
         self._dst_dir: Optional[str] = None

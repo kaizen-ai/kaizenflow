@@ -49,10 +49,10 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 
-# %% [markdown] heading_collapsed=true
+# %% [markdown]
 # # Functions
 
-# %% hidden=true
+# %%
 def get_replayed_delay_in_mins(
     min_timestamp_from_file: pd.Timestamp,
     min_timestamp_from_prod: pd.Timestamp,
