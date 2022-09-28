@@ -48,116 +48,11 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
-# %% [markdown]
-# # System configs
 
-# %%
-prod_dir = "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
-sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
-
-# %%
-prod_system_config_output = load_config_as_list(
-    prod_dir + "/system_config.output.txt"
-)
-sim_system_config_output = load_config_as_list(
-    sim_dir + "/system_config.output.txt"
-)
-prod_system_config_input = load_config_as_list(
-    prod_dir + "/system_config.input.txt"
-)
-sim_system_config_input = load_config_as_list(
-    sim_dir + "/system_config.input.txt"
-)
-
-# %%
-prod_output_only, sim_output_only = diff_lines(
-    prod_system_config_output, sim_system_config_output
-)
-
-# %%
-# prod_output_only
-
-# %%
-# sim_output_only
-
-# %% [markdown]
-# # DAG compare
-
-# %%
-prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
-hdbg.dassert_dir_exists(prod_dag_dir)
-print(prod_dag_dir)
-sim_dag_dir = os.path.join(sim_dir, "dag/node_io/node_io.data")
-hdbg.dassert_dir_exists(sim_dag_dir)
-print(sim_dag_dir)
-
-# %%
-stage = "7.process_forecasts"
-timestamp = "20220915_100000"
-
-# Get prod_dag_df.
-file_path = get_file_path(stage, timestamp, prod_dag_dir)
-prod_dag_df = load_parquet_data(file_path)
-# start_timestamp:end_timestamp are not defined so which ones should be?
-prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
-
-# Get sim_dag_df
-file_path = get_file_name(stage, timestamp, sim_dag_dir)
-sim_dag_df = load_parquet_data(file_path)
-# start_timestamp:end_timestamp are not defined so which ones should be?
-sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
-
-# %%
-target_cols = [
-    "close",
-    "close_vwap",
-    "day_num_spread",
-    "day_spread",
-    "garman_klass_vol",
-    "high",
-    "low",
-    "notional",
-    "open",
-    "prediction",
-    "twap",
-    "volume",
-]
-
-# Not sure if we need this when we use parquet.
-# prod_dag_df.to_csv("prod_tmp.csv")
-# prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
-
-prod_dag_df = get_df_to_compare(prod_dag_df, target_cols)
-hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
-#
-sim_dag_df = get_df_to_compare(sim_dag_df, target_cols)
-hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
-
-print(list(prod_dag_df.columns.levels[0]))
-print(list(sim_dag_df.columns.levels[0]))
-
-
-# %%
-# Compare output
-dag_corrs = dtfmod.compute_correlations(prod_dag_df, sim_dag_df.shift(0))
-# hpandas.df_to_str(dag_corrs, precision=3, log_level=logging.INFO)
-
-# sort_col = "close"
-sort_col = "prediction"
-# sort_col = "price"
-# sort_col = "volatility"
-hpandas.df_to_str(
-    dag_corrs.sort_values(sort_col, ascending=False),
-    num_rows=None,
-    precision=3,
-    log_level=logging.INFO,
-)
-
-
-# %% [markdown]
+# %% [markdown] heading_collapsed=true
 # # Functions
 
-# %%
+# %% hidden=true
 def get_replayed_delay_in_mins(
     min_timestamp_from_file: pd.Timestamp,
     min_timestamp_from_prod: pd.Timestamp,
@@ -311,6 +206,111 @@ def get_df_to_compare(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     df_to_compare = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
     return df_to_compare
 
+
+# %% [markdown]
+# # System configs
+
+# %%
+prod_dir = "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
+sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
+
+# %%
+prod_system_config_output = load_config_as_list(
+    prod_dir + "/system_config.output.txt"
+)
+sim_system_config_output = load_config_as_list(
+    sim_dir + "/system_config.output.txt"
+)
+prod_system_config_input = load_config_as_list(
+    prod_dir + "/system_config.input.txt"
+)
+sim_system_config_input = load_config_as_list(
+    sim_dir + "/system_config.input.txt"
+)
+
+# %%
+prod_output_only, sim_output_only = diff_lines(
+    prod_system_config_output, sim_system_config_output
+)
+
+# %%
+# prod_output_only
+
+# %%
+# sim_output_only
+
+# %% [markdown]
+# # DAG compare
+
+# %%
+prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
+hdbg.dassert_dir_exists(prod_dag_dir)
+print(prod_dag_dir)
+sim_dag_dir = os.path.join(sim_dir, "dag/node_io/node_io.data")
+hdbg.dassert_dir_exists(sim_dag_dir)
+print(sim_dag_dir)
+
+# %%
+stage = "7.process_forecasts"
+timestamp = "20220915_100000"
+
+# Get prod_dag_df.
+file_path = get_file_path(stage, timestamp, prod_dag_dir)
+prod_dag_df = load_parquet_data(file_path)
+# start_timestamp:end_timestamp are not defined so which ones should be?
+prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
+
+# Get sim_dag_df
+file_path = get_file_name(stage, timestamp, sim_dag_dir)
+sim_dag_df = load_parquet_data(file_path)
+# start_timestamp:end_timestamp are not defined so which ones should be?
+sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
+
+# %%
+target_cols = [
+    "close",
+    "close_vwap",
+    "day_num_spread",
+    "day_spread",
+    "garman_klass_vol",
+    "high",
+    "low",
+    "notional",
+    "open",
+    "prediction",
+    "twap",
+    "volume",
+]
+
+# Not sure if we need this when we use parquet.
+# prod_dag_df.to_csv("prod_tmp.csv")
+# prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
+
+prod_dag_df = get_df_to_compare(prod_dag_df, target_cols)
+hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
+#
+sim_dag_df = get_df_to_compare(sim_dag_df, target_cols)
+hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
+
+print(list(prod_dag_df.columns.levels[0]))
+print(list(sim_dag_df.columns.levels[0]))
+
+
+# %%
+# Compare output
+dag_corrs = dtfmod.compute_correlations(prod_dag_df, sim_dag_df.shift(0))
+# hpandas.df_to_str(dag_corrs, precision=3, log_level=logging.INFO)
+
+# sort_col = "close"
+sort_col = "prediction"
+# sort_col = "price"
+# sort_col = "volatility"
+hpandas.df_to_str(
+    dag_corrs.sort_values(sort_col, ascending=False),
+    num_rows=None,
+    precision=3,
+    log_level=logging.INFO,
+)
 
 # %% [markdown]
 # # Set system parameters
