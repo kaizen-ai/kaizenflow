@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.secrets as omssec
+import oms.hsecrets as homssec
 """
 
 from oms.hsecrets.secret_identifier import *  # pylint: disable=unused-import # NOQA
