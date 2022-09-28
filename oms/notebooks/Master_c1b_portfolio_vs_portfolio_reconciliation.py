@@ -37,7 +37,6 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hwall_clock_time as hwacltim
-import market_data as mdata
 import oms as oms
 
 # %%
@@ -130,7 +129,7 @@ target_cols = [
 
 prod_dag_df = get_df_to_compare(prod_dag_df, target_cols)
 hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
-# 
+#
 sim_dag_df = get_df_to_compare(sim_dag_df, target_cols)
 hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
 
@@ -298,18 +297,19 @@ def load_parquet_data(
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
     return df
 
+
 def get_file_path(stage: str, timestamp: str, target_dir: str) -> str:
     current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
     file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
-    file_path = os.path.join(target_dir, file_name)   
+    file_path = os.path.join(target_dir, file_name)
     return file_path
+
 
 def get_df_to_compare(df: pd.DataFrame, columns: list) -> pd.DataFrame:
     asset_ids = df.columns.levels[1].tolist()
     columns = list(itertools.product(columns, asset_ids))
     df_to_compare = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
     return df_to_compare
-    
 
 
 # %% [markdown]
