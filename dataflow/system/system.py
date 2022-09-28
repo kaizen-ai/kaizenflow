@@ -213,8 +213,8 @@ class System(abc.ABC):
         log_dir = self.config["system_log_dir"]
         hio.create_dir(log_dir, incremental=False)
         #
-        file_name = os.path.join(log_dir, "system_config.input.txt")
-        hio.to_file(file_name, repr(self.config))
+        tag = "system_config.input"
+        self.config.save_to_file(log_dir, tag)
         #
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
             key, self._get_dag_runner
@@ -235,8 +235,8 @@ class System(abc.ABC):
             + hprint.frame("End config after dag_runner")
         )
         #
-        file_name = os.path.join(log_dir, "system_config.output.txt")
-        hio.to_file(file_name, repr(self.config))
+        tag = "system_config.output"
+        self.config.save_to_file(log_dir, tag)
         return dag_runner
 
     @abc.abstractmethod

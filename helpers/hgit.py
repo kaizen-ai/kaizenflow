@@ -1278,7 +1278,7 @@ def does_branch_exist(
         for line in txt.split("\n"):
             # number, GH branch name, Git branch name, status.
             fields = line.split("\t")
-            hdbg.dassert_eq(len(fields), 4)
+            hdbg.dassert_eq(len(fields), 4, "fields=%s", fields)
             number, gh_branch_name, git_branch_name, _ = fields
             _ = number, gh_branch_name
             if branch_name == git_branch_name:
