@@ -6,7 +6,7 @@ Example use:
 # Get filled orders from binance from 2022-09-22 to 2022-09-23.
 > oms/get_ccxt_fills.py \
     --start_timestamp '2022-09-22' \
-    --start_timestamp '2022-09-23' \
+    --end_timestamp '2022-09-23' \
     --dst_dir '/shared_data/filled_orders/' \
     --exchange_id 'binance' \
     --contract_type 'futures' \
