@@ -195,7 +195,8 @@ def load_parquet_data(
 
 def get_file_path(stage: str, timestamp: str, target_dir: str) -> str:
     current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
-    file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
+    file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.csv"
+#     file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
     file_path = os.path.join(target_dir, file_name)
     return file_path
 
