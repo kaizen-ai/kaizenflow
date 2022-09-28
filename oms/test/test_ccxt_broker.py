@@ -57,6 +57,10 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Deallocate in reverse order to avoid race conditions.
         super().tearDown()
 
+    def get_my_trades_return_value(self):
+
+        return my_trades
+
     def get_test_broker(
         self, stage: str, contract_type: str, account_type: str
     ) -> occxbrok.CcxtBroker:
