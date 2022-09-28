@@ -7,7 +7,7 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
-import oms.secrets.secret_identifier as oseseide
+import oms.hsecrets.secret_identifier as oseseide
 
 
 class TestCcOptimizerUtils1(hunitest.TestCase):

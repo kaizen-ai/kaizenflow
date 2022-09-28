@@ -10,7 +10,7 @@ from typing import Any, List, Optional
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.portfolio as omportfo
-import oms.secrets as omssec
+import oms.hsecrets as omssec
 
 
 _LOG = logging.getLogger(__name__)
