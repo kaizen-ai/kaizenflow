@@ -572,7 +572,7 @@ class Config:
         hio.to_file(file_name, repr(self))
         # 2) As a pickle containing all strings as keys.
         file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
-        config = self.to_pickleable_config(force_strings)
+        config = self.to_pickleable_config()
         _LOG.info("after conversion config=%s", str(config))
         hpickle.to_pickle(config, file_name)
 
@@ -603,7 +603,10 @@ class Config:
         """
         config_out = {}
         for k, v in self._config.items():
-            config_out[k] = str(v)
+            if isinstance(v, Config):
+                config_out[k] = v.to_pickleable_config()
+            else:
+                config_out[k] = hpickle.to_pickleable(v)
         return config_out
 
     def to_python(self, check: bool = True) -> str:
