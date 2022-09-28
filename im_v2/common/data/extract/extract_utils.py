@@ -373,10 +373,7 @@ def _download_rest_realtime_for_one_exchange_periodically(
     hdbg.dassert_lte(
         1, interval_min, "interval_min: %s should be greater than 0", interval_min
     )
-    hdbg.dassert_eq(start_time.tz, stop_time.tz)
     tz = start_time.tz
-    hdbg.dassert_lt(datetime.now(tz), start_time, "start_time is in the past")
-    hdbg.dassert_lt(start_time, stop_time, "stop_time is less than start_time")
     # Error will be raised if we miss full 5 minute window of data,
     # even if the next download succeeds, we don't recover all of the previous data.
     num_failures = 0
@@ -468,6 +465,13 @@ def download_realtime_for_one_exchange_periodically(
     :param args: arguments passed on script run
     :param exchange: name of exchange used in script run
     """
+    # Peform assertions common to all downloaders.
+    start_time = pd.Timestamp(args["start_time"])
+    stop_time = pd.Timestamp(args["stop_time"])
+    hdbg.dassert_eq(start_time.tz, stop_time.tz)
+    tz = start_time.tz
+    hdbg.dassert_lt(datetime.now(tz), start_time, "start_time is in the past")
+    hdbg.dassert_lt(start_time, stop_time, "stop_time is less than start_time")
     if method == "rest":
         _download_rest_realtime_for_one_exchange_periodically(args, exchange)
     elif method == "websocket":
