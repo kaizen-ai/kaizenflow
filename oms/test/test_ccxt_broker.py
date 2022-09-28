@@ -300,10 +300,13 @@ class TestCcxtBroker1(hunitest.TestCase):
         broker = self.get_test_broker(stage, contract_type, account_type)
         with umock.patch.object(
             broker._exchange, "fetchMyTrades", create=True
-        ):
-            ...
-            # Count calls (make it be 2).
-            # Check out the format is correct.
+        ) as fetch_trades_mock:
+            return_value_path = os.path.join(self.get_input_dir(), "trades.json")
+            fetch_trades_mock.return_value = hio.from_json(return_value_path)
+            start_timestamp = pd.Timestamp("2022-09-01T00:00:00.000Z")
+            end_timestamp = pd.Timestamp("2022-09-01T00:10:00.000Z")
+            fills = broker.get_fills_since_timestamp(start_timestamp, end_timestamp)
+
 
     def test_get_fills(self) -> None:
         """
