@@ -498,17 +498,17 @@ def process_websocket_msg(msg):
 # https://docs.ccxt.com/en/latest/ccxt.pro.manual.html#real-time-vs-throttling
 async def watchOrderBooks(exchange, universe: List[str], run_for: int = 5, limit: int = 5):
     for currency_pair in universe:
-        await exchange.watchOrderBook(currency_pair, 5)
+        await exchange.watchOrderBook(currency_pair)
     print(datetime.now())
     end_time = datetime.now() + timedelta(seconds=run_for)
     while datetime.now() < end_time:
         for currency_pair in universe:
-            print(exchange.orderbooks[currency_pair].limit (limit))
+            print(exchange.orderbooks[currency_pair].limit(limit))
         await exchange.sleep(250) #miliseconds
 
 # Implemented using real-time mode
 # https://docs.ccxt.com/en/latest/ccxt.pro.manual.html#real-time-vs-throttling
-async def watchOHLCVs(exchange: List[str], universe: List[str], run_for: int = 10, limit: int = 1):
+async def watchOHLCVs(exchange: List[str], universe: List[str], run_for: int = 10, limit: int = 3):
     print(datetime.now())
     end_time = datetime.now() + timedelta(seconds=run_for)
     while datetime.now() < end_time:
@@ -516,12 +516,25 @@ async def watchOHLCVs(exchange: List[str], universe: List[str], run_for: int = 1
             for currency_pair in universe:
                 since = hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now().floor("min")
                                                                 - timedelta(minutes=2))
-                candles = await exchange.watch_ohlcv(currency_pair, timeframe="1m", since=since, limit=3)
+                candles = await exchange.watch_ohlcv(currency_pair, timeframe="1m", since=since, limit=limit)
                 print(exchange.iso8601(exchange.milliseconds()), candles)
         except Exception as e:
             print(e)
             # stop the loop on exception or leave it commented to retry
             # raise e
+
+# %%
+# Implemented using throttling mode
+# https://docs.ccxt.com/en/latest/ccxt.pro.manual.html#real-time-vs-throttling
+async def watchOHLCVs(exchange, universe: List[str], run_for: int = 5, limit: int = 3):
+    for currency_pair in universe:
+        await exchange.watchOHLCV(currency_pair, timeframe="1m", since=int(pd.Timestamp.now().timestamp()), limit=limit)
+    print(datetime.now())
+    end_time = datetime.now() + timedelta(seconds=run_for)
+    while datetime.now() < end_time:
+        for currency_pair in universe:
+            print(exchange.ohlcvs[currency_pair])
+        await exchange.sleep(1000) #miliseconds
 
 # %%
 await watchOrderBooks(binance, universe)
@@ -530,6 +543,12 @@ await watchOrderBooks(binance, universe)
 await watchOHLCVs(binance, universe)
 
 # %%
-dir(binance)
+list(filter(lambda x: "watch" in x, dir(binance)))
+
+# %%
+pd.Timestamp.now().timestamp()
+
+# %%
+binance.ohlcvs["ETH_USDT"]
 
 # %%
