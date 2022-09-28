@@ -1714,8 +1714,6 @@ class Test_to_pickleable_config(hunitest.TestCase):
         self,
         value: Optional[str],
         should_be_pickleable_before: bool,
-        *,
-        force_strings: bool = False,
     ) -> str:
         # Set config.
         nested = {
@@ -1727,7 +1725,7 @@ class Test_to_pickleable_config(hunitest.TestCase):
         is_pickleable_before = hintros.is_pickleable(config["key1"])
         self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
-        actual = config.to_pickleable_config(force_strings)
+        actual = config.to_pickleable_config()
         is_pickleable_after = hintros.is_pickleable(actual["key1"])
         self.assertTrue(is_pickleable_after)
         # Convert `actual` to string since `assert_equal` comparing
@@ -1740,9 +1738,8 @@ class Test_to_pickleable_config(hunitest.TestCase):
         Test when config is pickle-able before applying the function.
         """
         value = "val1"
-        expected = r"""{'key1': 'val1', 'key2': key3:
-          key4:
-        }
+        expected = r"""
+        {'key1': 'val1', 'key2': {'key3': {'key4': {}}}}
         """
         should_be_pickleable_before = True
         actual = self.helper(
@@ -1756,10 +1753,9 @@ class Test_to_pickleable_config(hunitest.TestCase):
         Test when config is not pickle-able before applying the function.
         """
         # Set non-pickle-able value.
-        value = lambda x: x
-        expected = r"""{'key1': '<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>', 'key2': key3:
-          key4:
-        }
+        value = self.test1
+        expected = r"""
+        {'key1': '<bound method Test_to_pickleable_config.test1 of <amp.core.config.test.test_config.Test_to_pickleable_config testMethod=test2>>', 'key2': {'key3': {'key4': {}}}}
         """
         should_be_pickleable_before = False
         actual = self.helper(
@@ -1767,21 +1763,6 @@ class Test_to_pickleable_config(hunitest.TestCase):
             should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
-
-    def test3(self) -> None:
-        """
-        Test when config is pickle-able before applying the function and `force_strings = True`.
-        """
-        value = "val3"
-        expected = r"""{'key1': 'val3', 'key2': key3:
-          key4:
-        }
-        """
-        should_be_pickleable_before = True
-        actual = self.helper(
-            value, should_be_pickleable_before, force_strings=True
-        )
-        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 class Test_save_to_file(hunitest.TestCase):
@@ -1798,14 +1779,10 @@ class Test_save_to_file(hunitest.TestCase):
         config.save_to_file(log_dir, tag)
         # Set expected values.
         expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
-        expected_pkl_path = os.path.join(log_dir, f"{tag}.pkl")
-        expected_force_strings_pkl_path = os.path.join(
-            log_dir, f"{tag}.force_strings.pkl"
-        )
+        expected_pkl_path = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
         # Check that file paths exist.
         hdbg.dassert_path_exists(expected_txt_path)
         hdbg.dassert_path_exists(expected_pkl_path)
-        hdbg.dassert_path_exists(expected_force_strings_pkl_path)
 
     def test1(self) -> None:
         """

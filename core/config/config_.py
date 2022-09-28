@@ -560,25 +560,19 @@ class Config:
         """
         Save config as a string and pickle.
 
-        Save 3 files in a log dir:
+        Save 2 files in a log dir:
         - ${log_dir}/{tag}.txt
-        - ${log_dir}/{tag}.pkl
-        - ${log_dir}/{tag}.force_strings.pkl
+        - ${log_dir}/{tag}.values_as_strings.pkl
 
         :param tag: basename of the files to save (e.g., "system_config.input")
         """
         # 1) As a string.
         file_name = os.path.join(log_dir, f"{tag}.txt")
         hio.to_file(file_name, repr(self))
-        # 2) As a pickle.
-        file_name = os.path.join(log_dir, f"{tag}.pkl")
-        force_strings = False
-        config = self.to_pickleable_config(force_strings)
-        hpickle.to_pickle(config, file_name)
-        # 3) As a pickle containing all strings.
-        file_name = os.path.join(log_dir, f"{tag}.force_strings.pkl")
-        force_strings = True
-        config = self.to_pickleable_config(force_strings)
+        # 2) As a pickle containing all strings as keys.
+        file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
+        config = self.to_pickleable_config()
+        _LOG.info("after conversion config=%s", str(config))
         hpickle.to_pickle(config, file_name)
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -601,21 +595,17 @@ class Config:
             return None
         return val  # type: ignore
 
-    def to_pickleable_config(self, force_strings: bool) -> "Config":
+    def to_pickleable_config(self) -> "Config":
         """
-        Transform this Config into a pickle-able one where non pickle-able
-        objects are replaced with their string representation.
-
-        :param force_strings: force all values to become strings, even if they are
-            pickle-able
+        Transform this Config into a pickle-able one where all values are
+        replaced with their string representation.
         """
         config_out = {}
         for k, v in self._config.items():
             if isinstance(v, Config):
-                config_out[k] = v.to_pickleable_config(force_strings)
-            elif force_strings or not hintros.is_pickleable(v):
-                v = str(v)
-            config_out[k] = v
+                config_out[k] = v.to_pickleable_config()
+            else:
+                config_out[k] = hpickle.to_pickleable(v)
         return config_out
 
     def to_python(self, check: bool = True) -> str:
