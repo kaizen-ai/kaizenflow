@@ -195,9 +195,11 @@ def load_parquet_data(
 
 
 def get_file_path(stage: str, timestamp: str, target_dir: str) -> str:
-    current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
     file_name = f"predict.{stage}.df_out.{timestamp}.parquet"
-    #     file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
+    # TODO(Nina): Decide what to use instead of `get_machine_wall_clock_time`
+    # since every call will return a different time. 
+    # current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
+    # file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
     file_path = os.path.join(target_dir, file_name)
     return file_path
 
@@ -214,6 +216,7 @@ def get_df_to_compare(df: pd.DataFrame) -> pd.DataFrame:
 # # System configs
 
 # %%
+# TODO(Nina): Factor out to a function to get all prod/sim dirs at once.
 run_time_stamp = "20220928"
 root_dir = f"/shared_data/prod_reconciliation/{run_time_stamp}"
 prod_dir = os.path.join(root_dir, f"prod/system_log_dir_{run_time_stamp}_2hours")
@@ -248,6 +251,7 @@ prod_output_only, sim_output_only = diff_lines(
 # # DAG compare
 
 # %%
+# TODO(Nina): Factor out to a function to get all prod/sim dirs at once.
 prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
 hdbg.dassert_dir_exists(prod_dag_dir)
 print(prod_dag_dir)
@@ -266,7 +270,7 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # %%
 stage = "8.process_forecasts"
 timestamp = f"{run_time_stamp}_142000"
-
+# TODO(Nina): Factor out to a function like `get_dag_df()`.
 # Get prod_dag_df.
 file_path = get_file_path(stage, timestamp, prod_dag_dir)
 prod_dag_df = load_parquet_data(file_path)
