@@ -420,7 +420,6 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
-    @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     @umock.patch.object(ivcdexex.hsecret, "get_secret")
@@ -507,7 +506,6 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         )
         imvcdeexut.download_historical_data(args, exchange)
 
-    @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
     @umock.patch.object(ivcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
