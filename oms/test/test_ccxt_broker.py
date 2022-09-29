@@ -15,8 +15,8 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms
 import oms.ccxt_broker as occxbrok
+import oms.hsecrets.secret_identifier as ohsseide
 import oms.order as omorder
-import oms.hsecrets.secret_identifier as oseseide
 
 _LOG = logging.getLogger(__name__)
 
@@ -66,7 +66,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         exchange_id = "binance"
         universe_version = "v5"
         portfolio_id = "ccxt_portfolio_mock"
-        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
             universe_version,
@@ -284,6 +284,97 @@ class TestCcxtBroker1(hunitest.TestCase):
         # Order df should be empty.
         self.assertEqual(order_df.empty, True)
 
+    def test_get_fills_for_time_period(self) -> None:
+        """
+        Verify that fills for conducted trades are requested properly.
+        """
+        # Define broker parameters.
+        stage = "preprod"
+        contract_type = "spot"
+        account_type = "trading"
+        # Initialize class.
+        broker = self.get_test_broker(stage, contract_type, account_type)
+        with umock.patch.object(
+            broker._exchange, "fetchMyTrades", create=True
+        ) as fetch_trades_mock:
+            # Load an example of a return value.
+            # Command to generate:
+            #  oms/get_ccxt_fills.py \
+            #  --start_timestamp 2022-09-01T00:00:00.000Z \
+            #  --end_timestamp 2022-09-01T00:10:00.000Z \
+            #  --dst_dir oms/test/outcomes/TestCcxtBroker1.test_get_fills_for_time_period/input/ \
+            #  --exchange_id binance \
+            #  --contract_type futures \
+            #  --stage preprod \
+            #  --account_type trading \
+            #  --secrets_id 1 \
+            #  --universe v5
+            # Note: the return value is generated via the script rather than
+            #  the mocked CCXT function, so the test covers only the format of
+            #  the data, and not the content.
+            return_value_path = os.path.join(self.get_input_dir(), "trades.json")
+            fetch_trades_mock.return_value = hio.from_json(return_value_path)
+            start_timestamp = pd.Timestamp("2022-09-01T00:00:00.000Z")
+            end_timestamp = pd.Timestamp("2022-09-01T00:10:00.000Z")
+            fills = broker.get_fills_for_time_period(
+                start_timestamp, end_timestamp
+            )
+            # Verify that the format of the data output is correct.
+            self.assertEqual(len(fills), 1548)
+            self.assertIsInstance(fills, list)
+            self.assertIsInstance(fills[0], dict)
+            # Verify that trades are fetched for each asset in the universe.
+            self.assertEqual(fetch_trades_mock.call_count, 9)
+            # Verify that the arguments are called correctly.
+            expected_calls = [
+                umock.call(
+                    symbol="ADA/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="AVAX/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="BNB/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="BTC/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="DOGE/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="EOS/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="ETH/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="LINK/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+                umock.call(
+                    symbol="SOL/USDT",
+                    since=1661990400000,
+                    params={"endTime": 1661991000000},
+                ),
+            ]
+            fetch_trades_mock.assert_has_calls(expected_calls)
+
     def test_get_fills(self) -> None:
         """
         Verify that orders are filled properly via mocked exchange.
@@ -351,8 +442,8 @@ class TestCcxtBroker1(hunitest.TestCase):
 @pytest.mark.skip(reason="Run manually.")
 class TestSaveMarketInfo(hunitest.TestCase):
     """
-    Capture market info data from a CCXT broker so that it can be
-    reused in other tests and code.
+    Capture market info data from a CCXT broker so that it can be reused in
+    other tests and code.
     """
 
     def get_test_broker(
@@ -367,7 +458,7 @@ class TestSaveMarketInfo(hunitest.TestCase):
         """
         exchange_id = "binance"
         portfolio_id = "ccxt_portfolio_mock"
-        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         broker = occxbrok.CcxtBroker(
             exchange_id,
             universe_version,
