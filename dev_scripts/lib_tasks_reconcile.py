@@ -8,6 +8,9 @@
 # 3) Run sim system
 # 4) Dump TCA data
 # 5) Run notebook and publish it
+#
+# User specifies start and end of prod run and everything gets derived from those
+# dates.
 
 """
 Import as:
@@ -23,12 +26,17 @@ from invoke import task
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
+import helpers.hio as hio
+import helpers.hsystem as hsystem
 
 
 _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Update this path.
 PROD_RECONCILIATION_DIR = "/data/shared/prod_reconciliation"
+
+def _system(cmd):
+    return hsystem.system(cmd, suppress_output=False, log_level="echo")
 
 
 # TODO(gp): It seems that the data is written by the prod system in the right
@@ -109,16 +117,17 @@ def _get_run_date(run_date: Optional[str]) ->  str:
 # > pytest_log dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data -s --dbg
 # > cp -v test_data.csv.gz /data/shared/prod_reconciliation/20220928/simulation
 @task
-def reconcile_dump_market_data(ctx, incremental=False, interactive=True):  # type: ignore
+def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactive=True):  # type: ignore
     """
     Dump the market data image and save it in the proper dir.
     """
     _ = ctx
+    run_date = _get_run_date(run_date)
     target_file = "test_save_data.csv.gz"
     if incremental and os.path.exists(target_file):
         _LOG.warning("Skipping generating %s", target_file)
     else:
-        docker_cmd = "pytest ./dataflow_orange/system/C1/test/test_C1f_forecast_system.py::Test_NonTime_ForecastSystem_C1f_ProdReconciliation::test_save_EOD_data1"
+        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
         #docker_cmd += " -s --dbg"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
