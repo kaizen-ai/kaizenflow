@@ -163,14 +163,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         log_dir = None
-        with umock.patch.object(
-            broker, "get_low_market_price", create=True
-        ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
-            market_price_mock.return_value = 100.0
-            # Run.
-            actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
-            actual = hpandas.df_to_str(actual)
+        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
     def test_apply_prod_limits2(self) -> None:
@@ -182,14 +176,9 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         log_dir = None
-        with umock.patch.object(
-            broker, "get_low_market_price", create=True
-        ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
-            market_price_mock.return_value = 100.0
-            # Run.
-            actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
-            actual = hpandas.df_to_str(actual)
+        # Run.
+        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
     def test_apply_testnet_limits1(self) -> None:
@@ -203,12 +192,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         log_dir = None
         # Set broker stage to imitate testnet.
         broker.stage = "local"
-        with umock.patch.object(
-            broker, "get_low_market_price", create=True
-        ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
-            market_price_mock.return_value = 100.0
-            # Run.
-            actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
-            actual = hpandas.df_to_str(actual)
+        # Run.
+        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = hpandas.df_to_str(actual)
         self.check_string(actual)
