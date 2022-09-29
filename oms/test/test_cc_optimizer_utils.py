@@ -7,7 +7,7 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
-import oms.hsecrets.secret_identifier as oseseide
+import oms.hsecrets.secret_identifier as ohsseide
 
 
 class TestCcOptimizerUtils1(hunitest.TestCase):
@@ -112,7 +112,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         contract_type = "futures"
         strategy_id = "dummy_strategy_id"
         market_data = umock.create_autospec(spec=mdata.MarketData, instance=True)
-        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         # Initialize broker.
         broker = occxbrok.CcxtBroker(
             exchange_id,

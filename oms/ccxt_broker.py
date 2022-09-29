@@ -294,7 +294,9 @@ class CcxtBroker(ombroker.Broker):
             # TODO(Danya): Maybe return a dataframe so we can trim the df
             #  at the output and avoid downloading extra data?
             if end_timestamp - start_timestamp < 86400000:
-                _LOG.debug("Downloading period=%s, %s", start_timestamp, end_timestamp)
+                _LOG.debug(
+                    "Downloading period=%s, %s", start_timestamp, end_timestamp
+                )
                 symbol_fills = self._exchange.fetchMyTrades(
                     symbol=symbol,
                     since=start_timestamp,
@@ -304,7 +306,9 @@ class CcxtBroker(ombroker.Broker):
             # Download day-by-day for longer time periods.
             else:
                 symbol_fills = []
-                for timestamp in range(start_timestamp, end_timestamp + 1, 86400000):
+                for timestamp in range(
+                    start_timestamp, end_timestamp + 1, 86400000
+                ):
                     _LOG.debug("Downloading period=%s, %s", timestamp, 86400000)
                     day_fills = self._exchange.fetchMyTrades(
                         symbol=symbol,
