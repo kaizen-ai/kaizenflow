@@ -37,6 +37,7 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hwall_clock_time as hwacltim
+import market_data as mdata
 import oms as oms
 
 # %%
@@ -195,15 +196,16 @@ def load_parquet_data(
 
 def get_file_path(stage: str, timestamp: str, target_dir: str) -> str:
     current_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
-    file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.csv"
-#     file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
+    file_name = f"predict.{stage}.df_out.{timestamp}.parquet"
+    #     file_name = f"predict.{stage}.df_out.{timestamp}.{current_timestamp}.parquet"
     file_path = os.path.join(target_dir, file_name)
     return file_path
 
 
-def get_df_to_compare(df: pd.DataFrame, columns: list) -> pd.DataFrame:
+def get_df_to_compare(df: pd.DataFrame) -> pd.DataFrame:
     asset_ids = df.columns.levels[1].tolist()
-    columns = list(itertools.product(columns, asset_ids))
+    target_columns = df.columns.levels[0].tolist()
+    columns = list(itertools.product(target_columns, asset_ids))
     df_to_compare = prod_dag_df[pd.MultiIndex.from_tuples(columns)].copy()
     return df_to_compare
 
@@ -212,8 +214,10 @@ def get_df_to_compare(df: pd.DataFrame, columns: list) -> pd.DataFrame:
 # # System configs
 
 # %%
-prod_dir = "/shared_data/prod_reconciliation/20220915/prod/system_log_dir_20220915_2hours"
-sim_dir = "/shared_data/prod_reconciliation/20220915/simulation/system_log_dir"
+run_time_stamp = "20220928"
+root_dir = f"/shared_data/prod_reconciliation/{run_time_stamp}"
+prod_dir = os.path.join(root_dir, f"prod/system_log_dir_{run_time_stamp}_2hours")
+sim_dir = os.path.join(root_dir, "simulation/system_log_dir")
 
 # %%
 prod_system_config_output = load_config_as_list(
@@ -252,49 +256,36 @@ hdbg.dassert_dir_exists(sim_dag_dir)
 print(sim_dag_dir)
 
 # %%
-stage = "7.process_forecasts"
-timestamp = "20220915_100000"
+start_timestamp = pd.Timestamp(
+    run_time_stamp + " 12:00:00", tz="America/New_York"
+)
+_LOG.info("start_timestamp=%s", start_timestamp)
+end_timestamp = pd.Timestamp(run_time_stamp + " 14:20:00", tz="America/New_York")
+_LOG.info("end_timestamp=%s", end_timestamp)
+
+# %%
+stage = "8.process_forecasts"
+timestamp = f"{run_time_stamp}_142000"
 
 # Get prod_dag_df.
 file_path = get_file_path(stage, timestamp, prod_dag_dir)
 prod_dag_df = load_parquet_data(file_path)
-# start_timestamp:end_timestamp are not defined so which ones should be?
 prod_dag_df = prod_dag_df[start_timestamp:end_timestamp]
 
 # Get sim_dag_df
-file_path = get_file_name(stage, timestamp, sim_dag_dir)
+file_path = get_file_path(stage, timestamp, sim_dag_dir)
 sim_dag_df = load_parquet_data(file_path)
-# start_timestamp:end_timestamp are not defined so which ones should be?
 sim_dag_df = sim_dag_df[start_timestamp:end_timestamp]
 
 # %%
-target_cols = [
-    "close",
-    "close_vwap",
-    "day_num_spread",
-    "day_spread",
-    "garman_klass_vol",
-    "high",
-    "low",
-    "notional",
-    "open",
-    "prediction",
-    "twap",
-    "volume",
-]
-
-# Not sure if we need this when we use parquet.
-# prod_dag_df.to_csv("prod_tmp.csv")
-# prod_dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
-
-prod_dag_df = get_df_to_compare(prod_dag_df, target_cols)
+prod_dag_df = get_df_to_compare(prod_dag_df)
 hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
 #
-sim_dag_df = get_df_to_compare(sim_dag_df, target_cols)
+sim_dag_df = get_df_to_compare(sim_dag_df)
 hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
 
-print(list(prod_dag_df.columns.levels[0]))
-print(list(sim_dag_df.columns.levels[0]))
+display(list(prod_dag_df.columns.levels[0]))
+display(list(sim_dag_df.columns.levels[0]))
 
 
 # %%
@@ -302,8 +293,8 @@ print(list(sim_dag_df.columns.levels[0]))
 dag_corrs = dtfmod.compute_correlations(prod_dag_df, sim_dag_df.shift(0))
 # hpandas.df_to_str(dag_corrs, precision=3, log_level=logging.INFO)
 
-# sort_col = "close"
-sort_col = "prediction"
+sort_col = "close"
+# sort_col = "prediction"
 # sort_col = "price"
 # sort_col = "volatility"
 hpandas.df_to_str(
@@ -317,10 +308,7 @@ hpandas.df_to_str(
 # # Set system parameters
 
 # %%
-# TODO(Nina): should be a parquet file.
-file_path = (
-    "/shared_data/prod_reconciliation/20220923/simulation/test_data.csv.gz"
-)
+file_path = f"/shared_data/prod_reconciliation/{run_time_stamp}/simulation/test_data.csv.gz"
 column_remap = {
     "start_timestamp": "start_datetime",
     "end_timestamp": "end_datetime",
@@ -328,7 +316,7 @@ column_remap = {
 timestamp_db_column = "end_datetime"
 datetime_columns = ["start_datetime", "end_datetime", "timestamp_db"]
 
-market_data_df = load_parquet_data(
+market_data_df = mdata.load_market_data(
     file_path,
     column_remap=column_remap,
     timestamp_db_column=timestamp_db_column,
@@ -347,13 +335,6 @@ max_market_data_end_time = (
     market_data_df["end_datetime"].max().tz_convert(tz="America/New_York")
 )
 max_market_data_end_time
-
-# %%
-date = "2022-09-23"
-start_timestamp = pd.Timestamp(date + " 07:40:00", tz="America/New_York")
-_LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 10:00:00", tz="America/New_York")
-_LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 replayed_delay_in_mins_or_timestamp = get_replayed_delay_in_mins(
