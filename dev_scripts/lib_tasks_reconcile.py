@@ -15,10 +15,14 @@ Import as:
 import helpers.lib_tasks_docker as hlitadoc
 """
 
+import datetime
 import logging
 from typing import Any, Dict, List, Match, Optional
 
 from invoke import task
+
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 
 _LOG = logging.getLogger(__name__)
@@ -40,6 +44,7 @@ def reconcile_dump_prod_data(ctx, account_type, incremental=False):  # type: ign
         _LOG.warning("Reusing existing %s", file_name)
     else:
         # TODO(gp): Dump data.
+        pass
     #
     hdbg.dassert_is_not(job_id, None)
     hdbg.dassert_is_integer(job_id)

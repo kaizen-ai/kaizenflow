@@ -100,16 +100,17 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 )
 
 
-#from oms.lib_tasks_reconcile import (
-#    reconcile_dump_prod_data,
-#    reconcile_dump_market_data,
-#    reconcile_run_sim,
-#    reconcile_save_sim,
-#    reconcile_dump_tca_data,
-#    reconcile_run_all,
-#    reconcile_ls,
-#    reconcile_rmrf,
-#)
+# TODO(gp): Unclear where it should go. In OMS there are too many dependencies.
+from dev_scripts.lib_tasks_reconcile import (
+    reconcile_dump_prod_data,
+    reconcile_dump_market_data,
+    reconcile_run_sim,
+    reconcile_save_sim,
+    reconcile_dump_tca_data,
+    reconcile_run_all,
+    reconcile_ls,
+    reconcile_rmrf,
+)
 
 # # TODO(gp): This is due to the coupling between code in linter container and
 # #  the code being linted.
