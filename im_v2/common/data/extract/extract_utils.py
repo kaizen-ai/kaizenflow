@@ -396,6 +396,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
     #time.sleep(start_delay)
     while pd.Timestamp.now(tz) < stop_time:
+        iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
             data_buffer.append(exchange.download_websocket_data(data_type, exchange_id, curr_pair))
         # If the buffer is full or this is the last iteration, process and save buffered data.
@@ -404,8 +405,12 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             _save_data_to_db(df, db_connection, db_table)
             # Empty buffer after persisting the data.
             data_buffer = []
-        _LOG.info(data_buffer)
-        await exchange._exchange.sleep(1000)
+        # Determine actual sleep time needed based on the difference
+        # between value set in config and actual time it took to complete
+        # an iteration, this allows an "autosycing" mechanism.
+        iter_length = (pd.Timestamp.now(tz) - iter_start_time).total_seconds * 1000
+        actual_sleep_time = max(0, iter_length - WEBSOCKET_CONFIG[data_type]["sleep_between_iter"])
+        await exchange._exchange.sleep(actual_sleep_time)
     _LOG.info("Websocket downloaded finished at %s", pd.Timestamp.now())
 
 
