@@ -22,6 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe as ivcu
@@ -36,7 +37,7 @@ SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
 #  max_buffer_size: specifies number of websocket 
 #  messages to cache before attempting DB insert.
 WEBSOCKET_CONFIG = {"ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
-                    "bid_ask": {"max_buffer_size": 100, "sleep_between_iter": 250}
+                    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter": 250}
                     }
 
 def _add_common_download_args(
@@ -387,6 +388,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             bid_ask_depth=args.get("bid_ask_depth"),
             since=hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now(tz))
         )
+    _LOG.info("Subscribed to %s websocket data successfully", exchange_id)
     # In order not to bombard the database with many small insert operations
     # a buffer is created, its size is determined by the config specific to each
     # data type.
@@ -394,15 +396,15 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     # Sync to the specified start_time.
     start_delay = max(0, ((start_time - datetime.now(tz)).total_seconds()))
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
-    #time.sleep(start_delay)
+    time.sleep(start_delay)
     while pd.Timestamp.now(tz) < stop_time:
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
             data_buffer.append(exchange.download_websocket_data(data_type, exchange_id, curr_pair))
         # If the buffer is full or this is the last iteration, process and save buffered data.
         if len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"] or pd.Timestamp.now(tz) >= stop_time:
-            df = _transform_websocket_data(data_buffer, data_type)
-            _save_data_to_db(df, db_connection, db_table)
+            df = imvcdttrut.transform_raw_websocket_data(data_buffer, data_type, exchange_id)
+            imvcddbut.save_data_to_db(df, data_type, db_connection, db_table)
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
@@ -413,33 +415,6 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
         await exchange._exchange.sleep(actual_sleep_time)
     _LOG.info("Websocket downloaded finished at %s", pd.Timestamp.now())
 
-
-def _transform_websocket_data(data: List[Dict], data_type: str) -> pd.DataFrame:
-    """
-    Transform raw websocket data into a DataFrame with columns compliant with our
-     internal representation:
-
-    :param data: data to be transformed
-    :param data_type: type of data, e.g. OHLCV
-    :return Dataframe formed from raw data
-    """
-    return data
-
-# TODO(Juraj): replace all occurrences of code inserting to db with a call to
-# this function.
-def _save_data_to_db(data: pd.DataFrame, db_connection: hsql.DbConnection, db_table: str) -> None:
-    """
-    Save data into specified database table. 
-    
-    INSERT query logic ensures exact duplicates are not saved into the database again. 
-
-    :param data: data to insert into database.
-    :param db_connection: a database connection object
-    :param db_table: name of the table to insert to.
-    """
-    #data["knowledge_timestamp"] = pd.Timestamp.utcnow()
-    return
-    
 
 def _download_rest_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
