@@ -246,10 +246,20 @@ class CcxtExtractor(imvcdexex.Extractor):
         :return Dict representing snapshot of the data for a specified symbol and data type.
         TODO(Juraj): show example
         """
+        data = {}
         try: 
             pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
+                ohlcv = None
                 data = self._exchange.ohlcvs[pair]
+                for key in data:
+                    # The ohlcvs dict returns only a single key: value pair of format:
+                    #  { "timeframe": [o, h, l, c, v]} where timeframe is e.g. 1m and
+                    #  o, h, l, c, v are the actual numerical values
+                    ohlcv = data[key]
+                if ohlcv is not None:
+                    data["ohlcv"] = ohlcv
+                data["currency_pair"] = pair
             elif data_type == "bid_ask":
                 data = self._exchange.orderbooks[pair].limit(self._bid_ask_depth)
             else:
