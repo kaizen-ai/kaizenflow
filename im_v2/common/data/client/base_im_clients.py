@@ -900,3 +900,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
+
+    def _filter_full_duplicates(self, data: pd.DataFrame, duplicate_columns: List[str]):
+        no_duplicates_data = data.drop_duplicates(duplicate_columns)
+        return no_duplicates_data
