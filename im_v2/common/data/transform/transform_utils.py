@@ -7,7 +7,7 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 """
 
 import logging
-from typing import List
+from typing import List, Dict
 
 import pandas as pd
 
@@ -105,16 +105,16 @@ def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_
     """
     df = pd.DataFrame(raw_data)
     if data_type == "ohlcv":
-        df = _transform_bid_ask_websocket_dataframe(df)
-    elif data_type == "bid_ask":
         df = _transform_ohlcv_websocket_dataframe(df)
+    elif data_type == "bid_ask":
+        df = _transform_bid_ask_websocket_dataframe(df)
     else:
         raise ValueError("Transformation of data type: %s is not supported", data_type)
     df = df.drop_duplicates()
     df["exchange_id"] = exchange_id
     return df
 
-def _transform_bid_ask_websocket_dataframe(df: List[Dict]) -> pd.DataFrame:
+def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Transform bid/ask raw DataFrame to DataFrame representation 
      suitable for database insertion.
@@ -132,7 +132,7 @@ def _transform_bid_ask_websocket_dataframe(df: List[Dict]) -> pd.DataFrame:
     return df[["timestamp", "bid_size", "bid_price", "ask_size", 
                     "ask_price", "currency_pair", "level", "end_download_timestamp"]]
 
-def _transform_ohlcv_websocket_dataframe(raw_data: List[Dict]) -> pd.DataFrame:
+def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Transform bid/ask raw DataFrame to DataFrame representation 
      suitable for database insertion.
@@ -140,7 +140,7 @@ def _transform_ohlcv_websocket_dataframe(raw_data: List[Dict]) -> pd.DataFrame:
     TODO(Juraj): Add example (assumes format, returns format)
     """
     df["currency_pair"] = df["currency_pair"].str.replace("_", "/")
-    df[["open", "high", "low", 
-                    "close", "volume", ]] = pd.DataFrame(df["ohlcv"].tolist(), index=df.index)
+    df[["open", "high", "low", "close", "volume"]] = pd.DataFrame(df["ohlcv"].tolist(), index=df.index)
+    # TODO(Juraj): remove unfinished candles.
     return df[["timestamp", "open", "high", "low", 
                     "close", "volume", "end_download_timestamp"]]
