@@ -1753,9 +1753,9 @@ class Test_to_pickleable_config(hunitest.TestCase):
         Test when config is not pickle-able before applying the function.
         """
         # Set non-pickle-able value.
-        value = self.test1
+        value = lambda x: x
         expected = r"""
-        {'key1': '<bound method Test_to_pickleable_config.test1 of <amp.core.config.test.test_config.Test_to_pickleable_config testMethod=test2>>', 'key2': {'key3': {'key4': {}}}}
+        {'key1': '<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>', 'key2': {'key3': {'key4': {}}}}
         """
         should_be_pickleable_before = False
         actual = self.helper(
