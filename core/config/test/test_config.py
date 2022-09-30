@@ -1709,7 +1709,7 @@ class Test_from_dict1(hunitest.TestCase):
         self.assertTrue(check)
 
 
-class Test_to_pickleable_config(hunitest.TestCase):
+class Test_to_string_config(hunitest.TestCase):
     def helper(
         self,
         value: Optional[str],
@@ -1725,7 +1725,7 @@ class Test_to_pickleable_config(hunitest.TestCase):
         is_pickleable_before = hintros.is_pickleable(config["key1"])
         self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
-        actual = config.to_pickleable_config()
+        actual = config.to_string_config()
         is_pickleable_after = hintros.is_pickleable(actual["key1"])
         self.assertTrue(is_pickleable_after)
         # Convert `actual` to string since `assert_equal` comparing
