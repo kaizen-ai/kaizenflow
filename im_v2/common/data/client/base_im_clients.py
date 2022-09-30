@@ -902,5 +902,20 @@ class SqlRealTimeImClient(RealTimeImClient):
         return timestamp
 
     def _filter_full_duplicates(self, data: pd.DataFrame, duplicate_columns: List[str]):
-        no_duplicates_data = data.drop_duplicates(duplicate_columns)
-        return no_duplicates_data
+        """
+        Remove duplicated rows, keeping the latest added.
+
+        The date of addition is based on `knowledge_timestamp` column.
+
+        The function also warns if the `knowledge_timestamp` value
+        is at least 1 minute later than the data `timestamp` value.
+
+        :param data: data loaded from the dataset.
+        :param duplicate_columns: columns on which to consider duplicates.
+        :return:
+        """
+        data = data.sort_values('knowledge_timestamp', ascending=False)
+        data = data.drop_duplicates(duplicate_columns)
+        data = data.sort_index()
+        # Verify that some
+        return data
