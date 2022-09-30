@@ -23,6 +23,31 @@ import helpers.htimer as htimer
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Dan): Add unit test.
+def to_pickleable(obj: Any) -> Any:
+    """
+    Convert an object into an object with the same nested structure (e.g., lists and dicts),
+    but where all objects are replaced with their string representation.
+    """
+    if isinstance(obj, list):
+        out = []
+        for k in obj:
+            out.append(to_pickleable(k))
+    elif isinstance(obj, tuple):
+        out = tuple([to_pickleable(k) for k in obj])
+    elif isinstance(obj, dict):
+        out = {}
+        for k, v in obj.items():
+            k = to_pickleable(k)
+            v = to_pickleable(v)
+            out[k] = v
+    elif hintros.is_iterable(obj):
+        out = [str(v) for v in obj]
+    else:
+        out = str(obj)
+    return out
+
+
 # #############################################################################
 # pickle
 # #############################################################################
