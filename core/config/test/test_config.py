@@ -1755,7 +1755,7 @@ class Test_to_string_config(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""
-        {'key1': '<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>', 'key2': {'key3': {'key4': {}}}}
+        {'key1': '<function Test_to_string_config.test2.<locals>.<lambda> at 0x>', 'key2': {'key3': {'key4': {}}}}
         """
         should_be_pickleable_before = False
         actual = self.helper(
