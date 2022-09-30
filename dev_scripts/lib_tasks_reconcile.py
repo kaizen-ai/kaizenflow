@@ -32,7 +32,6 @@ import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Update this path.
 PROD_RECONCILIATION_DIR = "/data/shared/prod_reconciliation"
 
 def _system(cmd):
@@ -114,6 +113,22 @@ def _get_run_date(run_date: Optional[str]) ->  str:
     return run_date
 
 
+@task
+def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
+    """
+    Create dirs for storing recinciliation data.
+    """
+    _ = ctx
+    run_date = _get_run_date(run_date)
+    run_date_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}"
+    hio.create_dir(run_date_dir, incremental=True)
+    #
+    prod_dir = f"{run_date_dir}/prod"
+    simulation_dir = f"{run_date_dir}/simulation"
+    hio.create_dir(prod_dir, incremental=True)
+    hio.create_dir(simulation_dir, incremental=True)
+
+
 # > pytest_log dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data -s --dbg
 # > cp -v test_data.csv.gz /data/shared/prod_reconciliation/20220928/simulation
 @task
@@ -123,11 +138,11 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_file = "test_save_data.csv.gz"
+    target_file = "test_data.csv.gz"
     if incremental and os.path.exists(target_file):
         _LOG.warning("Skipping generating %s", target_file)
     else:
-        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
+        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::save_data"
         #docker_cmd += " -s --dbg"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
@@ -141,34 +156,28 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if interactive:
         question = "Is the file ok?"
         hsystem.query_yes_no(question)
-    # > RUN_DATE=20220914
-    today = datetime.date.today()
-    today = today.strftime("%Y%m%d")
-    _LOG.info(hprint.to_str("today"))
-    # > TARGET_DIR={PROD_RECONCILIATION_DIR}/$RUN_DATE/
-    target_dir = f"{PROD_RECONCILIATION_DIR}/{today}"
-    hio.create_dir(target_dir, incremental=True)
+    #
+    target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
+    _LOG.info(hprint.to_str("target_dir"))
+    # If the target dir doesn't exist we didn't downloaded the test data and we can't
+    # continue.
+    hdbg.dassert_dir_exists(target_dir)
     #
     cmd = f"ls {target_dir}"
     _system(cmd)
     #
-    # > TARGET_FILE=$TARGET_DIR/test_save_data.as_of_$(timestamp).csv.gz
-    timestamp = hlitauti.get_ET_timestamp()
-    src_file = target_file
-    dst_file = os.path.join(target_dir, f"{target_file}.as_of_{timestamp}.tgz")
-    #
-    cmd = f"cp -a {src_file} {dst_file}"
+    cmd = f"cp -v {target_file} {target_dir}"
     _system(cmd)
-    cmd = f"chmod -R -w {dst_file}"
-    _system(cmd)
+    # cmd = f"chmod -R -w {target_file}"
+    # _system(cmd)
     # Sanity check remote data.
-    cmd = f"gzip -cd {dst_file} | head -3"
+    cmd = f"gzip -cd {target_file} | head -3"
     _system(cmd)
-    cmd = f"gzip -cd {dst_file} | tail -3"
+    cmd = f"gzip -cd {target_file} | tail -3"
     _system(cmd)
-    cmd = f"gzip -cd {dst_file} | wc -l"
+    cmd = f"gzip -cd {target_file} | wc -l"
     _system(cmd)
-    cmd = f"ls -lh {dst_file}"
+    cmd = f"ls -lh {target_file}"
     _system(cmd)
 
 
@@ -235,60 +244,23 @@ def delete_file(file_name):
 
 # > rm -r system_log_dir/; pytest_log ./dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test1 -s --dbg --update_outcomes
 @task
-def reconcile_run_sim(ctx, run_date=None, action_before="backup"):  # type: ignore
+def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     Run reconciliation simulation for `run_date`.
-
-    :param action_before: action to perform (e.g., `backup` or `delete`)
-        for the files that should be overwritten by the simulation (e.g.,
-        test_save_data.csv.gz, log.txt, system_log_dir)
     """
-    hdbg.dassert_in(action_before, ("backup", "delete"))
     timestamp = hlitauti.get_ET_timestamp()
     #
     run_date = _get_run_date(run_date)
-    target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}"
+    target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
     _LOG.info(hprint.to_str("target_dir"))
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
     hdbg.dassert_dir_exists(target_dir)
-    # Copy the test_save_data for today simulation locally.
-    file_name = "test_save_data.csv.gz"
-    if action_before == "delete":
-        delete_file(file_name)
-    elif action_before == "backup":
-        backup_file(ctx, file_name, timestamp=timestamp, abort_on_missing=False)
-    else:
-        raise ValueError(f"Invalid action_before='{action_before}'")
-    #
-    cmd = f"find {target_dir} -name '{file_name}*' -printf '%p\n' | sort -r | head -1"
-    _, src_file_name = hsystem.system_to_string(cmd)
-    hdbg.dassert_eq(len(src_file_name.split("\n")), 1)
-    src_file_name = src_file_name.split("\n")[0]
-    _LOG.info(hprint.to_str("src_file_name"))
-    hdbg.dassert_file_exists(src_file_name)
-    # Check the market data.
-    cmd = f"cp -a {src_file_name} {file_name}"
-    hsystem.system(cmd)
-    #
-    cmd = f"ls -lh {file_name}"
-    _system(cmd)
-    # Backup data locally if needed.
-    log_file = "pytest_log.txt"
-    file_names_to_backup = [log_file, "system_log_dir"]
-    for file_name in file_names_to_backup:
-        if action_before == "delete":
-            delete_file(file_name)
-        elif action_before == "backup":
-            backup_file(ctx, file_name, timestamp=timestamp,
-                        abort_on_missing=False)
-        else:
-            raise ValueError(f"Invalid action_before='{action_before}'")
     # Run simulation.
-    opts = "-s --dbg"
-    test_name = "./dataflow_lime/system/C1/test/test_C1f_forecast_system.py::Test_Time_ForecastSystem_with_DataFramePortfolio_C1f_ProdReconciliation::test1"
+    opts = "-s --dbg --update_outcomes"
+    test_name = "./dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::run_simulation"
     docker_cmd = f"pytest {test_name} {opts} 2>&1 | tee {log_file}"
-    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} {docker_cmd}"
+    docker_cmd = f"rm -r system_log_dir/; {docker_cmd}"
     #docker_cmd += "; exit ${PIPESTATUS[0]})"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
@@ -301,22 +273,20 @@ def reconcile_save_sim(ctx, run_date=None, timestamp=None):  # type: ignore
     """
     Copy the output of the simulation in the proper dir.
     """
-    if timestamp is None:
-        timestamp = hlitauti.get_ET_timestamp()
-    #
     run_date = _get_run_date(run_date)
-    target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}"
+    target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
     _LOG.info("Saving results to '%s'", target_dir)
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
     hdbg.dassert_dir_exists(target_dir)
-    # Save results to the destination dir.
-    log_file = "pytest_log.txt"
-    file_names_to_backup = [log_file, "system_log_dir"]
-    for file_name in file_names_to_backup:
-        hdbg.dassert_path_exists(file_name)
-        backup_file(ctx, file_name, action="copy", timestamp=timestamp, dst_dir=target_dir,
-                    abort_on_missing=True)
+    #
+    system_log_dir = "./system_log_dir"
+    docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
+    _system(cmd)
+    #
+    pytest_script_file_path = "tmp.pytest_script.txt"
+    docker_cmd = f"cp -v {pytest_script_file_path} {target_dir}"
+    _system(cmd)
 
 
 # TODO(Danya): Add script here to dump fills data.
@@ -357,13 +327,14 @@ def reconcile_run_all(ctx, incremental=False):  # type: ignore
     - run simulation
     - run notebook
     """
-    reconcile_dump_market_data(ctx, incremental=incremental)
+    run_date = "20220928"
+    reconcile_create_dirs(ctx, run_date=run_date)
+    reconcile_dump_market_data(ctx, run_date=run_date)
     #
-    account_type = "live_trading"
-    reconcile_dump_prod_data(ctx, account_type, incremental=incremental)
+    # TODO(Dan): Add prod invokes.
     #
-    account_type = "candidate"
-    reconcile_dump_prod_data(ctx, account_type, incremental=incremental)
+    reconcile_run_sim(ctx, account_type, run_date=run_date)
+    reconcile_save_sim(ctx, account_type, run_date=run_date)
     #
     # TODO(gp): Download for the day before.
     #reconcile_dump_tca_data(ctx, run_date=None)
