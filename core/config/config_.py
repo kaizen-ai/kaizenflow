@@ -560,20 +560,18 @@ class Config:
         """
         Save config as a string and pickle.
 
-        Save 3 files in a log dir:
+        Save 2 files in a log dir:
         - ${log_dir}/{tag}.txt
-        - ${log_dir}/{tag}.pkl
-        - ${log_dir}/{tag}.force_strings.pkl
+        - ${log_dir}/{tag}.values_as_strings.pkl
 
         :param tag: basename of the files to save (e.g., "system_config.input")
         """
         # 1) As a string.
         file_name = os.path.join(log_dir, f"{tag}.txt")
         hio.to_file(file_name, repr(self))
-        # 2) As a pickle containing all strings as keys.
+        # 2) As a pickle containing all values as string.
         file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
-        config = self.to_pickleable_config()
-        _LOG.info("after conversion config=%s", str(config))
+        config = self.to_string_config()
         hpickle.to_pickle(config, file_name)
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -596,15 +594,15 @@ class Config:
             return None
         return val  # type: ignore
 
-    def to_pickleable_config(self) -> "Config":
+    def to_string_config(self) -> "Config":
         """
-        Transform this Config into a pickle-able one where all values
-        are replaced with their string representation.
+        Transform this Config into a pickle-able one where all values are
+        replaced with their string representation.
         """
         config_out = {}
         for k, v in self._config.items():
             if isinstance(v, Config):
-                config_out[k] = v.to_pickleable_config()
+                config_out[k] = v.to_string_config()
             else:
                 config_out[k] = hpickle.to_pickleable(v)
         return config_out

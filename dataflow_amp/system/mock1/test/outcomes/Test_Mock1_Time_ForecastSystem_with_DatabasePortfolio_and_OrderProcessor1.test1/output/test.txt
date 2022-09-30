@@ -676,4 +676,6 @@ system_log_dir signature
 # Dir structure
 .
 system_config.input.txt
+system_config.input.values_as_strings.pkl
 system_config.output.txt
+system_config.output.values_as_strings.pkl
