@@ -487,7 +487,7 @@ binance = ccxtpro.binance()
 # %%
 universe = imvcounun.get_vendor_universe("CCXT", "download", version="v7")
 universe = list(map(lambda x: x.replace("_", "/"), universe))
-universe = ["ETH/USDT"]
+universe = ["BTC/USDT", "ETH/USDT"]
 
 # %% run_control={"marked": true}
 msgs = []
@@ -503,7 +503,7 @@ async def watchOrderBooks(exchange, universe: List[str], run_for: int = 5, limit
     end_time = datetime.now() + timedelta(seconds=run_for)
     while datetime.now() < end_time:
         for currency_pair in universe:
-            print(exchange.orderbooks[currency_pair].limit(limit))
+            msgs.append(exchange.orderbooks[currency_pair].limit(limit))
         await exchange.sleep(250) #miliseconds
 
 # Implemented using real-time mode
@@ -533,22 +533,41 @@ async def watchOHLCVs(exchange, universe: List[str], run_for: int = 5, limit: in
     end_time = datetime.now() + timedelta(seconds=run_for)
     while datetime.now() < end_time:
         for currency_pair in universe:
-            print(exchange.ohlcvs[currency_pair])
+            msgs.append(exchange.ohlcvs[currency_pair])
         await exchange.sleep(1000) #miliseconds
+
+
+# %%
+def transform_dict_bid_ask_data_to_df(raw_dict_data: List[Dict]) -> pd.DataFrame:
+    df_full = pd.DataFrame(raw_dict_data)
+    df_full = df_full.explode(["asks", "bids"])
+    df_full[["bid_price", "bid_size"]] = pd.DataFrame(
+    df_full["bids"].to_list(), index=df_full.index)
+    df_full[["ask_price", "ask_size"]] = pd.DataFrame(
+    df_full["asks"].to_list(), index=df_full.index)
+    df_full["currency_pair"] = df_full["symbol"].str.replace("_", "/")
+    groupby_cols = ["currency_pair", "timestamp"]
+    df_full["level"] = df_full.groupby(groupby_cols)[groupby_cols].cumcount().add(1)
+    return df_full[["timestamp", "bid_size", "bid_price", "ask_size", 
+                    "ask_price", "currency_pair", "level"]]
+
 
 # %%
 await watchOrderBooks(binance, universe)
 
 # %%
+msgs
+
+# %%
+df = transform_dict_bid_ask_data_to_df(msgs)
+
+# %%
+df.head()
+
+# %%
+msgs = []
+
+# %%
 await watchOHLCVs(binance, universe)
-
-# %%
-list(filter(lambda x: "watch" in x, dir(binance)))
-
-# %%
-pd.Timestamp.now().timestamp()
-
-# %%
-binance.ohlcvs["ETH_USDT"]
 
 # %%
