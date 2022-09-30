@@ -6,13 +6,13 @@ Import as:
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 """
 
-
+import asyncio
 import argparse
 import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import psycopg2
@@ -30,8 +30,14 @@ from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
 
-
 SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
+# Determines parameters for handling websocket download.
+#  sleep_between_iter: time to sleep between iterations in miliseconds.
+#  max_buffer_size: specifies number of websocket 
+#  messages to cache before attempting DB insert.
+WEBSOCKET_CONFIG = {"ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
+                    "bid_ask": {"max_buffer_size": 100, "sleep_between_iter": 250}
+                    }
 
 def _add_common_download_args(
     parser: argparse.ArgumentParser,
@@ -146,7 +152,7 @@ def add_periodical_download_args(
         required=True,
         type=str,
         choices=SUPPORTED_DOWNLOAD_METHODS,
-        help="Method used to download the data: rest (for http based download), or websocket"
+        help="Method used to download the data: rest (for HTTP REST based download), or websocket"
     )
     parser.add_argument(
         "--interval_min",
@@ -343,7 +349,7 @@ def _download_realtime_for_one_exchange_with_timeout(
 # TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
 #  functions' names since it spreads across the codebase. Docstring and the
 # method signature should sufficiently explain what the function does. 
-def _download_websocket_realtime_for_one_exchange_periodically(
+async def _download_websocket_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
@@ -353,6 +359,82 @@ def _download_websocket_realtime_for_one_exchange_periodically(
     :param args: arguments passed on script run
     :param exchange: name of exchange used in script run
     """
+    data_type = args["data_type"]
+    # Time related arguments.
+    start_time = pd.Timestamp(args["start_time"])
+    stop_time = pd.Timestamp(args["stop_time"])
+    tz = start_time.tz
+    # Data related arguments
+    universe = ivcu.get_vendor_universe(
+        exchange.vendor, mode="download", version=args["universe"]
+    )
+    exchange_id = args["exchange_id"]
+    currency_pairs = universe[exchange_id]
+    # DB related arguments.
+    # TODO(Juraj): create a common function to creation connection
+    # and pass earlier in the call stack.
+    env_file = imvimlita.get_db_env_path(args["db_stage"])
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    db_connection = hsql.get_connection(*connection_params)
+    db_table = args["db_table"]
+    for currency_pair in currency_pairs:
+        await exchange.subscribe_to_websocket_data(
+            data_type, 
+            exchange_id,
+            currency_pair,
+            # The following arguments are only applied for
+            # the corresponding data type
+            bid_ask_depth=args.get("bid_ask_depth"),
+            since=hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now(tz))
+        )
+    # In order not to bombard the database with many small insert operations
+    # a buffer is created, its size is determined by the config specific to each
+    # data type.
+    data_buffer = []
+    # Sync to the specified start_time.
+    start_delay = max(0, ((start_time - datetime.now(tz)).total_seconds()))
+    _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
+    #time.sleep(start_delay)
+    while pd.Timestamp.now(tz) < stop_time:
+        for curr_pair in currency_pairs:
+            data_buffer.append(exchange.download_websocket_data(data_type, exchange_id, curr_pair))
+        # If the buffer is full or this is the last iteration, process and save buffered data.
+        if len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"] or pd.Timestamp.now(tz) >= stop_time:
+            df = _transform_websocket_data(data_buffer, data_type)
+            _save_data_to_db(df, db_connection, db_table)
+            # Empty buffer after persisting the data.
+            data_buffer = []
+        _LOG.info(data_buffer)
+        await exchange._exchange.sleep(1000)
+    _LOG.info("Websocket downloaded finished at %s", pd.Timestamp.now())
+
+
+def _transform_websocket_data(data: List[Dict], data_type: str) -> pd.DataFrame:
+    """
+    Transform raw websocket data into a DataFrame with columns compliant with our
+     internal representation:
+
+    :param data: data to be transformed
+    :param data_type: type of data, e.g. OHLCV
+    :return Dataframe formed from raw data
+    """
+    return data
+
+# TODO(Juraj): replace all occurrences of code inserting to db with a call to
+# this function.
+def _save_data_to_db(data: pd.DataFrame, db_connection: hsql.DbConnection, db_table: str) -> None:
+    """
+    Save data into specified database table. 
+    
+    INSERT query logic ensures exact duplicates are not saved into the database again. 
+
+    :param data: data to insert into database.
+    :param db_connection: a database connection object
+    :param db_table: name of the table to insert to.
+    """
+    #data["knowledge_timestamp"] = pd.Timestamp.utcnow()
+    return
+    
 
 def _download_rest_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
@@ -456,7 +538,7 @@ def _download_rest_realtime_for_one_exchange_periodically(
             )
 
 def download_realtime_for_one_exchange_periodically(
-    args: Dict[str, Any], exchange: ivcdexex.Extractor, method: str
+    args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
     Encapsulate common logic for periodical exchange data download via 
@@ -472,10 +554,13 @@ def download_realtime_for_one_exchange_periodically(
     tz = start_time.tz
     hdbg.dassert_lt(datetime.now(tz), start_time, "start_time is in the past")
     hdbg.dassert_lt(start_time, stop_time, "stop_time is less than start_time")
-    if method == "rest":
+    if args["method"] == "rest":
         _download_rest_realtime_for_one_exchange_periodically(args, exchange)
-    elif method == "websocket":
-        _download_websocket_realtime_for_one_exchange_periodically(args, exchange)
+    elif args["method"] == "websocket":
+        # Websockets work asynchronously, in order this outer function synchronous
+        # the websocket download needs go be executed using asyncio.
+        loop = asyncio.get_event_loop()
+        loop.run_until_complete(_download_websocket_realtime_for_one_exchange_periodically(args, exchange))
     else:
         raise ValueError(f"Method: {method} is not a valid method for periodical download, " +
                           f"supported methods are: {SUPPORTED_DOWNLOAD_METHODS}")

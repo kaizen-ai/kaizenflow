@@ -7,6 +7,7 @@ import im_v2.common.data.extract.extractor as imvcdexex
 """
 
 import abc
+
 from typing import Any, Dict
 
 import pandas as pd
@@ -81,7 +82,7 @@ class Extractor(abc.ABC):
             )
         return data
 
-    def subscribe_to_websocket_data(self, data_type: str, exchange_id: str, currency_pair: str, **kwargs: Any
+    async def subscribe_to_websocket_data(self, data_type: str, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> None:
         """
         Subscribe to websocket based data stream for a particular exchange exchange_id and
@@ -145,7 +146,7 @@ class Extractor(abc.ABC):
     ) -> Dict:
         ...
 
-        @abc.abstractmethod
+    @abc.abstractmethod
     def _subscribe_to_websocket_ohlcv(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
