@@ -92,3 +92,55 @@ def reindex_on_custom_columns(
     data_reindex = data_reindex.sort_values(by=index_columns)
     data_reindex = data_reindex.set_index(index_columns)
     return data_reindex
+
+def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_id: str) -> pd.DataFrame:
+    """
+    Transform list of raw websocket data into a DataFrame with columns compliant with
+     the database representation
+
+    :param data: data to be transformed
+    :param data_type: type of data, e.g. OHLCV
+    :param exchange_id: ID of the exchange where the data come from
+    :return database compliant DataFrame formed from raw data
+    """
+    df = pd.DataFrame(raw_data)
+    if data_type == "ohlcv":
+        df = _transform_bid_ask_websocket_dataframe(df)
+    elif data_type == "bid_ask":
+        df = _transform_ohlcv_websocket_dataframe(df)
+    else:
+        raise ValueError("Transformation of data type: %s is not supported", data_type)
+    df = df.drop_duplicates()
+    df["exchange_id"] = exchange_id
+    return df
+
+def _transform_bid_ask_websocket_dataframe(df: List[Dict]) -> pd.DataFrame:
+    """
+    Transform bid/ask raw DataFrame to DataFrame representation 
+     suitable for database insertion.
+
+    TODO(Juraj): Add example
+    """
+    df = df.explode(["asks", "bids"])
+    df[["bid_price", "bid_size"]] = pd.DataFrame(
+    df["bids"].to_list(), index=df.index)
+    df[["ask_price", "ask_size"]] = pd.DataFrame(
+    df["asks"].to_list(), index=df.index)
+    df["currency_pair"] = df["symbol"].str.replace("_", "/")
+    groupby_cols = ["currency_pair", "timestamp"]
+    df["level"] = df.groupby(groupby_cols)[groupby_cols].cumcount().add(1)
+    return df[["timestamp", "bid_size", "bid_price", "ask_size", 
+                    "ask_price", "currency_pair", "level", "end_download_timestamp"]]
+
+def _transform_ohlcv_websocket_dataframe(raw_data: List[Dict]) -> pd.DataFrame:
+    """
+    Transform bid/ask raw DataFrame to DataFrame representation 
+     suitable for database insertion.
+
+    TODO(Juraj): Add example (assumes format, returns format)
+    """
+    df["currency_pair"] = df["currency_pair"].str.replace("_", "/")
+    df[["open", "high", "low", 
+                    "close", "volume", ]] = pd.DataFrame(df["ohlcv"].tolist(), index=df.index)
+    return df[["timestamp", "open", "high", "low", 
+                    "close", "volume", "end_download_timestamp"]]
