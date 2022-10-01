@@ -489,8 +489,14 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN",
-                    "CK_AWS_S3_BUCKET", "CK_ECR_BASE_PATH"]:
+    # TODO(gp): Diff between amp and cmamp.
+    for env_var in [
+                "AM_ECR_BASE_PATH",
+                "AM_AWS_S3_BUCKET",
+                "AM_TELEGRAM_TOKEN",
+                "CK_AWS_S3_BUCKET",
+                "CK_ECR_BASE_PATH"
+        ]:
         if env_var in os.environ:
             val = os.environ[env_var]
             if val == "":
@@ -508,11 +514,11 @@ def purify_object_representation(txt: str) -> str:
     txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
     txt = re.sub(r" id='\d+'>", " id='xxx'>", txt, flags=re.MULTILINE)
     txt = re.sub(r"port=\d+", "port=xxx", txt, flags=re.MULTILINE)
-    txt = re.sub("host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
     # wall_clock_time=Timestamp('2022-08-04 09:25:04.830746-0400'
     txt = re.sub(
-        "wall_clock_time=Timestamp\('.*?',",
-        "wall_clock_time=Timestamp('xxx',",
+        r"wall_clock_time=Timestamp\('.*?',",
+        r"wall_clock_time=Timestamp('xxx',",
         txt,
         flags=re.MULTILINE,
     )
@@ -744,31 +750,29 @@ def set_pd_default_values() -> None:
 # #############################################################################
 
 
-# TODO(gp): -> txt: str
-def _remove_spaces(obj: Any) -> str:
+def _remove_spaces(txt: str) -> str:
     """
     Remove leading / trailing spaces and empty lines.
 
     This is used to implement fuzzy matching.
     """
-    string = str(obj)
-    string = string.replace("\\n", "\n").replace("\\t", "\t")
+    txt = txt.replace("\\n", "\n").replace("\\t", "\t")
     # Convert multiple empty spaces (but not newlines) into a single one.
-    string = re.sub(r"[^\S\n]+", " ", string)
+    txt = re.sub(r"[^\S\n]+", " ", txt)
     # Remove insignificant crap.
     lines = []
-    for line in string.split("\n"):
+    for line in txt.split("\n"):
         # Remove leading and trailing spaces.
         line = re.sub(r"^\s+", "", line)
         line = re.sub(r"\s+$", "", line)
         # Skip empty lines.
         if line != "":
             lines.append(line)
-    string = "\n".join(lines)
-    return string
+    txt = "\n".join(lines)
+    return txt
 
 
-def _remove_lines(txt: str) -> str:
+def _remove_banner_lines(txt: str) -> str:
     """
     Remove lines of separating characters long at least 20 characters.
     """
@@ -777,26 +781,22 @@ def _remove_lines(txt: str) -> str:
         if re.match(r"^\s*[\#\-><=]{20,}\s*$", line):
             continue
         txt_tmp.append(line)
-    return "\n".join(txt_tmp)
+    txt = "\n".join(txt_tmp)
+    return txt
 
 
 def _fuzzy_clean(txt: str) -> str:
     """
     Remove irrelevant artifacts to make string comparison less strict.
     """
+    hdbg.dassert_isinstance(txt, str)
+    # Ignore spaces.
     txt = _remove_spaces(txt)
-    txt = _remove_lines(txt)
+    # Ignore separation lines.
+    txt = _remove_banner_lines(txt)
+    # Ignore line breaks.
+    txt = txt.replace("\n", " ")
     return txt
-
-
-# TODO(gp): Use the one in hprint. Is it even needed?
-def _to_pretty_string(obj: str) -> str:
-    if isinstance(obj, dict):
-        ret = pprint.pformat(obj)
-    else:
-        ret = str(obj)
-    ret = ret.rstrip("\n")
-    return ret
 
 
 def _sort_lines(txt: str) -> str:

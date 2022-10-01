@@ -51,6 +51,7 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     hlitauti.report_task()
     docker_login(ctx)
+    # TODO(gp): Move this to a var ECR_BASE_PATH="AM_ECR_BASE_PATH" in repo_config.py.
     ecr_base_path = hlitauti.get_default_param("CK_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
     hlitauti.run(ctx, f"{docker_exec} image ls {ecr_base_path}")
@@ -282,6 +283,7 @@ def docker_login(ctx):  # type: ignore
     #   -p eyJ... \
     #   -e none \
     #   https://*****.dkr.ecr.us-east-1.amazonaws.com
+    # TODO(gp): Move this to var in repo_config.py.
     profile = "ck"
     region = "eu-north-1"
     if major_version == 1:
@@ -984,7 +986,7 @@ def _get_container_name(service_name: str) -> str:
     # Get Docker image base name.
     image_name = hlitauti.get_default_param("BASE_IMAGE")
     # Get current timestamp.
-    current_timestamp = hlitauti._get_ET_timestamp()
+    current_timestamp = hlitauti.get_ET_timestamp()
     # Build container name.
     container_name = f"{linux_user}.{image_name}.{service_name}.{project_dir}.{current_timestamp}"
     _LOG.debug(

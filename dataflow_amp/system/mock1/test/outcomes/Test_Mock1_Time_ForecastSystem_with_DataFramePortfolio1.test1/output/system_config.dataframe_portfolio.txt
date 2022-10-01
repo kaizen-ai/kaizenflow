@@ -154,6 +154,7 @@ process_forecasts_node_dict:
     trading_start_time: 09:30:00
     ath_end_time: 16:00:00
     trading_end_time: 15:55:00
+    share_quantization: no_quantization
 event_loop_object: <_EventLoop running=False closed=False debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
 object.str:

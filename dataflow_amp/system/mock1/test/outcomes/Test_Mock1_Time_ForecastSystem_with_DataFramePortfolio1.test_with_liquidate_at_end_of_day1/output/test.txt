@@ -75,7 +75,7 @@ system_class: Mock1_Time_ForecastSystem_with_DataFramePortfolio
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
-  replayed_delay_in_mins_or_timestamp: 2000-01-01 09:35:00-05:00
+  replayed_delay_in_mins_or_timestamp: 5
   asset_ids: [101]
   data:
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
@@ -178,6 +178,7 @@ process_forecasts_node_dict:
     ath_start_time: 09:30:00
     trading_start_time: 09:30:00
     ath_end_time: 16:00:00
+    share_quantization: no_quantization
 event_loop_object: <_EventLoop running=False closed=True debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
 object.str:
@@ -644,18 +645,22 @@ num_it=7 current_time='2000-01-01 10:05:00-05:00'
 
 # forecast_evaluator_from_prices signature=
 
-# holdings=
+# holdings_shares=
                               101
 end_datetime
 2000-01-01 10:05:00-05:00 -1000.0
-# holdings marked to market=
+# holdings_notional=
                                 101
 end_datetime
 2000-01-01 10:05:00-05:00 -101000.0
-# flows=
+# executed_trades_shares=
+                              101
+end_datetime
+2000-01-01 10:05:00-05:00 -1990.1
+# executed_trades_notional=
                                 101
 end_datetime
-2000-01-01 10:05:00-05:00  201000.0
+2000-01-01 10:05:00-05:00 -201000.0
 # pnl=
                              101
 end_datetime
@@ -670,6 +675,4 @@ system_log_dir signature
 # Dir structure
 .
 system_config.input.txt
-system_config.input.values_as_strings.pkl
 system_config.output.txt
-system_config.output.values_as_strings.pkl

@@ -75,7 +75,7 @@ system_class: Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcesso
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
-  replayed_delay_in_mins_or_timestamp: 2000-01-01 09:35:00-05:00
+  replayed_delay_in_mins_or_timestamp: 5
   asset_ids: [101]
   data:
     index=[2000-01-01 09:31:00-05:00, 2000-01-01 10:10:00-05:00]
@@ -440,13 +440,25 @@ object.str:
       _bar_duration_in_secs='300' <int>
       _set_current_bar_timestamp='True' <bool>
       _events='[]' <list>
-  order_processor: <coroutine object OrderProcessor.run_loop at 0x>
+  order_processor_object:
+    <oms.order_processor.OrderProcessor at 0x>:
+      _db_connection='<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=xxx port=xxx', closed: 0>' <psycopg2.extensions.connection>
+      max_wait_time_for_order_in_secs='305' <int>
+      _delay_to_accept_in_secs='3' <int>
+      _delay_to_fill_in_secs='10' <int>
+      _asset_id_name='asset_id' <str>
+      _submitted_orders_table_name='submitted_orders' <str>
+      _accepted_orders_table_name='accepted_orders' <str>
+      _current_positions_table_name='current_positions' <str>
+      _target_list_id='0' <int>
+  order_processor_coroutine: <coroutine object OrderProcessor.run_loop at 0x>
 object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   portfolio_object: dataflow_amp.system.mock1.mock1_forecast_system._get_portfolio
   dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
-  order_processor: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor
+  order_processor_object: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor
+  order_processor_coroutine: dataflow_amp.system.mock1.mock1_forecast_system._get_order_processor_coroutine
 portfolio_object:
   <oms.portfolio.DatabasePortfolio at 0x>
     # historical holdings=
@@ -561,6 +573,7 @@ process_forecasts_node_dict:
     ath_end_time: 16:00:00
     trading_end_time: 15:55:00
     liquidate_at_trading_end_time: False
+    share_quantization: no_quantization
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(dag=DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>) <dataflow.core.dag.DAG>, config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
@@ -585,7 +598,8 @@ dag_runner_object:
       2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  102.0       101     100       1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
     _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[Event(num_it=1, current_time=Timestamp('2000-01-01 09:35:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=2, current_time=Timestamp('2000-01-01 09:40:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=3, current_time=Timestamp('2000-01-01 09:45:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=4, current_time=Timestamp('2000-01-01 09:50:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=5, current_time=Timestamp('2000-01-01 09:55:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=6, current_time=Timestamp('2000-01-01 10:00:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York')), Event(num_it=7, current_time=Timestamp('2000-01-01 10:05:00-0500', tz='America/New_York'), wall_clock_time=Timestamp('xxx', tz='America/New_York'))] <list>)
-order_processor: <coroutine object OrderProcessor.run_loop at 0x>
+order_processor_object: OrderProcessor at 0x=(_db_connection=<connection object; dsn: 'user=aljsdalsd password=xxx dbname=oms_postgres_db_local host=xxx port=xxx', closed: 0> <psycopg2.extensions.connection>, max_wait_time_for_order_in_secs=305 <int>, _delay_to_accept_in_secs=3 <int>, _delay_to_fill_in_secs=10 <int>, _asset_id_name=asset_id <str>, _submitted_orders_table_name=submitted_orders <str>, _accepted_orders_table_name=accepted_orders <str>, _current_positions_table_name=current_positions <str>, _target_list_id=7 <int>)
+order_processor_coroutine: <coroutine object OrderProcessor.run_loop at 0x>
 ################################################################################
 compute_run_signature
 ################################################################################
@@ -650,18 +664,22 @@ num_it=7 current_time='2000-01-01 10:05:00-05:00'
 
 # forecast_evaluator_from_prices signature=
 
-# holdings=
+# holdings_shares=
                               101
 end_datetime
 2000-01-01 10:05:00-05:00  982.32
-# holdings marked to market=
+# holdings_notional=
                                 101
 end_datetime
 2000-01-01 10:05:00-05:00  98821.22
-# flows=
+# executed_trades_shares=
+                               101
+end_datetime
+2000-01-01 10:05:00-05:00  1976.35
+# executed_trades_notional=
                                  101
 end_datetime
-2000-01-01 10:05:00-05:00 -198821.22
+2000-01-01 10:05:00-05:00  198821.22
 # pnl=
                                101
 end_datetime
@@ -676,6 +694,4 @@ system_log_dir signature
 # Dir structure
 .
 system_config.input.txt
-system_config.input.values_as_strings.pkl
 system_config.output.txt
-system_config.output.values_as_strings.pkl

@@ -112,7 +112,7 @@ def run_Time_ForecastSystem(
         #
         if "order_processor_config" in system.config:
             # Get the `OrderProcessor` coroutine.
-            order_processor_coroutine = system.order_processor
+            order_processor_coroutine = system.order_processor_coroutine
             hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
         #
@@ -517,6 +517,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    # TODO(gp): -> run_system
     def _test_database_portfolio_helper(
         self,
         system: dtfsyssyst.System,
@@ -527,6 +528,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         """
         Run a System with a DatabasePortfolio.
         """
+        # Add the DB connection.
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)

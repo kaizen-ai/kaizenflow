@@ -10,7 +10,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import s3fs
-import seaborn as sns
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -24,9 +23,8 @@ import helpers.hsystem as hsystem
 
 
 _LOG = logging.getLogger(__name__)
-
-
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+# Enable extra verbose debugging. Do not commit.
+_TRACE = False
 
 
 # #############################################################################
@@ -490,7 +488,7 @@ def drop_duplicates(
     **kwargs: Any,
 ) -> Union[pd.Series, pd.DataFrame]:
     """
-    Wrapper around `pandas.drop_duplicates()`.
+    Wrap `pandas.drop_duplicates()`.
 
     See the official docs:
     - https://pandas.pydata.org/docs/reference/api/pandas.Series.drop_duplicates.html
@@ -710,18 +708,21 @@ def trim_df(
         - False: ..., end_ts)
     :return: the trimmed dataframe
     """
-    _LOG.verb_debug(
-        df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
-    )
+    if _TRACE:
+        _LOG.trace(
+            df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
+        )
     _LOG.debug(
         hprint.to_str("ts_col_name start_ts end_ts left_close right_close")
     )
-    _LOG.debug("df=\n%s", df_to_str(df))
+    if _TRACE:
+        _LOG.trace("df=\n%s", df_to_str(df))
     if df.empty:
         # If the df is empty, there is nothing to trim.
         return df
     if start_ts is None and end_ts is None:
-        # If no boundaries are specified, there are no points of reference to trim to.
+        # If no boundaries are specified, there are no points of reference to trim
+        # to.
         return df
     num_rows_before = df.shape[0]
     if start_ts is not None and end_ts is not None:
@@ -735,7 +736,8 @@ def trim_df(
         hdbg.dassert_in(ts_col_name, df.columns)
         values_to_filter_by = df[ts_col_name]
     if values_to_filter_by.is_monotonic:
-        # The values are sorted; using the `pd.Series.searchsorted` method.
+        _LOG.trace("df is monotonic")
+        # The values are sorted; using the `pd.Series.searchsorted()` method.
         # Find the index corresponding to the left boundary of the interval.
         if start_ts is not None:
             side = "left" if left_close else "right"
@@ -752,12 +754,14 @@ def trim_df(
             # There is nothing to filter, so the right index is None.
             right_idx = None
         _LOG.debug(hprint.to_str("end_ts right_idx"))
+        #
         hdbg.dassert_lte(0, left_idx)
         if right_idx is not None:
             hdbg.dassert_lte(left_idx, right_idx)
             hdbg.dassert_lte(right_idx, df.shape[0])
         df = df.iloc[left_idx:right_idx]
     else:
+        _LOG.trace("df is not monotonic")
         # The values are not sorted; using the `pd.Series.between` method.
         if left_close and right_close:
             inclusive = "both"
@@ -795,7 +799,7 @@ def merge_dfs(
     **pd_merge_kwargs: Any,
 ) -> pd.DataFrame:
     """
-    Wrapper around `pd.merge`.
+    Wrap `pd.merge`.
 
     :param threshold_col_name: a column's name to check the minimum overlap on
     :param threshold: minimum overlap of unique values in a specified column to
@@ -925,6 +929,8 @@ def _df_to_str(
 
 # TODO(gp): Maybe we can have a `_LOG_df_to_str(log_level, *args, **kwargs)` that
 #  calls `_LOG.log(log_level, hpandas.df_to_str(*args, **kwargs, log_level=log_level))`.
+# TODO(gp): We should make sure this works properly in a notebook, although
+#  it's not easy to unit test.
 def df_to_str(
     df: Union[pd.DataFrame, pd.Series, pd.Index],
     *,

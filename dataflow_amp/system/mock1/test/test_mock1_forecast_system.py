@@ -15,10 +15,10 @@ _LOG = logging.getLogger(__name__)
 
 def _get_test_system_builder_func() -> Callable:
     """
-    Get System builder function for unit testing.
+    Get a function building a Mock1 non-time forecast system for unit testing.
     """
-    # TODO(Max): In the current system, the time periods are set manually,
-    # so the value of `time_interval_str` doesn't affect tests.
+    # In this system the time periods are set manually, so the value of
+    # `time_interval_str` doesn't affect tests.
     backtest_config = "mock1_v1-top2.5T.Jan2000"
     system_builder_func = lambda: dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
         backtest_config
@@ -46,7 +46,8 @@ class Test_Mock1_System_CheckConfig(dtfsys.System_CheckConfig_TestCase1):
 class Test_Mock1_NonTime_ForecastSystem_FitPredict(
     dtfsys.NonTime_ForecastSystem_FitPredict_TestCase1
 ):
-    def get_system(self) -> dtfsys.System:
+    @staticmethod
+    def get_system() -> dtfsys.System:
         """
         Create the System for testing.
         """
@@ -167,19 +168,6 @@ class Test_Mock1_Time_ForecastSystem1(dtfsys.Test_Time_ForecastSystem_TestCase1)
 # #############################################################################
 
 
-def _get_test_System_with_DataFramePortfolio(
-    market_data_df: pd.DataFrame,
-    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
-) -> dtfsys.System:
-    """
-    Get a System object with a DataFramePortfolio for unit testing.
-    """
-    system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
-        market_data_df, rt_timeout_in_secs_or_time
-    )
-    return system
-
-
 class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     dtfsys.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
 ):
@@ -191,12 +179,12 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     def test1(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
-        system = _get_test_System_with_DataFramePortfolio(
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
         self._test1(system)
-        # Check some high level property of the Portfolio:
+        # Check some high level property of the Portfolio.
         expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
@@ -204,7 +192,7 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     def test_with_liquidate_at_end_of_day1(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
-        system = _get_test_System_with_DataFramePortfolio(
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -214,19 +202,6 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
 # #############################################################################
 # Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1
 # #############################################################################
-
-
-def _get_test_System_with_DatabasePortfolio(
-    market_data_df: pd.DataFrame,
-    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
-) -> dtfsys.System:
-    """
-    Get a System object with a DatabasePortfolio for unit testing.
-    """
-    system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
-        market_data_df, rt_timeout_in_secs_or_time
-    )
-    return system
 
 
 class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
@@ -242,7 +217,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     def test1(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df1()
-        system = _get_test_System_with_DatabasePortfolio(
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -252,7 +227,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     def test2(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df2()
-        system = _get_test_System_with_DatabasePortfolio(
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -262,7 +237,7 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     def test3(self) -> None:
         # Build the system.
         data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df3()
-        system = _get_test_System_with_DatabasePortfolio(
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -290,12 +265,11 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
         rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
     ) -> Tuple[dtfsys.System, dtfsys.System]:
         # Build the systems to compare.
-        system_with_dataframe_portfolio = (
-            _get_test_System_with_DataFramePortfolio(
-                data, rt_timeout_in_secs_or_time
-            )
+
+        system_with_dataframe_portfolio = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data, rt_timeout_in_secs_or_time
         )
-        system_with_database_portfolio = _get_test_System_with_DatabasePortfolio(
+        system_with_database_portfolio = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
             data, rt_timeout_in_secs_or_time
         )
         # Run.
@@ -408,9 +382,9 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         time_system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_example1()
         # TODO(Grisha): @Dan Pass "rt_timeout_in_secs_or_time" through kwargs.
         # Make system to run for 3 5-minute intervals.
-        time_system.config["dag_runner_config", "rt_timeout_in_secs_or_time"] = (
-            rt_timeout_in_secs_or_time
-        )
+        time_system.config[
+            "dag_runner_config", "rt_timeout_in_secs_or_time"
+        ] = rt_timeout_in_secs_or_time
         time_system.config["market_data_config", "data"] = market_data_df
         return time_system
 
