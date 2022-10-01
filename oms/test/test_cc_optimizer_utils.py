@@ -7,7 +7,7 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
-import oms.hsecrets.secret_identifier as oseseide
+import oms.hsecrets.secret_identifier as ohsseide
 
 
 class TestCcOptimizerUtils1(hunitest.TestCase):
@@ -112,7 +112,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         contract_type = "futures"
         strategy_id = "dummy_strategy_id"
         market_data = umock.create_autospec(spec=mdata.MarketData, instance=True)
-        secret_id = oseseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+        secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
         # Initialize broker.
         broker = occxbrok.CcxtBroker(
             exchange_id,
@@ -163,14 +163,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         log_dir = None
-        with umock.patch.object(
-            broker, "get_low_market_price", create=True
-        ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
-            market_price_mock.return_value = 100.0
-            # Run.
-            actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
-            actual = hpandas.df_to_str(actual)
+        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
     def test_apply_prod_limits2(self) -> None:
@@ -182,14 +176,9 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
         log_dir = None
-        with umock.patch.object(
-            broker, "get_low_market_price", create=True
-        ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
-            market_price_mock.return_value = 100.0
-            # Run.
-            actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
-            actual = hpandas.df_to_str(actual)
+        # Run.
+        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
     def test_apply_testnet_limits1(self) -> None:
@@ -203,12 +192,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         log_dir = None
         # Set broker stage to imitate testnet.
         broker.stage = "local"
-        with umock.patch.object(
-            broker, "get_low_market_price", create=True
-        ) as market_price_mock:
-            # Mock minimal price to bypass CCXT API and RealTimeMarketData.
-            market_price_mock.return_value = 100.0
-            # Run.
-            actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
-            actual = hpandas.df_to_str(actual)
+        # Run.
+        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = hpandas.df_to_str(actual)
         self.check_string(actual)
