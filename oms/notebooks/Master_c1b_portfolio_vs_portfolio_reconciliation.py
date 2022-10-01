@@ -181,7 +181,7 @@ def diff_lines(
 # %%
 aws_profile = "ck"
 file_path = (
-    "/shared_data/prod_reconciliation/20220923/simulation/test_data.csv.gz"
+    "/shared_data/prod_reconciliation/20220928/simulation/test_data.csv.gz"
 )
 # file_path = "s3://cryptokaizen-data/unit_test/outcomes/Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation/input/test_data.csv.gz"
 column_remap = {
@@ -212,10 +212,10 @@ max_market_data_end_time = (
 max_market_data_end_time
 
 # %%
-date = "2022-09-23"
-start_timestamp = pd.Timestamp(date + " 07:40:00", tz="America/New_York")
+date = "2022-09-28"
+start_timestamp = pd.Timestamp(date + " 12:00:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date + " 10:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date + " 14:20:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
@@ -227,9 +227,9 @@ replayed_delay_in_mins_or_timestamp
 
 # %%
 prod_dir = (
-    "/shared_data/prod_reconciliation/20220923/prod/system_log_dir_20220923_2hours"
+    "/shared_data/prod_reconciliation/20220928/prod/system_log_dir_20220928_2hours"
 )
-sim_dir = "/shared_data/prod_reconciliation/20220923/simulation/system_log_dir"
+sim_dir = "/shared_data/prod_reconciliation/20220928/simulation/system_log_dir"
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
