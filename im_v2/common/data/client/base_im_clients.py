@@ -10,8 +10,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import core.finance.bid_ask as cfibiask
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -206,7 +206,9 @@ class ImClient(abc.ABC):
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
         if "level" in df.columns:
-            _LOG.debug("Detected level column and calling handle_orderbook_levels")
+            _LOG.debug(
+                "Detected level column and calling handle_orderbook_levels"
+            )
             # Transform bid ask data with multiple order book levels.
             timestamp_col = self._timestamp_col_name
             df = cfibiask.handle_orderbook_levels(df, timestamp_col)
@@ -730,7 +732,9 @@ class SqlRealTimeImClient(RealTimeImClient):
         data[self._timestamp_col_name] = data[self._timestamp_col_name].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        data = data.set_index(self._timestamp_col_name,)
+        data = data.set_index(
+            self._timestamp_col_name,
+        )
         # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
@@ -901,6 +905,42 @@ class SqlRealTimeImClient(RealTimeImClient):
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
 
-    def _filter_full_duplicates(self, data: pd.DataFrame, duplicate_columns: List[str]):
-        no_duplicates_data = data.drop_duplicates(duplicate_columns)
-        return no_duplicates_data
+    def _filter_full_duplicates(
+        self, data: pd.DataFrame, duplicate_columns: Optional[List[str]]
+    ):
+        """
+        Remove duplicates from data based on 'knowledge_timestamp'.
+
+        Keeps the row with the high 'knowledge_timestamp' value.
+
+        The function gives a warning if the knowledge timestamp is less
+        than a minute over the data timestamp. This might indicate that
+        the data hasn't been downloaded in full, although the risk is
+        very low.
+
+        :param data: data from the DB.
+        :param duplicate_columns: columns on which i
+        """
+        hdbg.dassert_in("knowledge_timestamp", data.columns)
+        # If no columns are given, use all non-metadata columns.
+        if duplicate_columns is None:
+            duplicate_columns = [
+                c
+                for c in data.columns.to_list()
+                if c not in ["knowledge_timestamp", "download_timestamp"]
+            ]
+        hdbg.dassert_is_subset(duplicate_columns, data.columns.to_list())
+        # Remove duplicates.
+        data = data.sort_values("knowledge_timestamp", ascending=False)
+        data = data.drop_duplicates(duplicate_columns).sort_index()
+        # Check if the knowledge_timestamp is over the candle timestamp by a minute.
+        mask = pd.to_datetime(data["timestamp"], unit="ms") < (
+            data["knowledge_timestamp"] + pd.Timedelta("1m")
+        )
+        early_data = data.loc[mask]
+        if not early_data.empty:
+            _LOG.warning(
+                "Knowledge timestamp for the following rows is less than a minute after candle timestamp:\n%s",
+                hpandas.df_to_str(early_data, num_rows=None),
+            )
+        return data
