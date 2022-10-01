@@ -132,10 +132,10 @@
 6) Sync a dir to handle moved files
 - Assume that there is a dir where files were moved
   ```
-    > invoke integrate_diff_dirs
-    ...
-    ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
-    ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+  > invoke integrate_diff_dirs
+  ...
+  ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+  ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
   ```
 - You can accept the `cmamp1` side with:
   ```
@@ -143,7 +143,7 @@
   ```
 - This corresponds to:
   ```
-  > rsync --delete -a -r {src_dir}/ {dst_dir}/"
+  > rsync --delete -a -r {src_dir}/ {dst_dir}/
   ```
 
 ## Double-check the integration
