@@ -20,6 +20,7 @@ import helpers.lib_tasks_docker as hlitadoc
 
 import datetime
 import logging
+import os
 from typing import Any, Dict, List, Match, Optional
 
 from invoke import task
@@ -142,7 +143,8 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(target_file):
         _LOG.warning("Skipping generating %s", target_file)
     else:
-        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::save_data"
+        test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::save_data"
+        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name}"
         #docker_cmd += " -s --dbg"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
@@ -248,19 +250,20 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     Run reconciliation simulation for `run_date`.
     """
-    timestamp = hlitauti.get_ET_timestamp()
-    #
+    _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
     _LOG.info(hprint.to_str("target_dir"))
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
     hdbg.dassert_dir_exists(target_dir)
+    # Remove local dir with system logs.
+    rm_cmd = "rm -r system_log_dir/"
+    _system(rm_cmd)
     # Run simulation.
     opts = "-s --dbg --update_outcomes"
-    test_name = "./dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::run_simulation"
-    docker_cmd = f"pytest {test_name} {opts} 2>&1 | tee {log_file}"
-    docker_cmd = f"rm -r system_log_dir/; {docker_cmd}"
+    test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_run_simulation"
+    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
     #docker_cmd += "; exit ${PIPESTATUS[0]})"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
@@ -269,7 +272,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
 # > cp -vr ./system_log_dir /data/shared/prod_reconciliation/20220928/simulation/
 # > cp -v tmp.pytest_script.txt /data/shared/prod_reconciliation/20220928/simulation/
 @task
-def reconcile_save_sim(ctx, run_date=None, timestamp=None):  # type: ignore
+def reconcile_save_sim(ctx, run_date=None):  # type: ignore
     """
     Copy the output of the simulation in the proper dir.
     """
@@ -279,14 +282,14 @@ def reconcile_save_sim(ctx, run_date=None, timestamp=None):  # type: ignore
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
     hdbg.dassert_dir_exists(target_dir)
-    #
+    # Save system logs.
     system_log_dir = "./system_log_dir"
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
-    _system(cmd)
-    #
+    _system(docker_cmd)
+    # Save script logs.
     pytest_script_file_path = "tmp.pytest_script.txt"
     docker_cmd = f"cp -v {pytest_script_file_path} {target_dir}"
-    _system(cmd)
+    _system(docker_cmd)
 
 
 # TODO(Danya): Add script here to dump fills data.
@@ -333,12 +336,12 @@ def reconcile_run_all(ctx, incremental=False):  # type: ignore
     #
     # TODO(Dan): Add prod invokes.
     #
-    reconcile_run_sim(ctx, account_type, run_date=run_date)
-    reconcile_save_sim(ctx, account_type, run_date=run_date)
+    reconcile_run_sim(ctx, run_date=run_date)
+    reconcile_save_sim(ctx, run_date=run_date)
     #
     # TODO(gp): Download for the day before.
     #reconcile_dump_tca_data(ctx, run_date=None)
-    reconcile_ls(ctx, run_date=None)
+    reconcile_ls(ctx, run_date=run_date)
 
 
 # #############################################################################
