@@ -132,7 +132,7 @@ def check_for_missing_bars(
 def print_stats(df: pd.DataFrame) -> None:
     """
     Print basic stats and sanity checks before doing heavy computations.
-    
+
     Stats include:
     - minimal index timestamp
     - maximum index timestamp
