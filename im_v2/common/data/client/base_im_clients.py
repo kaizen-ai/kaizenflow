@@ -938,9 +938,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = data.sort_values("knowledge_timestamp", ascending=False)
         data = data.drop_duplicates(duplicate_columns).sort_index()
         # Check if the knowledge_timestamp is over the candle timestamp by a minute.
-        mask = data["timestamp"] < (
-            data["knowledge_timestamp"] + pd.Timedelta("1m")
-        )
+        mask = data["timestamp"] < (data["knowledge_timestamp"] + pd.Timedelta("1m"))
         early_data = data.loc[mask]
         if not early_data.empty:
             _LOG.warning(

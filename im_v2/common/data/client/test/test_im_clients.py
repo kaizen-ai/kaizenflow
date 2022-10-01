@@ -3,10 +3,11 @@ import os
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
-import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
+import im_v2.common.db.db_utils as imvcddbut
 import im_v2.crypto_chassis.data.client as iccdc
 
 # TODO(Grisha): factor out `ImClient` calls in a helper function.
@@ -495,13 +496,33 @@ class TestDataFrameImClients1(icdc.ImClientTestCase):
         )
 
 
-class TestSqlRealTimeClient(icdc.ImClientTestCase):
-    """ """
+class TestSqlRealTimeClient(imvcddbut.TestImDbHelper):
+    @classmethod
+    def get_id(cls) -> int:
+        """
+        Required to instantiate the abstract class.
+        """
+        return hash(cls.__name__) % 10000
 
-    def test_filter_duplicates1(self):
-        im_client = imvcdcrcex.get_mock_realtime_client()
-        input_data_path = os.path.join(self.get_input_dir(), "trades.json")
-        input_data = pd.from_csv(input_data_path)
+    def setUp(self) -> None:
+        super().setUp()
+        self.client = icdc.get_mock_realtime_client(self.connection)
+
+    def test_filter_duplicates1(self) -> None:
+        """
+        Verify that duplicates are filtered correctly.
+        """
+        # Load input data and convert dtypes to timestamp.
+        #  Note: The conversions follow the pattern in `SqlRealTimeClient.read_data`.
+        input_data_path = os.path.join(self.get_input_dir(), "test_data.csv")
+        input_data = pd.read_csv(
+            input_data_path,
+            converters={"knowledge_timestamp": pd.Timestamp, "timestamp": int},
+        )
+        input_data["timestamp"] = input_data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Filter duplicates.
         columns = ["timestamp", "currency_pair", "exchange_id"]
-        actual = im_client._filter_duplicates(input_data, columns)
+        actual = self.client._filter_duplicates(input_data, columns)
         self.check_string(str(actual))
