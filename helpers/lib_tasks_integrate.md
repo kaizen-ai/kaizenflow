@@ -111,6 +111,7 @@
 
    # Diff the changes in each side from the integration point:
    > i git_branch_diff_with -t hash -h 813c7e763 -f ...
+   > git difftool 813c7e763 ...
    ```
 
 4) Check which files are different between the dirs:
@@ -131,10 +132,10 @@
 6) Sync a dir to handle moved files
 - Assume that there is a dir where files were moved
   ```
-    > invoke integrate_diff_dirs
-    ...
-    ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
-    ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
+  > invoke integrate_diff_dirs
+  ...
+  ... Only in .../cmamp1/.../alpha_numeric_data_snapshots: alpha
+  ... Only in .../amp1/.../alpha_numeric_data_snapshots: latest
   ```
 - You can accept the `cmamp1` side with:
   ```
@@ -142,7 +143,7 @@
   ```
 - This corresponds to:
   ```
-  > rsync --delete -a -r {src_dir}/ {dst_dir}/"
+  > rsync --delete -a -r {src_dir}/ {dst_dir}/
   ```
 
 ## Double-check the integration
@@ -160,8 +161,16 @@
   > cd cmamp1
   > i integrate_diff_overlapping_files --src-dir-basename "cmamp1" --dst-dir-basename "amp1"
   ```
+  
+- Read the changes to Python files:
+  ```
+  > cd amp1
+  > i git_branch_diff_with -t base --keep-extensions py
+  > cd cmamp1
+  > i git_branch_diff_with -t base --keep-extensions py
+  ```
 
-- Quickly scan all the changes in the branch compared to the base
+- Quickly scan all the changes in the branch compared to the base:
   ```
   > cd amp1
   > i git_branch_diff_with -t base

@@ -28,22 +28,9 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# There are 2 levels of debugging:
-# 1) _LOG.debug: which can be enabled or disabled for this module.
-
 # Mute this module unless we want to debug it.
 # NOTE: Keep this enabled when committing.
 _LOG.setLevel(logging.INFO)
-
-# Disable _LOG.debug.
-# _LOG.debug = lambda *_: 0
-
-# 2) _LOG.verb_debug: reports even more detailed information. It can be
-#    enabled or disabled for this module.
-
-# Enable or disable _LOG.verb_debug
-# _LOG.verb_debug = lambda *_: 0
-# _LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.

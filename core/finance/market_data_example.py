@@ -553,20 +553,25 @@ def build_timestamp_df(
 # #############################################################################
 
 
+# `get_MarketData_df...()` functions return the timeout in seconds corresponding
+# the returned data.
+
+
 # TODO(gp): @all -> get_MarketDataDf_example1()
 def get_MarketData_df1() -> Tuple[pd.DataFrame, int]:
     """
-    Generate price series with a price pattern and a real-time loop timeout in
-    seconds to test model.
+    Generate price data with in the interval [2000-01-01 09:31, 2000-01-01
+    10:10].
 
-    Output example:
-
-    ```
-                                          start_datetime ... volume  feature1
-    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
-    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
-    ```
+    - return: dataframe, e.g.,
+        ```
+                                              start_datetime ... volume  feature1
+        2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+        2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+        ...
+        2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00         100      -1.0
+        2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00         100      -1.0
+        ```
     """
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
@@ -590,17 +595,17 @@ def get_MarketData_df1() -> Tuple[pd.DataFrame, int]:
 
 def get_MarketData_df2() -> Tuple[pd.DataFrame, int]:
     """
-    Generate price series with a price pattern and a real-time loop timeout in
-    seconds to test model.
+    Generate price like `get_MarketData_df1()` but with a different pattern.
 
-    Output example:
-
-    ```
-                                          start_datetime ... volume  feature1
-    2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
-    2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
-    ```
+    - return: dataframe, e.g.,
+        ```
+                                              start_datetime ... volume  feature1
+        2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
+        2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
+        ...
+        2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00         100       1.0
+        2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00         100       1.0
+        ```
     """
     idx = pd.date_range(
         start=pd.Timestamp("2000-01-01 09:31:00-05:00", tz="America/New_York"),
@@ -633,7 +638,7 @@ def get_MarketData_df3() -> Tuple[pd.DataFrame, int]:
                                           start_datetime ... volume  feature1
     2000-01-01 09:31:00-05:00  2000-01-01 09:30:00-05:00        100      -1.0
     2000-01-01 09:32:00-05:00  2000-01-01 09:31:00-05:00        100      -1.0
-    2000-01-01 09:33:00-05:00  2000-01-01 09:32:00-05:00        100      -1.0
+    ...
     ```
     """
     idx = pd.date_range(

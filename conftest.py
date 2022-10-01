@@ -60,7 +60,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         parser.addoption(
             "--dbg",
             action="store_true",
-            help="Set the logging level to DEBUG",
+            help="Set the logging level to TRACE",
         )
         parser.addoption(
             "--image_version",
@@ -96,7 +96,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             if config.getoption("--dbg_verbosity", None):
                 level = config.getoption("--dbg_verbosity")
             elif config.getoption("--dbg", None):
-                level = logging.DEBUG
+                level = logging.TRACE
             else:
                 raise ValueError("Can't get here")
             print(f"\n{_WARNING}: Setting verbosity level to %s" % level)

@@ -64,7 +64,7 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 ) -> dtfsys.System:
     """
-    The System is used for the corresponding unit tests.
+    Build a System used for the corresponding unit tests.
     """
     system = dtfasmmfosy.Mock1_Time_ForecastSystem_with_DataFramePortfolio()
     # Market data config.
@@ -111,7 +111,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
 ) -> dtfsys.System:
     """
-    The System is used for the corresponding unit tests.
+    Build a System is used for the corresponding unit tests.
     """
     system = (
         dtfasmmfosy.Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor()
@@ -123,6 +123,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
         "market_data_config", "replayed_delay_in_mins_or_timestamp"
     ] = pd.Timestamp("2000-01-01 09:35:00-05:00", tz="America/New_York")
     system.config["market_data_config", "asset_ids"] = [101]
+    # TODO(gp): Use a file to pass the data instead of a df.
     system.config["market_data_config", "data"] = market_data_df
     # Portfolio config.
     system = dtfsys.apply_Portfolio_config(system)
@@ -174,7 +175,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
 
 
 def get_Mock1_NonTime_ForesactSystem_example1(
-    backtest_config,
+    backtest_config: str,
 ) -> dtfsys.ForecastSystem:
     """
     Build Mock1_ForecastSystem and fill the `System.config`.
@@ -210,7 +211,7 @@ def get_Mock1_NonTime_ForesactSystem_example1(
 # TODO(Nina): Factor out the examples to pass params into it.
 def get_Mock1_Time_ForecastSystem_example1() -> dtfsys.ForecastSystem:
     """
-    The System is used for the corresponding unit tests.
+    Build a System is used for the corresponding unit tests.
     """
     system = dtfasmmfosy.Mock1_Time_ForecastSystem()
     #

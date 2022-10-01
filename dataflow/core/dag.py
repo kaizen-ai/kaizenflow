@@ -618,6 +618,8 @@ class DAG(hobject.PrintableMixin):
             )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
+            # TODO(gp): Rename this as `df_as_csv_and_pq` and maybe add also
+            # `df_as_pq`.
             if self._save_node_io == "df_as_csv":
                 csv_file_name = file_name + ".csv.gz"
                 df.to_csv(csv_file_name, compression="gzip")
