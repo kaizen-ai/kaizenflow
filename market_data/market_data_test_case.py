@@ -391,11 +391,11 @@ class MarketData_get_data_TestCase(hunitest.TestCase, abc.ABC):
             + hprint.to_str("start_ts end_ts ts_col_name asset_ids column"),
         )
         # Run.
-        srs = market_data.get_twap_price(
+        df = market_data.get_twap_price(
             start_ts, end_ts, ts_col_name, asset_ids, column
         ).round(2)
         # Check output.
-        self.check_srs_output(srs, *args, **kwargs)
+        self.check_df_output(df, *args, **kwargs)
 
     # //////////////////////////////////////////////////////////////////////////////
 

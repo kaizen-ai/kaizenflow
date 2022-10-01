@@ -40,6 +40,7 @@ _LOG = logging.getLogger(__name__)
 #  (when we don't have a ForecastEvaluator to compute the research PnL).
 #  Can we unify?
 
+
 # TODO(gp): This doesn't freeze the research PnL but freezes part of the result
 #  bundle.
 # TODO(gp): Can we use directly _get_signature_from_result_bundle()?
@@ -74,12 +75,14 @@ def get_signature_from_result_bundle(
     result_bundles: List[dtfcore.ResultBundle],
     add_system_config: bool,
     add_run_signature: bool,
+    add_order_processor_signature: bool,
 ) -> str:
     """
     Compute the signature of a test in terms of:
 
     - System config signature
     - Run signature
+    - Order processor signature (if present)
     - System log dir signature
     """
     portfolio = system.portfolio
@@ -109,7 +112,13 @@ def get_signature_from_result_bundle(
             forecast_evaluator_from_prices_dict,
         )
         txt.append(txt_tmp)
-    # 3) System log dir signature.
+    # 3) Order processor signature.
+    if add_order_processor_signature:
+        order_processor = system.config.get("order_processor_object", None)
+        if order_processor:
+            txt.append(hprint.frame("OrderProcessor execution signature"))
+            txt.append(order_processor.get_execution_signature())
+    # 4) System log dir signature.
     txt.append(hprint.frame("system_log_dir signature"))
     log_dir = system.config["system_log_dir"]
     txt_tmp = hunitest.get_dir_signature(
@@ -208,7 +217,7 @@ def compute_run_signature(
         research_pnl = research_pnl.dropna().iloc[1:]
         tail = research_pnl.size
         # We create new series because the portfolio times may be
-        # disaligned from the research bar times.
+        # dis-aligned from the research bar times.
         pnl1 = pd.Series(pnl.tail(tail).values)
         _LOG.debug("portfolio pnl=\n%s", pnl1)
         #
@@ -220,7 +229,7 @@ def compute_run_signature(
         actual.append("\n# pnl agreement with research pnl\n")
         actual.append(f"corr = {correlation:.3f}")
         actual.append(f"corr_samples = {corr_samples}")
-    # Assemble retsult.
+    # Assemble results.
     actual = "\n".join(map(str, actual))
     return actual
 
@@ -253,11 +262,13 @@ def get_research_pnl_signature(
     _LOG.debug("signature=\n%s", signature)
     actual.append(signature)
     # 2) Get the portfolio.
-    _, _, _, _, stats = forecast_evaluator.compute_portfolio(
+    dfs = forecast_evaluator.compute_portfolio(
         result_df,
         style=forecast_evaluator_from_prices_dict["style"],
         **forecast_evaluator_from_prices_dict["kwargs"],
     )
+    hdbg.dassert_in("stats", dfs.keys())
+    stats = dfs["stats"]
     # Assemble.
     actual = "\n".join(map(str, actual))
     research_pnl = stats["pnl"]
@@ -285,7 +296,8 @@ def log_forecast_evaluator_portfolio(
         result_df,
         log_dir,
         style=forecast_evaluator_from_prices_dict["style"],
-        **forecast_evaluator_from_prices_dict["kwargs"])
+        **forecast_evaluator_from_prices_dict["kwargs"],
+    )
 
 
 # TODO(gp): This should be used in all TestCase right after the dag_runner is

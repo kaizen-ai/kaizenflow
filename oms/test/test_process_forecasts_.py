@@ -70,6 +70,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
             "liquidate_at_trading_end_time": False,
+            "share_quantization": "no_quantization",
         }
         return dict_
 
@@ -215,6 +216,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
             "liquidate_at_trading_end_time": False,
+            "share_quantization": "no_quantization",
         }
         return dict_
 
@@ -328,6 +330,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
             "liquidate_at_trading_end_time": False,
+            "share_quantization": "no_quantization",
         }
         return dict_
 
@@ -435,14 +438,17 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
                 asset_ids=[101, 202],
             )
             # Build OrderProcessor.
+            bar_duration_in_secs = 300
+            termination_condition = 3
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
             max_wait_time_for_order_in_secs = 10
             broker = portfolio.broker
-            termination_condition = 3
             asset_id_name = "asset_id"
             order_processor = oordproc.OrderProcessor(
                 db_connection,
+                bar_duration_in_secs,
+                termination_condition,
                 max_wait_time_for_order_in_secs,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
@@ -450,7 +456,6 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
                 asset_id_name,
             )
             order_processor_coroutine = order_processor.run_loop(
-                termination_condition
             )
             # Run.
             coroutines = [
@@ -510,6 +515,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
             "liquidate_at_trading_end_time": False,
+            "share_quantization": "no_quantization",
         }
         spread_df = None
         restrictions_df = None
@@ -564,17 +570,17 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         return hash(cls.__name__) % 10000
 
     def test_mocked_system1(self) -> None:
-        data = self._get_market_data_df1()
+        data = self._get_MarketData_df1()
         predictions, volatility = self._get_predictions_and_volatility1(data)
         self._run_coroutines(data, predictions, volatility)
 
     def test_mocked_system2(self) -> None:
-        data = self._get_market_data_df2()
+        data = self._get_MarketData_df2()
         predictions, volatility = self._get_predictions_and_volatility1(data)
         self._run_coroutines(data, predictions, volatility)
 
     def test_mocked_system3(self) -> None:
-        data = self._get_market_data_df1()
+        data = self._get_MarketData_df1()
         predictions, volatility = self._get_predictions_and_volatility2(data)
         self._run_coroutines(data, predictions, volatility)
 
@@ -582,14 +588,14 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
         "This test times out because nothing interesting happens after the first set of orders."
     )
     def test_mocked_system4(self) -> None:
-        data = self._get_market_data_df2()
+        data = self._get_MarketData_df2()
         predictions, volatility = self._get_predictions_and_volatility2(data)
         self._run_coroutines(data, predictions, volatility)
 
     # TODO(gp): Move to core/finance/market_data_example.py or reuse some of those
     #  functions.
     @staticmethod
-    def _get_market_data_df1() -> pd.DataFrame:
+    def _get_MarketData_df1() -> pd.DataFrame:
         """
         Generate price series that alternates every 5 minutes.
         """
@@ -612,7 +618,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
     # TODO(gp): Move to core/finance/market_data_example.py or reuse some of
     #  those functions.
     @staticmethod
-    def _get_market_data_df2() -> pd.DataFrame:
+    def _get_MarketData_df2() -> pd.DataFrame:
         idx = pd.date_range(
             start=pd.Timestamp(
                 "2000-01-01 09:31:00-05:00", tz="America/New_York"
@@ -732,12 +738,16 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
                 asset_ids=asset_id,
             )
             # Build OrderProcessor.
+            bar_duration_in_secs = 300
+            termination_condition = 4
+            max_wait_time_for_order_in_secs = 10
             delay_to_accept_in_secs = 3
             delay_to_fill_in_secs = 10
-            max_wait_time_for_order_in_secs = 10
             broker = portfolio.broker
             order_processor = oordproc.OrderProcessor(
                 db_connection,
+                bar_duration_in_secs,
+                termination_condition,
                 max_wait_time_for_order_in_secs,
                 delay_to_accept_in_secs,
                 delay_to_fill_in_secs,
@@ -745,9 +755,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
                 asset_id_name,
             )
             # Build order process coroutine.
-            termination_condition = 4
             order_processor_coroutine = order_processor.run_loop(
-                termination_condition
             )
             coroutines = [
                 self._test_mocked_system1(predictions, volatility, portfolio),
@@ -788,6 +796,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
             "ath_end_time": datetime.time(16, 00),
             "trading_end_time": datetime.time(15, 55),
             "liquidate_at_trading_end_time": False,
+            "share_quantization": "no_quantization",
         }
         spread_df = None
         restrictions_df = None

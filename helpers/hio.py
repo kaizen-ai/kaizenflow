@@ -15,7 +15,7 @@ import re
 import shutil
 import time
 import uuid
-from typing import Any, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
@@ -525,6 +525,8 @@ def add_suffix_to_filename(
     """
     Add a suffix to a file name, with or without changing the extension.
 
+    E.g., {base_name}.{ext} -> {file_name}.{suffix}.{ext}
+
     :param file_name: file name to modify
     :param suffix: index to add to the file name
     :param before_extension: whether to insert the index before the file extension
@@ -534,13 +536,24 @@ def add_suffix_to_filename(
     suffix = str(suffix)
     if with_underscore:
         suffix = "_" + suffix
+    _LOG.debug(hprint.to_str("suffix"))
+    #
     if before_extension:
-        # Add the index to the file name before the extension, e.g.
-        # `dir/file.txt` -> `dir/file_1.txt`.
-        file_name_no_ext, ext = file_name.rsplit(".", 1)
-        ret = file_name_no_ext + suffix + "." + ext
+        # Add the suffix to the file name before the extension.
+        data = file_name.rsplit(".", 1)
+        if len(data) == 1:
+            # E.g., `system_log_dir` -> `system_log_dir_1`
+            ret = file_name + suffix
+        else:
+            # E.g., `dir/file.txt` -> `dir/file_1.txt`.
+            hdbg.dassert_eq(len(data), 2, "Invalid file_name='%s'", file_name)
+            file_name_no_ext, ext = data
+            ret = file_name_no_ext + suffix + "." + ext
     else:
+        # Add the suffix after the name of the file.
+        # E.g., `dir/file.txt` -> `dir/file.txt_1`.
         ret = file_name + suffix
+    _LOG.debug(hprint.to_str("ret"))
     return ret
 
 
@@ -603,7 +616,7 @@ def to_json(file_name: str, obj: dict) -> None:
         )
 
 
-def from_json(file_name: str) -> dict:
+def from_json(file_name: str) -> Dict:
     """
     Read object from JSON file.
 
@@ -622,7 +635,7 @@ def from_json(file_name: str) -> dict:
         txt_tmp.append(line)
     txt_tmp = "\n".join(txt_tmp)
     _LOG.debug("txt_tmp=\n%s", txt_tmp)
-    data = json.loads(txt_tmp)
+    data: Dict = json.loads(txt_tmp)
     return data
 
 

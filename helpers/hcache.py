@@ -29,13 +29,8 @@ import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
-
-# TODO(gp): Do not commit this.
-# _LOG.debug = _LOG.info
-
-# TODO(gp): Use:
-# _LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
-_TRACE_FUNCS = False
+# Enable extra verbose debugging. Do not commit.
+_TRACE = False
 
 # #############################################################################
 
@@ -49,8 +44,8 @@ def enable_caching(val: bool) -> None:
     specific.
     """
     global _IS_CACHE_ENABLED
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     _LOG.warning("Setting caching to %s -> %s", _IS_CACHE_ENABLED, val)
     _IS_CACHE_ENABLED = val
 
@@ -61,8 +56,8 @@ def is_caching_enabled() -> bool:
 
     :return: whether the cache is enabled or not
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     return _IS_CACHE_ENABLED
 
 
@@ -75,8 +70,8 @@ def enable_clear_cache(val: bool) -> None:
     Enable or disable clearing a cache (both global and function-specific).
     """
     global _IS_CLEAR_CACHE_ENABLED
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     _LOG.warning("Enabling clear cache to %s -> %s", _IS_CLEAR_CACHE_ENABLED, val)
     _IS_CLEAR_CACHE_ENABLED = val
 
@@ -87,8 +82,8 @@ def get_global_cache_info(
     """
     Report information on global cache.
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     txt = []
     if add_banner:
         txt.append(hprint.frame("get_global_cache_info()", char1="<"))
@@ -151,8 +146,8 @@ def _get_global_cache_path(cache_type: str, tag: Optional[str] = None) -> str:
 
     :return: the file system path to the cache
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     _dassert_is_valid_cache_type(cache_type)
     # Get the cache name.
     cache_name = _get_global_cache_name(cache_type, tag)
@@ -175,8 +170,8 @@ def _get_cache_size(path: str, description: str) -> str:
     Report information about a cache (global or function) stored at a given
     path.
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     if path is None:
         txt = f"'{description}' cache: path='{path}' doesn't exist yet"
     else:
@@ -206,8 +201,8 @@ def _create_global_cache_backend(
 
     :return: cache backend object
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     _dassert_is_valid_cache_type(cache_type)
     dir_name = _get_global_cache_path(cache_type, tag)
     _LOG.debug(
@@ -227,8 +222,8 @@ def get_global_cache(cache_type: str, tag: Optional[str] = None) -> joblib.Memor
 
     :return: caching backend
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
@@ -256,8 +251,8 @@ def set_global_cache(cache_type: str, cache_backend: joblib.Memory) -> None:
     :param cache_type: type of a cache
     :param cache_backend: caching backend
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     _dassert_is_valid_cache_type(cache_type)
     global _MEMORY_CACHE
     global _DISK_CACHE
@@ -277,8 +272,8 @@ def clear_global_cache(
     :param tag: optional unique tag of the cache, empty by default
     :param destroy: remove physical directory
     """
-    if _TRACE_FUNCS:
-        _LOG.debug("")
+    if _TRACE:
+        _LOG.trace("")
     if cache_type == "all":
         for cache_type_tmp in _get_cache_types():
             clear_global_cache(cache_type_tmp, tag=tag, destroy=destroy)
@@ -394,8 +389,8 @@ class _Cached:
         # Make the class have the same attributes (e.g., `__name__`, `__doc__`,
         # `__dict__`) as the called function.
         functools.update_wrapper(self, func)
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         # Save interface parameters.
         hdbg.dassert_callable(func)
         self._func = func
@@ -431,8 +426,8 @@ class _Cached:
 
         :return: object returned by the wrapped function
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         perf_counter_start: float
         if self._is_verbose:
             perf_counter_start = time.perf_counter()
@@ -481,8 +476,8 @@ class _Cached:
         """
         Return info about the caching properties for this function.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         txt = []
         if add_banner:
             txt.append(hprint.frame("get_global_cache_info()", char1="<"))
@@ -501,8 +496,8 @@ class _Cached:
 
         :return: type of cache used in the last call
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         if self._last_used_mem_cache:
             ret = "mem"
         elif self._last_used_disk_cache:
@@ -520,8 +515,8 @@ class _Cached:
 
         Otherwise a `NotCachedValueException` is thrown.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         _LOG.warning(
             "Setting enable_read_only to %s -> %s", self._enable_read_only, val
         )
@@ -553,8 +548,8 @@ class _Cached:
         NOTE: here the caller must guarantee that the new function yields exactly
         the same results than the previous ones. Use carefully.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         hdbg.dassert(
             self.has_function_cache(),
             "This is used only for function-specific caches",
@@ -591,8 +586,8 @@ class _Cached:
         Return whether this function has a function-specific cache or uses the
         global cache.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         has_func_cache = self._disk_cache_path is not None
         return has_func_cache
 
@@ -601,8 +596,8 @@ class _Cached:
         """
         Clear a function-specific cache.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         hdbg.dassert(
             self.has_function_cache(),
             "This function has no function-specific cache",
@@ -648,8 +643,8 @@ class _Cached:
 
         :param cache_path: cache directory or `None` to use global cache
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         if cache_path:
             hdbg.dassert_dir_exists(cache_path)
         # We need to disable the memory cache.
@@ -664,8 +659,8 @@ class _Cached:
         ) = self._create_function_disk_cache()
 
     def _get_function_specific_code_path(self) -> str:
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         # Get the store backend.
         cache_type = "disk"
         memorized_result = self._get_memorized_result(cache_type)
@@ -684,8 +679,8 @@ class _Cached:
         """
         Initialize Joblib object storing a memory cache for this function.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         _LOG.debug("Create memory cache")
         # For memory always use the global cache.
         cache_type = "mem"
@@ -699,8 +694,8 @@ class _Cached:
         """
         Initialize Joblib object storing a disk cache for this function.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         if self.has_function_cache():
             hdbg.dassert(
                 not self._use_mem_cache,
@@ -752,8 +747,8 @@ class _Cached:
         """
         Return the dir of the cache corresponding to `cache_type` and `tag`.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         if cache_type == "no_cache":
             return "no_cache"
         if self.has_function_cache():
@@ -774,8 +769,8 @@ class _Cached:
         :param cache_type: type of a cache
         :return: instance of the Joblib cache
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         _dassert_is_valid_cache_type(cache_type)
         if cache_type == "mem":
             memorized_result = self._memory_cached_func
@@ -821,8 +816,8 @@ class _Cached:
         :param args_id: digest of arguments obtained from _get_identifiers
         :return: whether there is an entry in a cache
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         memorized_result = self._get_memorized_result(cache_type)
         has_cached_version = memorized_result.store_backend.contains_item(
             [func_id, args_id]
@@ -857,8 +852,8 @@ class _Cached:
         :param args_id: digest of arguments obtained from `_get_identifiers()`
         :param obj: return value of the intrinsic function
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         # This corresponds to
         # /venv/lib/python3.8/site-packages/joblib/memory.py
         # __call__
@@ -879,15 +874,15 @@ class _Cached:
         Reset the values used to track which cache we are hitting when
         executing the cached function.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         # The reset values depend on which caches are enabled.
         self._last_used_disk_cache = self._use_disk_cache
         self._last_used_mem_cache = self._use_mem_cache
 
     def _execute_func_from_disk_cache(self, *args: Any, **kwargs: Any) -> Any:
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         func_info = (
             f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
         )
@@ -928,8 +923,8 @@ class _Cached:
         Execute the function from memory cache and if not possible try the
         lower cache levels.
         """
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         func_info = (
             f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
         )
@@ -965,8 +960,8 @@ class _Cached:
         return obj
 
     def _execute_intrinsic_function(self, *args: Any, **kwargs: Any) -> Any:
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         with htimer.TimedScope(logging.INFO, "Executing intrinsic function"):
             func_info = (
                 f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
@@ -979,8 +974,8 @@ class _Cached:
         return obj
 
     def _execute_func(self, *args: Any, **kwargs: Any) -> Any:
-        if _TRACE_FUNCS:
-            _LOG.debug("")
+        if _TRACE:
+            _LOG.trace("")
         func_info = (
             f"{self._func.__name__}(args={str(args)} kwargs={str(kwargs)})"
         )

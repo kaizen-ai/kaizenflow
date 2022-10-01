@@ -16,5 +16,7 @@ from core.finance.per_bar_portfolio_metrics import *  # pylint: disable=unused-i
 from core.finance.prediction_processing import *  # pylint: disable=unused-import # NOQA
 from core.finance.resampling import *  # pylint: disable=unused-import # NOQA
 from core.finance.returns import *  # pylint: disable=unused-import # NOQA
+from core.finance.share_quantization import *  # pylint: disable=unused-import # NOQA
 from core.finance.target_position_generation import *  # pylint: disable=unused-import # NOQA
+from core.finance.tca_processing import *  # pylint: disable=unused-import # NOQA
 from core.finance.volatility import *  # pylint: disable=unused-import # NOQA

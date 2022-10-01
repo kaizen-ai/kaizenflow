@@ -30,7 +30,7 @@ _5mins = pd.DateOffset(minutes=5)
 
 class TestDataFramePortfolio1(hunitest.TestCase):
     @staticmethod
-    def get_portfolio1():
+    def get_portfolio1() -> omportfo.Portfolio:
         """
         Return a freshly minted Portfolio with only cash.
         """
@@ -45,7 +45,7 @@ class TestDataFramePortfolio1(hunitest.TestCase):
                 market_data=market_data,
             )
             _ = portfolio.mark_to_market()
-            return portfolio
+        return portfolio
 
     # @pytest.mark.skip("This is flaky because of the clock jitter")
     def test_state(self) -> None:

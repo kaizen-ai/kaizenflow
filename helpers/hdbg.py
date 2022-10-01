@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # Enforce that certain warnings are disabled.
-import helpers.hwarnings as hwarnin  # # isort:skip  # noqa: F401,F403 # pylint: disable=unused-import
+import helpers.hwarnings as hwarnin  # # isort:skip  # noqa: E402,F401,F403 # pylint: disable=unused-import
 
 
 # TODO(gp): Make these generate from MAPPING below.
@@ -169,6 +169,25 @@ def dassert_eq(
     cond = val1 == val2
     if not cond:
         txt = f"'{val1}'\n==\n'{val2}'"
+        _dfatal(txt, msg, *args, only_warning=only_warning)
+
+
+def dassert_approx_eq(
+    val1: Any,
+    val2: Any,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    import numpy as np
+
+    cond = np.allclose(
+        np.array([val1]), np.array([val2]), rtol=rtol, atol=atol, equal_nan=True
+    )
+    if not cond:
+        txt = f"'{val1}'\n==\n'{val2}' rtol={rtol}, atol={atol}"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 

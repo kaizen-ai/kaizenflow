@@ -59,7 +59,7 @@ def compute_target_positions_cross_sectionally(
             bulk_fill_method=bulk_fill_method,
         )
     else:
-        _LOG.info(
+        _LOG.warning(
             "Predictions provided for one asset; skipping Gaussian ranking."
         )
         gaussian_ranked = prediction

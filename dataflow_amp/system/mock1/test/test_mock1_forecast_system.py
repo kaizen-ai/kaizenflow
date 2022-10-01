@@ -9,6 +9,8 @@ import core.finance as cofinanc
 import dataflow.system as dtfsys
 import dataflow_amp.system.mock1.mock1_forecast_system as dtfasmmfosy
 import dataflow_amp.system.mock1.mock1_forecast_system_example as dtfasmmfsex
+import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -242,6 +244,41 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         )
         # Run.
         self._test1(system)
+
+
+# #############################################################################
+# Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2
+# #############################################################################
+
+
+class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
+    dtfsys.Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1
+):
+    """
+    Test a Mock1 system with DatabasePortfolio to verify the stopping
+    condition.
+    """
+
+    @pytest.mark.slow("~6 seconds.")
+    def test1(self) -> None:
+        # Build the system.
+        data, _ = cofinanc.get_MarketData_df1()
+        _LOG.debug("data=\n%s", hpandas.df_to_str(data))
+        self.assert_equal(str(data.index.min()), "2000-01-01 09:31:00-05:00")
+        self.assert_equal(str(data.index.max()), "2000-01-01 10:10:00-05:00")
+        # One bar is 5 mins and we want to run for 5 bars.
+        rt_timeout_in_secs_or_time = 300 * 5
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_example1(
+            data, rt_timeout_in_secs_or_time
+        )
+        # Run.
+        self._test1(system)
+        # Test some properties of the system.
+        order_processor = system.order_processor
+        _LOG.debug(hprint.to_str("order_processor.get_execution_signature()"))
+        self.assert_equal(str(order_processor.start_timestamp), "2000-01-01 09:35:00-05:00")
+        self.assert_equal(str(order_processor.end_timestamp), "2000-01-01 10:00:06-05:00")
+        self.assertEqual(order_processor.num_filled_orders, 5)
 
 
 # #############################################################################

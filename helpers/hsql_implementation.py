@@ -736,6 +736,7 @@ def execute_query(connection: DbConnection, query: str) -> None:
     :param connection: connection to the DB
     :param query: generic query that can be: insert, update, delete, etc.
     """
+    _LOG.debug(hprint.to_str("query"))
     with connection.cursor() as cursor:
         cursor.execute(query)
         if not connection.autocommit:

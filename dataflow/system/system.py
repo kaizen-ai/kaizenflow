@@ -291,11 +291,12 @@ class System(abc.ABC):
             # Build the object.
             hdbg.dassert_not_in(key, self.config)
             self.config[key] = obj
-            # Add the object representation after it's built.
-            key_tmp = ("object.str", key)
-            hdbg.dassert_not_in(key_tmp, self.config)
-            # Use the unambiguous object representation `__repr__()`.
-            self.config[key_tmp] = repr(obj)
+            if False:
+                # Add the object representation after it's built.
+                key_tmp = ("object.str", key)
+                hdbg.dassert_not_in(key_tmp, self.config)
+                # Use the unambiguous object representation `__repr__()`.
+                self.config[key_tmp] = repr(obj)
             # Add information about who created that object.
             key_tmp = ("object.builder_function", key)
             hdbg.dassert_not_in(key_tmp, self.config)

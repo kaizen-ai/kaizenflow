@@ -366,7 +366,7 @@ def add_ProcessForecastsNode(
     return dag
 
 
-def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
+def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System) -> None:
     """
     Update the `system_log_dir` to save data in the scratch space.
     """
@@ -374,6 +374,18 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     system.config["system_log_dir"] = os.path.join(
         self_.get_scratch_space(), "system_log_dir"
     )
+
+
+def apply_log_dir(
+    self_: Any, system: dtfsyssyst.System, log_dir: Optional[str] = None
+) -> None:
+    """
+    Update the `system_log_dir` to save data in `log_dir`.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    if log_dir is None:
+        log_dir = "./system_log_dir"
+    system.config["system_log_dir"] = log_dir
 
 
 def apply_ProcessForecastsNode_config_for_equities(
@@ -401,7 +413,8 @@ def apply_ProcessForecastsNode_config_for_equities(
     # time.
     mode = "floor"
     trading_end_time = hdateti.find_bar_timestamp(
-        trading_end_time - pd.Timedelta(minutes=1), bar_duration_in_secs,
+        trading_end_time - pd.Timedelta(minutes=1),
+        bar_duration_in_secs,
         mode=mode,
     )
     trading_end_time = trading_end_time.time()
@@ -412,6 +425,7 @@ def apply_ProcessForecastsNode_config_for_equities(
         "ath_end_time": ath_end_time,
         "trading_end_time": trading_end_time,
         "liquidate_at_trading_end_time": False,
+        "share_quantization": "no_quantization",
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
@@ -540,24 +554,42 @@ def apply_Portfolio_config(
 # #############################################################################
 
 
-def get_OrderProcessorCoroutine_from_System(
+def get_OrderProcessor_from_System(
     system: dtfsyssyst.System,
-) -> Coroutine:
+) -> oms.OrderProcessor:
     """
-    Build an OrderProcessor coroutine from the parameters in the SystemConfig.
+    Build an OrderProcessor object from the parameters in the SystemConfig.
     """
+    # TODO(gp): We use duration_in_secs to compute the termination_condition.
+    termination_condition = None
     order_processor = oms.get_order_processor_example1(
         system.config["db_connection_object"],
+        system.config["dag_runner_config", "bar_duration_in_secs"],
+        termination_condition,
+        system.config["order_processor_config", "duration_in_secs"],
         system.portfolio,
         system.config["market_data_config", "asset_id_col_name"],
         system.config[
             "order_processor_config", "max_wait_time_for_order_in_secs"
         ],
     )
-    order_processor_coroutine = oms.get_order_processor_coroutine_example1(
-        order_processor,
-        system.portfolio,
-        system.config["order_processor_config", "duration_in_secs"],
+    hdbg.dassert_isinstance(order_processor, oms.OrderProcessor)
+    return order_processor
+
+
+def get_OrderProcessorCoroutine_from_System(
+    system: dtfsyssyst.System,
+    order_processor: oms.OrderProcessor,
+) -> Coroutine:
+    """
+    Build an OrderProcessor coroutine from the parameters in the SystemConfig.
+    """
+    _ = system
+    hdbg.dassert_isinstance(order_processor, oms.OrderProcessor)
+    order_processor_coroutine: Coroutine = (
+        oms.get_order_processor_coroutine_example1(
+            order_processor,
+        )
     )
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
     return order_processor_coroutine
@@ -665,8 +697,9 @@ def apply_DagRunner_config_for_equities(
     # Determine when start and stop trading.
     # The system should come up around 9:37am ET and then we align to the
     # next bar.
-    wake_up_timestamp = system.market_data.get_wall_clock_time()
-    _LOG.info("Current time=%s", wake_up_timestamp)
+    curr_time = system.market_data.get_wall_clock_time()
+    _LOG.info("Current time=%s", curr_time)
+    wake_up_timestamp = curr_time
     #
     if trading_period_str == "1T":
         # Run every 1 min.
@@ -691,6 +724,7 @@ def apply_DagRunner_config_for_equities(
     else:
         raise ValueError(f"Invalid trading_period_str='{trading_period_str}'")
     wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
+    _LOG.debug(hprint.to_str("wake_up_timestamp"))
     # Get minutes for a time at which the real time loop should be terminated.
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
     # before the market closes, i.e. at 15:58.

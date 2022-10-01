@@ -377,6 +377,20 @@ def get_current_date_as_string(tz: str) -> str:
 # #############################################################################
 
 
+def convert_seconds_to_minutes(num_secs: int) -> int:
+    hdbg.dassert_lt(0, num_secs)
+    hdbg.dassert_eq(
+        num_secs % 60,
+        0,
+        "num_secs=%s is not an integer number of minutes",
+        num_secs,
+    )
+    num_mins = int(num_secs / 60)
+    hdbg.dassert_lt(0, num_mins)
+    _LOG.debug(hprint.to_str("num_secs num_mins"))
+    return num_mins
+
+
 # TODO(gp): bar_duration_in_secs -> bar_{length,period}_in_secs
 def find_bar_timestamp(
     current_timestamp: pd.Timestamp,
@@ -400,15 +414,7 @@ def find_bar_timestamp(
     """
     hdbg.dassert_isinstance(current_timestamp, pd.Timestamp)
     # Convert bar_duration_in_secs into minutes.
-    hdbg.dassert_lt(0, bar_duration_in_secs)
-    hdbg.dassert_eq(
-        bar_duration_in_secs % 60,
-        0,
-        "bar_duration_in_secs=%s is not an integer number of minutes",
-        bar_duration_in_secs,
-    )
-    grid_time_in_mins = int(bar_duration_in_secs / 60)
-    hdbg.dassert_lt(0, grid_time_in_mins)
+    grid_time_in_mins = convert_seconds_to_minutes(bar_duration_in_secs)
     _LOG.debug(hprint.to_str("grid_time_in_mins"))
     # Align.
     reference_timestamp = f"{grid_time_in_mins}T"

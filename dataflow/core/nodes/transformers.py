@@ -527,7 +527,7 @@ class SeriesToDfTransformer(dtfconobas.Transformer):
                 self._reindex_like_input,
             )
             if df_out is None:
-                _LOG.warning("No output for key=%s", key)
+                _LOG.warning("No output for col=%s", col)
                 continue
             hdbg.dassert_isinstance(df_out, pd.DataFrame)
             if col_info is not None:

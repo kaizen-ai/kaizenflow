@@ -168,9 +168,14 @@ class Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         portfolio = dtfsys.get_DatabasePortfolio_from_System(self)
         return portfolio
 
-    def _get_order_processor(self) -> Coroutine:
-        order_processor_coroutine = (
-            dtfsys.get_OrderProcessorCoroutine_from_System(self)
+    def _get_order_processor(self) -> oms.OrderProcessor:
+        order_processor = dtfsys.get_OrderProcessor_from_System(self)
+        return order_processor
+
+    def _get_order_processor_coroutine(self) -> Coroutine:
+        order_processor = self.order_processor
+        order_processor_coroutine: Coroutine = (
+            dtfsys.get_OrderProcessorCoroutine_from_System(self, order_processor)
         )
         return order_processor_coroutine
 

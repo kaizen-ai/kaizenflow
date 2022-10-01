@@ -111,6 +111,7 @@
 
    # Diff the changes in each side from the integration point:
    > i git_branch_diff_with -t hash -h 813c7e763 -f ...
+   > git difftool 813c7e763 ...
    ```
 
 4) Check which files are different between the dirs:

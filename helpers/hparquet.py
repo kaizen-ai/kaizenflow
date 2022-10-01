@@ -200,7 +200,16 @@ def to_parquet(
         logging.DEBUG, f"# Writing Parquet file '{file_name}'"
     ) as ts:
         table = pa.Table.from_pandas(df)
-        pq.write_table(table, file_name, filesystem=filesystem)
+        # This is needed to handle:
+        # ```
+        # pyarrow.lib.ArrowInvalid: Casting from timestamp[ns, tz=America/New_York]
+        #   to timestamp[us] would lose data: 1663595160000000030
+        # ```
+        parquet_args = {
+            "coerce_timestamps": "us",
+            "allow_truncated_timestamps": True,
+        }
+        pq.write_table(table, file_name, filesystem=filesystem, **parquet_args)
     # Report stats about the Parquet file size.
     if report_stats:
         file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)

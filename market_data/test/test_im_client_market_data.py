@@ -445,12 +445,17 @@ class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
         end_ts = pd.Timestamp("2018-08-17T00:05:00+00:00")
         #
         expected_length = 2
-        expected_unique_values = None
-        exp_srs_as_str = r"""
-                      close
-        asset_id
-        1467591036  6295.72
-        3187272957   285.64
+        expected_column_names = None
+        expected_column_unique_values = None
+        exp_df_as_str = r"""
+        # df=
+        index=[2018-08-17 00:05:00+00:00, 2018-08-17 00:05:00+00:00]
+        columns=asset_id,start_ts,close
+        shape=(2, 3)
+                                     asset_id                  start_ts    close
+        end_ts
+        2018-08-17 00:05:00+00:00  1467591036 2018-08-17 00:01:00+00:00  6295.72
+        2018-08-17 00:05:00+00:00  3187272957 2018-08-17 00:01:00+00:00   285.64
         """
         # Run.
         self._test_get_twap_price1(
@@ -458,9 +463,10 @@ class TestImClientMarketData1(mdata.MarketData_get_data_TestCase):
             start_ts,
             end_ts,
             asset_ids,
-            expected_length,
-            expected_unique_values,
-            exp_srs_as_str,
+            expected_length=expected_length,
+            expected_column_names=expected_column_names,
+            expected_column_unique_values=expected_column_unique_values,
+            expected_signature=exp_df_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////
@@ -577,7 +583,10 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         column_remap = None
         im_client = icdc.get_DataFrameImClient_example1()
         market_data = mdata.get_HistoricalImClientMarketData_example1(
-            im_client, asset_ids, columns, column_remap,
+            im_client,
+            asset_ids,
+            columns,
+            column_remap,
         )
         timedelta = pd.Timedelta("1D")
         # Run.
@@ -947,12 +956,17 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
         end_ts = pd.Timestamp("2000-01-01T09:42:00-05:00")
         #
         expected_length = 2
-        expected_unique_values = None
-        exp_srs_as_str = r"""
-                      close
-        asset_id
-        1467591036  100.29
-        3303714233  100.29
+        expected_column_names = None
+        expected_column_unique_values = None
+        exp_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:42:00-05:00, 2000-01-01 09:42:00-05:00]
+        columns=asset_id,start_ts,close
+        shape=(2, 3)
+                                     asset_id                  start_ts   close
+        end_ts
+        2000-01-01 09:42:00-05:00  1467591036 2000-01-01 09:35:00-05:00  100.29
+        2000-01-01 09:42:00-05:00  3303714233 2000-01-01 09:35:00-05:00  100.29
         """
         # Run.
         self._test_get_twap_price1(
@@ -960,9 +974,10 @@ class TestImClientMarketData2(mdata.MarketData_get_data_TestCase):
             start_ts,
             end_ts,
             asset_ids,
-            expected_length,
-            expected_unique_values,
-            exp_srs_as_str,
+            expected_length=expected_length,
+            expected_column_names=expected_column_names,
+            expected_column_unique_values=expected_column_unique_values,
+            expected_signature=exp_df_as_str,
         )
 
     # //////////////////////////////////////////////////////////////////////////////

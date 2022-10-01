@@ -21,10 +21,8 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
-
-_LOG.verb_debug = hprint.install_log_verb_debug(  # type: ignore[attr-defined]
-    _LOG, verbose=False
-)
+# Enable extra verbose debugging. Do not commit.
+_TRACE = False
 
 # There are different ways of reproducing real-time behaviors:
 # 1) True real-time
@@ -97,18 +95,20 @@ class ReplayedTime:
         # This is when the experiment starts.
         self._initial_wall_clock_dt = self._get_wall_clock_time()
         _LOG.debug(
-            hprint.to_str("self._initial_replayed_timestamp self._initial_wall_clock_dt")
+            hprint.to_str(
+                "self._initial_replayed_timestamp self._initial_wall_clock_dt"
+            )
         )
         hdateti.dassert_tz_compatible(
             self._initial_replayed_timestamp, self._initial_wall_clock_dt
         )
         # TODO(gp): Difference between amp and cmamp.
-        hdbg.dassert_lte(
-            self._initial_replayed_timestamp,
-            self._initial_wall_clock_dt,
-            msg="Replaying time can be done only for the past. "
-            "The future can't be replayed yet",
-        )
+        # hdbg.dassert_lte(
+        #    self._initial_replayed_timestamp,
+        #    self._initial_wall_clock_dt,
+        #    msg="Replaying time can be done only for the past. "
+        #    "The future can't be replayed yet",
+        # )
 
     def get_wall_clock_time(self) -> pd.Timestamp:
         """
@@ -119,7 +119,8 @@ class ReplayedTime:
         hdbg.dassert_lte(self._initial_wall_clock_dt, now)
         elapsed_time = now - self._initial_wall_clock_dt
         current_replayed_timestamp = (
-            self._initial_replayed_timestamp + self._speed_up_factor * elapsed_time
+            self._initial_replayed_timestamp
+            + self._speed_up_factor * elapsed_time
         )
         return current_replayed_timestamp
 
@@ -139,7 +140,9 @@ def get_replayed_wall_clock_time(
         tz, event_loop=event_loop
     )
     replayed_time = ReplayedTime(
-        initial_replayed_timestamp, get_wall_clock_time, speed_up_factor=speed_up_factor
+        initial_replayed_timestamp,
+        get_wall_clock_time,
+        speed_up_factor=speed_up_factor,
     )
     return replayed_time.get_wall_clock_time
 
@@ -198,9 +201,12 @@ def get_data_as_of_datetime(
     _LOG.debug(
         hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs")
     )
-    # _LOG.verb_debug(
-    # hpandas.df_to_str(df, print_shape_info=True, tag="Before get_data_as_of_datetime")
-    # )
+    if _TRACE:
+        _LOG.trace(
+            hpandas.df_to_str(
+                df, print_shape_info=True, tag="Before get_data_as_of_datetime"
+            )
+        )
     hdbg.dassert_lte(0, delay_in_secs)
     datetime_eff = datetime_ - datetime.timedelta(seconds=delay_in_secs)
     # TODO(gp): We could / should use binary search.
@@ -228,9 +234,12 @@ def get_data_as_of_datetime(
         # execution price of an order that will terminate in the future.
         raise ValueError("Future peeking")
         # pass
-    # _LOG.verb_debug(
-    # hpandas.df_to_str(df, print_shape_info=True, tag="After get_data_as_of_datetime")
-    # )
+    if _TRACE:
+        _LOG.trace(
+            hpandas.df_to_str(
+                df, print_shape_info=True, tag="After get_data_as_of_datetime"
+            )
+        )
     return df
 
 
@@ -255,7 +264,8 @@ def align_on_time_grid(
     use_high_resolution: bool = False,
 ) -> None:
     """
-    Wait until the current wall clock time is aligned on `bar_duration_in_secs`.
+    Wait until the current wall clock time is aligned on
+    `bar_duration_in_secs`.
 
     E.g., for `bar_duration_in_secs` = 2, if wall clock time is `2021-07-29 10:45:51`,
     then this function terminates when the wall clock is `2021-07-29 10:46:00`.
@@ -393,13 +403,17 @@ async def execute_with_real_time_loop(
             wall_clock_time,
             real_wall_clock_time,
             level=1,
+            verbosity=logging.INFO,
         )
         # Update the current events.
         event = Event(num_it, wall_clock_time, real_wall_clock_time)
         _LOG.debug("event='%s'", str(event))
         # Execute workload.
-        _LOG.debug("await for next bar (bar_duration_in_secs=%s wall_clock_time=%s) ...",
-                bar_duration_in_secs, get_wall_clock_time())
+        _LOG.debug(
+            "await for next bar (bar_duration_in_secs=%s wall_clock_time=%s) ...",
+            bar_duration_in_secs,
+            get_wall_clock_time(),
+        )
         # TODO(gp): Compensate for drift.
         result = await asyncio.gather(  # type: ignore[var-annotated]
             asyncio.sleep(bar_duration_in_secs),
@@ -413,19 +427,35 @@ async def execute_with_real_time_loop(
         # Exit, if needed.
         if rt_timeout_in_secs_or_time is not None:
             if isinstance(rt_timeout_in_secs_or_time, int):
-                num_iterations = int(rt_timeout_in_secs_or_time / bar_duration_in_secs)
+                num_iterations = int(
+                    rt_timeout_in_secs_or_time / bar_duration_in_secs
+                )
                 hdbg.dassert_lt(0, num_iterations)
-                _LOG.debug(hprint.to_str("num_it num_iterations"))
-                if num_it >= num_iterations:
-                    _LOG.debug(
+                is_done = num_it >= num_iterations
+                _LOG.debug(
+                    hprint.to_str(
+                        "rt_timeout_in_secs_or_time "
+                        "bar_duration_in_secs "
+                        "num_it "
+                        "num_iterations "
+                        "is_done"
+                    )
+                )
+                if is_done:
+                    _LOG.info(
                         "Exiting loop: %s", hprint.to_str("num_it num_iterations")
                     )
                     break
             elif isinstance(rt_timeout_in_secs_or_time, datetime.time):
                 curr_time = wall_clock_time.time()
-                _LOG.debug(hprint.to_str("curr_time rt_timeout_in_secs_or_time"))
-                if curr_time >= rt_timeout_in_secs_or_time:
-                    _LOG.debug(
+                is_done = curr_time >= rt_timeout_in_secs_or_time
+                _LOG.debug(
+                    hprint.to_str(
+                        "rt_timeout_in_secs_or_time curr_time is_done"
+                    )
+                )
+                if is_done:
+                    _LOG.info(
                         "Exiting loop: %s",
                         hprint.to_str("curr_time rt_timeout_in_secs_or_time"),
                     )

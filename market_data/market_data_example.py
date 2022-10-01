@@ -75,7 +75,7 @@ def get_ReplayedTimeMarketData_from_df(
     # TODO(Grisha): use `end_time_col_name` Cm Task #2908.
     min_timestamp = df[start_time_col_name].min()
     max_timestamp = df[start_time_col_name].max()
-    _LOG.debug(hprint.to_str("min_timestamp, max_timestamp"))
+    _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
     if isinstance(replayed_delay_in_mins_or_timestamp, int):
         # We can't enable this assertion since some tests
         # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
@@ -93,7 +93,7 @@ def get_ReplayedTimeMarketData_from_df(
         initial_replayed_timestamp = replayed_delay_in_mins_or_timestamp
     else:
         raise ValueError(
-            f"replayed_delay_in_mins_or_timestamp is {type(replayed_delay_in_mins_or_timestamp)} instead of Union[int, pd.Timestamp]"
+            f"Invalid replayed_delay_in_mins_or_timestamp='{replayed_delay_in_mins_or_timestamp}'"
         )
     _LOG.debug(
         hprint.to_str(
