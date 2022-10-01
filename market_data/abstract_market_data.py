@@ -17,6 +17,7 @@ import helpers.hdbg as hdbg
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 
 _LOG = logging.getLogger(__name__)
 
