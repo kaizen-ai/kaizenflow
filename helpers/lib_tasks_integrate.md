@@ -161,8 +161,16 @@
   > cd cmamp1
   > i integrate_diff_overlapping_files --src-dir-basename "cmamp1" --dst-dir-basename "amp1"
   ```
+  
+- Read the changes to Python files:
+  ```
+  > cd amp1
+  > i git_branch_diff_with -t base --keep-extensions py
+  > cd cmamp1
+  > i git_branch_diff_with -t base --keep-extensions py
+  ```
 
-- Quickly scan all the changes in the branch compared to the base
+- Quickly scan all the changes in the branch compared to the base:
   ```
   > cd amp1
   > i git_branch_diff_with -t base

@@ -1709,6 +1709,11 @@ class Test_from_dict1(hunitest.TestCase):
         self.assertTrue(check)
 
 
+# #############################################################################
+# Test_to_string_config
+# #############################################################################
+
+
 class Test_to_string_config(hunitest.TestCase):
     def helper(
         self,
@@ -1763,6 +1768,11 @@ class Test_to_string_config(hunitest.TestCase):
             should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_save_to_file
+# #############################################################################
 
 
 class Test_save_to_file(hunitest.TestCase):
