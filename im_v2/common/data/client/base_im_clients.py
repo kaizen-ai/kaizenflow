@@ -732,6 +732,10 @@ class SqlRealTimeImClient(RealTimeImClient):
         data[self._timestamp_col_name] = data[self._timestamp_col_name].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
+        # Remove duplicates in data.
+        duplicate_columns = ["timestamp", "currency_pair", "exchange_id"]
+        data = self._filter_full_duplicates(data, duplicate_columns=duplicate_columns)
+        #
         data = data.set_index(
             self._timestamp_col_name,
         )
@@ -905,7 +909,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
 
-    def _filter_full_duplicates(
+    def _filter_duplicates(
         self, data: pd.DataFrame, duplicate_columns: Optional[List[str]]
     ):
         """
@@ -934,7 +938,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = data.sort_values("knowledge_timestamp", ascending=False)
         data = data.drop_duplicates(duplicate_columns).sort_index()
         # Check if the knowledge_timestamp is over the candle timestamp by a minute.
-        mask = pd.to_datetime(data["timestamp"], unit="ms") < (
+        mask = data["timestamp"] < (
             data["knowledge_timestamp"] + pd.Timedelta("1m")
         )
         early_data = data.loc[mask]

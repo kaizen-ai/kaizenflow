@@ -1,9 +1,12 @@
+import os
+
 import pandas as pd
 import pytest
 
 import helpers.henv as henv
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client as icdc
+import im_v2.common.data.client.realtime_clients_example as imvcdcrcex
 import im_v2.crypto_chassis.data.client as iccdc
 
 # TODO(Grisha): factor out `ImClient` calls in a helper function.
@@ -490,3 +493,15 @@ class TestDataFrameImClients1(icdc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
+
+
+class TestSqlRealTimeClient(icdc.ImClientTestCase):
+    """ """
+
+    def test_filter_duplicates1(self):
+        im_client = imvcdcrcex.get_mock_realtime_client()
+        input_data_path = os.path.join(self.get_input_dir(), "trades.json")
+        input_data = pd.from_csv(input_data_path)
+        columns = ["timestamp", "currency_pair", "exchange_id"]
+        actual = im_client._filter_duplicates(input_data, columns)
+        self.check_string(str(actual))
