@@ -448,6 +448,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
         "ath_end_time": None,
         "trading_end_time": None,
         "liquidate_at_trading_end_time": False,
+        "share_quantization": "no_quantization",
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(

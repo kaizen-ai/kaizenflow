@@ -61,7 +61,7 @@ services:
       base_app
     volumes:
       - /app:/src
-      - ../../../:/app
+      - ../../:/app
     environment:
       - MYPYPATH
 
