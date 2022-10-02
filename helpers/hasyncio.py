@@ -147,28 +147,90 @@ def run(
 
 
 # #############################################################################
-# Asynchronous polling.
+# Synchronous / asynchronous polling.
 # #############################################################################
 
 
 # The result of a polling function in terms of a bool indicating success (which
 # when True stops the polling) and a result.
 PollOutput = Tuple[bool, Any]
-# A polling function accepts any inputs and needs to return a `PollOutput`
-# in terms of (success, result). Typically polling functions don't accept any inputs
-# and are built through lambdas and closures.
+
+# A polling function accepts any inputs and returns a `PollOutput` in terms of
+# (success, result). Typically polling functions don't accept any inputs and are
+# built through lambdas and closures.
 PollingFunction = Callable[[Any], PollOutput]
 
 
+def _get_max_num_iterations(
+    sleep_in_secs: float,
+    timeout_in_secs: float,
+) -> int:
+    hdbg.dassert_lt(0, sleep_in_secs)
+    hdbg.dassert_lt(0, timeout_in_secs)
+    max_num_iter = int(math.ceil(timeout_in_secs / sleep_in_secs))
+    hdbg.dassert_lte(1, max_num_iter)
+    return max_num_iter
+
+
+# TODO(gp): This is probably better implemented with an iterator.
+def _poll_iterate(
+    polling_func: PollingFunction,
+    sleep_in_secs: float,
+    timeout_in_secs: float,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    num_iter: int,
+    max_num_iter,
+    tag: str
+) -> Tuple[int, PollOutput]:
+    """
+    Execute an iteration of the polling loop.
+
+    :return: the number of iterations executed and the output of the polling
+        function (sucess, return value)
+    :raises: TimeoutError in case of timeout
+    """
+    _LOG.debug(
+        "\n## %s: wall clock time=%s: iter=%s/%s",
+        tag,
+        get_wall_clock_time(),
+        num_iter,
+        max_num_iter,
+    )
+    hdbg.dassert_isinstance(get_wall_clock_time, Callable)
+    # Poll.
+    success, value = polling_func()
+    _LOG.debug("success=%s, value=%s", success, value)
+    if success:
+        # If success, then exit.
+        hprint.log_frame(
+            _LOG,
+            "%s: wall clock time=%s: poll done",
+            tag,
+            get_wall_clock_time(),
+        )
+    else:
+        # Otherwise update state.
+        num_iter += 1
+        if num_iter > max_num_iter:
+            msg = "Timeout for " + hprint.to_str(
+                "polling_func sleep_in_secs timeout_in_secs tag"
+            )
+            _LOG.error(msg)
+            raise TimeoutError(msg)
+    return num_iter, (success, value)
+
+
+# TODO(gp): -> async_poll
 async def poll(
     polling_func: PollingFunction,
     sleep_in_secs: float,
     timeout_in_secs: float,
     get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
     tag: Optional[str] = None,
 ) -> Tuple[int, Any]:
     """
-    Call `polling_func` every `sleep_in_secs` secs until `polling_func()`
+    Call `polling_func()` every `sleep_in_secs` secs until the polling function
     returns success or there is a timeout. A timeout happens if no success is
     achieved within `timeout_in_secs` secs.
 
@@ -178,46 +240,57 @@ async def poll(
         - result from `polling_func`
     :raises: TimeoutError in case of timeout
     """
-    _LOG.debug(hprint.to_str("polling_func sleep_in_secs timeout_in_secs"))
-    hdbg.dassert_lt(0, sleep_in_secs)
-    hdbg.dassert_lt(0, timeout_in_secs)
-    max_num_iter = math.ceil(timeout_in_secs / sleep_in_secs)
-    hdbg.dassert_lte(1, max_num_iter)
-    num_iter = 1
+    _LOG.debug(hprint.to_str("polling_func sleep_in_secs timeout_in_secs tag"))
     if tag is None:
         # Use the function calling this function.
         tag = hintros.get_function_name(count=0)
+    max_num_iter = _get_max_num_iterations(sleep_in_secs, timeout_in_secs)
+    num_iter = 1
     while True:
-        _LOG.debug(
-            "\n## %s: wall clock time=%s: iter=%s/%s",
-            tag,
-            get_wall_clock_time(),
+        num_iter, (success, value) = _poll_iterate(
+            polling_func,
+            sleep_in_secs,
+            timeout_in_secs,
+            get_wall_clock_time,
             num_iter,
             max_num_iter,
-        )
-        # Poll.
-        success, value = polling_func()
-        _LOG.debug("success=%s, value=%s", success, value)
-        # If success, then exit.
+            tag)
         if success:
-            # The function returned.
-            hprint.log_frame(
-                _LOG,
-                "%s: wall clock time=%s: poll done",
-                tag,
-                get_wall_clock_time(),
-            )
             return num_iter, value
-        # Otherwise update state.
-        num_iter += 1
-        if num_iter > max_num_iter:
-            msg = "Timeout for " + hprint.to_str(
-                "polling_func sleep_in_secs timeout_in_secs tag"
-            )
-            _LOG.error(msg)
-            raise TimeoutError(msg)
         _LOG.debug("sleep for %s secs", sleep_in_secs)
         await asyncio.sleep(sleep_in_secs)
+
+
+def sync_poll(
+    polling_func: PollingFunction,
+    sleep_in_secs: float,
+    timeout_in_secs: float,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    *,
+    tag: Optional[str] = None,
+) -> Tuple[int, Any]:
+    """
+    Same interface and behavior of `poll()` but using a synchronous implementation.
+    """
+    _LOG.debug(hprint.to_str("polling_func sleep_in_secs timeout_in_secs tag"))
+    if tag is None:
+        # Use the function calling this function.
+        tag = hintros.get_function_name(count=0)
+    max_num_iter = _get_max_num_iterations(sleep_in_secs, timeout_in_secs)
+    num_iter = 1
+    while True:
+        num_iter, (success, value) = _poll_iterate(
+            polling_func,
+            sleep_in_secs,
+            timeout_in_secs,
+            get_wall_clock_time,
+            num_iter,
+            max_num_iter,
+            tag)
+        if success:
+            return success, value
+        _LOG.debug("sleep for %s secs", sleep_in_secs)
+        time.sleep(sleep_in_secs)
 
 
 def get_poll_kwargs(
@@ -252,6 +325,7 @@ async def sleep(
     delay_in_secs: WaitInSecs,
     get_wall_clock_time: hdateti.GetWallClockTime,
     *,
+    # TODO(gp): -> msg
     tag: Optional[str] = None,
     # TODO(gp): How to handle random seed here?
     seed: int = 42,
@@ -264,8 +338,10 @@ async def sleep(
         tag = hintros.get_function_name(count=0)
     # Extract or compute the delay.
     if isinstance(delay_in_secs, (int, float)):
+        # Deterministic delay.
         pass
     elif isinstance(delay_in_secs, tuple):
+        # Randomized delay.
         hdbg.dassert_eq(len(delay_in_secs), 2)
         min_, max_ = delay_in_secs
         hdbg.dassert_lte(0, min_)
@@ -390,6 +466,7 @@ async def async_wait_until(
     wait_until_timestamp: pd.Timestamp,
     get_wall_clock_time: hdateti.GetWallClockTime,
     *,
+    # TODO(gp): -> msg
     tag: Optional[str] = None,
 ) -> None:
     """

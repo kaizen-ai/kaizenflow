@@ -58,9 +58,9 @@ def get_ReplayedTimeMarketData_from_df(
 
     :param df: dataframe including the columns
         ["timestamp_db", "asset_id", "start_datetime", "end_datetime"]
-    :param replayed_delay_in_mins_or_timestamp: how many minutes after the beginning of the
-        data the replayed time starts. This is useful to simulate the beginning
-        / end of the trading day.
+    :param replayed_delay_in_mins_or_timestamp: how many minutes after the beginning
+        of the data the replayed time starts. This is useful to simulate the
+        beginning / end of the trading day.
     """
     hdbg.dassert_in(knowledge_datetime_col_name, df.columns)
     hdbg.dassert_in(asset_id_col_name, df.columns)
@@ -75,11 +75,12 @@ def get_ReplayedTimeMarketData_from_df(
     # TODO(Grisha): use `end_time_col_name` Cm Task #2908.
     min_timestamp = df[start_time_col_name].min()
     max_timestamp = df[start_time_col_name].max()
-    _LOG.debug(hprint.to_str("min_timestamp, max_timestamp"))
+    _LOG.debug(hprint.to_str("min_timestamp max_timestamp"))
     if isinstance(replayed_delay_in_mins_or_timestamp, int):
         # We can't enable this assertion since some tests
         # (e.g., `TestReplayedMarketData3::test_is_last_bar_available1`)
-        # use a negative offset to start replaying the data, before data is available.
+        # use a negative offset to start replaying the data, before data is
+        # available.
         # hdbg.dassert_lte(0, replayed_delay_in_mins_or_timestamp)
         # Shift the minimum timestamp by the specified number of minutes.
         initial_replayed_timestamp = min_timestamp + pd.Timedelta(
@@ -92,7 +93,7 @@ def get_ReplayedTimeMarketData_from_df(
         initial_replayed_timestamp = replayed_delay_in_mins_or_timestamp
     else:
         raise ValueError(
-            f"replayed_delay_in_mins_or_timestamp is {type(replayed_delay_in_mins_or_timestamp)} instead of Union[int, pd.Timestamp]"
+            f"Invalid replayed_delay_in_mins_or_timestamp='{replayed_delay_in_mins_or_timestamp}'"
         )
     _LOG.debug(
         hprint.to_str(
@@ -240,6 +241,7 @@ def get_ReplayedTimeMarketData_example4(
     return market_data, get_wall_clock_time
 
 
+# TODO(gp): @all -> start_datetime -> start_timestamp
 def get_ReplayedTimeMarketData_example5(
     event_loop: asyncio.AbstractEventLoop,
     start_datetime: pd.Timestamp,
@@ -247,14 +249,28 @@ def get_ReplayedTimeMarketData_example5(
     asset_ids: List[int],
     *,
     replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp] = 0,
+    use_midpoint_as_price: bool = False,
 ) -> Tuple[mdremada.ReplayedMarketData, hdateti.GetWallClockTime]:
     """
     Build a `ReplayedMarketData` with synthetic top-of-the-book data.
+
+    - E.g.,
+    ```
+                 start_datetime              end_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id
+    0 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:01-05:00  998.90  998.96   998.930     994       101
+    1 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:01-05:00  998.17  998.19   998.180    1015       101
+    2 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:01-05:00  997.39  997.44   997.415     956       101
+    ```
+
+    :param use_midpoint_as_price: if True, a column `price` is added equal to the
+        column `midpoint`
     """
     # Generate random price data.
     df = cofinanc.generate_random_top_of_book_bars(
         start_datetime, end_datetime, asset_ids
     )
+    if use_midpoint_as_price:
+        df["price"] = df["midpoint"]
     _LOG.debug("df=%s", hpandas.df_to_str(df))
     # Build a `ReplayedMarketData`.
     delay_in_secs = 0

@@ -306,6 +306,7 @@ def remove_oms_tables(db_connection: hsql.DbConnection) -> None:
         hsql.remove_table(db_connection, table_name)
 
 
+# TODO(gp): This might be part of DatabaseBroker. It is also used in some tests.
 async def wait_for_order_acceptance(
     db_connection: hsql.DbConnection,
     target_value: str,
@@ -315,7 +316,7 @@ async def wait_for_order_acceptance(
     field_name: str = "filename",
 ) -> hasynci.PollOutput:
     """
-    Wait until the desired order is accepted by the system.
+    Wait until the desired order is accepted by the OMS.
 
     The order is accepted when there is a value `target_value` in the column
     `file_name` of the expected table.

@@ -375,8 +375,7 @@ def _filter_existing_paths(paths_from_user: List[str]) -> List[str]:
 # Copied from helpers.datetime_ to avoid dependency from pandas.
 
 
-# TODO(gp): Make it public.
-def _get_ET_timestamp() -> str:
+def get_ET_timestamp() -> str:
     # The timezone depends on how the shell is configured.
     timestamp = datetime.datetime.now()
     return timestamp.strftime("%Y%m%d_%H%M%S")
