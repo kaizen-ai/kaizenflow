@@ -7,12 +7,16 @@ import asyncio
 import logging
 
 import pandas as pd
+import helpers.hio as hio
 
 import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
 import oms.order as omorder
+from typing import Optional
+import re
+import os
 
 _LOG = logging.getLogger(__name__)
 
@@ -136,3 +140,43 @@ def get_RealTimeImClientMarketData_example2(
         get_wall_clock_time,
     )
     return market_data
+
+
+# #############################################################################
+# Read trades.
+# #############################################################################
+
+def read_closed_trades(start_ts: pd.Timestamp, end_ts: pd.Timestamp, root_dir: Optional[str] = None):
+    # Get files for the given time range.
+    files = os.listdir(root_dir)
+    # Example of a JSON file name:
+    # fills_20220801-000000_20220928-000000.json
+    pattern = re.compile(r"(\d+-\d+)_(\d+-\d+)")
+    date_ranges = []
+    for file in files:
+        date_range = re.findall(pattern, file)
+        date_ranges.append(date_range)
+    # Get files inside the given time range.
+    #
+    # Get start timestamps below start_ts.
+    start_ts_files = [drange[0] for drange in date_ranges if pd.Timestamp(drange[0]) <= start_ts]
+    start_ts_file = max(start_ts_files)
+    # Get end timestamps above end_ts.
+    end_ts_files = [drange[0] for drange in date_ranges if pd.Timestamp(drange[0]) >= start_ts]
+    end_ts_file = min(end_ts_files)
+    # Get files that fit those timestamps.
+    jsons = []
+    for date_range in date_ranges:
+        if date_range[0] >= start_ts_file and date_range[1] <= end_ts_file:
+            path = os.path.join(root_dir, f"fills_{date_range[0]}_{date_range[1]}.json")
+            j = hio.from_json(path)
+            jsons.extend(j)
+    fills = pd.DataFrame(jsons)
+    # Extract nested values.
+    fills["fees"] = [d["cost"] for d in fills.fee]
+    fills["fees_currency"] = [d["currency"] for d in fills.fee]
+    fills["realized_pnl"] = [d["realizedPnl"] for d in fills.info]
+    columns = ["timestamp", "datetime", "symbol", "id", "order", "side", "takerOrMaker", "price", "amount", "cost",
+               "fees", "fees_currency", "realized_pnl"]
+    fills = fills[columns]
+    return fills
