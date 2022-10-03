@@ -41,6 +41,8 @@ def _system(cmd):
 
 # TODO(gp): It seems that the data is written by the prod system in the right
 #  location already. Maybe nothing to do.
+# Copy data from /data/shared/ecs/test/system_log_dir_scheduled__2022-10-02T10:00:00+00:00_2hours
+# cp -a '/data/shared/ecs/test/system_log_dir_scheduled__2022-10-02T10:00:00+00:00_2hours'/* /data/shared/prod_reconciliation/20221003/prod/
 # @task
 # def reconcile_dump_prod_data(ctx, account_type, incremental=False):  # type: ignore
 #     """
@@ -143,7 +145,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(target_file):
         _LOG.warning("Skipping generating %s", target_file)
     else:
-        test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::save_data"
+        test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
         docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name}"
         #docker_cmd += " -s --dbg"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
@@ -252,14 +254,15 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
-    _LOG.info(hprint.to_str("target_dir"))
+    #target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
+    #_LOG.info(hprint.to_str("target_dir"))
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
-    hdbg.dassert_dir_exists(target_dir)
     # Remove local dir with system logs.
-    rm_cmd = "rm -r system_log_dir/"
-    _system(rm_cmd)
+    target_dir = "system_log_dir"
+    if os.path.exists(target_dir):
+        rm_cmd = "rm -rf {target_dir}"
+        _system(rm_cmd)
     # Run simulation.
     opts = "-s --dbg --update_outcomes"
     test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_run_simulation"
@@ -287,12 +290,23 @@ def reconcile_save_sim(ctx, run_date=None):  # type: ignore
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Save script logs.
-    pytest_script_file_path = "tmp.pytest_script.txt"
+     ytest_script_file_path = "tmp.pytest_script.txt"
     docker_cmd = f"cp -v {pytest_script_file_path} {target_dir}"
     _system(docker_cmd)
 
 
 # TODO(Danya): Add script here to dump fills data.
+# amp/oms/get_ccxt_fills.py \
+#    --start_timestamp '2022-10-02' \
+#    --end_timestamp '2022-10-03' \
+#    --dst_dir '/shared_data/prod_reconciliation/20221003/tca' \
+#    --exchange_id 'binance' \
+#    --contract_type 'futures' \
+#    --stage 'preprod' \
+#    --account_type 'trading' \
+#    --secrets_id '3' \
+#    --universe 'v7.1' \
+#    --incremental
 # TCA = transaction_cost_analysis
 # @task
 # def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore

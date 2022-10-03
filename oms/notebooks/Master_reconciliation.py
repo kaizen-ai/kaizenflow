@@ -48,37 +48,49 @@ hprint.config_notebook()
 # # Specify data to load
 
 # %% run_control={"marked": true}
-date_str = "20220928"
+#date_str = "20220928"
+date_str = "20221003"
 root_dir = ""
 search_str = ""
 
-cmd = f"find {root_dir}/{date_str}/job.live* -name '{search_str}'"
-rc, prod_dir = hsystem.system_to_string(cmd)
+#cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
+#rc, prod_dir = hsystem.system_to_string(cmd)
+prod_dir = "/data/shared/prod_reconciliation/20221003/prod"
+prod_dir = prod_dir.replace("/data/shared/", "/shared_data/")
 hdbg.dassert(prod_dir)
 hdbg.dassert_dir_exists(prod_dir)
 
-cmd = f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
-rc, cand_dir = hsystem.system_to_string(cmd)
+#cmd = f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+#rc, cand_dir = hsystem.system_to_string(cmd)
+cand_dir = "/data/shared/prod_reconciliation/20221003/prod"
+cand_dir = cand_dir.replace("/data/shared/", "/shared_data/")
 hdbg.dassert(cand_dir)
 hdbg.dassert_dir_exists(cand_dir)
 
-sim_dir = os.path.join(f"{root_dir}/{date_str}/system_log_dir")
+#sim_dir = os.path.join(f"{root_dir}/{date_str}/system_log_dir")
+sim_dir = "/data/shared/prod_reconciliation/20221003/simulation/system_log_dir"
+sim_dir = sim_dir.replace("/data/shared/", "/shared_data/")
 hdbg.dassert(sim_dir)
 hdbg.dassert_dir_exists(sim_dir)
 
 # %%
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(prod_portfolio_dir)
+print(prod_portfolio_dir)
 prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
 hdbg.dassert_dir_exists(prod_dag_dir)
 #
 cand_portfolio_dir = os.path.join(cand_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(cand_portfolio_dir)
+print(cand_portfolio_dir)
 cand_dag_dir = os.path.join(cand_dir, "dag/node_io/node_io.data")
 hdbg.dassert_dir_exists(cand_dag_dir)
 #
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(sim_portfolio_dir)
+print(sim_portfolio_dir)
+sim_dag_dir = os.path.join(sim_dir, "dag/node_io/node_io.data")
+hdbg.dassert_dir_exists(sim_dag_dir)
 #
 # tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
 # hdbg.dassert_file_exists(tca_csv)
@@ -91,13 +103,14 @@ portfolio_path_dict = {
 }
 
 # %%
-start_timestamp = pd.Timestamp(date_str + " 10:00:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 15:30:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
-bar_duration = "15T"
+#bar_duration = "15T"
+bar_duration = "5T"
 
 
 # %% [markdown]
@@ -121,12 +134,160 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 
 # %%
-cand_dag_df = get_latest_output_from_last_dag_node(cand_dag_dir)
-hpandas.df_to_str(cand_dag_df, log_level=logging.INFO)
+dag_df.columns.levels[0]
+
 
 # %%
-prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
-hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
+dag_dir = prod_dag_dir
+if False:
+    stage = "0.read_data"
+    target_cols = [
+        "ask",
+        "bid",
+        "close",
+        "day_num_spread",
+        "day_spread",
+        "high",
+        "low",
+        "notional",
+        "open",
+        "sided_ask_count",
+        "sided_bid_count",
+        "start_time",
+        "volume",
+    ]
+# stage = "2.zscore"
+stage = "8.process_forecasts"
+# target_cols = [
+#     "close",
+#     "close_vwap",
+#     "day_num_spread",
+#     "day_spread",
+#     "garman_klass_vol",
+#     "high",
+#     "low",
+#     "notional",
+#     "open",
+#     "prediction",
+#     "twap",
+#     "volume",
+# ]
+target_cols = ['close', 'close.ret_0', 'twap', 'twap.ret_0', 'volume', 'vwap', 'vwap.ret_0', 'vwap.ret_0.vol', 'vwap.ret_0.vol_adj', 'vwap.ret_0.vol_adj.c', 'vwap.ret_0.vol_adj.c.lag0', 'vwap.ret_0.vol_adj.c.lag1', 'vwap.ret_0.vol_adj.c.lag2', 'vwap.ret_0.vol_adj.c.lag3', 'vwap.ret_0.vol_adj_2_hat']
+timestamp = "20221003_080000"
+
+file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = os.path.join(dag_dir, file_name)
+print(file_name)
+dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
+
+# dag_df = dag_df[start_timestamp:end_timestamp]
+
+display(dag_df.head(3))
+
+# print(dag_df.columns.levels[0])
+# print(sim_dag_df.columns.levels[0])
+# dag_df.drop(labels=["end_time"], axis=1, level=0, inplace=True, errors="raise")
+asset_ids = dag_df.columns.levels[1].tolist()
+# for col in dag_df.columns:
+#     if col[0] in target_cols:
+#     columns.append()
+import itertools
+
+columns = list(itertools.product(target_cols, asset_ids))
+dag_df = dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+hpandas.df_to_str(dag_df, log_level=logging.INFO)
+dag_df.to_csv("prod_tmp.csv")
+dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
+
+asset_ids = map(int, asset_ids)
+columns = list(itertools.product(target_cols, asset_ids))
+columns = pd.MultiIndex.from_tuples(columns)
+dag_df.columns = columns
+
+dag_df.index = pd.to_datetime(dag_df.index)
+dag_df.index = dag_df.index.tz_convert("America/New_York")
+
+prod_dag_df = dag_df
+
+# %%
+dag_dir = sim_dag_dir
+if False:
+    stage = "0.read_data"
+    target_cols = [
+        "ask",
+        "bid",
+        "close",
+        "day_num_spread",
+        "day_spread",
+        "high",
+        "low",
+        "notional",
+        "open",
+        "sided_ask_count",
+        "sided_bid_count",
+        "start_time",
+        "volume",
+    ]
+# stage = "2.zscore"
+stage = "8.process_forecasts"
+# target_cols = [
+#     "close",
+#     "close_vwap",
+#     "day_num_spread",
+#     "day_spread",
+#     "garman_klass_vol",
+#     "high",
+#     "low",
+#     "notional",
+#     "open",
+#     "prediction",
+#     "twap",
+#     "volume",
+# ]
+target_cols = ['close', 'close.ret_0', 'twap', 'twap.ret_0', 'volume', 'vwap', 'vwap.ret_0', 'vwap.ret_0.vol', 'vwap.ret_0.vol_adj', 'vwap.ret_0.vol_adj.c', 'vwap.ret_0.vol_adj.c.lag0', 'vwap.ret_0.vol_adj.c.lag1', 'vwap.ret_0.vol_adj.c.lag2', 'vwap.ret_0.vol_adj.c.lag3', 'vwap.ret_0.vol_adj_2_hat']
+timestamp = "20221003_080000"
+
+file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = os.path.join(dag_dir, file_name)
+print(file_name)
+dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
+
+# dag_df = dag_df[start_timestamp:end_timestamp]
+
+display(dag_df.head(3))
+
+# print(dag_df.columns.levels[0])
+# print(sim_dag_df.columns.levels[0])
+# dag_df.drop(labels=["end_time"], axis=1, level=0, inplace=True, errors="raise")
+asset_ids = dag_df.columns.levels[1].tolist()
+# for col in dag_df.columns:
+#     if col[0] in target_cols:
+#     columns.append()
+import itertools
+
+columns = list(itertools.product(target_cols, asset_ids))
+dag_df = dag_df[pd.MultiIndex.from_tuples(columns)].copy()
+hpandas.df_to_str(dag_df, log_level=logging.INFO)
+dag_df.to_csv("prod_tmp.csv")
+dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
+
+asset_ids = map(int, asset_ids)
+columns = list(itertools.product(target_cols, asset_ids))
+columns = pd.MultiIndex.from_tuples(columns)
+dag_df.columns = columns
+
+dag_df.index = pd.to_datetime(dag_df.index)
+dag_df.index = dag_df.index.tz_convert("America/New_York")
+
+cand_dag_df = dag_df
+
+# %%
+#cand_dag_df = get_latest_output_from_last_dag_node(cand_dag_dir)
+#hpandas.df_to_str(cand_dag_df, log_level=logging.INFO)
+
+# %%
+#prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
+#hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
 
 # %%
 prod_cand_dag_corr = dtfmod.compute_correlations(
@@ -143,17 +304,21 @@ prod_cand_dag_corr.min()
 # %%
 fep_dict = {
     "init": {
-        "price_col": "twap",
-        "prediction_col": "prediction",
-        "volatility_col": "garman_klass_vol",
+        #"price_col": "twap",
+        #"prediction_col": "prediction",
+        #"volatility_col": "garman_klass_vol",
+        "price_col": "vwap",
+        "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+        "volatility_col": "vwap.ret_0.vol",
     },
     "annotate_forecasts_kwargs": {
-        "quantization": "nearest_share",
+        #"quantization": "nearest_share",
+        "quantization": "no_quantization",
         "burn_in_bars": 3,
         #
         "style": "cross_sectional",
         "bulk_frac_to_remove": 0.0,
-        "target_gmv": 20000.0,
+        "target_gmv": 700.0,
     },
 }
 
@@ -185,7 +350,7 @@ portfolio_config_dict = {
 portfolio_dfs = {}
 portfolio_stats_dfs = {}
 for name, path in portfolio_path_dict.items():
-    _LOG.info("Processing portfolio=%s", name)
+    _LOG.info("Processing portfolio=%s path=%s", name, path)
     portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
         path,
         **portfolio_config_dict,
