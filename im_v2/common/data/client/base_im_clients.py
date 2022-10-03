@@ -737,7 +737,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # Remove duplicates in data.
         duplicate_columns = ["timestamp", full_symbol_col_name]
         data = self._filter_duplicates(data, duplicate_columns=duplicate_columns)
-        #
+        # #
         data = data.set_index(
             self._timestamp_col_name,
         )
@@ -927,7 +927,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         :param data: data from the DB.
         :param duplicate_columns: columns on which to remove duplicates.
         """
-        hdbg.dassert_in("knowledge_timestamp", data.columns)
+        hdbg.dassert_is_subset(["knowledge_timestamp", "timestamp"], data.columns)
         # If no columns are given, use all non-metadata columns.
         if duplicate_columns is None:
             duplicate_columns = [
@@ -940,7 +940,12 @@ class SqlRealTimeImClient(RealTimeImClient):
         data = data.sort_values("knowledge_timestamp", ascending=False)
         data = data.drop_duplicates(duplicate_columns).sort_index()
         # Check if the knowledge_timestamp is over the candle timestamp by a minute.
-        mask = data["knowledge_timestamp"] <= (data["timestamp"] + pd.Timedelta("1m"))
+        #
+        # Assert that both timestamps have timezone info.
+        # TODO(Danya): Create a `hdatetime` function to assert tz in pd.Series.
+        hdbg.dassert(data["knowledge_timestamp"].dt.tz is not None)
+        hdbg.dassert(data["timestamp"].dt.tz is not None)
+        mask = data["knowledge_timestamp"] <= (data["timestamp"] + pd.DateOffset(minutes=1))
         early_data = data.loc[mask]
         if not early_data.empty:
             _LOG.warning(
