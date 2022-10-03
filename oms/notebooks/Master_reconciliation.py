@@ -247,10 +247,10 @@ stage = "8.process_forecasts"
 target_cols = ['close', 'close.ret_0', 'twap', 'twap.ret_0', 'volume', 'vwap', 'vwap.ret_0', 'vwap.ret_0.vol', 'vwap.ret_0.vol_adj', 'vwap.ret_0.vol_adj.c', 'vwap.ret_0.vol_adj.c.lag0', 'vwap.ret_0.vol_adj.c.lag1', 'vwap.ret_0.vol_adj.c.lag2', 'vwap.ret_0.vol_adj.c.lag3', 'vwap.ret_0.vol_adj_2_hat']
 timestamp = "20221003_080000"
 
-file_name = f"predict.{stage}.df_out.{timestamp}.csv"
+file_name = f"predict.{stage}.df_out.{timestamp}.csv.gz"
 file_name = os.path.join(dag_dir, file_name)
 print(file_name)
-dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
+dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1], compression="gzip")
 
 # dag_df = dag_df[start_timestamp:end_timestamp]
 
@@ -412,8 +412,8 @@ def get_asset_id_slice(df: pd.DataFrame, asset_id: int) -> pd.DataFrame:
 
 
 # %%
-asset_id = 13684
-get_asset_id_slice(adapted_prod_df, asset_id)
+#asset_id = 13684
+#get_asset_id_slice(adapted_prod_df, asset_id)
 
 # %%
 get_asset_id_slice(adapted_cand_df, asset_id)
