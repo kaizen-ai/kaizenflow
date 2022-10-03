@@ -735,7 +735,7 @@ class SqlRealTimeImClient(RealTimeImClient):
             hdateti.convert_unix_epoch_to_timestamp
         )
         # Remove duplicates in data.
-        duplicate_columns = ["timestamp", "currency_pair", "exchange_id"]
+        duplicate_columns = ["timestamp", full_symbol_col_name]
         data = self._filter_duplicates(data, duplicate_columns=duplicate_columns)
         #
         data = data.set_index(
