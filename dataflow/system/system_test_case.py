@@ -112,7 +112,7 @@ def run_Time_ForecastSystem(
         #
         if "order_processor_config" in system.config:
             # Get the `OrderProcessor` coroutine.
-            order_processor_coroutine = system.order_processor
+            order_processor_coroutine = system.order_processor_coroutine
             hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
             coroutines.append(order_processor_coroutine)
         #
@@ -258,7 +258,7 @@ class NonTime_ForecastSystem_FitPredict_TestCase1(hunitest.TestCase):
         )
         self.check_string(actual, fuzzy_match=True, purify_text=True)
 
-    # TODO(Paul, gp): This should have the option to burn the last N elements
+    # TODO(Paul): This should have the option to burn the last N elements
     #  of the fit/predict dataframes.
     def _test_fit_vs_predict1(self, system: dtfsyssyst.System) -> None:
         """
@@ -448,8 +448,11 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
             self, system, config_tag, use_unit_test_log_dir
         )
         # 2) Check the run signature.
+        # In a dataframe-based system, there is not order processor.
+        add_order_processor_signature = False
         actual = dtfsysysig.get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature
+            system, result_bundles, add_system_config, add_run_signature,
+            add_order_processor_signature
         )
         # 3) Check the state of the Portfolio after forced liquidation.
         if liquidate_at_trading_end_time:
@@ -517,16 +520,32 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
     def get_id(cls) -> int:
         return hash(cls.__name__) % 10000
 
+    @staticmethod
+    def reset() -> None:
+        oms.Fill._fill_id = 0
+        oms.Order._order_id = 0
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.reset()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.reset()
+
+    # TODO(gp): -> run_system
     def _test_database_portfolio_helper(
         self,
         system: dtfsyssyst.System,
         *,
         add_system_config: bool = True,
         add_run_signature: bool = True,
+        add_order_processor_signature: bool = True,
     ) -> str:
         """
         Run a System with a DatabasePortfolio.
         """
+        # Add the DB connection.
         asset_id_name = system.config["market_data_config", "asset_id_col_name"]
         incremental = False
         oms.create_oms_tables(self.connection, incremental, asset_id_name)
@@ -539,7 +558,8 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_TestCase1(
         )
         # Check the run signature.
         actual = dtfsysysig.get_signature_from_result_bundle(
-            system, result_bundles, add_system_config, add_run_signature
+            system, result_bundles, add_system_config, add_run_signature,
+            add_order_processor_signature
         )
         return actual
 
@@ -563,6 +583,19 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
     Make sure that `NonTime_ForecastSystem` and `Time_ForecastSystem`
     produce the same predictions.
     """
+
+    @staticmethod
+    def reset() -> None:
+        oms.Fill._fill_id = 0
+        oms.Order._order_id = 0
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.reset()
+
+    def tearDown(self) -> None:
+        super().tearDown()
+        self.reset()
 
     @staticmethod
     def postprocess_result_bundle(
@@ -680,6 +713,7 @@ class NonTime_ForecastSystem_vs_Time_ForecastSystem_TestCase1(hunitest.TestCase)
 
 
 # TODO(Grisha): Use for the Mock1 pipeline.
+# TODO(gp): This should not yhave a reference to C1b since it's here and not in orange.
 class Test_C1b_Time_ForecastSystem_vs_Time_ForecastSystem_with_DataFramePortfolio_TestCase1(
     hunitest.TestCase
 ):
@@ -807,6 +841,9 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         # we only compare the result of the run.
         add_system_config = False
         add_run_signature = True
+        # Only the system with DatabasePortfolio but not a DataFramePortfolio
+        # has the OrderProcessor so we don't print it.
+        add_order_processor_signature = False
         actual = self._test_dataframe_portfolio_helper(
             system_with_dataframe_portfolio,
             add_system_config=add_system_config,
@@ -818,6 +855,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
             system_with_database_portfolio,
             add_system_config=add_system_config,
             add_run_signature=add_run_signature,
+            add_order_processor_signature=add_order_processor_signature
         )
         #
         hdbg.dassert_lte(10, len(expected.split("\n")))

@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 
 import core.finance.bar_processing as cfibapro
+import core.finance.share_quantization as cfishqua
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -26,16 +27,10 @@ def quantize_holdings(
     hpandas.dassert_time_indexed_df(
         holdings, allow_empty=True, strictly_increasing=True
     )
-    #
-    if quantization == "no_quantization":
-        quantized_holdings = holdings
-    elif quantization == "nearest_share":
-        quantized_holdings = np.rint(holdings)
-    elif quantization == "nearest_lot":
-        quantized_holdings = 100 * np.rint(holdings / 100)
-    else:
-        raise ValueError(f"Invalid quantization strategy `{quantization}`")
-    _LOG.debug("`quantized_holdings`=\n%s", hpandas.df_to_str(quantized_holdings))
+    quantized_holdings = cfishqua.quantize_shares(
+        holdings,
+        quantization,
+    )
     return quantized_holdings
 
 

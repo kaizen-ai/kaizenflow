@@ -3,6 +3,7 @@ Import as:
 
 import oms.portfolio as omportfo
 """
+
 import abc
 import collections
 import logging
@@ -14,6 +15,7 @@ import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import core.key_sorted_ordered_dict as cksoordi
+import helpers.hasyncio as hasynci
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hobject as hobject
@@ -37,13 +39,13 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
     any time. Cash is treated as just another asset to keep code uniform.
 
     The data is indexed by knowledge time, i.e., when this information became
-    known by this object.
+    known to this object.
+
+    A `Portfolio` tracks a fixed universe of asset ids.
 
     A `Portfolio` needs a `Broker` to:
     - connect to the `MarketData` to receive prices
     - receive the fills and update the holdings.
-
-    A `Portfolio` tracks a fixed universe of asset ids.
     """
 
     # ID of asset representing cash.
@@ -84,7 +86,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             pandas-style suffix: "twap.5T"
         :param initial_holdings: initial positions in shares indexed by integer
             asset_ids; no NaNs are allowed unless
-            `retrieve_initial_holdings_from_db=True`,in which case all values
+            `retrieve_initial_holdings_from_db=True`, in which case all values
             must be NaN.
         :param retrieve_initial_holdings_from_db: `True` iff holdings are
             initialized via an external database. The asset ids of nonzero
@@ -165,12 +167,12 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         txt = []
         # <...portfolio at 0x>
         txt.append(hprint.to_object_repr(self))
-        act = []
         # Print the rest of the data in a more readable format.
+        txt_tmp = []
         if num_periods:
             hdbg.dassert_lte(1, num_periods)
         precision = 2
-        act.append(
+        txt_tmp.append(
             "# historical holdings=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_holdings(num_periods),
@@ -178,7 +180,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
                 precision=precision,
             )
         )
-        act.append(
+        txt_tmp.append(
             "# historical holdings marked to market=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_holdings_marked_to_market(num_periods),
@@ -186,7 +188,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
                 precision=precision,
             )
         )
-        act.append(
+        txt_tmp.append(
             "# historical flows=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_flows(num_periods),
@@ -194,7 +196,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
                 precision=precision,
             )
         )
-        act.append(
+        txt_tmp.append(
             "# historical pnl=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_pnl(num_periods),
@@ -202,7 +204,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
                 precision=precision,
             )
         )
-        act.append(
+        txt_tmp.append(
             "# historical statistics=\n%s"
             % hpandas.df_to_str(
                 self.get_historical_statistics(num_periods),
@@ -210,31 +212,41 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
                 precision=precision,
             )
         )
-        act = "\n".join(act)
-        txt.append(hprint.indent(act))
+        txt_tmp = "\n".join(txt_tmp)
+        txt.append(hprint.indent(txt_tmp))
+        # Assemble in a single string.
         txt = "\n".join(txt)
         return txt
 
+    # TODO(gp): We could share some code from PrintableMixin.
     def __repr__(self) -> str:
+        """
+        Print a detailed state of the Portfolio.
+        """
         txt = []
+        # Same content as `str()`.
         txt.append(str(self))
-        act = []
-        act.append("broker=%s" % hprint.to_object_repr(self.broker))
-        act.append("market_data=%s" % hprint.to_object_repr(self.market_data))
-        act.append("_account=%s" % self._account)
-        act.append("_timestamp_col=%s" % self._timestamp_col)
-        act.append("_get_wall_clock_time=%s" % self._get_wall_clock_time)
-        act.append("_asset_id_col=%s" % self._asset_id_col)
-        act.append("_mark_to_market_col=%s" % self._mark_to_market_col)
-        act.append("_pricing_type=%s" % self._pricing_type)
-        act.append("_bar_duration=%s" % self._bar_duration)
-        act.append("_max_num_bars=%s" % self._max_num_bars)
-        act = "\n".join(act)
-        txt.append(hprint.indent(act))
+        # Add details about each attribute.
+        txt_tmp = []
+        txt_tmp.append("broker=%s" % hprint.to_object_repr(self.broker))
+        txt_tmp.append("market_data=%s" % hprint.to_object_repr(self.market_data))
+        txt_tmp.append("_account=%s" % self._account)
+        txt_tmp.append("_timestamp_col=%s" % self._timestamp_col)
+        #txt_tmp.append("_get_wall_clock_time=%s" % self._get_wall_clock_time)
+        txt_tmp.append("_asset_id_col=%s" % self._asset_id_col)
+        txt_tmp.append("_mark_to_market_col=%s" % self._mark_to_market_col)
+        txt_tmp.append("_pricing_type=%s" % self._pricing_type)
+        txt_tmp.append("_bar_duration=%s" % self._bar_duration)
+        txt_tmp.append("_max_num_bars=%s" % self._max_num_bars)
+        txt_tmp = "\n".join(txt_tmp)
+        txt.append(hprint.indent(txt_tmp))
+        # Assemble in a single string.
         txt = "\n".join(txt)
         return txt
 
-    # __repr__ prints a detailed state of the Portfolio.
+    # /////////////////////////////////////////////////////////////////////////////
+    # Builders
+    # /////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def read_state(
@@ -328,6 +340,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         )
         return portfolio
 
+    # /////////////////////////////////////////////////////////////////////////////
+    # Accessors
+    # /////////////////////////////////////////////////////////////////////////////
+
     @property
     def universe(self) -> List[int]:
         """
@@ -375,6 +391,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         asset_holdings_odict = self._asset_holdings.get_ordered_dict(num_periods)
         timestamp, _ = asset_holdings_odict.popitem()
         return timestamp
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Mark to market
+    # /////////////////////////////////////////////////////////////////////////////
 
     def mark_to_market(self) -> pd.DataFrame:
         """
@@ -458,6 +478,10 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         df.index = [timestamp] * df.shape[0]
         df = df.convert_dtypes()
         return df
+
+    # /////////////////////////////////////////////////////////////////////////////
+    # Historical accessors
+    # /////////////////////////////////////////////////////////////////////////////
 
     def get_historical_statistics(
         self, num_periods: Optional[int] = 10
@@ -578,6 +602,8 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             pnl = pnl.tail(num_periods - 1)
         return pnl
 
+    # /////////////////////////////////////////////////////////////////////////////
+
     def log_state(self, log_dir: str, num_periods: Optional[int] = 1) -> str:
         # TODO(Paul): Change this so that it logs only the most recent state.
         hdbg.dassert(log_dir, "Must specify `log_dir` to log state.")
@@ -611,27 +637,31 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         :return: series of prices at `as_of_timestamp` indexed by asset_id
         """
         if self._pricing_type == "last":
-            prices = self.market_data.get_last_price(
+            prices_df = self.market_data.get_last_price(
                 self._mark_to_market_col, asset_ids
             )
         elif self._pricing_type == "twap":
-            prices = self.market_data.get_last_twap_price(
+            prices_df = self.market_data.get_last_twap_price(
                 self._bar_duration,
                 self._timestamp_col,
                 asset_ids,
                 self._mark_to_market_col,
             )
         else:
-            raise NotImplementedError
-        hdbg.dassert_eq(self._mark_to_market_col, prices.name)
-        prices.index.name = "asset_id"
-        prices.name = "price"
-        hdbg.dassert(not prices.index.has_duplicates)
-        return prices
+            raise ValueError(f"Invalid pricing_type='{self._pricing_type}'")
+        hdbg.dassert_isinstance(prices_df, pd.DataFrame)
+        # Convert to series.
+        prices_srs = self.market_data.to_price_series(
+            prices_df, self._mark_to_market_col
+        )
+        prices_srs.index.name = "asset_id"
+        prices_srs.name = "price"
+        hdbg.dassert(not prices_srs.index.has_duplicates)
+        return prices_srs
 
     # //////////////////////////////////////////////////////////////////////////////
-
     # Read / write state.
+    # //////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _load_df_from_files(
@@ -880,7 +910,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             assets_marked_to_market = pd.DataFrame(columns=Portfolio.PRICE_COLS)
         else:
             # TODO(gp): A bit weird that we are calling the public method from the
-            # private.
+            #  private.
             prices = self.price_assets(asset_ids_list)
             assets_marked_to_market = asset_ids * prices
             assets_marked_to_market.name = "value"
@@ -1108,19 +1138,24 @@ class DatabasePortfolio(Portfolio):
         self,
         *args: Any,
         table_name: str,
+        poll_kwargs: Optional[Dict[str, Any]] = None,
         **kwargs: Any,
     ):
         """
         Constructor.
 
         :param table_name: current positions table name
+        :param poll_kwargs: polling instruction when waiting for stable current
+            positions
         """
-        _LOG.debug(hprint.to_str("table_name"))
+        _LOG.debug(hprint.to_str("table_name poll_kwargs"))
         super().__init__(*args, **kwargs)
         #
         self._db_connection = self.broker._db_connection
         self._table_name = table_name
-        #
+        if poll_kwargs is None:
+            poll_kwargs = hasynci.get_poll_kwargs(self._get_wall_clock_time)
+        self._poll_kwargs = poll_kwargs
         # wall clock timestamp -> snapshot_df (i.e., the image of the holdings in
         # the account, without cash).
         self._timestamp_to_snapshot_df = collections.OrderedDict()
@@ -1134,7 +1169,16 @@ class DatabasePortfolio(Portfolio):
         #
         _LOG.debug("After initialization:\n%s", repr(self))
 
-    def _observe_holdings(self) -> None:
+    def _get_snapshot_df(self, restrict_to_universe: bool) -> pd.DataFrame:
+        """
+        Return a snapshot df like:
+        ```
+         tradedate asset_id        published_dt  target_position  current_position ...
+        2021-12-09    10005 2021-12-09 11:54:28  0.0              0
+        2021-12-09    10006 2021-12-09 11:54:28  0.0              0
+        2021-12-09    10009 1970-01-01 00:00:00  0.0              0
+        ```
+        """
         # The current positions table has the following fields:
         # - tradedate (e.g., 2021-10-28)
         # - id (e.g., 10005)
@@ -1168,43 +1212,34 @@ class DatabasePortfolio(Portfolio):
         #   - = number of shares at BOD
         # - bod_price (e.g., 0.0)
         #   - = price of a share at BOD
-        # Wait until the portfolio is stable.
-        # TODO(gp): We can either assert or wait until the portfolio is stable.
-        # Get the current positions.
+        # Build the SQL query to retrieve the current positions.
         query = []
         query.append(f"SELECT * FROM {self._table_name}")
+        # Get the trade date.
         wall_clock_timestamp = self._get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
         trade_date = wall_clock_timestamp.date()
-        # Restrict query to portfolio universe.
-        hdbg.dassert(self.universe, "Universe is empty.")
-        _LOG.debug("universe=\n%s", self.universe)
-        universe = tuple(self.universe)
-        if len(universe) == 1:
-            universe = str(universe)[:-2] + ")"
-        else:
-            universe = universe
-        # TODO(Paul): Make sure that we do not exclude IDs with a nonzero current /
-        #  target position (ensure that these are included in the universe).
+        _LOG.debug(hprint.to_str("wall_clock_timestamp trade_date"))
         where_clause = [f"WHERE tradedate='{trade_date}'"]
-        where_clause.append(f"AND {self._asset_id_col} IN {universe}")
+        # Restrict query to portfolio universe.
+        if restrict_to_universe:
+            hdbg.dassert(self.universe, "Universe is empty.")
+            _LOG.debug("universe=\n%s", self.universe)
+            universe = tuple(self.universe)
+            if len(universe) == 1:
+                universe = str(universe)[:-2] + ")"
+            # TODO(Paul): Make sure that we do not exclude IDs with a nonzero current /
+            #  target position (ensure that these are included in the universe).
+            where_clause.append(f"AND {self._asset_id_col} IN {universe}")
+        # Restrict by account if needed.
         if self._account is not None:
             where_clause.append(f"AND account='{self._account}'")
         query.append(" ".join(where_clause))
         #
         query.append(f"ORDER BY {self._asset_id_col}")
         query = "\n".join(query)
-        _LOG.debug("query=%s", query)
         # Retrieve the data from the DB.
         snapshot_df = hsql.execute_query_to_df(self._db_connection, query)
         snapshot_df.rename(columns={self._asset_id_col: "asset_id"}, inplace=True)
-        # `snapshot_df` looks like:
-        # ```
-        #  tradedate asset_id        published_dt  target_position  current_position
-        # 2021-12-09    10005 2021-12-09 11:54:28  0.0              0
-        # 2021-12-09    10006 2021-12-09 11:54:28  0.0              0
-        # 2021-12-09    10009 1970-01-01 00:00:00  0.0              0
-        # ```
         _LOG.debug(
             "snapshot_df=\n%s",
             hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
@@ -1214,19 +1249,58 @@ class DatabasePortfolio(Portfolio):
                 snapshot_df["asset_id"],
                 "Each asset_id should be unique in a snapshot_df",
             )
+        # TODO(gp): Save the data we are seeing from the DB in debug mode.
         if False:
             file_name = f"snapshot_df.{wall_clock_timestamp}.csv"
             file_name = file_name.replace(" ", "_")
             _LOG.debug("Saving %s", file_name)
             snapshot_df.to_csv(file_name)
-        # Update cash from snapshot_df.
+        return snapshot_df
+
+    def _is_stable_snapshot_df(
+        self, *args: Any, **kwargs: Any
+    ) -> Tuple[bool, pd.DataFrame]:
+        snapshot_df = self._get_snapshot_df(*args, **kwargs)
+        is_stable = (snapshot_df["open_quantity"] == 0).all()
+        return is_stable, snapshot_df
+
+    def _get_stable_snapshot_df(self, *args: Any, **kwargs: Any) -> pd.DataFrame:
+        """
+        Wait until the current positions are stable and then return them.
+
+        The current positions are stable when no outstanding orders are
+        open.
+        """
+        # TODO(gp): Enable this.
+        if False:
+            polling_func = lambda: self._is_stable_snapshot_df(*args, **kwargs)
+            tag = "wait_for_stable_snapshot_df"
+            # Conceptually this should be an async polling. To avoid that the async
+            # behavior spreads to all the methods, we resort to a sync implementation.
+            rc, snapshot_df = hasynci.sync_poll(
+                polling_func, tag=tag, **self._poll_kwargs
+            )
+            _ = rc
+        else:
+            snapshot_df = self._get_snapshot_df(*args, **kwargs)
+        return snapshot_df
+
+    def _observe_holdings(self) -> None:
+        """
+        Observe the holdings stored in the external DB and update the internal
+        data structure to account for them.
+        """
+        restrict_to_universe = True
+        snapshot_df = self._get_stable_snapshot_df(restrict_to_universe)
+        # 1) Update cash from snapshot_df.
+        wall_clock_timestamp = self._get_wall_clock_time()
         self._update_cash(snapshot_df, wall_clock_timestamp)
-        # Update asset holdings from snapshot_df.
+        # 2) Update asset holdings from snapshot_df.
         asset_holdings = snapshot_df[["asset_id", "current_position"]].set_index(
             "asset_id"
         )["current_position"]
+        _LOG.debug(hprint.to_str("asset_holdings"))
         hdbg.dassert_isinstance(asset_holdings, pd.Series)
-        _LOG.debug("asset_holdings=%s", asset_holdings)
         asset_holdings = asset_holdings.reindex(
             index=self._initial_universe, copy=False
         )
@@ -1238,47 +1312,34 @@ class DatabasePortfolio(Portfolio):
         asset_holdings.fillna(0, inplace=True)
         hdbg.dassert(not asset_holdings.index.has_duplicates)
         self._asset_holdings[wall_clock_timestamp] = asset_holdings
-        # Update snapshot_df.
+        # 3) Update snapshot_df.
         hdbg.dassert(not snapshot_df.index.has_duplicates)
         self._timestamp_to_snapshot_df[wall_clock_timestamp] = snapshot_df
 
+    # TODO(gp): -> _get_initial_holdings_from_db since we are not assigning it.
     def _initialize_holdings_from_db(
         self, initial_holdings: pd.Series
     ) -> pd.Series:
-        # TODO(*): Factor out the query.
+        """
+        Retrieve and validate the holdings stored in an external DB.
+
+        :param initial_holdings: the nonzero holdings from the DB need to be a
+            subset of the index in `initial_holdings`
+        """
         # All initial holdings must be NaN when we invoke this method.
         hdbg.dassert_eq(initial_holdings.count(), 0)
-        #
-        query = []
-        query.append(f"SELECT * FROM {self._table_name}")
-        wall_clock_timestamp = self._get_wall_clock_time()
-        _LOG.debug("wall_clock_timestamp=%s", wall_clock_timestamp)
-        trade_date = wall_clock_timestamp.date()
-        where_clause = [f"WHERE tradedate='{trade_date}'"]
-        if self._account is not None:
-            where_clause.append(f"AND account='{self._account}'")
-        query.append(" ".join(where_clause))
-        #
-        query.append(f"ORDER BY {self._asset_id_col}")
-        query = "\n".join(query)
-        _LOG.debug("query=%s", query)
-        # Retrieve the data from the DB.
-        snapshot_df = hsql.execute_query_to_df(self._db_connection, query)
-        snapshot_df.rename(columns={self._asset_id_col: "asset_id"}, inplace=True)
-        _LOG.debug(
-            "snapshot_df=\n%s",
-            hpandas.df_to_str(snapshot_df, num_rows=None, precision=2),
-        )
-        if not snapshot_df.empty:
-            hdbg.dassert_no_duplicates(
-                snapshot_df["asset_id"],
-                "Each asset_id should be unique in a snapshot_df",
-            )
+        # TODO(gp): Explain why we don't restrict to universe here like in
+        #  `_observe_holdings()`. Maybe it's because we expect the client to pass
+        #  the universe from outside.
+        restrict_to_universe = False
+        snapshot_df = self._get_stable_snapshot_df(restrict_to_universe)
         # Get current nonzero positions.
         holdings = snapshot_df[["asset_id", "current_position"]].set_index(
             "asset_id"
         )["current_position"]
+        _LOG.debug(hprint.to_str("holdings"))
         hdbg.dassert_isinstance(holdings, pd.Series)
+        #
         nonzero_holdings = holdings[holdings != 0]
         hdbg.dassert_isinstance(nonzero_holdings, pd.Series)
         # Ensure that the nonzero positions are a subset of the universe
@@ -1292,6 +1353,7 @@ class DatabasePortfolio(Portfolio):
         initial_holdings = initial_holdings.add(nonzero_holdings, fill_value=0)
         return initial_holdings
 
+    # TODO(gp): Make it static
     def _convert_to_holdings_df(
         self, snapshot_df: pd.DataFrame, as_of_timestamp: pd.Timestamp
     ) -> pd.DataFrame:
@@ -1304,6 +1366,7 @@ class DatabasePortfolio(Portfolio):
         holdings_df = holdings_df.convert_dtypes()
         return holdings_df
 
+    # TODO(gp): Make it static
     def _get_net_cost(self, snapshot_df: pd.DataFrame) -> pd.Series:
         """
         Return the `net_cost` of assets stored in a `snapshot_df`.
