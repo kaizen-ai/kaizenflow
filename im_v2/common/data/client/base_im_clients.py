@@ -736,7 +736,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         # Remove duplicates in data.
         duplicate_columns = ["timestamp", "currency_pair", "exchange_id"]
-        data = self._filter_full_duplicates(data, duplicate_columns=duplicate_columns)
+        data = self._filter_duplicates(data, duplicate_columns=duplicate_columns)
         #
         data = data.set_index(
             self._timestamp_col_name,
