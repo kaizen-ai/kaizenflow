@@ -939,17 +939,21 @@ class SqlRealTimeImClient(RealTimeImClient):
         # Remove duplicates.
         data = data.sort_values("knowledge_timestamp", ascending=False)
         data = data.drop_duplicates(duplicate_columns).sort_index()
-        # Check if the knowledge_timestamp is over the candle timestamp by a minute.
+        hdbg.dassert_lt(0, data.shape[0], "Empty df=\n%s", data)
+        # Check if the knowledge_timestamp is over the candle timestamp by at least minute.
         #
         # Assert that both timestamps have timezone info.
         # TODO(Danya): Create a `hdatetime` function to assert tz in pd.Series.
         hdbg.dassert(data["knowledge_timestamp"].dt.tz is not None)
         hdbg.dassert(data["timestamp"].dt.tz is not None)
-        mask = data["knowledge_timestamp"] <= (data["timestamp"] + pd.DateOffset(minutes=1))
+        # Get all "early" data.
+        mask = data["knowledge_timestamp"] <= (
+            data["timestamp"] + pd.DateOffset(minutes=1)
+        )
         early_data = data.loc[mask]
         if not early_data.empty:
             _LOG.warning(
-                "Knowledge timestamp for the following rows is less than a minute after candle timestamp:\n%s",
+                "Knowledge timestamp for the following rows is <1m after data timestamp>:\n%s",
                 hpandas.df_to_str(early_data, num_rows=None),
             )
         return data
