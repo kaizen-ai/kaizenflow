@@ -1,12 +1,12 @@
 """
 Import as:
 
-import helpers.hprint as hprint
+import helpers.hobject as hobject
 """
 
 import logging
 import pprint
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 import pandas as pd
 
@@ -71,7 +71,13 @@ def _to_skip_attribute(
     callable_mode: str,
     private_mode: str,
     dunder_mode: str,
+    attr_names_to_skip: Optional[List[str]],
 ) -> bool:
+    # Check whether the attribute is one that was requested explicitly to skip.
+    if attr_names_to_skip is not None:
+        if attr_name in attr_names_to_skip:
+            skip = True
+            return skip
     # Handle callable methods.
     skip = _to_skip_callable_attribute(attr_value, callable_mode)
     if skip:
@@ -125,6 +131,7 @@ def obj_to_str(
     callable_mode: str = "skip",
     private_mode: str = "skip",
     dunder_mode: str = "skip",
+    attr_names_to_skip: Optional[List[str]] = None,
 ) -> str:
     """
     Print attributes of an object.
@@ -149,6 +156,9 @@ def obj_to_str(
         `callable_mode`
     :param dunder_mode: how to handle double under attributes. Same params as
         `callable_mode`
+    :param attr_names_to_skip: a list of attributes (e.g., private, callable, dunder)
+        to skip. This is used to avoid to print data that is redundant (e.g., a
+        cached value)
     """
     ret = []
     if attr_mode == "__dict__":
@@ -157,9 +167,16 @@ def obj_to_str(
             values = sorted(values)
         for attr_name in values:
             attr_value = obj.__dict__[attr_name]
-            _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
             skip = _to_skip_attribute(
-                attr_name, attr_value, callable_mode, private_mode, dunder_mode
+                attr_name,
+                attr_value,
+                callable_mode,
+                private_mode,
+                dunder_mode,
+                attr_names_to_skip,
+            )
+            _LOG.debug(
+                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
             )
             if skip:
                 continue
@@ -172,9 +189,16 @@ def obj_to_str(
             values = sorted(values)
         for attr_name in values:
             attr_value = getattr(obj, attr_name)
-            _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
             skip = _to_skip_attribute(
-                attr_name, attr_value, callable_mode, private_mode, dunder_mode
+                attr_name,
+                attr_value,
+                callable_mode,
+                private_mode,
+                dunder_mode,
+                attr_names_to_skip,
+            )
+            _LOG.debug(
+                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
             )
             if skip:
                 continue
@@ -223,6 +247,8 @@ def _attr_to_repr(attr_name: Any, attr_value: Any, print_type: bool) -> str:
     return out
 
 
+# TODO(gp): Merge the code with obj_to_repr() using a switch for the different
+#  code.
 def obj_to_repr(
     obj: Any,
     *,
@@ -232,30 +258,13 @@ def obj_to_repr(
     callable_mode: str = "skip",
     private_mode: str = "skip",
     dunder_mode: str = "skip",
+    attr_names_to_skip: Optional[List[str]] = None,
 ) -> str:
     """
-    Print attributes of an object.
+    Same interface and behavior as `obj_to_str()`.
 
-    An object is printed as name of the class and the attributes, e.g.,
-    ```
-    _Object:
-      a='False'
-      b='hello'
-      c='3.14'
-    ```
-
-    :param attr_mode: use `__dict__` or `dir()`
-        - It doesn't seem to make much difference
-    :param print_type: print the type of the attribute
-    :param callable_mode: how to handle attributes that are callable (i.e.,
-        methods)
-        - `skip`: skip the callable methods
-        - `only`: print only the callable methods
-        - `all`: always print
-    :param private_mode: how to handle private attributes. Same params as
-        `callable_mode`
-    :param dunder_mode: how to handle double under attributes. Same params as
-        `callable_mode`
+    Use `_attr_to_repr()` instead of a simple `attr_name = attr_value` like in
+    `obj_to_str()`.
     """
     ret = []
     if attr_mode == "__dict__":
@@ -264,9 +273,16 @@ def obj_to_repr(
             values = sorted(values)
         for attr_name in values:
             attr_value = obj.__dict__[attr_name]
-            _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
             skip = _to_skip_attribute(
-                attr_name, attr_value, callable_mode, private_mode, dunder_mode
+                attr_name,
+                attr_value,
+                callable_mode,
+                private_mode,
+                dunder_mode,
+                attr_names_to_skip,
+            )
+            _LOG.debug(
+                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
             )
             if skip:
                 continue
@@ -279,9 +295,16 @@ def obj_to_repr(
             values = sorted(values)
         for attr_name in values:
             attr_value = getattr(obj, attr_name)
-            _LOG.debug("attr_name=%s attr_value=%s", attr_name, attr_value)
             skip = _to_skip_attribute(
-                attr_name, attr_value, callable_mode, private_mode, dunder_mode
+                attr_name,
+                attr_value,
+                callable_mode,
+                private_mode,
+                dunder_mode,
+                attr_names_to_skip,
+            )
+            _LOG.debug(
+                "attr_name=%s attr_value=%s -> skip", attr_name, attr_value, skip
             )
             if skip:
                 continue
@@ -312,11 +335,27 @@ class PrintableMixin:
     These methods can be overridden with more specific methods, if needed.
     """
 
-    def __str__(self) -> str:
-        return obj_to_str(self, print_type=True, private_mode="all")
+    def __str__(
+        self,
+        attr_names_to_skip: Optional[List[str]] = None,
+    ) -> str:
+        return obj_to_str(
+            self,
+            print_type=True,
+            private_mode="all",
+            attr_names_to_skip=attr_names_to_skip,
+        )
 
-    def __repr__(self) -> str:
-        return obj_to_repr(self, print_type=True, private_mode="all")
+    def __repr__(
+        self,
+        attr_names_to_skip: Optional[List[str]] = None,
+    ) -> str:
+        return obj_to_repr(
+            self,
+            print_type=True,
+            private_mode="all",
+            attr_names_to_skip=attr_names_to_skip,
+        )
 
 
 # #############################################################################
