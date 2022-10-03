@@ -917,7 +917,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         """
         Remove duplicates from data based on 'knowledge_timestamp'.
 
-        Keeps the row with the high 'knowledge_timestamp' value.
+        Keeps the row with the highest 'knowledge_timestamp' value.
 
         The function gives a warning if the knowledge timestamp is less
         than a minute over the data timestamp. This might indicate that
@@ -925,7 +925,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         very low.
 
         :param data: data from the DB.
-        :param duplicate_columns: columns on which i
+        :param duplicate_columns: columns on which to remove duplicates.
         """
         hdbg.dassert_in("knowledge_timestamp", data.columns)
         # If no columns are given, use all non-metadata columns.
@@ -933,14 +933,14 @@ class SqlRealTimeImClient(RealTimeImClient):
             duplicate_columns = [
                 c
                 for c in data.columns.to_list()
-                if c not in ["knowledge_timestamp", "download_timestamp"]
+                if c not in ["knowledge_timestamp", "end_download_timestamp"]
             ]
         hdbg.dassert_is_subset(duplicate_columns, data.columns.to_list())
         # Remove duplicates.
         data = data.sort_values("knowledge_timestamp", ascending=False)
         data = data.drop_duplicates(duplicate_columns).sort_index()
         # Check if the knowledge_timestamp is over the candle timestamp by a minute.
-        mask = data["timestamp"] < (data["knowledge_timestamp"] + pd.Timedelta("1m"))
+        mask = data["knowledge_timestamp"] <= (data["timestamp"] + pd.Timedelta("1m"))
         early_data = data.loc[mask]
         if not early_data.empty:
             _LOG.warning(
