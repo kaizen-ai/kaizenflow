@@ -116,6 +116,20 @@ def _get_run_date(run_date: Optional[str]) ->  str:
     return run_date
 
 
+def _sanity_check_data(file_path: str) -> None:
+    """
+    Check that data at the specified file path is correct.
+    """
+    cmd = f"gzip -cd {market_data_file} | head -3"
+    _system(cmd)
+    cmd = f"gzip -cd {market_data_file} | tail -3"
+    _system(cmd)
+    cmd = f"gzip -cd {market_data_file_shared} | wc -l"
+    _system(cmd)
+    cmd = f"ls -lh {market_data_file_shared}"
+    _system(cmd)
+
+
 @task
 def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     """
@@ -181,10 +195,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
     # Check the market data file.
-    cmd = f"gzip -cd {market_data_file} | head -3"
-    _system(cmd)
-    cmd = f"gzip -cd {market_data_file} | tail -3"
-    _system(cmd)
+    _sanity_check_data(market_data_file)
     if interactive:
         question = "Is the file ok?"
         hsystem.query_yes_no(question)
@@ -204,14 +215,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     cmd = f"chmod -R -w {market_data_file_shared}"
     _system(cmd)
     # Sanity check remote data.
-    cmd = f"gzip -cd {market_data_file_shared} | head -3"
-    _system(cmd)
-    cmd = f"gzip -cd {market_data_file_shared} | tail -3"
-    _system(cmd)
-    cmd = f"gzip -cd {market_data_file_shared} | wc -l"
-    _system(cmd)
-    cmd = f"ls -lh {market_data_file_shared}"
-    _system(cmd)
+   _sanity_check_data(market_data_file_shared)
 
 
 # TODO(gp): Move it to a more general library.
@@ -305,8 +309,8 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     _system(cmd)
 
 
-# > cp -vr ./system_log_dir /data/shared/prod_reconciliation/20220928/simulation/
-# > cp -v tmp.pytest_script.txt /data/shared/prod_reconciliation/20220928/simulation/
+# > cp -vr ./system_log_dir /data/shared/prod_reconciliation/{run_date}/simulation/
+# > cp -v tmp.pytest_script.txt /data/shared/prod_reconciliation/{run_date}/simulation/
 @task
 def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     """
@@ -314,10 +318,10 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     """
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date, "simulation")
-    _LOG.info("Saving results to '%s'", target_dir)
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
     hdbg.dassert_dir_exists(target_dir)
+    _LOG.info("Saving results to '%s'", target_dir)
     # Save system logs.
     system_log_dir = "./system_log_dir"
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
@@ -326,6 +330,30 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     pytest_log_file_path = "tmp.pytest_script.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
     docker_cmd = f"cp -v {pytest_log_file_path} {target_dir}"
+    _system(docker_cmd)
+
+
+# > cp -vr system_log_dir_{run_date}_2hours /data/shared/prod_reconciliation/{run_date}/prod/
+# > cp -v log_{run_date}_2hours.txt /data/shared/prod_reconciliation/{run_date}/prod/
+@task
+def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
+    """
+    Copy the output of the prod in the proper dir.
+    """
+    run_date = _get_run_date(run_date)
+    target_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date, "prod")
+    hdbg.dassert_dir_exists(target_dir)
+    _LOG.info("Saving results to '%s'", target_dir)
+    # Copy system log file to the target dir.
+    # TODO(Grisha): @Dan Pass run duration as a param.
+    system_log_dir = f"./system_log_dir_{run_date}_2hours"
+    hdbg.dassert_dir_exists(system_log_dir)
+    docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
+    _system(docker_cmd)
+    # Copy script log file to the target dir.
+    log_file = f"log_{run_date}_2hours.txt"
+    hdbg.dassert_file_exists(system_log_dir)
+    docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
 
 
