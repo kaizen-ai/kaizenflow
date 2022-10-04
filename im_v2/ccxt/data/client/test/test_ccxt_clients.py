@@ -966,8 +966,46 @@ class TestCcxtSqlRealTimeImClient1(
         actual_data = im_client._filter_duplicates(
             input_data, full_symbol_col_name
         )
-        self.assertEqual(actual_data.shape, (6, 9))
-        self.check_string(str(actual_data))
+        expected_length = 6
+        expected_column_names = [
+            "close",
+            "end_download_timestamp",
+            "full_symbol",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "volume",
+        ]
+        expected_column_unique_values = {
+            "full_symbol": [
+                "binance::BTC_USDT",
+                "binance::ETH_USDT",
+                "kucoin::ETH_USDT",
+            ]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = """# df=
+        index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 9)
+        id open high low close volume end_download_timestamp knowledge_timestamp full_symbol
+        timestamp
+        2021-09-09 00:00:00+00:00 1 30 40 50 60 70 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:01:00+00:00 2 31 41 51 61 71 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:02:00+00:00 3 32 42 52 62 72 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
+        2021-09-09 00:04:00+00:00 4 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:04:00+00:00 5 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
+        2021-09-09 00:04:00+00:00 6 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 kucoin::ETH_USDT"""
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_data,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
 
     # TODO(Nina): Move setUp and tearDown methods on top of the class.
     def setUp(self) -> None:
