@@ -327,7 +327,6 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Save script logs.
-<<<<<<< HEAD
     pytest_log_file_path = "tmp.pytest_script.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
     docker_cmd = f"cp -v {pytest_log_file_path} {target_dir}"
@@ -355,10 +354,6 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     log_file = f"log_{run_date}_2hours.txt"
     hdbg.dassert_file_exists(system_log_dir)
     docker_cmd = f"cp -v {log_file} {target_dir}"
-=======
-    pytest_script_file_path = "tmp.pytest_script.txt"
-    docker_cmd = f"cp -v {pytest_script_file_path} {target_dir}"
->>>>>>> checkpoint
     _system(docker_cmd)
 
 
