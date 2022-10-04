@@ -735,12 +735,7 @@ class SqlRealTimeImClient(RealTimeImClient):
             hdateti.convert_unix_epoch_to_timestamp
         )
         # Remove duplicates in data.
-        duplicate_columns = ["timestamp", full_symbol_col_name]
-        data = self._filter_duplicates(data, duplicate_columns=duplicate_columns)
-        # #
-        data = data.set_index(
-            self._timestamp_col_name,
-        )
+        data = self._filter_duplicates(data, full_symbol_col_name)
         # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
@@ -912,10 +907,10 @@ class SqlRealTimeImClient(RealTimeImClient):
         return timestamp
 
     def _filter_duplicates(
-        self, data: pd.DataFrame, duplicate_columns: Optional[List[str]]
-    ):
+        self, data: pd.DataFrame, full_symbol_col_name: str
+    ) -> pd.DataFrame:
         """
-        Remove duplicates from data based on 'knowledge_timestamp'.
+        Remove duplicates from data based on full symbol and timestamp.
 
         Keeps the row with the highest 'knowledge_timestamp' value.
 
@@ -924,31 +919,25 @@ class SqlRealTimeImClient(RealTimeImClient):
         the data hasn't been downloaded in full, although the risk is
         very low.
 
-        :param data: data from the DB.
-        :param duplicate_columns: columns on which to remove duplicates.
+        :param data: data from the DB
+        :return: DB data with duplicates removed
         """
-        hdbg.dassert_is_subset(["knowledge_timestamp", "timestamp"], data.columns)
-        # If no columns are given, use all non-metadata columns.
-        if duplicate_columns is None:
-            duplicate_columns = [
-                c
-                for c in data.columns.to_list()
-                if c not in ["knowledge_timestamp", "end_download_timestamp"]
-            ]
-        hdbg.dassert_is_subset(duplicate_columns, data.columns.to_list())
+        hdbg.dassert_is_subset(["knowledge_timestamp", self._timestamp_col_name, full_symbol_col_name], data.columns)
+        duplicate_columns = [self._timestamp_col_name, full_symbol_col_name]
         # Remove duplicates.
         data = data.sort_values("knowledge_timestamp", ascending=False)
-        data = data.drop_duplicates(duplicate_columns).sort_index()
+        use_index = False
+        data = hpandas.drop_duplicates(data, use_index, subset=duplicate_columns).sort_index()
         hdbg.dassert_lt(0, data.shape[0], "Empty df=\n%s", data)
         # Check if the knowledge_timestamp is over the candle timestamp by at least minute.
         #
         # Assert that both timestamps have timezone info.
         # TODO(Danya): Create a `hdatetime` function to assert tz in pd.Series.
-        hdbg.dassert(data["knowledge_timestamp"].dt.tz is not None)
-        hdbg.dassert(data["timestamp"].dt.tz is not None)
+        hdbg.dassert_is_not(data["knowledge_timestamp"].dt.tz, None)
+        hdbg.dassert_is_not(data[self._timestamp_col_name].dt.tz, None)
         # Get all "early" data.
         mask = data["knowledge_timestamp"] <= (
-            data["timestamp"] + pd.DateOffset(minutes=1)
+            data[self._timestamp_col_name] + pd.DateOffset(minutes=1)
         )
         early_data = data.loc[mask]
         if not early_data.empty:
@@ -956,4 +945,7 @@ class SqlRealTimeImClient(RealTimeImClient):
                 "Knowledge timestamp for the following rows is <1m after data timestamp>:\n%s",
                 hpandas.df_to_str(early_data, num_rows=None),
             )
+        data = data.set_index(
+            self._timestamp_col_name,
+        )
         return data

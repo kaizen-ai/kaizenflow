@@ -494,35 +494,3 @@ class TestDataFrameImClients1(icdc.ImClientTestCase):
             expected_column_unique_values,
             expected_signature,
         )
-
-
-class TestSqlRealTimeClient(imvcddbut.TestImDbHelper):
-    @classmethod
-    def get_id(cls) -> int:
-        """
-        Required to instantiate the abstract class.
-        """
-        return hash(cls.__name__) % 10000
-
-    def setUp(self) -> None:
-        super().setUp()
-        self.client = icdc.get_mock_realtime_client(self.connection)
-
-    def test_filter_duplicates1(self) -> None:
-        """
-        Verify that duplicates are filtered correctly.
-        """
-        # Load input data and convert dtypes to timestamp.
-        #  Note: The conversions follow the pattern in `SqlRealTimeClient.read_data`.
-        input_data_path = os.path.join(self.get_input_dir(), "test_data.csv")
-        input_data = pd.read_csv(
-            input_data_path,
-            converters={"knowledge_timestamp": pd.Timestamp, "timestamp": int},
-        )
-        input_data["timestamp"] = input_data["timestamp"].apply(
-            hdateti.convert_unix_epoch_to_timestamp
-        )
-        # Filter duplicates.
-        columns = ["timestamp", "currency_pair", "exchange_id"]
-        actual = self.client._filter_duplicates(input_data, columns)
-        self.check_string(str(actual))

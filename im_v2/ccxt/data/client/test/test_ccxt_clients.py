@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
@@ -947,6 +948,25 @@ class TestCcxtSqlRealTimeImClient1(
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
 
+    # ///////////////////////////////////////////////////////////////////////
+    def test_filter_duplicates(self) -> None:
+        """
+        Verify that duplicated data is filtered correctly.
+        """
+        input_data = self._get_duplicated_test_data()
+        self.assertEqual(input_data.shape, (10, 10))
+        # Filter duplicates.
+        full_symbol_col_name = "full_symbol"
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
+        )
+        actual_data = im_client._filter_duplicates(
+            input_data, full_symbol_col_name
+        )
+        self.assertEqual(actual_data.shape, (6, 9))
+        self.check_string(str(actual_data))
+
     # TODO(Nina): Move setUp and tearDown methods on top of the class.
     def setUp(self) -> None:
         super().setUp()
@@ -957,8 +977,6 @@ class TestCcxtSqlRealTimeImClient1(
     def tearDown(self) -> None:
         hsql.remove_table(self.connection, "ccxt_ohlcv")
         super().tearDown()
-
-    # ///////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
@@ -992,6 +1010,41 @@ class TestCcxtSqlRealTimeImClient1(
             # pylint: enable=line-too-long
             # fmt: on
         )
+        return test_data
+
+    # ///////////////////////////////////////////////////////////////////////
+
+    def _get_duplicated_test_data(self) -> pd.DataFrame:
+        """
+        Get test data with duplicates for `_filter_duplicates` method test.
+        """
+        test_data = self._get_test_data()
+        #
+        # TODO(Danya): Add timezone info to test data in client tests.
+        test_data["knowledge_timestamp"] = test_data[
+            "knowledge_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["end_download_timestamp"] = test_data[
+            "end_download_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["timestamp"] = test_data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Add duplicated rows.
+        dupes = test_data.loc[0:3]
+        dupes["knowledge_timestamp"] = dupes[
+            "knowledge_timestamp"
+        ] - pd.Timedelta("40s")
+        dupes["end_download_timestamp"] = dupes[
+            "end_download_timestamp"
+        ] - pd.Timedelta("40s")
+        test_data = pd.concat([test_data, dupes]).reset_index(drop=True)
+        # Add full_symbol column.
+        full_symbol_col_name = "full_symbol"
+        test_data[full_symbol_col_name] = ivcu.build_full_symbol(
+            test_data["exchange_id"], test_data["currency_pair"]
+        )
+        test_data = test_data.drop(["exchange_id", "currency_pair"], axis=1)
         return test_data
 
     def _create_test_table(self) -> None:
