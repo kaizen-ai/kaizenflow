@@ -394,10 +394,8 @@ class TestDownloadRealtimeForOneExchange1(
     @pytest.mark.slow
     @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call1(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -408,7 +406,6 @@ class TestDownloadRealtimeForOneExchange1(
         Run without saving to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
@@ -420,12 +417,11 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
+    @pytest.mark.slow
     @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -436,7 +432,6 @@ class TestDownloadRealtimeForOneExchange1(
         Run and save to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
@@ -506,6 +501,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         )
         imvcdeexut.download_historical_data(args, exchange)
 
+    @pytest.mark.slow
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
