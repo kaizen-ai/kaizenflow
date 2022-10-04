@@ -33,7 +33,7 @@ import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-PROD_RECONCILIATION_DIR = "/data/shared/prod_reconciliation"
+_PROD_RECONCILIATION_DIR = "/data/shared/prod_reconciliation"
 
 def _system(cmd):
     return hsystem.system(cmd, suppress_output=False, log_level="echo")
@@ -64,13 +64,13 @@ def _system(cmd):
 #     if today != run_date:
 #         _LOG.warning("Running this script not on the trade date" +
 #             hprint.to_str("today run_date"))
-#     # > TARGET_DIR={PROD_RECONCILIATION_DIR}/$RUN_DATE/
-#     target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/job.{account_type}.{job_id}"
+#     # > TARGET_DIR={_PROD_RECONCILIATION_DIR}/$RUN_DATE/
+#     target_dir = f"{_PROD_RECONCILIATION_DIR}/{run_date}/job.{account_type}.{job_id}"
 #     _LOG.info(hprint.to_str("target_dir"))
 #     hio.create_dir(target_dir, incremental=True)
 #     # > RUN_DATE=20220914
 #     # > JOBID=1002436514
-#     # > TARGET_DIR={PROD_RECONCILIATION_DIR}/$RUN_DATE/job.$JOBID; echo $TARGET_DIR
+#     # > TARGET_DIR={_PROD_RECONCILIATION_DIR}/$RUN_DATE/job.$JOBID; echo $TARGET_DIR
 #     if account_type in ("live_trading", "candidate"):
 #         ...
 #     elif account_type == "qa":
@@ -149,7 +149,7 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     _ = ctx
     run_date = _get_run_date(run_date)
     # Create run date dir.
-    run_date_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date)
+    run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hio.create_dir(run_date_dir, incremental=True)
     # Create dirs for storing prod and simulation results.
     prod_dir = os.path.join(run_date_dir, "prod")
@@ -200,7 +200,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         question = "Is the file ok?"
         hsystem.query_yes_no(question)
     #
-    target_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date, "simulation")
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
     _LOG.info(hprint.to_str("target_dir"))
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
@@ -287,7 +287,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    #target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}/simulation"
+    #target_dir = f"{_PROD_RECONCILIATION_DIR}/{run_date}/simulation"
     #_LOG.info(hprint.to_str("target_dir"))
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
@@ -317,7 +317,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     Copy the output of the simulation in the proper dir.
     """
     run_date = _get_run_date(run_date)
-    target_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date, "simulation")
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
     # continue.
     hdbg.dassert_dir_exists(target_dir)
@@ -341,7 +341,7 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     Copy the output of the prod in the proper dir.
     """
     run_date = _get_run_date(run_date)
-    target_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date, "prod")
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "prod")
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Saving results to '%s'", target_dir)
     # Copy system log file to the target dir.
@@ -377,7 +377,7 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
 #     """
 #     _ = ctx
 #     run_date = _get_run_date(run_date)
-#     target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}"
+#     target_dir = f"{_PROD_RECONCILIATION_DIR}/{run_date}"
 #     _LOG.info(hprint.to_str("target_dir"))
 #     hio.create_dir(target_dir, incremental=True)
 #     # TODO(gp): run fills downloading script.
@@ -430,7 +430,7 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = os.path.join(PROD_RECONCILIATION_DIR, run_date)
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
     #
@@ -444,7 +444,7 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 # def reconcile_rmrf(ctx, run_date=None):  # type: ignore
 #     run_date = _get_run_date(run_date)
 #     reconcile_ls(ctx, run_date)
-#     target_dir = f"{PROD_RECONCILIATION_DIR}/{run_date}"
+#     target_dir = f"{_PROD_RECONCILIATION_DIR}/{run_date}"
 #     _LOG.info(hprint.to_str("target_dir"))
 #     cmd = f"chmod +w -R {target_dir}; rm -rf {target_dir}"
 #     print(f"> {cmd}")
