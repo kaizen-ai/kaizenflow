@@ -10,7 +10,9 @@ async_solipsism = ">= 0.3"
 awscli = "1.22.17"
 boto3 = "*"
 bs4 = "*"
-ccxt = "*"
+# This is the version in which CCXT pro got 
+# merged into the free version #CmTask2951.
+ccxt = ">= 1.95.2"
 # This constraint is needed because 3.4.8 seems to fail.
 cryptography = "<= 3.4.7"
 gluonts = "== 0.6.7"
@@ -30,6 +32,8 @@ moto = "*"
 mxnet = ">= 1.6"
 networkx = "*"
 pandas = "^1.2.0"
+# Needs to be present because of poetry bug #CmTask2951.
+pillow = "9.1.1"
 psutil = "*"
 psycopg2-binary = "*"
 pyarrow = "*"
