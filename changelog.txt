@@ -1,4 +1,5 @@
 # cmamp-1.2.0
+- 2022-10-04
 - Update `ccxt`
 
 # cmamp-1.1.1
