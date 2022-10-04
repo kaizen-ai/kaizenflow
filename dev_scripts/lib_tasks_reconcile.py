@@ -120,13 +120,13 @@ def _sanity_check_data(file_path: str) -> None:
     """
     Check that data at the specified file path is correct.
     """
-    cmd = f"gzip -cd {market_data_file} | head -3"
+    cmd = f"gzip -cd {file_path} | head -3"
     _system(cmd)
-    cmd = f"gzip -cd {market_data_file} | tail -3"
+    cmd = f"gzip -cd {file_path} | tail -3"
     _system(cmd)
-    cmd = f"gzip -cd {market_data_file_shared} | wc -l"
+    cmd = f"gzip -cd {file_path} | wc -l"
     _system(cmd)
-    cmd = f"ls -lh {market_data_file_shared}"
+    cmd = f"ls -lh {file_path}"
     _system(cmd)
 
 
@@ -190,6 +190,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     else:
         test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
         docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name}"
+        # TODO(Grisha): enable debug mode.
         #docker_cmd += " -s --dbg"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
@@ -215,7 +216,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     cmd = f"chmod -R -w {market_data_file_shared}"
     _system(cmd)
     # Sanity check remote data.
-   _sanity_check_data(market_data_file_shared)
+    _sanity_check_data(market_data_file_shared)
 
 
 # TODO(gp): Move it to a more general library.
@@ -303,10 +304,10 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
     #docker_cmd += "; exit ${PIPESTATUS[0]})"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
+    _system(cmd)
     # Check that system log dir exists and is filled.
     hdbg.dassert_dir_exists(os.path.join(target_dir, "dag"))
     hdbg.dassert_dir_exists(os.path.join(target_dir, "process_forecasts"))
-    _system(cmd)
 
 
 # > cp -vr ./system_log_dir /data/shared/prod_reconciliation/{run_date}/simulation/
@@ -316,6 +317,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     """
     Copy the output of the simulation in the proper dir.
     """
+    _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
     # If the target dir doesn't exist we didn't downloaded the test data and we can't
@@ -340,21 +342,26 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     """
     Copy the output of the prod in the proper dir.
     """
+    _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "prod")
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Saving results to '%s'", target_dir)
     # Copy system log file to the target dir.
     # TODO(Grisha): @Dan Pass run duration as a param.
-    system_log_dir = f"./system_log_dir_{run_date}_2hours"
+    # TODO(Grisha): @Dan infer the path from run date.
+    # TODO(Grisha): pass stage as a param with `preprod` as a default value.
+    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
+    # TODO(Grisha): @Dan change permission to disable overwriting.
     _system(docker_cmd)
-    # Copy script log file to the target dir.
-    log_file = f"log_{run_date}_2hours.txt"
-    hdbg.dassert_file_exists(system_log_dir)
-    docker_cmd = f"cp -v {log_file} {target_dir}"
-    _system(docker_cmd)
+    # TODO(Grisha): @Dan pick up the logs from `/data/shared/ecs/preprod/logs`.
+    # # Copy script log file to the target dir.
+    # log_file = f"log_{run_date}_2hours.txt"
+    # hdbg.dassert_file_exists(system_log_dir)
+    # docker_cmd = f"cp -v {log_file} {target_dir}"
+    # _system(docker_cmd)
 
 
 # TODO(Danya): Add script here to dump fills data.
@@ -408,10 +415,10 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     run_date = _get_run_date(run_date)
     reconcile_create_dirs(ctx, run_date=run_date)
+    #
+    reconcile_copy_prod_data(ctx, run_date=run_date)
+    #
     reconcile_dump_market_data(ctx, run_date=run_date)
-    #
-    # TODO(Dan): Add prod invokes.
-    #
     reconcile_run_sim(ctx, run_date=run_date)
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
