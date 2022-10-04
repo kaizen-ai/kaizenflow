@@ -116,7 +116,7 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
             "init": fep_init_dict,
             "annotate_forecasts_kwargs": {
                 "quantization": quantization,
-                "burn_in_bars": 1,
+                "burn_in_bars": 3,
                 "style": "cross_sectional",
                 "bulk_frac_to_remove": 0.0,
                 "target_gmv": gmv,
