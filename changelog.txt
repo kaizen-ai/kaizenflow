@@ -1,3 +1,6 @@
+# cmamp-1.2.0
+- Update `ccxt`
+
 # cmamp-1.1.1
 - 2022-09-02
 - Updates to production DAGs (All DAGs now use /amp as submodule)
