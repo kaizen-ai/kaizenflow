@@ -46,7 +46,6 @@ apt-get install $APT_GET_OPTS build-essential autoconf libtool python3-dev
 apt-get install $APT_GET_OPTS python3-venv python3-pip
 echo "PYTHON VERSION="$(python3 --version)
 echo "PIP VERSION="$(pip3 --version)
-
 # Install poetry.
 pip3 install poetry
 echo "POETRY VERSION="$(poetry --version)
@@ -60,7 +59,9 @@ DEBIAN_FRONTEND=noninteractive apt-get install -y tzdata
 apt-get install $APT_GET_OPTS software-properties-common
 apt-get install $APT_GET_OPTS dirmngr
 apt-get install $APT_GET_OPTS gpg-agent
-apt-key adv --keyserver keyserver.ubuntu.com --recv-key C99B11DEB97541F0
+# GitHub was recently forced to change the key they use for signing
+# details in CmTask #2803.
+apt-key adv --keyserver keyserver.ubuntu.com --recv-key 23F3D4EA75716059
 apt-add-repository https://cli.github.com/packages
 apt-get update
 apt-get install $APT_GET_OPTS gh
