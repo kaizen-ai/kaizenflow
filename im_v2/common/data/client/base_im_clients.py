@@ -922,12 +922,21 @@ class SqlRealTimeImClient(RealTimeImClient):
         :param data: data from the DB
         :return: DB data with duplicates removed
         """
-        hdbg.dassert_is_subset(["knowledge_timestamp", self._timestamp_col_name, full_symbol_col_name], data.columns)
+        hdbg.dassert_is_subset(
+            [
+                "knowledge_timestamp",
+                self._timestamp_col_name,
+                full_symbol_col_name,
+            ],
+            data.columns,
+        )
         duplicate_columns = [self._timestamp_col_name, full_symbol_col_name]
         # Remove duplicates.
         data = data.sort_values("knowledge_timestamp", ascending=False)
         use_index = False
-        data = hpandas.drop_duplicates(data, use_index, subset=duplicate_columns).sort_index()
+        data = hpandas.drop_duplicates(
+            data, use_index, subset=duplicate_columns
+        ).sort_index()
         hdbg.dassert_lt(0, data.shape[0], "Empty df=\n%s", data)
         # Check if the knowledge_timestamp is over the candle timestamp by at least minute.
         #
