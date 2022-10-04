@@ -48,7 +48,7 @@ hprint.config_notebook()
 # %%
 def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config:
     """
-    Get a reconciliation that is spefic of an asset class.
+    Get a reconciliation that is specific of an asset class.
     
     :param date_str: reconciliation date as str, e.g., `20221003`
     :param asset_class: either `equities` or `crypto`
@@ -77,6 +77,7 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
         }
         quantization = "no_quantization"
         gmv = 700.0
+        liquidate_at_end_of_day = False
     elif asset_class == "equities":
         run_tca = True
         #
@@ -101,6 +102,7 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
         }
         quantization = "nearest_share"
         gmv = 20000.0
+        liquidate_at_end_of_day = True
     else:
         raise ValueError(f"Unsupported asset class={asset_class}")
     # Get a config.
@@ -120,9 +122,11 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
                 "style": "cross_sectional",
                 "bulk_frac_to_remove": 0.0,
                 "target_gmv": gmv,
+                "liquidate_at_end_of_day": liquidate_at_end_of_day
             }
         }
     }
+    
     config = cconfig.Config.from_dict(config_dict)
     return config
 
@@ -156,24 +160,27 @@ hdbg.dassert(sim_dir)
 hdbg.dassert_dir_exists(sim_dir)
 
 # %%
+# TODO(Grisha): factor out common code.
+
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(prod_portfolio_dir)
-print(prod_portfolio_dir)
+print("prod_portfolio_dir=", prod_portfolio_dir)
 prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
 hdbg.dassert_dir_exists(prod_dag_dir)
 #
 cand_portfolio_dir = os.path.join(cand_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(cand_portfolio_dir)
-print(cand_portfolio_dir)
+print("cand_portfolio_dir=", cand_portfolio_dir)
 cand_dag_dir = os.path.join(cand_dir, "dag/node_io/node_io.data")
 hdbg.dassert_dir_exists(cand_dag_dir)
 #
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(sim_portfolio_dir)
-print(sim_portfolio_dir)
+print("sim_portfolio_dir=", sim_portfolio_dir)
 sim_dag_dir = os.path.join(sim_dir, "dag/node_io/node_io.data")
 hdbg.dassert_dir_exists(sim_dag_dir)
-#
+
+# TODO(gp): Load the TCA data for crypto.
 if config["meta"]["run_tca"]:
     tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
@@ -186,6 +193,8 @@ portfolio_path_dict = {
 }
 
 # %%
+# TODO(gp): @Grisha infer this from the data from df.
+
 start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
 end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
@@ -214,12 +223,12 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 # %%
 prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
-hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
+hpandas.df_to_str(prod_dag_df, num_rows=5, log_level=logging.INFO)
 
 
 # %%
 sim_dag_df = get_latest_output_from_last_dag_node(sim_dag_dir)
-hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
+hpandas.df_to_str(sim_dag_df, num_rows=5, log_level=logging.INFO)
 
 # %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
@@ -232,6 +241,55 @@ hpandas.df_to_str(
     precision=3,
     log_level=logging.INFO,
 )
+
+# %%
+# TODOO(gp): @grisha
+# Problem: given two multi-index dfs, we want to compare how similar they are
+
+# Check if they have the same columns (in the same order)
+#  - switch to ignore certain columns
+#  - switch to reorder the columns to sort them
+
+# Check if they have the same index
+#  - switch to perform intersection
+
+# Check if they are exactly the same, e.g., the difference is less than a threshold <1e-6.
+#   Show the rows with the max difference (use the `differ_visually_...`)
+#   Allow to subset by columns (e.g., close)
+
+# %%
+# TODO(gp): @grisha
+
+# Given two multi-index dfs, allow to slice the values by index or by column
+# Create a df with sliced 2 columns or rows and do the diff so that it's easy to plot / inspect
+#
+# #col_name = "price"
+# col_name = "executed_trades_notional"
+# #asset_id = 1030828978
+# #asset_id = 5115052901
+# asset_id = 5118394986
+# #df1 = adapted_sim_df[col_name][asset_id]
+# df1 = adapted_prod_df[col_name][asset_id]
+# df2 = research_portfolio_df[col_name][asset_id]
+
+# (df1 - df2).dropna().plot()
+
+# df = pd.DataFrame(df1).merge(pd.DataFrame(df2), how="outer", left_index=True, right_index=True, suffixes=["_prod", "_research"])
+
+# #df["diff"] = df["1030828978_prod"] - df["1030828978_research"]
+
+# #display(df)
+
+# df.dropna().plot()
+
+# %%
+# TODO(gp): Add function to compare duration of different dfs
+# E.g., duration_df = compute_duration_df(tag_to_df)
+#  Compute min / max index
+#  Compute min / max index with all values non-nans
+#  The output is multi-index indexed by tag and has (min_idx, max_idx, )
+
+duration_df = pd.MultiIndex
 
 # %% [markdown]
 # # Compute research portfolio equivalent
@@ -247,7 +305,48 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 )
 
 # %%
+# TODO(gp): Move it to annotate_forecasts?
+research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+
+# %%
 hpandas.df_to_str(research_portfolio_stats_df, log_level=logging.INFO)
+
+# %% [markdown]
+# # Orders
+
+# %%
+prod_order_df = oms.ForecastProcessor.read_logged_orders(
+    portfolio_path_dict["prod"] + "/.."
+)
+hpandas.df_to_str(prod_order_df, log_level=logging.INFO)
+
+# %%
+sim_order_df = oms.ForecastProcessor.read_logged_orders(
+    portfolio_path_dict["sim"] + "/.."
+)
+hpandas.df_to_str(sim_order_df, log_level=logging.INFO)
+
+# %%
+research_portfolio_df["executed_trades_shares"]
+
+# %%
+prod_order_df = prod_order_df.pivot(
+    index="end_timestamp",
+    columns="asset_id",
+    values="diff_num_shares",
+)
+freq = "5T"
+prod_order_df.index = prod_order_df.index.round(freq)
+
+sim_order_df = sim_order_df.pivot(
+    index="end_timestamp",
+    columns="asset_id",
+    values="diff_num_shares",
+)
+sim_order_df.index = sim_order_df.index.round(freq)
+
+# %%
+asset_id = 1030828978
 
 # %% [markdown]
 # # Load logged portfolios
@@ -270,11 +369,15 @@ for name, path in portfolio_path_dict.items():
         path,
         **portfolio_config_dict,
     )
+    #portfolio_df = portfolio_df.sort_index(axis=1)
     portfolio_dfs[name] = portfolio_df
     portfolio_stats_dfs[name] = portfolio_stats_df
+    
 portfolio_dfs["research"] = research_portfolio_df.loc[start_timestamp:end_timestamp]
 portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+
+# %%
 
 # %%
 hpandas.df_to_str(portfolio_stats_df, log_level=logging.INFO)
@@ -299,9 +402,57 @@ adapted_cand_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfol
 adapted_sim_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfolio_dfs["sim"])
 
 # %%
+adapted_prod_df.columns.levels
+
+# %%
+adapted_prod_df.columns.levels[0]
+
+# %%
+adapted_prod_df = adapted_prod_df.sort_index(axis=1)
+research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+
+# %%
+col_name = "holdings_shares"
+#col_name = "price"
+display(adapted_prod_df[col_name].tail(3))
+display(research_portfolio_df[col_name].tail(3))
+
+# %%
+#col_name = "pnl"
+#col_name = "executed_trades_shares"
+col_name = "holdings_shares"
 dtfmod.compute_correlations(
-    research_portfolio_df,
-    adapted_prod_df,
+    adapted_prod_df.iloc[1:],
+    research_portfolio_df.iloc[1:],
+    allow_unequal_indices=True,
+    allow_unequal_columns=True,
+).sort_values([col_name], ascending=False)
+
+# %%
+#col_name = "price"
+col_name = "executed_trades_notional"
+#asset_id = 1030828978
+#asset_id = 5115052901
+asset_id = 5118394986
+#df1 = adapted_sim_df[col_name][asset_id]
+df1 = adapted_prod_df[col_name][asset_id]
+df2 = research_portfolio_df[col_name][asset_id]
+
+(df1 - df2).dropna().plot()
+
+df = pd.DataFrame(df1).merge(pd.DataFrame(df2), how="outer", left_index=True, right_index=True, suffixes=["_prod", "_research"])
+
+#df["diff"] = df["1030828978_prod"] - df["1030828978_research"]
+
+#display(df)
+
+df.dropna().plot()
+
+# %%
+dtfmod.compute_correlations(
+    #research_portfolio_df,
+    adapted_sim_df.iloc[1:],
+    research_portfolio_df.iloc[1:],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 ).sort_values(["pnl"], ascending=False)
