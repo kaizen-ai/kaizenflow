@@ -949,6 +949,7 @@ class TestCcxtSqlRealTimeImClient1(
         self._test_filter_columns3(im_client, full_symbol, columns)
 
     # ///////////////////////////////////////////////////////////////////////
+
     def test_filter_duplicates(self) -> None:
         """
         Verify that duplicated data is filtered correctly.
@@ -977,6 +978,8 @@ class TestCcxtSqlRealTimeImClient1(
     def tearDown(self) -> None:
         hsql.remove_table(self.connection, "ccxt_ohlcv")
         super().tearDown()
+
+    # ///////////////////////////////////////////////////////////////////////
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
@@ -1011,8 +1014,6 @@ class TestCcxtSqlRealTimeImClient1(
             # fmt: on
         )
         return test_data
-
-    # ///////////////////////////////////////////////////////////////////////
 
     def _get_duplicated_test_data(self) -> pd.DataFrame:
         """
