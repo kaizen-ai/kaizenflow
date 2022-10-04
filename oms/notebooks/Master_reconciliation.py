@@ -58,10 +58,11 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
         # For crypto the TCA part is not implemented yet.
         run_tca = False
         #
-        bar_duration = "5"
+        bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        prod_dir = os.path.join(root_dir, date_str, "prod")
+        # TODO(Grisha): probably we should rename to `system_log_dir`.
+        prod_dir = os.path.join(root_dir, date_str, "prod", "system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours")
         data_dict = {
            "prod_dir": prod_dir,
            # For crypto we do not have a `candidate` so we just re-use prod.
@@ -127,7 +128,7 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
 
 
 # %%
-date_str = "20221003"
+date_str = "20221004"
 #asset_class = "equities"
 asset_class = "crypto"    
     
@@ -138,6 +139,7 @@ print(config)
 # # Specify data to load
 
 # %% run_control={"marked": true}
+# TODO(Grisha): factor out common code.
 prod_dir = config["load_data_config"]["prod_dir"]
 print(prod_dir)
 hdbg.dassert(prod_dir)
@@ -184,9 +186,9 @@ portfolio_path_dict = {
 }
 
 # %%
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -211,169 +213,25 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 
 # %%
-dag_df.columns.levels[0]
+prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
+hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
 
 
 # %%
-dag_dir = prod_dag_dir
-if False:
-    stage = "0.read_data"
-    target_cols = [
-        "ask",
-        "bid",
-        "close",
-        "day_num_spread",
-        "day_spread",
-        "high",
-        "low",
-        "notional",
-        "open",
-        "sided_ask_count",
-        "sided_bid_count",
-        "start_time",
-        "volume",
-    ]
-# stage = "2.zscore"
-stage = "8.process_forecasts"
-# target_cols = [
-#     "close",
-#     "close_vwap",
-#     "day_num_spread",
-#     "day_spread",
-#     "garman_klass_vol",
-#     "high",
-#     "low",
-#     "notional",
-#     "open",
-#     "prediction",
-#     "twap",
-#     "volume",
-# ]
-target_cols = ['close', 'close.ret_0', 'twap', 'twap.ret_0', 'volume', 'vwap', 'vwap.ret_0', 'vwap.ret_0.vol', 'vwap.ret_0.vol_adj', 'vwap.ret_0.vol_adj.c', 'vwap.ret_0.vol_adj.c.lag0', 'vwap.ret_0.vol_adj.c.lag1', 'vwap.ret_0.vol_adj.c.lag2', 'vwap.ret_0.vol_adj.c.lag3', 'vwap.ret_0.vol_adj_2_hat']
-timestamp = "20221003_080000"
-
-file_name = f"predict.{stage}.df_out.{timestamp}.csv"
-file_name = os.path.join(dag_dir, file_name)
-print(file_name)
-dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1])
-
-# dag_df = dag_df[start_timestamp:end_timestamp]
-
-display(dag_df.head(3))
-
-# print(dag_df.columns.levels[0])
-# print(sim_dag_df.columns.levels[0])
-# dag_df.drop(labels=["end_time"], axis=1, level=0, inplace=True, errors="raise")
-asset_ids = dag_df.columns.levels[1].tolist()
-# for col in dag_df.columns:
-#     if col[0] in target_cols:
-#     columns.append()
-import itertools
-
-columns = list(itertools.product(target_cols, asset_ids))
-dag_df = dag_df[pd.MultiIndex.from_tuples(columns)].copy()
-hpandas.df_to_str(dag_df, log_level=logging.INFO)
-dag_df.to_csv("prod_tmp.csv")
-dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
-
-asset_ids = map(int, asset_ids)
-columns = list(itertools.product(target_cols, asset_ids))
-columns = pd.MultiIndex.from_tuples(columns)
-dag_df.columns = columns
-
-dag_df.index = pd.to_datetime(dag_df.index)
-dag_df.index = dag_df.index.tz_convert("America/New_York")
-
-prod_dag_df = dag_df
+sim_dag_df = get_latest_output_from_last_dag_node(sim_dag_dir)
+hpandas.df_to_str(sim_dag_df, log_level=logging.INFO)
 
 # %%
-dag_dir = sim_dag_dir
-if False:
-    stage = "0.read_data"
-    target_cols = [
-        "ask",
-        "bid",
-        "close",
-        "day_num_spread",
-        "day_spread",
-        "high",
-        "low",
-        "notional",
-        "open",
-        "sided_ask_count",
-        "sided_bid_count",
-        "start_time",
-        "volume",
-    ]
-# stage = "2.zscore"
-stage = "8.process_forecasts"
-# target_cols = [
-#     "close",
-#     "close_vwap",
-#     "day_num_spread",
-#     "day_spread",
-#     "garman_klass_vol",
-#     "high",
-#     "low",
-#     "notional",
-#     "open",
-#     "prediction",
-#     "twap",
-#     "volume",
-# ]
-target_cols = ['close', 'close.ret_0', 'twap', 'twap.ret_0', 'volume', 'vwap', 'vwap.ret_0', 'vwap.ret_0.vol', 'vwap.ret_0.vol_adj', 'vwap.ret_0.vol_adj.c', 'vwap.ret_0.vol_adj.c.lag0', 'vwap.ret_0.vol_adj.c.lag1', 'vwap.ret_0.vol_adj.c.lag2', 'vwap.ret_0.vol_adj.c.lag3', 'vwap.ret_0.vol_adj_2_hat']
-timestamp = "20221003_080000"
-
-file_name = f"predict.{stage}.df_out.{timestamp}.csv.gz"
-file_name = os.path.join(dag_dir, file_name)
-print(file_name)
-dag_df = pd.read_csv(file_name, parse_dates=True, index_col=0, header=[0, 1], compression="gzip")
-
-# dag_df = dag_df[start_timestamp:end_timestamp]
-
-display(dag_df.head(3))
-
-# print(dag_df.columns.levels[0])
-# print(sim_dag_df.columns.levels[0])
-# dag_df.drop(labels=["end_time"], axis=1, level=0, inplace=True, errors="raise")
-asset_ids = dag_df.columns.levels[1].tolist()
-# for col in dag_df.columns:
-#     if col[0] in target_cols:
-#     columns.append()
-import itertools
-
-columns = list(itertools.product(target_cols, asset_ids))
-dag_df = dag_df[pd.MultiIndex.from_tuples(columns)].copy()
-hpandas.df_to_str(dag_df, log_level=logging.INFO)
-dag_df.to_csv("prod_tmp.csv")
-dag_df = pd.read_csv("prod_tmp.csv", index_col=0, header=[0, 1])
-
-asset_ids = map(int, asset_ids)
-columns = list(itertools.product(target_cols, asset_ids))
-columns = pd.MultiIndex.from_tuples(columns)
-dag_df.columns = columns
-
-dag_df.index = pd.to_datetime(dag_df.index)
-dag_df.index = dag_df.index.tz_convert("America/New_York")
-
-cand_dag_df = dag_df
-
-# %%
-#cand_dag_df = get_latest_output_from_last_dag_node(cand_dag_dir)
-#hpandas.df_to_str(cand_dag_df, log_level=logging.INFO)
-
-# %%
-#prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
-#hpandas.df_to_str(prod_dag_df, log_level=logging.INFO)
-
-# %%
-prod_cand_dag_corr = dtfmod.compute_correlations(
+prod_sim_dag_corr = dtfmod.compute_correlations(
     prod_dag_df,
-    cand_dag_df,
+    sim_dag_df,
 )
-
-# %%
-prod_cand_dag_corr.min()
+hpandas.df_to_str(
+    prod_sim_dag_corr.min(),
+    num_rows=None,
+    precision=3,
+    log_level=logging.INFO,
+)
 
 # %% [markdown]
 # # Compute research portfolio equivalent
@@ -401,6 +259,7 @@ portfolio_config_dict = {
     "freq": config["meta"]["bar_duration"],
     "normalize_bar_times": True,
 }
+portfolio_config_dict
 
 # %%
 portfolio_dfs = {}
@@ -427,7 +286,7 @@ coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
 # %%
 stats_computer = dtfmod.StatsComputer()
 stats_sxs, _ = stats_computer.compute_portfolio_stats(
-    portfolio_stats_df.iloc[bars_to_burn:], bar_duration
+    portfolio_stats_df.iloc[bars_to_burn:], config["meta"]["bar_duration"]
 )
 display(stats_sxs)
 
@@ -440,43 +299,31 @@ adapted_cand_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfol
 adapted_sim_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfolio_dfs["sim"])
 
 # %%
-research_portfolio_df
-
-# %%
 dtfmod.compute_correlations(
     research_portfolio_df,
     adapted_prod_df,
     allow_unequal_indices=True,
     allow_unequal_columns=True,
-)
-
-# %%
-portfolio_dfs["prod"].columns.levels[0]
+).sort_values(["pnl"], ascending=False)
 
 # %%
 dtfmod.compute_correlations(
     adapted_prod_df,
-    adapted_cand_df,
+    adapted_sim_df,
     allow_unequal_indices=False,
     allow_unequal_columns=False,
-)
-
-
-# %%
-def get_asset_id_slice(df: pd.DataFrame, asset_id: int) -> pd.DataFrame:
-    return df.T.xs(asset_id, level=1).T
-
+).sort_values(["pnl"], ascending=False)
 
 # %%
-#asset_id = 13684
-#get_asset_id_slice(adapted_prod_df, asset_id)
+dtfmod.compute_correlations(
+    research_portfolio_df,
+    adapted_sim_df,
+    allow_unequal_indices=True,
+    allow_unequal_columns=True,
+).sort_values(["pnl"], ascending=False)
 
 # %%
-get_asset_id_slice(adapted_cand_df, asset_id)
-
-# %%
-# tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
-# tca = cofinanc.compute_tca_price_annotations(tca, True)
-# tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
-
-# %%
+if config["meta"]["run_tca"]:
+    tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
+    tca = cofinanc.compute_tca_price_annotations(tca, True)
+    tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
