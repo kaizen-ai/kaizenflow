@@ -5,9 +5,7 @@ import oms.oms_ccxt_utils as oomccuti
 """
 import asyncio
 import logging
-import os
-import re
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import pandas as pd
 
@@ -16,7 +14,6 @@ import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
-import oms.hsecrets as homssec
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -143,23 +140,44 @@ def get_RealTimeImClientMarketData_example2(
     return market_data
 
 
-# #############################################################################
-# Read trades.
-# #############################################################################
-
-
+# TODO(Danya): Add test.
 def convert_fills_json_to_dataframe(
     fills_json: List[Dict[str, Any]]
 ) -> pd.DataFrame:
+    """
+        Convert JSON-format fills into a dataframe.
+
+        - Unpack nested values;
+        - Convert unix epoch to pd.Timestamp;
+        - Remove duplicated information;
+
+        Example of output data:
+                                 timestamp    symbol         id       order  side  \
+        0 2022-09-29 16:46:39.509000+00:00  APE/USDT  282773274  5772340563  sell
+        1 2022-09-29 16:51:58.567000+00:00  APE/USDT  282775654  5772441841   buy
+        2 2022-09-29 16:57:00.267000+00:00  APE/USDT  282779084  5772536135   buy
+        3 2022-09-29 17:02:00.329000+00:00  APE/USDT  282780259  5772618089  sell
+        4 2022-09-29 17:07:03.097000+00:00  APE/USDT  282781536  5772689853   buy
+
+          takerOrMaker  price  amount    cost      fees fees_currency realized_pnl
+        0        taker  5.427     5.0  27.135  0.010854          USDT            0
+        1        taker  5.398     6.0  32.388  0.012955          USDT   0.14500000
+        2        taker  5.407     3.0  16.221  0.006488          USDT            0
+        3        taker  5.395     9.0  48.555  0.019422          USDT  -0.03900000
+        4        taker  5.381     8.0  43.048  0.017219          USDT   0.07000000
+
+        Example of input JSON can be found at CcxtBroker.get_filled_trades().
+        """
     fills = pd.DataFrame(fills_json)
     # Extract nested values.
-    fills["fees"] = [d["cost"] for d in fills.fee]
+    fills["fees"] = [d["cost"] for d in fills["fee"]]
     fills["fees_currency"] = [d["currency"] for d in fills["fee"]]
     fills["realized_pnl"] = [d["realizedPnl"] for d in fills["info"]]
-    # Remove replace unix epoch with a timestamp.
+    # Replace unix epoch with a timestamp.
     fills["timestamp"] = fills["timestamp"].apply(
         hdateti.convert_unix_epoch_to_timestamp
     )
+    # Set columns.
     columns = [
         "timestamp",
         "symbol",
@@ -176,71 +194,3 @@ def convert_fills_json_to_dataframe(
     ]
     fills = fills[columns]
     return fills
-
-
-def get_fills_csv_file_names(
-    start_ts: pd.Timestamp,
-    end_ts: pd.Timestamp,
-    secret_identifier: homssec.SecretIdentifier,
-    root_dir: Optional[str],
-):
-    """ """
-    root_dir = os.path.join(root_dir, "csv")
-    # Get files for the given time range.
-    files = os.listdir(root_dir)
-    # Example of a csv file name:
-    # fills_20220801-000000_20220928-000000.json
-    pattern = re.compile(r"(\d+-\d+)_(\d+-\d+)")
-    date_ranges = []
-    for file in files:
-        date_range = re.findall(pattern, file)
-        date_ranges.extend(date_range)
-    # Get files inside the given time range.
-    #
-    # Get start timestamps below start_ts.
-    start_ts_file_names = [
-        drange[0] for drange in date_ranges if pd.Timestamp(drange[0]) <= start_ts
-    ]
-    start_ts_file_name = max(start_ts_file_names)
-    # Get end timestamps above end_ts.
-    end_ts_file_names = [
-        drange[0] for drange in date_ranges if pd.Timestamp(drange[0]) >= end_ts
-    ]
-    end_ts_file_name = min(end_ts_file_names)
-    # Get files that fit between start and end timestamps.
-    target_paths = []
-    for date_range in date_ranges:
-        if (
-            date_range[0] >= start_ts_file_name
-            and date_range[1] <= end_ts_file_name
-        ):
-            path = os.path.join(
-                root_dir,
-                f"fills_{date_range[0]}_{date_range[1]}_{secret_identifier}.csv.gz",
-            )
-            target_paths.append(path)
-    return target_paths
-
-
-def read_filled_trades_csv(
-    start_ts: pd.Timestamp,
-    end_ts: pd.Timestamp,
-    secret_identifier: homssec.SecretIdentifier,
-):
-    """ """
-    file_names = get_fills_csv_file_names(
-        start_ts, end_ts, secret_identifier, "/shared_data/filled_orders"
-    )
-    filled_trades_data = []
-    for file_name in file_names:
-        df = pd.read_csv(file_name, parse_dates=["timestamp"])
-        filled_trades_data.append(df)
-    filled_trades_data = pd.concat(filled_trades_data)
-    # Filter data outside the given time period.
-    filled_trades_data = filled_trades_data.loc[
-        (filled_trades_data["timestamp"].date() >= start_ts)
-        & (filled_trades_data["timestamp"].date() <= end_ts)
-    ]
-    # Set timestamp index.
-    filled_trades_data = filled_trades_data.set_index("timestamp")
-    return filled_trades_data
