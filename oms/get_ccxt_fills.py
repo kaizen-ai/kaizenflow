@@ -22,7 +22,6 @@ import logging
 import os
 
 import pandas as pd
-
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
@@ -157,10 +156,19 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Save file.
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
-    file_name = os.path.join(
-        args.dst_dir, f"fills_{start_timestamp_str}_{end_timestamp_str}.json"
+    # Save data as json.
+    json_file_name = os.path.join(
+        args.dst_dir, "json/", f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.json"
     )
-    hio.to_json(file_name, fills)
+    _LOG.debug("json_file_name=%s", json_file_name)
+    hio.to_json(json_file_name, fills)
+    # Save data as a .csv file.
+    fills_dataframe = oomccuti.convert_fills_json_to_dataframe(fills)
+    csv_file_name = os.path.join(
+        args.dst_dir, "csv/", f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.csv.gz"
+    )
+    _LOG.debug("csv_file_name=%s", csv_file_name)
+    fills_dataframe.to_csv(csv_file_name, index=False)
 
 
 if __name__ == "__main__":
