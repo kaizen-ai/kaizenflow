@@ -80,12 +80,9 @@ class FilledOrdersReader:
         )
         file_paths_df[["start_ts_timestamp", "end_ts_timestamp"]] = file_paths_df[
             ["start_ts_string", "end_ts_string"]
-        ]
+        ].apply(pd.to_datetime,utc=True)
         #
         if start_ts < file_paths_df["start_ts_timestamp"].min():
-            file_paths_df = file_paths_df.loc[
-                file_paths_df["start_ts_timestamp"].min()
-            ]
             _LOG.warning(
                 "Provided start_ts is earlier than the earliest data timestamp: %s",
                 file_paths_df["start_ts_timestamp"].min(),
@@ -95,9 +92,6 @@ class FilledOrdersReader:
         ]
         #
         if end_ts > file_paths_df["end_ts_timestamp"].max():
-            file_paths_df = file_paths_df.loc[
-                file_paths_df["end_ts_timestamp"].min()
-            ]
             _LOG.warning(
                 "Provided end_ts is later than the latest data timestamp: %s",
                 file_paths_df["end_ts_timestamp"].max(),
@@ -105,7 +99,7 @@ class FilledOrdersReader:
         file_paths_df = file_paths_df.loc[
             file_paths_df["end_ts_timestamp"] <= end_ts
         ]
-        file_paths = file_paths_df["file_paths"]
+        file_paths = file_paths_df["file_path"]
         file_paths = [(os.path.join(root_dir, f)) for f in file_paths]
         return file_paths
 
@@ -136,7 +130,7 @@ class FilledOrdersReader:
             # Load CSV files as a dataframe.
             for file_name in file_names:
                 df = pd.read_csv(
-                    file_name, index="timestamp", parse_dates=["timestamp"]
+                    file_name, parse_dates=["timestamp"]
                 )
                 filled_trades_data.append(df)
             filled_trades_data = pd.concat(filled_trades_data)
@@ -145,6 +139,8 @@ class FilledOrdersReader:
                 (filled_trades_data["timestamp"] >= start_ts)
                 & (filled_trades_data["timestamp"] <= end_ts)
             ]
+            # Set timestamp index
+            filled_trades_data = filled_trades_data.set_index("timestamp")
             # Set dtypes.
             filled_trades_data = filled_trades_data.astype(
                 {

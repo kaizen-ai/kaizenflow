@@ -3,9 +3,11 @@ import os
 import pandas as pd
 
 import helpers.hio as hio
+import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import oms.filled_orders_reader as ofiorrea
 import oms.hsecrets as homssec
+import helpers.hpandas as hpandas
 
 
 class TestFilledOrderReader1(hunitest.TestCase):
@@ -30,10 +32,11 @@ class TestFilledOrderReader1(hunitest.TestCase):
         # Choose files for given time period.
         start_ts = pd.Timestamp("2022-09-29T16:00:00", tz="UTC")
         end_ts = pd.Timestamp("2022-10-04T12:00:00", tz="UTC")
-        actual = reader.get_file_names_for_time_period(
+        actual = reader.read_filled_orders(
             start_ts, end_ts, data_format
         )
-        self.check_string(str(actual))
+        actual_str = hprint.format_list(actual, sep="\n")
+        self.check_string(actual_str)
 
     def test_read_filled_orders2(self):
         """
@@ -47,10 +50,11 @@ class TestFilledOrderReader1(hunitest.TestCase):
         # Choose files for given time period.
         start_ts = pd.Timestamp("2022-09-29T16:00:00", tz="UTC")
         end_ts = pd.Timestamp("2022-10-03T17:00:00", tz="UTC")
-        actual = reader.get_file_names_for_time_period(
+        actual = reader.read_filled_orders(
             start_ts, end_ts, data_format
         )
-        self.check_string(str(actual))
+        actual_str = hpandas.df_to_str(actual)
+        self.check_string(actual_str)
 
     def test_get_file_names_for_time_period1(self):
         """
@@ -67,7 +71,8 @@ class TestFilledOrderReader1(hunitest.TestCase):
         actual = reader.get_file_names_for_time_period(
             start_ts, end_ts, data_format
         )
-        self.check_string(str(actual))
+        actual_str = hprint.format_list(actual, sep="\n")
+        self.check_string(actual_str)
 
     def test_get_file_names_for_time_period2(self):
         """
@@ -86,7 +91,8 @@ class TestFilledOrderReader1(hunitest.TestCase):
         actual = reader.get_file_names_for_time_period(
             start_ts, end_ts, data_format
         )
-        self.check_string(str(actual))
+        actual_str = hprint.format_list(actual, sep="\n")
+        self.check_string(actual_str)
 
     def get_test_data(self, data_format: str) -> None:
         if data_format == "json":
