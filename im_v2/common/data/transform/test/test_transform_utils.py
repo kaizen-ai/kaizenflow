@@ -294,7 +294,6 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
         actual_df = imvcdttrut.transform_raw_websocket_data(
             test_data, "ohlcv", test_exchange
         ).reset_index(drop=True)
-        actual_df.to_csv("ohlcv_example.csv")
         self.assert_equal(
             hpandas.df_to_str(expected_df), hpandas.df_to_str(actual_df)
         )
@@ -388,7 +387,6 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
         actual_df = imvcdttrut.transform_raw_websocket_data(
             test_data, "bid_ask", test_exchange
         ).reset_index(drop=True)
-        actual_df.to_csv("bid_ask_example.csv")
         self.assert_equal(
             hpandas.df_to_str(expected_df), hpandas.df_to_str(actual_df)
         )
