@@ -102,11 +102,15 @@ if config["meta"]["run_tca"]:
     hdbg.dassert_file_exists(tca_csv)
 
 # %%
+# !ls /shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts
+
+# %%
 portfolio_path_dict = {
     "prod": prod_portfolio_dir,
     "cand": cand_portfolio_dir,
     "sim": sim_portfolio_dir,
 }
+print(portfolio_path_dict)
 
 # %%
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df.
@@ -274,6 +278,42 @@ hpandas.df_to_str(research_portfolio_stats_df, log_level=logging.INFO)
 research_portfolio_df = research_portfolio_df.sort_index(axis=1, level=1)
 
 # %% [markdown]
+# # Target positions
+
+# %%
+
+# !ls {portfolio_path_dict["prod"] + "/.."}
+
+# %%
+portfolio_path_dict["prod"] + "/.."
+
+# %%
+# !more '/shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts/portfolio/../target_positions/20221004_120217.csv'
+
+# %%
+prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
+    portfolio_path_dict["prod"] + "/.."
+)
+hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
+
+# %%
+prod_forecast_df.columns.levels[0]
+
+# %%
+df = prod_forecast_df.copy()
+df.index = prod_forecast_df["target_position"].index.round("5T")
+df["target_position"].shift(1).head(10)
+
+# %%
+research_portfolio_df["holdings_shares"]["2022-10-04 10:06:45.241662-04:00":]
+
+# %%
+sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
+    portfolio_path_dict["sim"] + "/.."
+)
+hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
+
+# %% [markdown]
 # # Orders
 
 # %%
@@ -354,8 +394,9 @@ hpandas.df_to_str(portfolio_stats_df, num_rows=2, log_level=logging.INFO)
 
 # %%
 # TODO(gp): For some reason the prod index is not ordered.
-hpandas.df_to_str(portfolio_dfs["prod"]["holdings", 1030828978], num_rows=4, log_level=logging.INFO)
-hpandas.df_to_str(portfolio_dfs["research"]["holdings_shares", 1030828978], num_rows=4, log_level=logging.INFO)
+asset_id = 1030828978
+hpandas.df_to_str(portfolio_dfs["prod"]["holdings", asset_id], num_rows=4, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_dfs["research"]["holdings_shares", asset_id], num_rows=4, log_level=logging.INFO)
 
 # %%
 bars_to_burn = 1

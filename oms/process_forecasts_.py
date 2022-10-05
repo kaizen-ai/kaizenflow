@@ -548,6 +548,7 @@ class ForecastProcessor:
                 path, index_col=0, parse_dates=["wall_clock_timestamp"]
             )
             # Change the index from `asset_id` to the timestamp.
+            df.index.name = "asset_id"
             df = df.reset_index().set_index("wall_clock_timestamp")
             # TODO(Dan): Research why column names are being incorrect sometimes
             #  and save the data with the proper names.
