@@ -193,4 +193,6 @@ def convert_fills_json_to_dataframe(
         "realized_pnl",
     ]
     fills = fills[columns]
+    # Set timestamp index.
+    fills = fills.set_index("timestamp")
     return fills

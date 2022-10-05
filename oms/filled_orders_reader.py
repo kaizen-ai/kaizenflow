@@ -12,6 +12,8 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import oms.hsecrets as homssec
+import helpers.hio as hio
+from typing import Union, Dict, List, Any
 
 _LOG = logging.getLogger(__name__)
 
@@ -70,14 +72,13 @@ class FilledOrdersReader:
         start_ts_file_names = [
             drange[0]
             for drange in date_ranges
-            if pd.Timestamp(drange[0]) <= start_ts
+            if pd.Timestamp(drange[0], tz="UTC") <= start_ts
         ]
         start_ts_from_file_name = max(start_ts_file_names)
         # Get end timestamp closest to end_ts.
         end_ts_file_names = [
-            drange[0]
+            drange[1]
             for drange in date_ranges
-            if pd.Timestamp(drange[0]) >= end_ts
         ]
         end_ts_from_file_name = min(end_ts_file_names)
         # Select files closest to the given time boundaries.
@@ -95,33 +96,52 @@ class FilledOrdersReader:
         return target_paths
 
     # TODO(Danya): Update to use with JSON.
-    def read_filled_orders_csv(
+    def read_filled_orders(
         self,
         start_ts: pd.Timestamp,
         end_ts: pd.Timestamp,
-    ) -> pd.DataFrame:
+        file_format: str
+    ) -> Union[List[Dict[str, Any]], pd.DataFrame]:
         """
         Read a .csv file for filled trades.
 
         An example of output data: same as `FilledTradesReader.convert_fills_json_to_dataframe`
         """
+        hdbg.dassert_in(file_format, ["json", "csv"])
         # Assert that passed timestamps have timezones.
         hdateti.dassert_has_tz(start_ts)
         hdateti.dassert_has_tz(end_ts)
         # Get files corresponding to the given time period.
-        file_names = self.get_file_names_for_time_period(start_ts, end_ts, "csv")
+        file_names = self.get_file_names_for_time_period(start_ts, end_ts, file_format)
         filled_trades_data = []
-        for file_name in file_names:
-            df = pd.read_csv(
-                file_name, index="timestamp", parse_dates=["timestamp"]
+        if file_format == "json":
+            # Load JSON as a list of dicts.
+            for file_name in file_names:
+                data = hio.from_json(file_name)
+                filled_trades_data.extend(data)
+        elif file_format == "csv":
+            # Load CSV files as a dataframe.
+            for file_name in file_names:
+                df = pd.read_csv(
+                    file_name, index="timestamp", parse_dates=["timestamp"]
+                )
+                filled_trades_data.append(df)
+            filled_trades_data = pd.concat(filled_trades_data)
+            # Filter data outside the given time period.
+            filled_trades_data = filled_trades_data.loc[
+                (filled_trades_data["timestamp"] >= start_ts)
+                & (filled_trades_data["timestamp"] <= end_ts)
+            ]
+            # Set dtypes.
+            filled_trades_data = filled_trades_data.astype(
+                {
+                    "id": int,
+                    "order": int,
+                    "price": float,
+                    "amount": float,
+                    "cost": float,
+                    "fees": float,
+                    "realized_pnl": float,
+                }
             )
-            filled_trades_data.append(df)
-        filled_trades_data = pd.concat(filled_trades_data)
-        # Filter data outside the given time period.
-        filled_trades_data = filled_trades_data.loc[
-            (filled_trades_data["timestamp"] >= start_ts)
-            & (filled_trades_data["timestamp"] <= end_ts)
-        ]
-        # Set timestamp index.
-        filled_trades_data = filled_trades_data.set_index("timestamp")
         return filled_trades_data
