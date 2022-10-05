@@ -364,6 +364,25 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     # _system(docker_cmd)
 
 
+@task
+def reconcile_run_notebook(ctx, run_date=None):
+    """
+    Run reconcilation notebook.
+    """
+    _ = ctx
+    run_date = "20221004" #_get_run_date(run_date)
+    asset_class = "crypto"
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    hdbg.dassert_dir_exists(target_dir)
+    _LOG.info("Saving results to '%s'", target_dir)
+    #
+    notebook_file = "amp/oms/notebooks/Master_reconciliation.ipynb"
+    config_builder = f"oms.reconciliationget_reconciliation_config({run_date}, {asset_class})"
+    docker_cmd = f"run_notebook.py --notebook {notebook_file} --config_builder {config_builder} --dst_dir {target_dir} --num_threads 2"
+    cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
+    _system(cmd)
+
+
 # TODO(Danya): Add script here to dump fills data.
 # amp/oms/get_ccxt_fills.py \
 #    --start_timestamp '2022-10-02' \
