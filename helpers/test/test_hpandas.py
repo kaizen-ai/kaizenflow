@@ -1938,10 +1938,6 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         }
         df2 = pd.DataFrame(data=values2)
         df2 = df2.set_index("timestamp")
-
-        # "Extra_row",
-        # "Extra_col": pd.Series(["rr", 4, 5]),
-        # }
         return df1, df2
 
     def get_test_dfs_different(self) -> pd.DataFrame:
