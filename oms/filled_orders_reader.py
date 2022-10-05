@@ -58,29 +58,35 @@ class FilledOrdersReader:
             file_format = "csv.gz"
         # Get files for the given time range.
         files = os.listdir(root_dir)
+        # Get files for the target account, e.g. only for `***REMOVED***`.
+        files = [f for f in files if str(self._secret_identifier) in f]
         # Search for filename date patterns, e.g.
         #  '20221001-000000_20221004-000000'.
         pattern = re.compile(r"(\d+-\d+)_(\d+-\d+)")
-        date_ranges = []
+        date_ranges_as_str = []
+        date_ranges_as_timestamps = []
         # Select all found time ranges from files.
         for file in files:
             date_range = re.findall(pattern, file)
-            date_ranges.extend(date_range)
+            date_ranges_as_str.extend(date_range)
+
         # Get files that fit into the given time range.
         #
         # Get start timestamp closest to start_ts.
-        start_ts_file_names = [
-            drange[0]
-            for drange in date_ranges
-            if pd.Timestamp(drange[0], tz="UTC") <= start_ts
-        ]
-        start_ts_from_file_name = max(start_ts_file_names)
+        start_ts_in_files = [pd.Timestamp(date_range[0], tz="UTC") for date_range in date_ranges]
+        if min(start_ts_in_files) > start_ts:
+            start_ts_from_file_name = min(start_ts_in_files)
+            _LOG.warning("min_ts is outside available data. Available min_ts=%s", start_ts_from_file_name)
+        else:
+            start_ts_from_file_name = max([ts for ts in start_ts_in_files if ts <= start_ts])
+
         # Get end timestamp closest to end_ts.
-        end_ts_file_names = [
-            drange[1]
-            for drange in date_ranges
-        ]
-        end_ts_from_file_name = min(end_ts_file_names)
+        end_ts_in_files = [pd.Timestamp(date_range[1], tz="UTC") for date_range in date_ranges]
+        if max(end_ts_in_files) < end_ts:
+            end_ts_from_file_name = max(end_ts_in_files)
+            _LOG.warning("end_ts is outside available data. Available end_ts=%s", end_ts_from_file_name)
+        else:
+            end_ts_from_file_name = min([ts for ts in end_ts_in_files if ts >= end_ts])
         # Select files closest to the given time boundaries.
         target_paths = []
         for date_range in date_ranges:
