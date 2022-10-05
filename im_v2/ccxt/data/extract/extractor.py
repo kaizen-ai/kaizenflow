@@ -9,7 +9,7 @@ import logging
 import time
 from typing import Any, Dict, List, Optional
 
-import ccxtpro
+import ccxt.pro as ccxtpro
 import pandas as pd
 import tqdm
 
@@ -56,7 +56,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         return currency_pair.replace("_", "/")
 
-    def log_into_exchange(self) -> ccxtpro.Exchange:
+    def log_into_exchange(self) -> ccxtpro.base.exchange.Exchange:
         """
         Log into an exchange via CCXT and return the corresponding
         `ccxtpro.Exchange` object.
@@ -97,6 +97,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         markets = exchange_tmp.markets
         loop.run_until_complete(exchange_tmp.close())
         return markets
+
 
     def _download_ohlcv(
         self,
