@@ -3,11 +3,11 @@ import os
 import pandas as pd
 
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
-import oms.filled_orders_reader as ofiorrea
+import oms.ccxt_filled_orders as occfiord
 import oms.hsecrets as homssec
-import helpers.hpandas as hpandas
 
 
 class TestFilledOrderReader1(hunitest.TestCase):
@@ -15,12 +15,12 @@ class TestFilledOrderReader1(hunitest.TestCase):
         "binance", "local", "sandbox", 1
     )
 
-    def setUp(self):
+    def setUp(self) -> None:
         super().setUp()
         self._root_dir = self.get_scratch_space()
 
     # TODO(Danya): Factor out common parts.
-    def test_read_filled_orders1(self):
+    def test_read_json_orders1(self) -> None:
         """
         Verify that JSON files are read correctly.
         """
@@ -28,17 +28,20 @@ class TestFilledOrderReader1(hunitest.TestCase):
         data_format = "json"
         self.get_test_data(data_format)
         # Initialize reader.
-        reader = ofiorrea.FilledOrdersReader(self._root_dir, self._secret_identifier)
+        reader = occfiord.FilledOrdersReader(
+            self._root_dir, self._secret_identifier
+        )
         # Choose files for given time period.
         start_ts = pd.Timestamp("2022-09-29T16:00:00", tz="UTC")
         end_ts = pd.Timestamp("2022-10-04T12:00:00", tz="UTC")
-        actual = reader.read_filled_orders(
-            start_ts, end_ts, data_format
+        actual = reader.read_json_orders(
+            start_ts,
+            end_ts,
         )
         actual_str = hprint.format_list(actual, sep="\n")
         self.check_string(actual_str)
 
-    def test_read_filled_orders2(self):
+    def test_read_csv_orders1(self) -> None:
         """
         Verify that CSV files are read correctly.
         """
@@ -46,17 +49,20 @@ class TestFilledOrderReader1(hunitest.TestCase):
         data_format = "csv"
         self.get_test_data(data_format)
         # Initialize reader.
-        reader = ofiorrea.FilledOrdersReader(self._root_dir, self._secret_identifier)
+        reader = occfiord.FilledOrdersReader(
+            self._root_dir, self._secret_identifier
+        )
         # Choose files for given time period.
         start_ts = pd.Timestamp("2022-09-29T16:00:00", tz="UTC")
         end_ts = pd.Timestamp("2022-10-03T17:00:00", tz="UTC")
-        actual = reader.read_filled_orders(
-            start_ts, end_ts, data_format
+        actual = reader.read_csv_orders(
+            start_ts,
+            end_ts,
         )
         actual_str = hpandas.df_to_str(actual)
         self.check_string(actual_str)
 
-    def test_get_file_names_for_time_period1(self):
+    def test_get_file_names_for_time_period1(self) -> None:
         """
         Verify that JSON file names are listed correctly.
         """
@@ -64,17 +70,19 @@ class TestFilledOrderReader1(hunitest.TestCase):
         data_format = "json"
         self.get_test_data(data_format)
         # Initialize reader.
-        reader = ofiorrea.FilledOrdersReader(self._root_dir, self._secret_identifier)
+        reader = occfiord.FilledOrdersReader(
+            self._root_dir, self._secret_identifier
+        )
         # Choose files for given time period.
         start_ts = pd.Timestamp("2022-09-29T16:00:00", tz="UTC")
         end_ts = pd.Timestamp("2022-09-30T16:00:00", tz="UTC")
-        actual = reader.get_file_names_for_time_period(
+        actual = reader._get_file_names_for_time_period(
             start_ts, end_ts, data_format
         )
         actual_str = hprint.format_list(actual, sep="\n")
         self.check_string(actual_str)
 
-    def test_get_file_names_for_time_period2(self):
+    def test_get_file_names_for_time_period2(self) -> None:
         """
         Verify that csv file names are listed correctly.
         """
@@ -84,11 +92,11 @@ class TestFilledOrderReader1(hunitest.TestCase):
         self.get_test_data(data_format)
         # Initialize reader.
         secret_identifier = self._secret_identifier
-        reader = ofiorrea.FilledOrdersReader(root_dir, secret_identifier)
+        reader = occfiord.FilledOrdersReader(root_dir, secret_identifier)
         # Choose files for given time period.
         start_ts = pd.Timestamp("2022-09-29T16:00:00", tz="UTC")
         end_ts = pd.Timestamp("2022-09-30T16:00:00", tz="UTC")
-        actual = reader.get_file_names_for_time_period(
+        actual = reader._get_file_names_for_time_period(
             start_ts, end_ts, data_format
         )
         actual_str = hprint.format_list(actual, sep="\n")
@@ -293,8 +301,9 @@ class TestFilledOrderReader1(hunitest.TestCase):
                 },
             ]
             # Create JSON scratch directory.
-            scratch_json_space = os.path.join(self.get_scratch_space(), "json/")
-            os.makedirs(scratch_json_space)
+            scratch_json_space = os.path.join(self.get_scratch_space(), "json")
+            incremental = False
+            hio.create_dir(scratch_json_space, incremental)
             # Save JSON files.
             json1_path = os.path.join(
                 scratch_json_space,
@@ -419,7 +428,8 @@ class TestFilledOrderReader1(hunitest.TestCase):
             ).set_index("timestamp")
             # Create CSV scrach directory.
             scratch_csv_space = os.path.join(self.get_scratch_space(), "csv/")
-            os.makedirs(scratch_csv_space)
+            incremental = False
+            hio.create_dir(scratch_csv_space, incremental)
             # Save tmp CSV files.
             csv1_path = os.path.join(
                 scratch_csv_space,

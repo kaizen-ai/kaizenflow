@@ -30,6 +30,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
+import oms.ccxt_filled_orders as occfiord
 import oms.hsecrets as omssec
 import oms.oms_ccxt_utils as oomccuti
 
@@ -157,7 +158,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Save file.
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
-    # Save data as json.
+    # Save data as JSON.
     json_file_name = os.path.join(
         args.dst_dir,
         "json/",
@@ -165,8 +166,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     _LOG.debug("json_file_name=%s", json_file_name)
     hio.to_json(json_file_name, fills)
-    # Save data as a .csv file.
-    fills_dataframe = oomccuti.convert_fills_json_to_dataframe(fills)
+    # Save data as a CSV file.
+    fills_dataframe = occfiord.convert_fills_json_to_dataframe(fills)
     csv_file_name = os.path.join(
         args.dst_dir,
         "csv/",
