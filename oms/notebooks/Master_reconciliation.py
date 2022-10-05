@@ -20,6 +20,7 @@
 # %%
 import logging
 import os
+import pprint
 from typing import List, Tuple
 
 import pandas as pd
@@ -154,6 +155,7 @@ print(cand_dir)
 hdbg.dassert(cand_dir)
 hdbg.dassert_dir_exists(cand_dir)
 
+# INV: The research flow can be computed from sim or cand or prod.
 sim_dir = config["load_data_config"]["sim_dir"]
 print(sim_dir)
 hdbg.dassert(sim_dir)
@@ -193,7 +195,7 @@ portfolio_path_dict = {
 }
 
 # %%
-# TODO(gp): @Grisha infer this from the data from df.
+# TODO(gp): @Grisha infer this from the data from prod Portfolio df.
 
 start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
@@ -222,6 +224,12 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 
 # %%
+# GOAL: We should be able to specify what exactly we want to run (e.g., prod, cand, sim)
+# because not everything is always available or important (e.g., for cc we don't have candidate,
+# for equities we don't always have sim).
+# INV: prod_dag_df -> dag_df["prod"], cand_dag_df -> dag_df["cand"]
+
+# %%
 prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
 hpandas.df_to_str(prod_dag_df, num_rows=5, log_level=logging.INFO)
 
@@ -243,19 +251,31 @@ hpandas.df_to_str(
 )
 
 # %%
+# Make sure they are exactly the same.
+(prod_dag_df - sim_dag_df).abs().max().max()
+
+# %% run_control={"marked": false}
 # TODOO(gp): @grisha
 # Problem: given two multi-index dfs, we want to compare how similar they are
 
-# Check if they have the same columns (in the same order)
-#  - switch to ignore certain columns
+# Check if they have the same columns in the same order
+#  - switch to ignore certain columns, or select the intersection 
 #  - switch to reorder the columns to sort them
 
 # Check if they have the same index
 #  - switch to perform intersection
+#  - if there is a mismatch it should be one is included in the other
+
+#  - are they any missing value based on the frequency
 
 # Check if they are exactly the same, e.g., the difference is less than a threshold <1e-6.
 #   Show the rows with the max difference (use the `differ_visually_...`)
 #   Allow to subset by columns (e.g., close)
+
+# %%
+# TODO(gp): Automate the burn-in correlation
+
+# TODO(gp): Handle the outliers
 
 # %%
 # TODO(gp): @grisha
@@ -287,17 +307,26 @@ hpandas.df_to_str(
 # E.g., duration_df = compute_duration_df(tag_to_df)
 #  Compute min / max index
 #  Compute min / max index with all values non-nans
-#  The output is multi-index indexed by tag and has (min_idx, max_idx, )
-
-duration_df = pd.MultiIndex
+#. Missing row
+#  The output is multi-index indexed by tag and has (min_idx, max_idx, min_valid_idx, max_valid_idx)
+#duration_df = pd.MultiIndex
 
 # %% [markdown]
 # # Compute research portfolio equivalent
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(**config["research_forecast_evaluator_from_prices"]["init"])
+# TODO(gp): to_str?
+print('config["research_forecast_evaluator_from_prices"]["init"]=\n' +
+      hprint.indent(
+          str(config["research_forecast_evaluator_from_prices"]["init"])))
+fep = dtfmod.ForecastEvaluatorFromPrices(
+    **config["research_forecast_evaluator_from_prices"]["init"])
 
 # %%
+# TODO(gp): to_str?
+print(hprint.to_str('config["research_forecast_evaluator_from_prices"]["annotate_forecasts_kwargs"]',
+                    char_separator="\n"))
+
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
     prod_dag_df,
     **config["research_forecast_evaluator_from_prices"]["annotate_forecasts_kwargs"],
@@ -305,11 +334,30 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 )
 
 # %%
-# TODO(gp): Move it to annotate_forecasts?
-research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+# TODO(gp): We should have a function for this
+research_portfolio_df.transpose().xs(1030828978, level=1).transpose()
+
+# %%
+# TODO(gp): Consider adding printing the levels to df_to_str.
+# TODO(gp): Consider showing only the first few columns of second level (e.g., num_cols=2 to see 2
+#. assets)
+print(research_portfolio_df.columns.levels[0])
+
+# TODO(gp): num_rows=2 by default
+# TODO(gp): Add switch skip_nans
+hpandas.df_to_str(research_portfolio_df, num_rows=2, log_level=logging.INFO)
+
+# price, volatility, prediction are the inputs from the DAG (that are propagated)
+# the rest is computed using the parameters for the ForecastEvaluator
 
 # %%
 hpandas.df_to_str(research_portfolio_stats_df, log_level=logging.INFO)
+
+# %%
+# TODO(gp): Move the sorting to annotate_forecasts only for the second level.
+# Ideally, we should have assume that things are sorted and if they are not asserts.
+# Then there is a switch to acknowledge this problem and solve it.
+research_portfolio_df = research_portfolio_df.sort_index(axis=1, level=1)
 
 # %% [markdown]
 # # Orders
@@ -361,6 +409,7 @@ portfolio_config_dict = {
 portfolio_config_dict
 
 # %%
+# Load the 4 portfolios.
 portfolio_dfs = {}
 portfolio_stats_dfs = {}
 for name, path in portfolio_path_dict.items():
@@ -369,18 +418,30 @@ for name, path in portfolio_path_dict.items():
         path,
         **portfolio_config_dict,
     )
-    #portfolio_df = portfolio_df.sort_index(axis=1)
+    # TODO(gp): We need to understand why this is not ordered.
+    portfolio_df = portfolio_df.sort_index(axis=1)
+    
     portfolio_dfs[name] = portfolio_df
     portfolio_stats_dfs[name] = portfolio_stats_df
     
-portfolio_dfs["research"] = research_portfolio_df.loc[start_timestamp:end_timestamp]
+portfolio_df = research_portfolio_df.loc[start_timestamp:end_timestamp]
+portfolio_df = portfolio_df.sort_index(axis=1)
+portfolio_dfs["research"] = portfolio_df
 portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
+
+# Multi-index of the stats.
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 
 # %%
+print(portfolio_dfs.keys())
 
 # %%
-hpandas.df_to_str(portfolio_stats_df, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_stats_df, num_rows=2, log_level=logging.INFO)
+
+# %%
+# TODO(gp): For some reason the prod index is not ordered.
+hpandas.df_to_str(portfolio_dfs["prod"]["holdings", 1030828978], num_rows=4, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_dfs["research"]["holdings_shares", 1030828978], num_rows=4, log_level=logging.INFO)
 
 # %%
 bars_to_burn = 1
