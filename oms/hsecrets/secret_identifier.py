@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.secrets.secret_identifier as oseseide
+import oms.hsecrets.secret_identifier as oseseide
 """
 
 import dataclasses
