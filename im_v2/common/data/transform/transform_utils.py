@@ -103,8 +103,6 @@ def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_
     :param exchange_id: ID of the exchange where the data come from
     :return database compliant DataFrame formed from raw data
     """
-    print(raw_data)
-    #exit()
     df = pd.DataFrame(raw_data)
     if data_type == "ohlcv":
         df = _transform_ohlcv_websocket_dataframe(df)
