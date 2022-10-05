@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -45,19 +45,105 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+
 # %%
-config = cconfig.Config.from_env_var("AM_CONFIG_CODE")
-if config is None:
-    date_str = "20221004"
-    #asset_class = "equities"
-    asset_class = "crypto"
-    config = oms.get_reconciliation_config(date_str, asset_class)
+def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config:
+    """
+    Get a reconciliation that is specific of an asset class.
+    
+    :param date_str: reconciliation date as str, e.g., `20221003`
+    :param asset_class: either `equities` or `crypto`
+    """
+    # Set values for variables that are specific of an asset class.
+    if asset_class == "crypto":
+        # For crypto the TCA part is not implemented yet.
+        run_tca = False
+        #
+        bar_duration = "5T"
+        #
+        root_dir = "/shared_data/prod_reconciliation"
+        # TODO(Grisha): probably we should rename to `system_log_dir`.
+        prod_dir = os.path.join(root_dir, date_str, "prod", "system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours")
+        data_dict = {
+           "prod_dir": prod_dir,
+           # For crypto we do not have a `candidate` so we just re-use prod.
+           "cand_dir": prod_dir,
+           "sim_dir": os.path.join(root_dir, date_str, "simulation", "system_log_dir"),
+        }
+        #
+        fep_init_dict = {
+            "price_col": "vwap",
+            "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+            "volatility_col": "vwap.ret_0.vol",
+        }
+        quantization = "no_quantization"
+        gmv = 700.0
+        liquidate_at_end_of_day = False
+    elif asset_class == "equities":
+        run_tca = True
+        #
+        bar_duration = "15T"
+        #
+        root_dir = ""
+        search_str = ""
+        prod_dir_cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
+        _, prod_dir = hsystem.system_to_string(prod_dir_cmd)
+        cand_cmd = f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+        _, cand_dir = hsystem.system_to_string(cand_cmd)
+        data_dict = {
+           "prod_dir": prod_dir,
+           "cand_dir": cand_dir,
+           "sim_dir": os.path.join(root_dir, date_str, "system_log_dir"),
+        }
+        #
+        fep_init_dict = {
+            "price_col": "twap",
+            "prediction_col": "prediction",
+            "volatility_col": "garman_klass_vol",
+        }
+        quantization = "nearest_share"
+        gmv = 20000.0
+        liquidate_at_end_of_day = True
+    else:
+        raise ValueError(f"Unsupported asset class={asset_class}")
+    # Get a config.
+    config_dict = {
+        "meta": {
+            "date_str": date_str,
+            "asset_class": asset_class,
+            "run_tca": run_tca,
+            "bar_duration": bar_duration,
+        },
+        "load_data_config": data_dict,
+        "research_forecast_evaluator_from_prices": {
+            "init": fep_init_dict,
+            "annotate_forecasts_kwargs": {
+                "quantization": quantization,
+                "burn_in_bars": 3,
+                "style": "cross_sectional",
+                "bulk_frac_to_remove": 0.0,
+                "target_gmv": gmv,
+                "liquidate_at_end_of_day": liquidate_at_end_of_day
+            }
+        }
+    }
+    
+    config = cconfig.Config.from_dict(config_dict)
+    return config
+
+
+# %%
+date_str = "20221004"
+#asset_class = "equities"
+asset_class = "crypto"    
+    
+config = get_reconciliation_config(date_str, asset_class)
 print(config)
 
 # %% [markdown]
 # # Specify data to load
 
-# %% run_control={"marked": false}
+# %% run_control={"marked": true}
 # TODO(Grisha): factor out common code.
 prod_dir = config["load_data_config"]["prod_dir"]
 print(prod_dir)
@@ -76,7 +162,8 @@ hdbg.dassert(sim_dir)
 hdbg.dassert_dir_exists(sim_dir)
 
 # %%
-# TODO(Grisha): factor out common code.
+# TODO(Grisha): factor out common code and use the dict approach for both portfolio_path_dict and
+#  dag_path_dict.
 
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(prod_portfolio_dir)
@@ -102,9 +189,10 @@ if config["meta"]["run_tca"]:
     hdbg.dassert_file_exists(tca_csv)
 
 # %%
-# !ls /shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts
+# # !ls /shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts
 
 # %%
+# This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 portfolio_path_dict = {
     "prod": prod_portfolio_dir,
     "cand": cand_portfolio_dir,
@@ -113,7 +201,15 @@ portfolio_path_dict = {
 print(portfolio_path_dict)
 
 # %%
-# TODO(gp): @Grisha infer this from the data from prod Portfolio df.
+# TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
+
+# # Load data from prod Portfolio
+# # Extract min max
+# if False:
+#   start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
+#   _LOG.info("start_timestamp=%s", start_timestamp)
+#   end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
+#   _LOG.info("end_timestamp=%s", end_timestamp)
 
 start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
@@ -125,6 +221,8 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
+# TODO(gp): @grisha move to oms/reconciliation.py
+
 def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     """
     Retrieve the most recent output from the last DAG node.
@@ -145,6 +243,7 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 # GOAL: We should be able to specify what exactly we want to run (e.g., prod, cand, sim)
 # because not everything is always available or important (e.g., for cc we don't have candidate,
 # for equities we don't always have sim).
+
 # INV: prod_dag_df -> dag_df["prod"], cand_dag_df -> dag_df["cand"]
 
 # %%
@@ -171,63 +270,6 @@ hpandas.df_to_str(
 # %%
 # Make sure they are exactly the same.
 (prod_dag_df - sim_dag_df).abs().max().max()
-
-# %% run_control={"marked": false}
-# TODOO(gp): @grisha
-# Problem: given two multi-index dfs, we want to compare how similar they are
-
-# Check if they have the same columns in the same order
-#  - switch to ignore certain columns, or select the intersection 
-#  - switch to reorder the columns to sort them
-
-# Check if they have the same index
-#  - switch to perform intersection
-#  - if there is a mismatch it should be one is included in the other
-
-#  - are they any missing value based on the frequency
-
-# Check if they are exactly the same, e.g., the difference is less than a threshold <1e-6.
-#   Show the rows with the max difference (use the `differ_visually_...`)
-#   Allow to subset by columns (e.g., close)
-
-# %%
-# TODO(gp): Automate the burn-in correlation
-
-# TODO(gp): Handle the outliers
-
-# %%
-# TODO(gp): @grisha
-
-# Given two multi-index dfs, allow to slice the values by index or by column
-# Create a df with sliced 2 columns or rows and do the diff so that it's easy to plot / inspect
-#
-# #col_name = "price"
-# col_name = "executed_trades_notional"
-# #asset_id = 1030828978
-# #asset_id = 5115052901
-# asset_id = 5118394986
-# #df1 = adapted_sim_df[col_name][asset_id]
-# df1 = adapted_prod_df[col_name][asset_id]
-# df2 = research_portfolio_df[col_name][asset_id]
-
-# (df1 - df2).dropna().plot()
-
-# df = pd.DataFrame(df1).merge(pd.DataFrame(df2), how="outer", left_index=True, right_index=True, suffixes=["_prod", "_research"])
-
-# #df["diff"] = df["1030828978_prod"] - df["1030828978_research"]
-
-# #display(df)
-
-# df.dropna().plot()
-
-# %%
-# TODO(gp): Add function to compare duration of different dfs
-# E.g., duration_df = compute_duration_df(tag_to_df)
-#  Compute min / max index
-#  Compute min / max index with all values non-nans
-#. Missing row
-#  The output is multi-index indexed by tag and has (min_idx, max_idx, min_valid_idx, max_valid_idx)
-#duration_df = pd.MultiIndex
 
 # %% [markdown]
 # # Compute research portfolio equivalent
@@ -281,7 +323,6 @@ research_portfolio_df = research_portfolio_df.sort_index(axis=1, level=1)
 # # Target positions
 
 # %%
-
 # !ls {portfolio_path_dict["prod"] + "/.."}
 
 # %%
@@ -363,6 +404,8 @@ portfolio_config_dict = {
 portfolio_config_dict
 
 # %%
+# TODO(gp): @grisha move to library.
+
 # Load the 4 portfolios.
 portfolio_dfs = {}
 portfolio_stats_dfs = {}
