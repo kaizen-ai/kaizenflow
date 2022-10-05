@@ -19,12 +19,32 @@ import oms.broker as ombroker
 _LOG = logging.getLogger(__name__)
 
 
+# Look at ./oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json
+# https://docs.ccxt.com/en/latest/manual.html#precision-and-limits
 def _apply_cc_limits(
     order: pd.Series, asset_market_info: Dict[str, Any], stage: str
 ) -> pd.Series:
+    """
+    :param asset_market_info: looks like
+    ```
+    {
+        "6051632686": {
+            # In shares.
+            "min_amount": 1.0,
+            # In notional.
+            "min_cost": 10.0,
+            # Number of decimals (0 means integer).
+            "amount_precision": 0
+        },
+        "8717633868": {
+            "min_amount": 1.0,
+            "min_cost": 10.0,
+            "amount_precision": 0
+         },
+    ```
+    """
     hdbg.dassert_isinstance(order, pd.Series)
     _LOG.debug("Order before adjustments: %s", order)
-    #
     min_amount = asset_market_info["min_amount"]
     price = order["price"]
     min_cost = asset_market_info["min_cost"]
@@ -81,6 +101,7 @@ def _apply_cc_limits(
     return order
 
 
+# TODO(gp): Pass market_data_info
 def apply_cc_limits(
     forecast_df: pd.DataFrame, broker: ombroker.Broker, log_dir: Optional[str]
 ) -> pd.DataFrame:
@@ -103,20 +124,20 @@ def apply_cc_limits(
         "Order df before adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    # Create a logging directory.
-    if log_dir is not None:
-        log_dir = os.path.join(log_dir, "apply_cc_limits")
-        hio.create_dir(log_dir, incremental=True)
+    # # Create a logging directory.
+    # if log_dir is not None:
+    #     log_dir = os.path.join(log_dir, "apply_cc_limits")
+    #     hio.create_dir(log_dir, incremental=True)
     # Select the timestamp of order creation for logging.
-    log_timestamp = broker.market_data.get_wall_clock_time()
-    log_timestamp = log_timestamp.strftime("%Y%m%d_%H%M%S")
+    # log_timestamp = broker.market_data.get_wall_clock_time()
+    # log_timestamp = log_timestamp.strftime("%Y%m%d_%H%M%S")
     # Save orders before applying the constraints.
-    if log_dir is not None:
-        file_name = os.path.join(
-            log_dir, f"forecast_df_before_apply_cc_limits.{log_timestamp}.csv"
-        )
-        forecast_df.to_csv(file_name)
-        _LOG.debug("Saved orders after adjustments to %s", file_name)
+    # if log_dir is not None:
+    #     file_name = os.path.join(
+    #         log_dir, f"forecast_df_before_apply_cc_limits.{log_timestamp}.csv"
+    #     )
+    #     forecast_df.to_csv(file_name)
+    #     _LOG.debug("Saved orders after adjustments to %s", file_name)
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_notional_trade", "price"], forecast_df.columns
@@ -124,11 +145,10 @@ def apply_cc_limits(
     forecast_df["diff_num_shares"] = (
         forecast_df["target_notional_trade"] / forecast_df["price"]
     )
-    #
+    # TODO(gp): Pass stage.
     stage = broker.stage
     hdbg.dassert_in(stage, ["local", "prod", "preprod"])
     market_info = broker.market_info
-    #
     # Save shares before limits application.
     forecast_df["diff_num_shares.before_apply_cc_limits"] = forecast_df[
         "diff_num_shares"
@@ -146,12 +166,12 @@ def apply_cc_limits(
         "Order df after adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    if log_dir is not None:
-        file_name = os.path.join(
-            log_dir, f"forecast_df_after_apply_cc_limits.{log_timestamp}.csv"
-        )
-        forecast_df.to_csv(file_name)
-        _LOG.debug("Saved orders after adjustments to %s", file_name)
+    # if log_dir is not None:
+    #     file_name = os.path.join(
+    #         log_dir, f"forecast_df_after_apply_cc_limits.{log_timestamp}.csv"
+    #     )
+    #     forecast_df.to_csv(file_name)
+    #     _LOG.debug("Saved orders after adjustments to %s", file_name)
     return forecast_df
 
 
