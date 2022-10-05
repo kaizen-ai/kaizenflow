@@ -377,8 +377,9 @@ def reconcile_run_notebook(ctx, run_date=None):
     _LOG.info("Saving results to '%s'", target_dir)
     #
     notebook_file = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    config_builder = f"oms.reconciliationget_reconciliation_config({run_date}, {asset_class})"
-    docker_cmd = f"run_notebook.py --notebook {notebook_file} --config_builder {config_builder} --dst_dir {target_dir} --num_threads 2"
+    # config_builder = f"amp.oms.reconciliation.get_reconciliation_config"
+    config_builder = "amp.oms.reconciliation.get_task2940_config"
+    docker_cmd = f"run_notebook.py --notebook {notebook_file} --config_builder '{config_builder}' --dst_dir {target_dir}"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
 

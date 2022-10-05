@@ -305,3 +305,11 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
     }
     config = cconfig.Config.from_dict(config_dict)
     return config
+
+
+# TODO(Grisha): @Dan Consider deprecating.
+def get_task2940_config() -> cconfig.Config:
+    date_str = "20221004"
+    asset_class = "crypto"
+    config = oms.get_reconciliation_config(date_str, asset_class)
+    return config
