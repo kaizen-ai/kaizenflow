@@ -201,3 +201,35 @@ class TestReindexOnCustomColumns(hunitest.TestCase):
         val1 - val2=['mock1', 'mock2', 'mock3']
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
+        
+        
+# #############################################################################
+
+class TestTransformRawWebsocketData(hunitest.TestCase):
+    
+    def test_transform_raw_websocket_ohlcv_data(self) -> None:
+        """
+        Verify that raw OHLCV dict data received from websocket is
+         transformed to DataFrame of specified format.
+        """
+        test_exchange_id = "binance"
+        test_timestamp = pd.Timestamp('2022-10-05 15:06:00.019422+00:00')
+        test_data = [{'ohlcv': [[1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017], [1664982240000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017]], 'currency_pair': 'ETH/USDT', 'end_download_timestamp': test_timestamp}, { 'ohlcv': [[1664982180000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639], [1664982240000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639]], 'currency_pair': 'BTC/USDT', 'end_download_timestamp': test_timestamp}]
+        expected_data = [["ETH_USDT", 1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017, test_timestamp, test_exchange], ["ETH_USDT", 1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017, test_timestamp, test_exchange], ["BTC_USDT", 1664982180000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639, test_timestamp, test_exchange], ["BTC_USDT", 1664982240000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639, test_timestamp, test_exchange]]
+        expected_columns = ["timestamp", "open", "high", "low", 
+                    "close", "volume", "end_download_timestamp", "exchange"]
+        expected_df = pd.DataFrame(expected_data, columns=expected_columns)
+        actual_df = imvcdttrut.transform_raw_websocket_data(
+                test_data, "ohlcv", test_exchange_id
+            )
+        self.assertTrue(False)
+        self.assert_equal(expected_df, actual_df)
+
+        
+    def test_transform_raw_websocket_ohlcv_data(self) -> None:
+        """
+        Verify that raw bid/ask dict data received from websocket is
+         transformed to DataFrame of specified format.
+        """
+        pass
+        

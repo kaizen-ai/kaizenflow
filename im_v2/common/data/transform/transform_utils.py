@@ -103,6 +103,8 @@ def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_
     :param exchange_id: ID of the exchange where the data come from
     :return database compliant DataFrame formed from raw data
     """
+    print(raw_data)
+    exit()
     df = pd.DataFrame(raw_data)
     if data_type == "ohlcv":
         df = _transform_ohlcv_websocket_dataframe(df)
@@ -119,7 +121,7 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     Transform bid/ask raw DataFrame to DataFrame representation 
      suitable for database insertion.
 
-    TODO(Juraj): Add example
+    TODO(Juraj): Add example (assumes format, returns format)
     """
     df = df.explode(["asks", "bids"])
     df[["bid_price", "bid_size"]] = pd.DataFrame(
@@ -128,8 +130,9 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["asks"].to_list(), index=df.index)
     df["currency_pair"] = df["symbol"].str.replace("_", "/")
     groupby_cols = ["currency_pair", "timestamp"]
+    # For clarify we add +1 so the levels start from 1.
     df["level"] = df.groupby(groupby_cols)[groupby_cols].cumcount().add(1)
-    return df[["timestamp", "bid_size", "bid_price", "ask_size", 
+    return df[["currency_pair", "timestamp", "bid_size", "bid_price", "ask_size", 
                     "ask_price", "currency_pair", "level", "end_download_timestamp"]]
 
 def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
@@ -140,7 +143,17 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     TODO(Juraj): Add example (assumes format, returns format)
     """
     df["currency_pair"] = df["currency_pair"].str.replace("_", "/")
-    df[["open", "high", "low", "close", "volume"]] = pd.DataFrame(df["ohlcv"].tolist(), index=df.index)
-    # TODO(Juraj): remove unfinished candles.
-    return df[["timestamp", "open", "high", "low", 
+    _LOG.warning("DataFrame:")
+    _LOG.warning(df.head())
+    # Each message stores ohlcv candles as a list of lists.
+    _LOG.warning("DataFrame explode:")
+    df = df.explode("ohlcv")
+    _LOG.warning(df.head())
+    df[["timestamp", "open", "high", "low", "close", "volume"]] = pd.DataFrame(df["ohlcv"].tolist(), index=df.index)
+    # Remove bars which are certainly unfinished
+    #  bars with end_download_timestamp which is not atleast
+    #  a minute (60000 ms) after the timestamp are certainly unfinished.
+    #  TODO(Juraj): this holds only for binance data.
+    df = df[df["end_download_timestamp"].map(hdateti.convert_timestamp_to_unix_epoch) > df['timestamp'] - 60000]
+    return df[["currency_pair", "timestamp", "open", "high", "low", 
                     "close", "volume", "end_download_timestamp"]]
