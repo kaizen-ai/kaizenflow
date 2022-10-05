@@ -6,13 +6,13 @@ Import as:
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 """
 
-import asyncio
 import argparse
+import asyncio
 import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 import pandas as pd
 import psycopg2
@@ -22,9 +22,9 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
+import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
 from helpers.hthreading import timeout
@@ -34,13 +34,15 @@ _LOG = logging.getLogger(__name__)
 SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
 # Determines parameters for handling websocket download.
 #  sleep_between_iter: time to sleep between iterations in miliseconds.
-#  max_buffer_size: specifies number of websocket 
+#  max_buffer_size: specifies number of websocket
 #  messages to cache before attempting DB insert.
-# Buffer size is 0 for ohlcv because we want to insert after round of receival 
+# Buffer size is 0 for ohlcv because we want to insert after round of receival
 #  from websockets.
-WEBSOCKET_CONFIG = {"ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
-                    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter": 250}
-                    }
+WEBSOCKET_CONFIG = {
+    "ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
+    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter": 250},
+}
+
 
 def _add_common_download_args(
     parser: argparse.ArgumentParser,
@@ -155,7 +157,7 @@ def add_periodical_download_args(
         required=True,
         type=str,
         choices=SUPPORTED_DOWNLOAD_METHODS,
-        help="Method used to download the data: rest (for HTTP REST based download), or websocket"
+        help="Method used to download the data: rest (for HTTP REST based download), or websocket",
     )
     parser.add_argument(
         "--interval_min",
@@ -349,15 +351,16 @@ def _download_realtime_for_one_exchange_with_timeout(
     )
     download_realtime_for_one_exchange(args, exchange_class)
 
+
 # TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
 #  functions' names since it spreads across the codebase. Docstring and the
-# method signature should sufficiently explain what the function does. 
+# method signature should sufficiently explain what the function does.
 async def _download_websocket_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
-    Encapsulate common logic for periodical exchange data download
-    using websocket based download.
+    Encapsulate common logic for periodical exchange data download using
+    websocket based download.
 
     :param args: arguments passed on script run
     :param exchange: name of exchange used in script run
@@ -382,13 +385,13 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     db_table = args["db_table"]
     for currency_pair in currency_pairs:
         await exchange.subscribe_to_websocket_data(
-            data_type, 
+            data_type,
             exchange_id,
             currency_pair,
             # The following arguments are only applied for
             # the corresponding data type
             bid_ask_depth=args.get("bid_ask_depth"),
-            since=hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now(tz))
+            since=hdateti.convert_timestamp_to_unix_epoch(pd.Timestamp.now(tz)),
         )
     _LOG.info("Subscribed to %s websocket data successfully", exchange_id)
     # In order not to bombard the database with many small insert operations
@@ -402,28 +405,46 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     while pd.Timestamp.now(tz) < stop_time:
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
-            data_buffer.append(exchange.download_websocket_data(data_type, exchange_id, curr_pair))
+            data_buffer.append(
+                exchange.download_websocket_data(
+                    data_type, exchange_id, curr_pair
+                )
+            )
         # If the buffer is full or this is the last iteration, process and save buffered data.
-        if len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"] or pd.Timestamp.now(tz) >= stop_time:
-            df = imvcdttrut.transform_raw_websocket_data(data_buffer, data_type, exchange_id)
-            imvcddbut.save_data_to_db(df, data_type, db_connection, db_table)
+        if (
+            len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"]
+            or pd.Timestamp.now(tz) >= stop_time
+        ):
+            df = imvcdttrut.transform_raw_websocket_data(
+                data_buffer, data_type, exchange_id
+            )
+            imvcddbut.save_data_to_db(df, data_type, db_connection, db_table, tz)
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete
         # an iteration, this provides an "time align" mechanism.
-        iter_length = (pd.Timestamp.now(tz) - iter_start_time).total_seconds * 1000
-        actual_sleep_time = max(0, iter_length - WEBSOCKET_CONFIG[data_type]["sleep_between_iter"])
+        iter_length = (
+            pd.Timestamp.now(tz) - iter_start_time
+        ).total_seconds() * 1000
+        actual_sleep_time = max(
+            0, WEBSOCKET_CONFIG[data_type]["sleep_between_iter"] - iter_length
+        )
+        _LOG.info(
+            "Iteration took %i ms, waiting between iterations for %i ms",
+            iter_length,
+            actual_sleep_time,
+        )
         await exchange._exchange.sleep(actual_sleep_time)
-    _LOG.info("Websocket downloaded finished at %s", pd.Timestamp.now())
+    _LOG.info("Websocket download finished at %s", pd.Timestamp.now(tz))
 
 
 def _download_rest_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
-    Encapsulate common logic for periodical exchange data download
-    using REST API based download.
+    Encapsulate common logic for periodical exchange data download using REST
+    API based download.
 
     :param args: arguments passed on script run
     :param exchange: name of exchange used in script run
@@ -519,12 +540,13 @@ def _download_rest_realtime_for_one_exchange_periodically(
                 download_duration_sec,
             )
 
+
 def download_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
-    Encapsulate common logic for periodical exchange data download via 
-    REST API or websocket.
+    Encapsulate common logic for periodical exchange data download via REST API
+    or websocket.
 
     :param args: arguments passed on script run
     :param exchange: name of exchange used in script run
@@ -542,10 +564,17 @@ def download_realtime_for_one_exchange_periodically(
         # Websockets work asynchronously, in order this outer function synchronous
         # the websocket download needs go be executed using asyncio.
         loop = asyncio.get_event_loop()
-        loop.run_until_complete(_download_websocket_realtime_for_one_exchange_periodically(args, exchange))
+        loop.run_until_complete(
+            _download_websocket_realtime_for_one_exchange_periodically(
+                args, exchange
+            )
+        )
     else:
-        raise ValueError(f"Method: {method} is not a valid method for periodical download, " +
-                          f"supported methods are: {SUPPORTED_DOWNLOAD_METHODS}")
+        raise ValueError(
+            f"Method: {method} is not a valid method for periodical download, "
+            + f"supported methods are: {SUPPORTED_DOWNLOAD_METHODS}"
+        )
+
 
 def save_csv(
     data: pd.DataFrame,

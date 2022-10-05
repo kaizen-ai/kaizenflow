@@ -7,7 +7,7 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 """
 
 import logging
-from typing import List, Dict
+from typing import Dict, List
 
 import pandas as pd
 
@@ -93,10 +93,13 @@ def reindex_on_custom_columns(
     data_reindex = data_reindex.set_index(index_columns)
     return data_reindex
 
-def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_id: str) -> pd.DataFrame:
+
+def transform_raw_websocket_data(
+    raw_data: List[Dict], data_type: str, exchange_id: str
+) -> pd.DataFrame:
     """
-    Transform list of raw websocket data into a DataFrame with columns compliant with
-     the database representation
+    Transform list of raw websocket data into a DataFrame with columns
+    compliant with the database representation.
 
     :param data: data to be transformed
     :param data_type: type of data, e.g. OHLCV
@@ -109,51 +112,82 @@ def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_
     elif data_type == "bid_ask":
         df = _transform_bid_ask_websocket_dataframe(df)
     else:
-        raise ValueError("Transformation of data type: %s is not supported", data_type)
+        raise ValueError(
+            "Transformation of data type: %s is not supported", data_type
+        )
     df = df.drop_duplicates()
     df["exchange_id"] = exchange_id
     return df
 
+
 def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Transform bid/ask raw DataFrame to DataFrame representation 
-     suitable for database insertion.
+    Transform bid/ask raw DataFrame to DataFrame representation suitable for
+    database insertion.
 
     :param df: DataFrame formed from raw bid/ask dict data.
     :return transformed DataFrame
     """
     df = df.explode(["asks", "bids"])
     df[["bid_price", "bid_size"]] = pd.DataFrame(
-    df["bids"].to_list(), index=df.index)
+        df["bids"].to_list(), index=df.index
+    )
     df[["ask_price", "ask_size"]] = pd.DataFrame(
-    df["asks"].to_list(), index=df.index)
+        df["asks"].to_list(), index=df.index
+    )
     df["currency_pair"] = df["symbol"].str.replace("/", "_")
     groupby_cols = ["currency_pair", "timestamp"]
+    # Drop duplicates before computing level column.
+    df = df[
+        [
+            "currency_pair",
+            "timestamp",
+            "bid_price",
+            "bid_size",
+            "ask_price",
+            "ask_size",
+            "end_download_timestamp",
+        ]
+    ]
+    df = df.drop_duplicates()
     # For clarify add +1 so the levels start from 1.
-    df["level"] = df.groupby(groupby_cols)[groupby_cols].cumcount().add(1)
-    return df[["currency_pair", "timestamp", "bid_price", "bid_size", "ask_price", 
-                    "ask_size", "level", "end_download_timestamp"]]
+    df["level"] = df.groupby(groupby_cols).cumcount().add(1)
+    return df
+
 
 def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Transform bid/ask raw DataFrame to DataFrame representation 
-     suitable for database insertion.
+    Transform bid/ask raw DataFrame to DataFrame representation suitable for
+    database insertion.
 
     :param df: DataFrame formed from raw bid/ask dict data.
     :return transformed DataFrame
     """
     df["currency_pair"] = df["currency_pair"].str.replace("/", "_")
-    _LOG.warning("DataFrame:")
-    _LOG.warning(df.head())
     # Each message stores ohlcv candles as a list of lists.
-    _LOG.warning("DataFrame explode:")
     df = df.explode("ohlcv")
-    _LOG.warning(df.head())
-    df[["timestamp", "open", "high", "low", "close", "volume"]] = pd.DataFrame(df["ohlcv"].tolist(), index=df.index)
+    df[["timestamp", "open", "high", "low", "close", "volume"]] = pd.DataFrame(
+        df["ohlcv"].tolist(), index=df.index
+    )
     # Remove bars which are certainly unfinished
     #  bars with end_download_timestamp which is not atleast
     #  a minute (60000 ms) after the timestamp are certainly unfinished.
     #  TODO(Juraj): this holds only for binance data.
-    df = df[df["end_download_timestamp"].map(hdateti.convert_timestamp_to_unix_epoch) > df['timestamp'] - 60000]
-    return df[["currency_pair", "timestamp", "open", "high", "low", 
-                    "close", "volume", "end_download_timestamp"]]
+    df = df[
+        pd.to_datetime(df["end_download_timestamp"]).map(
+            hdateti.convert_timestamp_to_unix_epoch
+        )
+        > df["timestamp"] - 60000
+    ]
+    return df[
+        [
+            "currency_pair",
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "end_download_timestamp",
+        ]
+    ]

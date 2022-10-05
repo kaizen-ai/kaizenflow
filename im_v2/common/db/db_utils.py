@@ -9,11 +9,11 @@ import abc
 import argparse
 import logging
 import os
-from typing import Optional, Dict
-
-import psycopg2 as psycop
+from typing import Optional
 
 import pandas as pd
+import psycopg2 as psycop
+
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
@@ -30,7 +30,14 @@ _LOG = logging.getLogger(__name__)
 #  corresponding data type
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
 BID_ASK_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + ["level"]
-OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + ["open", "high", "low", "close", "volume"]
+OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+]
+
 
 def add_db_args(
     parser: argparse.ArgumentParser,
@@ -178,34 +185,46 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     num_before = hsql.get_num_rows(db_connection, db_table)
     hsql.execute_query(db_connection, delete_query)
     num_after = hsql.get_num_rows(db_connection, db_table)
-    _LOG.warning("Removed %s duplicate rows from %s table.", str(num_before - num_after), db_table)
+    _LOG.warning(
+        "Removed %s duplicate rows from %s table.",
+        str(num_before - num_after),
+        db_table,
+    )
+
 
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
 # this function.
 # TODO(Juraj): probabl hsql is a better place for this?
-def save_data_to_db(data: pd.DataFrame, data_type: str, db_connection: hsql.DbConnection, db_table: str) -> None:
+def save_data_to_db(
+    data: pd.DataFrame,
+    data_type: str,
+    db_connection: hsql.DbConnection,
+    db_table: str,
+    time_zone: str,
+) -> None:
     """
-    Save data into specified database table. 
-    
-    INSERT query logic ensures exact duplicates are not saved into the database again. 
+    Save data into specified database table.
+
+    INSERT query logic ensures exact duplicates are not saved into the database again.
 
     :param data: data to insert into database.
     :param db_connection: a database connection object
     :param db_table: name of the table to insert to.
+    :param time_zone: time zone used to add correct knowledge_timestamp to the data
     """
     if data.empty:
         _LOG.warning("The DataFame is empty, nothing to insert.")
         return
-    data["knowledge_timestamp"] = pd.Timestamp.utcnow()
+    data["knowledge_timestamp"] = pd.Timestamp.now(time_zone)
     if data_type == "ohlcv":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":
-        unique_columns = BID_ASK_UNIQUE_COLUMNS 
+        unique_columns = BID_ASK_UNIQUE_COLUMNS
     hsql.execute_insert_on_conflict_do_nothing_query(
-                connection=db_connection,
-                obj=data,
-                table_name=db_table,
-                unique_columns=unique_columns,
+        connection=db_connection,
+        obj=data,
+        table_name=db_table,
+        unique_columns=unique_columns,
     )
     return
 

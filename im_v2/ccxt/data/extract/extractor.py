@@ -84,11 +84,11 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         # Because of either ccxt version change or introduction of ccxtpro
         #  (reason is unclear) load_markets() is an async method.
-        #  Its execution has to be wrapped asyncio event loop in order 
-        #  for this method to remain synchronous. 
+        #  Its execution has to be wrapped asyncio event loop in order
+        #  for this method to remain synchronous.
         #  A disposable instance is used to comply with ccxt:
         #  'binance requires to release all resources with an explicit
-        #  call to the .close() coroutine...Add `await exchange.close()` 
+        #  call to the .close() coroutine...Add `await exchange.close()`
         #  ...to your code into a place when you're done with the exchange.
         exchange_tmp = getattr(ccxtpro, self.exchange_id)
         exchange_tmp = exchange_tmp()
@@ -97,7 +97,6 @@ class CcxtExtractor(imvcdexex.Extractor):
         markets = exchange_tmp.markets
         loop.run_until_complete(exchange_tmp.close())
         return markets
-
 
     def _download_ohlcv(
         self,
@@ -190,11 +189,11 @@ class CcxtExtractor(imvcdexex.Extractor):
         *,
         timeframe: str = "1m",
         limit: Optional[int] = 5,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
-        Wrapper to subscribe to OHLCV data via watchOHLCV
-         websocket based approach.
+        Wrapper to subscribe to OHLCV data via watchOHLCV websocket based
+        approach.
 
         :param exchange_id: exchange to download from
          (not used, kept for compatibility with parent class).
@@ -207,18 +206,20 @@ class CcxtExtractor(imvcdexex.Extractor):
         converted_pair = self.convert_currency_pair(
             currency_pair,
         )
-        await self._exchange.watchOHLCV(converted_pair, timeframe=timeframe, since=since, limit=limit)
+        await self._exchange.watchOHLCV(
+            converted_pair, timeframe=timeframe, since=since, limit=limit
+        )
 
     async def _subscribe_to_websocket_bid_ask(
         self,
         exchange_id: str,
         currency_pair: str,
         bid_ask_depth: int,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> None:
         """
-        Wrapper to subscribe to bid/ask (order book) data via CCXTpro watchOrderBook
-         websocket based approach.
+        Wrapper to subscribe to bid/ask (order book) data via CCXTpro
+        watchOrderBook websocket based approach.
 
         :param exchange_id: exchange to download from
          (not used, kept for compatibility with parent class).
@@ -233,55 +234,57 @@ class CcxtExtractor(imvcdexex.Extractor):
         await self._exchange.watchOrderBook(currency_pair)
 
     async def _subscribe_to_websocket_trades(self, **kwargs: Any) -> None:
-        raise NotImplementedError("Trades websocket data is not implemented for CCXT vendor yet.")
+        raise NotImplementedError(
+            "Trades websocket data is not implemented for CCXT vendor yet."
+        )
 
     def _download_websocket_data(
-        self,
-        exchange_id: str,
-        currency_pair: str,
-        data_type: str
+        self, exchange_id: str, currency_pair: str, data_type: str
     ) -> Dict:
         """
-        Get the most recent websocket data for a specified currency pair and data type.
-        
+        Get the most recent websocket data for a specified currency pair and
+        data type.
+
         :return Dict representing snapshot of the data for a specified symbol and data type.
         TODO(Juraj): show example
         """
         data = {}
-        try: 
+        try:
             pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
-                ohlcv = None
                 data = self._exchange.ohlcvs[pair]
                 for key in data:
-                    # The ohlcvs dict returns only a single key: value pair of format:
-                    #  { "timeframe": [o, h, l, c, v]} where timeframe is e.g. 1m and
-                    #  o, h, l, c, v are the actual numerical values
-                    ohlcv = data[key]
-                if ohlcv is not None:
-                    data["ohlcv"] = ohlcv
+                    # One of the returned key:value pairs is:
+                    #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
+                    #  o, h, l, c, v are the actual numerical values, 99,9% of time
+                    #  '1m' is used but this is a cosmetic generalization to also support
+                    #  '2m', '5m' etc.
+                    if isinstance(
+                        data[key], ccxtpro.base.cache.ArrayCacheByTimestamp
+                    ):
+                        ohlcv = data[key]
+                data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
                 data = self._exchange.orderbooks[pair].limit(self._bid_ask_depth)
             else:
-                raise ValueError(f"{data_type} not supported. Supported data types: ohlcv, bid_ask")
-            data["end_download_timestamp"] = str(
-                hdateti.get_current_time("UTC")
-            )
+                raise ValueError(
+                    f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
+                )
+            data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
             return data
         except KeyError as e:
-            _LOG.error(f"Websocket {data_type} data for {exchange_id} and {currency_pair} is not available. Have you subscribed to the websocket?")
+            _LOG.error(
+                f"Websocket {data_type} data for {exchange_id} and {currency_pair} is not available. Have you subscribed to the websocket?"
+            )
             raise e
 
-
     def _download_websocket_ohlcv(
-        self,
-        exchange_id: str,
-        currency_pair: str
+        self, exchange_id: str, currency_pair: str
     ) -> Dict:
         """
-        Get the most recent OHLCV data for a given currency pair
-        
+        Get the most recent OHLCV data for a given currency pair.
+
         :return Dict representing snapshot of the data for a specified symbol and data type.
         TODO(Juraj): show example
         """
@@ -298,9 +301,11 @@ class CcxtExtractor(imvcdexex.Extractor):
 
         :return Dict representing snapshot of the order book
          for a specified currency pair up to limit-th level.
-        TODO(Juraj): show example 
+        TODO(Juraj): show example
         """
-        return self._download_websocket_data(exchange_id, currency_pair, "bid_ask")
+        return self._download_websocket_data(
+            exchange_id, currency_pair, "bid_ask"
+        )
 
     def _download_bid_ask(
         self, exchange_id: str, currency_pair: str, depth: int, **kwargs: Any
@@ -359,7 +364,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         return bid_ask
 
     def _download_websocket_trades(self, **kwargs: Any) -> Dict:
-        raise NotImplementedError("Trades websocket data is not implemented for CCXT vendor yet.")
+        raise NotImplementedError(
+            "Trades websocket data is not implemented for CCXT vendor yet."
+        )
 
     def _download_trades(self, **kwargs: Any) -> pd.DataFrame:
         raise NotImplementedError("Trades data is not available for CCXT vendor")
