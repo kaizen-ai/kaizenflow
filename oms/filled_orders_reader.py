@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.filled_trades_reader as ofitrrea
+import oms.filled_orders_reader as ofiorrea
 """
 import logging
 import os
@@ -43,7 +43,7 @@ class FilledOrdersReader:
         Get files that correspond to the given time period.
 
         Example of a file name:
-        'fills__***REMOVED***.csv.gz'
+        'fills_20221001-000000_20221004-000000_***REMOVED***.csv.gz'
 
         :param start_ts: start of time period
         :param end_ts: end of time period
