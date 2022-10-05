@@ -104,7 +104,7 @@ def transform_raw_websocket_data(raw_data: List[Dict], data_type: str, exchange_
     :return database compliant DataFrame formed from raw data
     """
     print(raw_data)
-    exit()
+    #exit()
     df = pd.DataFrame(raw_data)
     if data_type == "ohlcv":
         df = _transform_ohlcv_websocket_dataframe(df)
@@ -121,28 +121,30 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     Transform bid/ask raw DataFrame to DataFrame representation 
      suitable for database insertion.
 
-    TODO(Juraj): Add example (assumes format, returns format)
+    :param df: DataFrame formed from raw bid/ask dict data.
+    :return transformed DataFrame
     """
     df = df.explode(["asks", "bids"])
     df[["bid_price", "bid_size"]] = pd.DataFrame(
     df["bids"].to_list(), index=df.index)
     df[["ask_price", "ask_size"]] = pd.DataFrame(
     df["asks"].to_list(), index=df.index)
-    df["currency_pair"] = df["symbol"].str.replace("_", "/")
+    df["currency_pair"] = df["symbol"].str.replace("/", "_")
     groupby_cols = ["currency_pair", "timestamp"]
-    # For clarify we add +1 so the levels start from 1.
+    # For clarify add +1 so the levels start from 1.
     df["level"] = df.groupby(groupby_cols)[groupby_cols].cumcount().add(1)
-    return df[["currency_pair", "timestamp", "bid_size", "bid_price", "ask_size", 
-                    "ask_price", "currency_pair", "level", "end_download_timestamp"]]
+    return df[["currency_pair", "timestamp", "bid_price", "bid_size", "ask_price", 
+                    "ask_size", "level", "end_download_timestamp"]]
 
 def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
     Transform bid/ask raw DataFrame to DataFrame representation 
      suitable for database insertion.
 
-    TODO(Juraj): Add example (assumes format, returns format)
+    :param df: DataFrame formed from raw bid/ask dict data.
+    :return transformed DataFrame
     """
-    df["currency_pair"] = df["currency_pair"].str.replace("_", "/")
+    df["currency_pair"] = df["currency_pair"].str.replace("/", "_")
     _LOG.warning("DataFrame:")
     _LOG.warning(df.head())
     # Each message stores ohlcv candles as a list of lists.

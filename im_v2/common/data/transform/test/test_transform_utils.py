@@ -1,6 +1,7 @@
 import pandas as pd
 import pytest
 
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
@@ -201,35 +202,193 @@ class TestReindexOnCustomColumns(hunitest.TestCase):
         val1 - val2=['mock1', 'mock2', 'mock3']
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
-        
-        
+
+
 # #############################################################################
 
+
 class TestTransformRawWebsocketData(hunitest.TestCase):
-    
     def test_transform_raw_websocket_ohlcv_data(self) -> None:
         """
-        Verify that raw OHLCV dict data received from websocket is
-         transformed to DataFrame of specified format.
+        Verify that raw OHLCV dict data received from websocket is transformed
+        to DataFrame of specified format.
         """
-        test_exchange_id = "binance"
-        test_timestamp = pd.Timestamp('2022-10-05 15:06:00.019422+00:00')
-        test_data = [{'ohlcv': [[1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017], [1664982240000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017]], 'currency_pair': 'ETH/USDT', 'end_download_timestamp': test_timestamp}, { 'ohlcv': [[1664982180000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639], [1664982240000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639]], 'currency_pair': 'BTC/USDT', 'end_download_timestamp': test_timestamp}]
-        expected_data = [["ETH_USDT", 1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017, test_timestamp, test_exchange], ["ETH_USDT", 1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017, test_timestamp, test_exchange], ["BTC_USDT", 1664982180000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639, test_timestamp, test_exchange], ["BTC_USDT", 1664982240000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639, test_timestamp, test_exchange]]
-        expected_columns = ["timestamp", "open", "high", "low", 
-                    "close", "volume", "end_download_timestamp", "exchange"]
+        test_exchange = "binance"
+        test_timestamp = pd.Timestamp("2022-10-05 15:06:00.019422+00:00")
+        test_data = [
+            {
+                "ohlcv": [
+                    [1664982180000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017],
+                    [1664982240000, 1324.17, 1324.79, 1324.0, 1324.01, 2081.017],
+                ],
+                "currency_pair": "ETH/USDT",
+                "end_download_timestamp": test_timestamp,
+            },
+            {
+                "ohlcv": [
+                    [1664982180000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639],
+                    [1664982240000, 19900.0, 19913.2, 19900.0, 19905.1, 376.639],
+                ],
+                "currency_pair": "BTC/USDT",
+                "end_download_timestamp": test_timestamp,
+            },
+        ]
+        expected_data = [
+            [
+                "ETH_USDT",
+                1664982180000,
+                1324.17,
+                1324.79,
+                1324.0,
+                1324.01,
+                2081.017,
+                test_timestamp,
+                test_exchange,
+            ],
+            [
+                "ETH_USDT",
+                1664982240000,
+                1324.17,
+                1324.79,
+                1324.0,
+                1324.01,
+                2081.017,
+                test_timestamp,
+                test_exchange,
+            ],
+            [
+                "BTC_USDT",
+                1664982180000,
+                19900.0,
+                19913.2,
+                19900.0,
+                19905.1,
+                376.639,
+                test_timestamp,
+                test_exchange,
+            ],
+            [
+                "BTC_USDT",
+                1664982240000,
+                19900.0,
+                19913.2,
+                19900.0,
+                19905.1,
+                376.639,
+                test_timestamp,
+                test_exchange,
+            ],
+        ]
+        expected_columns = [
+            "currency_pair",
+            "timestamp",
+            "open",
+            "high",
+            "low",
+            "close",
+            "volume",
+            "end_download_timestamp",
+            "exchange_id",
+        ]
         expected_df = pd.DataFrame(expected_data, columns=expected_columns)
         actual_df = imvcdttrut.transform_raw_websocket_data(
-                test_data, "ohlcv", test_exchange_id
-            )
-        self.assertTrue(False)
-        self.assert_equal(expected_df, actual_df)
+            test_data, "ohlcv", test_exchange
+        ).reset_index(drop=True)
+        actual_df.to_csv("ohlcv_example.csv")
+        self.assert_equal(
+            hpandas.df_to_str(expected_df), hpandas.df_to_str(actual_df)
+        )
 
-        
-    def test_transform_raw_websocket_ohlcv_data(self) -> None:
+    def test_transform_raw_websocket_bid_ask_data(self) -> None:
         """
         Verify that raw bid/ask dict data received from websocket is
-         transformed to DataFrame of specified format.
+        transformed to DataFrame of specified format.
         """
-        pass
-        
+        test_exchange = "binance"
+        test_timestamp = pd.Timestamp("2022-10-05 15:06:00.019422+00:00")
+        test_data = [
+            {
+                "bids": [[1336.7, 60.789], [1336.69, 3.145]],
+                "asks": [[1336.71, 129.483], [1336.72, 20.892]],
+                "timestamp": 1664987681005,
+                "datetime": "2022-10-05T16:34:41.005Z",
+                "nonce": 2000450235897,
+                "symbol": "ETH/USDT",
+                "end_download_timestamp": test_timestamp,
+            },
+            {
+                "bids": [[20066.5, 39.455], [20066.3, 1.346]],
+                "asks": [[20066.6, 0.698], [20066.7, 0.008]],
+                "timestamp": 1664987681001,
+                "datetime": "2022-10-05T16:34:41.001Z",
+                "nonce": 2000450235917,
+                "symbol": "BTC/USDT",
+                "end_download_timestamp": test_timestamp,
+            },
+        ]
+
+        expected_data = [
+            [
+                "ETH_USDT",
+                1664987681005,
+                1336.7,
+                60.789,
+                1336.71,
+                129.483,
+                1,
+                test_timestamp,
+                test_exchange,
+            ],
+            [
+                "ETH_USDT",
+                1664987681005,
+                1336.69,
+                3.145,
+                1336.72,
+                20.892,
+                2,
+                test_timestamp,
+                test_exchange,
+            ],
+            [
+                "BTC_USDT",
+                1664987681001,
+                20066.5,
+                39.455,
+                20066.6,
+                0.698,
+                1,
+                test_timestamp,
+                test_exchange,
+            ],
+            [
+                "BTC_USDT",
+                1664987681001,
+                20066.3,
+                1.346,
+                20066.7,
+                0.008,
+                2,
+                test_timestamp,
+                test_exchange,
+            ],
+        ]
+        expected_columns = [
+            "currency_pair",
+            "timestamp",
+            "bid_price",
+            "bid_size",
+            "ask_price",
+            "ask_size",
+            "level",
+            "end_download_timestamp",
+            "exchange_id",
+        ]
+        expected_df = pd.DataFrame(expected_data, columns=expected_columns)
+        actual_df = imvcdttrut.transform_raw_websocket_data(
+            test_data, "bid_ask", test_exchange
+        ).reset_index(drop=True)
+        actual_df.to_csv("bid_ask_example.csv")
+        self.assert_equal(
+            hpandas.df_to_str(expected_df), hpandas.df_to_str(actual_df)
+        )
