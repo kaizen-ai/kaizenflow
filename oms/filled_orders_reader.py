@@ -88,18 +88,14 @@ class FilledOrdersReader:
                 "Provided start_ts is earlier than the earliest data timestamp: %s",
                 file_paths_df["start_ts"].min(),
             )
-        file_paths_df = file_paths_df.loc[
-            file_paths_df["start_ts"] >= start_ts
-        ]
+        file_paths_df = file_paths_df.loc[file_paths_df["start_ts"] >= start_ts]
         # Filter data by end_ts.
         if end_ts > file_paths_df["end_ts"].max():
             _LOG.warning(
                 "Provided end_ts is later than the latest data timestamp: %s",
                 file_paths_df["end_ts"].max(),
             )
-        file_paths_df = file_paths_df.loc[
-            file_paths_df["end_ts"] <= end_ts
-        ]
+        file_paths_df = file_paths_df.loc[file_paths_df["end_ts"] <= end_ts]
         # Extract file paths.
         file_paths = file_paths_df["file_path"].to_list()
         # Get absolute paths.
@@ -147,9 +143,7 @@ class FilledOrdersReader:
         elif file_format == "csv":
             # Load CSV files as a dataframe.
             for file_name in file_names:
-                df = pd.read_csv(
-                    file_name, parse_dates=["timestamp"]
-                )
+                df = pd.read_csv(file_name, parse_dates=["timestamp"])
                 filled_trades_data.append(df)
             filled_trades_data = pd.concat(filled_trades_data)
             # Filter data outside the given time period.
