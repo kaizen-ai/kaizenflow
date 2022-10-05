@@ -333,7 +333,6 @@ def to_str(
     expression: str,
     frame_lev: int = 1,
     print_lhs: bool = True,
-    equal_separator: str 
     char_separator: str = ",",
 ) -> str:
     """
