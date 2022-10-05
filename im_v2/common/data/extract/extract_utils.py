@@ -36,6 +36,8 @@ SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
 #  sleep_between_iter: time to sleep between iterations in miliseconds.
 #  max_buffer_size: specifies number of websocket 
 #  messages to cache before attempting DB insert.
+# Buffer size is 0 for ohlcv because we want to insert after round of receival 
+#  from websockets.
 WEBSOCKET_CONFIG = {"ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
                     "bid_ask": {"max_buffer_size": 500, "sleep_between_iter": 250}
                     }
@@ -409,7 +411,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             data_buffer = []
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete
-        # an iteration, this allows an "autosycing" mechanism.
+        # an iteration, this provides an "time align" mechanism.
         iter_length = (pd.Timestamp.now(tz) - iter_start_time).total_seconds * 1000
         actual_sleep_time = max(0, iter_length - WEBSOCKET_CONFIG[data_type]["sleep_between_iter"])
         await exchange._exchange.sleep(actual_sleep_time)
