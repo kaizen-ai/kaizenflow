@@ -139,7 +139,6 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         # pylint: enable=line-too-long
         docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name}"
         # TODO(Grisha): enable debug mode.
-        # docker_cmd += " -s --dbg"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
