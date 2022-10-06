@@ -38,6 +38,8 @@ class TestFilledOrderReader1(hunitest.TestCase):
             start_ts,
             end_ts,
         )
+        # Order JSON contents.
+        actual = [hprint.sort_dictionary(d) for d in actual]
         actual_str = hprint.format_list(actual, sep="\n")
         self.check_string(actual_str)
 
