@@ -121,9 +121,9 @@ date_str = config["meta"]["date_str"]
 #   end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
 #   _LOG.info("end_timestamp=%s", end_timestamp)
 
-start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 

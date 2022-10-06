@@ -226,7 +226,7 @@ def get_reconciliation_config() -> cconfig.ConfigList:
     if date_key in os.environ:
         date_str = os.environ[date_key]
     else:
-        date_str = "20221004"
+        date_str = datetime.date.today().strftime("%Y%m%d")
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:
@@ -242,11 +242,13 @@ def get_reconciliation_config() -> cconfig.ConfigList:
         #
         root_dir = "/shared_data/prod_reconciliation"
         # TODO(Grisha): probably we should rename to `system_log_dir`.
+        # Actual prod data dir contains a date of the previous day in the dir name.
+        previous_day_date_str = (pd.Timestamp(date_str) - pd.Timedelta("1D")).strftime("%Y-%m-%d")
         prod_dir = os.path.join(
             root_dir,
             date_str,
             "prod",
-            "system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours",
+            f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
         )
         data_dict = {
             "prod_dir": prod_dir,
