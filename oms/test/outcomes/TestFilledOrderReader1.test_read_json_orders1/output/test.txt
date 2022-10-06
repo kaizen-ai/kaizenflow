@@ -1,6 +1,242 @@
-(6) OrderedDict([('amount', 2.0), ('cost', 34.72), ('datetime', '2022-10-04T10:36:59.754Z'), ('fee', OrderedDict([('cost', 0.013888), ('currency', 'USDT')])), ('fees', [{'currency': 'USDT', 'cost': 0.013888}]), ('id', '400396688'), ('info', OrderedDict([('buyer', True), ('commission', '0.01388800'), ('commissionAsset', 'USDT'), ('id', '400396688'), ('maker', False), ('marginAsset', 'USDT'), ('orderId', '12598181143'), ('positionSide', 'BOTH'), ('price', '17.3600'), ('qty', '2'), ('quoteQty', '34.7200'), ('realizedPnl', '0'), ('side', 'BUY'), ('symbol', 'AVAXUSDT'), ('time', '1664879819754')])), ('order', '12598181143'), ('price', 17.36), ('side', 'buy'), ('symbol', 'AVAX/USDT'), ('takerOrMaker', 'taker'), ('timestamp', 1664879819754), ('type', None)])
-OrderedDict([('amount', 7.0), ('cost', 121.31), ('datetime', '2022-10-04T10:42:04.173Z'), ('fee', OrderedDict([('cost', 0.048524), ('currency', 'USDT')])), ('fees', [{'currency': 'USDT', 'cost': 0.048524}]), ('id', '400396907'), ('info', OrderedDict([('buyer', False), ('commission', '0.04852400'), ('commissionAsset', 'USDT'), ('id', '400396907'), ('maker', False), ('marginAsset', 'USDT'), ('orderId', '12598270086'), ('positionSide', 'BOTH'), ('price', '17.3300'), ('qty', '7'), ('quoteQty', '121.3100'), ('realizedPnl', '-0.12000000'), ('side', 'SELL'), ('symbol', 'AVAXUSDT'), ('time', '1664880124173')])), ('order', '12598270086'), ('price', 17.33), ('side', 'sell'), ('symbol', 'AVAX/USDT'), ('takerOrMaker', 'taker'), ('timestamp', 1664880124173), ('type', None)])
-OrderedDict([('amount', 6.0), ('cost', 104.16), ('datetime', '2022-10-04T10:46:59.818Z'), ('fee', OrderedDict([('cost', 0.041664), ('currency', 'USDT')])), ('fees', [{'currency': 'USDT', 'cost': 0.041664}]), ('id', '400397431'), ('info', OrderedDict([('buyer', True), ('commission', '0.04166400'), ('commissionAsset', 'USDT'), ('id', '400397431'), ('maker', False), ('marginAsset', 'USDT'), ('orderId', '12598362254'), ('positionSide', 'BOTH'), ('price', '17.3600'), ('qty', '6'), ('quoteQty', '104.1600'), ('realizedPnl', '-0.09000000'), ('side', 'BUY'), ('symbol', 'AVAXUSDT'), ('time', '1664880419818')])), ('order', '12598362254'), ('price', 17.36), ('side', 'buy'), ('symbol', 'AVAX/USDT'), ('takerOrMaker', 'taker'), ('timestamp', 1664880419818), ('type', None)])
-OrderedDict([('amount', 5.0), ('cost', 27.135), ('datetime', '2022-09-29T16:46:39.509Z'), ('fee', OrderedDict([('cost', 0.010854), ('currency', 'USDT')])), ('fees', [{'currency': 'USDT', 'cost': 0.010854}]), ('id', '282773274'), ('info', OrderedDict([('buyer', False), ('commission', '0.01085400'), ('commissionAsset', 'USDT'), ('id', '282773274'), ('maker', False), ('marginAsset', 'USDT'), ('orderId', '5772340563'), ('positionSide', 'BOTH'), ('price', '5.4270'), ('qty', '5'), ('quoteQty', '27.1350'), ('realizedPnl', '0'), ('side', 'SELL'), ('symbol', 'APEUSDT'), ('time', '1664469999509')])), ('order', '5772340563'), ('price', 5.427), ('side', 'sell'), ('symbol', 'APE/USDT'), ('takerOrMaker', 'taker'), ('timestamp', 1664469999509), ('type', None)])
-OrderedDict([('amount', 6.0), ('cost', 32.388), ('datetime', '2022-09-29T16:51:58.567Z'), ('fee', OrderedDict([('cost', 0.0129552), ('currency', 'USDT')])), ('fees', [{'currency': 'USDT', 'cost': 0.0129552}]), ('id', '282775654'), ('info', OrderedDict([('buyer', True), ('commission', '0.01295520'), ('commissionAsset', 'USDT'), ('id', '282775654'), ('maker', False), ('marginAsset', 'USDT'), ('orderId', '5772441841'), ('positionSide', 'BOTH'), ('price', '5.3980'), ('qty', '6'), ('quoteQty', '32.3880'), ('realizedPnl', '0.14500000'), ('side', 'BUY'), ('symbol', 'APEUSDT'), ('time', '1664470318567')])), ('order', '5772441841'), ('price', 5.398), ('side', 'buy'), ('symbol', 'APE/USDT'), ('takerOrMaker', 'taker'), ('timestamp', 1664470318567), ('type', None)])
-OrderedDict([('amount', 3.0), ('cost', 16.221), ('datetime', '2022-09-29T16:57:00.267Z'), ('fee', OrderedDict([('cost', 0.0064884), ('currency', 'USDT')])), ('fees', [{'currency': 'USDT', 'cost': 0.0064884}]), ('id', '282779084'), ('info', OrderedDict([('buyer', True), ('commission', '0.00648840'), ('commissionAsset', 'USDT'), ('id', '282779084'), ('maker', False), ('marginAsset', 'USDT'), ('orderId', '5772536135'), ('positionSide', 'BOTH'), ('price', '5.4070'), ('qty', '3'), ('quoteQty', '16.2210'), ('realizedPnl', '0'), ('side', 'BUY'), ('symbol', 'APEUSDT'), ('time', '1664470620267')])), ('order', '5772536135'), ('price', 5.407), ('side', 'buy'), ('symbol', 'APE/USDT'), ('takerOrMaker', 'taker'), ('timestamp', 1664470620267), ('type', None)])
+[
+    {
+        "amount": 2.0,
+        "cost": 34.72,
+        "datetime": "2022-10-04T10:36:59.754Z",
+        "fee": {
+            "cost": 0.013888,
+            "currency": "USDT"
+        },
+        "fees": [
+            {
+                "cost": 0.013888,
+                "currency": "USDT"
+            }
+        ],
+        "id": "400396688",
+        "info": {
+            "buyer": true,
+            "commission": "0.01388800",
+            "commissionAsset": "USDT",
+            "id": "400396688",
+            "maker": false,
+            "marginAsset": "USDT",
+            "orderId": "12598181143",
+            "positionSide": "BOTH",
+            "price": "17.3600",
+            "qty": "2",
+            "quoteQty": "34.7200",
+            "realizedPnl": "0",
+            "side": "BUY",
+            "symbol": "AVAXUSDT",
+            "time": "1664879819754"
+        },
+        "order": "12598181143",
+        "price": 17.36,
+        "side": "buy",
+        "symbol": "AVAX/USDT",
+        "takerOrMaker": "taker",
+        "timestamp": 1664879819754,
+        "type": null
+    },
+    {
+        "amount": 7.0,
+        "cost": 121.31,
+        "datetime": "2022-10-04T10:42:04.173Z",
+        "fee": {
+            "cost": 0.048524,
+            "currency": "USDT"
+        },
+        "fees": [
+            {
+                "cost": 0.048524,
+                "currency": "USDT"
+            }
+        ],
+        "id": "400396907",
+        "info": {
+            "buyer": false,
+            "commission": "0.04852400",
+            "commissionAsset": "USDT",
+            "id": "400396907",
+            "maker": false,
+            "marginAsset": "USDT",
+            "orderId": "12598270086",
+            "positionSide": "BOTH",
+            "price": "17.3300",
+            "qty": "7",
+            "quoteQty": "121.3100",
+            "realizedPnl": "-0.12000000",
+            "side": "SELL",
+            "symbol": "AVAXUSDT",
+            "time": "1664880124173"
+        },
+        "order": "12598270086",
+        "price": 17.33,
+        "side": "sell",
+        "symbol": "AVAX/USDT",
+        "takerOrMaker": "taker",
+        "timestamp": 1664880124173,
+        "type": null
+    },
+    {
+        "amount": 6.0,
+        "cost": 104.16,
+        "datetime": "2022-10-04T10:46:59.818Z",
+        "fee": {
+            "cost": 0.041664,
+            "currency": "USDT"
+        },
+        "fees": [
+            {
+                "cost": 0.041664,
+                "currency": "USDT"
+            }
+        ],
+        "id": "400397431",
+        "info": {
+            "buyer": true,
+            "commission": "0.04166400",
+            "commissionAsset": "USDT",
+            "id": "400397431",
+            "maker": false,
+            "marginAsset": "USDT",
+            "orderId": "12598362254",
+            "positionSide": "BOTH",
+            "price": "17.3600",
+            "qty": "6",
+            "quoteQty": "104.1600",
+            "realizedPnl": "-0.09000000",
+            "side": "BUY",
+            "symbol": "AVAXUSDT",
+            "time": "1664880419818"
+        },
+        "order": "12598362254",
+        "price": 17.36,
+        "side": "buy",
+        "symbol": "AVAX/USDT",
+        "takerOrMaker": "taker",
+        "timestamp": 1664880419818,
+        "type": null
+    },
+    {
+        "amount": 5.0,
+        "cost": 27.135,
+        "datetime": "2022-09-29T16:46:39.509Z",
+        "fee": {
+            "cost": 0.010854,
+            "currency": "USDT"
+        },
+        "fees": [
+            {
+                "cost": 0.010854,
+                "currency": "USDT"
+            }
+        ],
+        "id": "282773274",
+        "info": {
+            "buyer": false,
+            "commission": "0.01085400",
+            "commissionAsset": "USDT",
+            "id": "282773274",
+            "maker": false,
+            "marginAsset": "USDT",
+            "orderId": "5772340563",
+            "positionSide": "BOTH",
+            "price": "5.4270",
+            "qty": "5",
+            "quoteQty": "27.1350",
+            "realizedPnl": "0",
+            "side": "SELL",
+            "symbol": "APEUSDT",
+            "time": "1664469999509"
+        },
+        "order": "5772340563",
+        "price": 5.427,
+        "side": "sell",
+        "symbol": "APE/USDT",
+        "takerOrMaker": "taker",
+        "timestamp": 1664469999509,
+        "type": null
+    },
+    {
+        "amount": 6.0,
+        "cost": 32.388,
+        "datetime": "2022-09-29T16:51:58.567Z",
+        "fee": {
+            "cost": 0.0129552,
+            "currency": "USDT"
+        },
+        "fees": [
+            {
+                "cost": 0.0129552,
+                "currency": "USDT"
+            }
+        ],
+        "id": "282775654",
+        "info": {
+            "buyer": true,
+            "commission": "0.01295520",
+            "commissionAsset": "USDT",
+            "id": "282775654",
+            "maker": false,
+            "marginAsset": "USDT",
+            "orderId": "5772441841",
+            "positionSide": "BOTH",
+            "price": "5.3980",
+            "qty": "6",
+            "quoteQty": "32.3880",
+            "realizedPnl": "0.14500000",
+            "side": "BUY",
+            "symbol": "APEUSDT",
+            "time": "1664470318567"
+        },
+        "order": "5772441841",
+        "price": 5.398,
+        "side": "buy",
+        "symbol": "APE/USDT",
+        "takerOrMaker": "taker",
+        "timestamp": 1664470318567,
+        "type": null
+    },
+    {
+        "amount": 3.0,
+        "cost": 16.221,
+        "datetime": "2022-09-29T16:57:00.267Z",
+        "fee": {
+            "cost": 0.0064884,
+            "currency": "USDT"
+        },
+        "fees": [
+            {
+                "cost": 0.0064884,
+                "currency": "USDT"
+            }
+        ],
+        "id": "282779084",
+        "info": {
+            "buyer": true,
+            "commission": "0.00648840",
+            "commissionAsset": "USDT",
+            "id": "282779084",
+            "maker": false,
+            "marginAsset": "USDT",
+            "orderId": "5772536135",
+            "positionSide": "BOTH",
+            "price": "5.4070",
+            "qty": "3",
+            "quoteQty": "16.2210",
+            "realizedPnl": "0",
+            "side": "BUY",
+            "symbol": "APEUSDT",
+            "time": "1664470620267"
+        },
+        "order": "5772536135",
+        "price": 5.407,
+        "side": "buy",
+        "symbol": "APE/USDT",
+        "takerOrMaker": "taker",
+        "timestamp": 1664470620267,
+        "type": null
+    }
+]

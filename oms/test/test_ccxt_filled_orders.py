@@ -8,7 +8,7 @@ import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import oms.ccxt_filled_orders as occfiord
 import oms.hsecrets as homssec
-
+import json
 
 class TestFilledOrderReader1(hunitest.TestCase):
     _secret_identifier = homssec.SecretIdentifier(
@@ -39,8 +39,7 @@ class TestFilledOrderReader1(hunitest.TestCase):
             end_ts,
         )
         # Order JSON contents.
-        actual = [hprint.sort_dictionary(d) for d in actual]
-        actual_str = hprint.format_list(actual, sep="\n")
+        actual_str = json.dumps(actual, indent=4, sort_keys=True)
         self.check_string(actual_str)
 
     def test_read_csv_orders1(self) -> None:
