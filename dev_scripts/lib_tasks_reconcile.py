@@ -219,21 +219,20 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
     # Copy prod run results to the target dir.
-    # TODO(Grisha): @Dan infer the path from run date.
-    # TODO(Grisha): pass stage as a param with `preprod` as a default value.
-    timestamp = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
+    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
     shared_dir = f"/data/shared/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{timestamp}'"
-    system_log_dir = hsystem.system_to_string(cmd)[1]
+    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
+    _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
     cmd = f"chown -R -w {target_dir}"
     _system(cmd)
-    # TODO(Grisha): @Dan pick up the logs from `/data/shared/ecs/preprod/logs`.
     # Copy prod run logs to the shared folder.
-    log_file = f"{shared_dir}/logs/log_scheduled__{run_date}_2hours.txt"
+    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    _, log_file = hsystem.system_to_string(cmd)
     hdbg.dassert_file_exists(system_log_dir)
     docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
