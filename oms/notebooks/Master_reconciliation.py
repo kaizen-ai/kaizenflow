@@ -20,7 +20,6 @@
 # %%
 import logging
 import os
-from typing import List, Tuple
 
 import pandas as pd
 
@@ -31,8 +30,8 @@ import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import helpers.hprint as hprint
-import helpers.hsystem as hsystem
 import oms as oms
 
 # %%
@@ -45,7 +44,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %% [markdown]
-# # Build the config
+# # Build the reconciliation config
 
 # %%
 config_list = oms.build_reconciliation_configs()
@@ -71,6 +70,19 @@ sim_dir = config["load_data_config"]["sim_dir"]
 _LOG.info("Sim_dir=%s", sim_dir)
 hdbg.dassert(sim_dir)
 hdbg.dassert_dir_exists(sim_dir)
+
+# %%
+# TODO(Grisha): factor common code.
+# TODO(Grisha): diff configs.
+config_name = "system_config.input.values_as_strings.pkl"
+
+prod_config_path = os.path.join(prod_dir, config_name)
+prod_config_pkl = hpickle.from_pickle(prod_config_path)
+prod_config = cconfig.Config.from_dict(prod_config_pkl)
+#
+sim_config_path = os.path.join(sim_dir, config_name)
+sim_config_pkl = hpickle.from_pickle(sim_config_path)
+sim_config = cconfig.Config.from_dict(sim_config_pkl)
 
 # %%
 # TODO(Grisha): factor out common code.
@@ -120,13 +132,16 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # %%
 # TODO(gp): @grisha move to oms/reconciliation.py
 
+
 def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     """
     Retrieve the most recent output from the last DAG node.
 
     This function relies on our file naming conventions.
     """
-    parquet_files = list(filter(lambda x: "parquet" in x, sorted(os.listdir(cand_dag_dir))))
+    parquet_files = list(
+        filter(lambda x: "parquet" in x, sorted(os.listdir(cand_dag_dir)))
+    )
     _LOG.info("Tail of files found=%s", parquet_files[-3:])
     file_name = parquet_files[-1]
     _LOG.info("DAG file selected=%s", file_name)
@@ -174,13 +189,17 @@ hpandas.df_to_str(
 # # Compute research portfolio equivalent
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(**config["research_forecast_evaluator_from_prices"]["init"])
+fep = dtfmod.ForecastEvaluatorFromPrices(
+    **config["research_forecast_evaluator_from_prices"]["init"]
+)
 
 # %%
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
     prod_dag_df,
-    **config["research_forecast_evaluator_from_prices"]["annotate_forecasts_kwargs"],
-    compute_extended_stats=True
+    **config["research_forecast_evaluator_from_prices"][
+        "annotate_forecasts_kwargs"
+    ],
+    compute_extended_stats=True,
 )
 # TODO(gp): Move it to annotate_forecasts?
 research_portfolio_df = research_portfolio_df.sort_index(axis=1)
@@ -213,8 +232,12 @@ for name, path in portfolio_path_dict.items():
     )
     portfolio_dfs[name] = portfolio_df
     portfolio_stats_dfs[name] = portfolio_stats_df
-portfolio_dfs["research"] = research_portfolio_df.loc[start_timestamp:end_timestamp]
-portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
+portfolio_dfs["research"] = research_portfolio_df.loc[
+    start_timestamp:end_timestamp
+]
+portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
+    start_timestamp:end_timestamp
+]
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
@@ -233,9 +256,15 @@ display(stats_sxs)
 # # Compare pairwise portfolio correlations
 
 # %%
-adapted_prod_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfolio_dfs["prod"])
-adapted_cand_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfolio_dfs["cand"])
-adapted_sim_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(portfolio_dfs["sim"])
+adapted_prod_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(
+    portfolio_dfs["prod"]
+)
+adapted_cand_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(
+    portfolio_dfs["cand"]
+)
+adapted_sim_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(
+    portfolio_dfs["sim"]
+)
 
 # %%
 dtfmod.compute_correlations(
