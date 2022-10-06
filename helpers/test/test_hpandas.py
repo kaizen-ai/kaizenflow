@@ -2163,6 +2163,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
     """
     Filter Multiindex DataFrame with 2 column levels.
     """
+
     @staticmethod
     def get_multiindex_df() -> pd.DataFrame:
         timestamp_index = [
