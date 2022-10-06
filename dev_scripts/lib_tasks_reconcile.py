@@ -380,11 +380,11 @@ def reconcile_run_notebook(ctx, run_date=None):
     #
     notebook_file = "amp/oms/notebooks/Master_reconciliation.ipynb"
     # TODO(Grisha): @Dan Fix issue with parenthesis.
-    config_builder = "amp.oms.reconciliation.get_reconciliation_config()"
-    cmd_ = [f"AM_RECONCILIATION_DATE={run_date} AM_ASSET_CLASS={asset_class} amp/dev_scripts/notebooks/run_notebook.py"]
-    cmd_.append(f"--notebook {notebook_file}")
-    cmd_.append(f"--config_builder '{config_builder}'")
-    cmd_.append(f"--dst_dir {target_dir}")
+    config_builder = "amp/oms/reconciliation.py get_reconciliation_config"
+    cmd_ = [f'AM_RECONCILIATION_DATE={run_date} AM_ASSET_CLASS={asset_class} amp/dev_scripts/notebooks/run_notebook.py']
+    cmd_.append(f'--notebook {notebook_file}')
+    cmd_.append(f'--config_builder {config_builder}')
+    cmd_.append(f'--dst_dir {target_dir}')
     cmd_.append("--num_threads 'serial'")
     # TODO(Grisha): @Dan Understand whether the notebook is published and where.
     cmd_.append("--publish_notebook")
