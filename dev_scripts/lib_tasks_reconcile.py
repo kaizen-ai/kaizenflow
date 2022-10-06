@@ -208,7 +208,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
+def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: ignore
     """
     Copy the output of the prod run to a shared folder.
     """
@@ -221,7 +221,10 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     # Copy prod run results to the target dir.
     # TODO(Grisha): @Dan infer the path from run date.
     # TODO(Grisha): pass stage as a param with `preprod` as a default value.
-    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
+    timestamp = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    shared_dir = f"/data/shared/ecs/{stage}"
+    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{timestamp}'"
+    system_log_dir = hsystem.system_to_string(cmd)[1]
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
@@ -229,11 +232,11 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     cmd = f"chown -R -w {target_dir}"
     _system(cmd)
     # TODO(Grisha): @Dan pick up the logs from `/data/shared/ecs/preprod/logs`.
-    # # Copy script log file to the target dir.
-    # log_file = f"log_{run_date}_2hours.txt"
-    # hdbg.dassert_file_exists(system_log_dir)
-    # docker_cmd = f"cp -v {log_file} {target_dir}"
-    # _system(docker_cmd)
+    # Copy prod run logs to the shared folder.
+    log_file = f"{shared_dir}/logs/log_scheduled__{run_date}_2hours.txt"
+    hdbg.dassert_file_exists(system_log_dir)
+    docker_cmd = f"cp -v {log_file} {target_dir}"
+    _system(docker_cmd)
 
 
 @task
