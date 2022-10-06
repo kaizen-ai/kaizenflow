@@ -215,9 +215,10 @@ def adapt_portfolio_object_df_to_forecast_evaluator_df(
     return adapted_df
 
 
-def get_reconciliation_config() -> cconfig.ConfigList:
+def build_reconciliation_configs() -> cconfig.ConfigList:
     """
     Get a reconciliation that is specific of an asset class.
+
     :param date_str: reconciliation date as str, e.g., `20221003`
     :param asset_class: either `equities` or `crypto`
     """

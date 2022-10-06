@@ -250,15 +250,22 @@ def reconcile_run_notebook(ctx, run_date=None):
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
     cmd_txt.append(
-        "amp/dev_scripts/notebooks/run_notebook.py --notebook amp/oms/notebooks/Master_reconciliation.ipynb --config_builder 'amp.oms.reconciliation.get_reconciliation_config()' --dst_dir ./ --num_threads serial --publish_notebook -v DEBUG 2>&1 | tee log.txt"
+        "amp/dev_scripts/notebooks/run_notebook.py --notebook amp/oms/notebooks/Master_reconciliation.ipynb --config_builder 'amp.oms.reconciliation.build_reconciliation_configs()' --dst_dir ./ --num_threads serial --publish_notebook -v DEBUG 2>&1 | tee log.txt"
     )
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
     file_name = "tmp.publish_notebook.sh"
     hio.to_file(file_name, cmd_txt)
     # Run the script inside docker.
+    # TODO(Dan): Make more readable.
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
+    # Copy the published notebook to the shared folder.
+    # local_notebook_path = "./result0/"
+    # target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    # hdbg.dassert_dir_exists(target_dir)
+    # docker_cmd = f"cp -vr {local_notebook_path} {target_dir}"
+    # _system(docker_cmd)
 
 
 @task
