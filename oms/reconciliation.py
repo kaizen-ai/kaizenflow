@@ -214,7 +214,7 @@ def adapt_portfolio_object_df_to_forecast_evaluator_df(
     return adapted_df
 
 
-def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config:
+def get_reconciliation_config() -> cconfig.ConfigList:
     """
     Get a reconciliation that is specific of an asset class.
 
@@ -222,6 +222,18 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
     :param asset_class: either `equities` or `crypto`
     """
     # Set values for variables that are specific of an asset class.
+    date_key = "AM_RECONCILIATION_DATE"
+    if date_key in os.environ:
+        date_str = os.environ[date_key]
+    else:
+        date_str = "20221004"
+    #
+    asset_key = "AM_ASSET_CLASS"
+    if asset_key in os.environ:
+        asset_class = os.environ[asset_key]
+    else:
+        asset_class = "crypto"
+    #
     if asset_class == "crypto":
         # For crypto the TCA part is not implemented yet.
         run_tca = False
@@ -304,12 +316,5 @@ def get_reconciliation_config(date_str: str, asset_class: str) -> cconfig.Config
         },
     }
     config = cconfig.Config.from_dict(config_dict)
-    return config
-
-
-# TODO(Grisha): @Dan Consider deprecating.
-def get_task2940_config() -> cconfig.Config:
-    date_str = "20221004"
-    asset_class = "crypto"
-    config = oms.get_reconciliation_config(date_str, asset_class)
-    return config
+    config_list = cconfig.ConfigList([config])
+    return config_list

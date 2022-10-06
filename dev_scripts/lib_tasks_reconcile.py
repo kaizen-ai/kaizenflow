@@ -372,14 +372,20 @@ def reconcile_run_notebook(ctx, run_date=None):
     _ = ctx
     run_date = "20221004" #_get_run_date(run_date)
     asset_class = "crypto"
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    target_dir = "/app/oms"
+    # target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Saving results to '%s'", target_dir)
     #
     notebook_file = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    # config_builder = f"amp.oms.reconciliation.get_reconciliation_config"
-    config_builder = "amp.oms.reconciliation.get_task2940_config"
-    docker_cmd = f"run_notebook.py --notebook {notebook_file} --config_builder '{config_builder}' --dst_dir {target_dir}"
+    config_builder = "amp.oms.reconciliation.get_reconciliation_config()"
+    cmd_ = [f"AM_RECONCILIATION_DATE={run_date} AM_ASSET_CLASS={asset_class} amp/dev_scripts/notebooks/run_notebook.py"]
+    cmd_.append(f"--notebook {notebook_file}")
+    cmd_.append(f"--config_builder '{config_builder}'")
+    cmd_.append(f"--dst_dir {target_dir}")
+    cmd_.append("--num_threads 'serial'")
+    docker_cmd = " ".join(cmd_)
+    #
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
 
