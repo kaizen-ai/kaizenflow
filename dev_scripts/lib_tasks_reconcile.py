@@ -237,6 +237,25 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
 
 
 @task
+def reconcile_run_notebook(ctx, run_date=None):
+    """
+    Run reconcilation notebook.
+    """
+    _ = ctx
+    run_date = "20221005" #_get_run_date(run_date)
+    asset_class = "crypto"
+    #
+    cmd_ = [f"export AM_RECONCILIATION_DATE={run_date}"]
+    cmd_.append(f"export AM_ASSET_CLASS={asset_class}")
+    export_cmd = "; ".join(cmd_)
+    _system(export_cmd)
+    #
+    docker_cmd = f"invoke docker_cmd --cmd 'source tmp.publish_notebook.sh'"
+    # TODO(Grisha): @Dan Add command to copy the published notebook from local to shared.
+    _system(docker_cmd)
+
+
+@task
 def reconcile_ls(ctx, run_date=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
