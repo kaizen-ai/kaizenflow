@@ -30,6 +30,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
+import oms.ccxt_filled_orders as occfiord
 import oms.hsecrets as omssec
 import oms.oms_ccxt_utils as oomccuti
 
@@ -157,10 +158,23 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Save file.
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
-    file_name = os.path.join(
-        args.dst_dir, f"fills_{start_timestamp_str}_{end_timestamp_str}.json"
+    # Save data as JSON.
+    json_file_name = os.path.join(
+        args.dst_dir,
+        "json/",
+        f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.json",
     )
-    hio.to_json(file_name, fills)
+    _LOG.debug("json_file_name=%s", json_file_name)
+    hio.to_json(json_file_name, fills)
+    # Save data as a CSV file.
+    fills_dataframe = occfiord.convert_fills_json_to_dataframe(fills)
+    csv_file_name = os.path.join(
+        args.dst_dir,
+        "csv/",
+        f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.csv.gz",
+    )
+    _LOG.debug("csv_file_name=%s", csv_file_name)
+    fills_dataframe.to_csv(csv_file_name)
 
 
 if __name__ == "__main__":
