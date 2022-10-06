@@ -38,8 +38,12 @@ class TestFilledOrderReader1(hunitest.TestCase):
             start_ts,
             end_ts,
         )
+        # Verify that the number of items in JSON is similar to expected.
+        # Note: format of the output is checked instead of contents
+        #  due to unordered location of the items in the resulting dictionary.
         self.assertEqual(len(actual), 6)
-        expected_keys = [
+        # Verify that the items have expected keys.
+        expected_keys = {
             "order",
             "price",
             "side",
@@ -54,9 +58,9 @@ class TestFilledOrderReader1(hunitest.TestCase):
             "datetime",
             "cost",
             "amount",
-        ]
-        actual_keys = list(actual[0].keys())
-        self.assertListEqual(expected_keys, actual_keys)
+        }
+        actual_keys = set(actual[0].keys())
+        self.assertSetEqual(expected_keys, actual_keys)
 
     def test_read_csv_orders1(self) -> None:
         """
