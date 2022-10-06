@@ -1407,11 +1407,11 @@ def compare_visually_dataframes(
 
 
 def subset_multiindex_df(
-    df: pd.DataFrame, 
-    start_timestamp: pd.Timestamp = None, 
-    end_timestamp: pd.Timestamp = None, 
-    columns_level0: List[str] = None, 
-    columns_level1: List[str] = None,
+    df: pd.DataFrame,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+    columns_level0: Optional[List[str]] = None,
+    columns_level1: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
     Filter DataFrame with column MultiIndex by timestamp index, and column
@@ -1427,11 +1427,11 @@ def subset_multiindex_df(
     # Filter by timestamp.
     df = trim_df(
         df,
-        ts_col_name = None,
-        start_ts = start_timestamp,
-        end_ts = end_timestamp,
-        left_close = True,
-        right_close= True,
+        ts_col_name=None,
+        start_ts=start_timestamp,
+        end_ts=end_timestamp,
+        left_close=True,
+        right_close=True,
     )
     # Filter by asset_id (level 0).
     if columns_level0:

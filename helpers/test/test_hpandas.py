@@ -2163,6 +2163,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
     """
     Filter Multiindex DataFrame with 2 column levels.
     """
+
     def get_multiindex_df(self) -> pd.DataFrame:
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
@@ -2171,11 +2172,8 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             pd.Timestamp("2022-01-01 21:04:00+00:00"),
             pd.Timestamp("2022-01-01 21:05:00+00:00"),
         ]
-        #
         iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
-        #
         index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
-        #
         nums = np.array(
             [
                 [
@@ -2230,16 +2228,16 @@ class Test_subset_multiindex_df(hunitest.TestCase):
                 ],
             ]
         )
-        #
         df = pd.DataFrame(nums, index=timestamp_index, columns=index)
         return df
 
     def test1(self) -> None:
         """
         Sort by:
-         - Timestamp index range
-         - Column names (level 1)
-         - Asset ids (level 2)
+
+        - Timestamp index range
+        - Column names (level 1)
+        - Asset ids (level 2)
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2250,13 +2248,13 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             columns_level1=["high", "low"],
         )
         expected_length = 3
-        expected_column_names = [('asset1', 'high'), ('asset1', 'low')]
+        expected_column_names = [("asset1", "high"), ("asset1", "low")]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
         columns=('asset1', 'high'),('asset1', 'low')
         shape=(3, 2)
-                                    asset1          
+                                    asset1
         timestamp                      high       low
         2022-01-01 21:01:00+00:00  0.124922 -0.359292
         2022-01-01 21:02:00+00:00  0.791050  0.766129
@@ -2270,12 +2268,12 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             expected_signature,
         )
 
-    
     def test2(self) -> None:
         """
         Sort by:
-         - Timestamp index range
-         - Column names (level 1)
+
+        - Timestamp index range
+        - Column names (level 1)
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2285,7 +2283,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             columns_level1=["close"],
         )
         expected_length = 2
-        expected_column_names = [('asset1', 'close'), ('asset2', 'close')]
+        expected_column_names = [("asset1", "close"), ("asset2", "close")]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
@@ -2304,12 +2302,12 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             expected_signature,
         )
 
-
     def test3(self) -> None:
         """
         Sort by:
-         - Timestamp index range
-         - Asset ids (level 2)
+
+        - Timestamp index range
+        - Asset ids (level 2)
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2319,13 +2317,18 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             columns_level0=["asset2"],
         )
         expected_length = 2
-        expected_column_names = [('asset2', 'close'), ('asset2', 'high'), ('asset2', 'low'), ('asset2', 'open')]
+        expected_column_names = [
+            ("asset2", "close"),
+            ("asset2", "high"),
+            ("asset2", "low"),
+            ("asset2", "open"),
+        ]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
         columns=('asset2', 'open'),('asset2', 'high'),('asset2', 'low'),('asset2', 'close')
         shape=(2, 4)
-                                    asset2                              
+                                    asset2
         timestamp                      open      high       low     close
         2022-01-01 21:01:00+00:00  0.200999  1.407860 -0.131710  0.100234
         2022-01-01 21:02:00+00:00 -1.059238  0.060399 -0.776521  2.045787
@@ -2338,12 +2341,12 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             expected_signature,
         )
 
-
     def test4(self) -> None:
         """
         Sort by:
-         - Column names (level 1)
-         - Asset ids (level 2)
+
+        - Column names (level 1)
+        - Asset ids (level 2)
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2352,7 +2355,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             columns_level1=["low"],
         )
         expected_length = 5
-        expected_column_names = [('asset2', 'low')]
+        expected_column_names = [("asset2", "low")]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:05:00+00:00]
@@ -2374,7 +2377,6 @@ class Test_subset_multiindex_df(hunitest.TestCase):
             expected_signature,
         )
 
-
     def test_columns_level0_invalid_input(self) -> None:
         df = self.get_multiindex_df()
         with self.assertRaises(AssertionError):
@@ -2382,7 +2384,6 @@ class Test_subset_multiindex_df(hunitest.TestCase):
                 df,
                 columns_level0=["invalid_input"],
             )
-
 
     def test_columns_level1_invalid_input(self) -> None:
         df = self.get_multiindex_df()
