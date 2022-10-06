@@ -8,7 +8,7 @@ import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 import oms.ccxt_filled_orders as occfiord
 import oms.hsecrets as homssec
-import json
+
 
 class TestFilledOrderReader1(hunitest.TestCase):
     _secret_identifier = homssec.SecretIdentifier(
@@ -38,8 +38,25 @@ class TestFilledOrderReader1(hunitest.TestCase):
             start_ts,
             end_ts,
         )
-        actual = pd.DataFrame(actual)
-        self.check_string(hpandas.df_to_str(actual))
+        self.assertEqual(len(actual), 6)
+        expected_keys = [
+            "order",
+            "price",
+            "side",
+            "symbol",
+            "takerOrMaker",
+            "timestamp",
+            "type",
+            "info",
+            "id",
+            "fees",
+            "fee",
+            "datetime",
+            "cost",
+            "amount",
+        ]
+        actual_keys = list(actual[0].keys())
+        self.assertListEqual(expected_keys, actual_keys)
 
     def test_read_csv_orders1(self) -> None:
         """
