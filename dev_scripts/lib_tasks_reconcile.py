@@ -245,13 +245,19 @@ def reconcile_run_notebook(ctx, run_date=None):
     run_date = "20221005" #_get_run_date(run_date)
     asset_class = "crypto"
     #
-    cmd_ = [f"export AM_RECONCILIATION_DATE={run_date}"]
-    cmd_.append(f"export AM_ASSET_CLASS={asset_class}")
-    export_cmd = "; ".join(cmd_)
-    _system(export_cmd)
-    #
-    docker_cmd = f"invoke docker_cmd --cmd 'source tmp.publish_notebook.sh'"
-    # TODO(Grisha): @Dan Add command to copy the published notebook from local to shared.
+    cmd_txt = []
+    cmd_txt.append(f"export AM_RECONCILIATION_DATE={run_date}")
+    cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
+    # Add the command to run the notebook.
+    cmd_txt.append(
+        "amp/dev_scripts/notebooks/run_notebook.py --notebook amp/oms/notebooks/Master_reconciliation.ipynb --config_builder 'amp.oms.reconciliation.get_reconciliation_config()' --dst_dir ./ --num_threads serial --publish_notebook -v DEBUG 2>&1 | tee log.txt"
+    )
+    cmd_txt = "\n".join(cmd_txt)
+    # Save the commands as a script.
+    file_name = "tmp.publish_notebook.sh"
+    hio.to_file(file_name, cmd_txt)
+    # Run the script inside docker.
+    docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
 
 
