@@ -38,9 +38,8 @@ class TestFilledOrderReader1(hunitest.TestCase):
             start_ts,
             end_ts,
         )
-        # Order JSON contents.
-        actual_str = json.dumps(actual, indent=4, sort_keys=True)
-        self.check_string(actual_str)
+        actual = pd.DataFrame(actual)
+        self.check_string(hpandas.df_to_str(actual))
 
     def test_read_csv_orders1(self) -> None:
         """
