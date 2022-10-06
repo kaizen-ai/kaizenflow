@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.1
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -44,6 +44,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+
 # %%
 config_list = oms.get_reconciliation_config()
 config = config_list[0]
@@ -52,7 +53,7 @@ print(config)
 # %% [markdown]
 # # Specify data to load
 
-# %% run_control={"marked": false}
+# %% run_control={"marked": true}
 # TODO(Grisha): factor out common code.
 prod_dir = config["load_data_config"]["prod_dir"]
 print(prod_dir)
@@ -70,7 +71,8 @@ hdbg.dassert(sim_dir)
 hdbg.dassert_dir_exists(sim_dir)
 
 # %%
-# TODO(Grisha): factor out common code.
+# TODO(Grisha): factor out common code and use the dict approach for both portfolio_path_dict and
+#  dag_path_dict.
 
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 hdbg.dassert_dir_exists(prod_portfolio_dir)
@@ -96,6 +98,10 @@ if config["meta"]["run_tca"]:
     hdbg.dassert_file_exists(tca_csv)
 
 # %%
+# # !ls /shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts
+
+# %%
+# This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 portfolio_path_dict = {
     "prod": prod_portfolio_dir,
     "cand": cand_portfolio_dir,
@@ -105,6 +111,16 @@ portfolio_path_dict = {
 # %%
 # TODO(gp): @Grisha infer this from the data from df.
 date_str = config["meta"]["date_str"]
+# TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
+
+# # Load data from prod Portfolio
+# # Extract min max
+# if False:
+#   start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
+#   _LOG.info("start_timestamp=%s", start_timestamp)
+#   end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
+#   _LOG.info("end_timestamp=%s", end_timestamp)
+
 start_timestamp = pd.Timestamp(date_str + " 10:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
 end_timestamp = pd.Timestamp(date_str + " 12:00:00", tz="America/New_York")
@@ -115,6 +131,8 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
+# TODO(gp): @grisha move to oms/reconciliation.py
+
 def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     """
     Retrieve the most recent output from the last DAG node.
@@ -130,6 +148,13 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     dag_df = pd.read_parquet(dag_parquet_path)
     return dag_df
 
+
+# %%
+# GOAL: We should be able to specify what exactly we want to run (e.g., prod, cand, sim)
+# because not everything is always available or important (e.g., for cc we don't have candidate,
+# for equities we don't always have sim).
+
+# INV: prod_dag_df -> dag_df["prod"], cand_dag_df -> dag_df["cand"]
 
 # %%
 prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
@@ -153,53 +178,8 @@ hpandas.df_to_str(
 )
 
 # %%
-# TODOO(gp): @grisha
-# Problem: given two multi-index dfs, we want to compare how similar they are
-
-# Check if they have the same columns (in the same order)
-#  - switch to ignore certain columns
-#  - switch to reorder the columns to sort them
-
-# Check if they have the same index
-#  - switch to perform intersection
-
-# Check if they are exactly the same, e.g., the difference is less than a threshold <1e-6.
-#   Show the rows with the max difference (use the `differ_visually_...`)
-#   Allow to subset by columns (e.g., close)
-
-# %%
-# TODO(gp): @grisha
-
-# Given two multi-index dfs, allow to slice the values by index or by column
-# Create a df with sliced 2 columns or rows and do the diff so that it's easy to plot / inspect
-#
-# #col_name = "price"
-# col_name = "executed_trades_notional"
-# #asset_id = 1030828978
-# #asset_id = 5115052901
-# asset_id = 5118394986
-# #df1 = adapted_sim_df[col_name][asset_id]
-# df1 = adapted_prod_df[col_name][asset_id]
-# df2 = research_portfolio_df[col_name][asset_id]
-
-# (df1 - df2).dropna().plot()
-
-# df = pd.DataFrame(df1).merge(pd.DataFrame(df2), how="outer", left_index=True, right_index=True, suffixes=["_prod", "_research"])
-
-# #df["diff"] = df["1030828978_prod"] - df["1030828978_research"]
-
-# #display(df)
-
-# df.dropna().plot()
-
-# %%
-# TODO(gp): Add function to compare duration of different dfs
-# E.g., duration_df = compute_duration_df(tag_to_df)
-#  Compute min / max index
-#  Compute min / max index with all values non-nans
-#  The output is multi-index indexed by tag and has (min_idx, max_idx, )
-
-duration_df = pd.MultiIndex
+# Make sure they are exactly the same.
+(prod_dag_df - sim_dag_df).abs().max().max()
 
 # %% [markdown]
 # # Compute research portfolio equivalent
@@ -220,6 +200,47 @@ research_portfolio_df = research_portfolio_df.sort_index(axis=1)
 
 # %%
 hpandas.df_to_str(research_portfolio_stats_df, log_level=logging.INFO)
+
+# %%
+# TODO(gp): Move the sorting to annotate_forecasts only for the second level.
+# Ideally, we should have assume that things are sorted and if they are not asserts.
+# Then there is a switch to acknowledge this problem and solve it.
+research_portfolio_df = research_portfolio_df.sort_index(axis=1, level=1)
+
+# %% [markdown]
+# # Target positions
+
+# %%
+# !ls {portfolio_path_dict["prod"] + "/.."}
+
+# %%
+portfolio_path_dict["prod"] + "/.."
+
+# %%
+# !more '/shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts/portfolio/../target_positions/20221004_120217.csv'
+
+# %%
+prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
+    portfolio_path_dict["prod"] + "/.."
+)
+hpandas.df_to_str(prod_forecast_df, log_level=logging.INFO)
+
+# %%
+prod_forecast_df.columns.levels[0]
+
+# %%
+df = prod_forecast_df.copy()
+df.index = prod_forecast_df["target_position"].index.round("5T")
+df["target_position"].shift(1).head(10)
+
+# %%
+research_portfolio_df["holdings_shares"]["2022-10-04 10:06:45.241662-04:00":]
+
+# %%
+sim_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
+    portfolio_path_dict["sim"] + "/.."
+)
+hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 
 # %% [markdown]
 # # Orders
@@ -271,6 +292,9 @@ portfolio_config_dict = {
 portfolio_config_dict
 
 # %%
+# TODO(gp): @grisha move to library.
+
+# Load the 4 portfolios.
 portfolio_dfs = {}
 portfolio_stats_dfs = {}
 for name, path in portfolio_path_dict.items():
