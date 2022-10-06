@@ -1414,17 +1414,19 @@ def subset_multiindex_df(
     columns_level1: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
-    Filter DataFrame with column MultiIndex by timestamp index, and column
-    levels.
+    Filter MultiIndex DataFrame by timestamp index, and column levels.
 
-    :param start_timestamp: the start boundary for trimming
-    :param end_timestamp: the end boundary for trimming
-    :param columns_level0: asset-specific column name (e.g., `binance::BTC_USDT`)
-    :param columns_level1: data-specific column name (e.g., `close`)
+    :param start_timestamp: see `trim_df()`
+    :param end_timestamp: see `trim_df()`
+    :param columns_level0: column names that corresponds to `df.columns.levels[0]`
+    :param columns_level1: column names that corresponds to `df.columns.levels[1]`
     :return: filtered DataFrame
     """
     hdbg.dassert_eq(2, len(df.columns.levels))
     # Filter by timestamp.
+    allow_empty = False
+    strictly_increasing = False
+    dassert_time_indexed_df(df, allow_empty, strictly_increasing)
     df = trim_df(
         df,
         ts_col_name=None,
@@ -1433,12 +1435,14 @@ def subset_multiindex_df(
         left_close=True,
         right_close=True,
     )
-    # Filter by asset_id (level 0).
     if columns_level0:
+        # Filter by columns at level 0.
+        hdbg.dassert_lte(1, len(columns_level0), "Columns subset cannot be empty")
         hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
         df = df[columns_level0]
-    # Filter by column name (level 1).
     if columns_level1:
+        # Filter by columns at level 1.
+        hdbg.dassert_lte(1, len(columns_level1), "Columns subset cannot be empty")
         hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
         df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
     return df

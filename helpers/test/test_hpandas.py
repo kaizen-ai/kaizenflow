@@ -2163,8 +2163,8 @@ class Test_subset_multiindex_df(hunitest.TestCase):
     """
     Filter Multiindex DataFrame with 2 column levels.
     """
-
-    def get_multiindex_df(self) -> pd.DataFrame:
+    @staticmethod
+    def get_multiindex_df() -> pd.DataFrame:
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
             pd.Timestamp("2022-01-01 21:02:00+00:00"),
@@ -2233,11 +2233,11 @@ class Test_subset_multiindex_df(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Sort by:
+        Filter by:
 
         - Timestamp index range
-        - Column names (level 1)
-        - Asset ids (level 2)
+        - Level 1 columns
+        - Level 2 columns
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2270,10 +2270,10 @@ class Test_subset_multiindex_df(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Sort by:
+        Filter by:
 
         - Timestamp index range
-        - Column names (level 1)
+        - Level 1 columns
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2304,10 +2304,10 @@ class Test_subset_multiindex_df(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Sort by:
+        Filter by:
 
         - Timestamp index range
-        - Asset ids (level 2)
+        - Level 2 columns
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
@@ -2343,10 +2343,10 @@ class Test_subset_multiindex_df(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        Sort by:
+        Filter by:
 
-        - Column names (level 1)
-        - Asset ids (level 2)
+        - Level 1 columns
+        - Level 2 columns
         """
         df = self.get_multiindex_df()
         df_filtered = hpandas.subset_multiindex_df(
