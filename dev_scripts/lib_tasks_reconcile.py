@@ -236,19 +236,21 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     # _system(docker_cmd)
 
 
+# TODO(Dan): Add logs and expose chmod.
 @task
 def reconcile_run_notebook(ctx, run_date=None):
     """
     Run reconcilation notebook.
     """
     _ = ctx
-    run_date = "20221005" #_get_run_date(run_date)
+    run_date = _get_run_date(run_date)
     asset_class = "crypto"
     #
     cmd_txt = []
     cmd_txt.append(f"export AM_RECONCILIATION_DATE={run_date}")
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
+    # TODO(Dan): Make more readable.
     cmd_txt.append(
         "amp/dev_scripts/notebooks/run_notebook.py --notebook amp/oms/notebooks/Master_reconciliation.ipynb --config_builder 'amp.oms.reconciliation.build_reconciliation_configs()' --dst_dir ./ --num_threads serial --publish_notebook -v DEBUG 2>&1 | tee log.txt"
     )
@@ -257,15 +259,15 @@ def reconcile_run_notebook(ctx, run_date=None):
     file_name = "tmp.publish_notebook.sh"
     hio.to_file(file_name, cmd_txt)
     # Run the script inside docker.
-    # TODO(Dan): Make more readable.
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy the published notebook to the shared folder.
-    # local_notebook_path = "./result0/"
-    # target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
-    # hdbg.dassert_dir_exists(target_dir)
-    # docker_cmd = f"cp -vr {local_notebook_path} {target_dir}"
-    # _system(docker_cmd)
+    results_dir = "./result_0"
+    hdbg.dassert_dir_exists(results_dir)
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    hdbg.dassert_dir_exists(target_dir)
+    docker_cmd = f"cp -vr {results_dir} {target_dir}"
+    _system(docker_cmd)
 
 
 @task
@@ -290,14 +292,15 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    reconcile_create_dirs(ctx)
+    reconcile_create_dirs(ctx, run_date)
     #
-    reconcile_copy_prod_data(ctx)
+    reconcile_copy_prod_data(ctx, run_date)
     #
-    reconcile_dump_market_data(ctx)
-    reconcile_run_sim(ctx)
-    reconcile_copy_sim_data(ctx)
+    reconcile_dump_market_data(ctx, run_date)
+    reconcile_run_sim(ctx, run_date)
+    reconcile_copy_sim_data(ctx, run_date)
     #
     # TODO(gp): Download for the day before.
     # reconcile_dump_tca_data(ctx, run_date=None)
-    reconcile_ls(ctx, run_date=run_date)
+    reconcile_run_notebook(ctx, run_date)
+    reconcile_ls(ctx, run_date)
