@@ -15,12 +15,14 @@
 # %%
 import pandas as pd
 import numpy as np
+import helpers.hpandas as hpandas
+
 
 # %% [markdown]
 # # Create DataFrame
 
 # %%
-timestamp_index1 = [
+timestamp_index = [
     pd.Timestamp("2022-01-01 21:01:00+00:00"),
     pd.Timestamp("2022-01-01 21:02:00+00:00"),
     pd.Timestamp("2022-01-01 21:03:00+00:00"),
@@ -87,7 +89,7 @@ nums = np.array(
     ]
 )
 #
-df = pd.DataFrame(nums, index=timestamp_index1, columns=index)
+df = pd.DataFrame(nums, index=timestamp_index, columns=index)
 #
 df
 
@@ -97,33 +99,35 @@ df
 
 # %%
 def subset_multiindex_df(
-    df: pd.DataFrame, timestamp=None, column_name=None, asset_id=None
+    df: pd.DataFrame, start_timestamp=None, end_timestamp=None, columns_level0=None, columns_level1=None
 ) -> pd.DataFrame:
     """
     Filter DataFrame with column MultiIndex by timestamp index, and column
     levels.
 
     :param timestamp: either one specific date or range between two dates
-    :param column_name: data-specific column name (e.g., `close`)
-    :param asset_id: asset-specific column name (e.g., `binance::BTC_USDT`)
+    :param columns_level0: asset-specific column name (e.g., `binance::BTC_USDT`)
+    :param columns_level1: data-specific column name (e.g., `close`)
     :return: filtered DataFrame
     """
     # Filter by timestamp.
-    # TODO(Max): Add an assertion that len(given timestamps)<=2.
     # TODO(Max): Add an assertion for original timestamp range vs. given one.
-    if timestamp:
-        if len(timestamp) == 1:
-            df = df.loc[timestamp]
-        else:
-            df = df.loc[timestamp[0] : timestamp[1]]
-    # Filter by column name.
-    # TODO(Max): Add an assertion that given column names are in original columns.
-    if column_name:
-        df = df.swaplevel(axis=1)[column_name].swaplevel(axis=1)
-    # Filter by asset_id.
+    df = hpandas.trim_df(
+        df,
+        ts_col_name = None,
+        start_ts = start_timestamp,
+        end_ts = end_timestamp,
+        left_close = True,
+        right_close= True,
+    )
+    # Filter by asset_id (level 0).
     # TODO(Max): Add an assertion that given asset ids are in original columns.
-    if asset_id:
-        df = df[asset_id]
+    if columns_level0:
+        df = df[columns_level0]
+    # Filter by column name (level 1).
+    # TODO(Max): Add an assertion that given column names are in original columns.
+    if columns_level1:
+        df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
     return df
 
 
@@ -133,30 +137,25 @@ def subset_multiindex_df(
 # %%
 subset_multiindex_df(
     df,
-    timestamp=[
-        pd.Timestamp("2022-01-01 21:01:00+00:00"),
-        pd.Timestamp("2022-01-01 21:03:00+00:00"),
-    ],
-    column_name=["high", "low"],
-    asset_id=["asset1"],
+    start_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+    end_timestamp=pd.Timestamp("2022-01-01 21:03:00+00:00"),
+    columns_level0=["asset1"],
+    columns_level1=["high", "low"],
 )
 
 # %%
 subset_multiindex_df(
     df,
-    timestamp=[
-        pd.Timestamp("2022-01-01 21:01:00+00:00"),
-        pd.Timestamp("2022-01-01 21:03:00+00:00"),
-    ],
-    column_name=["close"],
-    asset_id=["asset2"],
+    start_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+    end_timestamp=pd.Timestamp("2022-01-01 21:03:00+00:00"),
+    columns_level0=["asset2"],
+    columns_level1=["close"],
 )
 
 # %%
 subset_multiindex_df(
     df,
-    timestamp=[
-        pd.Timestamp("2022-01-01 21:01:00+00:00"),
-    ],
-    column_name=["open", "close"],
+    start_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+    end_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+    columns_level1=["open", "close"],
 )

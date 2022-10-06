@@ -735,7 +735,7 @@ def trim_df(
     else:
         hdbg.dassert_in(ts_col_name, df.columns)
         values_to_filter_by = df[ts_col_name]
-    if values_to_filter_by.is_monotonic:
+    if values_to_filter_by.is_monotonic_increasing:
         _LOG.trace("df is monotonic")
         # The values are sorted; using the `pd.Series.searchsorted()` method.
         # Find the index corresponding to the left boundary of the interval.
@@ -1401,3 +1401,44 @@ def compare_visually_dataframes(
         cm = sns.diverging_palette(5, 250, as_cmap=True)
         df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
     return df_diff
+
+
+# #############################################################################
+
+
+def subset_multiindex_df(
+    df: pd.DataFrame, 
+    start_timestamp: pd.Timestamp = None, 
+    end_timestamp: pd.Timestamp = None, 
+    columns_level0: List[str] = None, 
+    columns_level1: List[str] = None,
+) -> pd.DataFrame:
+    """
+    Filter DataFrame with column MultiIndex by timestamp index, and column
+    levels.
+
+    :param start_timestamp: the start boundary for trimming
+    :param end_timestamp: the end boundary for trimming
+    :param columns_level0: asset-specific column name (e.g., `binance::BTC_USDT`)
+    :param columns_level1: data-specific column name (e.g., `close`)
+    :return: filtered DataFrame
+    """
+    hdbg.dassert_eq(2, len(df.columns.levels))
+    # Filter by timestamp.
+    df = trim_df(
+        df,
+        ts_col_name = None,
+        start_ts = start_timestamp,
+        end_ts = end_timestamp,
+        left_close = True,
+        right_close= True,
+    )
+    # Filter by asset_id (level 0).
+    if columns_level0:
+        hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
+        df = df[columns_level0]
+    # Filter by column name (level 1).
+    if columns_level1:
+        hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
+        df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
+    return df
