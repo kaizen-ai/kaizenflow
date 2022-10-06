@@ -154,7 +154,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     _system(cmd)
     # Prevent overwriting.
     market_data_file_shared = os.path.join(target_dir, market_data_file)
-    cmd = "chmod -w {market_data_file_shared}"
+    cmd = f"chmod -w {market_data_file_shared}"
     _system(cmd)
     # Sanity check remote data.
     _sanity_check_data(market_data_file_shared)
@@ -221,12 +221,12 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     # Copy prod run results to the target dir.
     # TODO(Grisha): @Dan infer the path from run date.
     # TODO(Grisha): pass stage as a param with `preprod` as a default value.
-    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
+    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__2022-10-05T10:00:00+00:00_2hours"
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
-    cmd = f"chown -R -w {target_dir}"
+    cmd = f"chmod -R -w {target_dir}"
     _system(cmd)
     # TODO(Grisha): @Dan pick up the logs from `/data/shared/ecs/preprod/logs`.
     # # Copy script log file to the target dir.
@@ -258,13 +258,13 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    reconcile_create_dirs(ctx)
+    reconcile_create_dirs(ctx, run_date=run_date)
     #
-    reconcile_copy_prod_data(ctx)
+    reconcile_copy_prod_data(ctx, run_date=run_date)
     #
-    reconcile_dump_market_data(ctx)
-    reconcile_run_sim(ctx)
-    reconcile_copy_sim_data(ctx)
+    reconcile_dump_market_data(ctx, run_date=run_date)
+    reconcile_run_sim(ctx, run_date=run_date)
+    reconcile_copy_sim_data(ctx, run_date=run_date)
     #
     # TODO(gp): Download for the day before.
     # reconcile_dump_tca_data(ctx, run_date=None)
