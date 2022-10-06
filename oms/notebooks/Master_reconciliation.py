@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -53,7 +53,7 @@ print(config)
 # %% [markdown]
 # # Specify data to load
 
-# %% run_control={"marked": true}
+# %% run_control={"marked": false}
 # TODO(Grisha): factor out common code.
 prod_dir = config["load_data_config"]["prod_dir"]
 print(prod_dir)
@@ -217,7 +217,7 @@ research_portfolio_df = research_portfolio_df.sort_index(axis=1, level=1)
 portfolio_path_dict["prod"] + "/.."
 
 # %%
-# !more '/shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts/portfolio/../target_positions/20221004_120217.csv'
+# # !more '/shared_data/prod_reconciliation/20221004/prod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours/process_forecasts/portfolio/../target_positions/20221004_120217.csv'
 
 # %%
 prod_forecast_df = oms.ForecastProcessor.read_logged_target_positions(
