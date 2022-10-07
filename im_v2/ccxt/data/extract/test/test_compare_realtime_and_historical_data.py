@@ -5,7 +5,9 @@ import unittest.mock as umock
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.henv as henv
+import helpers.hunit_test as hunitest
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -297,3 +299,123 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdecrah._run(args)
+
+
+class TestFilterDuplicates(hunitest.TestCase):
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "currency_pair",
+                "exchange_id",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [6, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "kucoin", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
+
+
+    # TODO(Danya): Convert to a separate test in the `ImClientTestCase`.
+    def test_filter_duplicates(self) -> None:
+        """
+        Verify that duplicated data is filtered correctly.
+        """
+        input_data = self._get_duplicated_test_data()
+        self.assertEqual(input_data.shape, (10, 10))
+        # Filter duplicates.
+        actual_data = imvcdecrah._filter_duplicates(input_data)
+        expected_length = 6
+        expected_column_names = [
+            "close",
+            "end_download_timestamp",
+            "full_symbol",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "volume",
+        ]
+        expected_column_unique_values = {
+            "full_symbol": [
+                "binance::BTC_USDT",
+                "binance::ETH_USDT",
+                "kucoin::ETH_USDT",
+            ]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = """# df=
+        index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 9)
+        id open high low close volume end_download_timestamp knowledge_timestamp full_symbol
+        timestamp
+        2021-09-09 00:00:00+00:00 1 30 40 50 60 70 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:01:00+00:00 2 31 41 51 61 71 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:02:00+00:00 3 32 42 52 62 72 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
+        2021-09-09 00:04:00+00:00 4 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:04:00+00:00 5 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
+        2021-09-09 00:04:00+00:00 6 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 kucoin::ETH_USDT"""
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_data,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def _get_duplicated_test_data(self) -> pd.DataFrame:
+        """
+        Get test data with duplicates for `_filter_duplicates` method test.
+        """
+        test_data = self._get_test_data()
+        #
+        # TODO(Danya): Add timezone info to test data in client tests.
+        test_data["knowledge_timestamp"] = test_data[
+            "knowledge_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["end_download_timestamp"] = test_data[
+            "end_download_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["timestamp"] = test_data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Add duplicated rows.
+        dupes = test_data.loc[0:3]
+        dupes["knowledge_timestamp"] = dupes[
+            "knowledge_timestamp"
+        ] - pd.Timedelta("40s")
+        dupes["end_download_timestamp"] = dupes[
+            "end_download_timestamp"
+        ] - pd.Timedelta("40s")
+        test_data = pd.concat([test_data, dupes]).reset_index(drop=True)
+        # Add full_symbol column.
+        #full_symbol_col_name = "full_symbol"
+        #test_data[full_symbol_col_name] = ivcu.build_full_symbol(
+        #    test_data["exchange_id"], test_data["currency_pair"]
+        #)
+        #test_data = test_data.drop(["exchange_id", "currency_pair"], axis=1)
+        return test_data
