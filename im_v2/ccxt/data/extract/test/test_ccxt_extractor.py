@@ -21,7 +21,7 @@ _LOG = logging.getLogger(__name__)
 class TestCcxtExtractor1(hunitest.TestCase):
     # Mock calls to external providers.
     get_secret_patch = umock.patch.object(imvcdexex.hsecret, "get_secret")
-    ccxt_patch = umock.patch.object(ivcdexex, "ccxtpro", spec=ccxt)
+    ccxt_patch = umock.patch.object(imvcdexex, "ccxtpro", spec=ccxt)
 
     def setUp(self) -> None:
         super().setUp()
