@@ -401,7 +401,11 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     # Sync to the specified start_time.
     start_delay = max(0, ((start_time - datetime.now(tz)).total_seconds()))
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
-    time.sleep(start_delay)
+    # Exchange.sleep() method is needed instead of built in python time.sleep()
+    #  to ensure websocket ping-pong messages are exchanged in a timely fashion.
+    #  The method expects value in miliseconds.
+    await exchange._exchange.sleep(start_delay * 1000)
+    # Start data collection
     while pd.Timestamp.now(tz) < stop_time:
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
