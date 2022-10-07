@@ -209,6 +209,7 @@ def _run_notebook_helper(
 
 
 @pytest.mark.flaky(reruns=2)
+@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 class TestRunNotebook1(hunitest.TestCase):
     """
     Run notebooks without failures.
@@ -244,7 +245,6 @@ class TestRunNotebook1(hunitest.TestCase):
         exp_pass = True
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
-    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
@@ -266,6 +266,7 @@ class TestRunNotebook1(hunitest.TestCase):
 
 
 @pytest.mark.flaky(reruns=2)
+@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 class TestRunNotebook2(hunitest.TestCase):
     """
     Run experiments that fail.
@@ -324,7 +325,6 @@ class TestRunNotebook2(hunitest.TestCase):
         exp_pass = True
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
-    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel1(self) -> None:
         """
@@ -342,7 +342,6 @@ class TestRunNotebook2(hunitest.TestCase):
         _LOG.warning("This command is supposed to fail")
         _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
 
-    @pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
     @pytest.mark.slow
     def test_parallel2(self) -> None:
         """
