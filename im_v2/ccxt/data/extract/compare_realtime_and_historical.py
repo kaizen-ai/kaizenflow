@@ -165,10 +165,10 @@ def _run(args: argparse.Namespace) -> None:
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
     # Remove duplicate rows.
-    daily_data_reindex = _filter_duplicates(daily_data_reindex)
+    daily_data_filtered = _filter_duplicates(daily_data)
     # Reindex the data.
     daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
-        daily_data, expected_columns[:2], expected_columns
+        daily_data_filtered, expected_columns[:2], expected_columns
     )
     # Inform if both dataframes are empty,
     # most likely there is a wrong arg value given.
