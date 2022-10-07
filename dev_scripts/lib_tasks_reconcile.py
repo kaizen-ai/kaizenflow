@@ -236,38 +236,45 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     # _system(docker_cmd)
 
 
-# TODO(Dan): Add logs and expose chmod.
 @task
 def reconcile_run_notebook(ctx, run_date=None):
     """
-    Run reconcilation notebook.
+    Run the reconciliation notebook, publish it locally and copy the results
+    to the shared folder.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = "20221005" #_get_run_date(run_date)
     asset_class = "crypto"
     #
     cmd_txt = []
     cmd_txt.append(f"export AM_RECONCILIATION_DATE={run_date}")
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
-    # TODO(Dan): Make more readable.
-    cmd_txt.append(
-        "amp/dev_scripts/notebooks/run_notebook.py --notebook amp/oms/notebooks/Master_reconciliation.ipynb --config_builder 'amp.oms.reconciliation.build_reconciliation_configs()' --dst_dir ./ --num_threads serial --publish_notebook -v DEBUG 2>&1 | tee log.txt"
-    )
+    notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
+    config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
+    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
+    dst_dir = "."
+    cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
+    cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
     file_name = "tmp.publish_notebook.sh"
     hio.to_file(file_name, cmd_txt)
     # Run the script inside docker.
+    _LOG.info("Running the notebook=%s", notebook_path)
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy the published notebook to the shared folder.
-    results_dir = "./result_0"
+    results_dir = os.path.join(dst_dir, "result_0")
     hdbg.dassert_dir_exists(results_dir)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hdbg.dassert_dir_exists(target_dir)
+    _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     docker_cmd = f"cp -vr {results_dir} {target_dir}"
     _system(docker_cmd)
+    # Prevent overwriting.
+    shared_results_dir = os.path.join(target_dir, "result_0")
+    cmd = "chmod -w {shared_results_dir}"
 
 
 @task
