@@ -1,22 +1,20 @@
+#!/usr/bin/env python
 """
 Get filled orders from the exchange and save to JSON.
 
 Example use:
 # Get filled orders from binance from 2022-09-22 to 2022-09-23.
-> oms/flatten_ccxt_account.py \
+> oms/get_ccxt_fills.py \
     --start_timestamp '2022-09-22' \
+    --end_timestamp '2022-09-23' \
     --dst_dir '/shared_data/filled_orders/' \
     --exchange_id 'binance' \
     --contract_type 'futures' \
     --stage 'preprod' \
     --account_type 'trading' \
     --secrets_id '1' \
-    --universe 'v7.1'
+    --universe 'v7.1' \
     --incremental
-
-Import as:
-
-import oms.get_ccxt_fills as ogeccfil
 """
 
 import argparse
@@ -25,16 +23,16 @@ import os
 
 import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
-import im_v2.common.data.client as icdc
+import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
+import oms.ccxt_filled_orders as occfiord
+import oms.hsecrets as omssec
 import oms.oms_ccxt_utils as oomccuti
-import oms.secrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
@@ -50,6 +48,13 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Beginning of the time period, e.g. '2022-09-22'",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Beginning of the time period, e.g. '2022-09-23'",
     )
     parser.add_argument(
         "--dst_dir",
@@ -128,7 +133,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     env_file = imvimlita.get_db_env_path("dev")
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     connection = hsql.get_connection(*connection_params)
-    im_client = icdc.get_mock_realtime_client(connection)
+    resample_1min = False
+    im_client = icdcl.CcxtSqlRealTimeImClient(
+        resample_1min, connection, "ccxt_ohlcv_futures"
+    )
     market_data = oomccuti.get_RealTimeImClientMarketData_example2(im_client)
     # Initialize broker.
     broker = occxbrok.CcxtBroker(
@@ -144,11 +152,30 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     #
     start_timestamp = pd.Timestamp(args.start_timestamp)
-    # Get timestamp of execution.
-    current_timestamp = hdateti.get_current_timestamp_as_string("ET")
+    end_timestamp = pd.Timestamp(args.end_timestamp)
     # Get all trades.
-    fills = broker.get_fills_since_timestamp(start_timestamp)
+    fills = broker.get_fills_for_time_period(start_timestamp, end_timestamp)
     # Save file.
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
-    file_name = os.path.join(args.dst_dir, f"fills_{start_timestamp_str}_{current_timestamp}.json")
-    hio.to_json(file_name, fills)
+    end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
+    # Save data as JSON.
+    json_file_name = os.path.join(
+        args.dst_dir,
+        "json/",
+        f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.json",
+    )
+    _LOG.debug("json_file_name=%s", json_file_name)
+    hio.to_json(json_file_name, fills)
+    # Save data as a CSV file.
+    fills_dataframe = occfiord.convert_fills_json_to_dataframe(fills)
+    csv_file_name = os.path.join(
+        args.dst_dir,
+        "csv/",
+        f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.csv.gz",
+    )
+    _LOG.debug("csv_file_name=%s", csv_file_name)
+    fills_dataframe.to_csv(csv_file_name)
+
+
+if __name__ == "__main__":
+    _main(_parse())

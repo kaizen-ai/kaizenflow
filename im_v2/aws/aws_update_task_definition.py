@@ -42,6 +42,10 @@ def _update_task_definition(task_definition: str, image_tag: str) -> None:
         taskDefinition=task_definition
     )
     task_def = task_description["taskDefinition"]
+    # TODO(Nikola): Currently original image URL is untouched and only tag is changed.
+    #   This is a problem if we need to use different ECR base path.
+    #   For now, on ECR base path change, task definitions must be updated manually.
+    #   `*.dkr.ecr.us-east-1.*/cmamp:prod-12a45` -> `*.dkr.ecr.eu-north-1.*/cmamp:prod-12a45`
     old_image_url = task_def["containerDefinitions"][0]["image"]
     # Edit container version, e.g. cmamp:prod-12a45 - > cmamp:prod-12b46`
     new_image_url = re.sub("prod-(.+)$", f"prod-{image_tag}", old_image_url)

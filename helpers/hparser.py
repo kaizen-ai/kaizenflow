@@ -57,7 +57,12 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         "-v",
         dest="log_level",
         default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        # TRACE=5
+        # DEBUG=10
+        # INFO=20
+        # WARNING=30
+        # CRITICAL=50
+        choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
     return parser
@@ -67,6 +72,8 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 def parse_verbosity_args(
     args: argparse.Namespace, *args_: Any, **kwargs: Any
 ) -> None:
+    #if args.log_level == "VERB_DEBUG":
+    #    args.log_level = 5
     hdbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
 
 
