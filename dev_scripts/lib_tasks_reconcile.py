@@ -219,9 +219,12 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
     # Copy prod run results to the target dir.
-    # TODO(Grisha): @Dan infer the path from run date.
     # TODO(Grisha): pass stage as a param with `preprod` as a default value.
-    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
+    # Actual prod data dir contains a date of the previous day in its name.
+    previous_day_date_str = (
+        datetime.datetime.strptime(run_date, "%Y%m%d") - datetime.timedelta(days=1)
+    ).strftime('%Y-%m-%d')
+    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
