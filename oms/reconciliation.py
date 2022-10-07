@@ -217,7 +217,7 @@ def adapt_portfolio_object_df_to_forecast_evaluator_df(
 
 def build_reconciliation_configs() -> cconfig.ConfigList:
     """
-    Get a reconciliation that is specific of an asset class.
+    Get a reconciliation config that is specific of an asset class.
 
     :param date_str: reconciliation date as str, e.g., `20221003`
     :param asset_class: either `equities` or `crypto`
@@ -297,7 +297,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         liquidate_at_end_of_day = True
     else:
         raise ValueError(f"Unsupported asset class={asset_class}")
-    # Get a config.
+    # Build a config.
     config_dict = {
         "meta": {
             "date_str": date_str,
