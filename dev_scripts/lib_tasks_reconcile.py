@@ -250,6 +250,7 @@ def reconcile_run_notebook(ctx, run_date=None):
     """
     _ = ctx
     run_date = _get_run_date(run_date)
+    # TODO(Grisha): pass `asset_class` as a param.
     asset_class = "crypto"
     #
     cmd_txt = []
@@ -279,7 +280,9 @@ def reconcile_run_notebook(ctx, run_date=None):
     docker_cmd = f"cp -vr {results_dir} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
-    os.path.join(target_dir, "result_0")
+    results_shared_dir = os.path.join(target_dir, "result_0")
+    cmd = f"chmod -w {results_shared_dir}"
+    _system(cmd)
 
 
 @task
