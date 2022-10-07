@@ -177,7 +177,7 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         pd.to_datetime(df["end_download_timestamp"]).map(
             hdateti.convert_timestamp_to_unix_epoch
         )
-        > df["timestamp"] - 60000
+        >= df["timestamp"] + 60000
     ]
     return df[
         [
