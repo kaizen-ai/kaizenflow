@@ -1938,10 +1938,6 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         }
         df2 = pd.DataFrame(data=values2)
         df2 = df2.set_index("timestamp")
-
-        # "Extra_row",
-        # "Extra_col": pd.Series(["rr", 4, 5]),
-        # }
         return df1, df2
 
     def get_test_dfs_different(self) -> pd.DataFrame:
@@ -2157,4 +2153,243 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
                 column_mode="equal",
                 diff_mode="pct_change",
                 background_gradient=False,
+            )
+
+
+# #############################################################################
+
+
+class Test_subset_multiindex_df(hunitest.TestCase):
+    """
+    Filter Multiindex DataFrame with 2 column levels.
+    """
+
+    @staticmethod
+    def get_multiindex_df() -> pd.DataFrame:
+        timestamp_index = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:05:00+00:00"),
+        ]
+        iterables = [["asset1", "asset2"], ["open", "high", "low", "close"]]
+        index = pd.MultiIndex.from_product(iterables, names=[None, "timestamp"])
+        nums = np.array(
+            [
+                [
+                    0.77650806,
+                    0.12492164,
+                    -0.35929232,
+                    1.04137784,
+                    0.20099949,
+                    1.4078602,
+                    -0.1317103,
+                    0.10023361,
+                ],
+                [
+                    -0.56299812,
+                    0.79105046,
+                    0.76612895,
+                    -1.49935339,
+                    -1.05923797,
+                    0.06039862,
+                    -0.77652117,
+                    2.04578691,
+                ],
+                [
+                    0.77348467,
+                    0.45237724,
+                    1.61051308,
+                    0.41800008,
+                    0.20838053,
+                    -0.48289112,
+                    1.03015762,
+                    0.17123323,
+                ],
+                [
+                    0.40486053,
+                    0.88037142,
+                    -1.94567068,
+                    -1.51714645,
+                    -0.52759748,
+                    -0.31592803,
+                    1.50826723,
+                    -0.50215196,
+                ],
+                [
+                    0.17409714,
+                    -2.13997243,
+                    -0.18530403,
+                    -0.48807381,
+                    0.5621593,
+                    0.25899393,
+                    1.14069646,
+                    2.07721856,
+                ],
+            ]
+        )
+        df = pd.DataFrame(nums, index=timestamp_index, columns=index)
+        return df
+
+    def test1(self) -> None:
+        """
+        Filter by:
+
+        - Timestamp index range
+        - Level 1 columns
+        - Level 2 columns
+        """
+        df = self.get_multiindex_df()
+        df_filtered = hpandas.subset_multiindex_df(
+            df,
+            start_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            end_timestamp=pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            columns_level0=["asset1"],
+            columns_level1=["high", "low"],
+        )
+        expected_length = 3
+        expected_column_names = [("asset1", "high"), ("asset1", "low")]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
+        columns=('asset1', 'high'),('asset1', 'low')
+        shape=(3, 2)
+                                    asset1
+        timestamp                      high       low
+        2022-01-01 21:01:00+00:00  0.124922 -0.359292
+        2022-01-01 21:02:00+00:00  0.791050  0.766129
+        2022-01-01 21:03:00+00:00  0.452377  1.610513
+        """
+        self.check_df_output(
+            df_filtered,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test2(self) -> None:
+        """
+        Filter by:
+
+        - Timestamp index range
+        - Level 1 columns
+        """
+        df = self.get_multiindex_df()
+        df_filtered = hpandas.subset_multiindex_df(
+            df,
+            start_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            end_timestamp=pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            columns_level1=["close"],
+        )
+        expected_length = 2
+        expected_column_names = [("asset1", "close"), ("asset2", "close")]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
+        columns=('asset1', 'close'),('asset2', 'close')
+        shape=(2, 2)
+                                    asset1    asset2
+        timestamp                     close     close
+        2022-01-01 21:01:00+00:00  1.041378  0.100234
+        2022-01-01 21:02:00+00:00 -1.499353  2.045787
+        """
+        self.check_df_output(
+            df_filtered,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test3(self) -> None:
+        """
+        Filter by:
+
+        - Timestamp index range
+        - Level 2 columns
+        """
+        df = self.get_multiindex_df()
+        df_filtered = hpandas.subset_multiindex_df(
+            df,
+            start_timestamp=pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            end_timestamp=pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            columns_level0=["asset2"],
+        )
+        expected_length = 2
+        expected_column_names = [
+            ("asset2", "close"),
+            ("asset2", "high"),
+            ("asset2", "low"),
+            ("asset2", "open"),
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
+        columns=('asset2', 'open'),('asset2', 'high'),('asset2', 'low'),('asset2', 'close')
+        shape=(2, 4)
+                                    asset2
+        timestamp                      open      high       low     close
+        2022-01-01 21:01:00+00:00  0.200999  1.407860 -0.131710  0.100234
+        2022-01-01 21:02:00+00:00 -1.059238  0.060399 -0.776521  2.045787
+        """
+        self.check_df_output(
+            df_filtered,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test4(self) -> None:
+        """
+        Filter by:
+
+        - Level 1 columns
+        - Level 2 columns
+        """
+        df = self.get_multiindex_df()
+        df_filtered = hpandas.subset_multiindex_df(
+            df,
+            columns_level0=["asset2"],
+            columns_level1=["low"],
+        )
+        expected_length = 5
+        expected_column_names = [("asset2", "low")]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:05:00+00:00]
+        columns=('asset2', 'low')
+        shape=(5, 1)
+                                    asset2
+        timestamp                       low
+        2022-01-01 21:01:00+00:00 -0.131710
+        2022-01-01 21:02:00+00:00 -0.776521
+        2022-01-01 21:03:00+00:00  1.030158
+        2022-01-01 21:04:00+00:00  1.508267
+        2022-01-01 21:05:00+00:00  1.140696
+        """
+        self.check_df_output(
+            df_filtered,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_columns_level0_invalid_input(self) -> None:
+        df = self.get_multiindex_df()
+        with self.assertRaises(AssertionError):
+            hpandas.subset_multiindex_df(
+                df,
+                columns_level0=["invalid_input"],
+            )
+
+    def test_columns_level1_invalid_input(self) -> None:
+        df = self.get_multiindex_df()
+        with self.assertRaises(AssertionError):
+            hpandas.subset_multiindex_df(
+                df,
+                columns_level1=["invalid_input"],
             )
