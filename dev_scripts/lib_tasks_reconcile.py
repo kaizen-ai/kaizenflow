@@ -208,7 +208,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
+def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: ignore
     """
     Copy the output of the prod run to a shared folder.
     """
@@ -219,22 +219,26 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
     # Copy prod run results to the target dir.
-    # TODO(Grisha): @Dan infer the path from run date.
-    # TODO(Grisha): pass stage as a param with `preprod` as a default value.
-    system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
+    run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
+    # Prod system is run via AirFlow and the results are tagged with the previous day.
+    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    shared_dir = f"/data/shared/ecs/{stage}"
+    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
+    # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
+    _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
+    _system(docker_cmd)
+    # Copy prod run logs to the shared folder.
+    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
+    _, log_file = hsystem.system_to_string(cmd)
+    hdbg.dassert_file_exists(system_log_dir)
+    docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
     cmd = f"chown -R -w {target_dir}"
     _system(cmd)
-    # TODO(Grisha): @Dan pick up the logs from `/data/shared/ecs/preprod/logs`.
-    # # Copy script log file to the target dir.
-    # log_file = f"log_{run_date}_2hours.txt"
-    # hdbg.dassert_file_exists(system_log_dir)
-    # docker_cmd = f"cp -v {log_file} {target_dir}"
-    # _system(docker_cmd)
-
 
 @task
 def reconcile_ls(ctx, run_date=None):  # type: ignore
