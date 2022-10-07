@@ -79,16 +79,9 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
-    Final dirs layout is:
-    ```
-    data/
-        shared/
-            prod_reconciliation/
-                {run_date}/
-                    prod/
-                    ...
-                    simulation/
-    ```
+    Final dirs layout is: ``` data/     shared/
+    prod_reconciliation/             {run_date}/                 prod/
+    ...                 simulation/ ```
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -135,7 +128,9 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
         # pylint: enable=line-too-long
         opts = "-s --dbg"
-        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+        docker_cmd = (
+            f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+        )
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
@@ -222,8 +217,9 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
     # TODO(Grisha): pass stage as a param with `preprod` as a default value.
     # Actual prod data dir contains a date of the previous day in its name.
     previous_day_date_str = (
-        datetime.datetime.strptime(run_date, "%Y%m%d") - datetime.timedelta(days=1)
-    ).strftime('%Y-%m-%d')
+        datetime.datetime.strptime(run_date, "%Y%m%d")
+        - datetime.timedelta(days=1)
+    ).strftime("%Y-%m-%d")
     system_log_dir = f"/data/shared/ecs/preprod/system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
@@ -242,8 +238,8 @@ def reconcile_copy_prod_data(ctx, run_date=None):  # type: ignore
 @task
 def reconcile_run_notebook(ctx, run_date=None):
     """
-    Run the reconciliation notebook, publish it locally and copy the results
-    to the shared folder.
+    Run the reconciliation notebook, publish it locally and copy the results to
+    the shared folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -276,8 +272,7 @@ def reconcile_run_notebook(ctx, run_date=None):
     docker_cmd = f"cp -vr {results_dir} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
-    shared_results_dir = os.path.join(target_dir, "result_0")
-    cmd = "chmod -w {shared_results_dir}"
+    os.path.join(target_dir, "result_0")
 
 
 @task
