@@ -101,7 +101,7 @@ class TestFilledOrderReader1(hunitest.TestCase):
             start_ts, end_ts, data_format
         )
         actual_str = hprint.format_list(actual, sep="\n")
-        self.check_string(actual_str)
+        self.check_string(actual_str, purify_text=True)
 
     def test_get_file_names_for_time_period2(self) -> None:
         """
@@ -121,7 +121,7 @@ class TestFilledOrderReader1(hunitest.TestCase):
             start_ts, end_ts, data_format
         )
         actual_str = hprint.format_list(actual, sep="\n")
-        self.check_string(actual_str)
+        self.check_string(actual_str, purify_text=True)
 
     def get_test_data(self, data_format: str) -> None:
         if data_format == "json":
