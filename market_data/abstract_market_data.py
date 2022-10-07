@@ -512,6 +512,9 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     ) -> pd.DataFrame:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close").
+
+        It returns data in the same format as the get data functions
+        (e.g., `get_twap_price()`).
         """
         self._dassert_valid_asset_ids(asset_ids)
         # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.

@@ -2,23 +2,27 @@
 str:
 ################################################################################
 <oms.portfolio.DatabasePortfolio at 0x>
-  # historical holdings=
-  Empty DataFrame
-  Columns: [-1]
-  Index: []
-  # historical holdings marked to market=
-  Empty DataFrame
-  Columns: [-1]
-  Index: []
-  # historical flows=
+  # holdings_shares=
   Empty DataFrame
   Columns: []
   Index: []
-  # historical pnl=
+  # holdings_notional=
   Empty DataFrame
   Columns: []
   Index: []
-  # historical statistics=
+  # executed_trades_shares=
+  Empty DataFrame
+  Columns: []
+  Index: []
+  # executed_trades_notional=
+  Empty DataFrame
+  Columns: []
+  Index: []
+  # pnl=
+  Empty DataFrame
+  Columns: []
+  Index: []
+  # statistics=
   Empty DataFrame
   Columns: [pnl]
   Index: []
@@ -26,23 +30,27 @@ str:
 repr:
 ################################################################################
 <oms.portfolio.DatabasePortfolio at 0x>
-  # historical holdings=
-  Empty DataFrame
-  Columns: [-1]
-  Index: []
-  # historical holdings marked to market=
-  Empty DataFrame
-  Columns: [-1]
-  Index: []
-  # historical flows=
+  # holdings_shares=
   Empty DataFrame
   Columns: []
   Index: []
-  # historical pnl=
+  # holdings_notional=
   Empty DataFrame
   Columns: []
   Index: []
-  # historical statistics=
+  # executed_trades_shares=
+  Empty DataFrame
+  Columns: []
+  Index: []
+  # executed_trades_notional=
+  Empty DataFrame
+  Columns: []
+  Index: []
+  # pnl=
+  Empty DataFrame
+  Columns: []
+  Index: []
+  # statistics=
   Empty DataFrame
   Columns: [pnl]
   Index: []

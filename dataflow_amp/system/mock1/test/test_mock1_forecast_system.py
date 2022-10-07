@@ -177,6 +177,11 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
     See description in the parent class.
     """
 
+    # These 3 tests correspond to the same tests for:
+    # - DataFramePortfolio
+    # - DatabasePortfolio
+    # - DataFrame vs Database
+
     @pytest.mark.slow("~7 seconds.")
     def test1(self) -> None:
         # Build the system.
@@ -189,6 +194,45 @@ class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio1(
         # Check some high level property of the Portfolio.
         expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
         dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
+
+    @pytest.mark.slow("~7 seconds.")
+    def test2(self) -> None:
+        # Build the system.
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df2()
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data, rt_timeout_in_secs_or_time
+        )
+        # Run.
+        self._test1(system)
+        # Check some high level property of the Portfolio.
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
+
+    @pytest.mark.slow("~7 seconds.")
+    def test3(self) -> None:
+        # Build the system.
+        data, rt_timeout_in_secs_or_time = cofinanc.get_MarketData_df3()
+        system = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
+            data, rt_timeout_in_secs_or_time
+        )
+        # Run.
+        self._test1(system)
+        # Check some high level property of the Portfolio.
+        expected_last_timestamp = pd.Timestamp("2000-01-01 11:25:06-05:00")
+        dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
+
+
+# #############################################################################
+# Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio2
+# #############################################################################
+
+
+class Test_Mock1_Time_ForecastSystem_with_DataFramePortfolio2(
+    dtfsys.Time_ForecastSystem_with_DataFramePortfolio_TestCase1
+):
+    """
+    Test liquidating the portfolio at the end of the day.
+    """
 
     @pytest.mark.slow("~7 seconds.")
     def test_with_liquidate_at_end_of_day1(self) -> None:
@@ -215,6 +259,11 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
     See description in the parent class.
     """
 
+    # These 3 tests correspond to the same tests for:
+    # - DataFramePortfolio
+    # - DatabasePortfolio
+    # - DataFrame vs Database
+
     @pytest.mark.slow("~6 seconds.")
     def test1(self) -> None:
         # Build the system.
@@ -224,6 +273,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         )
         # Run.
         self._test1(system)
+        # Check some high level property of the Portfolio.
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
     @pytest.mark.slow("~6 seconds.")
     def test2(self) -> None:
@@ -234,6 +286,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         )
         # Run.
         self._test1(system)
+        # Check some high level property of the Portfolio.
+        expected_last_timestamp = pd.Timestamp("2000-01-01 10:05:06-05:00")
+        dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
     @pytest.mark.superslow("~30 seconds.")
     def test3(self) -> None:
@@ -244,6 +299,9 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor1(
         )
         # Run.
         self._test1(system)
+        # Check some high level property of the Portfolio.
+        expected_last_timestamp = pd.Timestamp("2000-01-01 11:25:06-05:00")
+        dtfsys.check_portfolio_state(self, system, expected_last_timestamp)
 
 
 # #############################################################################
@@ -276,8 +334,12 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor2(
         # Test some properties of the system.
         order_processor = system.order_processor
         _LOG.debug(hprint.to_str("order_processor.get_execution_signature()"))
-        self.assert_equal(str(order_processor.start_timestamp), "2000-01-01 09:35:00-05:00")
-        self.assert_equal(str(order_processor.end_timestamp), "2000-01-01 10:00:06-05:00")
+        self.assert_equal(
+            str(order_processor.start_timestamp), "2000-01-01 09:35:00-05:00"
+        )
+        self.assert_equal(
+            str(order_processor.end_timestamp), "2000-01-01 10:00:06-05:00"
+        )
         self.assertEqual(order_processor.num_filled_orders, 5)
 
 
@@ -301,8 +363,10 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
         data: pd.DataFrame,
         rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
     ) -> Tuple[dtfsys.System, dtfsys.System]:
+        """
+        Run two systems with DataFrame and Database portfolios and compare.
+        """
         # Build the systems to compare.
-
         system_with_dataframe_portfolio = dtfasmmfsex.get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
             data, rt_timeout_in_secs_or_time
         )
@@ -314,6 +378,11 @@ class Test_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_v
             system_with_dataframe_portfolio, system_with_database_portfolio
         )
         return system_with_dataframe_portfolio, system_with_database_portfolio
+
+    # These 3 tests correspond to the same tests for:
+    # - DataFramePortfolio
+    # - DatabasePortfolio,
+    # - DataFrame vs Database
 
     @pytest.mark.slow("~10 seconds.")
     def test1(self) -> None:
@@ -363,7 +432,7 @@ class Test_Mock1_NonTime_ForecastSystem_vs_Time_ForecastSystem1(
         # doesn't affect tests.
         backtest_config = f"mock1_{universe_version}-all.5T.Jan2000"
         non_time_system_builder_func = (
-            lambda: dtfasmmfsex.get_Mock1_NonTime_ForesactSystem_example1(
+            lambda: dtfasmmfsex.get_Mock1_NonTime_ForecastSystem_example1(
                 backtest_config
             )
         )

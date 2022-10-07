@@ -285,6 +285,76 @@ class TestForecastEvaluatorFromPrices1(hunitest.TestCase):
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    def test_to_str_intraday_3_assets_asset_specific_quantization(self) -> None:
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-03 10:00:00", tz="America/New_York"),
+            asset_ids=[101, 201, 301],
+        )
+        forecast_evaluator = dtfmfefrpr.ForecastEvaluatorFromPrices(
+            price_col="price",
+            volatility_col="volatility",
+            prediction_col="prediction",
+        )
+        asset_id_to_share_decimals = {
+            101: -1,
+            201: 0,
+            301: 1,
+        }
+        actual = forecast_evaluator.to_str(
+            data,
+            target_gmv=1e5,
+            quantization="asset_specific",
+            liquidate_at_end_of_day=False,
+            burn_in_bars=0,
+            asset_id_to_share_decimals=asset_id_to_share_decimals,
+        )
+        expected = r"""
+# holdings_shares=
+                            101   201   301
+2022-01-03 09:40:00-05:00   NaN   NaN   NaN
+2022-01-03 09:45:00-05:00  90.0   0.0 -13.1
+2022-01-03 09:50:00-05:00  50.0 -52.0   0.0
+2022-01-03 09:55:00-05:00   0.0 -62.0  38.2
+2022-01-03 10:00:00-05:00   0.0 -68.0  32.1
+# holdings_notional=
+                                101       201       301
+2022-01-03 09:40:00-05:00       NaN       NaN       NaN
+2022-01-03 09:45:00-05:00  89765.39      0.00 -13068.30
+2022-01-03 09:50:00-05:00  49882.98 -51870.06      0.00
+2022-01-03 09:55:00-05:00      0.00 -61863.98  38183.76
+2022-01-03 10:00:00-05:00      0.00 -67725.29  32106.58
+# executed_trades_shares=
+                            101   201   301
+2022-01-03 09:40:00-05:00   NaN   NaN   NaN
+2022-01-03 09:45:00-05:00  90.0   0.0 -13.1
+2022-01-03 09:50:00-05:00 -40.0 -52.0  13.1
+2022-01-03 09:55:00-05:00 -50.0 -10.0  38.2
+2022-01-03 10:00:00-05:00   0.0  -6.0  -6.1
+# executed_trades_notional=
+                                101       201       301
+2022-01-03 09:40:00-05:00       NaN       NaN       NaN
+2022-01-03 09:45:00-05:00  89765.39      0.00 -13068.30
+2022-01-03 09:50:00-05:00 -39906.38 -51870.06  13081.56
+2022-01-03 09:55:00-05:00 -49870.58  -9978.06  38183.76
+2022-01-03 10:00:00-05:00      0.00  -5975.76  -6101.25
+# pnl=
+                             101     201    301
+2022-01-03 09:40:00-05:00    NaN     NaN    NaN
+2022-01-03 09:45:00-05:00   0.00    0.00   0.00
+2022-01-03 09:50:00-05:00  23.97    0.00 -13.26
+2022-01-03 09:55:00-05:00 -12.40  -15.86   0.00
+2022-01-03 10:00:00-05:00   0.00  114.45  24.06
+# statistics=
+                              pnl  gross_volume  net_volume        gmv       nmv
+2022-01-03 09:40:00-05:00     NaN           NaN         NaN        NaN       NaN
+2022-01-03 09:45:00-05:00    0.00     102833.69    76697.09  102833.69  76697.09
+2022-01-03 09:50:00-05:00   10.71     104858.00   -78694.88  101753.04  -1987.08
+2022-01-03 09:55:00-05:00  -28.26      98032.40   -21664.88  100047.74 -23680.22
+2022-01-03 10:00:00-05:00  138.51      12077.01   -12077.01   99831.87 -35618.72
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
     def test_to_str_intraday_3_assets_longitudinal(self) -> None:
         data = self.get_data(
             pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),

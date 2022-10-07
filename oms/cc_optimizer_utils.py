@@ -28,7 +28,7 @@ def _apply_cc_limits(
     min_amount = asset_market_info["min_amount"]
     price = order["price"]
     min_cost = asset_market_info["min_cost"]
-    final_order_amount = order["diff_num_shares"]
+    final_order_amount = order["target_trades_shares"]
     #
     if stage == "local":
         # Force minimum order amount for testnet.
@@ -51,7 +51,7 @@ def _apply_cc_limits(
             final_order_amount = min_amount
         # 2) Ensure that the order value is above the minimal cost.
         # We estimate the total value of the order using the order's `price`.
-        total_cost = price * abs(order["diff_num_shares"])
+        total_cost = price * abs(order["target_trades_shares"])
         if total_cost <= min_cost:
             # Set amount based on minimal notional price.
             min_amount = min_cost * 3 / price
@@ -76,7 +76,7 @@ def _apply_cc_limits(
         final_order_amount,
     )
     #
-    order["diff_num_shares"] = final_order_amount
+    order["target_trades_shares"] = final_order_amount
     _LOG.debug("Order after adjustments: %s", order)
     return order
 
@@ -119,10 +119,10 @@ def apply_cc_limits(
         _LOG.debug("Saved orders after adjustments to %s", file_name)
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
-        ["target_notional_trade", "price"], forecast_df.columns
+        ["target_trades_notional", "price"], forecast_df.columns
     )
-    forecast_df["diff_num_shares"] = (
-        forecast_df["target_notional_trade"] / forecast_df["price"]
+    forecast_df["target_trades_shares"] = (
+        forecast_df["target_trades_notional"] / forecast_df["price"]
     )
     #
     stage = broker.stage
@@ -130,8 +130,8 @@ def apply_cc_limits(
     market_info = broker.market_info
     #
     # Save shares before limits application.
-    forecast_df["diff_num_shares.before_apply_cc_limits"] = forecast_df[
-        "diff_num_shares"
+    forecast_df["target_trades_shares.before_apply_cc_limits"] = forecast_df[
+        "target_trades_shares"
     ]
     forecast_df_tmp = []
     # Apply exchange restrictions to individual orders.

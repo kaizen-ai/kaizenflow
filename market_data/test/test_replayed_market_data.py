@@ -56,29 +56,6 @@ def _check_get_data(
     return market_data
 
 
-def _set_current_bar_timestamp(
-    current_timestamp: pd.Timestamp,
-    bar_duration_in_secs: int,
-) -> None:
-    """
-    Compute the current bar by snapping the current timestamp to the grid.
-    """
-    mode = "round"
-    bar_duration_in_secs = bar_duration_in_secs
-    # E.g., `current_timestamp` is 09:26 and the next bar is at 09:30, so
-    # the distance is 4 minutes, i.e. max distance should be within a bar's
-    # length.
-    max_distance_in_secs = bar_duration_in_secs
-    bar_timestamp = hdateti.find_bar_timestamp(
-        current_timestamp,
-        bar_duration_in_secs,
-        mode=mode,
-        max_distance_in_secs=max_distance_in_secs,
-    )
-    _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
-    hwacltim.set_current_bar_timestamp(bar_timestamp)
-
-
 class TestReplayedMarketData1(hunitest.TestCase):
     def check_last_end_time(
         self,
@@ -685,7 +662,7 @@ class TestReplayedMarketData3(hunitest.TestCase):
             # `wait_for_latest_data()`.
             current_timestamp = market_data.get_wall_clock_time()
             bar_duration_in_secs = 60 * 5
-            _set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
+            hdateti.set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
@@ -741,7 +718,7 @@ class TestReplayedMarketData4(hunitest.TestCase):
             # `wait_for_latest_data()`.
             current_timestamp = market_data.get_wall_clock_time()
             bar_duration_in_secs = 60
-            _set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
+            hdateti.set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),

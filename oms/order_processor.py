@@ -11,7 +11,7 @@ from typing import List, Optional, Union
 import pandas as pd
 
 import helpers.hasyncio as hasynci
-import helpers.hdatetime as hdatetime
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
@@ -103,7 +103,9 @@ class OrderProcessor(hobject.PrintableMixin):
             )
         )
         self._db_connection = db_connection
-        hdbg.dassert_lte(1, hdatetime.convert_seconds_to_minutes(bar_duration_in_secs))
+        hdbg.dassert_lte(
+            1, hdateti.convert_seconds_to_minutes(bar_duration_in_secs)
+        )
         self.bar_duration_in_secs = bar_duration_in_secs
         hdbg.dassert_isinstance(termination_condition, (pd.Timestamp, int))
         if isinstance(termination_condition, int):
@@ -162,8 +164,8 @@ class OrderProcessor(hobject.PrintableMixin):
 
     def get_execution_signature(self) -> str:
         """
-        Return a string representation of the relevant events during the execution
-        of this object.
+        Return a string representation of the relevant events during the
+        execution of this object.
         """
         txt = []
         hdbg.dassert_is_not(
@@ -187,8 +189,8 @@ class OrderProcessor(hobject.PrintableMixin):
         """
         Run the order processing loop.
 
-        1) Wait for new orders submitted
-        2) Fill orders
+        - Wait for new orders submitted
+        - Fill orders
         """
         self._add_event("start")
         wall_clock_time = self._get_wall_clock_time()
@@ -199,11 +201,15 @@ class OrderProcessor(hobject.PrintableMixin):
             wall_clock_time = self._get_wall_clock_time()
             # Check whether we should exit or continue.
             if isinstance(termination_condition, pd.Timestamp):
-                bar_duration_in_mins = hdatetime.convert_seconds_to_minutes(self.bar_duration_in_secs)
+                bar_duration_in_mins = hdateti.convert_seconds_to_minutes(
+                    self.bar_duration_in_secs
+                )
                 hdbg.dassert_lte(1, bar_duration_in_mins)
                 period_as_pd_str = f"{bar_duration_in_mins}T"
                 wall_clock_time_tmp = wall_clock_time.round(period_as_pd_str)
-                termination_condition_tmp = termination_condition.round(period_as_pd_str)
+                termination_condition_tmp = termination_condition.round(
+                    period_as_pd_str
+                )
                 is_done = wall_clock_time_tmp >= termination_condition_tmp
                 msg = hprint.to_str(
                     "wall_clock_time termination_condition -> "

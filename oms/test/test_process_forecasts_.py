@@ -125,30 +125,36 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         actual = str(portfolio)
         expected = r"""
 <oms.portfolio.DataFramePortfolio at 0x>
-# historical holdings=
-asset_id                     101    202       -1
-2000-01-01 09:35:01-05:00   0.00   0.00  1000000.0
-2000-01-01 09:40:01-05:00 -49.98  49.98  1000000.0
-2000-01-01 09:45:01-05:00 -49.99  49.99  1000000.0
-# historical holdings marked to market=
-asset_id                        101       202       -1
-2000-01-01 09:35:01-05:00      0.00      0.00  1000000.0
-2000-01-01 09:40:01-05:00 -49994.47  49994.47  1000000.0
-2000-01-01 09:45:01-05:00 -49985.86  49985.86  1000000.0
-# historical flows=
-asset_id                        101       202
-2000-01-01 09:40:01-05:00  49980.22 -49980.22
-2000-01-01 09:45:01-05:00      5.53     -5.53
-# historical pnl=
-asset_id                     101    202
-2000-01-01 09:35:01-05:00    NaN    NaN
-2000-01-01 09:40:01-05:00 -14.26  14.26
-2000-01-01 09:45:01-05:00  14.14 -14.14
-# historical statistics=
-                           pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
-2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
-2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
-2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1"""
+  # holdings_shares=
+  asset_id                     101    202
+  2000-01-01 09:35:01-05:00   0.00   0.00
+  2000-01-01 09:40:01-05:00 -49.98  49.98
+  2000-01-01 09:45:01-05:00 -49.99  49.99
+  # holdings_notional=
+  asset_id                        101       202
+  2000-01-01 09:35:01-05:00      0.00      0.00
+  2000-01-01 09:40:01-05:00 -49994.47  49994.47
+  2000-01-01 09:45:01-05:00 -49985.86  49985.86
+  # executed_trades_shares=
+  asset_id                        101       202
+  2000-01-01 09:35:01-05:00  0.00e+00  0.00e+00
+  2000-01-01 09:40:01-05:00 -5.00e+01  5.00e+01
+  2000-01-01 09:45:01-05:00 -5.53e-03  5.53e-03
+  # executed_trades_notional=
+  asset_id                        101       202
+  2000-01-01 09:40:01-05:00 -49980.22  49980.22
+  2000-01-01 09:45:01-05:00     -5.53      5.53
+  # pnl=
+  asset_id                     101    202
+  2000-01-01 09:35:01-05:00    NaN    NaN
+  2000-01-01 09:40:01-05:00 -14.26  14.26
+  2000-01-01 09:45:01-05:00  14.14 -14.14
+  # statistics=
+                             pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
+  2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
+  2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
+  2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1
+"""
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
@@ -383,31 +389,37 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         )
         actual = str(portfolio)
         expected = r"""
-        <oms.portfolio.DataFramePortfolio at 0x>
-        # historical holdings=
-        asset_id                     101    202      -1
-        2000-01-01 09:35:01-05:00   0.00   0.00  1.00e+06
-        2000-01-01 09:40:01-05:00 -50.13  49.91  1.00e+06
-        2000-01-01 09:45:01-05:00 -50.04  49.96  1.00e+06
-        # historical holdings marked to market=
-        asset_id                        101       202      -1
-        2000-01-01 09:35:01-05:00      0.00      0.00  1.00e+06
-        2000-01-01 09:40:01-05:00 -50091.23  49944.85  1.00e+06
-        2000-01-01 09:45:01-05:00 -49854.64  50080.69  1.00e+06
-        # historical flows=
-        asset_id                        101       202
-        2000-01-01 09:40:01-05:00  50070.28 -49991.02
-        2000-01-01 09:45:01-05:00    -91.07    -55.25
-        # historical pnl=
-        asset_id                      101    202
-        2000-01-01 09:35:01-05:00     NaN    NaN
-        2000-01-01 09:40:01-05:00  -20.95 -46.17
-        2000-01-01 09:45:01-05:00  145.52  80.60
-        # historical statistics=
-                                      pnl  gross_volume  net_volume        gmv     nmv      cash  net_wealth  leverage
-        2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00    0.00  1.00e+06    1.00e+06       0.0
-        2000-01-01 09:40:01-05:00  -67.12     100061.30      -79.26  100036.08 -146.38  1.00e+06    1.00e+06       0.1
-        2000-01-01 09:45:01-05:00  226.12        146.31      146.31   99935.34  226.05  1.00e+06    1.00e+06       0.1"""
+<oms.portfolio.DataFramePortfolio at 0x>
+  # holdings_shares=
+  asset_id                     101    202
+  2000-01-01 09:35:01-05:00   0.00   0.00
+  2000-01-01 09:40:01-05:00 -50.13  49.91
+  2000-01-01 09:45:01-05:00 -50.04  49.96
+  # holdings_notional=
+  asset_id                        101       202
+  2000-01-01 09:35:01-05:00      0.00      0.00
+  2000-01-01 09:40:01-05:00 -50091.23  49944.85
+  2000-01-01 09:45:01-05:00 -49854.64  50080.69
+  # executed_trades_shares=
+  asset_id                     101    202
+  2000-01-01 09:35:01-05:00   0.00   0.00
+  2000-01-01 09:40:01-05:00 -50.13  49.91
+  2000-01-01 09:45:01-05:00   0.09   0.06
+  # executed_trades_notional=
+  asset_id                        101       202
+  2000-01-01 09:40:01-05:00 -50070.28  49991.02
+  2000-01-01 09:45:01-05:00     91.07     55.25
+  # pnl=
+  asset_id                      101    202
+  2000-01-01 09:35:01-05:00     NaN    NaN
+  2000-01-01 09:40:01-05:00  -20.95 -46.17
+  2000-01-01 09:45:01-05:00  145.52  80.60
+  # statistics=
+                                pnl  gross_volume  net_volume        gmv     nmv      cash  net_wealth  leverage
+  2000-01-01 09:35:01-05:00     NaN          0.00        0.00       0.00    0.00  1.00e+06    1.00e+06       0.0
+  2000-01-01 09:40:01-05:00  -67.12     100061.30      -79.26  100036.08 -146.38  1.00e+06    1.00e+06       0.1
+  2000-01-01 09:45:01-05:00  226.12        146.31      146.31   99935.34  226.05  1.00e+06    1.00e+06       0.1
+"""
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
@@ -455,8 +467,7 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
                 broker,
                 asset_id_name,
             )
-            order_processor_coroutine = order_processor.run_loop(
-            )
+            order_processor_coroutine = order_processor.run_loop()
             # Run.
             coroutines = [
                 self._test_mocked_system1(portfolio),
@@ -531,31 +542,37 @@ class TestMockedProcessForecasts1(omtodh.TestOmsDbHelper):
         # TODO(Paul): Factor out a test that compares simulation and mock.
         actual = str(portfolio)
         expected = r"""
-        <oms.portfolio.DatabasePortfolio at 0x>
-        # historical holdings=
-        asset_id                     101    202       -1
-        2000-01-01 09:35:01-05:00   0.00   0.00  1000000.0
-        2000-01-01 09:40:01-05:00 -49.98  49.98  1000000.0
-        2000-01-01 09:45:01-05:00 -49.99  49.99  1000000.0
-        # historical holdings marked to market=
-        asset_id                        101       202       -1
-        2000-01-01 09:35:01-05:00      0.00      0.00  1000000.0
-        2000-01-01 09:40:01-05:00 -49994.47  49994.47  1000000.0
-        2000-01-01 09:45:01-05:00 -49985.86  49985.86  1000000.0
-        # historical flows=
-        asset_id                        101       202
-        2000-01-01 09:40:01-05:00  49980.22 -49980.22
-        2000-01-01 09:45:01-05:00      5.53     -5.53
-        # historical pnl=
-        asset_id                     101    202
-        2000-01-01 09:35:01-05:00    NaN    NaN
-        2000-01-01 09:40:01-05:00 -14.26  14.26
-        2000-01-01 09:45:01-05:00  14.14 -14.14
-        # historical statistics=
-                                   pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
-        2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
-        2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
-        2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1"""
+<oms.portfolio.DatabasePortfolio at 0x>
+  # holdings_shares=
+  asset_id                     101    202
+  2000-01-01 09:35:01-05:00   0.00   0.00
+  2000-01-01 09:40:01-05:00 -49.98  49.98
+  2000-01-01 09:45:01-05:00 -49.99  49.99
+  # holdings_notional=
+  asset_id                        101       202
+  2000-01-01 09:35:01-05:00      0.00      0.00
+  2000-01-01 09:40:01-05:00 -49994.47  49994.47
+  2000-01-01 09:45:01-05:00 -49985.86  49985.86
+  # executed_trades_shares=
+  asset_id                        101       202
+  2000-01-01 09:35:01-05:00  0.00e+00  0.00e+00
+  2000-01-01 09:40:01-05:00 -5.00e+01  5.00e+01
+  2000-01-01 09:45:01-05:00 -5.53e-03  5.53e-03
+  # executed_trades_notional=
+  asset_id                        101       202
+  2000-01-01 09:40:01-05:00 -49980.22  49980.22
+  2000-01-01 09:45:01-05:00     -5.53      5.53
+  # pnl=
+  asset_id                     101    202
+  2000-01-01 09:35:01-05:00    NaN    NaN
+  2000-01-01 09:40:01-05:00 -14.26  14.26
+  2000-01-01 09:45:01-05:00  14.14 -14.14
+  # statistics=
+                             pnl  gross_volume  net_volume       gmv  nmv       cash  net_wealth  leverage
+  2000-01-01 09:35:01-05:00  NaN          0.00         0.0      0.00  0.0  1000000.0   1000000.0       0.0
+  2000-01-01 09:40:01-05:00  0.0      99960.44         0.0  99988.95  0.0  1000000.0   1000000.0       0.1
+  2000-01-01 09:45:01-05:00  0.0         11.05         0.0  99971.72  0.0  1000000.0   1000000.0       0.1
+"""
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
@@ -755,8 +772,7 @@ class TestMockedProcessForecasts2(omtodh.TestOmsDbHelper):
                 asset_id_name,
             )
             # Build order process coroutine.
-            order_processor_coroutine = order_processor.run_loop(
-            )
+            order_processor_coroutine = order_processor.run_loop()
             coroutines = [
                 self._test_mocked_system1(predictions, volatility, portfolio),
                 order_processor_coroutine,

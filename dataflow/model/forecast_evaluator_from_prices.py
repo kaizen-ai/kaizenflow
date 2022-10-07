@@ -331,6 +331,7 @@ class ForecastEvaluatorFromPrices:
         burn_in_bars: int = 3,
         burn_in_days: int = 0,
         compute_extended_stats: bool = False,
+        asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
         **kwargs,
     ) -> Dict[str, pd.DataFrame]:
         """
@@ -392,6 +393,7 @@ class ForecastEvaluatorFromPrices:
             liquidate_at_end_of_day,
             adjust_for_splits,
             ffill_limit,
+            asset_id_to_share_decimals,
         )
         # Compute cash inflows/outflows from trades.
         executed_trades_shares = self._compute_executed_trades_shares(
@@ -681,6 +683,7 @@ class ForecastEvaluatorFromPrices:
         liquidate_at_end_of_day: bool,
         adjust_for_splits: bool,
         ffill_limit: int,
+        asset_id_to_share_decimals: Optional[Dict[int, int]],
     ) -> pd.DataFrame:
         """
         Convert next-bar [dollar] positions to end-of-bar [share] holdings.
@@ -704,7 +707,7 @@ class ForecastEvaluatorFromPrices:
         )
         # Quantize holdings (e.g., nearest share).
         target_holdings_shares = cofinanc.quantize_holdings(
-            target_holdings_shares, quantization
+            target_holdings_shares, quantization, asset_id_to_share_decimals
         )
         # Adjust holdings for end-of-day and splits. Convert from next-bar
         # desired holdings to end-of-bar realized (assuming perfect fills)
