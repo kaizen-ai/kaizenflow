@@ -243,7 +243,7 @@ def reconcile_run_notebook(ctx, run_date=None):
     to the shared folder.
     """
     _ = ctx
-    run_date = "20221005" #_get_run_date(run_date)
+    run_date = _get_run_date(run_date)
     asset_class = "crypto"
     #
     cmd_txt = []
