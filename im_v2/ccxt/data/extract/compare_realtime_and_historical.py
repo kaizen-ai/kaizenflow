@@ -18,6 +18,7 @@ Import as:
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
+import logging
 import os
 
 import pandas as pd
@@ -32,6 +33,8 @@ import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
+
+_LOG = logging.getLogger(__name__)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -79,6 +82,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
+
 def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:
     """
     Remove duplicates from data based on exchange id and timestamp.
@@ -92,11 +96,14 @@ def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:
     # Sort values.
     data = data.sort_values("knowledge_timestamp", ascending=False)
     use_index = False
+    _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
     # Remove duplicates.
     data = hpandas.drop_duplicates(
         data, use_index, subset=duplicate_columns, keep="last"
     ).sort_index()
+    _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
     return data
+
 
 def _run(args: argparse.Namespace) -> None:
     # Get time range for last 24 hours.
@@ -130,6 +137,8 @@ def _run(args: argparse.Namespace) -> None:
         f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
     )
     rt_data = hsql.execute_query_to_df(connection, query)
+    # Remove duplicate rows.
+    rt_data_filtered = _filter_duplicates(rt_data)
     expected_columns = [
         "timestamp",
         "currency_pair",
@@ -139,15 +148,10 @@ def _run(args: argparse.Namespace) -> None:
         "close",
         "volume",
     ]
-    # ==== DATA FROM DB HERE ================ <( o Y o )> 
+    # Reindex the data.
     rt_data_reindex = imvcdttrut.reindex_on_custom_columns(
-        rt_data, expected_columns[:2], expected_columns
+        rt_data_filtered, expected_columns[:2], expected_columns
     )
-    #breakpoint()
-    
-    # Remove duplicating columns.
-    rt_data_reindex = _filter_duplicates(rt_data_reindex)
-    # PROCESS PARQUET.
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
@@ -160,12 +164,12 @@ def _run(args: argparse.Namespace) -> None:
 
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
-    # ==== DATA FROM PARQUET HERE ============== <( o Y o )> 
+    # Remove duplicate rows.
+    daily_data_reindex = _filter_duplicates(daily_data_reindex)
+    # Reindex the data.
     daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
         daily_data, expected_columns[:2], expected_columns
     )
-    # Remove duplicating columns.
-    daily_data_reindex = _filter_duplicates(daily_data_reindex)
     # Inform if both dataframes are empty,
     # most likely there is a wrong arg value given.
     if rt_data_reindex.empty and daily_data_reindex.empty:
