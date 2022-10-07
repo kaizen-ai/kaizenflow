@@ -217,12 +217,9 @@ def adapt_portfolio_object_df_to_forecast_evaluator_df(
 
 def build_reconciliation_configs() -> cconfig.ConfigList:
     """
-    Get a reconciliation config that is specific of an asset class.
-
-    :param date_str: reconciliation date as str, e.g., `20221003`
-    :param asset_class: either `equities` or `crypto`
+    Build reconciliation configs that are specific of an asset class.
     """
-    # Set values for variables that are specific of an asset class.
+    # Infer the meta-parameters from env.
     date_key = "AM_RECONCILIATION_DATE"
     if date_key in os.environ:
         date_str = os.environ[date_key]
@@ -234,7 +231,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         asset_class = os.environ[asset_key]
     else:
         asset_class = "crypto"
-    #
+    # Set values for variables that are specific of an asset class.
     if asset_class == "crypto":
         # For crypto the TCA part is not implemented yet.
         run_tca = False
@@ -242,8 +239,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        # TODO(Grisha): probably we should rename to `system_log_dir`.
-        # Actual prod data dir contains a date of the previous day in the dir name.
+        # Prod system is run via AirFlow and the results are tagged with the previous day.
         previous_day_date_str = (pd.Timestamp(date_str) - pd.Timedelta("1D")).strftime("%Y-%m-%d")
         prod_dir = os.path.join(
             root_dir,
@@ -297,7 +293,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         liquidate_at_end_of_day = True
     else:
         raise ValueError(f"Unsupported asset class={asset_class}")
-    # Build a config.
+    # Get a config.
     config_dict = {
         "meta": {
             "date_str": date_str,
