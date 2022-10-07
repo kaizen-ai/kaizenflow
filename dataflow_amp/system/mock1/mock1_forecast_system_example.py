@@ -174,7 +174,7 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
 # #############################################################################
 
 
-def get_Mock1_NonTime_ForesactSystem_example1(
+def get_Mock1_NonTime_ForecastSystem_example1(
     backtest_config: str,
 ) -> dtfsys.ForecastSystem:
     """
