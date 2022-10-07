@@ -1435,14 +1435,14 @@ def subset_multiindex_df(
         left_close=True,
         right_close=True,
     )
-    if columns_level0:
+    if columns_level0 is not None:
         # Filter by columns at level 0.
-        hdbg.dassert_lte(1, len(columns_level0), "Columns subset cannot be empty")
+        hdbg.dassert_lte(1, len(columns_level0), "Columns subset at level 0 cannot be empty")
         hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
         df = df[columns_level0]
-    if columns_level1:
+    if columns_level1 is not None:
         # Filter by columns at level 1.
-        hdbg.dassert_lte(1, len(columns_level1), "Columns subset cannot be empty")
+        hdbg.dassert_lte(1, len(columns_level1), "Columns subset at level 1 cannot be empty")
         hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
         df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
     return df
