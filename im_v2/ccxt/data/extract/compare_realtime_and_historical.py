@@ -79,6 +79,24 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
+def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove duplicates from data based on exchange id and timestamp.
+    
+    Keeps the row with the latest 'knowledge_timestamp' value.
+
+    :param data: Dataframe to process
+    :return: data with duplicates removed
+    """
+    duplicate_columns = ["exchange_id", "timestamp", "currency_pair"]
+    # Sort values.
+    data = data.sort_values("knowledge_timestamp", ascending=False)
+    use_index = False
+    # Remove duplicates.
+    data = hpandas.drop_duplicates(
+        data, use_index, subset=duplicate_columns, keep="last"
+    ).sort_index()
+    return data
 
 def _run(args: argparse.Namespace) -> None:
     # Get time range for last 24 hours.
@@ -121,10 +139,15 @@ def _run(args: argparse.Namespace) -> None:
         "close",
         "volume",
     ]
-
+    # ==== DATA FROM DB HERE ================ <( o Y o )> 
     rt_data_reindex = imvcdttrut.reindex_on_custom_columns(
         rt_data, expected_columns[:2], expected_columns
     )
+    #breakpoint()
+    
+    # Remove duplicating columns.
+    rt_data_reindex = _filter_duplicates(rt_data_reindex)
+    # PROCESS PARQUET.
     # List files for given exchange.
     exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
@@ -137,9 +160,12 @@ def _run(args: argparse.Namespace) -> None:
 
     daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
     daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
+    # ==== DATA FROM PARQUET HERE ============== <( o Y o )> 
     daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
         daily_data, expected_columns[:2], expected_columns
     )
+    # Remove duplicating columns.
+    daily_data_reindex = _filter_duplicates(daily_data_reindex)
     # Inform if both dataframes are empty,
     # most likely there is a wrong arg value given.
     if rt_data_reindex.empty and daily_data_reindex.empty:
