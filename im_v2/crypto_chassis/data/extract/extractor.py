@@ -6,7 +6,7 @@ Import as:
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 """
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import requests
@@ -389,3 +389,50 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
+    
+    def _download_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
+
+    
+    def _download_websocket_bid_ask(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
+
+    
+    def _download_websocket_trades(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
+
+    
+    def _subscribe_to_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
+
+    
+    def _subscribe_to_websocket_bid_ask(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
+
+    
+    def _subscribe_to_websocket_trades(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for CryptoChassis vendor yet."
+        )
