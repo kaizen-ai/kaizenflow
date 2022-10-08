@@ -63,6 +63,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
             "interval_min": 1,
             "start_time": "2022-08-04 21:17:35",
             "stop_time": "2022-08-04 21:20:35",
+            "method": "rest"
         }
         # Predefined side effects for successful run.
         iteration_delay_sec = timedelta(seconds=1)
@@ -244,6 +245,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         Run with wrong `interval_min`.
         """
         additional_kwargs = {"interval_min": 0}
+        self.datetime_mock.now.return_value = datetime(2020, 8, 4, 21, 17, 36)
         with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically(
