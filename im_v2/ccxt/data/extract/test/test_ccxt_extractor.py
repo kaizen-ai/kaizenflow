@@ -53,7 +53,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         actual_method_calls = str(exchange_class._exchange.method_calls)
         # Check calls against `exchange_class._exchange`.
         expected_method_calls = (
-            "[call.checkRequiredCredentials(), call.load_markets()]"
+            "[call.load_markets()]"
         )
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
@@ -75,7 +75,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         _ = imvcdexex.CcxtExtractor("binance", "spot")
         actual_args = tuple(exchange_mock.call_args)
         expected_args = (
-            ({"apiKey": "test", "rateLimit": True, "secret": "test"},),
+            ({"rateLimit": True},),
             {},
         )
         self.assertEqual(actual_args, expected_args)
@@ -85,10 +85,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
         expected_args = (
             (
                 {
-                    "apiKey": "test",
                     "options": {"defaultType": "future"},
                     "rateLimit": True,
-                    "secret": "test",
                 },
             ),
             {},
