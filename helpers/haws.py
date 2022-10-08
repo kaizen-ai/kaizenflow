@@ -83,13 +83,13 @@ def get_task_definition_image_url(task_definition_name: str) -> str:
     """
     aws_profile = "ck"
     service_name = "ecs"
-    with get_service_client(aws_profile, service_name) as client:
-        # Get the last revision of the task definition.
-        task_description = client.describe_task_definition(
-            taskDefinition=task_definition_name
-        )
-        task_definition_json = task_description["taskDefinition"]
-        image_url = task_definition_json["containerDefinitions"][0]["image"]
+    client = get_service_client(aws_profile, service_name)
+    # Get the last revision of the task definition.
+    task_description = client.describe_task_definition(
+        taskDefinition=task_definition_name
+    )
+    task_definition_json = task_description["taskDefinition"]
+    image_url = task_definition_json["containerDefinitions"][0]["image"]
     return image_url
 
 

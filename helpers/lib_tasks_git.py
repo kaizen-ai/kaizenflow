@@ -165,7 +165,8 @@ def git_patch_create(  # type: ignore
     super_module = False
     git_client_root = hgit.get_client_root(super_module)
     hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
-    timestamp = hlitauti._get_ET_timestamp()
+
+    timestamp = hlitauti.get_ET_timestamp()
     #
     tag = os.path.basename(git_client_root)
     dst_file = f"patch.{tag}.{hash_}.{timestamp}"
@@ -628,7 +629,8 @@ def _git_diff_with_branch(
     _LOG.debug(
         hprint.to_str(
             "hash_ tag dir_name diff_type subdir keep_extensions skip_extensions"
-            " file_name only_print_files dry_run")
+            " file_name only_print_files dry_run"
+        )
     )
     # Check that this branch is not master.
     curr_branch_name = hgit.get_branch_name()
@@ -902,6 +904,7 @@ def git_branch_diff_with(  # type: ignore
         only_print_files,
         dry_run,
     )
+
 
 # pylint: disable=line-too-long
 
