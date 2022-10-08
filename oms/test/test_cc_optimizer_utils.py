@@ -23,15 +23,15 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         """
         df_columns = [
             "asset_id",
-            "curr_num_shares",
+            "holdings_shares",
             "price",
-            "position",
+            "holdings_notional",
             "wall_clock_timestamp",
             "prediction",
             "volatility",
             "spread",
-            "target_position",
-            "target_notional_trade",
+            "target_holdings_notional",
+            "target_trades_notional",
         ]
         if below_min:
             # Create DataFrame with orders below limit.

@@ -266,12 +266,19 @@ def dassert_series_type_in(
 def dassert_indices_equal(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
+    allow_series: bool = False,
 ) -> None:
     """
     Ensure that `df1` and `df2` share a common index.
 
     Print the symmetric difference of indices if equality does not hold.
     """
+    if allow_series:
+        if isinstance(df1, pd.Series):
+            df1 = df1.to_frame()
+        if isinstance(df2, pd.Series):
+            df2 = df2.to_frame()
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
     hdbg.dassert(
@@ -752,13 +759,15 @@ def trim_df(
             right_idx = values_to_filter_by.searchsorted(end_ts, side)
         else:
             # There is nothing to filter, so the right index is None.
-            right_idx = None
+            right_idx = df.shape[0]
         _LOG.debug(hprint.to_str("end_ts right_idx"))
         #
         hdbg.dassert_lte(0, left_idx)
-        if right_idx is not None:
-            hdbg.dassert_lte(left_idx, right_idx)
-            hdbg.dassert_lte(right_idx, df.shape[0])
+        hdbg.dassert_lte(left_idx, right_idx)
+        hdbg.dassert_lte(right_idx, df.shape[0])
+        _LOG.debug(hprint.to_str("start_ts left_idx"))
+        if right_idx < df.shape[0]:
+            _LOG.debug(hprint.to_str("end_ts right_idx"))
         df = df.iloc[left_idx:right_idx]
     else:
         _LOG.trace("df is not monotonic")
