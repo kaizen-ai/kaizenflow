@@ -7,8 +7,9 @@ import im_v2.ccxt.data.extract.extractor as ivcdexex
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
+import ccxt
 import ccxt.pro as ccxtpro
 import pandas as pd
 import tqdm
@@ -45,7 +46,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         )
         self.contract_type = contract_type
         self.exchange_id = exchange_id
-        self._exchange = self.log_into_exchange()
+        self._async_exchange = self.log_into_exchange(async_=True)
+        self._sync_exchange = self.log_into_exchange(async_=False)
         self.currency_pairs = self.get_exchange_currency_pairs()
         self.vendor = "CCXT"
 
@@ -56,47 +58,30 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         return currency_pair.replace("_", "/")
 
-    def log_into_exchange(self) -> ccxtpro.base.exchange.Exchange:
+    def log_into_exchange(self, async_: bool) -> Union[ccxtpro.base.exchange.Exchange, ccxt.Exchange]:
         """
-        Log into an exchange via CCXT and return the corresponding
-        `ccxtpro.Exchange` object.
+        Log into an exchange via CCXT (or CCXT pro) and return the corresponding
+        `Exchange` object.
+        
+        :param async_: if True, returns CCXT pro Exchange with async support,
+         classic, sync ccxt Exchange otherwise. 
         """
         exchange_params: Dict[str, Any] = {}
-        secret_id = f"{self.exchange_id}.preprod.trading.1"
-        # Select credentials for provided exchange.
-        credentials = hsecret.get_secret(secret_id)
-        exchange_params.update(credentials)
         # Enable rate limit.
         exchange_params["rateLimit"] = True
         if self.contract_type == "futures":
             exchange_params["options"] = {"defaultType": "future"}
-        exchange_class = getattr(ccxtpro, self.exchange_id)
+        module = ccxtpro if async_ else ccxt
+        exchange_class = getattr(module, self.exchange_id)
+        # Using API keys was deprecated in #2919.
         exchange = exchange_class(exchange_params)
-        hdbg.dassert(
-            exchange.checkRequiredCredentials(),
-            msg="Required credentials not passed",
-        )
         return exchange
 
     def get_exchange_currency_pairs(self) -> List[str]:
         """
         Get all the currency pairs available for the exchange.
         """
-        # Because of either ccxt version change or introduction of ccxtpro
-        #  (reason is unclear) load_markets() is an async method.
-        #  Its execution has to be wrapped asyncio event loop in order
-        #  for this method to remain synchronous.
-        #  A disposable instance is used to comply with ccxt:
-        #  'binance requires to release all resources with an explicit
-        #  call to the .close() coroutine...Add `await exchange.close()`
-        #  ...to your code into a place when you're done with the exchange.
-        exchange_tmp = getattr(ccxtpro, self.exchange_id)
-        exchange_tmp = exchange_tmp()
-        loop = asyncio.get_event_loop()
-        loop.run_until_complete(exchange_tmp.load_markets())
-        markets = exchange_tmp.markets
-        loop.run_until_complete(exchange_tmp.close())
-        return markets
+        return self._sync_exchange.load_markets()
 
     def _download_ohlcv(
         self,
@@ -122,9 +107,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Assign exchange_id to make it symmetrical to other vendors.
         _ = exchange_id
         hdbg.dassert(
-            self._exchange.has["fetchOHLCV"],
+            self._sync_exchange.has["fetchOHLCV"],
             "Exchange %s doesn't has fetch_ohlcv method",
-            self._exchange,
+            self._sync_exchange,
         )
         hdbg.dassert_in(
             currency_pair,
@@ -152,7 +137,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Convert datetime into ms.
         start_timestamp = start_timestamp.asm8.astype(int) // 1000000
         end_timestamp = end_timestamp.asm8.astype(int) // 1000000
-        duration = self._exchange.parse_timeframe("1m") * 1000
+        duration = self._sync_exchange.parse_timeframe("1m") * 1000
         all_bars = []
         # Iterate over the time period.
         # Note: the iteration goes from start date to end date in milliseconds,
@@ -206,7 +191,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         converted_pair = self.convert_currency_pair(
             currency_pair,
         )
-        await self._exchange.watchOHLCV(
+        await self._async_exchange.watchOHLCV(
             converted_pair, timeframe=timeframe, since=since, limit=limit
         )
 
@@ -218,7 +203,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         **kwargs: Any,
     ) -> None:
         """
-        Wrapper to subscribe to bid/ask (order book) data via CCXTpro
+        Wrapper to subscribe to bid/ask (order book) data via CCXT pro
         watchOrderBook websocket based approach.
 
         :param exchange_id: exchange to download from
@@ -231,7 +216,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             currency_pair,
         )
         self._bid_ask_depth = bid_ask_depth
-        await self._exchange.watchOrderBook(currency_pair)
+        await self._async_exchange.watchOrderBook(currency_pair)
 
     async def _subscribe_to_websocket_trades(self, **kwargs: Any) -> None:
         raise NotImplementedError(
@@ -252,7 +237,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         try:
             pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
-                data = self._exchange.ohlcvs[pair]
+                data = self._async_exchange.ohlcvs[pair]
                 for key in data:
                     # One of the returned key:value pairs is:
                     #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
@@ -266,7 +251,7 @@ class CcxtExtractor(imvcdexex.Extractor):
                 data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
-                data = self._exchange.orderbooks[pair].limit(self._bid_ask_depth)
+                data = self._async_exchange.orderbooks[pair].limit(self._bid_ask_depth)
             else:
                 raise ValueError(
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
@@ -323,9 +308,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Assign exchange_id to make it symmetrical to other vendors.
         _ = exchange_id
         hdbg.dassert(
-            self._exchange.has["fetchOrderBook"],
+            self._sync_exchange.has["fetchOrderBook"],
             "Exchange %s doesn't has fetchOrderBook method",
-            self._exchange,
+            self._sync_exchange,
         )
         # Convert symbol to CCXT format, e.g. "BTC_USDT" -> "BTC/USDT".
         currency_pair = self.convert_currency_pair(
@@ -337,7 +322,7 @@ class CcxtExtractor(imvcdexex.Extractor):
             "Currency pair is not present in exchange",
         )
         # Download order book data.
-        order_book = self._exchange.fetch_order_book(currency_pair, depth)
+        order_book = self._sync_exchange.fetch_order_book(currency_pair, depth)
         order_book["end_download_timestamp"] = str(
             hdateti.get_current_time("UTC")
         )
@@ -397,7 +382,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         # Change currency pair to CCXT format.
         currency_pair = currency_pair.replace("_", "/")
         # Fetch the data through CCXT.
-        bars = self._exchange.fetch_ohlcv(
+        bars = self._sync_exchange.fetch_ohlcv(
             currency_pair,
             timeframe=timeframe,
             since=since,
