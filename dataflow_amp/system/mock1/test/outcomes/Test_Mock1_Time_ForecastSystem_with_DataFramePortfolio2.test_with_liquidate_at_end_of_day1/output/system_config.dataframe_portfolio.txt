@@ -1,5 +1,5 @@
 ################################################################################
-system_config.database_portfolio
+system_config.dataframe_portfolio
 ################################################################################
 dag_config:
   filter_ath:
@@ -71,7 +71,7 @@ dag_config:
     drop_nans: True
 dag_builder_object: nid_prefix=
 dag_builder_class: Mock1_DagBuilder
-system_class: Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor
+system_class: Mock1_Time_ForecastSystem_with_DataFramePortfolio
 market_data_config:
   asset_id_col_name: asset_id
   delay_in_secs: 5
@@ -100,7 +100,7 @@ portfolio_config:
     price: close
 dag_runner_config:
   bar_duration_in_secs: 300
-  rt_timeout_in_secs_or_time: 1500
+  rt_timeout_in_secs_or_time: 2100
 research_forecast_evaluator_from_prices:
   style: cross_sectional
   init:
@@ -110,48 +110,12 @@ research_forecast_evaluator_from_prices:
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
-order_processor_config:
-  max_wait_time_for_order_in_secs: 305
-  duration_in_secs: 1505
-event_loop_object: <_EventLoop running=False closed=False debug=False>
-market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
-object.builder_function:
-  market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
-  portfolio_object: dataflow_amp.system.mock1.mock1_forecast_system._get_portfolio
-  dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
-  dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
-portfolio_object:
-  <oms.portfolio.DatabasePortfolio at 0x>
-    # holdings_shares=
-    Empty DataFrame
-    Columns: []
-    Index: []
-    # holdings_notional=
-    Empty DataFrame
-    Columns: []
-    Index: []
-    # executed_trades_shares=
-    Empty DataFrame
-    Columns: []
-    Index: []
-    # executed_trades_notional=
-    Empty DataFrame
-    Columns: []
-    Index: []
-    # pnl=
-    Empty DataFrame
-    Columns: []
-    Index: []
-    # statistics=
-    Empty DataFrame
-    Columns: [pnl]
-    Index: []
 process_forecasts_node_dict:
   prediction_col: feature1
   volatility_col: vwap.ret_0.vol
   spread_col: None
   portfolio:
-    <oms.portfolio.DatabasePortfolio at 0x>
+    <oms.portfolio.DataFramePortfolio at 0x>
       # holdings_shares=
       Empty DataFrame
       Columns: []
@@ -189,12 +153,45 @@ process_forecasts_node_dict:
           bulk_fill_method: zero
           target_gmv: 100000.0
     execution_mode: real_time
+    trading_end_time: 10:00:00
+    liquidate_at_trading_end_time: True
     ath_start_time: 09:30:00
     trading_start_time: 09:30:00
     ath_end_time: 16:00:00
-    trading_end_time: 15:55:00
-    liquidate_at_trading_end_time: False
     share_quantization: no_quantization
+event_loop_object: <_EventLoop running=False closed=False debug=False>
+market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
+object.builder_function:
+  market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
+  portfolio_object: dataflow_amp.system.mock1.mock1_forecast_system._get_portfolio
+  dag_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag
+  dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
+portfolio_object:
+  <oms.portfolio.DataFramePortfolio at 0x>
+    # holdings_shares=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # holdings_notional=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # executed_trades_shares=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # executed_trades_notional=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # pnl=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # statistics=
+    Empty DataFrame
+    Columns: [pnl]
+    Index: []
 dag_object: DAG at 0x=(_nx_dag=DiGraph with 10 nodes and 9 edges <networkx.classes.digraph.DiGraph>, _name=None <NoneType>, _mode=strict <str>, _save_node_io= <str>, _profile_execution=False <bool>, _dst_dir=None <NoneType>, force_free_nodes=False <bool>)
 dag_runner_object:
   RealTimeDagRunner at 0x=(config= <core.config.config_.Config>, _column_to_tags_mapping=None <NoneType>, _result_nid=process_forecasts <str>, _execute_rt_loop_kwargs={'get_wall_clock_time': <bound method MarketData.get_wall_clock_time of <market_data.replayed_market_data.ReplayedMarketData at 0x>:
@@ -218,4 +215,4 @@ dag_runner_object:
       2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
       2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
-    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 1500} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)
+    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)

@@ -194,6 +194,8 @@ class RealTimeDagRunner(dtfcore.DagRunner):
 
     def _apply_current_bar_timestamp(self) -> None:
         if self._set_current_bar_timestamp:
+            # TODO(gp): This is similar to `hdateti.set_current_bar_timestamp()`.
+            #  Consider factoring it out.
             # Compute the current bar by snapping the current timestamp to the
             # grid.
             _LOG.debug("Setting current bar time")
