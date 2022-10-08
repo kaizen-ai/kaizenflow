@@ -404,7 +404,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     # Exchange.sleep() method is needed instead of built in python time.sleep()
     #  to ensure websocket ping-pong messages are exchanged in a timely fashion.
     #  The method expects value in miliseconds.
-    await exchange._exchange.sleep(start_delay * 1000)
+    await exchange._async_exchange.sleep(start_delay * 1000)
     # Start data collection
     while pd.Timestamp.now(tz) < stop_time:
         iter_start_time = pd.Timestamp.now(tz)
@@ -439,7 +439,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             iter_length,
             actual_sleep_time,
         )
-        await exchange._exchange.sleep(actual_sleep_time)
+        await exchange._async_exchange.sleep(actual_sleep_time)
     _LOG.info("Websocket download finished at %s", pd.Timestamp.now(tz))
 
 
