@@ -9,7 +9,7 @@ import im_v2.talos.data.extract.extractor as imvtdexex
 
 
 import logging
-from typing import Dict, Union
+from typing import Any, Dict, List, Optional, Union
 
 import pandas as pd
 import requests
@@ -233,3 +233,50 @@ class TalosExtractor(imvcdexex.Extractor):
             hdateti.convert_timestamp_to_unix_epoch
         )
         return concat_df
+    
+    def _download_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    
+    def _download_websocket_bid_ask(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    
+    def _download_websocket_trades(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    
+    def _subscribe_to_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    
+    def _subscribe_to_websocket_bid_ask(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    
+    def _subscribe_to_websocket_trades(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
