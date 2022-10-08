@@ -14,14 +14,14 @@ replace_text.py \
   --exclude_dirs "$im_client_test_case_dirs"
 
 replace_text.py \
-  --old "import market_data.market_data_test_case as mdtmdtca" \
+  --old "import market_data.test.market_data_test_case as mdtmdtca" \
   --new "import market_data as mdata" \
-  --exclude_dirs $mdata_test_case_dirs
+  --exclude_dirs "$mdata_test_case_dirs"
 
 replace_text.py \
   --old "mdtmdtca." \
   --new "mdata." \
-  --exclude_dirs $mdata_test_case_dirs
+  --exclude_dirs "$mdata_test_case_dirs"
 
 # Remove unused imports from affected files.
 invoke lint -m --only-format

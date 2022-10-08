@@ -14,6 +14,7 @@ import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -185,7 +186,7 @@ class TestTestCase1(hunitest.TestCase):
         act = hunitest.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
-        exp = """
+        exp ="""
         # Dir structure
         $TMP_DIR
         $TMP_DIR/tmp_diff.sh
@@ -193,9 +194,17 @@ class TestTestCase1(hunitest.TestCase):
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
         # $TMP_DIR/tmp_diff.sh
-        num_lines=1
+        num_lines=9
         '''
-        vimdiff helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.expected.txt
+        #!/bin/bash
+        if [[ $1 == "wrap" ]]; then
+            cmd='vimdiff -c "windo set wrap"'
+        else
+            cmd='vimdiff'
+        fi;
+        cmd="$cmd helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.expected.txt"
+        eval $cmd
+
         '''
         """
         # pylint: enable=line-too-long
@@ -315,8 +324,6 @@ completed failure Lint    Run_linter                                      |  com
 completed       success Lint    Fast_tests                                (
 completed       success Lint    Slow_tests                                (
 Diff with:
-> vimdiff helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.actual.txt helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.expected.txt
-or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
 ACTUAL VARIABLE: Test_AssertEqual1.test_not_equal1
@@ -984,11 +991,15 @@ class Test_purify_from_env_vars(hunitest.TestCase):
 
     def helper(self, env_var: str) -> None:
         env_var_value = os.environ[env_var]
-        input = f"s3://{env_var_value}/"
-        act = hunitest.purify_from_env_vars(input)
+        input_ = f"s3://{env_var_value}/"
+        act = hunitest.purify_from_env_vars(input_)
         exp = f"s3://${env_var}/"
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
     def test1(self) -> None:
         """
         - $CK_AWS_S3_BUCKET
@@ -1017,6 +1028,10 @@ class Test_purify_from_env_vars(hunitest.TestCase):
         env_var = "AM_ECR_BASE_PATH"
         self.helper(env_var)
 
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
     def test_end_to_end(self) -> None:
         """
         - Multiple env vars.
@@ -1037,6 +1052,8 @@ class Test_purify_from_env_vars(hunitest.TestCase):
         self.check_string(actual, fuzzy_match=True)
 
 
+# #############################################################################
+# Test_purify_object_representation1
 # #############################################################################
 
 

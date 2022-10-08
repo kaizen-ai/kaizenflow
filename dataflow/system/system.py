@@ -42,7 +42,7 @@ _LOG = logging.getLogger(__name__)
 # The lifecycle of `System` is like:
 #     ```
 #     # Instantiate a System.
-#     system = E8_ForecastSystem()
+#     system = XYZ_ForecastSystem()
 #     # Get the template config.
 #     system_config = system.get_system_config_template()
 #     # Apply all the changes to the `system_config` to customize the config.
@@ -213,8 +213,8 @@ class System(abc.ABC):
         log_dir = self.config["system_log_dir"]
         hio.create_dir(log_dir, incremental=False)
         #
-        file_name = os.path.join(log_dir, "system_config.input.txt")
-        hio.to_file(file_name, repr(self.config))
+        tag = "system_config.input"
+        self.config.save_to_file(log_dir, tag)
         #
         dag_runner: dtfcore.DagRunner = self._get_cached_value(
             key, self._get_dag_runner
@@ -235,8 +235,8 @@ class System(abc.ABC):
             + hprint.frame("End config after dag_runner")
         )
         #
-        file_name = os.path.join(log_dir, "system_config.output.txt")
-        hio.to_file(file_name, repr(self.config))
+        tag = "system_config.output"
+        self.config.save_to_file(log_dir, tag)
         return dag_runner
 
     @abc.abstractmethod
@@ -291,11 +291,12 @@ class System(abc.ABC):
             # Build the object.
             hdbg.dassert_not_in(key, self.config)
             self.config[key] = obj
-            # Add the object representation after it's built.
-            key_tmp = ("object.str", key)
-            hdbg.dassert_not_in(key_tmp, self.config)
-            # Use the unambiguous object representation `__repr__()`.
-            self.config[key_tmp] = repr(obj)
+            if False:
+                # Add the object representation after it's built.
+                key_tmp = ("object.str", key)
+                hdbg.dassert_not_in(key_tmp, self.config)
+                # Use the unambiguous object representation `__repr__()`.
+                self.config[key_tmp] = repr(obj)
             # Add information about who created that object.
             key_tmp = ("object.builder_function", key)
             hdbg.dassert_not_in(key_tmp, self.config)
@@ -309,7 +310,7 @@ class System(abc.ABC):
 # #############################################################################
 
 
-class ForecastSystem(System):
+class ForecastSystem(System, abc.ABC):
     """
     A System producing forecasts and comprised of:
 
@@ -360,7 +361,7 @@ class ForecastSystem(System):
 # #############################################################################
 
 
-class NonTime_ForecastSystem(ForecastSystem):
+class NonTime_ForecastSystem(ForecastSystem, abc.ABC):
     pass
 
 
@@ -369,7 +370,7 @@ class NonTime_ForecastSystem(ForecastSystem):
 # #############################################################################
 
 
-class _Time_ForecastSystem_Mixin:
+class _Time_ForecastSystem_Mixin(abc.ABC):
     """
     Class adding a time semantic, i.e., an event loop that is not `None`.
 
@@ -396,7 +397,7 @@ class _Time_ForecastSystem_Mixin:
 # #############################################################################
 
 
-class _ForecastSystem_with_Portfolio(ForecastSystem):
+class _ForecastSystem_with_Portfolio(ForecastSystem, abc.ABC):
     """
     Create a System composed of:
 
@@ -433,7 +434,7 @@ class _ForecastSystem_with_Portfolio(ForecastSystem):
 # #############################################################################
 
 
-class Time_ForecastSystem(_Time_ForecastSystem_Mixin, ForecastSystem):
+class Time_ForecastSystem(_Time_ForecastSystem_Mixin, ForecastSystem, abc.ABC):
     """
     Like `ForecastSystem` but with a time semantic.
     """
@@ -445,45 +446,63 @@ class Time_ForecastSystem(_Time_ForecastSystem_Mixin, ForecastSystem):
 # ForecastSystem_with_DataFramePortfolio
 # #############################################################################
 
-# Not all combinations of objects are possible
+# Not all combinations of objects are possible:
+# - Time_ForecastSystem, NonTime_ForecastSystem
+# - MarketData
+# - DataFramePortfolio, DatabasePortfolio
+# - SimulatedBroker, DatabaseBroker
 
-# Systems without time compute data in one-shot for all the history
-# Systems with time compute data as time advances (i.e., clock-by-clock)
+#  Time vs Non-time system
+#
+# - A `ForecastSystem` can have time or not
+#
+# - Systems without time (e.g., `NonTime_ForecastSystem`) compute data in one-shot
+#   for all the history, i.e., compute data in a vectorized way
+# - Systems with time (e.g., `Time_ForecastSystem`) compute data as time advances
+#   (i.e., clock-by-clock, using asyncio)
+#
+# - A `NonTime_ForecastSystem` computes the forecasts in one shot
+#   - It is possible in a set-up to scan the forecasts clock-by-clock and feed them
+#     to `Portfolio`
+# - A `Time_ForecastSystem` computes data clock-by-clock and feeds the data in the
+#   same pattern to `Portfolio`
 
-# A `ForecastSystem` can have time or not
-# A `ForecastSystem_with_DataFramePortfolio` can have time or not
-
+# # Portfolio
+#
 # A `Portfolio` always needs to be fed data in a timed fashion (i.e., clock-by-clock)
-# A `ForecastSystem` without time
-# - computes the forecasts in one shot
-# - scans the forecasts clock-by-clock feeding them to `Portfolio`
-# A `Time_ForecastSystem` computes data clock-by-clock and feeds the data in the same
-# pattern to `Portfolio`
-
+#
 # A `DataFramePortfolio`
 # - requires a `SimulatedBroker`
 # - can't work with an `OrderProcessor`
-# - can work both with time and without
+# - only works with time
 #
 # A `DatabasePortfolio`
 # - requires a `DatabaseBroker` and an `OrderProcessor`
 # - only works with time
+#
+# The only difference between a System with `DataFramePortfolio` and one with
+# `DatabasePortfolio` is the fact that the orders are simulated in terms of their
+# timing (e.g., fills)
 
-# Testing
-# - run without Time with DataFramePortfolio (forecast dag is vectorized, and then
-#   df portfolio loops)
-# - run with Time (and asyncio) with DataFramePortfolio (forecast dag is
-#   clock-by-clock and df portfolio too)
-# - run with Time with DatabasePortfolio + DatabaseBroker + OrderProcessor
+# Possible set-ups
+# - run without Time (forecast DAG is vectorized), save DAG output, and compute
+#   PnL with `ForecastEvaluatorFromPrices`
+# - run without Time (forecast DAG is vectorized), save DAG output, and apply
+#   outputs to a Portfolio using a timed loop
+# - run with Time and `DataFramePortfolio` + `SimulatedBroker` (forecast DAG and
+#   Portfolio are run clock-by-clock)
+# - run with Time with `DatabasePortfolio` + `DatabaseBroker` + `OrderProcessor`
 #   (see the trades going through, the fills coming back, all with a certain timing)
 
 
+# TODO(gp): I don't think this is ever used. Merge it with
+#  Time_ForecastSystem_with_DataFramePortfolio
 class ForecastSystem_with_DataFramePortfolio(_ForecastSystem_with_Portfolio):
     """
     Same as `_ForecastSystem_with_Portfolio` but with a `DataFramePortfolio`
 
-      - The portfolio is used to store the holdings according to the orders
-      - Use a `SimulatedBroker` to fill the orders
+    - The portfolio is used to store the holdings according to the orders
+    - Use a `SimulatedBroker` to fill the orders
 
     This System is used to simulate a forecast system in terms of orders and
     holdings in a portfolio.
@@ -555,24 +574,43 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
         _Time_ForecastSystem_Mixin.__init__(self)
         _ForecastSystem_with_Portfolio.__init__(self)
 
-    # TODO(gp): -> order_processor_coroutine?
-    # TODO(gp): Can we return the OrderProcessor somehow so we can add it to the
-    #  config?
     @property
     def order_processor(
         self,
-    ) -> Coroutine:
+    ) -> oms.OrderProcessor:
         """
         OrderProcessor should be built after DAG.
         """
+        order_processor: oms.OrderProcessor = self._get_cached_value(
+            "order_processor_object", self._get_order_processor
+        )
+        # TODO(gp): Maybe pass the object type to _get_cached_value() to
+        #  centralize the assertion.
+        hdbg.dassert_isinstance(order_processor, oms.OrderProcessor)
+        return order_processor
+
+    @property
+    def order_processor_coroutine(
+        self,
+    ) -> Coroutine:
+        """
+        OrderProcessorCoroutine should be built after DAG.
+        """
         order_processor_coroutine: Coroutine = self._get_cached_value(
-            "order_processor", self._get_order_processor
+            "order_processor_coroutine", self._get_order_processor_coroutine
         )
         hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
         return order_processor_coroutine
 
     @abc.abstractmethod
     def _get_order_processor(self) -> Coroutine:
+        """
+        Return the OrderProcessor.
+        """
+        ...
+
+    @abc.abstractmethod
+    def _get_order_processor_coroutine(self) -> Coroutine:
         """
         Return the coroutine representing the OrderProcessor.
         """

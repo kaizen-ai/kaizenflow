@@ -26,9 +26,9 @@ import helpers.hprint as hprint
 import helpers.htqdm as htqdm
 import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
+import oms.cc_optimizer_utils as occoputi
 import oms.order as omorder
 import oms.portfolio as omportfo
-import oms.cc_optimizer_utils as occoputi
 
 _LOG = logging.getLogger(__name__)
 
@@ -171,6 +171,11 @@ async def process_forecasts(
         "liquidate_at_trading_end_time",
         expected_type=bool,
     )
+    share_quantization = hdict.typed_get(
+        config,
+        "share_quantization",
+        expected_type=str,
+    )
     # Sanity check trading time.
     _validate_trading_time(
         ath_start_time,
@@ -217,6 +222,7 @@ async def process_forecasts(
         order_dict,
         optimizer_dict,
         restrictions_df,
+        share_quantization,
         log_dir=log_dir,
     )
     if execution_mode == "batch":
@@ -450,6 +456,7 @@ class ForecastProcessor:
         optimizer_dict: cconfig.Config,
         # TODO(gp): -> restrictions_df like the process_forecast
         restrictions: Optional[pd.DataFrame],
+        share_quantization: str,
         *,
         log_dir: Optional[str] = None,
     ) -> None:
@@ -495,6 +502,8 @@ class ForecastProcessor:
         # Store the target positions.
         self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
         self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
+        #
+        self._share_quantization = share_quantization
 
     def __str__(self) -> str:
         """
@@ -524,6 +533,7 @@ class ForecastProcessor:
         log_dir: str,
         *,
         tz: str = "America/New_York",
+        rename_col_map: Optional[Dict[str, str]] = None,
     ) -> pd.DataFrame:
         """
         Parse logged `target_position` dataframes.
@@ -539,6 +549,10 @@ class ForecastProcessor:
             )
             # Change the index from `asset_id` to the timestamp.
             df = df.reset_index().set_index("wall_clock_timestamp")
+            # TODO(Dan): Research why column names are being incorrect sometimes
+            #  and save the data with the proper names.
+            if rename_col_map:
+                df = df.rename(columns=rename_col_map)
             hpandas.dassert_series_type_is(df["asset_id"], np.int64)
             if not isinstance(df.index, pd.DatetimeIndex):
                 _LOG.info("Skipping file_name=%s", path)
@@ -772,27 +786,42 @@ class ForecastProcessor:
             raise NotImplementedError
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
-        #
-        if backend == "cc_pomo":
-            diff_num_shares = df["diff_num_shares"]
-        else:
-            # Convert the target positions from cash values to target share counts.
-            # Round to nearest integer towards zero.
-            # df["diff_num_shares"] = np.fix(df["target_trade"] / df["price"])
-            diff_num_shares = df["target_notional_trade"] / df["price"]
-        # Make sure the diff_num_shares are well-formed.
-        _LOG.debug("after applying backend: %s", str(diff_num_shares))
-        diff_num_shares.replace([-np.inf, np.inf], np.nan, inplace=True)
-        diff_num_shares = diff_num_shares.fillna(0)
-        _LOG.debug("after filling zeroes: %s", str(diff_num_shares))
-        #
         if liquidate_holdings:
             diff_num_shares = -df["curr_num_shares"]
             _LOG.info(
                 "Liquidating holdings: diff_num_shares=\n%s",
                 hpandas.df_to_str(diff_num_shares),
             )
-        #
+            # If liquidate, there is no quantization so we use the same
+            # shares that need to be liquidated.
+            df["diff_num_shares_before_quantization"] = diff_num_shares
+        else:
+            _LOG.debug(
+                "Computing diff_num_shares from target_notional_trade and price."
+            )
+            # Compute `diff_num_shares` from target (notional) positions.
+            if backend == "cc_pomo":
+                diff_num_shares = df["diff_num_shares"]
+            else:
+                # Convert the target positions from cash values to target share counts.
+                diff_num_shares_before_quantization = (
+                    df["target_notional_trade"] / df["price"]
+                )
+                diff_num_shares_before_quantization.replace(
+                    [-np.inf, np.inf], np.nan, inplace=True
+                )
+                diff_num_shares_before_quantization = (
+                    diff_num_shares_before_quantization.fillna(0)
+                )
+                df[
+                    "diff_num_shares_before_quantization"
+                ] = diff_num_shares_before_quantization
+                diff_num_shares = cofinanc.quantize_shares(
+                    diff_num_shares_before_quantization,
+                    self._share_quantization,
+                )
+        # TODO(gp): Add an assertion that diff_num_shares is all finite.
+        _LOG.debug("diff_num_shares=%s", diff_num_shares)
         df["diff_num_shares"] = diff_num_shares
         df["spread"] = assets_and_predictions.set_index("asset_id")["spread"]
         _LOG.debug("df=\n%s", hpandas.df_to_str(df))

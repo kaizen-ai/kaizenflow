@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.secrets.secret_identifier as oseseide
+import oms.hsecrets.secret_identifier as oseseide
 """
 
 import dataclasses
@@ -19,7 +19,7 @@ class SecretIdentifier:
     # Identifier of the exchange (e.g., "binance").
     exchange_id: str
     # Stage where the secret is used
-    # (e.g., "prod", "preprod", "test").
+    # (e.g., "prod", "preprod", "local").
     stage: str
     # Account type, broker related: "sandbox", "trading").
     account_type: str

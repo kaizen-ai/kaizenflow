@@ -51,6 +51,7 @@ def docker_images_ls_repo(ctx, sudo=False):  # type: ignore
     """
     hlitauti.report_task()
     docker_login(ctx)
+    # TODO(gp): Move this to a var ECR_BASE_PATH="AM_ECR_BASE_PATH" in repo_config.py.
     ecr_base_path = hlitauti.get_default_param("CK_ECR_BASE_PATH")
     docker_exec = _get_docker_exec(sudo)
     hlitauti.run(ctx, f"{docker_exec} image ls {ecr_base_path}")
@@ -245,8 +246,7 @@ def docker_pull_dev_tools(ctx, stage="prod", version=None):  # type: ignore
     Pull latest prod image of `dev_tools` from the registry.
     """
     hlitauti.report_task()
-    # TODO(Nikola): `dev_tools` is still on AM.
-    base_image = hlitauti.get_default_param("AM_ECR_BASE_PATH") + "/dev_tools"
+    base_image = hlitauti.get_default_param("CK_ECR_BASE_PATH") + "/dev_tools"
     _docker_pull(ctx, base_image, stage, version)
 
 
@@ -283,9 +283,9 @@ def docker_login(ctx):  # type: ignore
     #   -p eyJ... \
     #   -e none \
     #   https://*****.dkr.ecr.us-east-1.amazonaws.com
-    # TODO(Nikola): Temporary, until `dev_tools` is ported to `CK`.
-    profile = "am" if hgit.is_dev_tools() else "ck"
-    region = "us-east-1" if hgit.is_dev_tools() else "eu-north-1"
+    # TODO(gp): Move this to var in repo_config.py.
+    profile = "ck"
+    region = "eu-north-1"
     if major_version == 1:
         cmd = f"eval $(aws ecr get-login --profile {profile} --no-include-email --region {region})"
     elif major_version == 2:
@@ -877,9 +877,7 @@ def _get_base_image(base_image: str) -> str:
     if base_image == "":
         # TODO(gp): Use os.path.join.
         base_image = (
-            hlitauti.get_default_param(
-                "AM_ECR_BASE_PATH" if hgit.is_dev_tools() else "CK_ECR_BASE_PATH"
-            )
+            hlitauti.get_default_param("CK_ECR_BASE_PATH")
             + "/"
             + hlitauti.get_default_param("BASE_IMAGE")
         )
@@ -988,7 +986,7 @@ def _get_container_name(service_name: str) -> str:
     # Get Docker image base name.
     image_name = hlitauti.get_default_param("BASE_IMAGE")
     # Get current timestamp.
-    current_timestamp = hlitauti._get_ET_timestamp()
+    current_timestamp = hlitauti.get_ET_timestamp()
     # Build container name.
     container_name = f"{linux_user}.{image_name}.{service_name}.{project_dir}.{current_timestamp}"
     _LOG.debug(
@@ -1207,8 +1205,7 @@ def _get_lint_docker_cmd(
     :return: the full command to run
     """
     # Get an image to run the linter on.
-    # TODO(Nikola): `dev_tools` is still on AM.
-    ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+    ecr_base_path = os.environ["CK_ECR_BASE_PATH"]
     linter_image = f"{ecr_base_path}/dev_tools"
     # TODO(Grisha): do we need a version? i.e., we can pass `version` to `lint`
     # and run Linter on the specific version, e.g., `1.1.5`.

@@ -425,8 +425,8 @@ def check_env_to_str(
     act = hunitest.filter_text("get_name", act)
     act = hunitest.filter_text("get_repo_map", act)
     act = hunitest.filter_text("AM_HOST_", act)
-    # TODO(gp): Difference between amp and cmamp.
     if skip_secrets_vars:
+        # TODO(gp): Difference between amp and cmamp.
         act = hunitest.filter_text(
             "AM_AWS_|CK_AWS_|AM_TELEGRAM_TOKEN|GH_ACTION_ACCESS_TOKEN", act
         )

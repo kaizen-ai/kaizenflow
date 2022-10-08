@@ -1,13 +1,15 @@
 import collections
 import datetime
 import logging
+import os
 import pprint
-from typing import Any, Callable, Dict, Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
 import core.config as cconfig
 import core.config.config_ as cconconf
+import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -1707,14 +1709,16 @@ class Test_from_dict1(hunitest.TestCase):
         self.assertTrue(check)
 
 
-class Test_to_pickleable_config(hunitest.TestCase):
+# #############################################################################
+# Test_to_string_config
+# #############################################################################
+
+
+class Test_to_string_config(hunitest.TestCase):
     def helper(
         self,
         value: Optional[str],
-        expected: str,
-        assert_func: Callable,
-        *,
-        force_strings: bool = False,
+        should_be_pickleable_before: bool,
     ) -> str:
         # Set config.
         nested = {
@@ -1723,12 +1727,12 @@ class Test_to_pickleable_config(hunitest.TestCase):
         }
         config = cconfig.Config.from_dict(nested)
         # Check if config is pickle-able before.
-        check = hintros.is_pickleable(config["key1"])
-        assert_func(check)
+        is_pickleable_before = hintros.is_pickleable(config["key1"])
+        self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
-        actual = config.to_pickleable_config(force_strings)
-        check = hintros.is_pickleable(actual["key1"])
-        self.assertTrue(check)
+        actual = config.to_string_config()
+        is_pickleable_after = hintros.is_pickleable(actual["key1"])
+        self.assertTrue(is_pickleable_after)
         # Convert `actual` to string since `assert_equal` comparing
         # within strings and bytes.
         actual = str(actual)
@@ -1739,15 +1743,13 @@ class Test_to_pickleable_config(hunitest.TestCase):
         Test when config is pickle-able before applying the function.
         """
         value = "val1"
-        expected = r"""{'key1': 'val1', 'key2': key3:
-          key4:
-        }
+        expected = r"""
+        {'key1': 'val1', 'key2': {'key3': {'key4': {}}}}
         """
-        assert_func = self.assertTrue
+        should_be_pickleable_before = True
         actual = self.helper(
             value,
-            expected,
-            assert_func,
+            should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
@@ -1755,28 +1757,54 @@ class Test_to_pickleable_config(hunitest.TestCase):
         """
         Test when config is not pickle-able before applying the function.
         """
+        # Set non-pickle-able value.
         value = lambda x: x
-        expected = r"""{'key1': '<function Test_to_pickleable_config.test2.<locals>.<lambda> at 0x>', 'key2': key3:
-          key4:
-        }
+        expected = r"""
+        {'key1': '<function Test_to_string_config.test2.<locals>.<lambda> at 0x>', 'key2': {'key3': {'key4': {}}}}
         """
-        assert_func = self.assertFalse
+        should_be_pickleable_before = False
         actual = self.helper(
             value,
-            expected,
-            assert_func,
+            should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
-    def test3(self) -> None:
-        """
-        Test when config is pickle-able before applying the function and `force_strings = True`.
-        """
-        value = "val3"
-        expected = r"""{'key1': 'val3', 'key2': key3:
-          key4:
+
+# #############################################################################
+# Test_save_to_file
+# #############################################################################
+
+
+class Test_save_to_file(hunitest.TestCase):
+    def helper(self, value: Optional[str]) -> None:
+        # Set config.
+        log_dir = self.get_scratch_space()
+        tag = "system_config.input"
+        nested = {
+            "key1": value,
+            "key2": {"key3": {"key4": {}}},
         }
+        config = cconfig.Config.from_dict(nested)
+        # Save config.
+        config.save_to_file(log_dir, tag)
+        # Set expected values.
+        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
+        expected_pkl_path = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
+        # Check that file paths exist.
+        hdbg.dassert_path_exists(expected_txt_path)
+        hdbg.dassert_path_exists(expected_pkl_path)
+
+    def test1(self) -> None:
         """
-        assert_func = self.assertTrue
-        actual = self.helper(value, expected, assert_func, force_strings=True)
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        Test saving a Config that is pickle-able.
+        """
+        value = "value1"
+        self.helper(value)
+
+    def test2(self) -> None:
+        """
+        Test saving a Config that is not pickle-able.
+        """
+        # Set non-pickle-able value.
+        value = lambda x: x
+        self.helper(value)

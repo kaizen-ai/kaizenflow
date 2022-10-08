@@ -5,6 +5,7 @@ import helpers.hunit_test as hunitest
 """
 
 import abc
+import collections
 import datetime
 import inspect
 import logging
@@ -489,8 +490,14 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_AWS_S3_BUCKET", "AM_TELEGRAM_TOKEN",
-                    "CK_AWS_S3_BUCKET", "CK_ECR_BASE_PATH"]:
+    # TODO(gp): Diff between amp and cmamp.
+    for env_var in [
+        "AM_ECR_BASE_PATH",
+        "AM_AWS_S3_BUCKET",
+        "AM_TELEGRAM_TOKEN",
+        "CK_AWS_S3_BUCKET",
+        "CK_ECR_BASE_PATH"
+    ]:
         if env_var in os.environ:
             val = os.environ[env_var]
             if val == "":
@@ -508,11 +515,11 @@ def purify_object_representation(txt: str) -> str:
     txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
     txt = re.sub(r" id='\d+'>", " id='xxx'>", txt, flags=re.MULTILINE)
     txt = re.sub(r"port=\d+", "port=xxx", txt, flags=re.MULTILINE)
-    txt = re.sub("host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
+    txt = re.sub(r"host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
     # wall_clock_time=Timestamp('2022-08-04 09:25:04.830746-0400'
     txt = re.sub(
-        "wall_clock_time=Timestamp\('.*?',",
-        "wall_clock_time=Timestamp('xxx',",
+        r"wall_clock_time=Timestamp\('.*?',",
+        r"wall_clock_time=Timestamp('xxx',",
         txt,
         flags=re.MULTILINE,
     )
@@ -530,6 +537,7 @@ def purify_today_date(txt: str) -> str:
     return txt
 
 
+# TODO(gp): -> purify_trailing_white_spaces
 def purify_white_spaces(txt: str) -> str:
     """
     Remove trailing white spaces.
@@ -591,15 +599,21 @@ def diff_files(
     msg.append(res)
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
-    vimdiff_cmd = f"vimdiff {file_name1} {file_name2}"
+    vimdiff_cmd = f"""#!/bin/bash
+if [[ $1 == "wrap" ]]; then
+    cmd='vimdiff -c "windo set wrap"'
+else
+    cmd='vimdiff'
+fi;
+cmd="$cmd {file_name1} {file_name2}"
+eval $cmd
+"""
     # TODO(gp): Use hio.create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsystem.system(cmd)
     # Report how to diff.
     msg.append("Diff with:")
-    msg.append("> " + vimdiff_cmd)
-    msg.append("or running:")
     msg.append("> " + diff_script)
     msg_as_str = "\n".join(msg)
     # Append also error_msg to the current message.
@@ -744,31 +758,29 @@ def set_pd_default_values() -> None:
 # #############################################################################
 
 
-# TODO(gp): -> txt: str
-def _remove_spaces(obj: Any) -> str:
+def _remove_spaces(txt: str) -> str:
     """
     Remove leading / trailing spaces and empty lines.
 
     This is used to implement fuzzy matching.
     """
-    string = str(obj)
-    string = string.replace("\\n", "\n").replace("\\t", "\t")
+    txt = txt.replace("\\n", "\n").replace("\\t", "\t")
     # Convert multiple empty spaces (but not newlines) into a single one.
-    string = re.sub(r"[^\S\n]+", " ", string)
+    txt = re.sub(r"[^\S\n]+", " ", txt)
     # Remove insignificant crap.
     lines = []
-    for line in string.split("\n"):
+    for line in txt.split("\n"):
         # Remove leading and trailing spaces.
         line = re.sub(r"^\s+", "", line)
         line = re.sub(r"\s+$", "", line)
         # Skip empty lines.
         if line != "":
             lines.append(line)
-    string = "\n".join(lines)
-    return string
+    txt = "\n".join(lines)
+    return txt
 
 
-def _remove_lines(txt: str) -> str:
+def _remove_banner_lines(txt: str) -> str:
     """
     Remove lines of separating characters long at least 20 characters.
     """
@@ -777,26 +789,26 @@ def _remove_lines(txt: str) -> str:
         if re.match(r"^\s*[\#\-><=]{20,}\s*$", line):
             continue
         txt_tmp.append(line)
-    return "\n".join(txt_tmp)
+    txt = "\n".join(txt_tmp)
+    return txt
 
 
 def _fuzzy_clean(txt: str) -> str:
     """
     Remove irrelevant artifacts to make string comparison less strict.
     """
+    hdbg.dassert_isinstance(txt, str)
+    # Ignore spaces.
     txt = _remove_spaces(txt)
-    txt = _remove_lines(txt)
+    # Ignore separation lines.
+    txt = _remove_banner_lines(txt)
     return txt
 
 
-# TODO(gp): Use the one in hprint. Is it even needed?
-def _to_pretty_string(obj: str) -> str:
-    if isinstance(obj, dict):
-        ret = pprint.pformat(obj)
-    else:
-        ret = str(obj)
-    ret = ret.rstrip("\n")
-    return ret
+def _ignore_line_breaks(txt: str) -> str:
+    # Ignore line breaks.
+    txt = txt.replace("\n", " ")
+    return txt
 
 
 def _sort_lines(txt: str) -> str:
@@ -813,6 +825,22 @@ def _sort_lines(txt: str) -> str:
     return lines
 
 
+def _save_diff(
+    actual: str,
+    expected: str,
+    tag: str,
+    test_dir: str,
+) -> None:
+    if tag != "":
+        tag += "."
+    # Save expected strings to dir.
+    for dst_dir in (".", test_dir):
+        act_file_name = f"{dst_dir}/tmp.{tag}actual.txt"
+        hio.to_file(act_file_name, actual)
+        exp_file_name = f"{dst_dir}/tmp.{tag}expected.txt"
+        hio.to_file(exp_file_name, expected)
+
+
 def assert_equal(
     actual: str,
     expected: str,
@@ -824,6 +852,7 @@ def assert_equal(
     purify_text: bool = False,
     purify_expected_text: bool = False,
     fuzzy_match: bool = False,
+    ignore_line_breaks: bool = False,
     sort: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
@@ -837,135 +866,144 @@ def assert_equal(
     """
     _LOG.debug(
         hprint.to_str(
-            "full_test_name test_dir dedent purify_text fuzzy_match abort_on_error "
-            "dst_dir"
+            "full_test_name test_dir "
+            "dedent purify_text fuzzy_match ignore_line_breaks "
+            "abort_on_error dst_dir"
         )
     )
+    # Store a mapping tag after each transformation (e.g., original, sort, ...) to
+    # (actual, expected).
+    values: Dict[str, str] = collections.OrderedDict()
+
+    def _append(tag: str, actual: str, expected: str) -> None:
+        _LOG.debug("tag=%s\n  act='\n%s'\n  exp='\n%s'", actual, expected)
+        hdbg.dassert_not_in(tag, values)
+        values[tag] = (actual, expected)
+
     #
     _LOG.debug("Before any transformation:")
-    _LOG.debug("act='\n%s'", actual)
-    _LOG.debug("exp='\n%s'", expected)
-    # Remove white spaces.
+    tag = "original"
+    _append(tag, actual, expected)
+    # 1) Remove white spaces.
     actual = purify_white_spaces(actual)
     expected = purify_white_spaces(expected)
-    # Dedent expected, if needed.
+    tag = "purify_white_spaces"
+    _append(tag, actual, expected)
+    # Dedent only expected since we often align it to make it look more readable
+    # in the Python code, if needed.
     if dedent:
-        _LOG.debug("# Dedent expected")
-        # actual = hprint.dedent(actual)
         expected = hprint.dedent(expected)
-        _LOG.debug("exp='\n%s'", expected)
-    # Purify actual text, if needed.
+        tag = "dedent"
+        _append(tag, actual, expected)
+    # Purify text, if needed.
     if purify_text:
-        _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
-        _LOG.debug("act='\n%s'", actual)
         if purify_expected_text:
-            _LOG.debug("# Purify expected")
             expected = purify_txt_from_client(expected)
-            _LOG.debug("exp='\n%s'", expected)
+        tag = "purify"
+        _append(tag, actual, expected)
     # Ensure that there is a single `\n` at the end of the strings.
     actual = actual.rstrip("\n") + "\n"
     expected = expected.rstrip("\n") + "\n"
     # Sort the lines.
     if sort:
-        _LOG.debug("# Sorting lines")
         actual = _sort_lines(actual)
         expected = _sort_lines(expected)
+        tag = "sort"
+        _append(tag, actual, expected)
     # Fuzzy match, if needed.
-    actual_orig = actual
-    expected_orig = expected
     if fuzzy_match:
-        _LOG.debug("# Use fuzzy match")
         actual = _fuzzy_clean(actual)
         expected = _fuzzy_clean(expected)
+        tag = "fuzzy_clean"
+        _append(tag, actual, expected)
+    # Ignore line breaks, if needed.
+    if ignore_line_breaks:
+        actual = _ignore_line_breaks(actual)
+        expected = _ignore_line_breaks(expected)
+        tag = "ignore_line_breaks"
+        _append(tag, actual, expected)
     # Check.
-    _LOG.debug("The values being compared are:")
-    _LOG.debug("act='\n%s'", actual)
-    _LOG.debug("exp='\n%s'", expected)
+    tag = "final"
+    _append(tag, actual, expected)
+    #
     is_equal = expected == actual
-    if not is_equal:
-        _LOG.error(
-            "%s",
-            "\n"
-            + hprint.frame(
-                f"Test '{full_test_name}' failed", char1="=", num_chars=80
-            ),
-        )
-        if not check_string:
-            # Print the correct output, like:
-            #   exp = r'"""
-            #   2021-02-17 09:30:00-05:00
-            #   2021-02-17 10:00:00-05:00
-            #   2021-02-17 11:00:00-05:00
-            #   """
-            txt = []
-            txt.append(
-                hprint.frame(f"ACTUAL VARIABLE: {full_test_name}", char1="-")
-            )
-            # We always return the variable exactly as this should be, even if we
-            # could make it look better through indentation in case of fuzzy match.
-            if actual_orig.startswith('"'):
-                # TODO(gp): Switch to expected or expected_result.
-                # txt.append(f"expected = r'''{actual_orig}'''")
-                if fuzzy_match:
-                    # We can print in a more readable way since spaces don't matter.
-                    exp_var = f"exp = r'''\n{actual_orig}'''"
-                else:
-                    exp_var = f"exp = r'''{actual_orig}'''"
-            else:
-                # txt.append(f"expected = r'''{actual_orig}'''")
-                if fuzzy_match:
-                    # We can print in a more readable way since spaces don't matter.
-                    exp_var = f'exp = r"""\n{actual_orig}"""'
-                else:
-                    exp_var = f'exp = r"""{actual_orig}"""'
-            # Save the expected variable to files.
-            exp_var_file_name = f"{test_dir}/tmp.exp_var.txt"
-            hio.to_file(exp_var_file_name, exp_var)
-            #
-            exp_var_file_name = "tmp.exp_var.txt"
-            hio.to_file(exp_var_file_name, exp_var)
-            _LOG.info("Saved exp_var in %s", exp_var_file_name)
-            #
-            txt.append(exp_var)
-            txt = "\n".join(txt)
-            error_msg += txt
-        # Select what to save.
-        compare_orig = False
-        if compare_orig:
-            tag = "ORIGINAL ACTUAL vs EXPECTED"
-            actual = actual_orig
-            expected = expected_orig
+    _LOG.debug(hprint.to_str("is_equal"))
+    if is_equal:
+        return is_equal
+    _LOG.error(
+        "%s",
+        "\n"
+        + hprint.frame(
+            f"Test '{full_test_name}' failed", char1="=", num_chars=80
+        ),
+    )
+    if not check_string:
+        # If this is a `self.assert_equal()` and not a `self.check_string()`,
+        # then print the correct output, like:
+        #   exp = r'"""
+        #   2021-02-17 09:30:00-05:00
+        #   2021-02-17 10:00:00-05:00
+        #   2021-02-17 11:00:00-05:00
+        #   """
+        txt = []
+        txt.append(hprint.frame(f"ACTUAL VARIABLE: {full_test_name}", char1="-"))
+        # TODO(gp): Switch to expected or expected_result.
+        exp_var = "exp = r"
+        # We always return the variable exactly as this should be, even if we
+        # could make it look better through indentation in case of fuzzy match.
+        actual_orig = values["original"][0]
+        if actual_orig.startswith('"'):
+            sep = "'''"
         else:
-            if fuzzy_match:
-                tag = "FUZZY ACTUAL vs EXPECTED"
-            else:
-                tag = "ACTUAL vs EXPECTED"
-        tag += f": {full_test_name}"
-        # Save actual and expected strings to files (before or after fuzzy_clean).
-        # TODO(gp): It might be useful to save also the files without any
-        #  purification.
-        act_file_name = f"{test_dir}/tmp.actual.txt"
-        exp_file_name = f"{test_dir}/tmp.expected.txt"
-        save_with_fuzzy_clean = True
-        if save_with_fuzzy_clean:
-            hio.to_file(act_file_name, actual_orig)
-            hio.to_file(exp_file_name, expected_orig)
-        else:
-            hio.to_file(act_file_name, actual)
-            hio.to_file(exp_file_name, expected)
+            sep = '"""'
+        exp_var += sep
+        if fuzzy_match:
+            # We can print in a more readable way since spaces don't matter.
+            exp_var += "\n"
+        exp_var += actual_orig
+        if fuzzy_match:
+            # We can print in a more readable way since spaces don't matter.
+            exp_var += "\n"
+        exp_var += sep
+        # Save the expected variable to files.
+        exp_var_file_name = f"{test_dir}/tmp.exp_var.txt"
+        hio.to_file(exp_var_file_name, exp_var)
         #
-        _LOG.debug("Actual:\n'%s'", actual)
-        _LOG.debug("Expected:\n'%s'", expected)
-        diff_files(
-            act_file_name,
-            exp_file_name,
-            tag=tag,
-            abort_on_exit=abort_on_error,
-            dst_dir=dst_dir,
-            error_msg=error_msg,
-        )
-    _LOG.debug("-> is_equal=%s", is_equal)
+        exp_var_file_name = "tmp.exp_var.txt"
+        hio.to_file(exp_var_file_name, exp_var)
+        _LOG.info("Saved exp_var in %s", exp_var_file_name)
+        #
+        txt.append(exp_var)
+        txt = "\n".join(txt)
+        error_msg += txt
+    # Save all the values after the transformations.
+    debug = False
+    if debug:
+        for idx, key in enumerate(values.keys()):
+            actual_tmp, expected_tmp = values[key]
+            tag = "%s.%s" % (idx, key)
+            _save_diff(actual_tmp, expected_tmp, tag, test_dir)
+    else:
+        key = "final"
+        actual_tmp, expected_tmp = values[key]
+        _save_diff(actual_tmp, expected_tmp, key, test_dir)
+    # Compare the last values.
+    act_file_name = f"{test_dir}/tmp.final.actual.txt"
+    exp_file_name = f"{test_dir}/tmp.final.expected.txt"
+    if fuzzy_match:
+        msg = "FUZZY ACTUAL vs FUZZY EXPECTED"
+    else:
+        msg = "ACTUAL vs EXPECTED"
+    msg += f": {full_test_name}"
+    diff_files(
+        act_file_name,
+        exp_file_name,
+        tag=msg,
+        abort_on_exit=abort_on_error,
+        dst_dir=dst_dir,
+        error_msg=error_msg,
+    )
     return is_equal
 
 
@@ -1225,6 +1263,7 @@ class TestCase(unittest.TestCase):
         purify_text: bool = False,
         purify_expected_text: bool = False,
         fuzzy_match: bool = False,
+        ignore_line_breaks: bool = False,
         sort: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
@@ -1270,6 +1309,7 @@ class TestCase(unittest.TestCase):
             purify_text=purify_text,
             purify_expected_text=purify_expected_text,
             fuzzy_match=fuzzy_match,
+            ignore_line_breaks=ignore_line_breaks,
             sort=sort,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
@@ -1311,6 +1351,7 @@ class TestCase(unittest.TestCase):
         dedent: bool = False,
         purify_text: bool = False,
         fuzzy_match: bool = False,
+        ignore_line_breaks: bool = False,
         sort: bool = False,
         use_gzip: bool = False,
         tag: str = "test",
@@ -1326,8 +1367,8 @@ class TestCase(unittest.TestCase):
             beginning of the row
         :param purify_text: remove some artifacts (e.g., user names,
             directories, reference to Git client)
-        :param fuzzy_match: ignore differences in spaces and end of lines (see
-          `_to_single_line_cmd`)
+        :param fuzzy_match: ignore differences in spaces
+        :param ignore_line_breaks: ignore difference due to line breaks
         :param sort: sort the text and then compare it. In other terms we check
             whether the lines are the same although in different order
         :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
@@ -1337,7 +1378,9 @@ class TestCase(unittest.TestCase):
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error dedent"))
+        _LOG.debug(hprint.to_str(
+            "dedent purify_text fuzzy_match ignore_line_breaks sort "
+            "tag abort_on_error"))
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
@@ -1387,6 +1430,7 @@ class TestCase(unittest.TestCase):
                     # We have handled the purification of the output earlier.
                     purify_text=False,
                     fuzzy_match=fuzzy_match,
+                    ignore_line_breaks=ignore_line_breaks,
                     sort=sort,
                     abort_on_error=abort_on_error,
                 )
@@ -1479,6 +1523,7 @@ class TestCase(unittest.TestCase):
                         dedent=dedent,
                         purify_text=False,
                         fuzzy_match=False,
+                        ignore_line_breaks=False,
                         abort_on_error=abort_on_error,
                         error_msg=self._error_msg,
                     )

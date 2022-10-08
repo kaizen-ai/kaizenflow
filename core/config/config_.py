@@ -21,27 +21,16 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hintrospection as hintros
+import helpers.hio as hio
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# There are 2 levels of debugging:
-# 1) _LOG.debug: which can be enabled or disabled for this module.
-
 # Mute this module unless we want to debug it.
 # NOTE: Keep this enabled when committing.
 _LOG.setLevel(logging.INFO)
-
-# Disable _LOG.debug.
-# _LOG.debug = lambda *_: 0
-
-# 2) _LOG.verb_debug: reports even more detailed information. It can be
-#    enabled or disabled for this module.
-
-# Enable or disable _LOG.verb_debug
-# _LOG.verb_debug = lambda *_: 0
-# _LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -79,7 +68,7 @@ CompoundKey = Union[str, int, Iterable[str], Iterable[int]]
 ValueTypeHint = Any
 
 # TODO(gp): It seems that one can't derive from a typed data structure.
-#_OrderedDictType = collections.OrderedDict[ScalarKey, Any]
+# _OrderedDictType = collections.OrderedDict[ScalarKey, Any]
 _OrderedDictType = collections.OrderedDict
 
 
@@ -180,24 +169,6 @@ class Config:
                 hdbg.dassert_isinstance(k, ScalarKeyValidTypes)
                 self.__setitem__(k, v)
 
-    @property
-    def update_mode(self) -> str:
-        return self._update_mode
-
-    @update_mode.setter
-    def update_mode(self, update_mode: str) -> None:
-        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
-        self._update_mode = update_mode
-
-    @property
-    def clobber_mode(self) -> str:
-        return self._clobber_mode
-
-    @clobber_mode.setter
-    def clobber_mode(self, clobber_mode: str) -> None:
-        hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
-        self._clobber_mode = clobber_mode
-
     # ////////////////////////////////////////////////////////////////////////////
     # Printing
     # ////////////////////////////////////////////////////////////////////////////
@@ -251,31 +222,19 @@ class Config:
         """
         return str(self)
 
-    # TODO(gp): Is it used?
-    # TODO(*): Standardize/allow to be configurable what to return if a value is
-    #     missing.
-    # TODO(gp): return a string
-    def print_config(self, keys: Iterable[str]) -> None:
-        """
-        Return a string representation of a subset of keys, assigning "na" when
-        there is no value.
-        """
-        if isinstance(keys, str):
-            keys = [keys]
-        for k in keys:
-            v = self._config.get(k, "na")
-            _LOG.info("%s='%s'", k, v)
-
     # ////////////////////////////////////////////////////////////////////////////
     # Get / set.
     # ////////////////////////////////////////////////////////////////////////////
 
     # `__setitem__` and `__getitem__` accept a compound key.
 
-    def __setitem__(self, key: CompoundKey, val: Any,
+    def __setitem__(
+        self,
+        key: CompoundKey,
+        val: Any,
         *,
         update_mode: Optional[str] = None,
-        clobber_mode: Optional[str] = None
+        clobber_mode: Optional[str] = None,
     ) -> None:
         """
         Set / update `key` to `val`, equivalent to `dict[key] = val`.
@@ -333,7 +292,7 @@ class Config:
         self._config[key] = val  # type: ignore
 
     def __getitem__(
-        self, key: CompoundKey, *, report_mode:str="verbose_log_error"
+        self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist.
@@ -360,7 +319,9 @@ class Config:
             report_mode,
             self,
         )
-        hdbg.dassert_in(report_mode, ("verbose_log_error", "verbose_exception", "none"))
+        hdbg.dassert_in(
+            report_mode, ("verbose_log_error", "verbose_exception", "none")
+        )
         try:
             ret = self._get_item(key, level=0)
         except KeyError as e:
@@ -382,6 +343,63 @@ class Config:
             raise e
         return ret
 
+    # ////////////////////////////////////////////////////////////////////////////
+    # Dict-like methods.
+    # ////////////////////////////////////////////////////////////////////////////
+
+    def __contains__(self, key: CompoundKey) -> bool:
+        """
+        Implement membership operator like `key in config`.
+
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
+        """
+        _LOG.debug("key=%s self=\n%s", key, self)
+        # This is implemented lazily (or Pythonically) with a try-catch around
+        # accessing the key.
+        try:
+            # When we test for existence we don't want to report the config in case
+            # of error.
+            report_mode = "none"
+            val = self.__getitem__(key, report_mode=report_mode)
+            _LOG.debug("Found val=%s", val)
+            found = True
+        except KeyError as e:
+            _LOG.debug("e=%s", e)
+            found = False
+        return found
+
+    def __len__(self) -> int:
+        """
+        Return number of keys, i.e., the length of the underlying dict.
+
+        This enables calculating `len()` as with a dict and also enables
+        bool evaluation of a `Config` object for truth value testing.
+        """
+        return len(self._config)
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Accessor
+    # ////////////////////////////////////////////////////////////////////////////
+
+    @property
+    def update_mode(self) -> str:
+        return self._update_mode
+
+    @update_mode.setter
+    def update_mode(self, update_mode: str) -> None:
+        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
+        self._update_mode = update_mode
+
+    @property
+    def clobber_mode(self) -> str:
+        return self._clobber_mode
+
+    @clobber_mode.setter
+    def clobber_mode(self, clobber_mode: str) -> None:
+        hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
+        self._clobber_mode = clobber_mode
+
     # This is similar to `hdict.typed_get()`.
     def get(
         self,
@@ -390,7 +408,7 @@ class Config:
         expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
         *,
         # When we access a key we want to report the config in case of error.
-        report_mode: str = "verbose_log_error"
+        report_mode: str = "verbose_log_error",
     ) -> Any:
         """
         Equivalent to `dict.get(key, default_val)`.
@@ -405,9 +423,7 @@ class Config:
         """
         _LOG.debug(hprint.to_str("key default_value expected_type"))
         try:
-            ret = self.__getitem__(
-                key, report_mode=report_mode
-            )
+            ret = self.__getitem__(key, report_mode=report_mode)
         except KeyError as e:
             # No key: use the default val if it was passed or asserts.
             # We can't use None since None can be a valid default value, so we use
@@ -499,43 +515,6 @@ class Config:
             if assign_new_value:
                 self.__setitem__(key, val)
 
-    # ////////////////////////////////////////////////////////////////////////////
-    # Dict-like methods.
-    # ////////////////////////////////////////////////////////////////////////////
-
-    def __contains__(self, key: CompoundKey) -> bool:
-        """
-        Implement membership operator like `key in config`.
-
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
-        """
-        _LOG.debug("key=%s self=\n%s", key, self)
-        # This is implemented lazily (or Pythonically) with a try-catch around
-        # accessing the key.
-        try:
-            # When we test for existence we don't want to report the config in case
-            # of error.
-            report_mode = "none"
-            val = self.__getitem__(
-                key, report_mode=report_mode
-            )
-            _LOG.debug("Found val=%s", val)
-            found = True
-        except KeyError as e:
-            _LOG.debug("e=%s", e)
-            found = False
-        return found
-
-    def __len__(self) -> int:
-        """
-        Return number of keys, i.e., the length of the underlying dict.
-
-        This enables calculating `len()` as with a dict and also enables
-        bool evaluation of a `Config` object for truth value testing.
-        """
-        return len(self._config)
-
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
         return self._config.keys()
@@ -564,6 +543,24 @@ class Config:
             if isinstance(v, Config):
                 v.mark_read_only(value)
 
+    def save_to_file(self, log_dir: str, tag: str) -> None:
+        """
+        Save config as a string and pickle.
+
+        Save 2 files in a log dir:
+        - ${log_dir}/{tag}.txt
+        - ${log_dir}/{tag}.values_as_strings.pkl
+
+        :param tag: basename of the files to save (e.g., "system_config.input")
+        """
+        # 1) As a string.
+        file_name = os.path.join(log_dir, f"{tag}.txt")
+        hio.to_file(file_name, repr(self))
+        # 2) As a pickle containing all values as string.
+        file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
+        config = self.to_string_config()
+        hpickle.to_pickle(config, file_name)
+
     # /////////////////////////////////////////////////////////////////////////////
     # From / to functions.
     # /////////////////////////////////////////////////////////////////////////////
@@ -584,21 +581,17 @@ class Config:
             return None
         return val  # type: ignore
 
-    def to_pickleable_config(self, force_strings: bool) -> "Config":
+    def to_string_config(self) -> "Config":
         """
-        Transform this Config into a pickle-able one where non pickle-able
-        objects are replaced with their string representation.
-
-        :param force_strings: force all values to become strings, even if they are
-            pickle-able
+        Transform this Config into a pickle-able one where all values are
+        replaced with their string representation.
         """
         config_out = {}
         for k, v in self._config.items():
             if isinstance(v, Config):
-                config_out[k] = v.to_pickleable_config(force_strings)
-            elif force_strings or not hintros.is_pickleable(v):
-                v = str(v)
-            config_out[k] = v
+                config_out[k] = v.to_string_config()
+            else:
+                config_out[k] = hpickle.to_pickleable(v)
         return config_out
 
     def to_python(self, check: bool = True) -> str:
@@ -821,7 +814,9 @@ class Config:
         Check that a leaf config is valid.
         """
         _LOG.debug("key=%s", key)
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes, "Keys can only be string or int")
+        hdbg.dassert_isinstance(
+            key, ScalarKeyValidTypes, "Keys can only be string or int"
+        )
         hdbg.dassert_isinstance(self._config, dict)
 
     # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
