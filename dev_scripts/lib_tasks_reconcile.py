@@ -235,7 +235,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
-    hdbg.dassert_file_exists(system_log_dir)
+    hdbg.dassert_file_exists(log_file)
     docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
