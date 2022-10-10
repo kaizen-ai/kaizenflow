@@ -120,9 +120,9 @@ portfolio_path_dict = {
 # %%
 date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date_str + " 15:25:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 17:20:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 

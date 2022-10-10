@@ -224,17 +224,19 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # Prod system is run via AirFlow and the results are tagged with the previous day.
     prod_run_date = (run_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
-    shared_dir = f"/data/shared/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
-    # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
-    _, system_log_dir = hsystem.system_to_string(cmd)
+    # shared_dir = f"/data/shared/ecs/{stage}"
+    # cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
+    # # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
+    # _, system_log_dir = hsystem.system_to_string(cmd)
+    system_log_dir = f"/data/shared/ecs/{stage}/system_log_dir_manual__2022-10-10T19:19:10.604562+00:00_2hours"
     hdbg.dassert_dir_exists(system_log_dir)
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Copy prod run logs to the shared folder.
-    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
-    # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
-    _, log_file = hsystem.system_to_string(cmd)
+    # cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    # # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
+    # _, log_file = hsystem.system_to_string(cmd)
+    log_file = f"/data/shared/ecs/{stage}/logs/log_manual__2022-10-10T19:19:10.604562+00:00_2hours.txt"
     hdbg.dassert_file_exists(log_file)
     docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
