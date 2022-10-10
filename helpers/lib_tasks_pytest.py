@@ -1241,7 +1241,8 @@ def pytest_buildmeister(  # type: ignore
     ```
 
     :param docker_clean: remove all dead Docker instances
-    :param opts: options to pass to invoke
+    :param opts: options to pass to the invoke (e.g., `--version 1.2.0` to test
+        a specific version of the Docker container)
     :param pytest_opts: options to pass to pytest
     :param test: just run a single quick test to verify functionality of this
         script
