@@ -266,12 +266,19 @@ def dassert_series_type_in(
 def dassert_indices_equal(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
+    allow_series: bool = False,
 ) -> None:
     """
     Ensure that `df1` and `df2` share a common index.
 
     Print the symmetric difference of indices if equality does not hold.
     """
+    if allow_series:
+        if isinstance(df1, pd.Series):
+            df1 = df1.to_frame()
+        if isinstance(df2, pd.Series):
+            df2 = df2.to_frame()
     hdbg.dassert_isinstance(df1, pd.DataFrame)
     hdbg.dassert_isinstance(df2, pd.DataFrame)
     hdbg.dassert(
@@ -735,7 +742,7 @@ def trim_df(
     else:
         hdbg.dassert_in(ts_col_name, df.columns)
         values_to_filter_by = df[ts_col_name]
-    if values_to_filter_by.is_monotonic:
+    if values_to_filter_by.is_monotonic_increasing:
         _LOG.trace("df is monotonic")
         # The values are sorted; using the `pd.Series.searchsorted()` method.
         # Find the index corresponding to the left boundary of the interval.
@@ -752,13 +759,15 @@ def trim_df(
             right_idx = values_to_filter_by.searchsorted(end_ts, side)
         else:
             # There is nothing to filter, so the right index is None.
-            right_idx = None
+            right_idx = df.shape[0]
         _LOG.debug(hprint.to_str("end_ts right_idx"))
         #
         hdbg.dassert_lte(0, left_idx)
-        if right_idx is not None:
-            hdbg.dassert_lte(left_idx, right_idx)
-            hdbg.dassert_lte(right_idx, df.shape[0])
+        hdbg.dassert_lte(left_idx, right_idx)
+        hdbg.dassert_lte(right_idx, df.shape[0])
+        _LOG.debug(hprint.to_str("start_ts left_idx"))
+        if right_idx < df.shape[0]:
+            _LOG.debug(hprint.to_str("end_ts right_idx"))
         df = df.iloc[left_idx:right_idx]
     else:
         _LOG.trace("df is not monotonic")
@@ -1401,3 +1410,48 @@ def compare_visually_dataframes(
         cm = sns.diverging_palette(5, 250, as_cmap=True)
         df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
     return df_diff
+
+
+# #############################################################################
+
+
+def subset_multiindex_df(
+    df: pd.DataFrame,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+    columns_level0: Optional[List[str]] = None,
+    columns_level1: Optional[List[str]] = None,
+) -> pd.DataFrame:
+    """
+    Filter MultiIndex DataFrame by timestamp index, and column levels.
+
+    :param start_timestamp: see `trim_df()`
+    :param end_timestamp: see `trim_df()`
+    :param columns_level0: column names that corresponds to `df.columns.levels[0]`
+    :param columns_level1: column names that corresponds to `df.columns.levels[1]`
+    :return: filtered DataFrame
+    """
+    hdbg.dassert_eq(2, len(df.columns.levels))
+    # Filter by timestamp.
+    allow_empty = False
+    strictly_increasing = False
+    dassert_time_indexed_df(df, allow_empty, strictly_increasing)
+    df = trim_df(
+        df,
+        ts_col_name=None,
+        start_ts=start_timestamp,
+        end_ts=end_timestamp,
+        left_close=True,
+        right_close=True,
+    )
+    if columns_level0 is not None:
+        # Filter by columns at level 0.
+        hdbg.dassert_lte(1, len(columns_level0), "Columns subset at level 0 cannot be empty")
+        hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
+        df = df[columns_level0]
+    if columns_level1 is not None:
+        # Filter by columns at level 1.
+        hdbg.dassert_lte(1, len(columns_level1), "Columns subset at level 1 cannot be empty")
+        hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
+        df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
+    return df
