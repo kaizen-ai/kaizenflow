@@ -102,24 +102,15 @@ def compute_shares_traded(
     """
     # Process `portfolio_df`.
     hdbg.dassert_isinstance(portfolio_df, pd.DataFrame)
-    hdbg.dassert_in("holdings", portfolio_df.columns)
-    hdbg.dassert_in("flows", portfolio_df.columns)
+    hdbg.dassert_in("executed_trades_shares", portfolio_df.columns)
+    hdbg.dassert_in("executed_trades_notional", portfolio_df.columns)
     portfolio_df.index = portfolio_df.index.round(freq)
-    # Get the end-of-bar estimated (e.g., TWAP) notional flows from
-    # buying/selling.
-    estimated_notional_flow = portfolio_df["flows"]
-    asset_ids = estimated_notional_flow.columns
-    # Get the snapshots of the actual portfolio holdings in shares.
-    # TODO(Paul): The only difference should be in the cash asset id col.
-    holdings = portfolio_df["holdings"][asset_ids]
-    # Diff the share holding snapshots to get the shares traded.
-    shares_traded = holdings.diff()
-    # Convert the data type to integer.
-    # TODO(Paul): Confirm that the difference in norm is zero.
-    shares_traded_as_int = shares_traded.fillna(0).astype(int)
+    executed_trades_shares = portfolio_df["executed_trades_shares"]
+    executed_trades_notional = portfolio_df["executed_trades_notional"]
+    asset_ids = executed_trades_shares.columns
     # Divide the notional flow (signed) by the shares traded (signed)
     # to get the estimated (positive) price at which the trades took place.
-    estimated_price_per_share = -estimated_notional_flow.divide(shares_traded)
+    executed_trades_price_per_share = executed_trades_notional.abs().divide(executed_trades_shares)
     # Process `order_df`.
     hdbg.dassert_isinstance(order_df, pd.DataFrame)
     hdbg.dassert_is_subset(
@@ -132,80 +123,22 @@ def compute_shares_traded(
         values="diff_num_shares",
     )
     order_share_targets.index = order_share_targets.index.round(freq)
-    order_share_targets_as_int = order_share_targets.fillna(0).astype(int)
     # Compute underfills.
-    share_target_sign = np.sign(order_share_targets_as_int)
+    share_target_sign = np.sign(order_share_targets)
     underfill = share_target_sign * (
-        order_share_targets_as_int - shares_traded_as_int
+        order_share_targets - executed_trades_shares
     )
     # Combine into a multi-column dataframe.
     df = pd.concat(
         {
-            "shares_traded": shares_traded,
-            "shares_traded_as_int": shares_traded_as_int,
+            "shares_traded": executed_trades_shares,
             "order_share_target": order_share_targets,
-            "order_share_target_as_int": order_share_targets_as_int,
-            "estimated_price_per_share": estimated_price_per_share,
+            "executed_trades_price_per_shares": executed_trades_price_per_share,
             "underfill": underfill,
         },
         axis=1,
     )
     # The indices may not perfectly agree in the concat, and so we perform
     # another fillna and int casting.
-    for col in ["shares_traded_as_int", "order_share_target_as_int", "underfill"]:
-        df[col] = df[col].fillna(0).astype(int)
+    df["underfill"] = df["underfill"].fillna(0).astype(int)
     return df
-
-
-def adapt_portfolio_object_df_to_forecast_evaluator_df(
-    df: pd.DataFrame,
-) -> pd.DataFrame:
-    """
-    Adapt a dataframe returned by the `oms.Portfolio` object to fep format.
-    """
-    # Sanity-check the input dataframe.
-    hpandas.dassert_time_indexed_df(
-        df, allow_empty=False, strictly_increasing=True
-    )
-    hdbg.dassert_eq(df.columns.nlevels, 2)
-    hdbg.dassert_is_subset(
-        [
-            "holdings",
-            "holdings_marked_to_market",
-            "flows",
-            "pnl",
-        ],
-        df.columns.levels[0].to_list(),
-    )
-    # Map columns with straightforward mappings.
-    holdings_shares = df["holdings"].drop([omportfo.Portfolio.CASH_ID], axis=1)
-    holdings_notional = df["holdings_marked_to_market"].drop(
-        [omportfo.Portfolio.CASH_ID], axis=1
-    )
-    executed_trades_notional = -df["flows"]
-    pnl = df["pnl"]
-    # Check pnl for self-consistency.
-    computed_pnl = holdings_notional.subtract(
-        holdings_notional.shift(1), fill_value=0
-    ).subtract(executed_trades_notional, fill_value=0)
-    # hdbg.dassert_approx_eq(pnl, computed_pnl)
-    # Compute shares traded from diff of share holdings.
-    executed_trades_shares = holdings_shares.diff()
-    # Compute the price used to price the holdings.
-    holdings_price_per_share = holdings_notional / holdings_shares
-    # Cross-check the computation of `executed_trades_shares`.
-    executed_trades_notional / holdings_price_per_share
-    # hdbg.dassert_approx_eq(executed_trades_shares, estimated_executed_trades_shares)
-    # Adapt the columns.
-    adapted_df = pd.concat(
-        {
-            "price": holdings_price_per_share,
-            "holdings_shares": holdings_shares,
-            "holdings_notional": holdings_notional,
-            "executed_trades_shares": executed_trades_shares,
-            "executed_trades_notional": executed_trades_notional,
-            "pnl": pnl,
-        },
-        axis=1,
-    )
-    return adapted_df

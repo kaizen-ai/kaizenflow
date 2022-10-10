@@ -82,13 +82,13 @@ market_data_config:
     columns=start_datetime,end_datetime,timestamp_db,close,asset_id,volume,feature1
     shape=(40, 7)
                                          start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
-    2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100       1.0
-    2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100       1.0
-    2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100       1.0
+    2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+    2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+    2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  100.0       101     100      -1.0
     ...
-    2000-01-01 10:08:00-05:00 2000-01-01 10:07:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:08:00-05:00  100.0       101     100      -1.0
-    2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
-    2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
+    2000-01-01 10:08:00-05:00 2000-01-01 10:07:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:08:00-05:00  102.0       101     100       1.0
+    2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  102.0       101     100       1.0
+    2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  102.0       101     100       1.0
   history_lookback: 7 days 00:00:00
 portfolio_config:
   mark_to_market_col: close
@@ -116,23 +116,27 @@ process_forecasts_node_dict:
   spread_col: None
   portfolio:
     <oms.portfolio.DataFramePortfolio at 0x>
-      # historical holdings=
-      Empty DataFrame
-      Columns: [-1]
-      Index: []
-      # historical holdings marked to market=
-      Empty DataFrame
-      Columns: [-1]
-      Index: []
-      # historical flows=
+      # holdings_shares=
       Empty DataFrame
       Columns: []
       Index: []
-      # historical pnl=
+      # holdings_notional=
       Empty DataFrame
       Columns: []
       Index: []
-      # historical statistics=
+      # executed_trades_shares=
+      Empty DataFrame
+      Columns: []
+      Index: []
+      # executed_trades_notional=
+      Empty DataFrame
+      Columns: []
+      Index: []
+      # pnl=
+      Empty DataFrame
+      Columns: []
+      Index: []
+      # statistics=
       Empty DataFrame
       Columns: [pnl]
       Index: []
@@ -149,11 +153,11 @@ process_forecasts_node_dict:
           bulk_fill_method: zero
           target_gmv: 100000.0
     execution_mode: real_time
-    trading_end_time: 10:00:00
-    liquidate_at_trading_end_time: True
+    liquidate_at_trading_end_time: False
     ath_start_time: 09:30:00
     trading_start_time: 09:30:00
     ath_end_time: 16:00:00
+    trading_end_time: 15:55:00
     share_quantization: no_quantization
 event_loop_object: <_EventLoop running=False closed=False debug=False>
 market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
@@ -164,23 +168,27 @@ object.builder_function:
   dag_runner_object: dataflow_amp.system.mock1.mock1_forecast_system._get_dag_runner
 portfolio_object:
   <oms.portfolio.DataFramePortfolio at 0x>
-    # historical holdings=
-    Empty DataFrame
-    Columns: [-1]
-    Index: []
-    # historical holdings marked to market=
-    Empty DataFrame
-    Columns: [-1]
-    Index: []
-    # historical flows=
+    # holdings_shares=
     Empty DataFrame
     Columns: []
     Index: []
-    # historical pnl=
+    # holdings_notional=
     Empty DataFrame
     Columns: []
     Index: []
-    # historical statistics=
+    # executed_trades_shares=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # executed_trades_notional=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # pnl=
+    Empty DataFrame
+    Columns: []
+    Index: []
+    # statistics=
     Empty DataFrame
     Columns: [pnl]
     Index: []
@@ -199,12 +207,12 @@ dag_runner_object:
     _max_iterations='120' <int>
     _df= <pandas.core.frame.DataFrame>
                                            start_datetime              end_datetime              timestamp_db  close  asset_id  volume  feature1
-      2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100       1.0
-      2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100       1.0
-      2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  101.0       101     100       1.0
+      2000-01-01 09:31:00-05:00 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:31:00-05:00  101.0       101     100      -1.0
+      2000-01-01 09:32:00-05:00 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:32:00-05:00  101.0       101     100      -1.0
+      2000-01-01 09:33:00-05:00 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00 2000-01-01 09:33:00-05:00  100.0       101     100      -1.0
       ...
-      2000-01-01 10:08:00-05:00 2000-01-01 10:07:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:08:00-05:00  100.0       101     100      -1.0
-      2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  100.0       101     100      -1.0
-      2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  100.0       101     100      -1.0
+      2000-01-01 10:08:00-05:00 2000-01-01 10:07:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:08:00-05:00  102.0       101     100       1.0
+      2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  102.0       101     100       1.0
+      2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  102.0       101     100       1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
     _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)

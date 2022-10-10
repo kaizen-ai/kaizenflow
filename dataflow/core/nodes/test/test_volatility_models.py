@@ -256,6 +256,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
 
 
 class TestVolatilityModel(hunitest.TestCase):
+    @pytest.mark.skip("See CmTask #2975.")
     def test01(self) -> None:
         """
         Perform a typical `fit()` call.
@@ -276,6 +277,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test02(self) -> None:
         """
         Check that the volatility adjustment can be inverted.
@@ -354,6 +356,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test05(self) -> None:
         """
         Use "replace_all" column mode.
@@ -375,6 +378,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test06(self) -> None:
         """
         Use "replace_selected" column mode.
@@ -396,6 +400,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test07(self) -> None:
         """
         Model volatility for multiple columns (independently).
@@ -494,6 +499,7 @@ class TestVolatilityModel(hunitest.TestCase):
         df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test11(self) -> None:
         """
         Learn and store model state.
@@ -510,6 +516,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test12(self) -> None:
         """
         Initialize model from saved state.
