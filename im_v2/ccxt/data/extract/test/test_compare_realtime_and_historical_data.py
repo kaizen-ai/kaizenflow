@@ -342,47 +342,43 @@ class TestFilterDuplicates(hunitest.TestCase):
         Verify that duplicated data is filtered correctly.
         """
         input_data = self._get_duplicated_test_data()
-        self.assertEqual(input_data.shape, (10, 10))
+        self.assertEqual(input_data.shape, (10, 11))
         # Filter duplicates.
         actual_data = imvcdecrah._filter_duplicates(input_data)
         expected_length = 6
         expected_column_names = [
             "close",
+            "currency_pair",
             "end_download_timestamp",
-            "full_symbol",
+            "exchange_id",
             "high",
             "id",
             "knowledge_timestamp",
             "low",
             "open",
-            "volume",
+            "timestamp",
+            "volume"
         ]
-        expected_column_unique_values = {
-            "full_symbol": [
-                "binance::BTC_USDT",
-                "binance::ETH_USDT",
-                "kucoin::ETH_USDT",
-            ]
-        }
         # pylint: disable=line-too-long
-        expected_signature = """# df=
-        index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
-        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
-        shape=(6, 9)
-        id open high low close volume end_download_timestamp knowledge_timestamp full_symbol
-        timestamp
-        2021-09-09 00:00:00+00:00 1 30 40 50 60 70 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
-        2021-09-09 00:01:00+00:00 2 31 41 51 61 71 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
-        2021-09-09 00:02:00+00:00 3 32 42 52 62 72 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
-        2021-09-09 00:04:00+00:00 4 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
-        2021-09-09 00:04:00+00:00 5 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
-        2021-09-09 00:04:00+00:00 6 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 kucoin::ETH_USDT"""
+        expected_signature = """
+        # df=
+        index=[4, 9]
+        columns=id,timestamp,open,high,low,close,volume,currency_pair,exchange_id,end_download_timestamp,knowledge_timestamp
+        shape=(6, 11)
+        id                 timestamp  open  high  low  close  volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+        4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT      kucoin 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        6   1 2021-09-09 00:00:00+00:00    30    40   50     60      70      BTC_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
+        7   2 2021-09-09 00:01:00+00:00    31    41   51     61      71      BTC_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
+        8   3 2021-09-09 00:02:00+00:00    32    42   52     62      72      ETH_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
+        9   4 2021-09-09 00:04:00+00:00    34    44   54     64      74      BTC_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
+        """
         # pylint: enable=line-too-long
         self.check_df_output(
             actual_data,
             expected_length,
             expected_column_names,
-            expected_column_unique_values,
+            None,
             expected_signature,
         )
 
@@ -411,10 +407,4 @@ class TestFilterDuplicates(hunitest.TestCase):
             "end_download_timestamp"
         ] - pd.Timedelta("40s")
         test_data = pd.concat([test_data, dupes]).reset_index(drop=True)
-        # Add full_symbol column.
-        #full_symbol_col_name = "full_symbol"
-        #test_data[full_symbol_col_name] = ivcu.build_full_symbol(
-        #    test_data["exchange_id"], test_data["currency_pair"]
-        #)
-        #test_data = test_data.drop(["exchange_id", "currency_pair"], axis=1)
         return test_data
