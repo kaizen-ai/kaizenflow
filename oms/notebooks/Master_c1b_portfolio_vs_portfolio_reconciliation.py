@@ -174,6 +174,7 @@ def diff_lines(list1: List[str], list2: List[str]) -> Tuple[List[str], List[str]
     return list1_only, list2_only
 
 
+# TODO(Nina): Move to "dag.py".
 def load_parquet_data(
     file_path: str,
     *,
