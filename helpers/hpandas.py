@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import s3fs
+import seaborn as sns
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -1369,9 +1370,9 @@ def get_random_df(
 def compare_visually_dataframes(
     df1,
     df2,
-    column_mode="equal",
-    row_mode="equal",
-    diff_mode="diff",
+    column_mode: str ="equal",
+    row_mode: str="equal",
+    diff_mode: str="diff",
     background_gradient: bool = True,
 ):
     """
