@@ -154,7 +154,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     _system(cmd)
     # Prevent overwriting.
     market_data_file_shared = os.path.join(target_dir, market_data_file)
-    cmd = "chmod -w {market_data_file_shared}"
+    cmd = f"chmod -w {market_data_file_shared}"
     _system(cmd)
     # Sanity check remote data.
     _sanity_check_data(market_data_file_shared)
@@ -237,7 +237,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
-    cmd = f"chown -R -w {target_dir}"
+    cmd = f"chmod -R -w {target_dir}"
     _system(cmd)
 
 @task
@@ -262,13 +262,13 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    reconcile_create_dirs(ctx)
+    reconcile_create_dirs(ctx, run_date=run_date)
     #
-    reconcile_copy_prod_data(ctx)
+    reconcile_copy_prod_data(ctx, run_date=run_date)
     #
-    reconcile_dump_market_data(ctx)
-    reconcile_run_sim(ctx)
-    reconcile_copy_sim_data(ctx)
+    reconcile_dump_market_data(ctx, run_date=run_date)
+    reconcile_run_sim(ctx, run_date=run_date)
+    reconcile_copy_sim_data(ctx, run_date=run_date)
     #
     # TODO(gp): Download for the day before.
     # reconcile_dump_tca_data(ctx, run_date=None)
