@@ -281,7 +281,7 @@ def reconcile_run_notebook(ctx, run_date=None):
     _system(docker_cmd)
     # Prevent overwriting.
     results_shared_dir = os.path.join(target_dir, "result_0")
-    cmd = f"chmod -w {results_shared_dir}"
+    cmd = f"chmod -R -w {results_shared_dir}"
     _system(cmd)
 
 
