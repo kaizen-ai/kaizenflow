@@ -36,11 +36,11 @@ def quantize_shares(
     hdbg.dassert_type_in(shares, [pd.Series, pd.DataFrame])
     #
     if quantization == "no_quantization":
-        hdbg.dassert(
-            asset_id_to_decimals is None,
-            "asset_id_to_decimals must be `None` when `quantization`=%s",
-            quantization,
-        )
+        # hdbg.dassert(
+        #     asset_id_to_decimals is None,
+        #     "asset_id_to_decimals must be `None` when `quantization`=%s",
+        #     quantization,
+        # )
         quantized_shares = shares
     elif quantization == "nearest_share":
         hdbg.dassert(
