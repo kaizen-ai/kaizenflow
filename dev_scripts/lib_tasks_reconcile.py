@@ -131,8 +131,9 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
-        script_name = "chmod u+rx dataflow_orange/system/C1/C1b_reconcile_dump_data.sh"
-        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} {script_name}"
+        opts = f"--action dump_data --reconcile_sim_date {run_date}"
+        script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+        docker_cmd = f"{script_name} {opts}"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     hdbg.dassert_file_exists(market_data_file)
     # Check the market data file.
@@ -169,8 +170,9 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
         _LOG.warning("The target_dir=%s already exists, removing it.", target_dir)
         _system(rm_cmd)
     # Run simulation.
-    script_name = "chmod u+rx dataflow_orange/system/C1/C1b_reconcile_run_simulation.sh"
-    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} {script_name}"
+    opts = f"--action run_simulation --reconcile_sim_date {run_date}"
+    script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+    docker_cmd = f"{script_name} {opts}"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
     # Check that system log dir exists and is not empty.
