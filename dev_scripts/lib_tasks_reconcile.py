@@ -126,20 +126,14 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     """
     # pylint: enable=line-too-long
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = "20221005" #_get_run_date(run_date)
     market_data_file = "test_data.csv.gz"
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
-        # pylint: disable=line-too-long
-        test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
-        # pylint: enable=line-too-long
-        opts = "-s --dbg"
-        docker_cmd = (
-            f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
-        )
+        script_name = "chmod u+rx dataflow_orange/system/C1/C1b_reconcile_dump_data.sh"
+        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} {script_name}"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
-        _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
     # Check the market data file.
     _sanity_check_data(market_data_file)
@@ -168,18 +162,15 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     Run the simulation given a run date.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = "20221005" #_get_run_date(run_date)
     target_dir = "system_log_dir"
     if os.path.exists(target_dir):
         rm_cmd = f"rm -rf {target_dir}"
         _LOG.warning("The target_dir=%s already exists, removing it.", target_dir)
         _system(rm_cmd)
     # Run simulation.
-    opts = "-s --dbg --update_outcomes"
-    # pylint: disable=line-too-long
-    test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_run_simulation"
-    # pylint: enable=line-too-long
-    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+    script_name = "chmod u+rx dataflow_orange/system/C1/C1b_reconcile_run_simulation.sh"
+    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} {script_name}"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
     # Check that system log dir exists and is not empty.
