@@ -126,7 +126,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     """
     # pylint: enable=line-too-long
     _ = ctx
-    run_date = "20221005" #_get_run_date(run_date)
+    run_date = _get_run_date(run_date)
     market_data_file = "test_data.csv.gz"
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
@@ -163,7 +163,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     Run the simulation given a run date.
     """
     _ = ctx
-    run_date = "20221005" #_get_run_date(run_date)
+    run_date = _get_run_date(run_date)
     target_dir = "system_log_dir"
     if os.path.exists(target_dir):
         rm_cmd = f"rm -rf {target_dir}"
