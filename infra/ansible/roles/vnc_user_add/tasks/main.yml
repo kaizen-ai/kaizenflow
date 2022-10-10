@@ -71,16 +71,13 @@
 - name: Enable VNC service
   systemd:
     name: "{{ vnc_user }}_vncserver"
-    enabled: yes
+    enabled: no
     daemon-reload: yes
 
 - name: Start VNC service
   systemd:
     name: "{{ vnc_user }}_vncserver"
-    state: restarted
-
-- debug:
-    msg: "VNC_desktop_number is: {{ vnc_desktop_number }}"
+    state: stopped
 
 - name: Save server IPs to a file
   run_once: true
