@@ -337,7 +337,6 @@ class TestFilterDuplicates(hunitest.TestCase):
         return test_data
 
 
-    # TODO(Danya): Convert to a separate test in the `ImClientTestCase`.
     def test_filter_duplicates(self) -> None:
         """
         Verify that duplicated data is filtered correctly.
