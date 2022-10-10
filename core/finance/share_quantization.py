@@ -36,6 +36,8 @@ def quantize_shares(
     hdbg.dassert_type_in(shares, [pd.Series, pd.DataFrame])
     #
     if quantization == "no_quantization":
+        # TODO(Grisha): we cannot assert here because for the backend `cc_pomo` the
+        # `asset_id_to_decimals` is not None.
         # hdbg.dassert(
         #     asset_id_to_decimals is None,
         #     "asset_id_to_decimals must be `None` when `quantization`=%s",
