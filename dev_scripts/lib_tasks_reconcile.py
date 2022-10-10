@@ -135,7 +135,9 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
         # pylint: enable=line-too-long
         opts = "-s --dbg"
-        docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+        docker_cmd = (
+            f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+        )
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
@@ -154,7 +156,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     _system(cmd)
     # Prevent overwriting.
     market_data_file_shared = os.path.join(target_dir, market_data_file)
-    cmd = "chmod -w {market_data_file_shared}"
+    cmd = f"chmod -w {market_data_file_shared}"
     _system(cmd)
     # Sanity check remote data.
     _sanity_check_data(market_data_file_shared)
@@ -233,73 +235,54 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
-    hdbg.dassert_file_exists(system_log_dir)
+    hdbg.dassert_file_exists(log_file)
     docker_cmd = f"cp -v {log_file} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
-    cmd = f"chown -R -w {target_dir}"
+    cmd = f"chmod -R -w {target_dir}"
     _system(cmd)
 
 @task
 def reconcile_run_notebook(ctx, run_date=None):
     """
-    Run reconcilation notebook.
+    Run the reconciliation notebook, publish it locally and copy the results to
+    the shared folder.
     """
     _ = ctx
-    run_date = "20221005" #_get_run_date(run_date)
+    run_date = _get_run_date(run_date)
+    # TODO(Grisha): pass `asset_class` as a param.
     asset_class = "crypto"
-    target_dir = "./"
+    #
+    cmd_txt = []
+    cmd_txt.append(f"export AM_RECONCILIATION_DATE={run_date}")
+    cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
+    # Add the command to run the notebook.
+    notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
+    config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
+    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
+    dst_dir = "."
+    cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
+    cmd_txt.append(cmd_run_txt)
+    cmd_txt = "\n".join(cmd_txt)
+    # Save the commands as a script.
+    file_name = "tmp.publish_notebook.sh"
+    hio.to_file(file_name, cmd_txt)
+    # Run the script inside docker.
+    _LOG.info("Running the notebook=%s", notebook_path)
+    docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
+    _system(docker_cmd)
+    # Copy the published notebook to the shared folder.
+    results_dir = os.path.join(dst_dir, "result_0")
+    hdbg.dassert_dir_exists(results_dir)
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hdbg.dassert_dir_exists(target_dir)
-    _LOG.info("Saving results to '%s'", target_dir)
-    #
-    notebook_file = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    # TODO(Grisha): @Dan Fix issue with parenthesis.
-    config_builder = "amp.oms.reconciliation.get_reconciliation_config()"
-    cmd_ = [f'AM_RECONCILIATION_DATE={run_date} AM_ASSET_CLASS={asset_class} amp/dev_scripts/notebooks/run_notebook.py']
-    cmd_.append(f'--notebook {notebook_file}')
-    cmd_.append(f'--config_builder "{config_builder}"')
-    cmd_.append(f'--dst_dir {target_dir}')
-    cmd_.append("--num_threads 'serial'")
-    # TODO(Grisha): @Dan Understand whether the notebook is published and where.
-    cmd_.append("--publish_notebook")
-    docker_cmd = " ".join(cmd_)
-    #
-    cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
-    # TODO(Grisha): @Dan Add command to copy the published notebook from local to shared.
+    _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
+    docker_cmd = f"cp -vr {results_dir} {target_dir}"
+    _system(docker_cmd)
+    # Prevent overwriting.
+    results_shared_dir = os.path.join(target_dir, "result_0")
+    cmd = f"chmod -R -w {results_shared_dir}"
     _system(cmd)
-
-
-# TODO(Danya): Add script here to dump fills data.
-# amp/oms/get_ccxt_fills.py \
-#    --start_timestamp '2022-10-02' \
-#    --end_timestamp '2022-10-03' \
-#    --dst_dir '/shared_data/prod_reconciliation/20221003/tca' \
-#    --exchange_id 'binance' \
-#    --contract_type 'futures' \
-#    --stage 'preprod' \
-#    --account_type 'trading' \
-#    --secrets_id '3' \
-#    --universe 'v7.1' \
-#    --incremental
-# TCA = transaction_cost_analysis
-# @task
-# def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
-#     """
-#     Retrieve and save the TCA data.
-#     """
-#     _ = ctx
-#     run_date = _get_run_date(run_date)
-#     target_dir = f"{_PROD_RECONCILIATION_DIR}/{run_date}"
-#     _LOG.info(hprint.to_str("target_dir"))
-#     hio.create_dir(target_dir, incremental=True)
-#     # TODO(gp): run fills downloading script.
-#     cmd = f"aws s3 cp --recursive {src_dir} {dst_dir}"
-#     _system(cmd)
-#     #
-#     cmd = f"ls -lh {target_dir}"
-#     _system(cmd)
-#     cmd = f"du -d 1 -h {target_dir}"
-#     _system(cmd)
 
 
 @task
@@ -324,14 +307,49 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    reconcile_create_dirs(ctx)
+    reconcile_create_dirs(ctx, run_date=run_date)
     #
-    reconcile_copy_prod_data(ctx)
+    reconcile_copy_prod_data(ctx, run_date=run_date)
     #
-    reconcile_dump_market_data(ctx)
-    reconcile_run_sim(ctx)
-    reconcile_copy_sim_data(ctx)
+    reconcile_dump_market_data(ctx, run_date=run_date)
+    reconcile_run_sim(ctx, run_date=run_date)
+    reconcile_copy_sim_data(ctx, run_date=run_date)
     #
     # TODO(gp): Download for the day before.
     # reconcile_dump_tca_data(ctx, run_date=None)
+    reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
+
+
+# TODO(Danya): Add script here to dump fills data.
+# amp/oms/get_ccxt_fills.py \
+#    --start_timestamp '2022-10-02' \
+#    --end_timestamp '2022-10-03' \
+#    --dst_dir '/shared_data/prod_reconciliation/20221003/tca' \
+#    --exchange_id 'binance' \
+#    --contract_type 'futures' \
+#    --stage 'preprod' \
+#    --account_type 'trading' \
+#    --secrets_id '3' \
+#    --universe 'v7.1' \
+#    --incremental
+# TCA = transaction_cost_analysis
+
+# @task
+# def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
+#     """
+#     Retrieve and save the TCA data.
+#     """
+#     _ = ctx
+#     run_date = _get_run_date(run_date)
+#     target_dir = f"{_PROD_RECONCILIATION_DIR}/{run_date}"
+#     _LOG.info(hprint.to_str("target_dir"))
+#     hio.create_dir(target_dir, incremental=True)
+#     # TODO(gp): run fills downloading script.
+#     cmd = f"aws s3 cp --recursive {src_dir} {dst_dir}"
+#     _system(cmd)
+#     #
+#     cmd = f"ls -lh {target_dir}"
+#     _system(cmd)
+#     cmd = f"du -d 1 -h {target_dir}"
+#     _system(cmd)

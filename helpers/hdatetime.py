@@ -35,6 +35,7 @@ except ModuleNotFoundError:
 
 
 import helpers.hdbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
+import helpers.hwall_clock_time as hwacltim  # noqa: E402 # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
@@ -448,6 +449,31 @@ def find_bar_timestamp(
     return bar_timestamp
 
 
+
+# This can't go in `helpers.hwall_clock_time` since it has a dependency from
+# `find_bar_timestamp()` and might introduce an import loop.
+def set_current_bar_timestamp(
+    current_timestamp: pd.Timestamp,
+    bar_duration_in_secs: int,
+) -> None:
+    """
+    Compute the current bar by snapping the current timestamp to the grid.
+    """
+    mode = "round"
+    # E.g., `current_timestamp` is 09:26 and the next bar is at 09:30, so
+    # the distance is 4 minutes, i.e. max distance should be within a bar's
+    # length.
+    max_distance_in_secs = bar_duration_in_secs
+    bar_timestamp = find_bar_timestamp(
+        current_timestamp,
+        bar_duration_in_secs,
+        mode=mode,
+        max_distance_in_secs=max_distance_in_secs,
+    )
+    _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+    hwacltim.set_current_bar_timestamp(bar_timestamp)
+
+
 # #########################################################################
 
 
@@ -688,6 +714,8 @@ def _determine_date_format(
     return format_, date_modification_func
 
 
+# #############################################################################
+# Unix to epoch conversion
 # #############################################################################
 
 
