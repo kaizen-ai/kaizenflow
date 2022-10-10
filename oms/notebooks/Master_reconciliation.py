@@ -295,5 +295,3 @@ if config["meta"]["run_tca"]:
     tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
     tca = cofinanc.compute_tca_price_annotations(tca, True)
     tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
-
-# %%

@@ -172,7 +172,7 @@ def _get_mock2_create_table_query() -> str:
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
-            knowledge_timestamp TIMESTAMP WITH TIME ZONE 
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE
             )
             """
     return query
