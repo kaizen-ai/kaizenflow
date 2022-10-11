@@ -266,7 +266,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         filename = f"{wall_clock_time_str}.csv"
         # Log the target position.
         if self._target_positions:
-            last_key, last_target_positions = self._target_positions.peek()
+            _, last_target_positions = self._target_positions.peek()
             last_target_positions_filename = os.path.join(
                 self._log_dir, "target_positions", filename
             )
@@ -276,7 +276,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             last_target_positions.to_csv(last_target_positions_filename)
         # Log the orders.
         if self._orders:
-            last_key, last_orders = self._orders.peek()
+            _, last_orders = self._orders.peek()
             last_orders_filename = os.path.join(self._log_dir, "orders", filename)
             hio.create_enclosing_dir(last_orders_filename, incremental=True)
             hio.to_file(last_orders_filename, last_orders)
@@ -311,7 +311,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
             market_info_keys = list(market_info.keys())
-            _LOG("market_info keys=%s", market_info_keys)
+            _LOG.debug("market_info keys=%s", market_info_keys)
             asset_ids_to_decimals = {
                 key: market_info[key]["amount_precision"]
                 for key in market_info_keys
@@ -335,7 +335,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 # Verify that all orders are above the notional limit.
                 #  Note: orders that are below the minimal amount of asset
                 #  for the exchange are modified to go slightly above the limit.
-                df = occoputi.apply_cc_limits(df, self._portfolio.broker)
+                df = occoputi.apply_cc_limits(df, self._portfolio.broker, self._log_dir)
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 
