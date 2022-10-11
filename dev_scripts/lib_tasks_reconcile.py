@@ -303,6 +303,44 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 
 
 @task
+def reconcile_dump_tca_data(ctx, run_date=None): # type: ignore
+    """
+
+    """
+    _ = ctx
+    run_date = _get_run_date(run_date)
+    end_timestamp = run_date
+    start_timestamp = run_date - datetime.timedelta(days=1)
+    dst_dir = "."
+    exchange_id = "binance"
+    contract_type = "futures"
+    stage = "preprod"
+    account_type = "trading"
+    secrets_id = "3"
+    universe = "v7.1"
+    # pylint: disable=line-too-long
+    opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
+    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp {start_timestamp} --end_timestamp {end_timestamp} --dst_dir {dst_dir} {opts} --incremental"
+    # pylint: enable=line-too-long
+    # Save the command as a script.
+    file_name = "tmp.dump_tca_data.sh"
+    hio.to_file(file_name, cmd_txt)
+    # Run the script inside docker.
+    docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
+    _system(docker_cmd)
+    # Copy dumped data to a shared folder.
+    results_dir = "???" 
+    hdbg.dassert_dir_exists(results_dir)
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, "tca")
+    hdbg.dassert_dir_exists(target_dir)
+    _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
+    docker_cmd = f"cp -vr {results_dir} {target_dir}"
+    _system(docker_cmd)
+    # Prevent overwriting.
+    cmd = f"chmod -R -w {target_dir}"
+    _system(docker_cmd)
+
+@task
 def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
