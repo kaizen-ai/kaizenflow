@@ -211,6 +211,7 @@ def _run(args: argparse.Namespace) -> None:
         )
     if error_message:
         hdbg.dfatal(message="\n".join(error_message))
+    _LOG.info("No differences were found between real time and daily data")
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
