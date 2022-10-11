@@ -56,17 +56,17 @@ print(config)
 
 # %% run_control={"marked": true}
 # TODO(Grisha): factor out common code.
-prod_dir = config["load_data_config"]["prod_dir"]
+prod_dir = "/shared_data/prod_reconciliation/20221006/prod/system_log_dir_scheduled__2022-10-05T10:00:00+00:00_2hours"
 _LOG.info("Prod_dir=%s", prod_dir)
 hdbg.dassert(prod_dir)
 hdbg.dassert_dir_exists(prod_dir)
 
-cand_dir = config["load_data_config"]["cand_dir"]
+cand_dir = "/shared_data/prod_reconciliation/20221006/prod/system_log_dir_scheduled__2022-10-05T10:00:00+00:00_2hours"
 _LOG.info("Cand_dir=%s", cand_dir)
 hdbg.dassert(cand_dir)
 hdbg.dassert_dir_exists(cand_dir)
 
-sim_dir = config["load_data_config"]["sim_dir"]
+sim_dir = "/shared_data/prod_reconciliation/20221006/simulation/system_log_dir"
 _LOG.info("Sim_dir=%s", sim_dir)
 hdbg.dassert(sim_dir)
 hdbg.dassert_dir_exists(sim_dir)
@@ -83,6 +83,97 @@ prod_config = cconfig.Config.from_dict(prod_config_pkl)
 sim_config_path = os.path.join(sim_dir, config_name)
 sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
+
+
+# %%
+def load_config_as_list(path):
+    """
+    Load config as a list of string lines.
+    """
+    with open(path, "r") as f:
+        lines = f.readlines()
+    _LOG.debug("Lines read=%d", len(lines))
+    return lines
+
+a1 = load_config_as_list(prod_config_path)
+b1 = load_config_as_list(sim_config_path)
+c = d.compare(a1, b1)
+print('\n'.join(c))
+
+# %%
+a = hpickle.to_pickleable(sim_config)
+b = hpickle.to_pickleable(prod_config)
+
+# %%
+import difflib
+d = difflib.Differ()
+diff = d.compare(a, b)
+print('\n '.join(diff))
+
+# %%
+s = (1, 2)
+s.__dir__()
+
+# %%
+for i in range(len(s)):
+    print(i)
+
+# %%
+# Ordered dict contains List[tuple[tuple, some value]] "some value" can be any type.
+"""
+dag_config:
+  resample:
+    in_col_groups: [('close',), ('volume',)]
+    
+Becomes:
+"""
+(
+    ('dag_config', 'resample', 'in_col_groups'), 
+    [('close',), ('volume',)]
+),
+
+"""
+dag_config:
+  resample:
+    ....
+    out_col_group: ()
+"""
+(
+    ('dag_config', 'resample', 'out_col_group'), 
+    ()
+), 
+
+"""
+dag_config:
+  resample:
+    ....
+    transformer_kwargs:
+      rule: 5T
+"""
+(
+    ('dag_config', 'resample', 'transformer_kwargs', 'rule'), 
+    '5T'
+),
+
+
+# When we try to `subtract_config`, we'll get the following assertion:
+# ```
+# AssertionError: 
+################################################################################
+# For key='('portfolio_config', 'order_extra_params')' val='OrderedDict()' can't be a dict
+################################################################################
+# ```
+# The problem is that nested dict became an ordered one containig List[tuple[tuple, some value]].
+# So all keys of a nest placed as an inside tuple. So the solution is to iterate through the tuple and place keys
+# to diff config as nested dict.
+
+
+# %%
+import core.config.config_utils as ccocouti
+ccocouti.build_config_diff_dataframe({"1": sim_config, "2": prod_config})
+
+# %%
+pd.DataFrame(sim_config_pkl).T
 
 # %%
 # TODO(Grisha): factor out common code.
@@ -184,6 +275,8 @@ hpandas.df_to_str(
 # %%
 # Make sure they are exactly the same.
 (prod_dag_df - sim_dag_df).abs().max().max()
+
+# %%
 
 # %% [markdown]
 # # Compute research portfolio equivalent

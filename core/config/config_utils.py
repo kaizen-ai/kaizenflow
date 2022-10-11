@@ -128,7 +128,7 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
     """
-    if isinstance(obj, collections.abc.Hashable):
+    if isinstance(obj, collections.abc.Hashable) and not isinstance(obj, tuple):
         return obj
     if isinstance(obj, collections.abc.Iterable):
         return tuple(map(make_hashable, obj))
