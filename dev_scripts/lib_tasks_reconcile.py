@@ -86,8 +86,9 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
             prod_reconciliation/
                 {run_date}/
                     prod/
-                    ...
+                    tca/
                     simulation/
+                    ...
     ```
     """
     _ = ctx
@@ -319,7 +320,8 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date_str
     start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
-    dst_dir = "./tca"
+    tsa_dir_name = "tca"
+    dst_dir = os.path.join(".", tsa_dir_name)
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
@@ -338,7 +340,7 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy dumped data to a shared folder.
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str, "tca")
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str, tsa_dir_name)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
     docker_cmd = f"cp -vr {dst_dir} {target_dir}"
@@ -361,7 +363,7 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     reconcile_run_sim(ctx, run_date=run_date)
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
-    # TODO(gp): Download for the day before.
     reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
+    #
     reconcile_dump_tca_data(ctx, run_date=None)
