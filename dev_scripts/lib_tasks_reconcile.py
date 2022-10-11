@@ -77,10 +77,15 @@ def _sanity_check_data(file_path: str) -> None:
 @task
 def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     """
-    Create dirs for storing reconciliation data.
-
-    Final dirs layout is: ``` data/     shared/ prod_reconciliation/
-    {run_date}/                 prod/ ...                 simulation/
+    Final dirs layout is:
+    ```
+     data/
+         shared/
+             prod_reconciliation/
+                 {run_date}/
+                     prod/
+                     ...
+                     simulation/
     ```
     """
     _ = ctx
