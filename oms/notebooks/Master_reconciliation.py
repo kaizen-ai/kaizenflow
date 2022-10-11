@@ -77,14 +77,16 @@ sim_config = cconfig.Config.from_dict(sim_config_pkl)
 # TODO(gp): @grisha move to `oms/reconciliation.py`.
 
 
-def get_system_log_paths(system_log_path_dict: Dict[str, str], data_type: str) -> Dict[str, str]:
+def get_system_log_paths(
+    system_log_path_dict: Dict[str, str], data_type: str
+) -> Dict[str, str]:
     """
     Get paths to data inside a system log dir.
-    
+
     :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
         `{"prod": "/shared_data/system_log_dir", "sim": ...}`
     :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
-    :return: dir paths inside system log dir for different experiments, e.g., 
+    :return: dir paths inside system log dir for different experiments, e.g.,
         `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
     """
     data_path_dict = {}
