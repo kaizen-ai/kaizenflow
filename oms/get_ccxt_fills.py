@@ -159,18 +159,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
     # Save data as JSON.
+    json_dir = os.path.join(args.dst_dir, "json")
+    hio.create_dir(json_dir, incremental=args.incremental)
     json_file_name = os.path.join(
-        args.dst_dir,
-        "json/",
+        json_dir,
         f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.json",
     )
     _LOG.debug("json_file_name=%s", json_file_name)
     hio.to_json(json_file_name, fills)
     # Save data as a CSV file.
     fills_dataframe = occfiord.convert_fills_json_to_dataframe(fills)
+    csv_dir = os.path.join(args.dst_dir, "csv")
+    hio.create_dir(csv_dir, incremental=args.incremental)
     csv_file_name = os.path.join(
-        args.dst_dir,
-        "csv/",
+        csv_dir,
         f"fills_{start_timestamp_str}_{end_timestamp_str}_{secret_identifier}.csv.gz",
     )
     _LOG.debug("csv_file_name=%s", csv_file_name)

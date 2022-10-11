@@ -9,7 +9,7 @@
 # 4) Dump market data for simulation
 # 5) Run simulation
 # 6) Copy simulation data to a shared folder
-# 7) Dump TCA data (not implemented yet)
+# 7) Dump TCA data
 # 8) Run the reconciliation notebook and publish it
 
 """
@@ -100,6 +100,9 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     simulation_dir = os.path.join(run_date_dir, "simulation")
     hio.create_dir(prod_dir, incremental=True)
     hio.create_dir(simulation_dir, incremental=True)
+    # Create dir for dumped TCA data.
+    tca_dir = os.path.join(run_date_dir, "tca")
+    hio.create_dir(tca_dir, incremental=True) 
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
@@ -311,11 +314,11 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     Retrieve and save the TCA data.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
-    run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
+    run_date_str = _get_run_date(run_date)
+    run_date = datetime.datetime.strptime(run_date_str, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
-    end_timestamp = run_date
-    start_timestamp = run_date - datetime.timedelta(days=1)
+    end_timestamp = run_date_str
+    start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
     dst_dir = "./tca"
     exchange_id = "binance"
     contract_type = "futures"
@@ -326,7 +329,7 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     # pylint: disable=line-too-long
     opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
     log_file = os.path.join(dst_dir, "log.txt")
-    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp {start_timestamp} --end_timestamp {end_timestamp} --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
+    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
     # pylint: enable=line-too-long
     # Save the command as a script.
     file_name = "tmp.dump_tca_data.sh"
@@ -335,7 +338,7 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy dumped data to a shared folder.
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, "tca")
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str, "tca")
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
     docker_cmd = f"cp -vr {dst_dir} {target_dir}"
