@@ -79,15 +79,8 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
-    Final dirs layout is:
-    ```
-    data/
-        shared/
-            prod_reconciliation/
-                {run_date}/
-                    prod/
-                    ...
-                    simulation/
+    Final dirs layout is: ``` data/     shared/ prod_reconciliation/
+    {run_date}/                 prod/ ...                 simulation/
     ```
     """
     _ = ctx
@@ -223,7 +216,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     # Copy prod run results to the target dir.
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # Prod system is run via AirFlow and the results are tagged with the previous day.
-    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     shared_dir = f"/data/shared/ecs/{stage}"
     cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
@@ -242,8 +235,9 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     cmd = f"chmod -R -w {target_dir}"
     _system(cmd)
 
+
 @task
-def reconcile_run_notebook(ctx, run_date=None):
+def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
@@ -261,7 +255,9 @@ def reconcile_run_notebook(ctx, run_date=None):
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
     dst_dir = "."
+    # pylint: disable=line-too-long
     cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
+    # pylint: enable=line-too-long
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
@@ -303,15 +299,17 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_dump_tca_data(ctx, run_date=None): # type: ignore
+def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     """
-
+    Retrieve and save the TCA data.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
+    run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
+    # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date
     start_timestamp = run_date - datetime.timedelta(days=1)
-    dst_dir = "."
+    dst_dir = "./tca"
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
@@ -320,25 +318,24 @@ def reconcile_dump_tca_data(ctx, run_date=None): # type: ignore
     universe = "v7.1"
     # pylint: disable=line-too-long
     opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
-    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp {start_timestamp} --end_timestamp {end_timestamp} --dst_dir {dst_dir} {opts} --incremental"
+    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp {start_timestamp} --end_timestamp {end_timestamp} --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee log.txt"
     # pylint: enable=line-too-long
     # Save the command as a script.
     file_name = "tmp.dump_tca_data.sh"
-    hio.to_file(file_name, cmd_txt)
+    hio.to_file(file_name, cmd_run_txt)
     # Run the script inside docker.
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy dumped data to a shared folder.
-    results_dir = "???" 
-    hdbg.dassert_dir_exists(results_dir)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, "tca")
     hdbg.dassert_dir_exists(target_dir)
-    _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
-    docker_cmd = f"cp -vr {results_dir} {target_dir}"
+    _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
+    docker_cmd = f"cp -vr {dst_dir} {target_dir}"
     _system(docker_cmd)
     # Prevent overwriting.
-    cmd = f"chmod -R -w {target_dir}"
+    f"chmod -R -w {target_dir}"
     _system(docker_cmd)
+
 
 @task
 def reconcile_run_all(ctx, run_date=None):  # type: ignore
@@ -354,6 +351,6 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
     # TODO(gp): Download for the day before.
-    # reconcile_dump_tca_data(ctx, run_date=None)
     reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
+    reconcile_dump_tca_data(ctx, run_date=None)
