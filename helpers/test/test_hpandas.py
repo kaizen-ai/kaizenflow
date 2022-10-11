@@ -2628,11 +2628,8 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Filter by:
-
-        - Timestamp index range
-        - Level 1 columns
-        - Level 2 columns
+        - Subset by both columns and index
+        - Make inner intersection and compute pct_change
         """
         df1, df2 = self.get_multiindex_dfs()
         kwargs = {
