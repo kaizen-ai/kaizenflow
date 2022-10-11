@@ -320,8 +320,7 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date_str
     start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
-    tsa_dir_name = "tca"
-    dst_dir = os.path.join(".", tsa_dir_name)
+    dst_dir = "./tca"
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
@@ -340,7 +339,7 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy dumped data to a shared folder.
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str, tsa_dir_name)
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
     docker_cmd = f"cp -vr {dst_dir} {target_dir}"
