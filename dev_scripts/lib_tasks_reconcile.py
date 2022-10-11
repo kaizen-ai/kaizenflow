@@ -325,7 +325,8 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     universe = "v7.1"
     # pylint: disable=line-too-long
     opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
-    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp {start_timestamp} --end_timestamp {end_timestamp} --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee log.txt"
+    log_file = os.path.join(dst_dir, "log.txt")
+    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp {start_timestamp} --end_timestamp {end_timestamp} --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
     # pylint: enable=line-too-long
     # Save the command as a script.
     file_name = "tmp.dump_tca_data.sh"
