@@ -81,7 +81,7 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
 
     Final dirs layout is:
     ```
-     data/
+    data/
         shared/
             prod_reconciliation/
                 {run_date}/
