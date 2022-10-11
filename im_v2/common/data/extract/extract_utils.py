@@ -549,7 +549,7 @@ def download_historical_data(
         data["exchange_id"] = args["exchange_id"]
         # Get current time of download.
         knowledge_timestamp = hdateti.get_current_time("UTC")
-        data["knowledge_timestamp"] = knowledge_timestamp
+        data["knowledge_timestamp"] = pd.Timestamp(knowledge_timestamp)
         # Save data to S3 filesystem.
         if args["file_format"] == "parquet":
             save_parquet(
