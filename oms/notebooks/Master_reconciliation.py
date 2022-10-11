@@ -20,6 +20,7 @@
 # %%
 import logging
 import os
+from typing import Dict
 
 import pandas as pd
 
@@ -55,67 +56,61 @@ print(config)
 # # Specify data to load
 
 # %% run_control={"marked": true}
-# TODO(Grisha): factor out common code.
-prod_dir = config["load_data_config"]["prod_dir"]
-_LOG.info("Prod_dir=%s", prod_dir)
-hdbg.dassert(prod_dir)
-hdbg.dassert_dir_exists(prod_dir)
-
-cand_dir = config["load_data_config"]["cand_dir"]
-_LOG.info("Cand_dir=%s", cand_dir)
-hdbg.dassert(cand_dir)
-hdbg.dassert_dir_exists(cand_dir)
-
-sim_dir = config["load_data_config"]["sim_dir"]
-_LOG.info("Sim_dir=%s", sim_dir)
-hdbg.dassert(sim_dir)
-hdbg.dassert_dir_exists(sim_dir)
+# The dict points to `system_log_dir` for different experiments.
+system_log_path_dict = dict(config["load_data_config"].to_dict())
+system_log_path_dict
 
 # %%
 # TODO(Grisha): factor common code.
 # TODO(Grisha): diff configs.
 config_name = "system_config.input.values_as_strings.pkl"
 
-prod_config_path = os.path.join(prod_dir, config_name)
+prod_config_path = os.path.join(system_log_path_dict["prod_dir"], config_name)
 prod_config_pkl = hpickle.from_pickle(prod_config_path)
 prod_config = cconfig.Config.from_dict(prod_config_pkl)
 #
-sim_config_path = os.path.join(sim_dir, config_name)
+sim_config_path = os.path.join(system_log_path_dict["sim_dir"], config_name)
 sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
 
-# %%
-# TODO(Grisha): factor out common code.
-prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
-hdbg.dassert_dir_exists(prod_portfolio_dir)
-_LOG.info("prod_portfolio_dir=%s", prod_portfolio_dir)
-prod_dag_dir = os.path.join(prod_dir, "dag/node_io/node_io.data")
-hdbg.dassert_dir_exists(prod_dag_dir)
-#
-cand_portfolio_dir = os.path.join(cand_dir, "process_forecasts/portfolio")
-hdbg.dassert_dir_exists(cand_portfolio_dir)
-_LOG.info("cand_portfolio_dir=%s", cand_portfolio_dir)
-cand_dag_dir = os.path.join(cand_dir, "dag/node_io/node_io.data")
-hdbg.dassert_dir_exists(cand_dag_dir)
-#
-sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
-hdbg.dassert_dir_exists(sim_portfolio_dir)
-_LOG.info("sim_portfolio_dir=%s", sim_portfolio_dir)
-sim_dag_dir = os.path.join(sim_dir, "dag/node_io/node_io.data")
-hdbg.dassert_dir_exists(sim_dag_dir)
 
+# %%
+def get_data_paths(system_log_path_dict: Dict[str, str], data_type: str) -> Dict[str, str]:
+    """
+    Get paths to data inside `system_log_dir`.
+    
+    
+    """
+    data_path_dict = {}
+    if data_type == "portfolio":
+        dir_name = "process_forecasts/portfolio"
+    elif data_type == "dag":
+        dir_name = "dag/node_io/node_io.data"
+    else:
+        raise ValueError(f"Unsupported data type={data_type}")
+    for k, v in system_log_path_dict.items():
+        cur_dir = os.path.join(v, dir_name)
+        hdbg.dassert_dir_exists(cur_dir)
+        new_key = k.replace("_dir", "")
+        data_path_dict[new_key] = cur_dir
+    return data_path_dict
+
+
+# %%
+# This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
+portfolio_path_dict = get_data_paths(system_log_path_dict, "portfolio")
+portfolio_path_dict
+
+# %%
+# This dict points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
+dag_path_dict = get_data_paths(system_log_path_dict, "dag")
+dag_path_dict
+
+# %%
 # TODO(gp): Load the TCA data for crypto.
 if config["meta"]["run_tca"]:
     tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
-
-# %%
-# This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
-portfolio_path_dict = {
-    "prod": prod_portfolio_dir,
-    "cand": cand_portfolio_dir,
-    "sim": sim_portfolio_dir,
-}
 
 # %%
 date_str = config["meta"]["date_str"]
@@ -139,17 +134,24 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
     This function relies on our file naming conventions.
     """
+    hdbg.dassert_dir_exists(dag_dir)
     parquet_files = list(
-        filter(lambda x: "parquet" in x, sorted(os.listdir(cand_dag_dir)))
+        filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
     )
     _LOG.info("Tail of files found=%s", parquet_files[-3:])
     file_name = parquet_files[-1]
     _LOG.info("DAG file selected=%s", file_name)
-    dag_parquet_path = os.path.join(cand_dag_dir, file_name)
-    # _LOG.info("DAG parquet path=%s", dag_parquet_path)
+    dag_parquet_path = os.path.join(dag_dir, file_name)
+    _LOG.info("DAG parquet path=%s", dag_parquet_path)
     dag_df = pd.read_parquet(dag_parquet_path)
     return dag_df
 
+
+# %%
+parquet_files = list(
+    filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
+)
+parquet_files
 
 # %%
 # TODO(gp): @Grisha
@@ -160,17 +162,30 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 # INV: prod_dag_df -> dag_df["prod"], cand_dag_df -> dag_df["cand"]
 
 # %%
-prod_dag_df = get_latest_output_from_last_dag_node(prod_dag_dir)
-hpandas.df_to_str(prod_dag_df, num_rows=5, log_level=logging.INFO)
+dag_df_dict = {}
+for name, path in dag_path_dict.items():
+    dag_df_dict[name] = get_latest_output_from_last_dag_node(path)
+hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-sim_dag_df = get_latest_output_from_last_dag_node(sim_dag_dir)
-hpandas.df_to_str(sim_dag_df, num_rows=5, log_level=logging.INFO)
+dag_df_dict["prod"].index.max()
+
+# %%
+dag_df_dict["sim"].index.max()
+
+# %%
+dag_df_dict["prod"].index.min()
+
+# %%
+dag_df_dict["sim"].index.min()
+
+# %%
+dag_df_dict["prod"].index.difference(dag_df_dict["sim"].index)
 
 # %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
-    prod_dag_df,
-    sim_dag_df,
+    dag_df_dict["prod"],
+    dag_df_dict["sim"],
 )
 
 # %%

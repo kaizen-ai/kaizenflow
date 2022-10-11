@@ -231,6 +231,9 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         liquidate_at_end_of_day = True
     else:
         raise ValueError(f"Unsupported asset class={asset_class}")
+    # Sanity check dirs.
+    for dir in data_dict.values():
+        hdbg.dassert_dir_exists(dir)
     # Get a config.
     config_dict = {
         "meta": {
