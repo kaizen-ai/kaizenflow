@@ -185,11 +185,11 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "prod",
             f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
         )
-        data_dict = {
-            "prod_dir": prod_dir,
+        system_log_path_dict = {
+            "prod": prod_dir,
             # For crypto we do not have a `candidate` so we just re-use prod.
-            "cand_dir": prod_dir,
-            "sim_dir": os.path.join(
+            "cand": prod_dir,
+            "sim": os.path.join(
                 root_dir, date_str, "simulation", "system_log_dir"
             ),
         }
@@ -215,10 +215,10 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
         )
         _, cand_dir = hsystem.system_to_string(cand_cmd)
-        data_dict = {
-            "prod_dir": prod_dir,
-            "cand_dir": cand_dir,
-            "sim_dir": os.path.join(root_dir, date_str, "system_log_dir"),
+        system_log_path_dict = {
+            "prod": prod_dir,
+            "cand": cand_dir,
+            "sim": os.path.join(root_dir, date_str, "system_log_dir"),
         }
         #
         fep_init_dict = {
@@ -232,7 +232,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     else:
         raise ValueError(f"Unsupported asset class={asset_class}")
     # Sanity check dirs.
-    for dir in data_dict.values():
+    for dir in system_log_path_dict.values():
         hdbg.dassert_dir_exists(dir)
     # Get a config.
     config_dict = {
@@ -242,7 +242,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "run_tca": run_tca,
             "bar_duration": bar_duration,
         },
-        "load_data_config": data_dict,
+        "system_log_path": system_log_path_dict,
         "research_forecast_evaluator_from_prices": {
             "init": fep_init_dict,
             "annotate_forecasts_kwargs": {

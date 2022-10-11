@@ -57,7 +57,7 @@ print(config)
 
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
-system_log_path_dict = dict(config["load_data_config"].to_dict())
+system_log_path_dict = dict(config["system_log_path"].to_dict())
 system_log_path_dict
 
 # %%
@@ -65,21 +65,27 @@ system_log_path_dict
 # TODO(Grisha): diff configs.
 config_name = "system_config.input.values_as_strings.pkl"
 
-prod_config_path = os.path.join(system_log_path_dict["prod_dir"], config_name)
+prod_config_path = os.path.join(system_log_path_dict["prod"], config_name)
 prod_config_pkl = hpickle.from_pickle(prod_config_path)
 prod_config = cconfig.Config.from_dict(prod_config_pkl)
 #
-sim_config_path = os.path.join(system_log_path_dict["sim_dir"], config_name)
+sim_config_path = os.path.join(system_log_path_dict["sim"], config_name)
 sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
 
-
 # %%
-def get_data_paths(system_log_path_dict: Dict[str, str], data_type: str) -> Dict[str, str]:
+# TODO(gp): @grisha move to `oms/reconciliation.py`.
+
+
+def get_system_log_paths(system_log_path_dict: Dict[str, str], data_type: str) -> Dict[str, str]:
     """
-    Get paths to data inside `system_log_dir`.
+    Get paths to data inside a system log dir.
     
-    
+    :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
+        `{"prod": "/shared_data/system_log_dir", "sim": ...}`
+    :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
+    :return: dir paths inside system log dir for different experiments, e.g., 
+        `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
     """
     data_path_dict = {}
     if data_type == "portfolio":
@@ -91,19 +97,20 @@ def get_data_paths(system_log_path_dict: Dict[str, str], data_type: str) -> Dict
     for k, v in system_log_path_dict.items():
         cur_dir = os.path.join(v, dir_name)
         hdbg.dassert_dir_exists(cur_dir)
-        new_key = k.replace("_dir", "")
-        data_path_dict[new_key] = cur_dir
+        data_path_dict[k] = cur_dir
     return data_path_dict
 
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
-portfolio_path_dict = get_data_paths(system_log_path_dict, "portfolio")
+data_type = "portfolio"
+portfolio_path_dict = get_system_log_paths(system_log_path_dict, data_type)
 portfolio_path_dict
 
 # %%
 # This dict points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
-dag_path_dict = get_data_paths(system_log_path_dict, "dag")
+data_type = "dag"
+dag_path_dict = get_system_log_paths(system_log_path_dict, data_type)
 dag_path_dict
 
 # %%
@@ -125,7 +132,7 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
-# TODO(gp): @grisha move to oms/reconciliation.py
+# TODO(gp): @grisha move to `oms/reconciliation.py`.
 
 
 def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
@@ -140,7 +147,6 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     )
     _LOG.info("Tail of files found=%s", parquet_files[-3:])
     file_name = parquet_files[-1]
-    _LOG.info("DAG file selected=%s", file_name)
     dag_parquet_path = os.path.join(dag_dir, file_name)
     _LOG.info("DAG parquet path=%s", dag_parquet_path)
     dag_df = pd.read_parquet(dag_parquet_path)
@@ -148,39 +154,11 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 
 # %%
-parquet_files = list(
-    filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
-)
-parquet_files
-
-# %%
-# TODO(gp): @Grisha
-# GOAL: We should be able to specify what exactly we want to run (e.g., prod, cand, sim)
-# because not everything is always available or important (e.g., for cc we don't have candidate,
-# for equities we don't always have sim).
-
-# INV: prod_dag_df -> dag_df["prod"], cand_dag_df -> dag_df["cand"]
-
-# %%
+# Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
     dag_df_dict[name] = get_latest_output_from_last_dag_node(path)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
-
-# %%
-dag_df_dict["prod"].index.max()
-
-# %%
-dag_df_dict["sim"].index.max()
-
-# %%
-dag_df_dict["prod"].index.min()
-
-# %%
-dag_df_dict["sim"].index.min()
-
-# %%
-dag_df_dict["prod"].index.difference(dag_df_dict["sim"].index)
 
 # %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
@@ -198,7 +176,7 @@ hpandas.df_to_str(
 
 # %%
 # Make sure they are exactly the same.
-(prod_dag_df - sim_dag_df).abs().max().max()
+(dag_df_dict["prod"] - dag_df_dict["sim"]).abs().max().max()
 
 # %% [markdown]
 # # Compute research portfolio equivalent
@@ -210,7 +188,7 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 
 # %%
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
-    prod_dag_df,
+    dag_df_dict["prod"],
     **config["research_forecast_evaluator_from_prices"][
         "annotate_forecasts_kwargs"
     ],
@@ -271,28 +249,17 @@ display(stats_sxs)
 # # Compare pairwise portfolio correlations
 
 # %%
-adapted_prod_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(
-    portfolio_dfs["prod"]
-)
-adapted_cand_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(
-    portfolio_dfs["cand"]
-)
-adapted_sim_df = oms.adapt_portfolio_object_df_to_forecast_evaluator_df(
-    portfolio_dfs["sim"]
-)
-
-# %%
 dtfmod.compute_correlations(
     research_portfolio_df,
-    adapted_prod_df,
+    portfolio_dfs["prod"],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
 
 # %%
 dtfmod.compute_correlations(
-    adapted_prod_df,
-    adapted_sim_df,
+    portfolio_dfs["prod"],
+    portfolio_dfs["sim"],
     allow_unequal_indices=False,
     allow_unequal_columns=False,
 )
@@ -300,7 +267,7 @@ dtfmod.compute_correlations(
 # %%
 dtfmod.compute_correlations(
     research_portfolio_df,
-    adapted_sim_df,
+    portfolio_dfs["sim"],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
