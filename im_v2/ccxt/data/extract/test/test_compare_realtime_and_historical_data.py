@@ -362,16 +362,16 @@ class TestFilterDuplicates(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_signature = """
         # df=
-        index=[4, 9]
+        index=[0, 5]
         columns=id,timestamp,open,high,low,close,volume,currency_pair,exchange_id,end_download_timestamp,knowledge_timestamp
         shape=(6, 11)
         id                 timestamp  open  high  low  close  volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+        0   1 2021-09-09 00:00:00+00:00    30    40   50     60      70      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        1   2 2021-09-09 00:01:00+00:00    31    41   51     61      71      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        2   3 2021-09-09 00:02:00+00:00    32    42   52     62      72      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        3   4 2021-09-09 00:04:00+00:00    34    44   54     64      74      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
         4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
         5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT      kucoin 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        6   1 2021-09-09 00:00:00+00:00    30    40   50     60      70      BTC_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
-        7   2 2021-09-09 00:01:00+00:00    31    41   51     61      71      BTC_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
-        8   3 2021-09-09 00:02:00+00:00    32    42   52     62      72      ETH_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
-        9   4 2021-09-09 00:04:00+00:00    34    44   54     64      74      BTC_USDT     binance 2021-09-08 23:59:20+00:00 2021-09-08 23:59:20+00:00
         """
         # pylint: enable=line-too-long
         self.check_df_output(

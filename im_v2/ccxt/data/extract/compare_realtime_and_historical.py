@@ -99,7 +99,7 @@ def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:
     _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
     # Remove duplicates.
     data = hpandas.drop_duplicates(
-        data, use_index, subset=duplicate_columns, keep="last"
+        data, use_index, subset=duplicate_columns
     ).sort_index()
     _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
     return data
