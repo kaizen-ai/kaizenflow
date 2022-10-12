@@ -135,10 +135,11 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
-        opts = f"--action dump_data --reconcile_sim_date {run_date}"
+        opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         docker_cmd = f"{script_name} {opts}"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
+        _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
     # Check the market data file.
     _sanity_check_data(market_data_file)
@@ -174,7 +175,8 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
         _LOG.warning("The target_dir=%s already exists, removing it.", target_dir)
         _system(rm_cmd)
     # Run simulation.
-    opts = f"--action run_simulation --reconcile_sim_date {run_date}"
+    # TODO(Grisha): @Dan Copy logs to the shared folder.
+    opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     docker_cmd = f"{script_name} {opts}"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
@@ -200,7 +202,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Copy simulation run logs to the shared folder.
-    pytest_log_file_path = "tmp.pytest_script.txt"
+    pytest_log_file_path = "reconcile_run_sim_log.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
     docker_cmd = f"cp -v {pytest_log_file_path} {target_dir}"
     _system(docker_cmd)
