@@ -321,3 +321,34 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
         2                  Crude Oil  world
         """
         self.assert_equal(str(act), exp, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_make_hashable
+# #############################################################################
+
+
+class Test_make_hashable(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test unhashable object type: list.
+        """
+        obj = [1, (2, 3)]
+        is_hashable_before = isinstance(obj, collections.Hashable)
+        self.assertEqual(is_hashable_before, False)
+        #
+        hashable_obj = cconfig.make_hashable(obj)
+        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
+        self.assertEqual(is_hashable_after, True)
+
+    def test2(self) -> None:
+        """
+        Test unhashable object type: list.
+        """
+        obj = [1, ("2", 3), {"key": "val"}]
+        is_hashable_before = isinstance(obj, collections.Hashable)
+        self.assertEqual(is_hashable_before, False)
+        #
+        hashable_obj = cconfig.make_hashable(obj)
+        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
+        self.assertEqual(is_hashable_after, True)
