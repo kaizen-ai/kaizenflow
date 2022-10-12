@@ -66,8 +66,8 @@ universe = ["binance::SOL_USDT", "binance::DOGE_USDT", "binance::BNB_USDT", "bin
 # ## Load data
 
 # %%
-start_ts = pd.Timestamp("2022-10-08 19:00:00+00:00")
-end_ts = pd.Timestamp("2022-10-08 20:00:00+00:00")
+start_ts = pd.Timestamp("2022-10-11 17:00:00+00:00")
+end_ts = pd.Timestamp("2022-10-11 18:00:00+00:00")
 start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_ts)
 end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
 
@@ -78,6 +78,12 @@ end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
 filters = [("year", "=", 2022), ("month", "=", 10)]
 file_name = "s3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance/"
 df = hparquet.from_parquet(file_name, filters=filters, aws_profile="ck")
+
+# %%
+df.head()
+
+# %%
+df.index.max()
 
 # %%
 df_chassis = df.loc[(df.index >= start_ts) & (df.index <= end_ts)]
@@ -91,10 +97,13 @@ df_chassis = df_chassis.reset_index().set_index(["timestamp", "full_symbol"])
 df_chassis = df_chassis.drop(start_ts)
 
 # %%
-df_chassis.head()
+df_chassis.tail()
 
 # %%
 df_chassis.shape
+
+# %%
+df_chassis[df_chassis.index.isin(['binance::BTC_USDT'], level=1)].head()
 
 # %% [markdown]
 # ### CCXT data
@@ -120,10 +129,9 @@ df_ccxt["full_symbol"] = "binance::" + df_ccxt["currency_pair"]
 dfs_ccxt = []
 for fs in universe:
     df_fs = df_ccxt[df_ccxt["full_symbol"] == fs]
-    df_fs = df_fs[["bid_size", "bid_price", "ask_size", "ask_price"]].resample("S", label="right").last()
+    df_fs = df_fs[["bid_size", "bid_price", "ask_size", "ask_price"]].resample("S", label="right").mean()
     df_fs["full_symbol"] = fs
     df_fs = df_fs.reset_index().set_index(["timestamp", "full_symbol"])
-    print(df_fs.shape)
     dfs_ccxt.append(df_fs)
 df_ccxt_sec_last = pd.concat(dfs_ccxt)
 
