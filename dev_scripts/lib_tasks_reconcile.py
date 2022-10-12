@@ -103,7 +103,7 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     hio.create_dir(simulation_dir, incremental=True)
     # Create dir for dumped TCA data.
     tca_dir = os.path.join(run_date_dir, "tca")
-    hio.create_dir(tca_dir, incremental=True) 
+    hio.create_dir(tca_dir, incremental=True)
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
@@ -135,13 +135,12 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
+        # TODO(Grisha): @Dan Copy logs to the shared folder.
         # pylint: disable=line-too-long
-        test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
+        opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         # pylint: enable=line-too-long
-        opts = "-s --dbg"
-        docker_cmd = (
-            f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
-        )
+        script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+        docker_cmd = f"{script_name} {opts}"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
@@ -179,11 +178,11 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
         _LOG.warning("The target_dir=%s already exists, removing it.", target_dir)
         _system(rm_cmd)
     # Run simulation.
-    opts = "-s --dbg --update_outcomes"
     # pylint: disable=line-too-long
-    test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_run_simulation"
+    opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     # pylint: enable=line-too-long
-    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+    script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+    docker_cmd = f"{script_name} {opts}"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
     # Check that system log dir exists and is not empty.
@@ -207,7 +206,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Copy simulation run logs to the shared folder.
-    pytest_log_file_path = "tmp.pytest_script.txt"
+    pytest_log_file_path = "reconcile_run_sim_log.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
     docker_cmd = f"cp -v {pytest_log_file_path} {target_dir}"
     _system(docker_cmd)
