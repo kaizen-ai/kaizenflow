@@ -79,17 +79,9 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
-    Final dirs layout is:
-    ```
-    data/
-        shared/
-            prod_reconciliation/
-                {run_date}/
-                    prod/
-                    tca/
-                    simulation/
-                    ...
-    ```
+    Final dirs layout is: ``` data/     shared/
+    prod_reconciliation/             {run_date}/                 prod/
+    tca/                 simulation/                 ... ```
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -103,7 +95,7 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     hio.create_dir(simulation_dir, incremental=True)
     # Create dir for dumped TCA data.
     tca_dir = os.path.join(run_date_dir, "tca")
-    hio.create_dir(tca_dir, incremental=True) 
+    hio.create_dir(tca_dir, incremental=True)
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
@@ -135,7 +127,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
-        # pylint: enable=line-too-long
+        # pylint: disable=line-too-long
         opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
@@ -178,7 +170,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
         _system(rm_cmd)
     # Run simulation.
     # TODO(Grisha): @Dan Copy logs to the shared folder.
-    # pylint: enable=line-too-long
+    # pylint: disable=line-too-long
     opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
