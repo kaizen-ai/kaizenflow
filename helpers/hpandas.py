@@ -1467,26 +1467,26 @@ def subset_multiindex_df(
 
 
 def compare_multiindex_dfs(
-    df1: pd.DataFrame, df2: pd.DataFrame, **kwargs: Any
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    subset_multiindex_df_kwargs: Optional[Dict[str, Any]] = None,
+    compare_visually_dataframes_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     - Subset both Multiindex Dataframes
     - Compare their values through difference
 
-    Note: kwargs should be defined using the following high-level template:
-       {
-        "subset_multiindex_df_kwargs": {...},
-        "compare_visually_dataframes_kwargs": {...}
-        }
+    See `subset_multiindex_df()` and `compare_visually_dataframes()` for parameters descriptions.
     """
+    # Define kwargs for subsetting and comparison.
+    if subset_multiindex_df_kwargs is None:
+        subset_multiindex_df_kwargs = {}
+    if compare_visually_dataframes_kwargs is None:
+        compare_visually_dataframes_kwargs = {}
     # Subset DataFrames.
-    subset_multiindex_df_kwargs = kwargs["subset_multiindex_df_kwargs"]
     subset_df1 = subset_multiindex_df(df1, **subset_multiindex_df_kwargs)
     subset_df2 = subset_multiindex_df(df2, **subset_multiindex_df_kwargs)
     # Compare.
-    compare_visually_dataframes_kwargs = kwargs[
-        "compare_visually_dataframes_kwargs"
-    ]
     diff_df = compare_visually_dataframes(
         subset_df1, subset_df2, **compare_visually_dataframes_kwargs
     )
