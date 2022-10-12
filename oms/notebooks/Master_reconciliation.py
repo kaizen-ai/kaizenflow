@@ -84,6 +84,96 @@ sim_config_path = os.path.join(sim_dir, config_name)
 sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
 
+# %%
+import helpers.hpickle as hpickle
+
+sim_config1 = hpickle.to_pickleable(sim_config)
+prod_config1 = hpickle.to_pickleable(prod_config)
+
+# %%
+prod_config
+
+# %%
+config_dict = [sim_config, prod_config]
+cconfig.diff_configs(config_dict)
+
+# %%
+intersection = cconfig.intersect_configs(config_dict)
+config_diff = cconfig.subtract_config(config_dict[1], intersection)
+config_diff
+
+# %%
+pd.options.display.max_colwidth = 999
+
+cconfig.build_config_diff_dataframe({"prod_config": prod_config, "sim_config": sim_config}).T
+
+# %%
+flat1 = config_dict[1].flatten()
+flat2 = intersection.flatten()
+
+# %%
+flat1
+
+# %%
+flat1[('portfolio_config', 'order_extra_params')] = ""
+
+# %%
+diff = cconfig.Config()
+
+# %%
+for k, v in flat1.items():
+    if (k not in flat2) or (flat1[k] != flat2[k]):
+        try:
+            diff[k] = v
+        except AssertionError:
+            print(k)
+
+# %%
+config_diff
+
+# %%
+flat = sim_config.flatten()
+list(flat.items())[0]
+
+# %%
+flat1 = {}
+for k, v in flat.items():
+    flat1[k] = hpickle.to_pickleable(v)
+
+# %%
+test_items = None
+for items in flat1.items():
+    try:
+        set(items)
+    except TypeError:
+        print(items)
+        test_items = items
+        assert 0
+
+# %%
+items_before = (('dag_config', 'resample', 'in_col_groups'), [('close',), ('volume',)])
+test = items_before[1]
+test
+
+
+# %%
+def make_hashable(obj):
+    if isinstance(obj, (int, str)):
+        return obj
+    if isinstance(obj, (set, tuple, list)):
+        return tuple([make_hashable(e) for e in obj])  
+
+
+# %%
+make_hashable(test)
+
+# %%
+for v in items_before[1]:
+    print(v)
+
+# %%
+test_items[1]
+
 
 # %%
 def load_config_as_list(path):

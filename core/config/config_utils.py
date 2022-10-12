@@ -14,6 +14,7 @@ import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hprint as hprint
+import helpers.hpickle as hpickle
 
 _LOG = logging.getLogger(__name__)
 
@@ -128,11 +129,22 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
     """
-    if isinstance(obj, collections.abc.Hashable) and not isinstance(obj, tuple):
+    import copy
+
+    if isinstance(obj, (int, str)):
         return obj
-    if isinstance(obj, collections.abc.Iterable):
-        return tuple(map(make_hashable, obj))
-    return tuple(obj)
+    if isinstance(obj, (set, tuple, list)):
+        return tuple([make_hashable(e) for e in obj])  
+    if isinstance(obj, dict):
+        new_o = copy.deepcopy(obj)
+        for k, v in new_o.items():
+            new_o[k] = make_hashable(v)
+        return tuple(frozenset(sorted(new_o.items())))
+    # if isinstance(obj, collections.abc.Hashable) and not isinstance(obj, tuple):
+    #     return obj
+    # if isinstance(obj, collections.abc.Iterable):
+    #     return tuple(map(make_hashable, obj))
+    # return tuple(obj)
 
 
 def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:
@@ -182,10 +194,16 @@ def subtract_config(
     """
     hdbg.dassert(minuend)
     flat_m = minuend.flatten()
+    #flat_m[('portfolio_config', 'order_extra_params')] = ""
     flat_s = subtrahend.flatten()
     diff = cconconf.Config()
     for k, v in flat_m.items():
         if (k not in flat_s) or (flat_m[k] != flat_s[k]):
+            if isinstance(v, dict):
+                if not v:
+                    v = ""
+                else:
+                    v = cconconf.Config.from_dict(v)
             diff[k] = v
     return diff
 
