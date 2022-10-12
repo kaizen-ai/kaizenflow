@@ -87,6 +87,8 @@ def run_Time_ForecastSystem(
     system: dtfsyssyst.System,
     config_tag: str,
     use_unit_test_log_dir: bool,
+    *,
+    check_config: bool = True,
 ) -> List[dtfcore.ResultBundle]:
     """
     Run `Time_ForecastSystem` with predict method.
@@ -94,6 +96,7 @@ def run_Time_ForecastSystem(
     :param system: `Time_ForecastSystem` object
     :param config_tag: tag used to freeze the system config by `check_SystemConfig()`
     :param use_unit_test_log_dir: whether to use unit test log dir or not
+    :param check_config: whether to check the config against the frozen value
     :return: `DagRunner` result bundles
     """
     if use_unit_test_log_dir:
@@ -106,8 +109,9 @@ def run_Time_ForecastSystem(
         system.config["event_loop_object"] = event_loop
         # Create a `DagRunner`.
         dag_runner = system.dag_runner
-        # Check the system config against the frozen value.
-        dtfsysysig.check_SystemConfig(self, system, config_tag)
+        if check_config:
+            # Check the system config against the frozen value.
+            dtfsysysig.check_SystemConfig(self, system, config_tag)
         coroutines.append(dag_runner.predict())
         #
         if "order_processor_config" in system.config:
