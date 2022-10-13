@@ -132,6 +132,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     _ = ctx
     run_date = _get_run_date(run_date)
     market_data_file = "test_data.csv.gz"
+    # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
@@ -248,7 +249,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
 
 
 @task
-def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
+def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
@@ -257,12 +258,19 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     run_date = _get_run_date(run_date)
     # Set results destination dir and clear it if is already filled.
     dst_dir = "."
-    # TODO(Grisha): @Dan Find a way to clear experiment dir using script parameters.
     results_dir = os.path.join(dst_dir, "result_0")
     if os.path.exists(results_dir):
-        rm_cmd = f"rm -rf {results_dir}"
-        _LOG.warning("The results_dir=%s already exists, removing it.", results_dir)
-        _system(rm_cmd)
+        if incremental:
+            _LOG.warning(
+                "Notebook run results are already stored at %s", results_dir
+            )
+            return
+        else:
+            rm_cmd = f"rm -rf {results_dir}"
+            _LOG.warning(
+                "The results_dir=%s already exists, removing it.", results_dir
+            )
+            _system(rm_cmd)
     # TODO(Grisha): pass `asset_class` as a param.
     asset_class = "crypto"
     #
