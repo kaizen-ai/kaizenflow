@@ -193,7 +193,7 @@ class FilledOrdersReader:
 
 
 # #############################################################################
-# Filled Orders and TCA Otilities
+# Filled Orders and TCA utilities
 # #############################################################################
 
 

@@ -118,8 +118,8 @@ def _run_notebook(
             cmd = (
                 "python amp/dev_scripts/notebooks/publish_notebook.py"
                 + f" --file {dst_file}"
-                + f" --subdir {html_subdir_name}"
-                + " --action publish"
+                + f" --publish_notebook_dir {html_subdir_name}"
+                + " --action publish_locally"
             )
             log_file = log_file.replace(".log", ".html.log")
             hsystem.system(cmd, output_file=log_file)
