@@ -14,6 +14,7 @@ import pandas as pd
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.htimer as htimer
+import core.finance.resampling as cfinresa
 
 _LOG = logging.getLogger(__name__)
 
@@ -150,7 +151,7 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         ]
     ]
     df = df.drop_duplicates()
-    # For clarify add +1 so the levels start from 1.
+    # For clarity, add +1 so the levels start from 1.
     df["level"] = df.groupby(groupby_cols).cumcount().add(1)
     return df
 
@@ -191,3 +192,87 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
             "end_download_timestamp",
         ]
     ]
+
+def calculate_vwap(
+    data: pd.Series, price_col: str, volume_col: str, **resample_kwargs
+) -> pd.DataFrame:
+    price = (
+        data[price_col]
+        .multiply(data[volume_col])
+        .resample(**resample_kwargs)
+        .agg({f"{volume_col}": "sum"})
+    )
+    size = data[volume_col].resample(**resample_kwargs).agg({volume_col: "sum"})
+    calculated_price = price.divide(size)
+    return calculated_price
+
+
+def resample_bid_ask_data(
+    data: pd.DataFrame, mode: str = "VWAP"
+) -> pd.DataFrame:
+    """
+    Resample bid/ask data to 1 minute interval.
+
+    :param mode: designate strategy to use, i.e. volume-weighted average
+        (VWAP) or time-weighted average price (TWAP)
+    """
+    resample_kwargs = {
+        "rule": "T",
+        "closed": None,
+        "label": None,
+    }
+    if mode == "VWAP":
+        bid_price = calculate_vwap(
+            data, "bid_price", "bid_size", **resample_kwargs
+        )
+        ask_price = calculate_vwap(
+            data, "ask_price", "ask_size", **resample_kwargs
+        )
+        bid_ask_price_df = pd.concat([bid_price, ask_price], axis=1)
+    elif mode == "TWAP":
+        bid_ask_price_df = (
+            data[["bid_size", "ask_size"]]
+            .groupby(pd.Grouper(freq=resample_kwargs["rule"]))
+            .mean()
+        )
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
+    df = cfinresa.resample(data, **resample_kwargs).agg(
+        {
+            "bid_size": "sum",
+            "ask_size": "sum",
+            "exchange_id": "last",
+        }
+    )
+    df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
+    df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
+    return df
+
+#TODO(Juraj): extend to support deeper levels of order book.
+def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
+    """
+    Transform raw bid/ask realtime data and resample to 1-min.
+    """
+    # Currently only top of the book is supported.
+    df_raw = df_raw[df_raw["level"] == 1]
+    # Convert timestamp to pd.Timestamp and set as index before sending for resampling.
+    df_raw["timestamp"] = df_raw["timestamp"].map(hdateti.convert_unix_epoch_to_timestamp)
+    df_raw = df_raw.set_index("timestamp")
+    dfs_resampled = []
+    for currency_pair in df_raw["currency_pair"].unique():
+        df_part = df_raw[df_raw["currency_pair"] == currency_pair]
+        df_part = resample_bid_ask_data(df_part)
+        df_part["currency_pair"] = currency_pair
+        dfs_resampled.append(df_part)
+    df_resampled = pd.concat(dfs_resampled)
+    # Convert back to unix timestamp after resampling
+    df_resampled = df_resampled.reset_index()
+    df_resampled["timestamp"] = df_resampled["timestamp"].map(hdateti.convert_timestamp_to_unix_epoch)
+    # This data is only reloaded so end_download_timestamp is None.
+    df_resampled["end_download_timestamp"] = None
+    # Only top of the book currently supported
+    df_resampled["level"] = 1
+    # Apply rounding functions so the data is more readable.
+    round_cols_dict = { col: 3 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]}
+    df_resampled = df_resampled.round(decimals=round_cols_dict)
+    return df_resampled

@@ -21,70 +21,14 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import tqdm
 
-import core.finance.resampling as cfinresa
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
-
-
-def _calculate_vwap(
-    data: pd.Series, price_col: str, volume_col: str, **resample_kwargs
-) -> pd.DataFrame:
-    price = (
-        data[price_col]
-        .multiply(data[volume_col])
-        .resample(**resample_kwargs)
-        .agg({f"{volume_col}": "sum"})
-    )
-    size = data[volume_col].resample(**resample_kwargs).agg({volume_col: "sum"})
-    calculated_price = price.divide(size)
-    return calculated_price
-
-
-def _resample_bid_ask_data(
-    data: pd.DataFrame, mode: str = "VWAP"
-) -> pd.DataFrame:
-    """
-    Resample bid/ask data to 1 minute interval.
-
-    :param mode: designate strategy to use, i.e. volume-weighted average
-        (VWAP) or time-weighted average price (TWAP)
-    """
-    resample_kwargs = {
-        "rule": "T",
-        "closed": None,
-        "label": None,
-    }
-    if mode == "VWAP":
-        bid_price = _calculate_vwap(
-            data, "bid_price", "bid_size", **resample_kwargs
-        )
-        ask_price = _calculate_vwap(
-            data, "ask_price", "ask_size", **resample_kwargs
-        )
-        bid_ask_price_df = pd.concat([bid_price, ask_price], axis=1)
-    elif mode == "TWAP":
-        bid_ask_price_df = (
-            data[["bid_size", "ask_size"]]
-            .groupby(pd.Grouper(freq=resample_kwargs["rule"]))
-            .mean()
-        )
-    else:
-        raise ValueError(f"Invalid mode='{mode}'")
-    df = cfinresa.resample(data, **resample_kwargs).agg(
-        {
-            "bid_size": "sum",
-            "ask_size": "sum",
-            "exchange_id": "last",
-        }
-    )
-    df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
-    df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
-    return df
 
 
 def _run(args: argparse.Namespace) -> None:
@@ -130,7 +74,7 @@ def _run(args: argparse.Namespace) -> None:
                 args.end_timestamp,
             )
             continue
-        df = _resample_bid_ask_data(df)
+        df = imvcdttrut.resample_bid_ask_data(df)
         dst_path = os.path.join(args.dst_dir, file)
         pq.write_table(
             pa.Table.from_pandas(df),
