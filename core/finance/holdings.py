@@ -4,6 +4,7 @@ Import as:
 import core.finance.holdings as cfinhold
 """
 import logging
+from typing import Dict, Optional
 
 import numpy as np
 import pandas as pd
@@ -19,6 +20,7 @@ _LOG = logging.getLogger(__name__)
 def quantize_holdings(
     holdings: pd.DataFrame,
     quantization: str,
+    asset_id_to_decimals: Optional[Dict[int, int]] = None,
 ) -> pd.DataFrame:
     """
     Keep factional holdings or round to nearest share or lot.
@@ -30,6 +32,7 @@ def quantize_holdings(
     quantized_holdings = cfishqua.quantize_shares(
         holdings,
         quantization,
+        asset_id_to_decimals,
     )
     return quantized_holdings
 

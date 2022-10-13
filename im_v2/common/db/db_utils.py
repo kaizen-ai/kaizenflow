@@ -9,10 +9,13 @@ import abc
 import argparse
 import logging
 import os
+from datetime import timedelta
 from typing import Optional
 
+import pandas as pd
 import psycopg2 as psycop
 
+import helpers.hdatetime as hdateti
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hsql as hsql
@@ -23,6 +26,19 @@ import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
+
+
+# Set of columns which are unique row-wise across db tables for
+#  corresponding data type
+BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
+BID_ASK_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + ["level"]
+OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
+    "open",
+    "high",
+    "low",
+    "close",
+    "volume",
+]
 
 
 def add_db_args(
@@ -171,7 +187,90 @@ def delete_duplicate_rows_from_ohlcv_table(db_stage: str, db_table: str) -> None
     num_before = hsql.get_num_rows(db_connection, db_table)
     hsql.execute_query(db_connection, delete_query)
     num_after = hsql.get_num_rows(db_connection, db_table)
-    _LOG.warning("Removed %s duplicate rows from %s table.", str(num_before - num_after), db_table)
+    _LOG.warning(
+        "Removed %s duplicate rows from %s table.",
+        str(num_before - num_after),
+        db_table,
+    )
+
+
+def fetch_last_minute_bid_ask_rt_db_data(
+    db_connection: hsql.DbConnection, src_table: str, time_zone: str
+) -> pd.Timestamp:
+    """
+    Fetch last FULL minute of bid/ask data, resample to 1 min and insert into
+    another table.
+    
+    This is a convenience wrapper function to make the most likely use case easier
+    to execute.
+    """
+    end_ts = pd.Timestamp.now(time_zone).floor("min")
+    start_ts = end_ts - timedelta(minutes=1)
+    return fetch_bid_ask_rt_db_data(db_connection, src_table, start_ts, end_ts)
+
+
+def fetch_bid_ask_rt_db_data(
+    db_connection: hsql.DbConnection,
+    src_table: str,
+    start_ts: pd.Timestamp,
+    end_ts: pd.Timestamp,
+) -> pd.Timestamp:
+    """
+    Fetch bid/ask data (only top of the book) for specified interval.
+
+    Data interval is applied as: (start_ts, end_ts>.
+
+    :param db_connection: a database connection object
+    :param src_table: name of the table to select from
+    :param start_ts: start of the time interval to resample
+    :param end_ts: end of the time interval to resample
+    """
+    # TODO(Juraj): perform bunch of assertions.
+    start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+    end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+    select_query = f"""
+                    SELECT * FROM {src_table} WHERE timestamp > {start_ts_unix}
+                    AND timestamp <= {end_ts_unix};
+                    """
+    return hsql.execute_query_to_df(db_connection, select_query)
+
+
+# TODO(Juraj): replace all occurrences of code inserting to db with a call to
+# this function.
+# TODO(Juraj): probabl hsql is a better place for this?
+def save_data_to_db(
+    data: pd.DataFrame,
+    data_type: str,
+    db_connection: hsql.DbConnection,
+    db_table: str,
+    time_zone: str,
+) -> None:
+    """
+    Save data into specified database table.
+
+    INSERT query logic ensures exact duplicates are not saved into the database again.
+
+    :param data: data to insert into database.
+    :param db_connection: a database connection object
+    :param db_table: name of the table to insert to.
+    :param time_zone: time zone used to add correct knowledge_timestamp to the data
+    """
+    if data.empty:
+        _LOG.warning("The DataFame is empty, nothing to insert.")
+        return
+    data["knowledge_timestamp"] = pd.Timestamp.now(time_zone)
+    if data_type == "ohlcv":
+        unique_columns = OHLCV_UNIQUE_COLUMNS
+    elif data_type == "bid_ask":
+        unique_columns = BID_ASK_UNIQUE_COLUMNS
+    else:
+        raise ValueError(f"Invalid data_type='{data_type}'")
+    hsql.execute_insert_on_conflict_do_nothing_query(
+        connection=db_connection,
+        obj=data,
+        table_name=db_table,
+        unique_columns=unique_columns,
+    )
 
 
 # #############################################################################
