@@ -28,7 +28,6 @@ import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.common.universe.universe_utils as imvcuunut
 import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
 import oms.ccxt_filled_orders as occfiord
