@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 import s3fs
+import seaborn as sns
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -1367,13 +1368,13 @@ def get_random_df(
 
 
 def compare_visually_dataframes(
-    df1,
-    df2,
-    column_mode="equal",
-    row_mode="equal",
-    diff_mode="diff",
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    column_mode: str = "equal",
+    row_mode: str = "equal",
+    diff_mode: str = "diff",
     background_gradient: bool = True,
-):
+) -> pd.DataFrame:
     """
     :param row_mode: controls how the rows are handled
      - "equal": rows need to be the same
@@ -1382,6 +1383,7 @@ def compare_visually_dataframes(
     :param diff_mode: control how the dataframes are computed
      - "diff": compute the difference between dataframes
      - "pct_change": compute the percentage change between dataframes
+    :param background_gradient: colorize the output
     """
     if row_mode == "equal":
         hdbg.dassert_eq(list(df1.index), list(df2.index))
@@ -1446,12 +1448,46 @@ def subset_multiindex_df(
     )
     if columns_level0 is not None:
         # Filter by columns at level 0.
-        hdbg.dassert_lte(1, len(columns_level0), "Columns subset at level 0 cannot be empty")
+        hdbg.dassert_lte(
+            1, len(columns_level0), "Columns subset at level 0 cannot be empty"
+        )
         hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
         df = df[columns_level0]
     if columns_level1 is not None:
         # Filter by columns at level 1.
-        hdbg.dassert_lte(1, len(columns_level1), "Columns subset at level 1 cannot be empty")
+        hdbg.dassert_lte(
+            1, len(columns_level1), "Columns subset at level 1 cannot be empty"
+        )
         hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
         df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
     return df
+
+
+# #############################################################################
+
+
+def compare_multiindex_dfs(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    subset_multiindex_df_kwargs: Optional[Dict[str, Any]] = None,
+    compare_visually_dataframes_kwargs: Optional[Dict[str, Any]] = None,
+) -> pd.DataFrame:
+    """
+    - Subset both Multiindex Dataframes
+    - Compare their values through difference
+
+    See `subset_multiindex_df()` and `compare_visually_dataframes()` for parameters descriptions.
+    """
+    # Define kwargs for subsetting and comparison.
+    if subset_multiindex_df_kwargs is None:
+        subset_multiindex_df_kwargs = {}
+    if compare_visually_dataframes_kwargs is None:
+        compare_visually_dataframes_kwargs = {}
+    # Subset DataFrames.
+    subset_df1 = subset_multiindex_df(df1, **subset_multiindex_df_kwargs)
+    subset_df2 = subset_multiindex_df(df2, **subset_multiindex_df_kwargs)
+    # Compare.
+    diff_df = compare_visually_dataframes(
+        subset_df1, subset_df2, **compare_visually_dataframes_kwargs
+    )
+    return diff_df
