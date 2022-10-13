@@ -396,10 +396,8 @@ class TestDownloadRealtimeForOneExchange1(
     @pytest.mark.slow
     @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdexex.hsecret, "get_secret")
     def test_function_call1(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -410,7 +408,6 @@ class TestDownloadRealtimeForOneExchange1(
         Run without saving to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
@@ -425,10 +422,8 @@ class TestDownloadRealtimeForOneExchange1(
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(imvcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -439,7 +434,6 @@ class TestDownloadRealtimeForOneExchange1(
         Run and save to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
@@ -511,12 +505,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(imvcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,
         mock_get_current_time: umock.MagicMock,
-        mock_get_secret: umock.MagicMock,
         mock_list_and_merge: umock.MagicMock,
     ) -> None:
         """
@@ -526,7 +518,6 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         # Set mock return values.
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
-        mock_get_secret.return_value = self.binance_secret
         # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:

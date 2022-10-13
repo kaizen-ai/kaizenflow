@@ -20,19 +20,14 @@ _LOG = logging.getLogger(__name__)
 )
 class TestCcxtExtractor1(hunitest.TestCase):
     # Mock calls to external providers.
-    get_secret_patch = umock.patch.object(imvcdexex.hsecret, "get_secret")
-    ccxt_patch = umock.patch.object(imvcdexex, "ccxtpro", spec=ccxt)
+    ccxt_patch = umock.patch.object(imvcdexex, "ccxt", spec=ccxt)
 
     def setUp(self) -> None:
         super().setUp()
         # Create new mocks from patch's start() method.
-        self.get_secret_mock: umock.MagicMock = self.get_secret_patch.start()
         self.ccxt_mock: umock.MagicMock = self.ccxt_patch.start()
-        # Set dummy credentials for all tests.
-        self.get_secret_mock.return_value = {"apiKey": "test", "secret": "test"}
 
     def tearDown(self) -> None:
-        self.get_secret_patch.stop()
         self.ccxt_patch.stop()
         # Deallocate in reverse order to avoid race conditions.
         super().tearDown()
@@ -45,13 +40,13 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self.assertEqual(exchange_class.exchange_id, "binance")
         self.assertEqual(exchange_class.contract_type, "spot")
         self.assertEqual(exchange_class.vendor, "CCXT")
-        # Check if `exchange_class._exchange` was created from `ccxtpro.binance()` call.
+        # Check if `exchange_class._sync_exchange` was created from `ccxt.binance()` call.
         # Mock memorizes calls that lead to creation of it.
         self.assertEqual(
-            exchange_class._exchange._extract_mock_name(), "ccxtpro.binance()"
+            exchange_class._sync_exchange._extract_mock_name(), "ccxt.binance()"
         )
-        actual_method_calls = str(exchange_class._exchange.method_calls)
-        # Check calls against `exchange_class._exchange`.
+        actual_method_calls = str(exchange_class._sync_exchange.method_calls)
+        # Check calls against `exchange_class._sync_exchange`.
         expected_method_calls = "[call.load_markets()]"
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
@@ -103,7 +98,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self, sleep_mock: umock.MagicMock, fetch_ohlcv_mock: umock.MagicMock
     ) -> None:
         """
-        Verify that wrapper around `ccxtpro.binance` download is properly
+        Verify that wrapper around `ccxt.binance` download is properly
         called.
         """
         # Prepare data and initialize class before run.
@@ -121,7 +116,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         )
         # Mock a call to ccxt's `parse_timeframe method` called inside `_fetch_ohlcv`.
         with umock.patch.object(
-            exchange_class._exchange, "parse_timeframe", create=True
+            exchange_class._sync_exchange, "parse_timeframe", create=True
         ) as parse_timeframe_mock:
             parse_timeframe_mock.return_value = 60
             # Run.
@@ -163,7 +158,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
     )
     def test_download_ohlcv2(self, fetch_ohlcv_mock: umock.MagicMock) -> None:
         """
-        Verify that wrapper around `ccxtpro.binance` is getting the latest
+        Verify that wrapper around `ccxt.binance` is getting the latest
         bars.
         """
         fetch_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
@@ -210,7 +205,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class.currency_pairs = ["BTC/USDT"]
         # Mock a call to ccxt's `fetch_ohlcv` method called inside `_fetch_ohlcv`.
         with umock.patch.object(
-            exchange_class._exchange, "fetch_ohlcv", create=True
+            exchange_class._sync_exchange, "fetch_ohlcv", create=True
         ) as fetch_ohlcv_mock:
             fetch_ohlcv_mock.return_value = bars
             # Run.
@@ -242,7 +237,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class = imvcdexex.CcxtExtractor("binance", "spot")
         # Mock a call to ccxt's `load_markets` method called inside `get_exchange_currency_pairs`.
         with umock.patch.object(
-            exchange_class._exchange, "load_markets", create=True
+            exchange_class._sync_exchange, "load_markets", create=True
         ) as load_markets_mock:
             load_markets_mock.return_value = {"BTC/USDT": {}}
             # Run.
@@ -362,11 +357,11 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class = imvcdexex.CcxtExtractor("binance", "futures")
         exchange_class.currency_pairs = [symbol]
         self.assertEqual(
-            exchange_class._exchange._extract_mock_name(), f"ccxtpro.{exchange}()"
+            exchange_class._sync_exchange._extract_mock_name(), f"ccxt.{exchange}()"
         )
         # Mock a call to ccxt's `fetch_order_book` method called inside `_download_bid_ask`.
         with umock.patch.object(
-            exchange_class._exchange, "fetch_order_book", create=True
+            exchange_class._sync_exchange, "fetch_order_book", create=True
         ) as fetch_order_book_mock:
             fetch_order_book_mock.return_value = {
                 "symbol": symbol,

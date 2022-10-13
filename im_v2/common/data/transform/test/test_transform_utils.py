@@ -334,8 +334,8 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
                 60.789,
                 1336.71,
                 129.483,
-                1,
                 test_timestamp,
+                1,
                 test_exchange,
             ],
             [
@@ -345,8 +345,8 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
                 3.145,
                 1336.72,
                 20.892,
-                2,
                 test_timestamp,
+                2,
                 test_exchange,
             ],
             [
@@ -356,8 +356,8 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
                 39.455,
                 20066.6,
                 0.698,
-                1,
                 test_timestamp,
+                1,
                 test_exchange,
             ],
             [
@@ -367,8 +367,8 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
                 1.346,
                 20066.7,
                 0.008,
-                2,
                 test_timestamp,
+                2,
                 test_exchange,
             ],
         ]
@@ -379,8 +379,8 @@ class TestTransformRawWebsocketData(hunitest.TestCase):
             "bid_size",
             "ask_price",
             "ask_size",
-            "level",
             "end_download_timestamp",
+            "level",
             "exchange_id",
         ]
         expected_df = pd.DataFrame(expected_data, columns=expected_columns)

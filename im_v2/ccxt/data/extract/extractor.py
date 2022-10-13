@@ -44,6 +44,10 @@ class CcxtExtractor(imvcdexex.Extractor):
         )
         self.contract_type = contract_type
         self.exchange_id = exchange_id
+        # Initialize two instances of class since exchanges initialized
+        #  using ccxtpro inherit from base class which uses aync methods
+        #  we keep the ccxt.Exchange in _sync_exchange for backwards
+        #  compatibility with our codebase.
         self._async_exchange = self.log_into_exchange(async_=True)
         self._sync_exchange = self.log_into_exchange(async_=False)
         self.currency_pairs = self.get_exchange_currency_pairs()
@@ -81,7 +85,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         Get all the currency pairs available for the exchange.
         """
-        return self._sync_exchange.load_markets()
+        return list(self._sync_exchange.load_markets().keys())
 
     def _download_ohlcv(
         self,
