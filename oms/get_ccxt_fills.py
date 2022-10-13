@@ -28,6 +28,7 @@ import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
+import im_v2.common.universe.universe_utils as imvcuunut
 import im_v2.im_lib_tasks as imvimlita
 import oms.ccxt_broker as occxbrok
 import oms.ccxt_filled_orders as occfiord
@@ -35,6 +36,21 @@ import oms.hsecrets as omssec
 import oms.oms_ccxt_utils as oomccuti
 
 _LOG = logging.getLogger(__name__)
+
+def add_asset_id_to_output(fills: list) -> list:
+    """
+    Add asset id to TCA output. 
+    """
+    for item in fills:
+        symbol = item["info"]["symbol"]
+        symbol = symbol.replace("/", "_")
+        asset_id = imvcuunut.string_to_numerical_id(symbol)
+        # Get a position of full symbol in order to paste asset id after it.
+        position = list(item["info"].keys()).index("id")
+        items = list(item["info"].items())
+        items.insert(position, ('asset_id', asset_id))
+        item["info"] = dict(items)
+    return fills
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -155,6 +171,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_timestamp = pd.Timestamp(args.end_timestamp)
     # Get all trades.
     fills = broker.get_fills_for_time_period(start_timestamp, end_timestamp)
+    fills = add_asset_id_to_output(fills)
     # Save file.
     start_timestamp_str = start_timestamp.strftime("%Y%m%d-%H%M%S")
     end_timestamp_str = end_timestamp.strftime("%Y%m%d-%H%M%S")
