@@ -11,10 +11,10 @@ from typing import Dict, List
 
 import pandas as pd
 
+import core.finance.resampling as cfinresa
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.htimer as htimer
-import core.finance.resampling as cfinresa
 
 _LOG = logging.getLogger(__name__)
 
@@ -95,31 +95,9 @@ def reindex_on_custom_columns(
     return data_reindex
 
 
-def transform_raw_websocket_data(
-    raw_data: List[Dict], data_type: str, exchange_id: str
-) -> pd.DataFrame:
-    """
-    Transform list of raw websocket data into a DataFrame with columns
-    compliant with the database representation.
-
-    :param data: data to be transformed
-    :param data_type: type of data, e.g. OHLCV
-    :param exchange_id: ID of the exchange where the data come from
-    :return database compliant DataFrame formed from raw data
-    """
-    df = pd.DataFrame(raw_data)
-    if data_type == "ohlcv":
-        df = _transform_ohlcv_websocket_dataframe(df)
-    elif data_type == "bid_ask":
-        df = _transform_bid_ask_websocket_dataframe(df)
-    else:
-        raise ValueError(
-            "Transformation of data type: %s is not supported", data_type
-        )
-    df = df.drop_duplicates()
-    df["exchange_id"] = exchange_id
-    return df
-
+# #############################################################################
+# Transform utils for raw websocket data
+# #############################################################################
 
 def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -193,6 +171,37 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
         ]
     ]
 
+
+def transform_raw_websocket_data(
+    raw_data: List[Dict], data_type: str, exchange_id: str
+) -> pd.DataFrame:
+    """
+    Transform list of raw websocket data into a DataFrame with columns
+    compliant with the database representation.
+
+    :param data: data to be transformed
+    :param data_type: type of data, e.g. OHLCV
+    :param exchange_id: ID of the exchange where the data come from
+    :return database compliant DataFrame formed from raw data
+    """
+    df = pd.DataFrame(raw_data)
+    if data_type == "ohlcv":
+        df = _transform_ohlcv_websocket_dataframe(df)
+    elif data_type == "bid_ask":
+        df = _transform_bid_ask_websocket_dataframe(df)
+    else:
+        raise ValueError(
+            "Transformation of data type: %s is not supported", data_type
+        )
+    df = df.drop_duplicates()
+    df["exchange_id"] = exchange_id
+    return df
+
+# #############################################################################
+# Transform utils for resampling bid/ask data
+# #############################################################################
+
+
 def calculate_vwap(
     data: pd.Series, price_col: str, volume_col: str, **resample_kwargs
 ) -> pd.DataFrame:
@@ -207,9 +216,7 @@ def calculate_vwap(
     return calculated_price
 
 
-def resample_bid_ask_data(
-    data: pd.DataFrame, mode: str = "VWAP"
-) -> pd.DataFrame:
+def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
     Resample bid/ask data to 1 minute interval.
 
@@ -248,31 +255,62 @@ def resample_bid_ask_data(
     df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
     return df
 
-#TODO(Juraj): extend to support deeper levels of order book.
+
+# TODO(Juraj): extend to support deeper levels of order book.
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Transform raw bid/ask realtime data and resample to 1-min.
+    
+    The function expects raw bid/ask data from a single exchange
+    sampled multiple times per second In the first step the raw data 
+    get resampled to 1 sec by applying mean(). The second step performs 
+    resampling to 1 min via sum for sizes and VWAP for prices.
+    
+    :param df_raw: real-time bid/ask data from a single exchange
     """
+    # Currently only data from single exchange across the dataset
+    #  are supported.
+    hdbg.dassert_eq(len(df_raw["exchange_id"].unique()), 
+                    1, 
+                    "Only data from single exchange are supported")
+    exchange_id = df_raw["exchange_id"].unique()[0]
     # Currently only top of the book is supported.
     df_raw = df_raw[df_raw["level"] == 1]
     # Convert timestamp to pd.Timestamp and set as index before sending for resampling.
-    df_raw["timestamp"] = df_raw["timestamp"].map(hdateti.convert_unix_epoch_to_timestamp)
+    df_raw["timestamp"] = df_raw["timestamp"].map(
+        hdateti.convert_unix_epoch_to_timestamp
+    )
     df_raw = df_raw.set_index("timestamp")
     dfs_resampled = []
     for currency_pair in df_raw["currency_pair"].unique():
         df_part = df_raw[df_raw["currency_pair"] == currency_pair]
+        # Resample to 1 sec.
+        df_part = (
+            df_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
+            # Label right is used to match conventions used by CryptoChassis.
+            .resample("S", label="right")
+            .mean()
+        )
+        # Add the exchange_id column back for compatibility with the
+        # 1 min resampling function.
+        df_part["exchange_id"] = exchange_id
+        # Resample to 1 min.
         df_part = resample_bid_ask_data(df_part)
         df_part["currency_pair"] = currency_pair
         dfs_resampled.append(df_part)
     df_resampled = pd.concat(dfs_resampled)
     # Convert back to unix timestamp after resampling
     df_resampled = df_resampled.reset_index()
-    df_resampled["timestamp"] = df_resampled["timestamp"].map(hdateti.convert_timestamp_to_unix_epoch)
+    df_resampled["timestamp"] = df_resampled["timestamp"].map(
+        hdateti.convert_timestamp_to_unix_epoch
+    )
     # This data is only reloaded so end_download_timestamp is None.
     df_resampled["end_download_timestamp"] = None
-    # Only top of the book currently supported
+    # At the level column back.
     df_resampled["level"] = 1
-    # Apply rounding functions so the data is more readable.
-    round_cols_dict = { col: 3 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]}
+    # Round column values for readability.
+    round_cols_dict = {
+        col: 3 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
+    }
     df_resampled = df_resampled.round(decimals=round_cols_dict)
     return df_resampled
