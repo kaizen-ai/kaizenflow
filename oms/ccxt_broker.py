@@ -288,6 +288,7 @@ class CcxtBroker(ombroker.Broker):
         fills = []
         start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
         end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+        asset_id_mapping = self._symbol_to_asset_id_mapping
         # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
             # Download all trades if period is less than 24 hours.
@@ -316,7 +317,14 @@ class CcxtBroker(ombroker.Broker):
                         params={"endTime": timestamp + 86400000},
                     )
                     symbol_fills.extend(day_fills)
-            fills.extend(symbol_fills)
+            symbol_fills_with_asset_ids = []
+            for item in symbol_fills:
+                # Get a position of full symbol in order to paste asset id after it.
+                position = list(item.keys()).index("symbol") + 1
+                items = list(item.items())
+                items.insert(position, ("asset_id", asset_id_mapping[symbol]))
+                symbol_fills_with_asset_ids.append(dict(items))
+            fills.extend(symbol_fills_with_asset_ids)
         return fills
 
     @staticmethod

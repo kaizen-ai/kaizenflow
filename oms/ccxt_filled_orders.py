@@ -238,6 +238,7 @@ def convert_fills_json_to_dataframe(
     columns = [
         "timestamp",
         "symbol",
+        "asset_id",
         "id",
         "order",
         "side",
