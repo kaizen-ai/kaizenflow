@@ -41,7 +41,7 @@ SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
 #  from websockets.
 WEBSOCKET_CONFIG = {
     "ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
-    "bid_ask": {"max_buffer_size": 1000, "sleep_between_iter": 300},
+    "bid_ask": {"max_buffer_size": 1000, "sleep_between_iter": 200},
 }
 
 
@@ -825,7 +825,7 @@ def resample_rt_bid_ask_data_periodically(
             _LOG.warning("Empty Dataframe, nothing to resample")
         else:
             df_resampled = imvcdttrut.transform_and_resample_bid_ask_rt_data(df_raw)
-            save_data_to_db(df_resampled, "bid_ask", db_connection, dst_table, start_ts.tz)
+            imvcddbut.save_data_to_db(df_resampled, "bid_ask", db_connection, dst_table, start_ts.tz)
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete
         # an iteration, this provides an "time align" mechanism.
