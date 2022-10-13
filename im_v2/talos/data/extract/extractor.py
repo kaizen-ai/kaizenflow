@@ -9,20 +9,20 @@ import im_v2.talos.data.extract.extractor as imvtdexex
 
 
 import logging
-from typing import Dict, Union
+from typing import Any, Dict, Union
 
 import pandas as pd
 import requests
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import im_v2.common.data.extract.extractor as imvcdexex
+import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.talos.utils as imv2tauti
 
 _LOG = logging.getLogger(__name__)
 
 
-class TalosExtractor(imvcdexex.Extractor):
+class TalosExtractor(ivcdexex.Extractor):
     """
     A class for accessing Talos exchange data.
 
@@ -233,3 +233,45 @@ class TalosExtractor(imvcdexex.Extractor):
             hdateti.convert_timestamp_to_unix_epoch
         )
         return concat_df
+
+    def _download_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    def _download_websocket_bid_ask(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    def _download_websocket_trades(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    def _subscribe_to_websocket_ohlcv(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    def _subscribe_to_websocket_bid_ask(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )
+
+    def _subscribe_to_websocket_trades(
+        self, exchange_id: str, currency_pair: str, **kwargs: Any
+    ) -> Dict:
+        raise NotImplementedError(
+            "This method is not implemented for Talos vendor yet."
+        )

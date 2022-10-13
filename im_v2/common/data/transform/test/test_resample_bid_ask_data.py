@@ -3,9 +3,9 @@ import pandas as pd
 
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
-import im_v2.common.data.transform.resample_bid_ask_data as imvcdtrbad
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
-
+#TODO(Juraj): Move test into test_transform_utils
 class TestResampleBidAskData(hunitest.TestCase):
     @staticmethod
     def get_test_data() -> pd.DataFrame:
@@ -25,8 +25,8 @@ class TestResampleBidAskData(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         df = self.get_test_data()
-        self._actual_vwap_df = imvcdtrbad._resample_bid_ask_data(df)
-        self._actual_twap_df = imvcdtrbad._resample_bid_ask_data(df, mode="TWAP")
+        self._actual_vwap_df = imvcdttrut.resample_bid_ask_data(df)
+        self._actual_twap_df = imvcdttrut.resample_bid_ask_data(df, mode="TWAP")
 
     def test_resample_bid_ask_data1(self) -> None:
         """
