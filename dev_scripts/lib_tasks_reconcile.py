@@ -21,6 +21,7 @@ import dev_scripts.lib_tasks_reconcile as dslitare
 import datetime
 import logging
 import os
+import sys
 from typing import Optional
 
 from invoke import task
@@ -264,7 +265,7 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
             _LOG.warning(
                 "Notebook run results are already stored at %s", results_dir
             )
-            return
+            sys.exit(-1)
         else:
             rm_cmd = f"rm -rf {results_dir}"
             _LOG.warning(
@@ -294,16 +295,16 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy the published notebook to the shared folder.
-    hdbg.dassert_dir_exists(results_dir)
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
-    hdbg.dassert_dir_exists(target_dir)
-    _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
-    docker_cmd = f"cp -vr {results_dir} {target_dir}"
-    _system(docker_cmd)
-    # Prevent overwriting.
-    results_shared_dir = os.path.join(target_dir, "result_0")
-    cmd = f"chmod -R -w {results_shared_dir}"
-    _system(cmd)
+    # hdbg.dassert_dir_exists(results_dir)
+    # target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    # hdbg.dassert_dir_exists(target_dir)
+    # _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
+    # docker_cmd = f"cp -vr {results_dir} {target_dir}"
+    # _system(docker_cmd)
+    # # Prevent overwriting.
+    # results_shared_dir = os.path.join(target_dir, "result_0")
+    # cmd = f"chmod -R -w {results_shared_dir}"
+    # _system(cmd)
 
 
 @task
@@ -364,19 +365,24 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_run_all(ctx, run_date=None):  # type: ignore
+def reconcile_run_all(ctx, run_date=None, abort_on_first_error=True):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    reconcile_create_dirs(ctx, run_date=run_date)
-    #
-    reconcile_copy_prod_data(ctx, run_date=run_date)
-    #
-    reconcile_dump_market_data(ctx, run_date=run_date)
-    reconcile_run_sim(ctx, run_date=run_date)
-    reconcile_copy_sim_data(ctx, run_date=run_date)
-    #
-    reconcile_run_notebook(ctx, run_date=run_date)
-    reconcile_ls(ctx, run_date=run_date)
-    #
-    reconcile_dump_tca_data(ctx, run_date=None)
+    invokes_list = [
+        reconcile_create_dirs,
+        reconcile_copy_prod_data,
+        reconcile_dump_market_data,
+        reconcile_run_sim,
+        reconcile_copy_sim_data,
+        reconcile_run_notebook,
+        reconcile_ls,
+        # TODO(Grisha): @Dan Should we put tca above the notebook run?
+        reconcile_dump_tca_data,
+    ]
+    for invoke in invokes_list:
+        rc = invoke(ctx, run_date=run_date)
+        if rc != 0:
+            _LOG.error("'%s' invoke failed", invoke)
+            if abort_on_first_error:
+                sys.exit(-1)
