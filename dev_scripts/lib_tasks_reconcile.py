@@ -110,7 +110,7 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactive=True):  # type: ignore
+def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactive=False):  # type: ignore
     # pylint: disable=line-too-long
     """
     Dump the market data image and save it to a shared folder.
@@ -188,6 +188,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     # Check that system log dir exists and is not empty.
     hdbg.dassert_dir_exists(os.path.join(target_dir, "dag"))
     hdbg.dassert_dir_exists(os.path.join(target_dir, "process_forecasts"))
+    # TODO(Grisha): @Dan Add asserts on the latest files so we confirm that simulation was completed.
 
 
 @task
@@ -254,6 +255,13 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     """
     _ = ctx
     run_date = _get_run_date(run_date)
+    # Set results destination dir and clear it if is already filled.
+    dst_dir = "."
+    results_dir = os.path.join(dst_dir, "result_0")
+    if os.path.exists(results_dir):
+        rm_cmd = f"rm -rf {results_dir}"
+        _LOG.warning("The results_dir=%s already exists, removing it.", results_dir)
+        _system(rm_cmd)
     # TODO(Grisha): pass `asset_class` as a param.
     asset_class = "crypto"
     #
@@ -264,7 +272,6 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
-    dst_dir = "."
     # pylint: disable=line-too-long
     cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
     # pylint: enable=line-too-long
@@ -278,7 +285,6 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy the published notebook to the shared folder.
-    results_dir = os.path.join(dst_dir, "result_0")
     hdbg.dassert_dir_exists(results_dir)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hdbg.dassert_dir_exists(target_dir)
