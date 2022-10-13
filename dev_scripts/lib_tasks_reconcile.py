@@ -257,6 +257,7 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     run_date = _get_run_date(run_date)
     # Set results destination dir and clear it if is already filled.
     dst_dir = "."
+    # TODO(Grisha): @Dan Find a way to clear experiment dir using script parameters.
     results_dir = os.path.join(dst_dir, "result_0")
     if os.path.exists(results_dir):
         rm_cmd = f"rm -rf {results_dir}"
