@@ -4,7 +4,6 @@ Import as:
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 """
 
-import asyncio
 import logging
 import time
 from typing import Any, Dict, List, Optional, Union
@@ -16,7 +15,6 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import helpers.hsecrets as hsecret
 import im_v2.common.data.extract.extractor as imvcdexex
 
 _LOG = logging.getLogger(__name__)
@@ -58,13 +56,15 @@ class CcxtExtractor(imvcdexex.Extractor):
         """
         return currency_pair.replace("_", "/")
 
-    def log_into_exchange(self, async_: bool) -> Union[ccxtpro.base.exchange.Exchange, ccxt.Exchange]:
+    def log_into_exchange(
+        self, async_: bool
+    ) -> Union[ccxtpro.base.exchange.Exchange, ccxt.Exchange]:
         """
-        Log into an exchange via CCXT (or CCXT pro) and return the corresponding
-        `Exchange` object.
-        
+        Log into an exchange via CCXT (or CCXT pro) and return the
+        corresponding `Exchange` object.
+
         :param async_: if True, returns CCXT pro Exchange with async support,
-         classic, sync ccxt Exchange otherwise. 
+         classic, sync ccxt Exchange otherwise.
         """
         exchange_params: Dict[str, Any] = {}
         # Enable rate limit.
@@ -251,7 +251,9 @@ class CcxtExtractor(imvcdexex.Extractor):
                 data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
-                data = self._async_exchange.orderbooks[pair].limit(self._bid_ask_depth)
+                data = self._async_exchange.orderbooks[pair].limit(
+                    self._bid_ask_depth
+                )
             else:
                 raise ValueError(
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask"

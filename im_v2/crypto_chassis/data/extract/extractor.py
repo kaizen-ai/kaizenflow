@@ -14,12 +14,12 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import im_v2.common.data.extract.extractor as imvcdexex
+import im_v2.common.data.extract.extractor as ivcdexex
 
 _LOG = logging.getLogger(__name__)
 
 
-class CryptoChassisExtractor(imvcdexex.Extractor):
+class CryptoChassisExtractor(ivcdexex.Extractor):
     """
     Access exchange data from Crypto-Chassis through REST API.
     """
@@ -145,7 +145,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             )
             if currency_pair.endswith("usd"):
                 # Change exchange and currency format to COIN-M futures.
-                currency_pair = currency_pair+"_perp"
+                currency_pair = currency_pair + "_perp"
                 exchange_id = "binance-coin-futures"
             else:
                 # Change exchange ID to USDS futures.
@@ -195,9 +195,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             columns=["bid_price_bid_size", "ask_price_ask_size"]
         )
         bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
-        bid_ask = self.coerce_to_numeric(
-            bid_ask, float_columns=bid_ask_cols
-        )
+        bid_ask = self.coerce_to_numeric(bid_ask, float_columns=bid_ask_cols)
         # Rename time column.
         bid_ask = bid_ask.rename(columns={"time_seconds": "timestamp"})
         return bid_ask
@@ -256,7 +254,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
                 exchange_id, "binance", msg="Only binance futures are supported"
             )
             if currency_pair.endswith("usd"):
-                currency_pair = currency_pair+"_perp"
+                currency_pair = currency_pair + "_perp"
                 exchange_id = "binance-coin-futures"
             else:
                 exchange_id = "binance-usds-futures"
@@ -389,7 +387,7 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
         # Build main API URL.
         core_url = f"{self._endpoint}/{data_type}/{exchange}/{currency_pair}"
         return core_url
-    
+
     def _download_websocket_ohlcv(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
@@ -397,7 +395,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             "This method is not implemented for CryptoChassis vendor yet."
         )
 
-    
     def _download_websocket_bid_ask(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
@@ -405,7 +402,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             "This method is not implemented for CryptoChassis vendor yet."
         )
 
-    
     def _download_websocket_trades(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
@@ -413,7 +409,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             "This method is not implemented for CryptoChassis vendor yet."
         )
 
-    
     def _subscribe_to_websocket_ohlcv(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
@@ -421,7 +416,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             "This method is not implemented for CryptoChassis vendor yet."
         )
 
-    
     def _subscribe_to_websocket_bid_ask(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:
@@ -429,7 +423,6 @@ class CryptoChassisExtractor(imvcdexex.Extractor):
             "This method is not implemented for CryptoChassis vendor yet."
         )
 
-    
     def _subscribe_to_websocket_trades(
         self, exchange_id: str, currency_pair: str, **kwargs: Any
     ) -> Dict:

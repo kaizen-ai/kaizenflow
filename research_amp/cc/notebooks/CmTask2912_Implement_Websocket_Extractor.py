@@ -28,17 +28,16 @@
 # %autoreload 2
 
 import logging
-import os
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import helpers.hdatetime as hdateti
 import helpers.hsql as hsql
-import helpers.hparquet as hparquet
 import im_v2.im_lib_tasks as imvimlita
 
 # %%
@@ -60,7 +59,13 @@ hprint.config_notebook()
 # ## Specify universe
 
 # %%
-universe = ["binance::SOL_USDT", "binance::DOGE_USDT", "binance::BNB_USDT", "binance::ETH_USDT", "binance::BTC_USDT"]
+universe = [
+    "binance::SOL_USDT",
+    "binance::DOGE_USDT",
+    "binance::BNB_USDT",
+    "binance::ETH_USDT",
+    "binance::BTC_USDT",
+]
 
 # %% [markdown]
 # ## Load data
@@ -77,7 +82,7 @@ end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
 # %%
 filters = [("year", "=", 2022), ("month", "=", 10)]
 file_name = "s3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance/"
-df = hparquet.from_parquet(file_name, filters=filters, aws_profile="ck")
+df = hparque.from_parquet(file_name, filters=filters, aws_profile="ck")
 
 # %%
 df.head()
@@ -90,7 +95,9 @@ df_chassis = df.loc[(df.index >= start_ts) & (df.index <= end_ts)]
 df_chassis = df_chassis.drop_duplicates()
 df_chassis["full_symbol"] = "binance::" + df_chassis["currency_pair"]
 df_chassis = df_chassis[df_chassis["full_symbol"].isin(universe)]
-df_chassis = df_chassis[["bid_size", "bid_price", "ask_size", "ask_price", "full_symbol"]]
+df_chassis = df_chassis[
+    ["bid_size", "bid_price", "ask_size", "ask_price", "full_symbol"]
+]
 df_chassis = df_chassis.reset_index().set_index(["timestamp", "full_symbol"])
 # We drop the first row because CC labels right side of the intrval during resampling, meaning for CCXT we will have
 # one less row
@@ -103,7 +110,7 @@ df_chassis.tail()
 df_chassis.shape
 
 # %%
-df_chassis[df_chassis.index.isin(['binance::BTC_USDT'], level=1)].head()
+df_chassis[df_chassis.index.isin(["binance::BTC_USDT"], level=1)].head()
 
 # %% [markdown]
 # ### CCXT data
@@ -120,7 +127,9 @@ query
 
 # %%
 df_ccxt = hsql.execute_query_to_df(db_connection, query)
-df_ccxt["timestamp"] = df_ccxt["timestamp"].map(hdateti.convert_unix_epoch_to_timestamp)
+df_ccxt["timestamp"] = df_ccxt["timestamp"].map(
+    hdateti.convert_unix_epoch_to_timestamp
+)
 df_ccxt = df_ccxt.reset_index(drop=True).set_index(["timestamp"])
 
 # %%
@@ -129,7 +138,11 @@ df_ccxt["full_symbol"] = "binance::" + df_ccxt["currency_pair"]
 dfs_ccxt = []
 for fs in universe:
     df_fs = df_ccxt[df_ccxt["full_symbol"] == fs]
-    df_fs = df_fs[["bid_size", "bid_price", "ask_size", "ask_price"]].resample("S", label="right").mean()
+    df_fs = (
+        df_fs[["bid_size", "bid_price", "ask_size", "ask_price"]]
+        .resample("S", label="right")
+        .mean()
+    )
     df_fs["full_symbol"] = fs
     df_fs = df_fs.reset_index().set_index(["timestamp", "full_symbol"])
     dfs_ccxt.append(df_fs)

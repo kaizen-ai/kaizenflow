@@ -8,8 +8,8 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 import argparse
 import asyncio
-import logging
 import copy
+import logging
 import os
 import time
 from datetime import datetime, timedelta
@@ -33,15 +33,22 @@ from helpers.hthreading import timeout
 _LOG = logging.getLogger(__name__)
 
 SUPPORTED_DOWNLOAD_METHODS = ["rest", "websocket"]
-# Determines parameters for handling websocket download.
-#  sleep_between_iter: time to sleep between iterations in miliseconds.
-#  max_buffer_size: specifies number of websocket
-#  messages to cache before attempting DB insert.
-# Buffer size is 0 for ohlcv because we want to insert after round of receival
-#  from websockets.
+# Provides parameters for handling websocket download.
+#  - sleep_between_iter_in_ms: time to sleep between iterations in miliseconds.
+#  - max_buffer_size: specifies number of websocket
+#    messages to cache before attempting DB insert.
+
 WEBSOCKET_CONFIG = {
-    "ohlcv": {"max_buffer_size": 0, "sleep_between_iter": 60000},
-    "bid_ask": {"max_buffer_size": 1000, "sleep_between_iter": 200},
+    "ohlcv": {
+        # Buffer size is 0 for OHLCV because we want to insert after round of receival
+        #  from websockets.
+        "max_buffer_size": 0, 
+        "sleep_between_iter_in_ms": 60000
+        },
+    "bid_ask": {
+        "max_buffer_size": 500, 
+        "sleep_between_iter_in_ms": 200
+        },
 }
 
 
@@ -411,10 +418,12 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
             # CCXT uses their own 'dict-like' structure for storing the data
-            #  deepcopy is needed to retain the older data. 
-            data_point = copy.deepcopy(exchange.download_websocket_data(
-                data_type, exchange_id, curr_pair
-            ))
+            #  deepcopy is needed to retain the older data.
+            data_point = copy.deepcopy(
+                exchange.download_websocket_data(
+                    data_type, exchange_id, curr_pair
+                )
+            )
             data_buffer.append(data_point)
         # If the buffer is full or this is the last iteration, process and save buffered data.
         if (
@@ -434,7 +443,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             pd.Timestamp.now(tz) - iter_start_time
         ).total_seconds() * 1000
         actual_sleep_time = max(
-            0, WEBSOCKET_CONFIG[data_type]["sleep_between_iter"] - iter_length
+            0, WEBSOCKET_CONFIG[data_type]["sleep_between_iter_in_ms"] - iter_length
         )
         _LOG.info(
             "Iteration took %i ms, waiting between iterations for %i ms",
@@ -794,8 +803,8 @@ def resample_rt_bid_ask_data_periodically(
     end_ts: pd.Timestamp,
 ) -> None:
     """
-    Load raw bid/ask data from specified DB table every minute, resample to 1 minute and insert
-    back during a specified time interval <start_ts, end_ts>.
+    Load raw bid/ask data from specified DB table every minute, resample to 1
+    minute and insert back during a specified time interval <start_ts, end_ts>.
 
     :param db_stage: DB stage to use
     :param src_table: Source table to get raw data from
@@ -812,29 +821,29 @@ def resample_rt_bid_ask_data_periodically(
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     db_connection = hsql.get_connection(*connection_params)
     tz = start_ts.tz
-    start_delay = (
-        start_ts - datetime.now(tz)
-    ).total_seconds()
+    start_delay = (start_ts - datetime.now(tz)).total_seconds()
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
     time.sleep(start_delay)
     # Start resampling.
     while pd.Timestamp.now(tz) < end_ts:
         iter_start_time = pd.Timestamp.now(tz)
-        df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(db_connection, src_table, tz)
+        df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(
+            db_connection, src_table, tz
+        )
         if df_raw.empty:
             _LOG.warning("Empty Dataframe, nothing to resample")
         else:
-            df_resampled = imvcdttrut.transform_and_resample_bid_ask_rt_data(df_raw)
-            imvcddbut.save_data_to_db(df_resampled, "bid_ask", db_connection, dst_table, start_ts.tz)
+            df_resampled = imvcdttrut.transform_and_resample_bid_ask_rt_data(
+                df_raw
+            )
+            imvcddbut.save_data_to_db(
+                df_resampled, "bid_ask", db_connection, dst_table, start_ts.tz
+            )
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete
         # an iteration, this provides an "time align" mechanism.
-        iter_length = (
-            pd.Timestamp.now(tz) - iter_start_time
-        ).total_seconds()
-        actual_sleep_time = max(
-            0, 60 - iter_length
-        )
+        iter_length = (pd.Timestamp.now(tz) - iter_start_time).total_seconds()
+        actual_sleep_time = max(0, 60 - iter_length)
         _LOG.info(
             "Resampling iteration took %i s, waiting between iterations for %i s",
             iter_length,

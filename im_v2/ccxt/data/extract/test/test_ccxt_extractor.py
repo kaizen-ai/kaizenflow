@@ -52,9 +52,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         )
         actual_method_calls = str(exchange_class._exchange.method_calls)
         # Check calls against `exchange_class._exchange`.
-        expected_method_calls = (
-            "[call.load_markets()]"
-        )
+        expected_method_calls = "[call.load_markets()]"
         self.assertEqual(actual_method_calls, expected_method_calls)
         # Wrong contract type.
         with pytest.raises(AssertionError) as fail:
