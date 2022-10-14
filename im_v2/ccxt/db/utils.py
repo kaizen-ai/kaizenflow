@@ -88,7 +88,7 @@ def get_ccxt_create_bid_ask_futures_raw_table_query() -> str:
     Get SQL query to create CCXT bid/ask raw futures data table.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures(
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures_raw(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             bid_size NUMERIC,
