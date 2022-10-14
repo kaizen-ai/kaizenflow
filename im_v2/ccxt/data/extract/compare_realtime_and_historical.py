@@ -6,32 +6,36 @@ Use as:
 # Compare daily S3 and realtime data for binance.
 > im_v2/ccxt/data/extract/compare_realtime_and_historical.py \
    --db_stage 'dev' \
-   --start_timestamp 20220216-000000 \
-   --end_timestamp 20220217-000000 \
+   --start_timestamp 20221008-000000 \
+   --end_timestamp 20221013-000000 \
    --exchange_id 'binance' \
-   --db_table 'ccxt_ohlcv_test' \
+   --data_type 'ohlcv' \
+   --contract_type 'futures' \
+   --db_table 'ccxt_ohlcv_preprod' \
    --aws_profile 'ck' \
-   --s3_path 's3://cryptokaizen-data-test/daily_staged/'
+   --resample_1min 'True' \
+   --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
 
 Import as:
 
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
-import os
+import logging
+from typing import List
 
 import pandas as pd
-import psycopg2
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.common.data.transform.transform_utils as imvcdttrut
+import im_v2.ccxt.data.client as icdcl
+import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
+
+_LOG = logging.getLogger(__name__)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -68,6 +72,20 @@ def _parse() -> argparse.ArgumentParser:
         help="Exchange for which the comparison should be done",
     )
     parser.add_argument(
+        "--data_type",
+        action="store",
+        required=True,
+        type=str,
+        help="Data type to compare: 'bid_ask' or 'ohlcv'",
+    )
+    parser.add_argument(
+        "--contract_type",
+        action="store",
+        required=True,
+        type=str,
+        help="Contract type: 'spot' or 'futures'",
+    )
+    parser.add_argument(
         "--db_table",
         action="store",
         required=False,
@@ -75,112 +93,220 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
     )
+    parser.add_argument(
+        "--resample_1min",
+        action="store",
+        required=False,
+        default=True,
+        type=bool,
+        help="(Optional) If the data should be resampled to 1 min'",
+    )
     parser = hparser.add_verbosity_arg(parser)
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
 
+class RealTimeHistoricalReconciler:
+    def __init__(self, args) -> None:
+        """ 
+        """
+        hdbg.dassert_in(args.data_type, ["bid_ask", "ohlcv"])
+        self.data_type = args.data_type
+        # Set DB connection.
+        db_connection = hsql.get_connection(
+            *hsql.get_connection_info_from_env_file(
+                imvimlita.get_db_env_path("dev")
+            )
+        )
+        # Initialize CCXT client.
+        self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
+            args.resample_1min, db_connection, args.db_table
+        )
+        # Initialize CC client.
+        universe_version = None
+        partition_mode = "by_year_month"
+        data_snapshot = ""
+        self.cc_daily_pq_client = iccdc.CryptoChassisHistoricalPqByTileClient(
+            universe_version,
+            args.resample_1min,
+            args.s3_path,
+            partition_mode,
+            args.data_type,
+            args.contract_type,
+            data_snapshot,
+            aws_profile=args.aws_profile,
+        )
+        # Process time period.
+        self.start_ts = pd.Timestamp(args.start_timestamp, tz="UTC")
+        self.end_ts = pd.Timestamp(args.end_timestamp, tz="UTC")
+        #
+        self.universe = self._get_universe()
+        self.expected_columns = {
+            "ohlcv": [
+                "full_symbol",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+            ],
+            "bid_ask": [
+                "full_symbol",
+                "bid_price",
+                "bid_size",
+                "ask_price",
+                "ask_size",
+            ],
+        }
+
+    @staticmethod
+    def clean_data_for_orderbook_level(
+        df: pd.DataFrame, level: int = 1
+    ) -> pd.DataFrame:
+        """
+        Specify the order level in CCXT bid ask data.
+
+        :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
+        :return: Data where specific level has common name (i.e., bid_price)
+        """
+        level_cols = [col for col in df.columns if col.endswith(f"_{level}")]
+        level_cols_cleaned = [elem[:-2] for elem in level_cols]
+        #
+        zip_iterator = zip(level_cols, level_cols_cleaned)
+        col_dict = dict(zip_iterator)
+        #
+        df = df.rename(columns=col_dict)
+        #
+        return df
+
+    def run(self) -> None:
+        """ """
+        # Get CCXT data.
+        ccxt_rt = self.ccxt_rt_im_client.read_data(
+            self.universe, self.start_ts, self.end_ts, None, "assert"
+        )
+        if self.data_type == "bid_ask":
+            # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
+            ccxt_rt.index = ccxt_rt.reset_index()["timestamp"].apply(
+                lambda x: x.round(freq="T")
+            )
+            # Choose the specific order level (first level by default).
+            ccxt_rt = self.clean_data_for_orderbook_level(ccxt_rt)
+
+        # Get CC data.
+        cc_daily = self.cc_daily_pq_client.read_data(
+            self.universe, self.start_ts, self.end_ts, None, "assert"
+        )
+        expected_columns = self.expected_columns[self.data_type]
+        # Reindex real time data.
+        ccxt_rt = ccxt_rt[expected_columns]
+        ccxt_rt_reindex = ccxt_rt.reset_index().set_index(
+            ["timestamp", "full_symbol"]
+        )
+        # Reindex daily data.
+        cc_daily = cc_daily[expected_columns]
+        cc_daily_reindex = cc_daily.reset_index().set_index(
+            ["timestamp", "full_symbol"]
+        )
+        # Compare real time and daily data.
+        if self.data_type == "ohlcv":
+            self._compare_ohlcv(ccxt_rt_reindex, cc_daily_reindex)
+        else:
+            self._compare_bid_ask(ccxt_rt_reindex, cc_daily_reindex)
+        return
+
+    def _compare_ohlcv(self, rt_data, daily_data):
+        """
+        Compare OHLCV real time and daily data.
+
+        :param rt_data: real time data
+        :param daily_data: daily data
+        :return:
+        """
+        # Inform if both dataframes are empty,
+        # most likely there is a wrong arg value given.
+        if rt_data.empty and daily_data.empty:
+            message = (
+                "Both realtime and staged data are missing, \n"
+                + "Did you provide correct arguments?"
+            )
+            hdbg.dfatal(message=message)
+        # Get missing data.
+        rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
+            rt_data, daily_data
+        )
+        # Compare dataframe contents.
+        data_difference = hpandas.compare_dataframe_rows(rt_data, daily_data)
+        # Show difference and raise if one is found.
+        error_message = []
+        if not rt_missing_data.empty:
+            error_message.append("Missing real time data:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    rt_missing_data, num_rows=len(rt_missing_data)
+                )
+            )
+        if not daily_missing_data.empty:
+            error_message.append("Missing daily data:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    daily_missing_data, num_rows=len(daily_missing_data)
+                )
+            )
+        if not data_difference.empty:
+            error_message.append("Differing table contents:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    data_difference, num_rows=len(data_difference)
+                )
+            )
+
+        if error_message:
+            hdbg.dfatal(message="\n".join(error_message))
+
+    def _compare_bid_ask(self, rt_data, daily_data):
+        """
+        Compare order book real time and daily data.
+
+        :param rt_data: real time data
+        :param daily_data: daily data
+        :return:
+        """
+        data = rt_data.merge(
+            daily_data,
+            how="outer",
+            left_index=True,
+            right_index=True,
+            suffixes=("_ccxt", "_cc"),
+        )
+        # Move the same metrics from two vendors together.
+        data = data.reindex(sorted(data.columns), axis=1)
+        #
+        _LOG.info(
+            "Found %s missing rows for both vendors",
+            len(data[data.isna().all(axis=1)]),
+        )
+        # METRICS HERE
+
+        return
+
+    def _get_universe(self) -> List[str]:
+        """ 
+        """
+        # DB universe.
+        ccxt_universe = self.ccxt_rt_im_client.get_universe()
+        # CC universe.
+        cc_universe = self.cc_daily_pq_client.get_universe()
+        # Intersection of universes that will be used for analysis.
+        universe = list(set(ccxt_universe) & set(cc_universe))
+        return universe
+
+
 def _run(args: argparse.Namespace) -> None:
-    # Get time range for last 24 hours.
-    start_timestamp = pd.Timestamp(args.start_timestamp, tz="UTC")
-    end_timestamp = pd.Timestamp(args.end_timestamp, tz="UTC")
-    # Connect to database.
-    env_file = imvimlita.get_db_env_path(args.db_stage)
-    try:
-        # Connect with the parameters from the env file.
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        connection = hsql.get_connection(*connection_params)
-    except psycopg2.OperationalError:
-        # Connect with the dynamic parameters (usually during tests).
-        actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
-        connection_params = hsql.DbConnectionInfo(
-            host=actual_details["host"],
-            dbname=actual_details["dbname"],
-            port=int(actual_details["port"]),
-            user=actual_details["user"],
-            password=actual_details["password"],
-        )
-        connection = hsql.get_connection(*connection_params)
-    # Convert timestamps to unix ms format used in OHLCV data.
-    unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(
-        start_timestamp
-    )
-    unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
-    # Read data from DB.
-    query = (
-        f"SELECT * FROM {args.db_table} WHERE timestamp >='{unix_start_timestamp}'"
-        f" AND timestamp <= '{unix_end_timestamp}' AND exchange_id='{args.exchange_id}'"
-    )
-    rt_data = hsql.execute_query_to_df(connection, query)
-    expected_columns = [
-        "timestamp",
-        "currency_pair",
-        "open",
-        "high",
-        "low",
-        "close",
-        "volume",
-    ]
-
-    rt_data_reindex = imvcdttrut.reindex_on_custom_columns(
-        rt_data, expected_columns[:2], expected_columns
-    )
-    # List files for given exchange.
-    exchange_path = os.path.join(args.s3_path, args.exchange_id) + "/"
-    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
-        "by_year_month", start_timestamp, end_timestamp
-    )
-    # Read data corresponding to given time range.
-    daily_data = hparque.from_parquet(
-        exchange_path, filters=timestamp_filters, aws_profile=args.aws_profile
-    )
-
-    daily_data = daily_data.loc[daily_data["timestamp"] >= unix_start_timestamp]
-    daily_data = daily_data.loc[daily_data["timestamp"] <= unix_end_timestamp]
-    daily_data_reindex = imvcdttrut.reindex_on_custom_columns(
-        daily_data, expected_columns[:2], expected_columns
-    )
-    # Inform if both dataframes are empty,
-    # most likely there is a wrong arg value given.
-    if rt_data_reindex.empty and daily_data_reindex.empty:
-        message = (
-            "Both realtime and staged data are missing, \n"
-            + "Did you provide correct arguments?"
-        )
-        hdbg.dfatal(message=message)
-    # Get missing data.
-    rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
-        rt_data_reindex, daily_data_reindex
-    )
-    # Compare dataframe contents.
-    data_difference = hpandas.compare_dataframe_rows(
-        rt_data_reindex, daily_data_reindex
-    )
-    # Show difference and raise if one is found.
-    error_message = []
-    if not rt_missing_data.empty:
-        error_message.append("Missing real time data:")
-        error_message.append(
-            hpandas.get_df_signature(
-                rt_missing_data, num_rows=len(rt_missing_data)
-            )
-        )
-    if not daily_missing_data.empty:
-        error_message.append("Missing daily data:")
-        error_message.append(
-            hpandas.get_df_signature(
-                daily_missing_data, num_rows=len(daily_missing_data)
-            )
-        )
-    if not data_difference.empty:
-        error_message.append("Differing table contents:")
-        error_message.append(
-            hpandas.get_df_signature(
-                data_difference, num_rows=len(data_difference)
-            )
-        )
-    if error_message:
-        hdbg.dfatal(message="\n".join(error_message))
+    #
+    reconciler = RealTimeHistoricalReconciler(args)
+    #
+    reconciler.run()
 
 
 def _main(parser: argparse.ArgumentParser) -> None:

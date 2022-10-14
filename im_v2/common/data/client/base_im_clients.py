@@ -344,7 +344,7 @@ class ImClient(abc.ABC):
             # Combination of full symbol and timestamp is a unique identifier,
             # so full symbol cannot be NaN.
             df[full_symbol_col_name] = df[full_symbol_col_name].fillna(
-                method="bfill"
+                method="ffill" # TOMA: changed to `ffil` from `bfill`
             )
         # 4) Convert to UTC.
         df.index = df.index.tz_convert("UTC")
@@ -378,6 +378,7 @@ class ImClient(abc.ABC):
         )
         # Check that full symbol column has no NaNs.
         hdbg.dassert(df[full_symbol_col_name].notna().all())
+        
         # Check that there are no duplicates in data by index and full symbol.
         n_duplicated_rows = (
             df.reset_index()
