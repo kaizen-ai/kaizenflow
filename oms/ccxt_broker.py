@@ -319,7 +319,7 @@ class CcxtBroker(ombroker.Broker):
                     symbol_fills.extend(day_fills)
             symbol_fills_with_asset_ids = []
             for item in symbol_fills:
-                # Get a position of full symbol in order to paste asset id after it.
+                # Get a position of full symbol to paste asset id after it.
                 position = list(item.keys()).index("symbol") + 1
                 items = list(item.items())
                 items.insert(position, ("asset_id", asset_id_mapping[symbol]))
@@ -794,7 +794,9 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self.market_info = market_info
 
 
-def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
+def get_SimulatedCcxtBroker_instance1(
+    market_data: pd.DataFrame,
+) -> ombroker.SimulatedBroker:
     # Load pre-saved market info generated with
     # `TestSaveMarketInfo`.
     file_path = os.path.join(
