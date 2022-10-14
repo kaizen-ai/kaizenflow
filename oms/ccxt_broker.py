@@ -35,18 +35,6 @@ _LOG = logging.getLogger(__name__)
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
 
-def _add_asset_id_to_fills(fills, asset_id):
-    fills_with_asset_id = []
-    for item in fills:
-        # Get a position of full symbol to paste asset id after it.
-        position = list(item.keys()).index("symbol") + 1
-        items = list(item.items())
-        items.insert(position, ("asset_id", asset_id))
-        fills_with_asset_id.append(dict(items))
-        fills.extend(fills_with_asset_id)
-    return fills_with_asset_id
-
-
 # #############################################################################
 # CcxtBroker
 # #############################################################################
@@ -300,9 +288,9 @@ class CcxtBroker(ombroker.Broker):
         fills = []
         start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
         end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+        asset_id_mapping = self._symbol_to_asset_id_mapping
         # Get conducted trades (fills) symbol by symbol.
         for symbol in symbols:
-            asset_id = self._symbol_to_asset_id_mapping[symbol]
             # Download all trades if period is less than 24 hours.
             # TODO(Danya): Maybe return a dataframe so we can trim the df
             #  at the output and avoid downloading extra data?
@@ -315,7 +303,6 @@ class CcxtBroker(ombroker.Broker):
                     since=start_timestamp,
                     params={"endTime": end_timestamp},
                 )
-                symbol_fills = _add_asset_id_to_fills(symbol_fills, asset_id)
                 fills.extend(symbol_fills)
             # Download day-by-day for longer time periods.
             else:
@@ -330,8 +317,14 @@ class CcxtBroker(ombroker.Broker):
                         params={"endTime": timestamp + 86400000},
                     )
                     symbol_fills.extend(day_fills)
-                    symbol_fills = _add_asset_id_to_fills(symbol_fills, asset_id)
-            fills.extend(symbol_fills)
+            symbol_fills_with_asset_ids = []
+            for item in symbol_fills:
+                # Get a position of full symbol to paste asset id after it.
+                position = list(item.keys()).index("symbol") + 1
+                items = list(item.items())
+                items.insert(position, ("asset_id", asset_id_mapping[symbol]))
+                symbol_fills_with_asset_ids.append(dict(items))
+            fills.extend(symbol_fills_with_asset_ids)
         return fills
 
     @staticmethod
