@@ -345,11 +345,10 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
             _LOG.warning("TCA data is already stored at %s", dst_dir)
             sys.exit(-1)
         else:
-            rm_cmd = f"rm -rf {dst_dir}"
             _LOG.warning(
-                "The dst_dir=%s already exists, removing it.", dst_dir
+                "The dst_dir=%s already exists, re-creating it.", dst_dir
             )
-            _system(rm_cmd)
+            hio.create_dir(dst_dir, incremental=incremental)
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
