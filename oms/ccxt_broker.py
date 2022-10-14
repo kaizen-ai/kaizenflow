@@ -787,6 +787,29 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
 
 
 def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
+    market_info = load_market_data_info()
+    stage = "preprod"
+    strategy_id = "C1b"
+    broker = SimulatedCcxtBroker(
+        strategy_id,
+        market_data,
+        stage=stage,
+        market_info=market_info,
+    )
+    return broker
+
+
+def get_asset_ids_to_decimals_from_market_info(market_info: Dict, param: str) -> Dict:
+    market_info_keys = list(market_info.keys())
+    _LOG.debug("market_info keys=%s", market_info_keys)
+    asset_ids_to_decimals = {
+        key: market_info[key][param]
+        for key in market_info_keys
+    }
+    return asset_ids_to_decimals
+
+
+def load_market_data_info() -> Dict:
     # Load pre-saved market info generated with
     # `TestSaveMarketInfo`.
     file_path = os.path.join(
@@ -798,14 +821,6 @@ def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     #     {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
     # ...
     market_info = hio.from_json(file_path)
-    # Convert to int, because asset ids are integers.
+    # Convert to int, because asset ids are strings.
     market_info = {int(k): v for k, v in market_info.items()}
-    stage = "preprod"
-    strategy_id = "C1b"
-    broker = SimulatedCcxtBroker(
-        strategy_id,
-        market_data,
-        stage=stage,
-        market_info=market_info,
-    )
-    return broker
+    return market_info
