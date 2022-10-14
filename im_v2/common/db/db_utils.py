@@ -260,7 +260,7 @@ def save_data_to_db(
     if data.empty:
         _LOG.warning("The DataFame is empty, nothing to insert.")
         return
-    data["knowledge_timestamp"] = pd.Timestamp.now(time_zone)
+    data["knowledge_timestamp"] = hdateti.get_current_time(time_zone)
     if data_type == "ohlcv":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":
