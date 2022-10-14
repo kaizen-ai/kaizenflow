@@ -21,6 +21,7 @@ import dev_scripts.lib_tasks_reconcile as dslitare
 import datetime
 import logging
 import os
+import sys
 from typing import Optional
 
 from invoke import task
@@ -75,7 +76,7 @@ def _sanity_check_data(file_path: str) -> None:
 
 
 @task
-def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
+def reconcile_create_dirs(ctx, run_date=None, abort_if_exists=True):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
@@ -95,22 +96,26 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     run_date = _get_run_date(run_date)
     # Create a dir specific of the run date.
     run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
-    hio.create_dir(run_date_dir, incremental=True)
+    hio.create_dir(
+        run_date_dir, incremental=True, abort_if_exists=abort_if_exists
+    )
     # Create dirs for storing prod and simulation results.
     prod_dir = os.path.join(run_date_dir, "prod")
     simulation_dir = os.path.join(run_date_dir, "simulation")
-    hio.create_dir(prod_dir, incremental=True)
-    hio.create_dir(simulation_dir, incremental=True)
+    hio.create_dir(prod_dir, incremental=True, abort_if_exists=abort_if_exists)
+    hio.create_dir(
+        simulation_dir, incremental=True, abort_if_exists=abort_if_exists
+    )
     # Create dir for dumped TCA data.
     tca_dir = os.path.join(run_date_dir, "tca")
-    hio.create_dir(tca_dir, incremental=True)
+    hio.create_dir(tca_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
 
 
 @task
-def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactive=True):  # type: ignore
+def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactive=False):  # type: ignore
     # pylint: disable=line-too-long
     """
     Dump the market data image and save it to a shared folder.
@@ -132,6 +137,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     _ = ctx
     run_date = _get_run_date(run_date)
     market_data_file = "test_data.csv.gz"
+    # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
@@ -188,6 +194,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     # Check that system log dir exists and is not empty.
     hdbg.dassert_dir_exists(os.path.join(target_dir, "dag"))
     hdbg.dassert_dir_exists(os.path.join(target_dir, "process_forecasts"))
+    # TODO(Grisha): @Dan Add asserts on the latest files so we confirm that simulation was completed.
 
 
 @task
@@ -247,13 +254,28 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
 
 
 @task
-def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
+def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
+    # Set results destination dir and clear it if is already filled.
+    dst_dir = "."
+    results_dir = os.path.join(dst_dir, "result_0")
+    if os.path.exists(results_dir):
+        if incremental:
+            _LOG.warning(
+                "Notebook run results are already stored at %s", results_dir
+            )
+            sys.exit(-1)
+        else:
+            rm_cmd = f"rm -rf {results_dir}"
+            _LOG.warning(
+                "The results_dir=%s already exists, removing it.", results_dir
+            )
+            _system(rm_cmd)
     # TODO(Grisha): pass `asset_class` as a param.
     asset_class = "crypto"
     #
@@ -264,7 +286,6 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
-    dst_dir = "."
     # pylint: disable=line-too-long
     cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
     # pylint: enable=line-too-long
@@ -278,7 +299,6 @@ def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
     _system(docker_cmd)
     # Copy the published notebook to the shared folder.
-    results_dir = os.path.join(dst_dir, "result_0")
     hdbg.dassert_dir_exists(results_dir)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hdbg.dassert_dir_exists(target_dir)
@@ -309,7 +329,7 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
+def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ignore
     """
     Retrieve and save the TCA data.
     """
@@ -320,6 +340,15 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     end_timestamp = run_date_str
     start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
     dst_dir = "./tca"
+    if os.path.exists(dst_dir):
+        if incremental:
+            _LOG.warning("TCA data is already stored at %s", dst_dir)
+            sys.exit(-1)
+        else:
+            _LOG.warning(
+                "The dst_dir=%s already exists, re-creating it.", dst_dir
+            )
+    hio.create_dir(dst_dir, incremental=incremental)
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
@@ -353,6 +382,7 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
+    # TODO(Grisha): @Dan Implement approach to abort the invoke on the first error.
     reconcile_create_dirs(ctx, run_date=run_date)
     #
     reconcile_copy_prod_data(ctx, run_date=run_date)
@@ -361,7 +391,7 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     reconcile_run_sim(ctx, run_date=run_date)
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
+    reconcile_dump_tca_data(ctx, run_date=None)
+    #
     reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
-    #
-    reconcile_dump_tca_data(ctx, run_date=None)
