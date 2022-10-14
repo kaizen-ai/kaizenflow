@@ -140,6 +140,7 @@ def apply_cc_limits(
         forecast_df_tmp.append(row_tmp)
     # Combine orders into one dataframe.
     forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
+    forecast_df_tmp.index.name = forecast_df.index.name
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
     forecast_df = forecast_df_tmp
     _LOG.debug(

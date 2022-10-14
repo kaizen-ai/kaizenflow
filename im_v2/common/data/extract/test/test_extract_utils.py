@@ -11,7 +11,7 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
@@ -49,7 +49,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         self.sleep_mock: umock.MagicMock = self.sleep_patch.start()
         # Commonly used extractor mock.
         self.extractor_mock = umock.create_autospec(
-            ivcdexex.CcxtExtractor, instance=True
+            imvcdexex.CcxtExtractor, instance=True
         )
         # Commonly used kwargs across the tests.
         self.kwargs = {
@@ -63,6 +63,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
             "interval_min": 1,
             "start_time": "2022-08-04 21:17:35",
             "stop_time": "2022-08-04 21:20:35",
+            "method": "rest",
         }
         # Predefined side effects for successful run.
         iteration_delay_sec = timedelta(seconds=1)
@@ -244,6 +245,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         Run with wrong `interval_min`.
         """
         additional_kwargs = {"interval_min": 0}
+        self.datetime_mock.now.return_value = datetime(2020, 8, 4, 21, 17, 36)
         with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically(
@@ -360,7 +362,7 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(
+        extractor = imvcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -392,12 +394,10 @@ class TestDownloadRealtimeForOneExchange1(
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call1(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -408,7 +408,6 @@ class TestDownloadRealtimeForOneExchange1(
         Run without saving to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
@@ -421,12 +420,10 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
     @pytest.mark.skip(reason="CMTask2089")
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -437,7 +434,6 @@ class TestDownloadRealtimeForOneExchange1(
         Run and save to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
         mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
@@ -502,19 +498,17 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = ivcdexex.CcxtExtractor(
+        exchange = imvcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,
         mock_get_current_time: umock.MagicMock,
-        mock_get_secret: umock.MagicMock,
         mock_list_and_merge: umock.MagicMock,
     ) -> None:
         """
@@ -524,7 +518,6 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         """
         # Set mock return values.
         mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
-        mock_get_secret.return_value = self.binance_secret
         # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
@@ -779,7 +772,8 @@ class TestVerifySchema(hunitest.TestCase):
 
     def test_non_numerical_column(self) -> None:
         """
-        Test if non numerical column that supposed to be numerical produces an error.
+        Test if non numerical column that supposed to be numerical produces an
+        error.
         """
         # Define test Dataframe data with non-numerical `close` column.
         test_data = {
