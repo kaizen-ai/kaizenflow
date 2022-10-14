@@ -64,12 +64,12 @@ def get_ccxt_ohlcv_futures_create_table_query() -> str:
     return query
 
 
-def get_ccxt_create_bid_ask_table_query() -> str:
+def get_ccxt_create_bid_ask_raw_table_query() -> str:
     """
-    Get SQL query to create CCXT bid/ask futures table.
+    Get SQL query to create CCXT bid/ask raw spot data table.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS ccxt_bid_ask(
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_raw(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             bid_size NUMERIC,
@@ -87,12 +87,12 @@ def get_ccxt_create_bid_ask_table_query() -> str:
     return query
 
 
-def get_ccxt_create_bid_ask_futures_table_query() -> str:
+def get_ccxt_create_bid_ask_futures_raw_table_query() -> str:
     """
-    Get SQL query to create CCXT bid/ask futures table.
+    Get SQL query to create CCXT bid/ask raw futures data table.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures(
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures_raw(
             id SERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             bid_size NUMERIC,
@@ -108,6 +108,54 @@ def get_ccxt_create_bid_ask_futures_table_query() -> str:
             )
             """
     return query
+
+# TODO(Juraj): specify spot in the table name CmTask2804.
+def get_ccxt_create_bid_ask_resampled_1min_table_query() -> str:
+    """
+    Get SQL query to create CCXT bid/ask spot data 
+    resampled to 1 min table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_resampled_1min(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            bid_size NUMERIC,
+            bid_price NUMERIC,
+            ask_size NUMERIC,
+            ask_price NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
+            level INTEGER NOT NULL,
+            end_download_timestamp TIMESTAMP WITH TIME ZONE,
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE,
+            UNIQUE(timestamp, exchange_id, currency_pair, level)
+            )
+            """
+    return query
+
+
+def get_ccxt_create_bid_ask_futures_resampled_1min_table_query() -> str:
+    """
+    Get SQL query to create CCXT bid/ask futures resampled to 1 min table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures_resampled_1min(
+            id SERIAL PRIMARY KEY,
+            timestamp BIGINT NOT NULL,
+            bid_size NUMERIC,
+            bid_price NUMERIC,
+            ask_size NUMERIC,
+            ask_price NUMERIC,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchange_id VARCHAR(255) NOT NULL,
+            level INTEGER NOT NULL,
+            end_download_timestamp TIMESTAMP WITH TIME ZONE,
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE,
+            UNIQUE(timestamp, exchange_id, currency_pair, level)
+            )
+            """
+    return query
+
 
 
 def get_exchange_name_create_table_query() -> str:
