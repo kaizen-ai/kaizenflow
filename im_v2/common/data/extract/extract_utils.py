@@ -42,13 +42,10 @@ WEBSOCKET_CONFIG = {
     "ohlcv": {
         # Buffer size is 0 for OHLCV because we want to insert after round of receival
         #  from websockets.
-        "max_buffer_size": 0, 
-        "sleep_between_iter_in_ms": 60000
-        },
-    "bid_ask": {
-        "max_buffer_size": 500, 
-        "sleep_between_iter_in_ms": 200
-        },
+        "max_buffer_size": 0,
+        "sleep_between_iter_in_ms": 60000,
+    },
+    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter_in_ms": 200},
 }
 
 
@@ -279,41 +276,13 @@ def download_realtime_for_one_exchange(
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = exchange_id
-        # Get timestamp of insertion in UTC.
-        data["knowledge_timestamp"] = hdateti.get_current_time("UTC")
-        # Remove duplicated entries.
-        # TODO(Juraj): Update duplicates removal (CMTask2782).
-        if data_type == "ohlcv":
-            data = remove_duplicates(
-                db_connection,
-                data,
-                db_table,
-                start_timestamp_as_unix,
-                end_timestamp_as_unix,
-                exchange_id,
-                currency_pair,
-            )
-            # Insert data into the DB.
-            hsql.execute_insert_query(
-                connection=db_connection,
-                obj=data,
-                table_name=db_table,
-            )
-        elif data_type == "bid_ask":
-            # Skip insertion of duplicate rows represented by
-            # this subset of columns.
-            unique_columns = [
-                "timestamp",
-                "exchange_id",
-                "currency_pair",
-                "level",
-            ]
-            hsql.execute_insert_on_conflict_do_nothing_query(
-                connection=db_connection,
-                obj=data,
-                table_name=db_table,
-                unique_columns=unique_columns,
-            )
+        # Add exchange specific filter.
+        if exchange_id == "binance":
+            data = imvcdttrut.remove_unfinished_ohlcv_bars(data)
+        # Save data to the database.
+        imvcddbut.save_data_to_db(
+            data, data_type, db_connection, db_table, start_timestamp.tz
+        )
         # Save data to S3 bucket.
         if args["s3_path"]:
             # Connect to S3 filesystem.
@@ -443,7 +412,8 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             pd.Timestamp.now(tz) - iter_start_time
         ).total_seconds() * 1000
         actual_sleep_time = max(
-            0, WEBSOCKET_CONFIG[data_type]["sleep_between_iter_in_ms"] - iter_length
+            0,
+            WEBSOCKET_CONFIG[data_type]["sleep_between_iter_in_ms"] - iter_length,
         )
         _LOG.info(
             "Iteration took %i ms, waiting between iterations for %i ms",
@@ -725,43 +695,6 @@ def download_historical_data(
             )
         else:
             hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
-
-
-def remove_duplicates(
-    db_connection: hsql.DbConnection,
-    data: pd.DataFrame,
-    db_table: str,
-    start_timestamp_as_unix: int,
-    end_timestamp_as_unix: int,
-    exchange_id: str,
-    currency_pair: str,
-) -> pd.DataFrame:
-    """
-    Remove duplicated entities from realtime data.
-
-    :param db_connection: connection to the database
-    :param data: Dataframe to remove duplicates from
-    :param db_table: the name of the DB, e.g. `ccxt_ohlcv`
-    :param start_timestamp_as_unix: start timestamp as int
-    :param end_timestamp_as_unix: end timestamp as int
-    :param exchange_id: exchange ID, e.g. `binance`
-    :param currency_pair: e.g. `ADA_USDT`
-    :return: Dataframe with duplicates removed
-    """
-    # Get duplicated rows from the DB.
-    dup_query = f"SELECT * FROM {db_table} WHERE timestamp \
-                BETWEEN {start_timestamp_as_unix} \
-                AND {end_timestamp_as_unix} \
-                AND exchange_id='{exchange_id}' \
-                AND currency_pair='{currency_pair}'"
-    existing_data = hsql.execute_query_to_df(db_connection, dup_query)
-    # Remove data that has been already been downloaded.
-    data = data.loc[~data.timestamp.isin(existing_data.timestamp)]
-    # Remove final unfinished tick.
-    #  E.g. at 19:02:11 the candle will have a smaller volume than at 19:02:59.
-    if (end_timestamp_as_unix - data.timestamp.max()) < 60000:
-        data = data.loc[data.timestamp != data.timestamp.max()]
-    return data
 
 
 def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
