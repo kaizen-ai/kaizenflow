@@ -76,7 +76,7 @@ def _sanity_check_data(file_path: str) -> None:
 
 
 @task
-def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
+def reconcile_create_dirs(ctx, run_date=None, incremental=True):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
@@ -96,15 +96,17 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     run_date = _get_run_date(run_date)
     # Create a dir specific of the run date.
     run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
-    hio.create_dir(run_date_dir, incremental=True)
+    if incremental and os.path.exists(run_date_dir):
+        _LOG.warning("Skipping generating %s", run_date_dir)
+    hio.create_dir(run_date_dir, incremental=incremental)
     # Create dirs for storing prod and simulation results.
     prod_dir = os.path.join(run_date_dir, "prod")
     simulation_dir = os.path.join(run_date_dir, "simulation")
-    hio.create_dir(prod_dir, incremental=True)
-    hio.create_dir(simulation_dir, incremental=True)
+    hio.create_dir(prod_dir, incremental=incremental)
+    hio.create_dir(simulation_dir, incremental=incremental)
     # Create dir for dumped TCA data.
     tca_dir = os.path.join(run_date_dir, "tca")
-    hio.create_dir(tca_dir, incremental=True)
+    hio.create_dir(tca_dir, incremental=incremental)
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
@@ -325,7 +327,7 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
+def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ignore
     """
     Retrieve and save the TCA data.
     """
@@ -336,6 +338,16 @@ def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
     end_timestamp = run_date_str
     start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
     dst_dir = "./tca"
+    if os.path.exists(dst_dir):
+        if incremental:
+            _LOG.warning("TCA data is already stored at %s", dst_dir)
+            sys.exit(-1)
+        else:
+            rm_cmd = f"rm -rf {dst_dir}"
+            _LOG.warning(
+                "The dst_dir=%s already exists, removing it.", dst_dir
+            )
+            _system(rm_cmd)
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
@@ -379,6 +391,7 @@ def reconcile_run_all(ctx, run_date=None, abort_on_first_error=True):  # type: i
         reconcile_run_notebook,
         reconcile_ls,
     )
+    # TODO(Grisha): @Dan Fix approach to abort the invoke on the first error.
     for invoke_target in invokes_list:
         rc = invoke_target(ctx, run_date=run_date)
         if rc != 0:
