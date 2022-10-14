@@ -288,7 +288,8 @@ def _get_Cx_dag_prod_instance1(
     dag = dag_builder.get_dag(dag_config)
     system = dtfsys.apply_dag_property(dag, system)
     #
-    system = dtfsys.apply_DagRunner_config_for_crypto(system)
+    is_prod = True
+    system = dtfsys.apply_DagRunner_config_for_crypto(system, is_prod)
     # Build Portfolio.
     trading_period_str = dag_builder.get_trading_period(dag_config)
     # TODO(gp): Add a param to get_trading_period to return the int.
