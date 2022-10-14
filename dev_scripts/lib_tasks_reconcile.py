@@ -9,7 +9,7 @@
 # 4) Dump market data for simulation
 # 5) Run simulation
 # 6) Copy simulation data to a shared folder
-# 7) Dump TCA data (not implemented yet)
+# 7) Dump TCA data
 # 8) Run the reconciliation notebook and publish it
 
 """
@@ -86,8 +86,9 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
             prod_reconciliation/
                 {run_date}/
                     prod/
-                    ...
+                    tca/
                     simulation/
+                    ...
     ```
     """
     _ = ctx
@@ -100,6 +101,9 @@ def reconcile_create_dirs(ctx, run_date=None):  # type: ignore
     simulation_dir = os.path.join(run_date_dir, "simulation")
     hio.create_dir(prod_dir, incremental=True)
     hio.create_dir(simulation_dir, incremental=True)
+    # Create dir for dumped TCA data.
+    tca_dir = os.path.join(run_date_dir, "tca")
+    hio.create_dir(tca_dir, incremental=True)
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
@@ -131,13 +135,12 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
+        # TODO(Grisha): @Dan Copy logs to the shared folder.
         # pylint: disable=line-too-long
-        test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_save_data"
+        opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         # pylint: enable=line-too-long
-        opts = "-s --dbg"
-        docker_cmd = (
-            f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
-        )
+        script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+        docker_cmd = f"{script_name} {opts}"
         cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
@@ -175,11 +178,11 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
         _LOG.warning("The target_dir=%s already exists, removing it.", target_dir)
         _system(rm_cmd)
     # Run simulation.
-    opts = "-s --dbg --update_outcomes"
     # pylint: disable=line-too-long
-    test_name = "dataflow_orange/system/C1/test/test_C1b_prod_system.py::Test_C1b_Time_ForecastSystem_with_DataFramePortfolio_ProdReconciliation::test_run_simulation"
+    opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     # pylint: enable=line-too-long
-    docker_cmd = f"AM_RECONCILE_SIM_DATE={run_date} pytest_log {test_name} {opts}"
+    script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+    docker_cmd = f"{script_name} {opts}"
     cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
     _system(cmd)
     # Check that system log dir exists and is not empty.
@@ -203,7 +206,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
     _system(docker_cmd)
     # Copy simulation run logs to the shared folder.
-    pytest_log_file_path = "tmp.pytest_script.txt"
+    pytest_log_file_path = "reconcile_run_sim_log.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
     docker_cmd = f"cp -v {pytest_log_file_path} {target_dir}"
     _system(docker_cmd)
@@ -223,7 +226,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     # Copy prod run results to the target dir.
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # Prod system is run via AirFlow and the results are tagged with the previous day.
-    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime('%Y-%m-%d')
+    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     shared_dir = f"/data/shared/ecs/{stage}"
     cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
@@ -242,8 +245,9 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     cmd = f"chmod -R -w {target_dir}"
     _system(cmd)
 
+
 @task
-def reconcile_run_notebook(ctx, run_date=None):
+def reconcile_run_notebook(ctx, run_date=None):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
@@ -261,7 +265,9 @@ def reconcile_run_notebook(ctx, run_date=None):
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
     dst_dir = "."
+    # pylint: disable=line-too-long
     cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
+    # pylint: enable=line-too-long
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
@@ -303,6 +309,46 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 
 
 @task
+def reconcile_dump_tca_data(ctx, run_date=None):  # type: ignore
+    """
+    Retrieve and save the TCA data.
+    """
+    _ = ctx
+    run_date_str = _get_run_date(run_date)
+    run_date = datetime.datetime.strptime(run_date_str, "%Y%m%d")
+    # TODO(Grisha): add as params to the interface.
+    end_timestamp = run_date_str
+    start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
+    dst_dir = "./tca"
+    exchange_id = "binance"
+    contract_type = "futures"
+    stage = "preprod"
+    account_type = "trading"
+    secrets_id = "3"
+    universe = "v7.1"
+    # pylint: disable=line-too-long
+    opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
+    log_file = os.path.join(dst_dir, "log.txt")
+    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
+    # pylint: enable=line-too-long
+    # Save the command as a script.
+    file_name = "tmp.dump_tca_data.sh"
+    hio.to_file(file_name, cmd_run_txt)
+    # Run the script inside docker.
+    docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
+    _system(docker_cmd)
+    # Copy dumped data to a shared folder.
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str)
+    hdbg.dassert_dir_exists(target_dir)
+    _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
+    docker_cmd = f"cp -vr {dst_dir} {target_dir}"
+    _system(docker_cmd)
+    # Prevent overwriting.
+    f"chmod -R -w {target_dir}"
+    _system(docker_cmd)
+
+
+@task
 def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
@@ -315,7 +361,7 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     reconcile_run_sim(ctx, run_date=run_date)
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
-    # TODO(gp): Download for the day before.
-    # reconcile_dump_tca_data(ctx, run_date=None)
     reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
+    #
+    reconcile_dump_tca_data(ctx, run_date=None)
