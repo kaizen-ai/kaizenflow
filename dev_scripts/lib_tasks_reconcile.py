@@ -348,7 +348,7 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
             _LOG.warning(
                 "The dst_dir=%s already exists, re-creating it.", dst_dir
             )
-            hio.create_dir(dst_dir, incremental=incremental)
+    hio.create_dir(dst_dir, incremental=incremental)
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
