@@ -95,6 +95,24 @@ def reindex_on_custom_columns(
     return data_reindex
 
 
+def remove_unfinished_ohlcv_bars(data: pd.DataFrame) -> pd.DataFrame:
+    """
+    Remove unfinished OHLCV bars, i.e. bars for which it holds that
+    end_download_timestamp - timestamp < 60s.
+    
+    Some exchanges, e.g. binance, label a candle representing 
+    1/1/2022 10:59 - 1/1/2022 11:00 with timestamp 1/1/2022 10:59
+    If the bar has been downloaded less than a minute after the
+    candle start. the candle will contain unfinished data.
+    
+    :param data: DataFrame to filter unfinished bars from
+    :return DataFrame with unfinished bars removed
+    """
+    hdbg.dassert_is_subset(["timestamp", "end_download_timestamp"], list(data.columns))
+    time_diff = pd.to_datetime(data["end_download_timestamp"]).map(hdateti.convert_timestamp_to_unix_epoch) - data["timestamp"]
+    data = data.loc[time_diff >= 60000]
+    return data
+
 # #############################################################################
 # Transform utils for raw websocket data
 # #############################################################################
