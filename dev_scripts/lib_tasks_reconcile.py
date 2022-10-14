@@ -97,7 +97,8 @@ def reconcile_create_dirs(ctx, run_date=None, incremental=True):  # type: ignore
     # Create a dir specific of the run date.
     run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     if incremental and os.path.exists(run_date_dir):
-        _LOG.warning("Skipping generating %s", run_date_dir)
+        _LOG.warning("The run_date_dir=%s already exists.", run_date_dir)
+        sys.exit(-1)
     hio.create_dir(run_date_dir, incremental=incremental)
     # Create dirs for storing prod and simulation results.
     prod_dir = os.path.join(run_date_dir, "prod")
