@@ -1,6 +1,6 @@
 import os
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import im.eoddata.metadata.load as load
 import im.eoddata.metadata.types as imeometyp
 

@@ -1,3 +1,0 @@
-call('git pull --autostash')
-call('git checkout -b test')
-call('git push --set-upstream origin test')

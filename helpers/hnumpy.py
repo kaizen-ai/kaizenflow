@@ -1,14 +1,13 @@
 """
 Import as:
 
-import helpers.hnumpy as hhnumpy
+import helpers.hnumpy as hnumpy
 """
 
 import contextlib
 from typing import Iterator
 
 import numpy as np
-
 
 # From https://stackoverflow.com/questions/49555991
 @contextlib.contextmanager

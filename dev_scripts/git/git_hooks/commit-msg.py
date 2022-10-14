@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import dev_scripts.git.git_hooks.commit-msg as dsgghoco
+"""
+
 import re
 import sys
 

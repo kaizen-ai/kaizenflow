@@ -1,4 +1,19 @@
 # Keep this in sync with `dev_scripts/client_setup/requirements.txt`.
 invoke
+awscli >= 1.19  # For aws CLI.
+docker-compose >= 1.29.0
+flaky
+invoke >= 1.5.0
+poetry
+pytest >= "6.0.0"
+pytest-cov
+pytest-instafail
+pytest-xdist
 python-dateutil
+s3fs  # For tools like `publish_notebook.py`.
 tqdm
+# TODO(gp): It would be better to avoid depending on these packages.
+#  See if we can remove this dependency.
+numpy
+pandas
+matplotlib

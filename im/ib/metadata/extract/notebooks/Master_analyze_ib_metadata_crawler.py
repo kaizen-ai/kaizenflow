@@ -18,9 +18,9 @@ import os
 
 import pandas as pd
 
-import core.pandas_helpers as cpanh
-import helpers.dbg as hdbg
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
+import helpers.hs3 as hs3
 
 # %%
 # !ls ..
@@ -35,13 +35,15 @@ if False:
     hdbg.dassert(len(files), 1)
     file_name = files[0]
 
-S3_BUCKET = hs3.get_bucket()
+AM_AWS_PROFILE = "am"
+S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
 file_name = (
     f"s3://{S3_BUCKET}/data/ib/metadata/symbols-2021-04-01-143112738505.csv"
 )
 s3fs = hs3.get_s3fs("am")
 print("file_name=%s" % file_name)
-symbols = cpanh.read_csv(file_name, s3fs=s3fs, sep="\t")
+stream, kwargs = hs3.get_local_or_s3_stream(file_name, s3fs=s3fs)
+symbols = hpandas.read_csv_to_df(stream, sep="\t", **kwargs)
 
 print(len(symbols))
 

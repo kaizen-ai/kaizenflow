@@ -1,1 +1,0 @@
-call('git fetch origin master:master')

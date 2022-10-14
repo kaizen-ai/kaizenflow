@@ -17,10 +17,10 @@ from typing import List
 import bs4
 import requests
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.s3 as hs3
-import helpers.system_interaction as hsysinte
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 import im.kibot.base.command as imkibacom
 import im.kibot.data.extract.download as imkdaexdo
 import im.kibot.metadata.config as imkimecon
@@ -104,7 +104,7 @@ class DownloadTickerListsCommand(imkibacom.KibotCommand):
 
             # TODO(amr): create hs3.copy() helper.
             cmd = "aws s3 cp %s %s" % (file_path, aws_path)
-            hsysinte.system(cmd)
+            hsystem.system(cmd)
             _LOG.info("Uploaded file to s3: %s", aws_path)
 
         return 0

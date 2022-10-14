@@ -13,7 +13,7 @@ import logging
 import os
 from typing import List
 
-import helpers.io_ as hio
+import helpers.hio as hio
 import im.eoddata.metadata.types as imeometyp
 
 _LOG = logging.getLogger(__name__)

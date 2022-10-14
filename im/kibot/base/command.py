@@ -11,9 +11,9 @@ import sys
 
 import requests
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 import im.kibot.metadata.config as imkimecon
 
 
@@ -41,14 +41,14 @@ class KibotCommand:
         self._file_path = inspect.getfile(self.__class__)
         self._setup_parser()
 
-    def run(self) -> None:
-        sys.exit(self._main())
-
     @staticmethod
     def customize_parser(parser: argparse.ArgumentParser) -> None:
         """
         Allow child classes to customize the parser further.
         """
+
+    def run(self) -> None:
+        sys.exit(self._main())
 
     def customize_run(self) -> int:  # pylint: disable=no-self-use
         """

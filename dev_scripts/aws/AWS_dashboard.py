@@ -5,8 +5,8 @@
 #     text_representation:
 #       extension: .py
 #       format_name: percent
-#       format_version: '1.2'
-#       jupytext_version: 1.2.4
+#       format_version: '1.3'
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python [conda env:develop] *
 #     language: python
@@ -21,23 +21,23 @@ import logging
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.printing as print_
-import helpers.system_interaction as si
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hsystem as hsystem
 
 # %%
-print_.config_notebook()
+hprint.config_notebook()
 
 # TODO(gp): Changing level during the notebook execution doesn't work. Fix it.
-# dbg.init_logger(verbosity=logging.DEBUG)
-dbg.init_logger(verbosity=logging.INFO)
+# hdbg.init_logger(verbosity=logging.DEBUG)
+hdbg.init_logger(verbosity=logging.INFO)
 
 # %% [markdown]
 # ## Describe-instances
 
 # %%
 cmd = "aws ec2 describe-instances"
-_, txt = si.system_to_string(cmd)
+_, txt = hsystem.system_to_string(cmd)
 
 # %%
 data = json.loads(txt)

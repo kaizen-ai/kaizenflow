@@ -5,7 +5,7 @@
 
 set -ex
 
-FILE_NAME="devops/docker_build/install_python_packages.sh"
+FILE_NAME="optimizer/devops/docker_build/install_python_packages.sh"
 echo "#############################################################################"
 echo "##> $FILE_NAME"
 echo "#############################################################################"
@@ -53,6 +53,9 @@ else
 
         pip3 install wheel
 
+        # TODO(Grisha): CmTask #1584: Cannot build `opt` Docker image.
+        poetry run pip install -U setuptools
+
         poetry install
 
         # Export deps from poetry and install with pip.
@@ -67,9 +70,6 @@ else
     # TODO(gp): Enable this.
     #poetry cache clear --all -q pypi
 fi;
-
-# Install cvxpy directly (see Amp Issue #1836).
-pip install cvxpy
 
 # Some tools refer to `python` and `pip`.
 # TODO(gp): Move to install_packages.sh

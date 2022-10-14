@@ -12,9 +12,9 @@ import argparse
 import logging
 import os
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import helpers.sql as hsql
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsql as hsql
 
 _LOG = logging.getLogger(__name__)
 
@@ -33,8 +33,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     conn = hsql.get_connection(
-        dbname=os.environ["POSTGRES_DB"],
         host=os.environ["POSTGRES_HOST"],
+        dbname=os.environ["POSTGRES_DB"],
         port=int(os.environ["POSTGRES_PORT"]),
         user=os.environ["POSTGRES_USER"],
         password=os.environ["POSTGRES_PASSWORD"],

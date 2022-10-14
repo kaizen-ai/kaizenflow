@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import im.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
 
 

@@ -1,11 +1,14 @@
 """
 Import as:
 
-import helpers.htqdm as hhtqdm
+import helpers.htqdm as htqdm
 """
 import io
 import logging
 from typing import Any, Optional
+
+# Avoid dependency from other `helpers` modules, such as `helpers.hjoblib`, to
+# prevent import cycles.
 
 
 # From https://github.com/tqdm/tqdm/issues/313

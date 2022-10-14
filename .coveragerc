@@ -1,0 +1,13 @@
+# Configure the coverage tool.
+
+[run]
+omit =
+    # Exclude tests.
+    */test/*
+    # Exclude notebooks.
+    */notebooks/*
+    # Exclude certain Python files.
+    */__init__.py
+    */repo_config.py
+    */setup.py
+    */tasks.py

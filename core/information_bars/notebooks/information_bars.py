@@ -30,7 +30,7 @@ import scipy.stats as stats
 import seaborn as sns
 import statsmodels.api as sm
 
-import core.information_bars.bars as cib
+import core.information_bars.bars as cinbabar
 
 # TODO(vr): Use below when Tick data will be in PQ on S3
 # import im.kibot.data.load as vkdl
@@ -95,7 +95,7 @@ df.set_index("date_time", inplace=True)
 # ## Tick Bars
 
 # %% pycharm={"name": "#%%\n"}
-tick_df = cib.get_tick_bars(source_df, threshold=TICK_M)
+tick_df = cinbabar.get_tick_bars(source_df, threshold=TICK_M)
 tick_df.set_index("date_time", inplace=True)
 n_ticks = tick_df.shape[0]
 volume_ratio = (tick_df.cum_buy_volume.sum() / n_ticks).round()
@@ -109,7 +109,7 @@ tick_df
 # ## Volume Bars
 
 # %% pycharm={"name": "#%%\n"}
-v_bar_df = cib.get_volume_bars(source_df, threshold=VOLUME_M)
+v_bar_df = cinbabar.get_volume_bars(source_df, threshold=VOLUME_M)
 v_bar_df.set_index("date_time", inplace=True)
 v_bar_df
 
@@ -117,7 +117,7 @@ v_bar_df
 # ## Dollar Bars
 
 # %% pycharm={"name": "#%%\n"}
-dv_bar_df = cib.get_dollar_bars(source_df, threshold=DOLLAR_VOLUME_M)
+dv_bar_df = cinbabar.get_dollar_bars(source_df, threshold=DOLLAR_VOLUME_M)
 dv_bar_df.set_index("date_time", inplace=True)
 dv_bar_df
 

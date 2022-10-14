@@ -7,6 +7,9 @@
 PWD=$(pwd)
 AMP=$PWD
 
+# Give permissions to read / write to user and group.
+umask 002
+
 # #############################################################################
 # Virtual env
 # #############################################################################
@@ -18,7 +21,7 @@ if [[ ! -d $VENV_DIR ]]; then
     # The venv in the container is in a different spot. Check that.
     VENV_DIR="/venv/amp.client_venv"
     if [[ ! -d $VENV_DIR ]]; then
-        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'"
+        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'. Create it with client_setup/build.sh"
         return -1
     fi;
 fi;
@@ -56,6 +59,7 @@ export PATH=$AMP/dev_scripts/testing:$PATH
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
 # Print.
+echo "PATH="
 echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################
@@ -68,54 +72,14 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 # Remove duplicates.
 export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
-# Print.
+# Print on different lines.
+echo "PYTHONPATH="
 echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################
 # Configure environment
 # #############################################################################
 
-echo "# Configure env"
-echo "which gh="$(which gh)
-
-# Select which profile to use by default.
-export AM_AWS_PROFILE="am"
-
-# These variables are propagated to Docker.
-export AM_ECR_BASE_PATH="665840871993.dkr.ecr.us-east-1.amazonaws.com"
-export AM_S3_BUCKET="alphamatic-data"
-
-# Print the AM env vars.
-printenv | egrep "AM_|AWS_" | sort
-
-# `invoke` doesn't seem to allow to have a single configuration file and
-# doesn't allow to specify it through an env var, so we create an alias.
-# From https://github.com/pyinvoke/invoke/issues/543
-# This doesn't work:
-# > export INVOKE_RUNTIME_CONFIG=$(pwd)/invoke.yaml
-#
-# These don't work:
-# > export INVOKE_TASKS_AUTO_DASH_NAMES=0
-# > export INVOKE_RUN_ECHO=1
-#
-# This works:
-# > export INVOKE_DEBUG=1
-#
-# This doesn't work:
-# > INVOKE_OPTS="--config $(pwd)/invoke.yaml"
-# > alias invoke="invoke $INVOKE_OPTS"
-alias i="invoke"
-alias it="invoke traceback"
-alias itpb="pbpaste | traceback_to_cfile.py -i - -o cfile"
-alias ih="invoke --help"
-alias il="invoke --list"
-
-# Print the aliases.
-alias
-
-if [[ $(whoami) == "saggese" && $(git remote -v) =~ "cmamp.git" ]]; then
-    export GIT_SSH_COMMAND="ssh -i ~/.ssh/cryptomatic/id_rsa.cryptomtc.github"
-    echo "GIT_SSH_COMMAND=$GIT_SSH_COMMAND"
-fi;
+source $AMP/dev_scripts/setenv_amp.configure_env.sh
 
 echo "==> SUCCESS <=="

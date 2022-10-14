@@ -1,0 +1,57 @@
+# cmamp-1.2.0
+- 2022-10-04
+- Update `ccxt`
+
+# cmamp-1.1.1
+- 2022-09-02
+- Updates to production DAGs (All DAGs now use /amp as submodule)
+- Add daily data reconciliation DAG
+
+# cmamp-1.1.0
+- 2022-04-18
+- Generate `docker-compose` programmatically instead of composing different files
+
+# cmamp-1.0.9
+- 2022-03-15
+- Update `docker-compose` version
+
+# cmamp-1.0.8
+- 2022-03-09
+- Add more docker users
+
+# cmamp-1.0.7
+- 2022-02-16
+- Remove useless Python packages
+- Update `pandas`
+- See CMTask #1028 for details
+
+# cmamp-1.0.6
+- 2022-01-13
+- Add more docker users
+
+# cmamp-1.0.5
+- 2022-01-05
+- Add `importlib-resources` Python package
+- Unfreeze the `jsonschema` version
+
+# cmamp-1.0.4
+- 2021-12-30
+- Add `moto` Python package
+
+# cmamp-1.0.3
+- 2021-12-11
+- Add `python-dotenv` Python package
+
+# cmamp-1.0.2
+- 2021-12-07
+- Add `pytest-rerunfailures` Python package
+
+# cmamp-1.0.1
+- 2021-12-01
+- Add `pytest-timeout` Python package
+- Freeze the `awscli` version = `1.22.17`, see #339
+- Freeze the `jsonschema` version = `3.2.0`, see #650
+
+# cmamp-1.0.0
+- 2021-10-26
+- Initial version

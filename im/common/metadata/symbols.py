@@ -8,8 +8,8 @@ import dataclasses
 import logging
 from typing import List, Optional, Tuple
 
-import helpers.dbg as hdbg
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hs3 as hs3
 import im.common.data.load.file_path_generator as imcdlfpage
 import im.common.data.types as imcodatyp
 

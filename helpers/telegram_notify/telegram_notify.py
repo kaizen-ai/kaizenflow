@@ -1,7 +1,7 @@
 """
 Import as:
 
-import helpers.telegram_notify.telegram_notify as htenotenot
+import helpers.telegram_notify.telegram_notify as htnoteno
 """
 
 import json
@@ -35,12 +35,6 @@ class TelegramNotebookNotify:
         self.launcher_name = _get_launcher_name()
         self.token, self.chat_id = htenocon.get_info()
 
-    def notify(self, message: str) -> None:
-        msg = "<pre>{notebook_name}</pre>: {message}".format(
-            notebook_name=self.launcher_name, message=message
-        )
-        self.send(msg, self.token, self.chat_id)
-
     @staticmethod
     def send(
         text: str, token: Optional[str], chat_id: Optional[str]
@@ -54,9 +48,13 @@ class TelegramNotebookNotify:
             return None
         payload = {"chat_id": chat_id, "text": text, "parse_mode": "HTML"}
         return requests.post(
-            "https://api.telegram.org/bot{token}/sendMessage".format(token=token),
+            f"https://api.telegram.org/bot{token}/sendMessage",
             data=payload,
         ).content
+
+    def notify(self, message: str) -> None:
+        msg = f"<pre>{self.launcher_name}</pre>: {message}"
+        self.send(msg, self.token, self.chat_id)
 
 
 def _get_launcher_name() -> str:
@@ -102,7 +100,7 @@ class _RequestsHandler(logging.Handler):
         log_entry = self.format(record)
         payload = {"chat_id": chat_id, "text": log_entry, "parse_mode": "HTML"}
         return requests.post(
-            "https://api.telegram.org/bot{token}/sendMessage".format(token=token),
+            f"https://api.telegram.org/bot{token}/sendMessage",
             data=payload,
         ).content
 
@@ -110,9 +108,7 @@ class _RequestsHandler(logging.Handler):
 class _LogFormatter(logging.Formatter):
     def format(self, record: logging.LogRecord) -> str:
         launcher_name = _get_launcher_name()
-        return "<pre>{notebook_name}</pre>: {message}".format(
-            message=record.msg, notebook_name=launcher_name
-        )
+        return f"<pre>{launcher_name}</pre>: {record.msg}"
 
 
 def init_tglogger(log_level: int = logging.DEBUG) -> None:
@@ -143,8 +139,6 @@ class TelegramNotify:
     def send(self, text: str) -> Optional[bytes]:
         payload = {"chat_id": self.chat_id, "text": text, "parse_mode": "HTML"}
         return requests.post(
-            "https://api.telegram.org/bot{token}/sendMessage".format(
-                token=self.token
-            ),
+            f"https://api.telegram.org/bot{self.token}/sendMessage",
             data=payload,
         ).content

@@ -21,9 +21,9 @@ import joblib
 import requests
 import tqdm
 
-import helpers.io_ as hio
-import helpers.s3 as hs3
-import helpers.system_interaction as hsysinte
+import helpers.hio as hio
+import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 import im.kibot.base.command as imkibacom
 import im.kibot.metadata.config as imkimecon
 
@@ -97,7 +97,7 @@ def _download_adjustments_data_for_symbol(symbol: str, tmp_dir: str) -> None:
 
     # TODO(amr): create hs3.copy() helper.
     cmd = "aws s3 cp %s %s" % (file_path, aws_path)
-    hsysinte.system(cmd)
+    hsystem.system(cmd)
 
 
 # #############################################################################

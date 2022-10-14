@@ -20,8 +20,8 @@ import time
 
 import ib_insync
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 
 _LOG = logging.getLogger(__name__)
 

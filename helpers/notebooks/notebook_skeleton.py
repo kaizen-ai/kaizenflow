@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.12.0
+#       jupytext_version: 1.13.8
 #   kernelspec:
-#     display_name: Python [conda env:venv] *
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-env-venv-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -24,14 +24,14 @@
 
 import logging
 
-import helpers.dbg as hdbg
-import helpers.env as henv
-import helpers.printing as hprintin
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 
 # %%
 print(henv.get_system_signature()[0])
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # %%
 # hdbg.init_logger(verbosity=logging.DEBUG)

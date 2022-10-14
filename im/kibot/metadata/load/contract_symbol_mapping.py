@@ -7,7 +7,7 @@ import im.kibot.metadata.load.contract_symbol_mapping as imkmlcsyma
 import logging
 from typing import List, Optional, Union
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 
 from .kibot_metadata import KibotMetadata
 

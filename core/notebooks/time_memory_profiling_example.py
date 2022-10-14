@@ -6,11 +6,11 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.4.2
+#       jupytext_version: 1.13.8
 #   kernelspec:
-#     display_name: Python [conda env:.conda-develop] *
+#     display_name: Python 3 (ipykernel)
 #     language: python
-#     name: conda-env-.conda-develop-py
+#     name: python3
 # ---
 
 # %% [markdown]
@@ -33,18 +33,18 @@ import time
 import IPython.display as dspl
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.printing as prnt
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 
 # %%
-dbg.init_logger(verbosity=logging.INFO)
+hdbg.init_logger(verbosity=logging.INFO)
 
 _LOG = logging.getLogger(__name__)
 
-_LOG.info("%s", env.get_system_signature()[0])
+_LOG.info("%s", henv.get_system_signature()[0])
 
-prnt.config_notebook()
+hprint.config_notebook()
 
 
 # %% [markdown]

@@ -3,7 +3,7 @@ Import as:
 
 import im.ib.data.load.ib_sql_data_loader as iidlisdlo
 """
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.types as imcodatyp
 

@@ -8,8 +8,8 @@ except ModuleNotFoundError:
     print("Can't find ib_insync")
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.unit_test as hunitest
+import helpers.hdbg as hdbg
+import helpers.hunit_test as hunitest
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
 import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
@@ -19,20 +19,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class IbExtractionTest(hunitest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        hdbg.shutup_chatty_modules()
-
-    def setUp(self):
-        super().setUp()
-        self.ib = imidegaut.ib_connect(
-            sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
-        )
-
-    def tearDown(self):
-        self.ib.disconnect()
-        super().tearDown()
-
     @staticmethod
     def get_df_signatures(df: pd.DataFrame) -> Tuple[str, str]:
         """
@@ -63,6 +49,20 @@ class IbExtractionTest(hunitest.TestCase):
         txt.append("df=\n%s" % df.to_csv())
         long_signature = "\n".join(txt)
         return short_signature, long_signature
+
+    @classmethod
+    def setUpClass(cls):
+        hdbg.shutup_chatty_modules()
+
+    def setUp(self):
+        super().setUp()
+        self.ib = imidegaut.ib_connect(
+            sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
+        )
+
+    def tearDown(self):
+        self.ib.disconnect()
+        super().tearDown()
 
     def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
         """

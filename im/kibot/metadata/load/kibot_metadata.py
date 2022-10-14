@@ -15,13 +15,12 @@ import pandas as pd
 import pandas.tseries.offsets as ptoffs
 from tqdm.autonotebook import tqdm
 
-import core.pandas_helpers as cpanh
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
+import helpers.hio as hio
 import helpers.hpandas as hpandas
-import helpers.io_ as hio
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 import im.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.metadata.types as imkimetyp
@@ -94,7 +93,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             metadata = self.tickbidask_metadata.copy()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         return metadata
 
     def get_futures(self, contract_type: str = "1min") -> List[str]:
@@ -171,7 +170,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             one_min_contract_metadata = cls.read_tickbidask_contract_metadata()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         continuous_contract_metadata = cls.read_continuous_contract_metadata()
         # Extract month, year, expiries and SymbolBase from the Symbol col.
         (
@@ -411,7 +410,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         self.end_timedelta_days = end_timedelta_days
 
     def compute_lifetime(self, contract_name: str) -> imkimetyp.ContractLifetime:
-        df = imkdlksdlo.KibotS3DataLoader().read_data(
+        df = ikdlksdlo.KibotS3DataLoader().read_data(
             "Kibot",
             contract_name,
             imcodatyp.AssetClass.Futures,
@@ -549,13 +548,14 @@ class FuturesContractLifetimes:
         symbol_to_contracts: _SymbolToContracts = {}
         for symbol in symbols:
             file_name = os.path.join(self._get_dir_name(), symbol + ".csv")
-            hdbg.dassert_exists(file_name)
+            hdbg.dassert_path_exists(file_name)
             if hs3.is_s3_path(file_name):
                 s3fs = hs3.get_s3fs("am")
                 kwargs = {"s3fs": s3fs}
             else:
                 kwargs = {}
-            df = cpanh.read_csv(file_name, index_col=0, **kwargs)
+            stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
+            df = hpandas.read_csv_to_df(stream, index_col=0, **kwargs)
             hdbg.dassert_eq(
                 df.columns.tolist(),
                 ["symbol", "contract", "start_date", "end_date"],

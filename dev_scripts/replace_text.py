@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 
 r"""
-- Replace an instance of text in all py, ipynb, and txt files or in filenames.
+- Replace an instance of text in all:
+    - `.py` file contents
+    - `.ipynb` file contents
+    - `.txt` file contents
+    - filenames
 - Git rename the names of files based on certain criteria.
 
 # Replace an import with a new one:
@@ -13,7 +17,7 @@ r"""
 # Custom flow:
 > replace_text.py --custom_flow _custom1
 
-# Custome flow for AmpTask14
+# Custom flow for AmpTask14
 > replace_text.py --custom_flow _custom2 --revert_all
 
 # Replace text in a specific directory:
@@ -24,13 +28,16 @@ r"""
         --dirs dev_scripts \
         --exts None
 
-
 # To revert all files but this one:
 > gs -s | \
         grep -v dev_scripts/replace_text.py | \
         grep -v "\?" | \
         awk '{print $2}' | \
         xargs git checkout --
+
+Import as:
+
+import dev_scripts.replace_text as dscretex
 """
 
 import argparse
@@ -41,13 +48,13 @@ import re
 import sys
 from typing import Dict, List, Optional, Tuple
 
-import helpers.dbg as dbg
-import helpers.io_ as hio
-import helpers.parser as hparse
-import helpers.printing as hprint
-import helpers.system_interaction as hsyste
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hsystem as hsystem
 
-# TODO(gp): 
+# TODO(gp):
 #  - allow to read a cfile with a subset of files / points to replace
 #  - allow to work with no filter
 #  - fix the help
@@ -58,44 +65,66 @@ _LOG = logging.getLogger(__name__)
 _ENCODING = "ISO-8859-1"
 
 
-def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
+def _get_all_files(dirs: List[str], extensions: Optional[List[str]]) -> List[str]:
     """
     Find all the files with the given extensions in files under `dirs`.
 
-    :param exts: if None, no filtering by extensions
+    :param extensions: if None, no filtering by extensions
     """
-    if exts is not None:
+    if extensions is not None:
         # Extensions are specified.
-        dbg.dassert_isinstance(exts, list)
-        dbg.dassert_lte(1, len(exts))
-        for ext in exts:
-            dbg.dassert(not ext.startswith("."), "Invalid ext='%s'", ext)
+        hdbg.dassert_isinstance(extensions, list)
+        hdbg.dassert_lte(1, len(extensions))
+        for extension in extensions:
+            hdbg.dassert(
+                not extension.startswith("."), "Invalid ext='%s'", extension
+            )
     # Get files.
-    _LOG.debug("exts=%s", exts)
+    _LOG.debug("extensions=%s", extensions)
     file_names = []
     for d in dirs:
         _LOG.debug("Processing dir '%s'", d)
-        if exts is not None:
+        only_files = False
+        use_relative_paths = False
+        if extensions is not None:
             # Extensions are specified: find all the files with the given extensions.
-            for ext in exts:
-                file_names_tmp = hio.find_files(d, "*." + ext)
-                _LOG.debug("ext=%s -> found %s files", ext, len(file_names_tmp))
+            for extension in extensions:
+                pattern = "*." + extension
+                file_names_tmp = hio.listdir(
+                    d, pattern, only_files, use_relative_paths
+                )
+                _LOG.debug(
+                    "extension=%s -> found %s files",
+                    extension,
+                    len(file_names_tmp),
+                )
                 file_names.extend(file_names_tmp)
         else:
             # No extension: find all files.
-            file_names_tmp = hio.find_files(d, "*")
-            _LOG.debug("exts=%s -> found %s files", exts, len(file_names_tmp))
+            pattern = "*"
+            file_names_tmp = hio.listdir(
+                d, pattern, only_files, use_relative_paths
+            )
+            _LOG.debug(
+                "extensions=%s -> found %s files", extensions, len(file_names_tmp)
+            )
             file_names.extend(file_names_tmp)
     # Exclude some files.
-    file_names = [f for f in file_names if ".ipynb_checkpoints" not in f]
-    file_names = [f for f in file_names if "__pycache__" not in f]
-    file_names = [f for f in file_names if ".mypy_cache" not in f]
-    file_names = [f for f in file_names if ".pytest_cache" not in f]
-    file_names = [f for f in file_names if "replace_text.py" not in f]
-    file_names = [f for f in file_names if ".git/" not in f]
+    file_names_to_remove = [
+        ".ipynb_checkpoints",
+        "__pycache__",
+        ".mypy_cache",
+        ".pytest_cache",
+        "replace_text.py",
+        ".git/",
+    ]
+    for file_name_to_remove in file_names_to_remove:
+        file_names = [f for f in file_names if file_name_to_remove not in f]
     file_names = [f for f in file_names if os.path.basename(f) != "cfile"]
     _LOG.info(
-        "Found %s target files with extension '%s'", len(file_names), str(exts)
+        "Found %s target files with extensions '%s'",
+        len(file_names),
+        str(extensions),
     )
     return file_names
 
@@ -105,45 +134,54 @@ def _get_all_files(dirs: List[str], exts: Optional[List[str]]) -> List[str]:
 # #############################################################################
 
 
-def _get_files_to_replace(
-    file_names: List[str], old_regex: str
-) -> Tuple[List[str], str]:
+def _look_for(file_name: str, filter_by: str) -> Tuple[bool, List[str]]:
     """
-    Return the list of files that contain `old_regex` and the corresponding
-    cfile.
-    """
-    # Look for files with values.
-    res = []
-    file_names_to_process = []
-    for f in file_names:
-        found, res_tmp = _look_for(f, old_regex)
-        _LOG.debug("File='%s', found=%s, res_tmp=\n%s", f, found, res_tmp)
-        res.extend(res_tmp)
-        if found:
-            file_names_to_process.append(f)
-    #
-    txt = "\n".join(res)
-    _LOG.info("Found %s occurrences\n%s", len(res), hprint.indent(txt))
-    _LOG.info("Found %s files to process", len(file_names_to_process))
-    return file_names_to_process, txt
+    Search for the regex string in a file.
 
-
-def _look_for(file_name: str, old_regex: str) -> Tuple[bool, List[str]]:
-    """
-    Look for `old_regex` in `file_name` returning if it was found and the
-    corresponding cfile entry.
+    :param file_name: the name of the file to search in
+    :param filter_by: the regex to search for in the file content
+    :return: whether the regex was found in a file; the corresponding
+        cfile entry
     """
     txt = hio.from_file(file_name, encoding=_ENCODING)
     txt = txt.split("\n")
     res = []
     found = False
     for i, line in enumerate(txt):
-        m = re.search(old_regex, line)
+        m = re.search(filter_by, line)
         if m:
             # ./install/create_conda.py:21:import helpers.helper_io as hio
             res.append("%s:%s:%s" % (file_name, i + 1, line))
             found = True
     return found, res
+
+
+def _get_files_to_replace(
+    file_names: List[str],
+    filter_by: str,
+) -> Tuple[List[str], str]:
+    """
+    Get the list of the files that contain the `filter_by` regex.
+
+    :param file_names: names of the files to check
+    :param filter_by: the regex to look for in the files
+    :return: names of the files that contain the `filter_by` regex and the
+        corresponding cfile
+    """
+    # Look for files with values.
+    res = []
+    file_names_to_process = []
+    for f in file_names:
+        found, res_tmp = _look_for(f, filter_by)
+        _LOG.debug("File='%s', found=%s, res_tmp=\n%s", f, found, res_tmp)
+        res.extend(res_tmp)
+        if found:
+            file_names_to_process.append(f)
+    #
+    txt = "\n".join(res)
+    _LOG.info("Found %s occurrences to replace\n%s", len(res), hprint.indent(txt))
+    _LOG.info("Found %s files to replace", len(file_names_to_process))
+    return file_names_to_process, txt
 
 
 # #############################################################################
@@ -177,7 +215,7 @@ def _replace_with_perl(
     else:
         perl_opts.append(r"-e '%s unless /^\s*#/'" % regex)
     cmd = "perl %s %s" % (" ".join(perl_opts), file_name)
-    hsyste.system(cmd, suppress_output=False)
+    hsystem.system(cmd, suppress_output=False)
 
 
 def _replace_with_python(
@@ -185,7 +223,7 @@ def _replace_with_python(
 ) -> None:
     if backup:
         cmd = "cp %s %s.bak" % (file_name, file_name)
-        hsyste.system(cmd)
+        hsystem.system(cmd)
     #
     lines = hio.from_file(file_name, encoding=_ENCODING).split("\n")
     lines_out = []
@@ -213,6 +251,7 @@ def _replace(
     :param backup: make a backup of the file before the replacement
     :param mode: `replace_with_perl` or `replace_with_python`
     """
+    hdbg.dassert_ne(old_regex, new_regex)
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
@@ -256,6 +295,8 @@ def _replace_repeated_lines(file_name: str, new_regex: str) -> None:
 
 
 # #############################################################################
+# Custom scripts.
+# #############################################################################
 
 
 def _custom1(args: argparse.Namespace) -> None:
@@ -278,7 +319,7 @@ def _custom1(args: argparse.Namespace) -> None:
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        dbg.dassert_lte(1, len(file_names_to_process))
+        hdbg.dassert_lte(1, len(file_names_to_process))
         # Replace.
         if preview:
             txt += txt_tmp
@@ -308,7 +349,7 @@ def _fix_AmpTask1403_helper(
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        # dbg.dassert_lte(1, len(file_names_to_process))
+        # hdbg.dassert_lte(1, len(file_names_to_process))
         if len(file_names_to_process) < 1:
             _LOG.warning("Didn't find files to replace")
         # Replace.
@@ -332,12 +373,12 @@ def _fix_AmpTask1403(args: argparse.Namespace) -> None:
     to_replace = [
         "import core.config as cfg",
         "import core.config as ccfg",
-        #"import core.config as cconfi",
+        # "import core.config as cconfi",
         "import core.config as cconfig",
         "import core.config_builders as ccbuild",
         "import core.config_builders as cfgb",
     ]
-    #to_replace = [(f"^{s}$", "import core.config as cconfig") for s in to_replace]
+    # to_replace = [(f"^{s}$", "import core.config as cconfig") for s in to_replace]
     to_replace = [(f"{s}", "import core.config as cconfig") for s in to_replace]
     _fix_AmpTask1403_helper(args, to_replace)
     #
@@ -345,7 +386,7 @@ def _fix_AmpTask1403(args: argparse.Namespace) -> None:
         # (r"printing\.", "hprint."),
         # ("import helpers.config", "import core.config")
         "ccfg",
-        #"cconfi",
+        # "cconfi",
         "cconfig",
         "cfg",
         "ccbuild",
@@ -360,12 +401,9 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
     Implement AmpTask1403.
     """
     # From longest to shortest to avoid nested replacements.
-    to_replace = [
-        ("instrument_master", "im"),
-        ("order_management_system", "oms")
-    ]
+    to_replace = [("instrument_master", "im"), ("order_management_system", "oms")]
     dirs = ["."]
-    #exts = ["py", "ipynb", "md", "txt"]
+    # exts = ["py", "ipynb", "md", "txt"]
     exts = None
     backup = args.backup
     preview = args.preview
@@ -380,7 +418,7 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
         file_names_to_process, txt_tmp = _get_files_to_replace(
             file_names, old_regex
         )
-        # dbg.dassert_lte(1, len(file_names_to_process))
+        # hdbg.dassert_lte(1, len(file_names_to_process))
         if len(file_names_to_process) < 1:
             _LOG.warning("Didn't find files to replace")
         # Replace.
@@ -400,31 +438,79 @@ def _prerelease_cleanup(args: argparse.Namespace) -> None:
 
 
 def _get_files_to_rename(
-    file_names: List[str], old_regex: str, new_regex: str
+    file_names: List[str],
+    old_regex: str,
+    new_regex: str,
+    replace_in: str,
+    filter_by: str,
+    filter_on: str,
 ) -> Tuple[List[str], Dict[str, str]]:
-    # Look for files containing "old_regex".
+    """
+    Get names of the files to be renamed and a mapping for renaming.
+
+    :param file_names: all file names to check
+    :param old_regex: regex of the string to be replaced in the file names
+    :param new_regex: regex of the string that `old_regex` will be replaced with
+    :param replace_in: part of the name to replace `old_regex` with `new_regex` in
+        - "basename": `file.py` for `dir/subdir/file.py`
+        - "dirname": `dir/subdir` for `dir/subdir/file.py`
+        - "filename": `dir/subdir/file.py` for `dir/subdir/file.py`
+    :param filter_by: only replace `old_regex` with `new_regex` if the `filter_by`
+        regex is found in the file name
+    :param filter_on: part of the file name to look for the `filter_by` regex in;
+        same possible options as in `replace_in`
+    :return: file names to rename; a mapping for renaming
+    """
     file_map: Dict[str, str] = {}
     file_names_to_process = []
-    for f in file_names:
-        dirname = os.path.dirname(f)
-        basename = os.path.basename(f)
-        found = old_regex in basename
+    for filename in file_names:
+        dirname = os.path.dirname(filename)
+        basename = os.path.basename(filename)
+        # Check if the file matches the filter.
+        if filter_on == "basename":
+            filter_name_part = basename
+        elif filter_on == "dirname":
+            filter_name_part = dirname
+        elif filter_on == "filename":
+            filter_name_part = filename
+        else:
+            raise ValueError(f"Unsupported 'filter_on'={filter_on}")
+        found = bool(re.findall(filter_by, filter_name_part))
         if found:
-            new_basename = basename.replace(old_regex, new_regex)
-            _LOG.debug("File='%s', found=%s", f, found)
-            file_names_to_process.append(f)
-            file_map[f] = os.path.join(dirname, new_basename)
-    #
-    _LOG.info("Found %s files to process", len(file_names_to_process))
-    _LOG.info("%s", pprint.pformat(file_map))
+            # Update the name.
+            if replace_in == "basename":
+                new_basename = re.sub(old_regex, new_regex, basename)
+                new_filename = os.path.join(dirname, new_basename)
+            elif replace_in == "dirname":
+                new_dirname = re.sub(old_regex, new_regex, dirname)
+                new_filename = os.path.join(new_dirname, basename)
+            elif replace_in == "filename":
+                new_filename = re.sub(old_regex, new_regex, filename)
+            else:
+                raise ValueError(f"Unsupported 'replace_in'={replace_in}")
+            # Store the new file name.
+            _LOG.debug(hprint.to_str("filename found new_filename"))
+            if filename != new_filename:
+                file_names_to_process.append(filename)
+                hdbg.dassert_ne(filename, new_filename)
+                file_map[filename] = new_filename
+    _LOG.info("Found %s files to rename", len(file_names_to_process))
+    if file_map:
+        _LOG.info("Replacing:\n%s", pprint.pformat(file_map))
     return file_names_to_process, file_map
 
 
 def _rename(file_names_to_process: List[str], file_map: Dict[str, str]) -> None:
     for f in file_names_to_process:
         new_name = file_map[f]
+        dirname = os.path.dirname(new_name)
+        if not os.path.isdir(dirname):
+            # Create a dir if the new file name presupposes a new dir.
+            cmd = "mkdir -p %s" % dirname
+            hsystem.system(cmd)
+        # Rename the file.
         cmd = "git mv %s %s" % (f, new_name)
-        hsyste.system(cmd)
+        hsystem.system(cmd)
 
 
 # #############################################################################
@@ -436,19 +522,46 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
+        "--dst_dir",
+        action="store",
+        default=None,
+        help="Change dir before replacing",
+    )
+    parser.add_argument(
         "--revert_all",
         action="store_true",
-        help="Revert all the files before processing",
+        help="Revert all the files (excluding this one) before processing",
     )
     parser.add_argument("--custom_flow", action="store", type=str)
+    parser.add_argument(
+        "--filter_by",
+        action="store",
+        default=None,
+        type=str,
+        help="Regex to filter file names by",
+    )
+    parser.add_argument(
+        "--filter_on",
+        action="store",
+        default="basename",
+        choices=["basename", "dirname", "filename"],
+        help="Which part of the file name to filter on",
+    )
     parser.add_argument(
         "--old",
         action="store",
         type=str,
-        help="regex (in perl format) to replace",
+        help="Regex of text to replace",
     )
     parser.add_argument(
-        "--new", action="store", type=str, help="regex (in perl format) to use"
+        "--new", action="store", type=str, help="New string to replace with"
+    )
+    parser.add_argument(
+        "--replace_in",
+        action="store",
+        default="basename",
+        choices=["basename", "dirname", "filename"],
+        help="Which part of the file name to replace the string in",
     )
     parser.add_argument(
         "--preview", action="store_true", help="Preview only the replacement"
@@ -463,32 +576,53 @@ def _parse() -> argparse.ArgumentParser:
         "--action",
         action="store",
         default="replace",
-        choices=["replace", "rename"],
+        choices=["replace", "rename", "replace_rename"],
     )
     parser.add_argument(
         "--ext",
         action="store",
         type=str,
-        default="py,ipynb",
-        help="Extensions to process",
+        default="py,ipynb,txt,sh",
+        help="Extensions to process. `_all_` for all files",
     )
     parser.add_argument(
         "--backup", action="store_true", help="Keep backups of files"
     )
     parser.add_argument(
-        "-d",
-        "--dirs",
+        "--only_dirs",
         action="append",
         default=None,
-        help="Directories to process",
+        help="Space-separated list of directories to process",
     )
-    hparse.add_verbosity_arg(parser)
+    parser.add_argument(
+        "--only_files",
+        action="store",
+        default=None,
+        help="Space-separated list of files to process",
+    )
+    parser.add_argument(
+        "--exclude_files",
+        action="store",
+        default=None,
+        help="Space-separated list of files to exclude from replacements",
+    )
+    parser.add_argument(
+        "--exclude_dirs",
+        action="store",
+        default=None,
+        help="Space-separated dir to exclude from replacements",
+    )
+    hparser.add_verbosity_arg(parser)
     return parser
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(args.log_level)
+    hdbg.init_logger(args.log_level)
+    if args.dst_dir:
+        print("pwd=", os.getcwd())
+        hdbg.dassert_dir_exists(args.dst_dir)
+        os.chdir(args.dst_dir)
     if args.revert_all:
         # Revert all the files but this one. Use at your own risk.
         _LOG.warning("Reverting all files but this one")
@@ -501,17 +635,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
         ]
         cmd = " | ".join(cmd)
         print(f"> {cmd}")
-        hsyste.system(cmd)
+        hsystem.system(cmd)
     if args.custom_flow:
         eval("%s(args)" % args.custom_flow)
     else:
         # Use command line params.
-        dirs = args.dirs
+        dirs = args.only_dirs
         if dirs is None:
             dirs = ["."]
         _LOG.info("dirs=%s", dirs)
         # Parse the extensions.
-        if args.ext == "None":
+        if args.ext == "_all_":
             exts = None
         else:
             exts = args.ext
@@ -520,30 +654,107 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("extensions=%s", exts)
         # Find all the files with the correct extension.
         file_names = _get_all_files(dirs, exts)
-        if args.action == "replace":
-            # Replace.
-            file_names_to_process, txt = _get_files_to_replace(
-                file_names, args.old
+        # Use only specific files.
+        if args.only_files:
+            only_files_list = args.only_files.split(" ")
+            num_files_before = len(file_names)
+            _LOG.info("Using only_files=%s", only_files_list)
+            file_names = [
+                file_name
+                for file_name in file_names
+                # Remove current directory to match only_files format.
+                if os.path.normpath(file_name) in only_files_list
+            ]
+            num_files_after = len(file_names)
+            _LOG.info(
+                "num_files_before=%s num_files_after=%s",
+                num_files_before,
+                num_files_after,
             )
-            #
+        # Exclude files.
+        if args.exclude_files:
+            exclude_files_list = args.exclude_files.split(" ")
+            num_files_before = len(file_names)
+            _LOG.info("Excluding files=%s", exclude_files_list)
+            file_names = [
+                file_name
+                for file_name in file_names
+                if os.path.normpath(file_name) not in exclude_files_list
+            ]
+            num_files_after = len(file_names)
+            _LOG.info(
+                "num_files_before=%s num_files_after=%s",
+                num_files_before,
+                num_files_after,
+            )
+        # Exclude dirs.
+        if args.exclude_dirs:
+            exclude_dirs_list = args.exclude_dirs.split(" ")
+            num_files_before = len(file_names)
+            _LOG.info("Excluding dirs=%s", exclude_dirs_list)
+            file_names = [
+                file_name
+                for file_name in file_names
+                if os.path.normpath(os.path.dirname(file_name)) not in exclude_dirs_list
+            ]
+            num_files_after = len(file_names)
+            _LOG.info(
+                "num_files_before=%s num_files_after=%s",
+                num_files_before,
+                num_files_after,
+            )
+        # Process the actions.
+        _LOG.info("Found %s target files to process", len(file_names))
+        if args.filter_by is None:
+            # Filter the files by the string that is going to be replaced.
+            filter_by = args.old
+        else:
+            # Filter the files by the supplied regex.
+            filter_by = args.filter_by
+        action_processed = False
+        if args.action in ("replace", "replace_rename"):
+            # Get the files to replace the string in. The files are selected
+            # if the `filter_by` regex is found in their content.
+            file_names_to_process, txt = _get_files_to_replace(
+                file_names, filter_by
+            )
             if args.preview:
                 hio.to_file("./cfile", txt)
                 _LOG.warning("Preview only as required. Results saved in ./cfile")
-                sys.exit(0)
-            _replace(
-                file_names_to_process, args.old, args.new, args.backup, args.mode
-            )
-        elif args.action == "rename":
-            # Rename.
+            else:
+                # Replace the string inside the files. The `args.old` regex is
+                # replaced with the `args.new` regex in the whole files' contents.
+                _replace(
+                    file_names_to_process,
+                    args.old,
+                    args.new,
+                    args.backup,
+                    args.mode,
+                )
+            action_processed = True
+        if args.action in ("rename", "replace_rename"):
+            # Get the files to rename. The files are selected if the `filter_by`
+            # regex is found in a part of their name determined by `args.filter_on`.
+            # Then the `args.old` regex is replaced with the `args.new` regex in the
+            # part of their name determined by `args.replace_in`.
             file_names_to_process, file_map = _get_files_to_rename(
-                file_names, args.old, args.new
+                file_names,
+                args.old,
+                args.new,
+                args.replace_in,
+                filter_by,
+                args.filter_on,
             )
             if args.preview:
                 _LOG.warning("Preview only as required.")
-                sys.exit(0)
-            _rename(file_names_to_process, file_map)
-        else:
+            else:
+                # Rename the files.
+                _rename(file_names_to_process, file_map)
+            action_processed = True
+        if not action_processed:
             raise ValueError("Invalid action='%s'" % args.action)
+        if args.preview:
+            sys.exit(0)
 
 
 if __name__ == "__main__":

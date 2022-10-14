@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.timeseries_study as tss
+import core.timeseries_study as ctimstud
 """
 
 import logging
@@ -12,12 +12,15 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tqdm.auto import tqdm
 
-import core.plotting as plot
-import helpers.dbg as dbg
+import core.plotting as coplotti
+import helpers.hdbg as hdbg
+import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
-import helpers.introspection as intr
 
 _LOG = logging.getLogger(__name__)
+
+
+# TODO(gp): Obsolete or clean up / reuse.
 
 
 class _TimeSeriesAnalyzer:
@@ -51,8 +54,8 @@ class _TimeSeriesAnalyzer:
             method
         :param disabled_methods: methods that need to be skipped
         """
-        dbg.dassert_isinstance(time_series, pd.Series)
-        dbg.dassert_isinstance(time_series.index, pd.DatetimeIndex)
+        hdbg.dassert_isinstance(time_series, pd.Series)
+        hdbg.dassert_isinstance(time_series.index, pd.DatetimeIndex)
         hpandas.dassert_strictly_increasing_index(time_series.index)
         self._time_series = time_series
         self._ts_name = time_series.name
@@ -68,7 +71,7 @@ class _TimeSeriesAnalyzer:
         """
         Plot timeseries on its original time scale.
         """
-        func_name = intr.get_function_name()
+        func_name = hintros.get_function_name()
         _LOG.debug(func_name)
         if func_name in self._disabled_methods:
             _LOG.debug("Skipping '%s' as per user request", func_name)
@@ -95,15 +98,15 @@ class _TimeSeriesAnalyzer:
         axes: Optional[List[mpl.axes.Axes]] = None,
     ) -> Optional[mpl.figure.Figure]:
         """
-        Resample yearly and then plot each year on a different plot.
+        Resample yearly and then plot each year on a different coplotti.
         """
-        func_name = intr.get_function_name()
+        func_name = hintros.get_function_name()
         if self._need_to_skip(func_name):
             return None
         # Split by year.
         time_series = self._time_series.dropna()
         yearly_resample = time_series.resample("y")
-        # Include only the years with enough data to plot.
+        # Include only the years with enough data to coplotti.
         yearly_resample_count = yearly_resample.count()
         years_to_plot_data_mask = yearly_resample_count > 1
         # Limit to top n years, if set.
@@ -115,7 +118,7 @@ class _TimeSeriesAnalyzer:
             return None
         if axes is None:
             # Create as many subplots as years.
-            _, axes = plot.get_multiple_plots(
+            _, axes = coplotti.get_multiple_plots(
                 num_plots,
                 num_cols=1,
                 y_scale=5,
@@ -158,7 +161,7 @@ class _TimeSeriesAnalyzer:
         """
         Plot the mean value of the timeseries for each day.
         """
-        func_name = intr.get_function_name()
+        func_name = hintros.get_function_name()
         if self._need_to_skip(func_name):
             return None
         #
@@ -177,7 +180,7 @@ class _TimeSeriesAnalyzer:
         """
         Plot the mean value of the timeseries for year.
         """
-        func_name = intr.get_function_name()
+        func_name = hintros.get_function_name()
         if self._need_to_skip(func_name):
             return None
         #
@@ -252,7 +255,7 @@ class TimeSeriesMinutelyStudy(_TimeSeriesAnalyzer):
     def boxplot_minutely_hour(
         self, ax: Optional[mpl.axes.Axes] = None
     ) -> Optional[mpl.figure.Figure]:
-        func_name = intr.get_function_name()
+        func_name = hintros.get_function_name()
         if self._need_to_skip(func_name):
             return None
         #
@@ -314,7 +317,7 @@ def map_dict_to_dataframe(
             func_out = func(series, prefix=prefix)
             if isinstance(func_out, pd.DataFrame):
                 func_out = func_out.squeeze("columns")
-            dbg.dassert_isinstance(func_out, pd.Series)
+            hdbg.dassert_isinstance(func_out, pd.Series)
             key_func_outs.append(func_out)
         # Create a single series from individual function series.
         key_func_out_srs = pd.concat(key_func_outs)

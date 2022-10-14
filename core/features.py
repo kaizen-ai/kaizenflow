@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.features as cfea
+import core.features as cofeatur
 """
 
 import collections
@@ -11,12 +11,15 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-import core.signal_processing as csipro
-import core.statistics as csta
-import helpers.dbg as hdbg
+import core.signal_processing as csigproc
+import core.statistics as costatis
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 COL = Union[str, int]
+
+
+# TODO(gp): Where is it used?
 
 
 def get_lagged_feature_names(
@@ -74,8 +77,14 @@ def compute_lagged_features(
     return df, info
 
 
+# TODO(Paul): Clean this up. The interface has become a bit awkward.
 def compute_lagged_columns(
-    df: pd.DataFrame, lag_delay: int, num_lags: int
+    df: pd.DataFrame,
+    lag_delay: int,
+    num_lags: int,
+    *,
+    first_lag: int = 1,
+    separator: str = "_",
 ) -> pd.DataFrame:
     """
     Compute lags of each column in df.
@@ -83,13 +92,15 @@ def compute_lagged_columns(
     out_cols = []
     hdbg.dassert_isinstance(df, pd.DataFrame)
     for col in df.columns:
-        out_col = compute_lags(df[col], lag_delay, num_lags)
-        out_col.rename(columns=lambda x: str(col) + "_" + x, inplace=True)
+        out_col = compute_lags(df[col], lag_delay, num_lags, first_lag)
+        out_col.rename(columns=lambda x: str(col) + separator + x, inplace=True)
         out_cols.append(out_col)
     return pd.concat(out_cols, axis=1)
 
 
-def compute_lags(srs: pd.Series, lag_delay: int, num_lags: int) -> pd.DataFrame:
+def compute_lags(
+    srs: pd.Series, lag_delay: int, num_lags: int, first_lag: int
+) -> pd.DataFrame:
     """
     Compute `num_lags` lags of `srs` starting with a delay of `lag_delay`.
     """
@@ -101,7 +112,7 @@ def compute_lags(srs: pd.Series, lag_delay: int, num_lags: int) -> pd.DataFrame:
         )
     hdbg.dassert_lte(1, num_lags)
     #
-    shifts = list(range(1 + lag_delay, 1 + lag_delay + num_lags))
+    shifts = list(range(first_lag + lag_delay, first_lag + lag_delay + num_lags))
     out_cols = []
     hdbg.dassert_isinstance(srs, pd.Series)
     for num_shifts in shifts:
@@ -297,7 +308,7 @@ def cross_feature_pair(
     name = "compressed_difference"
     if name in requested_cols:
         # Optimized for variance-1 features.
-        cross = csipro.compress_tails(
+        cross = csigproc.compress_tails(
             (ftr1 - ftr2) / np.sqrt(2), scale=compression_scale
         )
         cross = cross.rename(name)
@@ -329,7 +340,7 @@ def cross_feature_pair(
         if (quotient < 0).any():
             _log_opposite_sign_warning(feature1_col, feature2_col, name)
         cross = np.log(ftr1.abs()) - np.log(ftr2.abs())
-        cross = csipro.compress_tails(cross, scale=compression_scale)
+        cross = csigproc.compress_tails(cross, scale=compression_scale)
         cross = cross.rename(name)
         crosses.append(cross)
     #
@@ -342,7 +353,7 @@ def cross_feature_pair(
     name = "compressed_mean"
     if name in requested_cols:
         # Optimized for variance-1 features.
-        cross = csipro.compress_tails(
+        cross = csigproc.compress_tails(
             (ftr1 + ftr2) / np.sqrt(2), scale=compression_scale
         )
         cross = cross.rename(name)
@@ -356,7 +367,7 @@ def cross_feature_pair(
     name = "compressed_product"
     if name in requested_cols:
         # Optimized for variance-1 features.
-        cross = csipro.compress_tails(ftr1 * ftr2, scale=compression_scale)
+        cross = csigproc.compress_tails(ftr1 * ftr2, scale=compression_scale)
         cross = cross.rename(name)
         crosses.append(cross)
     #
@@ -365,7 +376,7 @@ def cross_feature_pair(
         if (ftr1 < 0).any() or (ftr2 < 0).any():
             _log_negative_value_warning(feature1_col, feature2_col, name)
         product = ftr1 * ftr2
-        signs = csipro.sign_normalize(product)
+        signs = csigproc.sign_normalize(product)
         cross = np.sqrt(product.abs()) * signs
         cross = cross.rename(name)
         crosses.append(cross)
@@ -393,18 +404,18 @@ def cross_feature_pair(
 
 
 def _log_opposite_sign_warning(
-    feature1_col,
-    feature2_col,
-    feature_cross,
+    feature1_col: str,
+    feature2_col: str,
+    feature_cross: str,
 ) -> None:
     msg = "Calculating feature cross `%s`: features `%s` and `%s` have entries with opposite signs."
     _LOG.warning(msg, feature_cross, feature1_col, feature2_col)
 
 
 def _log_negative_value_warning(
-    feature1_col,
-    feature2_col,
-    feature_cross,
+    feature1_col: str,
+    feature2_col: str,
+    feature_cross: str,
 ) -> None:
     msg = "Calculating feature cross `%s`: negative values detected in at least one of feature `%s` and `%s`."
     _LOG.warning(msg, feature_cross, feature1_col, feature2_col)
@@ -595,7 +606,7 @@ def compute_effective_rank(
     _, singular_values, _ = np.linalg.svd(df, full_matrices=False)
     # Compute effective rank
     sq_singular_values = pd.Series(np.square(singular_values))
-    rank = csta.compute_cardinality(sq_singular_values, alpha=alpha)
+    rank = costatis.compute_cardinality(sq_singular_values, alpha=alpha)
     return rank
 
 

@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.0
+#       jupytext_version: 1.13.7
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -13,12 +13,11 @@
 # ---
 
 # %%
-import numpy as np
-import pandas as pd
-
 # # !pip install cvxopt
-import cvxopt
 import cvxpy as cp
+
+# %%
+import numpy as np
 
 # %% [markdown]
 # # Example 1
@@ -90,9 +89,9 @@ rets = mu.T @ weights
 portfolio_variance = cp.quad_form(weights, covariance)
 
 # %%
-minimize_variance = cp.Problem(cp.Minimize(portfolio_variance),
-                        [cp.sum(weights) == 1]
-                    )
+minimize_variance = cp.Problem(
+    cp.Minimize(portfolio_variance), [cp.sum(weights) == 1]
+)
 
 # %%
 minimize_variance.solve()
@@ -104,12 +103,14 @@ rets.value
 weights.value
 
 # %%
-maximize_returns = cp.Problem(cp.Maximize(rets),
-                                 [cp.sum(weights) == 1,
-                                  # Long-short will try to increase leverage to infinity (and fail to converge)
-                                  weights >= 0
-                                 ]
-                             )
+maximize_returns = cp.Problem(
+    cp.Maximize(rets),
+    [
+        cp.sum(weights) == 1,
+        # Long-short will try to increase leverage to infinity (and fail to converge)
+        weights >= 0,
+    ],
+)
 
 # %%
 maximize_returns.solve()
@@ -118,12 +119,14 @@ maximize_returns.solve()
 portfolio_variance.value
 
 # %%
-maximize_returns_2 = cp.Problem(cp.Maximize(rets),
-                                 [cp.norm(weights) <= 1.5,
-                                  cp.sum(weights) == 1,
-                                  portfolio_variance <= 0.05,
-                                 ]
-                             )
+maximize_returns_2 = cp.Problem(
+    cp.Maximize(rets),
+    [
+        cp.norm(weights) <= 1.5,
+        cp.sum(weights) == 1,
+        portfolio_variance <= 0.05,
+    ],
+)
 
 # %%
 maximize_returns_2.solve()

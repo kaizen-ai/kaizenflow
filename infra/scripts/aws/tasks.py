@@ -1,8 +1,10 @@
 import logging
-import helpers.dbg as dbg
 import sys
-from invoke import task
+
 from aws_manager import AWS_EC2_Manager
+from invoke import task
+
+import helpers.hdbg as dbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -23,9 +25,14 @@ DEFAULT_REGION: str = "us-east-1"
 
 @task
 def aws_create_key_pair(
-    ctx, key_name=DEFAULT_KEYNAME, region=DEFAULT_REGION, path_to_key="aws_ec2_key.pem"
+    ctx,
+    key_name=DEFAULT_KEYNAME,
+    region=DEFAULT_REGION,
+    path_to_key="aws_ec2_key.pem",
 ):
-    """Create a public/private key-pair which can be used to access created AWS EC2 instances
+    """
+    Create a public/private key-pair which can be used to access created AWS
+    EC2 instances.
 
     :param ctx: state encaplusated by Invoke module itself, handed to tasks when they execute
     :param key_name: unique identifier of the key, defaults to "us-east-1"
@@ -49,7 +56,9 @@ def aws_create_instance(
     root_device_type="gp2",
     name_tag=None,
 ):
-    """Create chosen EC2 instance type from specified AMI with specified root partition size
+    """
+    Create chosen EC2 instance type from specified AMI with specified root
+    partition size.
 
     :param ctx: state encaplusated by Invoke module itself, handed to tasks when they execute
     :param ami: amazon machine image ID, defaults to "ami-083654bd07b5da81d"
@@ -77,7 +86,9 @@ def aws_create_instance(
 def aws_attach_new_volume(
     ctx, instance_id, region=DEFAULT_REGION, size=512, device_name="/dev/sdf"
 ):
-    """Create an EBS volume in specified region and attach it to an existing EC2 instance specified by instance ID
+    """
+    Create an EBS volume in specified region and attach it to an existing EC2
+    instance specified by instance ID.
 
     :param ctx: state encaplusated by Invoke module itself, handed to tasks when they execute
     :param instance_id: ID of the EC2 to attach the volume to

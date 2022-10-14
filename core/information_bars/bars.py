@@ -1,10 +1,16 @@
+"""
+Import as:
+
+import core.information_bars.bars as cinbabar
+"""
+
 import logging
 from typing import Generator, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -156,6 +162,31 @@ class _StandardBars:
         self.flag = True
         return list_bars
 
+    @staticmethod
+    def _assert_csv(test_batch: pd.DataFrame) -> None:
+        """
+        Test that the csv file read has the format: date_time, price, and
+        volume. If not then the user needs to create such a file. This format
+        is in place to remove any unwanted overhead.
+
+        :param test_batch: The first row of the dataset.
+        """
+        hdbg.dassert_eq(
+            test_batch.shape[1],
+            3,
+            "Must have only 3 columns in csv: date_time, price, & volume.",
+        )
+        hdbg.dassert_isinstance(
+            test_batch.iloc[0, 1], float, "price column in csv not float."
+        )
+        try:
+            pd.to_datetime(test_batch.iloc[0, 0])
+        except ValueError as ex:
+            raise ValueError(
+                "csv file, column 0, not a date time format:",
+                test_batch.iloc[0, 0],
+            ) from ex
+
     def _batch_iterator(
         self, file_path_or_df: Union[str, Iterable[str], pd.DataFrame]
     ) -> Generator[pd.DataFrame, None, None]:
@@ -262,31 +293,6 @@ class _StandardBars:
             "cum_volume": 0,
             "cum_buy_volume": 0,
         }
-
-    @staticmethod
-    def _assert_csv(test_batch: pd.DataFrame) -> None:
-        """
-        Test that the csv file read has the format: date_time, price, and
-        volume. If not then the user needs to create such a file. This format
-        is in place to remove any unwanted overhead.
-
-        :param test_batch: The first row of the dataset.
-        """
-        dbg.dassert_eq(
-            test_batch.shape[1],
-            3,
-            "Must have only 3 columns in csv: date_time, price, & volume.",
-        )
-        dbg.dassert_isinstance(
-            test_batch.iloc[0, 1], float, "price column in csv not float."
-        )
-        try:
-            pd.to_datetime(test_batch.iloc[0, 0])
-        except ValueError as ex:
-            raise ValueError(
-                "csv file, column 0, not a date time format:",
-                test_batch.iloc[0, 0],
-            ) from ex
 
     def _update_high_low(self, price: float) -> Tuple[float, float]:
         """

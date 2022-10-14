@@ -9,7 +9,7 @@ import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 import os
 from typing import Optional, cast
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.load.file_path_generator as imcdlfpage
 import im.common.data.types as imcodatyp
 import im.kibot.data.config as imkidacon
@@ -34,6 +34,13 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
         imcodatyp.AssetClass.Futures: "all_futures",
         imcodatyp.AssetClass.SP500: "sp_500_",
     }
+
+    @staticmethod
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols.
+        """
+        raise NotImplementedError
 
     def generate_file_path(
         self,
@@ -74,22 +81,15 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
         return file_path
 
     @staticmethod
-    def get_latest_symbols_file() -> str:
-        """
-        Get the latest available file with symbols.
-        """
-        raise NotImplementedError
+    def _generate_unadjusted_modifier(unadjusted: bool) -> str:
+        adjusted_modifier = "unadjusted_" if unadjusted else ""
+        return adjusted_modifier
 
     def _generate_contract_path_modifier(
         self, contract_type: imcodatyp.ContractType
     ) -> str:
         contract_path = self.CONTRACT_PATH_MAPPING[contract_type]
         return f"_{contract_path}contracts_"
-
-    @staticmethod
-    def _generate_unadjusted_modifier(unadjusted: bool) -> str:
-        adjusted_modifier = "unadjusted_" if unadjusted else ""
-        return adjusted_modifier
 
     def _generate_modifier(
         self,

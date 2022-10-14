@@ -14,9 +14,10 @@ import im.devops.old.docker_scripts.init_im_db as imdodsiimdb
 import argparse
 import logging
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
-import im.common.db.create_db as imcdbcrdb
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.hsql as hsql
+import im_v2.common.db.utils as imvcodbut
 
 _LOG = logging.getLogger(__name__)
 
@@ -40,8 +41,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level)
     _LOG.info("Updating schema to DB %s...", args.db)
-    imcdbcrdb.initialize_database(
-        args.db, init_sql_files=imcdbcrdb.get_init_sql_files()
+    imvcodbut.initialize_database(
+        args.db, init_sql_files=hsql.get_init_sql_files()
     )
     _LOG.info("Database %s is ready to use", args.db)
 

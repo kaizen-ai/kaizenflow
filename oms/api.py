@@ -1,10 +1,16 @@
+"""
+Import as:
+
+import oms.api as omapi
+"""
+
 import logging
 from typing import Dict, Optional
 
 import pandas as pd
 
-import helpers.dbg as dbg
-import helpers.printing as prn
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,15 +34,18 @@ class Contract:
         currency: Optional[str] = None,
     ):
         self.symbol = symbol
-        dbg.dassert_in(sec_type, ("STK", "FUT"))
+        hdbg.dassert_in(sec_type, ("STK", "FUT"))
         self.sec_type = sec_type
-        dbg.dassert_in(currency, ("USD", None))
+        hdbg.dassert_in(currency, ("USD", None))
         self.exchange = exchange
         self.currency = currency
 
     def __repr__(self):
         return "Contract: symbol=%s, sec_type=%s, currency=%s, exchange=%s" % (
-            self.symbol, self.sec_type, self.exchange, self.currency
+            self.symbol,
+            self.sec_type,
+            self.exchange,
+            self.currency,
         )
 
     def __hash__(self):
@@ -83,7 +92,7 @@ class Order:
         action: str,
         total_quantity: float,
         order_type: str,
-        timestamp: Optional[pd.Timestamp] = None
+        timestamp: Optional[pd.Timestamp] = None,
     ):
         """
         Create an order.
@@ -95,18 +104,25 @@ class Order:
         :param timestamp:
         """
         self.order_id = order_id
-        dbg.dassert_in(action, ("BUY", "SELL"))
+        hdbg.dassert_in(action, ("BUY", "SELL"))
         self.action = action
-        dbg.dassert_lt(0.0, total_quantity)
+        hdbg.dassert_lt(0.0, total_quantity)
         self.total_quantity = total_quantity
-        dbg.dassert_in(order_type, ("MKT", "LIM"))
+        hdbg.dassert_in(order_type, ("MKT", "LIM"))
         self.order_type = order_type
         #
         self.timestamp = timestamp
 
     def __repr__(self):
-        return "Order: order_id=%s, action=%s, total_quantity=%s, order_type=%s timestamp=%s" % (
-            self.order_id, self.action, self.total_quantity, self.order_type, self.timestamp
+        return (
+            "Order: order_id=%s, action=%s, total_quantity=%s, order_type=%s timestamp=%s"
+            % (
+                self.order_id,
+                self.action,
+                self.total_quantity,
+                self.order_type,
+                self.timestamp,
+            )
         )
 
 
@@ -132,7 +148,7 @@ class Position:
     def __init__(self, contract: Contract, position: float):
         self.contract = contract
         # We don't allow a position with no shares.
-        dbg.dassert_ne(0, position)
+        hdbg.dassert_ne(0, position)
         self.position = position
 
     def __repr__(self):
@@ -140,7 +156,7 @@ class Position:
         ret.append("contract=%s" % self.contract)
         ret.append("position=%s" % self.position)
         ret = "\n".join(ret)
-        ret = "Position:\n" + prn.indent(ret, 2)
+        ret = "Position:\n" + hprint.indent(ret, 2)
         return ret
 
     def __hash__(self):
@@ -156,7 +172,7 @@ class Position:
         """
         Update the position `lhs` using another position `rhs`.
         """
-        dbg.dassert_eq(lhs.contract, rhs.contract)
+        hdbg.dassert_eq(lhs.contract, rhs.contract)
         position = lhs.position + rhs.position
         if position == 0:
             return None
@@ -183,24 +199,31 @@ class OrderStatus:
         status: str,
         filled: float,
         remaining: float,
-        avg_fill_price: float
+        avg_fill_price: float,
     ) -> None:
         # Pointer to the corresponding Order.
-        dbg.dassert_lte(0, order_id)
+        hdbg.dassert_lte(0, order_id)
         self.order_id = order_id
         self.status = status
         # How many shares are filled.
-        dbg.dassert_lte(0, filled)
+        hdbg.dassert_lte(0, filled)
         self.filled = filled
         # How many shares were not filled.
-        dbg.dassert_lte(0, remaining)
+        hdbg.dassert_lte(0, remaining)
         self.remaining = remaining
-        dbg.dassert_lte(0, avg_fill_price)
+        hdbg.dassert_lte(0, avg_fill_price)
         self.avg_fill_price = avg_fill_price
 
     def __repr__(self):
-        return "OrderStatus: order_id=%s, status=%s, filled=%s, remaining=%s avg_fill_price=%s" % (
-            self.order_id, self.status, self.filled, self.remaining, self.avg_fill_price
+        return (
+            "OrderStatus: order_id=%s, status=%s, filled=%s, remaining=%s avg_fill_price=%s"
+            % (
+                self.order_id,
+                self.status,
+                self.filled,
+                self.remaining,
+                self.avg_fill_price,
+            )
         )
 
 
@@ -217,16 +240,19 @@ class Trade:
         contract: Contract,
         order: Order,
         order_status: OrderStatus,
-        timestamp: Optional[pd.Timestamp] = None
+        timestamp: Optional[pd.Timestamp] = None,
     ) -> None:
         self.contract = contract
         self.order = order
-        dbg.dassert_lte(order_status.filled, order.total_quantity,
-                        msg="Can't fill more than what was requested")
-        dbg.dassert_eq(
+        hdbg.dassert_lte(
+            order_status.filled,
+            order.total_quantity,
+            msg="Can't fill more than what was requested",
+        )
+        hdbg.dassert_eq(
             order.total_quantity,
             order_status.filled + order_status.remaining,
-            msg="The filled and remaining shares must be the same as the total quantity"
+            msg="The filled and remaining shares must be the same as the total quantity",
         )
         self.order_status = order_status
         self.timestamp = timestamp  # TODO(gp): Implement fills.
@@ -238,7 +264,7 @@ class Trade:
         ret.append("order_status=%s" % self.order_status)
         ret.append("timestamp=%s" % self.timestamp)
         ret = "\n".join(ret)
-        ret = "Trade:\n" + prn.indent(ret, 2)
+        ret = "Trade:\n" + hprint.indent(ret, 2)
         return ret
 
     def to_position(self) -> Position:
@@ -258,6 +284,7 @@ class OMS:
     Modelled after:
     https://ib-insync.readthedocs.io/api.html#module-ib_insync.ib
     """
+
     def __init__(self) -> None:
         self._trades = []
         self._orders = []
@@ -268,15 +295,16 @@ class OMS:
         def _to_string(prefix, objs) -> str:
             ret = "%s=%d" % (prefix, len(objs))
             if objs:
-                ret += "\n" + prn.indent("\n".join(map(str, objs)), 2)
+                ret += "\n" + hprint.indent("\n".join(map(str, objs)), 2)
             return ret
+
         ret = []
         ret.append(_to_string("trades", self._trades))
         ret.append(_to_string("orders", self._orders))
         ret.append(_to_string("positions", sorted(self._current_positions)))
         #
         ret = "\n".join(ret)
-        ret = "OMS:\n" + prn.indent(ret, 2)
+        ret = "OMS:\n" + hprint.indent(ret, 2)
         return ret
 
     def get_current_positions(self) -> Dict[Contract, Position]:
@@ -310,8 +338,9 @@ class OMS:
         remaining = 0.0
         # TODO(gp): Implement this by talking to IM.
         avg_fill_price = 1000.0
-        order_status = OrderStatus(order.order_id, status, filled, remaining,
-                avg_fill_price)
+        order_status = OrderStatus(
+            order.order_id, status, filled, remaining, avg_fill_price
+        )
         trade = Trade(contract, order, order_status, timestamp=timestamp)
         self._trades.append(trade)
         #
@@ -322,10 +351,10 @@ class OMS:
         """
         Update the current position given the executed trade.
         """
-        dbg.dassert_eq(
+        hdbg.dassert_eq(
             len(set(self._current_positions)),
             len(self._current_positions),
-            msg="All positions should be about different Contracts"
+            msg="All positions should be about different Contracts",
         )
         # Look for the contract corresponding to `trade` among the current positions.
         contract = trade.contract
@@ -335,15 +364,14 @@ class OMS:
             position = Position(contract, trade.order.total_quantity)
         else:
             # Update the current position for `contract`.
-            position = Position.update(
-                current_position,
-                trade.to_position()
-            )
+            position = Position.update(current_position, trade.to_position())
         _LOG.debug("position=%s", position)
         # Update the contract.
         if position is None:
             if contract in self._current_positions:
-                _LOG.debug("Removing %s from %s", contract, self._current_positions)
+                _LOG.debug(
+                    "Removing %s from %s", contract, self._current_positions
+                )
                 del self._current_positions[contract]
         else:
             _LOG.debug("Updating %s to %s", current_position, position)

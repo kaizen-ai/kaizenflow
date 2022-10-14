@@ -23,8 +23,8 @@ import ib_insync
 
 print(ib_insync.__all__)
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import im.ib.data.extract.gateway.utils as imidegaut
 
 # %% [markdown]
@@ -241,8 +241,8 @@ print(ib_insync.__all__)
 # %%
 import logging
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 import im.ib.data.extract.gateway.utils as imidegaut
 
 hdbg.init_logger(verbosity=logging.DEBUG)

@@ -8,8 +8,8 @@ import enum
 import os
 from typing import List, Tuple
 
-import pandas as pd
-
+import helpers.hpandas as hpandas
+import helpers.hs3 as hs3
 import im.kibot.metadata.config as imkimecon
 import im.kibot.metadata.types as imkimetyp
 
@@ -27,7 +27,8 @@ class ParsingState(enum.Enum):
 
 class TickerListsLoader:
     # pylint: disable=line-too-long
-    """Parse text in the following form:
+    """
+    Parse text in the following form:
 
     ```
     Listed: 43 symbols and 4 gigabytes
@@ -46,7 +47,9 @@ class TickerListsLoader:
     """
     # pylint: enable=line-too-long
 
-    def get(self, ticker_list: str, listed: bool = True) -> List[imkimetyp.Ticker]:
+    def get(
+        self, ticker_list: str, listed: bool = True
+    ) -> List[imkimetyp.Ticker]:
         s3_path = os.path.join(
             imkimecon.S3_PREFIX,
             imkimecon.TICKER_LISTS_SUB_DIR,
@@ -59,12 +62,36 @@ class TickerListsLoader:
     @staticmethod
     def _get_lines(s3_path: str) -> List[str]:
         aws_profile = "am"
+        s3fs = hs3.get_s3fs(aws_profile)
         # TODO(gp): Is it \t?
         sep = "/t"
-        s3fs = hs3.get_s3fs("am")
-        lines = pdhelp.read_csv(s3_path, s3fs=s3fs, sep=sep).values.tolist()
+        # This call was broken during a refactoring and this fix is not
+        # guaranteed to work.
+        try:
+            lines = hpandas.read_csv_to_df(s3_path, sep=sep).values.tolist()
+        except Exception:  # pylint: disable=broad-except
+            lines = hpandas.read_csv_to_df(s3fs, sep=sep).values.tolist()
         res = [line[0] for line in lines]
         return res
+
+    @staticmethod
+    def _get_ticker_from_line(line: str) -> imkimetyp.Ticker:
+        # pylint: disable=line-too-long
+        """
+        Get a ticker from a line.
+
+        - Example line:
+        1    AA     4/27/2007    68    "Alcoa Corporation"    NYSE    "Aluminum"    "Basic Industries"
+        """
+        # pylint: enable=line-too-long
+        args = line.split("\t")
+        # Remove new line from last element. Note: if we strip before splitting,
+        # the tab delimiters would be removed as well if a column is empty.
+        args[-1] = args[-1].strip()
+        # Skip index col.
+        args = args[1:]
+        ret = imkimetyp.Ticker(*args)
+        return ret
 
     def _parse_lines(
         self, lines: List[str]
@@ -93,22 +120,3 @@ class TickerListsLoader:
             elif state == ParsingState.DelistedSectionStarted:
                 delisted_tickers.append(self._get_ticker_from_line(line))
         return listed_tickers, delisted_tickers
-
-    @staticmethod
-    def _get_ticker_from_line(line: str) -> imkimetyp.Ticker:
-        # pylint: disable=line-too-long
-        """
-        Get a ticker from a line.
-
-        - Example line:
-        1    AA     4/27/2007    68    "Alcoa Corporation"    NYSE    "Aluminum"    "Basic Industries"
-        """
-        # pylint: enable=line-too-long
-        args = line.split("\t")
-        # Remove new line from last element. Note: if we strip before splitting,
-        # the tab delimiters would be removed as well if a column is empty.
-        args[-1] = args[-1].strip()
-        # Skip index col.
-        args = args[1:]
-        ret = imkimetyp.Ticker(*args)
-        return ret

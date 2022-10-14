@@ -1,5 +1,11 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import dev_scripts.compile_all as dsccoall
+"""
+
 import compileall
 import re
 

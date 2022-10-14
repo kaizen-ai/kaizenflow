@@ -3,19 +3,15 @@ import datetime
 import pandas as pd
 import pytest
 
-import helpers.sql as hsql
-import helpers.unit_test as hunitest
+import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.common.db.create_db as imcdbcrdb
-import im.common.db.utils as imcodbuti
-import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_sql_data_loader as imkdlksdlo
 import im.kibot.sql_writer as imkisqwri
+import im_v2.common.db.db_utils as imvcddbut
 
 
-@pytest.mark.skipif(
-    not imcodbuti.is_inside_im_container(),
-    reason="Testable only inside IM container",
-)
+@pytest.mark.skip(reason="CmTask666")
 class TestSqlDataLoader1(hunitest.TestCase):
     """
     Test writing operation to PostgreSQL Kibot DB.
@@ -27,10 +23,10 @@ class TestSqlDataLoader1(hunitest.TestCase):
         self._connection = hsql.get_connection_from_env_vars()
         self._new_db = self._get_test_name().replace("/", "").replace(".", "")
         # Create database for test.
-        imcdbcrdb.create_database(
+        imvcddbut.create_im_database(
             connection=self._connection,
             new_db=self._new_db,
-            force=True,
+            overwrite=True,
         )
         # Initialize writer class to test.
         writer = imkisqwri.KibotSqlWriter(
@@ -40,7 +36,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         self._prepare_tables(writer)
         writer.close()
         # Create loader.
-        self._loader = ikdlksdlo.KibotSqlDataLoader(
+        self._loader = imkdlksdlo.KibotSqlDataLoader(
             self._new_db, self._user, self._password, self._host, self._port
         )
 
@@ -48,9 +44,7 @@ class TestSqlDataLoader1(hunitest.TestCase):
         # Close connection.
         self._loader.conn.close()
         # Remove created database.
-        hsql.remove_database(
-            connection=self._connection, dbname=self._new_db
-        )
+        hsql.remove_database(connection=self._connection, dbname=self._new_db)
         super().tearDown()
 
     def test_get_symbol_id1(self) -> None:
@@ -139,6 +133,32 @@ class TestSqlDataLoader1(hunitest.TestCase):
         with self.assertRaises(AssertionError):
             self._loader._read_data("CME", "", imcodatyp.Frequency.Minutely)
 
+    @staticmethod
+    def _generate_test_data(seed: int) -> pd.DataFrame:
+        """
+        Generate dataframe with some data based on symbol.
+        """
+        nrows = 5
+        df = pd.DataFrame(
+            {
+                "trade_symbol_id": [seed] * nrows,
+                "date": [
+                    datetime.date(2021, 1, i + 1).isoformat()
+                    for i in range(nrows)
+                ],
+                "datetime": [
+                    datetime.datetime(2021, 1, 1, 1, i + 1, 0).isoformat()
+                    for i in range(nrows)
+                ],
+                "open": [seed + i for i in range(nrows)],
+                "high": [seed + 2 * i for i in range(nrows)],
+                "low": [seed - i for i in range(nrows)],
+                "close": [seed] * nrows,
+                "volume": [seed * 100] * nrows,
+            }
+        )
+        return df
+
     @classmethod
     def _prepare_tables(cls, writer: imkisqwri.KibotSqlWriter) -> None:
         """
@@ -201,29 +221,3 @@ class TestSqlDataLoader1(hunitest.TestCase):
                     writer.insert_bulk_minute_data(
                         generated_data.drop(columns=["date"])
                     )
-
-    @staticmethod
-    def _generate_test_data(seed: int) -> pd.DataFrame:
-        """
-        Generate dataframe with some data based on symbol.
-        """
-        nrows = 5
-        df = pd.DataFrame(
-            {
-                "trade_symbol_id": [seed] * nrows,
-                "date": [
-                    datetime.date(2021, 1, i + 1).isoformat()
-                    for i in range(nrows)
-                ],
-                "datetime": [
-                    datetime.datetime(2021, 1, 1, 1, i + 1, 0).isoformat()
-                    for i in range(nrows)
-                ],
-                "open": [seed + i for i in range(nrows)],
-                "high": [seed + 2 * i for i in range(nrows)],
-                "low": [seed - i for i in range(nrows)],
-                "close": [seed] * nrows,
-                "volume": [seed * 100] * nrows,
-            }
-        )
-        return df

@@ -1,23 +1,35 @@
 #!/bin/bash
 #
-# Compare the build system of different repos.
+# Compare GH workflows / devops / config dirs of different repos.
 #
 
-GIT_CLIENT="lemonade2"
+# Select the dirs to compare.
+GIT_CLIENT="amp1"
 echo "GIT_CLIENT=$GIT_CLIENT"
 
 if [[ 0 == 1 ]]; then
     # amp vs lm.
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/$GIT_CLIENT
-else
+elif [[ 0 == 1 ]]; then
     # amp vs dev_tools.
     DIR1=$HOME/src/$GIT_CLIENT/amp
     DIR2=$HOME/src/dev_tools1
+else
+    # amp vs optimizer.
+    DIR1=$HOME/src/$GIT_CLIENT
+    DIR2=$HOME/src/$GIT_CLIENT/optimizer
 fi;
 
 echo "DIR1=$DIR1"
 echo "DIR2=$DIR2"
+
+if [[ ! -d $DIR1 ]]; then
+    echo "ERROR: '$DIR1' doesn't exist"
+fi;
+if [[ ! -d $DIR2 ]]; then
+    echo "ERROR: '$DIR2' doesn't exist"
+fi;
 
 # Compare some configuration files.
 if [[ 0 == 1 ]]; then

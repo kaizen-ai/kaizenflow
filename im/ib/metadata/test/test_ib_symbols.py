@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
 import im.common.metadata.symbols as imcomesym
 import im.ib.data.config as imibdacon
@@ -15,7 +15,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
     def setUpClass(cls) -> None:
         # Disable the chatty modules when debugging with DEBUG verbosity. We need to
         # disable the modules after they have been imported.
-        # import helpers.dbg as hdbg
+        # import helpers.hdbg as hdbg
         # hdbg.shutup_chatty_modules(verbose=True)
         hunitest.TestCase.setUpClass()
 
@@ -70,11 +70,13 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         """
         Test supported futures symbol converting.
         """
-        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
-            ib_ticker="ZC",
-            ib_exchange="CME part (ECBOT)",
-            ib_asset_class="Futures",
-            ib_currency="USD",
+        converted_symbol = (
+            imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker="ZC",
+                ib_exchange="CME part (ECBOT)",
+                ib_asset_class="Futures",
+                ib_currency="USD",
+            )
         )
         expected_symbol = imcomesym.Symbol(
             ticker="ZC",
@@ -89,11 +91,13 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         """
         Test symbol with unsupported exchange.
         """
-        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
-            ib_ticker="AA",
-            ib_exchange="No brackets exchange",
-            ib_asset_class="Stocks",
-            ib_currency="USD",
+        converted_symbol = (
+            imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker="AA",
+                ib_exchange="No brackets exchange",
+                ib_asset_class="Stocks",
+                ib_currency="USD",
+            )
         )
         self.assertIsNone(converted_symbol)
 
@@ -101,11 +105,13 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         """
         Test symbol with unsupported asset class.
         """
-        converted_symbol = imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
-            ib_ticker="AA",
-            ib_exchange="New York (NYSE)",
-            ib_asset_class="Warrants",
-            ib_currency="USD",
+        converted_symbol = (
+            imimeibsy.IbSymbolUniverse._convert_df_to_row_to_symbol(
+                ib_ticker="AA",
+                ib_exchange="New York (NYSE)",
+                ib_asset_class="Warrants",
+                ib_currency="USD",
+            )
         )
         self.assertIsNone(converted_symbol)
 
@@ -125,7 +131,9 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         Test uppercase name extraction from no brackets string.
         """
         extracted_exchange = (
-            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name("NAME")
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
+                "NAME"
+            )
         )
         self.assert_equal(extracted_exchange, "NAME")
 
@@ -145,7 +153,9 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         Test non-uppercase name extraction from no brackets string.
         """
         extracted_exchange = (
-            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name("Name")
+            imimeibsy.IbSymbolUniverse._extract_exchange_code_from_full_name(
+                "Name"
+            )
         )
         self.assertIsNone(extracted_exchange)
 
@@ -161,7 +171,11 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         )
         self.assert_equal(extracted_exchange, "NAMES")
 
-    @pytest.mark.slow("Around 15 sec.")
+    # The 1st test parses the large file, which is used by the tests
+    # `test_get_2`, `test_get_3`, `test_get_4`. They run < 5 seconds,
+    # but they depend on the `test_get_1`, so they should be in one
+    # test category, i.e. `slow` tests.
+    @pytest.mark.superslow("~30 seconds.")
     def test_get_1(self) -> None:
         """
         Test that ES symbol is returned by request.
@@ -179,7 +193,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.slow("Around 15 sec.")
+    @pytest.mark.superslow("depends on `test_get_1`.")
     def test_get_2(self) -> None:
         """
         Test that NON_EXISTING symbol is returned by request.
@@ -196,7 +210,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         )
         self.assertEqual(matched, [])
 
-    @pytest.mark.slow("Around 15 sec.")
+    @pytest.mark.superslow("depends on `test_get_1`.")
     def test_get_3(self) -> None:
         """
         Test that NG symbol is in downloaded list.
@@ -217,7 +231,7 @@ class TestIbSymbolUniverse(hunitest.TestCase):
         # TODO(gp): Use the actual outcome.
         self.assertEqual(len(matched), 1)
 
-    @pytest.mark.slow("Around 15 sec.")
+    @pytest.mark.superslow("depends on `test_get_1`.")
     def test_get_4(self) -> None:
         """
         Test that NON_EXISTING symbol is not in the downloaded list.
