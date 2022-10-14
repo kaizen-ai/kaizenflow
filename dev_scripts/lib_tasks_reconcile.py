@@ -392,7 +392,7 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     reconcile_run_sim(ctx, run_date=run_date)
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
+    reconcile_dump_tca_data(ctx, run_date=None)
+    #
     reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
-    #
-    reconcile_dump_tca_data(ctx, run_date=None)
