@@ -42,13 +42,10 @@ WEBSOCKET_CONFIG = {
     "ohlcv": {
         # Buffer size is 0 for OHLCV because we want to insert after round of receival
         #  from websockets.
-        "max_buffer_size": 0, 
-        "sleep_between_iter_in_ms": 60000
-        },
-    "bid_ask": {
-        "max_buffer_size": 500, 
-        "sleep_between_iter_in_ms": 200
-        },
+        "max_buffer_size": 0,
+        "sleep_between_iter_in_ms": 60000,
+    },
+    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter_in_ms": 200},
 }
 
 
@@ -283,7 +280,9 @@ def download_realtime_for_one_exchange(
         if exchange_id == "binance":
             data = imvcdttrut.remove_unfinished_ohlcv_bars(data)
         # Save data to the database.
-        imvcddbut.save_data_to_db(data, data_type, db_connection, db_table, start_timestamp.tz)
+        imvcddbut.save_data_to_db(
+            data, data_type, db_connection, db_table, start_timestamp.tz
+        )
         # Save data to S3 bucket.
         if args["s3_path"]:
             # Connect to S3 filesystem.
@@ -413,7 +412,8 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             pd.Timestamp.now(tz) - iter_start_time
         ).total_seconds() * 1000
         actual_sleep_time = max(
-            0, WEBSOCKET_CONFIG[data_type]["sleep_between_iter_in_ms"] - iter_length
+            0,
+            WEBSOCKET_CONFIG[data_type]["sleep_between_iter_in_ms"] - iter_length,
         )
         _LOG.info(
             "Iteration took %i ms, waiting between iterations for %i ms",

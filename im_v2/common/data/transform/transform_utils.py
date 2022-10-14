@@ -97,25 +97,35 @@ def reindex_on_custom_columns(
 
 def remove_unfinished_ohlcv_bars(data: pd.DataFrame) -> pd.DataFrame:
     """
-    Remove unfinished OHLCV bars, i.e. bars for which it holds that
+    Remove unfinished OHLCV bars, i.e. bars for which it holds that.
+
     end_download_timestamp - timestamp < 60s.
-    
-    Some exchanges, e.g. binance, label a candle representing 
+
+    Some exchanges, e.g. binance, label a candle representing
     1/1/2022 10:59 - 1/1/2022 11:00 with timestamp 1/1/2022 10:59
     If the bar has been downloaded less than a minute after the
     candle start. the candle will contain unfinished data.
-    
+
     :param data: DataFrame to filter unfinished bars from
     :return DataFrame with unfinished bars removed
     """
-    hdbg.dassert_is_subset(["timestamp", "end_download_timestamp"], list(data.columns))
-    time_diff = pd.to_datetime(data["end_download_timestamp"]).map(hdateti.convert_timestamp_to_unix_epoch) - data["timestamp"]
+    hdbg.dassert_is_subset(
+        ["timestamp", "end_download_timestamp"], list(data.columns)
+    )
+    time_diff = (
+        pd.to_datetime(data["end_download_timestamp"]).map(
+            hdateti.convert_timestamp_to_unix_epoch
+        )
+        - data["timestamp"]
+    )
     data = data.loc[time_diff >= 60000]
     return data
+
 
 # #############################################################################
 # Transform utils for raw websocket data
 # #############################################################################
+
 
 def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     """
@@ -215,6 +225,7 @@ def transform_raw_websocket_data(
     df["exchange_id"] = exchange_id
     return df
 
+
 # #############################################################################
 # Transform utils for resampling bid/ask data
 # #############################################################################
@@ -278,19 +289,21 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Transform raw bid/ask realtime data and resample to 1-min.
-    
+
     The function expects raw bid/ask data from a single exchange
-    sampled multiple times per second In the first step the raw data 
-    get resampled to 1 sec by applying mean(). The second step performs 
+    sampled multiple times per second In the first step the raw data
+    get resampled to 1 sec by applying mean(). The second step performs
     resampling to 1 min via sum for sizes and VWAP for prices.
-    
+
     :param df_raw: real-time bid/ask data from a single exchange
     """
     # Currently only data from single exchange across the dataset
     #  are supported.
-    hdbg.dassert_eq(len(df_raw["exchange_id"].unique()), 
-                    1, 
-                    "Only data from single exchange are supported")
+    hdbg.dassert_eq(
+        len(df_raw["exchange_id"].unique()),
+        1,
+        "Only data from single exchange are supported",
+    )
     exchange_id = df_raw["exchange_id"].unique()[0]
     # Currently only top of the book is supported.
     df_raw = df_raw[df_raw["level"] == 1]
@@ -306,8 +319,7 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         df_part = (
             df_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
             # Label right is used to match conventions used by CryptoChassis.
-            .resample("S", label="right")
-            .mean()
+            .resample("S", label="right").mean()
         )
         # Add the exchange_id column back for compatibility with the
         # 1 min resampling function.
