@@ -76,7 +76,7 @@ def _sanity_check_data(file_path: str) -> None:
 
 
 @task
-def reconcile_create_dirs(ctx, run_date=None, incremental=True):  # type: ignore
+def reconcile_create_dirs(ctx, run_date=None, abort_if_exists=True):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
@@ -96,18 +96,19 @@ def reconcile_create_dirs(ctx, run_date=None, incremental=True):  # type: ignore
     run_date = _get_run_date(run_date)
     # Create a dir specific of the run date.
     run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
-    if incremental and os.path.exists(run_date_dir):
-        _LOG.warning("The run_date_dir=%s already exists.", run_date_dir)
-        sys.exit(-1)
-    hio.create_dir(run_date_dir, incremental=incremental)
+    hio.create_dir(
+        run_date_dir, incremental=True, abort_if_exists=abort_if_exists
+    )
     # Create dirs for storing prod and simulation results.
     prod_dir = os.path.join(run_date_dir, "prod")
     simulation_dir = os.path.join(run_date_dir, "simulation")
-    hio.create_dir(prod_dir, incremental=incremental)
-    hio.create_dir(simulation_dir, incremental=incremental)
+    hio.create_dir(prod_dir, incremental=True, abort_if_exists=abort_if_exists)
+    hio.create_dir(
+        simulation_dir, incremental=True, abort_if_exists=abort_if_exists
+    )
     # Create dir for dumped TCA data.
     tca_dir = os.path.join(run_date_dir, "tca")
-    hio.create_dir(tca_dir, incremental=incremental)
+    hio.create_dir(tca_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Sanity check the created dirs.
     cmd = f"ls -lh {run_date_dir}"
     _system(cmd)
@@ -378,24 +379,20 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
 
 
 @task
-def reconcile_run_all(ctx, run_date=None, abort_on_first_error=True):  # type: ignore
+def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    invokes_list = (
-        reconcile_create_dirs,
-        reconcile_copy_prod_data,
-        reconcile_dump_market_data,
-        reconcile_run_sim,
-        reconcile_copy_sim_data,
-        reconcile_dump_tca_data,
-        reconcile_run_notebook,
-        reconcile_ls,
-    )
-    # TODO(Grisha): @Dan Fix approach to abort the invoke on the first error.
-    for invoke_target in invokes_list:
-        rc = invoke_target(ctx, run_date=run_date)
-        if rc != 0:
-            _LOG.error("'%s' invoke failed", invoke_target)
-            if abort_on_first_error:
-                sys.exit(-1)
+    # TODO(Grisha): @Dan Implement approach to abort the invoke on the first error.
+    reconcile_create_dirs(ctx, run_date=run_date)
+    #
+    reconcile_copy_prod_data(ctx, run_date=run_date)
+    #
+    reconcile_dump_market_data(ctx, run_date=run_date)
+    reconcile_run_sim(ctx, run_date=run_date)
+    reconcile_copy_sim_data(ctx, run_date=run_date)
+    #
+    reconcile_run_notebook(ctx, run_date=run_date)
+    reconcile_ls(ctx, run_date=run_date)
+    #
+    reconcile_dump_tca_data(ctx, run_date=None)
