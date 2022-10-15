@@ -10,8 +10,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.hpandas as hpandas
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
@@ -2679,8 +2679,8 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
 
 
 class Test_compute_duration_df(hunitest.TestCase):
-    """
-    
+    """ 
+    Compute timestamp stats from dfs in dict and check the modified intersection.
     """
 
     @staticmethod
@@ -2720,9 +2720,8 @@ class Test_compute_duration_df(hunitest.TestCase):
             "tag1": df1,
             "tag2": df2,
             "tag3": df3,
-        } 
+        }
         return tag_to_df
-
 
     def test1(self) -> None:
         """
@@ -2731,7 +2730,12 @@ class Test_compute_duration_df(hunitest.TestCase):
         tag_to_df = self.get_dict_with_dfs()
         tag_dfs, df_stats = hpandas.compute_duration_df(tag_to_df)
         expected_length = 3
-        expected_column_names = ['max_index', 'max_valid_index', 'min_index', 'min_valid_index']
+        expected_column_names = [
+            "max_index",
+            "max_valid_index",
+            "min_index",
+            "min_valid_index",
+        ]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[tag1, tag3]
@@ -2747,20 +2751,23 @@ class Test_compute_duration_df(hunitest.TestCase):
             expected_length,
             expected_column_names,
             expected_column_unique_values,
-            expected_signature
+            expected_signature,
         )
-
 
     def test_intersection1(self) -> None:
         """
-        Modify initial DataFrames in dictionary with non-valid intersection (incl. NaNs)
+        Modify initial DataFrames in dictionary with non-valid intersection (incl. NaNs).
         """
         tag_to_df = self.get_dict_with_dfs()
-        tag_dfs, df_stats = hpandas.compute_duration_df(tag_to_df, valid_intersect=False, intersect_dfs=True)
+        tag_dfs, df_stats = hpandas.compute_duration_df(
+            tag_to_df, valid_intersect=False, intersect_dfs=True
+        )
         # Collect all start timestamps.
         start_timestamps = [tag_dfs[tag].index.min() for tag in tag_dfs]
         # Check that all start timestamps are equal.
-        start_equal = all(element == start_timestamps[0] for element in start_timestamps)
+        start_equal = all(
+            element == start_timestamps[0] for element in start_timestamps
+        )
         hdbg.dassert_eq(start_equal, True)
         # Check that start intersection is correct.
         required_start_intersection = pd.Timestamp("2022-01-01 21:02:00+00:00")
@@ -2768,23 +2775,28 @@ class Test_compute_duration_df(hunitest.TestCase):
         # Collect all end timestamps.
         end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
         # Check that all end timestamps are equal.
-        end_equal = all(element == end_timestamps[0] for element in end_timestamps)
+        end_equal = all(
+            element == end_timestamps[0] for element in end_timestamps
+        )
         hdbg.dassert_eq(end_equal, True)
         # Check that end intersection is correct.
         required_end_intersection = pd.Timestamp("2022-01-01 21:04:00+00:00")
         hdbg.dassert_eq(end_timestamps[0], required_end_intersection)
 
-
     def test_intersection2(self) -> None:
         """
-        Modify initial DataFrames in dictionary with valid intersection (excl. NaNs)
+        Modify initial DataFrames in dictionary with valid intersection (ecxl. NaNs).
         """
         tag_to_df = self.get_dict_with_dfs()
-        tag_dfs, df_stats = hpandas.compute_duration_df(tag_to_df, valid_intersect=True, intersect_dfs=True)
+        tag_dfs, df_stats = hpandas.compute_duration_df(
+            tag_to_df, valid_intersect=True, intersect_dfs=True
+        )
         # Collect all start timestamps.
         start_timestamps = [tag_dfs[tag].index.min() for tag in tag_dfs]
         # Check that all start timestamps are equal.
-        start_equal = all(element == start_timestamps[0] for element in start_timestamps)
+        start_equal = all(
+            element == start_timestamps[0] for element in start_timestamps
+        )
         hdbg.dassert_eq(start_equal, True)
         # Check that start intersection is correct.
         required_start_intersection = pd.Timestamp("2022-01-01 21:03:00+00:00")
@@ -2792,7 +2804,9 @@ class Test_compute_duration_df(hunitest.TestCase):
         # Collect all end timestamps.
         end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
         # Check that all end timestamps are equal.
-        end_equal = all(element == end_timestamps[0] for element in end_timestamps)
+        end_equal = all(
+            element == end_timestamps[0] for element in end_timestamps
+        )
         hdbg.dassert_eq(end_equal, True)
         # Check that end intersection is correct.
         required_end_intersection = pd.Timestamp("2022-01-01 21:04:00+00:00")
