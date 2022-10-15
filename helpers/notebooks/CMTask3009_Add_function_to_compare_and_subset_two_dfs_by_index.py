@@ -59,7 +59,7 @@ tag_to_df = {
 tag_to_df
 
 # %%
-tag_dfs, stats = hpandas.compute_duration_df(tag_to_df, valid_intersect=True, intersect_dfs=True)
+tag_dfs, stats = hpandas.compute_duration_df(tag_to_df, valid_intersect=False, intersect_dfs=True)
 stats
 
 # %%
@@ -67,5 +67,24 @@ tag_dfs
 
 # %%
 tag_to_df
+
+# %%
+
+# %%
+
+# %%
+tag_dfs
+
+# %%
+dd = [tag_dfs[tag].index.min() for tag in tag_dfs]
+
+# %%
+dd[0]
+
+# %%
+result = all(element == dd[0] for element in dd)
+
+# %%
+result
 
 # %%
