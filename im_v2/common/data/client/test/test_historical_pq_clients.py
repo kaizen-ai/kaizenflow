@@ -353,7 +353,7 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
 # TestHistoricalPqByTileClient2
 # #############################################################################
 
-
+@pytest.mark.slow
 class TestHistoricalPqByTileClient2(icdc.ImClientTestCase):
     """
     Test that Parquet intervals are correctly filtered (corner cases).

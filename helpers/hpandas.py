@@ -510,8 +510,8 @@ def drop_duplicates(
         "use_index = % s, subset = % s args = % s, kwargs = % s",
         str(use_index),
         str(subset),
-        str(*args),
-        str(**kwargs),
+        str(args),
+        str(kwargs),
     )
     # TODO(Nina): Consider the case when one of the columns has "index" as its name.
     hdbg.dassert_not_in("index", data.columns.tolist())
