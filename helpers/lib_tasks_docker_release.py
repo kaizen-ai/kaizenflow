@@ -360,6 +360,7 @@ def docker_build_prod_image(  # type: ignore
         --tag {image_versioned_prod} \
         --file {dockerfile} \
         --build-arg VERSION={dev_version} \
+        --build-arg ECR_BASE_PATH={os.environ["CK_ECR_BASE_PATH"]} \
         .
     """
     hlitauti.run(ctx, cmd)
@@ -694,6 +695,7 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
             prod_dag_name = dag_name.replace("preprod.", "prod.")
             dag_s3_path = airflow_dags_s3_path + prod_dag_name
             s3fs_.put(dag_path, dag_s3_path)
+            _LOG.info("Successfully uploaded `%s`!", dag_s3_path)
             successful_uploads.append(dag_s3_path)
         # Upload new tag to ECS.
         docker_push_prod_image(ctx, prod_version)
@@ -722,11 +724,11 @@ def docker_update_prod_task_definition(ctx, version, preprod_tag, airflow_dags_s
                     key=attrgetter("last_modified"),
                     reverse=True,
                 )
-                latest_version = versions[-1]
+                latest_version = versions[0]
                 latest_version.delete()
                 _LOG.info("Deleted version `%s`.", latest_version.version_id)
                 if len(versions) > 1:
-                    rollback_version = versions[-2]
+                    rollback_version = versions[1]
                     _LOG.info(
                         "Active version is now `%s`!", rollback_version.version_id
                     )

@@ -97,6 +97,9 @@ class Order:
             txt.append(f"{k}={v}")
         return " ".join(txt)
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     @classmethod
     def from_string(cls, txt: str) -> "Order":
         """

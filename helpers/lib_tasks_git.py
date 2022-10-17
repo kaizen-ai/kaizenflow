@@ -165,7 +165,8 @@ def git_patch_create(  # type: ignore
     super_module = False
     git_client_root = hgit.get_client_root(super_module)
     hash_ = hgit.get_head_hash(git_client_root, short_hash=True)
-    timestamp = hlitauti._get_ET_timestamp()
+
+    timestamp = hlitauti.get_ET_timestamp()
     #
     tag = os.path.basename(git_client_root)
     dst_file = f"patch.{tag}.{hash_}.{timestamp}"

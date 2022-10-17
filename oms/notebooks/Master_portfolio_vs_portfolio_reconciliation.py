@@ -50,14 +50,24 @@ end_timestamp = pd.Timestamp(date + " 15:45:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", start_timestamp)
 
 # %%
+# !ls /data/cf_production/20220915/job.1002440809/job-sasm_job-jobid-1002440809/user_executable_run_0-1000005405809/cf_prod_system_log_dir/process_forecasts
+
+# %%
+#/share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir
+#/share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir
 prod_dir = (
-    "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.prod"
+    #"/share/data/cf_production/20220919/job.1002450215/job-sasm_job-jobid-1002450215/user_executable_run_0-1000005484302/cf_prod_system_log_dir"
+    "/share/data/cf_production/20220919/job.1002452903/user_executable_run_0-1000005489454/cf_prod_system_log_dir"
 )
-sim_dir = "/data/tmp/AmpTask2534_Prod_reconciliation_20220901/system_log_dir.sim"
+prod_dir = prod_dir.replace("/share/data/", "/data/")
 prod_portfolio_dir = os.path.join(prod_dir, "process_forecasts/portfolio")
 prod_forecast_dir = os.path.join(prod_dir, "process_forecasts")
+hdbg.dassert_dir_exists(prod_forecast_dir)
+
+sim_dir = "/app/system_log_dir"
 sim_portfolio_dir = os.path.join(sim_dir, "process_forecasts/portfolio")
 sim_forecast_dir = os.path.join(sim_dir, "process_forecasts")
+hdbg.dassert_dir_exists(sim_forecast_dir)
 
 # %%
 # hdbg.dassert_dir_exists(root_dir)
@@ -73,47 +83,6 @@ dict_ = {
 #
 config = cconfig.Config.from_dict(dict_)
 display(config)
-
-
-# %%
-def load_portfolio(
-    portfolio_dir, start_timestamp, end_timestamp, freq
-) -> Tuple[pd.DataFrame, pd.DataFrame]:
-    # Make sure the directory exists.
-    hdbg.dassert_dir_exists(portfolio_dir)
-    # Sanity-check timestamps.
-    hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
-    hdbg.dassert_isinstance(end_timestamp, pd.Timestamp)
-    hdbg.dassert_lt(start_timestamp, end_timestamp)
-    # Load the portfolio and stats dataframes.
-    portfolio_df, portfolio_stats_df = oms.Portfolio.read_state(
-        portfolio_dir,
-    )
-    # Sanity-check the dataframes.
-    hpandas.dassert_time_indexed_df(
-        portfolio_df, allow_empty=False, strictly_increasing=True
-    )
-    hpandas.dassert_time_indexed_df(
-        portfolio_stats_df, allow_empty=False, strictly_increasing=True
-    )
-    # Sanity-check the date ranges of the dataframes against the start and end timestamps.
-    first_timestamp = portfolio_df.index[0]
-    hdbg.dassert_lte(first_timestamp.round(freq), start_timestamp)
-    last_timestamp = portfolio_df.index[-1]
-    hdbg.dassert_lte(end_timestamp, last_timestamp.round(freq))
-    #
-    portfolio_df = portfolio_df.loc[start_timestamp:end_timestamp]
-    portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:end_timestamp]
-    #
-    return portfolio_df, portfolio_stats_df
-
-
-# %%
-def compute_delay(df, freq):
-    bar_index = df.index.round(config["freq"])
-    delay_vals = df.index - bar_index
-    delay = pd.Series(delay_vals, bar_index, name="delay")
-    return delay
 
 
 # %% [markdown]
@@ -138,7 +107,7 @@ hpandas.df_to_str(sim_forecast_df, log_level=logging.INFO)
 # ## Compute forecast prod delay
 
 # %%
-prod_forecast_delay = compute_delay(prod_forecast_df, config["freq"])
+prod_forecast_delay = oms.compute_delay(prod_forecast_df, config["freq"])
 hpandas.df_to_str(prod_forecast_delay, log_level=logging.INFO)
 
 # %%
@@ -191,11 +160,12 @@ hpandas.df_to_str(sim_order_df, log_level=logging.INFO)
 # ## Load prod portfolio
 
 # %%
-prod_portfolio_df, prod_portfolio_stats_df = load_portfolio(
+prod_portfolio_df, prod_portfolio_stats_df = oms.load_portfolio_artifacts(
     config["prod_portfolio_dir"],
     config["start_timestamp"],
     config["end_timestamp"],
     config["freq"],
+    normalize_bar_times=False,
 )
 
 # %%
@@ -208,11 +178,12 @@ hpandas.df_to_str(prod_portfolio_stats_df, log_level=logging.INFO)
 # ## Load sim portfolio
 
 # %%
-sim_portfolio_df, sim_portfolio_stats_df = load_portfolio(
+sim_portfolio_df, sim_portfolio_stats_df = oms.load_portfolio_artifacts(
     config["sim_portfolio_dir"],
     config["start_timestamp"],
     config["end_timestamp"],
     config["freq"],
+    normalize_bar_times=False,
 )
 
 # %%
@@ -225,7 +196,7 @@ hpandas.df_to_str(sim_portfolio_stats_df, log_level=logging.INFO)
 # ## Compute prod portfolio delay
 
 # %%
-prod_portfolio_delay = compute_delay(prod_portfolio_df, config["freq"])
+prod_portfolio_delay = oms.compute_delay(prod_portfolio_df, config["freq"])
 
 # %%
 hpandas.df_to_str(prod_portfolio_delay, log_level=logging.INFO)
@@ -297,6 +268,20 @@ hpandas.df_to_str(
     log_level=logging.INFO,
 )
 
+# %%
+# OMS
+
+# %%
+shares_df = oms.compute_shares_traded(prod_portfolio_df, prod_order_df, "15T")
+
+# %%
+shares_df.columns.levels[0]
+
+# %%
+#shares_df["estimated_price_per_share"]
+#shares_df["underfill"] / shares_df["order_share_target_as_int"]
+shares_df["order_share_target_as_int"]
+
 
 # %% [markdown]
 # # System configs
@@ -341,5 +326,3 @@ prod_output_only, sim_output_only = diff_lines(
 
 # %%
 # sim_output_only
-
-# %%

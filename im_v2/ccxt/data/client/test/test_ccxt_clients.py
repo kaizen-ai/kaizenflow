@@ -4,6 +4,7 @@ from typing import List
 import pandas as pd
 import pytest
 
+import helpers.hdatetime as hdateti
 import helpers.henv as henv
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
@@ -947,6 +948,65 @@ class TestCcxtSqlRealTimeImClient1(
         columns = ["open", "close"]
         self._test_filter_columns3(im_client, full_symbol, columns)
 
+    # ///////////////////////////////////////////////////////////////////////
+
+    # TODO(Danya): Convert to a separate test in the `ImClientTestCase`.
+    def test_filter_duplicates(self) -> None:
+        """
+        Verify that duplicated data is filtered correctly.
+        """
+        input_data = self._get_duplicated_test_data()
+        self.assertEqual(input_data.shape, (10, 10))
+        # Filter duplicates.
+        full_symbol_col_name = "full_symbol"
+        resample_1min = True
+        im_client = icdcl.CcxtSqlRealTimeImClient(
+            resample_1min, self.connection, "ccxt_ohlcv"
+        )
+        actual_data = im_client._filter_duplicates(
+            input_data, full_symbol_col_name
+        )
+        expected_length = 6
+        expected_column_names = [
+            "close",
+            "end_download_timestamp",
+            "full_symbol",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "volume",
+        ]
+        expected_column_unique_values = {
+            "full_symbol": [
+                "binance::BTC_USDT",
+                "binance::ETH_USDT",
+                "kucoin::ETH_USDT",
+            ]
+        }
+        # pylint: disable=line-too-long
+        expected_signature = """# df=
+        index=[2021-09-09 00:00:00+00:00, 2021-09-09 00:04:00+00:00]
+        columns=id,open,high,low,close,volume,end_download_timestamp,knowledge_timestamp,full_symbol
+        shape=(6, 9)
+        id open high low close volume end_download_timestamp knowledge_timestamp full_symbol
+        timestamp
+        2021-09-09 00:00:00+00:00 1 30 40 50 60 70 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:01:00+00:00 2 31 41 51 61 71 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:02:00+00:00 3 32 42 52 62 72 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
+        2021-09-09 00:04:00+00:00 4 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::BTC_USDT
+        2021-09-09 00:04:00+00:00 5 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 binance::ETH_USDT
+        2021-09-09 00:04:00+00:00 6 34 44 54 64 74 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00 kucoin::ETH_USDT"""
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_data,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
     # TODO(Nina): Move setUp and tearDown methods on top of the class.
     def setUp(self) -> None:
         super().setUp()
@@ -994,6 +1054,39 @@ class TestCcxtSqlRealTimeImClient1(
         )
         return test_data
 
+    def _get_duplicated_test_data(self) -> pd.DataFrame:
+        """
+        Get test data with duplicates for `_filter_duplicates` method test.
+        """
+        test_data = self._get_test_data()
+        #
+        # TODO(Danya): Add timezone info to test data in client tests.
+        test_data["knowledge_timestamp"] = test_data[
+            "knowledge_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["end_download_timestamp"] = test_data[
+            "end_download_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["timestamp"] = test_data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Add duplicated rows.
+        dupes = test_data.loc[0:3]
+        dupes["knowledge_timestamp"] = dupes[
+            "knowledge_timestamp"
+        ] - pd.Timedelta("40s")
+        dupes["end_download_timestamp"] = dupes[
+            "end_download_timestamp"
+        ] - pd.Timedelta("40s")
+        test_data = pd.concat([test_data, dupes]).reset_index(drop=True)
+        # Add full_symbol column.
+        full_symbol_col_name = "full_symbol"
+        test_data[full_symbol_col_name] = ivcu.build_full_symbol(
+            test_data["exchange_id"], test_data["currency_pair"]
+        )
+        test_data = test_data.drop(["exchange_id", "currency_pair"], axis=1)
+        return test_data
+
     def _create_test_table(self) -> None:
         """
         Create a test CCXT OHLCV table in DB.
@@ -1010,6 +1103,11 @@ class TestCcxtSqlRealTimeImClient1(
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
+)
+# TODO(gp): This is due to one of the discrepancies between amp and cmamp.
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("get_name()") == "//amp",
+    reason="Run only in //amp",
 )
 class TestCcxtHistoricalPqByTileClient1(icdc.ImClientTestCase):
     """

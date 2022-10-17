@@ -17,11 +17,13 @@ import helpers.hdbg as hdbg
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 
 _LOG = logging.getLogger(__name__)
 
 
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
+# Enable extra verbose debugging. Do not commit.
+_TRACE = False
 
 
 AssetId = int
@@ -32,6 +34,13 @@ AssetId = int
 # #############################################################################
 
 
+# TODO(gp): We should use the column_remap as we do for broker. E.g., we tell the
+#  remap what's the mapping from the column names to the official names.
+#  Instead now we specify the name of each column through `start_time_col_name`
+#  and `end_time_col_name`.
+#  The remap approach has the benefit of tending to make the naming more stable.
+# TODO(gp): One can use start or end of an interval to work on. It's unclear how
+#  the knowledge time is handled. It seems that it is handled by the derived classes.
 class MarketData(abc.ABC, hobject.PrintableMixin):
     """
     Implement an interface to an historical / real-time source of price data.
@@ -56,6 +65,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     # Non-responsibilities:
     - In general do not access data directly but rely on `ImClient` objects to
       retrieve the data from different backends
+    - The knowledge time is handled by the derived classes.
 
     # Output format
     - The class normalizes the data by:
@@ -119,7 +129,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             hprint.to_str(
                 "asset_id_col asset_ids start_time_col_name "
                 "end_time_col_name columns get_wall_clock_time "
-                "timezone sleep_in_secs time_out_in_secs column_remap filter_data_mode"
+                "timezone sleep_in_secs time_out_in_secs column_remap "
+                "filter_data_mode"
             )
         )
         self._asset_id_col = asset_id_col
@@ -174,7 +185,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         :return: DataFrame with data for last given period
         """
         # Handle `timedelta`.
-        _LOG.verb_debug(hprint.to_str("timedelta"))
+        if _TRACE:
+            _LOG.trace(hprint.to_str("timedelta"))
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         wall_clock_time = self.get_wall_clock_time()
         start_ts = self._process_period(timedelta, wall_clock_time)
@@ -195,7 +207,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
+        if _TRACE:
+            _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
         return df
 
     def get_data_at_timestamp(
@@ -211,6 +224,12 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             on and use as index
         :param ts: the timestamp to filter on
         :param asset_ids: list of asset ids to filter on. `None` for all asset ids.
+        :return: df with results, e.g.,
+        ```
+                                             start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id   price
+        end_datetime
+        2000-01-01 09:35:00-05:00 2000-01-01 09:34:00-05:00 2000-01-01 09:35:01-05:00  997.41  997.44    997.42     978       101  997.42
+        ```
         """
         self._dassert_valid_asset_ids(asset_ids)
         start_ts = ts - pd.Timedelta("1S")
@@ -223,7 +242,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
-        _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
+        if _TRACE:
+            _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
         return df
 
     def get_data_for_interval(
@@ -278,7 +298,6 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # If the assets were specified, check that the returned data doesn't contain
         # data that we didn't request.
         # TODO(Danya): How do we handle NaNs?
-        #
         hdbg.dassert_is_subset(
             df[self._asset_id_col].dropna().unique(), asset_ids
         )
@@ -296,7 +315,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             )
         # Remap result columns to the required names.
         df = self._remap_columns(df)
-        _LOG.verb_debug("-> df=\n%s", hpandas.df_to_str(df))
+        if _TRACE:
+            _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
         hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
@@ -320,6 +340,43 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
     # /////////////////////////////////////////////////////////////////////////////
 
+    def to_price_series(
+        self,
+        price_df: pd.DataFrame,
+        col_name: str,
+    ) -> pd.Series:
+        """
+        Convert a df with prices returned by methods like `get_twap_price()`.
+            ```
+                                                 start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id   price
+            end_datetime
+            2000-01-01 09:35:00-05:00 2000-01-01 09:34:00-05:00 2000-01-01 09:35:01-05:00  997.41  997.44    997.42     978       101  997.42
+            ```
+        into a series that indexed by asset_id:
+            ```
+                       price
+            asset_id
+            101       997.93
+            ```
+        """
+        hdbg.dassert_isinstance(price_df, pd.DataFrame)
+        # Convert the df of data into a series indexed by asset_id.
+        hdbg.dassert_in(col_name, price_df.columns)
+        price_df = price_df.reset_index()
+        price_df = price_df[[col_name, self._asset_id_col]]
+        price_df.set_index(self._asset_id_col, inplace=True)
+        # Ensure that there are not repeated asset ids.
+        hdbg.dassert_no_duplicates(
+            price_df.index.to_list(), "price_df=%s", price_df
+        )
+        # Ensure that there is a single.
+        price_srs = hpandas.to_series(price_df)
+        hdbg.dassert_isinstance(price_srs, pd.Series)
+        price_srs.index.name = self._asset_id_col
+        price_srs.name = col_name
+        hpandas.dassert_series_type_in(price_srs, [np.float64, np.int64])
+        return price_srs
+
     def get_twap_price(
         self,
         start_ts: pd.Timestamp,
@@ -327,7 +384,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         ts_col_name: str,
         asset_ids: List[int],
         column: str,
-    ) -> pd.Series:
+    ) -> pd.DataFrame:
         """
         Compute TWAP of the column `column` in (ts_start, ts_end].
 
@@ -335,6 +392,19 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
         This function should be called `get_twa_price()` or `get_twap()`, but alas
         TWAP is often used as an adjective for price.
+
+        :param start_ts, end_ts: beginning and end of the time period as (`ts_start`,
+            `ts_end`]
+        :param ts_col_name: column to use to index (e.g., `start_datetime` or
+            `end_datetime`)
+        :param column: column to use to compute the TWAP (e.g., `bid`, `ask`,
+            `price`)
+        :return: df with prices, like:
+            ```
+                                                 start_datetime              timestamp_db     bid     ask  midpoint  volume  asset_id   price
+            end_datetime
+            2000-01-01 09:35:00-05:00 2000-01-01 09:34:00-05:00 2000-01-01 09:35:01-05:00  997.41  997.44    997.42     978       101  997.42
+            ```
         """
         self._dassert_valid_asset_ids(asset_ids)
         # Get the slice (start_ts, end_ts] of prices.
@@ -356,18 +426,42 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # done it.
         hdbg.dassert_in(column, prices.columns)
         # Compute the mean value.
-        _LOG.verb_debug("prices=\n%s", prices)
-        twap = prices.groupby(self._asset_id_col)[column].mean()
-        hpandas.dassert_series_type_in(twap, [np.float64, np.int64])
-        return twap
+        if _TRACE:
+            _LOG.trace("prices=\n%s", prices)
+        # twap_srs looks like:
+        # ```
+        #            price
+        # asset_id
+        # 101       997.93
+        # ```
+        twap_srs = prices.groupby(self._asset_id_col)[column].mean()
+        hpandas.dassert_series_type_in(twap_srs, [np.float64, np.int64])
+        # Add start_ts and end_ts.
+        start_datetime_srs = pd.Series(start_ts, index=twap_srs.index)
+        start_datetime_srs.name = self._start_time_col_name
+        end_datetime_srs = pd.Series(end_ts, index=twap_srs.index)
+        end_datetime_srs.name = self._end_time_col_name
+        # Swap index from asset_id to end_time_col_name.
+        twap_df = pd.concat(
+            [start_datetime_srs, end_datetime_srs, twap_srs], axis=1
+        )
+        twap_df = twap_df.reset_index().set_index(self._end_time_col_name)
+        # The df should look like:
+        # ```
+        #                                      start_datetime   price  asset_id
+        # end_datetime
+        # 2000-01-01 09:35:00-05:00 2000-01-01 09:34:00-05:00  997.41     101.0
+        # ```
+        return twap_df
 
     def get_last_twap_price(
         self,
+        # TODO(gp): -> bar_duration_as_pd_str
         bar_duration: str,
         ts_col_name: str,
         asset_ids: List[int],
         column: str,
-    ) -> pd.Series:
+    ) -> pd.DataFrame:
         """
         Compute TWAP of the column `column` over last `bar_duration`.
 
@@ -381,14 +475,14 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         first_end_time = last_end_time - offset
         # We rely on the assumption that we are reading 1-minute bars.
         start_time = first_end_time - pd.Timedelta(minutes=1)
-        twap = self.get_twap_price(
+        twap_df = self.get_twap_price(
             start_time,
             last_end_time,
             ts_col_name,
             asset_ids,
             column,
         )
-        return twap
+        return twap_df
 
     # /////////////////////////////////////////////////////////////////////////////
     # Methods for handling real-time behaviors.
@@ -407,16 +501,20 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             # Convert to ET.
             # TODO(Dan): Pass timezone from ctor in CmTask1000.
             ret = ret.tz_convert("America/New_York")
-        _LOG.verb_debug("-> ret=%s", ret)
+        if _TRACE:
+            _LOG.trace("-> ret=%s", ret)
         return ret
 
     def get_last_price(
         self,
         col_name: str,
         asset_ids: List[int],
-    ) -> pd.Series:
+    ) -> pd.DataFrame:
         """
-        Get last price for `asset_ids` using column `col_name` (e.g., "close")
+        Get last price for `asset_ids` using column `col_name` (e.g., "close").
+
+        It returns data in the same format as the get data functions
+        (e.g., `get_twap_price()`).
         """
         self._dassert_valid_asset_ids(asset_ids)
         # TODO(Paul): Use a to-be-written `get_last_start_time()` instead.
@@ -430,17 +528,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             self._start_time_col_name,
             asset_ids,
         )
-        # Convert the df of data into a series.
-        hdbg.dassert_in(col_name, df.columns)
-        last_price = df[[col_name, self._asset_id_col]]
-        last_price.set_index(self._asset_id_col, inplace=True)
-        last_price_srs = hpandas.to_series(last_price)
-        hdbg.dassert_isinstance(last_price_srs, pd.Series)
-        last_price_srs.index.name = self._asset_id_col
-        last_price_srs.name = col_name
-        hpandas.dassert_series_type_in(last_price_srs, [np.float64, np.int64])
         # TODO(gp): Print if there are nans.
-        return last_price_srs
+        return df
 
     @abc.abstractmethod
     def should_be_online(self, wall_clock_time: pd.Timestamp) -> bool:
@@ -457,35 +546,39 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         check this by checking if there was data in the last minute.
         """
         # Check if the data in the last minute is empty.
-        _LOG.verb_debug("")
+        if _TRACE:
+            _LOG.trace("")
         # The DB is online if there was data within the last minute.
         last_db_end_time = self.get_last_end_time()
         if last_db_end_time is None:
             ret = False
         else:
-            _LOG.verb_debug(
-                "last_db_end_time=%s -> %s",
-                last_db_end_time,
-                last_db_end_time.floor("Min"),
-            )
+            if _TRACE:
+                _LOG.trace(
+                    "last_db_end_time=%s -> %s",
+                    last_db_end_time,
+                    last_db_end_time.floor("Min"),
+                )
             wall_clock_time = self.get_wall_clock_time()
-            _LOG.verb_debug(
-                "wall_clock_time=%s -> %s",
-                wall_clock_time,
-                wall_clock_time.floor("Min"),
-            )
+            if _TRACE:
+                _LOG.trace(
+                    "wall_clock_time=%s -> %s",
+                    wall_clock_time,
+                    wall_clock_time.floor("Min"),
+                )
             ret = last_db_end_time.floor("Min") >= (
                 wall_clock_time.floor("Min") - pd.Timedelta("1T")
             )
-        _LOG.verb_debug("-> ret=%s", ret)
+        if _TRACE:
+            _LOG.trace("-> ret=%s", ret)
         return ret
 
     async def wait_for_latest_data(
         self,
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
-        Wait until the bar with `end_time` == `wall_clock_time` is present in
-        the RT DB.
+        Wait until the bar with `end_time` == `current_bar_timestamp` is
+        present in the RT DB.
 
         :return:
             - start_sampling_time: timestamp when the sampling started
@@ -494,7 +587,13 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             - num_iter: number of iterations before the last bar was ready
         """
         start_sampling_time = self.get_wall_clock_time()
-        _LOG.verb_debug("DB on-line: %s", self.is_online())
+        current_bar_timestamp = hwacltim.get_current_bar_timestamp()
+        _LOG.debug(hprint.to_str("start_sampling_time current_bar_timestamp"))
+        # We should start sampling for a bar inside the bar interval. Sometimes we start a
+        # second before or after due to wall-clock drift so we round to the nearest minute.
+        hdbg.dassert_lte(start_sampling_time.round("1T"), current_bar_timestamp)
+        if _TRACE:
+            _LOG.trace("DB on-line: %s", self.is_online())
         #
         hprint.log_frame(_LOG, "Waiting on last bar ...")
         num_iter = 0
@@ -504,14 +603,16 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             # TODO(gp): We should use the new hasynci.poll().
             _LOG.debug(
                 "\n### waiting on last bar: "
-                "num_iter=%s/%s: wall_clock_time=%s last_db_end_time=%s",
+                "num_iter=%s/%s: current_bar_timestamp=%s wall_clock_time=%s last_db_end_time=%s",
                 num_iter,
                 self._max_iterations,
+                current_bar_timestamp,
                 wall_clock_time,
                 last_db_end_time,
             )
             if last_db_end_time and (
-                last_db_end_time.floor("Min") >= wall_clock_time.floor("Min")
+                last_db_end_time.floor("Min")
+                >= current_bar_timestamp.floor("Min")
             ):
                 # Get the current timestamp when the call was finally executed.
                 hprint.log_frame(_LOG, "Waiting on last bar: done")
@@ -520,12 +621,14 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             if num_iter >= self._max_iterations:
                 raise TimeoutError
             num_iter += 1
-            _LOG.verb_debug("Sleep for %s secs", self._sleep_in_secs)
+            if _TRACE:
+                _LOG.trace("Sleep for %s secs", self._sleep_in_secs)
             await asyncio.sleep(self._sleep_in_secs)
-        _LOG.verb_debug(
-            "-> %s",
-            hprint.to_str("start_sampling_time end_sampling_time num_iter"),
-        )
+        if _TRACE:
+            _LOG.trace(
+                "-> %s",
+                hprint.to_str("start_sampling_time end_sampling_time num_iter"),
+            )
         return start_sampling_time, end_sampling_time, num_iter
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -559,11 +662,13 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
 
         :param timedelta: a `pd.Timedelta` like `1D`, `5T`
         """
-        _LOG.verb_debug(hprint.to_str("timedelta wall_clock_time"))
+        if _TRACE:
+            _LOG.trace(hprint.to_str("timedelta wall_clock_time"))
         hdbg.dassert_isinstance(timedelta, pd.Timedelta)
         hdbg.dassert_lt(pd.Timedelta("0S"), timedelta)
         last_start_time = wall_clock_time - timedelta
-        _LOG.verb_debug("last_start_time=%s", last_start_time)
+        if _TRACE:
+            _LOG.trace("last_start_time=%s", last_start_time)
         return last_start_time
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -647,7 +752,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         df.set_index(self._end_time_col_name, drop=True, inplace=True)
         # TODO(gp): Add a check to make sure we are not getting data after the
         #  current time.
-        _LOG.verb_debug("df.empty=%s, df.shape=%s", df.empty, str(df.shape))
+        if _TRACE:
+            _LOG.trace("df.empty=%s, df.shape=%s", df.empty, str(df.shape))
         # # The data source should not return data after the current time.
         # if not df.empty:
         #     wall_clock_time = self.get_wall_clock_time()

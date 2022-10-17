@@ -34,7 +34,7 @@ ret_0:
           dtypes: float64(2)
     compute_smooth_moving_average:
       fit:
-        tau: 4.749994998634449
+        tau: 4.749994998634446
         min_periods: 9
         df_out_info:
           <class 'pandas.core.frame.DataFrame'>

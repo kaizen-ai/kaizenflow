@@ -30,7 +30,7 @@ _5mins = pd.DateOffset(minutes=5)
 
 class TestDataFramePortfolio1(hunitest.TestCase):
     @staticmethod
-    def get_portfolio1():
+    def get_portfolio1() -> omportfo.Portfolio:
         """
         Return a freshly minted Portfolio with only cash.
         """
@@ -45,7 +45,7 @@ class TestDataFramePortfolio1(hunitest.TestCase):
                 market_data=market_data,
             )
             _ = portfolio.mark_to_market()
-            return portfolio
+        return portfolio
 
     # @pytest.mark.skip("This is flaky because of the clock jitter")
     def test_state(self) -> None:
@@ -86,14 +86,15 @@ class TestDataFramePortfolio2(hunitest.TestCase):
             _ = portfolio.mark_to_market()
             # Check.
             expected = pd.DataFrame(
-                {-1: 1000000.0},
-                [
+                index=[
                     pd.Timestamp(
                         "2000-01-01 09:35:00-05:00", tz="America/New_York"
                     )
                 ],
             )
-            self.assert_dfs_close(portfolio.get_historical_holdings(), expected)
+            self.assert_dfs_close(
+                portfolio.get_historical_holdings_shares(), expected
+            )
 
     def test_initialization_with_holdings1(self) -> None:
         """
@@ -116,19 +117,21 @@ class TestDataFramePortfolio2(hunitest.TestCase):
                 broker,
                 mark_to_market_col,
                 pricing_method,
-                holdings_dict=holdings_dict,
+                holdings_shares_dict=holdings_dict,
             )
             _ = portfolio.mark_to_market()
             # Check.
-            expected = pd.DataFrame(
-                {101: 727.5, 202: 1040.3, -1: 10000.0},
+            expected_shares = pd.DataFrame(
+                {101: 727.5, 202: 1040.3},
                 [
                     pd.Timestamp(
                         "2000-01-01 09:35:00-05:00", tz="America/New_York"
                     )
                 ],
             )
-            self.assert_dfs_close(portfolio.get_historical_holdings(), expected)
+            self.assert_dfs_close(
+                portfolio.get_historical_holdings_shares(), expected_shares
+            )
 
     def test_get_historical_statistics1(self) -> None:
         with hasynci.solipsism_context() as event_loop:
@@ -174,7 +177,7 @@ class TestDataFramePortfolio2(hunitest.TestCase):
                 broker,
                 mark_to_market_col,
                 pricing_method,
-                holdings_dict=holdings_dict,
+                holdings_shares_dict=holdings_dict,
             )
             _ = portfolio.mark_to_market()
             expected = r"""
@@ -321,26 +324,31 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
         # Check.
         actual = str(portfolio)
         expected = r"""
-        <oms.portfolio.DatabasePortfolio at 0x>
-        # historical holdings=
-        asset_id                    101       -1
-        2000-01-01 09:35:00-05:00   0.0  1000000.0
-        2000-01-01 09:40:00-05:00  20.0  1000000.0
-        # historical holdings marked to market=
-        asset_id                        101       -1
-        2000-01-01 09:35:00-05:00      0.00  1000000.0
-        2000-01-01 09:40:00-05:00  20004.03  1000000.0
-        # historical flows=
-        asset_id                   101
-        2000-01-01 09:40:00-05:00  0.0
-        # historical pnl=
-        asset_id                        101
-        2000-01-01 09:35:00-05:00       NaN
-        2000-01-01 09:40:00-05:00  20004.03
-        # historical statistics=
-                                        pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
-        2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
-        2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02"""
+<oms.portfolio.DatabasePortfolio at 0x>
+  # holdings_shares=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00   0.0
+  2000-01-01 09:40:00-05:00  20.0
+  # holdings_notional=
+  asset_id                        101
+  2000-01-01 09:35:00-05:00      0.00
+  2000-01-01 09:40:00-05:00  20004.03
+  # executed_trades_shares=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00   0.0
+  2000-01-01 09:40:00-05:00  20.0
+  # executed_trades_notional=
+  asset_id                   101
+  2000-01-01 09:40:00-05:00 -0.0
+  # pnl=
+  asset_id                        101
+  2000-01-01 09:35:00-05:00       NaN
+  2000-01-01 09:40:00-05:00  20004.03
+  # statistics=
+                                  pnl  gross_volume  net_volume       gmv       nmv       cash  net_wealth  leverage
+  2000-01-01 09:35:00-05:00       NaN           0.0         0.0      0.00      0.00  1000000.0    1.00e+06      0.00
+  2000-01-01 09:40:00-05:00  20004.03           0.0         0.0  20004.03  20004.03  1000000.0    1.02e+06      0.02
+"""
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test1(self) -> None:
@@ -381,26 +389,31 @@ class TestDatabasePortfolio1(omtodh.TestOmsDbHelper):
         # Check.
         actual = str(portfolio)
         expected = r"""
-        <oms.portfolio.DatabasePortfolio at 0x>
-        # historical holdings=
-        asset_id                    101      -1
-        2000-01-01 09:35:00-05:00   0.0  1.00e+06
-        2000-01-01 09:40:00-05:00  20.0  1.00e+06
-        # historical holdings marked to market=
-        asset_id                        101      -1
-        2000-01-01 09:35:00-05:00      0.00  1.00e+06
-        2000-01-01 09:40:00-05:00  20004.03  1.00e+06
-        # historical flows=
-        asset_id                       101
-        2000-01-01 09:40:00-05:00  1903.12
-        # historical pnl=
-        asset_id                        101
-        2000-01-01 09:35:00-05:00       NaN
-        2000-01-01 09:40:00-05:00  21907.15
-        # historical statistics=
-                                        pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
-        2000-01-01 09:35:00-05:00       NaN          0.00        0.00      0.00      0.00  1.00e+06    1.00e+06      0.00
-        2000-01-01 09:40:00-05:00  21907.15       1903.12    -1903.12  20004.03  20004.03  1.00e+06    1.02e+06      0.02"""
+<oms.portfolio.DatabasePortfolio at 0x>
+  # holdings_shares=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00   0.0
+  2000-01-01 09:40:00-05:00  20.0
+  # holdings_notional=
+  asset_id                        101
+  2000-01-01 09:35:00-05:00      0.00
+  2000-01-01 09:40:00-05:00  20004.03
+  # executed_trades_shares=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00   0.0
+  2000-01-01 09:40:00-05:00  20.0
+  # executed_trades_notional=
+  asset_id                       101
+  2000-01-01 09:40:00-05:00 -1903.12
+  # pnl=
+  asset_id                        101
+  2000-01-01 09:35:00-05:00       NaN
+  2000-01-01 09:40:00-05:00  21907.15
+  # statistics=
+                                  pnl  gross_volume  net_volume       gmv       nmv      cash  net_wealth  leverage
+  2000-01-01 09:35:00-05:00       NaN          0.00        0.00      0.00      0.00  1.00e+06    1.00e+06      0.00
+  2000-01-01 09:40:00-05:00  21907.15       1903.12    -1903.12  20004.03  20004.03  1.00e+06    1.02e+06      0.02
+"""
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test2(self) -> None:
@@ -463,10 +476,11 @@ class TestDatabasePortfolio2(omtodh.TestOmsDbHelper):
         #
         portfolio_df_str = hpandas.df_to_str(portfolio_df, precision=precision)
         expected_portfolio_df_str = r"""
-                                  holdings            holdings_marked_to_market            flows   pnl
-                                       101       -1                         101       -1     101   101
-        2000-01-01 09:40:00-05:00     20.0  1000000.0                  20004.03  1000000.0   0.0   NaN
-        2000-01-01 09:45:00-05:00     20.0  1000000.0                  19998.37  1000000.0  -0.0 -5.66"""
+                          holdings_shares holdings_notional  executed_trades_shares executed_trades_notional   pnl
+                                      101               101                     101                      101   101
+2000-01-01 09:40:00-05:00            20.0          20004.03                    20.0                     -0.0   NaN
+2000-01-01 09:45:00-05:00            20.0          19998.37                     0.0                      0.0 -5.66
+"""
         self.assert_equal(
             portfolio_df_str, expected_portfolio_df_str, fuzzy_match=True
         )
@@ -530,26 +544,31 @@ class TestDatabasePortfolio3(omtodh.TestOmsDbHelper):
         #
         actual = str(portfolio)
         expected = r"""
-        <oms.portfolio.DatabasePortfolio at 0x>
-        # historical holdings=
-        asset_id                    101  -1
-        2000-01-01 09:35:00-05:00  20.0  0.0
-        2000-01-01 09:40:00-05:00  20.0  0.0
-        # historical holdings marked to market=
-        asset_id                        101  -1
-        2000-01-01 09:35:00-05:00  20006.24  0.0
-        2000-01-01 09:40:00-05:00  20004.03  0.0
-        # historical flows=
-        asset_id                   101
-        2000-01-01 09:40:00-05:00  0.0
-        # historical pnl=
-        asset_id                    101
-        2000-01-01 09:35:00-05:00   NaN
-        2000-01-01 09:40:00-05:00 -2.21
-        # historical statistics=
-                                    pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
-        2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
-        2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0"""
+<oms.portfolio.DatabasePortfolio at 0x>
+  # holdings_shares=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00  20.0
+  2000-01-01 09:40:00-05:00  20.0
+  # holdings_notional=
+  asset_id                        101
+  2000-01-01 09:35:00-05:00  20006.24
+  2000-01-01 09:40:00-05:00  20004.03
+  # executed_trades_shares=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00  20.0
+  2000-01-01 09:40:00-05:00   0.0
+  # executed_trades_notional=
+  asset_id                   101
+  2000-01-01 09:40:00-05:00 -0.0
+  # pnl=
+  asset_id                    101
+  2000-01-01 09:35:00-05:00   NaN
+  2000-01-01 09:40:00-05:00 -2.21
+  # statistics=
+                              pnl  gross_volume  net_volume       gmv       nmv  cash  net_wealth  leverage
+  2000-01-01 09:35:00-05:00   NaN           0.0         0.0  20006.24  20006.24   0.0    20006.24       1.0
+  2000-01-01 09:40:00-05:00 -2.21           0.0         0.0  20004.03  20004.03   0.0    20004.03       1.0
+"""
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test1(self) -> None:

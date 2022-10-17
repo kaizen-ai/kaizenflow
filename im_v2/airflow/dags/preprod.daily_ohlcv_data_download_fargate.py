@@ -1,5 +1,4 @@
-# This is a utility DAG to conduct QA on real time data download
-# DAG task downloads data for last N minutes in one batch
+# This is a utility DAG to download OHLCV data daily.
 
 import datetime
 import airflow
@@ -86,8 +85,8 @@ dag = airflow.DAG(
 
 download_command = [
     "/app/amp/im_v2/{}/data/extract/download_historical_data.py",
-     "--end_timestamp '{{ execution_date + macros.timedelta(minutes=1440) }}'",
-     "--start_timestamp '{{ execution_date }}'",
+     "--end_timestamp '{{ execution_date + macros.timedelta(hours=24) - macros.timedelta(minutes=var.value.daily_ohlcv_data_download_delay_min | int)  }}'",
+     "--start_timestamp '{{ execution_date - macros.timedelta(minutes=var.value.daily_ohlcv_data_download_delay_min	| int) }}'",
      "--exchange_id '{}'",
      "--universe '{}'",
      "--aws_profile 'ck'",

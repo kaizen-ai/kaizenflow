@@ -115,14 +115,13 @@ def apply_backtest_config(
 # #############################################################################
 
 
-# TODO(gp): @all -> apply_MarketData_config
-def apply_market_data_config(
+def apply_MarketData_config(
     system: dtfsyssyst.ForecastSystem,
 ) -> dtfsyssyst.ForecastSystem:
     """
     Convert full symbol universe to asset ids and fill market data config.
     """
-    im_client = build_im_client_from_config(system)
+    im_client = build_ImClient_from_System(system)
     universe_str = system.config["backtest_config", "universe_str"]
     full_symbols = dtfuniver.get_universe(universe_str)
     asset_ids = im_client.get_asset_ids_from_full_symbols(full_symbols)
@@ -133,8 +132,7 @@ def apply_market_data_config(
     return system
 
 
-# TODO(gp): build_ImClient_from_System
-def build_im_client_from_config(system: dtfsyssyst.System) -> icdc.ImClient:
+def build_ImClient_from_System(system: dtfsyssyst.System) -> icdc.ImClient:
     """
     Build an IM client from params in the system Config.
     """
@@ -167,8 +165,7 @@ def apply_history_lookback(
     return system
 
 
-# TODO(gp): -> get_ReplayedMarketData_from_df.
-def get_EventLoop_MarketData_from_df(
+def get_ReplayedMarketData_from_df(
     system: dtfsyssyst.System,
 ) -> mdata.ReplayedMarketData:
     """
@@ -195,8 +192,7 @@ def get_EventLoop_MarketData_from_df(
 # #############################################################################
 
 
-# TODO(gp): -> get_RealTimeDag_from_System
-def adapt_dag_to_real_time_from_config(
+def get_RealTimeDag_from_System(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     # Assemble.
@@ -218,8 +214,7 @@ def adapt_dag_to_real_time_from_config(
     # TODO(gp): Why is this not returning anything? Is this even used?
 
 
-# TODO(gp): -> build...from_System
-def get_HistoricalDag_from_system(system: dtfsyssyst.System) -> dtfcore.DAG:
+def build_HistoricalDag_from_System(system: dtfsyssyst.System) -> dtfcore.DAG:
     """
     Build a DAG with an historical data source for simulation.
     """
@@ -353,8 +348,7 @@ def add_real_time_data_source(
     return dag
 
 
-# TODO(gp): -> ...ProcessForecastsNode...
-def add_process_forecasts_node(
+def add_ProcessForecastsNode(
     system: dtfsyssyst.System, dag: dtfcore.DAG
 ) -> dtfcore.DAG:
     """
@@ -372,7 +366,7 @@ def add_process_forecasts_node(
     return dag
 
 
-def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
+def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System) -> None:
     """
     Update the `system_log_dir` to save data in the scratch space.
     """
@@ -380,6 +374,18 @@ def apply_unit_test_log_dir(self_: Any, system: dtfsyssyst.System):
     system.config["system_log_dir"] = os.path.join(
         self_.get_scratch_space(), "system_log_dir"
     )
+
+
+def apply_log_dir(
+    self_: Any, system: dtfsyssyst.System, log_dir: Optional[str] = None
+) -> None:
+    """
+    Update the `system_log_dir` to save data in `log_dir`.
+    """
+    hdbg.dassert_isinstance(system, dtfsyssyst.System)
+    if log_dir is None:
+        log_dir = "./system_log_dir"
+    system.config["system_log_dir"] = log_dir
 
 
 def apply_ProcessForecastsNode_config_for_equities(
@@ -403,8 +409,13 @@ def apply_ProcessForecastsNode_config_for_equities(
     bar_duration_in_secs = system.config[
         "dag_runner_config", "bar_duration_in_secs"
     ]
-    trading_end_time = hdateti.find_current_bar(
-        trading_end_time - pd.Timedelta(minutes=1), bar_duration_in_secs
+    # We need to find the bar that includes 1 minute before the trading end
+    # time.
+    mode = "floor"
+    trading_end_time = hdateti.find_bar_timestamp(
+        trading_end_time - pd.Timedelta(minutes=1),
+        bar_duration_in_secs,
+        mode=mode,
     )
     trading_end_time = trading_end_time.time()
     #
@@ -414,6 +425,7 @@ def apply_ProcessForecastsNode_config_for_equities(
         "ath_end_time": ath_end_time,
         "trading_end_time": trading_end_time,
         "liquidate_at_trading_end_time": False,
+        "share_quantization": "no_quantization",
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
@@ -423,19 +435,27 @@ def apply_ProcessForecastsNode_config_for_equities(
 
 
 def apply_ProcessForecastsNode_config_for_crypto(
-    system: dtfsyssyst.System,
+    system: dtfsyssyst.System, is_prod: bool
 ) -> dtfsyssyst.System:
     """
     Set the trading hours for crypto.
 
     For crypto we do not filter since crypto market is open 24/7.
     """
+    if is_prod:
+        share_quantization = "asset_specific"
+    else:
+        # For simplicity in the non-prod system we do not use quantization so that
+        # we do not need to pass `asset_ids_to_decimals` (that we receive from 
+        # broker) around.
+        share_quantization = "no_quantization"
     dict_ = {
         "ath_start_time": None,
         "trading_start_time": None,
         "ath_end_time": None,
         "trading_end_time": None,
         "liquidate_at_trading_end_time": False,
+        "share_quantization": share_quantization,
     }
     config = cconfig.Config.from_dict(dict_)
     system.config["process_forecasts_node_dict", "process_forecasts_dict"].update(
@@ -450,23 +470,37 @@ def apply_ProcessForecastsNode_config_for_crypto(
 
 
 def get_DataFramePortfolio_from_System(
-    system: dtfsyssyst.System,
+    system: dtfsyssyst.System, is_prod: bool
 ) -> oms.Portfolio:
     """
     Build a `DataFramePortfolio` from a system config.
+
+    :param system: the system to build a portfolio from
+    :param is_prod: whether the system is going to be used for production or
+        for simulation
     """
-    event_loop = system.config["event_loop_object"]
     market_data = system.market_data
-    mark_to_market_col = system.config["portfolio_config", "mark_to_market_col"]
-    pricing_method = system.config["portfolio_config", "pricing_method"]
     asset_ids = system.config["market_data_config", "asset_ids"]
-    portfolio = oms.get_DataFramePortfolio_example1(
-        event_loop,
-        market_data=market_data,
-        mark_to_market_col=mark_to_market_col,
-        pricing_method=pricing_method,
-        asset_ids=asset_ids,
-    )
+    if is_prod:
+        # Initialize `Portfolio` with parameters that are set in the example.
+        portfolio = oms.get_DataFramePortfolio_example3(
+            market_data=market_data, asset_ids=asset_ids
+        )
+    else:
+        # Set event loop object for `SimulatedBroker` used in simulation.
+        event_loop = system.config["event_loop_object"]
+        # Initialize `Portfolio` with parameters from the system config.
+        mark_to_market_col = system.config[
+            "portfolio_config", "mark_to_market_col"
+        ]
+        pricing_method = system.config["portfolio_config", "pricing_method"]
+        portfolio = oms.get_DataFramePortfolio_example1(
+            event_loop,
+            market_data=market_data,
+            mark_to_market_col=mark_to_market_col,
+            pricing_method=pricing_method,
+            asset_ids=asset_ids,
+        )
     # TODO(gp): We should pass the column_remap to the Portfolio builder,
     # instead of injecting it after the fact.
     portfolio.broker._column_remap = system.config[
@@ -528,24 +562,42 @@ def apply_Portfolio_config(
 # #############################################################################
 
 
-def get_OrderProcessorCoroutine_from_System(
+def get_OrderProcessor_from_System(
     system: dtfsyssyst.System,
-) -> Coroutine:
+) -> oms.OrderProcessor:
     """
-    Build an OrderProcessor coroutine from the parameters in the SystemConfig.
+    Build an OrderProcessor object from the parameters in the SystemConfig.
     """
+    # TODO(gp): We use duration_in_secs to compute the termination_condition.
+    termination_condition = None
     order_processor = oms.get_order_processor_example1(
         system.config["db_connection_object"],
+        system.config["dag_runner_config", "bar_duration_in_secs"],
+        termination_condition,
+        system.config["order_processor_config", "duration_in_secs"],
         system.portfolio,
         system.config["market_data_config", "asset_id_col_name"],
         system.config[
             "order_processor_config", "max_wait_time_for_order_in_secs"
         ],
     )
-    order_processor_coroutine = oms.get_order_processor_coroutine_example1(
-        order_processor,
-        system.portfolio,
-        system.config["order_processor_config", "duration_in_secs"],
+    hdbg.dassert_isinstance(order_processor, oms.OrderProcessor)
+    return order_processor
+
+
+def get_OrderProcessorCoroutine_from_System(
+    system: dtfsyssyst.System,
+    order_processor: oms.OrderProcessor,
+) -> Coroutine:
+    """
+    Build an OrderProcessor coroutine from the parameters in the SystemConfig.
+    """
+    _ = system
+    hdbg.dassert_isinstance(order_processor, oms.OrderProcessor)
+    order_processor_coroutine: Coroutine = (
+        oms.get_order_processor_coroutine_example1(
+            order_processor,
+        )
     )
     hdbg.dassert_isinstance(order_processor_coroutine, Coroutine)
     return order_processor_coroutine
@@ -556,7 +608,7 @@ def get_OrderProcessorCoroutine_from_System(
 # #############################################################################
 
 
-def _apply_dag_runner_config(
+def _apply_DagRunner_config(
     system: dtfsyssyst.System,
     wake_up_timestamp: Optional[datetime.date],
     bar_duration_in_secs: int,
@@ -610,7 +662,7 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     return trading_period_str, bar_duration_in_secs
 
 
-def apply_dag_runner_config_for_crypto(
+def apply_DagRunner_config_for_crypto(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -626,7 +678,7 @@ def apply_dag_runner_config_for_crypto(
     wake_up_timestamp = None
     rt_timeout_in_secs_or_time = None
     #
-    system = _apply_dag_runner_config(
+    system = _apply_DagRunner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,
@@ -636,7 +688,7 @@ def apply_dag_runner_config_for_crypto(
     return system
 
 
-def apply_dag_runner_config_for_equities(
+def apply_DagRunner_config_for_equities(
     system: dtfsyssyst.System,
 ) -> dtfsyssyst.System:
     """
@@ -653,8 +705,9 @@ def apply_dag_runner_config_for_equities(
     # Determine when start and stop trading.
     # The system should come up around 9:37am ET and then we align to the
     # next bar.
-    wake_up_timestamp = system.market_data.get_wall_clock_time()
-    _LOG.info("Current time=%s", wake_up_timestamp)
+    curr_time = system.market_data.get_wall_clock_time()
+    _LOG.info("Current time=%s", curr_time)
+    wake_up_timestamp = curr_time
     #
     if trading_period_str == "1T":
         # Run every 1 min.
@@ -679,6 +732,7 @@ def apply_dag_runner_config_for_equities(
     else:
         raise ValueError(f"Invalid trading_period_str='{trading_period_str}'")
     wake_up_timestamp = wake_up_timestamp.tz_convert("America/New_York")
+    _LOG.debug(hprint.to_str("wake_up_timestamp"))
     # Get minutes for a time at which the real time loop should be terminated.
     # E.g., for trading period 2 minutes the system must shut down 2 minutes
     # before the market closes, i.e. at 15:58.
@@ -687,7 +741,7 @@ def apply_dag_runner_config_for_equities(
     rt_timeout_in_mins = 60 - int(bar_duration_in_secs / 60)
     hdbg.dassert_is_integer(rt_timeout_in_mins)
     rt_timeout_in_secs_or_time = datetime.time(15, int(rt_timeout_in_mins))
-    system = _apply_dag_runner_config(
+    system = _apply_DagRunner_config(
         system,
         wake_up_timestamp,
         bar_duration_in_secs,

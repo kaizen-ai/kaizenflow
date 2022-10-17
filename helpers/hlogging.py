@@ -9,7 +9,7 @@ import contextlib
 import copy
 import datetime
 import logging
-from typing import Any, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 
 # Avoid dependency from other helpers modules since this is used when the code
 # is bootstrapped.
@@ -90,6 +90,27 @@ def get_memory_usage_as_str(process: Optional[Any] = None) -> str:
 # Utils.
 # #############################################################################
 
+# White: 37.
+# Red: 31
+# Green: 32
+# Yellow: 33
+# Blu: 34
+# Cyan: 36
+# White on red background: 41
+
+_COLOR_MAPPING = {
+    # Green.
+    "TRACE": (32, "TRACE"),
+    # Blu.
+    "DEBUG": (34, "DEBUG"),
+    # Cyan.
+    "INFO": (36, "INFO "),
+    # White on red background.
+    "WARNING": (41, "WARN "),
+    "ERROR": (41, "ERROR"),
+    "CRITICAL": (41, "CRTCL"),
+}
+
 
 def reset_logger() -> None:
     import importlib
@@ -155,6 +176,7 @@ def shutup_chatty_modules(
         "boto",
         "boto3",
         "botocore",
+        # CCXT also needs to be shut up after the `exchange` is built.
         "ccxt",
         "fsspec",
         "hooks",
@@ -181,20 +203,6 @@ def shutup_chatty_modules(
         #       " Shutting up %d modules: %s"
         #       % (len(loggers), ", ".join([logger.name for logger in loggers]))
         #    )
-
-
-def test_logger() -> None:
-    print("# Testing logger ...")
-    _log = logging.getLogger(__name__)
-    print("effective level=", _log.getEffectiveLevel())
-    #
-    _log.debug("DEBUG=%s", logging.DEBUG)
-    #
-    _log.info("INFO=%s", logging.INFO)
-    #
-    _log.warning("WARNING=%s", logging.WARNING)
-    #
-    _log.critical("CRITICAL=%s", logging.CRITICAL)
 
 
 # #############################################################################
@@ -263,20 +271,6 @@ class _ColoredFormatter(  # type: ignore[misc]
 
     _SKIP_DEBUG = True
 
-    MAPPING = {
-        # White: 37.
-        # Blu.
-        "DEBUG": (34, "DEBUG"),
-        # Cyan.
-        "INFO": (36, "INFO "),
-        # Yellow.
-        "WARNING": (33, "WARN "),
-        # Red.
-        "ERROR": (31, "ERROR"),
-        # White on red background.
-        "CRITICAL": (41, "CRTCL"),
-    }
-
     def format(self, record: logging.LogRecord) -> str:
         colored_record = copy.copy(record)
         # `levelname` is the internal name and can't be changed to `level_name`
@@ -288,12 +282,77 @@ class _ColoredFormatter(  # type: ignore[misc]
             # Use white as default.
             prefix = "\033["
             suffix = "\033[0m"
-            assert levelname in self.MAPPING, "Can't find info '%s'"
-            color_code, tag = self.MAPPING[levelname]
+            assert levelname in _COLOR_MAPPING, "Can't find info '%s'"
+            color_code, tag = _COLOR_MAPPING[levelname]
             # Align the level name.
             colored_levelname = f"{prefix}{color_code}m{tag}{suffix}"
         colored_record.levelname = colored_levelname
         return logging.Formatter.format(self, colored_record)
+
+
+# From https://stackoverflow.com/questions/2183233
+def addLoggingLevel(levelName, levelNum, methodName=None):
+    """
+    Comprehensively adds a new logging level to the `logging` module and the
+    currently configured logging class.
+
+    `levelName` becomes an attribute of the `logging` module with the value
+    `levelNum`. `methodName` becomes a convenience method for both `logging`
+    itself and the class returned by `logging.getLoggerClass()` (usually just
+    `logging.Logger`). If `methodName` is not specified, `levelName.lower()` is
+    used.
+
+    To avoid accidental clobberings of existing attributes, this method will
+    raise an `AttributeError` if the level name is already an attribute of the
+    `logging` module or if the method name is already present
+
+    Example
+    -------
+    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
+    >>> logging.getLogger(__name__).setLevel("TRACE")
+    >>> logging.getLogger(__name__).trace('that worked')
+    >>> logging.trace('so did this')
+    >>> logging.TRACE
+    5
+
+    """
+    if not methodName:
+        methodName = levelName.lower()
+
+    if hasattr(logging, levelName):
+       raise AttributeError('{} already defined in logging module'.format(levelName))
+    if hasattr(logging, methodName):
+       raise AttributeError('{} already defined in logging module'.format(methodName))
+    if hasattr(logging.getLoggerClass(), methodName):
+       raise AttributeError('{} already defined in logger class'.format(methodName))
+
+    # This method was inspired by the answers to Stack Overflow post
+    # http://stackoverflow.com/q/2183233/2988730, especially
+    # http://stackoverflow.com/a/13638084/2988730
+    def logForLevel(self, message, *args, **kwargs):
+        if self.isEnabledFor(levelNum):
+            self._log(levelNum, message, args, **kwargs)
+    def logToRoot(message, *args, **kwargs):
+        logging.log(levelNum, message, *args, **kwargs)
+
+    logging.addLevelName(levelNum, levelName)
+    setattr(logging, levelName, levelNum)
+    setattr(logging.getLoggerClass(), methodName, logForLevel)
+    setattr(logging, methodName, logToRoot)
+
+
+addLoggingLevel('TRACE', 5)
+
+
+# Note that this doesn't avoid evaluating the call.
+# The only way to be completely sure that there is no evaluation is:
+# ```
+# if False: _LOG.debug(...)
+# ```
+def shut_up_log_debug(logger: logging.Logger) -> None:
+    logging.disable(logging.DEBUG)
+    #logger.debug = lambda *_: 0
+    #logger.trace = lambda *_: 0
 
 
 # #############################################################################
@@ -529,7 +588,6 @@ class CustomFormatter(logging.Formatter):
         #  'stack_info': None,
         #  'thread': 140250120021824,
         #  'threadName': 'MainThread'}
-
         msg = ""
         # Add the wall clock time.
         msg += self._get_wall_clock_time()
@@ -610,20 +668,6 @@ class CustomFormatter(logging.Formatter):
         time_as_str = dt.strftime(date_fmt)
         return time_as_str
 
-    _COLOR_MAPPING = {
-        # White: 37.
-        # Blu.
-        "DEBUG": (34, "DEBUG"),
-        # Cyan.
-        "INFO": (36, "INFO "),
-        # Yellow.
-        "WARNING": (33, "WARN "),
-        # Red.
-        "ERROR": (31, "ERROR"),
-        # White on red background.
-        "CRITICAL": (41, "CRTCL"),
-    }
-
     def _get_wall_clock_time(self) -> str:
         dt = datetime.datetime.utcnow()
         return self._convert_time_to_string(dt, self._date_fmt)
@@ -640,8 +684,8 @@ class CustomFormatter(logging.Formatter):
             txt = "".join(txt)
             print(txt)
 
-        assert level_name in self._COLOR_MAPPING, "Can't find info '%s'"
-        color_code, tag = self._COLOR_MAPPING[level_name]
+        assert level_name in _COLOR_MAPPING, "Can't find info '%s'"
+        color_code, tag = _COLOR_MAPPING[level_name]
         colored_level_name = f"{prefix}{color_code}m{tag}{suffix}"
         return colored_level_name
 
@@ -707,3 +751,23 @@ def set_level(logger: Any, level: int) -> None:
     finally:
         logger.setLevel(previous_level)
     assert logger.getEffectiveLevel() == previous_level
+
+
+# #############################################################################
+
+
+def test_logger() -> None:
+    print("# Testing logger ...")
+    print("effective level=", _LOG.getEffectiveLevel())
+    #
+    _LOG.trace("TRACE=%s", logging.TRACE)
+    #
+    _LOG.debug("DEBUG=%s", logging.DEBUG)
+    #
+    _LOG.info("INFO=%s", logging.INFO)
+    #
+    _LOG.warning("WARNING=%s", logging.WARNING)
+    #
+    _LOG.error("ERROR=%s", logging.ERROR)
+    #
+    _LOG.critical("CRITICAL=%s", logging.CRITICAL)

@@ -6,9 +6,10 @@ import oms.call_optimizer as ocalopti
 
 import logging
 import os
-from typing import List
+from typing import Dict, List, Optional
 
 import invoke
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -23,7 +24,7 @@ import helpers.hsystem as hsystem
 _LOG = logging.getLogger(__name__)
 
 
-def compute_target_positions_in_cash(
+def compute_target_holdings_and_trades_notional(
     df: pd.DataFrame,
     *,
     style: str,
@@ -37,20 +38,21 @@ def compute_target_positions_in_cash(
     needs to be told the id associated with cash.
 
     :param df: a dataframe with current positions (in dollars) and predictions
-    :return: a dataframe with target positions and trades (denominated in dollars)
+    :return: a dataframe with target positions and trades (denominated in
+        dollars)
     """
     # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert(not df.empty)
     hdbg.dassert_is_subset(
-        ["asset_id", "prediction", "volatility", "position"], df.columns
+        ["asset_id", "prediction", "volatility", "holdings_notional"], df.columns
     )
-    hdbg.dassert_not_in("target_position", df.columns)
-    hdbg.dassert_not_in("target_trade", df.columns)
+    hdbg.dassert_not_in("target_holdings_notional", df.columns)
+    hdbg.dassert_not_in("target_trades_notional", df.columns)
     #
     hdbg.dassert(not df["prediction"].isna().any())
     hdbg.dassert(not df["volatility"].isna().any())
-    hdbg.dassert(not df["position"].isna().any())
+    hdbg.dassert(not df["holdings_notional"].isna().any())
     #
     df = df.set_index("asset_id")
     hdbg.dassert(not df.index.has_duplicates)
@@ -58,44 +60,121 @@ def compute_target_positions_in_cash(
     predictions = df["prediction"].rename(0).to_frame().T
     volatility = df["volatility"].rename(0).to_frame().T
     if style == "cross_sectional":
-        target_positions = cofinanc.compute_target_positions_cross_sectionally(
-            predictions,
-            volatility,
-            **kwargs,
+        target_holdings_notional = (
+            cofinanc.compute_target_positions_cross_sectionally(
+                predictions,
+                volatility,
+                **kwargs,
+            )
         )
     elif style == "longitudinal":
-        target_positions = cofinanc.compute_target_positions_longitudinally(
-            predictions,
-            volatility,
-            spread=None,
-            **kwargs,
+        target_holdings_notional = (
+            cofinanc.compute_target_positions_longitudinally(
+                predictions,
+                volatility,
+                spread=None,
+                **kwargs,
+            )
         )
     else:
         raise ValueError("Unsupported `style`=%s", style)
-    hdbg.dassert_eq(target_positions.shape[0], 1)
-    target_positions = pd.Series(
-        target_positions.values[0],
-        index=target_positions.columns,
-        name="target_position",
+    hdbg.dassert_eq(target_holdings_notional.shape[0], 1)
+    target_holdings_notional = pd.Series(
+        target_holdings_notional.values[0],
+        index=target_holdings_notional.columns,
+        name="target_holdings_notional",
         dtype="float",
     )
     _LOG.debug(
-        "`target_positions`=\n%s",
+        "`target_holdings_notional`=\n%s",
         hpandas.df_to_str(
-            target_positions, print_dtypes=True, print_shape_info=True
+            target_holdings_notional, print_dtypes=True, print_shape_info=True
         ),
     )
     # These positions are expressed in dollars.
-    current_positions = df["position"]
+    holdings_notional = df["holdings_notional"]
     _LOG.debug(
-        "`current_positions`=\n%s",
+        "`holdings_notional`=\n%s",
         hpandas.df_to_str(
-            current_positions, print_dtypes=True, print_shape_info=True
+            holdings_notional, print_dtypes=True, print_shape_info=True
         ),
     )
-    target_trades = target_positions - current_positions
-    df["target_position"] = target_positions
-    df["target_notional_trade"] = target_trades
+    target_trades_notional = target_holdings_notional - holdings_notional
+    df["target_holdings_notional"] = target_holdings_notional
+    df["target_trades_notional"] = target_trades_notional
+    return df
+
+
+def convert_target_holdings_and_trades_to_shares_and_adjust_notional(
+    df: pd.DataFrame,
+    *,
+    quantization: str,
+    asset_id_to_decimals: Optional[Dict[int, int]] = None,
+) -> pd.DataFrame:
+    """
+    Computes target holdings and trades in shares; adjusts target notionals.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert(not df.empty)
+    hdbg.dassert_is_subset(
+        [
+            "price",
+            "holdings_shares",
+            "target_holdings_notional",
+            "target_trades_notional",
+        ],
+        df.columns,
+    )
+    hdbg.dassert_not_in("target_holdings_shares", df.columns)
+    hdbg.dassert_not_in("target_trades_shares", df.columns)
+    #
+    hdbg.dassert(not df.index.has_duplicates)
+    # Convert target trades in notional to shares, without any quantization.
+    target_trades_shares_before_quantization = (
+        df["target_trades_notional"] / df["price"]
+    )
+    target_trades_shares_before_quantization.replace(
+        [-np.inf, np.inf], np.nan, inplace=True
+    )
+    target_trades_shares_before_quantization = (
+        target_trades_shares_before_quantization.fillna(0)
+    )
+    # Compute `target_trades_shares` post-quantization.
+    target_trades_shares = cofinanc.quantize_shares(
+        target_trades_shares_before_quantization,
+        quantization,
+        asset_id_to_decimals,
+    )
+    # hdbg.dassert(np.isfinite(target_trades_shares).all())
+    _LOG.debug(
+        "Post-quantization target_trades_shares adjusted from %s to %s",
+        hpandas.df_to_str(target_trades_shares_before_quantization),
+        hpandas.df_to_str(target_trades_shares),
+    )
+    df["target_trades_shares"] = target_trades_shares
+    # Update `target_trades_notional` post-quantization.
+    target_trades_notional = target_trades_shares * df["price"]
+    _LOG.debug(
+        "Post-quantization target_trades_notional adjusted from %s to %s",
+        hpandas.df_to_str(df["target_trades_notional"]),
+        hpandas.df_to_str(target_trades_notional),
+    )
+    df["target_trades_notional"] = target_trades_notional
+    # Computer `target_holdings_shares` post-quantization.
+    holdings_shares = df["holdings_shares"]
+    target_holdings_shares = holdings_shares + target_trades_shares
+    _LOG.debug(
+        "`target_holdings_shares`=%s", hpandas.df_to_str(target_trades_notional)
+    )
+    df["target_holdings_shares"] = target_holdings_shares
+    # Update `target_holdings_notional` post-quantization.
+    target_holdings_notional = target_holdings_shares * df["price"]
+    _LOG.debug(
+        "Post-quantization target_holdings_notional adjusted from %s to %s",
+        hpandas.df_to_str(df["target_holdings_notional"]),
+        hpandas.df_to_str(target_holdings_notional),
+    )
+    df["target_holdings_notional"] = target_holdings_notional
     return df
 
 

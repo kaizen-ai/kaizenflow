@@ -464,9 +464,11 @@ class TestPlaybackFileMode1(hunitest.TestCase):
         # Get file paths.
         tmp_dir = self.get_scratch_space()
         # File with code.
-        tmp_py_file = os.path.join(tmp_dir, "code.py")
+        code_basename = "code_.py"
+        tmp_py_file = os.path.join(tmp_dir, code_basename)
         # File with test.
-        tmp_test_file = os.path.join(tmp_dir, "test", "test_by_playback_code.py")
+        tmp_test_file = os.path.join(tmp_dir, "test", "test_by_playback_" +
+                code_basename)
         # Save the code to the file.
         hio.to_file(tmp_py_file, self.get_code(max_tests))
         # Executes the code.

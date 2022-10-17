@@ -92,7 +92,7 @@ class ForecastEvaluatorFromPrices:
         self._sell_price_col = sell_price_col
 
     @staticmethod
-    def read_portfolio(
+    def load_portfolio(
         log_dir: str,
         *,
         file_name: Optional[str] = None,
@@ -100,9 +100,9 @@ class ForecastEvaluatorFromPrices:
         cast_asset_ids_to_int: bool = True,
     ) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
-        Read and process logged portfolio.
+        Load and process saved portfolio.
 
-        :param log_dir: directory for reading log files of portfolio state
+        :param log_dir: directory for loading log files of portfolio state
         :param file_name: if `None`, find and use the latest
         :param tz: timezone to apply to timestamps (this information is lost in
             the logging/reading round trip)
@@ -128,14 +128,17 @@ class ForecastEvaluatorFromPrices:
         predictions = ForecastEvaluatorFromPrices._read_df(
             log_dir, "prediction", file_name, tz
         )
-        holdings = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "holdings", file_name, tz
+        holdings_shares = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "holdings_shares", file_name, tz
         )
-        positions = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "position", file_name, tz
+        holdings_notional = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "holdings_notional", file_name, tz
         )
-        flows = ForecastEvaluatorFromPrices._read_df(
-            log_dir, "flow", file_name, tz
+        executed_trades_shares = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "executed_trades_shares", file_name, tz
+        )
+        executed_trades_notional = ForecastEvaluatorFromPrices._read_df(
+            log_dir, "executed_trades_notional", file_name, tz
         )
         pnl = ForecastEvaluatorFromPrices._read_df(log_dir, "pnl", file_name, tz)
         if cast_asset_ids_to_int:
@@ -143,9 +146,10 @@ class ForecastEvaluatorFromPrices:
                 price,
                 volatility,
                 predictions,
-                holdings,
-                positions,
-                flows,
+                holdings_shares,
+                holdings_notional,
+                executed_trades_shares,
+                executed_trades_notional,
                 pnl,
             ]:
                 ForecastEvaluatorFromPrices._cast_cols_to_int(df)
@@ -153,9 +157,10 @@ class ForecastEvaluatorFromPrices:
             "price": price,
             "volatility": volatility,
             "prediction": predictions,
-            "holdings": holdings,
-            "position": positions,
-            "flow": flows,
+            "holdings_shares": holdings_shares,
+            "holdings_notional": holdings_notional,
+            "executed_trades_shares": executed_trades_shares,
+            "executed_trades_notional": executed_trades_notional,
             "pnl": pnl,
         }
         portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(dfs)
@@ -165,22 +170,22 @@ class ForecastEvaluatorFromPrices:
         )
         return portfolio_df, statistics_df
 
-    # TODO(gp): save_portfolio for symmetry?
-    def log_portfolio(
+    def save_portfolio(
         self,
         df: pd.DataFrame,
         log_dir: str,
         **kwargs,
     ) -> str:
         """
-        Log portfolio state to the file system.
+        Save portfolio state to the file system.
 
         The dir structure of the data output is:
         ```
-        - flow
-        - holdings
+        - holdings_shares
+        - holdings_notional
+        - executed_trades_shares
+        - executed_trades_notional
         - pnl
-        - position
         - prediction
         - price
         - statistics
@@ -193,7 +198,7 @@ class ForecastEvaluatorFromPrices:
         :return: name of log files with timestamp
         """
         hdbg.dassert(log_dir, "Must specify `log_dir` to log portfolio.")
-        holdings, position, flow, pnl, statistics = self.compute_portfolio(
+        derived_dfs = self.compute_portfolio(
             df,
             **kwargs,
         )
@@ -212,15 +217,31 @@ class ForecastEvaluatorFromPrices:
             df[self._prediction_col], log_dir, "prediction", file_name
         )
         ForecastEvaluatorFromPrices._write_df(
-            holdings, log_dir, "holdings", file_name
+            derived_dfs["holdings_shares"], log_dir, "holdings_shares", file_name
         )
         ForecastEvaluatorFromPrices._write_df(
-            position, log_dir, "position", file_name
+            derived_dfs["holdings_notional"],
+            log_dir,
+            "holdings_notional",
+            file_name,
         )
-        ForecastEvaluatorFromPrices._write_df(flow, log_dir, "flow", file_name)
-        ForecastEvaluatorFromPrices._write_df(pnl, log_dir, "pnl", file_name)
         ForecastEvaluatorFromPrices._write_df(
-            statistics, log_dir, "statistics", file_name
+            derived_dfs["executed_trades_shares"],
+            log_dir,
+            "executed_trades_shares",
+            file_name,
+        )
+        ForecastEvaluatorFromPrices._write_df(
+            derived_dfs["executed_trades_notional"],
+            log_dir,
+            "executed_trades_notional",
+            file_name,
+        )
+        ForecastEvaluatorFromPrices._write_df(
+            derived_dfs["pnl"], log_dir, "pnl", file_name
+        )
+        ForecastEvaluatorFromPrices._write_df(
+            derived_dfs["stats"], log_dir, "statistics", file_name
         )
         return file_name
 
@@ -236,7 +257,7 @@ class ForecastEvaluatorFromPrices:
         :param kwargs: forwarded to `compute_portfolio()`
         :return: portfolio state (rounded) as a string
         """
-        holdings, positions, flows, pnl, stats = self.compute_portfolio(
+        dfs = self.compute_portfolio(
             df,
             **kwargs,
         )
@@ -244,26 +265,34 @@ class ForecastEvaluatorFromPrices:
         act = []
         round_precision = 6
         precision = 2
-        act.append("# holdings=")
+        act.append("# holdings_shares=")
         act.append(
             hpandas.df_to_str(
-                holdings.round(round_precision),
+                dfs["holdings_shares"].round(round_precision),
                 num_rows=None,
                 precision=precision,
             )
         )
-        act.append("# holdings marked to market=")
+        act.append("# holdings_notional=")
         act.append(
             hpandas.df_to_str(
-                positions.round(round_precision),
+                dfs["holdings_notional"].round(round_precision),
                 num_rows=None,
                 precision=precision,
             )
         )
-        act.append("# flows=")
+        act.append("# executed_trades_shares=")
         act.append(
             hpandas.df_to_str(
-                flows.round(round_precision),
+                dfs["executed_trades_shares"].round(round_precision),
+                num_rows=None,
+                precision=precision,
+            )
+        )
+        act.append("# executed_trades_notional=")
+        act.append(
+            hpandas.df_to_str(
+                dfs["executed_trades_notional"].round(round_precision),
                 num_rows=None,
                 precision=precision,
             )
@@ -271,7 +300,7 @@ class ForecastEvaluatorFromPrices:
         act.append("# pnl=")
         act.append(
             hpandas.df_to_str(
-                pnl.round(round_precision),
+                dfs["pnl"].round(round_precision),
                 num_rows=None,
                 precision=precision,
             )
@@ -279,7 +308,9 @@ class ForecastEvaluatorFromPrices:
         act.append("# statistics=")
         act.append(
             hpandas.df_to_str(
-                stats.round(round_precision), num_rows=None, precision=precision
+                dfs["stats"].round(round_precision),
+                num_rows=None,
+                precision=precision,
             )
         )
         act = "\n".join(act)
@@ -300,10 +331,9 @@ class ForecastEvaluatorFromPrices:
         burn_in_bars: int = 3,
         burn_in_days: int = 0,
         compute_extended_stats: bool = False,
+        asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
         **kwargs,
-    ) -> Tuple[
-        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
-    ]:
+    ) -> Dict[str, pd.DataFrame]:
         """
         Compute target positions, PnL, and portfolio stats.
 
@@ -334,7 +364,9 @@ class ForecastEvaluatorFromPrices:
             `compute_target_positions_cross_sectionally()` or
             `compute_target_positions_longitudinally()` depending upon the
             value of `style`
-        :return: (holdings, position, flow, pnl, stats)
+        :return: dictionary of portfolio dataframes, with keys
+            ["holdings_shares", "holdings_notional", "executed_trades_shares",
+             "executed_trades_notional", "pnl", "stats"]
         """
         _LOG.debug("df=\n%s", hpandas.df_to_str(df, print_shape_info=True))
         self._validate_df(df)
@@ -346,7 +378,7 @@ class ForecastEvaluatorFromPrices:
         # Trim to indices with prices and beginning of forecast availability.
         df = self._apply_trimming(df)
         # Compute target positions (in dollars).
-        target_positions = self._compute_target_positions(
+        target_holdings_notional = self._compute_target_holdings_notional(
             df,
             style,
             **kwargs,
@@ -354,37 +386,51 @@ class ForecastEvaluatorFromPrices:
         # Compute holdings (in shares).
         # TODO(Paul): Expose these two parameters.
         ffill_limit = 4
-        holdings = self._compute_holdings(
+        holdings_shares = self._compute_holdings_shares(
             df,
-            target_positions,
+            target_holdings_notional,
             quantization,
             liquidate_at_end_of_day,
             adjust_for_splits,
             ffill_limit,
+            asset_id_to_share_decimals,
         )
         # Compute cash inflows/outflows from trades.
-        flows = self._compute_flows(
+        executed_trades_shares = self._compute_executed_trades_shares(
             df,
-            holdings,
+            holdings_shares,
             initialize_beginning_of_day_trades_to_zero,
+        )
+        executed_trades_notional = self._compute_executed_trades_notional(
+            df,
+            executed_trades_shares,
             ffill_limit,
         )
-        # Compute positions (in dollars).
-        positions = self._compute_positions(df, holdings)
+        # Compute notional positions.
+        holdings_notional = self._compute_holdings_notional(df, holdings_shares)
         # Compute PnL.
-        pnl = self._compute_pnl(df, positions, flows)
+        pnl = self._compute_pnl(df, holdings_notional, executed_trades_notional)
         # Compute statistics.
         stats = self._compute_stats(
-            df, positions, flows, pnl, compute_extended_stats
+            df,
+            holdings_notional,
+            executed_trades_notional,
+            pnl,
+            compute_extended_stats,
         )
+        #
+        derived_dfs = {
+            "holdings_shares": holdings_shares,
+            "holdings_notional": holdings_notional,
+            "executed_trades_shares": executed_trades_shares,
+            "executed_trades_notional": executed_trades_notional,
+            "pnl": pnl,
+            "stats": stats,
+        }
         # Apply burn-in and reindex like input.
         return self._apply_burn_in_and_reindex(
             df,
-            holdings,
-            positions,
-            flows,
-            pnl,
-            stats,
+            derived_dfs,
             burn_in_bars,
             burn_in_days,
             idx,
@@ -400,10 +446,9 @@ class ForecastEvaluatorFromPrices:
 
         :param df: as in `compute_portfolio()`
         :param kwargs: forwarded to `compute_portfolio()`
-        :return: multiindexed dataframe with level-0 columns
-            "returns", "volatility", "prediction", "position", "pnl"
+        :return: multiindexed portfolio dataframe, stats dataframe
         """
-        holdings, position, flow, pnl, statistics_df = self.compute_portfolio(
+        derived_dfs = self.compute_portfolio(
             df,
             **kwargs,
         )
@@ -411,15 +456,16 @@ class ForecastEvaluatorFromPrices:
             "price": df[self._price_col],
             "volatility": df[self._volatility_col],
             "prediction": df[self._prediction_col],
-            "holdings": holdings,
-            "position": position,
-            "flow": flow,
-            "pnl": pnl,
+            "holdings_shares": derived_dfs["holdings_shares"],
+            "holdings_notional": derived_dfs["holdings_notional"],
+            "executed_trades_shares": derived_dfs["executed_trades_shares"],
+            "executed_trades_notional": derived_dfs["executed_trades_notional"],
+            "pnl": derived_dfs["pnl"],
         }
         if self._spread_col is not None:
             dfs["spread"] = df[self._spread_col]
         portfolio_df = ForecastEvaluatorFromPrices._build_multiindex_df(dfs)
-        return portfolio_df, statistics_df
+        return portfolio_df, derived_dfs["stats"]
 
     def get_cols(self) -> List[str]:
         """
@@ -577,7 +623,7 @@ class ForecastEvaluatorFromPrices:
         _LOG.debug("trimmed df=\n%s", hpandas.df_to_str(df))
         return df
 
-    def _compute_target_positions(
+    def _compute_target_holdings_notional(
         self,
         df: pd.DataFrame,
         style: str,
@@ -589,8 +635,8 @@ class ForecastEvaluatorFromPrices:
         :param df: as in `compute_portfolio()`
         :param style: "cross-sectional" or "longitudinal"
         :param kwargs: parameters to forward (depending upon `style`)
-        :return: end-of-bar indexed target positions to trade into over the
-            next bar
+        :return: end-of-bar indexed target notional positions to trade into
+            over the next bar
         """
         # Extract prediction and volatility dataframes.
         prediction_df = ForecastEvaluatorFromPrices._get_df(
@@ -606,7 +652,7 @@ class ForecastEvaluatorFromPrices:
             spread_df = ForecastEvaluatorFromPrices._get_df(df, self._spread_col)
         # The values of`target_positions` represent cash values.
         if style == "cross_sectional":
-            target_positions = (
+            target_notional_positions = (
                 cofinanc.compute_target_positions_cross_sectionally(
                     prediction_df,
                     volatility_df,
@@ -614,53 +660,60 @@ class ForecastEvaluatorFromPrices:
                 )
             )
         elif style == "longitudinal":
-            target_positions = cofinanc.compute_target_positions_longitudinally(
-                prediction_df,
-                volatility_df,
-                spread=spread_df,
-                **kwargs,
+            target_notional_positions = (
+                cofinanc.compute_target_positions_longitudinally(
+                    prediction_df,
+                    volatility_df,
+                    spread=spread_df,
+                    **kwargs,
+                )
             )
         else:
             raise ValueError("Unsupported `style`=%s", style)
-        self._validate_target_position_df(target_positions, prediction_df)
-        return target_positions
+        self._validate_target_position_df(
+            target_notional_positions, prediction_df
+        )
+        return target_notional_positions
 
-    def _compute_holdings(
+    def _compute_holdings_shares(
         self,
         df: pd.DataFrame,
-        target_positions: pd.DataFrame,
+        target_notional_positions: pd.DataFrame,
         quantization: str,
         liquidate_at_end_of_day: bool,
         adjust_for_splits: bool,
         ffill_limit: int,
+        asset_id_to_share_decimals: Optional[Dict[int, int]],
     ) -> pd.DataFrame:
         """
         Convert next-bar [dollar] positions to end-of-bar [share] holdings.
 
         :param df: as in `compute_portfolio()`
-        :param target_positions: from `_compute_target_positions()`
+        :param target_notional_positions: from `_compute_target_holdings_notional()`
         :param quantization: as in `compute_portfolio()`
         :param liquidate_at_end_of_day: as in `compute_portfolio()`
         :param adjust_for_splits: as in `compute_portfolio()`
         :param ffill_limit: as in `compute_portfolio()`
-        :return: end-of-bar indexed holdings (holdings held at the end of the
-            bar)
+        :return: end-of-bar indexed holdings in shares (holdings held at the
+            end of the bar)
         """
         mark_to_market_price = ForecastEvaluatorFromPrices._get_df(
             df, self._price_col
         )
         # Compute target (next bar) holdings based on prices available at
         # decision time.
-        target_holdings = target_positions.divide(mark_to_market_price)
+        target_holdings_shares = target_notional_positions.divide(
+            mark_to_market_price
+        )
         # Quantize holdings (e.g., nearest share).
-        target_holdings = cofinanc.quantize_holdings(
-            target_holdings, quantization
+        target_holdings_shares = cofinanc.quantize_holdings(
+            target_holdings_shares, quantization, asset_id_to_share_decimals
         )
         # Adjust holdings for end-of-day and splits. Convert from next-bar
         # desired holdings to end-of-bar realized (assuming perfect fills)
         # holdings.
-        ideal_holdings = cofinanc.adjust_holdings_for_overnight(
-            target_holdings.shift(1),
+        ideal_holdings_shares = cofinanc.adjust_holdings_for_overnight(
+            target_holdings_shares.shift(1),
             mark_to_market_price,
             liquidate_at_end_of_day,
             adjust_for_splits,
@@ -675,39 +728,40 @@ class ForecastEvaluatorFromPrices:
             sell_price = ForecastEvaluatorFromPrices._get_df(
                 df, self._sell_price_col
             )
-            holdings = cofinanc.adjust_holdings_for_underfills(
-                ideal_holdings,
+            holdings_shares = cofinanc.adjust_holdings_for_underfills(
+                ideal_holdings_shares,
                 mark_to_market_price,
                 buy_price,
                 sell_price,
             )
         else:
-            holdings = ideal_holdings
-        return holdings
+            holdings_shares = ideal_holdings_shares
+        return holdings_shares
 
-    def _compute_flows(
+    def _compute_executed_trades_shares(
         self,
         df: pd.DataFrame,
-        holdings: pd.DataFrame,
+        holdings_shares: pd.DataFrame,
         initialize_beginning_of_day_trades_to_zero: bool,
-        ffill_limit: int,
     ) -> pd.DataFrame:
         """
         Compute trade inflows and outflows.
 
         :param df: as in `compute_portfolio()`
-        :param holdings: from `_compute_holdings()`
+        :param holdings_shares: from `_compute_holdings_shares()`
         :param initialize_beginning_of_day_trades_to_zero: whether to force
             beginning-of-day trades to be zero. Set to `True` to take into
             account the impact of corporate actions on overnight holdings.
-        :return: end-of-bar indexed cash inflows/outflows. A "buy" is considered
-            a cash outflow (cash goes out to purchase shares, and so is
-            negative) and conversely a "sell" is considered a cash inflow
-            (shares are sold for cash, and so the flow is positive).
+        :return: end-of-bar indexed trades in shares
         """
         # Compute trades as the difference in (share) holdings.
-        trades = holdings.subtract(holdings.shift(1), fill_value=0)
-        _LOG.debug("`difference in holdings`=\n%s", hpandas.df_to_str(trades))
+        executed_trades_shares = holdings_shares.subtract(
+            holdings_shares.shift(1), fill_value=0
+        )
+        _LOG.debug(
+            "`executed_trades_shares pre-adjusted`=\n%s",
+            hpandas.df_to_str(executed_trades_shares),
+        )
         # In equity markets with corporate actions, the previous end-of-day
         # share counts may differ from the beginning-of-day share counts even
         # though no trades have taken place. This can be remedied by resetting
@@ -720,24 +774,45 @@ class ForecastEvaluatorFromPrices:
                 mark_to_market_price_df
             )
             # Set overnight trades to zero.
-            trades.loc[bod_timestamps["timestamp"]] *= 0
-        execution_price_df = self._compute_execution_prices(
-            df, holdings, ffill_limit
+            executed_trades_shares.loc[bod_timestamps["timestamp"]] *= 0
+        _LOG.debug(
+            "`executed_trades_shares adjusted`=\n%s",
+            hpandas.df_to_str(executed_trades_shares),
         )
-        flows = -trades.multiply(execution_price_df.ffill(limit=ffill_limit))
-        return flows
+        return executed_trades_shares
+
+    def _compute_executed_trades_notional(
+        self,
+        df: pd.DataFrame,
+        executed_trades_shares: pd.DataFrame,
+        ffill_limit: int,
+    ) -> pd.DataFrame:
+        """
+        Compute trade inflows and outflows.
+
+        :param df: as in `compute_portfolio()`
+        :param executed_trades_shares:
+        :return: end-of-bar indexed notional trades
+        """
+        execution_price_df = self._compute_execution_prices(
+            df, executed_trades_shares, ffill_limit
+        )
+        executed_trades_notional = executed_trades_shares.multiply(
+            execution_price_df.ffill(limit=ffill_limit)
+        )
+        return executed_trades_notional
 
     def _compute_execution_prices(
         self,
         df: pd.DataFrame,
-        holdings: pd.DataFrame,
+        executed_trades_shares: pd.DataFrame,
         ffill_limit: int,
     ) -> pd.DataFrame:
         """
         Compute execution prices from buy/sell price columns if available.
 
         :param df: as in `compute_portfolio()`
-        :param holdings: from `_compute_holdings()`
+        :param executed_trades_shares:
         :return: end-of-bar indexed dataframe of prices to use to value cash
             outflows/inflows for the buying/selling of shares
         """
@@ -752,8 +827,6 @@ class ForecastEvaluatorFromPrices:
             sell_price_df = ForecastEvaluatorFromPrices._get_df(
                 df, self._sell_price_col
             )
-            # Generate a signal indicating when we should buy or sell.
-            trade_signal = holdings.diff()
             # Market in last bar.
             buy_price_df = cofinanc.replace_end_of_day_values(
                 buy_price_df, mark_to_market_price_df
@@ -762,7 +835,7 @@ class ForecastEvaluatorFromPrices:
                 sell_price_df, mark_to_market_price_df
             )
             execution_price_df = cofinanc.apply_execution_prices_to_trades(
-                trade_signal,
+                executed_trades_shares,
                 buy_price_df,
                 sell_price_df,
             )
@@ -770,50 +843,50 @@ class ForecastEvaluatorFromPrices:
             execution_price_df = mark_to_market_price_df
         return execution_price_df
 
-    def _compute_positions(
+    def _compute_holdings_notional(
         self,
         df: pd.DataFrame,
-        holdings: pd.DataFrame,
+        holdings_shares: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Compute positions in dollars from share holdings.
 
         :param df: as in `compute_portfolio()`
-        :param holdings: from `_compute_holdings()`
+        :param holdings_shares: from `_compute_holdings_shares()`
         :return: end-of-bar indexed dataframe of holdings valued using
             `self.price_col` of `df`
         """
         mark_to_market_price = ForecastEvaluatorFromPrices._get_df(
             df, self._price_col
         )
-        positions = holdings.multiply(mark_to_market_price)
-        return positions
+        holdings_notional = holdings_shares.multiply(mark_to_market_price)
+        return holdings_notional
 
     def _compute_pnl(
         self,
         df: pd.DataFrame,
-        positions: pd.DataFrame,
-        flows: pd.DataFrame,
+        holdings_notional: pd.DataFrame,
+        executed_trades_notional: pd.DataFrame,
     ) -> pd.DataFrame:
         """
         Compute PnL from dollar positions and dollar inflows/outflows.
 
         :param df: as in `compute_portfolio()`
-        :param positions: from `_compute_positions()`
-        :param flows: from `_compute_flows()`
+        :param holdings_notional: from `_compute_holdings_notional()`
+        :param executed_trades_notional: from `_compute_executed_trades_notional()`
         :return: end-of-bar indexed dataframe of per-instrument dollar PnL
         """
         _ = df
-        pnl = positions.subtract(positions.shift(1), fill_value=0).add(
-            flows, fill_value=0
-        )
+        pnl = holdings_notional.subtract(
+            holdings_notional.shift(1), fill_value=0
+        ).subtract(executed_trades_notional, fill_value=0)
         return pnl
 
     def _compute_stats(
         self,
         df: pd.DataFrame,
-        positions: pd.DataFrame,
-        flows: pd.DataFrame,
+        holdings_notional: pd.DataFrame,
+        executed_trades_notional: pd.DataFrame,
         pnl: pd.DataFrame,
         compute_extended_stats: bool,
     ) -> pd.DataFrame:
@@ -821,8 +894,8 @@ class ForecastEvaluatorFromPrices:
         Compute PnL from dollar positions and dollar inflows/outflows.
 
         :param df: as in `compute_portfolio()`
-        :param positions: from `_compute_positions()`
-        :param flows: from `_compute_flows()`
+        :param holdings_notional: from `_compute_holdings_notional()`
+        :param executed_trades_notional: from `_compute_flows()`
         :param pnl: from `_compute_pnl()`
         :param compute_extended_stats: forwarded to
             `cofinanc.compute_bar_metrics()`
@@ -832,31 +905,26 @@ class ForecastEvaluatorFromPrices:
         if self._spread_col is not None:
             spread_df = ForecastEvaluatorFromPrices._get_df(df, self._spread_col)
         stats = cofinanc.compute_bar_metrics(
-            positions, flows, pnl, spread_df, compute_extended_stats
+            holdings_notional,
+            -executed_trades_notional,
+            pnl,
+            spread_df,
+            compute_extended_stats,
         )
         return stats
 
     def _apply_burn_in_and_reindex(
         self,
         df: pd.DataFrame,
-        holdings: pd.DataFrame,
-        positions: pd.DataFrame,
-        flows: pd.DataFrame,
-        pnl: pd.DataFrame,
-        stats: pd.DataFrame,
+        derived_dfs: Dict[str, pd.DataFrame],
         burn_in_bars: int,
         burn_in_days: int,
         input_idx: Optional[None],
-    ) -> Tuple[
-        pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame
-    ]:
+    ) -> Dict[str, pd.DataFrame]:
         # Remove initial bars.
         if burn_in_bars > 0:
-            holdings = holdings.iloc[burn_in_bars:]
-            positions = positions.iloc[burn_in_bars:]
-            flows = flows.iloc[burn_in_bars:]
-            pnl = pnl.iloc[burn_in_bars:]
-            stats = stats.iloc[burn_in_bars:]
+            for key, value in derived_dfs.items():
+                derived_dfs[key] = value.iloc[burn_in_bars:]
         if burn_in_days > 0:
             # TODO(Paul): Consider making this more efficient (and less
             # awkward).
@@ -864,19 +932,13 @@ class ForecastEvaluatorFromPrices:
             hdbg.dassert_lt(burn_in_days, date_idx.size)
             first_date = pd.Timestamp(date_idx[burn_in_days], tz=df.index.tz)
             _LOG.info("Initial date after burn-in=%s", first_date)
-            holdings = holdings.loc[first_date:]
-            positions = positions.loc[first_date:]
-            flows = flows.loc[first_date:]
-            pnl = pnl.loc[first_date:]
-            stats = stats.loc[first_date:]
+            for key, value in derived_dfs.items():
+                derived_dfs[key] = value.iloc[first_date:]
         # Possibly reindex dataframes.
         if input_idx is not None:
-            holdings = holdings.reindex(input_idx)
-            positions = positions.reindex(input_idx)
-            flows = flows.reindex(input_idx)
-            pnl = pnl.reindex(input_idx)
-            stats = stats.reindex(input_idx)
-        return holdings, positions, flows, pnl, stats
+            for key, value in derived_dfs.items():
+                derived_dfs[key] = value.reindex(input_idx)
+        return derived_dfs
 
 
 # #############################################################################
@@ -898,27 +960,31 @@ def cross_check_portfolio_pnl(df: pd.DataFrame) -> pd.DataFrame:
     """
     # Reference PnL (nominal).
     reference_pnl = df["pnl"]
-    # PnL computed from nominal position changes and nominal in/outflows.
-    holdings_diff_plus_flow = df["position"].diff().add(df["flow"])
+    # PnL computed from notional position changes and notional in/outflows.
+    holdings_notional_diff_minus_trades_notional = (
+        df["holdings_notional"].diff().subtract(df["executed_trades_notional"])
+    )
     # PnL computed from share counts and price differences.
-    holdings_time_price_diff = (
-        df["holdings"].shift(1).multiply(df["price"].diff())
+    holdings_shares_times_price_diff = (
+        df["holdings_shares"].shift(1).multiply(df["price"].diff())
     )
-    # PnL computed from nominal position changes and nominal share trades.
-    nominal_position_minus_trade_times_price = (
-        df["position"].diff().add(-df["price"].multiply(df["holdings"].diff()))
+    # PnL computed from notional position changes and recomputed notional trades.
+    holdings_notional_minus_trade_times_price = (
+        df["holdings_notional"]
+        .diff()
+        .subtract(df["price"].multiply(df["holdings_shares"].diff()))
     )
-    # PnL computed from nominal positions and percentage price changes.
-    nominal_position_time_pct_price_change = (
-        df["position"].shift(1).multiply(df["price"].pct_change())
+    # PnL computed from notional positions and percentage price changes.
+    holdings_notional_times_pct_price_change = (
+        df["holdings_notional"].shift(1).multiply(df["price"].pct_change())
     )
     # Organize PnL calculations into a multiindexed dataframe.
     pnl_dict = {
         "reference_pnl": reference_pnl,
-        "holdings_diff_plus_flow": holdings_diff_plus_flow,
-        "holdings_times_price_diff": holdings_time_price_diff,
-        "nominal_position_minus_trade_times_price": nominal_position_minus_trade_times_price,
-        "nominal_position_times_pct_price_change": nominal_position_time_pct_price_change,
+        "holdings_notional_diff_minus_trades_notional": holdings_notional_diff_minus_trades_notional,
+        "holdings_times_price_diff": holdings_shares_times_price_diff,
+        "holdings_notional_minus_trade_times_price": holdings_notional_minus_trade_times_price,
+        "holdings_notional_times_pct_price_change": holdings_notional_times_pct_price_change,
     }
     pnl_df = pd.concat(pnl_dict.values(), axis=1, keys=pnl_dict.keys())
     pnl_df = pnl_df.swaplevel(i=0, j=1, axis=1)
@@ -928,3 +994,38 @@ def cross_check_portfolio_pnl(df: pd.DataFrame) -> pd.DataFrame:
         pnl_corrs[col] = pnl_df[col].corr()
     pnl_corr_df = pd.concat(pnl_corrs.values(), keys=pnl_corrs.keys())
     return pnl_corr_df
+
+
+def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Adapt the `ForecastEvaluatorFromPrices` portfolio df to `Portfolio`'s.
+    """
+    hpandas.dassert_time_indexed_df(
+        df, allow_empty=False, strictly_increasing=True
+    )
+    hdbg.dassert_is_subset(
+        [
+            "holdings_shares",
+            "holdings_notional",
+            "executed_trades_shares",
+            "executed_trades_notional",
+            "pnl",
+        ],
+        df.columns.levels[0].to_list(),
+    )
+    #
+    holdings = df["holdings_shares"]
+    holdings_marked_to_market = df["holdings_notional"]
+    flows = -df["executed_trades_notional"]
+    pnl = df["pnl"]
+    #
+    normalized_df = pd.concat(
+        {
+            "holdings": holdings,
+            "holdings_marked_to_market": holdings_marked_to_market,
+            "flows": flows,
+            "pnl": pnl,
+        },
+        axis=1,
+    )
+    return normalized_df

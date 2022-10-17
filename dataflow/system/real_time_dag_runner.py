@@ -194,14 +194,20 @@ class RealTimeDagRunner(dtfcore.DagRunner):
 
     def _apply_current_bar_timestamp(self) -> None:
         if self._set_current_bar_timestamp:
+            # TODO(gp): This is similar to `hdateti.set_current_bar_timestamp()`.
+            #  Consider factoring it out.
             # Compute the current bar by snapping the current timestamp to the
             # grid.
             _LOG.debug("Setting current bar time")
             current_timestamp = self._get_wall_clock_time()
-            bar_timestamp = hdateti.find_current_bar(
-                current_timestamp, self._bar_duration_in_secs
+            mode = "round"
+            max_distance_in_secs = 10
+            bar_timestamp = hdateti.find_bar_timestamp(
+                current_timestamp, self._bar_duration_in_secs,
+                mode=mode, max_distance_in_secs=max_distance_in_secs
             )
             _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+            _LOG.info("\n%s", hprint.frame("bar_timestamp=%s" % bar_timestamp))
             hwacltim.set_current_bar_timestamp(bar_timestamp)
 
     async def _run_dag(self, method: dtfcore.Method) -> dtfcore.ResultBundle:

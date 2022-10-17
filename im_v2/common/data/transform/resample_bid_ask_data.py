@@ -21,69 +21,14 @@ import pyarrow as pa
 import pyarrow.parquet as pq
 import tqdm
 
-import core.finance.resampling as cfinresa
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
-
-
-def _calculate_vwap(
-    data: pd.Series, price_col: str, volume_col: str, **resample_kwargs
-) -> pd.DataFrame:
-    price = (
-        data[price_col]
-        .multiply(data[volume_col])
-        .resample(**resample_kwargs)
-        .agg({f"{volume_col}": "sum"})
-    )
-    size = data[volume_col].resample(**resample_kwargs).agg({volume_col: "sum"})
-    calculated_price = price.divide(size)
-    return calculated_price
-
-
-def _resample_bid_ask_data(
-    data: pd.DataFrame, mode: str = "VWAP"
-) -> pd.DataFrame:
-    """
-    Resample bid/ask data to 1 minute interval.
-
-    :param mode: designate strategy to use, i.e. volume-weighted average
-        (VWAP) or time-weighted average price (TWAP)
-    """
-    resample_kwargs = {
-        "rule": "T",
-        "closed": None,
-        "label": None,
-    }
-    if mode == "VWAP":
-        bid_price = _calculate_vwap(
-            data, "bid_price", "bid_size", **resample_kwargs
-        )
-        ask_price = _calculate_vwap(
-            data, "ask_price", "ask_size", **resample_kwargs
-        )
-        bid_ask_price_df = pd.concat([bid_price, ask_price], axis=1)
-    elif mode == "TWAP":
-        bid_ask_price_df = (
-            data[["bid_size", "ask_size"]]
-            .groupby(pd.Grouper(freq=resample_kwargs["rule"]))
-            .mean()
-        )
-    else:
-        raise ValueError(f"Invalid mode='{mode}'")
-    df = cfinresa.resample(data, **resample_kwargs).agg(
-        {
-            "bid_size": "sum",
-            "ask_size": "sum",
-            "exchange_id": "last",
-        }
-    )
-    df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
-    df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
-    return df
 
 
 def _run(args: argparse.Namespace) -> None:
@@ -107,12 +52,29 @@ def _run(args: argparse.Namespace) -> None:
         "ask_size",
         "exchange_id",
     ]
+    # Convert dates to unix timestamps.
+    start = hdateti.convert_timestamp_to_unix_epoch(
+        pd.Timestamp(args.start_timestamp), unit="s"
+    )
+    end = hdateti.convert_timestamp_to_unix_epoch(
+        pd.Timestamp(args.end_timestamp), unit="s"
+    )
+    # Define filters for data period.
+    filters = [("timestamp", ">=", start), ("timestamp", "<", end)]
     for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
         df = hparque.from_parquet(
-            file_path, columns=columns, aws_profile=aws_profile
+            file_path, columns=columns, filters=filters, aws_profile=aws_profile
         )
-        df = _resample_bid_ask_data(df)
+        if df.empty:
+            _LOG.warning(
+                "Empty Dataframe: no data in %s for %s-%s time period",
+                file_path,
+                args.start_timestamp,
+                args.end_timestamp,
+            )
+            continue
+        df = imvcdttrut.resample_bid_ask_data(df)
         dst_path = os.path.join(args.dst_dir, file)
         pq.write_table(
             pa.Table.from_pandas(df),
@@ -139,6 +101,20 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         required=True,
         help="Destination dir where to save resampled parquet files",
+    )
+    parser.add_argument(
+        "--start_timestamp",
+        required=True,
+        action="store",
+        type=str,
+        help="Beginning of the downloaded data period",
+    )
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the downloaded data period",
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser

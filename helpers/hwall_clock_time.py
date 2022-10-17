@@ -13,6 +13,7 @@ from typing import Callable, Optional, Union
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): Consider adding a `import pandas as pd` to use the type hints.
 
 # #############################################################################
 # Simulated real time
@@ -96,7 +97,7 @@ def set_current_bar_timestamp(timestamp: "pd.Timestamp") -> None:
     _LOG.debug("timestamp=%s", timestamp)
     global _CURR_BAR_TIMESTAMP
     if _CURR_BAR_TIMESTAMP is not None:
-        assert _CURR_BAR_TIMESTAMP <= timestamp, (
+        assert _CURR_BAR_TIMESTAMP < timestamp, (
             "Bar timestamp can only move forward: "
             + f"{_CURR_BAR_TIMESTAMP} <= {timestamp}"
         )

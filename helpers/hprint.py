@@ -8,7 +8,7 @@ import inspect
 import logging
 import re
 import sys
-from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
+from typing import Any, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg
 
@@ -355,7 +355,12 @@ def round_digits(
 # name of variables from the caller.
 
 
-def to_str(expression: str, frame_lev: int = 1, mode: str = "str") -> str:
+def to_str(
+    expression: str,
+    frame_lev: int = 1,
+    print_lhs: bool = True,
+    char_separator: str = ",",
+) -> str:
     """
     Return a string with the value of a variable / expression / multiple
     variables.
@@ -371,7 +376,13 @@ def to_str(expression: str, frame_lev: int = 1, mode: str = "str") -> str:
     x+1=2
     ```
 
-    :param mode: `str` or `repr` to determine how each object is printed
+    :param expression: the variable / expression to evaluate and print. E.g.,
+        `to_str("exp1")` is converted into `exp1=val1`.
+        If expression is a space-separated compound expression, e.g.,
+        `to_str("exp1 exp2 ...")`, it is converted into:
+        `exp1=val1, exp2=val2, ...`
+    :param print_lhs: whether we want to print the left hand side (i.e., exp1)
+    :param sep_char: character separating different values
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -382,8 +393,18 @@ def to_str(expression: str, frame_lev: int = 1, mode: str = "str") -> str:
         exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
         # Remove empty names.
         exprs = [v for v in exprs if v.strip().rstrip() != ""]
+        # Convert each expression into a value.
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
-        return ", ".join(list(map(_to_str, exprs)))
+        values = list(map(_to_str, exprs))
+        # Assemble in a return value.
+        hdbg.dassert_lte(len(char_separator), 1)
+        sep = char_separator + " "
+        txt = sep.join(values)
+        return txt
+    # Certain expressions are evaluated as literals.
+    if expression in ("->", ":", "\n"):
+        return expression
+    # Evaluate the expression.
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
     ret = expression + "="
     eval_ = eval(expression, frame_.f_globals, frame_.f_locals)
@@ -539,38 +560,6 @@ def log_frame(
     # Add an empty space.
     msg = "\n" + msg
     logger.log(verbosity, "%s", msg)
-
-
-# TODO(gp): This can be injected in `hlogger.py` and then controlled through
-#  command line, e.g., `-v VERBOSE`. We should be able to tweak the verbosity
-#  of each module independently.
-def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> Callable:
-    """
-    Create a _LOG.verb_debug() in a module that can be disabled in a
-    centralized way.
-
-    This is useful when we want to have an higher-level of verbose debugging that
-    can be enabled programmatically.
-
-    Use example:
-    ```
-    _LOG = logging.getLogger(__name__)
-    # Assign this not to confuse the linter about a symbol that doesn't exist
-    # in the code.
-    _LOG.verb_debug = hprint.install_log_verb_debug(_LOG,
-        # Enable the very verbose output.
-        verbose=True)
-
-    _LOG.verb_debug(...)
-    ```
-    """
-    hdbg.dassert_isinstance(logger, logging.Logger)
-
-    def _verb_debug(*args: Any, **kwargs: Any) -> None:
-        if verbose:
-            logger.debug(*args, **kwargs)
-
-    return _verb_debug
 
 
 # #############################################################################

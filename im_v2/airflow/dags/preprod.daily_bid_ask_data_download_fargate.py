@@ -1,5 +1,4 @@
-# This is a utility DAG to conduct QA on real time data download
-# DAG task downloads data for last N minutes in one batch
+# This is a utility DAG to download bid/ask data daily.
 
 import datetime
 import airflow
@@ -85,8 +84,8 @@ dag = airflow.DAG(
 
 download_command = [
     "/app/amp/im_v2/{}/data/extract/download_historical_data.py",
-     "--end_timestamp '{{ execution_date + macros.timedelta(minutes=1440) }}'",
-     "--start_timestamp '{{ execution_date }}'",
+     "--end_timestamp '{{ execution_date + macros.timedelta(hours=24) - macros.timedelta(minutes=var.value.daily_bid_ask_data_download_delay_min | int)  }}'",
+     "--start_timestamp '{{ execution_date - macros.timedelta(minutes=var.value.daily_bid_ask_data_download_delay_min | int) }}'",
      "--exchange_id '{}'",
      "--universe '{}'",
      "--aws_profile 'ck'",
@@ -141,7 +140,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
                     "command": curr_bash_command,
                 }
             ],
-            # For uknown reason bid-ask task needs more resources.
+            # For unknown reason bid-ask task needs more resources.
             "cpu": "512",
             "memory": "1024"
         },

@@ -6,7 +6,7 @@ import dataflow.core.dag_runner as dtfcodarun
 
 import abc
 import logging
-from typing import Generator, Optional, Tuple
+from typing import Generator, List, Optional, Tuple
 
 import pandas as pd
 
@@ -63,6 +63,24 @@ class DagRunner(abc.ABC, hobject.PrintableMixin):
         # Extract the sink node.
         self._result_nid = self.dag.get_unique_sink()
         _LOG.debug("_result_nid=%s", self._result_nid)
+
+    def __str__(
+        self,
+        attr_names_to_skip: Optional[List[str]] = None,
+    ) -> str:
+        if attr_names_to_skip is None:
+            attr_names_to_skip = []
+        attr_names_to_skip.extend(["dag", ])
+        return super().__str__(attr_names_to_skip=attr_names_to_skip)
+
+    def __repr__(
+        self,
+        attr_names_to_skip: Optional[List[str]] = None,
+    ) -> str:
+        if attr_names_to_skip is None:
+            attr_names_to_skip = []
+        attr_names_to_skip.extend(["dag", ])
+        return super().__repr__(attr_names_to_skip=attr_names_to_skip)
 
     def _set_fit_predict_intervals(
         self, method: dtfcornode.Method, intervals: Optional[dtfcorutil.Intervals]

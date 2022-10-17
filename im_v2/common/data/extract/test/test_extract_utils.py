@@ -11,7 +11,7 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
@@ -49,7 +49,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         self.sleep_mock: umock.MagicMock = self.sleep_patch.start()
         # Commonly used extractor mock.
         self.extractor_mock = umock.create_autospec(
-            ivcdexex.CcxtExtractor, instance=True
+            imvcdexex.CcxtExtractor, instance=True
         )
         # Commonly used kwargs across the tests.
         self.kwargs = {
@@ -63,6 +63,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
             "interval_min": 1,
             "start_time": "2022-08-04 21:17:35",
             "stop_time": "2022-08-04 21:20:35",
+            "method": "rest",
         }
         # Predefined side effects for successful run.
         iteration_delay_sec = timedelta(seconds=1)
@@ -120,8 +121,8 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
             (
                 self.kwargs,
                 self.extractor_mock,
-                pd.Timestamp("2022-08-04 21:12:35"),
-                datetime(2022, 8, 4, 21, 17, 35),
+                pd.Timestamp("2022-08-04 21:12:00"),
+                datetime(2022, 8, 4, 21, 17, 0),
             ),
             {},
         )
@@ -244,6 +245,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         Run with wrong `interval_min`.
         """
         additional_kwargs = {"interval_min": 0}
+        self.datetime_mock.now.return_value = datetime(2020, 8, 4, 21, 17, 36)
         with self.assertRaises(AssertionError) as fail:
             # Run.
             self.call_download_realtime_for_one_exchange_periodically(
@@ -346,8 +348,8 @@ class TestDownloadRealtimeForOneExchange1(
         """
         # Prepare inputs.
         kwargs = {
-            "start_timestamp": "20211110-101100",
-            "end_timestamp": "20211110-101200",
+            "start_timestamp": "2021-11-10 10:11:00+00:00",
+            "end_timestamp": "2021-11-10 10:12:00+00:00",
             "exchange_id": "binance",
             "universe": "v3",
             "data_type": "ohlcv",
@@ -360,7 +362,7 @@ class TestDownloadRealtimeForOneExchange1(
             "s3_path": None,
             "connection": self.connection,
         }
-        extractor = ivcdexex.CcxtExtractor(
+        extractor = imvcdexex.CcxtExtractor(
             kwargs["exchange_id"], kwargs["contract_type"]
         )
         if use_s3:
@@ -379,25 +381,23 @@ class TestDownloadRealtimeForOneExchange1(
         # Check data output.
         actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
         # pylint: disable=line-too-long
-        expected = r"""id timestamp open high low close volume currency_pair exchange_id end_download_timestamp knowledge_timestamp
-                        0 1 1636569000000 2.2440 2.2450 2.2410 2.2410 9.389970e+04 ADA_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        1 2 1636569000000 90.3800 90.4400 90.2800 90.2800 4.519300e+02 AVAX_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        2 3 1636569000000 643.5000 643.7000 643.1000 643.2000 3.907190e+02 BNB_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        3 4 1636569000000 68225.0400 68238.7900 68160.4100 68171.3100 1.118236e+01 BTC_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        4 5 1636569000000 0.2697 0.2697 0.2694 0.2696 1.239735e+06 DOGE_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        5 6 1636569000000 5.2640 5.2670 5.2600 5.2620 1.260730e+04 EOS_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        6 7 1636569000000 4812.1100 4812.8200 4806.6000 4806.6000 9.595610e+01 ETH_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        7 8 1636569000000 37.1600 37.2100 37.1400 37.1400 4.097370e+03 LINK_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-                        8 9 1636569000000 241.6600 241.6700 241.4100 241.4300 7.629000e+02 SOL_USDT binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00"""
+        expected = r"""   id      timestamp        open        high         low       close         volume               currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+            0   1  1636539060000      2.2270      2.2280      2.2250      2.2250  7.188450e+04      ADA_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            1   2  1636539060000     92.4400     92.4700     92.2600     92.2600  1.309350e+03     AVAX_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            2   3  1636539060000    648.9000    649.0000    648.7000    648.9000  6.547400e+02      BNB_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            3   4  1636539060000  66774.0200  66779.9200  66770.0300  66774.0500  1.503426e+01      BTC_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            4   5  1636539060000      0.2736      0.2737      0.2732      0.2733  1.170147e+06     DOGE_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            5   6  1636539060000      5.1910      5.1910      5.1860      5.1860  4.172600e+03      EOS_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            6   7  1636539060000   4716.5200   4716.8400   4715.6400   4715.6500  9.941380e+01      ETH_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            7   8  1636539060000     34.9400     34.9400     34.8800     34.8900  5.722750e+03     LINK_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            8   9  1636539060000    242.5400    242.5400    242.3500    242.3500  4.506200e+02      SOL_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
-    @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcddbut.hdateti, "get_current_time")
     def test_function_call1(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -408,9 +408,8 @@ class TestDownloadRealtimeForOneExchange1(
         Run without saving to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
-        mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
-        mock_get_current_timestamp_as_string.return_value = "20211110-000001"
+        mock_get_current_time.return_value = "2021-11-10 10:12:00.000000+00:00"
+        mock_get_current_timestamp_as_string.return_value = "20211110-101200"
         # Run.
         use_s3 = False
         self.call_download_realtime_for_one_exchange(use_s3)
@@ -421,12 +420,10 @@ class TestDownloadRealtimeForOneExchange1(
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
     @pytest.mark.skip(reason="CMTask2089")
-    @umock.patch.object(ivcdexex.hdateti, "get_current_timestamp_as_string")
+    @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     def test_function_call2(
         self,
-        mock_get_secret: umock.MagicMock,
         mock_get_current_time: umock.MagicMock,
         mock_get_current_timestamp_as_string: umock.MagicMock,
     ) -> None:
@@ -437,8 +434,7 @@ class TestDownloadRealtimeForOneExchange1(
         Run and save to s3.
         """
         # Set mock return values.
-        mock_get_secret.return_value = self.binance_secret
-        mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
+        mock_get_current_time.return_value = "2021-11-10 10:12:00.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
         use_s3 = True
@@ -502,19 +498,17 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "file_format": "parquet",
             "unit": "ms",
         }
-        exchange = ivcdexex.CcxtExtractor(
+        exchange = imvcdexex.CcxtExtractor(
             args["exchange_id"], args["contract_type"]
         )
         imvcdeexut.download_historical_data(args, exchange)
 
     @pytest.mark.skip(reason="CMTask2089")
     @umock.patch.object(imvcdeexut.hparque, "list_and_merge_pq_files")
-    @umock.patch.object(ivcdexex.hsecret, "get_secret")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call1(
         self,
         mock_get_current_time: umock.MagicMock,
-        mock_get_secret: umock.MagicMock,
         mock_list_and_merge: umock.MagicMock,
     ) -> None:
         """
@@ -523,8 +517,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         structure and file contents.
         """
         # Set mock return values.
-        mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
-        mock_get_secret.return_value = self.binance_secret
+        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
@@ -779,7 +772,8 @@ class TestVerifySchema(hunitest.TestCase):
 
     def test_non_numerical_column(self) -> None:
         """
-        Test if non numerical column that supposed to be numerical produces an error.
+        Test if non numerical column that supposed to be numerical produces an
+        error.
         """
         # Define test Dataframe data with non-numerical `close` column.
         test_data = {

@@ -35,6 +35,7 @@ except ModuleNotFoundError:
 
 
 import helpers.hdbg as hdbg  # noqa: E402 # pylint: disable=wrong-import-position
+import helpers.hwall_clock_time as hwacltim  # noqa: E402 # pylint: disable=wrong-import-position
 import helpers.hprint as hprint  # noqa: E402 # pylint: disable=wrong-import-position
 
 _LOG = logging.getLogger(__name__)
@@ -377,39 +378,103 @@ def get_current_date_as_string(tz: str) -> str:
 # #############################################################################
 
 
+def convert_seconds_to_minutes(num_secs: int) -> int:
+    hdbg.dassert_lt(0, num_secs)
+    hdbg.dassert_eq(
+        num_secs % 60,
+        0,
+        "num_secs=%s is not an integer number of minutes",
+        num_secs,
+    )
+    num_mins = int(num_secs / 60)
+    hdbg.dassert_lt(0, num_mins)
+    _LOG.debug(hprint.to_str("num_secs num_mins"))
+    return num_mins
+
+
 # TODO(gp): bar_duration_in_secs -> bar_{length,period}_in_secs
-def find_current_bar(
+def find_bar_timestamp(
     current_timestamp: pd.Timestamp,
     bar_duration_in_secs: int,
+    *,
+    mode: str = "round",
+    max_distance_in_secs: int = 10,
 ) -> pd.Timestamp:
     """
     Compute the bar (a, b] with period `bar_duration_in_secs` including
     `current_timestamp`.
+
+    :param current_timestamp:
+    :param bar_duration_in_secs:
+    :param mode: how to compute the bar
+        - `round`: snap to the closest bar extreme
+        - `floor`: pick timestamp to the bar that includes it, returning the lower
+            bound. E.g., For `9:13am` and 5 mins bars returns `9:10am`
+    :param max_distance_in_secs: number of seconds representing the maximal distance
+        that it's allowed from the start of the bar
     """
     hdbg.dassert_isinstance(current_timestamp, pd.Timestamp)
     # Convert bar_duration_in_secs into minutes.
-    hdbg.dassert_lt(0, bar_duration_in_secs)
-    hdbg.dassert_eq(
-        bar_duration_in_secs % 60,
-        0,
-        "bar_duration_in_secs=%s is not an integer number of minutes",
-        bar_duration_in_secs,
-    )
-    grid_time_in_mins = int(bar_duration_in_secs / 60)
-    hdbg.dassert_lt(0, grid_time_in_mins)
+    grid_time_in_mins = convert_seconds_to_minutes(bar_duration_in_secs)
     _LOG.debug(hprint.to_str("grid_time_in_mins"))
-    #
-    bar_timestamp = current_timestamp.floor(f"{grid_time_in_mins}T")
-    hdbg.dassert_lte(bar_timestamp, current_timestamp)
+    # Align.
+    reference_timestamp = f"{grid_time_in_mins}T"
+    if mode == "round":
+        bar_timestamp = current_timestamp.round(reference_timestamp)
+    elif mode == "floor":
+        bar_timestamp = current_timestamp.floor(reference_timestamp)
+        hdbg.dassert_lte(bar_timestamp, current_timestamp)
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
     _LOG.debug(
         hprint.to_str(
             "current_timestamp bar_duration_in_secs grid_time_in_mins bar_timestamp"
         )
     )
+    # Sanity check.
+    if mode == "round":
+        hdbg.dassert_lte(1, max_distance_in_secs)
+        if bar_timestamp >= current_timestamp:
+            distance_in_secs = (bar_timestamp - current_timestamp).seconds
+        else:
+            distance_in_secs = (current_timestamp - bar_timestamp).seconds
+        hdbg.dassert_lte(0, distance_in_secs)
+        hdbg.dassert_lte(
+            distance_in_secs,
+            max_distance_in_secs,
+            "current_timestamp=%s is too distant from bar_timestamp=%s",
+            current_timestamp,
+            bar_timestamp,
+        )
     return bar_timestamp
 
 
-# #############################################################################
+
+# This can't go in `helpers.hwall_clock_time` since it has a dependency from
+# `find_bar_timestamp()` and might introduce an import loop.
+def set_current_bar_timestamp(
+    current_timestamp: pd.Timestamp,
+    bar_duration_in_secs: int,
+) -> None:
+    """
+    Compute the current bar by snapping the current timestamp to the grid.
+    """
+    mode = "round"
+    # E.g., `current_timestamp` is 09:26 and the next bar is at 09:30, so
+    # the distance is 4 minutes, i.e. max distance should be within a bar's
+    # length.
+    max_distance_in_secs = bar_duration_in_secs
+    bar_timestamp = find_bar_timestamp(
+        current_timestamp,
+        bar_duration_in_secs,
+        mode=mode,
+        max_distance_in_secs=max_distance_in_secs,
+    )
+    _LOG.debug(hprint.to_str("current_timestamp bar_timestamp"))
+    hwacltim.set_current_bar_timestamp(bar_timestamp)
+
+
+# #########################################################################
 
 
 def to_generalized_datetime(
@@ -649,6 +714,8 @@ def _determine_date_format(
     return format_, date_modification_func
 
 
+# #############################################################################
+# Unix to epoch conversion
 # #############################################################################
 
 

@@ -18,9 +18,9 @@ import helpers.htimer as htimer
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
+# Enable extra verbose debugging. Do not commit.
+_TRACE = False
 
-
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 # #############################################################################
 # ReplayedMarketData
@@ -92,12 +92,13 @@ class ReplayedMarketData(mdabmada.MarketData):
         right_close: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
-        _LOG.verb_debug(
-            hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close "
-                "right_close limit"
+        if _TRACE:
+            _LOG.trace(
+                hprint.to_str(
+                    "start_ts end_ts ts_col_name asset_ids left_close "
+                    "right_close limit"
+                )
             )
-        )
         # TODO(gp): This assertion seems very slow. Move this check in a
         #  centralized place instead of calling it every time, if possible.
         if asset_ids is not None:
@@ -110,7 +111,8 @@ class ReplayedMarketData(mdabmada.MarketData):
             )
         # Filter the data by the current time.
         wall_clock_time = self.get_wall_clock_time()
-        _LOG.verb_debug(hprint.to_str("wall_clock_time"))
+        if _TRACE:
+            _LOG.trace(hprint.to_str("wall_clock_time"))
         df_tmp = creatime.get_data_as_of_datetime(
             self._df,
             self._knowledge_datetime_col_name,
@@ -127,17 +129,20 @@ class ReplayedMarketData(mdabmada.MarketData):
             df_tmp, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Handle `asset_ids`
-        _LOG.verb_debug("before df_tmp=\n%s", hpandas.df_to_str(df_tmp))
+        if _TRACE:
+            _LOG.trace("before df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         if asset_ids is not None:
             hdbg.dassert_in(self._asset_id_col, df_tmp.columns)
             mask = df_tmp[self._asset_id_col].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
-        _LOG.verb_debug("after df_tmp=\n%s", hpandas.df_to_str(df_tmp))
+        if _TRACE:
+            _LOG.trace("after df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
             df_tmp = df_tmp.head(limit)
-        _LOG.verb_debug("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
+        if _TRACE:
+            _LOG.trace("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -168,6 +173,7 @@ def save_market_data(
     file_name: str,
     timedelta: pd.Timedelta,
     *,
+    asset_id_col: str = "asset_id",
     limit: Optional[int] = None,
 ) -> None:
     """
@@ -188,7 +194,8 @@ def save_market_data(
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
     #
     _LOG.info("index=%s, %s", rt_df.index.min(), rt_df.index.max())
-    asset_ids = rt_df["asset_id"].unique()
+    hdbg.dassert_in(asset_id_col, rt_df.columns)
+    asset_ids = rt_df[asset_id_col].unique()
     _LOG.info("asset_id=%s %s", len(asset_ids), str(asset_ids))
     #
     _LOG.debug(

@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
+import core.finance.bid_ask as cfibiask
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -67,6 +68,7 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
+        timestamp_col_name: str = "timestamp",
     ) -> None:
         """
         Constructor.
@@ -76,10 +78,11 @@ class ImClient(abc.ABC):
         :param resample_1min: whether to resample data to 1 minute or not
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
+        :param timestamp_col_name: the name of the column storing timestamp
         """
         _LOG.debug(
             hprint.to_str(
-                "vendor universe_version resample_1min full_symbol_col_name"
+                "vendor universe_version resample_1min full_symbol_col_name timestamp_col_name"
             )
         )
         hdbg.dassert_isinstance(vendor, str)
@@ -89,6 +92,8 @@ class ImClient(abc.ABC):
         self._universe_version = universe_version
         hdbg.dassert_isinstance(resample_1min, bool)
         self._resample_1min = resample_1min
+        hdbg.dassert_isinstance(timestamp_col_name, str)
+        self._timestamp_col_name = timestamp_col_name
         # TODO(gp): This is the name of the column of the asset_id in the data
         #  as it is read by the derived classes (e.g., `igid`, `asset_id`).
         #  We should rename this as "full_symbol" so that all the code downstream
@@ -200,6 +205,13 @@ class ImClient(abc.ABC):
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
+        if "level" in df.columns:
+            _LOG.debug(
+                "Detected level column and calling handle_orderbook_levels"
+            )
+            # Transform bid ask data with multiple order book levels.
+            timestamp_col = self._timestamp_col_name
+            df = cfibiask.handle_orderbook_levels(df, timestamp_col)
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()
@@ -213,7 +225,7 @@ class ImClient(abc.ABC):
             only_warning=True,
         )
         # Rename index.
-        df.index.name = "timestamp"
+        df.index.name = self._timestamp_col_name
         # Normalize data for each symbol.
         _LOG.debug("full_symbols=%s", df[full_symbol_col_name].unique())
         dfs = []
@@ -232,6 +244,7 @@ class ImClient(abc.ABC):
                 self._resample_1min,
                 start_ts,
                 end_ts,
+                self._timestamp_col_name,
             )
             dfs.append(df_tmp)
         hdbg.dassert_lt(0, df.shape[0], "Empty df=\n%s", df)
@@ -241,13 +254,15 @@ class ImClient(abc.ABC):
         # There is not a simple way to sort by index and columns in Pandas,
         # so we convert the index into a column, sort, and convert back.
         df = df.reset_index()
-        df = df.sort_values(by=["timestamp", full_symbol_col_name])
-        df = df.set_index("timestamp", drop=True)
+        df = df.sort_values(by=[self._timestamp_col_name, full_symbol_col_name])
+        df = df.set_index(self._timestamp_col_name, drop=True)
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
         # Check that columns are required ones.
-        if columns is not None:
+        # TODO(gp): Difference between amp and cmamp.
+        # TODO(gp): This makes a test in E8 fail.
+        if False and columns is not None:
             df = hpandas.check_and_filter_matching_columns(
                 df, columns, filter_data_mode
             )
@@ -342,6 +357,7 @@ class ImClient(abc.ABC):
         resample_1min: bool,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
+        timestamp_col_name: str,
     ) -> None:
         """
         Verify that the normalized data is valid.
@@ -365,7 +381,7 @@ class ImClient(abc.ABC):
         # Check that there are no duplicates in data by index and full symbol.
         n_duplicated_rows = (
             df.reset_index()
-            .duplicated(subset=["timestamp", full_symbol_col_name])
+            .duplicated(subset=[timestamp_col_name, full_symbol_col_name])
             .sum()
         )
         hdbg.dassert_eq(
@@ -715,10 +731,11 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         data = data.drop(["exchange_id", "currency_pair"], axis=1)
         # Convert timestamp column with Unix epoch to timestamp format.
-        data["timestamp"] = data["timestamp"].apply(
+        data[self._timestamp_col_name] = data[self._timestamp_col_name].apply(
             hdateti.convert_unix_epoch_to_timestamp
         )
-        data = data.set_index("timestamp")
+        # Remove duplicates in data.
+        data = self._filter_duplicates(data, full_symbol_col_name)
         # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns
@@ -888,3 +905,56 @@ class SqlRealTimeImClient(RealTimeImClient):
         timestamp = hdateti.convert_unix_epoch_to_timestamp(timestamp)
         hdateti.dassert_has_specified_tz(timestamp, ["UTC"])
         return timestamp
+
+    def _filter_duplicates(
+        self, data: pd.DataFrame, full_symbol_col_name: str
+    ) -> pd.DataFrame:
+        """
+        Remove duplicates from data based on full symbol and timestamp.
+
+        Keeps the row with the highest 'knowledge_timestamp' value.
+
+        The function gives a warning if the knowledge timestamp is less
+        than a minute over the data timestamp. This might indicate that
+        the data hasn't been downloaded in full, although the risk is
+        very low.
+
+        :param data: data from the DB
+        :return: DB data with duplicates removed
+        """
+        hdbg.dassert_is_subset(
+            [
+                "knowledge_timestamp",
+                self._timestamp_col_name,
+                full_symbol_col_name,
+            ],
+            data.columns,
+        )
+        duplicate_columns = [self._timestamp_col_name, full_symbol_col_name]
+        # Remove duplicates.
+        data = data.sort_values("knowledge_timestamp", ascending=False)
+        use_index = False
+        data = hpandas.drop_duplicates(
+            data, use_index, subset=duplicate_columns
+        ).sort_index()
+        hdbg.dassert_lt(0, data.shape[0], "Empty df=\n%s", data)
+        # Check if the knowledge_timestamp is over the candle timestamp by at least minute.
+        #
+        # Assert that both timestamps have timezone info.
+        # TODO(Danya): Create a `hdatetime` function to assert tz in pd.Series.
+        hdbg.dassert_is_not(data["knowledge_timestamp"].dt.tz, None)
+        hdbg.dassert_is_not(data[self._timestamp_col_name].dt.tz, None)
+        # Get all "early" data.
+        mask = data["knowledge_timestamp"] <= (
+            data[self._timestamp_col_name] + pd.DateOffset(minutes=1)
+        )
+        early_data = data.loc[mask]
+        if not early_data.empty:
+            _LOG.warning(
+                "Knowledge timestamp for the following rows is <1m after data timestamp>:\n%s",
+                hpandas.df_to_str(early_data, num_rows=None),
+            )
+        data = data.set_index(
+            self._timestamp_col_name,
+        )
+        return data

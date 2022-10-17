@@ -20,9 +20,6 @@ import market_data.im_client_market_data as mdimcmada
 _LOG = logging.getLogger(__name__)
 
 
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
-
-
 # #############################################################################
 # RealTimeMarketData
 # #############################################################################

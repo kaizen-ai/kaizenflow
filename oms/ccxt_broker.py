@@ -7,6 +7,7 @@ import oms.ccxt_broker as occxbrok
 """
 
 import logging
+import os
 import re
 import time
 from typing import Any, Dict, List, Optional, Tuple
@@ -16,14 +17,17 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hlogging as hloggin
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
 import im_v2.common.universe.universe_utils as imvcuunut
 import market_data as mdata
 import oms.broker as ombroker
+import oms.hsecrets as omssec
 import oms.order as omorder
-import oms.secrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,11 +35,19 @@ _LOG = logging.getLogger(__name__)
 _MAX_ORDER_SUBMIT_RETRIES = 3
 
 
+# #############################################################################
+# CcxtBroker
+# #############################################################################
+
+
 class CcxtBroker(ombroker.Broker):
     def __init__(
         self,
         exchange_id: str,
+        # TODO(gp): move this to `Broker` and assign a default value or wire it
+        #  everywhere. IMO default value is a better approach.
         universe_version: str,
+        # TODO(gp): move this to Broker.
         stage: str,
         account_type: str,
         portfolio_id: str,
@@ -71,7 +83,9 @@ class CcxtBroker(ombroker.Broker):
         self.stage = stage
         hdbg.dassert_in(account_type, ["trading", "sandbox"])
         self._account_type = account_type
+        _LOG.debug("secret_identifier=%s", secret_identifier)
         self._secret_identifier = secret_identifier
+        _LOG.warning("secret_identifier=%s", secret_identifier)
         # TODO(Juraj): not sure how to generalize this coinbasepro-specific parameter.
         self._portfolio_id = portfolio_id
         #
@@ -80,6 +94,7 @@ class CcxtBroker(ombroker.Broker):
         #
         self._exchange = self._log_into_exchange()
         self._assert_order_methods_presence()
+        # TODO(gp): @all -> Move this to the `Broker` class.
         # Enable mapping back from asset ids when placing orders.
         self._universe_version = universe_version
         self._asset_id_to_symbol_mapping = (
@@ -90,7 +105,7 @@ class CcxtBroker(ombroker.Broker):
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
         # Set minimal order limits.
-        self.minimal_order_limits = self._get_minimal_order_limits()
+        self.market_info = self._get_market_info()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # Set up empty sent orders for the first run of the system.
@@ -170,7 +185,7 @@ class CcxtBroker(ombroker.Broker):
         Select all open futures positions.
 
         Selects all possible positions and filters out those
-        with a non-0 amount.
+        with a non-zero amount.
         Example of an output:
 
         [{'info': {'symbol': 'BTCUSDT',
@@ -225,6 +240,94 @@ class CcxtBroker(ombroker.Broker):
             if position_amount != 0:
                 open_positions.append(position)
         return open_positions
+
+    def get_fills_for_time_period(
+        self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
+    ) -> List[Dict[str, Any]]:
+        """
+        Get a list of fills for given time period in JSON format.
+
+        The time period is treated as [a, b].
+        Note that in case of longer time periods (>24h) the pagination
+        is done by day, which can lead to more data being downloaded than expected.
+
+        Example of output:
+        {'info': {'symbol': 'ETHUSDT',
+                 'id': '2271885264',
+                 'orderId': '8389765544333791328',
+                 'side': 'SELL',
+                 'price': '1263.68',
+                 'qty': '0.016',
+                 'realizedPnl': '-3.52385454',
+                 'marginAsset': 'USDT',
+                 'quoteQty': '20.21888',
+                 'commission': '0.00808755',
+                 'commissionAsset': 'USDT',
+                 'time': '1663859837554',
+                 'positionSide': 'BOTH',
+                 'buyer': False,
+                 'maker': False},
+        'timestamp': 1663859837554,
+        'datetime': '2022-09-22T15:17:17.554Z',
+        'symbol': 'ETH/USDT',
+        'id': '2271885264',
+        'order': '8389765544333791328',
+        'type': None,
+        'side': 'sell',
+        'takerOrMaker': 'taker',
+        'price': 1263.68,
+        'amount': 0.016,
+        'cost': 20.21888,
+        'fee': {'cost': 0.00808755, 'currency': 'USDT'},
+        'fees': [{'currency': 'USDT', 'cost': 0.00808755}]}
+        """
+        hdbg.dassert_isinstance(start_timestamp, pd.Timestamp)
+        hdbg.dassert_isinstance(end_timestamp, pd.Timestamp)
+        hdbg.dassert_lte(start_timestamp, end_timestamp)
+        symbols = list(self._symbol_to_asset_id_mapping.keys())
+        fills = []
+        start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_timestamp)
+        end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+        # Get conducted trades (fills) symbol by symbol.
+        for symbol in symbols:
+            # Download all trades if period is less than 24 hours.
+            # TODO(Danya): Maybe return a dataframe so we can trim the df
+            #  at the output and avoid downloading extra data?
+            if end_timestamp - start_timestamp < 86400000:
+                _LOG.debug(
+                    "Downloading period=%s, %s", start_timestamp, end_timestamp
+                )
+                symbol_fills = self._exchange.fetchMyTrades(
+                    symbol=symbol,
+                    since=start_timestamp,
+                    params={"endTime": end_timestamp},
+                )
+                fills.extend(symbol_fills)
+            # Download day-by-day for longer time periods.
+            else:
+                symbol_fills = []
+                for timestamp in range(
+                    start_timestamp, end_timestamp + 1, 86400000
+                ):
+                    _LOG.debug("Downloading period=%s, %s", timestamp, 86400000)
+                    day_fills = self._exchange.fetchMyTrades(
+                        symbol=symbol,
+                        since=timestamp,
+                        params={"endTime": timestamp + 86400000},
+                    )
+                    symbol_fills.extend(day_fills)
+            # Add the asset ids to each fill.
+            asset_id = self._symbol_to_asset_id_mapping[symbol]
+            symbol_fills_with_asset_ids = []
+            for item in symbol_fills:
+                # Get the position of the full symbol field to paste the asset id after it.
+                hdbg.dassert_in("symbol", item.keys())
+                position = list(item.keys()).index("symbol") + 1
+                items = list(item.items())
+                items.insert(position, ("asset_id", asset_id))
+                symbol_fills_with_asset_ids.append(dict(items))
+            fills.extend(symbol_fills_with_asset_ids)
+        return fills
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
@@ -348,9 +451,13 @@ class CcxtBroker(ombroker.Broker):
         )
         return oms_order
 
-    def _get_minimal_order_limits(self) -> Dict[int, Any]:
+    def _get_market_info(self) -> Dict[int, Any]:
         """
-        Load minimal amount and total cost for the given exchange.
+        Load market information from the given exchange and map to asset ids.
+
+        Currently the following data is saved:
+        - minimal order limits (notional and quantity)
+        - asset quantity precision (for rounding of orders)
 
         The numbers are determined by loading the market metadata from CCXT.
 
@@ -440,12 +547,13 @@ class CcxtBroker(ombroker.Broker):
         'tierBased': False,
         'type': 'future'}
         """
-        minimal_order_limits: Dict[str, Any] = {}
+        minimal_order_limits: Dict[int, Any] = {}
         # Load market information from CCXT.
         exchange_markets = self._exchange.load_markets()
         for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
             minimal_order_limits[asset_id] = {}
-            limits = exchange_markets[symbol]["limits"]
+            currency_market = exchange_markets[symbol]
+            limits = currency_market["limits"]
             # Get the minimal amount of asset in the order.
             amount_limit = limits["amount"]["min"]
             minimal_order_limits[asset_id]["min_amount"] = amount_limit
@@ -454,6 +562,9 @@ class CcxtBroker(ombroker.Broker):
             #  and subject to fluctuations, so it is set manually to 10.
             notional_limit = 10.0
             minimal_order_limits[asset_id]["min_cost"] = notional_limit
+            # Set the rounding precision for amount of the asset.
+            amount_precision = currency_market["precision"]["amount"]
+            minimal_order_limits[asset_id]["amount_precision"] = amount_precision
         return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:
@@ -633,6 +744,9 @@ class CcxtBroker(ombroker.Broker):
             exchange.checkRequiredCredentials(),
             msg="Required credentials not passed",
         )
+        # CCXT registers the logger after it's built, so we need to reduce its
+        # logger verbosity here.
+        hloggin.shutup_chatty_modules()
         return exchange
 
 
@@ -660,5 +774,50 @@ def get_CcxtBroker_prod_instance1(
         secret_identifier,
         strategy_id=strategy_id,
         market_data=market_data,
+    )
+    return broker
+
+
+# #############################################################################
+# SimulatedCcxtBroker
+# #############################################################################
+
+
+class SimulatedCcxtBroker(ombroker.SimulatedBroker):
+    def __init__(
+        self,
+        *args: Any,
+        stage: str,
+        market_info: Dict[int, float],
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, **kwargs)
+        self.stage = stage
+        self.market_info = market_info
+
+
+def get_SimulatedCcxtBroker_instance1(
+    market_data: pd.DataFrame,
+) -> ombroker.SimulatedBroker:
+    # Load pre-saved market info generated with
+    # `TestSaveMarketInfo`.
+    file_path = os.path.join(
+        hgit.get_amp_abs_path(),
+        "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
+    )
+    # The data looks like
+    # {"6051632686":
+    #     {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
+    # ...
+    market_info = hio.from_json(file_path)
+    # Convert to int, because asset ids are integers.
+    market_info = {int(k): v for k, v in market_info.items()}
+    stage = "preprod"
+    strategy_id = "C1b"
+    broker = SimulatedCcxtBroker(
+        strategy_id,
+        market_data,
+        stage=stage,
+        market_info=market_info,
     )
     return broker

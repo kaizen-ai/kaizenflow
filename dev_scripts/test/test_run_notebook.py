@@ -209,6 +209,7 @@ def _run_notebook_helper(
 
 
 @pytest.mark.flaky(reruns=2)
+@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 class TestRunNotebook1(hunitest.TestCase):
     """
     Run notebooks without failures.
@@ -265,6 +266,7 @@ class TestRunNotebook1(hunitest.TestCase):
 
 
 @pytest.mark.flaky(reruns=2)
+@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
 class TestRunNotebook2(hunitest.TestCase):
     """
     Run experiments that fail.
