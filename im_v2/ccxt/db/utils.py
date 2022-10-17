@@ -81,7 +81,6 @@ def get_ccxt_create_bid_ask_raw_table_query() -> str:
             level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE,
-            UNIQUE(timestamp, exchange_id, currency_pair, level)
             )
             """
     return query
@@ -104,7 +103,6 @@ def get_ccxt_create_bid_ask_futures_raw_table_query() -> str:
             level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE,
-            UNIQUE(timestamp, exchange_id, currency_pair, level)
             )
             """
     return query
@@ -128,7 +126,6 @@ def get_ccxt_create_bid_ask_resampled_1min_table_query() -> str:
             level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE,
-            UNIQUE(timestamp, exchange_id, currency_pair, level)
             )
             """
     return query
@@ -151,7 +148,6 @@ def get_ccxt_create_bid_ask_futures_resampled_1min_table_query() -> str:
             level INTEGER NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE,
-            UNIQUE(timestamp, exchange_id, currency_pair, level)
             )
             """
     return query
