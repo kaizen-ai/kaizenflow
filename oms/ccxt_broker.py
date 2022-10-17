@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ccxt
 import pandas as pd
@@ -799,19 +799,7 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
 def get_SimulatedCcxtBroker_instance1(
     market_data: pd.DataFrame,
 ) -> ombroker.SimulatedBroker:
-    # Load pre-saved market info generated with
-    # `TestSaveMarketInfo`.
-    file_path = os.path.join(
-        hgit.get_amp_abs_path(),
-        "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
-    )
-    # The data looks like
-    # {"6051632686":
-    #     {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
-    # ...
-    market_info = hio.from_json(file_path)
-    # Convert to int, because asset ids are integers.
-    market_info = {int(k): v for k, v in market_info.items()}
+    market_info = load_market_data_info()
     stage = "preprod"
     strategy_id = "C1b"
     broker = SimulatedCcxtBroker(
@@ -821,3 +809,40 @@ def get_SimulatedCcxtBroker_instance1(
         market_info=market_info,
     )
     return broker
+
+
+def subset_market_info(
+    market_info: Dict[int, Dict[str, Union[float, int]]], info_type: str
+) -> Dict[int, Union[float, int]]:
+    """
+    Return only the relevant information from market info, e.g., info about
+    precision.
+    """
+    # It is assumed that every asset has the same info type structure.
+    available_info = list(market_info.values())[0].keys()
+    hdbg.dassert_in(info_type, available_info)
+    market_info_keys = list(market_info.keys())
+    _LOG.debug("market_info keys=%s", market_info_keys)
+    asset_ids_to_decimals = {
+        key: market_info[key][info_type] for key in market_info_keys
+    }
+    return asset_ids_to_decimals
+
+
+def load_market_data_info() -> Dict[int, Dict[str, Union[float, int]]]:
+    """
+    Load pre-saved market info.
+
+    The data looks like:
+    {"6051632686":
+        {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
+     ...
+    """
+    file_path = os.path.join(
+        hgit.get_amp_abs_path(),
+        "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
+    )
+    market_info = hio.from_json(file_path)
+    # Convert to int, because asset ids are strings.
+    market_info = {int(k): v for k, v in market_info.items()}
+    return market_info
