@@ -281,7 +281,7 @@ def download_realtime_for_one_exchange(
             data = imvcdttrut.remove_unfinished_ohlcv_bars(data)
         # Save data to the database.
         imvcddbut.save_data_to_db(
-            data, data_type, db_connection, db_table, start_timestamp.tz
+            data, data_type, db_connection, db_table, str(start_timestamp.tz)
         )
         # Save data to S3 bucket.
         if args["s3_path"]:
@@ -402,7 +402,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             df = imvcdttrut.transform_raw_websocket_data(
                 data_buffer, data_type, exchange_id
             )
-            imvcddbut.save_data_to_db(df, data_type, db_connection, db_table, tz)
+            imvcddbut.save_data_to_db(df, data_type, db_connection, db_table, str(tz))
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
@@ -761,7 +761,7 @@ def resample_rt_bid_ask_data_periodically(
     while pd.Timestamp.now(tz) < end_ts:
         iter_start_time = pd.Timestamp.now(tz)
         df_raw = imvcddbut.fetch_last_minute_bid_ask_rt_db_data(
-            db_connection, src_table, tz
+            db_connection, src_table, str(tz)
         )
         if df_raw.empty:
             _LOG.warning("Empty Dataframe, nothing to resample")
@@ -770,7 +770,7 @@ def resample_rt_bid_ask_data_periodically(
                 df_raw
             )
             imvcddbut.save_data_to_db(
-                df_resampled, "bid_ask", db_connection, dst_table, start_ts.tz
+                df_resampled, "bid_ask", db_connection, dst_table, str(start_ts.tz)
             )
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete
