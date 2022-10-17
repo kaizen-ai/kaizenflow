@@ -86,7 +86,7 @@ def _parse() -> argparse.ArgumentParser:
 def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:
     """
     Remove duplicates from data based on exchange id and timestamp.
-    
+
     Keeps the row with the latest 'knowledge_timestamp' value.
 
     :param data: Dataframe to process
