@@ -115,6 +115,7 @@ _VALID_UPDATE_MODES = (
     "assign_if_missing",
 )
 
+# TODO(gp): read -> used
 # `clobber_mode` specifies whether values can be updated after they have been
 #   read
 #   - `allow_write_after_read`: allow to write a key even after that key was
@@ -285,6 +286,7 @@ class _OrderedConfig(_OrderedDictType):
         marked_as_read, val = super().__getitem__(key)
         return val
 
+    # TODO(gp): -> mark_as_used
     def mark_as_read(
         self,
         key: ScalarKey,
