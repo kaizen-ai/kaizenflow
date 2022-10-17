@@ -704,6 +704,8 @@ def execute_insert_on_conflict_do_nothing_query(
     """
     Insert a DB as multiple rows into the database. If a a UNIQUE constraint is
     violated for a provided set of columns, duplicates are not inserted.
+    
+    If unique_columns is an empty list, a regular DB insert is executed.
 
     :param connection: connection to the DB
     :param obj: data to insert
@@ -720,9 +722,13 @@ def execute_insert_on_conflict_do_nothing_query(
     # Transform dataframe into list of tuples.
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.
-    query = create_insert_on_conflict_do_nothing_query(
-        df, table_name, unique_columns
-    )
+    # If unique_columns is an empty list.
+    if not unique_columns:
+        query = create_insert_query(df, table_name)
+    else:
+        query = create_insert_on_conflict_do_nothing_query(
+            df, table_name, unique_columns
+        )
     # Execute query for each provided row.
     cur = connection.cursor()
     extras.execute_values(cur, query, values)
