@@ -802,8 +802,8 @@ def get_SimulatedCcxtBroker_instance1(
 
 
 def get_asset_ids_to_decimals_from_market_info(
-    market_info: Dict[Dict[float, int]], info_type: str
-) -> Dict[float, int]:
+    market_info: Dict[int, Dict[str, Optional[int]]], info_type: str
+) -> Dict[int, Optional[int]]:
     hdbg.dassert_in(info_type, ["amount_precision", "min_amount", "min_cost"])
     market_info_keys = list(market_info.keys())
     _LOG.debug("market_info keys=%s", market_info_keys)
@@ -813,7 +813,7 @@ def get_asset_ids_to_decimals_from_market_info(
     return asset_ids_to_decimals
 
 
-def load_market_data_info() -> Dict[Dict[float, int]]:
+def load_market_data_info() -> Dict[int, Dict[str, Optional[int]]]:
     """
     Load pre-saved market info.
 

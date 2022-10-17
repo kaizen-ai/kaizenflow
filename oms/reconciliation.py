@@ -112,7 +112,7 @@ def compute_shares_traded(
     portfolio_df.index = portfolio_df.index.round(freq)
     executed_trades_shares = portfolio_df["executed_trades_shares"]
     executed_trades_notional = portfolio_df["executed_trades_notional"]
-    asset_ids = executed_trades_shares.columns
+    executed_trades_shares.columns
     # Divide the notional flow (signed) by the shares traded (signed)
     # to get the estimated (positive) price at which the trades took place.
     executed_trades_price_per_share = executed_trades_notional.abs().divide(
@@ -171,6 +171,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     else:
         asset_class = "crypto"
     # Set values for variables that are specific of an asset class.
+    market_info = occxbrok.load_market_data_info()
     if asset_class == "crypto":
         # For crypto the TCA part is not implemented yet.
         run_tca = False
@@ -243,8 +244,6 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     # Sanity check dirs.
     for dir in system_log_path_dict.values():
         hdbg.dassert_dir_exists(dir)
-    # Load `amount_precision` from `market_info`.
-    market_info = occxbrok.load_market_data_info()
     # Build the config.
     config_dict = {
         "meta": {
