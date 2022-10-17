@@ -4,7 +4,6 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 import pytest
-import pytz
 
 import helpers.henv as henv
 import helpers.hmoto as hmoto
@@ -416,7 +415,7 @@ class TestDownloadRealtimeForOneExchange1(
         self.call_download_realtime_for_one_exchange(use_s3)
         # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
-        self.assertEqual(mock_get_current_time.call_args.args, (pytz.utc,))
+        self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
