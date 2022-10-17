@@ -39,6 +39,7 @@ def get_ccxt_ohlcv_create_table_query() -> str:
             """
     return query
 
+
 # TODO(gp): -> get_create_ccxt_ohlcv_futures_table_query()
 def get_ccxt_ohlcv_futures_create_table_query() -> str:
     """
@@ -107,11 +108,11 @@ def get_ccxt_create_bid_ask_futures_raw_table_query() -> str:
             """
     return query
 
+
 # TODO(Juraj): specify spot in the table name CmTask2804.
 def get_ccxt_create_bid_ask_resampled_1min_table_query() -> str:
     """
-    Get SQL query to create CCXT bid/ask spot data 
-    resampled to 1 min table.
+    Get SQL query to create CCXT bid/ask spot data resampled to 1 min table.
     """
     query = """
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask_resampled_1min(
@@ -151,7 +152,6 @@ def get_ccxt_create_bid_ask_futures_resampled_1min_table_query() -> str:
             )
             """
     return query
-
 
 
 def get_exchange_name_create_table_query() -> str:

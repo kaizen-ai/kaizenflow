@@ -402,7 +402,9 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
             df = imvcdttrut.transform_raw_websocket_data(
                 data_buffer, data_type, exchange_id
             )
-            imvcddbut.save_data_to_db(df, data_type, db_connection, db_table, str(tz))
+            imvcddbut.save_data_to_db(
+                df, data_type, db_connection, db_table, str(tz)
+            )
             # Empty buffer after persisting the data.
             data_buffer = []
         # Determine actual sleep time needed based on the difference
@@ -770,7 +772,11 @@ def resample_rt_bid_ask_data_periodically(
                 df_raw
             )
             imvcddbut.save_data_to_db(
-                df_resampled, "bid_ask", db_connection, dst_table, str(start_ts.tz)
+                df_resampled,
+                "bid_ask",
+                db_connection,
+                dst_table,
+                str(start_ts.tz),
             )
         # Determine actual sleep time needed based on the difference
         # between value set in config and actual time it took to complete

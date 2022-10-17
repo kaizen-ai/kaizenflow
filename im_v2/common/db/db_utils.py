@@ -201,12 +201,17 @@ def fetch_last_minute_bid_ask_rt_db_data(
 ) -> pd.Timestamp:
     """
     Fetch last minute of bid/ask RT data.
-    
-    This is a convenience wrapper function to make the most likely use case easier
-    to execute.
+
+    This is a convenience wrapper function to make the most likely use
+    case easier to execute.
     """
     # One second is substracted to allow better match with CryptoChassis.
-    end_ts = hdateti.get_current_time(time_zone).floor("min") - timedelta(seconds=1)
+    #  CryptoChassis uses labels aligned with the end of the minute, using
+    #  this trick we will only get 1 data point per currency after resampling
+    #  to 1-min, which should match CryptoChassis well.
+    end_ts = hdateti.get_current_time(time_zone).floor("min") - timedelta(
+        seconds=1
+    )
     start_ts = end_ts - timedelta(minutes=1)
     return fetch_bid_ask_rt_db_data(db_connection, src_table, start_ts, end_ts)
 
@@ -220,7 +225,9 @@ def fetch_bid_ask_rt_db_data(
     """
     Fetch bid/ask data (only top of the book) for specified interval.
 
-    Data interval is applied as: <start_ts, end_ts).
+    TODO(Juraj): Long term we would to follow the preferred conventions
+     using (a, b].
+    Data interval is applied as: [start_ts, end_ts).
 
     :param db_connection: a database connection object
     :param src_table: name of the table to select from
