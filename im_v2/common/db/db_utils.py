@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 # Set of columns which are unique row-wise across db tables for
 #  corresponding data type
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
-BID_ASK_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + ["level"]
+BID_ASK_UNIQUE_COLUMNS = []
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "open",
     "high",
@@ -206,7 +206,7 @@ def fetch_last_minute_bid_ask_rt_db_data(
     This is a convenience wrapper function to make the most likely use case easier
     to execute.
     """
-    end_ts = pd.Timestamp.now(time_zone).floor("min")
+    end_ts = hdateti.get_current_time(time_zone).floor("min")
     start_ts = end_ts - timedelta(minutes=1)
     return fetch_bid_ask_rt_db_data(db_connection, src_table, start_ts, end_ts)
 
