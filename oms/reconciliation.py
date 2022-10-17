@@ -203,6 +203,11 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "volatility_col": "vwap.ret_0.vol",
         }
         quantization = "asset_specific"
+        asset_id_to_share_decimals = (
+            occxbrok.get_asset_ids_to_decimals_from_market_info(
+                market_info, "amount_precision"
+            )
+        )
         gmv = 700.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
@@ -230,6 +235,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "volatility_col": "garman_klass_vol",
         }
         quantization = "nearest_share"
+        asset_id_to_share_decimals = None
         gmv = 20000.0
         liquidate_at_end_of_day = True
     else:
@@ -237,13 +243,9 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     # Sanity check dirs.
     for dir in system_log_path_dict.values():
         hdbg.dassert_dir_exists(dir)
-    # Get a config.
+    # Load `amount_precision` from `market_info`.
     market_info = occxbrok.load_market_data_info()
-    asset_id_to_share_decimals = (
-        occxbrok.get_asset_ids_to_decimals_from_market_info(
-            market_info, "amount_precision"
-        )
-    )
+    # Build the config.
     config_dict = {
         "meta": {
             "date_str": date_str,
