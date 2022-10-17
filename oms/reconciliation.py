@@ -171,7 +171,6 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     else:
         asset_class = "crypto"
     # Set values for variables that are specific of an asset class.
-    market_info = occxbrok.load_market_data_info()
     if asset_class == "crypto":
         # For crypto the TCA part is not implemented yet.
         run_tca = False
@@ -204,8 +203,9 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "volatility_col": "vwap.ret_0.vol",
         }
         quantization = "asset_specific"
+        market_info = occxbrok.load_market_data_info()
         asset_id_to_share_decimals = (
-            occxbrok.get_asset_ids_to_decimals_from_market_info(
+            occxbrok.subset_market_info(
                 market_info, "amount_precision"
             )
         )

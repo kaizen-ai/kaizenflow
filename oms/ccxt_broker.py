@@ -10,7 +10,7 @@ import logging
 import os
 import re
 import time
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ccxt
 import pandas as pd
@@ -811,10 +811,16 @@ def get_SimulatedCcxtBroker_instance1(
     return broker
 
 
-def get_asset_ids_to_decimals_from_market_info(
-    market_info: Dict[int, Dict[str, Optional[int]]], info_type: str
-) -> Dict[int, Optional[int]]:
-    hdbg.dassert_in(info_type, ["amount_precision", "min_amount", "min_cost"])
+def subset_market_info(
+    market_info: Dict[int, Dict[str, Union[float, int]]], info_type: str
+) -> Dict[int, Union[float, int]]:
+    """
+    Return only the relevant information from market info, e.g., info about
+    precision.
+    """
+    # It is assumed that every asset has the same info type structure.
+    available_info = list(market_info.values())[0].keys()
+    hdbg.dassert_in(info_type, available_info)
     market_info_keys = list(market_info.keys())
     _LOG.debug("market_info keys=%s", market_info_keys)
     asset_ids_to_decimals = {
@@ -823,7 +829,7 @@ def get_asset_ids_to_decimals_from_market_info(
     return asset_ids_to_decimals
 
 
-def load_market_data_info() -> Dict[int, Dict[str, Optional[int]]]:
+def load_market_data_info() -> Dict[int, Dict[str, Union[float, int]]]:
     """
     Load pre-saved market info.
 

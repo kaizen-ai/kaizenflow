@@ -312,7 +312,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
             asset_ids_to_decimals = (
-                occxbrok.get_asset_ids_to_decimals_from_market_info(
+                occxbrok.subset_market_info(
                     market_info, "amount_precision"
                 )
             )
