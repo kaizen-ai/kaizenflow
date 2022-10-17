@@ -31,7 +31,7 @@ _LOG = logging.getLogger(__name__)
 # Set of columns which are unique row-wise across db tables for
 #  corresponding data type
 BASE_UNIQUE_COLUMNS = ["timestamp", "exchange_id", "currency_pair"]
-BID_ASK_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + ["level"]
+BID_ASK_UNIQUE_COLUMNS = []
 OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "open",
     "high",
@@ -200,13 +200,18 @@ def fetch_last_minute_bid_ask_rt_db_data(
     db_connection: hsql.DbConnection, src_table: str, time_zone: str
 ) -> pd.Timestamp:
     """
-    Fetch last FULL minute of bid/ask data, resample to 1 min and insert into
-    another table.
-    
-    This is a convenience wrapper function to make the most likely use case easier
-    to execute.
+    Fetch last minute of bid/ask RT data.
+
+    This is a convenience wrapper function to make the most likely use
+    case easier to execute.
     """
-    end_ts = pd.Timestamp.now(time_zone).floor("min")
+    # One second is substracted to allow better match with CryptoChassis.
+    #  CryptoChassis uses labels aligned with the end of the minute, using
+    #  this trick we will only get 1 data point per currency after resampling
+    #  to 1-min, which should match CryptoChassis well.
+    end_ts = hdateti.get_current_time(time_zone).floor("min") - timedelta(
+        seconds=1
+    )
     start_ts = end_ts - timedelta(minutes=1)
     return fetch_bid_ask_rt_db_data(db_connection, src_table, start_ts, end_ts)
 
@@ -220,7 +225,9 @@ def fetch_bid_ask_rt_db_data(
     """
     Fetch bid/ask data (only top of the book) for specified interval.
 
-    Data interval is applied as: (start_ts, end_ts>.
+    TODO(Juraj): Long term we would to follow the preferred conventions
+     using (a, b].
+    Data interval is applied as: [start_ts, end_ts).
 
     :param db_connection: a database connection object
     :param src_table: name of the table to select from
@@ -231,8 +238,8 @@ def fetch_bid_ask_rt_db_data(
     start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(start_ts)
     end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(end_ts)
     select_query = f"""
-                    SELECT * FROM {src_table} WHERE timestamp > {start_ts_unix}
-                    AND timestamp <= {end_ts_unix};
+                    SELECT * FROM {src_table} WHERE timestamp >= {start_ts_unix}
+                    AND timestamp < {end_ts_unix};
                     """
     return hsql.execute_query_to_df(db_connection, select_query)
 
