@@ -297,18 +297,20 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     # Run the script inside docker.
     _LOG.info("Running the notebook=%s", notebook_path)
     docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
-    _system(docker_cmd)
+    rc = _system(docker_cmd)
+    print("GGG rc= ", rc)
     # Copy the published notebook to the shared folder.
-    hdbg.dassert_dir_exists(results_dir)
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
-    hdbg.dassert_dir_exists(target_dir)
-    _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
-    docker_cmd = f"cp -vr {results_dir} {target_dir}"
-    _system(docker_cmd)
-    # Prevent overwriting.
-    results_shared_dir = os.path.join(target_dir, "result_0")
-    cmd = f"chmod -R -w {results_shared_dir}"
-    _system(cmd)
+    # hdbg.dassert_dir_exists(results_dir)
+    # target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    # hdbg.dassert_dir_exists(target_dir)
+    # _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
+    # docker_cmd = f"cp -vr {results_dir} {target_dir}"
+    # _system(docker_cmd)
+    # # Prevent overwriting.
+    # results_shared_dir = os.path.join(target_dir, "result_0")
+    # cmd = f"chmod -R -w {results_shared_dir}"
+    # _system(cmd)
+    return rc
 
 
 @task
@@ -378,20 +380,29 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
 
 
 @task
-def reconcile_run_all(ctx, run_date=None):  # type: ignore
+def reconcile_run_all(ctx, run_date=None, abort_on_first_error=True):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    # TODO(Grisha): @Dan Implement approach to abort the invoke on the first error.
-    reconcile_create_dirs(ctx, run_date=run_date)
-    #
-    reconcile_copy_prod_data(ctx, run_date=run_date)
-    #
-    reconcile_dump_market_data(ctx, run_date=run_date)
-    reconcile_run_sim(ctx, run_date=run_date)
-    reconcile_copy_sim_data(ctx, run_date=run_date)
-    #
-    reconcile_dump_tca_data(ctx, run_date=None)
-    #
-    reconcile_run_notebook(ctx, run_date=run_date)
-    reconcile_ls(ctx, run_date=run_date)
+    invokes = (
+        # reconcile_create_dirs,
+        # reconcile_copy_prod_data,
+        # reconcile_dump_market_data,
+        # reconcile_run_sim,
+        # reconcile_copy_sim_data,
+        # reconcile_dump_tca_data,
+        reconcile_run_notebook,
+        reconcile_ls,
+    )
+    for invoke_target in invokes:
+        rc = 0
+        try:
+            rc = invoke_target(ctx, run_date=run_date)
+        except:
+             _LOG.error("'%s' invoke miserably failed", invoke_target)
+            #  if abort_on_first_error:
+            #     sys.exit(-1)
+        if rc != 0:
+            _LOG.error("'%s' invoke failed", invoke_target)
+            if abort_on_first_error:
+                sys.exit(-1)
