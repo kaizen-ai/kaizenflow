@@ -348,8 +348,8 @@ class TestDownloadRealtimeForOneExchange1(
         """
         # Prepare inputs.
         kwargs = {
-            "start_timestamp": "20211110-101100",
-            "end_timestamp": "20211110-101200",
+            "start_timestamp": "2021-11-10 10:11:00+00:00",
+            "end_timestamp": "2021-11-10 10:12:00+00:00",
             "exchange_id": "binance",
             "universe": "v3",
             "data_type": "ohlcv",
@@ -382,20 +382,20 @@ class TestDownloadRealtimeForOneExchange1(
         actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
         # pylint: disable=line-too-long
         expected = r"""   id      timestamp        open        high         low       close         volume               currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
-            0   1  1636539060000      2.2270      2.2280      2.2250      2.2250  7.188450e+04      ADA_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            1   2  1636539060000     92.4400     92.4700     92.2600     92.2600  1.309350e+03     AVAX_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            2   3  1636539060000    648.9000    649.0000    648.7000    648.9000  6.547400e+02      BNB_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            3   4  1636539060000  66774.0200  66779.9200  66770.0300  66774.0500  1.503426e+01      BTC_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            4   5  1636539060000      0.2736      0.2737      0.2732      0.2733  1.170147e+06     DOGE_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            5   6  1636539060000      5.1910      5.1910      5.1860      5.1860  4.172600e+03      EOS_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            6   7  1636539060000   4716.5200   4716.8400   4715.6400   4715.6500  9.941380e+01      ETH_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            7   8  1636539060000     34.9400     34.9400     34.8800     34.8900  5.722750e+03     LINK_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00
-            8   9  1636539060000    242.5400    242.5400    242.3500    242.3500  4.506200e+02      SOL_USDT     binance 2021-11-10 00:00:01+00:00 2021-11-10 00:00:01+00:00"""
+            0   1  1636539060000      2.2270      2.2280      2.2250      2.2250  7.188450e+04      ADA_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            1   2  1636539060000     92.4400     92.4700     92.2600     92.2600  1.309350e+03     AVAX_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            2   3  1636539060000    648.9000    649.0000    648.7000    648.9000  6.547400e+02      BNB_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            3   4  1636539060000  66774.0200  66779.9200  66770.0300  66774.0500  1.503426e+01      BTC_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            4   5  1636539060000      0.2736      0.2737      0.2732      0.2733  1.170147e+06     DOGE_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            5   6  1636539060000      5.1910      5.1910      5.1860      5.1860  4.172600e+03      EOS_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            6   7  1636539060000   4716.5200   4716.8400   4715.6400   4715.6500  9.941380e+01      ETH_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            7   8  1636539060000     34.9400     34.9400     34.8800     34.8900  5.722750e+03     LINK_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00
+            8   9  1636539060000    242.5400    242.5400    242.3500    242.3500  4.506200e+02      SOL_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
     @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
-    @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
+    @umock.patch.object(imvcddbut.hdateti, "get_current_time")
     def test_function_call1(
         self,
         mock_get_current_time: umock.MagicMock,
@@ -408,8 +408,8 @@ class TestDownloadRealtimeForOneExchange1(
         Run without saving to s3.
         """
         # Set mock return values.
-        mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
-        mock_get_current_timestamp_as_string.return_value = "20211110-000001"
+        mock_get_current_time.return_value = "2021-11-10 10:12:00.000000+00:00"
+        mock_get_current_timestamp_as_string.return_value = "20211110-101200"
         # Run.
         use_s3 = False
         self.call_download_realtime_for_one_exchange(use_s3)
@@ -434,7 +434,7 @@ class TestDownloadRealtimeForOneExchange1(
         Run and save to s3.
         """
         # Set mock return values.
-        mock_get_current_time.return_value = "2021-11-10 00:00:01.000000+00:00"
+        mock_get_current_time.return_value = "2021-11-10 10:12:00.000000+00:00"
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
         use_s3 = True
@@ -517,7 +517,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         structure and file contents.
         """
         # Set mock return values.
-        mock_get_current_time.return_value = "2022-02-08 00:00:01.000000+00:00"
+        mock_get_current_time.return_value = "2022-02-08 10:12:00.000000+00:00"
         # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         with s3fs_.open("s3://mock_bucket/binance/dummy.txt", "w") as f:
