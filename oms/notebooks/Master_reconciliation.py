@@ -164,7 +164,7 @@ diff_config = ccocouti.build_config_diff_dataframe(
         "sim_config": sim_config,
     }
 )
-diff_config
+diff_config 
 
 # %%
 # Load DAG output for different experiments.
