@@ -25,6 +25,7 @@ from typing import Dict
 import pandas as pd
 
 import core.config as cconfig
+import core.config.config_utils as ccocouti
 import core.finance as cofinanc
 import core.plotting as coplotti
 import dataflow.model as dtfmod
@@ -154,6 +155,16 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     dag_df = pd.read_parquet(dag_parquet_path)
     return dag_df
 
+
+# %%
+# Get config differencies.
+diff_config = ccocouti.build_config_diff_dataframe(
+    {
+        "prod_config": prod_config,
+        "sim_config": sim_config,
+    }
+)
+diff_config
 
 # %%
 # Load DAG output for different experiments.

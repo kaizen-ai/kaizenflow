@@ -198,9 +198,7 @@ class Test_diff_configs1(hunitest.TestCase):
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.Config.from_dict(
-                {"build_targets": {"target_asset": "Gold"}}
-            ),
+            cconfig.Config.from_dict({"build_targets": {"target_asset": "Gold"}}),
         ]
         self.assert_equal(str(act), str(exp))
 
@@ -218,9 +216,7 @@ class Test_diff_configs1(hunitest.TestCase):
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.Config.from_dict(
-                {"build_targets": {"target_asset": "Gold"}}
-            ),
+            cconfig.Config.from_dict({"build_targets": {"target_asset": "Gold"}}),
             #
             cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}, "hello": "world"}
@@ -331,9 +327,9 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
 class Test_make_hashable(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test unhashable object type: list.
+        Test unhashable object and its values.
         """
-        obj = [1, (2, 3)]
+        obj = [1, (2, "3")]
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, False)
         #
@@ -343,11 +339,24 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test unhashable object type: list.
+        Test unhashable object and its values including a dict with an empty
+        value.
         """
-        obj = [1, ("2", 3), {"key": "val"}]
+        obj = [1, ["2", 3], {"key": {}, "key2": "value"}]
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, False)
+        #
+        hashable_obj = cconfig.make_hashable(obj)
+        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
+        self.assertEqual(is_hashable_after, True)
+
+    def test3(self) -> None:
+        """
+        Test hashable object that also contains unhashable ones.
+        """
+        obj = (1, ["2", 3], {})
+        is_hashable_before = isinstance(obj, collections.Hashable)
+        self.assertEqual(is_hashable_before, True)
         #
         hashable_obj = cconfig.make_hashable(obj)
         is_hashable_after = isinstance(hashable_obj, collections.Hashable)
