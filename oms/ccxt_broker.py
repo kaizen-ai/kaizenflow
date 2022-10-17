@@ -799,11 +799,12 @@ def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     return broker
 
 
-def get_asset_ids_to_decimals_from_market_info(market_info: Dict, param: str) -> Dict:
+def get_asset_ids_to_decimals_from_market_info(market_info: Dict, info_type: str) -> Dict:
+    hdbg.dassert_in(info_type, ["amount_precision", "min_amount", "min_cost"])
     market_info_keys = list(market_info.keys())
     _LOG.debug("market_info keys=%s", market_info_keys)
     asset_ids_to_decimals = {
-        key: market_info[key][param]
+        key: market_info[key][info_type]
         for key in market_info_keys
     }
     return asset_ids_to_decimals
