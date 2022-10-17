@@ -23,6 +23,7 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import argparse
 import logging
 from typing import List
+import os
 
 import pandas as pd
 
@@ -289,6 +290,28 @@ class RealTimeHistoricalReconciler:
         # METRICS HERE
 
         return
+        
+    def _filter_duplicates(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Remove duplicates from data based on exchange id and timestamp.
+
+        Keeps the row with the latest 'knowledge_timestamp' value.
+
+        :param data: Dataframe to process
+        :return: data with duplicates removed
+        """
+        duplicate_columns = ["exchange_id", "timestamp", "currency_pair"]
+        # Sort values.
+        data = data.sort_values("knowledge_timestamp", ascending=False)
+        use_index = False
+        _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
+        # Remove duplicates.
+        data = hpandas.drop_duplicates(
+            data, use_index, subset=duplicate_columns
+        ).sort_index()
+        _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
+        return data
+        
 
     def _get_universe(self) -> List[str]:
         """ 

@@ -120,8 +120,10 @@ def create_all_tables(db_connection: hsql.DbConnection) -> None:
         imkisqwri.get_create_table_query(),
         imvccdbut.get_ccxt_ohlcv_create_table_query(),
         imvccdbut.get_ccxt_ohlcv_futures_create_table_query(),
-        imvccdbut.get_ccxt_create_bid_ask_table_query(),
-        imvccdbut.get_ccxt_create_bid_ask_futures_table_query(),
+        imvccdbut.get_ccxt_create_bid_ask_raw_table_query(),
+        imvccdbut.get_ccxt_create_bid_ask_futures_raw_table_query(),
+        imvccdbut.get_ccxt_create_bid_ask_resampled_1min_table_query(),
+        imvccdbut.get_ccxt_create_bid_ask_futures_resampled_1min_table_query(),
         imvccdbut.get_exchange_name_create_table_query(),
         imvccdbut.get_currency_pair_create_table_query(),
     ]
@@ -258,7 +260,7 @@ def save_data_to_db(
     if data.empty:
         _LOG.warning("The DataFame is empty, nothing to insert.")
         return
-    data["knowledge_timestamp"] = pd.Timestamp.now(time_zone)
+    data["knowledge_timestamp"] = hdateti.get_current_time(time_zone)
     if data_type == "ohlcv":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":
