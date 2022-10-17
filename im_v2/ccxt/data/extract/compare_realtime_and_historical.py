@@ -288,12 +288,62 @@ class RealTimeHistoricalReconciler:
         # Move the same metrics from two vendors together.
         data = data.reindex(sorted(data.columns), axis=1)
         #
+        _LOG.info("Start date = %s", data.reset_index()["timestamp"].min())
+        _LOG.info("End date = %s", data.reset_index()["timestamp"].max())
         _LOG.info(
-            "Found %s missing rows for both vendors",
+            "Avg observations per coin = %s",
+            len(data) / len(data.reset_index()["full_symbol"].unique()),
+        )
+        # Move the same metrics from two vendors together.
+        data = data.reindex(sorted(data.columns), axis=1)
+        # NaNs observation.
+        _LOG.info(
+            "Number of observations with NaNs in CryptoChassis = %s",
+            len(data[data["bid_price_cc"].isna()]),
+        )
+        _LOG.info(
+            "Number of observations with NaNs in CCXT = %s",
+            len(data[data["bid_price_ccxt"].isna()]),
+        )
+        _LOG.info(
+            "Number of observations with NaNs for both vendors = %s",
             len(data[data.isna().all(axis=1)]),
         )
-        # METRICS HERE
-
+        # Remove NaNs.
+        data = hpandas.dropna(data, report_stats=True)
+        #
+        # Full symbol will not be relevant in calculation loops below.
+        bid_ask_cols = self.expected_columns[self.data_type]
+        bid_ask_cols.remove("full_symbol")
+        bid_ask_cols.remove("timestamp")
+        # Each bid ask value will have a notional and a relative difference between two sources.
+        for col in bid_ask_cols:
+            # Notional difference: CC value - DB value.
+            data[f"{col}_diff"] = data[f"{col}_cc"] - data[f"{col}_ccxt"]
+            # Relative value: (CC value - DB value)/DB value.
+            data[f"{col}_relative_diff_pct"] = (
+                100 * (data[f"{col}_cc"] - data[f"{col}_ccxt"]) / data[f"{col}_ccxt"]
+            )
+        #
+        # Calculate the mean value of differences for each coin.
+        diff_stats = []
+        grouper = data.groupby(["full_symbol"])
+        for col in bid_ask_cols:
+            diff_stats.append(grouper[f"{col}_diff"].mean())
+            diff_stats.append(grouper[f"{col}_relative_diff_pct"].mean())
+        #
+        diff_stats = pd.concat(diff_stats, axis=1)
+        # Show stats for differences for prices.
+        diff_stats_prices = diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]]
+        _LOG.info("Difference stats for prices: %s", hpandas.get_df_signature(
+            diff_stats_prices, num_rows=len(diff_stats_prices)
+        ))
+        # Show stats for differences for sizes.
+        diff_stats_sizes = [["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]]
+        _LOG.info("Difference stats for sizes: %s", hpandas.get_df_signature(
+            diff_stats_sizes, num_rows=len(diff_stats_sizes)
+        ))
+        # CHOOSE THRESHOLD
         return
         
     def _filter_duplicates(self, data: pd.DataFrame) -> pd.DataFrame:
@@ -318,9 +368,6 @@ class RealTimeHistoricalReconciler:
         ).sort_index()
         _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
         return data
-
-    
-        
 
     def _get_universe(self) -> List[str]:
         """ 
