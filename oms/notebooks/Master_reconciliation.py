@@ -189,11 +189,12 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 )
 
 # %%
+annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
+    "annotate_forecasts_kwargs"
+].to_dict()
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
     dag_df_dict["prod"],
-    **config["research_forecast_evaluator_from_prices"][
-        "annotate_forecasts_kwargs"
-    ],
+    **annotate_forecasts_kwargs,
     compute_extended_stats=True,
 )
 # TODO(gp): Move it to annotate_forecasts?
