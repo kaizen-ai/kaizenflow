@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Tuple
+from typing import Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -112,7 +112,7 @@ def compute_shares_traded(
     portfolio_df.index = portfolio_df.index.round(freq)
     executed_trades_shares = portfolio_df["executed_trades_shares"]
     executed_trades_notional = portfolio_df["executed_trades_notional"]
-    asset_ids = executed_trades_shares.columns
+    executed_trades_shares.columns
     # Divide the notional flow (signed) by the shares traded (signed)
     # to get the estimated (positive) price at which the trades took place.
     executed_trades_price_per_share = executed_trades_notional.abs().divide(
@@ -204,10 +204,8 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         }
         quantization = "asset_specific"
         market_info = occxbrok.load_market_data_info()
-        asset_id_to_share_decimals = (
-            occxbrok.subset_market_info(
-                market_info, "amount_precision"
-            )
+        asset_id_to_share_decimals = occxbrok.subset_market_info(
+            market_info, "amount_precision"
         )
         gmv = 700.0
         liquidate_at_end_of_day = False
@@ -269,3 +267,47 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     config = cconfig.Config.from_dict(config_dict)
     config_list = cconfig.ConfigList([config])
     return config_list
+
+
+def get_system_log_paths(
+    system_log_path_dict: Dict[str, str], data_type: str
+) -> Dict[str, str]:
+    """
+    Get paths to data inside a system log dir.
+
+    :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
+        `{"prod": "/shared_data/system_log_dir", "sim": ...}`
+    :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
+    :return: dir paths inside system log dir for different experiments, e.g.,
+        `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
+    """
+    data_path_dict = {}
+    if data_type == "portfolio":
+        dir_name = "process_forecasts/portfolio"
+    elif data_type == "dag":
+        dir_name = "dag/node_io/node_io.data"
+    else:
+        raise ValueError(f"Unsupported data type={data_type}")
+    for k, v in system_log_path_dict.items():
+        cur_dir = os.path.join(v, dir_name)
+        hdbg.dassert_dir_exists(cur_dir)
+        data_path_dict[k] = cur_dir
+    return data_path_dict
+
+
+def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
+    """
+    Retrieve the most recent output from the last DAG node.
+
+    This function relies on our file naming conventions.
+    """
+    hdbg.dassert_dir_exists(dag_dir)
+    parquet_files = list(
+        filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
+    )
+    _LOG.info("Tail of files found=%s", parquet_files[-3:])
+    file_name = parquet_files[-1]
+    dag_parquet_path = os.path.join(dag_dir, file_name)
+    _LOG.info("DAG parquet path=%s", dag_parquet_path)
+    dag_df = pd.read_parquet(dag_parquet_path)
+    return dag_df
