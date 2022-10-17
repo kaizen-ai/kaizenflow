@@ -1,7 +1,7 @@
 """
 Import as:
 
-import oms.target_position_and_order_generator as omstpog
+import oms.target_position_and_order_generator as otpaorge
 """
 
 import logging
@@ -22,6 +22,7 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import oms.call_optimizer as ocalopti
 import oms.cc_optimizer_utils as occoputi
+import oms.ccxt_broker as occxbrok
 import oms.order as omorder
 import oms.portfolio as omportfo
 
@@ -310,12 +311,12 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         backend = self._optimizer_dict["backend"]
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
-            market_info_keys = list(market_info.keys())
-            _LOG.debug("market_info keys=%s", market_info_keys)
-            asset_ids_to_decimals = {
-                key: market_info[key]["amount_precision"]
-                for key in market_info_keys
-            }
+            asset_ids_to_decimals = (
+                occxbrok.get_asset_ids_to_decimals_from_market_info(
+                    market_info, "amount_precision"
+                )
+            )
+            _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
         else:
             asset_ids_to_decimals = None
         if backend == "pomo" or "cc_pomo":
@@ -335,7 +336,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 # Verify that all orders are above the notional limit.
                 #  Note: orders that are below the minimal amount of asset
                 #  for the exchange are modified to go slightly above the limit.
-                df = occoputi.apply_cc_limits(df, self._portfolio.broker, self._log_dir)
+                df = occoputi.apply_cc_limits(
+                    df, self._portfolio.broker, self._log_dir
+                )
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
 

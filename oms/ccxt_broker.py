@@ -786,7 +786,9 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self.market_info = market_info
 
 
-def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
+def get_SimulatedCcxtBroker_instance1(
+    market_data: pd.DataFrame,
+) -> ombroker.SimulatedBroker:
     market_info = load_market_data_info()
     stage = "preprod"
     strategy_id = "C1b"
@@ -799,28 +801,31 @@ def get_SimulatedCcxtBroker_instance1(market_data: pd.DataFrame):
     return broker
 
 
-def get_asset_ids_to_decimals_from_market_info(market_info: Dict, info_type: str) -> Dict:
+def get_asset_ids_to_decimals_from_market_info(
+    market_info: Dict[Dict[float, int]], info_type: str
+) -> Dict[float, int]:
     hdbg.dassert_in(info_type, ["amount_precision", "min_amount", "min_cost"])
     market_info_keys = list(market_info.keys())
     _LOG.debug("market_info keys=%s", market_info_keys)
     asset_ids_to_decimals = {
-        key: market_info[key][info_type]
-        for key in market_info_keys
+        key: market_info[key][info_type] for key in market_info_keys
     }
     return asset_ids_to_decimals
 
 
-def load_market_data_info() -> Dict:
-    # Load pre-saved market info generated with
-    # `TestSaveMarketInfo`.
+def load_market_data_info() -> Dict[Dict[float, int]]:
+    """
+    Load pre-saved market info.
+
+    The data looks like:
+    {"6051632686":
+        {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
+     ...
+    """
     file_path = os.path.join(
         hgit.get_amp_abs_path(),
         "oms/test/outcomes/TestSaveMarketInfo/input/binance.market_info.json",
     )
-    # The data looks like
-    # {"6051632686":
-    #     {"min_amount": 1.0, "min_cost": 10.0, "amount_precision": 3},
-    # ...
     market_info = hio.from_json(file_path)
     # Convert to int, because asset ids are strings.
     market_info = {int(k): v for k, v in market_info.items()}
