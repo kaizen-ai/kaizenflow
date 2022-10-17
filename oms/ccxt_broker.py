@@ -316,7 +316,17 @@ class CcxtBroker(ombroker.Broker):
                         params={"endTime": timestamp + 86400000},
                     )
                     symbol_fills.extend(day_fills)
-            fills.extend(symbol_fills)
+            # Add the asset ids to each fill.
+            asset_id = self._symbol_to_asset_id_mapping[symbol]
+            symbol_fills_with_asset_ids = []
+            for item in symbol_fills:
+                # Get the position of the full symbol field to paste the asset id after it.
+                hdbg.dassert_in("symbol", item.keys())
+                position = list(item.keys()).index("symbol") + 1
+                items = list(item.items())
+                items.insert(position, ("asset_id", asset_id))
+                symbol_fills_with_asset_ids.append(dict(items))
+            fills.extend(symbol_fills_with_asset_ids)
         return fills
 
     @staticmethod
