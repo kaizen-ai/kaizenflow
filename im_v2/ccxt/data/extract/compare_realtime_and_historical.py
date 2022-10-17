@@ -109,8 +109,6 @@ def _parse() -> argparse.ArgumentParser:
 
 class RealTimeHistoricalReconciler:
     def __init__(self, args) -> None:
-        """ 
-        """
         hdbg.dassert_in(args.data_type, ["bid_ask", "ohlcv"])
         self.data_type = args.data_type
         # Set DB connection.
@@ -144,6 +142,7 @@ class RealTimeHistoricalReconciler:
         self.universe = self._get_universe()
         self.expected_columns = {
             "ohlcv": [
+                "timestamp",
                 "full_symbol",
                 "open",
                 "high",
@@ -152,6 +151,7 @@ class RealTimeHistoricalReconciler:
                 "volume",
             ],
             "bid_ask": [
+                "timestamp",
                 "full_symbol",
                 "bid_price",
                 "bid_size",
@@ -181,7 +181,9 @@ class RealTimeHistoricalReconciler:
         return df
 
     def run(self) -> None:
-        """ """
+        """
+        Compare real time and daily data. 
+        """
         # Get CCXT data.
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
@@ -193,20 +195,23 @@ class RealTimeHistoricalReconciler:
             )
             # Choose the specific order level (first level by default).
             ccxt_rt = self.clean_data_for_orderbook_level(ccxt_rt)
-
+        # Remove duplicated columns in real time data.
+        ccxt_rt = self._filter_duplicates(ccxt_rt)
         # Get CC data.
         cc_daily = self.cc_daily_pq_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
+        # Remove duplicated columns in daily data.
+        cc_daily = self._filter_duplicates(cc_daily)
         expected_columns = self.expected_columns[self.data_type]
         # Reindex real time data.
         ccxt_rt = ccxt_rt[expected_columns]
-        ccxt_rt_reindex = ccxt_rt.reset_index().set_index(
+        ccxt_rt_reindex = ccxt_rt.set_index(
             ["timestamp", "full_symbol"]
         )
         # Reindex daily data.
         cc_daily = cc_daily[expected_columns]
-        cc_daily_reindex = cc_daily.reset_index().set_index(
+        cc_daily_reindex = cc_daily.set_index(
             ["timestamp", "full_symbol"]
         )
         # Compare real time and daily data.
@@ -216,7 +221,7 @@ class RealTimeHistoricalReconciler:
             self._compare_bid_ask(ccxt_rt_reindex, cc_daily_reindex)
         return
 
-    def _compare_ohlcv(self, rt_data, daily_data):
+    def _compare_ohlcv(self, rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> None:
         """
         Compare OHLCV real time and daily data.
 
@@ -261,11 +266,11 @@ class RealTimeHistoricalReconciler:
                     data_difference, num_rows=len(data_difference)
                 )
             )
-
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
+        _LOG.info("No differences were found between real time and daily data")
 
-    def _compare_bid_ask(self, rt_data, daily_data):
+    def _compare_bid_ask(self, rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> None:
         """
         Compare order book real time and daily data.
 
@@ -300,17 +305,21 @@ class RealTimeHistoricalReconciler:
         :param data: Dataframe to process
         :return: data with duplicates removed
         """
-        duplicate_columns = ["exchange_id", "timestamp", "currency_pair"]
+        duplicate_columns = ["full_symbol", "timestamp"]
         # Sort values.
         data = data.sort_values("knowledge_timestamp", ascending=False)
         use_index = False
         _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
+        # Reset `timestamp` index to use timestamp as a column.
+        data = data.reset_index()
         # Remove duplicates.
         data = hpandas.drop_duplicates(
             data, use_index, subset=duplicate_columns
         ).sort_index()
         _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
         return data
+
+    
         
 
     def _get_universe(self) -> List[str]:
