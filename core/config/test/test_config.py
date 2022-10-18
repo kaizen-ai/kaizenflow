@@ -51,8 +51,8 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
     self_.assertEqual(str(config), str(config2))
     # Build the signature of the test.
     act = []
-    act.append(f"# config=\n{str(config)}")
-    act.append(f"# code=\n{str(config)}")
+    act.append("# config=\n%s" % str(config))
+    act.append("# code=\n%s" % str(config))
     act = "\n".join(act)
     return act
 
