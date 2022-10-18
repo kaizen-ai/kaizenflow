@@ -8,6 +8,7 @@ import collections
 import logging
 from typing import Any, Iterable, List, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config.config_ as cconconf
@@ -123,17 +124,49 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
 
 
 # #############################################################################
+import copy
 
 
-def make_hashable(obj: Any) -> collections.abc.Hashable:
-    """
-    Coerce `obj` to a hashable type if not already hashable.
-    """
-    if isinstance(obj, collections.abc.Hashable) and not isinstance(obj, tuple):
-        return obj
-    if isinstance(obj, collections.abc.Iterable):
-        return tuple(map(make_hashable, obj))
-    return tuple(obj)
+def make_hashable(obj):
+    hashable_obj = None
+    if isinstance(obj, collections.abc.Mapping):
+        # Handle dict-like objects.
+        new_object = copy.deepcopy(obj)
+        for k, v in new_object.items():
+            new_object[k] = make_hashable(v)
+        hashable_obj = tuple(new_object.items())
+        print("mapping", hashable_obj)
+    # The problem is that `str` is both `Hashable` and `Iterable`, but here
+    # we want to treat it like `Hashable`, i.e. return string as it is.
+    # Same with `Tuple`, but for `Tuple` we want to apply the function
+    # recursively, i.e. make every element `Hashable`.
+    elif isinstance(obj, collections.abc.Iterable) and not isinstance(obj, str):
+        # Handle iterables, e.g., lists, sets, tuples.
+        hashable_obj = tuple([make_hashable(element) for element in obj])
+        print("iterable", hashable_obj)
+    elif isinstance(obj,  collections.abc.Hashable):
+        # Return an object as is, since it's already hashable.
+        hashable_obj = obj
+        print("hashable", hashable_obj)
+    else:
+        hashable_obj = tuple(obj)  
+        print("else", hashable_obj)
+    return hashable_obj
+
+# def make_hashable(obj: Any) -> collections.abc.Hashable:
+#     """
+#     Coerce `obj` to a hashable type if not already hashable.
+#     """
+#     # if isinstance(obj, collections.abc.Iterable):
+#     #     return tuple(map(make_hashable, obj))
+#     # if isinstance(obj, collections.abc.Hashable):
+#     #     return obj
+#     # return tuple(obj)
+#     if isinstance(obj, collections.abc.Hashable) and not isinstance(obj, tuple):
+#         return obj
+#     if isinstance(obj, collections.abc.Iterable):
+#         return tuple(map(make_hashable, obj))
+#     return tuple(obj)
 
 
 def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:
@@ -187,8 +220,15 @@ def subtract_config(
     diff = cconconf.Config()
     for k, v in flat_m.items():
         if (k not in flat_s) or (flat_m[k] != flat_s[k]):
-            if isinstance(v, dict) and not v:
-                v = ""
+            # It is not possible to use a dict as a config's value.
+            # It should be converted to a config first.
+            if isinstance(v, dict):
+                if not v:
+                    # Replace empty dict with empty config.
+                    v = cconconf.Config()
+                else:
+                    # Get config from a dict.
+                    v = cconconf.Config.from_dict(v)
             diff[k] = v
     return diff
 
