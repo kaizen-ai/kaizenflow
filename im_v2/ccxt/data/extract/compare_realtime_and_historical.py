@@ -23,7 +23,6 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import argparse
 import logging
 from typing import List
-import os
 
 import pandas as pd
 
@@ -182,7 +181,7 @@ class RealTimeHistoricalReconciler:
 
     def run(self) -> None:
         """
-        Compare real time and daily data. 
+        Compare real time and daily data.
         """
         # Get CCXT data.
         ccxt_rt = self.ccxt_rt_im_client.read_data(
@@ -206,14 +205,10 @@ class RealTimeHistoricalReconciler:
         expected_columns = self.expected_columns[self.data_type]
         # Reindex real time data.
         ccxt_rt = ccxt_rt[expected_columns]
-        ccxt_rt_reindex = ccxt_rt.set_index(
-            ["timestamp", "full_symbol"]
-        )
+        ccxt_rt_reindex = ccxt_rt.set_index(["timestamp", "full_symbol"])
         # Reindex daily data.
         cc_daily = cc_daily[expected_columns]
-        cc_daily_reindex = cc_daily.set_index(
-            ["timestamp", "full_symbol"]
-        )
+        cc_daily_reindex = cc_daily.set_index(["timestamp", "full_symbol"])
         # Compare real time and daily data.
         if self.data_type == "ohlcv":
             self._compare_ohlcv(ccxt_rt_reindex, cc_daily_reindex)
@@ -221,7 +216,9 @@ class RealTimeHistoricalReconciler:
             self._compare_bid_ask(ccxt_rt_reindex, cc_daily_reindex)
         return
 
-    def _compare_ohlcv(self, rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> None:
+    def _compare_ohlcv(
+        self, rt_data: pd.DataFrame, daily_data: pd.DataFrame
+    ) -> None:
         """
         Compare OHLCV real time and daily data.
 
@@ -270,7 +267,9 @@ class RealTimeHistoricalReconciler:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
 
-    def _compare_bid_ask(self, rt_data: pd.DataFrame, daily_data: pd.DataFrame) -> None:
+    def _compare_bid_ask(
+        self, rt_data: pd.DataFrame, daily_data: pd.DataFrame
+    ) -> None:
         """
         Compare order book real time and daily data.
 
@@ -322,7 +321,9 @@ class RealTimeHistoricalReconciler:
             data[f"{col}_diff"] = data[f"{col}_cc"] - data[f"{col}_ccxt"]
             # Relative value: (CC value - DB value)/DB value.
             data[f"{col}_relative_diff_pct"] = (
-                100 * (data[f"{col}_cc"] - data[f"{col}_ccxt"]) / data[f"{col}_ccxt"]
+                100
+                * (data[f"{col}_cc"] - data[f"{col}_ccxt"])
+                / data[f"{col}_ccxt"]
             )
         #
         # Calculate the mean value of differences for each coin.
@@ -334,18 +335,60 @@ class RealTimeHistoricalReconciler:
         #
         diff_stats = pd.concat(diff_stats, axis=1)
         # Show stats for differences for prices.
-        diff_stats_prices = diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]]
-        _LOG.info("Difference stats for prices: %s", hpandas.get_df_signature(
-            diff_stats_prices, num_rows=len(diff_stats_prices)
-        ))
+        diff_stats_prices = diff_stats[
+            ["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]
+        ]
+        _LOG.info(
+            "Difference stats for prices: %s",
+            hpandas.get_df_signature(
+                diff_stats_prices, num_rows=len(diff_stats_prices)
+            ),
+        )
+        error_message = []
+        threshhold = 1
+        # Log the difference.
+        for index, row in diff_stats_prices.iterrows():
+            if abs(row["bid_price_relative_diff_pct"]) > threshhold:
+                message = (
+                    f"Difference between bid prices in real time and daily "
+                    f"data for `{index}` coin is more that 1%"
+                )
+                error_message.append(message)
+            if abs(row["ask_price_relative_diff_pct"]) > threshhold:
+                message = (
+                    f"Difference between ask prices in real time and daily "
+                    f"data for `{index}` coin is more that 1%"
+                )
+                error_message.append(message)
         # Show stats for differences for sizes.
-        diff_stats_sizes = [["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]]
-        _LOG.info("Difference stats for sizes: %s", hpandas.get_df_signature(
-            diff_stats_sizes, num_rows=len(diff_stats_sizes)
-        ))
-        # CHOOSE THRESHOLD
+        diff_stats_sizes = diff_stats[
+            ["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]
+        ]
+        _LOG.info(
+            "Difference stats for sizes: %s",
+            hpandas.get_df_signature(
+                diff_stats_sizes, num_rows=len(diff_stats_sizes)
+            ),
+        )
+        # Log the difference.
+        for index, row in diff_stats_sizes.iterrows():
+            if abs(row["bid_size_relative_diff_pct"]) > threshhold:
+                message = (
+                    f"Difference between bid sizes in real time and daily "
+                    f"data for `{index}` coin is more that 1%"
+                )
+                error_message.append(message)
+            if abs(row["ask_size_relative_diff_pct"]) > threshhold:
+                message = (
+                    f"Difference between ask sizes in real time and daily "
+                    f"data for `{index}` coin is more that 1%"
+                )
+                error_message.append(message)
+        if error_message:
+            hdbg.dfatal(message="\n".join(error_message))
+        _LOG.info("No differences were found between real time and daily data")
         return
-        
+
     def _filter_duplicates(self, data: pd.DataFrame) -> pd.DataFrame:
         """
         Remove duplicates from data based on exchange id and timestamp.
@@ -370,11 +413,12 @@ class RealTimeHistoricalReconciler:
         return data
 
     def _get_universe(self) -> List[str]:
-        """ 
         """
-        # DB universe.
+        Get the intersection of the real time and daily universes.
+        """
+        # CCXT real time universe.
         ccxt_universe = self.ccxt_rt_im_client.get_universe()
-        # CC universe.
+        # CC daily universe.
         cc_universe = self.cc_daily_pq_client.get_universe()
         # Intersection of universes that will be used for analysis.
         universe = list(set(ccxt_universe) & set(cc_universe))
@@ -382,9 +426,8 @@ class RealTimeHistoricalReconciler:
 
 
 def _run(args: argparse.Namespace) -> None:
-    #
     reconciler = RealTimeHistoricalReconciler(args)
-    #
+    # Run reconciliation process.
     reconciler.run()
 
 
