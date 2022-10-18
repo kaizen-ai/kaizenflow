@@ -325,6 +325,17 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
 
 
 class Test_make_hashable(hunitest.TestCase):
+    def helper(obj: Any, is_hashable: bool, expected: str) -> None:
+        is_hashable_before = isinstance(obj, collections.Hashable)
+        self.assertEqual(is_hashable_before, is_hashable)
+        #
+        hashable_obj = cconfig.make_hashable(obj)
+        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
+        self.assertEqual(is_hashable_after, True)
+        #
+        actual = str(hashable_obj)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
     def test1(self) -> None:
         """
         Test and its values including an empty dict.
@@ -341,16 +352,9 @@ class Test_make_hashable(hunitest.TestCase):
                 {},
             )
         ]
-        is_hashable_before = isinstance(obj, collections.Hashable)
-        self.assertEqual(is_hashable_before, False)
-        #
-        hashable_obj = cconfig.make_hashable(obj)
-        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
-        self.assertEqual(is_hashable_after, True)
-        #
-        actual = str(hashable_obj)
+        is_hashable = False
         expected = "((2, (('key', 'value'), ('key2', 'value2'), ('key3', 4)), 'value3', ()),)"
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.helper(obj, is_hashable, expected)
 
     def test2(self) -> None:
         """
@@ -369,18 +373,11 @@ class Test_make_hashable(hunitest.TestCase):
             (8, 9, 0): "value2",
             "key4": [],
         }
-        is_hashable_before = isinstance(obj, collections.Hashable)
-        self.assertEqual(is_hashable_before, False)
-        #
-        hashable_obj = cconfig.make_hashable(obj)
-        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
-        self.assertEqual(is_hashable_after, True)
-        #
-        actual = str(hashable_obj)
+        is_hashable = False
         expected = r"""
         ((1, ('value1', (), (('key2', ()), ('key3', (3, '4', (5, ((6, '7'),))))))), ((8, 9, 0), 'value2'), ('key4', ()))
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.helper(obj, is_hashable, expected)
 
     def test3(self) -> None:
         """
@@ -391,14 +388,8 @@ class Test_make_hashable(hunitest.TestCase):
             ["2", 3, (4, (5, ("6", {"key1": "value1"})))],
             (({},), "value2"),
         )
-        is_hashable_before = isinstance(obj, collections.Hashable)
-        self.assertEqual(is_hashable_before, True)
-        #
-        hashable_obj = cconfig.make_hashable(obj)
-        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
-        self.assertEqual(is_hashable_after, True)
-        actual = str(hashable_obj)
+        is_hashable = True
         expected = r"""
         (1, ('2', 3, (4, (5, ('6', (('key1', 'value1'),))))), (((),), 'value2'))
         """
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        self.helper(obj, is_hashable, expected)
