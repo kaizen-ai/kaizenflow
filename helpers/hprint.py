@@ -132,7 +132,9 @@ def frame(
     hdbg.dassert_lte(1, thickness)
     hdbg.dassert_lte(0, level)
     # Build the return value.
-    prefix = "#" * (level + 1) + " "
+    prefix = ""
+    if level:
+        prefix = "#" * level + " "
     ret = (
         (prefix + (line(char1, num_chars) + "\n") * thickness)
         + (prefix + message + "\n")
@@ -362,7 +364,7 @@ def to_str(
     frame_lev: int = 1,
     print_lhs: bool = True,
     char_separator: str = ",",
-    mode: str = "str",
+    mode: str = "repr",
 ) -> str:
     """
     Return a string with the value of a variable / expression / multiple

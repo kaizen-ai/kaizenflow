@@ -13,7 +13,7 @@ def _check(self: Any, str_to_eval: str, exp_val: str) -> None:
     Evaluate `str_to_eval` and compare it to expected value `exp_val`.
     """
     # The variable lives 3 levels in the stack trace from here.
-    act_val = hprint.to_str(str_to_eval, frame_lev=3, print_lhs=False)
+    act_val = hprint.to_str(str_to_eval, frame_lev=3)
     _LOG.debug("%s", act_val)
     self.assert_equal(act_val, exp_val, purify_text=True)
 
