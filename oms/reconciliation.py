@@ -15,6 +15,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
 import oms.portfolio as omportfo
@@ -112,7 +113,7 @@ def compute_shares_traded(
     portfolio_df.index = portfolio_df.index.round(freq)
     executed_trades_shares = portfolio_df["executed_trades_shares"]
     executed_trades_notional = portfolio_df["executed_trades_notional"]
-    asset_ids = executed_trades_shares.columns
+    executed_trades_shares.columns
     # Divide the notional flow (signed) by the shares traded (signed)
     # to get the estimated (positive) price at which the trades took place.
     executed_trades_price_per_share = executed_trades_notional.abs().divide(
@@ -311,3 +312,17 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     _LOG.info("DAG parquet path=%s", dag_parquet_path)
     dag_df = pd.read_parquet(dag_parquet_path)
     return dag_df
+
+
+def get_config_from_pickle(
+    system_log_path_dict: Dict, config_name: str, stage: str
+) -> cconfig.Config:
+    """
+    Build config from pickled one.
+
+    :param config_name: file name of pickled config
+    """
+    path = os.path.join(system_log_path_dict[stage], config_name)
+    config_pkl = hpickle.from_pickle(path)
+    config = cconfig.Config.from_dict(config_pkl)
+    return config

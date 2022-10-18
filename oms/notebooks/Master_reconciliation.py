@@ -61,17 +61,9 @@ system_log_path_dict = dict(config["system_log_path"].to_dict())
 system_log_path_dict
 
 # %%
-# TODO(Grisha): factor common code.
-# TODO(Grisha): diff configs.
 config_name = "system_config.input.values_as_strings.pkl"
-
-prod_config_path = os.path.join(system_log_path_dict["prod"], config_name)
-prod_config_pkl = hpickle.from_pickle(prod_config_path)
-prod_config = cconfig.Config.from_dict(prod_config_pkl)
-#
-sim_config_path = os.path.join(system_log_path_dict["sim"], config_name)
-sim_config_pkl = hpickle.from_pickle(sim_config_path)
-sim_config = cconfig.Config.from_dict(sim_config_pkl)
+prod_config = oms.get_config_from_pickle(system_log_path_dict, config_name, "prod")
+sim_config = oms.get_config_from_pickle(system_log_path_dict, config_namem "sim")
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
