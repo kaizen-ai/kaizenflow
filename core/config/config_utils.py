@@ -14,7 +14,6 @@ import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hprint as hprint
-import helpers.hpickle as hpickle
 
 _LOG = logging.getLogger(__name__)
 
@@ -49,7 +48,8 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
 # TODO(gp): Add unit tests.
 def sort_config_string(txt: str) -> str:
     """
-    Sort a string representing a Config in alphabetical order by the first level.
+    Sort a string representing a Config in alphabetical order by the first
+    level.
 
     This function can be used to diff two Configs serialized as strings.
     """
@@ -59,15 +59,22 @@ def sort_config_string(txt: str) -> str:
     state = "look_for_start"
     start_idx = end_idx = None
     for i, line in enumerate(lines):
-        _LOG.debug("i=%s state=%s start_idx=%s end_idx=%s line=%s" % (i, state, start_idx, end_idx, line))
-        if state == "look_for_start" and line[0] != " " and lines[i+1][0] != " ":
+        _LOG.debug(
+            "i=%s state=%s start_idx=%s end_idx=%s line=%s"
+            % (i, state, start_idx, end_idx, line)
+        )
+        if (
+            state == "look_for_start"
+            and line[0] != " "
+            and lines[i + 1][0] != " "
+        ):
             _LOG.debug("Found single line")
             # Single line.
             key = lines[i]
             val = " "
             chunks[key] = val
             _LOG.debug("Single line -> %s %s", key, val)
-        elif state == "look_for_start" and line[0] != " " :
+        elif state == "look_for_start" and line[0] != " ":
             _LOG.debug("Found first line")
             start_idx = i
             end_idx = None
@@ -78,7 +85,7 @@ def sort_config_string(txt: str) -> str:
             hdbg.dassert_lte(start_idx, end_idx)
             key = lines[start_idx]
             _LOG.debug("start_idx=%s end_idx=%s key=%s", start_idx, end_idx, key)
-            val = lines[start_idx+ 1:end_idx + 1]
+            val = lines[start_idx + 1 : end_idx + 1]
             chunks[key] = val
             _LOG.debug("-> %s %s", key, val)
             #
@@ -88,7 +95,9 @@ def sort_config_string(txt: str) -> str:
     # Sort.
     chunks = {k: chunks[k] for k in sorted(chunks.keys())}
     # Assemble with proper indentation.
-    chunks = "\n".join([k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()])
+    chunks = "\n".join(
+        [k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()]
+    )
     return chunks
 
 
