@@ -1,4 +1,5 @@
 import collections
+from typing import Any
 
 import pandas as pd
 
@@ -325,7 +326,7 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
 
 
 class Test_make_hashable(hunitest.TestCase):
-    def helper(obj: Any, is_hashable: bool, expected: str) -> None:
+    def helper(self, obj: Any, is_hashable: bool, expected: str) -> None:
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, is_hashable)
         #
