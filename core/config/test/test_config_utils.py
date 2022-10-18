@@ -150,7 +150,9 @@ class Test_subtract_configs1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
     def test2(self) -> None:
-        """ """
+        """
+        Substract config when its value has an empty dict.
+        """
         config_dict1 = {
             "key1": [
                 (
@@ -179,7 +181,9 @@ class Test_subtract_configs1(hunitest.TestCase):
         self.assert_equal(str(actual), expected, fuzzy_match=True)
 
     def test3(self) -> None:
-        """ """
+        """
+        Substract config when its value has a dict.
+        """
         config_dict1 = {
             "key1": {"key2": "value2", "key3": {"key4": "value3", "key5": 5}}
         }
@@ -391,7 +395,7 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test and its values including an empty dict.
+        Test unhashable object List[Tuple[...Dict]].
         """
         obj = [
             (
@@ -411,8 +415,7 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test unhashable object and its values including a dict with an empty
-        value.
+        Test unhashable object Dict[...List[Dict, Dict[str, Dict...]]].
         """
         obj = {
             1: [
@@ -434,7 +437,7 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Test hashable object that also contains unhashable ones.
+        Test hashable object Tuple[...Dict[str, str]].
         """
         obj = (
             1,
