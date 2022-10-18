@@ -345,6 +345,7 @@ class RealTimeHistoricalReconciler:
             ),
         )
         error_message = []
+        # Define the maximum acceptable difference as 1%.
         threshhold = 1
         # Log the difference.
         for index, row in diff_stats_prices.iterrows():
