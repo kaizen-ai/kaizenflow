@@ -117,6 +117,7 @@ prod_sim_dag_corr = dtfmod.compute_correlations(
 )
 
 # %%
+# TODO(Grisha): move up.
 hpandas.df_to_str(
     prod_sim_dag_corr.min(),
     num_rows=None,
@@ -137,6 +138,7 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 )
 
 # %%
+# TODO(Grisha): move up.
 annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ].to_dict()
@@ -163,7 +165,7 @@ portfolio_config_dict = {
 portfolio_config_dict
 
 # %%
-# TODO(gp): @grisha move to library.
+# TODO(gp): @grisha convert into a function and move to library.
 
 # Load the 4 portfolios.
 portfolio_dfs = {}
