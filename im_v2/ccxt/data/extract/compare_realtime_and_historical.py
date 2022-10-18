@@ -88,10 +88,10 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--db_table",
         action="store",
-        required=False,
+        required=True,
         default="ccxt_ohlcv",
         type=str,
-        help="(Optional) DB table to use, default: 'ccxt_ohlcv'",
+        help="DB table to use, e.g. 'ccxt_ohlcv'",
     )
     parser.add_argument(
         "--resample_1min",
@@ -102,6 +102,9 @@ def _parse() -> argparse.ArgumentParser:
         help="(Optional) If the data should be resampled to 1 min'",
     )
     parser = hparser.add_verbosity_arg(parser)
+    # For `--s3_path` argument we only specify the top level path for the daily staged data, 
+    # the code handles appending the exchange, e.g. `binance` and data type, e.g. `bid_ask`
+    # as the part of the path.
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
@@ -169,6 +172,7 @@ class RealTimeHistoricalReconciler:
         :param data: Dataframe to process
         :return: data with duplicates removed
         """
+
         duplicate_columns = ["full_symbol", "timestamp"]
         # Sort values.
         data = data.sort_values("knowledge_timestamp", ascending=False)
@@ -186,7 +190,7 @@ class RealTimeHistoricalReconciler:
         df: pd.DataFrame, level: int = 1
     ) -> pd.DataFrame:
         """
-        Specify the order level in CCXT bid ask data.
+        Specify the order book level in CCXT bid ask data.
 
         :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
         :return: Data where specific level has common name (i.e., bid_price)
@@ -233,6 +237,7 @@ class RealTimeHistoricalReconciler:
             # Choose the specific order level (first level by default).
             ccxt_rt = self._clean_data_for_orderbook_level(ccxt_rt)
         # Remove duplicated columns and reindex real time data.
+        _LOG.info("Filter duplicates in real time data")
         ccxt_rt_reindex = self._preprocess_data(ccxt_rt)
         return ccxt_rt_reindex
 
@@ -245,6 +250,7 @@ class RealTimeHistoricalReconciler:
         )
         cc_daily = cc_daily.reset_index()
         # Remove duplicated columns and reindex daily data.
+        _LOG.info("Filter duplicates in daily data")
         cc_daily = self._preprocess_data(cc_daily)
         return cc_daily
 
@@ -255,7 +261,7 @@ class RealTimeHistoricalReconciler:
         :param data: the data to process
         :return: reindexed data with no duplicates
         """
-        # Remove duplicated columns in the data.
+        # Remove duplicated rows in the data.
         data = self._filter_duplicates(data)
         expected_columns = self.expected_columns[self.data_type]
         # Reindex daily data.
