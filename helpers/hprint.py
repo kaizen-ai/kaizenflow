@@ -365,7 +365,6 @@ def to_str(
     print_lhs: bool = True,
     char_separator: str = ",",
     mode: str = "repr",
-    print_lhs: bool = True,
 ) -> str:
     """
     Return a string with the value of a variable / expression / multiple
