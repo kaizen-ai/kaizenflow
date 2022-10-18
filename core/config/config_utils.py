@@ -9,7 +9,6 @@ import copy
 import logging
 from typing import Any, Iterable, List, Optional
 
-import numpy as np
 import pandas as pd
 
 import core.config.config_ as cconconf
@@ -127,7 +126,7 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
 # #############################################################################
 
 
-def make_hashable(obj):
+def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
     """
