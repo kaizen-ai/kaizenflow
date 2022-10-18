@@ -16,6 +16,7 @@ import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hsystem as hsystem
+import oms.ccxt_broker as occxbrok
 import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
@@ -114,7 +115,9 @@ def compute_shares_traded(
     asset_ids = executed_trades_shares.columns
     # Divide the notional flow (signed) by the shares traded (signed)
     # to get the estimated (positive) price at which the trades took place.
-    executed_trades_price_per_share = executed_trades_notional.abs().divide(executed_trades_shares)
+    executed_trades_price_per_share = executed_trades_notional.abs().divide(
+        executed_trades_shares
+    )
     # Process `order_df`.
     hdbg.dassert_isinstance(order_df, pd.DataFrame)
     hdbg.dassert_is_subset(
@@ -129,9 +132,7 @@ def compute_shares_traded(
     order_share_targets.index = order_share_targets.index.round(freq)
     # Compute underfills.
     share_target_sign = np.sign(order_share_targets)
-    underfill = share_target_sign * (
-        order_share_targets - executed_trades_shares
-    )
+    underfill = share_target_sign * (order_share_targets - executed_trades_shares)
     # Combine into a multi-column dataframe.
     df = pd.concat(
         {
@@ -178,7 +179,9 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         #
         root_dir = "/shared_data/prod_reconciliation"
         # Prod system is run via AirFlow and the results are tagged with the previous day.
-        previous_day_date_str = (pd.Timestamp(date_str) - pd.Timedelta("1D")).strftime("%Y-%m-%d")
+        previous_day_date_str = (
+            pd.Timestamp(date_str) - pd.Timedelta("1D")
+        ).strftime("%Y-%m-%d")
         prod_dir = os.path.join(
             root_dir,
             date_str,
@@ -199,7 +202,13 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "prediction_col": "vwap.ret_0.vol_adj_2_hat",
             "volatility_col": "vwap.ret_0.vol",
         }
-        quantization = "no_quantization"
+        quantization = "asset_specific"
+        market_info = occxbrok.load_market_data_info()
+        asset_id_to_share_decimals = (
+            occxbrok.subset_market_info(
+                market_info, "amount_precision"
+            )
+        )
         gmv = 700.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
@@ -227,6 +236,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "volatility_col": "garman_klass_vol",
         }
         quantization = "nearest_share"
+        asset_id_to_share_decimals = None
         gmv = 20000.0
         liquidate_at_end_of_day = True
     else:
@@ -234,7 +244,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     # Sanity check dirs.
     for dir in system_log_path_dict.values():
         hdbg.dassert_dir_exists(dir)
-    # Get a config.
+    # Build the config.
     config_dict = {
         "meta": {
             "date_str": date_str,
@@ -247,6 +257,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             "init": fep_init_dict,
             "annotate_forecasts_kwargs": {
                 "quantization": quantization,
+                "asset_id_to_share_decimals": asset_id_to_share_decimals,
                 "burn_in_bars": 3,
                 "style": "cross_sectional",
                 "bulk_frac_to_remove": 0.0,
