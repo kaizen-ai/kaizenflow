@@ -63,7 +63,6 @@ system_log_path_dict
 
 # %%
 # TODO(Grisha): factor common code.
-# TODO(Grisha): diff configs.
 config_name = "system_config.input.values_as_strings.pkl"
 
 prod_config_path = os.path.join(system_log_path_dict["prod"], config_name)
@@ -73,6 +72,16 @@ prod_config = cconfig.Config.from_dict(prod_config_pkl)
 sim_config_path = os.path.join(system_log_path_dict["sim"], config_name)
 sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
+
+# %%
+# Get config differencies.
+diff_config = ccocouti.build_config_diff_dataframe(
+    {
+        "prod_config": prod_config,
+        "sim_config": sim_config,
+    }
+)
+diff_config 
 
 # %%
 # TODO(gp): @grisha move to `oms/reconciliation.py`.
@@ -155,16 +164,6 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     dag_df = pd.read_parquet(dag_parquet_path)
     return dag_df
 
-
-# %%
-# Get config differencies.
-diff_config = ccocouti.build_config_diff_dataframe(
-    {
-        "prod_config": prod_config,
-        "sim_config": sim_config,
-    }
-)
-diff_config 
 
 # %%
 # Load DAG output for different experiments.
