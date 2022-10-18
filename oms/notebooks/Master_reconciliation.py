@@ -63,7 +63,7 @@ system_log_path_dict
 # %%
 config_name = "system_config.input.values_as_strings.pkl"
 prod_config = oms.get_config_from_pickle(system_log_path_dict, config_name, "prod")
-sim_config = oms.get_config_from_pickle(system_log_path_dict, config_namem "sim")
+sim_config = oms.get_config_from_pickle(system_log_path_dict, config_name, "sim")
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.

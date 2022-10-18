@@ -15,6 +15,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparquet
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
@@ -113,7 +114,7 @@ def compute_shares_traded(
     portfolio_df.index = portfolio_df.index.round(freq)
     executed_trades_shares = portfolio_df["executed_trades_shares"]
     executed_trades_notional = portfolio_df["executed_trades_notional"]
-    executed_trades_shares.columns
+    asset_ids = executed_trades_shares.columns
     # Divide the notional flow (signed) by the shares traded (signed)
     # to get the estimated (positive) price at which the trades took place.
     executed_trades_price_per_share = executed_trades_notional.abs().divide(
@@ -310,7 +311,7 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     file_name = parquet_files[-1]
     dag_parquet_path = os.path.join(dag_dir, file_name)
     _LOG.info("DAG parquet path=%s", dag_parquet_path)
-    dag_df = pd.read_parquet(dag_parquet_path)
+    dag_df = hparquet.from_parquet(dag_parquet_path)
     return dag_df
 
 
