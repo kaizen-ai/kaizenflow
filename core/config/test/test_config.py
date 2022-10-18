@@ -51,8 +51,8 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
     self_.assertEqual(str(config), str(config2))
     # Build the signature of the test.
     act = []
-    act.append("# config=\n%s" % str(config))
-    act.append("# code=\n%s" % str(code))
+    act.append(f"# config=\n{str(config)}")
+    act.append(f"# code=\n{str(config)}")
     act = "\n".join(act)
     return act
 
@@ -275,7 +275,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_existing_key_with_type1(self) -> None:
         """
-        nrows exists, so the default value is not used.
+        'nrows' exists, so the default value is not used.
         """
         config = _get_flat_config2(self)
         self.assertEqual(config.get("nrows", None, int), 10000)
@@ -283,7 +283,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_existing_key_with_type2(self) -> None:
         """
-        nrows3 is missing so the default value is used.
+        'nrows3' is missing so the default value is used.
         """
         config = _get_flat_config2(self)
         self.assertEqual(config.get("nrows3", 5, int), 5)
@@ -291,7 +291,8 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_existing_key_with_type3(self) -> None:
         """
-        nrows exists, so the default value is not used but the type is checked.
+        'nrows' exists, so the default value is not used but the type is
+        checked.
         """
         config = _get_flat_config2(self)
         with self.assertRaises(AssertionError) as cm:
@@ -305,7 +306,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_non_existing_key_with_type1(self) -> None:
         """
-        nrows exists (so the default value is not used) but it's int and not
+        'nrows' exists (so the default value is not used) but it's int and not
         str.
         """
         config = _get_flat_config2(self)
@@ -1159,7 +1160,9 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    )
     def test_flatten2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1329,7 +1332,9 @@ class Test_from_env_var1(hunitest.TestCase):
 
 
 class Test_make_read_only1(hunitest.TestCase):
-    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
+    )
     def test_set1(self) -> None:
         """
         Setting a value that already exists on a read-only config raises.
@@ -1362,7 +1367,9 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
+    )
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1617,7 +1624,9 @@ class Test_to_dict2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    )
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1788,11 +1797,11 @@ class Test_from_dict1(hunitest.TestCase):
 class Test_to_string_config(hunitest.TestCase):
     def helper(
         self,
-        value: Optional[str],
+        value: Any,
         should_be_pickleable_before: bool,
     ) -> str:
         # Set config.
-        nested = {
+        nested: Dict[str, Any] = {
             "key1": value,
             "key2": {"key3": {"key4": {}}},
         }
@@ -1851,7 +1860,7 @@ class Test_save_to_file(hunitest.TestCase):
         # Set config.
         log_dir = self.get_scratch_space()
         tag = "system_config.input"
-        nested = {
+        nested: Dict[str, Any] = {
             "key1": value,
             "key2": {"key3": {"key4": {}}},
         }
@@ -1901,12 +1910,12 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         - Check that config is what's expected, if exp is not `None`
         """
         _LOG.debug("\n" + hprint.frame(stmt))
-        exec(stmt, globals)
+        exec(stmt, globals)  # pylint: disable=exec-used
         #
         if mode == "str":
-            act = str(config)
+            act = str(config)  # pylint: disable=undefined-variable
         elif mode == "repr":
-            act = repr(config)
+            act = repr(config)  # pylint: disable=undefined-variable
         else:
             raise ValueError(f"Invalid mode={mode}")
         _LOG.debug("config=\n%s", act)
@@ -1917,29 +1926,29 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         return act
 
     def raise_stmt(
-        self, stmt: str, assertion_type: Any, exp: Optional[str], globals: Dict
-    ) -> str:
+        self, stmt: str, assertion_type: Any, exp: Optional[str], globals_: Dict
+    ) -> None:
         _LOG.debug("\n" + hprint.frame(stmt))
         with self.assertRaises(assertion_type) as cm:
-            exec(stmt, globals)
+            exec(stmt, globals_)  # pylint: disable=exec-used
         act = str(cm.exception)
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def run_steps_assert_string(
-        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals: Dict
+        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals_: Dict
     ) -> None:
         for data in workload:
             hdbg.dassert_eq(len(data), 2, "Invalid data='%s'", str(data))
             stmt, exp = data
-            self.execute_stmt(stmt, exp, mode, globals)
+            self.execute_stmt(stmt, exp, mode, globals_)
 
     def run_steps_check_string(
-        self, workload: List[str], mode: str, globals: Dict
+        self, workload: List[str], mode: str, globals_: Dict
     ) -> None:
         exp = None
         res = []
         for stmt in workload:
-            res_tmp = self.execute_stmt(stmt, exp, mode, globals)
+            res_tmp = self.execute_stmt(stmt, exp, mode, globals_)
             res.append(res_tmp)
         txt = "\n".join(res)
         self.check_string(txt, purify_text=True, fuzzy_match=True)
