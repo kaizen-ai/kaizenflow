@@ -51,8 +51,8 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
     self_.assertEqual(str(config), str(config2))
     # Build the signature of the test.
     act = []
-    act.append("# config=\n%s" % str(config))
-    act.append("# code=\n%s" % str(config))
+    act.append(f"# config=\n{str(config)}")
+    act.append(f"# code=\n{str(config)}")
     act = "\n".join(act)
     return act
 
@@ -99,6 +99,7 @@ class Test_flat_config_set1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after implementation of `__str__`")
     def test_roundtrip_transform1(self) -> None:
         """
         Test serialization/deserialization for a flat config.
@@ -749,6 +750,7 @@ class Test_nested_config_misc1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after implementation of `__str__`")
     def test_roundtrip_transform1(self) -> None:
         """
         Test serialization/deserialization for nested config.
