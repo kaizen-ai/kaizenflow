@@ -977,6 +977,7 @@ class Test_nested_config_update2(hunitest.TestCase):
             """
             self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: Add after implementation of OverwriteError.")
     def test_assert_on_overwrite2(self) -> None:
         """
         Update with update_mode="assert_on_overwrite" and values that are
@@ -1158,6 +1159,7 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
     def test_flatten2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1327,6 +1329,7 @@ class Test_from_env_var1(hunitest.TestCase):
 
 
 class Test_make_read_only1(hunitest.TestCase):
+    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
     def test_set1(self) -> None:
         """
         Setting a value that already exists on a read-only config raises.
@@ -1359,6 +1362,7 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1613,6 +1617,7 @@ class Test_to_dict2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1973,6 +1978,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         mode = "str"
         self.run_steps_assert_string(workload, mode, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_assert_string_repr1(self) -> None:
         workload = []
         #
@@ -1997,7 +2003,6 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         self.run_steps_assert_string(workload, mode, globals())
 
     # ////////////////////////////////////////////////////////////////////////////
-
     def check_string_helper1(self, mode: str) -> None:
         workload = []
         #
@@ -2012,10 +2017,12 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         #
         self.run_steps_check_string(workload, mode, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__str__` method.")
     def test_check_string_str1(self) -> None:
         mode = "str"
         self.check_string_helper1(mode)
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_check_string_repr1(self) -> None:
         mode = "repr"
         self.check_string_helper1(mode)
@@ -2027,7 +2034,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 
 
 class Test_basic1(_Config_execute_stmt_TestCase1):
-
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test1(self) -> None:
         """
         Various assignments and their representations.
@@ -2059,6 +2066,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         """
         self.raise_stmt(stmt, AssertionError, exp, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test2(self) -> None:
         """
         Various assignments and their representations.
@@ -2085,6 +2093,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test3(self) -> None:
         mode = "repr"
         # Create a Config.
