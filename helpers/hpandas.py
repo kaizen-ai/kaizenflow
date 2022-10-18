@@ -1501,13 +1501,14 @@ def compute_duration_df(
     *,
     intersect_dfs: bool = False,
     valid_intersect: bool = False,
-) -> pd.DataFrame:
+) -> Tuple[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """
     Compute a df with some statistics about the time index from a dict of dfs.
 
-    :param intersect_dfs: return a transformed dict with the intersection of indices
-    :param valid_intersect: use either actual or valid (non-NaN values) timestamp for intersection
-    :return: modified intersection data (if `intersect_dfs == True`) and timestamp stats (described below)
+    :param intersect_dfs: return a transformed dict with the intersection of indices of all the dfs
+    if True, otherwise return the input data as is
+    :param valid_intersect: intersect indices without NaNs if True, otherwise intersect indices as is
+    :return: timestamp stats and updated dict of dfs, see `intersect_dfs` param
     ```
                    min_index   max_index   min_valid_index   max_valid_index
     tag1
@@ -1535,6 +1536,8 @@ def compute_duration_df(
         data_stats.loc[tag, max_valid_index_col] = (
             tag_to_df[tag].dropna().index.max()
         )
+    # Make a copy so we do not modify the original data.
+    tag_to_df_updated = tag_to_df.copy()
     # Change the initial dfs with intersection.
     if intersect_dfs:
         if valid_intersect:
@@ -1545,16 +1548,14 @@ def compute_duration_df(
         intersection_start_date = data_stats[min_col].max()
         # The end of intersection will be the min value amongst all end dates.
         intersection_end_date = data_stats[max_col].min()
-        # Make a copy so we do not modify the original data.
-        tag_to_df = tag_to_df.copy()
-        for tag in tag_to_df.keys():
+        for tag in tag_to_df_updated.keys():
             df = trim_df(
-                tag_to_df[tag],
+                tag_to_df_updated[tag],
                 ts_col_name=None,
                 start_ts=intersection_start_date,
                 end_ts=intersection_end_date,
                 left_close=True,
                 right_close=True,
             )
-            tag_to_df[tag] = df
-    return tag_to_df, data_stats
+            tag_to_df_updated[tag] = df
+    return data_stats, tag_to_df_updated

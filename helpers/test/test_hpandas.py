@@ -2679,8 +2679,8 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
 
 
 class Test_compute_duration_df(hunitest.TestCase):
-    """ 
-    Compute timestamp stats from dfs in dict and check the modified intersection.
+    """
+    Compute timestamp stats from dfs and check the intersection.
     """
 
     @staticmethod
@@ -2723,12 +2723,43 @@ class Test_compute_duration_df(hunitest.TestCase):
         }
         return tag_to_df
 
+    def intersection_helper(
+        self, valid_intersect, expected_start_timestamp, expected_end_timestamp
+    ) -> None:
+        """
+        Checks if the intersection is valid and the same amongst all dfs.
+        """
+        tag_to_df = self.get_dict_with_dfs()
+        _, tag_dfs = hpandas.compute_duration_df(
+            tag_to_df, valid_intersect=valid_intersect, intersect_dfs=True
+        )
+        # Collect all start timestamps.
+        start_timestamps = [tag_dfs[tag].index.min() for tag in tag_dfs]
+        # Check that all start timestamps are equal.
+        start_equal = all(
+            element == start_timestamps[0] for element in start_timestamps
+        )
+        hdbg.dassert_eq(start_equal, True)
+        # Check that start intersection is correct.
+        required_start_intersection = expected_start_timestamp
+        hdbg.dassert_eq(start_timestamps[0], required_start_intersection)
+        # Collect all end timestamps.
+        end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
+        # Check that all end timestamps are equal.
+        end_equal = all(
+            element == end_timestamps[0] for element in end_timestamps
+        )
+        hdbg.dassert_eq(end_equal, True)
+        # Check that end intersection is correct.
+        required_end_intersection = expected_end_timestamp
+        hdbg.dassert_eq(end_timestamps[0], required_end_intersection)
+
     def test1(self) -> None:
         """
         Check only timestamp stats.
         """
         tag_to_df = self.get_dict_with_dfs()
-        tag_dfs, df_stats = hpandas.compute_duration_df(tag_to_df)
+        df_stats, _ = hpandas.compute_duration_df(tag_to_df)
         expected_length = 3
         expected_column_names = [
             "max_index",
@@ -2756,58 +2787,27 @@ class Test_compute_duration_df(hunitest.TestCase):
 
     def test_intersection1(self) -> None:
         """
-        Modify initial DataFrames in dictionary with non-valid intersection (incl. NaNs).
+        Modify initial DataFrames in dictionary with non-valid intersection
+        (incl.
+
+        NaNs).
         """
-        tag_to_df = self.get_dict_with_dfs()
-        tag_dfs, df_stats = hpandas.compute_duration_df(
-            tag_to_df, valid_intersect=False, intersect_dfs=True
+        valid_intersect = False
+        expected_start_timestamp = pd.Timestamp("2022-01-01 21:02:00+00:00")
+        expected_end_timestamp = pd.Timestamp("2022-01-01 21:04:00+00:00")
+        self.intersection_helper(
+            valid_intersect, expected_start_timestamp, expected_end_timestamp
         )
-        # Collect all start timestamps.
-        start_timestamps = [tag_dfs[tag].index.min() for tag in tag_dfs]
-        # Check that all start timestamps are equal.
-        start_equal = all(
-            element == start_timestamps[0] for element in start_timestamps
-        )
-        hdbg.dassert_eq(start_equal, True)
-        # Check that start intersection is correct.
-        required_start_intersection = pd.Timestamp("2022-01-01 21:02:00+00:00")
-        hdbg.dassert_eq(start_timestamps[0], required_start_intersection)
-        # Collect all end timestamps.
-        end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
-        # Check that all end timestamps are equal.
-        end_equal = all(
-            element == end_timestamps[0] for element in end_timestamps
-        )
-        hdbg.dassert_eq(end_equal, True)
-        # Check that end intersection is correct.
-        required_end_intersection = pd.Timestamp("2022-01-01 21:04:00+00:00")
-        hdbg.dassert_eq(end_timestamps[0], required_end_intersection)
 
     def test_intersection2(self) -> None:
         """
-        Modify initial DataFrames in dictionary with valid intersection (ecxl. NaNs).
+        Modify initial DataFrames in dictionary with valid intersection (ecxl.
+
+        NaNs).
         """
-        tag_to_df = self.get_dict_with_dfs()
-        tag_dfs, df_stats = hpandas.compute_duration_df(
-            tag_to_df, valid_intersect=True, intersect_dfs=True
+        valid_intersect = True
+        expected_start_timestamp = pd.Timestamp("2022-01-01 21:03:00+00:00")
+        expected_end_timestamp = pd.Timestamp("2022-01-01 21:04:00+00:00")
+        self.intersection_helper(
+            valid_intersect, expected_start_timestamp, expected_end_timestamp
         )
-        # Collect all start timestamps.
-        start_timestamps = [tag_dfs[tag].index.min() for tag in tag_dfs]
-        # Check that all start timestamps are equal.
-        start_equal = all(
-            element == start_timestamps[0] for element in start_timestamps
-        )
-        hdbg.dassert_eq(start_equal, True)
-        # Check that start intersection is correct.
-        required_start_intersection = pd.Timestamp("2022-01-01 21:03:00+00:00")
-        hdbg.dassert_eq(start_timestamps[0], required_start_intersection)
-        # Collect all end timestamps.
-        end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
-        # Check that all end timestamps are equal.
-        end_equal = all(
-            element == end_timestamps[0] for element in end_timestamps
-        )
-        hdbg.dassert_eq(end_equal, True)
-        # Check that end intersection is correct.
-        required_end_intersection = pd.Timestamp("2022-01-01 21:04:00+00:00")
-        hdbg.dassert_eq(end_timestamps[0], required_end_intersection)
