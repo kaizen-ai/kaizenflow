@@ -115,9 +115,6 @@ prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
 )
-
-# %%
-# TODO(Grisha): move up.
 hpandas.df_to_str(
     prod_sim_dag_corr.min(),
     num_rows=None,
@@ -136,9 +133,6 @@ hpandas.df_to_str(
 fep = dtfmod.ForecastEvaluatorFromPrices(
     **config["research_forecast_evaluator_from_prices"]["init"]
 )
-
-# %%
-# TODO(Grisha): move up.
 annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ].to_dict()
