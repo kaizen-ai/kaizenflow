@@ -153,11 +153,11 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     elif isinstance(obj, collections.abc.Iterable) and not isinstance(obj, str):
         # Handle iterables, e.g., lists, sets, tuples.
         hashable_obj = tuple([make_hashable(element) for element in obj])
-    elif isinstance(obj,  collections.abc.Hashable):
+    elif isinstance(obj, collections.abc.Hashable):
         # Return an object as is, since it's already hashable.
         hashable_obj = obj
     else:
-        hashable_obj = tuple(obj)  
+        hashable_obj = tuple(obj)
     return hashable_obj
 
 
