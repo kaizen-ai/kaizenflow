@@ -327,37 +327,80 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
 class Test_make_hashable(hunitest.TestCase):
     def test1(self) -> None:
         """
-        Test unhashable object and its values.
+        Test and its values including an empty dict.
         """
-        obj = [1, (2, "3")]
+        obj = [
+            (2,
+             {
+               "key": "value",
+               "key2": "value2",
+               "key3": 4,
+             },
+             "value3",
+             {}
+            )
+        ]
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, False)
         #
         hashable_obj = cconfig.make_hashable(obj)
         is_hashable_after = isinstance(hashable_obj, collections.Hashable)
         self.assertEqual(is_hashable_after, True)
+        #
+        actual = str(hashable_obj)
+        expected = "((2, (('key', 'value'), ('key2', 'value2'), ('key3', 4)), 'value3', ()),)"
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
         """
         Test unhashable object and its values including a dict with an empty
         value.
         """
-        obj = [1, ["2", 3], {"key": {}, "key2": "value"}]
+        obj = {
+            1: [
+                 "value1",
+                 {},
+                 {
+                   "key2": {},
+                   "key3": (3, "4", [5, {6: "7"}]),
+                 }
+            ],
+            (8, 9, 0): "value2",
+            "key4": [],
+        }
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, False)
         #
         hashable_obj = cconfig.make_hashable(obj)
         is_hashable_after = isinstance(hashable_obj, collections.Hashable)
         self.assertEqual(is_hashable_after, True)
+        #
+        actual = str(hashable_obj)
+        expected = r"""
+        ((1, ('value1', (), (('key2', ()), ('key3', (3, '4', (5, ((6, '7'),))))))), ((8, 9, 0), 'value2'), ('key4', ()))
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
 
     def test3(self) -> None:
         """
         Test hashable object that also contains unhashable ones.
         """
-        obj = (1, ["2", 3], {})
+        obj = (
+            1,
+            [
+              "2", 3, (4, (5, ("6", {"key1": "value1"})))
+            ],
+            (({},), "value2")
+        )
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, True)
         #
         hashable_obj = cconfig.make_hashable(obj)
         is_hashable_after = isinstance(hashable_obj, collections.Hashable)
         self.assertEqual(is_hashable_after, True)
+        actual = str(hashable_obj)
+        expected = r"""
+        (1, ('2', 3, (4, (5, ('6', (('key1', 'value1'),))))), (((),), 'value2'))
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
