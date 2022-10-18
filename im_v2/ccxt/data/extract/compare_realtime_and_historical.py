@@ -13,7 +13,7 @@ Use as:
    --contract_type 'futures' \
    --db_table 'ccxt_ohlcv_preprod' \
    --aws_profile 'ck' \
-   --resample_1min 'True' \
+   --resample_1min True \
    --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
 
 Import as:
@@ -160,7 +160,29 @@ class RealTimeHistoricalReconciler:
         }
 
     @staticmethod
-    def clean_data_for_orderbook_level(
+    def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Remove duplicates from data based on exchange id and timestamp.
+
+        Keeps the row with the latest 'knowledge_timestamp' value.
+
+        :param data: Dataframe to process
+        :return: data with duplicates removed
+        """
+        duplicate_columns = ["full_symbol", "timestamp"]
+        # Sort values.
+        data = data.sort_values("knowledge_timestamp", ascending=False)
+        use_index = False
+        _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
+        # Remove duplicates.
+        data = hpandas.drop_duplicates(
+            data, use_index, subset=duplicate_columns
+        ).sort_index()
+        _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
+        return data
+
+    @staticmethod
+    def _clean_data_for_orderbook_level(
         df: pd.DataFrame, level: int = 1
     ) -> pd.DataFrame:
         """
@@ -184,37 +206,62 @@ class RealTimeHistoricalReconciler:
         Compare real time and daily data.
         """
         # Get CCXT data.
+        ccxt_rt = self._get_rt_data()
+        # Get CC data.
+        cc_daily = self._get_daily_data()
+        # Compare real time and daily data.
+        if self.data_type == "ohlcv":
+            self._compare_ohlcv(ccxt_rt, cc_daily)
+        else:
+            self._compare_bid_ask(ccxt_rt, cc_daily)
+        return
+
+    def _get_rt_data(self) -> pd.DataFrame:
+        """
+        Load and process real time data.
+        """
+        # Get CCXT data.
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
+        ccxt_rt = ccxt_rt.reset_index()
         if self.data_type == "bid_ask":
             # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
-            ccxt_rt.index = ccxt_rt.reset_index()["timestamp"].apply(
+            ccxt_rt["timestamp"] = ccxt_rt["timestamp"].apply(
                 lambda x: x.round(freq="T")
             )
             # Choose the specific order level (first level by default).
-            ccxt_rt = self.clean_data_for_orderbook_level(ccxt_rt)
-        # Remove duplicated columns in real time data.
-        ccxt_rt = self._filter_duplicates(ccxt_rt)
-        # Get CC data.
+            ccxt_rt = self._clean_data_for_orderbook_level(ccxt_rt)
+        # Remove duplicated columns and reindex real time data.
+        ccxt_rt_reindex = self._preprocess_data(ccxt_rt)
+        return ccxt_rt_reindex
+
+    def _get_daily_data(self) -> pd.DataFrame:
+        """
+        Load and process daily data.
+        """
         cc_daily = self.cc_daily_pq_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
-        # Remove duplicated columns in daily data.
-        cc_daily = self._filter_duplicates(cc_daily)
+        cc_daily = cc_daily.reset_index()
+        # Remove duplicated columns and reindex daily data.
+        cc_daily = self._preprocess_data(cc_daily)
+        return cc_daily
+
+    def _preprocess_data(self, data) -> pd.DataFrame:
+        """
+        Filter duplicates and reindex the data.
+
+        :param data: the data to process
+        :return: reindexed data with no duplicates
+        """
+        # Remove duplicated columns in the data.
+        data = self._filter_duplicates(data)
         expected_columns = self.expected_columns[self.data_type]
-        # Reindex real time data.
-        ccxt_rt = ccxt_rt[expected_columns]
-        ccxt_rt_reindex = ccxt_rt.set_index(["timestamp", "full_symbol"])
         # Reindex daily data.
-        cc_daily = cc_daily[expected_columns]
-        cc_daily_reindex = cc_daily.set_index(["timestamp", "full_symbol"])
-        # Compare real time and daily data.
-        if self.data_type == "ohlcv":
-            self._compare_ohlcv(ccxt_rt_reindex, cc_daily_reindex)
-        else:
-            self._compare_bid_ask(ccxt_rt_reindex, cc_daily_reindex)
-        return
+        data = data[expected_columns]
+        data_reindex = data.set_index(["timestamp", "full_symbol"])
+        return data_reindex
 
     def _compare_ohlcv(
         self, rt_data: pd.DataFrame, daily_data: pd.DataFrame
@@ -389,29 +436,6 @@ class RealTimeHistoricalReconciler:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
         return
-
-    def _filter_duplicates(self, data: pd.DataFrame) -> pd.DataFrame:
-        """
-        Remove duplicates from data based on exchange id and timestamp.
-
-        Keeps the row with the latest 'knowledge_timestamp' value.
-
-        :param data: Dataframe to process
-        :return: data with duplicates removed
-        """
-        duplicate_columns = ["full_symbol", "timestamp"]
-        # Sort values.
-        data = data.sort_values("knowledge_timestamp", ascending=False)
-        use_index = False
-        _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
-        # Reset `timestamp` index to use timestamp as a column.
-        data = data.reset_index()
-        # Remove duplicates.
-        data = hpandas.drop_duplicates(
-            data, use_index, subset=duplicate_columns
-        ).sort_index()
-        _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
-        return data
 
     def _get_universe(self) -> List[str]:
         """
