@@ -150,19 +150,21 @@ class Test_subtract_configs1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
     def test2(self) -> None:
-        """
-        """
-        config_dict1 = { "key1": [
+        """ """
+        config_dict1 = {
+            "key1": [
                 (
-                   2,
-                   "value3",
-                   {},
+                    2,
+                    "value3",
+                    {},
                 )
             ],
             "key2": {},
         }
-        config_dict2 = { "key1": [
-                (   (1, 3),
+        config_dict2 = {
+            "key1": [
+                (
+                    (1, 3),
                     "value3",
                     None,
                 )
@@ -177,15 +179,13 @@ class Test_subtract_configs1(hunitest.TestCase):
         self.assert_equal(str(actual), expected, fuzzy_match=True)
 
     def test3(self) -> None:
-        """
-        """
-        config_dict1 = { "key1": {
-                 "key2": "value2",
-                 "key3": {"key4": "value3", "key5": 5}
-            }
+        """ """
+        config_dict1 = {
+            "key1": {"key2": "value2", "key3": {"key4": "value3", "key5": 5}}
         }
-        config_dict2 = { "key1": {
-                 "key3": "value3",
+        config_dict2 = {
+            "key1": {
+                "key3": "value3",
             },
             "key2": {},
         }
