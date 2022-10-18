@@ -109,6 +109,14 @@ async def process_forecasts(
               (used in real-time mode)
         - `log_dir`: directory for logging state
     """
+    _LOG.debug(
+        "\n%s",
+        hprint.frame("process_forecast")
+    )
+    _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
+    _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
+    _LOG.debug("portfolio=\n%s", portfolio)
+    _LOG.debug("config=\n%s", config)
     # TODO(gp): Move all this in a _validate method
     # Check `predictions_df`.
     hpandas.dassert_time_indexed_df(
@@ -140,11 +148,9 @@ async def process_forecasts(
     order_dict = hdict.typed_get(
         config, "order_config", expected_type=(dict, NoneType)
     )
-    _validate_order_dict(order_dict)
     optimizer_dict = hdict.typed_get(
         config, "optimizer_config", expected_type=(dict, NoneType)
     )
-    _validate_optimizer_dict(optimizer_dict)
     # Extract ATH and trading start times from config.
     ath_start_time = hdict.typed_get(
         config, "ath_start_time", expected_type=(datetime.time, NoneType)
@@ -194,8 +200,6 @@ async def process_forecasts(
     # Get log dir.
     log_dir = config.get("log_dir", None)
     _LOG.info("log_dir=%s", log_dir)
-    # We should not have anything left in the config that we didn't extract.
-    # hdbg.dassert(not config, "config=%s", str(config))
     _LOG.debug(
         "predictions_df=%s\n%s",
         str(prediction_df.shape),
@@ -209,7 +213,8 @@ async def process_forecasts(
     tqdm_out = htqdm.TqdmToLogger(_LOG, level=logging.INFO)
     iter_ = enumerate(prediction_df.iterrows())
     offset_min = pd.DateOffset(minutes=order_dict["order_duration_in_mins"])
-    # Initialize a `TargetPositionAndOrderGenerator` object to perform the heavy lifting.
+    # Initialize a `TargetPositionAndOrderGenerator` object to perform the heavy
+    # lifting.
     target_position_and_order_generator = (
         otpaorge.TargetPositionAndOrderGenerator(
             portfolio,
@@ -272,11 +277,11 @@ async def process_forecasts(
             trading_start_time,
             trading_end_time,
         )
-        # Compute the target positions.
+        # 1) Compute the target positions.
         _LOG.debug(
             "\n%s",
             hprint.frame(
-                "Computing target positions: timestamp=%s current_bar_time=%s"
+                "1) Computing target positions: timestamp=%s current_bar_time=%s"
                 % (wall_clock_timestamp, current_bar_time),
                 char1="#",
             ),
@@ -285,9 +290,11 @@ async def process_forecasts(
             _LOG.warning("Skipping generating orders")
             # Keep logging the state and marking to market even if we don't submit
             # orders.
-            # `target_position_and_order_generator.submit_orders()` takes care of logging
-            # `target_position_and_order_generator.compute_target_positions_and_generate_orders()` takes care of marking to market
-            # the portfolio.
+            # We need to force to mark to market since usually
+            # `target_position_and_order_generator.submit_orders()` takes care of
+            # logging and
+            # `target_position_and_order_generator.compute_target_positions_and_generate_orders()`
+            # takes care of marking to market the portfolio.
             mark_to_market = True
             target_position_and_order_generator.log_state(mark_to_market)
             continue
@@ -301,7 +308,7 @@ async def process_forecasts(
                 + hprint.to_str("trading_end_time current_bar_time")
             )
             if current_bar_time >= trading_end_time:
-                _LOG.info(
+                _LOG.debug(
                     "Liquidating holdings: "
                     + hprint.to_str("trading_end_time current_bar_time")
                 )
@@ -315,7 +322,15 @@ async def process_forecasts(
             spread,
             liquidate_holdings,
         )
-        # Submit orders.
+        # 2) Submit orders.
+        _LOG.debug(
+            "\n%s",
+            hprint.frame(
+                "2) Submitting orders: timestamp=%s current_bar_time=%s"
+                % (wall_clock_timestamp, current_bar_time),
+                char1="#",
+                ),
+        )
         await target_position_and_order_generator.submit_orders(orders)
         _LOG.debug(
             "TargetPositionAndOrderGenerator=\n%s",
@@ -376,7 +391,9 @@ def _skip_generating_orders(
     trading_end_time: Optional[datetime.time],
 ) -> bool:
     """
-    Determine whether to skip a bar processing or not.
+    Determine whether to skip processing a bar or not.
+
+    This decision is based on the current time and on the ATH / trading time limits.
     """
     _LOG.debug(
         hprint.to_str(
@@ -427,17 +444,3 @@ def _skip_generating_orders(
             skip_bar_cond = True
     _LOG.debug(hprint.to_str("skip_bar_cond"))
     return skip_bar_cond
-
-
-def _validate_order_dict(order_dict: Dict[str, Any]) -> None:
-    hdbg.dassert_isinstance(order_dict, dict)
-    _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
-    _ = hdict.typed_get(order_dict, "order_duration_in_mins", expected_type=int)
-
-
-def _validate_optimizer_dict(optimizer_dict: Dict[str, Any]) -> None:
-    hdbg.dassert_isinstance(optimizer_dict, dict)
-    _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)
-    # target_gmv = hdict.typed_get(
-    #     optimizer_dict, "target_gmv", expected_type=(float, int)
-    # )

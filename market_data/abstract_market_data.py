@@ -454,6 +454,12 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # ```
         return twap_df
 
+    # TODO(gp): When we want to evaluate a TWAP price in (a, b] we need to:
+    #  1) wait until `MarketData` is updated
+    #  2) assert that all the requested prices are actually available
+    # We should simplify this interface by removing this function and forcing
+    # the callers to be explicit about what interval is needed (sometimes we
+    # want the freshest data other times we want exactly one interval).
     def get_last_twap_price(
         self,
         # TODO(gp): -> bar_duration_as_pd_str
@@ -465,16 +471,28 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         Compute TWAP of the column `column` over last `bar_duration`.
 
-        E.g., if the last end time is 9:35 and `bar_duration=5T`, then
-        we compute TWAP for (9:30, 9:35].
+        Prices are computed on bars like:
+        ```
+                                                 start_time  asset_id  close  volume
+                         end_time
+        2022-10-03 13:01:00+00:00 2022-10-03 13:00:00+00:00    23135    NaN       0
+           ...
+        2022-10-04 20:59:00+00:00 2022-10-04 20:58:00+00:00    20122    NaN       0
+        ```
+
+        E.g., if
+        - ts_col_name = "end_time" (i.e., we are constraining the end of the
+          interval)
+        - the last end time is 9:35 and `bar_duration=5T`, then end_time in
+          (9:30, 9:35] and compute its TWAP.
         """
         self._dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
         _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
-        first_end_time = last_end_time - offset
-        # We rely on the assumption that we are reading 1-minute bars.
-        start_time = first_end_time - pd.Timedelta(minutes=1)
+        start_time = last_end_time - offset
+        # TODO(gp): Remove this.
+        start_time = start_time - pd.Timedelta(minutes=1)
         twap_df = self.get_twap_price(
             start_time,
             last_end_time,

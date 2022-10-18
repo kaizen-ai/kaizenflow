@@ -6,6 +6,7 @@ import core.signal_processing.cross_sectional as csprcrse
 
 import logging
 
+import numpy as np
 import pandas as pd
 import scipy as sp
 import sklearn.preprocessing as skp
@@ -66,3 +67,22 @@ def gaussian_rank(
         # Add back the all-NaN rows.
         df = df.reindex(index=idx)
     return df
+
+
+def uniform_rank(
+    df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Rank rows uniformly and map to [-1, +1].
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    # Rank each row. Each non-NaN element is mapped to an integer between zero
+    # and the number of non-NaN elements in the element's row.
+    ranked = df.rank(axis=1)
+    # Do not rank rows with fewer than two non-NaN elements.
+    counts = df.count(axis=1).replace([0, 1], np.nan)
+    # Map each row to [-1, +1].
+    multiplier = 2 / (counts - 1)
+    translation = -(counts + 1) / (counts - 1)
+    ranked = (ranked.multiply(multiplier, axis=0)).add(translation, axis=0)
+    return ranked

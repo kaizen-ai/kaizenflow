@@ -20,6 +20,7 @@ import helpers.hio as hio
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
@@ -42,11 +43,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
     def __init__(
         self,
         portfolio: omportfo.Portfolio,
-        # TODO(gp): -> order_dict?
         order_dict: cconfig.Config,
-        # TODO(gp): -> optimizer_dict
         optimizer_dict: cconfig.Config,
-        # TODO(gp): -> restrictions_df like the process_forecast
+        # TODO(gp): -> restrictions_df like in `process_forecast()`
         restrictions: Optional[pd.DataFrame],
         share_quantization: str,
         *,
@@ -71,35 +70,50 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 target_gmv: 100000.0
             ```
         :param log_dir: directory to log different stages of computation
-            - Saved by `ForecastProcessor`
-                - `orders`
-                - `portfolio`
-                - `target_positions`
+            - `orders`
+                - For each bar timestamp store a list of string representation of
+                  the placed orders at that timestamp
+            - `target_positions`
+                - For each bar timestamp store the target position in terms of
+                  asset_id, curr_num_shares, price, etc.
+            - `portfolio`
+                - Store the output of the included `Portfolio`
         """
         self._portfolio = portfolio
         self._get_wall_clock_time = portfolio.market_data.get_wall_clock_time
-        # Process order config.
-        _validate_order_dict(order_dict)
+        # Save order config.
         self._order_dict = order_dict
+        _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
+        _ = hdict.typed_get(order_dict, "order_duration_in_mins", expected_type=int)
         self._offset_min = pd.DateOffset(
             minutes=order_dict["order_duration_in_mins"]
         )
-        # Process optimizer config.
-        _validate_optimizer_dict(optimizer_dict)
+        # Save optimizer config.
+        _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)
         self._optimizer_dict = optimizer_dict
         #
         self._restrictions = restrictions
-        #
-        self._log_dir = log_dir
-        # Store the target positions.
-        self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
-        self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
-        #
         self._share_quantization = share_quantization
+        self._log_dir = log_dir
+        # Dict from timestamp to target positions.
+        self._target_positions = cksoordi.KeySortedOrderedDict(pd.Timestamp)
+        # Dict from timestamp to orders.
+        self._orders = cksoordi.KeySortedOrderedDict(pd.Timestamp)
 
     def __str__(self) -> str:
         """
-        Return the most recent state of the ForecastProcessor as a string.
+        Return the most recent state of this object as a string.
+
+        E.g.,
+        ```
+        <oms.target_position_and_order_generator.TargetPositionAndOrderGenerator at 0x>
+        # last target positions=
+                  holdings_shares      price  holdings_notional wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
+        asset_id
+        101                     0    1000.30                0.0                                1      0.0001    0.01             100031.192549           100031.192549                 100.0                   100.0
+        # last orders=
+        Order: order_id=0 creation_timestamp=2000-01-01 09:35:00-05:00 asset_id=101 type_=price@twap start_timestamp=2000-01-01 09:35:00-05:00 end_timestamp=2000-01-01 09:40:00-05:00 curr_num_shares=0.0 diff_num_shares=100.0 tz=America/New_York
+        ```
         """
         txt = []
         # <...target_position_and_order_generator at 0x>
@@ -119,7 +133,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         else:
             orders_str = "None"
         txt.append(orders_str)
-        #
+        # Assemble result.
         act = "\n".join(txt)
         return act
 
@@ -133,12 +147,16 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         """
         Parse logged `target_position` dataframes.
 
-        :return a dataframe indexed by datetimes and with two column levels
+        :return a dataframe indexed by datetimes and with two column levels. E.g.,
+            ```
+         asset_id     curr_num_shares   price   position      wall_clock_timestamp prediction   volatility   spread  target_position   target_notional_trade  diff_num_shares_before_quantization  diff_num_shares
+            10365                -4.0   305.6    -1222.6 2022-10-05 15:30:02-04:00     0.355         0.002        0            435.7                  1658.3                5.4                                5.0
+            ```
         """
-        name = "target_positions"
-        files = TargetPositionAndOrderGenerator._get_files(log_dir, name)
+        sub_dir = "target_positions"
+        files = TargetPositionAndOrderGenerator._get_files(log_dir, sub_dir)
         dfs = []
-        for path in tqdm(files, desc=f"Loading `{name}` files..."):
+        for path in tqdm(files, desc=f"Loading `{sub_dir}` files..."):
             df = pd.read_csv(
                 path, index_col=0, parse_dates=["wall_clock_timestamp"]
             )
@@ -168,11 +186,21 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
 
         NOTE: Parsing logged orders takes significantly longer than reading
         logged target positions.
+
+        E.g.,
+        from `.../system_log_dir/process_forecasts/orders/20221005_153006.csv`
+        ```
+        Order: order_id=398 creation_timestamp=2022-10-05 15:30:02-04:00 asset_id=10365 type_=price@twap start_timestamp=2022-10-05 15:30:02-04:00 end_timestamp=2022-10-05 15:45:02-04:00 curr_num_shares=-4.0 diff_nu
+        m_shares=5.0 tz=America/New_York
+        Order: order_id=399 creation_timestamp=2022-10-05 15:30:02-04:00 asset_id=12007 type_=price@twap start_timestamp=2022-10-05 15:30:02-04:00 end_timestamp=2022-10-05 15:45:02-04:00 curr_num_shares=-8.0 diff_nu
+        m_shares=6.0 tz=America/New_York
+        ...
+        ```
         """
-        name = "orders"
-        files = TargetPositionAndOrderGenerator._get_files(log_dir, name)
+        sub_dir = "orders"
+        files = TargetPositionAndOrderGenerator._get_files(log_dir, sub_dir)
         dfs = []
-        for path in tqdm(files, desc=f"Loading `{name}` files..."):
+        for path in tqdm(files, desc=f"Loading `{sub_dir}` files..."):
             lines = hio.from_file(path)
             lines = lines.split("\n")
             for line in lines:
@@ -207,22 +235,31 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         target_positions = self._compute_target_holdings_shares(
             predictions, volatility, spread, liquidate_holdings
         )
+        # Convert target positions into orders.
         orders = self._generate_orders_wrapper(target_positions)
         return orders
 
     # TODO(gp): mark_to_market -> mark_to_market_portfolio
-    def log_state(self, mark_to_market: bool):
+    def log_state(self, mark_to_market: bool) -> None:
+        """
+        Log the state of this object and Portfolio to log_dir.
+
+        This is typically triggered by `submit_orders()` and in some flows by
+        `process_forecasts()`.
+
+        :param mark_to_market: mark Portfolio to market before logging the state.
+        """
         _LOG.debug("log_state")
         if mark_to_market:
             self._portfolio.mark_to_market()
-        # Log the state of Portfolio.
+        # Log the state of this object and Portfolio.
         if self._log_dir:
             self._log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
 
     async def submit_orders(self, orders: List[omorder.Order]) -> None:
         """
-        Submit `orders` to the broker and confirm receipt.
+        Submit `orders` to the broker confirming receipt and log the object state.
 
         :param orders: list of orders to execute
         """
@@ -243,9 +280,12 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
     # /////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
-    def _get_files(log_dir: str, name: str) -> List[str]:
-        # Find all files in the requested dir.
-        dir_name = os.path.join(log_dir, name)
+    def _get_files(log_dir: str, sub_dir: str) -> List[str]:
+        """
+        Find all files from the requested dir `{log_dir}/{sub_dir}`.
+        """
+        dir_name = os.path.join(log_dir, sub_dir)
+        # TODO(gp): We should consider only CSV files.
         pattern = "*"
         only_files = True
         use_relative_paths = True
@@ -255,19 +295,20 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         files = [os.path.join(dir_name, file_name) for file_name in files]
         return files
 
-    # TODO(gp): -> _log_internal_state?
+    # TODO(gp): -> _log_internal_state or _log_object_state?
     def _log_state(self) -> None:
         """
         Log the most recent state of the object.
         """
         hdbg.dassert(self._log_dir, "Must specify `log_dir` to log state.")
-        #
+        # TODO(gp): We should also add the bar timestamp as for other objects.
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
         filename = f"{wall_clock_time_str}.csv"
-        # Log the target position.
+        # Log the last target position.
         if self._target_positions:
             _, last_target_positions = self._target_positions.peek()
+            # TODO(gp): Check that last_key matches the current bar timestamp.
             last_target_positions_filename = os.path.join(
                 self._log_dir, "target_positions", filename
             )
@@ -304,10 +345,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         hdbg.dassert_not_in(
             self._portfolio.CASH_ID, assets_and_predictions["asset_id"].to_list()
         )
-        # Compute the target positions in cash (call the optimizer).
+        # Compute the target positions in notional. This conceptually corresponds
+        # to calling an optimizer.
         # TODO(Paul): Align with ForecastEvaluator and update callers.
-        # compute_target_positions_func
-        # compute_target_positions_kwargs
         backend = self._optimizer_dict["backend"]
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
@@ -364,7 +404,10 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             raise NotImplementedError
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
+        # Package the output df.
         if liquidate_holdings:
+            # If we want to liquidate all the holdings, we want to trade to flatten
+            # the current positions.
             target_trades_shares = -df["holdings_shares"]
             target_trades_notional = -df["holdings_notional"]
             _LOG.info(
@@ -381,6 +424,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         return df
 
+    # TODO(gp): This should go before.
     def _prepare_data_for_optimizer(
         self,
         predictions: pd.Series,
@@ -396,6 +440,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         :param volatility: volatility forecasts indexed by `asset_id`
         """
         hpandas.dassert_indices_equal(predictions, volatility, allow_series=True)
+        # TODO(gp): Add check for spread too.
         marked_to_market = self._get_extended_marked_to_market_df(predictions)
         # Combine the portfolio `marked_to_market` dataframe with the predictions.
         df_for_optimizer = self._merge_predictions(
@@ -419,11 +464,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
 
         :param predictions: predictions indexed by `asset_id`
         """
-        marked_to_market = self._portfolio.mark_to_market().set_index("asset_id")
-        # If there are predictions for assets not currently in `marked_to_market`,
-        # then attempt to price those assets and extend `marked_to_market`
+        marked_to_market_df = self._portfolio.mark_to_market().set_index("asset_id")
+        # If there are predictions for assets not currently in `marked_to_market_df`,
+        # then attempt to price those assets and extend `marked_to_market_df`
         # (imputing 0's for the holdings).
-        unpriced_assets = predictions.index.difference(marked_to_market.index)
+        unpriced_assets = predictions.index.difference(marked_to_market_df.index)
         if not unpriced_assets.empty:
             _LOG.debug(
                 "Unpriced assets by id=\n%s",
@@ -437,15 +482,15 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             hdbg.dassert_eq(len(unpriced_assets), len(prices))
             mtm_extension["price"] = prices
             mtm_extension.index.name = "asset_id"
-            marked_to_market = pd.concat(
-                [marked_to_market, mtm_extension], axis=0
+            marked_to_market_df = pd.concat(
+                [marked_to_market_df, mtm_extension], axis=0
             )
-        marked_to_market.reset_index(inplace=True)
+        marked_to_market_df.reset_index(inplace=True)
         _LOG.debug(
-            "marked_to_market dataframe=\n%s"
-            % hpandas.df_to_str(marked_to_market)
+            "marked_to_market dataframe=\n%s",
+            hpandas.df_to_str(marked_to_market_df)
         )
-        marked_to_market.rename(
+        marked_to_market_df.rename(
             columns={
                 "curr_num_shares": "holdings_shares",
                 "value": "holdings_notional",
@@ -453,13 +498,13 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             inplace=True,
         )
         # TODO(Paul): Rename columns here for now.
-        return marked_to_market
+        return marked_to_market_df
 
     def _normalize_series(
         self,
         series: pd.Series,
         index: pd.DatetimeIndex,
-        imputation: str,
+        imputation_mode: str,
         name: str,
     ) -> pd.DataFrame:
         """
@@ -478,13 +523,13 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Set the "prediction" for cash to 1. This is for the optimizer.
         series[self._portfolio.CASH_ID] = 1
         # Impute zero for NaNs.
-        if imputation == "zero":
+        if imputation_mode == "zero":
             series = series.fillna(0.0)
-        elif imputation == "mean":
+        elif imputation_mode == "mean":
             series_mean = series.mean()
             series = series.fillna(series_mean)
         else:
-            raise ValueError("Invalid imputation mode")
+            raise ValueError(f"Invalid imputation mode '{imputation_mode}")
         # Convert to a dataframe.
         df = pd.DataFrame(series)
         # Format the predictions dataframe.
@@ -505,9 +550,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         Merge marked_to_market dataframe with predictions and volatility.
 
         :return: dataframe with columns `asset_id`, `prediction`, `price`,
-            `curr_num_shares`, `value`.
-            - The dataframe is the outer join of all the held assets in `portfolio` and
-              `predictions`
+            `curr_num_shares`, `value`
+            - The dataframe is the outer join of all the held assets in `portfolio`
+              and `predictions`
         """
         hpandas.dassert_indices_equal(predictions, volatility, allow_series=True)
         # The portfolio may have grandfathered holdings for which there is no
@@ -542,6 +587,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         merged_df = merged_df.fillna(0.0)
         _LOG.debug("After merge: merged_df=\n%s", hpandas.df_to_str(merged_df))
         return merged_df
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def _generate_orders_wrapper(
         self, target_positions: pd.DataFrame
@@ -672,14 +719,3 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             diff_num_shares = 0.0
         _LOG.warning("Enforcing restriction for asset_id=%i", asset_id)
         return diff_num_shares
-
-
-def _validate_order_dict(order_dict: Dict[str, Any]) -> None:
-    hdbg.dassert_isinstance(order_dict, dict)
-    _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
-    _ = hdict.typed_get(order_dict, "order_duration_in_mins", expected_type=int)
-
-
-def _validate_optimizer_dict(optimizer_dict: Dict[str, Any]) -> None:
-    hdbg.dassert_isinstance(optimizer_dict, dict)
-    _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)

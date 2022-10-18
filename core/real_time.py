@@ -359,7 +359,7 @@ async def execute_with_real_time_loop(
     get_wall_clock_time: hdateti.GetWallClockTime,
     bar_duration_in_secs: int,
     # TODO(gp): -> exit_condition
-    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time]],
+    rt_timeout_in_secs_or_time: Optional[Union[int, datetime.time, pd.Timestamp]],
     workload: Callable[[pd.Timestamp], Any],
 ) -> AsyncGenerator[Tuple[Event, Any], None]:
     """
@@ -456,6 +456,15 @@ async def execute_with_real_time_loop(
                 )
                 if is_done:
                     _LOG.info(
+                        "Exiting loop: %s",
+                        hprint.to_str("curr_time rt_timeout_in_secs_or_time"),
+                    )
+                    break
+            elif isinstance(rt_timeout_in_secs_or_time, pd.Timestamp):
+                curr_time = wall_clock_time
+                _LOG.debug(hprint.to_str("curr_time rt_timeout_in_secs_or_time"))
+                if curr_time >= rt_timeout_in_secs_or_time:
+                    _LOG.debug(
                         "Exiting loop: %s",
                         hprint.to_str("curr_time rt_timeout_in_secs_or_time"),
                     )
