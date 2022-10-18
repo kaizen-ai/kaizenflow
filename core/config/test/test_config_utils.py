@@ -330,14 +330,15 @@ class Test_make_hashable(hunitest.TestCase):
         Test and its values including an empty dict.
         """
         obj = [
-            (2,
-             {
-               "key": "value",
-               "key2": "value2",
-               "key3": 4,
-             },
-             "value3",
-             {}
+            (
+                2,
+                {
+                    "key": "value",
+                    "key2": "value2",
+                    "key3": 4,
+                },
+                "value3",
+                {},
             )
         ]
         is_hashable_before = isinstance(obj, collections.Hashable)
@@ -358,12 +359,12 @@ class Test_make_hashable(hunitest.TestCase):
         """
         obj = {
             1: [
-                 "value1",
-                 {},
-                 {
-                   "key2": {},
-                   "key3": (3, "4", [5, {6: "7"}]),
-                 }
+                "value1",
+                {},
+                {
+                    "key2": {},
+                    "key3": (3, "4", [5, {6: "7"}]),
+                },
             ],
             (8, 9, 0): "value2",
             "key4": [],
@@ -381,17 +382,14 @@ class Test_make_hashable(hunitest.TestCase):
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-
     def test3(self) -> None:
         """
         Test hashable object that also contains unhashable ones.
         """
         obj = (
             1,
-            [
-              "2", 3, (4, (5, ("6", {"key1": "value1"})))
-            ],
-            (({},), "value2")
+            ["2", 3, (4, (5, ("6", {"key1": "value1"})))],
+            (({},), "value2"),
         )
         is_hashable_before = isinstance(obj, collections.Hashable)
         self.assertEqual(is_hashable_before, True)
