@@ -458,6 +458,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
     For crypto we do not filter since crypto market is open 24/7.
     """
     if is_prod:
+        prod_start_time = datetime.time(6, 00)
         # The prod run is terminated at 8 a.m. ET.
         prod_end_time = datetime.time(8, 00)
         bar_duration_in_secs = system.config[
@@ -470,16 +471,21 @@ def apply_ProcessForecastsNode_config_for_crypto(
         #
         share_quantization = "asset_specific"
     else:
+        prod_start_time = None
+        prod_end_time = None
         trading_end_time = None
         liquidate_at_trading_end_time = False
         # For simplicity in the non-prod system we do not use quantization so that
         # we do not need to pass `asset_ids_to_decimals` (that we receive from 
         # broker) around.
         share_quantization = "no_quantization"
+    # TODO(Grisha): for crypto there is no ATH, but we have to
+    # pass `ath_start{end}_time` to make things work. Find a
+    # better mechanism.
     dict_ = {
-        "ath_start_time": None,
-        "trading_start_time": None,
-        "ath_end_time": None,
+        "ath_start_time": prod_start_time,
+        "trading_start_time": prod_start_time,
+        "ath_end_time": prod_end_time,
         "trading_end_time": trading_end_time,
         "liquidate_at_trading_end_time": liquidate_at_trading_end_time,
         "share_quantization": share_quantization,
