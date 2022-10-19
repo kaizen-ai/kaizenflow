@@ -139,26 +139,26 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
     """
-    hashable_obj = None
+    ret = None
     if isinstance(obj, collections.abc.Mapping):
         # Handle dict-like objects.
         new_object = copy.deepcopy(obj)
         for k, v in new_object.items():
             new_object[k] = make_hashable(v)
-        hashable_obj = tuple(new_object.items())
+        ret = tuple(new_object.items())
     # The problem is that `str` is both `Hashable` and `Iterable`, but here
     # we want to treat it like `Hashable`, i.e. return string as it is.
     # Same with `Tuple`, but for `Tuple` we want to apply the function
     # recursively, i.e. make every element `Hashable`.
     elif isinstance(obj, collections.abc.Iterable) and not isinstance(obj, str):
         # Handle iterables, e.g., lists, sets, tuples.
-        hashable_obj = tuple([make_hashable(element) for element in obj])
+        ret = tuple([make_hashable(element) for element in obj])
     elif isinstance(obj, collections.abc.Hashable):
-        # Return an object as is, since it's already hashable.
-        hashable_obj = obj
+        # Return the object as is, since it's already hashable.
+        ret = obj
     else:
-        hashable_obj = tuple(obj)
-    return hashable_obj
+        ret = tuple(obj)
+    return ret
 
 
 def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:

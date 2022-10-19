@@ -151,7 +151,7 @@ class Test_subtract_configs1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Substract config when its value has an empty dict.
+        A config contains an empty dict.
         """
         config_dict1 = {
             "key1": [
@@ -176,13 +176,15 @@ class Test_subtract_configs1(hunitest.TestCase):
         config1 = cconfig.Config().from_dict(config_dict1)
         config2 = cconfig.Config().from_dict(config_dict2)
         actual = cconfig.subtract_config(config1, config2)
-        expected = r"""key1: [(2, 'value3', {})]
-        key2: """
+        expected = r"""
+        key1: [(2, 'value3', {})]
+        key2:
+        """
         self.assert_equal(str(actual), expected, fuzzy_match=True)
 
     def test3(self) -> None:
         """
-        Substract config when its value has a dict.
+        A config contains a non-empty empty dict.
         """
         config_dict1 = {
             "key1": {"key2": "value2", "key3": {"key4": "value3", "key5": 5}}
@@ -388,14 +390,14 @@ class Test_make_hashable(hunitest.TestCase):
         #
         hashable_obj = cconfig.make_hashable(obj)
         is_hashable_after = isinstance(hashable_obj, collections.Hashable)
-        self.assertEqual(is_hashable_after, True)
+        self.assertTrue(is_hashable_after)
         #
         actual = str(hashable_obj)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test1(self) -> None:
         """
-        Test unhashable object List[Tuple[...Dict]].
+        Test an unhashable nested object.
         """
         obj = [
             (
@@ -415,7 +417,7 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test unhashable object Dict[...List[Dict, Dict[str, Dict...]]].
+        Test an unhashable nested object.
         """
         obj = {
             1: [
@@ -437,15 +439,41 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        Test hashable object Tuple[...Dict[str, str]].
+        Test a nested Tuple.
         """
         obj = (
             1,
-            ["2", 3, (4, (5, ("6", {"key1": "value1"})))],
-            (({},), "value2"),
+            ["2", 3],
         )
         is_hashable = True
-        expected = r"""
-        (1, ('2', 3, (4, (5, ('6', (('key1', 'value1'),))))), (((),), 'value2'))
+        expected = r"(1, ('2', 3))"
+        self.helper(obj, is_hashable, expected)
+
+    def test4(self) -> None:
         """
+        Test an unhashable object.
+        """
+        obj = {
+            1: "2",
+        }
+        is_hashable = False
+        expected = r"((1, '2'),)"
+        self.helper(obj, is_hashable, expected)
+
+    def test5(self) -> None:
+        """
+        Test a hashable object.
+        """
+        obj = "1"
+        is_hashable = True
+        expected = r"1"
+        self.helper(obj, is_hashable, expected)
+
+    def test6(self) -> None:
+        """
+        Test a hashable object.
+        """
+        obj = 2
+        is_hashable = True
+        expected = r"2"
         self.helper(obj, is_hashable, expected)
