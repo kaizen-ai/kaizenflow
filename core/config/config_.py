@@ -396,7 +396,7 @@ class Config:
                 msg = []
                 msg.append("exception=" + str(e))
                 # .replace("\\n", "\n"))
-                msg.append(f"key='{key} not in:")
+                msg.append(f"key='{key}'")
                 msg.append("config=\n" + hprint.indent(str(self)))
                 msg = "\n".join(msg)
                 if report_mode == "verbose_log_error":
