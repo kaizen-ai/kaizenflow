@@ -2802,7 +2802,7 @@ class Test_compute_duration_df(hunitest.TestCase):
 
     def test_intersection2(self) -> None:
         """
-        Modify initial DataFrames in dictionary with valid intersection (ecxl NaNs).
+        Modify initial DataFrames in dictionary with valid intersection (ecxl. NaNs).
         """
         valid_intersect = True
         expected_start_timestamp = pd.Timestamp("2022-01-01 21:03:00+00:00")

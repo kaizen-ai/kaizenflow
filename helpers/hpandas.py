@@ -1503,7 +1503,7 @@ def compute_duration_df(
     valid_intersect: bool = False,
 ) -> Tuple[pd.DataFrame, Dict[str, pd.DataFrame]]:
     """
-    Compute a df with some statistics about the time index from a dict of dfs.
+    Compute a df with some statistics about the time index.
 
     E.g.,
     ```
@@ -1512,9 +1512,10 @@ def compute_duration_df(
     tag2
     ```
 
-    :param intersect_dfs: return a transformed dict with the intersection of indices of all the dfs
-    if True, otherwise return the input data as is
-    :param valid_intersect: intersect indices without NaNs if True, otherwise intersect indices as is
+    :param intersect_dfs: return a transformed dict with the intersection of
+        indices of all the dfs if True, otherwise return the input data as is
+    :param valid_intersect: intersect indices without NaNs if True, otherwise 
+        intersect indices as is
     :return: timestamp stats and updated dict of dfs, see `intersect_dfs` param
     """
     hdbg.dassert_isinstance(tag_to_df, Dict)
@@ -1546,9 +1547,9 @@ def compute_duration_df(
             # Assign start, end date column according to specs.
             min_col = min_valid_index_col
             max_col = max_valid_index_col
-        # The start of intersection will be the max value amongst all start dates.
+        # The start of the intersection will be the max value amongt all start dates.
         intersection_start_date = data_stats[min_col].max()
-        # The end of intersection will be the min value amongst all end dates.
+        # The end of the intersection will be the min value amongt all end dates.
         intersection_end_date = data_stats[max_col].min()
         for tag in tag_to_df_updated.keys():
             df = trim_df(
