@@ -105,7 +105,6 @@ def reconcile_create_dirs(ctx, run_date=None, abort_if_exists=True):  # type: ig
                     ...
     ```
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     # Create a dir specific of the run date.
@@ -216,7 +215,6 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     """
     Copy the output of the simulation run to a shared folder.
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
@@ -239,7 +237,6 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     """
     Copy the output of the prod run to a shared folder.
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "prod")
@@ -334,7 +331,6 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
