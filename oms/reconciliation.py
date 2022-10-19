@@ -318,8 +318,6 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 def get_config_from_pickle(system_log_path_dict: Dict) -> Dict[str, cconfig.Config]:
     """
     Build config from pickled one.
-
-    :param config_name: file name of pickled config
     """
     config_dict = {}
     file_name = "system_config.input.values_as_strings.pkl"
