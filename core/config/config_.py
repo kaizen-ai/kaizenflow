@@ -334,7 +334,7 @@ class Config:
             )
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
-            raise RuntimeError(msg)
+            raise ReadOnlyConfigError(msg)
         # If the key is compound, then recurse.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
@@ -547,7 +547,7 @@ class Config:
                     msg.append("self=\n" + hprint.indent(str(self)))
                     msg.append("config=\n" + hprint.indent(str(config)))
                     msg = "\n".join(msg)
-                    raise RuntimeError(msg)
+                    raise OverwriteError(msg)
                 # Key doesn't exist, then assign.
                 assign_new_value = True
             elif update_mode == "overwrite":
