@@ -21,9 +21,7 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hintrospection as hintros
-import helpers.hio as hio
 import helpers.hpandas as hpandas
-import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -287,8 +285,8 @@ class Config:
                     # ```
                     val_as_str = "\n" + hprint.indent(val_as_str)
                     # 3) Print.
-                txt.append(f"{key_as_str}: {val_as_str}")
-                # Assemble the result.
+            txt.append(f"{key_as_str}: {val_as_str}")
+        # Assemble the result.
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
         #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
@@ -307,9 +305,8 @@ class Config:
     def __contains__(self, key: CompoundKey) -> bool:
         """
         Implement membership operator like `key in config`.
-
-        If `key` is nested, the hierarchy of Config objects
-        is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -318,12 +315,7 @@ class Config:
             # When we test for existence we don't want to report the config in case
             # of error.
             report_mode = "none"
-            # When we test for existence we don't want to mark a key as read by
-            # the client, since we don't introduce a dependency from its value.
-            mark_key_as_read = False
-            val = self.__getitem__(
-                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
-            )
+            val = self.__getitem__(key, report_mode=report_mode)
             _LOG.debug("Found val=%s", val)
             found = True
         except KeyError as e:
@@ -358,92 +350,21 @@ class Config:
         clobber_mode: Optional[str] = None,
         report_mode: Optional[str] = None,
     ) -> None:
-        _LOG.debug("-> " + hprint.to_str("key val update_mode clobber_mode self"))
-        clobber_mode = self._resolve_clobber_mode(clobber_mode)
-        report_mode = self._resolve_report_mode(report_mode)
-        try:
-            self._set_item(key, val, update_mode, clobber_mode, report_mode)
-        except Exception as e:
-            self._raise_exception(e, key, report_mode)
-
-    def __getitem__(
-        self,
-        key: CompoundKey,
-        *,
-        report_mode: Optional[str] = None,
-        mark_key_as_read: bool = True,
-    ) -> Any:
-        """
-        Get value for `key` or raise `KeyError` if it doesn't exist.
-        If `key` is compound, then the hierarchy is navigated until the
-        corresponding element is found or we raise if the element doesn't exist.
-        :param mark_key_as_read: control whether we mark the key as read by the
-            client. It is True since clients use the `config[...]` notation
-        :raises KeyError: if the compound key is not found in the `Config`
-        """
-        _LOG.debug("-> " + hprint.to_str("key report_mode self"))
-        report_mode = self._resolve_report_mode(report_mode)
-        try:
-            ret = self._get_item(key, level=0)
-        except Exception as e:
-            # After the recursion is done, in case of error print information
-            # about the offending key.
-            self._raise_exception(e, key, report_mode)
-        return ret
-
-    def get(
-            self,
-            key: CompoundKey,
-            default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
-            expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
-            *,
-            report_mode: Optional[str] = None,
-        ) -> Any:
-        """
-        Equivalent to `dict.get(key, default_val)`.
-        :param default_value: default value to return if key is not in `config`
-        :param expected_type: expected type of `value`
-        :return: config[key] if available, else `default_value`
-            """
-        _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
-        # The implementation of this function is similar to `hdict.typed_get()`.
-        report_mode = self._resolve_report_mode(report_mode)
-        try:
-            ret = self.__getitem__(key, report_mode=report_mode)
-        except KeyError as e:
-            # No key: use the default val if it was passed or asserts.
-            # We can't use None since None can be a valid default value, so we use
-            # another value.
-            if default_value != _NO_VALUE_SPECIFIED:
-                ret = default_value
-            else:
-                # No default value found, then raise.
-                raise e
-        if expected_type != _NO_VALUE_SPECIFIED:
-            hdbg.dassert_isinstance(ret, expected_type)
-        return ret
-
-    def _set_item(
-            self,
-            key: CompoundKey,
-            val: Any,
-            update_mode: Optional[str],
-            clobber_mode: Optional[str],
-            report_mode: Optional[str],
-    ) -> None:
         """
         Set / update `key` to `val`, equivalent to `dict[key] = val`.
         If `key` is an iterable of keys, then the key hierarchy is navigated /
-        created and the leaf value added / updated with `val`.
-
+        created and the leaf value added/updated with `val`.
         :param update_mode: define the policy used for updates (see above)
             - `None` to use the value set in the constructor
         :param clobber_mode: define the policy used for controlling
             write-after-read (see above)
             - `None` to use the value set in the constructor
         """
-        _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
-        # # Used to debug who is setting a certain key.
+        _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
+        # TODO(gp): Difference between amp and cmamp.
+        if isinstance(val, dict):
+            hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
+        # # To debug who is setting a certain key.
         # if False:
         #     _LOG.info("key.set=%s", str(key))
         #     if key == ("dag_runner_config", "wake_up_timestamp"):
@@ -457,18 +378,13 @@ class Config:
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
             raise ReadOnlyConfigError(msg)
-        update_mode = self._resolve_update_mode(update_mode)
-        clobber_mode = self._resolve_clobber_mode(clobber_mode)
-        report_mode = self._resolve_report_mode(report_mode)
         # If the key is compound, then recurse.
         if hintros.is_iterable(key):
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
-                # There is no tail_key so `__setitem__()` was called on a tuple of a
+                # There is no tail_key so __setitem__ was called on a tuple of a
                 # single element, then set the value.
-                self._set_item(
-                    head_key, val, update_mode, clobber_mode, report_mode
-                )
+                self.__setitem__(head_key, val)
             else:
                 # Compound key: recurse on the tail of the key.
                 _LOG.debug(
@@ -477,34 +393,70 @@ class Config:
                     self._config,
                 )
                 if head_key in self:
-                    # Remove the
-                    # We mark a key as read only when it's read from a client of
-                    # Config, not from the Config itself.
-                    mark_key_as_read = False
-                    subconfig = self.__getitem__(
-                        head_key,
-                        report_mode="none",
-                        mark_key_as_read=mark_key_as_read,
-                    )
+                    subconfig = self.__getitem__(head_key)
                 else:
                     subconfig = self.add_subconfig(head_key)
                 hdbg.dassert_isinstance(subconfig, Config)
-                subconfig._set_item(
-                    tail_key, val, update_mode, clobber_mode, report_mode
-                )
+                subconfig.__setitem__(tail_key, val)
             return
-        # Base case: write the config.
+        # Base case: key is valid, config is a dict.
         self._dassert_base_case(key)
-        self._config.__setitem__(
-            key, val, update_mode=update_mode, clobber_mode=clobber_mode
+        self._config[key] = val  # type: ignore
+
+    def __getitem__(
+        self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
+    ) -> Any:
+        """
+        Get value for `key` or raise `KeyError` if it doesn't exist.
+        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
+        the hierarchy is navigated until the corresponding element is found or we
+        raise if the element doesn't exist.
+        When we report an error about a missing key, we print only the keys of the
+        Config at the current level of the recursion and not the original Config
+        (which is also not directly accessible inside the recursion), e.g.,
+        `key='nrows_tmp' not in ['nrows', 'nrows2']`
+        :param report_mode: how to report a KeyError
+            - `none` (default): only report the exception from `_get_item()`
+            - `verbose_log_error`: report the full key and config in the log
+            - `verbose_exception`: report the full key and config in the exception
+                (e.g., used in the unit tests)
+        :raises KeyError: if the (nested) key is not found in the `Config`.
+        """
+        _LOG.debug(
+            "key=%s report_mode=%s self=\n%s",
+            key,
+            report_mode,
+            self,
         )
+        hdbg.dassert_in(
+            report_mode, ("verbose_log_error", "verbose_exception", "none")
+        )
+        try:
+            ret = self._get_item(key, level=0)
+        except KeyError as e:
+            # After the recursion is done, in case of error print information
+            # about the offending config.
+            if report_mode in ("verbose_log_error", "verbose_exception"):
+                msg = []
+                msg.append("exception=" + str(e))
+                # .replace("\\n", "\n"))
+                msg.append(f"key='{key}'")
+                msg.append("config=\n" + hprint.indent(str(self)))
+                msg = "\n".join(msg)
+                if report_mode == "verbose_log_error":
+                    _LOG.error(msg)
+                elif report_mode == "verbose_exception":
+                    e = KeyError(msg)
+                else:
+                    raise ValueError("Invalid report_mode='%s'", report_mode)
+            raise e
+        return ret
 
     def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on
         `KeyError`.
-
         This method should be used only by `__getitem__()` since it's an
         helper of that function.
         """
@@ -543,6 +495,38 @@ class Config:
             raise KeyError(msg)
         ret = self._config[key]  # type: ignore
         return ret
+    def get(
+            self,
+            key: CompoundKey,
+            default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+            expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
+            *,
+            report_mode: Optional[str] = None,
+        ) -> Any:
+        """
+        Equivalent to `dict.get(key, default_val)`.
+        :param default_value: default value to return if key is not in `config`
+        :param expected_type: expected type of `value`
+        :return: config[key] if available, else `default_value`
+            """
+        _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
+        # The implementation of this function is similar to `hdict.typed_get()`.
+        report_mode = self._resolve_report_mode(report_mode)
+        try:
+            ret = self.__getitem__(key, report_mode=report_mode)
+        except KeyError as e:
+            # No key: use the default val if it was passed or asserts.
+            # We can't use None since None can be a valid default value, so we use
+            # another value.
+            if default_value != _NO_VALUE_SPECIFIED:
+                ret = default_value
+            else:
+                # No default value found, then raise.
+                raise e
+        if expected_type != _NO_VALUE_SPECIFIED:
+            hdbg.dassert_isinstance(ret, expected_type)
+        return ret
+
     # ////////////////////////////////////////////////////////////////////////////
     # Update.
     # ////////////////////////////////////////////////////////////////////////////
