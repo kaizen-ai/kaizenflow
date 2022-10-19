@@ -46,8 +46,6 @@ import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-_PROD_RECONCILIATION_DIR = "/shared_data/prod_reconciliation"
-
 
 def _system(cmd: str) -> int:
     return hsystem.system(cmd, suppress_output=False, log_level="echo")
@@ -74,6 +72,37 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
+def _get_dst_dir(
+    run_date: Optional[str], dst_dir: Optional[str]
+) -> str:
+    """
+    Return the folder name to store reconcilation results.
+
+    If a folder name is not specified by a user then use prod reconcilation dir
+    on the shared disk with the corresponding run date subdir.
+    """
+    if dst_dir is None:
+        run_date = _get_run_date(run_date)
+        dst_dir = os.path.join("shared_data", "prod_reconciliation", run_date)
+    _LOG.info(hprint.to_str("dst_dir"))
+    return dst_dir
+
+
+# TODO(Dan): Expose `rt_timeout_in_secs_or_time` as datetime as well.
+def _get_rt_timeout_in_secs_or_time(
+    rt_timeout_in_secs_or_time: Optional[int]
+) -> int:
+    """
+    Return the number of seconds to run reconcilation for.
+
+    If a the param is not specified by a user then use default 2 hours.
+    """
+    if rt_timeout_in_secs_or_time is None:
+        rt_timeout_in_secs_or_time = 2 * 60 * 60
+    _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
+    return rt_timeout_in_secs_or_time
+
+
 def _sanity_check_data(file_path: str) -> None:
     """
     Check that data at the specified file path is correct.
@@ -89,46 +118,46 @@ def _sanity_check_data(file_path: str) -> None:
 
 
 @task
-def reconcile_create_dirs(ctx, run_date=None, abort_if_exists=True):  # type: ignore
+def reconcile_create_dirs(
+    ctx, run_date=None, dst_dir=None, abort_if_exists=True
+):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
     Final dirs layout is:
     ```
-    data/
-        shared/
-            prod_reconciliation/
-                {run_date}/
-                    prod/
-                    tca/
-                    simulation/
-                    ...
+    {dst_dir}/
+        prod/
+        tca/
+        simulation/
+        ...
     ```
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
-    # Create a dir specific of the run date.
-    run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    dst_dir = _get_dst_dir(run_date, dst_dir)
+    # Create a dir for reconcilation results.
     hio.create_dir(
-        run_date_dir, incremental=True, abort_if_exists=abort_if_exists
+        dst_dir, incremental=True, abort_if_exists=abort_if_exists
     )
     # Create dirs for storing prod and simulation results.
-    prod_dir = os.path.join(run_date_dir, "prod")
-    simulation_dir = os.path.join(run_date_dir, "simulation")
+    prod_dir = os.path.join(dst_dir, "prod")
+    simulation_dir = os.path.join(dst_dir, "simulation")
     hio.create_dir(prod_dir, incremental=True, abort_if_exists=abort_if_exists)
     hio.create_dir(
         simulation_dir, incremental=True, abort_if_exists=abort_if_exists
     )
     # Create dir for dumped TCA data.
-    tca_dir = os.path.join(run_date_dir, "tca")
+    tca_dir = os.path.join(dst_dir, "tca")
     hio.create_dir(tca_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Sanity check the created dirs.
-    cmd = f"ls -lh {run_date_dir}"
+    cmd = f"ls -lh {dst_dir}"
     _system(cmd)
 
 
 @task
-def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactive=False):  # type: ignore
+def reconcile_dump_market_data(
+    ctx, run_date=None, dst_dir=None, incremental=False, interactive=False
+):  # type: ignore
     # pylint: disable=line-too-long
     """
     Dump the market data image and save it to a shared folder.
@@ -141,6 +170,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     2022-09-27 10:35:00-04:00  1464553467 2022-09-27 14:36:05.788923+00:00  1384.23  1386.24  1383.19  1385.63   5282.272  2022-09-27 14:36:05.284506+00:00  3409043  binance::ETH_USDT  2022-09-27 10:34:00-04:00
     ```
     :param run_date: date of the reconcile run
+    :param dst_dir: dir to store reconcilation results at
     :param incremental: if False then the directory is deleted and re-created,
         otherwise it skips
     :param interactive: if True ask user to visually inspect data snippet and
@@ -150,14 +180,16 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
+    dst_dir = _get_dst_dir(run_date, dst_dir)
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
         # TODO(Grisha): @Dan Copy logs to the shared folder.
+        # TODO(Grisha): @Dan Make all the script params optional except for `action`.
         # pylint: disable=line-too-long
-        opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
+        opts = f"--action dump_data --reconcile_sim_date {run_date} --rt_timeout_in_secs_or_time 7200 --dst_dir {dst_dir} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         cmd = f"{script_name} {opts}"
@@ -169,7 +201,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         question = "Is the file ok?"
         hsystem.query_yes_no(question)
     #
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
+    target_dir = os.path.join(dst_dir, "simulation")
     _LOG.info(hprint.to_str("target_dir"))
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(target_dir)
@@ -185,39 +217,42 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
 
 
 @task
-def reconcile_run_sim(ctx, run_date=None):  # type: ignore
+def reconcile_run_sim(
+    ctx, run_date=None, dst_dir=None, rt_timeout_in_secs_or_time=None
+):  # type: ignore
     """
     Run the simulation given a run date.
     """
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = "system_log_dir"
-    if os.path.exists(target_dir):
-        rm_cmd = f"rm -rf {target_dir}"
-        _LOG.warning("The target_dir=%s already exists, removing it.", target_dir)
+    dst_dir = _get_dst_dir(run_date, dst_dir)
+    local_results_dir = "system_log_dir"
+    if os.path.exists(local_results_dir):
+        rm_cmd = f"rm -rf {local_results_dir}"
+        _LOG.warning("The local_results_dir=%s already exists, removing it.", local_results_dir)
         _system(rm_cmd)
     # Run simulation.
     # pylint: disable=line-too-long
-    opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
+    opts = f"--action run_simulation --reconcile_sim_date {run_date} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} --dst_dir {dst_dir} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
     # Check that system log dir exists and is not empty.
-    hdbg.dassert_dir_exists(os.path.join(target_dir, "dag"))
-    hdbg.dassert_dir_exists(os.path.join(target_dir, "process_forecasts"))
+    hdbg.dassert_dir_exists(os.path.join(local_results_dir, "dag"))
+    hdbg.dassert_dir_exists(os.path.join(local_results_dir, "process_forecasts"))
     # TODO(Grisha): @Dan Add asserts on the latest files so we confirm that simulation was completed.
 
 
 @task
-def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
+def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None):  # type: ignore
     """
     Copy the output of the simulation run to a shared folder.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
+    dst_dir = _get_dst_dir(run_date, dst_dir)
+    target_dir = os.path.join(dst_dir, "simulation")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
@@ -233,14 +268,17 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: ignore
+def reconcile_copy_prod_data(
+    ctx, run_date=None, dst_dir=None, stage="preprod"
+):  # type: ignore
     """
     Copy the output of the prod run to a shared folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "prod")
-    # Make sure that the destination dir exists before copying.
+    dst_dir = _get_dst_dir(run_date, dst_dir)
+    target_dir = os.path.join(dst_dir, "prod")
+    # Make sure that the target dir exists before copying.
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
     # Copy prod run results to the target dir.
@@ -266,8 +304,11 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     _system(cmd)
 
 
+# TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
 @task
-def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: ignore
+def reconcile_run_notebook(
+    ctx, run_date=None, dst_dir=None, incremental=False
+):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
@@ -315,7 +356,7 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     _system(script_name)
     # Copy the published notebook to the shared folder.
     hdbg.dassert_dir_exists(results_dir)
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    target_dir = _get_dst_dir(run_date, dst_dir)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
@@ -327,13 +368,12 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
 
 
 @task
-def reconcile_ls(ctx, run_date=None):  # type: ignore
+def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
+    target_dir = _get_dst_dir(run_date, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
     #
@@ -344,27 +384,31 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
 
 
 @task
-def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ignore
+def reconcile_dump_tca_data(
+    ctx, run_date=None, dst_dir=None, incremental=False
+):  # type: ignore
     """
     Retrieve and save the TCA data.
     """
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
-    run_date_str = _get_run_date(run_date)
-    run_date = datetime.datetime.strptime(run_date_str, "%Y%m%d")
+    run_date = _get_run_date(run_date)
+    dst_dir = _get_dst_dir(run_date, dst_dir)
+    run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
-    end_timestamp = run_date_str
-    start_timestamp = (run_date - datetime.timedelta(days=1)).strftime("%Y%m%d")
-    dst_dir = "./tca"
-    if os.path.exists(dst_dir):
+    end_timestamp = run_date
+    start_timestamp = (end_timestamp - datetime.timedelta(days=1)).strftime("%Y%m%d")
+    local_results_dir = "./tca"
+    if os.path.exists(local_results_dir):
         if incremental:
-            _LOG.warning("TCA data is already stored at %s", dst_dir)
+            _LOG.warning("TCA data is already stored at %s", local_results_dir)
             sys.exit(-1)
         else:
             _LOG.warning(
-                "The dst_dir=%s already exists, re-creating it.", dst_dir
+                "The local_results_dir=%s already exists, re-creating it.",
+                local_results_dir,
             )
-    hio.create_dir(dst_dir, incremental=incremental)
+    hio.create_dir(local_results_dir, incremental=incremental)
     exchange_id = "binance"
     contract_type = "futures"
     stage = "preprod"
@@ -373,8 +417,8 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     universe = "v7.1"
     # pylint: disable=line-too-long
     opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
-    log_file = os.path.join(dst_dir, "log.txt")
-    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
+    log_file = os.path.join(local_results_dir, "log.txt")
+    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {local_results_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
     # pylint: enable=line-too-long
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
@@ -383,33 +427,45 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     cmd = f"chmod +x {script_name}"
     _system(cmd)
     _system(script_name)
-    # Copy dumped data to a shared folder.
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str)
-    hdbg.dassert_dir_exists(target_dir)
-    _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
-    cmd = f"cp -vr {dst_dir} {target_dir}"
+    # Copy dumped data to the specified folder.
+    hdbg.dassert_dir_exists(dst_dir)
+    _LOG.info("Copying results from '%s' to '%s'", local_results_dir, dst_dir)
+    cmd = f"cp -vr {local_results_dir} {dst_dir}"
     _system(cmd)
     # Prevent overwriting.
-    cmd = f"chmod -R -w {target_dir}"
+    cmd = f"chmod -R -w {dst_dir}"
     _system(cmd)
 
 
 @task
-def reconcile_run_all(ctx, run_date=None):  # type: ignore
+def reconcile_run_all(
+    ctx,
+    run_date=None,
+    dst_dir=None,
+    rt_timeout_in_secs_or_time=None,
+    # TODO(Dan): Fix `run_notebook` usage.
+    run_notebook=False,
+):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     #
-    reconcile_create_dirs(ctx, run_date=run_date)
+    reconcile_create_dirs(ctx, run_date=run_date, dst_dir=dst_dir)
     #
-    reconcile_copy_prod_data(ctx, run_date=run_date)
+    reconcile_copy_prod_data(ctx, run_date=run_date, dst_dir=dst_dir)
     #
-    reconcile_dump_market_data(ctx, run_date=run_date)
-    reconcile_run_sim(ctx, run_date=run_date)
-    reconcile_copy_sim_data(ctx, run_date=run_date)
+    reconcile_dump_market_data(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_run_sim(
+        ctx,
+        run_date=run_date,
+        dst_dir=dst_dir,
+        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
+    )
+    reconcile_copy_sim_data(ctx, run_date=run_date, dst_dir=dst_dir)
     #
-    reconcile_dump_tca_data(ctx, run_date=run_date)
+    reconcile_dump_tca_data(ctx, run_date=run_date, dst_dir=dst_dir)
     #
-    reconcile_run_notebook(ctx, run_date=run_date)
-    reconcile_ls(ctx, run_date=run_date)
+    if run_notebook:
+        reconcile_run_notebook(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_ls(ctx, run_date=run_date, dst_dir=dst_dir)
