@@ -16,14 +16,14 @@
 Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
-'''
+```
 > invoke run_reconcile_run_all --run-date 20221017
-'''
+```
 
 to run outside a Docker container:
-'''
+```
 > invoke docker_cmd --cmd 'invoke run_reconcile_run_all --run-date 20221017'
-'''
+```
 
 Import as:
 
@@ -41,6 +41,7 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
@@ -104,6 +105,7 @@ def reconcile_create_dirs(ctx, run_date=None, abort_if_exists=True):  # type: ig
                     ...
     ```
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     # Create a dir specific of the run date.
@@ -146,6 +148,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         confirm the dumping
     """
     # pylint: enable=line-too-long
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     market_data_file = "test_data.csv.gz"
@@ -187,6 +190,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     Run the simulation given a run date.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = "system_log_dir"
@@ -212,6 +216,7 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     """
     Copy the output of the simulation run to a shared folder.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
@@ -234,6 +239,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     """
     Copy the output of the prod run to a shared folder.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "prod")
@@ -269,6 +275,7 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     # Set results destination dir and clear it if is already filled.
@@ -327,6 +334,7 @@ def reconcile_ls(ctx, run_date=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
@@ -344,6 +352,7 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     """
     Retrieve and save the TCA data.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date_str = _get_run_date(run_date)
     run_date = datetime.datetime.strptime(run_date_str, "%Y%m%d")
@@ -394,7 +403,8 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    # TODO(Grisha): @Dan Implement approach to abort the invoke on the first error.
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    #
     reconcile_create_dirs(ctx, run_date=run_date)
     #
     reconcile_copy_prod_data(ctx, run_date=run_date)
