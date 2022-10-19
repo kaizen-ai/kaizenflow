@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Tuple
+from typing import Tuple, Dict
 
 import numpy as np
 import pandas as pd
@@ -269,3 +269,48 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     config = cconfig.Config.from_dict(config_dict)
     config_list = cconfig.ConfigList([config])
     return config_list
+
+
+def get_research_dfs(research_portfolio_dict: Dict) -> Dict[str, pd.DataFrame]:
+    """
+    Get dictionary of research portfolio dataframes filtered by timestamp.
+    """
+    df_dict = {}
+    start_timestamp = research_portfolio_dict["filter"]["start_timestamp"]
+    end_timestamp = research_portfolio_dict["filter"]["end_timestamp"]
+    for df_name, df in research_portfolio_dict["dfs"].items():
+        df_dict[df_name] = df.loc[
+            start_timestamp:end_timestamp
+        ]
+    return df_dict
+
+
+def get_portfolio_dfs(
+    portfolio_dict: Dict,
+    research_portfolio_dfs: Dict[str, pd.DataFrame],
+) -> Dict[str, pd.DataFrame]:
+    """
+    Get dictionary of portfolio dataframes.
+    """
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_dict["path"].items():
+        hdbg.dassert_path_exists(path)
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            path,
+            **portfolio_dict["config"],
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    portfolio_dfs["research"] = research_portfolio_dfs["research_portfolio_df"]
+    portfolio_stats_df["research"] = research_portfolio_dfs["research_portfolio_stats_df"]
+    portfolio_df = pd.concat(portfolio_dfs, axis=1)
+    portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+    #
+    df_dict = {
+        "portfolio_df": portfolio_df,
+        "portfolio_stats_df": portfolio_stats_df,
+    }
+    return df_dict
