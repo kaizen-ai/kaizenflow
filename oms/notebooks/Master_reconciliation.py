@@ -62,7 +62,6 @@ system_log_path_dict
 
 # %%
 # TODO(Grisha): factor common code.
-# TODO(Grisha): diff configs.
 config_name = "system_config.input.values_as_strings.pkl"
 
 prod_config_path = os.path.join(system_log_path_dict["prod"], config_name)
@@ -72,6 +71,16 @@ prod_config = cconfig.Config.from_dict(prod_config_pkl)
 sim_config_path = os.path.join(system_log_path_dict["sim"], config_name)
 sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
+
+# %%
+# Diff configs.
+diff_config = cconfig.build_config_diff_dataframe(
+    {
+        "prod_config": prod_config,
+        "sim_config": sim_config,
+    }
+)
+diff_config 
 
 # %%
 # TODO(gp): @grisha move to `oms/reconciliation.py`.
