@@ -73,7 +73,7 @@ sim_config_pkl = hpickle.from_pickle(sim_config_path)
 sim_config = cconfig.Config.from_dict(sim_config_pkl)
 
 # %%
-# Get config differencies.
+# Diff configs.
 diff_config = cconfig.build_config_diff_dataframe(
     {
         "prod_config": prod_config,
