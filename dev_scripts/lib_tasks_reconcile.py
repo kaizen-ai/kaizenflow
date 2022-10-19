@@ -13,6 +13,18 @@
 # 8) Run the reconciliation notebook and publish it
 
 """
+Invokes in the file are runnable from a Docker container only.
+
+E.g., to run for certain date from a Docker container:
+```
+> invoke run_reconcile_run_all --run-date 20221017
+```
+
+to run outside a Docker container:
+```
+> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --run-date 20221017'
+```
+
 Import as:
 
 import dev_scripts.lib_tasks_reconcile as dslitare
@@ -29,11 +41,12 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
-_PROD_RECONCILIATION_DIR = "/data/shared/prod_reconciliation"
+_PROD_RECONCILIATION_DIR = "/shared_data/prod_reconciliation"
 
 
 def _system(cmd: str) -> int:
@@ -134,6 +147,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         confirm the dumping
     """
     # pylint: enable=line-too-long
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     market_data_file = "test_data.csv.gz"
@@ -146,8 +160,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
-        docker_cmd = f"{script_name} {opts}"
-        cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
+        cmd = f"{script_name} {opts}"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
     # Check the market data file.
@@ -176,6 +189,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     Run the simulation given a run date.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = "system_log_dir"
@@ -188,8 +202,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
-    docker_cmd = f"{script_name} {opts}"
-    cmd = f"invoke docker_cmd --cmd '{docker_cmd}'"
+    cmd = f"{script_name} {opts}"
     _system(cmd)
     # Check that system log dir exists and is not empty.
     hdbg.dassert_dir_exists(os.path.join(target_dir, "dag"))
@@ -210,13 +223,13 @@ def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     _LOG.info("Copying results to '%s'", target_dir)
     # Copy the output to the shared folder.
     system_log_dir = "./system_log_dir"
-    docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
-    _system(docker_cmd)
+    cmd = f"cp -vr {system_log_dir} {target_dir}"
+    _system(cmd)
     # Copy simulation run logs to the shared folder.
     pytest_log_file_path = "reconcile_run_sim_log.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
-    docker_cmd = f"cp -v {pytest_log_file_path} {target_dir}"
-    _system(docker_cmd)
+    cmd = f"cp -v {pytest_log_file_path} {target_dir}"
+    _system(cmd)
 
 
 @task
@@ -234,20 +247,20 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # Prod system is run via AirFlow and the results are tagged with the previous day.
     prod_run_date = (run_date - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
-    shared_dir = f"/data/shared/ecs/{stage}"
+    shared_dir = f"/shared_data/ecs/{stage}"
     cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
     _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
-    docker_cmd = f"cp -vr {system_log_dir} {target_dir}"
-    _system(docker_cmd)
+    cmd = f"cp -vr {system_log_dir} {target_dir}"
+    _system(cmd)
     # Copy prod run logs to the shared folder.
     cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
     hdbg.dassert_file_exists(log_file)
-    docker_cmd = f"cp -v {log_file} {target_dir}"
-    _system(docker_cmd)
+    cmd = f"cp -v {log_file} {target_dir}"
+    _system(cmd)
     # Prevent overwriting.
     cmd = f"chmod -R -w {target_dir}"
     _system(cmd)
@@ -259,6 +272,7 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     # Set results destination dir and clear it if is already filled.
@@ -292,19 +306,20 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
-    file_name = "tmp.publish_notebook.sh"
-    hio.to_file(file_name, cmd_txt)
-    # Run the script inside docker.
+    script_name = "tmp.publish_notebook.sh"
+    hio.to_file(script_name, cmd_txt)
+    # Make the script executable and run it.
     _LOG.info("Running the notebook=%s", notebook_path)
-    docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
-    _system(docker_cmd)
+    cmd = f"chmod +x {script_name}"
+    _system(cmd)
+    _system(script_name)
     # Copy the published notebook to the shared folder.
     hdbg.dassert_dir_exists(results_dir)
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
-    docker_cmd = f"cp -vr {results_dir} {target_dir}"
-    _system(docker_cmd)
+    cmd = f"cp -vr {results_dir} {target_dir}"
+    _system(cmd)
     # Prevent overwriting.
     results_shared_dir = os.path.join(target_dir, "result_0")
     cmd = f"chmod -R -w {results_shared_dir}"
@@ -333,6 +348,7 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     """
     Retrieve and save the TCA data.
     """
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
     run_date_str = _get_run_date(run_date)
     run_date = datetime.datetime.strptime(run_date_str, "%Y%m%d")
@@ -361,20 +377,21 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
     # pylint: enable=line-too-long
     # Save the command as a script.
-    file_name = "tmp.dump_tca_data.sh"
-    hio.to_file(file_name, cmd_run_txt)
-    # Run the script inside docker.
-    docker_cmd = f"invoke docker_cmd --cmd 'source {file_name}'"
-    _system(docker_cmd)
+    script_name = "tmp.dump_tca_data.sh"
+    hio.to_file(script_name, cmd_run_txt)
+    # Make the script executable and run it.
+    cmd = f"chmod +x {script_name}"
+    _system(cmd)
+    _system(script_name)
     # Copy dumped data to a shared folder.
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
-    docker_cmd = f"cp -vr {dst_dir} {target_dir}"
-    _system(docker_cmd)
+    cmd = f"cp -vr {dst_dir} {target_dir}"
+    _system(cmd)
     # Prevent overwriting.
-    f"chmod -R -w {target_dir}"
-    _system(docker_cmd)
+    cmd = f"chmod -R -w {target_dir}"
+    _system(cmd)
 
 
 @task
@@ -382,7 +399,8 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
     """
-    # TODO(Grisha): @Dan Implement approach to abort the invoke on the first error.
+    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    #
     reconcile_create_dirs(ctx, run_date=run_date)
     #
     reconcile_copy_prod_data(ctx, run_date=run_date)
@@ -391,7 +409,7 @@ def reconcile_run_all(ctx, run_date=None):  # type: ignore
     reconcile_run_sim(ctx, run_date=run_date)
     reconcile_copy_sim_data(ctx, run_date=run_date)
     #
-    reconcile_dump_tca_data(ctx, run_date=None)
+    reconcile_dump_tca_data(ctx, run_date=run_date)
     #
     reconcile_run_notebook(ctx, run_date=run_date)
     reconcile_ls(ctx, run_date=run_date)
