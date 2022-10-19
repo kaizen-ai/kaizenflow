@@ -2745,7 +2745,7 @@ class Test_compute_duration_df(hunitest.TestCase):
         self.assertTrue(start_equal)
         # Check that start intersection is correct.
         required_start_intersection = expected_start_timestamp
-        hdbg.dassert_eq(start_timestamps[0], required_start_intersection)
+        self.assertEqual(start_timestamps[0], required_start_intersection)
         # Collect all end timestamps.
         end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
         # Check that all end timestamps are equal.
@@ -2755,7 +2755,7 @@ class Test_compute_duration_df(hunitest.TestCase):
         self.assertTrue(end_equal)
         # Check that end intersection is correct.
         required_end_intersection = expected_end_timestamp
-        hdbg.dassert_eq(end_timestamps[0], required_end_intersection)
+        self.assertEqual(end_timestamps[0], required_end_intersection)
 
     def test1(self) -> None:
         """
