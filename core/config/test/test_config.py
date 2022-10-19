@@ -52,7 +52,7 @@ def _check_roundtrip_transformation(self_: Any, config: cconfig.Config) -> str:
     # Build the signature of the test.
     act = []
     act.append("# config=\n%s" % str(config))
-    act.append("# code=\n%s" % str(config))
+    act.append("# code=\n%s" % str(code))
     act = "\n".join(act)
     return act
 
@@ -1344,7 +1344,7 @@ class Test_make_read_only1(hunitest.TestCase):
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         config.update_mode = "overwrite"
-        config.clobber_mode = "allow_write_after_read"
+        config.clobber_mode = "allow_write_after_use"
         # Assigning values is not a problem, since the config is not read only.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
@@ -1438,7 +1438,7 @@ class Test_make_read_only1(hunitest.TestCase):
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         config.update_mode = "overwrite"
-        config.clobber_mode = "allow_write_after_read"
+        config.clobber_mode = "allow_write_after_use"
         # Assign the value.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
@@ -2053,7 +2053,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
-        clobber_mode = "allow_write_after_read"
+        clobber_mode = "allow_write_after_use"
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
@@ -2085,7 +2085,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
-        clobber_mode = "allow_write_after_read"
+        clobber_mode = "allow_write_after_use"
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
@@ -2109,7 +2109,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
-        clobber_mode = "assert_on_write_after_read"
+        clobber_mode = "assert_on_write_after_use"
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
