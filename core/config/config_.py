@@ -116,13 +116,12 @@ _VALID_UPDATE_MODES = (
     "assign_if_missing",
 )
 
-# TODO(gp): read -> used
 # `clobber_mode` specifies whether values can be updated after they have been
-#   read
+#   used
 #   - `allow_write_after_use`: allow to write a key even after that key was
-#     already read. A warning is issued in this case
+#     already used. A warning is issued in this case
 #   - `assert_on_write_after_use`: assert if an outside user tries to write a
-#     value that has already been read
+#     value that has already been used
 _VALID_CLOBBER_MODES = (
     "allow_write_after_use",
     "assert_on_write_after_use",
