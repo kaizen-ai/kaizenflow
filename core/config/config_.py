@@ -41,7 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 # Enable or disable _LOG.verb_debug
 # _LOG.verb_debug = lambda *_: 0
-# _LOG.verb_debug = _LOG.debug
+_LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -74,7 +74,7 @@ DUMMY = "__DUMMY__"
 #   all read?
 #   - Probably yes, and that's what the user likely intend
 # - What happens if the user does `read["key1"]` and that is a Config, should
-#   be considerd all read?
+#   be considered all read?
 #   - Probably yes, but that's not what the user intends to do when doing
 #     `read["key1"]["key2"]` instead of `read["key1", "key2"]`?
 # - What happens when printing a `Config`?
@@ -118,13 +118,13 @@ _VALID_UPDATE_MODES = (
 # TODO(gp): read -> used
 # `clobber_mode` specifies whether values can be updated after they have been
 #   read
-#   - `allow_write_after_read`: allow to write a key even after that key was
+#   - `allow_write_after_use`: allow to write a key even after that key was
 #     already read. A warning is issued in this case
-#   - `assert_on_write_after_read`: assert if an outside user tries to write a
+#   - `assert_on_write_after_use`: assert if an outside user tries to write a
 #     value that has already been read
 _VALID_CLOBBER_MODES = (
-    "allow_write_after_read",
-    "assert_on_write_after_read",
+    "allow_write_after_use",
+    "assert_on_write_after_use",
 )
 
 # report_mode specifies how to report an error
@@ -203,7 +203,7 @@ class Config:
         *,
         # By default we use safe behaviors.
         update_mode: str = "assert_on_overwrite",
-        clobber_mode: str = "assert_on_write_after_read",
+        clobber_mode: str = "assert_on_write_after_use",
         report_mode: str = "verbose_log_error",
     ) -> None:
         """
@@ -216,7 +216,8 @@ class Config:
         :param report_mode: define the policy used for reporting errors (see above)
         """
         _LOG.debug(hprint.to_str("update_mode clobber_mode report_mode"))
-        self._config = _OrderedConfig()
+        self._config = _OrderedDict()
+        # self._config = _OrderedConfig()
         self.update_mode = update_mode
         self.clobber_mode = clobber_mode
         self.report_mode = report_mode
