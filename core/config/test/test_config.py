@@ -1,16 +1,15 @@
 import collections
 import datetime
 import logging
-import os
 import pprint
 from typing import Any, Dict, List, Optional, Tuple
 
+import pandas as pd
 import pytest
 
 import core.config as cconfig
 import core.config.config_ as cconconf
 import helpers.hdbg as hdbg
-import helpers.hintrospection as hintros
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
@@ -24,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _check_config_string(
-    self: Any, config: cconfig.Config, exp: str, mode: str = "str"
+        self: Any, config: cconfig.Config, exp: str, mode: str = "str"
 ) -> None:
     _LOG.debug("config=\n%s", config)
     if mode == "str":
@@ -942,9 +941,9 @@ class Test_nested_config_update2(hunitest.TestCase):
         present.
         """
         for update_mode in (
-            "assert_on_overwrite",
-            "overwrite",
-            "assign_if_missing",
+                "assert_on_overwrite",
+                "overwrite",
+                "assign_if_missing",
         ):
             config1 = _get_nested_config3(self)
             # Check the value of the config.
@@ -1472,9 +1471,9 @@ class Test_make_read_only1(hunitest.TestCase):
 
 class Test_to_dict1(hunitest.TestCase):
     def helper(
-        self,
-        config_as_dict: Dict[str, Any],
-        expected_result_as_str: str,
+            self,
+            config_as_dict: Dict[str, Any],
+            expected_result_as_str: str,
     ) -> None:
         """
         Check that a `Config`'s conversion to a dict is correct.
@@ -1795,12 +1794,11 @@ class Test_from_dict1(hunitest.TestCase):
 # Test_to_string_config
 # #############################################################################
 
-
-class Test_to_string_config(hunitest.TestCase):
+# TODO(Danya): Add `test4` testing a nested Config case.
+class Test_to_string(hunitest.TestCase):
     def helper(
-        self,
-        value: Any,
-        should_be_pickleable_before: bool,
+            self,
+            value: Any,
     ) -> str:
         # Set config.
         nested: Dict[str, Any] = {
@@ -1808,94 +1806,72 @@ class Test_to_string_config(hunitest.TestCase):
             "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
-        # Check if config is pickle-able before.
-        is_pickleable_before = hintros.is_pickleable(config["key1"])
-        self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
-        actual = config.to_string_config()
-        is_pickleable_after = hintros.is_pickleable(actual["key1"])
-        self.assertTrue(is_pickleable_after)
-        # Convert `actual` to string since `assert_equal` comparing
-        # within strings and bytes.
-        actual = str(actual)
+        mode = "verbose"
+        actual = config.to_string(mode)
         return actual
 
     def test1(self) -> None:
         """
-        Test when config is pickle-able before applying the function.
+        Test when a value is a DataFrame.
         """
-        value = "val1"
-        expected = r"""
-        {'key1': 'val1', 'key2': {'key3': {'key4': {}}}}
+        value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]],
+                             columns=["a", "b", "c"])
+        expected = r"""key1 (val_type=pandas.core.frame.DataFrame)):
+        index=[0, 1]
+        columns=a,b,c
+        shape=(2, 3)
+        a b c
+        0 1 2 3
+        1 4 5 6
+        key2 (val_type=core.config.config_.Config)):
+        key3 (val_type=core.config.config_.Config)):
+        key4 (val_type=core.config.config_.Config)):
         """
-        should_be_pickleable_before = True
         actual = self.helper(
             value,
-            should_be_pickleable_before,
         )
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
         """
-        Test when config is not pickle-able before applying the function.
+        Test when config contains functions.
         """
-        # Set non-pickle-able value.
+        # Set function value.
         value = lambda x: x
         expected = r"""
-        {'key1': '<function Test_to_string_config.test2.<locals>.<lambda> at 0x>', 'key2': {'key3': {'key4': {}}}}
+        key1 (val_type=function)): <function Test_to_string.test2.<locals>.<lambda>>
+        key2 (val_type=core.config.config_.Config)):
+        key3 (val_type=core.config.config_.Config)):
+        key4 (val_type=core.config.config_.Config)):
         """
-        should_be_pickleable_before = False
         actual = self.helper(
             value,
-            should_be_pickleable_before,
+        )
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test when config contains a multiline string.
+        """
+        # Set multiline string value.
+        value = "This is a\ntest multiline string."
+        expected = r"""key1 (val_type=str)):
+        This is a
+        test multiline string.
+        key2 (val_type=core.config.config_.Config)):
+        key3 (val_type=core.config.config_.Config)):
+        key4 (val_type=core.config.config_.Config)):
+        """
+        actual = self.helper(
+            value,
         )
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
-# Test_save_to_file
-# #############################################################################
-
-
-class Test_save_to_file(hunitest.TestCase):
-    def helper(self, value: Optional[str]) -> None:
-        # Set config.
-        log_dir = self.get_scratch_space()
-        tag = "system_config.input"
-        nested: Dict[str, Any] = {
-            "key1": value,
-            "key2": {"key3": {"key4": {}}},
-        }
-        config = cconfig.Config.from_dict(nested)
-        # Save config.
-        config.save_to_file(log_dir, tag)
-        # Set expected values.
-        expected_txt_path = os.path.join(log_dir, f"{tag}.txt")
-        expected_pkl_path = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
-        # Check that file paths exist.
-        hdbg.dassert_path_exists(expected_txt_path)
-        hdbg.dassert_path_exists(expected_pkl_path)
-
-    def test1(self) -> None:
-        """
-        Test saving a Config that is pickle-able.
-        """
-        value = "value1"
-        self.helper(value)
-
-    def test2(self) -> None:
-        """
-        Test saving a Config that is not pickle-able.
-        """
-        # Set non-pickle-able value.
-        value = lambda x: x
-        self.helper(value)
-
-
-# #############################################################################
 # _Config_execute_stmt_TestCase1
 # #############################################################################
-
 
 class _Config_execute_stmt_TestCase1(hunitest.TestCase):
     """
@@ -1904,7 +1880,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
     """
 
     def execute_stmt(
-        self, stmt: str, exp: Optional[str], mode: str, globals: Dict
+            self, stmt: str, exp: Optional[str], mode: str, globals: Dict
     ) -> str:
         """
         - Execute statement stmt
@@ -1928,7 +1904,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         return act
 
     def raise_stmt(
-        self, stmt: str, assertion_type: Any, exp: Optional[str], globals_: Dict
+            self, stmt: str, assertion_type: Any, exp: Optional[str], globals_: Dict
     ) -> None:
         _LOG.debug("\n" + hprint.frame(stmt))
         with self.assertRaises(assertion_type) as cm:
@@ -1937,7 +1913,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def run_steps_assert_string(
-        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals_: Dict
+            self, workload: List[Tuple[str, Optional[str]]], mode: str, globals_: Dict
     ) -> None:
         for data in workload:
             hdbg.dassert_eq(len(data), 2, "Invalid data='%s'", str(data))
@@ -1945,7 +1921,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
             self.execute_stmt(stmt, exp, mode, globals_)
 
     def run_steps_check_string(
-        self, workload: List[str], mode: str, globals_: Dict
+            self, workload: List[str], mode: str, globals_: Dict
     ) -> None:
         exp = None
         res = []

@@ -405,15 +405,18 @@ class Config:
         return ret
 
     def to_string(self, mode: str) -> str:
+        """
+
+        """
         txt = []
-        for key, (marked_as_read, val) in self.items():
+        for key, val in self._config.items():
             # 1) Process key.
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
+                # TODO(Danya): Uncomment in CMTask2689.
                 # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (marked_as_read={marked_as_read}, "
-                key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
+                key_as_str = "%s (val_type=%s))" % (key, hprint.type_to_string(type(val)))
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
                 # Data structures that can be printed in a fancy way.
@@ -660,8 +663,7 @@ class Config:
         _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[ScalarKey, Any] = collections.OrderedDict()
-        for key, (marked_as_read, val) in self._config.items():
-            _ = marked_as_read
+        for key, val in self._config.items():
             if keep_leaves:
                 if isinstance(val, Config):
                     # If a value is a `Config` convert to dictionary recursively.
