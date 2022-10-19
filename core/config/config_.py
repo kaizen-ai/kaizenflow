@@ -140,6 +140,8 @@ _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 # #############################################################################
 
 
+
+
 class OverwriteError(RuntimeError):
     """
     Trying to overwrite a value.
@@ -237,24 +239,41 @@ class Config:
                 )
 
     # ////////////////////////////////////////////////////////////////////////////
-    # Printing
+    # Print
     # ////////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
-        """
-        Return a short string representation of this `Config`.
-        """
+        mode = "only_values"
+        ret = self.to_string(mode)
+        return ret
+
+    def __repr__(self) -> str:
+        mode = "verbose"
+        ret = self.to_string(mode)
+        return ret
+
+    def to_string(self, mode: str) -> str:
         txt = []
-        for k, v in self._config.items():
-            if isinstance(v, Config):
-                txt_tmp = str(v)
-                txt.append("%s:\n%s" % (k, hprint.indent(txt_tmp)))
+        for key, (marked_as_read, val) in self.items():
+            # 1) Process key.
+            if mode == "only_values":
+                key_as_str = str(key)
+            elif mode == "verbose":
+                # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
+                key_as_str = f"{key} (marked_as_read={marked_as_read}, "
+                key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
+            # 2) Process value.
+            if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
+                # Data structures that can be printed in a fancy way.
+                val_as_str = hpandas.df_to_str(val, print_shape_info=True)
+                val_as_str = "\n" + hprint.indent(val_as_str)
+            elif isinstance(val, Config):
+                val_as_str = val.to_string(mode)
+                val_as_str = "\n" + hprint.indent(val_as_str)
             else:
-                if isinstance(v, (pd.DataFrame, pd.Series, pd.Index)):
-                    v_as_str = hpandas.df_to_str(v, print_shape_info=True)
-                    v_as_str = "\n" + hprint.indent(v_as_str)
-                else:
-                    v_as_str = str(v)
+                # Normal Python data structures.
+                val_as_str = str(val)
+                if len(val_as_str.split("\n")) > 1:
                     # Indent a string that spans multiple lines like:
                     # ```
                     # portfolio_object:
@@ -266,9 +285,10 @@ class Config:
                     #   # historical holdings marked to market=
                     #   ...
                     # ```
-                    if len(v_as_str.split("\n")) > 1:
-                        v_as_str = "\n" + hprint.indent(v_as_str)
-                txt.append("%s: %s" % (k, v_as_str))
+                    val_as_str = "\n" + hprint.indent(val_as_str)
+                    # 3) Print.
+                txt.append(f"{key_as_str}: {val_as_str}")
+                # Assemble the result.
         ret = "\n".join(txt)
         # Remove memory locations of functions, if config contains them, e.g.,
         #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
@@ -280,137 +300,6 @@ class Config:
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
 
-    def __repr__(self) -> str:
-        """
-        Return an unambiguous representation of this `Config`
-
-        For now it's the same as `str()`. This is used by Jupyter
-        notebook when printing.
-        """
-        return str(self)
-
-    # ////////////////////////////////////////////////////////////////////////////
-    # Get / set.
-    # ////////////////////////////////////////////////////////////////////////////
-
-    # `__setitem__` and `__getitem__` accept a compound key.
-
-    def __setitem__(
-        self,
-        key: CompoundKey,
-        val: Any,
-        *,
-        update_mode: Optional[str] = None,
-        clobber_mode: Optional[str] = None,
-        report_mode: Optional[str] = None,
-    ) -> None:
-        """
-        Set / update `key` to `val`, equivalent to `dict[key] = val`.
-
-        If `key` is an iterable of keys, then the key hierarchy is navigated /
-        created and the leaf value added/updated with `val`.
-
-        :param update_mode: define the policy used for updates (see above)
-            - `None` to use the value set in the constructor
-        :param clobber_mode: define the policy used for controlling
-            write-after-read (see above)
-            - `None` to use the value set in the constructor
-        """
-        _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
-        # TODO(gp): Difference between amp and cmamp.
-        if isinstance(val, dict):
-            hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
-        # # To debug who is setting a certain key.
-        # if False:
-        #     _LOG.info("key.set=%s", str(key))
-        #     if key == ("dag_runner_config", "wake_up_timestamp"):
-        #         assert 0
-        # A read-only config cannot be changed.
-        if self._read_only:
-            msg = []
-            msg.append(
-                f"Can't set key='{key}' to val='{val}' in read-only config"
-            )
-            msg.append("self=\n" + hprint.indent(str(self)))
-            msg = "\n".join(msg)
-            raise ReadOnlyConfigError(msg)
-        # If the key is compound, then recurse.
-        if hintros.is_iterable(key):
-            head_key, tail_key = self._parse_compound_key(key)
-            if not tail_key:
-                # There is no tail_key so __setitem__ was called on a tuple of a
-                # single element, then set the value.
-                self.__setitem__(head_key, val)
-            else:
-                # Compound key: recurse on the tail of the key.
-                _LOG.debug(
-                    "head_key='%s', self._config=\n%s",
-                    head_key,
-                    self._config,
-                )
-                if head_key in self:
-                    subconfig = self.__getitem__(head_key)
-                else:
-                    subconfig = self.add_subconfig(head_key)
-                hdbg.dassert_isinstance(subconfig, Config)
-                subconfig.__setitem__(tail_key, val)
-            return
-        # Base case: key is valid, config is a dict.
-        self._dassert_base_case(key)
-        self._config[key] = val  # type: ignore
-
-    def __getitem__(
-        self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
-    ) -> Any:
-        """
-        Get value for `key` or raise `KeyError` if it doesn't exist.
-
-        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
-        the hierarchy is navigated until the corresponding element is found or we
-        raise if the element doesn't exist.
-
-        When we report an error about a missing key, we print only the keys of the
-        Config at the current level of the recursion and not the original Config
-        (which is also not directly accessible inside the recursion), e.g.,
-        `key='nrows_tmp' not in ['nrows', 'nrows2']`
-
-        :param report_mode: how to report a KeyError
-            - `none` (default): only report the exception from `_get_item()`
-            - `verbose_log_error`: report the full key and config in the log
-            - `verbose_exception`: report the full key and config in the exception
-                (e.g., used in the unit tests)
-        :raises KeyError: if the (nested) key is not found in the `Config`.
-        """
-        _LOG.debug(
-            "key=%s report_mode=%s self=\n%s",
-            key,
-            report_mode,
-            self,
-        )
-        hdbg.dassert_in(
-            report_mode, ("verbose_log_error", "verbose_exception", "none")
-        )
-        try:
-            ret = self._get_item(key, level=0)
-        except KeyError as e:
-            # After the recursion is done, in case of error print information
-            # about the offending config.
-            if report_mode in ("verbose_log_error", "verbose_exception"):
-                msg = []
-                msg.append("exception=" + str(e))
-                # .replace("\\n", "\n"))
-                msg.append(f"key='{key}'")
-                msg.append("config=\n" + hprint.indent(str(self)))
-                msg = "\n".join(msg)
-                if report_mode == "verbose_log_error":
-                    _LOG.error(msg)
-                elif report_mode == "verbose_exception":
-                    e = KeyError(msg)
-                else:
-                    raise ValueError("Invalid report_mode='%s'", report_mode)
-            raise e
-        return ret
-
     # ////////////////////////////////////////////////////////////////////////////
     # Dict-like methods.
     # ////////////////////////////////////////////////////////////////////////////
@@ -419,8 +308,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        If `key` is nested, the hierarchy of Config objects
+        is navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -429,7 +318,12 @@ class Config:
             # When we test for existence we don't want to report the config in case
             # of error.
             report_mode = "none"
-            val = self.__getitem__(key, report_mode=report_mode)
+            # When we test for existence we don't want to mark a key as read by
+            # the client, since we don't introduce a dependency from its value.
+            mark_key_as_read = False
+            val = self.__getitem__(
+                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
+            )
             _LOG.debug("Found val=%s", val)
             found = True
         except KeyError as e:
@@ -446,29 +340,74 @@ class Config:
         """
         return len(self._config)
 
+
     # ////////////////////////////////////////////////////////////////////////////
-    # Accessor
+    # Get / set.
     # ////////////////////////////////////////////////////////////////////////////
 
-    def get(
+    # `__setitem__` and `__getitem__`
+    #   - accept a compound key
+    #   - invoke the internal methods `_set_item`, `_get_item` to do the actual work
+    #     and handle exceptions based on `report_mode`
+
+    def __setitem__(
         self,
         key: CompoundKey,
-        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
-        expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
+        val: Any,
+        *,
+        update_mode: Optional[str] = None,
+        clobber_mode: Optional[str] = None,
+        report_mode: Optional[str] = None,
+    ) -> None:
+        _LOG.debug("-> " + hprint.to_str("key val update_mode clobber_mode self"))
+        clobber_mode = self._resolve_clobber_mode(clobber_mode)
+        report_mode = self._resolve_report_mode(report_mode)
+        try:
+            self._set_item(key, val, update_mode, clobber_mode, report_mode)
+        except Exception as e:
+            self._raise_exception(e, key, report_mode)
+
+    def __getitem__(
+        self,
+        key: CompoundKey,
         *,
         report_mode: Optional[str] = None,
+        mark_key_as_read: bool = True,
     ) -> Any:
         """
+        Get value for `key` or raise `KeyError` if it doesn't exist.
+        If `key` is compound, then the hierarchy is navigated until the
+        corresponding element is found or we raise if the element doesn't exist.
+        :param mark_key_as_read: control whether we mark the key as read by the
+            client. It is True since clients use the `config[...]` notation
+        :raises KeyError: if the compound key is not found in the `Config`
+        """
+        _LOG.debug("-> " + hprint.to_str("key report_mode self"))
+        report_mode = self._resolve_report_mode(report_mode)
+        try:
+            ret = self._get_item(key, level=0)
+        except Exception as e:
+            # After the recursion is done, in case of error print information
+            # about the offending key.
+            self._raise_exception(e, key, report_mode)
+        return ret
+
+    def get(
+            self,
+            key: CompoundKey,
+            default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+            expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
+            *,
+            report_mode: Optional[str] = None,
+        ) -> Any:
+        """
         Equivalent to `dict.get(key, default_val)`.
-
-        It has the same functionality as `__getitem__()` but returning `val` if the
-        value corresponding to `key` doesn't exist.
-
         :param default_value: default value to return if key is not in `config`
         :param expected_type: expected type of `value`
         :return: config[key] if available, else `default_value`
-        """
+            """
         _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
+        # The implementation of this function is similar to `hdict.typed_get()`.
         report_mode = self._resolve_report_mode(report_mode)
         try:
             ret = self.__getitem__(key, report_mode=report_mode)
@@ -484,6 +423,10 @@ class Config:
         if expected_type != _NO_VALUE_SPECIFIED:
             hdbg.dassert_isinstance(ret, expected_type)
         return ret
+
+    # ////////////////////////////////////////////////////////////////////////////
+    # Accessor
+    # ////////////////////////////////////////////////////////////////////////////
 
     def add_subconfig(self, key: CompoundKey) -> "Config":
         _LOG.debug(hprint.to_str("key"))
@@ -506,7 +449,14 @@ class Config:
     # Update.
     # ////////////////////////////////////////////////////////////////////////////
 
-    def update(self, config: "Config", update_mode: Optional[str] = None) -> None:
+    def update(
+        self,
+        config: "Config",
+        *,
+        update_mode: Optional[str] = None,
+        clobber_mode: Optional[str] = None,
+        report_mode: Optional[str] = None,
+    ) -> None:
         """
         Equivalent to `dict.update(config)`.
 
@@ -515,63 +465,24 @@ class Config:
         - recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values, assert depending on the
           value of `mode`
-
-        :param update_mode:
-            - `None`: use the default behavior specified in the constructor
-            - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
-                - if a key already exists, then assert
-                - if a key doesn't exist, then assign the new value
-            - `overwrite`: assign the key, whether the key exists or not
-            - `assign_if_missing`: this mode is used to complete a config, preserving
-              what already exists
-                - if a key already exists, leave the old value and raise a warning
-                - if a key doesn't exist, then assign the new value
         """
-        _LOG.debug("update_mode=%s config=\n%s", update_mode, config)
+        _LOG.debug(hprint.to_str("config update_mode"))
+        # `update()` is just a series of sets.
         update_mode = self._resolve_update_mode(update_mode)
         _LOG.debug("resolved update_mode=%s", update_mode)
         #
         flattened_config = config.flatten()
-        assign_new_value = False
         for key, val in flattened_config.items():
-            if update_mode == "assert_on_overwrite":
-                if key in self:
-                    # Key already exists, then assert.
-                    old_val = self.get(key)
-                    msg = []
-                    msg.append(
-                        f"Trying to overwrite old value '{old_val}' with new value '{val}'"
-                        f" for key '{key}' when update_mode={update_mode}"
-                    )
-                    msg.append("self=\n" + hprint.indent(str(self)))
-                    msg.append("config=\n" + hprint.indent(str(config)))
-                    msg = "\n".join(msg)
-                    raise OverwriteError(msg)
-                # Key doesn't exist, then assign.
-                assign_new_value = True
-            elif update_mode == "overwrite":
-                # Assign the value in any case.
-                assign_new_value = True
-            elif update_mode == "assign_if_missing":
-                if key in self:
-                    # Key already exists, then keep the old value and issue a
-                    # warning.
-                    old_val = self.get(key)
-                    msg = []
-                    msg.append(
-                        f"Overwriting old value '{old_val}' with new value '{val}'"
-                        f" for key '{key}' since update_mode={update_mode}"
-                    )
-                    msg = "\n".join(msg)
-                    _LOG.warning(msg)
-                    assign_new_value = False
-                else:
-                    # Key doesn't exist, assign the value.
-                    assign_new_value = True
-            # Assign the value, if needed.
-            _LOG.debug(hprint.to_str("assign_new_value"))
-            if assign_new_value:
-                self.__setitem__(key, val)
+            _LOG.debug(hprint.to_str("key val"))
+            if not val:
+                val = Config()
+            self.__setitem__(
+                key,
+                val,
+                update_mode=update_mode,
+                clobber_mode=clobber_mode,
+                report_mode=report_mode,
+            )
 
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
@@ -671,19 +582,6 @@ class Config:
             return None
         return val  # type: ignore
 
-    def to_string_config(self) -> "Config":
-        """
-        Transform this Config into a pickle-able one where all values are
-        replaced with their string representation.
-        """
-        config_out = {}
-        for k, v in self._config.items():
-            if isinstance(v, Config):
-                config_out[k] = v.to_string_config()
-            else:
-                config_out[k] = hpickle.to_pickleable(v)
-        return config_out
-
     def to_python(self, check: bool = True) -> str:
         """
         Return python code that builds, when executed, the current object.
@@ -714,37 +612,47 @@ class Config:
             config = None
         return config
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self, *, keep_leaves: bool = True) -> Dict[ScalarKey, Any]:
         """
         Convert the Config to nested ordered dicts.
-
-        In other words, it replaces the `Config` class with simple
-        ordered dicts.
+        :param keep_leaves: keep or skip empty leaves
         """
+        _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
-        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        for k, v in self._config.items():
-            if isinstance(v, Config):
-                # If a value is a `Config` convert to dictionary recursively.
-                dict_[k] = v.to_dict()
+        dict_: collections.OrderedDict[ScalarKey, Any] = collections.OrderedDict()
+        for key, (marked_as_read, val) in self._config.items():
+            _ = marked_as_read
+            if keep_leaves:
+                if isinstance(val, Config):
+                    # If a value is a `Config` convert to dictionary recursively.
+                    val = val.to_dict(keep_leaves=keep_leaves)
+                hdbg.dassert(not isinstance(val, Config))
+                dict_[key] = val
             else:
-                dict_[k] = v
+                if isinstance(val, Config):
+                    if val:
+                        # If a value is a `Config` convert to dictionary recursively.
+                        val = val.to_dict(keep_leaves=keep_leaves)
+                    else:
+                        continue
+                hdbg.dassert(not isinstance(val, Config))
+                dict_[key] = val
         return dict_
 
     @classmethod
-    def from_dict(cls, nested: Dict[str, Any]) -> "Config":
+    def from_dict(cls, nested_dict: Dict[str, Any]) -> "Config":
         """
         Build a `Config` from a nested dict.
 
-        :param nested: nested dict, with certain restrictions:
+        :param nested_dict: nested dict, with certain restrictions:
           - only leaf nodes may not be a dict
           - every nonempty dict must only have keys of type `str`
         """
-        hdbg.dassert_isinstance(nested, dict)
-        hdbg.dassert(nested)
-        iter_ = hdict.get_nested_dict_iterator(nested)
-        flattened = collections.OrderedDict(iter_)
-        return Config._get_config_from_flattened_dict(flattened)
+        hdbg.dassert_isinstance(nested_dict, dict)
+        hdbg.dassert(nested_dict)
+        iter_ = hdict.get_nested_dict_iterator(nested_dict)
+        flattened_config = collections.OrderedDict(iter_)
+        return Config._get_config_from_flattened_dict(flattened_config)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -761,7 +669,7 @@ class Config:
         """
         Return a dict path to leaf -> value.
         """
-        dict_ = self._to_dict_except_for_leaves()
+        dict_ = self.to_dict(keep_leaves=True)
         iter_ = hdict.get_nested_dict_iterator(dict_)
         return collections.OrderedDict(iter_)
 
@@ -831,46 +739,38 @@ class Config:
             config[k] = v
         return config
 
-    def _resolve_update_mode(self, update_mode_: Optional[str] = None) -> str:
-        """
-        Return update mode, provided or speficied in constructor.
+    @staticmethod
+    def _resolve_mode(
+        value: Optional[str],
+        ctor_value: str,
+        valid_values: Iterable[str],
+        tag: str,
+    ) -> str:
+        if value is None:
+            # Use the value from the constructor.
+            value = ctor_value
+            _LOG.debug("resolved: %s=%s", tag, value)
+        # The result should be a valid string.
+        hdbg.dassert_isinstance(value, str)
+        hdbg.dassert_in(value, valid_values)
+        return value
 
-        Raises error if `None` is provided by method or constructor.
-        """
-        if update_mode_ is None:
-            update_mode = self._update_mode
-        else:
-            update_mode = update_mode_
-        hdbg.dassert_is_not(
-            update_mode,
-            None,
-            "Either function param or constructor need to be specified: "
-            "self._update_mode=%s update_mode_=%s",
-            self._update_mode,
-            update_mode_,
+    def _resolve_update_mode(self, value: Optional[str]) -> str:
+        update_mode = self._resolve_mode(
+            value, self._update_mode, _VALID_UPDATE_MODES, "update_mode"
         )
-        hdbg.dassert_in(update_mode, _VALID_UPDATE_MODES)
         return update_mode
 
-    def _resolve_report_mode(self, report_mode_: Optional[str] = None) -> str:
-        """
-        Return report mode, provided or speficied in constructor.
-
-        Raises error if `None` is provided by method or constructor.
-        """
-        if report_mode_ is None:
-            report_mode = self._report_mode
-        else:
-            report_mode = report_mode_
-        hdbg.dassert_is_not(
-            report_mode,
-            None,
-            "Either function param or constructor need to be specified: "
-            "self._report_mode=%s report_mode_=%s",
-            self._report_mode,
-            report_mode_,
+    def _resolve_clobber_mode(self, value: Optional[str]) -> str:
+        clobber_mode = self._resolve_mode(
+            value, self._clobber_mode, _VALID_CLOBBER_MODES, "clobber_mode"
         )
-        hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
+        return clobber_mode
+
+    def _resolve_report_mode(self, value: Optional[str]) -> str:
+        report_mode = self._resolve_mode(
+            value, self._report_mode, _VALID_REPORT_MODES, "report_mode"
+        )
         return report_mode
 
     def _get_item(self, key: CompoundKey, *, level: int) -> Any:
