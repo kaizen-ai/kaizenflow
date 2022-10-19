@@ -25,7 +25,6 @@ from typing import Dict
 import pandas as pd
 
 import core.config as cconfig
-import core.config.config_utils as ccocouti
 import core.finance as cofinanc
 import core.plotting as coplotti
 import dataflow.model as dtfmod
@@ -75,7 +74,7 @@ sim_config = cconfig.Config.from_dict(sim_config_pkl)
 
 # %%
 # Get config differencies.
-diff_config = ccocouti.build_config_diff_dataframe(
+diff_config = cconfig.build_config_diff_dataframe(
     {
         "prod_config": prod_config,
         "sim_config": sim_config,
