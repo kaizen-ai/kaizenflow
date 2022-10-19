@@ -447,7 +447,8 @@ class CcxtBroker(ombroker.Broker):
         _LOG.debug("Before order has been filled: curr_num_shares=%s", curr_num_shares)
         curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
         # Convert the retrieved string and round.
-        curr_num_shares = round(curr_num_shares, 2)
+        amount_precision = self.market_info[asset_id]["amount_precision"]
+        curr_num_shares = round(curr_num_shares, amount_precision)
         # Calculate position before the order has been filled.
         curr_num_shares = curr_num_shares - diff_num_shares
         _LOG.debug("After order has been filled: curr_num_shares=%s", curr_num_shares)
