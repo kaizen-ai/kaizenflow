@@ -123,10 +123,11 @@ if config["meta"]["run_tca"]:
 
 # %%
 date_str = config["meta"]["date_str"]
+rt_timeout_in_secs_or_time = config["meta"]["rt_timeout_in_secs_or_time"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
 start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
+end_timestamp = start_timestamp + pd.Timedelta(rt_timeout_in_secs_or_time, unit="seconds")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
