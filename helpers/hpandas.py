@@ -1505,15 +1505,17 @@ def compute_duration_df(
     """
     Compute a df with some statistics about the time index from a dict of dfs.
 
-    :param intersect_dfs: return a transformed dict with the intersection of indices of all the dfs
-    if True, otherwise return the input data as is
-    :param valid_intersect: intersect indices without NaNs if True, otherwise intersect indices as is
-    :return: timestamp stats and updated dict of dfs, see `intersect_dfs` param
+    E.g.,
     ```
                    min_index   max_index   min_valid_index   max_valid_index
     tag1
     tag2
     ```
+
+    :param intersect_dfs: return a transformed dict with the intersection of indices of all the dfs
+    if True, otherwise return the input data as is
+    :param valid_intersect: intersect indices without NaNs if True, otherwise intersect indices as is
+    :return: timestamp stats and updated dict of dfs, see `intersect_dfs` param
     """
     hdbg.dassert_isinstance(tag_to_df, Dict)
     # Create df and assign columns.

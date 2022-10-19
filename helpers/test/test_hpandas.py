@@ -2724,7 +2724,10 @@ class Test_compute_duration_df(hunitest.TestCase):
         return tag_to_df
 
     def intersection_helper(
-        self, valid_intersect, expected_start_timestamp, expected_end_timestamp
+        self, 
+        valid_intersect: bool, 
+        expected_start_timestamp: pd.Timestamp, 
+        expected_end_timestamp: pd.Timestamp,
     ) -> None:
         """
         Checks if the intersection is valid and the same amongst all dfs.
@@ -2739,7 +2742,7 @@ class Test_compute_duration_df(hunitest.TestCase):
         start_equal = all(
             element == start_timestamps[0] for element in start_timestamps
         )
-        hdbg.dassert_eq(start_equal, True)
+        self.assertTrue(start_equal)
         # Check that start intersection is correct.
         required_start_intersection = expected_start_timestamp
         hdbg.dassert_eq(start_timestamps[0], required_start_intersection)
@@ -2749,7 +2752,7 @@ class Test_compute_duration_df(hunitest.TestCase):
         end_equal = all(
             element == end_timestamps[0] for element in end_timestamps
         )
-        hdbg.dassert_eq(end_equal, True)
+        self.assertTrue(end_equal)
         # Check that end intersection is correct.
         required_end_intersection = expected_end_timestamp
         hdbg.dassert_eq(end_timestamps[0], required_end_intersection)
