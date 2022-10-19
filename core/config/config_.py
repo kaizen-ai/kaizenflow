@@ -21,7 +21,9 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hintrospection as hintros
+import helpers.hio as hio
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -79,7 +81,6 @@ DUMMY = "__DUMMY__"
 #     `read["key1"]["key2"]` instead of `read["key1", "key2"]`?
 # - What happens when printing a `Config`?
 #   - That would be considered a read, but it's not what the user intends
-
 
 
 # Keys in a Config are strings or ints.
@@ -170,6 +171,7 @@ class _OrderedDict(_OrderedDictType):
     def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         return super().__getitem__(key)
+
 
 # #############################################################################
 # Config
@@ -301,6 +303,7 @@ class Config:
         *,
         update_mode: Optional[str] = None,
         clobber_mode: Optional[str] = None,
+        report_mode: Optional[str] = None,
     ) -> None:
         """
         Set / update `key` to `val`, equivalent to `dict[key] = val`.
@@ -417,7 +420,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -447,28 +451,11 @@ class Config:
     # Accessor
     # ////////////////////////////////////////////////////////////////////////////
 
-    @property
-    def update_mode(self) -> str:
-        return self._update_mode
-
-    @update_mode.setter
-    def update_mode(self, update_mode: str) -> None:
-        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
-        self._update_mode = update_mode
-
-    @property
-    def clobber_mode(self) -> str:
-        return self._clobber_mode
-
-    @clobber_mode.setter
-    def clobber_mode(self, clobber_mode: str) -> None:
-        hdbg.dassert_in(clobber_mode, self._VALID_CLOBBER_MODES)
-        self._clobber_mode = clobber_mode
-
     def get(
         self,
         key: CompoundKey,
-        default_value: Optional[Any] = _NO_VALUE_SPECIFIED, expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
+        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+        expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
         *,
         report_mode: Optional[str] = None,
     ) -> Any:
@@ -483,7 +470,6 @@ class Config:
         :return: config[key] if available, else `default_value`
         """
         _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
-        # The implementation of this function is similar to `hdict.typed_get()`.
         report_mode = self._resolve_report_mode(report_mode)
         try:
             ret = self.__getitem__(key, report_mode=report_mode)
@@ -504,13 +490,17 @@ class Config:
         _LOG.debug(hprint.to_str("key"))
         hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
         config = Config(
-            update_mode = self._update_mode,
-            clobber_mode = self._clobber_mode,
-            report_mode = self._report_mode)
-        self.__setitem__(key, config,
-            update_mode = self._update_mode,
-            clobber_mode = self._clobber_mode,
-            report_mode = self._report_mode)
+            update_mode=self._update_mode,
+            clobber_mode=self._clobber_mode,
+            report_mode=self._report_mode,
+        )
+        self.__setitem__(
+            key,
+            config,
+            update_mode=self._update_mode,
+            clobber_mode=self._clobber_mode,
+            report_mode=self._report_mode,
+        )
         return config
 
     # ////////////////////////////////////////////////////////////////////////////
@@ -844,6 +834,11 @@ class Config:
         return config
 
     def _resolve_update_mode(self, update_mode_: Optional[str] = None) -> str:
+        """
+        Return update mode, provided or speficied in constructor.
+
+        Raises error if `None` is provided by method or constructor.
+        """
         if update_mode_ is None:
             update_mode = self._update_mode
         else:
@@ -856,8 +851,29 @@ class Config:
             self._update_mode,
             update_mode_,
         )
-        hdbg.dassert_in(update_mode, self._VALID_UPDATE_MODES)
+        hdbg.dassert_in(update_mode, _VALID_UPDATE_MODES)
         return update_mode
+
+    def _resolve_report_mode(self, report_mode_: Optional[str] = None) -> str:
+        """
+        Return report mode, provided or speficied in constructor.
+
+        Raises error if `None` is provided by method or constructor.
+        """
+        if report_mode_ is None:
+            report_mode = self._report_mode
+        else:
+            report_mode = report_mode_
+        hdbg.dassert_is_not(
+            report_mode,
+            None,
+            "Either function param or constructor need to be specified: "
+            "self._report_mode=%s report_mode_=%s",
+            self._report_mode,
+            report_mode_,
+        )
+        hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
+        return report_mode
 
     def _get_item(self, key: CompoundKey, *, level: int) -> Any:
         """
