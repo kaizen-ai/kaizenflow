@@ -315,9 +315,7 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     return dag_df
 
 
-def get_config_from_pickle(
-    system_log_path_dict: Dict,
-) -> Dict[str, cconfig.Config]:
+def get_config_from_pickle(system_log_path_dict: Dict) -> Dict[str, cconfig.Config]:
     """
     Build config from pickled one.
 
@@ -326,6 +324,7 @@ def get_config_from_pickle(
     config_dict = {}
     file_name = "system_config.input.values_as_strings.pkl"
     for stage, path in system_log_path_dict.items():
+        path = os.path.join(path, file_name)
         hdbg.dassert_path_exists(path)
         _LOG.debug("Reading config from %s", path)
         config_pkl = hpickle.from_pickle(path)
