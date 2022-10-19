@@ -138,8 +138,6 @@ _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 # #############################################################################
 
 
-
-
 class OverwriteError(RuntimeError):
     """
     Trying to overwrite a value.
@@ -250,54 +248,6 @@ class Config:
         ret = self.to_string(mode)
         return ret
 
-    def to_string(self, mode: str) -> str:
-        txt = []
-        for key, (marked_as_read, val) in self.items():
-            # 1) Process key.
-            if mode == "only_values":
-                key_as_str = str(key)
-            elif mode == "verbose":
-                # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (marked_as_read={marked_as_read}, "
-                key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
-            # 2) Process value.
-            if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
-                # Data structures that can be printed in a fancy way.
-                val_as_str = hpandas.df_to_str(val, print_shape_info=True)
-                val_as_str = "\n" + hprint.indent(val_as_str)
-            elif isinstance(val, Config):
-                val_as_str = val.to_string(mode)
-                val_as_str = "\n" + hprint.indent(val_as_str)
-            else:
-                # Normal Python data structures.
-                val_as_str = str(val)
-                if len(val_as_str.split("\n")) > 1:
-                    # Indent a string that spans multiple lines like:
-                    # ```
-                    # portfolio_object:
-                    #   # historical holdings=
-                    #   egid                        10365    -1
-                    #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
-                    #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
-                    #   ...
-                    #   # historical holdings marked to market=
-                    #   ...
-                    # ```
-                    val_as_str = "\n" + hprint.indent(val_as_str)
-                    # 3) Print.
-            txt.append(f"{key_as_str}: {val_as_str}")
-        # Assemble the result.
-        ret = "\n".join(txt)
-        # Remove memory locations of functions, if config contains them, e.g.,
-        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
-        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        # Remove memory locations of objects, if config contains them, e.g.,
-        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
-        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
-        ret = re.sub(memory_loc_pattern, r"\1", ret)
-        return ret
-
     # ////////////////////////////////////////////////////////////////////////////
     # Dict-like methods.
     # ////////////////////////////////////////////////////////////////////////////
@@ -305,6 +255,7 @@ class Config:
     def __contains__(self, key: CompoundKey) -> bool:
         """
         Implement membership operator like `key in config`.
+
         If `key` is nested, the hierarchy of Config objects is
         navigated.
         """
@@ -407,14 +358,15 @@ class Config:
         self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
     ) -> Any:
         """
-        Get value for `key` or raise `KeyError` if it doesn't exist.
-        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
-        the hierarchy is navigated until the corresponding element is found or we
-        raise if the element doesn't exist.
-        When we report an error about a missing key, we print only the keys of the
-        Config at the current level of the recursion and not the original Config
-        (which is also not directly accessible inside the recursion), e.g.,
-        `key='nrows_tmp' not in ['nrows', 'nrows2']`
+        Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
+        is an iterable of keys (e.g., `("read_data", "file_name")`, then the
+        hierarchy is navigated until the corresponding element is found or we
+        raise if the element doesn't exist. When we report an error about a
+        missing key, we print only the keys of the Config at the current level
+        of the recursion and not the original Config (which is also not
+        directly accessible inside the recursion), e.g., `key='nrows_tmp' not
+        in ['nrows', 'nrows2']`
+
         :param report_mode: how to report a KeyError
             - `none` (default): only report the exception from `_get_item()`
             - `verbose_log_error`: report the full key and config in the log
@@ -452,63 +404,69 @@ class Config:
             raise e
         return ret
 
-    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
-        """
-        Implement `__getitem__()` but keeping track of the depth of the key to
-        report an informative message reporting the entire config on
-        `KeyError`.
-        This method should be used only by `__getitem__()` since it's an
-        helper of that function.
-        """
-        _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
-        # Check if the key is compound.
-        if hintros.is_iterable(key):
-            head_key, tail_key = self._parse_compound_key(key)
-            if not tail_key:
-                # Tuple of a single element, then return the value.
-                ret = self._get_item(head_key, level=level + 1)
+    def to_string(self, mode: str) -> str:
+        txt = []
+        for key, (marked_as_read, val) in self.items():
+            # 1) Process key.
+            if mode == "only_values":
+                key_as_str = str(key)
+            elif mode == "verbose":
+                # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
+                key_as_str = f"{key} (marked_as_read={marked_as_read}, "
+                key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
+            # 2) Process value.
+            if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
+                # Data structures that can be printed in a fancy way.
+                val_as_str = hpandas.df_to_str(val, print_shape_info=True)
+                val_as_str = "\n" + hprint.indent(val_as_str)
+            elif isinstance(val, Config):
+                val_as_str = val.to_string(mode)
+                val_as_str = "\n" + hprint.indent(val_as_str)
             else:
-                # Compound key: recurse on the tail of the key.
-                if head_key not in self._config:
-                    # msg = self._get_error_msg("head_key", head_key)
-                    keys_as_str = str(list(self._config.keys()))
-                    msg = f"head_key='{head_key}' not in {keys_as_str} at level {level}"
-                    raise KeyError(msg)
-                subconfig = self._config[head_key]
-                _LOG.debug("subconfig\n=%s", self._config)
-                if isinstance(subconfig, Config):
-                    # Recurse.
-                    ret = subconfig._get_item(tail_key, level=level + 1)
-                else:
-                    # There are more keys to process but we have reached the leaves
-                    # of the config, then we assert.
-                    # msg = self._get_error_msg("tail_key", tail_key)
-                    msg = f"tail_key={tail_key} at level {level}"
-                    raise KeyError(msg)
-            return ret
-        # Base case: key is a string, config is a dict.
-        self._dassert_base_case(key)
-        if key not in self._config:
-            # msg = self._get_error_msg("key", key)
-            keys_as_str = str(list(self._config.keys()))
-            msg = f"key='{key}' not in {keys_as_str} at level {level}"
-            raise KeyError(msg)
-        ret = self._config[key]  # type: ignore
+                # Normal Python data structures.
+                val_as_str = str(val)
+                if len(val_as_str.split("\n")) > 1:
+                    # Indent a string that spans multiple lines like:
+                    # ```
+                    # portfolio_object:
+                    #   # historical holdings=
+                    #   egid                        10365    -1
+                    #   2022-06-27 09:45:02-04:00    0.00  1.00e+06
+                    #   2022-06-27 10:00:02-04:00  -44.78  1.01e+06
+                    #   ...
+                    #   # historical holdings marked to market=
+                    #   ...
+                    # ```
+                    val_as_str = "\n" + hprint.indent(val_as_str)
+                    # 3) Print.
+            txt.append(f"{key_as_str}: {val_as_str}")
+        # Assemble the result.
+        ret = "\n".join(txt)
+        # Remove memory locations of functions, if config contains them, e.g.,
+        #   `<function _filter_relevance at 0x7fe4e35b1a70>`.
+        memory_loc_pattern = r"(<function \w+.+) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
+        # Remove memory locations of objects, if config contains them, e.g.,
+        #   `<dataflow.task2538_pipeline.ArPredictor object at 0x7f7c7991d390>`
+        memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
+        ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
+
     def get(
-            self,
-            key: CompoundKey,
-            default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
-            expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
-            *,
-            report_mode: Optional[str] = None,
-        ) -> Any:
+        self,
+        key: CompoundKey,
+        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+        expected_type: Optional[Any] = _NO_VALUE_SPECIFIED,
+        *,
+        report_mode: Optional[str] = None,
+    ) -> Any:
         """
         Equivalent to `dict.get(key, default_val)`.
+
         :param default_value: default value to return if key is not in `config`
         :param expected_type: expected type of `value`
         :return: config[key] if available, else `default_value`
-            """
+        """
         _LOG.debug(hprint.to_str("key default_value expected_type report_mode"))
         # The implementation of this function is similar to `hdict.typed_get()`.
         report_mode = self._resolve_report_mode(report_mode)
@@ -643,7 +601,6 @@ class Config:
             if isinstance(v, Config):
                 v.mark_read_only(value)
 
-
     # /////////////////////////////////////////////////////////////////////////////
     # From / to functions.
     # /////////////////////////////////////////////////////////////////////////////
@@ -726,6 +683,7 @@ class Config:
     def from_dict(cls, nested_dict: Dict[str, Any]) -> "Config":
         """
         Build a `Config` from a nested dict.
+
         :param nested_dict: nested dict, with certain restrictions:
           - only leaf nodes may not be a dict
           - every nonempty dict must only have keys of type `str`
@@ -836,6 +794,51 @@ class Config:
         hdbg.dassert_isinstance(value, str)
         hdbg.dassert_in(value, valid_values)
         return value
+
+    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
+        """
+        Implement `__getitem__()` but keeping track of the depth of the key to
+        report an informative message reporting the entire config on
+        `KeyError`.
+
+        This method should be used only by `__getitem__()` since it's an
+        helper of that function.
+        """
+        _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
+        # Check if the key is compound.
+        if hintros.is_iterable(key):
+            head_key, tail_key = self._parse_compound_key(key)
+            if not tail_key:
+                # Tuple of a single element, then return the value.
+                ret = self._get_item(head_key, level=level + 1)
+            else:
+                # Compound key: recurse on the tail of the key.
+                if head_key not in self._config:
+                    # msg = self._get_error_msg("head_key", head_key)
+                    keys_as_str = str(list(self._config.keys()))
+                    msg = f"head_key='{head_key}' not in {keys_as_str} at level {level}"
+                    raise KeyError(msg)
+                subconfig = self._config[head_key]
+                _LOG.debug("subconfig\n=%s", self._config)
+                if isinstance(subconfig, Config):
+                    # Recurse.
+                    ret = subconfig._get_item(tail_key, level=level + 1)
+                else:
+                    # There are more keys to process but we have reached the leaves
+                    # of the config, then we assert.
+                    # msg = self._get_error_msg("tail_key", tail_key)
+                    msg = f"tail_key={tail_key} at level {level}"
+                    raise KeyError(msg)
+            return ret
+        # Base case: key is a string, config is a dict.
+        self._dassert_base_case(key)
+        if key not in self._config:
+            # msg = self._get_error_msg("key", key)
+            keys_as_str = str(list(self._config.keys()))
+            msg = f"key='{key}' not in {keys_as_str} at level {level}"
+            raise KeyError(msg)
+        ret = self._config[key]  # type: ignore
+        return ret
 
     def _resolve_update_mode(self, value: Optional[str]) -> str:
         update_mode = self._resolve_mode(
