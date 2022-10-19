@@ -164,12 +164,6 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         date_str = os.environ[date_key]
     else:
         date_str = datetime.date.today().strftime("%Y%m%d")
-     #
-    rt_timeout_in_secs_or_time_key = "AM_RT_TIMEOUT_IN_SECS_OR_TIME"
-    if rt_timeout_in_secs_or_time_key in os.environ:
-        rt_timeout_in_secs_or_time = os.environ[rt_timeout_in_secs_or_time_key]
-    else:
-        rt_timeout_in_secs_or_time = 2 * 60 * 60
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:
@@ -254,7 +248,6 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     config_dict = {
         "meta": {
             "date_str": date_str,
-            "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
             "asset_class": asset_class,
             "run_tca": run_tca,
             "bar_duration": bar_duration,

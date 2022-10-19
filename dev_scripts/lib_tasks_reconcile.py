@@ -61,21 +61,6 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
-# TODO(Dan): Expose datetime `rt_timeout_in_secs_or_time`.
-def _get_rt_timeout_in_secs_or_time(
-    rt_timeout_in_secs_or_time: Optional[int]
-) -> int:
-    """
-    Return the replayed timeout in secs.
-
-    If a timeout is not specified by a user then run for 2 hours by default.
-    """
-    if rt_timeout_in_secs_or_time is None:
-        rt_timeout_in_secs_or_time = 2 * 60 * 60
-    _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
-    return rt_timeout_in_secs_or_time
-
-
 def _sanity_check_data(file_path: str) -> None:
     """
     Check that data at the specified file path is correct.
@@ -91,9 +76,7 @@ def _sanity_check_data(file_path: str) -> None:
 
 
 @task
-def reconcile_create_dirs(
-    ctx, run_date=None, rt_timeout_in_secs_or_time=None, abort_if_exists=True
-):  # type: ignore
+def reconcile_create_dirs(ctx, run_date=None, abort_if_exists=True):  # type: ignore
     """
     Create dirs for storing reconciliation data.
 
@@ -102,7 +85,7 @@ def reconcile_create_dirs(
     data/
         shared/
             prod_reconciliation/
-                {run_date}_{rt_timeout_in_secs_or_time}/
+                {run_date}/
                     prod/
                     tca/
                     simulation/
@@ -111,12 +94,8 @@ def reconcile_create_dirs(
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    rt_timeout_in_secs_or_time = _get_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
-    run_dst_dir = "_".join([reconcile_sim_date, str(rt_timeout_in_secs_or_time)])
     # Create a dir specific of the run date.
-    run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_dst_dir)
+    run_date_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date)
     hio.create_dir(
         run_date_dir, incremental=True, abort_if_exists=abort_if_exists
     )
@@ -177,10 +156,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         question = "Is the file ok?"
         hsystem.query_yes_no(question)
     #
-    run_dst_dir = "_".join([reconcile_sim_date, str(rt_timeout_in_secs_or_time)])
-    target_dir = os.path.join(
-        _PROD_RECONCILIATION_DIR, run_dst_dir, "simulation"
-    )
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
     _LOG.info(hprint.to_str("target_dir"))
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(target_dir)
@@ -196,15 +172,12 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
 
 
 @task
-def reconcile_run_sim(ctx, run_date=None, rt_timeout_in_secs_or_time=None):  # type: ignore
+def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     """
     Run the simulation given a run date.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    rt_timeout_in_secs_or_time = _get_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
     target_dir = "system_log_dir"
     if os.path.exists(target_dir):
         rm_cmd = f"rm -rf {target_dir}"
@@ -212,7 +185,7 @@ def reconcile_run_sim(ctx, run_date=None, rt_timeout_in_secs_or_time=None):  # t
         _system(rm_cmd)
     # Run simulation.
     # pylint: disable=line-too-long
-    opts = f"--action run_simulation --reconcile_sim_date {run_date} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
+    opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     docker_cmd = f"{script_name} {opts}"
@@ -225,19 +198,13 @@ def reconcile_run_sim(ctx, run_date=None, rt_timeout_in_secs_or_time=None):  # t
 
 
 @task
-def reconcile_copy_sim_data(ctx, run_date=None, rt_timeout_in_secs_or_time=None):  # type: ignore
+def reconcile_copy_sim_data(ctx, run_date=None):  # type: ignore
     """
     Copy the output of the simulation run to a shared folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    rt_timeout_in_secs_or_time = _get_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
-    run_dst_dir = "_".join([reconcile_sim_date, str(rt_timeout_in_secs_or_time)])
-    target_dir = os.path.join(
-        _PROD_RECONCILIATION_DIR, run_dst_dir, "simulation"
-    )
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "simulation")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
@@ -259,8 +226,7 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    run_dst_dir = "_".join([reconcile_sim_date, str(rt_timeout_in_secs_or_time)])
-    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_dst_dir, "prod")
+    target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date, "prod")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results to '%s'", target_dir)
@@ -288,18 +254,13 @@ def reconcile_copy_prod_data(ctx, run_date=None, stage="preprod"):  # type: igno
 
 
 @task
-def reconcile_run_notebook(
-    ctx, run_date=None, rt_timeout_in_secs_or_time=None, incremental=False
-):  # type: ignore
+def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the shared folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    rt_timeout_in_secs_or_time = _get_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
     # Set results destination dir and clear it if is already filled.
     dst_dir = "."
     results_dir = os.path.join(dst_dir, "result_0")
@@ -320,9 +281,6 @@ def reconcile_run_notebook(
     #
     cmd_txt = []
     cmd_txt.append(f"export AM_RECONCILIATION_DATE={run_date}")
-    cmd_txt.append(
-        f"export AM_RT_TIMEOUT_IN_SECS_OR_TIME={rt_timeout_in_secs_or_time}"
-    )
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
