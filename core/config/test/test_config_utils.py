@@ -451,7 +451,7 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test4(self) -> None:
         """
-        Test an unhashable object.
+        Test a dictionary.
         """
         obj = {
             1: "2",
@@ -462,7 +462,7 @@ class Test_make_hashable(hunitest.TestCase):
 
     def test5(self) -> None:
         """
-        Test a hashable object.
+        Test a string.
         """
         obj = "1"
         is_hashable = True

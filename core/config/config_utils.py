@@ -151,6 +151,10 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     # Same with `Tuple`, but for `Tuple` we want to apply the function
     # recursively, i.e. make every element `Hashable`.
     elif isinstance(obj, collections.abc.Iterable) and not isinstance(obj, str):
+        # The problem is that `str` is both `Hashable` and `Iterable`, but here
+        # we want to treat it like `Hashable`, i.e. return string as it is.
+        # Same with `Tuple`, but for `Tuple` we want to apply the function
+        # recursively, i.e. make every element `Hashable`.
         # Handle iterables, e.g., lists, sets, tuples.
         ret = tuple([make_hashable(element) for element in obj])
     elif isinstance(obj, collections.abc.Hashable):
