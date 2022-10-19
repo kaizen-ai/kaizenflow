@@ -316,14 +316,19 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
 
 
 def get_config_from_pickle(
-    system_log_path_dict: Dict, config_name: str, stage: str
-) -> cconfig.Config:
+    system_log_path_dict: Dict,
+) -> Dict[str, cconfig.Config]:
     """
     Build config from pickled one.
 
     :param config_name: file name of pickled config
     """
-    path = os.path.join(system_log_path_dict[stage], config_name)
-    config_pkl = hpickle.from_pickle(path)
-    config = cconfig.Config.from_dict(config_pkl)
-    return config
+    config_dict = {}
+    file_name = "system_config.input.values_as_strings.pkl"
+    for stage, path in system_log_path_dict.items():
+        hdbg.dassert_path_exists(path)
+        _LOG.debug("Reading config from %s", path)
+        config_pkl = hpickle.from_pickle(path)
+        config = cconfig.Config.from_dict(config_pkl)
+        config_dict[stage] = config
+    return config_dict
