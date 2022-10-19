@@ -208,7 +208,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         end_timestamp: Optional[pd.Timestamp],
         *,
         interval: Optional[str] = "1m",
-        include_realtime: str = "1",
+        include_realtime: str = "0",
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -278,6 +278,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         _LOG.info("Downloading from %s", query_url)
         r = requests.get(query_url)
         # Retrieve raw data.
+        _LOG.info(str(r.text))
         data_json = r.json()
         # Get OHLCV data.
         data = []
