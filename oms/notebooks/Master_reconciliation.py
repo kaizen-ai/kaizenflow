@@ -215,11 +215,105 @@ portfolio_config_dict = {
 portfolio_config_dict
 
 # %%
+portfolio_path_dict = {
+    'prod': '/shared_data/prod_reconciliation/20221018/prod/system_log_dir_scheduled__2022-10-17T10:00:00+00:00_2hours/process_forecasts/portfolio',
+    'cand': '/shared_data/prod_reconciliation/20221018/prod/system_log_dir_scheduled__2022-10-17T10:00:00+00:00_2hours/process_forecasts/portfolio',
+    'sim': '/shared_data/prod_reconciliation/20221018/simulation/system_log_dir/process_forecasts/portfolio'
+}
+
+portfolio_config_dict = {
+    'start_timestamp': pd.Timestamp('2022-10-18 06:05:00-0400', tz='America/New_York'),
+    'end_timestamp': pd.Timestamp('2022-10-18 08:00:00-0400', tz='America/New_York'),
+    'freq': '5T',
+    'normalize_bar_times': True
+}
+
+# %%
+portfolio_dict = {
+    "path": {
+        'prod': '/shared_data/prod_reconciliation/20221018/prod/system_log_dir_scheduled__2022-10-17T10:00:00+00:00_2hours/process_forecasts/portfolio',
+        'cand': '/shared_data/prod_reconciliation/20221018/prod/system_log_dir_scheduled__2022-10-17T10:00:00+00:00_2hours/process_forecasts/portfolio',
+        'sim': '/shared_data/prod_reconciliation/20221018/simulation/system_log_dir/process_forecasts/portfolio'
+    },
+    "config": {
+        'start_timestamp': pd.Timestamp('2022-10-18 06:05:00-0400', tz='America/New_York'),
+        'end_timestamp': pd.Timestamp('2022-10-18 08:00:00-0400', tz='America/New_York'),
+        'freq': '5T',
+        'normalize_bar_times': True
+    }
+}
+
+def load_portfolio(
+    portfolio_dict: Dict,
+    research_portfolio_df: pd.DataFrame,
+    research_portfolio_stats_df: pd.DataFrame,
+) -> pd.DataFrame:
+    #
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_dict["path"].items():
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
+            path,
+            **portfolio_config_dict,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    start_timestamp = portfolio_config_dict["start_timestamp"]
+    end_timestamp = portfolio_config_dict["end_timestamp"]
+    #
+    research_filter = (start_timestamp:end_timestamp)
+    portfolio_dfs["research"] = research_portfolio_df.loc[
+        research_filter
+    ]
+    portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
+        research_filter
+    ]
+    #
+    portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+    return portfolio_stats_df
+
+
+# %%
 # TODO(gp): @grisha move to library.
+def load_portfolio(
+    portfolio_path_dict: Dict,
+    portfolio_config_dict: Dict,
+    research_portfolio_df: pd.DataFrame,
+    research_portfolio_stats_df: pd.DataFrame,
+) -> pd.DataFrame:
+    #
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_path_dict.items():
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
+            path,
+            **portfolio_config_dict,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    start_timestamp = portfolio_config_dict["start_timestamp"]
+    end_timestamp = portfolio_config_dict["end_timestamp"]
+    #
+    research_filter = (start_timestamp:end_timestamp)
+    portfolio_dfs["research"] = research_portfolio_df.loc[
+        research_filter
+    ]
+    portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
+        research_filter
+    ]
+    #
+    portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+    return portfolio_stats_df
+    
 
 # Load the 4 portfolios.
 portfolio_dfs = {}
 portfolio_stats_dfs = {}
+
 for name, path in portfolio_path_dict.items():
     _LOG.info("Processing portfolio=%s path=%s", name, path)
     portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
@@ -228,12 +322,14 @@ for name, path in portfolio_path_dict.items():
     )
     portfolio_dfs[name] = portfolio_df
     portfolio_stats_dfs[name] = portfolio_stats_df
+    
 portfolio_dfs["research"] = research_portfolio_df.loc[
     start_timestamp:end_timestamp
 ]
 portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
     start_timestamp:end_timestamp
 ]
+
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
