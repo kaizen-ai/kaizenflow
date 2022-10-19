@@ -43,7 +43,7 @@ _LOG = logging.getLogger(__name__)
 
 # Enable or disable _LOG.verb_debug
 # _LOG.verb_debug = lambda *_: 0
-_LOG.verb_debug = _LOG.debug
+# _LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
