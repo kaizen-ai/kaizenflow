@@ -544,13 +544,12 @@ class Config:
                         f"Trying to overwrite old value '{old_val}' with new value '{val}'"
                         f" for key '{key}' when update_mode={update_mode}"
                     )
-                    msg.append(f"self=\n" + hprint.indent(str(self)))
-                    msg.append(f"config=\n" + hprint.indent(str(config)))
+                    msg.append("self=\n" + hprint.indent(str(self)))
+                    msg.append("config=\n" + hprint.indent(str(config)))
                     msg = "\n".join(msg)
                     raise RuntimeError(msg)
-                else:
-                    # Key doesn't exist, then assign.
-                    assign_new_value = True
+                # Key doesn't exist, then assign.
+                assign_new_value = True
             elif update_mode == "overwrite":
                 # Assign the value in any case.
                 assign_new_value = True
