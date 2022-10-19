@@ -340,7 +340,6 @@ class Config:
         """
         return len(self._config)
 
-
     # ////////////////////////////////////////////////////////////////////////////
     # Get / set.
     # ////////////////////////////////////////////////////////////////////////////
@@ -424,27 +423,126 @@ class Config:
             hdbg.dassert_isinstance(ret, expected_type)
         return ret
 
-    # ////////////////////////////////////////////////////////////////////////////
-    # Accessor
-    # ////////////////////////////////////////////////////////////////////////////
+    def _set_item(
+            self,
+            key: CompoundKey,
+            val: Any,
+            update_mode: Optional[str],
+            clobber_mode: Optional[str],
+            report_mode: Optional[str],
+    ) -> None:
+        """
+        Set / update `key` to `val`, equivalent to `dict[key] = val`.
+        If `key` is an iterable of keys, then the key hierarchy is navigated /
+        created and the leaf value added / updated with `val`.
 
-    def add_subconfig(self, key: CompoundKey) -> "Config":
-        _LOG.debug(hprint.to_str("key"))
-        hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
-        config = Config(
-            update_mode=self._update_mode,
-            clobber_mode=self._clobber_mode,
-            report_mode=self._report_mode,
+        :param update_mode: define the policy used for updates (see above)
+            - `None` to use the value set in the constructor
+        :param clobber_mode: define the policy used for controlling
+            write-after-read (see above)
+            - `None` to use the value set in the constructor
+        """
+        _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
+        # # Used to debug who is setting a certain key.
+        # if False:
+        #     _LOG.info("key.set=%s", str(key))
+        #     if key == ("dag_runner_config", "wake_up_timestamp"):
+        #         assert 0
+        # A read-only config cannot be changed.
+        if self._read_only:
+            msg = []
+            msg.append(
+                f"Can't set key='{key}' to val='{val}' in read-only config"
+            )
+            msg.append("self=\n" + hprint.indent(str(self)))
+            msg = "\n".join(msg)
+            raise ReadOnlyConfigError(msg)
+        update_mode = self._resolve_update_mode(update_mode)
+        clobber_mode = self._resolve_clobber_mode(clobber_mode)
+        report_mode = self._resolve_report_mode(report_mode)
+        # If the key is compound, then recurse.
+        if hintros.is_iterable(key):
+            head_key, tail_key = self._parse_compound_key(key)
+            if not tail_key:
+                # There is no tail_key so `__setitem__()` was called on a tuple of a
+                # single element, then set the value.
+                self._set_item(
+                    head_key, val, update_mode, clobber_mode, report_mode
+                )
+            else:
+                # Compound key: recurse on the tail of the key.
+                _LOG.debug(
+                    "head_key='%s', self._config=\n%s",
+                    head_key,
+                    self._config,
+                )
+                if head_key in self:
+                    # Remove the
+                    # We mark a key as read only when it's read from a client of
+                    # Config, not from the Config itself.
+                    mark_key_as_read = False
+                    subconfig = self.__getitem__(
+                        head_key,
+                        report_mode="none",
+                        mark_key_as_read=mark_key_as_read,
+                    )
+                else:
+                    subconfig = self.add_subconfig(head_key)
+                hdbg.dassert_isinstance(subconfig, Config)
+                subconfig._set_item(
+                    tail_key, val, update_mode, clobber_mode, report_mode
+                )
+            return
+        # Base case: write the config.
+        self._dassert_base_case(key)
+        self._config.__setitem__(
+            key, val, update_mode=update_mode, clobber_mode=clobber_mode
         )
-        self.__setitem__(
-            key,
-            config,
-            update_mode=self._update_mode,
-            clobber_mode=self._clobber_mode,
-            report_mode=self._report_mode,
-        )
-        return config
 
+    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
+        """
+        Implement `__getitem__()` but keeping track of the depth of the key to
+        report an informative message reporting the entire config on
+        `KeyError`.
+
+        This method should be used only by `__getitem__()` since it's an
+        helper of that function.
+        """
+        _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
+        # Check if the key is compound.
+        if hintros.is_iterable(key):
+            head_key, tail_key = self._parse_compound_key(key)
+            if not tail_key:
+                # Tuple of a single element, then return the value.
+                ret = self._get_item(head_key, level=level + 1)
+            else:
+                # Compound key: recurse on the tail of the key.
+                if head_key not in self._config:
+                    # msg = self._get_error_msg("head_key", head_key)
+                    keys_as_str = str(list(self._config.keys()))
+                    msg = f"head_key='{head_key}' not in {keys_as_str} at level {level}"
+                    raise KeyError(msg)
+                subconfig = self._config[head_key]
+                _LOG.debug("subconfig\n=%s", self._config)
+                if isinstance(subconfig, Config):
+                    # Recurse.
+                    ret = subconfig._get_item(tail_key, level=level + 1)
+                else:
+                    # There are more keys to process but we have reached the leaves
+                    # of the config, then we assert.
+                    # msg = self._get_error_msg("tail_key", tail_key)
+                    msg = f"tail_key={tail_key} at level {level}"
+                    raise KeyError(msg)
+            return ret
+        # Base case: key is a string, config is a dict.
+        self._dassert_base_case(key)
+        if key not in self._config:
+            # msg = self._get_error_msg("key", key)
+            keys_as_str = str(list(self._config.keys()))
+            msg = f"key='{key}' not in {keys_as_str} at level {level}"
+            raise KeyError(msg)
+        ret = self._config[key]  # type: ignore
+        return ret
     # ////////////////////////////////////////////////////////////////////////////
     # Update.
     # ////////////////////////////////////////////////////////////////////////////
@@ -504,6 +602,23 @@ class Config:
     # Accessors.
     # ////////////////////////////////////////////////////////////////////////////
 
+    def add_subconfig(self, key: CompoundKey) -> "Config":
+        _LOG.debug(hprint.to_str("key"))
+        hdbg.dassert_not_in(key, self._config.keys(), "Key already present")
+        config = Config(
+            update_mode=self._update_mode,
+            clobber_mode=self._clobber_mode,
+            report_mode=self._report_mode,
+        )
+        self.__setitem__(
+            key,
+            config,
+            update_mode=self._update_mode,
+            clobber_mode=self._clobber_mode,
+            report_mode=self._report_mode,
+        )
+        return config
+
     @property
     def update_mode(self) -> str:
         return self._update_mode
@@ -544,23 +659,6 @@ class Config:
             if isinstance(v, Config):
                 v.mark_read_only(value)
 
-    def save_to_file(self, log_dir: str, tag: str) -> None:
-        """
-        Save config as a string and pickle.
-
-        Save 2 files in a log dir:
-        - ${log_dir}/{tag}.txt
-        - ${log_dir}/{tag}.values_as_strings.pkl
-
-        :param tag: basename of the files to save (e.g., "system_config.input")
-        """
-        # 1) As a string.
-        file_name = os.path.join(log_dir, f"{tag}.txt")
-        hio.to_file(file_name, repr(self))
-        # 2) As a pickle containing all values as string.
-        file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
-        config = self.to_string_config()
-        hpickle.to_pickle(config, file_name)
 
     # /////////////////////////////////////////////////////////////////////////////
     # From / to functions.
@@ -615,6 +713,7 @@ class Config:
     def to_dict(self, *, keep_leaves: bool = True) -> Dict[ScalarKey, Any]:
         """
         Convert the Config to nested ordered dicts.
+
         :param keep_leaves: keep or skip empty leaves
         """
         _LOG.debug(hprint.to_str("self keep_leaves"))
@@ -643,7 +742,6 @@ class Config:
     def from_dict(cls, nested_dict: Dict[str, Any]) -> "Config":
         """
         Build a `Config` from a nested dict.
-
         :param nested_dict: nested dict, with certain restrictions:
           - only leaf nodes may not be a dict
           - every nonempty dict must only have keys of type `str`
@@ -773,58 +871,6 @@ class Config:
         )
         return report_mode
 
-    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
-        """
-        Implement `__getitem__()` but keeping track of the depth of the key to
-        report an informative message reporting the entire config on
-        `KeyError`.
-
-        This method should be used only by `__getitem__()` since it's an
-        helper of that function.
-        """
-        _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
-        # Check if the key is compound.
-        if hintros.is_iterable(key):
-            head_key, tail_key = self._parse_compound_key(key)
-            if not tail_key:
-                # Tuple of a single element, then return the value.
-                ret = self._get_item(head_key, level=level + 1)
-            else:
-                # Compound key: recurse on the tail of the key.
-                if head_key not in self._config:
-                    # msg = self._get_error_msg("head_key", head_key)
-                    keys_as_str = str(list(self._config.keys()))
-                    msg = f"head_key='{head_key}' not in {keys_as_str} at level {level}"
-                    raise KeyError(msg)
-                subconfig = self._config[head_key]
-                _LOG.debug("subconfig\n=%s", self._config)
-                if isinstance(subconfig, Config):
-                    # Recurse.
-                    ret = subconfig._get_item(tail_key, level=level + 1)
-                else:
-                    # There are more keys to process but we have reached the leaves
-                    # of the config, then we assert.
-                    # msg = self._get_error_msg("tail_key", tail_key)
-                    msg = f"tail_key={tail_key} at level {level}"
-                    raise KeyError(msg)
-            return ret
-        # Base case: key is a string, config is a dict.
-        self._dassert_base_case(key)
-        if key not in self._config:
-            # msg = self._get_error_msg("key", key)
-            keys_as_str = str(list(self._config.keys()))
-            msg = f"key='{key}' not in {keys_as_str} at level {level}"
-            raise KeyError(msg)
-        ret = self._config[key]  # type: ignore
-        return ret
-
-    def _get_error_msg(self, tag: str, key: CompoundKey) -> str:
-        msg = []
-        msg.append(f"{tag}='{key}' not in:")
-        msg.append(hprint.indent(str(self)))
-        msg = "\n".join(msg)
-        return msg
-
     def _dassert_base_case(self, key: CompoundKey) -> None:
         """
         Check that a leaf config is valid.
@@ -835,16 +881,28 @@ class Config:
         )
         hdbg.dassert_isinstance(self._config, dict)
 
-    # TODO(gp): Maybe consolidate with to_dict() adding a parameter.
-    def _to_dict_except_for_leaves(self) -> Dict[str, Any]:
-        """
-        Convert as in `to_dict()` except for leaf values.
-        """
-        # pylint: disable=unsubscriptable-object
-        dict_: collections.OrderedDict[str, Any] = collections.OrderedDict()
-        for k, v in self._config.items():
-            if v and isinstance(v, Config):
-                dict_[k] = v.to_dict()
-            else:
-                dict_[k] = v
-        return dict_
+    def _raise_exception(
+        self, exception: Exception, key: CompoundKey, report_mode: str
+    ) -> None:
+        _LOG.debug(hprint.to_str("exception key report_mode"))
+        hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
+        if report_mode in ("verbose_log_error", "verbose_exception"):
+            msg = []
+            msg.append("exception=" + str(exception))
+            msg.append(f"key='{key}'")
+            msg.append("config=\n" + hprint.indent(str(self)))
+            msg = "\n".join(msg)
+            if report_mode == "verbose_log_error":
+                _LOG.error(msg)
+            elif report_mode == "verbose_exception":
+                # TODO(gp): It's not clear how to create an exception with a
+                #  different message, so we resort to an ugly switch.
+                if isinstance(exception, KeyError):
+                    exception = KeyError(msg)
+                elif isinstance(exception, OverwriteError):
+                    exception = OverwriteError(msg)
+                elif isinstance(exception, ReadOnlyConfigError):
+                    exception = ReadOnlyConfigError(msg)
+                else:
+                    raise RuntimeError(f"Invalid exception: {exception}")
+        raise exception
