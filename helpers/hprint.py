@@ -85,7 +85,9 @@ def frame(
     """
     Print a frame around a message.
 
+    :param char1: char for top line of the frame
     :param num_chars: how many chars in each line (by default 80 chars)
+    :param char2: char for bottom line of the frame
     :param thickness: how many overlapping lines
         - E.g., thickness = 2
         ```
@@ -95,7 +97,7 @@ def frame(
         # #######...
         # #######...
         ```
-    :param level:  how
+    :param level:  level of framing indent based on `#` char:
         - E.g., level = 0
         ```
         #######...
@@ -130,7 +132,9 @@ def frame(
     hdbg.dassert_lte(1, thickness)
     hdbg.dassert_lte(0, level)
     # Build the return value.
-    prefix = "#" * (level + 1) + " "
+    prefix = ""
+    if level:
+        prefix = "#" * level + " "
     ret = (
         (prefix + (line(char1, num_chars) + "\n") * thickness)
         + (prefix + message + "\n")
@@ -360,7 +364,7 @@ def to_str(
     frame_lev: int = 1,
     print_lhs: bool = True,
     char_separator: str = ",",
-    mode: str = "str",
+    mode: str = "repr",
 ) -> str:
     """
     Return a string with the value of a variable / expression / multiple
@@ -382,8 +386,6 @@ def to_str(
         If expression is a space-separated compound expression, e.g.,
         `to_str("exp1 exp2 ...")`, it is converted into:
         `exp1=val1, exp2=val2, ...`
-    :param print_lhs: whether we want to print the left hand side (i.e., exp1)
-    :param sep_char: character separating different values
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname

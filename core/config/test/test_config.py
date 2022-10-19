@@ -99,6 +99,7 @@ class Test_flat_config_set1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after implementation of `__str__`")
     def test_roundtrip_transform1(self) -> None:
         """
         Test serialization/deserialization for a flat config.
@@ -275,7 +276,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_existing_key_with_type1(self) -> None:
         """
-        nrows exists, so the default value is not used.
+        'nrows' exists, so the default value is not used.
         """
         config = _get_flat_config2(self)
         self.assertEqual(config.get("nrows", None, int), 10000)
@@ -283,7 +284,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_existing_key_with_type2(self) -> None:
         """
-        nrows3 is missing so the default value is used.
+        'nrows3' is missing so the default value is used.
         """
         config = _get_flat_config2(self)
         self.assertEqual(config.get("nrows3", 5, int), 5)
@@ -291,7 +292,8 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_existing_key_with_type3(self) -> None:
         """
-        nrows exists, so the default value is not used but the type is checked.
+        'nrows' exists, so the default value is not used but the type is
+        checked.
         """
         config = _get_flat_config2(self)
         with self.assertRaises(AssertionError) as cm:
@@ -305,7 +307,7 @@ class Test_flat_config_get1(hunitest.TestCase):
 
     def test_non_existing_key_with_type1(self) -> None:
         """
-        nrows exists (so the default value is not used) but it's int and not
+        'nrows' exists (so the default value is not used) but it's int and not
         str.
         """
         config = _get_flat_config2(self)
@@ -748,6 +750,7 @@ class Test_nested_config_misc1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: unskip after implementation of `__str__`")
     def test_roundtrip_transform1(self) -> None:
         """
         Test serialization/deserialization for nested config.
@@ -977,6 +980,7 @@ class Test_nested_config_update2(hunitest.TestCase):
             """
             self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip("CMTask2689: Add after implementation of OverwriteError.")
     def test_assert_on_overwrite2(self) -> None:
         """
         Update with update_mode="assert_on_overwrite" and values that are
@@ -1158,6 +1162,9 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    )
     def test_flatten2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1327,6 +1334,9 @@ class Test_from_env_var1(hunitest.TestCase):
 
 
 class Test_make_read_only1(hunitest.TestCase):
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
+    )
     def test_set1(self) -> None:
         """
         Setting a value that already exists on a read-only config raises.
@@ -1334,7 +1344,7 @@ class Test_make_read_only1(hunitest.TestCase):
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         config.update_mode = "overwrite"
-        config.clobber_mode = "allow_write_after_read"
+        config.clobber_mode = "allow_write_after_use"
         # Assigning values is not a problem, since the config is not read only.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
@@ -1359,6 +1369,9 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
+    )
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1425,7 +1438,7 @@ class Test_make_read_only1(hunitest.TestCase):
         config = _get_nested_config1(self)
         _LOG.debug("config=\n%s", config)
         config.update_mode = "overwrite"
-        config.clobber_mode = "allow_write_after_read"
+        config.clobber_mode = "allow_write_after_use"
         # Assign the value.
         self.assertEqual(config["zscore", "style"], "gaz")
         config["zscore", "style"] = "gasoline"
@@ -1613,6 +1626,9 @@ class Test_to_dict2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    )
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1783,11 +1799,11 @@ class Test_from_dict1(hunitest.TestCase):
 class Test_to_string_config(hunitest.TestCase):
     def helper(
         self,
-        value: Optional[str],
+        value: Any,
         should_be_pickleable_before: bool,
     ) -> str:
         # Set config.
-        nested = {
+        nested: Dict[str, Any] = {
             "key1": value,
             "key2": {"key3": {"key4": {}}},
         }
@@ -1846,7 +1862,7 @@ class Test_save_to_file(hunitest.TestCase):
         # Set config.
         log_dir = self.get_scratch_space()
         tag = "system_config.input"
-        nested = {
+        nested: Dict[str, Any] = {
             "key1": value,
             "key2": {"key3": {"key4": {}}},
         }
@@ -1896,12 +1912,12 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         - Check that config is what's expected, if exp is not `None`
         """
         _LOG.debug("\n" + hprint.frame(stmt))
-        exec(stmt, globals)
+        exec(stmt, globals)  # pylint: disable=exec-used
         #
         if mode == "str":
-            act = str(config)
+            act = str(config)  # pylint: disable=undefined-variable
         elif mode == "repr":
-            act = repr(config)
+            act = repr(config)  # pylint: disable=undefined-variable
         else:
             raise ValueError(f"Invalid mode={mode}")
         _LOG.debug("config=\n%s", act)
@@ -1912,29 +1928,29 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         return act
 
     def raise_stmt(
-        self, stmt: str, assertion_type: Any, exp: Optional[str], globals: Dict
-    ) -> str:
+        self, stmt: str, assertion_type: Any, exp: Optional[str], globals_: Dict
+    ) -> None:
         _LOG.debug("\n" + hprint.frame(stmt))
         with self.assertRaises(assertion_type) as cm:
-            exec(stmt, globals)
+            exec(stmt, globals_)  # pylint: disable=exec-used
         act = str(cm.exception)
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def run_steps_assert_string(
-        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals: Dict
+        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals_: Dict
     ) -> None:
         for data in workload:
             hdbg.dassert_eq(len(data), 2, "Invalid data='%s'", str(data))
             stmt, exp = data
-            self.execute_stmt(stmt, exp, mode, globals)
+            self.execute_stmt(stmt, exp, mode, globals_)
 
     def run_steps_check_string(
-        self, workload: List[str], mode: str, globals: Dict
+        self, workload: List[str], mode: str, globals_: Dict
     ) -> None:
         exp = None
         res = []
         for stmt in workload:
-            res_tmp = self.execute_stmt(stmt, exp, mode, globals)
+            res_tmp = self.execute_stmt(stmt, exp, mode, globals_)
             res.append(res_tmp)
         txt = "\n".join(res)
         self.check_string(txt, purify_text=True, fuzzy_match=True)
@@ -1973,6 +1989,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         mode = "str"
         self.run_steps_assert_string(workload, mode, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_assert_string_repr1(self) -> None:
         workload = []
         #
@@ -1997,7 +2014,6 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         self.run_steps_assert_string(workload, mode, globals())
 
     # ////////////////////////////////////////////////////////////////////////////
-
     def check_string_helper1(self, mode: str) -> None:
         workload = []
         #
@@ -2012,10 +2028,12 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         #
         self.run_steps_check_string(workload, mode, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__str__` method.")
     def test_check_string_str1(self) -> None:
         mode = "str"
         self.check_string_helper1(mode)
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_check_string_repr1(self) -> None:
         mode = "repr"
         self.check_string_helper1(mode)
@@ -2027,7 +2045,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 
 
 class Test_basic1(_Config_execute_stmt_TestCase1):
-
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test1(self) -> None:
         """
         Various assignments and their representations.
@@ -2035,7 +2053,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
-        clobber_mode = "allow_write_after_read"
+        clobber_mode = "allow_write_after_use"
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
@@ -2059,6 +2077,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         """
         self.raise_stmt(stmt, AssertionError, exp, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test2(self) -> None:
         """
         Various assignments and their representations.
@@ -2066,7 +2085,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
-        clobber_mode = "allow_write_after_read"
+        clobber_mode = "allow_write_after_use"
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
@@ -2085,11 +2104,12 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test3(self) -> None:
         mode = "repr"
         # Create a Config.
         update_mode = "overwrite"
-        clobber_mode = "assert_on_write_after_read"
+        clobber_mode = "assert_on_write_after_use"
         stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
         exp = ""
         self.execute_stmt(stmt, exp, mode, globals())
@@ -2099,198 +2119,3 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         key1 (marked_as_read=False): hello.txt <class 'str'>
         """
         self.execute_stmt(stmt, exp, mode, globals())
-
-
-# #############################################################################
-# Test_flat_config_clobber1
-# #############################################################################
-
-
-class Test_flat_config_clobber1(_Config_execute_stmt_TestCase1):
-
-    # TODO(gp): It's not easy to factor out the code around the `exec()` so
-    #  we copy-paste it for now.
-
-    def test1(self) -> None:
-        """
-        Test the following scenario:
-
-        - a flat config
-        - clobber_mode='assert_on_write_after_read'
-        - writing-after-reading asserts
-        """
-        mode = "repr"
-        # Create a Config.
-        update_mode = "overwrite"
-        clobber_mode = "assert_on_write_after_read"
-        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
-        exp = ""
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Assign a value.
-        stmt = 'config["key1"] = "hello.txt"'
-        exp = r"""
-        key1 (marked_as_read=False, val_type=str): hello.txt
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Overwrite a value.
-        stmt = 'config["key1"] = "test_name.txt"'
-        exp = r"""
-        key1 (marked_as_read=False, val_type=str): test_name.txt
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Read the value.
-        stmt = 'config.mark_as_read()'
-        exp = r"""
-        key1 (marked_as_read=False, val_type=str): test_name.txt
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Write after read asserts.
-        stmt = 'config["key1"] = "new_name.txt"'
-        exp = """
-        Trying to overwrite old value 'test_name.txt' with new value 'new_name.txt' for key 'key1' with clobber_mode=assert_on_write_after_read
-        self=
-          key1:
-            test_name.txt
-        """
-        self.raise_stmt(stmt, cconfig.ClobberError, exp, globals())
-
-    def test2(self) -> None:
-        """
-        Test the following scenario:
-
-        - a flat config
-        - clobber_mode='allow_write_after_read'
-        - writing-after-reading doesn't asserts
-
-        Like test_flat_config_assert_on_write_after_read1 but allowing to write
-        after read.
-        """
-        mode = "repr"
-        # Create a Config.
-        update_mode = "overwrite"
-        clobber_mode = "allow_write_after_read"
-        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
-        exp = ""
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Assign a value.
-        stmt = 'config["key1"] = "hello.txt"'
-        exp = r"""
-        key1 (marked_as_read=False): hello.txt <class 'str'>
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Overwrite a value.
-        stmt = 'config["key1"] = "test_name.txt"'
-        exp = r"""
-        key1 (marked_as_read=False): test_name.txt <class 'str'>
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Read the value.
-        stmt = '_ = config["key1"]'
-        exp = r"""
-        key1 (marked_as_read=True): test_name.txt <class 'str'>
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Write after read doesn't asserts.
-        stmt = 'config["key1"] = "new_name.txt"'
-        exp = """
-        key1 (marked_as_read=True): new_name.txt <class 'str'>
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-
-
-# #############################################################################
-# Test_nested_config_clobber1
-# #############################################################################
-
-
-class Test_nested_config_clobber1(_Config_execute_stmt_TestCase1):
-
-    def test1(self) -> None:
-        """
-        Test the following scenario:
-
-        - a nested config
-        - clobber_mode='assert_on_write_after_read'
-        - writing-after-reading asserts
-        """
-        mode = "repr"
-        # Create a Config.
-        update_mode = "overwrite"
-        clobber_mode = "assert_on_write_after_read"
-        stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
-        exp = ""
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Assign a value.
-        stmt = 'config["read_data", "filename"] = "hello.txt"'
-        exp = r"""
-        read_data (marked_as_read=False, val_type=core.config.config_.Config):
-          filename (marked_as_read=False, val_type=str): hello.txt
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-        # Overwrite a value.
-        stmt = 'config["read_data"] = "test_name.txt"'
-        exp = r"""
-        read_data (marked_as_read=False): test_name.txt <class 'str'>
-        """
-        self.execute_stmt(stmt, exp, mode, globals())
-    #     # Read the value.
-    #     stmt = '_ = config["read_data"]'
-    #     exp = r"""
-    #     read_data (marked_as_read=True): test_name.txt <class 'str'>
-    #     """
-    #     self.execute_stmt(stmt, exp, mode, globals())
-    #     # Write after read asserts.
-    #     stmt = 'config["read_data"] = "new_name.txt"'
-    #     exp = """
-    #     Trying to overwrite old value 'test_name.txt' with new value 'new_name.txt' for key 'read_data' with clobber_mode=assert_on_write_after_read
-    #     self=
-    #       read_data:
-    #         test_name.txt
-    #     """
-    #     self.raise_stmt(stmt, cconfig.ClobberError, exp, globals())
-    #
-    # def test2(self) -> None:
-    #     """
-    #     Test the following scenario:
-    #
-    #     - a nested config
-    #     - clobber_mode='allow_write_after_read'
-    #     - writing-after-reading doesn't asserts
-    #
-    #     Like test_flat_config_assert_on_write_after_read1 but allowing to write
-    #     after read.
-    #     """
-    #     mode = "repr"
-    #     # Create a Config.
-    #     update_mode = "overwrite"
-    #     clobber_mode = "allow_write_after_read"
-    #     stmt = f'config = cconfig.Config(update_mode="{update_mode}", clobber_mode="{clobber_mode}")'
-    #     exp = ""
-    #     self.execute_stmt(stmt, exp, mode, globals())
-    #     # Assign a value.
-    #     stmt = 'config["read_data"] = "hello.txt"'
-    #     exp = r"""
-    #     read_data (marked_as_read=False): hello.txt <class 'str'>
-    #     """
-    #     self.execute_stmt(stmt, exp, mode, globals())
-    #     # Overwrite a value.
-    #     stmt = 'config["read_data"] = "test_name.txt"'
-    #     exp = r"""
-    #     read_data (marked_as_read=False): test_name.txt <class 'str'>
-    #     """
-    #     self.execute_stmt(stmt, exp, mode, globals())
-    #     # Read the value.
-    #     stmt = '_ = config["read_data"]'
-    #     exp = r"""
-    #     read_data (marked_as_read=True): test_name.txt <class 'str'>
-    #     """
-    #     self.execute_stmt(stmt, exp, mode, globals())
-    #     # Write after read doesn't asserts.
-    #     stmt = 'config["read_data"] = "new_name.txt"'
-    #     exp = """
-    #     read_data (marked_as_read=True): new_name.txt <class 'str'>
-    #     """
-    #     self.execute_stmt(stmt, exp, mode, globals())
-
-
-# TODO(gp): Unit tests all the functions.
