@@ -1806,7 +1806,7 @@ class Test_to_string(hunitest.TestCase):
             "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
-        # Check if function was succesfully applied on config.
+        # Check if function was successfully applied on config.
         mode = "verbose"
         actual = config.to_string(mode)
         return actual

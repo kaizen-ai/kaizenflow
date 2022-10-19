@@ -23,6 +23,7 @@ import helpers.hdict as hdict
 import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -603,6 +604,19 @@ class Config:
         for v in self._config.values():
             if isinstance(v, Config):
                 v.mark_read_only(value)
+
+    def save_to_file(self, log_dir: str, tag: str) -> None:
+        """
+        Save config as a string.
+        Saves file in a log dir:
+        - ${log_dir}/{tag}.txt
+
+        :param tag: basename of the files to save (e.g., "system_config.input")
+        """
+        file_name = os.path.join(log_dir, f"{tag}.txt")
+        mode = "verbose"
+        config_string = repr(mode)
+        hio.to_file(file_name, config_string)
 
     # /////////////////////////////////////////////////////////////////////////////
     # From / to functions.
