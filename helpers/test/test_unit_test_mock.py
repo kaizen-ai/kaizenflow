@@ -13,7 +13,7 @@ def _check(self: Any, str_to_eval: str, exp_val: str) -> None:
     Evaluate `str_to_eval` and compare it to expected value `exp_val`.
     """
     # The variable lives 3 levels in the stack trace from here.
-    act_val = hprint.to_str(str_to_eval, frame_lev=3, print_lhs=False)
+    act_val = hprint.to_str(str_to_eval, frame_lev=3)
     _LOG.debug("%s", act_val)
     self.assert_equal(act_val, exp_val, purify_text=True)
 
@@ -71,12 +71,12 @@ class Test_Mock1(_TestCase):
         """
         obj = umock.Mock()
         # obj is a Mock object.
-        self.check("obj", "<Mock id='xxx'>")
+        self.check("obj", "obj=<Mock id='xxx'>")
         # Calling an attribute creates a Mock.
-        self.check("obj.a", "<Mock name='mock.a' id='xxx'>")
+        self.check("obj.a", "obj.a=<Mock name='mock.a' id='xxx'>")
         # Assigning an attribute in the mock creates an attribute.
         obj.a = 3
-        self.check("obj.a", "3")
+        self.check("obj.a", "obj.a=3")
 
     def test_lazy_methods1(self) -> None:
         """
@@ -84,16 +84,16 @@ class Test_Mock1(_TestCase):
         """
         # Mock json module `import json`.
         json = umock.Mock()
-        self.check("json", "<Mock id='xxx'>")
+        self.check("json", "json=<Mock id='xxx'>")
         # Create a function on the fly that returns a mock.
         v = json.dumps()
         self.assertTrue(isinstance(v, umock.Mock))
-        self.check("json.dumps", "<Mock name='mock.dumps' id='xxx'>")
+        self.check("json.dumps", "json.dumps=<Mock name='mock.dumps' id='xxx'>")
         # The mocked function and the returned value from a mock function are
         # different mocks.
-        self.check("v", "<Mock name='mock.dumps()' id='xxx'>")
-        self.check("type(v)", "<class 'unittest.mock.Mock'>")
-        self.check("json.dumps()", "<Mock name='mock.dumps()' id='xxx'>")
+        self.check("v", "v=<Mock name='mock.dumps()' id='xxx'>")
+        self.check("type(v)", "type(v)=<class 'unittest.mock.Mock'>")
+        self.check("json.dumps()", "json.dumps()=<Mock name='mock.dumps()' id='xxx'>")
         self.assertTrue(isinstance(json.dumps, umock.Mock))
         self.assertNotEqual(id(v), id(json.dumps))
 
@@ -112,7 +112,7 @@ class Test_Mock1(_TestCase):
     def test_str1(self) -> None:
         mock = umock.Mock()
         # Calling `str()` on a mock creates a mock on the fly.
-        self.check("str(mock)", "\"<Mock id='xxx'>\"")
+        self.check("str(mock)", "str(mock)=\"<Mock id='xxx'>\"")
         # Assign a mocked function returning "hello" to mock.__str__.
         mock.__str__ = umock.Mock(return_value="hello")
         self.assertEqual(str(mock), "hello")
@@ -219,7 +219,7 @@ class Test_Mock_Class_with_decorator1(_TestCase):
         obj = _Class()
         # Check.
         # self.assertIs(mock_method, umock.MagicMock)
-        self.check("mock_method", "<MagicMock name='get_a' id='xxx'>")
+        self.check("mock_method", "mock_method=<MagicMock name='get_a' id='xxx'>")
         self.assertEqual(obj.get_a(), 4)
         mock_method.assert_called()
         obj.get_a.assert_called()
@@ -239,14 +239,14 @@ class Test_Mock_Class_with_context_manager1(_TestCase):
         with umock.patch.object(_Class, "get_a", return_value=4):
             obj = _Class()
             # Check.
-            self.check("obj.get_a", "<MagicMock name='get_a' id='xxx'>")
+            self.check("obj.get_a", "obj.get_a=<MagicMock name='get_a' id='xxx'>")
             self.assertEqual(obj.get_a(), 4)
             obj.get_a.assert_called()
         # Outside the context manager everything is normal.
         obj = _Class()
         # Check.
         self.check("obj.get_a",
-                "<bound method _Class.get_a of <helpers.test.test_unit_test_mock._Class object at 0x>>")
+                "obj.get_a=<bound method _Class.get_a of <helpers.test.test_unit_test_mock._Class object at 0x>>")
         self.assertEqual(obj.get_a(), 3)
 
     def test_dict1(self) -> None:
