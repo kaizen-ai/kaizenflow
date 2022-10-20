@@ -775,7 +775,9 @@ class Config:
         hdbg.dassert(nested_dict)
         iter_ = hdict.get_nested_dict_iterator(nested_dict)
         flattened_config = collections.OrderedDict(iter_)
-        return Config._get_config_from_flattened_dict(flattened_config)
+        config_from_dict = Config._get_config_from_flattened_dict(flattened_config)
+        _LOG.debug("config_from_dict=%s", str(config_from_dict))
+        return config_from_dict
 
     # /////////////////////////////////////////////////////////////////////////////
 
