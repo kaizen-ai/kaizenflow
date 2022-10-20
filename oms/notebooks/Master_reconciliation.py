@@ -141,6 +141,9 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 )
 # TODO(gp): Move it to annotate_forecasts?
 research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+# Align index with prod and sim portfolio.
+research_portfolio_df = research_portfolio_df.loc[start_timestamp:end_timestamp]
+research_portfolio_stats_df = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
 #
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
@@ -148,35 +151,41 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # # Load logged portfolios
 
 # %%
-research_portfolio_df_loc = research_portfolio_df.loc[start_timestamp:end_timestamp]
-research_portfolio_stats_df_loc = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
-research_portfolio_dict = {
-    "research_portfolio_df": research_portfolio_df_loc,
-    "research_portfolio_stats_df": research_portfolio_stats_df_loc
-}
+portfolio_config = cconfig.Config.from_dict(
+    {
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        "freq": config["meta"]["bar_duration"],
+        "normalize_bar_times": True,
+    }
+)
+portfolio_config
 
 # %%
-portfolio_config_dict = {
-    "start_timestamp": start_timestamp,
-    "end_timestamp": end_timestamp,
-    "freq": config["meta"]["bar_duration"],
-    "normalize_bar_times": True,
-}
-portfolio_df_dict = oms.load_portfolio_dfs(
-    portfolio_config_dict,
+portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
     portfolio_path_dict,
-    research_portfolio_dict
+    portfolio_config,
 )
-hpandas.df_to_str(portfolio_df_dict["portfolio_stats_df"], num_rows=5, log_level=logging.INFO)
+# Add research portfolio.
+portfolio_dfs["research"] = research_portfolio_df
+#
+hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
+
+# %%
+# Add research df and combine into a single df.
+portfolio_stats_dfs["research"] = research_portfolio_stats_df
+portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+#
+hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %%
 bars_to_burn = 1
-coplotti.plot_portfolio_stats(portfolio_df_dict["portfolio_stats_df"].iloc[bars_to_burn:])
+coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
 
 # %%
 stats_computer = dtfmod.StatsComputer()
 stats_sxs, _ = stats_computer.compute_portfolio_stats(
-    portfolio_df_dict["portfolio_stats_df"].iloc[bars_to_burn:],
+    portfolio_stats_df.iloc[bars_to_burn:],
     config["meta"]["bar_duration"]
 )
 display(stats_sxs)
@@ -187,15 +196,15 @@ display(stats_sxs)
 # %%
 dtfmod.compute_correlations(
     research_portfolio_df,
-    portfolio_df_dict["portfolio_df"]["prod"],
+    portfolio_dfs["prod"],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
 
 # %%
 dtfmod.compute_correlations(
-    portfolio_df_dict["portfolio_df"]["prod"],
-    portfolio_df_dict["portfolio_df"]["sim"],
+    portfolio_dfs["prod"],
+    portfolio_dfs["sim"],
     allow_unequal_indices=False,
     allow_unequal_columns=False,
 )
@@ -203,7 +212,7 @@ dtfmod.compute_correlations(
 # %%
 dtfmod.compute_correlations(
     research_portfolio_df,
-    portfolio_df_dict["portfolio_df"]["sim"],
+    portfolio_dfs["sim"],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
