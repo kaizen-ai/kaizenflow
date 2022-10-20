@@ -61,17 +61,12 @@ system_log_path_dict = dict(config["system_log_path"].to_dict())
 system_log_path_dict
 
 # %%
-config_name = "system_config.input.values_as_strings.pkl"
 configs = oms.get_config_from_pickle(system_log_path_dict)
-prod_config = configs["prod"]
-sim_config = configs["sim"]
-
-# %%
 # Diff configs.
 diff_config = cconfig.build_config_diff_dataframe(
     {
-        "prod_config": prod_config,
-        "sim_config": sim_config,
+        "prod_config": configs["prod"],
+        "sim_config": configs["sim"],
     }
 )
 diff_config 
