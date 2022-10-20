@@ -109,10 +109,7 @@ async def process_forecasts(
               (used in real-time mode)
         - `log_dir`: directory for logging state
     """
-    _LOG.debug(
-        "\n%s",
-        hprint.frame("process_forecast")
-    )
+    _LOG.debug("\n%s", hprint.frame("process_forecast"))
     _LOG.debug("prediction_df=\n%s", hpandas.df_to_str(prediction_df))
     _LOG.debug("volatility_df=\n%s", hpandas.df_to_str(volatility_df))
     _LOG.debug("portfolio=\n%s", portfolio)
@@ -329,7 +326,7 @@ async def process_forecasts(
                 "2) Submitting orders: timestamp=%s current_bar_time=%s"
                 % (wall_clock_timestamp, current_bar_time),
                 char1="#",
-                ),
+            ),
         )
         await target_position_and_order_generator.submit_orders(orders)
         _LOG.debug(
@@ -393,7 +390,8 @@ def _skip_generating_orders(
     """
     Determine whether to skip processing a bar or not.
 
-    This decision is based on the current time and on the ATH / trading time limits.
+    This decision is based on the current time and on the ATH / trading
+    time limits.
     """
     _LOG.debug(
         hprint.to_str(

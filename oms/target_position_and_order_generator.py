@@ -20,7 +20,6 @@ import helpers.hio as hio
 import helpers.hobject as hobject
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hwall_clock_time as hwacltim
 import oms.call_optimizer as ocalopti
 import oms.cc_optimizer_utils as occoputi
 import oms.ccxt_broker as occxbrok
@@ -84,7 +83,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Save order config.
         self._order_dict = order_dict
         _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
-        _ = hdict.typed_get(order_dict, "order_duration_in_mins", expected_type=int)
+        _ = hdict.typed_get(
+            order_dict, "order_duration_in_mins", expected_type=int
+        )
         self._offset_min = pd.DateOffset(
             minutes=order_dict["order_duration_in_mins"]
         )
@@ -259,7 +260,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
 
     async def submit_orders(self, orders: List[omorder.Order]) -> None:
         """
-        Submit `orders` to the broker confirming receipt and log the object state.
+        Submit `orders` to the broker confirming receipt and log the object
+        state.
 
         :param orders: list of orders to execute
         """
@@ -351,10 +353,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         backend = self._optimizer_dict["backend"]
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
-            asset_ids_to_decimals = (
-                occxbrok.subset_market_info(
-                    market_info, "amount_precision"
-                )
+            asset_ids_to_decimals = occxbrok.subset_market_info(
+                market_info, "amount_precision"
             )
             _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
         else:
@@ -464,7 +464,9 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
 
         :param predictions: predictions indexed by `asset_id`
         """
-        marked_to_market_df = self._portfolio.mark_to_market().set_index("asset_id")
+        marked_to_market_df = self._portfolio.mark_to_market().set_index(
+            "asset_id"
+        )
         # If there are predictions for assets not currently in `marked_to_market_df`,
         # then attempt to price those assets and extend `marked_to_market_df`
         # (imputing 0's for the holdings).
@@ -488,7 +490,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         marked_to_market_df.reset_index(inplace=True)
         _LOG.debug(
             "marked_to_market dataframe=\n%s",
-            hpandas.df_to_str(marked_to_market_df)
+            hpandas.df_to_str(marked_to_market_df),
         )
         marked_to_market_df.rename(
             columns={

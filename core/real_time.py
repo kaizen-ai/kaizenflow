@@ -450,9 +450,7 @@ async def execute_with_real_time_loop(
                 curr_time = wall_clock_time.time()
                 is_done = curr_time >= rt_timeout_in_secs_or_time
                 _LOG.debug(
-                    hprint.to_str(
-                        "rt_timeout_in_secs_or_time curr_time is_done"
-                    )
+                    hprint.to_str("rt_timeout_in_secs_or_time curr_time is_done")
                 )
                 if is_done:
                     _LOG.info(

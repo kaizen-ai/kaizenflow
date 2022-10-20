@@ -19,7 +19,9 @@ class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
         ombroker.Fill._fill_id = 0
         omorder.Order._order_id = 0
 
-    def get_target_position_and_order_generator1(self) -> otpaorge.TargetPositionAndOrderGenerator:
+    def get_target_position_and_order_generator1(
+        self,
+    ) -> otpaorge.TargetPositionAndOrderGenerator:
         self.reset()
         with hasynci.solipsism_context() as event_loop:
             (

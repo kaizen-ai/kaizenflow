@@ -99,8 +99,8 @@ def checked_get(
     key: Any,
 ) -> Any:
     """
-    Ensure that the key exists and print a decent error message in case of error,
-    instead of a generic `TypeError`.
+    Ensure that the key exists and print a decent error message in case of
+    error, instead of a generic `TypeError`.
     """
     hdbg.dassert_in(key, dict_)
     return dict_[key]
