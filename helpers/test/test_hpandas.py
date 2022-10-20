@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
@@ -2674,4 +2675,138 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
             expected_column_names,
             expected_column_unique_values,
             expected_signature,
+        )
+
+
+class Test_compute_duration_df(hunitest.TestCase):
+    """
+    Compute timestamp stats from dfs and check the intersection.
+    """
+
+    @staticmethod
+    def get_dict_with_dfs() -> Dict[str, pd.DataFrame]:
+        timestamp_index1 = [
+            pd.Timestamp("2022-01-01 21:00:00+00:00"),
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:05:00+00:00"),
+            pd.Timestamp("2022-01-01 21:06:00+00:00"),
+            pd.Timestamp("2022-01-01 21:06:00+00:00"),
+        ]
+        timestamp_index2 = [
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+            pd.Timestamp("2022-01-01 21:05:00+00:00"),
+        ]
+        timestamp_index3 = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+            pd.Timestamp("2022-01-01 21:04:00+00:00"),
+        ]
+        #
+        value1 = {"value1": [None, None, 1, 2, 3, 4, 5, None]}
+        value2 = {"value2": [1, 2, 3, None]}
+        value3 = {"value3": [None, None, 1, 2]}
+        #
+        df1 = pd.DataFrame(value1, index=timestamp_index1)
+        df2 = pd.DataFrame(value2, index=timestamp_index2)
+        df3 = pd.DataFrame(value3, index=timestamp_index3)
+        #
+        tag_to_df = {
+            "tag1": df1,
+            "tag2": df2,
+            "tag3": df3,
+        }
+        return tag_to_df
+
+    def intersection_helper(
+        self,
+        valid_intersect: bool,
+        expected_start_timestamp: pd.Timestamp,
+        expected_end_timestamp: pd.Timestamp,
+    ) -> None:
+        """
+        Checks if the intersection is valid and the same amongst all dfs.
+        """
+        tag_to_df = self.get_dict_with_dfs()
+        _, tag_dfs = hpandas.compute_duration_df(
+            tag_to_df, valid_intersect=valid_intersect, intersect_dfs=True
+        )
+        # Collect all start timestamps.
+        start_timestamps = [tag_dfs[tag].index.min() for tag in tag_dfs]
+        # Check that all start timestamps are equal.
+        start_equal = all(
+            element == start_timestamps[0] for element in start_timestamps
+        )
+        self.assertTrue(start_equal)
+        # Check that start intersection is correct.
+        required_start_intersection = expected_start_timestamp
+        self.assertEqual(start_timestamps[0], required_start_intersection)
+        # Collect all end timestamps.
+        end_timestamps = [tag_dfs[tag].index.max() for tag in tag_dfs]
+        # Check that all end timestamps are equal.
+        end_equal = all(
+            element == end_timestamps[0] for element in end_timestamps
+        )
+        self.assertTrue(end_equal)
+        # Check that end intersection is correct.
+        required_end_intersection = expected_end_timestamp
+        self.assertEqual(end_timestamps[0], required_end_intersection)
+
+    def test1(self) -> None:
+        """
+        Check only timestamp stats.
+        """
+        tag_to_df = self.get_dict_with_dfs()
+        df_stats, _ = hpandas.compute_duration_df(tag_to_df)
+        expected_length = 3
+        expected_column_names = [
+            "max_index",
+            "max_valid_index",
+            "min_index",
+            "min_valid_index",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[tag1, tag3]
+        columns=min_index,max_index,min_valid_index,max_valid_index
+        shape=(3, 4)
+                            min_index                  max_index            min_valid_index            max_valid_index
+        tag1  2022-01-01 21:00:00+00:00  2022-01-01 21:06:00+00:00  2022-01-01 21:02:00+00:00  2022-01-01 21:06:00+00:00
+        tag2  2022-01-01 21:02:00+00:00  2022-01-01 21:05:00+00:00  2022-01-01 21:02:00+00:00  2022-01-01 21:04:00+00:00
+        tag3  2022-01-01 21:01:00+00:00  2022-01-01 21:04:00+00:00  2022-01-01 21:03:00+00:00  2022-01-01 21:04:00+00:00
+        """
+        self.check_df_output(
+            df_stats,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test_intersection1(self) -> None:
+        """
+        Modify initial DataFrames in dictionary with non-valid intersection
+        (incl NaNs).
+        """
+        valid_intersect = False
+        expected_start_timestamp = pd.Timestamp("2022-01-01 21:02:00+00:00")
+        expected_end_timestamp = pd.Timestamp("2022-01-01 21:04:00+00:00")
+        self.intersection_helper(
+            valid_intersect, expected_start_timestamp, expected_end_timestamp
+        )
+
+    def test_intersection2(self) -> None:
+        """
+        Modify initial DataFrames in dictionary with valid intersection (ecxl. NaNs).
+        """
+        valid_intersect = True
+        expected_start_timestamp = pd.Timestamp("2022-01-01 21:03:00+00:00")
+        expected_end_timestamp = pd.Timestamp("2022-01-01 21:04:00+00:00")
+        self.intersection_helper(
+            valid_intersect, expected_start_timestamp, expected_end_timestamp
         )
