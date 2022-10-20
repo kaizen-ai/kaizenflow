@@ -1,6 +1,6 @@
 v3
 - 2022-10-19
-- Expanded to get the best intersection with CCXT futures (v7)
+- Expanded to get the best intersection with CCXT universe `v7`
 
 top30_20220706
 - 2022-07-07
