@@ -13,7 +13,7 @@ Use as:
    --contract_type 'futures' \
    --db_table 'ccxt_ohlcv_preprod' \
    --aws_profile 'ck' \
-   --resample_1min True \
+   --resample_1min \
    --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
 
 Import as:
@@ -22,19 +22,24 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
 import logging
+from re import S
 from typing import List
+import os
 
 import pandas as pd
 import psycopg2
 
 import helpers.hdbg as hdbg
+import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
+import im_v2.common.universe.full_symbol as imvcufusy
 
 _LOG = logging.getLogger(__name__)
 
@@ -96,12 +101,22 @@ def _parse() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--resample_1min",
-        action="store",
-        required=False,
-        default=True,
-        type=bool,
-        help="(Optional) If the data should be resampled to 1 min'",
+        action="store_true",
+        #required=True,
+        #default=False,
+        #type=bool,
+        help="If the data should be resampled to 1 min'",
     )
+
+    parser.add_argument(
+        "--resample_1sec",
+        action="store_true",
+        #required=True,
+        #default=False,
+        #type=bool,
+        help="If the data should be resampled to 1 sec'",
+    )
+
     parser = hparser.add_verbosity_arg(parser)
     # For `--s3_path` argument we only specify the top level path for the daily staged data, 
     # the code handles appending the exchange, e.g. `binance` and data type, e.g. `bid_ask`
@@ -120,23 +135,12 @@ class RealTimeHistoricalReconciler:
         self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
             args.resample_1min, db_connection, args.db_table
         )
-        # Initialize CC client.
-        universe_version = None
-        partition_mode = "by_year_month"
-        data_snapshot = ""
-        self.cc_daily_pq_client = iccdc.CryptoChassisHistoricalPqByTileClient(
-            universe_version,
-            args.resample_1min,
-            args.s3_path,
-            partition_mode,
-            args.data_type,
-            args.contract_type,
-            data_snapshot,
-            aws_profile=args.aws_profile,
-        )
+        self.aws_profile = args.aws_profile
+        self.s3_path = os.path.join(args.s3_path, args.exchange_id) + "/"
         # Process time period.
         self.start_ts = pd.Timestamp(args.start_timestamp, tz="UTC")
         self.end_ts = pd.Timestamp(args.end_timestamp, tz="UTC")
+        self.resample_1sec = args.resample_1sec
         #
         self.universe = self._get_universe()
         self.expected_columns = {
@@ -199,13 +203,14 @@ class RealTimeHistoricalReconciler:
 
         duplicate_columns = ["full_symbol", "timestamp"]
         # Sort values.
-        data = data.sort_values("knowledge_timestamp", ascending=False)
         use_index = False
         _LOG.info("Dataframe length before duplicate rows removed: %s", len(data))
         # Remove duplicates.
         data = hpandas.drop_duplicates(
             data, use_index, subset=duplicate_columns
         ).sort_index()
+        # Sort values.
+        data = data.sort_values("timestamp", ascending=False)
         _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
         return data
 
@@ -228,6 +233,30 @@ class RealTimeHistoricalReconciler:
         df = df.rename(columns=col_dict)
         #
         return df
+
+    @staticmethod
+    def _resample_to_1sec(data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Resample the data to 1 second.
+
+        :param data: raw data
+        :return: data resampled to 1 sec
+        """
+        data = data.set_index("timestamp")
+        data_resampled = []
+        for full_symbol in data["full_symbol"].unique():
+            data_part = data[data["full_symbol"] == full_symbol]
+            # Resample to 1 sec.
+            data_part = (
+                data_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
+                # Label right is used to match conventions used by CryptoChassis.
+                .resample("S", label="right").mean()
+            )
+            # Add the full_symbol column back.
+            data_part["full_symbol"] = full_symbol
+            data_resampled.append(data_part)
+        df_resampled = pd.concat(data_resampled)
+        return df_resampled.reset_index()
 
     def run(self) -> None:
         """
@@ -262,36 +291,57 @@ class RealTimeHistoricalReconciler:
             ccxt_rt = self._clean_data_for_orderbook_level(ccxt_rt)
         # Remove duplicated columns and reindex real time data.
         _LOG.info("Filter duplicates in real time data")
-        ccxt_rt_reindex = self._preprocess_data(ccxt_rt)
+        ccxt_rt = self._preprocess_data(ccxt_rt)
+    
+        if self.resample_1sec:
+            ccxt_rt = self._resample_to_1sec(ccxt_rt)
+        # Reindex the data.
+        ccxt_rt_reindex = ccxt_rt.set_index(["timestamp", "full_symbol"])
         return ccxt_rt_reindex
 
     def _get_daily_data(self) -> pd.DataFrame:
         """
         Load and process daily data.
         """
-        cc_daily = self.cc_daily_pq_client.read_data(
-            self.universe, self.start_ts, self.end_ts, None, "assert"
+        # List files for given exchange.
+        timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+            "by_year_month", self.start_ts, self.end_ts
         )
+        # Read data corresponding to given time range.
+        cc_daily = hparque.from_parquet(
+            self.s3_path, filters=timestamp_filters, aws_profile=self.aws_profile
+        )
+        if "timestamp" in cc_daily.columns:
+            # Sometimes the data contain `timestamp` column which is not needed
+            # since there is a timestamp in the index. 
+            cc_daily = cc_daily.drop(columns=["timestamp"])
         cc_daily = cc_daily.reset_index()
+        cc_daily = cc_daily.loc[cc_daily["timestamp"] >= self.start_ts]
+        cc_daily = cc_daily.loc[cc_daily["timestamp"] <= self.end_ts]
+        # Build full symbol columns.
+        cc_daily["full_symbol"] = imvcufusy.build_full_symbol(cc_daily["exchange_id"], cc_daily["currency_pair"])
+        # Remove deprecated columns.
+        cc_daily = cc_daily.drop(columns=["exchange_id", "currency_pair"])
         # Remove duplicated columns and reindex daily data.
         _LOG.info("Filter duplicates in daily data")
         cc_daily = self._preprocess_data(cc_daily)
-        return cc_daily
+        # Reindex the data.
+        cc_reindex = cc_daily.set_index(["timestamp", "full_symbol"])
+        return cc_reindex
 
-    def _preprocess_data(self, data) -> pd.DataFrame:
+    def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Filter duplicates and reindex the data.
+        Filter rows and columns..
 
         :param data: the data to process
-        :return: reindexed data with no duplicates
+        :return: filtered data with no duplicates
         """
         # Remove duplicated rows in the data.
         data = self._filter_duplicates(data)
         expected_columns = self.expected_columns[self.data_type]
-        # Reindex daily data.
+        # Filter the columns.
         data = data[expected_columns]
-        data_reindex = data.set_index(["timestamp", "full_symbol"])
-        return data_reindex
+        return data
 
     def _compare_ohlcv(
         self, rt_data: pd.DataFrame, daily_data: pd.DataFrame
@@ -474,7 +524,18 @@ class RealTimeHistoricalReconciler:
         # CCXT real time universe.
         ccxt_universe = self.ccxt_rt_im_client.get_universe()
         # CC daily universe.
-        cc_universe = self.cc_daily_pq_client.get_universe()
+        cc_universe = ["binance::ADA_USDT",
+            'binance::BNB_USDT',
+            'binance::BTC_USD',
+            'binance::BTC_USDT',
+            'binance::DOGE_USDT',
+            'binance::DOT_USDT',
+            'binance::EOS_USDT',
+            'binance::ETH_USD',
+            'binance::ETH_USDT',
+            'binance::SOL_USDT',
+            'binance::XRP_USDT'
+        ]
         # Intersection of universes that will be used for analysis.
         universe = list(set(ccxt_universe) & set(cc_universe))
         return universe
