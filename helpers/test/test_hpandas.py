@@ -10,7 +10,6 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
@@ -2724,9 +2723,9 @@ class Test_compute_duration_df(hunitest.TestCase):
         return tag_to_df
 
     def intersection_helper(
-        self, 
-        valid_intersect: bool, 
-        expected_start_timestamp: pd.Timestamp, 
+        self,
+        valid_intersect: bool,
+        expected_start_timestamp: pd.Timestamp,
         expected_end_timestamp: pd.Timestamp,
     ) -> None:
         """
@@ -2802,7 +2801,8 @@ class Test_compute_duration_df(hunitest.TestCase):
 
     def test_intersection2(self) -> None:
         """
-        Modify initial DataFrames in dictionary with valid intersection (ecxl. NaNs).
+        Modify initial DataFrames in dictionary with valid intersection
+        (excluding NaNs).
         """
         valid_intersect = True
         expected_start_timestamp = pd.Timestamp("2022-01-01 21:03:00+00:00")
