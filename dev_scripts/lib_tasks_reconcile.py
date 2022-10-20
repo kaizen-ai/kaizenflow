@@ -148,9 +148,9 @@ def reconcile_dump_market_data(
     ctx,
     run_date=None,
     dst_dir=None,
-    prevent_overwriting=True,
     incremental=False, 
     interactive=False,
+    prevent_overwriting=True,
 ):  # type: ignore
     # pylint: disable=line-too-long
     """
@@ -269,8 +269,8 @@ def reconcile_copy_prod_data(
     ctx,
     run_date=None,
     dst_dir=None,
-    prevent_overwriting=True,
     stage="preprod",
+    prevent_overwriting=True,
 ):  # type: ignore
     """
     Copy the output of the prod run to a shared folder.
@@ -312,8 +312,8 @@ def reconcile_run_notebook(
     ctx,
     run_date=None,
     dst_dir=None,
-    prevent_overwriting=True,
     incremental=False,
+    prevent_overwriting=True,
 ):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
@@ -396,8 +396,8 @@ def reconcile_dump_tca_data(
     ctx,
     run_date=None,
     dst_dir=None,
-    prevent_overwriting=True,
     incremental=False,
+    prevent_overwriting=True,
 ):  # type: ignore
     """
     Retrieve and save the TCA data.
