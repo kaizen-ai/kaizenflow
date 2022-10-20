@@ -319,7 +319,14 @@ class Config:
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
-            hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
+            if not(val):
+            # If the value is an empty `dict`, convert to empty string.
+            # This is used for back compatibility with cases when config
+            #  has empty leaves, see 
+            #  `core/config/test/test_config.py::Test_nested_config_update1::test_update3`
+                val = ""
+            else:
+                hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
         # # To debug who is setting a certain key.
         # if False:
         #     _LOG.info("key.set=%s", str(key))
@@ -567,8 +574,6 @@ class Config:
                     assign_new_value = True
             # Assign the value, if needed.
             _LOG.debug(hprint.to_str("assign_new_value"))
-            if not val:
-                val = Config()
             if assign_new_value:
                 self.__setitem__(key, val)
 
