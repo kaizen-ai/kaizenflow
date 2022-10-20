@@ -979,7 +979,7 @@ class Test_nested_config_update2(hunitest.TestCase):
             """
             self.assert_equal(act, exp, fuzzy_match=True)
 
-    # @pytest.mark.skip("CMTask2689: Add after implementation of OverwriteError.")
+    @pytest.mark.skip("CMTask2689: Add after implementation of OverwriteError.")
     def test_assert_on_overwrite2(self) -> None:
         """
         Update with update_mode="assert_on_overwrite" and values that are
@@ -1161,9 +1161,7 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    # @pytest.mark.skip(
-    #     "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
-    # )
+    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
     def test_flatten2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1333,9 +1331,7 @@ class Test_from_env_var1(hunitest.TestCase):
 
 
 class Test_make_read_only1(hunitest.TestCase):
-    # @pytest.mark.skip(
-    #     "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
-    # )
+    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
     def test_set1(self) -> None:
         """
         Setting a value that already exists on a read-only config raises.
@@ -1368,9 +1364,7 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-#    @pytest.mark.skip(
-    #     "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
-    # )
+    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1625,9 +1619,7 @@ class Test_to_dict2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    # @pytest.mark.skip(
-    #     "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
-    # )
+    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1965,7 +1957,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         mode = "str"
         self.run_steps_assert_string(workload, mode, globals())
 
-    # @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
+    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_assert_string_repr1(self) -> None:
         workload = []
         #

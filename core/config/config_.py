@@ -254,10 +254,10 @@ class Config:
     # ////////////////////////////////////////////////////////////////////////////
 
     def __contains__(self, key: CompoundKey) -> bool:
-        """	
-        Implement membership operator like `key in config`.	
-        If `key` is nested, the hierarchy of Config objects is	
-        navigated.	
+        """
+        Implement membership operator like `key in config`.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -555,6 +555,8 @@ class Config:
                     assign_new_value = True
             # Assign the value, if needed.
             _LOG.debug(hprint.to_str("assign_new_value"))
+            if not val:
+                val = Config()
             if assign_new_value:
                 self.__setitem__(key, val)
 
