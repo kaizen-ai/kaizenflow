@@ -399,6 +399,7 @@ def _find_last_trading_bar(
     :param bar_duration_in_secs: duration of a bar in seconds
     :return: time of the last bar before trading end time
     """
+    _LOG.debug(hprint.to_str("trading_end_time bar_duration_in_secs"))
     trading_end_time = pd.Timestamp.today().replace(
         hour=trading_end_time.hour,
         minute=trading_end_time.minute,
@@ -414,6 +415,7 @@ def _find_last_trading_bar(
         mode=mode,
     )
     trading_end_time = trading_end_time.time()
+    _LOG.debug(hprint.to_str("trading_end_time"))
     return trading_end_time
 
 
@@ -459,8 +461,8 @@ def apply_ProcessForecastsNode_config_for_crypto(
     """
     if is_prod:
         prod_start_time = datetime.time(6, 00)
-        # The prod run is terminated at 8 a.m. ET.
-        prod_end_time = datetime.time(8, 00)
+        # The prod run is terminated at 8:05 a.m. ET.
+        prod_end_time = datetime.time(8, 5)
         bar_duration_in_secs = system.config[
             "dag_runner_config", "bar_duration_in_secs"
         ]
