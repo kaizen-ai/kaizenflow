@@ -25,6 +25,7 @@ import logging
 from typing import List
 
 import pandas as pd
+import psycopg2
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -62,7 +63,7 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="DB stage to use",
+        help="DB stage to use, e.g. `dev`",
     )
     parser.add_argument(
         "--exchange_id",
@@ -114,11 +115,7 @@ class RealTimeHistoricalReconciler:
         hdbg.dassert_in(args.data_type, ["bid_ask", "ohlcv"])
         self.data_type = args.data_type
         # Set DB connection.
-        db_connection = hsql.get_connection(
-            *hsql.get_connection_info_from_env_file(
-                imvimlita.get_db_env_path("dev")
-            )
-        )
+        db_connection = self.get_db_connection(args)
         # Initialize CCXT client.
         self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
             args.resample_1min, db_connection, args.db_table
@@ -161,6 +158,33 @@ class RealTimeHistoricalReconciler:
                 "ask_size",
             ],
         }
+
+    @staticmethod
+    def get_db_connection(args):
+        """
+        Set-up the connection to the database.
+
+        :param args:
+        check the  type of the connection
+        """
+        # Connect to database.
+        env_file = imvimlita.get_db_env_path(args.db_stage)
+        try:
+            # Connect with the parameters from the env file.
+            connection_params = hsql.get_connection_info_from_env_file(env_file)
+            connection = hsql.get_connection(*connection_params)
+        except psycopg2.OperationalError:
+            # Connect with the dynamic parameters (usually during tests).
+            actual_details = hsql.db_connection_to_tuple(args.connection)._asdict()
+            connection_params = hsql.DbConnectionInfo(
+                host=actual_details["host"],
+                dbname=actual_details["dbname"],
+                port=int(actual_details["port"]),
+                user=actual_details["user"],
+                password=actual_details["password"],
+            )
+            connection = hsql.get_connection(*connection_params)
+        return connection
 
     @staticmethod
     def _filter_duplicates(data: pd.DataFrame) -> pd.DataFrame:

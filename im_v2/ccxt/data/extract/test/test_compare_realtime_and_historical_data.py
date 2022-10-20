@@ -51,18 +51,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
-        """"
-        if self._ohlcv_dataframe_sample is None:
-            file_name = f"{self.get_s3_path()}/binance/"
-            ohlcv_sample = hparque.from_parquet(
-                file_name, filters=self.FILTERS, aws_profile="ck"
-            )
-            # Matching exact timespan as in test function call.
-            self._ohlcv_dataframe_sample = ohlcv_sample.loc[
-                "2021-12-31 23:55:00":"2022-01-01 00:05:00"  # type: ignore[misc]
-            ]
-        # Deep copy (which is default for `pd.DataFrame.copy()`) is used to
-        # preserve original data for each test.
+        """
         """
         ohlcv_sample = pd.DataFrame(
             columns=[
