@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Dict, Tuple, Union
+from typing import Any, Dict, Tuple
 
 import numpy as np
 import pandas as pd
@@ -271,35 +271,22 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     return config_list
 
 
-def get_research_dfs(
-    research_portfolio_dict: Dict[str, Dict[str, Union[pd.DataFrame, str]]]
-) -> Dict[str, pd.DataFrame]:
-    """
-    Get dictionary of research portfolio dataframes filtered by timestamp.
-    """
-    df_dict = {}
-    start_timestamp = research_portfolio_dict["filter"]["start_timestamp"]
-    end_timestamp = research_portfolio_dict["filter"]["end_timestamp"]
-    for df_name, df in research_portfolio_dict["dfs"].items():
-        df_dict[df_name] = df.loc[start_timestamp:end_timestamp]  # type: ignore[misc]
-    return df_dict
-
-
 def load_portfolio_dfs(
-    portfolio_dict: Dict[str, Dict[str, Union[str, bool]]],
-    research_portfolio_dfs: Dict[str, Dict[Union[pd.DataFrame, str]]],
-) -> Dict[str, pd.DataFrame]:
+    portfolio_config_dict: Dict[str, Any],
+    portfolio_path_dict: Dict[str, str],
+    research_portfolio_dfs: Dict[str, pd.DataFrame],
+) -> Dict[str, Any]:
     """
     Load multiple portfolios given a dict of paths.
     """
     portfolio_dfs = {}
     portfolio_stats_dfs = {}
-    for name, path in portfolio_dict["path"].items():
+    for name, path in portfolio_path_dict.items():
         hdbg.dassert_path_exists(path)
         _LOG.info("Processing portfolio=%s path=%s", name, path)
         portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
             path,
-            **portfolio_dict["config"],
+            **portfolio_config_dict,
         )
         portfolio_dfs[name] = portfolio_df
         portfolio_stats_dfs[name] = portfolio_stats_df
@@ -308,11 +295,10 @@ def load_portfolio_dfs(
     portfolio_stats_dfs["research"] = research_portfolio_dfs[
         "research_portfolio_stats_df"
     ]
-    portfolio_concat_df = pd.concat(portfolio_dfs, axis=1)
     portfolio_stats_concat_df = pd.concat(portfolio_stats_dfs, axis=1)
     #
     df_dict = {
-        "portfolio_df": portfolio_concat_df,
+        "portfolio_df": portfolio_dfs,
         "portfolio_stats_df": portfolio_stats_concat_df,
     }
     return df_dict

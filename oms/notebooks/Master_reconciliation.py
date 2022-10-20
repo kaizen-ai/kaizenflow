@@ -148,41 +148,36 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # # Load logged portfolios
 
 # %%
+research_portfolio_df_loc = research_portfolio_df.loc[start_timestamp:end_timestamp]
+research_portfolio_stats_df_loc = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
 research_portfolio_dict = {
-    "dfs": {
-        "research_portfolio_df": research_portfolio_df,
-        "research_portfolio_stats_df": research_portfolio_stats_df,
-    },
-    "filter": {
-        "start_timestamp": start_timestamp,
-        "end_timestamp": end_timestamp,
-    }
+    "research_portfolio_df": research_portfolio_df_loc,
+    "research_portfolio_stats_df": research_portfolio_stats_df_loc
 }
-research_portfolio_df_dict = oms.get_research_dfs(research_portfolio_dict)
 
 # %%
-portfolio_dict = {
-    "config": {
-        "start_timestamp": start_timestamp,
-        "end_timestamp": end_timestamp,
-        "freq": config["meta"]["bar_duration"],
-        "normalize_bar_times": True,
-    },
-    "path": portfolio_path_dict
+portfolio_config_dict = {
+    "start_timestamp": start_timestamp,
+    "end_timestamp": end_timestamp,
+    "freq": config["meta"]["bar_duration"],
+    "normalize_bar_times": True,
 }
-portfolio_df_dict = oms.load_portfolio_dfs(portfolio_dict, research_portfolio_df_dict)
-
-# %%
+portfolio_df_dict = oms.load_portfolio_dfs(
+    portfolio_config_dict,
+    portfolio_path_dict,
+    research_portfolio_dict
+)
 hpandas.df_to_str(portfolio_df_dict["portfolio_stats_df"], num_rows=5, log_level=logging.INFO)
 
 # %%
 bars_to_burn = 1
-coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
+coplotti.plot_portfolio_stats(portfolio_df_dict["portfolio_stats_df"].iloc[bars_to_burn:])
 
 # %%
 stats_computer = dtfmod.StatsComputer()
 stats_sxs, _ = stats_computer.compute_portfolio_stats(
-    portfolio_stats_df.iloc[bars_to_burn:], config["meta"]["bar_duration"]
+    portfolio_df_dict["portfolio_stats_df"].iloc[bars_to_burn:],
+    config["meta"]["bar_duration"]
 )
 display(stats_sxs)
 
@@ -192,15 +187,15 @@ display(stats_sxs)
 # %%
 dtfmod.compute_correlations(
     research_portfolio_df,
-    portfolio_dfs["prod"],
+    portfolio_df_dict["portfolio_df"]["prod"],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
 
 # %%
 dtfmod.compute_correlations(
-    portfolio_dfs["prod"],
-    portfolio_dfs["sim"],
+    portfolio_df_dict["portfolio_df"]["prod"],
+    portfolio_df_dict["portfolio_df"]["sim"],
     allow_unequal_indices=False,
     allow_unequal_columns=False,
 )
@@ -208,7 +203,7 @@ dtfmod.compute_correlations(
 # %%
 dtfmod.compute_correlations(
     research_portfolio_df,
-    portfolio_dfs["sim"],
+    portfolio_df_dict["portfolio_df"]["sim"],
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
