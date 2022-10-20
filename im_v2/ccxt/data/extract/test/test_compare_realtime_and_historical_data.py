@@ -88,7 +88,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         pass
 
     @pytest.mark.slow
-    def test_function_call_1(self) -> None:
+    def test_compare_ohlcv_1(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
@@ -109,7 +109,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         mock_get_daily_data = mock_get_daily_data_patch.start()
         # Prepare and attach sample to mocked function.
         mock_get_daily_data.return_value = sample
-        self._test_function_call()
+        self._test_function_call("ohlcv", "spot", True)
         #
         mock_get_rt_data_patch.stop()
         mock_get_daily_data_patch.stop()
@@ -117,7 +117,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assertEqual(mock_get_daily_data.call_count, 1)
 
     @pytest.mark.slow
-    def test_function_call_2(self) -> None:
+    def test_compare_ohlcv_2(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
@@ -144,8 +144,8 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         mock_get_daily_data.return_value = sample_daily
         # Run.
         with pytest.raises(AssertionError) as fail:
-            self._test_function_call()
-        # Stop the patches.s
+            self._test_function_call("ohlcv", "spot", True)
+        # Stop the patches.
         mock_get_rt_data_patch.stop()
         mock_get_daily_data_patch.stop()
         self.assertEqual(mock_get_rt_data.call_count, 1)
@@ -166,7 +166,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     @pytest.mark.slow
-    def test_function_call_3(self) -> None:
+    def test_compare_ohlcv_3(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
@@ -193,7 +193,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         mock_get_daily_data.return_value = sample_daily
         # Run.
         with pytest.raises(AssertionError) as fail:
-            self._test_function_call()
+            self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
         mock_get_daily_data_patch.stop()
@@ -216,7 +216,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
 
     @pytest.mark.slow
-    def test_function_call_4(self) -> None:
+    def test_compare_ohlcv_4(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
@@ -246,7 +246,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         mock_get_daily_data.return_value = sample_daily
         # Run.
         with pytest.raises(AssertionError) as fail:
-            self._test_function_call()
+            self._test_function_call("ohlcv", "spot", True)
         # Stop the patches.
         mock_get_rt_data_patch.stop()
         mock_get_daily_data_patch.stop()
@@ -303,6 +303,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         actual = vars(args)
         # Change bool values to string type to pass the check.
         actual["resample_1min"] = "True"
+        actual["resample_1sec"] = "False"
         expected = {
             "start_timestamp": "20220216-000000",
             "end_timestamp": "20220217-000000",
@@ -315,6 +316,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "data_type": "ohlcv",
             "contract_type": "spot",
             "resample_1min": "True",
+            "resample_1sec": "False",
         }
         self.assertDictEqual(actual, expected)
 
@@ -333,7 +335,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             table_name="ccxt_ohlcv",
         )
 
-    def _test_function_call(self) -> None:
+    def _test_function_call(self, data_type, contract_type, resample_1min) -> None:
         """
         Test directly _run function for coverage increase.
         """
@@ -348,10 +350,16 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "aws_profile": "ck",
             "s3_path": f"{self.get_s3_path()}",
             "connection": self.connection,
-            "data_type": "ohlcv",
-            "contract_type": "spot",
+            "data_type": data_type,
+            "contract_type": contract_type,
             "resample_1min": True,
         }
+        if resample_1min:
+            kwargs["resample_1min"] = True
+            kwargs["resample_1sec"] = False
+        else:
+            kwargs["resample_1min"] = False
+            kwargs["resample_1sec"] = True
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdecrah._run(args)
@@ -413,7 +421,7 @@ class TestFilterDuplicates(hunitest.TestCase):
             "volume"
         ]
         # pylint: disable=line-too-long
-        expected_signature = """
+        expected_signature = r"""
         # df=
         index=[0, 4]
         columns=id,timestamp,open,high,low,close,volume,full_symbol,end_download_timestamp,knowledge_timestamp

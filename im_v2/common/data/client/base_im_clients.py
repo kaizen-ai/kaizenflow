@@ -344,7 +344,7 @@ class ImClient(abc.ABC):
             # Combination of full symbol and timestamp is a unique identifier,
             # so full symbol cannot be NaN.
             df[full_symbol_col_name] = df[full_symbol_col_name].fillna(
-                method="ffill" # TOMA: changed to `ffil` from `bfill`
+                method="bfill"
             )
         # 4) Convert to UTC.
         df.index = df.index.tz_convert("UTC")

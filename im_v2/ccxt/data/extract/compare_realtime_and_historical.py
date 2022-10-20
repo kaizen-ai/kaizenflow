@@ -207,7 +207,7 @@ class RealTimeHistoricalReconciler:
             data, use_index, subset=duplicate_columns
         ).sort_index()
         # Sort values.
-        data = data.sort_values("timestamp", ascending=False)
+        data = data.sort_values("timestamp", ascending=True)
         _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
         return data
 
