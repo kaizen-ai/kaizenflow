@@ -61,7 +61,7 @@ system_log_path_dict = dict(config["system_log_path"].to_dict())
 system_log_path_dict
 
 # %%
-configs = oms.get_config_from_pickle(system_log_path_dict)
+configs = oms.load_config_from_pickle(system_log_path_dict)
 # Diff configs.
 diff_config = cconfig.build_config_diff_dataframe(
     {
