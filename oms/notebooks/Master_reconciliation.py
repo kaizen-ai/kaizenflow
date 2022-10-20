@@ -20,7 +20,6 @@
 # %%
 import logging
 import os
-from typing import Dict
 
 import pandas as pd
 
@@ -31,7 +30,6 @@ import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
-import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import oms as oms
 
@@ -69,7 +67,7 @@ diff_config = cconfig.build_config_diff_dataframe(
         "sim_config": configs["sim"],
     }
 )
-diff_config 
+diff_config
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
@@ -141,9 +139,11 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 )
 # TODO(gp): Move it to annotate_forecasts?
 research_portfolio_df = research_portfolio_df.sort_index(axis=1)
-# Align index with prod and sim portfolio.
+# Align index with prod and sim portfolios.
 research_portfolio_df = research_portfolio_df.loc[start_timestamp:end_timestamp]
-research_portfolio_stats_df = research_portfolio_stats_df.loc[start_timestamp:end_timestamp]
+research_portfolio_stats_df = research_portfolio_stats_df.loc[
+    start_timestamp:end_timestamp
+]
 #
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
@@ -185,8 +185,7 @@ coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
 # %%
 stats_computer = dtfmod.StatsComputer()
 stats_sxs, _ = stats_computer.compute_portfolio_stats(
-    portfolio_stats_df.iloc[bars_to_burn:],
-    config["meta"]["bar_duration"]
+    portfolio_stats_df.iloc[bars_to_burn:], config["meta"]["bar_duration"]
 )
 display(stats_sxs)
 
