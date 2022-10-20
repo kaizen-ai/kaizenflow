@@ -22,7 +22,6 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
 import logging
-from re import S
 from typing import List
 import os
 
