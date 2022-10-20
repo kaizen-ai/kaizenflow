@@ -90,21 +90,6 @@ def _resolve_target_dir(
     return target_dir
 
 
-# TODO(Dan): Expose `rt_timeout_in_secs_or_time` as datetime as well.
-def _get_rt_timeout_in_secs_or_time(
-    rt_timeout_in_secs_or_time: Optional[int]
-) -> int:
-    """
-    Return the number of seconds to run reconcilation for.
-
-    If a the param is not specified by a user then use default 2 hours.
-    """
-    if rt_timeout_in_secs_or_time is None:
-        rt_timeout_in_secs_or_time = 2 * 60 * 60
-    _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
-    return rt_timeout_in_secs_or_time
-
-
 def _sanity_check_data(file_path: str) -> None:
     """
     Check that data at the specified file path is correct.
@@ -230,6 +215,8 @@ def reconcile_run_sim(
     _ = ctx
     run_date = _get_run_date(run_date)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
+    # TODO(Dan): Expose `rt_timeout_in_secs_or_time` as datetime as well.
+    rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
