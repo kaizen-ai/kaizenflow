@@ -7,10 +7,10 @@ import pytest
 
 import helpers.hdatetime as hdateti
 import helpers.henv as henv
-import helpers.hunit_test as hunitest
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
@@ -302,6 +302,51 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
 
 class TestFilterDuplicates(hunitest.TestCase):
+    def test_filter_duplicates(self) -> None:
+        """
+        Verify that duplicated data is filtered correctly.
+        """
+        input_data = self._get_duplicated_test_data()
+        self.assertEqual(input_data.shape, (10, 11))
+        # Filter duplicates.
+        actual_data = imvcdecrah._filter_duplicates(input_data)
+        expected_length = 6
+        expected_column_names = [
+            "close",
+            "currency_pair",
+            "end_download_timestamp",
+            "exchange_id",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "timestamp",
+            "volume",
+        ]
+        # pylint: disable=line-too-long
+        expected_signature = """
+        # df=
+        index=[0, 5]
+        columns=id,timestamp,open,high,low,close,volume,currency_pair,exchange_id,end_download_timestamp,knowledge_timestamp
+        shape=(6, 11)
+        id                 timestamp  open  high  low  close  volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
+        0   1 2021-09-09 00:00:00+00:00    30    40   50     60      70      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        1   2 2021-09-09 00:01:00+00:00    31    41   51     61      71      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        2   3 2021-09-09 00:02:00+00:00    32    42   52     62      72      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        3   4 2021-09-09 00:04:00+00:00    34    44   54     64      74      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT      kucoin 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        """
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_data,
+            expected_length,
+            expected_column_names,
+            None,
+            expected_signature,
+        )
+
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -335,52 +380,6 @@ class TestFilterDuplicates(hunitest.TestCase):
             # fmt: on
         )
         return test_data
-
-
-    def test_filter_duplicates(self) -> None:
-        """
-        Verify that duplicated data is filtered correctly.
-        """
-        input_data = self._get_duplicated_test_data()
-        self.assertEqual(input_data.shape, (10, 11))
-        # Filter duplicates.
-        actual_data = imvcdecrah._filter_duplicates(input_data)
-        expected_length = 6
-        expected_column_names = [
-            "close",
-            "currency_pair",
-            "end_download_timestamp",
-            "exchange_id",
-            "high",
-            "id",
-            "knowledge_timestamp",
-            "low",
-            "open",
-            "timestamp",
-            "volume"
-        ]
-        # pylint: disable=line-too-long
-        expected_signature = """
-        # df=
-        index=[0, 5]
-        columns=id,timestamp,open,high,low,close,volume,currency_pair,exchange_id,end_download_timestamp,knowledge_timestamp
-        shape=(6, 11)
-        id                 timestamp  open  high  low  close  volume currency_pair exchange_id    end_download_timestamp       knowledge_timestamp
-        0   1 2021-09-09 00:00:00+00:00    30    40   50     60      70      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        1   2 2021-09-09 00:01:00+00:00    31    41   51     61      71      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        2   3 2021-09-09 00:02:00+00:00    32    42   52     62      72      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        3   4 2021-09-09 00:04:00+00:00    34    44   54     64      74      BTC_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT     binance 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74      ETH_USDT      kucoin 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        """
-        # pylint: enable=line-too-long
-        self.check_df_output(
-            actual_data,
-            expected_length,
-            expected_column_names,
-            None,
-            expected_signature,
-        )
 
     def _get_duplicated_test_data(self) -> pd.DataFrame:
         """
