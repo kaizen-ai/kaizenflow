@@ -138,7 +138,7 @@ class DAG(hobject.PrintableMixin):
             execution of the nodes
         :param dst_dir: directory to save node interface and execution profiling info
         """
-        hdbg.dassert_in(save_node_io, ("", "stats", "df_as_csv", "df_as_parquet"))
+        hdbg.dassert_in(save_node_io, ("", "stats", "df_as_csv", "df_as_pq", "df_as_csv_and_pq"))
         _LOG.debug(hprint.to_str("save_node_io profile_execution dst_dir"))
         self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
