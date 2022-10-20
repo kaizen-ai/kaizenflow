@@ -285,12 +285,12 @@ def get_research_dfs(research_portfolio_dict: Dict) -> Dict[str, pd.DataFrame]:
     return df_dict
 
 
-def get_portfolio_dfs(
+def load_portfolio_dfs(
     portfolio_dict: Dict,
     research_portfolio_dfs: Dict[str, pd.DataFrame],
 ) -> Dict[str, pd.DataFrame]:
     """
-    Get dictionary of portfolio dataframes.
+    Load multiple portfolios given a dict of paths.
     """
     portfolio_dfs = {}
     portfolio_stats_dfs = {}
