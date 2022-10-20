@@ -20,7 +20,6 @@
 # %%
 import logging
 import os
-from typing import Dict
 
 import pandas as pd
 
@@ -31,7 +30,6 @@ import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
-import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import oms as oms
 
@@ -69,7 +67,7 @@ diff_config = cconfig.build_config_diff_dataframe(
         "sim_config": configs["sim"],
     }
 )
-diff_config 
+diff_config
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
@@ -147,6 +145,11 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 )
 # TODO(gp): Move it to annotate_forecasts?
 research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+# Align index with prod and sim portfolios.
+research_portfolio_df = research_portfolio_df.loc[start_timestamp:end_timestamp]
+research_portfolio_stats_df = research_portfolio_stats_df.loc[
+    start_timestamp:end_timestamp
+]
 #
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
@@ -154,35 +157,31 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # # Load logged portfolios
 
 # %%
-portfolio_config_dict = {
-    "start_timestamp": start_timestamp,
-    "end_timestamp": end_timestamp,
-    "freq": config["meta"]["bar_duration"],
-    "normalize_bar_times": True,
-}
-portfolio_config_dict
+portfolio_config = cconfig.Config.from_dict(
+    {
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        "freq": config["meta"]["bar_duration"],
+        "normalize_bar_times": True,
+    }
+)
+portfolio_config
 
 # %%
-# TODO(gp): @grisha convert into a function and move to library.
+portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
+    portfolio_path_dict,
+    portfolio_config,
+)
+# Add research portfolio.
+portfolio_dfs["research"] = research_portfolio_df
+#
+hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
 
-# Load the 4 portfolios.
-portfolio_dfs = {}
-portfolio_stats_dfs = {}
-for name, path in portfolio_path_dict.items():
-    _LOG.info("Processing portfolio=%s path=%s", name, path)
-    portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
-        path,
-        **portfolio_config_dict,
-    )
-    portfolio_dfs[name] = portfolio_df
-    portfolio_stats_dfs[name] = portfolio_stats_df
-portfolio_dfs["research"] = research_portfolio_df.loc[
-    start_timestamp:end_timestamp
-]
-portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
-    start_timestamp:end_timestamp
-]
+# %%
+# Add research df and combine into a single df.
+portfolio_stats_dfs["research"] = research_portfolio_stats_df
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+#
 hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %%
