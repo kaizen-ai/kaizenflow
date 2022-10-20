@@ -254,11 +254,10 @@ class Config:
     # ////////////////////////////////////////////////////////////////////////////
 
     def __contains__(self, key: CompoundKey) -> bool:
-        """
-        Implement membership operator like `key in config`.
-
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        """	
+        Implement membership operator like `key in config`.	
+        If `key` is nested, the hierarchy of Config objects is	
+        navigated.	
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a try-catch around
@@ -359,15 +358,14 @@ class Config:
         self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
     ) -> Any:
         """
-        Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
-        is an iterable of keys (e.g., `("read_data", "file_name")`, then the
-        hierarchy is navigated until the corresponding element is found or we
-        raise if the element doesn't exist. When we report an error about a
-        missing key, we print only the keys of the Config at the current level
-        of the recursion and not the original Config (which is also not
-        directly accessible inside the recursion), e.g., `key='nrows_tmp' not
-        in ['nrows', 'nrows2']`
-
+        Get value for `key` or raise `KeyError` if it doesn't exist.
+        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
+        the hierarchy is navigated until the corresponding element is found or we
+        raise if the element doesn't exist.
+        When we report an error about a missing key, we print only the keys of the
+        Config at the current level of the recursion and not the original Config
+        (which is also not directly accessible inside the recursion), e.g.,
+        `key='nrows_tmp' not in ['nrows', 'nrows2']`
         :param report_mode: how to report a KeyError
             - `none` (default): only report the exception from `_get_item()`
             - `verbose_log_error`: report the full key and config in the log
@@ -493,14 +491,7 @@ class Config:
     # Update.
     # ////////////////////////////////////////////////////////////////////////////
 
-    def update(
-        self,
-        config: "Config",
-        *,
-        update_mode: Optional[str] = None,
-        clobber_mode: Optional[str] = None,
-        report_mode: Optional[str] = None,
-    ) -> None:
+    def update(self, config: "Config", update_mode: Optional[str] = None) -> None:
         """
         Equivalent to `dict.update(config)`.
 
@@ -509,24 +500,64 @@ class Config:
         - recursively creates paths to leaf values if needed
         - `config` values overwrite any existing values, assert depending on the
           value of `mode`
+
+        :param update_mode:
+            - `None`: use the default behavior specified in the constructor
+            - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
+                - if a key already exists, then assert
+                - if a key doesn't exist, then assign the new value
+            - `overwrite`: assign the key, whether the key exists or not
+            - `assign_if_missing`: this mode is used to complete a config, preserving
+              what already exists
+                - if a key already exists, leave the old value and raise a warning
+                - if a key doesn't exist, then assign the new value
         """
-        _LOG.debug(hprint.to_str("config update_mode"))
-        # `update()` is just a series of sets.
+        _LOG.debug("update_mode=%s config=\n%s", update_mode, config)
         update_mode = self._resolve_update_mode(update_mode)
         _LOG.debug("resolved update_mode=%s", update_mode)
         #
         flattened_config = config.flatten()
+        assign_new_value = False
         for key, val in flattened_config.items():
-            _LOG.debug(hprint.to_str("key val"))
-            if not val:
-                val = Config()
-            self.__setitem__(
-                key,
-                val,
-                update_mode=update_mode,
-                clobber_mode=clobber_mode,
-                report_mode=report_mode,
-            )
+            if update_mode == "assert_on_overwrite":
+                if key in self:
+                    # Key already exists, then assert.
+                    old_val = self.get(key)
+                    msg = []
+                    msg.append(
+                        f"Trying to overwrite old value '{old_val}' with new value '{val}'"
+                        f" for key '{key}' when update_mode={update_mode}"
+                    )
+                    msg.append("self=\n" + hprint.indent(str(self)))
+                    msg.append("config=\n" + hprint.indent(str(config)))
+                    msg = "\n".join(msg)
+                    raise OverwriteError(msg)
+                # Key doesn't exist, then assign.
+                assign_new_value = True
+            elif update_mode == "overwrite":
+                # Assign the value in any case.
+                assign_new_value = True
+            elif update_mode == "assign_if_missing":
+                if key in self:
+                    # Key already exists, then keep the old value and issue a
+                    # warning.
+                    old_val = self.get(key)
+                    msg = []
+                    msg.append(
+                        f"Overwriting old value '{old_val}' with new value '{val}'"
+                        f" for key '{key}' since update_mode={update_mode}"
+                    )
+                    msg = "\n".join(msg)
+                    _LOG.warning(msg)
+                    assign_new_value = False
+                else:
+                    # Key doesn't exist, assign the value.
+                    assign_new_value = True
+            # Assign the value, if needed.
+            _LOG.debug(hprint.to_str("assign_new_value"))
+            if assign_new_value:
+                self.__setitem__(key, val)
+
 
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
