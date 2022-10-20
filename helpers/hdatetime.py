@@ -413,7 +413,7 @@ def find_bar_timestamp(
     :param max_distance_in_secs: number of seconds representing the maximal distance
         that it's allowed from the start of the bar
     """
-    _LOG.debug(hprint.to_str("trading_end_time bar_duration_in_secs mode max_distance_in_secs"))
+    _LOG.debug(hprint.to_str("current_timestamp bar_duration_in_secs mode max_distance_in_secs"))
     hdbg.dassert_isinstance(current_timestamp, pd.Timestamp)
     # Convert bar_duration_in_secs into minutes.
     grid_time_in_mins = convert_seconds_to_minutes(bar_duration_in_secs)
