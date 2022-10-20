@@ -169,6 +169,10 @@ dag_df_dict["prod"].index.max()
 dag_df_dict["sim"].index.max()
 
 # %%
+dag_df_dict["prod"] = dag_df_dict["prod"].loc[start_timestamp: end_timestamp]
+dag_df_dict["sim"] = dag_df_dict["sim"].loc[start_timestamp: end_timestamp]
+
+# %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
@@ -256,6 +260,15 @@ display(stats_sxs)
 
 # %% [markdown]
 # # Compare pairwise portfolio correlations
+
+# %%
+research_portfolio_df.sort_index(axis=1)["holdings_shares"].head(5)
+
+# %%
+portfolio_dfs["sim"].sort_index(axis=1)["holdings_shares"][6051632686].head(5)
+
+# %%
+portfolio_dfs["prod"].sort_index(axis=1)["holdings_shares"][6051632686].head(5)
 
 # %%
 dtfmod.compute_correlations(
