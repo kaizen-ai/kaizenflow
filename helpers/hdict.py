@@ -6,7 +6,7 @@ import helpers.hdict as hdict
 
 import collections
 import logging
-from typing import Any, Dict, Generator, Iterable, Mapping, Optional, Tuple
+from typing import Any, Dict, Generator, Iterable, Mapping, Optional, Tuple, Union
 
 import helpers.hdbg as hdbg
 
@@ -58,7 +58,7 @@ _NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
 
 
 def typed_get(
-    dict_: Dict,
+    dict_: Union[Dict, "Config"],
     key: Any,
     default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
     *,
@@ -72,6 +72,7 @@ def typed_get(
     :param expected_type: expected type of `value`
     :return: config[key] if available, else `default_value`
     """
+    hdbg.dassert_isinstance(dict_, dict)
     if default_value == _NO_VALUE_SPECIFIED:
         # No value is specified so check that the key is present with dassert_in
         # to report a decent error.
@@ -97,5 +98,9 @@ def checked_get(
     dict_: Dict,
     key: Any,
 ) -> Any:
+    """
+    Ensure that the key exists and print a decent error message in case of
+    error, instead of a generic `TypeError`.
+    """
     hdbg.dassert_in(key, dict_)
     return dict_[key]

@@ -137,7 +137,9 @@ class CcxtBroker(ombroker.Broker):
                 )
                 # Select closed orders.
                 for order in orders:
-                    _LOG.debug("Transforming retrieved CCXT order: %s", str(order))
+                    _LOG.debug(
+                        "Transforming retrieved CCXT order: %s", str(order)
+                    )
                     if order["status"] == "closed":
                         # Select order matching to CCXT exchange id.
                         filled_order = [
@@ -444,14 +446,18 @@ class CcxtBroker(ombroker.Broker):
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         # Select current position amount.
         curr_num_shares = self._exchange.fetch_positions([symbol])[0]
-        _LOG.debug("Before order has been filled: curr_num_shares=%s", curr_num_shares)
+        _LOG.debug(
+            "Before order has been filled: curr_num_shares=%s", curr_num_shares
+        )
         curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
         # Convert the retrieved string and round.
         amount_precision = self.market_info[asset_id]["amount_precision"]
         curr_num_shares = round(curr_num_shares, amount_precision)
         # Calculate position before the order has been filled.
         curr_num_shares = curr_num_shares - diff_num_shares
-        _LOG.debug("After order has been filled: curr_num_shares=%s", curr_num_shares)
+        _LOG.debug(
+            "After order has been filled: curr_num_shares=%s", curr_num_shares
+        )
         oms_order = omorder.Order(
             creation_timestamp,
             asset_id,

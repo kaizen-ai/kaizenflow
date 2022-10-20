@@ -446,7 +446,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
         share_quantization = "asset_specific"
     else:
         # For simplicity in the non-prod system we do not use quantization so that
-        # we do not need to pass `asset_ids_to_decimals` (that we receive from 
+        # we do not need to pass `asset_ids_to_decimals` (that we receive from
         # broker) around.
         share_quantization = "no_quantization"
     dict_ = {
