@@ -158,6 +158,7 @@ def reconcile_dump_market_data(ctx, run_date=None, incremental=False, interactiv
         # TODO(Grisha): @Dan Copy logs to the shared folder.
         # pylint: disable=line-too-long
         opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
+        opts += "; exit ${PIPESTATUS[0]}"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         cmd = f"{script_name} {opts}"
@@ -200,6 +201,7 @@ def reconcile_run_sim(ctx, run_date=None):  # type: ignore
     # Run simulation.
     # pylint: disable=line-too-long
     opts = f"--action run_simulation --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
+    opts += "; exit ${PIPESTATUS[0]}"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
@@ -299,7 +301,7 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
-    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
+    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     # pylint: disable=line-too-long
     cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
     # pylint: enable=line-too-long
@@ -376,6 +378,7 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     log_file = os.path.join(dst_dir, "log.txt")
     cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {dst_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
     # pylint: enable=line-too-long
+    cmd_run_txt += "; exit ${PIPESTATUS[0]}"
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
     hio.to_file(script_name, cmd_run_txt)
