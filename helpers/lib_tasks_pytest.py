@@ -1090,15 +1090,18 @@ def _purify_log_file(
     txt = re.sub(r"^\d\d:\d\d:\d\d ", "", txt, flags=re.MULTILINE)
     # Remove references like `at 0x7f43493442e0`.
     txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
-    # Remove `done (0.014 s)`
+    # Remove `done (0.014 s)`.
     txt = re.sub(r"(done) \(\d+\.\d+ s\)", "\\1", txt, flags=re.MULTILINE)
-    # Remove wall_clock_time='2022-06-17 04:36:56.062645-04:00'
+    # Remove wall_clock_time='2022-06-17 04:36:56.062645-04:00'.
     txt = re.sub(r"(wall_clock_time=)'.*'", "\\1", txt, flags=re.MULTILINE)
-    # Remove `real_wall_clock_time = '2022-06-17 04:33:19.946025-04:00'`
+    # Remove `real_wall_clock_time = '2022-06-17 04:33:19.946025-04:00'`.
     txt = re.sub(r"(real_wall_clock_time=)'.*'", "\\1", txt, flags=re.MULTILINE)
-    # Remove tqdm [00:00<00:00,  4.05it/s]
+    # Remove `tqdm [00:00<00:00,  4.05it/s]`.
     txt = re.sub(r"(htqdm.py.*)\[.*\]", "\\1", txt, flags=re.MULTILINE)
-    # Remove line number: `htqdm.py abstract_market_data.py get_data_for_interval:259 `
+    # Remove `Task-3`.
+    txt = re.sub(r"(Task-)\d+", "\\1", txt, flags=re.MULTILINE)
+    # Remove line number, e.g.,
+    # `htqdm.py abstract_market_data.py get_data_for_interval:259`
     if remove_line_numbers:
         txt = re.sub(
             r"(\.py [a-zA-Z_][a-zA-Z0-9_]*):\d+ ",
