@@ -23,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _check_config_string(
-        self: Any, config: cconfig.Config, exp: str, mode: str = "str"
+    self: Any, config: cconfig.Config, exp: str, mode: str = "str"
 ) -> None:
     _LOG.debug("config=\n%s", config)
     if mode == "str":
@@ -941,9 +941,9 @@ class Test_nested_config_update2(hunitest.TestCase):
         present.
         """
         for update_mode in (
-                "assert_on_overwrite",
-                "overwrite",
-                "assign_if_missing",
+            "assert_on_overwrite",
+            "overwrite",
+            "assign_if_missing",
         ):
             config1 = _get_nested_config3(self)
             # Check the value of the config.
@@ -1471,9 +1471,9 @@ class Test_make_read_only1(hunitest.TestCase):
 
 class Test_to_dict1(hunitest.TestCase):
     def helper(
-            self,
-            config_as_dict: Dict[str, Any],
-            expected_result_as_str: str,
+        self,
+        config_as_dict: Dict[str, Any],
+        expected_result_as_str: str,
     ) -> None:
         """
         Check that a `Config`'s conversion to a dict is correct.
@@ -1797,8 +1797,8 @@ class Test_from_dict1(hunitest.TestCase):
 # TODO(Danya): Add `test4` testing a nested Config case.
 class Test_to_string(hunitest.TestCase):
     def helper(
-            self,
-            value: Any,
+        self,
+        value: Any,
     ) -> str:
         # Set config.
         nested: Dict[str, Any] = {
@@ -1880,7 +1880,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
     """
 
     def execute_stmt(
-            self, stmt: str, exp: Optional[str], mode: str, globals: Dict
+        self, stmt: str, exp: Optional[str], mode: str, globals: Dict
     ) -> str:
         """
         - Execute statement stmt
@@ -1904,7 +1904,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         return act
 
     def raise_stmt(
-            self, stmt: str, assertion_type: Any, exp: Optional[str], globals_: Dict
+        self, stmt: str, assertion_type: Any, exp: Optional[str], globals_: Dict
     ) -> None:
         _LOG.debug("\n" + hprint.frame(stmt))
         with self.assertRaises(assertion_type) as cm:
@@ -1913,7 +1913,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
         self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
 
     def run_steps_assert_string(
-            self, workload: List[Tuple[str, Optional[str]]], mode: str, globals_: Dict
+        self, workload: List[Tuple[str, Optional[str]]], mode: str, globals_: Dict
     ) -> None:
         for data in workload:
             hdbg.dassert_eq(len(data), 2, "Invalid data='%s'", str(data))
@@ -1921,7 +1921,7 @@ class _Config_execute_stmt_TestCase1(hunitest.TestCase):
             self.execute_stmt(stmt, exp, mode, globals_)
 
     def run_steps_check_string(
-            self, workload: List[str], mode: str, globals_: Dict
+        self, workload: List[str], mode: str, globals_: Dict
     ) -> None:
         exp = None
         res = []
