@@ -43,7 +43,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Specifies threshold for archival. Data older than \
-            the threshold gets archived"
+            <timestamp> threshold get archived"
     )
     parser.add_argument(
         "--db_stage",
@@ -92,7 +92,8 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=bool,
         help="If True, the script fails if the archival operation creates a time gap \
-            in the archive data"
+            in the archive data or if a different column is used as a threshold than the \
+            last entry"
     )
     parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
