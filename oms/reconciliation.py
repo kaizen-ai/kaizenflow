@@ -15,7 +15,7 @@ import pandas as pd
 import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hparquet as hparquet
+import helpers.hparquet as hparque
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
@@ -311,11 +311,13 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     file_name = parquet_files[-1]
     dag_parquet_path = os.path.join(dag_dir, file_name)
     _LOG.info("DAG parquet path=%s", dag_parquet_path)
-    dag_df = hparquet.from_parquet(dag_parquet_path)
+    dag_df = hparque.from_parquet(dag_parquet_path)
     return dag_df
 
 
-def load_config_from_pickle(system_log_path_dict: Dict[str, str]) -> Dict[str, cconfig.Config]:
+def load_config_from_pickle(
+    system_log_path_dict: Dict[str, str]
+) -> Dict[str, cconfig.Config]:
     """
     Load configs from pickle files given a dict of paths.
     """
