@@ -21,9 +21,9 @@ import pandas as pd
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hintrospection as hintros
+import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hio as hio
 
 _LOG = logging.getLogger(__name__)
 
@@ -256,6 +256,7 @@ class Config:
     def __contains__(self, key: CompoundKey) -> bool:
         """
         Implement membership operator like `key in config`.
+
         If `key` is nested, the hierarchy of Config objects is
         navigated.
         """
@@ -358,14 +359,15 @@ class Config:
         self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
     ) -> Any:
         """
-        Get value for `key` or raise `KeyError` if it doesn't exist.
-        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
-        the hierarchy is navigated until the corresponding element is found or we
-        raise if the element doesn't exist.
-        When we report an error about a missing key, we print only the keys of the
-        Config at the current level of the recursion and not the original Config
-        (which is also not directly accessible inside the recursion), e.g.,
-        `key='nrows_tmp' not in ['nrows', 'nrows2']`
+        Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
+        is an iterable of keys (e.g., `("read_data", "file_name")`, then the
+        hierarchy is navigated until the corresponding element is found or we
+        raise if the element doesn't exist. When we report an error about a
+        missing key, we print only the keys of the Config at the current level
+        of the recursion and not the original Config (which is also not
+        directly accessible inside the recursion), e.g., `key='nrows_tmp' not
+        in ['nrows', 'nrows2']`
+
         :param report_mode: how to report a KeyError
             - `none` (default): only report the exception from `_get_item()`
             - `verbose_log_error`: report the full key and config in the log
@@ -404,9 +406,7 @@ class Config:
         return ret
 
     def to_string(self, mode: str) -> str:
-        """
-
-        """
+        """ """
         txt = []
         for key, val in self._config.items():
             # 1) Process key.
@@ -415,7 +415,10 @@ class Config:
             elif mode == "verbose":
                 # TODO(Danya): Uncomment in CMTask2689.
                 # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
-                key_as_str = "%s (val_type=%s))" % (key, hprint.type_to_string(type(val)))
+                key_as_str = "%s (val_type=%s))" % (
+                    key,
+                    hprint.type_to_string(type(val)),
+                )
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
                 # Data structures that can be printed in a fancy way.
@@ -560,7 +563,6 @@ class Config:
             if assign_new_value:
                 self.__setitem__(key, val)
 
-
     # TODO(gp): Add also iteritems()
     def keys(self) -> List[str]:
         return self._config.keys()
@@ -640,8 +642,8 @@ class Config:
 
     def save_to_file(self, log_dir: str, tag: str) -> None:
         """
-        Save config as a string.
-        Saves file in a log dir:
+        Save config as a string. Saves file in a log dir:
+
         - ${log_dir}/{tag}.txt
 
         :param tag: basename of the files to save (e.g., "system_config.input")

@@ -1161,7 +1161,9 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    )
     def test_flatten2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1331,7 +1333,9 @@ class Test_from_env_var1(hunitest.TestCase):
 
 
 class Test_make_read_only1(hunitest.TestCase):
-    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
+    )
     def test_set1(self) -> None:
         """
         Setting a value that already exists on a read-only config raises.
@@ -1364,7 +1368,9 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
+    )
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1619,7 +1625,9 @@ class Test_to_dict2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`")
+    @pytest.mark.skip(
+        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    )
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1807,8 +1815,7 @@ class Test_to_string(hunitest.TestCase):
         """
         Test when a value is a DataFrame.
         """
-        value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]],
-                             columns=["a", "b", "c"])
+        value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
         expected = r"""key1 (val_type=pandas.core.frame.DataFrame)):
         index=[0, 1]
         columns=a,b,c
@@ -1864,6 +1871,7 @@ class Test_to_string(hunitest.TestCase):
 # #############################################################################
 # _Config_execute_stmt_TestCase1
 # #############################################################################
+
 
 class _Config_execute_stmt_TestCase1(hunitest.TestCase):
     """
