@@ -29,14 +29,12 @@ import pandas as pd
 import psycopg2
 
 import helpers.hdbg as hdbg
-import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
-import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
 import im_v2.common.universe.full_symbol as imvcufusy
 
