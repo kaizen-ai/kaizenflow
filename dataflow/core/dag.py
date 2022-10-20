@@ -618,12 +618,16 @@ class DAG(hobject.PrintableMixin):
             )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
-            # TODO(gp): Rename this as `df_as_csv_and_pq` and maybe add also
-            # `df_as_pq`.
             if self._save_node_io == "df_as_csv":
-                csv_file_name = file_name + ".csv.gz"
+                csv_file_name = f"{file_name}.csv.gz"
                 df.to_csv(csv_file_name, compression="gzip")
-                parquet_file_name = file_name + ".parquet"
+            elif self._save_node_io == "df_as_pq":
+                parquet_file_name = f"{file_name}.parquet"
+                hparque.to_parquet(df, parquet_file_name)
+            elif self._save_node_io == "df_as_csv_and_pq":
+                csv_file_name = f"{file_name}.csv.gz"
+                df.to_csv(csv_file_name, compression="gzip")
+                parquet_file_name = f"{file_name}.parquet"
                 hparque.to_parquet(df, parquet_file_name)
             else:
                 raise ValueError(f"Invalid save_node_io='{self._save_node_io}'")
