@@ -5,6 +5,7 @@ import core.config.config_utils as ccocouti
 """
 
 import collections
+import copy
 import logging
 from typing import Any, Iterable, List, Optional
 
@@ -48,7 +49,8 @@ def configs_to_str(configs: List[cconconf.Config]) -> str:
 # TODO(gp): Add unit tests.
 def sort_config_string(txt: str) -> str:
     """
-    Sort a string representing a Config in alphabetical order by the first level.
+    Sort a string representing a Config in alphabetical order by the first
+    level.
 
     This function can be used to diff two Configs serialized as strings.
     """
@@ -58,15 +60,22 @@ def sort_config_string(txt: str) -> str:
     state = "look_for_start"
     start_idx = end_idx = None
     for i, line in enumerate(lines):
-        _LOG.debug("i=%s state=%s start_idx=%s end_idx=%s line=%s" % (i, state, start_idx, end_idx, line))
-        if state == "look_for_start" and line[0] != " " and lines[i+1][0] != " ":
+        _LOG.debug(
+            "i=%s state=%s start_idx=%s end_idx=%s line=%s"
+            % (i, state, start_idx, end_idx, line)
+        )
+        if (
+            state == "look_for_start"
+            and line[0] != " "
+            and lines[i + 1][0] != " "
+        ):
             _LOG.debug("Found single line")
             # Single line.
             key = lines[i]
             val = " "
             chunks[key] = val
             _LOG.debug("Single line -> %s %s", key, val)
-        elif state == "look_for_start" and line[0] != " " :
+        elif state == "look_for_start" and line[0] != " ":
             _LOG.debug("Found first line")
             start_idx = i
             end_idx = None
@@ -77,7 +86,7 @@ def sort_config_string(txt: str) -> str:
             hdbg.dassert_lte(start_idx, end_idx)
             key = lines[start_idx]
             _LOG.debug("start_idx=%s end_idx=%s key=%s", start_idx, end_idx, key)
-            val = lines[start_idx+ 1:end_idx + 1]
+            val = lines[start_idx + 1 : end_idx + 1]
             chunks[key] = val
             _LOG.debug("-> %s %s", key, val)
             #
@@ -87,7 +96,9 @@ def sort_config_string(txt: str) -> str:
     # Sort.
     chunks = {k: chunks[k] for k in sorted(chunks.keys())}
     # Assemble with proper indentation.
-    chunks = "\n".join([k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()])
+    chunks = "\n".join(
+        [k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()]
+    )
     return chunks
 
 
@@ -128,11 +139,25 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
     """
-    if isinstance(obj, collections.abc.Hashable):
-        return obj
-    if isinstance(obj, collections.abc.Iterable):
-        return tuple(map(make_hashable, obj))
-    return tuple(obj)
+    ret = None
+    if isinstance(obj, collections.abc.Mapping):
+        # Handle dict-like objects.
+        new_object = copy.deepcopy(obj)
+        for k, v in new_object.items():
+            new_object[k] = make_hashable(v)
+        ret = tuple(new_object.items())
+    elif isinstance(obj, collections.abc.Iterable) and not isinstance(obj, str):
+        # The problem is that `str` is both `Hashable` and `Iterable`, but here
+        # we want to treat it like `Hashable`, i.e. return string as it is.
+        # Same with `Tuple`, but for `Tuple` we want to apply the function
+        # recursively, i.e. make every element `Hashable`.
+        ret = tuple([make_hashable(element) for element in obj])
+    elif isinstance(obj, collections.abc.Hashable):
+        # Return the object as is, since it's already hashable.
+        ret = obj
+    else:
+        ret = tuple(obj)
+    return ret
 
 
 def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:
@@ -186,6 +211,15 @@ def subtract_config(
     diff = cconconf.Config()
     for k, v in flat_m.items():
         if (k not in flat_s) or (flat_m[k] != flat_s[k]):
+            # It is not possible to use a dict as a config's value.
+            # It should be converted to a config first.
+            if isinstance(v, dict):
+                if not v:
+                    # Replace empty dict with empty config.
+                    v = cconconf.Config()
+                else:
+                    # Get config from a dict.
+                    v = cconconf.Config.from_dict(v)
             diff[k] = v
     return diff
 
