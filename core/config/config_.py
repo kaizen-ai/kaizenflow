@@ -23,6 +23,7 @@ import helpers.hdict as hdict
 import helpers.hintrospection as hintros
 import helpers.hio as hio
 import helpers.hpandas as hpandas
+import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
@@ -198,7 +199,8 @@ class Config:
 
     def __init__(
         self,
-        # We can't make this as mandatory kwarg because of `Config.from_python()`.
+        # We can't make this as mandatory kwarg because  of
+        # `Config.from_python()`.
         array: Optional[List[Tuple[CompoundKey, Any]]] = None,
         *,
         # By default we use safe behaviors.
@@ -264,8 +266,8 @@ class Config:
         # This is implemented lazily (or Pythonically) with a try-catch around
         # accessing the key.
         try:
-            # When we test for existence we don't want to report the config in case
-            # of error.
+            # When we test for existence we don't want to report the config
+            # in case of error.
             report_mode = "none"
             val = self.__getitem__(key, report_mode=report_mode)
             _LOG.debug("Found val=%s", val)
@@ -290,8 +292,8 @@ class Config:
 
     # `__setitem__` and `__getitem__`
     #   - accept a compound key
-    #   - invoke the internal methods `_set_item`, `_get_item` to do the actual work
-    #     and handle exceptions based on `report_mode`
+    #   - invoke the internal methods `_set_item`, `_get_item` to do the
+    #   actual work and handle exceptions based on `report_mode`.
 
     def __setitem__(
         self,
@@ -304,8 +306,10 @@ class Config:
     ) -> None:
         """
         Set / update `key` to `val`, equivalent to `dict[key] = val`.
+
         If `key` is an iterable of keys, then the key hierarchy is navigated /
         created and the leaf value added/updated with `val`.
+
         :param update_mode: define the policy used for updates (see above)
             - `None` to use the value set in the constructor
         :param clobber_mode: define the policy used for controlling
@@ -359,14 +363,16 @@ class Config:
         self, key: CompoundKey, *, report_mode: str = "verbose_log_error"
     ) -> Any:
         """
-        Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
-        is an iterable of keys (e.g., `("read_data", "file_name")`, then the
-        hierarchy is navigated until the corresponding element is found or we
-        raise if the element doesn't exist. When we report an error about a
-        missing key, we print only the keys of the Config at the current level
-        of the recursion and not the original Config (which is also not
-        directly accessible inside the recursion), e.g., `key='nrows_tmp' not
-        in ['nrows', 'nrows2']`
+        Get value for `key` or raise `KeyError` if it doesn't exist.
+
+        If `key` is an iterable of keys (e.g., `("read_data", "file_name")`, then
+        the hierarchy is navigated until the corresponding element is found or we
+        raise if the element doesn't exist.
+
+        When we report an error about a missing key, we print only the keys of the
+        Config at the current level of the recursion and not the original Config
+        (which is also not directly accessible inside the recursion), e.g.,
+        `key='nrows_tmp' not in ['nrows', 'nrows2']`
 
         :param report_mode: how to report a KeyError
             - `none` (default): only report the exception from `_get_item()`
@@ -468,6 +474,9 @@ class Config:
         """
         Equivalent to `dict.get(key, default_val)`.
 
+        It has the same functionality as `__getitem__()` but returning `val`
+        if the value corresponding to `key` doesn't exist.
+
         :param default_value: default value to return if key is not in `config`
         :param expected_type: expected type of `value`
         :return: config[key] if available, else `default_value`
@@ -479,8 +488,8 @@ class Config:
             ret = self.__getitem__(key, report_mode=report_mode)
         except KeyError as e:
             # No key: use the default val if it was passed or asserts.
-            # We can't use None since None can be a valid default value, so we use
-            # another value.
+            # We can't use None since None can be a valid default value,
+            # so we use another value.
             if default_value != _NO_VALUE_SPECIFIED:
                 ret = default_value
             else:
@@ -510,8 +519,8 @@ class Config:
                 - if a key already exists, then assert
                 - if a key doesn't exist, then assign the new value
             - `overwrite`: assign the key, whether the key exists or not
-            - `assign_if_missing`: this mode is used to complete a config, preserving
-              what already exists
+            - `assign_if_missing`: this mode is used to complete a config,
+            preserving what already exists
                 - if a key already exists, leave the old value and raise a warning
                 - if a key doesn't exist, then assign the new value
         """
@@ -642,16 +651,34 @@ class Config:
 
     def save_to_file(self, log_dir: str, tag: str) -> None:
         """
-        Save config as a string. Saves file in a log dir:
+        Save config as a string and pickle.
 
+        Save 2 files in a log dir:
         - ${log_dir}/{tag}.txt
+        - ${log_dir}/{tag}.values_as_strings.pkl
 
         :param tag: basename of the files to save (e.g., "system_config.input")
         """
+        # 1) As a string.
         file_name = os.path.join(log_dir, f"{tag}.txt")
-        mode = "verbose"
-        config_string = repr(mode)
-        hio.to_file(file_name, config_string)
+        hio.to_file(file_name, repr(self))
+        # 2) As a pickle containing all values as string.
+        file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
+        config = self.to_string_config()
+        hpickle.to_pickle(config, file_name)
+
+    def to_string_config(self) -> "Config":
+        """
+        Transform this Config into a pickle-able one where all values are
+        replaced with their string representation.
+        """
+        config_out = {}
+        for k, v in self._config.items():
+            if isinstance(v, Config):
+                config_out[k] = v.to_string_config()
+            else:
+                config_out[k] = hpickle.to_pickleable(v)
+        return config_out
 
     # /////////////////////////////////////////////////////////////////////////////
     # From / to functions.
