@@ -161,9 +161,6 @@ research_portfolio_dict = {
 research_portfolio_df_dict = oms.get_research_dfs(research_portfolio_dict)
 
 # %%
-research_portfolio_df_dict["research_portfolio_stats_df"]
-
-# %%
 portfolio_dict = {
     "config": {
         "start_timestamp": start_timestamp,
