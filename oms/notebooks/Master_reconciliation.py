@@ -148,36 +148,35 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # # Load logged portfolios
 
 # %%
-portfolio_config_dict = {
-    "start_timestamp": start_timestamp,
-    "end_timestamp": end_timestamp,
-    "freq": config["meta"]["bar_duration"],
-    "normalize_bar_times": True,
+research_portfolio_dict = {
+    "dfs": {
+        "research_portfolio_df": research_portfolio_df,
+        "research_portfolio_stats_df": research_portfolio_stats_df,
+    },
+    "filter": {
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+    }
 }
-portfolio_config_dict
+research_portfolio_df_dict = oms.get_research_dfs(research_portfolio_dict)
 
 # %%
-# TODO(gp): @grisha convert into a function and move to library.
+research_portfolio_df_dict["research_portfolio_stats_df"]
 
-# Load the 4 portfolios.
-portfolio_dfs = {}
-portfolio_stats_dfs = {}
-for name, path in portfolio_path_dict.items():
-    _LOG.info("Processing portfolio=%s path=%s", name, path)
-    portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
-        path,
-        **portfolio_config_dict,
-    )
-    portfolio_dfs[name] = portfolio_df
-    portfolio_stats_dfs[name] = portfolio_stats_df
-portfolio_dfs["research"] = research_portfolio_df.loc[
-    start_timestamp:end_timestamp
-]
-portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
-    start_timestamp:end_timestamp
-]
-portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
-hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
+# %%
+portfolio_dict = {
+    "config": {
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        "freq": config["meta"]["bar_duration"],
+        "normalize_bar_times": True,
+    },
+    "path": portfolio_path_dict
+}
+portfolio_df_dict = oms.load_portfolio_dfs(portfolio_dict, research_portfolio_df_dict)
+
+# %%
+hpandas.df_to_str(portfolio_df_dict["portfolio_stats_df"], num_rows=5, log_level=logging.INFO)
 
 # %%
 bars_to_burn = 1
