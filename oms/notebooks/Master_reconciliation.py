@@ -67,6 +67,16 @@ prod_config = configs["prod"]
 sim_config = configs["sim"]
 
 # %%
+# Diff configs.
+diff_config = cconfig.build_config_diff_dataframe(
+    {
+        "prod_config": prod_config,
+        "sim_config": sim_config,
+    }
+)
+diff_config 
+
+# %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 data_type = "portfolio"
 portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
