@@ -145,7 +145,12 @@ def reconcile_create_dirs(
 
 @task
 def reconcile_dump_market_data(
-    ctx, run_date=None, dst_dir=None, incremental=False, interactive=False
+    ctx,
+    run_date=None,
+    dst_dir=None,
+    prevent_overwriting=True,
+    incremental=False, 
+    interactive=False,
 ):  # type: ignore
     # pylint: disable=line-too-long
     """
@@ -196,12 +201,13 @@ def reconcile_dump_market_data(
     # Copy market data file to the target dir.
     cmd = f"cp -v {market_data_file} {sim_target_dir}"
     _system(cmd)
-    # Prevent overwriting.
-    market_data_file_shared = os.path.join(sim_target_dir, market_data_file)
-    cmd = f"chmod -w {market_data_file_shared}"
-    _system(cmd)
     # Sanity check remote data.
+    market_data_file_shared = os.path.join(sim_target_dir, market_data_file)
     _sanity_check_data(market_data_file_shared)
+    #
+    if prevent_overwriting:
+        cmd = f"chmod -w {market_data_file_shared}"
+        _system(cmd)
 
 
 @task
@@ -260,7 +266,11 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None):  # type: ignore
 
 @task
 def reconcile_copy_prod_data(
-    ctx, run_date=None, dst_dir=None, stage="preprod"
+    ctx,
+    run_date=None,
+    dst_dir=None,
+    prevent_overwriting=True,
+    stage="preprod",
 ):  # type: ignore
     """
     Copy the output of the prod run to a shared folder.
@@ -290,15 +300,20 @@ def reconcile_copy_prod_data(
     hdbg.dassert_file_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
-    # Prevent overwriting.
-    cmd = f"chmod -R -w {prod_target_dir}"
-    _system(cmd)
+    #
+    if prevent_overwriting:
+        cmd = f"chmod -R -w {prod_target_dir}"
+        _system(cmd)
 
 
 # TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
 @task
 def reconcile_run_notebook(
-    ctx, run_date=None, dst_dir=None, incremental=False
+    ctx,
+    run_date=None,
+    dst_dir=None,
+    prevent_overwriting=True,
+    incremental=False,
 ):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
@@ -352,10 +367,11 @@ def reconcile_run_notebook(
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
     _system(cmd)
-    # Prevent overwriting.
-    results_shared_dir = os.path.join(target_dir, "result_0")
-    cmd = f"chmod -R -w {results_shared_dir}"
-    _system(cmd)
+    #
+    if prevent_overwriting:
+        results_shared_dir = os.path.join(target_dir, "result_0")
+        cmd = f"chmod -R -w {results_shared_dir}"
+        _system(cmd)
 
 
 @task
@@ -377,7 +393,11 @@ def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
 
 @task
 def reconcile_dump_tca_data(
-    ctx, run_date=None, dst_dir=None, incremental=False
+    ctx,
+    run_date=None,
+    dst_dir=None,
+    prevent_overwriting=True,
+    incremental=False,
 ):  # type: ignore
     """
     Retrieve and save the TCA data.
@@ -424,9 +444,10 @@ def reconcile_dump_tca_data(
     _LOG.info("Copying results from '%s' to '%s'", local_results_dir, target_dir)
     cmd = f"cp -vr {local_results_dir} {target_dir}"
     _system(cmd)
-    # Prevent overwriting.
-    cmd = f"chmod -R -w {target_dir}"
-    _system(cmd)
+    #
+    if prevent_overwriting:
+        cmd = f"chmod -R -w {target_dir}"
+        _system(cmd)
 
 
 @task
@@ -435,8 +456,8 @@ def reconcile_run_all(
     run_date=None,
     dst_dir=None,
     rt_timeout_in_secs_or_time=None,
-    # TODO(Dan): Fix `run_notebook` usage.
-    run_notebook=False,
+    prevent_overwriting=True,
+    skip_notebook=True,
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
@@ -445,9 +466,19 @@ def reconcile_run_all(
     #
     reconcile_create_dirs(ctx, run_date=run_date, dst_dir=dst_dir)
     #
-    reconcile_copy_prod_data(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_copy_prod_data(
+        ctx,
+        run_date=run_date,
+        dst_dir=dst_dir,
+        prevent_overwriting=prevent_overwriting,
+    )
     #
-    reconcile_dump_market_data(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_dump_market_data(
+        ctx,
+        run_date=run_date,
+        dst_dir=dst_dir,
+        prevent_overwriting=prevent_overwriting,
+    )
     reconcile_run_sim(
         ctx,
         run_date=run_date,
@@ -456,8 +487,18 @@ def reconcile_run_all(
     )
     reconcile_copy_sim_data(ctx, run_date=run_date, dst_dir=dst_dir)
     #
-    reconcile_dump_tca_data(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_dump_tca_data(
+        ctx,
+        run_date=run_date,
+        dst_dir=dst_dir,
+        prevent_overwriting=prevent_overwriting,
+    )
     #
-    if run_notebook:
-        reconcile_run_notebook(ctx, run_date=run_date, dst_dir=dst_dir)
+    if not skip_notebook:
+        reconcile_run_notebook(
+            ctx,
+            run_date=run_date,
+            dst_dir=dst_dir,
+            prevent_overwriting=prevent_overwriting,
+        )
     reconcile_ls(ctx, run_date=run_date, dst_dir=dst_dir)
