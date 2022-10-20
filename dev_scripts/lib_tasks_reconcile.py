@@ -309,11 +309,9 @@ def reconcile_run_notebook(ctx, run_date=None, incremental=False):  # type: igno
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
     script_name = "tmp.publish_notebook.sh"
-    hio.to_file(script_name, cmd_txt)
+    hio.create_executable_script(script_name, cmd_txt)
     # Make the script executable and run it.
     _LOG.info("Running the notebook=%s", notebook_path)
-    cmd = f"chmod +x {script_name}"
-    _system(cmd)
     _system(script_name)
     # Copy the published notebook to the shared folder.
     hdbg.dassert_dir_exists(results_dir)
@@ -381,10 +379,8 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     cmd_run_txt += "; exit ${PIPESTATUS[0]}"
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
-    hio.to_file(script_name, cmd_run_txt)
+    hio.create_executable_script(script_name, cmd_run_txt)
     # Make the script executable and run it.
-    cmd = f"chmod +x {script_name}"
-    _system(cmd)
     _system(script_name)
     # Copy dumped data to a shared folder.
     target_dir = os.path.join(_PROD_RECONCILIATION_DIR, run_date_str)
