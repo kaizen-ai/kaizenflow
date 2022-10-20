@@ -10,7 +10,7 @@ import argparse
 import logging
 import os
 from datetime import timedelta
-from typing import Optional
+from typing import Optional, Union
 
 import pandas as pd
 import psycopg2 as psycop
@@ -242,6 +242,53 @@ def fetch_bid_ask_rt_db_data(
                     AND timestamp < {end_ts_unix};
                     """
     return hsql.execute_query_to_df(db_connection, select_query)
+
+def fetch_data_by_age(db_connection: hsql.DbConnection,
+    db_table: str,
+    table_column: str,
+    timestamp: pd.Timestamp
+) -> pd.DataFrame:
+    """
+    Fetch data strictly older than a specified timestamp from a db table.
+    
+    Age is determined based on a specified column, i.e.
+    when 
+
+    :param db_connection: a database connection object
+    :param db_table: name of the table to select from
+    :param table_column: name of the column to apply the comparison on
+    :param timestamp: timestamp to filter on
+    :return DataFrame with data older than the specified `timestamp` based
+     on `table_column` value. 
+    """
+    ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
+    select_query = f"""
+                    SELECT * FROM {db_table} WHERE {table_column} < {ts_unix};
+                    """
+    return hsql.execute_query_to_df(db_connection, select_query)
+
+
+def drop_db_data_by_age(db_connection: hsql.DbConnection,
+    db_table: str,
+    table_column: str,
+    timestamp: pd.Timestamp
+) -> None:
+    """
+    Delete data strictly older than a specified timestamp from a db table.
+    
+    Age is determined based on a specified column, i.e.
+    when 
+
+    :param db_connection: a database connection object
+    :param db_table: name of the table to delete from
+    :param table_column: name of the column to apply the comparison on
+    :param timestamp: timestamp to filter on
+    """
+    ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
+    delete_query = f"""
+                    DELETE FROM {db_table} WHERE {table_column} < {ts_unix};
+                    """
+    hsql.execute_query(db_connection, select_query)
 
 
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to

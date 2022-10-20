@@ -603,6 +603,8 @@ def save_parquet(
     unit: str,
     aws_profile: Optional[str],
     data_type: str,
+    *,
+    drop_db_metadata_column = True
 ) -> None:
     """
     Save Parquet dataset.
@@ -614,7 +616,8 @@ def save_parquet(
         data, "by_year_month"
     )
     # Drop DB metadata columns.
-    data = data.drop(["end_download_timestamp"], axis=1, errors="ignore")
+    if drop_db_metadata_column:
+        data = data.drop(["end_download_timestamp"], axis=1, errors="ignore")
     # Verify the schema of Dataframe.
     data = verify_schema(data)
     # Save filename as `uuid`, e.g.
