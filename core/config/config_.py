@@ -319,14 +319,14 @@ class Config:
         _LOG.debug("key=%s val=%s self=\n%s", key, val, self)
         # TODO(gp): Difference between amp and cmamp.
         if isinstance(val, dict):
-            if not(val):
-            # If the value is an empty `dict`, convert to empty string.
-            # This is used for back compatibility with cases when config
-            #  has empty leaves, see 
-            #  `core/config/test/test_config.py::Test_nested_config_update1::test_update3`
-                val = ""
-            else:
-                hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
+            # if not val:
+            # # If the value is an empty `dict`, convert to empty string.
+            # # This is used for back compatibility with cases when config
+            # #  has empty leaves, see 
+            # #  `core/config/test/test_config.py::Test_nested_config_update1::test_update3`
+            #     val = Config()
+            # else:
+            hdbg.dfatal(f"For key='{key}' val='{val}' can't be a dict")
         # # To debug who is setting a certain key.
         # if False:
         #     _LOG.info("key.set=%s", str(key))
@@ -767,6 +767,11 @@ class Config:
                         continue
                 hdbg.dassert(not isinstance(val, Config))
                 dict_[key] = val
+            if isinstance(val, dict) and not val:
+                # Convert empty leaves from OrderedDict to Config.
+                #  Temporary measure to keep back compatibility
+                #  with Config string representations (CMTask2689).
+                dict_[key] = Config()
         return dict_
 
     @classmethod

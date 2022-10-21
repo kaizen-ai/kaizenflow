@@ -1546,9 +1546,9 @@ class Test_to_dict1(hunitest.TestCase):
             {
                 "param1": 1,
                 "param2": 2,
-                # An empty dict becomes an empty config when converting to `Config`
-                # further.
-                "param3": collections.OrderedDict(),
+                # The empty leaves are converted to Configs,
+                #  which are retained when converting back to dict.
+                "param3": cconfig.Config(),
             }
         )
         #
@@ -1621,15 +1621,15 @@ class Test_to_dict2(hunitest.TestCase):
         act = pprint.pformat(flattened)
         exp = r"""
         OrderedDict([('read_data',
-                      OrderedDict([('file_name', 'foo_bar.txt'), ('nrows', 999)])),
-                     ('single_val', 'hello'),
-                     ('zscore', OrderedDict())])
+                    OrderedDict([('file_name', 'foo_bar.txt'), ('nrows', 999)])),
+                    ('single_val', 'hello'),
+                    ('zscore', )])
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip(
-        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
-    )
+    # @pytest.mark.skip(
+    #     "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    # )
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.

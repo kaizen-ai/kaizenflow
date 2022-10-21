@@ -178,6 +178,7 @@ class Test_subtract_configs1(hunitest.TestCase):
         actual = cconfig.subtract_config(config1, config2)
         expected = r"""
         key1: [(2, 'value3', {})]
+        key2:
         """
         self.assert_equal(str(actual), expected, fuzzy_match=True)
 
