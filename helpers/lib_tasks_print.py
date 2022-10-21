@@ -83,3 +83,8 @@ def print_env(ctx):  # type: ignore
     """
     _ = ctx
     print(henv.env_to_str())
+
+
+# TODO(gp):
+# Print a CSV
+# cat /share/data/cf_production/20221005/system_log_dir/process_forecasts/target_positions/20221005_153006.csv | column -t -s,

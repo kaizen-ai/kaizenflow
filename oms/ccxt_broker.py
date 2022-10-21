@@ -124,6 +124,7 @@ class CcxtBroker(ombroker.Broker):
             return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
+        _LOG.info("asset_ids=%s", asset_ids)
         if self.last_order_execution_ts:
             # Load orders for each given symbol.
             for asset_id in asset_ids:
@@ -136,6 +137,9 @@ class CcxtBroker(ombroker.Broker):
                 )
                 # Select closed orders.
                 for order in orders:
+                    _LOG.debug(
+                        "Transforming retrieved CCXT order: %s", str(order)
+                    )
                     if order["status"] == "closed":
                         # Select order matching to CCXT exchange id.
                         filled_order = [
@@ -233,10 +237,13 @@ class CcxtBroker(ombroker.Broker):
         )
         # Fetch all open positions.
         positions = self._exchange.fetchPositions()
+        _LOG.debug("fetched_positions=%s", positions)
         open_positions = []
         for position in positions:
+            _LOG.debug("fetched_position=%s", position)
             # Get the quantity of assets on short/long positions.
             position_amount = float(position["info"]["positionAmt"])
+            _LOG.debug("After rounding: fetched_position=%s", position)
             if position_amount != 0:
                 open_positions.append(position)
         return open_positions
@@ -320,12 +327,14 @@ class CcxtBroker(ombroker.Broker):
             asset_id = self._symbol_to_asset_id_mapping[symbol]
             symbol_fills_with_asset_ids = []
             for item in symbol_fills:
+                _LOG.debug("symbol_fill=%s", item)
                 # Get the position of the full symbol field to paste the asset id after it.
                 hdbg.dassert_in("symbol", item.keys())
                 position = list(item.keys()).index("symbol") + 1
                 items = list(item.items())
                 items.insert(position, ("asset_id", asset_id))
                 symbol_fills_with_asset_ids.append(dict(items))
+                _LOG.debug("after transformation: symbol_fill=%s", item)
             fills.extend(symbol_fills_with_asset_ids)
         return fills
 
@@ -437,9 +446,18 @@ class CcxtBroker(ombroker.Broker):
         symbol = self._asset_id_to_symbol_mapping[asset_id]
         # Select current position amount.
         curr_num_shares = self._exchange.fetch_positions([symbol])[0]
+        _LOG.debug(
+            "Before order has been filled: curr_num_shares=%s", curr_num_shares
+        )
         curr_num_shares = float(curr_num_shares["info"]["positionAmt"])
+        # Convert the retrieved string and round.
+        amount_precision = self.market_info[asset_id]["amount_precision"]
+        curr_num_shares = round(curr_num_shares, amount_precision)
         # Calculate position before the order has been filled.
         curr_num_shares = curr_num_shares - diff_num_shares
+        _LOG.debug(
+            "After order has been filled: curr_num_shares=%s", curr_num_shares
+        )
         oms_order = omorder.Order(
             creation_timestamp,
             asset_id,
@@ -449,6 +467,8 @@ class CcxtBroker(ombroker.Broker):
             curr_num_shares,
             diff_num_shares,
         )
+        _LOG.debug("After CCXT to OMS transform:")
+        _LOG.debug("oms_order=%s", str(oms_order))
         return oms_order
 
     def _get_market_info(self) -> Dict[int, Any]:
@@ -598,6 +618,7 @@ class CcxtBroker(ombroker.Broker):
         submitted_order: Optional[omorder.Order] = None
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
+        _LOG.debug("Submitting order=%s", str(order))
         # TODO(Juraj): separate the retry logic from the code that does the work.
         for _ in range(self.max_order_submit_retries):
             try:
@@ -616,6 +637,7 @@ class CcxtBroker(ombroker.Broker):
                         "client_oid": order.order_id,
                     },
                 )
+                _LOG.debug("CCXT order response order_resp=%s", order_resp)
                 submitted_order = order
                 submitted_order.ccxt_id = order_resp["id"]
                 # If the submission was successful, don't retry.
@@ -652,9 +674,7 @@ class CcxtBroker(ombroker.Broker):
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[omorder.Order] = []
         for order in orders:
-            _LOG.info("Submitting %s", str(order))
             sent_order = await self._submit_single_order(order)
-            _LOG.info(str(sent_order))
             # If order was submitted successfully append it to
             # the list of sent orders.
             if sent_order:
@@ -668,6 +688,7 @@ class CcxtBroker(ombroker.Broker):
         # Combine all orders in a df.
         order_dicts = [order.to_dict() for order in sent_orders]
         order_df = pd.DataFrame(order_dicts)
+        _LOG.debug("order_df=%s", order_df)
         return receipt, order_df
 
     def _build_asset_id_to_symbol_mapping(

@@ -343,7 +343,7 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     df_resampled["level"] = 1
     # Round column values for readability.
     round_cols_dict = {
-        col: 3 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
+        col: 6 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
     }
     df_resampled = df_resampled.round(decimals=round_cols_dict)
     return df_resampled

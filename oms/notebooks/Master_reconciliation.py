@@ -20,7 +20,6 @@
 # %%
 import logging
 import os
-from typing import Dict
 
 import pandas as pd
 
@@ -31,7 +30,6 @@ import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
-import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import oms as oms
 
@@ -61,58 +59,26 @@ system_log_path_dict = dict(config["system_log_path"].to_dict())
 system_log_path_dict
 
 # %%
-# TODO(Grisha): factor common code.
-# TODO(Grisha): diff configs.
-config_name = "system_config.input.values_as_strings.pkl"
-
-prod_config_path = os.path.join(system_log_path_dict["prod"], config_name)
-prod_config_pkl = hpickle.from_pickle(prod_config_path)
-prod_config = cconfig.Config.from_dict(prod_config_pkl)
-#
-sim_config_path = os.path.join(system_log_path_dict["sim"], config_name)
-sim_config_pkl = hpickle.from_pickle(sim_config_path)
-sim_config = cconfig.Config.from_dict(sim_config_pkl)
-
-# %%
-# TODO(gp): @grisha move to `oms/reconciliation.py`.
-
-
-def get_system_log_paths(
-    system_log_path_dict: Dict[str, str], data_type: str
-) -> Dict[str, str]:
-    """
-    Get paths to data inside a system log dir.
-
-    :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir", "sim": ...}`
-    :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
-    :return: dir paths inside system log dir for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
-    """
-    data_path_dict = {}
-    if data_type == "portfolio":
-        dir_name = "process_forecasts/portfolio"
-    elif data_type == "dag":
-        dir_name = "dag/node_io/node_io.data"
-    else:
-        raise ValueError(f"Unsupported data type={data_type}")
-    for k, v in system_log_path_dict.items():
-        cur_dir = os.path.join(v, dir_name)
-        hdbg.dassert_dir_exists(cur_dir)
-        data_path_dict[k] = cur_dir
-    return data_path_dict
-
+configs = oms.load_config_from_pickle(system_log_path_dict)
+# Diff configs.
+diff_config = cconfig.build_config_diff_dataframe(
+    {
+        "prod_config": configs["prod"],
+        "sim_config": configs["sim"],
+    }
+)
+diff_config
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 data_type = "portfolio"
-portfolio_path_dict = get_system_log_paths(system_log_path_dict, data_type)
+portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
 portfolio_path_dict
 
 # %%
 # This dict points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
 data_type = "dag"
-dag_path_dict = get_system_log_paths(system_log_path_dict, data_type)
+dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
 dag_path_dict
 
 # %%
@@ -134,32 +100,10 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
-# TODO(gp): @grisha move to `oms/reconciliation.py`.
-
-
-def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
-    """
-    Retrieve the most recent output from the last DAG node.
-
-    This function relies on our file naming conventions.
-    """
-    hdbg.dassert_dir_exists(dag_dir)
-    parquet_files = list(
-        filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
-    )
-    _LOG.info("Tail of files found=%s", parquet_files[-3:])
-    file_name = parquet_files[-1]
-    dag_parquet_path = os.path.join(dag_dir, file_name)
-    _LOG.info("DAG parquet path=%s", dag_parquet_path)
-    dag_df = pd.read_parquet(dag_parquet_path)
-    return dag_df
-
-
-# %%
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    dag_df_dict[name] = get_latest_output_from_last_dag_node(path)
+    dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -177,8 +121,6 @@ prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
 )
-
-# %%
 hpandas.df_to_str(
     prod_sim_dag_corr.min(),
     num_rows=None,
@@ -197,8 +139,6 @@ hpandas.df_to_str(
 fep = dtfmod.ForecastEvaluatorFromPrices(
     **config["research_forecast_evaluator_from_prices"]["init"]
 )
-
-# %%
 annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ].to_dict()
@@ -209,6 +149,11 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 )
 # TODO(gp): Move it to annotate_forecasts?
 research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+# Align index with prod and sim portfolios.
+research_portfolio_df = research_portfolio_df.loc[start_timestamp:end_timestamp]
+research_portfolio_stats_df = research_portfolio_stats_df.loc[
+    start_timestamp:end_timestamp
+]
 #
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
@@ -216,35 +161,31 @@ hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INF
 # # Load logged portfolios
 
 # %%
-portfolio_config_dict = {
-    "start_timestamp": start_timestamp,
-    "end_timestamp": end_timestamp,
-    "freq": config["meta"]["bar_duration"],
-    "normalize_bar_times": True,
-}
-portfolio_config_dict
+portfolio_config = cconfig.Config.from_dict(
+    {
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        "freq": config["meta"]["bar_duration"],
+        "normalize_bar_times": True,
+    }
+)
+portfolio_config
 
 # %%
-# TODO(gp): @grisha move to library.
+portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
+    portfolio_path_dict,
+    portfolio_config,
+)
+# Add research portfolio.
+portfolio_dfs["research"] = research_portfolio_df
+#
+hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
 
-# Load the 4 portfolios.
-portfolio_dfs = {}
-portfolio_stats_dfs = {}
-for name, path in portfolio_path_dict.items():
-    _LOG.info("Processing portfolio=%s path=%s", name, path)
-    portfolio_df, portfolio_stats_df = oms.load_portfolio_artifacts(
-        path,
-        **portfolio_config_dict,
-    )
-    portfolio_dfs[name] = portfolio_df
-    portfolio_stats_dfs[name] = portfolio_stats_df
-portfolio_dfs["research"] = research_portfolio_df.loc[
-    start_timestamp:end_timestamp
-]
-portfolio_stats_dfs["research"] = research_portfolio_stats_df.loc[
-    start_timestamp:end_timestamp
-]
+# %%
+# Add research df and combine into a single df.
+portfolio_stats_dfs["research"] = research_portfolio_stats_df
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
+#
 hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %%

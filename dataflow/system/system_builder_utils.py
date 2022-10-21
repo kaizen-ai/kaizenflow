@@ -476,7 +476,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
         trading_end_time = None
         liquidate_at_trading_end_time = False
         # For simplicity in the non-prod system we do not use quantization so that
-        # we do not need to pass `asset_ids_to_decimals` (that we receive from 
+        # we do not need to pass `asset_ids_to_decimals` (that we receive from
         # broker) around.
         share_quantization = "no_quantization"
     # TODO(Grisha): for crypto there is no ATH, but we have to

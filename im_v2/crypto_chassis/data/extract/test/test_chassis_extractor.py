@@ -382,9 +382,9 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         actual_args = str(self.build_query_url_mock.call_args_list)
         expected_args = (
             """[call('https://api.cryptochassis.com/v1/ohlc/binance/btc-usd', startTime=1660867200, """
-            """endTime=1660953540, interval='1m', includeRealTime='1'),
+            """endTime=1660953540, interval='1m', includeRealTime='0'),
  call('https://api.cryptochassis.com/v1/ohlc/binance-coin-futures/btcusd_perp', startTime=1660867200, """
-    """endTime=1660953540, interval='1m', includeRealTime='1')]"""
+    """endTime=1660953540, interval='1m', includeRealTime='0')]"""
         )
         self.assertEqual(actual_args, expected_args)
         # Check calls against `requests.get`.

@@ -386,6 +386,7 @@ def to_str(
         If expression is a space-separated compound expression, e.g.,
         `to_str("exp1 exp2 ...")`, it is converted into:
         `exp1=val1, exp2=val2, ...`
+    :param print_lhs: whether we want to print the left hand side (i.e., exp1)
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -409,7 +410,9 @@ def to_str(
         return expression
     # Evaluate the expression.
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
-    ret = expression + "="
+    ret = ""
+    if print_lhs:
+        ret += expression + "="
     eval_ = eval(expression, frame_.f_globals, frame_.f_locals)
     if mode == "str":
         ret += str(eval_)
