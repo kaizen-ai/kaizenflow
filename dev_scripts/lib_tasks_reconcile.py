@@ -182,11 +182,7 @@ def reconcile_dump_market_data(
     else:
         # TODO(Grisha): @Dan Copy logs to the shared folder.
         # pylint: disable=line-too-long
-<<<<<<< HEAD
         opts = "--action dump_data -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
-=======
-        opts = f"--action dump_data --reconcile_sim_date {run_date} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
->>>>>>> 605fa8309dbf9531ea7851fdee3e910ce115f8fa
         opts += "; exit ${PIPESTATUS[0]}"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
@@ -444,16 +440,8 @@ def reconcile_dump_tca_data(
     _system(script_name)
     # Copy dumped data to the specified folder.
     hdbg.dassert_dir_exists(target_dir)
-<<<<<<< HEAD
     _LOG.info("Copying results from '%s' to '%s'", local_results_dir, target_dir)
     cmd = f"cp -vr {local_results_dir} {target_dir}"
-=======
-    _LOG.info("Copying results from '%s' to '%s'", dst_dir, target_dir)
-    cmd = f"cp -vr {dst_dir} {target_dir}"
-    _system(cmd)
-    # Prevent overwriting.
-    cmd = f"chmod -R -w {target_dir}/tca"
->>>>>>> 605fa8309dbf9531ea7851fdee3e910ce115f8fa
     _system(cmd)
     #
     if prevent_overwriting:
