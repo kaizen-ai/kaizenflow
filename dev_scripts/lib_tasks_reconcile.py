@@ -183,6 +183,7 @@ def reconcile_dump_market_data(
         # TODO(Grisha): @Dan Copy logs to the shared folder.
         # pylint: disable=line-too-long
         opts = "--action dump_data -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
+        opts += "; exit ${PIPESTATUS[0]}"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         cmd = f"{script_name} {opts}"
@@ -231,6 +232,7 @@ def reconcile_run_sim(
     # Run simulation.
     # pylint: disable=line-too-long
     opts = f"--action run_simulation --reconcile_sim_date {run_date} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} --dst_dir {dst_dir} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
+    opts += "; exit ${PIPESTATUS[0]}"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
@@ -346,7 +348,7 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
-    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt"
+    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     # pylint: disable=line-too-long
     cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
     # pylint: enable=line-too-long
@@ -354,11 +356,9 @@ def reconcile_run_notebook(
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
     script_name = "tmp.publish_notebook.sh"
-    hio.to_file(script_name, cmd_txt)
+    hio.create_executable_script(script_name, cmd_txt)
     # Make the script executable and run it.
     _LOG.info("Running the notebook=%s", notebook_path)
-    cmd = f"chmod +x {script_name}"
-    _system(cmd)
     _system(script_name)
     # Copy the published notebook to the shared folder.
     hdbg.dassert_dir_exists(results_dir)
@@ -432,12 +432,11 @@ def reconcile_dump_tca_data(
     log_file = os.path.join(local_results_dir, "log.txt")
     cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {local_results_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
     # pylint: enable=line-too-long
+    cmd_run_txt += "; exit ${PIPESTATUS[0]}"
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
-    hio.to_file(script_name, cmd_run_txt)
+    hio.create_executable_script(script_name, cmd_run_txt)
     # Make the script executable and run it.
-    cmd = f"chmod +x {script_name}"
-    _system(cmd)
     _system(script_name)
     # Copy dumped data to the specified folder.
     hdbg.dassert_dir_exists(target_dir)
