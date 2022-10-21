@@ -327,7 +327,7 @@ class RealTimeHistoricalReconciler:
         """
         Load and process real time data.
         """
-        # Get CCXT data.
+        # Load real time data from the database.
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
@@ -357,18 +357,18 @@ class RealTimeHistoricalReconciler:
         timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
             "by_year_month", self.start_ts, self.end_ts
         )
-        # Read data corresponding to given time range.
+        # Load daily data from s3 parquet.
         cc_daily = hparque.from_parquet(
             self.s3_path, filters=timestamp_filters, aws_profile=self.aws_profile
         )
         if "timestamp" in cc_daily.columns:
-            # Sometimes the data contain `timestamp` column which is not needed
-            # since there is a timestamp in the index.
+            # Sometimes the data contains `timestamp` column which is not needed
+            # since there is always a timestamp in the index.
             cc_daily = cc_daily.drop(columns=["timestamp"])
         cc_daily = cc_daily.reset_index()
         cc_daily = cc_daily.loc[cc_daily["timestamp"] >= self.start_ts]
         cc_daily = cc_daily.loc[cc_daily["timestamp"] <= self.end_ts]
-        # Build full symbol columns.
+        # Build full symbol column.
         cc_daily["full_symbol"] = imvcufusy.build_full_symbol(
             cc_daily["exchange_id"], cc_daily["currency_pair"]
         )

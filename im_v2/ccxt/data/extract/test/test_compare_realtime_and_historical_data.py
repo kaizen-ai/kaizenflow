@@ -26,6 +26,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+    _bid_ask_dataframe_sample = None
 
     @staticmethod
     def get_s3_path() -> str:
@@ -87,9 +88,37 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
     def bid_ask_dataframe_sample(self) -> pd.DataFrame:
         """
-        
+        Get bid-ask data sample.
         """
-        pass
+        bid_ask_sample = pd.DataFrame(
+            columns=[
+                "timestamp",
+                "full_symbol",
+                "bid_price",
+                "bid_size",
+                "ask_price",
+                "ask_size",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [1631145600000, "binance::BTC_USDT", 19505.817, 1185.347, 19504.541, 859.472],
+                [1631145600000, "binance::ETH_USDT", 1321.790, 7004.761, 1321.699, 3670.681],
+                [1631145840000, "binance::BTC_USDT", 19500.714, 1019.649, 19502.706, 1101.954],
+                [1631145840000, "binance::ETH_USDT", 1321.400, 3675.864, 1321.278, 4320.231],
+                [1631145900000, "binance::BTC_USDT", 19483.345, 1689.938, 19484.335, 1095.325],
+                [1631145900000, "binance::ETH_USDT", 1320.022, 4612.925, 1320.102, 6404.481],
+                [1631145940000, "binance::BTC_USDT", 19483.128, 1528.736, 19482.422, 958.668],
+                [1631145940000, "binance::ETH_USDT", 1319.769, 3754.403, 1319.654, 4775.201],
+                [1631145970000, "binance::BTC_USDT", 19473.500, 4.351, 19473.600, 15.578],
+                [1631145970000, "binance::ETH_USDT", 1319.030, 43.404, 1319.040, 48.725],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        bid_ask_sample = bid_ask_sample.set_index(["timestamp", "full_symbol"])
+        self._bid_ask_dataframe_sample = bid_ask_sample
+        return self._bid_ask_dataframe_sample.copy()
 
     @pytest.mark.slow
     def test_compare_ohlcv_1(self) -> None:
@@ -280,6 +309,170 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         1631145660000 binance::BTC_USDT   666    41   51     61      71
         1631145840000 binance::BTC_USDT    34    44   54     64      74
                     binance::ETH_USDT   666    44   54     64      74
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_1(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        No data missing.
+        """
+        sample = self.bid_ask_dataframe_sample()
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample
+        self._test_function_call("bid_ask", "futures", True)
+        #
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_2(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        Missing realtime data.
+        """
+        sample_rt = self.bid_ask_dataframe_sample()
+        sample_daily = self.bid_ask_dataframe_sample()
+        for position in [1, 3]:
+            # Edit original realtime data for mismatch.
+            sample_rt.iloc[position, sample_rt.columns.get_loc("bid_size")] = 666.667
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            self._test_function_call("bid_ask", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+        ################################################################################
+        Difference between bid sizes in real time and daily data for `binance::ETH_USDT` coin is more that 1%
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_3(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        Missing daily data.
+        """
+        sample_rt = self.bid_ask_dataframe_sample()
+        sample_daily = self.bid_ask_dataframe_sample()
+        for position in [2, 4]:
+            # Edit original realtime data for mismatch.
+            sample_daily.iloc[position, sample_daily.columns.get_loc("ask_price")] = 999.876
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            self._test_function_call("bid_ask", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+        ################################################################################
+        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more that 1%
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_4(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        Mismatch between realtime and daily data with missing data.
+        """
+        sample_rt = self.bid_ask_dataframe_sample().head(4)
+        sample_daily = self.bid_ask_dataframe_sample().head(4)
+        for position in [1, 3]:
+            # Edit original realtime data for mismatch.
+            sample_rt.iloc[position, sample_rt.columns.get_loc("bid_size")] = 2279.667
+        for position in [2, 3]:
+            # Edit original daily data for mismatch.
+            sample_daily.iloc[position, sample_daily.columns.get_loc("ask_price")] = 3224.678
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            self._test_function_call("bid_ask", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+        ################################################################################
+        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more that 1%
+        Difference between ask prices in real time and daily data for `binance::ETH_USDT` coin is more that 1%
+        Difference between bid sizes in real time and daily data for `binance::ETH_USDT` coin is more that 1%
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
