@@ -91,25 +91,25 @@ def _parse() -> argparse.ArgumentParser:
         "--db_table",
         action="store",
         required=True,
-        default="ccxt_ohlcv",
         type=str,
         help="DB table to use, e.g. 'ccxt_ohlcv'",
     )
     parser.add_argument(
+        "--s3_vendor",
+        action="store",
+        required=True,
+        type=str,
+        help="Vendor folder to use on s3 for daily data: 'ccxt' or 'crypto_chassis'",
+    )
+    parser.add_argument(
         "--resample_1min",
         action="store_true",
-        # required=True,
-        # default=False,
-        # type=bool,
         help="If the data should be resampled to 1 min'",
     )
 
     parser.add_argument(
         "--resample_1sec",
         action="store_true",
-        # required=True,
-        # default=False,
-        # type=bool,
         help="If the data should be resampled to 1 sec'",
     )
 
@@ -128,11 +128,12 @@ class RealTimeHistoricalReconciler:
             ["bid_ask", "ohlcv"],
             f"Invalid data type: {args.data_type} is not in [`bid_ask`, `ohlcv`]",
         )
-        hdbg.dassert_is(
-            (args.resample_1min != args.resample_1sec),
-            True,
-            "One resampling option should be chosen",
-        )
+        if args.data_type == "bid_ask":
+            hdbg.dassert_is(
+                (args.resample_1min != args.resample_1sec),
+                True,
+                "One resampling option should be chosen",
+            )
         self.data_type = args.data_type
         # Set DB connection.
         db_connection = self.get_db_connection(args)
@@ -145,6 +146,8 @@ class RealTimeHistoricalReconciler:
             args.s3_path,
             args.data_type,
             args.contract_type,
+            args.exchange_id,
+            args.s3_vendor,
             args.resample_1min,
             args.resample_1sec,
         )
@@ -208,6 +211,8 @@ class RealTimeHistoricalReconciler:
         s3_path: str,
         data_type: str,
         contract_type: str,
+        exchange_id: str,
+        s3_vendor: str,
         resample_1min: bool,
         resample_1sec: bool,
     ) -> str:
@@ -229,10 +234,11 @@ class RealTimeHistoricalReconciler:
             if resample_1sec:
                 vendor_folder = "crypto_chassis.downloaded_1sec"
         else:
-            vendor_folder = "crypto_chassis"
+            # Ohlcv data can be both `crypto_chassis` or `ccxt`.
+            vendor_folder = s3_vendor
         if contract_type == "futures":
             data_type = f"{data_type}-futures"
-        s3_path = f"{s3_path}/{data_type}/{vendor_folder}/binance"
+        s3_path = f"{s3_path}/{data_type}/{vendor_folder}/{exchange_id}"
         return s3_path
 
     @staticmethod
@@ -245,7 +251,6 @@ class RealTimeHistoricalReconciler:
         :param data: Dataframe to process
         :return: data with duplicates removed
         """
-
         duplicate_columns = ["full_symbol", "timestamp"]
         # Sort values.
         use_index = False
@@ -378,7 +383,7 @@ class RealTimeHistoricalReconciler:
 
     def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
-        Filter rows and columns..
+        Filter rows and columns.
 
         :param data: the data to process
         :return: filtered data with no duplicates
@@ -398,7 +403,6 @@ class RealTimeHistoricalReconciler:
 
         :param rt_data: real time data
         :param daily_data: daily data
-        :return:
         """
         # Inform if both dataframes are empty,
         # most likely there is a wrong arg value given.
@@ -449,7 +453,6 @@ class RealTimeHistoricalReconciler:
 
         :param rt_data: real time data
         :param daily_data: daily data
-        :return:
         """
         data = rt_data.merge(
             daily_data,

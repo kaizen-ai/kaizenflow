@@ -52,6 +52,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
         """
+        Get OHLCV data sample.
         """
         ohlcv_sample = pd.DataFrame(
             columns=[
@@ -85,6 +86,9 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         return self._ohlcv_dataframe_sample.copy()
 
     def bid_ask_dataframe_sample(self) -> pd.DataFrame:
+        """
+        
+        """
         pass
 
     @pytest.mark.slow
@@ -299,6 +303,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         )
         cmd.extend(["--data_type", "ohlcv"])
         cmd.extend(["--contract_type", "spot"])
+        cmd.extend(["--s3_vendor", "crypto_chassis"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         # Change bool values to string type to pass the check.
@@ -317,6 +322,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "contract_type": "spot",
             "resample_1min": "True",
             "resample_1sec": "False",
+            "s3_vendor": "crypto_chassis",
         }
         self.assertDictEqual(actual, expected)
 
@@ -353,6 +359,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "data_type": data_type,
             "contract_type": contract_type,
             "resample_1min": True,
+            "s3_vendor": "crypto_chassis",
         }
         if resample_1min:
             kwargs["resample_1min"] = True
@@ -403,10 +410,10 @@ class TestFilterDuplicates(hunitest.TestCase):
         Verify that duplicated data is filtered correctly.
         """
         input_data = self._get_duplicated_test_data()
-        self.assertEqual(input_data.shape, (9, 10))
+        self.assertEqual(input_data.shape, (10, 10))
         # Filter duplicates.
         actual_data = imvcdecrah.RealTimeHistoricalReconciler._filter_duplicates(input_data)
-        expected_length = 5
+        expected_length = 6
         expected_column_names = [
             "close",
             "full_symbol",
@@ -422,15 +429,16 @@ class TestFilterDuplicates(hunitest.TestCase):
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[0, 4]
+        index=[0, 5]
         columns=id,timestamp,open,high,low,close,volume,full_symbol,end_download_timestamp,knowledge_timestamp
-        shape=(5, 10)
+        shape=(6, 10)
         id                 timestamp  open  high  low  close  volume        full_symbol    end_download_timestamp       knowledge_timestamp
-        0   0 2021-09-09 00:00:00+00:00    30    40   50     60      70  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        1   1 2021-09-09 00:01:00+00:00    31    41   51     61      71  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        2   2 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        3   3 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
-        4   4 2021-09-09 00:04:00+00:00    34    44   54     64      74   kucoin::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        0   1 2021-09-09 00:00:00+00:00    30    40   50     60      70  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        1   2 2021-09-09 00:01:00+00:00    31    41   51     61      71  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        2   3 2021-09-09 00:02:00+00:00    32    42   52     62      72  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        3   4 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74   kucoin::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
         """
         # pylint: enable=line-too-long
         self.check_df_output(
@@ -455,20 +463,19 @@ class TestFilterDuplicates(hunitest.TestCase):
                 "low",
                 "close",
                 "volume",
-                "currency_pair",
-                "exchange_id",
+                "full_symbol",
                 "end_download_timestamp",
                 "knowledge_timestamp",
             ],
             # fmt: off
             # pylint: disable=line-too-long
             data=[
-                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [4, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [5, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [6, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "kucoin", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [1, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [6, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
             ]
             # pylint: enable=line-too-long
             # fmt: on
