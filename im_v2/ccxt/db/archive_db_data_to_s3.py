@@ -207,7 +207,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     Archive data from DB table older than specified timestamp into a S3
     storage, based on `timestamp` column of the table.
     """
-    # Transorm and assign args for readability.
+    # Transform and assign args for readability.
     is_incremental, s3_path, db_stage, db_table, dry_run = (
         args.incremental,
         args.s3_path,
@@ -216,12 +216,12 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         args.dry_run,
     )
     # TODO(Juraj): for now we assume that the only column used for archival
-    #  will be `timestamp`.
+    # is `timestamp`.
     table_column = "timestamp"
     s3_path = os.path.join(s3_path, db_stage, db_table, table_column)
     args.skip_time_continuity_assertion
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
-    # Get database connection
+    # Get database connection.
     db_conn = _get_db_connection(db_stage)
     # Perform argument assertions.
     _assert_db_args(db_conn, db_table, table_column)
