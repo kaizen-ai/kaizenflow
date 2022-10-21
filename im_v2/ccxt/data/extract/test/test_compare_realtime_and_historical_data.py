@@ -7,10 +7,10 @@ import pytest
 
 import helpers.hdatetime as hdateti
 import helpers.henv as henv
-import helpers.hunit_test as hunitest
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
@@ -398,7 +398,6 @@ class TestFilterDuplicates(hunitest.TestCase):
         )
         return test_data
 
-
     def test_filter_duplicates(self) -> None:
         """
         Verify that duplicated data is filtered correctly.
@@ -418,7 +417,7 @@ class TestFilterDuplicates(hunitest.TestCase):
             "low",
             "open",
             "timestamp",
-            "volume"
+            "volume",
         ]
         # pylint: disable=line-too-long
         expected_signature = r"""
@@ -441,6 +440,40 @@ class TestFilterDuplicates(hunitest.TestCase):
             None,
             expected_signature,
         )
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "currency_pair",
+                "exchange_id",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [1, 1631145600000, 30, 40, 50, 60, 70, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "BTC_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "binance", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [6, 1631145840000, 34, 44, 54, 64, 74, "ETH_USDT", "kucoin", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
 
     def _get_duplicated_test_data(self) -> pd.DataFrame:
         """

@@ -403,7 +403,7 @@ class OrderProcessor(hobject.PrintableMixin):
         Update current positions based on fills.
         """
         for fill in fills:
-            _LOG.debug("fill=\n%s" % str(fill))
+            _LOG.debug("fill=\n%s", str(fill))
             # Extract the fill info.
             id_ = fill.order.order_id
             trade_date = fill.timestamp.date()

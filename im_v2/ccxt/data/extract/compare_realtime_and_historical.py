@@ -203,21 +203,6 @@ class RealTimeHistoricalReconciler:
             connection = hsql.get_connection(*connection_params)
         return connection
 
-    def run(self) -> None:
-        """
-        Compare real time and daily data.
-        """
-        # Get CCXT data.
-        ccxt_rt = self._get_rt_data()
-        # Get CC data.
-        cc_daily = self._get_daily_data()
-        # Compare real time and daily data.
-        if self.data_type == "ohlcv":
-            self._compare_ohlcv(ccxt_rt, cc_daily)
-        else:
-            self._compare_bid_ask(ccxt_rt, cc_daily)
-        return
-
     @staticmethod
     def _build_s3_path(
         s3_path: str,
@@ -318,6 +303,21 @@ class RealTimeHistoricalReconciler:
         df_resampled = pd.concat(data_resampled)
         return df_resampled.reset_index()
 
+    def run(self) -> None:
+        """
+        Compare real time and daily data.
+        """
+        # Get CCXT data.
+        ccxt_rt = self._get_rt_data()
+        # Get CC data.
+        cc_daily = self._get_daily_data()
+        # Compare real time and daily data.
+        if self.data_type == "ohlcv":
+            self._compare_ohlcv(ccxt_rt, cc_daily)
+        else:
+            self._compare_bid_ask(ccxt_rt, cc_daily)
+        return
+      
     def _get_rt_data(self) -> pd.DataFrame:
         """
         Load and process real time data.

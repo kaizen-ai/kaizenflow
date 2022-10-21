@@ -1514,7 +1514,7 @@ def compute_duration_df(
 
     :param intersect_dfs: return a transformed dict with the intersection of
         indices of all the dfs if True, otherwise return the input data as is
-    :param valid_intersect: intersect indices without NaNs if True, otherwise 
+    :param valid_intersect: intersect indices without NaNs if True, otherwise
         intersect indices as is
     :return: timestamp stats and updated dict of dfs, see `intersect_dfs` param
     """
