@@ -389,7 +389,7 @@ def reconcile_dump_tca_data(ctx, run_date=None, incremental=False):  # type: ign
     cmd = f"cp -vr {dst_dir} {target_dir}"
     _system(cmd)
     # Prevent overwriting.
-    cmd = f"chmod -R -w {target_dir}"
+    cmd = f"chmod -R -w {target_dir}/tca"
     _system(cmd)
 
 
