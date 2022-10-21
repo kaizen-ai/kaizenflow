@@ -288,7 +288,7 @@ def drop_db_data_by_age(db_connection: hsql.DbConnection,
     delete_query = f"""
                     DELETE FROM {db_table} WHERE {table_column} < {ts_unix};
                     """
-    hsql.execute_query(db_connection, select_query)
+    hsql.execute_query(db_connection, delete_query)
 
 
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
