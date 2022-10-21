@@ -67,7 +67,7 @@ diff_config = cconfig.build_config_diff_dataframe(
         "sim_config": configs["sim"],
     }
 )
-diff_config
+diff_config.T
 
 # %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
@@ -107,14 +107,8 @@ for name, path in dag_path_dict.items():
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-dag_df_dict["prod"].index.max()
-
-# %%
-dag_df_dict["sim"].index.max()
-
-# %%
-dag_df_dict["prod"] = dag_df_dict["prod"].loc[start_timestamp: end_timestamp]
-dag_df_dict["sim"] = dag_df_dict["sim"].loc[start_timestamp: end_timestamp]
+for k, df in dag_df_dict.items():
+    dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
 
 # %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
@@ -200,29 +194,68 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Compare pairwise portfolio correlations
+# # Load forecast dataframes
 
 # %%
-import oms
 prod_target_position_df = oms.load_target_positions(
-    prod_forecast_dir,
+    portfolio_path_dict["prod"].strip("portfolio"),
     start_timestamp,
     end_timestamp,
-    bar_duration,
+    config["meta"]["bar_duration"],
+    normalize_bar_times=True
+)
+
+cand_target_position_df = oms.load_target_positions(
+    portfolio_path_dict["cand"].strip("portfolio"),
+    start_timestamp,
+    end_timestamp,
+    config["meta"]["bar_duration"],
     normalize_bar_times=True
 )
 
 # %%
-research_portfolio_df.columns.levels[0]
+prod_target_position_df["target_trades_shares"].head(6)
 
 # %%
-research_portfolio_df.sort_index(axis=1)["holdings_shares"].head(5)
+#prod_target_position_df.columns.levels[0]
+prod_target_position_df["holdings_shares"].head(5)
 
 # %%
-portfolio_dfs["sim"].sort_index(axis=1)["holdings_shares"][6051632686].head(5)
+research_portfolio_df["holdings_shares"].head(10)
+
+# %% [markdown]
+# # Orders
 
 # %%
-portfolio_dfs["prod"].sort_index(axis=1)["holdings_shares"][6051632686].head(5)
+prod_order_df = oms.TargetPositionAndOrderGenerator.load_orders( 
+    portfolio_path_dict["prod"].strip("portfolio"),
+)
+hpandas.df_to_str(prod_order_df, log_level=logging.INFO)
+
+# %%
+sim_order_df = oms.TargetPositionAndOrderGenerator.load_orders(
+    portfolio_path_dict["sim"].strip("portfolio"),
+)
+hpandas.df_to_str(sim_order_df, log_level=logging.INFO)
+
+# %%
+prod_order_df.groupby(["creation_timestamp", "asset_id"]).count()
+
+# %%
+asset_id = 6051632686
+
+mask = prod_order_df["asset_id"] == asset_id
+prod_order_df[mask].head(6)
+
+# %%
+prod_target_position_df["target_trades_shares"][asset_id].head(20)
+
+# %%
+# We are getting the fills that correspond to the orders and to the change of holdings.
+prod_target_position_df["holdings_shares"][asset_id].diff()
+
+# %% [markdown]
+# # Compare pairwise portfolio correlations
 
 # %%
 dtfmod.compute_correlations(
