@@ -3,12 +3,12 @@
 # #############################################################################
 
 # Logically the reconciliation process:
-# 1) Create reconciliation shared dirs
+# 1) Create reconciliation target dirs
 # 2) Run prod system (done by a separate AirFlow task)
-# 3) Copy prod data to a shared folder
+# 3) Copy prod data to a target folder
 # 4) Dump market data for simulation
 # 5) Run simulation
-# 6) Copy simulation data to a shared folder
+# 6) Copy simulation data to a target folder
 # 7) Dump TCA data
 # 8) Run the reconciliation notebook and publish it
 
@@ -154,7 +154,7 @@ def reconcile_dump_market_data(
 ):  # type: ignore
     # pylint: disable=line-too-long
     """
-    Dump the market data image and save it to a shared folder.
+    Dump the market data image and save it to the specified folder.
 
     The output df looks like:
     ```
@@ -169,6 +169,7 @@ def reconcile_dump_market_data(
         otherwise it skips
     :param interactive: if True ask user to visually inspect data snippet and
         confirm the dumping
+    :param prevent_overwriting: if True subtract writing right from the target dir
     """
     # pylint: enable=line-too-long
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
@@ -180,7 +181,7 @@ def reconcile_dump_market_data(
     if incremental and os.path.exists(market_data_file):
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
-        # TODO(Grisha): @Dan Copy logs to the shared folder.
+        # TODO(Grisha): @Dan Copy logs to the specified folder.
         # pylint: disable=line-too-long
         opts = "--action dump_data -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         opts += "; exit ${PIPESTATUS[0]}"
@@ -202,12 +203,12 @@ def reconcile_dump_market_data(
     # Copy market data file to the target dir.
     cmd = f"cp -v {market_data_file} {sim_target_dir}"
     _system(cmd)
-    # Sanity check remote data.
-    market_data_file_shared = os.path.join(sim_target_dir, market_data_file)
-    _sanity_check_data(market_data_file_shared)
+    # Sanity check result data.
+    market_data_file_target = os.path.join(sim_target_dir, market_data_file)
+    _sanity_check_data(market_data_file_target)
     #
     if prevent_overwriting:
-        cmd = f"chmod -w {market_data_file_shared}"
+        cmd = f"chmod -w {market_data_file_target}"
         _system(cmd)
 
 
@@ -246,7 +247,7 @@ def reconcile_run_sim(
 @task
 def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None):  # type: ignore
     """
-    Copy the output of the simulation run to a shared folder.
+    Copy the output of the simulation run to the specified folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -255,11 +256,11 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None):  # type: ignore
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(sim_target_dir)
     _LOG.info("Copying results to '%s'", sim_target_dir)
-    # Copy the output to the shared folder.
+    # Copy the output to the specified folder.
     system_log_dir = "./system_log_dir"
     cmd = f"cp -vr {system_log_dir} {sim_target_dir}"
     _system(cmd)
-    # Copy simulation run logs to the shared folder.
+    # Copy simulation run logs to the specified folder.
     pytest_log_file_path = "reconcile_run_sim_log.txt"
     hdbg.dassert_file_exists(pytest_log_file_path)
     cmd = f"cp -v {pytest_log_file_path} {sim_target_dir}"
@@ -275,7 +276,7 @@ def reconcile_copy_prod_data(
     prevent_overwriting=True,
 ):  # type: ignore
     """
-    Copy the output of the prod run to a shared folder.
+    Copy the output of the prod run to the specified folder.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -295,7 +296,7 @@ def reconcile_copy_prod_data(
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
-    # Copy prod run logs to the shared folder.
+    # Copy prod run logs to the specified folder.
     cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
@@ -319,7 +320,7 @@ def reconcile_run_notebook(
 ):  # type: ignore
     """
     Run the reconciliation notebook, publish it locally and copy the results to
-    the shared folder.
+    the specified folder.
     """
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     _ = ctx
@@ -360,7 +361,7 @@ def reconcile_run_notebook(
     # Make the script executable and run it.
     _LOG.info("Running the notebook=%s", notebook_path)
     _system(script_name)
-    # Copy the published notebook to the shared folder.
+    # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
     target_dir = _resolve_target_dir(dst_dir, run_date)
     hdbg.dassert_dir_exists(target_dir)
@@ -369,8 +370,8 @@ def reconcile_run_notebook(
     _system(cmd)
     #
     if prevent_overwriting:
-        results_shared_dir = os.path.join(target_dir, "result_0")
-        cmd = f"chmod -R -w {results_shared_dir}"
+        results_target_dir = os.path.join(target_dir, "result_0")
+        cmd = f"chmod -R -w {results_target_dir}"
         _system(cmd)
 
 
@@ -460,6 +461,12 @@ def reconcile_run_all(
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
+
+    :param run_date: date of the reconcile run
+    :param dst_dir: dir to store reconcilation results at
+    :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
+    :param prevent_overwriting: if True subtract writing right from the target dir
+    :param skip_notebook: if True do not run the reconcilation notebook
     """
     hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
     #
