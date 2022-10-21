@@ -34,6 +34,7 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 _LOG = logging.getLogger(__name__)
 
+_AWS_PROFILE = "ck"
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -144,9 +145,9 @@ def _assert_archival_mode(incremental: bool, s3_path: str, db_stage: str, db_tab
     if incremental:
         # The profile won't change for the foreseeable future so
         # so we can keep hardcoded.
-        hs3.dassert_path_exists(s3_path, aws_profile="ck")
+        hs3.dassert_path_exists(s3_path, aws_profile=_AWS_PROFILE)
     else:
-        hs3.dassert_path_not_exists(s3_path, aws_profile="ck")
+        hs3.dassert_path_not_exists(s3_path, aws_profile=_AWS_PROFILE)
 
 def _get_db_connection(db_stage: str) -> hsql.DbConnection:
     """
@@ -170,15 +171,15 @@ def _fetch_latest_row_from_s3(s3_path: str, timestamp: pd.Timestamp) -> pd.DataF
     )
     # Read data corresponding to given time range.
     archived_data = hparque.from_parquet(
-        s3_path, filters=timestamp_filters, aws_profile="ck"
+        s3_path, filters=timestamp_filters, aws_profile=_AWS_PROFILE
     )
     # Data should be sorted but sort again as an insurance.
     archived_data = archived_data.sort_values("timestamp", ascending=False)
     return latest_archived_data.head(1)
 
-def _assert_correct_archival(db_data: pd.DataFame, s3_path: str)
+def _assert_correct_archival(db_data: pd.DataFrame, s3_path: str) -> None:
     """
-    Safety check that the parquet archive was extended successfully.
+    Safety check that the data were archived successfully.
     """
     pass
 
@@ -188,35 +189,47 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     into a S3 storage, based on `timestamp` column of the table
     """
     # Transorm and assign args for readability.
-    incremental, s3_path, db_stage, db_table, table_column = args.incremental, args.s3_path, args.db_stage, args.db_table, args.table_column
+    is_incremental, s3_path, db_stage, db_table, dry_run = args.incremental, args.s3_path, args.db_stage, args.db_table, args.dry_run
+    # TODO(Juraj): for now we assume that the only column used for archival
+    #  will be `timestamp`.
+    table_column = "timestamp"
     s3_path = os.path.join(s3_path, db_stage, db_table, table_column)
     skip_time_continuity_assertion = args.skip_time_continuity_assertion
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection
-    db_conn = _get_db_connection(args.db_stage)
+    db_conn = _get_db_connection(db_stage)
     # Perform argument assertions.
-    _assert_db_args(db_conn, args.db_table, args.table_column)
-    _assert_archival_mode(args.incremental, args.s3_path, args.db_stage, args.db_table, args.table_column)
+    _assert_db_args(db_conn, db_table, table_column)
+    _assert_archival_mode(is_incremental, s3_path, db_stage, db_table, table_column)
     # Fetch DB data.
-    # TODO(Juraj): for now we assume that the only column used for archival
-    #  will be `timestamp`.
-    db_data = imvcddbut.fetch_data_by_age(db_conn, "timestamp", min_age_timestamp)
+    # TODO(Juraj): for now we assume that the only column used for archival 
+    # age filter is `timestamp`.
+    db_data = imvcddbut.fetch_data_by_age(db_conn, db_table, table_column, min_age_timestamp)
+    if db_data.empty:
+        _LOG.warning(f"There were no data older than '{min_age_timestamp}' in '{db_table}' table.")
+    else:
+        _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
     # Fetch latest S3 row upon incremental archival.
-    if incremental:
-        latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
+    if is_incremental:
+        # TODO(Juraj): think about a HW resource friendly solution to this.
+        # latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
         # Assert time continuity of both datasets.
-        _assert_data_continuity(latest_row, args.skip_time_continuity_assertion)
-    # Double check archival
-    # Drop DB data.
+        #_assert_data_continuity(latest_row, args.skip_time_continuity_assertion)
+        pass
     if dry_run:
         _LOG.info("Dry run of data archival finished successfully.")
     else:
         # Archive the data
+        # The `id` column is most likely not needed once the data is in S3.
+        db_data = db_data.drop("id", axis=1)
         # Argument data_type is only used to specify duplicate removal mode in
         #  hparquet.list_and_merge_pq_files, 'None' is needed here.
-        imvcdeexut.save_parquet(db_data, s3_path, unit="ms", aws_profile="ck", data_type=None)
+        imvcdeexut.save_parquet(db_data, s3_path, unit="ms", aws_profile=_AWS_PROFILE, data_type=None,
+        drop_db_metadata_column=False,
+        list_and_merge=False)
         # Double check archival was successful
-        _assert_correct_archival(db_data, s3_path)
+        # TODO(Juraj): this might a be pretty difficult problem.
+        # _assert_correct_archival(db_data, s3_path)
         # Drop DB data.
         imvcddbut.drop_db_data_by_age(db_conn, db_table, "timestamp", min_age_timestamp)
         _LOG.info("Data archival finished successfully.")
