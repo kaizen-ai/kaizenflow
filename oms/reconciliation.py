@@ -519,13 +519,24 @@ def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
     """
     hdbg.dassert_dir_exists(dag_dir)
     parquet_files = list(
-        filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
+        filter(lambda x: "csv.gz" in x, sorted(os.listdir(dag_dir)))
     )
     _LOG.info("Tail of files found=%s", parquet_files[-3:])
     file_name = parquet_files[-1]
     dag_parquet_path = os.path.join(dag_dir, file_name)
     _LOG.info("DAG parquet path=%s", dag_parquet_path)
-    dag_df = hparque.from_parquet(dag_parquet_path)
+    dag_df = pd.read_csv(dag_parquet_path, parse_dates=True, index_col=0, header=[0, 1])
+    asset_ids = dag_df.columns.levels[1].tolist()
+
+
+    import itertools
+
+
+    asset_ids = map(int, asset_ids)
+    target_cols = dag_df.columns.levels[0].tolist()
+    columns = list(itertools.product(target_cols, asset_ids))
+    columns = pd.MultiIndex.from_tuples(columns)
+    dag_df.columns = columns
     return dag_df
 
 
