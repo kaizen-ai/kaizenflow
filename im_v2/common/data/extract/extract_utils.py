@@ -183,6 +183,7 @@ DATASET_SCHEMA = {
     "bid_size": "float64",
     "close": "float64",
     "currency_pair": "object",
+    "end_download_timestamp": "datetime64[ns, UTC]",
     "exchange_id": "object",
     "high": "float64",
     "knowledge_timestamp": "datetime64[ns, UTC]",
@@ -604,7 +605,8 @@ def save_parquet(
     aws_profile: Optional[str],
     data_type: str,
     *,
-    drop_db_metadata_column = True
+    drop_db_metadata_column = True,
+    list_and_merge = True
 ) -> None:
     """
     Save Parquet dataset.
@@ -630,9 +632,10 @@ def save_parquet(
         aws_profile=aws_profile,
     )
     # Merge all new parquet into a single `data.parquet`.
-    hparque.list_and_merge_pq_files(
-        path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=data_type
-    )
+    if list_and_merge:
+        hparque.list_and_merge_pq_files(
+            path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=data_type
+        )
 
 
 def download_historical_data(
