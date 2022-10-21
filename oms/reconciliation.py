@@ -164,6 +164,7 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         date_str = os.environ[date_key]
     else:
         date_str = datetime.date.today().strftime("%Y%m%d")
+    date_str = "20221019"
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:

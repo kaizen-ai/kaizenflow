@@ -262,6 +262,19 @@ display(stats_sxs)
 # # Compare pairwise portfolio correlations
 
 # %%
+import oms
+prod_target_position_df = oms.load_target_positions(
+    prod_forecast_dir,
+    start_timestamp,
+    end_timestamp,
+    bar_duration,
+    normalize_bar_times=True
+)
+
+# %%
+research_portfolio_df.columns.levels[0]
+
+# %%
 research_portfolio_df.sort_index(axis=1)["holdings_shares"].head(5)
 
 # %%
