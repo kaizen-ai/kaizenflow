@@ -263,11 +263,11 @@ class Config:
         navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
-        # This is implemented lazily (or Pythonically) with a try-catch around
-        # accessing the key.
+        # This is implemented lazily (or Pythonically) with a
+        #  try-catch around accessing the key.
         try:
-            # When we test for existence we don't want to report the config
-            # in case of error.
+            # When we test for existence we don't want to
+            #  report the config in case of error.
             report_mode = "none"
             val = self.__getitem__(key, report_mode=report_mode)
             _LOG.debug("Found val=%s", val)
@@ -419,7 +419,13 @@ class Config:
         return ret
 
     def to_string(self, mode: str) -> str:
-        """ """
+        """ 
+        Convert Config to its string representation.
+
+        :param mode: how to convert a string
+            - `only_values` report text contents, similar to `str`
+            - `verbose`: report text and data types, similar to `repr`
+        """
         txt = []
         for key, val in self._config.items():
             # 1) Process key.
@@ -438,6 +444,7 @@ class Config:
                 val_as_str = hpandas.df_to_str(val, print_shape_info=True)
                 val_as_str = "\n" + hprint.indent(val_as_str)
             elif isinstance(val, Config):
+                # Convert nested Config recursively.
                 val_as_str = val.to_string(mode)
                 val_as_str = "\n" + hprint.indent(val_as_str)
             else:
@@ -481,7 +488,7 @@ class Config:
         """
         Equivalent to `dict.get(key, default_val)`.
 
-        It has the same functionality as `__getitem__()` but returning `val`
+        It has the same functionality as `__getitem__()` but returning `val` 
         if the value corresponding to `key` doesn't exist.
 
         :param default_value: default value to return if key is not in `config`
