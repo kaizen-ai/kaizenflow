@@ -4,21 +4,21 @@ import numpy as np
 import pandas as pd
 import pytest
 
-import core.explore as cexp
-import helpers.datetime_ as hdatetim
-import helpers.unit_test as huntes
+import core.explore as coexplor
+import helpers.hdatetime as hdateti
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_explore1(huntes.TestCase):
+class Test_explore1(hunitest.TestCase):
     def test_ols_regress_series(self) -> None:
         x = 5 * np.random.randn(100)
         y = x + np.random.randn(*x.shape)
         df = pd.DataFrame()
         df["x"] = x
         df["y"] = y
-        cexp.ols_regress_series(
+        coexplor.ols_regress_series(
             df["x"], df["y"], intercept=True, print_model_stats=False
         )
 
@@ -27,7 +27,7 @@ class Test_explore1(huntes.TestCase):
         np.random.seed(42)
         df = pd.DataFrame(np.random.randn(10, 5))
         df.index = pd.date_range("2017-01-01", periods=10)
-        corr_df, eigval_df, eigvec_df = cexp.rolling_pca_over_time(
+        corr_df, eigval_df, eigvec_df = coexplor.rolling_pca_over_time(
             df, 0.5, "fill_with_zero"
         )
         txt = (
@@ -38,36 +38,15 @@ class Test_explore1(huntes.TestCase):
         self.check_string(txt)
 
 
-class TestFilterByTime(huntes.TestCase):
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Get data for testing.
-
-        :return: data for testing
-        """
-        df = pd.DataFrame(
-            {
-                "col1": [1, 2, 3, 4],
-                "col2": [
-                    hdatetim.to_datetime("2018-04-05"),
-                    hdatetim.to_datetime("2018-04-06"),
-                    hdatetim.to_datetime("2018-04-07"),
-                    hdatetim.to_datetime("2018-04-08"),
-                ],
-            }
-        )
-        df.index = pd.date_range("2017-01-01", periods=4)
-        return df
-
+class TestFilterByTime(hunitest.TestCase):
     def test_filter_by_index1(self) -> None:
         """
         Verify that `[lower_bound, upper_bound)` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2017-01-02")
-        upper_bound = hdatetim.to_datetime("2017-01-04")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2017-01-02")
+        upper_bound = hdateti.to_datetime("2017-01-04")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -82,9 +61,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `(lower_bound, upper_bound]` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2017-01-02")
-        upper_bound = hdatetim.to_datetime("2017-01-04")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2017-01-02")
+        upper_bound = hdateti.to_datetime("2017-01-04")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -99,9 +78,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `[lower_bound, upper_bound]` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2017-01-02")
-        upper_bound = hdatetim.to_datetime("2017-01-04")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2017-01-02")
+        upper_bound = hdateti.to_datetime("2017-01-04")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -116,9 +95,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `(lower_bound, upper_bound)` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2017-01-02")
-        upper_bound = hdatetim.to_datetime("2017-01-04")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2017-01-02")
+        upper_bound = hdateti.to_datetime("2017-01-04")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -133,9 +112,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `[lower_bound, upper_bound)` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2018-04-06")
-        upper_bound = hdatetim.to_datetime("2018-04-08")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2018-04-06")
+        upper_bound = hdateti.to_datetime("2018-04-08")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -150,9 +129,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `(lower_bound, upper_bound]` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2018-04-06")
-        upper_bound = hdatetim.to_datetime("2018-04-08")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2018-04-06")
+        upper_bound = hdateti.to_datetime("2018-04-08")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -167,9 +146,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `[lower_bound, upper_bound]` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2018-04-06")
-        upper_bound = hdatetim.to_datetime("2018-04-08")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2018-04-06")
+        upper_bound = hdateti.to_datetime("2018-04-08")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -184,9 +163,9 @@ class TestFilterByTime(huntes.TestCase):
         Verify that `(lower_bound, upper_bound)` works.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2018-04-06")
-        upper_bound = hdatetim.to_datetime("2018-04-08")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2018-04-06")
+        upper_bound = hdateti.to_datetime("2018-04-08")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -202,9 +181,9 @@ class TestFilterByTime(huntes.TestCase):
         DataFrame is returned.
         """
         df = self._get_test_data()
-        lower_bound = hdatetim.to_datetime("2021-04-06")
-        upper_bound = hdatetim.to_datetime("2021-04-08")
-        actual = cexp.filter_by_time(
+        lower_bound = hdateti.to_datetime("2021-04-06")
+        upper_bound = hdateti.to_datetime("2021-04-08")
+        actual = coexplor.filter_by_time(
             df=df,
             lower_bound=lower_bound,
             upper_bound=upper_bound,
@@ -212,3 +191,24 @@ class TestFilterByTime(huntes.TestCase):
             ts_col_name=None,
         )
         self.assertEqual(actual.shape[0], 0)
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Get data for testing.
+
+        :return: data for testing
+        """
+        df = pd.DataFrame(
+            {
+                "col1": [1, 2, 3, 4],
+                "col2": [
+                    hdateti.to_datetime("2018-04-05"),
+                    hdateti.to_datetime("2018-04-06"),
+                    hdateti.to_datetime("2018-04-07"),
+                    hdateti.to_datetime("2018-04-08"),
+                ],
+            }
+        )
+        df.index = pd.date_range("2017-01-01", periods=4)
+        return df

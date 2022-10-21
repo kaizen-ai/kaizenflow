@@ -1,17 +1,17 @@
 """
 Import as:
 
-import helpers.old.env2 as holenv
+import helpers.old.env2 as holdenv2
 """
 
 import logging
 import os
 from typing import Tuple
 
-import helpers.io_ as hio
-import helpers.old.conda as holcon
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
+import helpers.hio as hio
+import helpers.hprint as hprint
+import helpers.hsystem as hsystem
+import helpers.old.conda as holdcond
 
 _LOG = logging.getLogger(__name__)
 
@@ -22,24 +22,24 @@ _LOG = logging.getLogger(__name__)
 def get_system_info(add_frame: bool) -> str:
     msg = ""
     if add_frame:
-        msg += hprintin.frame("System info") + "\n"
-    msg += "user name=%s\n" % hsyint.get_user_name()
-    msg += "server name=%s\n" % hsyint.get_server_name()
-    msg += "os name=%s\n" % hsyint.get_os_name()
-    msg += "conda path=%s\n" % holcon.get_conda_path()
-    msg += "conda env root=%s\n" % str(holcon.get_conda_envs_dirs())
+        msg += hprint.frame("System info") + "\n"
+    msg += f"user name={hsystem.get_user_name()}\n"
+    msg += f"server name={hsystem.get_server_name()}\n"
+    msg += f"os name={hsystem.get_os_name()}\n"
+    msg += f"conda path={holdcond.get_conda_path()}\n"
+    msg += f"conda env root={str(holdcond.get_conda_envs_dirs())}\n"
     return msg
 
 
 def get_package_summary(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
-        msg += hprintin.frame("Package summary") + "\n"
-    conda_list = holcon.get_conda_list(conda_env_name)
+        msg += hprint.frame("Package summary") + "\n"
+    conda_list = holdcond.get_conda_list(conda_env_name)
     msg = ""
     for package in ["pandas", "numpy", "scipy", "arrow-cpp"]:
         ver = conda_list[package]["version"] if package in conda_list else "None"
-        line = "%s: %s" % (package, ver)
+        line = f"{package}: {ver}"
         msg += line + "\n"
     return msg
 
@@ -47,12 +47,9 @@ def get_package_summary(conda_env_name: str, add_frame: bool) -> str:
 def get_conda_export_list(conda_env_name: str, add_frame: bool) -> str:
     msg = ""
     if add_frame:
-        msg += hprintin.frame("Package summary") + "\n"
-    cmd = (
-        "(conda activate %s 2>&1 >/dev/null) && conda list --export"
-        % conda_env_name
-    )
-    _, msg_tmp = holcon.conda_system_to_string(cmd)
+        msg += hprint.frame("Package summary") + "\n"
+    cmd = rf"(conda activate {conda_env_name} 2>&1 >/dev/null) && conda list --export"
+    _, msg_tmp = holdcond.conda_system_to_string(cmd)
     msg += msg_tmp
     return msg
 
@@ -64,11 +61,9 @@ def save_env_file(conda_env_name: str, dir_name: str) -> Tuple[str, str]:
     msg += get_conda_export_list(conda_env_name, add_frame=True)
     # Save results.
     if dir_name is not None:
-        file_name = "%s.%s.%s.%s.txt" % (
-            conda_env_name,
-            hsyint.get_user_name(),
-            hsyint.get_os_name(),
-            hsyint.get_server_name(),
+        file_name = (
+            f"{conda_env_name}.{hsystem.get_user_name()}.{hsystem.get_os_name()}."
+            f"{hsystem.get_server_name()}.txt"
         )
         dst_file = os.path.join(dir_name, file_name)
         dst_file = os.path.abspath(dst_file)

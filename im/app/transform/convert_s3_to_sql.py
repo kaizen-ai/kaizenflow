@@ -61,8 +61,8 @@ from typing import List
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import im.app.services.file_path_generator_factory as imasfpgefa
 import im.app.services.loader_factory as imaselofa
 import im.app.services.sql_writer_factory as imasswrfa
@@ -95,8 +95,8 @@ def _get_symbols_from_args(args: argparse.Namespace) -> List[imcomesym.Symbol]:
             for args_symbol in args.symbol
         ]
     # Find all matched symbols otherwise.
-    file_path_generator = imasfpgefa.FilePathGeneratorFactory.get_file_path_generator(
-        args.provider
+    file_path_generator = (
+        imasfpgefa.FilePathGeneratorFactory.get_file_path_generator(args.provider)
     )
     latest_symbols_file = file_path_generator.get_latest_symbols_file()
     symbol_universe = imassunfa.SymbolUniverseFactory.get_symbol_universe(
@@ -247,11 +247,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Set up parameters for running.
     provider = args.provider
     symbols = _get_symbols_from_args(args)
-    s3_data_loader: imcdladalo.AbstractS3DataLoader = imaselofa.LoaderFactory.get_loader(
-        storage_type="s3", provider=provider
+    s3_data_loader: imcdladalo.AbstractS3DataLoader = (
+        imaselofa.LoaderFactory.get_loader(storage_type="s3", provider=provider)
     )
-    s3_to_sql_transformer = imasetrfa.TransformerFactory.get_s3_to_sql_transformer(
-        provider=provider
+    s3_to_sql_transformer = (
+        imasetrfa.TransformerFactory.get_s3_to_sql_transformer(provider=provider)
     )
     sql_writer_backend = imasswrfa.SqlWriterFactory.get_sql_writer_backend(
         provider=provider,

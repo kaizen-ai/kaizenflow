@@ -1,11 +1,11 @@
 import logging
 import time
 
-import helpers.timer as htimer
-import helpers.unit_test as huntes
+import helpers.htimer as htimer
+import helpers.hunit_test as hunitest
 
 
-class TestTimedScope(huntes.TestCase):
+class TestTimedScope(hunitest.TestCase):
     def test_1(self) -> None:
         """
         Test that elapsed time is correctly computed.

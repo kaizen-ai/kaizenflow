@@ -1,8 +1,8 @@
 import logging
 from typing import List, Tuple
 
-import helpers.dbg as hdbg
-import helpers.unit_test as huntes
+import helpers.hdbg as hdbg
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
@@ -13,7 +13,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): Use a self.assert_equal() instead of a check_string() since this
 #  code needs to be stable.
-class Test_dassert1(huntes.TestCase):
+class Test_dassert1(hunitest.TestCase):
     """
     Test `dassert()`.
     """
@@ -82,7 +82,7 @@ class Test_dassert1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_eq1(huntes.TestCase):
+class Test_dassert_eq1(hunitest.TestCase):
     def test1(self) -> None:
         hdbg.dassert_eq(1, 1)
 
@@ -112,7 +112,7 @@ class Test_dassert_eq1(huntes.TestCase):
 
 
 # TODO(gp): Break it in piece.
-class Test_dassert_misc1(huntes.TestCase):
+class Test_dassert_misc1(hunitest.TestCase):
 
     # dassert_in
 
@@ -154,6 +154,7 @@ class Test_dassert_misc1(huntes.TestCase):
     def test_is_instance5(self) -> None:
         with self.assertRaises(AssertionError) as cm:
             hdbg.dassert_isinstance("a", (float, int))
+        # TODO(gp): Replace all check_string with assert_equal
         self.check_string(str(cm.exception))
 
     # dassert_set_eq
@@ -168,7 +169,17 @@ class Test_dassert_misc1(huntes.TestCase):
             a = [1, 2, 3]
             b = [2, 2, 1]
             hdbg.dassert_set_eq(a, b)
-        self.check_string(str(cm.exception))
+        # Check.
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        val1 - val2=[3]
+        val2 - val1=[]
+        val1=[1, 2, 3]
+        set eq
+        val2=[1, 2]
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # dassert_is_subset
 
@@ -182,7 +193,16 @@ class Test_dassert_misc1(huntes.TestCase):
             a = [1, 2, 3]
             b = [4, 2, 1]
             hdbg.dassert_is_subset(a, b)
-        self.check_string(str(cm.exception))
+        # Check.
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        val1=[1, 2, 3]
+        issubset
+        val2=[1, 2, 4]
+        val1 - val2=[3]
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # dassert_not_intersection
 
@@ -196,7 +216,15 @@ class Test_dassert_misc1(huntes.TestCase):
             a = [1, 2, 3]
             b = [4, 2, 1]
             hdbg.dassert_not_intersection(a, b)
-        self.check_string(str(cm.exception))
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        val1=[1, 2, 3]
+        has no intersection
+        val2=[1, 2, 4]
+        val1 - val2=[3]
+        """
+        self.assert_equal(act, exp, fuzzy_match=True)
 
     # dassert_no_duplicates
 
@@ -257,7 +285,7 @@ class Test_dassert_misc1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_lgt1(huntes.TestCase):
+class Test_dassert_lgt1(hunitest.TestCase):
     def test1(self) -> None:
         """
         No assertion raised since `0 <= 0 <= 3`.
@@ -311,7 +339,7 @@ class Test_dassert_lgt1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_is_proportion1(huntes.TestCase):
+class Test_dassert_is_proportion1(hunitest.TestCase):
     def test1(self) -> None:
         """
         Passing assertion with correct message and format.
@@ -394,7 +422,7 @@ class Test_dassert_is_proportion1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_container_type1(huntes.TestCase):
+class Test_dassert_container_type1(hunitest.TestCase):
     def test1(self) -> None:
         list_ = "a b c".split()
         hdbg.dassert_container_type(list_, List, str)
@@ -463,7 +491,7 @@ class _Vegetable:
     pass
 
 
-class Test_dassert_issubclass1(huntes.TestCase):
+class Test_dassert_issubclass1(hunitest.TestCase):
     def test_man1(self) -> None:
         """
         An instance of `_Man` descends from `_Animal`.
@@ -517,7 +545,7 @@ class Test_dassert_issubclass1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_dassert_callable1(huntes.TestCase):
+class Test_dassert_callable1(hunitest.TestCase):
     def test1(self) -> None:
         func = lambda x: x
         hdbg.dassert_callable(func)
@@ -537,6 +565,82 @@ class Test_dassert_callable1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_logging1(huntes.TestCase):
-    def test_logging_levels1(self) -> None:
-        hdbg.test_logger()
+class Test_dassert_related_params1(hunitest.TestCase):
+    def test1(self) -> None:
+        obj = {
+            "val1": 1,
+            "val2": 1,
+            "val3": "hello"
+        }
+        mode = "all_or_none_non_null"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test2(self) -> None:
+        obj = {
+            "val1": 0,
+            "val2": None,
+            "val3": ""
+        }
+        mode = "all_or_none_non_null"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test3(self) -> None:
+        obj = {
+            "val1": 1,
+            "val2": 0,
+            "val3": "hello"
+        }
+        with self.assertRaises(Exception) as cm:
+            mode = "all_or_none_non_null"
+            hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        All or none parameter should be non-null:
+        val2=0
+        params={'val1': 1, 'val2': 0, 'val3': 'hello'}
+        message 'hello world'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
+
+
+class Test_dassert_related_params2(hunitest.TestCase):
+    def test1(self) -> None:
+        obj = {
+            "val1": 1,
+            "val2": 1,
+            "val3": "hello"
+        }
+        mode = "all_or_none_non_None"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test2(self) -> None:
+        obj = {
+            "val1": None,
+            "val2": None,
+            "val3": None,
+        }
+        mode = "all_or_none_non_None"
+        hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+
+    def test3(self) -> None:
+        obj = {
+            "val1": None,
+            "val2": None,
+            "val3": "hello"
+        }
+        with self.assertRaises(Exception) as cm:
+            mode = "all_or_none_non_None"
+            hdbg.dassert_related_params(obj, mode, "message %s", "'hello world'")
+        act = str(cm.exception)
+        exp = """
+        * Failed assertion *
+        All or none parameter should be non-None:
+        val1=None
+        params={'val1': None, 'val2': None, 'val3': 'hello'}
+        message 'hello world'
+        """
+        self.assert_equal(act, exp, purify_text=True, fuzzy_match=True)

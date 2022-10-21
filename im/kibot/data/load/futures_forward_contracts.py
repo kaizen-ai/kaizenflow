@@ -8,8 +8,8 @@ import pandas as pd
 from tqdm.auto import tqdm
 
 import core.finance as cofinanc
-import helpers.dataframe as hdatafr
-import helpers.dbg as hdbg
+import helpers.hdataframe as hdatafr
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import im.common.data.load.abstract_data_loader as imcdladalo
 import im.common.data.types as imcodatyp
@@ -21,7 +21,9 @@ class FuturesForwardContracts:
     """
 
     def __init__(
-        self, data_loader: imcdladalo.AbstractDataLoader, disable_tqdm: bool = False
+        self,
+        data_loader: imcdladalo.AbstractDataLoader,
+        disable_tqdm: bool = False,
     ) -> None:
         """
         Initialize by injecting a data loader.

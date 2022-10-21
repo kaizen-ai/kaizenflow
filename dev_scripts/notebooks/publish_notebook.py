@@ -10,7 +10,8 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file s3://.../notebooks/PTask768_event_filtering.html \
-      --action open
+      --action open \
+      --aws_profile 'am'
   ```
 
 # Publish a notebook
@@ -18,8 +19,16 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish_on_s3
+      --action publish_on_s3 \
+      --aws_profile 'am'
   ```
+
+# Detailed instructions at:
+https://docs.google.com/document/d/1b3RptKVK6vFUc8upcz3n0nTZhTO0ZQ-Ay5I01nCp5WM/edit#heading=h.prfy6fm6muxp
+
+Import as:
+
+import dev_scripts.notebooks.publish_notebook as dsnopuno
 """
 
 import argparse
@@ -31,13 +40,14 @@ from typing import BinaryIO, List, Tuple
 
 import requests
 
-import helpers.dbg as dbg
-import helpers.io_ as hio
-import helpers.open as opn
-import helpers.parser as prsr
-import helpers.printing as hprint
-import helpers.s3 as hs3
-import helpers.system_interaction as hsyste
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hio as hio
+import helpers.hopen as hopen
+import helpers.hparser as hparser
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -56,7 +66,7 @@ def _get_path(path_or_url: str) -> str:
         ret = "/".join(path_or_url.split("/")[7:])
     elif "http://" in path_or_url:
         ret = "/".join(path_or_url.split("/")[4:])
-        dbg.dassert_exists(ret)
+        hdbg.dassert_path_exists(ret)
         if not os.path.exists(path_or_url):
             # Try to find the file with find basename in the current client.
             pass
@@ -83,7 +93,7 @@ def _get_file_from_git_branch(git_branch: str, git_path: str) -> str:
         tempfile.gettempdir(), os.path.basename(git_path)
     )
     _LOG.debug("Check out '%s/%s' to '%s'.", git_branch, git_path, dst_file_name)
-    hsyste.system(f"git show {git_branch}:{git_path} > {dst_file_name}")
+    hsystem.system(f"git show {git_branch}:{git_path} > {dst_file_name}")
     return dst_file_name
 
 
@@ -102,13 +112,13 @@ def _export_notebook_to_html(ipynb_file_name: str, tag: str) -> str:
     file_name = os.path.splitext(os.path.basename(ipynb_file_name))[0]
     # Create dst file name including timestamp.
     html_file_name = file_name + ".html"
-    html_file_name = hsyste.append_timestamp_tag(html_file_name, tag)
+    html_file_name = hsystem.append_timestamp_tag(html_file_name, tag)
     dst_file_name = os.path.join(dir_path, html_file_name)
     # Export notebook file to HTML format.
     cmd = (
         f"jupyter nbconvert {ipynb_file_name} --to html --output {dst_file_name}"
     )
-    hsyste.system(cmd)
+    hsystem.system(cmd)
     _LOG.debug("Export notebook '%s' to HTML '%s'", file_name, dst_file_name)
     return dst_file_name
 
@@ -136,7 +146,7 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
         _LOG.debug("Export '%s' to '%s'", norm_html_src_path, norm_html_dst_path)
         hio.create_dir(dst_dir, incremental=True)
         cmd = f"mv {norm_html_src_path} {norm_html_dst_path}"
-        hsyste.system(cmd)
+        hsystem.system(cmd)
     # Print info.
     _LOG.info("Generated HTML file '%s'", norm_html_dst_path)
     cmd = f"""
@@ -147,18 +157,20 @@ def _export_notebook_to_dir(ipynb_file_name: str, tag: str, dst_dir: str) -> str
     return norm_html_dst_path
 
 
-def _post_to_s3(local_src_path: str, s3_path: str, aws_profile: str) -> str:
+def _post_to_s3(
+    local_src_path: str, s3_path: str, aws_profile: hs3.AwsProfile
+) -> str:
     """
     Export a notebook as HTML to S3.
 
     :param local_src_path: the path of the local ipynb to export
     :param s3_path: full S3 path starting with `s3://` and ending with `/notebooks`
-    :param aws_profile: the profile to use
+    :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
-    dbg.dassert_file_exists(local_src_path)
+    hdbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
     hs3.dassert_is_s3_path(s3_path)
-    dbg.dassert(
+    hdbg.dassert(
         s3_path.endswith("/notebooks"),
         "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
         s3_path,
@@ -248,13 +260,13 @@ def _parse() -> argparse.ArgumentParser:
 """,
     )
     parser = hs3.add_s3_args(parser)
-    parser = prsr.add_verbosity_arg(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
+    hdbg.init_logger(verbosity=args.log_level)
     if args.action == "open":
         # Open an existing HTML notebook.
         src_file_name = args.file
@@ -263,16 +275,16 @@ def _main(parser: argparse.ArgumentParser) -> None:
             aws_profile = hs3.get_aws_profile(args.aws_profile)
             # Check that the file exists.
             cmd = f"aws s3 ls --profile {aws_profile} {src_file_name}"
-            hsyste.system(cmd)
+            hsystem.system(cmd)
             # Copy.
             local_file_name = os.path.basename(src_file_name)
             cmd = f"aws s3 cp --profile {aws_profile} {src_file_name} {local_file_name}"
-            hsyste.system(cmd)
+            hsystem.system(cmd)
             _LOG.info("Copied remote url to '%s'", local_file_name)
         else:
             local_file_name = src_file_name
         #
-        opn.open_file(local_file_name)
+        hopen.open_file(local_file_name)
         sys.exit(0)
     # Compute the path of the src file.
     if args.branch:
@@ -285,18 +297,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Try to open.
-        opn.open_file(html_file_name)
+        hopen.open_file(html_file_name)
     elif args.action == "publish_locally":
         # Convert to HTML.
         if args.publish_notebook_dir is not None:
             dst_dir = args.publish_notebook_dir
         else:
-            env_var = "AM_PUBLISH_NOTEBOOK_LOCAL_PATH"
-            dbg.dassert_in(
-                env_var, os.environ, "The env needs to set env var '%s'", env_var
-            )
-            dst_dir = os.environ[env_var]
-        dbg.dassert_dir_exists(dst_dir)
+            dst_dir = henv.execute_repo_config_code("get_html_local_path()")
+            dst_dir = os.path.join(dst_dir, "published_notebooks")
+        hdbg.dassert_dir_exists(dst_dir)
         hio.create_dir(dst_dir, incremental=True)
         _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
     elif args.action == "publish_on_s3":
@@ -304,7 +313,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         dst_dir = "."
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Copy to S3.
-        aws_profile = hs3.get_aws_profile(args.aws_profile)
+        aws_profile = args.aws_profile
         _LOG.debug("aws_profile='%s'", aws_profile)
         # Get the S3 path from command line.
         s3_path = args.s3_path
@@ -313,20 +322,20 @@ def _main(parser: argparse.ArgumentParser) -> None:
             # The user didn't specified the path, so we derive it from the
             # credentials or from the env vars.
             _LOG.debug("Getting s3_path from credentials file")
-            s3_path = hs3.get_key_value(aws_profile, "aws_s3_bucket")
+            s3_path = hs3.get_s3_bucket_path(aws_profile, add_s3_prefix=False)
         s3_path = "s3://" + s3_path + "/notebooks"
         s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
         # TODO(gp): Remove the file or save it directly in a temp dir.
         cmd = f"""
         # To open the notebook from S3 run:
-        > publish_notebook.py --file {s3_file_name} --action open
+        > publish_notebook.py --file {s3_file_name} --action open --aws_profile {aws_profile}
         """
         print(hprint.dedent(cmd))
     elif args.action == "publish_on_webserver":
         remote_dst_path = os.path.basename(html_file_name)
         _post_to_webserver(html_file_name, remote_dst_path)
     else:
-        dbg.dfatal(f"Invalid action='{args.action}'")
+        hdbg.dfatal(f"Invalid action='{args.action}'")
 
 
 if __name__ == "__main__":

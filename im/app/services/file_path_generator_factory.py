@@ -11,7 +11,9 @@ import im.common.data.load.file_path_generator as imcdlfpage
 
 class FilePathGeneratorFactory:
     @classmethod
-    def get_file_path_generator(cls, provider: str) -> imcdlfpage.FilePathGenerator:
+    def get_file_path_generator(
+        cls, provider: str
+    ) -> imcdlfpage.FilePathGenerator:
         """
         Get file path generator for a provider.
 

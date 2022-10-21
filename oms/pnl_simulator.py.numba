@@ -497,7 +497,7 @@ def _append_accounting_df(
 
 # TODO(gp): Move to MarketInterface?
 @numba.jit(nopython=True)
-def get_total_wealth(
+def get_net_wealth(
     mi: MarketInterface, ts: pd.Timestamp, cash: float, holdings: float
 ) -> float:
     """
@@ -640,7 +640,7 @@ def _compute_pnl_level2(
         #_LOG.debug("pred=%s", pred)
         # Mark the portfolio to market.
         #_LOG.debug("# Mark portfolio to market")
-        #wealth = get_total_wealth(mi, ts, cash, holdings)
+        #wealth = get_net_wealth(mi, ts, cash, holdings)
         price = mi.get_instantaneous_price(ts)
         holdings_value = holdings * price
         wealth = cash + holdings_value
@@ -671,7 +671,7 @@ def _compute_pnl_level2(
             price_0 = _order_get_price(
                 mi, order_type, ts_start, ts_end, num_shares_proxy
             )
-            wealth_to_allocate = get_total_wealth(
+            wealth_to_allocate = get_net_wealth(
                 mi, ts_end, cash, holdings
             )
         else:

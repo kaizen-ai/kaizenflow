@@ -1,0 +1,41 @@
+v7
+- 2022-08-05
+- Only `binance` futures
+- Same coins as in `binance` in the `download` universe `top30_20220706`
+- `binance::ADA_USDT` was removed due to CmTask2375
+- Updated snapshot at `20220805`
+
+top30_20220706
+- 2022-07-07
+- Universe with coinmarketcap's top 30 perpetual futures contracts
+
+coinbase_test
+- 2022-06-15
+- Coinbasepro universe for unit tests
+
+v5
+- 2022-05-25
+- Coinbase, Kucoin, Gateio are added due to CmTask #1948
+
+- 2022-06-09
+- Coinbasepro is added due to CmTask #1995
+
+v4
+- 2022-04-29
+- Gateio, Kucoin are removed due to CmTask #1710
+
+small
+- 2021-11-07
+- Small universe for fast unit tests
+
+v3
+- 2021-11-04
+- CDD is removed due to CmTask324
+
+v2
+- 2021-11-03
+- CCXT-Bitfinex is removed due to CmTask274
+
+v1
+- 2021-09-25
+- Initial version

@@ -6,7 +6,7 @@ import os
 from invoke import task
 from lib_tasks import STAGE, get_image, set_default_params
 
-import helpers.dbg as dbg
+import helpers.hdbg as dbg
 
 # We inline the code here since we need to make it visible to `invoke`, although
 # `from ... import *` is bad practice.
@@ -19,16 +19,16 @@ _LOG = logging.getLogger(__name__)
 # Setup.
 # #############################################################################
 
-ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+AM_ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
 
 
 default_params = {
-    "ECR_BASE_PATH": ECR_BASE_PATH,
+    "AM_ECR_BASE_PATH": ECR_BASE_PATH,
     # When testing a change to the build system in a branch you can use a different
     # image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "..._tmp",
     "BASE_IMAGE": "im_tws",
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
+    "DEV_TOOLS_IMAGE_PROD": f"{AM_ECR_BASE_PATH}/dev_tools:prod",
 }
 
 
@@ -42,8 +42,8 @@ set_default_params(default_params)
 def im_tws_start_ib_interface(ctx, stage=STAGE, ib_app=""):
     dbg.dassert_in(ib_app, ("TWS", "GATEWAY"))
     base_image = ""
-    # ****.dkr.ecr.us-east-1.amazonaws.com/im_tws:local
-    image = get_image(stage, base_image)
+    # ****.dkr.ecr.us-east-1.amazonaws.com/im_tws:dev
+    image = get_image(base_image, stage)
     # TODO(gp): Use `curl ifconfig.me` to get host's IP.
     trusted_ips = ""
     vnc_password = "12345"

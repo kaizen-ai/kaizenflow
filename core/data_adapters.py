@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.data_adapters as adpt
+import core.data_adapters as cdatadap
 """
 
 import functools
@@ -11,13 +11,15 @@ from typing import Any, Dict, Generator, Iterable, List, Optional, Tuple, Union
 import numpy as np
 import pandas as pd
 
-import helpers.dbg as dbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Remove after PTask2335.
+
 if True:
+    # TODO(gp): @all -> gluonts/data_adapters.py
+    # TODO(gp): @all Remove this `if True`
     import gluonts
 
     #
@@ -55,12 +57,12 @@ if True:
         :param y_truncate: number of rows by which to truncate target
         :return: iterator of dicts with target, start_date, and features
         """
-        dbg.dassert_isinstance(df.index, pd.DatetimeIndex)
+        hdbg.dassert_isinstance(df.index, pd.DatetimeIndex)
         y_truncate = y_truncate or 0
         if y_truncate == 0:
             y = df[y_vars]
         else:
-            dbg.dassert_lt(
+            hdbg.dassert_lt(
                 y_truncate, df.shape[0], "Cannot truncate the dataframe"
             )
             y = df[y_vars].iloc[:-y_truncate]
@@ -101,16 +103,16 @@ if True:
         :return: gluonts `ListDataset`
         """
         x_vars = x_vars or []
-        dbg.dassert_isinstance(x_vars, list)
-        dbg.dassert_isinstance(y_vars, list)
-        dbg.dassert_is_subset(x_vars, df.columns)
-        dbg.dassert_is_subset(y_vars, df.columns)
-        dbg.dassert_not_intersection(
+        hdbg.dassert_isinstance(x_vars, list)
+        hdbg.dassert_isinstance(y_vars, list)
+        hdbg.dassert_is_subset(x_vars, df.columns)
+        hdbg.dassert_is_subset(y_vars, df.columns)
+        hdbg.dassert_not_intersection(
             x_vars, y_vars, "`x_vars` and `y_vars` should not intersect"
         )
         df_freq = df.index.get_level_values(-1).freq
         if frequency is None:
-            dbg.dassert_is_not(
+            hdbg.dassert_is_not(
                 frequency,
                 None,
                 "Dataframe index does not have a frequency "
@@ -119,7 +121,7 @@ if True:
             frequency = df_freq
         else:
             if df_freq is not None:
-                dbg.dassert_eq(
+                hdbg.dassert_eq(
                     frequency,
                     df_freq,
                     "Dataframe index frequency and `frequency` "
@@ -164,7 +166,7 @@ if True:
         :return: if there is one time series in `gluon_ts`, return singly
             indexed dataframe; else return multiindexed dataframe
         """
-        dbg.dassert_isinstance(gluon_ts, gluonts.dataset.common.Dataset)
+        hdbg.dassert_isinstance(gluon_ts, gluonts.dataset.common.Dataset)
         x_vars = x_vars or []
         if isinstance(y_vars, str):
             y_vars = [y_vars]
@@ -218,7 +220,7 @@ if True:
         :return: multiindexed series
         """
         start_dates = [forecast.start_date for forecast in forecasts]
-        dbg.dassert_no_duplicates(
+        hdbg.dassert_no_duplicates(
             start_dates, "Forecast start dates should be unique"
         )
         forecast_dfs = [
@@ -269,7 +271,7 @@ if True:
         Iterate level 0 of MultiIndex and generate `data_iter` parameter for
         `gluonts.dataset.common.ListDataset`.
         """
-        dbg.dassert_isinstance(local_ts.index, pd.MultiIndex)
+        hdbg.dassert_isinstance(local_ts.index, pd.MultiIndex)
         hpandas.dassert_strictly_increasing_index(
             local_ts.index.get_level_values(0).unique()
         )
@@ -305,6 +307,10 @@ if True:
 # #############################################################################
 
 
+# TODO(gp): @all -> data_adapters_sklearn.py
+# TODO(gp): Consider moving to dataflow if it's used only there
+
+
 def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:
     """
     Transform pd.DataFrame cols into a numpy array and sanity check.
@@ -313,18 +319,18 @@ def transform_to_sklearn(df: pd.DataFrame, cols: List[Any]) -> np.array:
     :param cols: columns to be included in transformed dataset
     :return: numpy array of shape (nrows, #`cols`)
     """
-    dbg.dassert_isinstance(cols, list, "type(cols)=`%s`", type(cols))
-    dbg.dassert(cols, "No columns provided!")
-    dbg.dassert_is_subset(
+    hdbg.dassert_isinstance(cols, list, "type(cols)=`%s`", type(cols))
+    hdbg.dassert(cols, "No columns provided!")
+    hdbg.dassert_is_subset(
         cols, df.columns, "Requested columns not a subset of `df.columns`"
     )
     data_section = df[cols]
-    dbg.dassert(
+    hdbg.dassert(
         data_section.notna().values.any(),
         "The selected columns should not contain `None` values.",
     )
     vals = data_section.values
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         vals.shape,
         (data_section.index.size, len(cols)),
         "Input/output dimension mismatch",
@@ -348,7 +354,7 @@ def transform_to_sklearn_old(
     :return: (x_vals, y_vals)
     """
     x_vars = x_vars or []
-    dbg.dassert_not_intersection(
+    hdbg.dassert_not_intersection(
         x_vars, y_vars, "`x_vars` and `y_vars` should not intersect"
     )
     if x_vars:
@@ -376,7 +382,7 @@ def transform_from_sklearn(
     # two-dimensional input. Add a dimension for such cases.
     if vals.ndim == 1:
         vals = np.expand_dims(vals, axis=1)
-    dbg.dassert_eq(
+    hdbg.dassert_eq(
         vals.shape,
         (len(idx), len(vars_)),
         "The shape of `vals` does not match the length of `idx` and `vars_`",

@@ -1,17 +1,16 @@
 import pandas as pd
 import pytest
 
-import helpers.unit_test as hunitest
+import helpers.hunit_test as hunitest
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 
 
 class TestKibotS3DataLoader(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
-        self._s3_data_loader = imkdlksdlo.KibotS3DataLoader()
+        self._s3_data_loader = ikdlksdlo.KibotS3DataLoader()
 
-    @pytest.mark.slow
     def test1(self) -> None:
         df = self._s3_data_loader._read_data(
             symbol="XG",

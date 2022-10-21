@@ -1,4 +1,10 @@
 #!/usr/bin/env python
+"""
+Import as:
+
+import dev_scripts.notebooks.ipynb_format as dsnoipfo
+"""
+
 # -*- encoding: utf-8 -*-
 
 # From https://github.com/fg1/ipynb_format

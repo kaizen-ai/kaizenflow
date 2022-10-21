@@ -1,20 +1,26 @@
 #!/usr/bin/env python
 
+"""
+Import as:
+
+import dev_scripts.old.create_conda.install.print_conda_packages as dsoccipcp
+"""
+
 import argparse
 import logging
 
-import helpers.dbg as dbg
-import helpers.env as env
-import helpers.parser as prsr
+import helpers.hdbg as hdbg
+import helpers.hparser as hparser
+import helpers.old.env2 as holdenv2
 
 _LOG = logging.getLogger(__name__)
 
 
-def _main():
+def _main() -> None:
     parser = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    prsr.add_verbosity_arg(parser)
+    hparser.add_verbosity_arg(parser)
     parser.add_argument(
         "--conda_env_name",
         help="Environment name",
@@ -22,9 +28,9 @@ def _main():
         required=True,
     )
     args = parser.parse_args()
-    dbg.init_logger(verbosity=args.log_level)
-    msg, file_name = env.save_env_file(args.conda_env_name, dir_name=None)
-    print("file_name=%s", file_name)
+    hdbg.init_logger(verbosity=args.log_level)
+    msg, file_name = holdenv2.save_env_file(args.conda_env_name, dir_name=None)
+    print(f"file_name={file_name}")
     print(msg)
 
 

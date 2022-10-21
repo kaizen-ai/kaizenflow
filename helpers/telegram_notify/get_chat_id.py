@@ -3,7 +3,7 @@
 """
 Import as:
 
-import helpers.telegram_notify.get_chat_id as htnogechaid
+import helpers.telegram_notify.get_chat_id as htngchid
 """
 
 import argparse
@@ -14,7 +14,7 @@ from typing import Dict, cast
 import requests
 
 import helpers.telegram_notify.config as htenocon
-import helpers.telegram_notify.telegram_notify as htenotenot
+import helpers.telegram_notify.telegram_notify as htnoteno
 
 _LOG = logging.getLogger(__name__)
 _LOG.setLevel(logging.INFO)
@@ -22,7 +22,7 @@ _LOG.setLevel(logging.INFO)
 
 def _get_updates_dict(token: str) -> dict:
     updates_cont = requests.post(
-        "https://api.telegram.org/bot{token}/getUpdates".format(token=token)
+        f"https://api.telegram.org/bot{token}/getUpdates"
     ).content
     updates_dict = json.loads(updates_cont)
     assert updates_dict["ok"], updates_dict
@@ -48,8 +48,8 @@ def _get_chat_id_updates_dict(username: str, updates_dict: dict) -> str:
 def send_chat_id(token: str, username: str) -> str:
     updates_dict = _get_updates_dict(token)
     chat_id = _get_chat_id_updates_dict(username, updates_dict)
-    htenotenot.TelegramNotify.send(
-        text="Your chat id is: %s" % chat_id, token=token, chat_id=chat_id
+    htnoteno.TelegramNotify.send(
+        text=f"Your chat id is: {chat_id}", token=token, chat_id=chat_id
     )
     return chat_id
 
@@ -68,7 +68,7 @@ def _main() -> None:
         _LOG.info("Using default token for NotifyJupyterBot.")
         token_ = htenocon.NOTIFY_JUPYTER_TOKEN
     chat_id_ = send_chat_id(token_, username)
-    print("Your chat id is: %s" % chat_id_)
+    print(f"Your chat id is: {chat_id_}")
 
 
 if __name__ == "__main__":

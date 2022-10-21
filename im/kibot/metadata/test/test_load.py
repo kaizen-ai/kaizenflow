@@ -2,8 +2,8 @@ import os
 
 import pytest
 
-import helpers.io_ as hio
-import helpers.unit_test as hunitest
+import helpers.hio as hio
+import helpers.hunit_test as hunitest
 import im.kibot.metadata.load as vkmloa
 import im.kibot.metadata.types as imkimetyp
 

@@ -4,20 +4,22 @@ import os
 import numpy as np
 import pandas as pd
 
-import helpers.git as hgit
-import helpers.io_ as hio
-import helpers.printing as hprintin
-import helpers.unit_test as huntes
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hpandas as hpandas
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-class Test_find_all_files1(huntes.TestCase):
+class Test_find_all_files1(hunitest.TestCase):
     def test1(self) -> None:
         dir_name = hgit.get_client_root(super_module=False)
-        #
         # Check that there are files.
-        all_files = hio.find_all_files(dir_name)
+        pattern = "*"
+        only_files = True
+        use_relative_paths = True
+        all_files = hio.listdir(dir_name, pattern, only_files, use_relative_paths)
         self.assertGreater(len(all_files), 0)
         # Check that there are more files than Python files.
         exclude_paired_jupytext = False
@@ -33,7 +35,7 @@ class Test_find_all_files1(huntes.TestCase):
         self.assertGreater(len(py_files), len(not_paired_py_files))
 
 
-class Test_change_filename_extension1(huntes.TestCase):
+class Test_change_filename_extension1(hunitest.TestCase):
     def test1(self) -> None:
         file_name = "./core/dataflow_model/notebooks/Master_experiment_runner.py"
         actual = hio.change_filename_extension(file_name, "py", "ipynb")
@@ -43,7 +45,7 @@ class Test_change_filename_extension1(huntes.TestCase):
         self.assert_equal(actual, expected)
 
 
-class Test_load_df_from_json(huntes.TestCase):
+class Test_load_df_from_json(hunitest.TestCase):
     def test1(self) -> None:
         test_json_path = os.path.join(self.get_input_dir(), "test.json")
         actual_result = hio.load_df_from_json(test_json_path)
@@ -54,6 +56,6 @@ class Test_load_df_from_json(huntes.TestCase):
                 "col3": ["a", "b", "c", np.nan],
             }
         )
-        actual_result = hprintin.dataframe_to_str(actual_result)
-        expected_result = hprintin.dataframe_to_str(expected_result)
+        actual_result = hpandas.df_to_str(actual_result)
+        expected_result = hpandas.df_to_str(expected_result)
         self.assertEqual(actual_result, expected_result)

@@ -15,6 +15,15 @@ class FilePathGenerator(abc.ABC):
     (e.g., S3).
     """
 
+    # TODO(gp): Do we really want to make it explicit?
+    # No one is interested in this file except SymbolUniverse class.
+    @staticmethod
+    @abc.abstractmethod
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols.
+        """
+
     @abc.abstractmethod
     def generate_file_path(
         self,
@@ -33,13 +42,4 @@ class FilePathGenerator(abc.ABC):
 
         Parameters as in `read_data`.
         :return: path to the file
-        """
-
-    # TODO(gp): Do we really want to make it explicit?
-    # No one is interested in this file except SymbolUniverse class.
-    @staticmethod
-    @abc.abstractmethod
-    def get_latest_symbols_file() -> str:
-        """
-        Get the latest available file with symbols.
         """

@@ -1,30 +1,25 @@
 """
 Import as:
 
-import core.artificial_signal_generators as sig_gen
+import core.artificial_signal_generators as carsigen
 """
 
+import datetime
 import logging
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import scipy as sp
-
-# import statsmodels as sm
 import statsmodels.api as sm
 
-import helpers.dbg as dbg
-import helpers.hnumpy as hnumpy
-
-# TODO(*): statsmodels needs this import to work properly.
-# import statsmodels.tsa.arima_process as smarima  # isort: skip # noqa: F401 # pylint: disable=unused-import
-
+import helpers.hdbg as hdbg
+import helpers.henv as henv
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): Remove after PTask2335.
-if True:
+
+if henv.has_module("gluonts"):
     import gluonts
     import gluonts.dataset.artificial as gda
     import gluonts.dataset.artificial.recipe as rcp
@@ -67,8 +62,8 @@ if True:
         test_df = gluonts.dataset.util.to_pandas(test_entry)
         train_length = train_length or train_df.shape[0]
         test_length = test_length or test_df.shape[0]
-        dbg.dassert_lte(train_length, train_df.shape[0])
-        dbg.dassert_lte(test_length, test_df.shape[0])
+        hdbg.dassert_lte(train_length, train_df.shape[0])
+        hdbg.dassert_lte(test_length, test_df.shape[0])
         train_df = pd.DataFrame(train_df.head(train_length), columns=["y"])
         test_df = pd.DataFrame(test_df.head(test_length), columns=["y"])
         return train_df, test_df
@@ -138,7 +133,7 @@ if True:
         :return: GluonTS TrainDatasets (with `train` and `test` attributes).
         """
         names = [name for name, _ in recipe]
-        dbg.dassert_in("target", names)
+        hdbg.dassert_in("target", names)
         metadata = gluonts.dataset.common.MetaData(freq=freq)
         recipe_dataset = gda.RecipeDataset(
             recipe,
@@ -152,6 +147,7 @@ if True:
         return recipe_dataset.generate()
 
 
+# TODO(Paul): Remove the statsmodels dependency.
 class ArmaProcess:
     """
     A thin wrapper around statsmodels `ArmaProcess`, with Pandas support.
@@ -240,6 +236,7 @@ class MultivariateNormalProcess:
         https://docs.scipy.org/doc/scipy-0.16.0/reference/generated/scipy.stats.invwishart.html#scipy.stats.invwishart
         """
         scale = np.identity(dim)
+        # TODO(Paul): Replace with numpy if available.
         rv = sp.stats.invwishart(df=dim, scale=scale)
         self.cov = rv.rvs(random_state=seed)
 
@@ -253,8 +250,11 @@ class MultivariateNormalProcess:
         """
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
+        # TODO(Paul): Replace with numpy.
         rv = sp.stats.multivariate_normal(
-            mean=self.mean, cov=self.cov, allow_singular=self.allow_singular,
+            mean=self.mean,
+            cov=self.cov,
+            allow_singular=self.allow_singular,
         )
         # Setting the seed through scipy interface seems to be jittery (see
         # AmpTask1649).
@@ -282,8 +282,8 @@ class PoissonProcess:
     """
     A thin wrapper around sp.stats.poisson, with Pandas support.
 
-    We interpret the values as the number of events that occurred in the last
-    interval.
+    We interpret the values as the number of events that occurred in the
+    last interval.
     """
 
     def __init__(self, mu: float) -> None:
@@ -302,11 +302,199 @@ class PoissonProcess:
         """
         index = pd.date_range(**date_range_kwargs)
         nsample = index.size
+        # TODO(Paul): Replace with numpy.
         rv = sp.stats.poisson(mu=self.mu)
         data = rv.rvs(size=nsample, random_state=seed)
         return pd.Series(index=index, data=data, name="Poisson")
 
 
+class PriceProcess:
+    """
+    Helpers for generating fake price and volume data.
+    """
+
+    def __init__(self, seed):
+        """
+        Constructor.
+
+        Uses a numpy `Generator`, which replaces numpy's `RandomState`.
+        https://numpy.org/doc/stable/reference/random/generator.html
+
+        :param seed: random number generator seed
+        """
+        self._rng = np.random.default_rng(seed=seed)
+
+    # TODO(Paul): drop "log" from the name.
+    def generate_log_normal_series(
+        self,
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_id: int,
+        *,
+        bar_duration: str = "1T",
+        bar_volatility_in_bps: float = 5,
+        start_time: datetime.time = datetime.time(9, 30),
+        end_time: datetime.time = datetime.time(16, 00),
+    ) -> pd.Series:
+        # Generate the datetime index.
+        index = PriceProcess._get_index(
+            start_datetime,
+            end_datetime,
+            bar_duration,
+            start_time,
+            end_time,
+        )
+        #
+        n_samples = index.size
+        # Generate random normal returns.
+        z_scored = self._rng.normal(size=n_samples)
+        series = 0.0001 * bar_volatility_in_bps * z_scored
+        # Convert to a series.
+        series = pd.Series(data=series, index=index, name=asset_id)
+        return series
+
+    def generate_price_series_from_normal_log_returns(
+        self,
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_id: int,
+        *,
+        bar_duration: str = "1T",
+        # TODO(Paul): Change the default to 5.
+        bar_volatility_in_bps: float = 10,
+        last_price: float = 1000,
+        start_time: datetime.time = datetime.time(9, 30),
+        end_time: datetime.time = datetime.time(16, 00),
+    ) -> pd.Series:
+        """
+        Return a fake price series generated from a normal log returns process.
+
+        :param start_datetime: initial timestamp
+        :param end_datetime: final timestamp
+        :param asset_id: asset id for naming the series
+        :param bar_duration: length (in time) of bars
+        :param bar_volatility_in_bps: target bar volatility of returns
+        :param last_price: "last price" before start of fake price series
+        :param start_time: e.g., start of active trading hours
+        :param end_time: e.g., end of active trading hours
+        :return: series of fake prices, indexed by datetime
+          - the index does not have a `freq` because certain timestamps are
+            omitted
+          - the series can safely be resampled to `bar_duration` without loss
+        """
+        rets = self.generate_log_normal_series(
+            start_datetime=start_datetime,
+            end_datetime=end_datetime,
+            asset_id=asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            start_time=start_time,
+            end_time=end_time,
+        )
+        # Generate prices.
+        price = last_price * np.exp(rets.cumsum())
+        return price
+
+    def generate_price_series_from_binomial_tick_movements(
+        self,
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_id: int,
+        *,
+        bar_duration: str = "1T",
+        tick_size: float = 0.01,
+        bar_volatility_in_ticks: int = 10,
+        last_price: float = 1000,
+        start_time: datetime.time = datetime.time(9, 30),
+        end_time: datetime.time = datetime.time(16, 00),
+    ) -> pd.Series:
+        """
+        Return a fake price series generated from a binomial tick process.
+
+        Similar to `generate_price_series_from_normal_log_returns()`, but
+        generates price movements from a binomial random variable that
+        specifies how many `tick_size` movements to move.
+
+        :param tick_size: size of minimum price movement
+        :param bar_volatility_in_ticks: target bar volatility of returns
+        """
+        # Generate the datetime index.
+        index = PriceProcess._get_index(
+            start_datetime,
+            end_datetime,
+            bar_duration,
+            start_time,
+            end_time,
+        )
+        #
+        n_samples = index.size
+        # Generate random absolute price movements.
+        n_binomial = 4 * (bar_volatility_in_ticks ** 2)
+        tick_movements = (
+            self._rng.binomial(n_binomial, 0.5, n_samples) - n_binomial * 0.5
+        )
+        price_diff = tick_size * tick_movements
+        # Convert to a series.
+        price_diff = pd.Series(data=price_diff, index=index, name=asset_id)
+        # Generate prices.
+        price = last_price + price_diff.cumsum()
+        return price
+
+    def generate_volume_series_from_poisson_process(
+        self,
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_id: int,
+        *,
+        bar_duration: str = "1T",
+        bar_expected_count: int = 100,
+        start_time: datetime.time = datetime.time(9, 30),
+        end_time: datetime.time = datetime.time(16, 00),
+    ) -> pd.Series:
+        """
+        Return a fake volume series generated by a Poisson process.
+
+        :param bar_expected_count: expected count per bar
+        """
+        # Generate the datetime index.
+        index = PriceProcess._get_index(
+            start_datetime,
+            end_datetime,
+            bar_duration,
+            start_time,
+            end_time,
+        )
+        #
+        n_samples = index.size
+        # Generate random poisson counts.
+        counts = self._rng.poisson(bar_expected_count, n_samples)
+        # Convert to a series.
+        counts = pd.Series(data=counts, index=index, name=asset_id)
+        return counts
+
+    @staticmethod
+    def _get_index(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        freq: str,
+        start_time: datetime.time,
+        end_time: datetime.time,
+    ) -> pd.DatetimeIndex:
+        # Check types.
+        hdbg.dassert_isinstance(start_datetime, pd.Timestamp)
+        hdbg.dassert_isinstance(end_datetime, pd.Timestamp)
+        hdbg.dassert_isinstance(freq, str)
+        hdbg.dassert_isinstance(start_time, datetime.time)
+        hdbg.dassert_isinstance(end_time, datetime.time)
+        # Create index.
+        index = pd.date_range(start_datetime, end_datetime, freq=freq)
+        srs = pd.Series(index=index, dtype="float64")
+        srs = srs.between_time(start_time, end_time)
+        index = srs.index
+        return index
+
+
+# TODO(Paul): Deprecate and delete.
 def generate_arima_signal_and_response(
     start_date: str,
     freq: str,
@@ -370,8 +558,8 @@ def get_heaviside(a: int, b: int, zero_val: int, tick: int) -> pd.Series:
     """
     Generate Heaviside pd.Series.
     """
-    dbg.dassert_lte(a, zero_val)
-    dbg.dassert_lte(zero_val, b)
+    hdbg.dassert_lte(a, zero_val)
+    hdbg.dassert_lte(zero_val, b)
     array = np.arange(a, b, tick)
     srs = pd.Series(
         data=np.heaviside(array, zero_val), index=array, name="Heaviside"

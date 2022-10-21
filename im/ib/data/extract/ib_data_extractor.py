@@ -14,9 +14,9 @@ from typing import List, Optional, Tuple
 import ib_insync
 import pandas as pd
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.s3 as hs3
+import helpers.hs3 as hs3
 import im.common.data.extract.data_extractor as imcdedaex
 import im.common.data.types as imcodatyp
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
@@ -41,6 +41,30 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
             self._ib_connect_client_id = imidegaut.get_free_client_id(
                 self._MAX_IB_CONNECTION_ATTEMPTS
             )
+
+    @staticmethod
+    def get_default_part_files_dir(
+        symbol: str,
+        frequency: imcodatyp.Frequency,
+        asset_class: imcodatyp.AssetClass,
+        contract_type: imcodatyp.ContractType,
+        exchange: str,
+        currency: str,
+    ) -> str:
+        """
+        Return a `symbol` directory on S3 near the main archive file.
+        """
+        arch_file = imidlifpge.IbFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            frequency=frequency,
+            asset_class=asset_class,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            ext=imcodatyp.Extension.CSV,
+        )
+        arch_path, _ = os.path.split(arch_file)
+        return os.path.join(arch_path, symbol)
 
     def extract_data(
         self,
@@ -249,134 +273,6 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
         return data
 
     @staticmethod
-    def get_default_part_files_dir(
-        symbol: str,
-        frequency: imcodatyp.Frequency,
-        asset_class: imcodatyp.AssetClass,
-        contract_type: imcodatyp.ContractType,
-        exchange: str,
-        currency: str,
-    ) -> str:
-        """
-        Return a `symbol` directory on S3 near the main archive file.
-        """
-        arch_file = imidlifpge.IbFilePathGenerator().generate_file_path(
-            symbol=symbol,
-            frequency=frequency,
-            asset_class=asset_class,
-            contract_type=contract_type,
-            exchange=exchange,
-            currency=currency,
-            ext=imcodatyp.Extension.CSV,
-        )
-        arch_path, _ = os.path.split(arch_file)
-        return os.path.join(arch_path, symbol)
-
-    def _extract_data_parts(
-        self,
-        ib: ib_insync.ib.IB,
-        part_files_dir: str,
-        exchange: str,
-        symbol: str,
-        asset_class: imcodatyp.AssetClass,
-        frequency: imcodatyp.Frequency,
-        currency: str,
-        contract_type: Optional[imcodatyp.ContractType] = None,
-        start_ts: Optional[pd.Timestamp] = None,
-        end_ts: Optional[pd.Timestamp] = None,
-        incremental: Optional[bool] = None,
-    ) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
-        """
-        Make a several requests to IB, each response is saved to a separate
-        file.
-
-        E.g. list of resultes files:
-        - s3://*****/data/ib/futures/daily/ESH1/ESH1.20200101.20210101.csv
-        - s3://*****/data/ib/futures/daily/ESH1/ESH1.20190101.20200101.csv
-        - ...
-
-        :param ib: IB connection
-        :param part_files_dir: place to keep results of each IB request
-        :param exchange: name of the exchange
-        :param symbol: symbol to get the data for
-        :param asset_class: asset class
-        :param frequency: `D` or `T` for daily or minutely data respectively
-        :param currency: contract currency
-        :param contract_type: required for asset class of type `futures`
-        :param start_ts: start time of data to extract,
-            by default - the oldest available
-        :param end_ts: end time of data to extract,
-            by default - now
-        :param incremental: if True - save only new data,
-            if False - remove old firstly,
-            True by default
-        :return: a list of failed intervals
-        """
-        # Get tasks.
-        tasks = imidegaut.get_tasks(
-            ib=ib,
-            target=self._get_ib_target(asset_class, contract_type),
-            frequency=self._get_ib_frequency(frequency),
-            symbols=[symbol],
-            start_ts=start_ts,
-            end_ts=end_ts,
-            use_rth=False,
-            exchange=exchange,
-            currency=currency,
-        )
-        # Do tasks.
-        file_name = imidlifpge.IbFilePathGenerator().generate_file_path(
-            symbol=symbol,
-            frequency=frequency,
-            asset_class=asset_class,
-            contract_type=contract_type,
-            exchange=exchange,
-            currency=currency,
-            ext=imcodatyp.Extension.CSV,
-        )
-        failed_tasks_intervals = []
-        for (
-            contract,
-            start_ts_task,
-            end_ts_task,
-            duration_str,
-            bar_size_setting,
-            what_to_show,
-            use_rth,
-        ) in tasks:
-            saved_intervals = imidegddil.save_historical_data_by_intervals_IB_loop(
-                ib=ib,
-                contract=contract,
-                start_ts=start_ts_task,
-                end_ts=end_ts_task,
-                duration_str=duration_str,
-                bar_size_setting=bar_size_setting,
-                what_to_show=what_to_show,
-                use_rth=use_rth,
-                file_name=file_name,
-                part_files_dir=part_files_dir,
-                incremental=incremental,
-                num_retry=self._MAX_IB_DATA_LOAD_ATTEMPTS,
-            )
-            # Find intervals with no data.
-            for interval in saved_intervals:
-                file_name_for_part = imidegddil.historical_data_to_filename(
-                    contract=contract,
-                    start_ts=interval[0],
-                    end_ts=interval[1],
-                    duration_str=duration_str,
-                    bar_size_setting=bar_size_setting,
-                    what_to_show=what_to_show,
-                    use_rth=use_rth,
-                    dst_dir=part_files_dir,
-                )
-                df_part = imidegddil.load_historical_data(file_name_for_part)
-                if df_part.empty:
-                    failed_tasks_intervals.append(interval)
-        # Return failed intervals.
-        return failed_tasks_intervals
-
-    @staticmethod
     def _get_ib_target(
         asset_class: imcodatyp.AssetClass,
         contract_type: Optional[imcodatyp.ContractType],
@@ -474,3 +370,109 @@ class IbDataExtractor(imcdedaex.AbstractDataExtractor):
             intervals,
         )
         return intervals
+
+    def _extract_data_parts(
+        self,
+        ib: ib_insync.ib.IB,
+        part_files_dir: str,
+        exchange: str,
+        symbol: str,
+        asset_class: imcodatyp.AssetClass,
+        frequency: imcodatyp.Frequency,
+        currency: str,
+        contract_type: Optional[imcodatyp.ContractType] = None,
+        start_ts: Optional[pd.Timestamp] = None,
+        end_ts: Optional[pd.Timestamp] = None,
+        incremental: Optional[bool] = None,
+    ) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
+        """
+        Make a several requests to IB, each response is saved to a separate
+        file.
+
+        E.g. list of resultes files:
+        - s3://*****/data/ib/futures/daily/ESH1/ESH1.20200101.20210101.csv
+        - s3://*****/data/ib/futures/daily/ESH1/ESH1.20190101.20200101.csv
+        - ...
+
+        :param ib: IB connection
+        :param part_files_dir: place to keep results of each IB request
+        :param exchange: name of the exchange
+        :param symbol: symbol to get the data for
+        :param asset_class: asset class
+        :param frequency: `D` or `T` for daily or minutely data respectively
+        :param currency: contract currency
+        :param contract_type: required for asset class of type `futures`
+        :param start_ts: start time of data to extract,
+            by default - the oldest available
+        :param end_ts: end time of data to extract,
+            by default - now
+        :param incremental: if True - save only new data,
+            if False - remove old firstly,
+            True by default
+        :return: a list of failed intervals
+        """
+        # Get tasks.
+        tasks = imidegaut.get_tasks(
+            ib=ib,
+            target=self._get_ib_target(asset_class, contract_type),
+            frequency=self._get_ib_frequency(frequency),
+            symbols=[symbol],
+            start_ts=start_ts,
+            end_ts=end_ts,
+            use_rth=False,
+            exchange=exchange,
+            currency=currency,
+        )
+        # Do tasks.
+        file_name = imidlifpge.IbFilePathGenerator().generate_file_path(
+            symbol=symbol,
+            frequency=frequency,
+            asset_class=asset_class,
+            contract_type=contract_type,
+            exchange=exchange,
+            currency=currency,
+            ext=imcodatyp.Extension.CSV,
+        )
+        failed_tasks_intervals = []
+        for (
+            contract,
+            start_ts_task,
+            end_ts_task,
+            duration_str,
+            bar_size_setting,
+            what_to_show,
+            use_rth,
+        ) in tasks:
+            saved_intervals = (
+                imidegddil.save_historical_data_by_intervals_IB_loop(
+                    ib=ib,
+                    contract=contract,
+                    start_ts=start_ts_task,
+                    end_ts=end_ts_task,
+                    duration_str=duration_str,
+                    bar_size_setting=bar_size_setting,
+                    what_to_show=what_to_show,
+                    use_rth=use_rth,
+                    file_name=file_name,
+                    part_files_dir=part_files_dir,
+                    incremental=incremental,
+                    num_retry=self._MAX_IB_DATA_LOAD_ATTEMPTS,
+                )
+            )
+            # Find intervals with no data.
+            for interval in saved_intervals:
+                file_name_for_part = imidegddil.historical_data_to_filename(
+                    contract=contract,
+                    start_ts=interval[0],
+                    end_ts=interval[1],
+                    duration_str=duration_str,
+                    bar_size_setting=bar_size_setting,
+                    what_to_show=what_to_show,
+                    use_rth=use_rth,
+                    dst_dir=part_files_dir,
+                )
+                df_part = imidegddil.load_historical_data(file_name_for_part)
+                if df_part.empty:
+                    failed_tasks_intervals.append(interval)
+        # Return failed intervals.
+        return failed_tasks_intervals

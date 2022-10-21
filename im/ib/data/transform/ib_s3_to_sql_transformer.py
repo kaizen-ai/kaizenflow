@@ -10,7 +10,7 @@ import logging
 
 import pandas as pd
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.transform.s3_to_sql_transformer as imcdtststr
 import im.common.data.types as imcodatyp
 

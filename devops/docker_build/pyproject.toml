@@ -6,27 +6,34 @@ authors = [""]
 
 [tool.poetry.dependencies]
 async_solipsism = ">= 0.3"
-awscli = "*"
+# The version is frozen due to #339.
+awscli = "1.22.17"
 boto3 = "*"
 bs4 = "*"
-ccxt = "*"
+# This is the version in which CCXT pro got 
+# merged into the free version #CmTask2951.
+ccxt = ">= 1.95.2"
 # This constraint is needed because 3.4.8 seems to fail.
 cryptography = "<= 3.4.7"
-flaky = "*"
-fsspec = "*"
 gluonts = "== 0.6.7"
 #ib_insync = "*"
+# This is needed for `jupyter` extensions.
+importlib-resources = "*"
 invoke = "*"
 jsonpickle = "*"
 jupyter = "*"
 jupyter_contrib_nbextensions = "*"
 jupyter_nbextensions_configurator = "*"
+# By default we install and enable `Jupytext` plugin in `Jupyter` notebook
+# to get automatically `.py` paired with `.ipynb`.
 jupytext = "*"
-lxml = "*"
 matplotlib = "*"
+moto = "*"
 mxnet = ">= 1.6"
 networkx = "*"
 pandas = "^1.2.0"
+# Needs to be present because of poetry bug #CmTask2951.
+pillow = "9.1.1"
 psutil = "*"
 psycopg2-binary = "*"
 pyarrow = "*"
@@ -34,14 +41,21 @@ pygraphviz = "*"
 pytest = "^6.0.0"
 pytest-cov = "*"
 pytest-instafail = "*"
+pytest-rerunfailures = "*"
+pytest-timeout = "*"
 pytest-xdist = "*"
-python = "^3.9"
+# TODO(Nikola): poetry does not work with Python 3.9.* via GH actions,
+#  see "Switch all the build systems to Python 3.9" CmTask #535.
+python = "3.8.*"
+python-dotenv = "*"
 pywavelets = "*"
 requests = "*"
 s3fs = "*"
 seaborn = "*"
 sklearn = "*"
 statsmodels = "*"
+# This is needed for `pandas.read_sql()`.
+SQLAlchemy = "*"
 tqdm = "*"
 
 [tool.poetry.dev-dependencies]

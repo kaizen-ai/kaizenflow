@@ -4,32 +4,31 @@ Import as:
 import helpers.test.test_unit_test as ttutes
 """
 
-import datetime
 import logging
+import os
 import tempfile
 import unittest.mock as umock
-import uuid
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import pytest
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
-import helpers.printing as hprintin
-import helpers.system_interaction as hsyint
-import helpers.unit_test as huntes
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hprint as hprint
+import helpers.hsystem as hsystem
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
 def _git_add(file_name: str) -> None:
     # pylint: disable=unreachable
-    cmd = "git add -u %s" % file_name
+    cmd = f"git add -u {file_name}"
     _LOG.debug("> %s", cmd)
-    rc = hsyint.system(cmd, abort_on_error=False)
+    rc = hsystem.system(cmd, abort_on_error=False)
     if rc:
         _LOG.warning(
             "Can't run '%s': you need to add the file manually",
@@ -39,15 +38,17 @@ def _git_add(file_name: str) -> None:
 
 def _to_skip_on_update_outcomes() -> bool:
     """
+    Determine whether to skip on `--update_outcomes`.
+
     Some tests can't pass with `--update_outcomes`, since they exercise the
     logic in `--update_outcomes` itself.
 
-    We can't always use `@pytest.mark.skipif(huntes.get_update_tests)`
+    We can't always use `@pytest.mark.skipif(hunitest.get_update_tests)`
     since pytest decides which tests need to be run before the variable
     is actually set.
     """
     to_skip = False
-    if huntes.get_update_tests():
+    if hunitest.get_update_tests():
         _LOG.warning(
             "Skip this test since it exercises the logic for --update_outcomes"
         )
@@ -58,19 +59,18 @@ def _to_skip_on_update_outcomes() -> bool:
 # #############################################################################
 
 
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
-class TestTestCase1(huntes.TestCase):
+class TestTestCase1(hunitest.TestCase):
     """
     Test free-standing functions in unit_test.py.
     """
 
     def test_get_input_dir1(self) -> None:
         """
-        Test huntes.get_input_dir().
+        Test hunitest.get_input_dir().
         """
         act = self.get_input_dir()
-        act = huntes.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir1/input"
+        act = hunitest.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_input_dir1/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir2(self) -> None:
@@ -80,9 +80,9 @@ class TestTestCase1(huntes.TestCase):
         act = self.get_input_dir(
             use_only_test_class, test_class_name, test_method_name
         )
-        act = huntes.purify_txt_from_client(act)
+        act = hunitest.purify_txt_from_client(act)
         #
-        exp = "$GIT_ROOT/helpers/test/test_class.test_method/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/test_class.test_method/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir3(self) -> None:
@@ -92,9 +92,9 @@ class TestTestCase1(huntes.TestCase):
         act = self.get_input_dir(
             use_only_test_class, test_class_name, test_method_name
         )
-        act = huntes.purify_txt_from_client(act)
+        act = hunitest.purify_txt_from_client(act)
         #
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_input_dir3/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_input_dir3/input"
         self.assertEqual(act, exp)
 
     def test_get_input_dir4(self) -> None:
@@ -104,28 +104,28 @@ class TestTestCase1(huntes.TestCase):
         act = self.get_input_dir(
             use_only_test_class, test_class_name, test_method_name
         )
-        act = huntes.purify_txt_from_client(act)
+        act = hunitest.purify_txt_from_client(act)
         #
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1/input"
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1/input"
         self.assertEqual(act, exp)
 
     def test_get_output_dir1(self) -> None:
         """
-        Test huntes.get_output_dir().
+        Test hunitest.get_output_dir().
         """
         act = self.get_output_dir()
-        act = huntes.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/TestTestCase1.test_get_output_dir1/output"
+        act = hunitest.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_output_dir1/output"
         self.assertEqual(act, exp)
 
     def test_get_scratch_space1(self) -> None:
         """
-        Test huntes.get_scratch_space().
+        Test hunitest.get_scratch_space().
         """
         act = self.get_scratch_space()
-        act = huntes.purify_txt_from_client(act)
+        act = hunitest.purify_txt_from_client(act)
         exp = (
-            "$GIT_ROOT/helpers/test/TestTestCase1.test_get_scratch_space1"
+            "$GIT_ROOT/helpers/test/outcomes/TestTestCase1.test_get_scratch_space1"
             "/tmp.scratch"
         )
         self.assertEqual(act, exp)
@@ -134,8 +134,8 @@ class TestTestCase1(huntes.TestCase):
         test_class_name = "test_class"
         test_method_name = "test_method"
         act = self.get_scratch_space(test_class_name, test_method_name)
-        act = huntes.purify_txt_from_client(act)
-        exp = "$GIT_ROOT/helpers/test/test_class.test_method/tmp.scratch"
+        act = hunitest.purify_txt_from_client(act)
+        exp = "$GIT_ROOT/helpers/test/outcomes/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
     def test_get_scratch_space3(self) -> None:
@@ -145,8 +145,8 @@ class TestTestCase1(huntes.TestCase):
         act = self.get_scratch_space(
             test_class_name, test_method_name, use_absolute_path
         )
-        act = huntes.purify_txt_from_client(act)
-        exp = "test_class.test_method/tmp.scratch"
+        act = hunitest.purify_txt_from_client(act)
+        exp = "outcomes/test_class.test_method/tmp.scratch"
         self.assertEqual(act, exp)
 
     def test_get_s3_scratch_dir1(self) -> None:
@@ -168,25 +168,25 @@ class TestTestCase1(huntes.TestCase):
 
     def test_assert_not_equal1(self) -> None:
         actual = "hello world"
-        expected = "hello world "
+        expected = "hello world w"
         tmp_dir = tempfile.mkdtemp()
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, dst_dir=tmp_dir)
 
     def test_assert_not_equal2(self) -> None:
         actual = "hello world"
-        expected = "hello world "
+        expected = "hello world w"
         # Create a dir like `/var/tmp/tmph_kun9xq`.
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
         # Compute the signature from the dir.
-        act = huntes.get_dir_signature(
+        act = hunitest.get_dir_signature(
             tmp_dir, include_file_content=True, num_lines=None
         )
-        act = huntes.purify_txt_from_client(act)
+        act = hunitest.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
-        exp = """
+        exp ="""
         # Dir structure
         $TMP_DIR
         $TMP_DIR/tmp_diff.sh
@@ -194,9 +194,17 @@ class TestTestCase1(huntes.TestCase):
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
         # $TMP_DIR/tmp_diff.sh
-        num_lines=1
+        num_lines=9
         '''
-        vimdiff helpers/test/TestTestCase1.test_assert_not_equal2/tmp.actual.txt helpers/test/TestTestCase1.test_assert_not_equal2/tmp.expected.txt
+        #!/bin/bash
+        if [[ $1 == "wrap" ]]; then
+            cmd='vimdiff -c "windo set wrap"'
+        else
+            cmd='vimdiff'
+        fi;
+        cmd="$cmd helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.expected.txt"
+        eval $cmd
+
         '''
         """
         # pylint: enable=line-too-long
@@ -224,7 +232,7 @@ class TestTestCase1(huntes.TestCase):
         # #####################################################################
         # #####################################################################
         """
-        act = huntes._remove_spaces(txt)
+        act = hunitest._remove_spaces(txt)
         exp = r"""
         * Failed assertion *
         'in1' not in '{'in1': 'out1'}'
@@ -238,7 +246,7 @@ class TestTestCase1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_AssertEqual1(huntes.TestCase):
+class Test_AssertEqual1(hunitest.TestCase):
     def test_equal1(self) -> None:
         """
         Matching act and exp without fuzzy matching.
@@ -255,8 +263,8 @@ completed       success Lint    Slow_tests
 """
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
-        is_equal = huntes._assert_equal(act, exp, test_name, test_dir)
-        _LOG.debug(hprintin.to_str("is_equal"))
+        is_equal = hunitest.assert_equal(act, exp, test_name, test_dir)
+        _LOG.debug(hprint.to_str("is_equal"))
         self.assertTrue(is_equal)
 
     def test_equal2(self) -> None:
@@ -276,10 +284,10 @@ completed       success Lint    Slow_tests
         test_name = self._get_test_name()
         test_dir = self.get_scratch_space()
         fuzzy_match = True
-        is_equal = huntes._assert_equal(
+        is_equal = hunitest.assert_equal(
             act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
         )
-        _LOG.debug(hprintin.to_str("is_equal"))
+        _LOG.debug(hprint.to_str("is_equal"))
         self.assertTrue(is_equal)
 
     def test_not_equal1(self) -> None:
@@ -300,12 +308,12 @@ completed       success Lint    Slow_tests
         test_dir = self.get_scratch_space()
         fuzzy_match = False
         with self.assertRaises(RuntimeError) as cm:
-            huntes._assert_equal(
+            hunitest.assert_equal(
                 act, exp, test_name, test_dir, fuzzy_match=fuzzy_match
             )
         # Check that the assertion is what expected.
         act = str(cm.exception)
-        act = huntes.purify_txt_from_client(act)
+        act = hunitest.purify_txt_from_client(act)
         exp = '''
 --------------------------------------------------------------------------------
 ACTUAL vs EXPECTED: Test_AssertEqual1.test_not_equal1
@@ -316,16 +324,15 @@ completed failure Lint    Run_linter                                      |  com
 completed       success Lint    Fast_tests                                (
 completed       success Lint    Slow_tests                                (
 Diff with:
-> vimdiff helpers/test/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.actual.txt helpers/test/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.expected.txt
-or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
-EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
+ACTUAL VARIABLE: Test_AssertEqual1.test_not_equal1
 --------------------------------------------------------------------------------
 exp = r"""
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
-completed       success Lint    Slow_tests"""'''
+completed       success Lint    Slow_tests
+"""'''
         if act != exp:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)
@@ -360,7 +367,7 @@ end
 # #############################################################################
 
 
-class TestCheckString1(huntes.TestCase):
+class TestCheckString1(hunitest.TestCase):
     def test_check_string1(self) -> None:
         """
         Compare the actual value to a matching golden outcome.
@@ -566,7 +573,7 @@ class TestCheckString1(huntes.TestCase):
 # #############################################################################
 
 
-class TestCheckDataFrame1(huntes.TestCase):
+class TestCheckDataFrame1(hunitest.TestCase):
     """
     Some of these tests can't pass with `--update_outcomes`, since they
     exercise the logic in `--update_outcomes` itself.
@@ -739,7 +746,7 @@ class TestCheckDataFrame1(huntes.TestCase):
         self.mock_update_tests()
         tag = "test_df"
         _, file_name = self._get_golden_outcome_file_name(tag)
-        _LOG.debug(hprintin.to_str("file_name"))
+        _LOG.debug(hprint.to_str("file_name"))
         try:
             # Remove the golden.
             hio.delete_file(file_name)
@@ -780,7 +787,7 @@ class TestCheckDataFrame1(huntes.TestCase):
             )
             hdbg.dassert_file_exists(file_name + ".tmp")
             new_golden = pd.read_csv(file_name + ".tmp", index_col=0)
-            hdbg.dassert_not_exists(file_name)
+            hdbg.dassert_path_not_exists(file_name)
         finally:
             # Clean up.
             hio.delete_file(file_name)
@@ -847,7 +854,7 @@ class TestCheckDataFrame1(huntes.TestCase):
 # #############################################################################
 
 
-class Test_check_string_debug1(huntes.TestCase):
+class Test_check_string_debug1(hunitest.TestCase):
     def test1(self) -> None:
         act = "hello"
         # action_on_missing_golden = "assert"
@@ -865,8 +872,8 @@ class Test_check_string_debug1(huntes.TestCase):
 
 # #############################################################################
 
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
-class Test_unit_test1(huntes.TestCase):
+
+class Test_unit_test1(hunitest.TestCase):
     def test_purify_txt_from_client1(self) -> None:
         super_module_path = hgit.get_client_root(super_module=True)
         # TODO(gp): We should remove the current path.
@@ -893,7 +900,7 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: [W1401(ano
 dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Name 're' is not defined [mypy]
 """
         # pylint: enable=line-too-long
-        act = huntes.purify_txt_from_client(txt)
+        act = hunitest.purify_txt_from_client(txt)
         self.assert_equal(act, exp)
 
     def test_purify_txt_from_client2(self) -> None:
@@ -905,131 +912,40 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
         hgit.get_client_root.return_value = "/"
         txt = "/tmp/subdir1"
         exp = txt
-        act = huntes.purify_txt_from_client(txt)
+        act = hunitest.purify_txt_from_client(txt)
         self.assertEqual(act, exp)
 
 
 # #############################################################################
 
 
-class TestSubsetDf1(huntes.TestCase):
-    def test1(self) -> None:
-        # Generate some random data.
-        np.random.seed(42)
-        df = pd.DataFrame(
-            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
+class Test_get_dir_signature1(hunitest.TestCase):
+    def helper(self, include_file_content: bool) -> str:
+        in_dir = self.get_input_dir()
+        act = hunitest.get_dir_signature(
+            in_dir, include_file_content, num_lines=None
         )
-        # Subset.
-        df2 = huntes.subset_df(df, nrows=5, seed=43)
-        # Check.
-        act = []
-        act.append("df=")
-        act.append(str(df))
-        act.append("df2=")
-        act.append(str(df2))
-        act = "\n".join(act)
-        self.check_string(act)
+        act = hunitest.purify_txt_from_client(act)
+        return act  # type: ignore[no-any-return]
 
-
-class TestDataframeToJson(huntes.TestCase):
-    def test_dataframe_to_json(self) -> None:
-        """
-        Verify correctness of dataframe to JSON transformation.
-        """
-        # Initialize a dataframe.
-        test_dataframe = pd.DataFrame(
-            {
-                "col_1": [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0],
-                "col_2": [1, 2, 3, 4, 5, 6, 7],
-            }
-        )
-        # Convert dataframe to JSON.
-        output_str = huntes.convert_df_to_json_string(
-            test_dataframe, n_head=3, n_tail=3
-        )
-        self.check_string(output_str)
-
-    def test_dataframe_to_json_uuid(self) -> None:
-        """
-        Verify correctness of UUID-containing dataframe transformation.
-        """
-        # Initialize a dataframe.
-        test_dataframe = pd.DataFrame(
-            {
-                "col_1": [
-                    uuid.UUID("421470c7-7797-4a94-b584-eb83ff2de88a"),
-                    uuid.UUID("22cde381-1782-43dc-8c7a-8712cbdf5ee1"),
-                ],
-                "col_2": [1, 2],
-            }
-        )
-        # Convert dataframe to JSON.
-        output_str = huntes.convert_df_to_json_string(
-            test_dataframe, n_head=None, n_tail=None
-        )
-        self.check_string(output_str)
-
-    def test_dataframe_to_json_timestamp(self) -> None:
-        """
-        Verify correctness of transformation of a dataframe with Timestamps.
-        """
-        # Initialize a dataframe.
-        test_dataframe = pd.DataFrame(
-            {
-                "col_1": [pd.Timestamp("2020-01-01"), pd.Timestamp("2020-05-12")],
-                "col_2": [1.0, 2.0],
-            }
-        )
-        # Convert dataframe to JSON.
-        output_str = huntes.convert_df_to_json_string(
-            test_dataframe, n_head=None, n_tail=None
-        )
-        self.check_string(output_str)
-
-    def test_dataframe_to_json_datetime(self) -> None:
-        """
-        Verify correctness of transformation of a dataframe with datetime.
-        """
-        # Initialize a dataframe.
-        test_dataframe = pd.DataFrame(
-            {
-                "col_1": [
-                    datetime.datetime(2020, 1, 1),
-                    datetime.datetime(2020, 5, 12),
-                ],
-                "col_2": [1.0, 2.0],
-            }
-        )
-        # Convert dataframe to JSON.
-        output_str = huntes.convert_df_to_json_string(
-            test_dataframe, n_head=None, n_tail=None
-        )
-        self.check_string(output_str)
-
-
-# #############################################################################
-
-
-@pytest.mark.skip(reason="See cryptomtc/cmamp#321")
-class Test_get_dir_signature1(huntes.TestCase):
     def test1(self) -> None:
         """
         Test dir signature excluding the file content.
         """
         include_file_content = False
-        act = self._helper(include_file_content)
+        act = self.helper(include_file_content)
         # pylint: disable=line-too-long
         exp = r"""
         # Dir structure
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.pkl
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/config.txt
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_0/run_notebook.0.log
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.pkl
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/config.txt
-        $GIT_ROOT/helpers/test/Test_get_dir_signature1.test1/input/result_1/run_notebook.1.log
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0/config.pkl
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0/config.txt
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_0/run_notebook.0.log
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1/config.pkl
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1/config.txt
+        $GIT_ROOT/helpers/test/outcomes/Test_get_dir_signature1.test1/input/result_1/run_notebook.1.log
         """
         # pylint: enable=line-too-long
         self.assert_equal(act, exp, fuzzy_match=True)
@@ -1039,38 +955,229 @@ class Test_get_dir_signature1(huntes.TestCase):
         Test dir signature including the file content.
         """
         include_file_content = True
-        act = self._helper(include_file_content)
+        act = self.helper(include_file_content)
         # The golden outcome is long and uninteresting so we use check_string.
         self.check_string(act, fuzzy_match=True)
-
-    def _helper(self, include_file_content: bool) -> str:
-        in_dir = self.get_input_dir()
-        act = huntes.get_dir_signature(
-            in_dir, include_file_content, num_lines=None
-        )
-        act = huntes.purify_txt_from_client(act)
-        return act  # type: ignore[no-any-return]
 
 
 # #############################################################################
 
 
-class Test_purify_txt_from_client1(huntes.TestCase):
+class Test_purify_txt_from_client1(hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        act = hunitest.purify_txt_from_client(txt)
+        self.assert_equal(act, exp)
+
     def test1(self) -> None:
         txt = "amp/helpers/test/test_system_interaction.py"
         exp = "helpers/test/test_system_interaction.py"
-        self._helper(txt, exp)
+        self.helper(txt, exp)
 
     def test2(self) -> None:
         txt = "amp/helpers/test/test_system_interaction.py"
         exp = "helpers/test/test_system_interaction.py"
-        self._helper(txt, exp)
+        self.helper(txt, exp)
 
     def test3(self) -> None:
         txt = "['amp/helpers/test/test_system_interaction.py']"
         exp = "['helpers/test/test_system_interaction.py']"
-        self._helper(txt, exp)
+        self.helper(txt, exp)
 
-    def _helper(self, txt: str, exp: str) -> None:
-        act = huntes.purify_txt_from_client(txt)
-        self.assertEqual(act, exp)
+
+class Test_purify_from_env_vars(hunitest.TestCase):
+    """
+    Test purification from env vars.
+    """
+
+    def helper(self, env_var: str) -> None:
+        env_var_value = os.environ[env_var]
+        input_ = f"s3://{env_var_value}/"
+        act = hunitest.purify_from_env_vars(input_)
+        exp = f"s3://${env_var}/"
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
+    def test1(self) -> None:
+        """
+        - $CK_AWS_S3_BUCKET
+        """
+        env_var = "CK_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test2(self) -> None:
+        """
+        - $AM_TELEGRAM_TOKEN
+        """
+        env_var = "AM_TELEGRAM_TOKEN"
+        self.helper(env_var)
+
+    def test3(self) -> None:
+        """
+        - $AM_AWS_S3_BUCKET
+        """
+        env_var = "AM_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test4(self) -> None:
+        """
+        - $AM_ECR_BASE_PATH
+        """
+        env_var = "AM_ECR_BASE_PATH"
+        self.helper(env_var)
+
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
+    def test_end_to_end(self) -> None:
+        """
+        - Multiple env vars.
+        """
+        am_aws_s3_bucket = os.environ["AM_AWS_S3_BUCKET"]
+        ck_aws_s3_bucket = os.environ["CK_AWS_S3_BUCKET"]
+        am_telegram_token = os.environ["AM_TELEGRAM_TOKEN"]
+        am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+        #
+        text = f"""
+        $AM_AWS_S3_BUCKET = {am_aws_s3_bucket}
+        $CK_AWS_S3_BUCKET = {ck_aws_s3_bucket}
+        $AM_TELEGRAM_TOKEN = {am_telegram_token}
+        $AM_ECR_BASE_PATH = {am_ecr_base_path}
+        """
+        #
+        actual = hunitest.purify_from_env_vars(text)
+        self.check_string(actual, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_purify_object_representation1
+# #############################################################################
+
+
+class Test_purify_object_representation1(hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_object_representation(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        txt = """
+        load_prices: {'source_node_name': 'RealTimeDataSource object
+        at 0x7f571c329b50
+        """
+        exp = r"""
+        load_prices: {'source_node_name': 'RealTimeDataSource object
+        at 0x"""
+        self.helper(txt, exp)
+
+    def test2(self) -> None:
+        txt = """
+        load_prices: {'source_node_name at 0x7f571c329b51':
+        'RealTimeDataSource object at 0x7f571c329b50
+        """
+        exp = r"""
+        load_prices: {'source_node_name at 0x':
+        'RealTimeDataSource object at 0x"""
+        self.helper(txt, exp)
+
+    def test3(self) -> None:
+        txt = """
+        load_prices: {'source_node_name': 'RealTimeDataSource',
+        'source_node_kwargs': {'market_data':
+        <market_data.market_data.ReplayedMarketData
+        object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
+        'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
+        'execution_mode': 'real_time', 'process_forecasts_config':
+        {'market_data':
+        <market_data.market_data.ReplayedMarketData
+        object at 0x7faff4c3faf0>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
+        object>, 'order_type': 'price@twap', 'ath_start_time':
+        datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
+        'ath_end_time': datetime.time(16, 40), 'trading_end_time':
+        datetime.time(16, 4  0)}}
+        """
+        exp = r"""
+        load_prices: {'source_node_name': 'RealTimeDataSource',
+        'source_node_kwargs': {'market_data':
+        <market_data.market_data.ReplayedMarketData
+        object>, 'period': 'last_5mins', 'asset_id_col': 'asset_id',
+        'multiindex_output': True}} process_forecasts: {'prediction_col': 'close',
+        'execution_mode': 'real_time', 'process_forecasts_config':
+        {'market_data':
+        <market_data.market_data.ReplayedMarketData
+        object at 0x>,'portfolio  ': <oms.portfolio.SimulatedPortfolio
+        object>, 'order_type': 'price@twap', 'ath_start_time':
+        datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
+        'ath_end_time': datetime.time(16, 40), 'trading_end_time':
+        datetime.time(16, 4  0)}}"""
+        self.helper(txt, exp)
+
+    def test4(self) -> None:
+        """
+        Test replacing wall_clock_time=Timestamp('..., tz='America/New_York'))
+        """
+        txt = """
+        _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
+        <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 900} <dict>,
+        _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
+        _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>,
+        _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
+        10:05:00-0500', tz='America/New_York'),
+        wall_clock_time=Timestamp('2022-08-04 09:29:13.441715-0400',
+        tz='America/New_York')), Event(num_it=2,
+        current_time=Timestamp('2000-01-01 10:10:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04
+        09:29:13.892793-0400', tz='America/New_York')), Event(num_it=3,
+        current_time=Timestamp('2000-01-01 10:15:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04
+        09:29:14.131619-0400', tz='America/New_York'))] <list>)
+        """
+        exp = """
+        _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
+        <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 900} <dict>,
+        _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
+        _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>,
+        _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
+        10:05:00-0500', tz='America/New_York'),
+        wall_clock_time=Timestamp('xxx', tz='America/New_York')),
+        Event(num_it=2, current_time=Timestamp('2000-01-01 10:10:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('xxx',
+        tz='America/New_York')), Event(num_it=3,
+        current_time=Timestamp('2000-01-01 10:15:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('xxx',
+        tz='America/New_York'))] <list>)
+        """
+        txt = " ".join(hprint.dedent(txt).split("\n"))
+        exp = " ".join(hprint.dedent(exp).split("\n"))
+        self.helper(txt, exp)
+
+
+# #############################################################################
+
+
+class Test_purify_amp_reference1(hunitest.TestCase):
+    def helper(self, txt: str, exp: str) -> None:
+        txt = hprint.dedent(txt)
+        act = hunitest.purify_amp_references(txt)
+        exp = hprint.dedent(exp)
+        self.assert_equal(act, exp)
+
+    def test1(self) -> None:
+        """
+        Remove the reference to `amp.`.
+        """
+        txt = """
+        * Failed assertion *
+        Instance '<amp.helpers.test.test_dbg._Man object at 0x123456>'
+            of class '_Man' is not a subclass of '<class 'int'>'
+        """
+        exp = r"""
+        * Failed assertion *
+        Instance '<helpers.test.test_dbg._Man object at 0x123456>'
+            of class '_Man' is not a subclass of '<class 'int'>'
+        """
+        self.helper(txt, exp)

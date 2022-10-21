@@ -21,9 +21,9 @@ import pandas as pd
 from tqdm import tqdm
 
 # import core.explore as coexplor
-import helpers.dbg as hdbg
-import helpers.list as hlist
-import helpers.printing as hprint
+import helpers.hdbg as hdbg
+import helpers.hlist as hlist
+import helpers.hprint as hprint
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.utils as imidegaut
 
@@ -448,7 +448,7 @@ def get_historical_data(
         raise ValueError("Invalid mode='%s'" % mode)
     #
     if not df.empty:
-        # import helpers.unit_test as hunitest
+        # import helpers.hunit_test as hunitest
         # hunitest.diff_df_monotonic(df)
         hpandas.dassert_monotonic_index(df)
         end_ts3 = end_ts - pd.DateOffset(seconds=1)

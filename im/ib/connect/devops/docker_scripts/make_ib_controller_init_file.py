@@ -16,9 +16,9 @@ import argparse
 import logging
 from typing import Any, Dict
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
-import helpers.parser as hparser
+import helpers.hdbg as hdbg
+import helpers.hio as hio
+import helpers.hparser as hparser
 
 DEFAULT_CONFIG = dict(
     LogToConsole="yes",

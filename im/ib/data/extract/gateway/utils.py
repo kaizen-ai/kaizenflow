@@ -19,9 +19,9 @@ except ModuleNotFoundError:
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.printing as hprint
-import helpers.s3 as hs3
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 
 # from tqdm.notebook import tqdm
 

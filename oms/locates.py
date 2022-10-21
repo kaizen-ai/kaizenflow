@@ -4,6 +4,8 @@ Import as:
 import oms.locates as omlocate
 """
 
+import pandas as pd
+
 
 class Locates:
     def __init__(self, strategy_id: str, account: str):

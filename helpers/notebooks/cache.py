@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.12.0
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -24,12 +24,12 @@ import logging
 
 import joblib
 
-import helpers.cache as hcache
-import helpers.dbg as hdbg
-import helpers.printing as hprintin
-import helpers.s3 as hs3
+import helpers.hcache as hcache
+import helpers.hdbg as hdbg
+import helpers.hprint as hprint
+import helpers.hs3 as hs3
 
-hprintin.config_notebook()
+hprint.config_notebook()
 
 # hdbg.init_logger(verbosity=logging.DEBUG)
 hdbg.init_logger(verbosity=logging.INFO)

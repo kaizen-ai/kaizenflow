@@ -6,7 +6,7 @@ import im.kibot.data.load.dataset_name_parser as imkdldnapa
 
 from typing import Dict, Tuple
 
-import helpers.dbg as hdbg
+import helpers.hdbg as hdbg
 import im.common.data.types as imcodatyp
 import im.kibot.data.load.kibot_file_path_generator as imkdlkfpge
 
@@ -21,7 +21,8 @@ class DatasetNameParser:
 
     # TODO(*): Move out and make it private?
     FREQ_PATH_MAPPING: Dict[str, imcodatyp.Frequency] = {
-        v: k for k, v in imkdlkfpge.KibotFilePathGenerator.FREQ_PATH_MAPPING.items()
+        v: k
+        for k, v in imkdlkfpge.KibotFilePathGenerator.FREQ_PATH_MAPPING.items()
     }
 
     CONTRACT_PATH_MAPPING = {
@@ -30,13 +31,16 @@ class DatasetNameParser:
     }
 
     ASSET_TYPE_PREFIX = {
-        v: k for k, v in imkdlkfpge.KibotFilePathGenerator.ASSET_TYPE_PREFIX.items()
+        v: k
+        for k, v in imkdlkfpge.KibotFilePathGenerator.ASSET_TYPE_PREFIX.items()
     }
 
     def parse_dataset_name(
         self,
         dataset: str,
-    ) -> Tuple[imcodatyp.AssetClass, imcodatyp.ContractType, imcodatyp.Frequency, bool]:
+    ) -> Tuple[
+        imcodatyp.AssetClass, imcodatyp.ContractType, imcodatyp.Frequency, bool
+    ]:
         """
         Parse dataset name and return a tuple with types, describing the
         dataset.

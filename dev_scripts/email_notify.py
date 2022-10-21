@@ -1,6 +1,12 @@
 #!/usr/bin/env python
 
-import helpers.send_email as send_email
+"""
+Import as:
+
+import dev_scripts.email_notify as dscemnot
+"""
+
+import helpers.hemail as hemail
 
 
 def _main():
@@ -10,7 +16,7 @@ def _main():
 
     # TODO(gp): Generalize to multiple users using current user: we can use github
     # credentials.
-    send_email.send_email(subject, message, "abc@xyz.com")
+    hemail.send_email(subject, message, "abc@xyz.com")
 
 
 if __name__ == "main":

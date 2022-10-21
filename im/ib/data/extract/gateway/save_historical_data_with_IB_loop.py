@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
+import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwil
 """
 
 import logging
@@ -14,8 +14,8 @@ except ModuleNotFoundError:
 
 import pandas as pd
 
-import helpers.dbg as hdbg
-import helpers.io_ as hio
+import helpers.hdbg as hdbg
+import helpers.hio as hio
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import im.ib.data.extract.gateway.utils as imidegaut
 

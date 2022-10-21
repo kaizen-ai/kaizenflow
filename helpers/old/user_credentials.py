@@ -11,11 +11,11 @@ import os
 import pprint
 from typing import Any, Dict, List, Tuple
 
-import helpers.dbg as hdbg
-import helpers.git as hgit
-import helpers.io_ as hio
-import helpers.parser as hparser
-import helpers.system_interaction as hsyint
+import helpers.hdbg as hdbg
+import helpers.hgit as hgit
+import helpers.hio as hio
+import helpers.hparser as hparser
+import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
@@ -80,8 +80,8 @@ def get_credentials() -> Dict[str, Any]:
         notebooks
     """
     #
-    user_name = hsyint.get_user_name()
-    server_name = hsyint.get_server_name()
+    user_name = hsystem.get_user_name()
+    server_name = hsystem.get_server_name()
     _LOG.debug("user_name='%s'", user_name)
     _LOG.debug("server_name='%s'", server_name)
     git_repo_name = hgit.get_repo_full_name_from_client(super_module=True)
@@ -149,14 +149,14 @@ def get_credentials() -> Dict[str, Any]:
         )
     conda_sh_path = os.path.expanduser(conda_sh_path)
     conda_sh_path = os.path.abspath(conda_sh_path)
-    hdbg.dassert_exists(conda_sh_path)
+    hdbg.dassert_path_exists(conda_sh_path)
     #
     conda_env_path = os.path.abspath(os.path.expanduser(conda_env_path))
     # Not necessarily the conda_env_path exists.
     if not os.path.exists(conda_env_path):
         _LOG.warning("The dir '%s' doesn't exist: creating it", conda_env_path)
         hio.create_dir(conda_env_path, incremental=True)
-    hdbg.dassert_exists(os.path.dirname(conda_env_path))
+    hdbg.dassert_path_exists(os.path.dirname(conda_env_path))
     #
     for service in tunnel_info:
         # TODO(gp): We should call in ssh_tunnels.py to keep this encapsulated.
@@ -196,7 +196,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     if args.user:
-        hsyint.set_user_name(args.user)
+        hsystem.set_user_name(args.user)
     usc = get_credentials()
     pprint.pprint(usc)
 
