@@ -31,6 +31,7 @@ def compute_correlations(
     If `df1` and `df2` have two column levels, do this for each level
     zero column grouping.
     """
+    # Switch to trim the outliers.
     if trim_outliers:
         df1 = remove_outliers(
             df1, remove_outliers_columns, remove_outliers_quantiles
@@ -50,7 +51,6 @@ def compute_correlations(
         hpandas.dassert_indices_equal(df1, df2)
     else:
         hpandas.dassert_axes_equal(df1, df2, sort_cols=True)
-    # Switch to trim the outliers.
     corrs = []
     n_col_levels = df1.columns.nlevels
     if n_col_levels == 2:
