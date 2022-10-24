@@ -1,6 +1,7 @@
 import logging
 from typing import Tuple
 
+import numpy as np
 import pandas as pd
 import pytest
 
@@ -108,3 +109,82 @@ class Test_compute_correlations(hunitest.TestCase):
 300         NaN      NaN         NaN
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_remove_outliers(hunitest.TestCase):
+    def get_df(self) -> None:
+        nums = np.array(
+            [
+                [-1.53580211, -0.88311838, -0.9268523],
+                [0.09501515, 1.12366058, 0.80002804],
+                [1.08125789, -0.20406254, -0.08120811],
+                [0.33397661, 1.04270523, 1.59740044],
+                [-0.4743577, -0.50033428, 0.09625748],
+                [0.8941359, 1.19616695, -1.09999985],
+                [-1.40818938, -0.42240908, -0.2632948],
+                [-0.79188331, 2.1047349, 0.23452866],
+                [-0.3200597, -0.53649986, -0.62987924],
+                [0.32623263, 1.08249829, -0.81985613],
+                [3.10699222, 0.14783941, 1.32086867],
+                [1.03414825, 0.01248009, -0.82187353],
+                [1.10943433, -0.54393293, 0.13566491],
+                [-0.14998328, -2.40109159, 0.83874707],
+                [0.80136256, -0.16536185, -0.41269046],
+                [-0.37734219, -0.42609142, 2.12198585],
+                [1.05515186, 1.59208727, -0.23878072],
+                [-0.61766738, 1.53046652, -1.17789303],
+                [1.07962295, -0.22866981, -0.52123512],
+                [1.88383153, 2.15388803, -1.40128023],
+                [-1.60486466, -1.2914935, -2.20470003],
+                [-0.6113645, -0.53856561, 0.08046906],
+                [0.38195559, -0.18929166, -1.61712474],
+                [-0.11033695, 0.74294306, -0.08442939],
+                [1.43922872, -1.46676904, 0.5632592],
+                [-0.18302709, 0.72735447, -1.07294376],
+                [0.5699014, -0.04598221, -2.03213193],
+                [-0.04296407, -0.8878259, -0.72056154],
+                [0.89140669, -1.53084954, -0.75036537],
+                [0.55553088, -0.48892993, 0.76471976],
+            ]
+        )
+        dates = (
+            pd.date_range(end=pd.Timestamp("2022-05-05"), periods=30)
+            .to_pydatetime()
+            .tolist()
+        )
+        df = pd.DataFrame(nums, columns=["a", "b", "c"], index=dates)
+        return df
+
+    def test1(self) -> None:
+        """
+        Given the initial DataFrame with 30 rows make sure that the function removes outliers.
+        """
+        df = self.get_df()
+        remove_outliers_columns = ["a", "b"]
+        remove_outliers_quantiles = (0.05, 0.95)
+        df_modified = dtfmodcorr.remove_outliers(
+            df, remove_outliers_columns, remove_outliers_quantiles
+        )
+        expected_length = 20
+        expected_column_names = ["a", "b", "c"]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-04-06 00:00:00, 2022-05-05 00:00:00]
+        columns=a,b,c
+        shape=(20, 3)
+                        a         b         c
+        2022-04-06 -1.535802 -0.883118 -0.926852
+        2022-04-09  0.333977  1.042705  1.597400
+        2022-04-10 -0.474358 -0.500334  0.096257
+        ...
+        2022-05-02  0.569901 -0.045982 -2.032132
+        2022-05-03 -0.042964 -0.887826 -0.720562
+        2022-05-05  0.555531 -0.488930  0.764720
+        """
+        self.check_df_output(
+            df_modified,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
