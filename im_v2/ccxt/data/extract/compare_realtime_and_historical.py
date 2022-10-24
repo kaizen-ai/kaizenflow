@@ -156,7 +156,7 @@ class RealTimeHistoricalReconciler:
         self.end_ts = pd.Timestamp(args.end_timestamp, tz="UTC")
         self.resample_1sec = args.resample_1sec
         #
-        self.universe = self._get_universe()
+        self.universe = self._get_universe(args.s3_vendor)
         self.expected_columns = {
             "ohlcv": [
                 "timestamp",
@@ -205,6 +205,22 @@ class RealTimeHistoricalReconciler:
             )
             connection = hsql.get_connection(*connection_params)
         return connection
+
+    def run(self) -> None:
+        """
+        Compare real time and daily data.
+        """
+        _LOG.info("In run")
+        # Get CCXT data.
+        ccxt_rt = self._get_rt_data()
+        # Get daily data.
+        daily_data = self._get_daily_data()
+        # Compare real time and daily data.
+        if self.data_type == "ohlcv":
+            self._compare_ohlcv(ccxt_rt, daily_data)
+        else:
+            self._compare_bid_ask(ccxt_rt, daily_data)
+        return
 
     @staticmethod
     def _build_s3_path(
@@ -308,21 +324,6 @@ class RealTimeHistoricalReconciler:
         df_resampled = pd.concat(data_resampled)
         return df_resampled.reset_index()
 
-    def run(self) -> None:
-        """
-        Compare real time and daily data.
-        """
-        # Get CCXT data.
-        ccxt_rt = self._get_rt_data()
-        # Get CC data.
-        cc_daily = self._get_daily_data()
-        # Compare real time and daily data.
-        if self.data_type == "ohlcv":
-            self._compare_ohlcv(ccxt_rt, cc_daily)
-        else:
-            self._compare_bid_ask(ccxt_rt, cc_daily)
-        return
-      
     def _get_rt_data(self) -> pd.DataFrame:
         """
         Load and process real time data.
@@ -331,6 +332,8 @@ class RealTimeHistoricalReconciler:
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
+        _LOG.info("Rt data")
+        _LOG.info(ccxt_rt.head())
         ccxt_rt = ccxt_rt.reset_index()
         if self.data_type == "bid_ask":
             # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
@@ -358,28 +361,28 @@ class RealTimeHistoricalReconciler:
             "by_year_month", self.start_ts, self.end_ts
         )
         # Load daily data from s3 parquet.
-        cc_daily = hparque.from_parquet(
+        daily_data = hparque.from_parquet(
             self.s3_path, filters=timestamp_filters, aws_profile=self.aws_profile
         )
-        if "timestamp" in cc_daily.columns:
+        if "timestamp" in daily_data.columns:
             # Sometimes the data contains `timestamp` column which is not needed
             # since there is always a timestamp in the index.
-            cc_daily = cc_daily.drop(columns=["timestamp"])
-        cc_daily = cc_daily.reset_index()
-        cc_daily = cc_daily.loc[cc_daily["timestamp"] >= self.start_ts]
-        cc_daily = cc_daily.loc[cc_daily["timestamp"] <= self.end_ts]
+            daily_data = daily_data.drop(columns=["timestamp"])
+        daily_data = daily_data.reset_index()
+        daily_data = daily_data.loc[daily_data["timestamp"] >= self.start_ts]
+        daily_data = daily_data.loc[daily_data["timestamp"] <= self.end_ts]
         # Build full symbol column.
-        cc_daily["full_symbol"] = imvcufusy.build_full_symbol(
-            cc_daily["exchange_id"], cc_daily["currency_pair"]
+        daily_data["full_symbol"] = imvcufusy.build_full_symbol(
+            daily_data["exchange_id"], daily_data["currency_pair"]
         )
         # Remove deprecated columns.
-        cc_daily = cc_daily.drop(columns=["exchange_id", "currency_pair"])
+        daily_data = daily_data.drop(columns=["exchange_id", "currency_pair"])
         # Remove duplicated columns and reindex daily data.
         _LOG.info("Filter duplicates in daily data")
-        cc_daily = self._preprocess_data(cc_daily)
+        daily_data = self._preprocess_data(daily_data)
         # Reindex the data.
-        cc_reindex = cc_daily.set_index(["timestamp", "full_symbol"])
-        return cc_reindex
+        daily_data_reindex = daily_data.set_index(["timestamp", "full_symbol"])
+        return daily_data_reindex
 
     def _preprocess_data(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -567,13 +570,18 @@ class RealTimeHistoricalReconciler:
         _LOG.info("No differences were found between real time and daily data")
         return
 
-    def _get_universe(self) -> List[str]:
+    def _get_universe(self, s3_vendor: str) -> List[str]:
         """
-        Get the intersection of the real time and daily universes.
+        Get the universe used for reconciliation.
+
+        :param s3_vendor: determines origin of the data, i.e. CCXT or CryptoChassis
+         which determines if we should do an intersection of vendor universes or use
+         CCXT only universe.
         """
         # CCXT real time universe.
         ccxt_universe = self.ccxt_rt_im_client.get_universe()
         # CC daily universe.
+        # TODO(Juraj): replace this hardcoded temporary solution.
         cc_universe = [
             "binance::ADA_USDT",
             "binance::BNB_USDT",
@@ -587,8 +595,11 @@ class RealTimeHistoricalReconciler:
             "binance::SOL_USDT",
             "binance::XRP_USDT",
         ]
-        # Intersection of universes that will be used for analysis.
-        universe = list(set(ccxt_universe) & set(cc_universe))
+        if s3_vendor == "ccxt":
+            universe = ccxt_universe
+        else:
+            # Intersection of universes that will be used for analysis.
+            universe = list(set(ccxt_universe) & set(cc_universe))
         return universe
 
 
