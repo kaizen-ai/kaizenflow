@@ -178,8 +178,8 @@ class _OrderedConfig(_OrderedDictType):
         self,
         key: ScalarKey,
         val: ValueTypeHint,
-        update_mode: Optional[str] = None,
-        clobber_mode: Optional[str] = None,
+        update_mode: Optional[str] = "overwrite",
+        clobber_mode: Optional[str] = "allow_write_after_use"
     ) -> None:
         """
         A value is encoded internally as a pair (marked_as_read, value) where:
@@ -269,6 +269,7 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
+                _LOG.warning("%s", key)
                 marked_as_read, old_val = super().__getitem__(key)
                 _ = old_val
             else:
@@ -653,7 +654,8 @@ class Config:
         """
         Create a deep copy of the Config object.
         """
-        return copy.deepcopy(self)
+        copy_config = Config()
+        return copy_config.update(self)
 
     # ////////////////////////////////////////////////////////////////////////////
     # Accessors.
