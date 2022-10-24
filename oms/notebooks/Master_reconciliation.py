@@ -55,8 +55,10 @@ print(config)
 
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
-system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict
+# system_log_path_dict = dict(config["system_log_path"].to_dict())
+system_log_path_dict = {'prod': '/shared_data/prod_reconciliation/20221020/prod/system_log_dir_scheduled__2022-10-19T10:00:00+00:00_2hours',
+ 'cand': '/shared_data/prod_reconciliation/20221020/prod/system_log_dir_scheduled__2022-10-19T10:00:00+00:00_2hours',
+ 'sim': '/shared_data/prod_reconciliation/20221020/simulation/system_log_dir'}
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -107,12 +109,12 @@ for name, path in dag_path_dict.items():
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-prod_sim_dag_corr = dtfmod.compute_correlations(
+prod_sim_dag_corr = dtfmod.compute_corr(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
 )
 hpandas.df_to_str(
-    prod_sim_dag_corr.min(),
+    prod_sim_dag_corr,
     num_rows=None,
     precision=3,
     log_level=logging.INFO,
