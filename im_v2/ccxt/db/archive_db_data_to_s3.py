@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 """
-Archive data from DB table older than specified timestamp into a S3 storage,
-based on `timestamp` column of the table.
+Archive data from DB table older than specified timestamp into a S3 storage.
+based on `timestamp` column of the table. The archive is maintained in a
+parquet format, with multiple `.pq` files at the bottom most partition.
 
 Use as:
 > im_v2/ccxt/db/archive_db_data_to_s3.py \
@@ -11,10 +12,10 @@ Use as:
    --s3_path 's3://cryptokaizen-data-test/db_archive/' \
    --incremental  \
    --dry_run
-   
+
 Import as:
 
-import im_v2.ccxt.db.archive_db_data_to_s3 as imvccdbar
+import im_v2.ccxt.db.archive_db_data_to_s3 as imvcdaddts
 """
 import argparse
 import logging
@@ -48,7 +49,7 @@ def _parse() -> argparse.ArgumentParser:
         required=True,
         type=str,
         help="Specifies time threshold for archival. Data for which \
-            `table_column` > `timestamp`, get archived and dropped",
+            `table_timestamp_column` > `timestamp`, gets archived and dropped",
     )
     parser.add_argument(
         "--db_stage",
@@ -64,27 +65,28 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="DB table to archive data from",
     )
-    # TODO(Juraj): for now we assume that the only column used for archival
+    #TODO(Juraj): for now we assume that the only column used for archival
     #  will be `timestamp`.
-    # parser.add_argument(
-    #     "--table_column",
-    #     action="store",
-    #     required=True,
-    #     type=str,
-    #     help="Column to consider when applying the time threshold",
-    # )
+    parser.add_argument(
+        "--table_timestamp_column",
+        action="store",
+        required=False,
+        default="timestamp",
+        type=str,
+        help="Table column to use when applying the time threshold",
+    )
     # #########################################################################
     # Only a base path needs to be provided, i.e.
     #  when archiving db table ccxt_ohlcv for dev DB
     #  you only need to provide s3://cryptokaizen-data/archive/
     #  The script automatically creates/maintains the subfolder
-    #  structure for the specific stage and table.
+    #  structure for the specific stage and table, i.e.
     parser.add_argument(
         "--s3_path",
         action="store",
         required=True,
         type=str,
-        help="S3 location to archive data into.",
+        help="S3 location to archive data into",
     )
     parser.add_argument(
         "--incremental",
@@ -115,7 +117,7 @@ def _parse() -> argparse.ArgumentParser:
 def _assert_data_continuity(
     db_data: pd.DataFrame,
     last_archived_row: pd.DataFrame,
-    table_column: str,
+    table_timestamp_column: str,
     warn_only: bool,
 ) -> None:
     """
@@ -131,7 +133,7 @@ def _assert_data_continuity(
 
 
 def _assert_db_args(
-    connection: hsql.DbConnection, db_table: str, table_column: str
+    connection: hsql.DbConnection, db_table: str, table_timestamp_column: str
 ) -> None:
     """
     Assert the DB table exists and contains the specified column.
@@ -139,7 +141,7 @@ def _assert_db_args(
     tables = hsql.get_table_names(connection)
     hdbg.dassert_in(db_table, tables)
     table_columns = hsql.get_table_columns(connection, db_table)
-    hdbg.dassert_in(table_column, table_columns)
+    hdbg.dassert_in(table_timestamp_column, table_columns)
 
 
 def _assert_archival_mode(
@@ -147,16 +149,17 @@ def _assert_archival_mode(
     s3_path: str,
     db_stage: str,
     db_table: str,
-    table_column: str,
+    table_timestamp_column: str,
 ) -> None:
     """
     Assert that the path corresponding to th DB stage and DB table exists if
     incremental is True, assert the path doesn't exist.
 
     The folder structure used for archival:
-    s3://<s3_base_path>/<db_stage>/<db_table>/<table_column>/..parquet/partition/columns../data.parquet
-    Table column <table_column> in the path helps ensure that the same column is always reused in
-    a single archival parquet file.
+    s3://<s3_base_path>/<db_stage>/<db_table>/<table_timestamp_column>
+    /..parquet/partition/columns../data.parquet
+    Table column <table_timestamp_column> in the path helps ensure that
+    the same column is always reused in a single archival parquet file.
     """
     if incremental:
         # The profile won't change for the foreseeable future so
@@ -176,28 +179,28 @@ def _get_db_connection(db_stage: str) -> hsql.DbConnection:
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     return hsql.get_connection(*connection_params)
 
-
-def _fetch_latest_row_from_s3(
-    s3_path: str, timestamp: pd.Timestamp
-) -> pd.DataFrame:
-    """
-    Fetch the latest archived row.
-    """
-    # Assume that archival happens more often than once a month.
-    end_ts = timestamp
-    start_ts = end_ts - timedelta(months=1)
-    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
-        "by_year_month",
-        self.start_ts,
-        timestamp,
-    )
-    # Read data corresponding to given time range.
-    archived_data = hparque.from_parquet(
-        s3_path, filters=timestamp_filters, aws_profile=_AWS_PROFILE
-    )
-    # Data should be sorted but sort again as an insurance.
-    archived_data = archived_data.sort_values("timestamp", ascending=False)
-    return latest_archived_data.head(1)
+# TODO(Juraj): Create a mechanism to check data continuity.
+# def _fetch_latest_row_from_s3(
+#     s3_path: str, timestamp: pd.Timestamp
+# ) -> pd.DataFrame:
+#     """
+#     Fetch the latest archived row.
+#     """
+#     # Assume that archival happens more often than once a month.
+#     end_ts = timestamp
+#     start_ts = end_ts - timedelta(months=1)
+#     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+#         "by_year_month",
+#         self.start_ts,
+#         timestamp,
+#     )
+#     # Read data corresponding to given time range.
+#     archived_data = hparque.from_parquet(
+#         s3_path, filters=timestamp_filters, aws_profile=_AWS_PROFILE
+#     )
+#     # Data should be sorted but sort again as an insurance.
+#     archived_data = archived_data.sort_values("timestamp", ascending=False)
+#     return latest_archived_data.head(1)
 
 
 def _assert_correct_archival(db_data: pd.DataFrame, s3_path: str) -> None:
@@ -212,40 +215,36 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     storage, based on `timestamp` column of the table.
     """
     # Transform and assign args for readability.
-    is_incremental, s3_path, db_stage, db_table, dry_run = (
+    incremental, s3_path, db_stage, db_table, dry_run, table_timestamp_column = (
         args.incremental,
         args.s3_path,
         args.db_stage,
         args.db_table,
         args.dry_run,
+        args.table_timestamp_column
     )
-    # TODO(Juraj): for now we assume that the only column used for archival
-    # is `timestamp`.
-    table_column = "timestamp"
-    s3_path = os.path.join(s3_path, db_stage, db_table, table_column)
+    s3_path = os.path.join(s3_path, db_stage, db_table, table_timestamp_column)
     skip_time_continuity_assertion = args.skip_time_continuity_assertion
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
     db_conn = _get_db_connection(db_stage)
     # Perform argument assertions.
-    _assert_db_args(db_conn, db_table, table_column)
+    _assert_db_args(db_conn, db_table, table_timestamp_column)
     _assert_archival_mode(
-        is_incremental, s3_path, db_stage, db_table, table_column
+        incremental, s3_path, db_stage, db_table, table_timestamp_column
     )
     # Fetch DB data.
-    # TODO(Juraj): for now we assume that the only column used for archival
-    # age filter is `timestamp`.
     db_data = imvcddbut.fetch_data_by_age(
-        db_conn, db_table, table_column, min_age_timestamp
+        min_age_timestamp, db_conn, db_table, table_timestamp_column
     )
     if db_data.empty:
         _LOG.warning(
-            f"There were no data older than '{min_age_timestamp}' in '{db_table}' table."
+            f"There is no data older than '{min_age_timestamp}' in '{db_table}' table."
         )
     else:
         _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
     # Fetch latest S3 row upon incremental archival.
-    if is_incremental:
+    if incremental:
         # TODO(Juraj): think about a HW resource friendly solution to this.
         # latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
         # Assert time continuity of both datasets.
@@ -265,15 +264,15 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
             unit="ms",
             aws_profile=_AWS_PROFILE,
             data_type=None,
-            drop_db_metadata_column=False,
-            list_and_merge=False,
+            drop_columns=[],
+            mode="append",
         )
         # Double check archival was successful
         # TODO(Juraj): this might a be pretty difficult problem.
         # _assert_correct_archival(db_data, s3_path)
         # Drop DB data.
         imvcddbut.drop_db_data_by_age(
-            db_conn, db_table, "timestamp", min_age_timestamp
+            min_age_timestamp, db_conn, db_table, "timestamp"
         )
         _LOG.info("Data archival finished successfully.")
 

@@ -35,7 +35,7 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    @umock.patch.object(imvccdbar, "_get_db_connection")
+    @umock.patch.object(imvcdaddts, "_get_db_connection")
     def test_full_archival_flow(
         self, mock_get_db_connection: umock.MagicMock
     ) -> None:
@@ -74,6 +74,7 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
         args = {
             "db_stage": "local",
             "timestamp": timestamp_mid,
+            "table_timestamp_column": "timestamp",
             "db_table": "ccxt_ohlcv",
             "s3_path": f"s3://{self.bucket_name}/db_archive/",
             "incremental": False,
@@ -106,7 +107,7 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
         actual_data = hparque.from_parquet(
             expected_path, filters=None, aws_profile=s3fs_
         )
-        # TODO(Juraj): for some reasons the from_parquet just WOULD NOT
+        # TODO(Juraj): for some reasons the from_parquet just would not
         # pick up multiple .pq files from the specified path.
         # Assert archive content.
         # self.assert_equal(

@@ -64,7 +64,7 @@ class S3Mock_TestCase(hunitest.TestCase):
 
     def tearDown(self) -> None:
         # Empty the bucket otherwise deletion will fail.
-        s3 = boto3.resource('s3')
+        s3 = boto3.resource("s3")
         bucket = s3.Bucket(self.bucket_name)
         bucket.objects.all().delete()
         # Delete bucket.

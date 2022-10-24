@@ -13,7 +13,7 @@ import logging
 import os
 import time
 from datetime import datetime, timedelta
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 import pandas as pd
 import psycopg2
@@ -605,12 +605,13 @@ def save_parquet(
     aws_profile: Optional[str],
     data_type: str,
     *,
-    drop_db_metadata_column = True,
-    list_and_merge = True
+    drop_columns: List[str] = ["end_download_timestamp"],
+    mode: str = "list_and_merge",
 ) -> None:
     """
     Save Parquet dataset.
     """
+    hdbg.dassert_in(mode, ["list_and_merge", "append"])
     # Update indexing and add partition columns.
     # TODO(Danya): Add `unit` as a parameter in the function.
     data = imvcdttrut.reindex_on_datetime(data, "timestamp", unit=unit)
@@ -618,8 +619,8 @@ def save_parquet(
         data, "by_year_month"
     )
     # Drop DB metadata columns.
-    if drop_db_metadata_column:
-        data = data.drop(["end_download_timestamp"], axis=1, errors="ignore")
+    for column in drop_columns:
+        data = data.drop(column, axis=1, errors="ignore")
     # Verify the schema of Dataframe.
     data = verify_schema(data)
     # Save filename as `uuid`, e.g.
@@ -632,9 +633,11 @@ def save_parquet(
         aws_profile=aws_profile,
     )
     # Merge all new parquet into a single `data.parquet`.
-    if list_and_merge:
+    if mode == "list_and_merge":
         hparque.list_and_merge_pq_files(
-            path_to_exchange, aws_profile=aws_profile, drop_duplicates_mode=data_type
+            path_to_exchange,
+            aws_profile=aws_profile,
+            drop_duplicates_mode=data_type,
         )
 
 
