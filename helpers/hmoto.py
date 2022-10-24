@@ -63,6 +63,10 @@ class S3Mock_TestCase(hunitest.TestCase):
         super().setUp()
 
     def tearDown(self) -> None:
+        # Empty the bucket otherwise deletion will fail.
+        s3 = boto3.resource('s3')
+        bucket = s3.Bucket(self.bucket_name)
+        bucket.objects.all().delete()
         # Delete bucket.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         s3fs_.delete(f"s3://{self.bucket_name}", recursive=True)
