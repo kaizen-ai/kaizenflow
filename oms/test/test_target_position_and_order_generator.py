@@ -7,7 +7,7 @@ import helpers.hunit_test as hunitest
 import market_data as mdata
 import oms.broker as ombroker
 import oms.order as omorder
-import oms.portfolio as omportfo
+import oms.target_position_and_order_generator as otpaorge
 import oms.target_position_and_order_generator_example as otpaogeex
 
 _LOG = logging.getLogger(__name__)
@@ -19,7 +19,9 @@ class TestTargetPositionAndOrderGenerator1(hunitest.TestCase):
         ombroker.Fill._fill_id = 0
         omorder.Order._order_id = 0
 
-    def get_target_position_and_order_generator1(self) -> omportfo.Portfolio:
+    def get_target_position_and_order_generator1(
+        self,
+    ) -> otpaorge.TargetPositionAndOrderGenerator:
         self.reset()
         with hasynci.solipsism_context() as event_loop:
             (

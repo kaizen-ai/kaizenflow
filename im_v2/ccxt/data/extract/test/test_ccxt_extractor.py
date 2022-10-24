@@ -98,8 +98,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
         self, sleep_mock: umock.MagicMock, fetch_ohlcv_mock: umock.MagicMock
     ) -> None:
         """
-        Verify that wrapper around `ccxt.binance` download is properly
-        called.
+        Verify that wrapper around `ccxt.binance` download is properly called.
         """
         # Prepare data and initialize class before run.
         exchange_class = imvcdexex.CcxtExtractor("binance", "spot")
@@ -158,8 +157,7 @@ class TestCcxtExtractor1(hunitest.TestCase):
     )
     def test_download_ohlcv2(self, fetch_ohlcv_mock: umock.MagicMock) -> None:
         """
-        Verify that wrapper around `ccxt.binance` is getting the latest
-        bars.
+        Verify that wrapper around `ccxt.binance` is getting the latest bars.
         """
         fetch_ohlcv_mock.return_value = pd.DataFrame(["dummy"], columns=["dummy"])
         # Prepare data and initialize class before run.
@@ -357,7 +355,8 @@ class TestCcxtExtractor1(hunitest.TestCase):
         exchange_class = imvcdexex.CcxtExtractor("binance", "futures")
         exchange_class.currency_pairs = [symbol]
         self.assertEqual(
-            exchange_class._sync_exchange._extract_mock_name(), f"ccxt.{exchange}()"
+            exchange_class._sync_exchange._extract_mock_name(),
+            f"ccxt.{exchange}()",
         )
         # Mock a call to ccxt's `fetch_order_book` method called inside `_download_bid_ask`.
         with umock.patch.object(

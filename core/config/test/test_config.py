@@ -5,6 +5,7 @@ import os
 import pprint
 from typing import Any, Dict, List, Optional, Tuple
 
+import pandas as pd
 import pytest
 
 import core.config as cconfig
@@ -1545,9 +1546,9 @@ class Test_to_dict1(hunitest.TestCase):
             {
                 "param1": 1,
                 "param2": 2,
-                # An empty dict becomes an empty config when converting to `Config`
-                # further.
-                "param3": collections.OrderedDict(),
+                # The empty leaves are converted to Configs,
+                #  which are retained when converting back to dict.
+                "param3": cconfig.Config(),
             }
         )
         #
@@ -1620,15 +1621,15 @@ class Test_to_dict2(hunitest.TestCase):
         act = pprint.pformat(flattened)
         exp = r"""
         OrderedDict([('read_data',
-                      OrderedDict([('file_name', 'foo_bar.txt'), ('nrows', 999)])),
-                     ('single_val', 'hello'),
-                     ('zscore', OrderedDict())])
+                    OrderedDict([('file_name', 'foo_bar.txt'), ('nrows', 999)])),
+                    ('single_val', 'hello'),
+                    ('zscore', )])
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip(
-        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
-    )
+    # @pytest.mark.skip(
+    #     "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
+    # )
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1890,6 +1891,84 @@ class Test_save_to_file(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         self.helper(value)
+
+
+# #############################################################################
+# Test_to_string
+# #############################################################################
+
+# TODO(Danya): Add `test4` testing a nested Config case.
+class Test_to_string(hunitest.TestCase):
+    def helper(
+        self,
+        value: Any,
+    ) -> str:
+        # Set config.
+        nested: Dict[str, Any] = {
+            "key1": value,
+            "key2": {"key3": {"key4": {}}},
+        }
+        config = cconfig.Config.from_dict(nested)
+        # Check if function was successfully applied on config.
+        mode = "verbose"
+        actual = config.to_string(mode)
+        return actual
+
+    def test1(self) -> None:
+        """
+        Test when a value is a DataFrame.
+        """
+        value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
+        expected = r"""key1 (val_type=pandas.core.frame.DataFrame)):
+        index=[0, 1]
+        columns=a,b,c
+        shape=(2, 3)
+        a b c
+        0 1 2 3
+        1 4 5 6
+        key2 (val_type=core.config.config_.Config)):
+        key3 (val_type=core.config.config_.Config)):
+        key4 (val_type=core.config.config_.Config)):
+        """
+        actual = self.helper(
+            value,
+        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        """
+        Test when config contains functions.
+        """
+        # Set function value.
+        value = lambda x: x
+        expected = r"""
+        key1 (val_type=function)): <function Test_to_string.test2.<locals>.<lambda>>
+        key2 (val_type=core.config.config_.Config)):
+        key3 (val_type=core.config.config_.Config)):
+        key4 (val_type=core.config.config_.Config)):
+        """
+        actual = self.helper(
+            value,
+        )
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+    def test3(self) -> None:
+        """
+        Test when config contains a multiline string.
+        """
+        # Set multiline string value.
+        value = "This is a\ntest multiline string."
+        expected = r"""key1 (val_type=str)):
+        This is a
+        test multiline string.
+        key2 (val_type=core.config.config_.Config)):
+        key3 (val_type=core.config.config_.Config)):
+        key4 (val_type=core.config.config_.Config)):
+        """
+        actual = self.helper(
+            value,
+        )
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################

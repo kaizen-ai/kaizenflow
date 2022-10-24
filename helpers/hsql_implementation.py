@@ -709,8 +709,8 @@ def execute_insert_on_conflict_do_nothing_query(
     :param obj: data to insert
     :param table_name: name of the table for insertion
     :param unique_columns: set of columns which should be unique record-wise.
-      If unique_columns is an empty list, a regular DB
-      insert is executed without the UNIQUE constraint.
+       If unique_columns is an empty list, a regular DB insert is executed
+       without the UNIQUE constraint.
     """
     if isinstance(obj, pd.Series):
         df = obj.to_frame().T
@@ -723,9 +723,8 @@ def execute_insert_on_conflict_do_nothing_query(
     values = [tuple(v) for v in df.to_numpy()]
     # Generate a query for multiple rows.
     if not unique_columns:
-        # If unique_columns is an empty list, currently
-        #  used when saving bid/ask RT data, to experiment
-        #  with using no uniqueness constraints.
+        # If unique_columns is an empty list, currently used when saving
+        # bid/ask RT data, to experiment with using no uniqueness constraints.
         query = create_insert_query(df, table_name)
     else:
         query = create_insert_on_conflict_do_nothing_query(
