@@ -183,6 +183,11 @@ class ImClient(abc.ABC):
         #
         left_close = True
         right_close = True
+        # TODO(Grisha): This is a hack. We want to filter data based
+        # on the end of sampling interval, now timestamp is the
+        # beginning of a sampling interval so we subtract 1 minute.
+        start_ts = start_ts - pd.Timedelta(minutes=1)
+        end_ts = end_ts - pd.Timedelta(minutes=1)
         hdateti.dassert_is_valid_interval(
             start_ts, end_ts, left_close, right_close
         )
@@ -256,6 +261,10 @@ class ImClient(abc.ABC):
         df = df.reset_index()
         df = df.sort_values(by=[self._timestamp_col_name, full_symbol_col_name])
         df = df.set_index(self._timestamp_col_name, drop=True)
+        # TODO(Grisha): This is a hack. We want the index to be the
+        # end of a sampling interval. At the moment it is the beginning
+        # of a sampling interval so we manually add 1 minute.
+        df.index = df.index + pd.Timedelta(minutes=1)
         # The full_symbol should be a string.
         hdbg.dassert_isinstance(df[full_symbol_col_name].values[0], str)
         _LOG.debug("After sorting: df=\n%s", hpandas.df_to_str(df))
