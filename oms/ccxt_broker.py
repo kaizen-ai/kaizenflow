@@ -20,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlogging as hloggin
+import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
@@ -124,7 +125,7 @@ class CcxtBroker(ombroker.Broker):
             return fills
         _LOG.info("Inside asset_ids")
         asset_ids = [sent_order.asset_id for sent_order in sent_orders]
-        _LOG.info("asset_ids=%s", asset_ids)
+        _LOG.info(hprint.to_str("asset_ids"))
         if self.last_order_execution_ts:
             # Load orders for each given symbol.
             for asset_id in asset_ids:
@@ -137,9 +138,7 @@ class CcxtBroker(ombroker.Broker):
                 )
                 # Select closed orders.
                 for order in orders:
-                    _LOG.debug(
-                        "Transforming retrieved CCXT order: %s", str(order)
-                    )
+                    _LOG.debug(hprint.to_str("order"))
                     if order["status"] == "closed":
                         # Select order matching to CCXT exchange id.
                         filled_order = [
@@ -155,6 +154,7 @@ class CcxtBroker(ombroker.Broker):
                         filled_order = self._convert_ccxt_order_to_oms_order(
                             filled_order
                         )
+                        _LOG.debug(hprint.to_str("filled_order"))
                         # Create a Fill object.
                         fill = ombroker.Fill(
                             filled_order,
@@ -165,6 +165,7 @@ class CcxtBroker(ombroker.Broker):
                             price=order["price"],
                         )
                         fills.append(fill)
+                        _LOG.debug(hprint.to_str("fill"))
         return fills
 
     def get_total_balance(self) -> Dict[str, float]:
@@ -467,8 +468,6 @@ class CcxtBroker(ombroker.Broker):
             curr_num_shares,
             diff_num_shares,
         )
-        _LOG.debug("After CCXT to OMS transform:")
-        _LOG.debug("oms_order=%s", str(oms_order))
         return oms_order
 
     def _get_market_info(self) -> Dict[int, Any]:
