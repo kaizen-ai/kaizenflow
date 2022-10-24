@@ -654,8 +654,7 @@ class Config:
         """
         Create a deep copy of the Config object.
         """
-        copy_config = Config()
-        return copy_config.update(self)
+        return copy.deepcopy(self)
 
     # ////////////////////////////////////////////////////////////////////////////
     # Accessors.
