@@ -11,6 +11,10 @@ Use as:
    --s3_path 's3://cryptokaizen-data-test/db_archive/' \
    --incremental  \
    --dry_run
+   
+Import as:
+
+import im_v2.ccxt.db.archive_db_data_to_s3 as imvccdbar
 """
 import argparse
 import logging
@@ -219,7 +223,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     # is `timestamp`.
     table_column = "timestamp"
     s3_path = os.path.join(s3_path, db_stage, db_table, table_column)
-    args.skip_time_continuity_assertion
+    skip_time_continuity_assertion = args.skip_time_continuity_assertion
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
     db_conn = _get_db_connection(db_stage)
@@ -245,7 +249,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         # TODO(Juraj): think about a HW resource friendly solution to this.
         # latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
         # Assert time continuity of both datasets.
-        # _assert_data_continuity(latest_row, args.skip_time_continuity_assertion)
+        # _assert_data_continuity(latest_row, skip_time_continuity_assertion)
         pass
     if dry_run:
         _LOG.info("Dry run of data archival finished successfully.")
