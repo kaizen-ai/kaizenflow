@@ -53,7 +53,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
     # ID of asset representing cash.
     CASH_ID: int = -1
 
-    # An `holding_df` represents the holdings_shares over time, e.g.,
+    # An `holdings_shares_df` represents the holdings in shares over time, e.g.,
     # ```
     #                            asset_id  curr_num_shares
     # 2000-01-01 09:35:00-05:00        -1        1000000.0
@@ -83,25 +83,29 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         Constructor.
 
         :param broker: the `Broker` object used to retrieve prices and fills
-        :param mark_to_market_col: column name used as price to mark holdings_shares to
-            market
+        :param mark_to_market_col: column name used as price to mark holdings_shares
+            to market
         :param pricing_method: pricing methodology to use for valuing assets.
-            If e.g. "twap", then we also include the bar duration as a
-            pandas-style suffix: "twap.5T"
-        :param initial_holdings_shares: initial positions in shares indexed by integer
-            asset_ids; no NaNs are allowed unless
-            `retrieve_initial_holdings_from_db=True`, in which case all values
-            must be NaN.
+            E.g., if "twap", then we also include the bar duration as a
+            Pandas-style suffix "twap.5T"
+        :param initial_holdings_shares: initial positions in shares indexed by
+            integer asset_ids; no NaNs are allowed unless
+            `retrieve_initial_holdings_from_db` is True, in which case all values
+            must be NaN
         :param retrieve_initial_holdings_from_db: `True` iff holdings_shares are
             initialized via an external database. The asset ids of nonzero
             holdings_shares must be a subset of the index of `initial_holdings`.
         :param max_num_bars: maximum number of market data bars to store in memory;
-            if `None`, then impose no restriction.
+            if `None`, then impose no restriction
         """
         _LOG.debug(
             hprint.to_str(
-                "broker mark_to_market_col pricing_method initial_holdings_shares "
-                "retrieve_initial_holdings_from_db max_num_bars"
+                "broker "
+                "mark_to_market_col "
+                "pricing_method "
+                "initial_holdings_shares "
+                "retrieve_initial_holdings_from_db "
+                "max_num_bars"
             )
         )
         # Set and unpack broker.
@@ -109,7 +113,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         self.broker = broker
         self._account = broker.account
         self._timestamp_col = broker.timestamp_col
-        # Extract `MarketData` object from `Broker` and extract other information.
+        # Extract `MarketData` object and other information from `Broker`.
         self.market_data = broker.market_data
         self._get_wall_clock_time = self.market_data.get_wall_clock_time
         self._asset_id_col = self.market_data.asset_id_col
@@ -127,7 +131,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         #   key order (i.e., increasing in time)
         # - simplify extracting the last timestamp
         # We initialize the collection of dictionaries from `holdings_shares_df`.
-        # - timestamp to pd.Series of holdings_shares in shares (indexed by asset_id)
+        # - timestamp to pd.Series of holdings in shares (indexed by asset_id)
         # - this does not include the "cash asset".
         self._holdings_shares = cksoordi.KeySortedOrderedDict(
             pd.Timestamp, self._max_num_bars
@@ -153,13 +157,14 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             retrieve_initial_holdings_from_db
         )
         if not self._retrieve_initial_holdings_shares_from_db:
-            # The client passed initial holdings_shares and not just the allowed universe,
-            # so we need to make sure that the holdings_shares are valid (e.g., contain
-            # no NaNs).
+            # The client passed initial holdings_shares and not just the allowed
+            # universe, so we need to make sure that the holdings_shares are
+            # valid (e.g., contain no NaNs).
             self._validate_initial_holdings(initial_holdings_shares)
         # TODO(Paul): these should be kept in alignment with `HOLDING_COLS`.
         initial_holdings_shares.index.name = "asset_id"
         initial_holdings_shares.name = "curr_num_shares"
+        # TODO(gp): -> self._initial_holdings_shares
         self._initial_holdings = initial_holdings_shares
         # Set the initial universe.
         self._initial_universe = initial_holdings_shares.index.drop(

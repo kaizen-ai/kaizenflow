@@ -80,9 +80,36 @@ def frame(
     num_chars: Optional[int] = None,
     char2: Optional[str] = None,
     thickness: int = 1,
+    level: int = 0,
 ) -> str:
     """
     Print a frame around a message.
+
+    :param char1: char for top line of the frame
+    :param num_chars: how many chars in each line (by default 80 chars)
+    :param char2: char for bottom line of the frame
+    :param thickness: how many overlapping lines
+        - E.g., thickness = 2
+        ```
+        # #######...
+        # #######...
+        # hello
+        # #######...
+        # #######...
+        ```
+    :param level:  level of framing indent based on `#` char:
+        - E.g., level = 0
+        ```
+        #######...
+        hello
+        #######...
+        ```
+        - E.g., level = 1
+        ```
+        # #######...
+        # hello
+        # #######...
+        ```
     """
     # Fill in the default values.
     if char1 is None:
@@ -92,23 +119,26 @@ def frame(
         # User specified only one char.
         char2 = char1
     elif char1 is None and char2 is not None:
-        # User specified the second char, but not the first.
+        # User specified the second char, but not the first one.
         hdbg.dfatal(f"Invalid char1='{char1}' char2='{char2}'")
     else:
         # User specified both chars. Nothing to do.
         pass
     num_chars = 80 if num_chars is None else num_chars
     # Sanity check.
-    hdbg.dassert_lte(1, thickness)
     hdbg.dassert_eq(len(char1), 1)
-    hdbg.dassert_eq(len(char2), 1)
     hdbg.dassert_lte(1, num_chars)
+    hdbg.dassert_eq(len(char2), 1)
+    hdbg.dassert_lte(1, thickness)
+    hdbg.dassert_lte(0, level)
     # Build the return value.
+    prefix = ""
+    if level:
+        prefix = "#" * level + " "
     ret = (
-        (line(char1, num_chars) + "\n") * thickness
-        + message
-        + "\n"
-        + (line(char2, num_chars) + "\n") * thickness
+        (prefix + (line(char1, num_chars) + "\n") * thickness)
+        + (prefix + message + "\n")
+        + (prefix + (line(char2, num_chars) + "\n") * thickness)
     ).rstrip("\n")
     return ret
 
@@ -334,16 +364,20 @@ def to_str(
     frame_lev: int = 1,
     print_lhs: bool = True,
     char_separator: str = ",",
+    mode: str = "repr",
 ) -> str:
     """
-    Return a string with the value of one or more variables / expressions.
+    Return a string with the value of a variable / expression / multiple
+    variables.
+
+    If expression is a space-separated compound expression, convert it into
+    `exp1=val1, exp2=val2, ...`.
 
     This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
     We don't want to force to use Python 3.8 just for this feature.
-
     ```
     > x = 1
-    > print(to_str("x+1"))
+    > to_str("x+1")
     x+1=2
     ```
 
@@ -353,7 +387,6 @@ def to_str(
         `to_str("exp1 exp2 ...")`, it is converted into:
         `exp1=val1, exp2=val2, ...`
     :param print_lhs: whether we want to print the left hand side (i.e., exp1)
-    :param sep_char: character separating different values
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -380,7 +413,13 @@ def to_str(
     ret = ""
     if print_lhs:
         ret += expression + "="
-    ret += repr(eval(expression, frame_.f_globals, frame_.f_locals))
+    eval_ = eval(expression, frame_.f_globals, frame_.f_locals)
+    if mode == "str":
+        ret += str(eval_)
+    elif mode == "repr":
+        ret += repr(eval_)
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
     return ret
 
 
