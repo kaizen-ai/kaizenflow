@@ -54,7 +54,7 @@ def _run(args: argparse.Namespace) -> None:
     ]
     # Convert dates to unix timestamps.
     start = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.start_timestamp), unit="s"
+        pd.Timestamp(args.start_timestamp), unit="s" 
     )
     end = hdateti.convert_timestamp_to_unix_epoch(
         pd.Timestamp(args.end_timestamp), unit="s"
@@ -76,10 +76,17 @@ def _run(args: argparse.Namespace) -> None:
             continue
         df = imvcdttrut.resample_bid_ask_data(df)
         dst_path = os.path.join(args.dst_dir, file)
-        pq.write_table(
-            pa.Table.from_pandas(df),
+        hparque.to_partitioned_parquet(
+            df,
+            ["currency_pair", "year", "month"],
             dst_path,
-            filesystem=filesystem,
+            partition_filename=None,
+            aws_profile=aws_profile,
+        )
+        hparque.list_and_merge_pq_files(
+            dst_path, 
+            aws_profile=aws_profile, 
+            drop_duplicates_mode="bid_ask"
         )
         _LOG.info("Resampled data was uploaded to %s", args.dst_dir)
 
