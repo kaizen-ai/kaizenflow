@@ -92,7 +92,7 @@ date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
 start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 07:50:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -103,13 +103,8 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    print("name=", name)
-    print("path=", path)
     dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
-
-# %%
-dag_df_dict["sim"].index.max()
 
 # %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
@@ -172,13 +167,13 @@ portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
     portfolio_config,
 )
 # Add research portfolio.
-#portfolio_dfs["research"] = research_portfolio_df
+portfolio_dfs["research"] = research_portfolio_df
 #
 hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
 # Add research df and combine into a single df.
-#portfolio_stats_dfs["research"] = research_portfolio_stats_df
+portfolio_stats_dfs["research"] = research_portfolio_stats_df
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 #
 hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
@@ -220,3 +215,9 @@ dtfmod.compute_correlations(
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
+
+# %%
+if config["meta"]["run_tca"]:
+    tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
+    tca = cofinanc.compute_tca_price_annotations(tca, True)
+    tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
