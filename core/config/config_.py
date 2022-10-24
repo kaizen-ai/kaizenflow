@@ -158,20 +158,6 @@ class ClobberError(RuntimeError):
 _OrderedDictType = collections.OrderedDict
 
 
-class _OrderedDict(_OrderedDictType):
-    """
-    A dict data structure that allows to read and write with strict policies.
-    """
-
-    def __setitem__(self, key: ScalarKey, value: ValueTypeHint) -> None:
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        super().__setitem__(key, value)
-
-    def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        return super().__getitem__(key)
-
-
 class _OrderedConfig(_OrderedDictType):
     """
     A dict data structure that allows to read and write with strict policies.
@@ -192,8 +178,8 @@ class _OrderedConfig(_OrderedDictType):
         self,
         key: ScalarKey,
         val: ValueTypeHint,
-        update_mode: str,
-        clobber_mode: str,
+        update_mode: Optional[str] = None,
+        clobber_mode: Optional[str] = None,
     ) -> None:
         """
         A value is encoded internally as a pair (marked_as_read, value) where:
@@ -213,6 +199,8 @@ class _OrderedConfig(_OrderedDictType):
         # 1) Handle `update_mode`.
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
+        if update_mode is None:
+            update_mode = "assert_on_overwrite"
         if update_mode == "assert_on_overwrite":
             # It is not allowed to overwrite a value.
             if is_key_present:
@@ -251,10 +239,12 @@ class _OrderedConfig(_OrderedDictType):
         else:
             raise RuntimeError(f"Invalid update_mode='{update_mode}'")
         # 2) Handle `clobber_mode`.
-        if clobber_mode == "allow_write_after_read":
+        if clobber_mode is None:
+            clobber_mode = "assert_on_write_after_use"
+        if clobber_mode == "allow_write_after_use":
             # Nothing to do.
             pass
-        elif clobber_mode == "assert_on_write_after_read":
+        elif clobber_mode == "assert_on_write_after_use":
             _LOG.debug("Checking clobber_mode...")
             if is_key_present:
                 marked_as_read, old_val = super().__getitem__(key)
