@@ -5,8 +5,10 @@ back.
 
 # Usage sample:
 > im_v2/common/data/transform/resample_bid_ask_data.py \
-    --src_dir 's3://<ck-data>/bid_ask/crypto_chassis/ftx' \
-    --dst_dir 's3://<ck-data>/resampled_bid_ask/ftx' \
+    --start_timestamp '20220916-000000' \
+    --end_timestamp '20220920-000000' \
+    --src_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec' \
+    --dst_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min' 
 
 Import as:
 
