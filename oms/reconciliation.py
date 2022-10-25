@@ -514,6 +514,7 @@ def get_system_log_paths(
 def get_output_from_last_dag_node(
     dag_dir: str,
     *,
+    # TODO(Grisha): add `dag_node_name` as a param.
     timestamp: pd.Timestamp = None,
 ) -> pd.DataFrame:
     """
