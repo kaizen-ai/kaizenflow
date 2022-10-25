@@ -125,11 +125,7 @@ def remove_outliers(
     for vals in outliers_idxs.values():
         idxs_to_remove = idxs_to_remove.union(set(vals))
     idxs_to_remove = list(idxs_to_remove)
-    # indices_to_remove = []
-    # for key in outliers_idxs.keys():
-    #     value_temp = list(outliers_idxs[key])
-    #     indices_to_remove = indices_to_remove + value_temp
-    # indices_to_remove = list(set(indices_to_remove))
     # Remove outliers from initial df.
     df = df.drop(idxs_to_remove)
+    _LOG.debug("Number of outliers dropped = %s", len(idxs_to_remove))
     return df
