@@ -265,6 +265,7 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
+                # If replacing valye, use the same `mark_as_read` as it had.
                 marked_as_read, old_val = super().__getitem__(key)
                 _ = old_val
             else:
@@ -272,8 +273,9 @@ class _OrderedConfig(_OrderedDictType):
                 marked_as_read = False
             # Check if the value has already been marked as read/unread.
             #  Required for `copy()` method.
+            # TRY: if `is_key_present` ...
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
-                val[0] = marked_as_read
+                val = (marked_as_read, val[1])
                 super().__setitem__(key, val)
             else:
                 super().__setitem__(key, (marked_as_read, val))
