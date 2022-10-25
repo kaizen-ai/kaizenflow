@@ -249,6 +249,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         )
     else:
         _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
+    
     # Fetch latest S3 row upon incremental archival.
     if incremental:
         # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
@@ -259,26 +260,27 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     if dry_run:
         _LOG.info("Dry run of data archival finished successfully.")
     else:
-        # Archive the data
-        # Argument data_type is only used to specify duplicate removal mode in
-        #  hparquet.list_and_merge_pq_files, 'None' is needed here.
-        imvcdeexut.save_parquet(
-            db_data,
-            s3_path,
-            unit="ms",
-            aws_profile=_AWS_PROFILE,
-            data_type=None,
-            # The `id` column is most likely not needed once the data is in S3.
-            drop_columns=["id"],
-            mode="append",
-        )
-        # Double check archival was successful
-        # TODO(Juraj): CmTask#3087 this might a be pretty difficult problem.
-        # _assert_correct_archival(db_data, s3_path)
-        # Drop DB data.
-        imvcddbut.drop_db_data_by_age(
-            min_age_timestamp, db_conn, db_table, table_timestamp_column
-        )
+        if not db_data.empty:
+            # Archive the data
+            # Argument data_type is only used to specify duplicate removal mode in
+            #  hparquet.list_and_merge_pq_files, 'None' is needed here.
+            imvcdeexut.save_parquet(
+                db_data,
+                s3_path,
+                unit="ms",
+                aws_profile=_AWS_PROFILE,
+                data_type=None,
+                # The `id` column is most likely not needed once the data is in S3.
+                drop_columns=["id"],
+                mode="append",
+            )
+            # Double check archival was successful
+            # TODO(Juraj): CmTask#3087 this might a be pretty difficult problem.
+            # _assert_correct_archival(db_data, s3_path)
+            # Drop DB data.
+            imvcddbut.drop_db_data_by_age(
+                min_age_timestamp, db_conn, db_table, table_timestamp_column
+            )
         _LOG.info("Data archival finished successfully.")
 
 
