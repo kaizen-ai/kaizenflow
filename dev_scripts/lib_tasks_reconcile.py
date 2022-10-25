@@ -523,8 +523,7 @@ def reconcile_run_all(
         dst_dir=dst_dir,
         rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
     )
-    reconcile_copy_sim_data(ctx, run_date=run_date, dst_dir=dst_dir)
-    #
+    reconcile_copy_sim_data(ctx, run_date=run_date, dst_dir=dst_dir, prevent_overwriting=prevent_overwriting)
     reconcile_dump_tca_data(
         ctx,
         run_date=run_date,
