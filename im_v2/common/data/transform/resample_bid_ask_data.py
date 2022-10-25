@@ -65,10 +65,10 @@ def _run(args: argparse.Namespace) -> None:
     filters = [("timestamp", ">=", start), ("timestamp", "<", end)]
     for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
-        df = hparque.from_parquet(
+        data = hparque.from_parquet(
             file_path, columns=columns, filters=filters, aws_profile=aws_profile
         )
-        if df.empty:
+        if data.empty:
             _LOG.warning(
                 "Empty Dataframe: no data in %s for %s-%s time period",
                 file_path,
@@ -76,11 +76,14 @@ def _run(args: argparse.Namespace) -> None:
                 args.end_timestamp,
             )
             continue
-        df = imvcdttrut.resample_bid_ask_data(df)
+        data_resampled = imvcdttrut.resample_bid_ask_data(data)
         dst_path = os.path.join(args.dst_dir, file)
+        data_resampled, partition_cols = hparque.add_date_partition_columns(
+            data_resampled, "by_year_month"
+        )
         hparque.to_partitioned_parquet(
-            df,
-            ["currency_pair", "year", "month"],
+            data_resampled,
+            partition_cols,
             dst_path,
             partition_filename=None,
             aws_profile=aws_profile,
@@ -88,7 +91,6 @@ def _run(args: argparse.Namespace) -> None:
         hparque.list_and_merge_pq_files(
             dst_path, 
             aws_profile=aws_profile, 
-            drop_duplicates_mode="bid_ask"
         )
         _LOG.info("Resampled data was uploaded to %s", args.dst_dir)
 
