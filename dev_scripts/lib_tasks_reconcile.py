@@ -187,7 +187,7 @@ def reconcile_dump_market_data(
     else:
         # TODO(Grisha): @Dan Copy logs to the specified folder.
         # pylint: disable=line-too-long
-        opts = "--action dump_data -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
+        opts = f"--action dump_data --reconcile_sim_date {run_date}  -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         opts += "; exit ${PIPESTATUS[0]}"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
