@@ -632,8 +632,6 @@ class Config:
         flattened_config = config.flatten()
         for key, val in flattened_config.items():
             _LOG.debug(hprint.to_str("key val"))
-            if not val:
-                val = Config()
             self.__setitem__(
                 key,
                 val,
