@@ -105,8 +105,7 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    if name != "cand":
-        dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path, timestamp=None)
+    dag_df_dict[name] = oms.get_output_from_last_dag_node(path, timestamp=None)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -114,36 +113,8 @@ prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
 )
-minn = prod_sim_dag_corr.min()
-minn.name = "all"
 hpandas.df_to_str(
-    minn,
-    num_rows=None,
-    precision=3,
-    log_level=logging.INFO,
-)
-
-# %%
-# Load DAG output for different experiments.
-dag_df_dict = {}
-timestamp = pd.Timestamp("2022-10-17 07:55:00")
-for name, path in dag_path_dict.items():
-    if name != "cand":
-        dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(
-            path,
-            timestamp=timestamp
-        )
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
-
-# %%
-prod_sim_dag_corr = dtfmod.compute_correlations(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
-)
-minn = prod_sim_dag_corr.min()
-minn.name = timestamp
-hpandas.df_to_str(
-    minn,
+    prod_sim_dag_corr.min(),
     num_rows=None,
     precision=3,
     log_level=logging.INFO,
