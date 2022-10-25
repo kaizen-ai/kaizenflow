@@ -77,57 +77,59 @@ def compute_correlations(
 
 def detect_outliers(
     df: pd.DataFrame,
-    remove_outliers_columns: List[str],
-    remove_outliers_quantiles: Tuple[Optional[float], Optional[float]],
+    outlier_columns: List[str],
+    outlier_quantiles: Tuple[Optional[float], Optional[float]],
 ) -> Dict[str, pd.Series]:
     """
-    Collect the outliers for given columns.
+    Return a series storing the indices of the outliers for the given columns.
 
-    :param remove_outliers_columns: see description in `remove_outliers()`
-    :param remove_outliers_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
+    :param outlier_columns: see description in `remove_outliers()`
+    :param outlier_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
     """
-    outlier_placeholder = {}
+    outlier_idxs = {}
     # Assert that `remove_outliers_columns` in df.columns.
-    hdbg.dassert_is_subset(remove_outliers_columns, df.columns)
-    for col in remove_outliers_columns:
+    hdbg.dassert_is_subset(outlier_columns, df.columns)
+    for col in outlier_columns:
         srs_temp = df[col]
-        # Collect the number of NaNs in the initial data.
-        len(srs_temp[srs_temp.isna()])
         # Drop NaNs in the initial data, so they don't confuse the results later.
         srs_temp = srs_temp.dropna()
         # Identify outliers.
-        srs_cleaned = csiprout.process_outliers(
+        srs_tmp = csiprout.process_outliers(
             srs=srs_temp,
             mode="set_to_nan",
-            lower_quantile=remove_outliers_quantiles[0],
-            upper_quantile=remove_outliers_quantiles[1],
+            lower_quantile=outlier_quantiles[0],
+            upper_quantile=outlier_quantiles[1],
         )
         # Extract outliers' indices.
-        outlier_placeholder[col] = srs_cleaned[srs_cleaned.isna()].index
-    return outlier_placeholder
+        outlier_idxs[col] = srs_tmp[srs_tmp.isna()].index
+    return outlier_idxs
 
 
 def remove_outliers(
     df: pd.DataFrame,
-    remove_outliers_columns: List[str],
-    remove_outliers_quantiles: Tuple[Optional[float], Optional[float]],
+    outlier_columns: List[str],
+    outlier_quantiles: Tuple[Optional[float], Optional[float]],
 ) -> pd.DataFrame:
     """
-    Remove rows with outliers for each given column.
+    Remove rows with outliers in any given column.
 
     :param remove_outliers_columns: list of columns to proceed
     :param remove_outliers_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
     :return: Data with removed rows with outliers
     """
-    outlier_index_placeholder = detect_outliers(
-        df, remove_outliers_columns, remove_outliers_quantiles
+    outliers_idxs = detect_outliers(
+        df, outlier_columns, outlier_quantiles
     )
     # Collect indices that correspond to outlier values.
-    indices_to_remove = []
-    for key in outlier_index_placeholder.keys():
-        value_temp = list(outlier_index_placeholder[key])
-        indices_to_remove = indices_to_remove + value_temp
-    indices_to_remove = list(set(indices_to_remove))
+    idxs_to_remove = set()
+    for vals in outliers_idxs.values():
+        idxs_to_remove = idxs_to_remove.union(set(vals))
+    idxs_to_remove = list(idxs_to_remove)
+    # indices_to_remove = []
+    # for key in outliers_idxs.keys():
+    #     value_temp = list(outliers_idxs[key])
+    #     indices_to_remove = indices_to_remove + value_temp
+    # indices_to_remove = list(set(indices_to_remove))
     # Remove outliers from initial df.
-    df = df.drop(indices_to_remove)
+    df = df.drop(idxs_to_remove)
     return df
