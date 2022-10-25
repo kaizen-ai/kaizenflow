@@ -182,12 +182,18 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: Optional[str] = "allow_write_after_use"
     ) -> None:
         """
-        A value is encoded internally as a pair (marked_as_read, value) where:
+        Each val is encoded internally as a tuple (marked_as_read, value) where:
 
         - marked_as_read: stores whether the value has been already read and thus
           needs to be protected from successive writes, depending on
           clobber_mode
         - value: stores the actual value
+
+        For `update_mode` and `clobber_mode` see module docstring.
+
+        Since this class is supposed to be found at leaves level,
+        by default the modes are set up as less restrictive,
+        but are inherited from `Config` in most actual uses.
         """
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
@@ -273,8 +279,8 @@ class _OrderedConfig(_OrderedDictType):
                 marked_as_read = False
             # Check if the value has already been marked as read/unread.
             #  Required for `copy()` method.
-            # TRY: if `is_key_present` ...
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
+                # Set new `marked_as_read` status with the same value.
                 val = (marked_as_read, val[1])
                 super().__setitem__(key, val)
             else:
@@ -614,12 +620,6 @@ class Config:
     ) -> None:
         """
         Equivalent to `dict.update(config)`.
-
-        Some features of `update()`:
-            - updates leaf values in self from values in `config`
-            - recursively creates paths to leaf values if needed
-            - `config` values overwrite any existing values, assert depending on the
-            value of `mode`
 
         Some features of `update()`:
             - updates leaf values in self from values in `config`

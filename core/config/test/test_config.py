@@ -1359,7 +1359,6 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1613,7 +1612,6 @@ class Test_to_dict2(hunitest.TestCase):
                     ('zscore', )])
         """
         self.assert_equal(act, exp, fuzzy_match=True)
-
 
     def test2(self) -> None:
         config = _get_nested_config6(self)
