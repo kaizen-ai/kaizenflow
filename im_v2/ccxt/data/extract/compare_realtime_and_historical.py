@@ -445,14 +445,10 @@ class RealTimeHistoricalReconciler:
         :param rt_data: real time data
         :param daily_data: daily data
         """
-        # Get missing data.
-        rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
-            rt_data, daily_data
-        )
-        # Compare dataframe contents.
-        data_difference = hpandas.compare_dataframe_rows(rt_data, daily_data)
         # Perform general comparison.
         error_message = self._compare_general(rt_data, daily_data)
+        # Compare dataframe contents.
+        data_difference = hpandas.compare_dataframe_rows(rt_data, daily_data)
         if not data_difference.empty:
             error_message.append("Differing table contents:")
             error_message.append(
@@ -582,7 +578,7 @@ class RealTimeHistoricalReconciler:
                     f"data for `{index}` coin is more that 1%"
                 )
                 error_message.append(message)
-        error_message = self._compare_general(rt_data, daily_data)
+        error_message += self._compare_general(rt_data, daily_data)
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
