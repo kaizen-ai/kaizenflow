@@ -210,7 +210,6 @@ class RealTimeHistoricalReconciler:
         """
         Compare real time and daily data.
         """
-        _LOG.info("In run")
         # Get CCXT data.
         ccxt_rt = self._get_rt_data()
         # Get daily data.
@@ -332,8 +331,6 @@ class RealTimeHistoricalReconciler:
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
-        _LOG.info("Rt data")
-        _LOG.info(ccxt_rt.head())
         ccxt_rt = ccxt_rt.reset_index()
         if self.data_type == "bid_ask":
             # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
@@ -375,6 +372,9 @@ class RealTimeHistoricalReconciler:
         daily_data["full_symbol"] = imvcufusy.build_full_symbol(
             daily_data["exchange_id"], daily_data["currency_pair"]
         )
+        # Filter out currency pair which are not in universe determined for the
+        #  comparison at hand.
+        daily_data = daily_data[daily_data["full_symbol"].isin(self.universe)]
         # Remove deprecated columns.
         daily_data = daily_data.drop(columns=["exchange_id", "currency_pair"])
         # Remove duplicated columns and reindex daily data.
@@ -398,14 +398,14 @@ class RealTimeHistoricalReconciler:
         data = data[expected_columns]
         return data
 
-    def _compare_ohlcv(
+    def _compare_general(
         self, rt_data: pd.DataFrame, daily_data: pd.DataFrame
-    ) -> None:
+    ) -> List[str]:
         """
-        Compare OHLCV real time and daily data.
+        Compare general attributes of the datasets (missing rows, gaps in
+        data).
 
-        :param rt_data: real time data
-        :param daily_data: daily data
+        :return list of error strings specifying what is wrong with the data.
         """
         # Inform if both dataframes are empty,
         # most likely there is a wrong arg value given.
@@ -419,9 +419,6 @@ class RealTimeHistoricalReconciler:
         rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
             rt_data, daily_data
         )
-        # Compare dataframe contents.
-        data_difference = hpandas.compare_dataframe_rows(rt_data, daily_data)
-        # Show difference and raise if one is found.
         error_message = []
         if not rt_missing_data.empty:
             error_message.append("Missing real time data:")
@@ -437,6 +434,25 @@ class RealTimeHistoricalReconciler:
                     daily_missing_data, num_rows=len(daily_missing_data)
                 )
             )
+        return error_message
+
+    def _compare_ohlcv(
+        self, rt_data: pd.DataFrame, daily_data: pd.DataFrame
+    ) -> None:
+        """
+        Compare OHLCV real time and daily data.
+
+        :param rt_data: real time data
+        :param daily_data: daily data
+        """
+        # Get missing data.
+        rt_missing_data, daily_missing_data = hpandas.find_gaps_in_dataframes(
+            rt_data, daily_data
+        )
+        # Compare dataframe contents.
+        data_difference = hpandas.compare_dataframe_rows(rt_data, daily_data)
+        # Perform general comparison.
+        error_message = self._compare_general(rt_data, daily_data)
         if not data_difference.empty:
             error_message.append("Differing table contents:")
             error_message.append(
@@ -457,6 +473,8 @@ class RealTimeHistoricalReconciler:
         :param rt_data: real time data
         :param daily_data: daily data
         """
+        # Perform general comparison.
+        error_message = self._compare_general(rt_data, daily_data)
         data = rt_data.merge(
             daily_data,
             how="outer",
@@ -524,18 +542,17 @@ class RealTimeHistoricalReconciler:
                 diff_stats_prices, num_rows=len(diff_stats_prices)
             ),
         )
-        error_message = []
         # Define the maximum acceptable difference as 1%.
-        threshhold = 1
+        threshold = 1
         # Log the difference.
         for index, row in diff_stats_prices.iterrows():
-            if abs(row["bid_price_relative_diff_pct"]) > threshhold:
+            if abs(row["bid_price_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between bid prices in real time and daily "
                     f"data for `{index}` coin is more that 1%"
                 )
                 error_message.append(message)
-            if abs(row["ask_price_relative_diff_pct"]) > threshhold:
+            if abs(row["ask_price_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between ask prices in real time and daily "
                     f"data for `{index}` coin is more that 1%"
@@ -553,18 +570,19 @@ class RealTimeHistoricalReconciler:
         )
         # Log the difference.
         for index, row in diff_stats_sizes.iterrows():
-            if abs(row["bid_size_relative_diff_pct"]) > threshhold:
+            if abs(row["bid_size_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between bid sizes in real time and daily "
                     f"data for `{index}` coin is more that 1%"
                 )
                 error_message.append(message)
-            if abs(row["ask_size_relative_diff_pct"]) > threshhold:
+            if abs(row["ask_size_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between ask sizes in real time and daily "
                     f"data for `{index}` coin is more that 1%"
                 )
                 error_message.append(message)
+        error_message = self._compare_general(rt_data, daily_data)
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
