@@ -171,3 +171,41 @@ class Test_gaussian_rank2(hunitest.TestCase):
 2016-01-05 09:31:00  NaN  NaN -5.2  5.2
 2016-01-05 09:32:00 -5.2  NaN -5.2  5.2"""
         self.helper(expected_str, 0.5, "ffill")
+
+
+class Test_uniform_rank1(hunitest.TestCase):
+    @staticmethod
+    def get_data() -> pd.DataFrame:
+        df_str = """
+,100,200,300,400
+2016-01-04 16:00:00,3,5,32,-3
+2016-01-04 16:01:00,NaN,NaN,NaN,NaN
+2016-01-05 09:29:00,NaN,NaN,NaN,NaN
+2016-01-05 09:30:00,NaN,2,-4,8
+2016-01-05 09:31:00,2,NaN,-4,8
+2016-01-05 09:32:00,1,2,3,4
+"""
+        df = pd.read_csv(
+            io.StringIO(df_str),
+            index_col=0,
+            parse_dates=True,
+        )
+        return df
+
+    def test1(self) -> None:
+        df = self.get_data()
+        actual = csprcrse.uniform_rank(df)
+        precision = 2
+        actual_str = hpandas.df_to_str(
+            actual.round(precision), num_rows=None, precision=precision
+        )
+        expected_str = r"""
+                      100   200   300  400
+2016-01-04 16:00:00 -0.33  0.33  1.00 -1.0
+2016-01-04 16:01:00   NaN   NaN   NaN  NaN
+2016-01-05 09:29:00   NaN   NaN   NaN  NaN
+2016-01-05 09:30:00   NaN  0.00 -1.00  1.0
+2016-01-05 09:31:00  0.00   NaN -1.00  1.0
+2016-01-05 09:32:00 -1.00 -0.33  0.33  1.0
+"""
+        self.assert_equal(actual_str, expected_str, fuzzy_match=True)

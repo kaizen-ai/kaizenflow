@@ -1491,3 +1491,74 @@ def compare_multiindex_dfs(
         subset_df1, subset_df2, **compare_visually_dataframes_kwargs
     )
     return diff_df
+
+
+# #############################################################################
+
+
+def compute_duration_df(
+    tag_to_df: Dict[str, pd.DataFrame],
+    *,
+    intersect_dfs: bool = False,
+    valid_intersect: bool = False,
+) -> Tuple[pd.DataFrame, Dict[str, pd.DataFrame]]:
+    """
+    Compute a df with some statistics about the time index.
+
+    E.g.,
+    ```
+                   min_index   max_index   min_valid_index   max_valid_index
+    tag1
+    tag2
+    ```
+
+    :param intersect_dfs: return a transformed dict with the intersection of
+        indices of all the dfs if True, otherwise return the input data as is
+    :param valid_intersect: intersect indices without NaNs if True, otherwise
+        intersect indices as is
+    :return: timestamp stats and updated dict of dfs, see `intersect_dfs` param
+    """
+    hdbg.dassert_isinstance(tag_to_df, Dict)
+    # Create df and assign columns.
+    data_stats = pd.DataFrame()
+    min_col = "min_index"
+    max_col = "max_index"
+    min_valid_index_col = "min_valid_index"
+    max_valid_index_col = "max_valid_index"
+    # Collect timestamp info from all dfs.
+    for tag in tag_to_df.keys():
+        # Check that the passed timestamp has timezone info.
+        hdateti.dassert_has_tz(tag_to_df[tag].index[0])
+        dassert_index_is_datetime(tag_to_df[tag])
+        # Compute timestamp stats.
+        data_stats.loc[tag, min_col] = tag_to_df[tag].index.min()
+        data_stats.loc[tag, max_col] = tag_to_df[tag].index.max()
+        data_stats.loc[tag, min_valid_index_col] = (
+            tag_to_df[tag].dropna().index.min()
+        )
+        data_stats.loc[tag, max_valid_index_col] = (
+            tag_to_df[tag].dropna().index.max()
+        )
+    # Make a copy so we do not modify the original data.
+    tag_to_df_updated = tag_to_df.copy()
+    # Change the initial dfs with intersection.
+    if intersect_dfs:
+        if valid_intersect:
+            # Assign start, end date column according to specs.
+            min_col = min_valid_index_col
+            max_col = max_valid_index_col
+        # The start of the intersection will be the max value amongt all start dates.
+        intersection_start_date = data_stats[min_col].max()
+        # The end of the intersection will be the min value amongt all end dates.
+        intersection_end_date = data_stats[max_col].min()
+        for tag in tag_to_df_updated.keys():
+            df = trim_df(
+                tag_to_df_updated[tag],
+                ts_col_name=None,
+                start_ts=intersection_start_date,
+                end_ts=intersection_end_date,
+                left_close=True,
+                right_close=True,
+            )
+            tag_to_df_updated[tag] = df
+    return data_stats, tag_to_df_updated
