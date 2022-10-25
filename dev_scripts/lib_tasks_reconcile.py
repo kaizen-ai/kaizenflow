@@ -118,8 +118,13 @@ def reconcile_create_dirs(
             prod/
             tca/
             simulation/
+            result_0/
             ...
     ```
+
+    See `reconcile_run_all()` for params description.
+
+    :param abort_if_exists: see `hio.create_dir()`
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -163,16 +168,15 @@ def reconcile_dump_market_data(
     2022-09-27 10:35:00-04:00  1030828978 2022-09-27 14:36:12.230330+00:00   0.7233   0.7247   0.7215   0.7241  3291381.0  2022-09-27 14:36:11.727196+00:00  3409049  binance::GMT_USDT  2022-09-27 10:34:00-04:00
     2022-09-27 10:35:00-04:00  1464553467 2022-09-27 14:36:05.788923+00:00  1384.23  1386.24  1383.19  1385.63   5282.272  2022-09-27 14:36:05.284506+00:00  3409043  binance::ETH_USDT  2022-09-27 10:34:00-04:00
     ```
-    :param run_date: date of the reconcile run
-    :param dst_dir: dir to store reconcilation results at
-    :param incremental: if False then the directory is deleted and re-created,
-        otherwise it skips
+
+    See `reconcile_run_all()` for params description.
+
+    :param incremental: see `hio.create_dir()`
     :param interactive: if True ask user to visually inspect data snippet and
-        confirm the dumping
-    :param prevent_overwriting: if True subtract writing right from the target dir
+        confirm the dumping otherwise just save
     """
     # pylint: enable=line-too-long
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
@@ -208,6 +212,7 @@ def reconcile_dump_market_data(
     _sanity_check_data(market_data_file_target)
     #
     if prevent_overwriting:
+        _LOG.info("Removing the write permissions for file=%s", market_data_file_target)
         cmd = f"chmod -w {market_data_file_target}"
         _system(cmd)
 
@@ -218,8 +223,10 @@ def reconcile_run_sim(
 ):  # type: ignore
     """
     Run the simulation given a run date.
+
+    See `reconcile_run_all()` for params description.
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
@@ -245,9 +252,11 @@ def reconcile_run_sim(
 
 
 @task
-def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None):  # type: ignore
+def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwriting=True):  # type: ignore
     """
     Copy the output of the simulation run to the specified folder.
+
+    See `reconcile_run_all()` for params description.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -265,6 +274,10 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None):  # type: ignore
     hdbg.dassert_file_exists(pytest_log_file_path)
     cmd = f"cp -v {pytest_log_file_path} {sim_target_dir}"
     _system(cmd)
+    if prevent_overwriting:
+        _LOG.info("Removing the write permissions for dir=%s", sim_target_dir)
+        cmd = f"chmod -R -w {sim_target_dir}"
+        _system(cmd)
 
 
 @task
@@ -277,7 +290,12 @@ def reconcile_copy_prod_data(
 ):  # type: ignore
     """
     Copy the output of the prod run to the specified folder.
+
+    See `reconcile_run_all()` for params description.
+
+    :param stage: development stage, e.g., `preprod`
     """
+    hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
@@ -305,6 +323,7 @@ def reconcile_copy_prod_data(
     _system(cmd)
     #
     if prevent_overwriting:
+        _LOG.info("Removing the write permissions for dir=%s", prod_target_dir)
         cmd = f"chmod -R -w {prod_target_dir}"
         _system(cmd)
 
@@ -321,8 +340,12 @@ def reconcile_run_notebook(
     """
     Run the reconciliation notebook, publish it locally and copy the results to
     the specified folder.
+
+    See `reconcile_run_all()` for params description.
+
+    :param incremetal: see `hio.create_dir()`
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     # Set results destination dir and clear it if is already filled.
@@ -371,6 +394,7 @@ def reconcile_run_notebook(
     #
     if prevent_overwriting:
         results_target_dir = os.path.join(target_dir, "result_0")
+        _LOG.info("Removing the write permissions for dir=%s", results_target_dir)
         cmd = f"chmod -R -w {results_target_dir}"
         _system(cmd)
 
@@ -379,6 +403,8 @@ def reconcile_run_notebook(
 def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
+
+    See `reconcile_run_all()` for params description.
     """
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -402,8 +428,12 @@ def reconcile_dump_tca_data(
 ):  # type: ignore
     """
     Retrieve and save the TCA data.
+
+    See `reconcile_run_all()` for params description.
+
+    :param incremetal: see `hio.create_dir()`
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
@@ -446,6 +476,7 @@ def reconcile_dump_tca_data(
     _system(cmd)
     #
     if prevent_overwriting:
+        _LOG.info("Removing the write permissions for dir=%s", target_dir)
         cmd = f"chmod -R -w {target_dir}"
         _system(cmd)
 
@@ -457,18 +488,19 @@ def reconcile_run_all(
     dst_dir=None,
     rt_timeout_in_secs_or_time=None,
     prevent_overwriting=True,
-    skip_notebook=True,
+    skip_notebook=False,
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
 
     :param run_date: date of the reconcile run
-    :param dst_dir: dir to store reconcilation results at
+    :param dst_dir: dir to store reconcilation results in
     :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
-    :param prevent_overwriting: if True subtract writing right from the target dir
-    :param skip_notebook: if True do not run the reconcilation notebook
+    :param prevent_overwriting: if True write permissions are remove otherwise
+        a permissions remain as they are
+    :param skip_notebook: if True do not run the reconcilation notebook otherwise run
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This can run only inside Docker.")
+    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
     #
     reconcile_create_dirs(ctx, run_date=run_date, dst_dir=dst_dir)
     #
