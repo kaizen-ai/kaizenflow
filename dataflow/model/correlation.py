@@ -60,20 +60,3 @@ def compute_correlations(
     else:
         raise ("Number of column levels must be 1 or 2 but is=%d", n_col_levels)
     return corrs
-
-
-def compute_corr(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
-    """
-    Compute correlation for all timestamps.
-    """
-    # Compute correlation for 10-min intervals.
-    corr = df1.rolling(3).corr(df2, axis=1)
-    min_corr_list = []
-    # Get a minimum value for each timestamp and 1st level column.
-    for col in corr.columns:
-        min_corr = corr[col[0]].min(axis=1)
-        min_corr.name = col[0]
-        min_corr_list.append(min_corr)
-    corr_df = pd.concat(min_corr_list, axis=1)
-    corr_df.dropna(inplace=True)
-    return corr_df
