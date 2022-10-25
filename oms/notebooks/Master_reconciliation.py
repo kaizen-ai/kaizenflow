@@ -111,6 +111,9 @@ for k, df in dag_df_dict.items():
     dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
 
 # %%
+dag_df_dict["prod"]
+
+# %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
@@ -214,11 +217,15 @@ cand_target_position_df = oms.load_target_positions(
 )
 
 # %%
-prod_target_position_df["target_trades_shares"].head(6)
+#prod_target_position_df["target_holdings_shares"].shift(1)#
+research_portfolio_df["holdings_shares"]
+
+# %%
+research_portfolio_df["holdings_shares"].head(10)
 
 # %%
 #prod_target_position_df.columns.levels[0]
-prod_target_position_df["holdings_shares"].head(5)
+prod_target_position_df["holdings_shares"].head(10)
 
 # %%
 research_portfolio_df["holdings_shares"].head(10)
