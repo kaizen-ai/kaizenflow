@@ -187,6 +187,7 @@ DATASET_SCHEMA = {
     "exchange_id": "object",
     "high": "float64",
     "knowledge_timestamp": "datetime64[ns, UTC]",
+    "level": "int32",
     "low": "float64",
     "month": "int32",
     "number_of_trades": "int32",
