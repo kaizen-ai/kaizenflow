@@ -332,8 +332,9 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
                 },
                 "x_vars": ["x"],
                 "nan_mode": "drop",
-            }
+            },
         )
+        config.update_mode = "overwrite"
         return config
 
     def _check_results(

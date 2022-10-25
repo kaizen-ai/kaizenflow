@@ -199,8 +199,6 @@ class _OrderedConfig(_OrderedDictType):
         # 1) Handle `update_mode`.
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
-        if update_mode is None:
-            update_mode = "assert_on_overwrite"
         if update_mode == "assert_on_overwrite":
             # It is not allowed to overwrite a value.
             if is_key_present:
@@ -239,8 +237,6 @@ class _OrderedConfig(_OrderedDictType):
         else:
             raise RuntimeError(f"Invalid update_mode='{update_mode}'")
         # 2) Handle `clobber_mode`.
-        if clobber_mode is None:
-            clobber_mode = "assert_on_write_after_use"
         if clobber_mode == "allow_write_after_use":
             # Nothing to do.
             pass
@@ -269,14 +265,16 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
-                _LOG.warning("%s", key)
                 marked_as_read, old_val = super().__getitem__(key)
                 _ = old_val
             else:
                 # The key was not present, so we just mark it not read yet.
                 marked_as_read = False
-            super().__setitem__(key, (marked_as_read, val))
-
+            if isinstance(val, tuple) and val and isinstance(val[0], bool):
+                super().__setitem__(key, val)
+            else:
+                super().__setitem__(key, (marked_as_read, val))
+            
     # /////////////////////////////////////////////////////////////////////////////
     # Get.
     # /////////////////////////////////////////////////////////////////////////////
@@ -425,7 +423,6 @@ class Config:
         """
         _LOG.debug(hprint.to_str("update_mode clobber_mode report_mode"))
         self._config = _OrderedConfig()
-        # self._config = _OrderedConfig()
         self.update_mode = update_mode
         self.clobber_mode = clobber_mode
         self.report_mode = report_mode
@@ -735,6 +732,7 @@ class Config:
         config = self.to_string_config()
         hpickle.to_pickle(config, file_name)
 
+    # TODO(Danya): -> `to_pickleable_string`
     def to_string_config(self) -> "Config":
         """
         Transform this Config into a pickle-able one where all values are
@@ -1008,7 +1006,6 @@ class Config:
                     self._config,
                 )
                 if head_key in self:
-                    # Remove the
                     # We mark a key as read only when it's read from a client of
                     # Config, not from the Config itself.
                     mark_key_as_read = False

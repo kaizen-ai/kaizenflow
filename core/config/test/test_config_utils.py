@@ -12,7 +12,9 @@ def _get_test_config1() -> cconfig.Config:
     """
     Build a test config for Crude Oil asset.
     """
-    config = cconfig.Config()
+    # Create an empty config with overwritable values.
+    update_mode = "overwrite"
+    config = cconfig.Config(update_mode=update_mode)
     tmp_config = config.add_subconfig("build_model")
     tmp_config["activation"] = "sigmoid"
     tmp_config = config.add_subconfig("build_targets")

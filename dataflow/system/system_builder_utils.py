@@ -75,7 +75,7 @@ def get_SystemConfig_template_from_DagBuilder(
     """
     Build a System config from a DAG builder.
     """
-    system_config = cconfig.Config()
+    system_config = cconfig.Config(update_mode="overwrite")
     # Save the `DagBuilder` and the `DagConfig` in the config object.
     hdbg.dassert_isinstance(dag_builder, dtfcore.DagBuilder)
     #

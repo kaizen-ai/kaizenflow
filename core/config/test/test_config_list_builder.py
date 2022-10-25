@@ -37,7 +37,8 @@ class Test_build_config_list_varying_tiled_periods1(hunitest.TestCase):
         expected_num_configs: int,
     ) -> None:
         # Prepare inputs.
-        config = cconfig.Config()
+        update_mode = "overwrite"
+        config = cconfig.Config(update_mode=update_mode)
         config_list = cconfig.ConfigList([config])
         freq_as_pd_str = "1M"
         lookback_as_pd_str = "10D"
