@@ -1,8 +1,7 @@
 #!/usr/bin/env python
 """
-Archive data from DB table older than specified timestamp into a S3 storage.
-based on `timestamp` column of the table. The archive is maintained in a
-parquet format, with multiple `.pq` files at the bottom most partition.
+Archive data older than specified timestamp from a DB table into S3 folder. The
+archive is saved as a `parquet` dataset with multiple .pq files.
 
 Use as:
 > im_v2/ccxt/db/archive_db_data_to_s3.py \
@@ -20,12 +19,10 @@ import im_v2.ccxt.db.archive_db_data_to_s3 as imvcdaddts
 import argparse
 import logging
 import os
-from datetime import timedelta
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
@@ -65,7 +62,7 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="DB table to archive data from",
     )
-    #TODO(Juraj): for now we assume that the only column used for archival
+    # TODO(Juraj): for now we assume that the only column used for archival
     #  will be `timestamp`.
     parser.add_argument(
         "--table_timestamp_column",
@@ -158,7 +155,7 @@ def _assert_archival_mode(
     The folder structure used for archival:
     s3://<s3_base_path>/<db_stage>/<db_table>/<table_timestamp_column>
     /..parquet/partition/columns../data.parquet
-    Table column <table_timestamp_column> in the path helps ensure that
+    Table column `table_timestamp_column` in the path helps ensure that
     the same column is always reused in a single archival parquet file.
     """
     if incremental:
@@ -178,6 +175,7 @@ def _get_db_connection(db_stage: str) -> hsql.DbConnection:
     env_file = imvimlita.get_db_env_path(db_stage)
     connection_params = hsql.get_connection_info_from_env_file(env_file)
     return hsql.get_connection(*connection_params)
+
 
 # TODO(Juraj): Create a mechanism to check data continuity.
 # def _fetch_latest_row_from_s3(
@@ -215,16 +213,24 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     storage, based on `timestamp` column of the table.
     """
     # Transform and assign args for readability.
-    incremental, s3_path, db_stage, db_table, dry_run, table_timestamp_column = (
+    (
+        incremental,
+        s3_path,
+        db_stage,
+        db_table,
+        dry_run,
+        table_timestamp_column,
+        skip_time_continuity_assertion,
+    ) = (
         args.incremental,
         args.s3_path,
         args.db_stage,
         args.db_table,
         args.dry_run,
-        args.table_timestamp_column
+        args.table_timestamp_column,
+        args.skip_time_continuity_assertion,
     )
     s3_path = os.path.join(s3_path, db_stage, db_table, table_timestamp_column)
-    skip_time_continuity_assertion = args.skip_time_continuity_assertion
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
     db_conn = _get_db_connection(db_stage)
@@ -245,7 +251,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
     # Fetch latest S3 row upon incremental archival.
     if incremental:
-        # TODO(Juraj): think about a HW resource friendly solution to this.
+        # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
         # latest_row = _fetch_latest_row_from_s3(s3_path, timestamp)
         # Assert time continuity of both datasets.
         # _assert_data_continuity(latest_row, skip_time_continuity_assertion)
@@ -254,8 +260,6 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         _LOG.info("Dry run of data archival finished successfully.")
     else:
         # Archive the data
-        # The `id` column is most likely not needed once the data is in S3.
-        db_data = db_data.drop("id", axis=1)
         # Argument data_type is only used to specify duplicate removal mode in
         #  hparquet.list_and_merge_pq_files, 'None' is needed here.
         imvcdeexut.save_parquet(
@@ -264,15 +268,16 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
             unit="ms",
             aws_profile=_AWS_PROFILE,
             data_type=None,
-            drop_columns=[],
+            # The `id` column is most likely not needed once the data is in S3.
+            drop_columns=["id"],
             mode="append",
         )
         # Double check archival was successful
-        # TODO(Juraj): this might a be pretty difficult problem.
+        # TODO(Juraj): CmTask#3087 this might a be pretty difficult problem.
         # _assert_correct_archival(db_data, s3_path)
         # Drop DB data.
         imvcddbut.drop_db_data_by_age(
-            min_age_timestamp, db_conn, db_table, "timestamp"
+            min_age_timestamp, db_conn, db_table, table_timestamp_column
         )
         _LOG.info("Data archival finished successfully.")
 
