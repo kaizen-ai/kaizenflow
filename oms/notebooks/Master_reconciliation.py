@@ -56,9 +56,9 @@ print(config)
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
 # system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict = {'prod': '/shared_data/prod_reconciliation/20221020/prod/system_log_dir_scheduled__2022-10-19T10:00:00+00:00_2hours',
- 'cand': '/shared_data/prod_reconciliation/20221020/prod/system_log_dir_scheduled__2022-10-19T10:00:00+00:00_2hours',
- 'sim': '/shared_data/prod_reconciliation/20221020/simulation/system_log_dir'}
+system_log_path_dict = {'prod': '/shared_data/prod_reconciliation/20221017/prod/system_log_dir_scheduled__2022-10-16T10:00:00+00:00_2hours',
+ 'cand': '/shared_data/prod_reconciliation/20221017/prod/system_log_dir_scheduled__2022-10-16T10:00:00+00:00_2hours',
+ 'sim': '/shared_data/prod_reconciliation/20221017/simulation/system_log_dir'}
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -105,16 +105,45 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
+    if name != "cand":
+        dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path, timestamp=None)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-prod_sim_dag_corr = dtfmod.compute_corr(
+prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
 )
+minn = prod_sim_dag_corr.min()
+minn.name = "all"
 hpandas.df_to_str(
-    prod_sim_dag_corr,
+    minn,
+    num_rows=None,
+    precision=3,
+    log_level=logging.INFO,
+)
+
+# %%
+# Load DAG output for different experiments.
+dag_df_dict = {}
+timestamp = pd.Timestamp("2022-10-17 07:55:00")
+for name, path in dag_path_dict.items():
+    if name != "cand":
+        dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(
+            path,
+            timestamp=timestamp
+        )
+hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+
+# %%
+prod_sim_dag_corr = dtfmod.compute_correlations(
+    dag_df_dict["prod"],
+    dag_df_dict["sim"],
+)
+minn = prod_sim_dag_corr.min()
+minn.name = timestamp
+hpandas.df_to_str(
+    minn,
     num_rows=None,
     precision=3,
     log_level=logging.INFO,

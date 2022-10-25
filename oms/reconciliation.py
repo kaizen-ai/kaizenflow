@@ -511,22 +511,30 @@ def get_system_log_paths(
     return data_path_dict
 
 
-def get_latest_output_from_last_dag_node(dag_dir: str) -> pd.DataFrame:
+def get_output_from_last_dag_node(
+    dag_dir: str,
+    *,
+    timestamp: pd.Timestamp = None,
+) -> pd.DataFrame:
     """
-    Retrieve the most recent output from the last DAG node.
+    Retrieve output from the last DAG node.
 
     This function relies on our file naming conventions.
     """
     hdbg.dassert_dir_exists(dag_dir)
-    parquet_files = list(
-        filter(lambda x: "parquet" in x, sorted(os.listdir(dag_dir)))
-    )
-    _LOG.info("Tail of files found=%s", parquet_files[-3:])
-    file_name = parquet_files[-1]
-    dag_parquet_path = os.path.join(dag_dir, file_name)
-    _LOG.info("DAG parquet path=%s", dag_parquet_path)
-    dag_df = hparque.from_parquet(dag_parquet_path)
-    return dag_df
+    cmd = f"find '{dag_dir}' -name predict.8.process_forecasts.df_out*.parquet"
+    if timestamp is not None:
+        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+        timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
+        cmd += f" | grep '{timestamp}'"
+    _, files = hsystem.system_to_string(cmd)
+    files = files.split("\n")
+    all_data = []
+    for file in files:
+        df = hparque.from_parquet(file)
+        all_data.append(df)
+    all_data = pd.concat(all_data, axis=1)
+    return all_data
 
 
 def load_config_from_pickle(
