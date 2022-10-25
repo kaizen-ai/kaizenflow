@@ -491,8 +491,6 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         _LOG.debug("last_end_time=%s", last_end_time)
         offset = pd.Timedelta(bar_duration)
         start_time = last_end_time - offset
-        # TODO(gp): Remove this.
-        start_time = start_time - pd.Timedelta(minutes=1)
         twap_df = self.get_twap_price(
             start_time,
             last_end_time,
