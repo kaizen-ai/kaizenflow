@@ -687,7 +687,7 @@ class CcxtBroker(ombroker.Broker):
         # Combine all orders in a df.
         order_dicts = [order.to_dict() for order in sent_orders]
         order_df = pd.DataFrame(order_dicts)
-        _LOG.debug("order_df=%s", order_df)
+        _LOG.debug("order_df=%s", hpandas.df_to_str(order_df))
         return receipt, order_df
 
     def _build_asset_id_to_symbol_mapping(
