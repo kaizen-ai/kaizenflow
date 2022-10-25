@@ -270,7 +270,10 @@ class _OrderedConfig(_OrderedDictType):
             else:
                 # The key was not present, so we just mark it not read yet.
                 marked_as_read = False
+            # Check if the value has already been marked as read/unread.
+            #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
+                val[0] = marked_as_read
                 super().__setitem__(key, val)
             else:
                 super().__setitem__(key, (marked_as_read, val))
