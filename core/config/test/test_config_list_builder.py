@@ -173,7 +173,7 @@ class Test_build_config_list_with_tiled_universe(hunitest.TestCase):
 class Test_build_config_list_with_tiled_universe_and_periods(hunitest.TestCase):
     def test1(self) -> None:
         # Prepare inputs.
-        system_config = cconfig.Config()
+        system_config = cconfig.Config(update_mode="overwrite")
         system_config[
             "backtest_config", "time_interval_str"
         ] = "2020-01-01_2020-03-01"

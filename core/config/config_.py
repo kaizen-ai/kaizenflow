@@ -347,7 +347,7 @@ class _OrderedConfig(_OrderedDictType):
                 # Data structures that can be printed in a fancy way.
                 val_as_str = hpandas.df_to_str(val, print_shape_info=True)
                 val_as_str = "\n" + hprint.indent(val_as_str)
-            elif isinstance(val, Config):
+            elif isinstance(val, Config) or isinstance (val, _OrderedConfig):
                 val_as_str = val.to_string(mode)
                 val_as_str = "\n" + hprint.indent(val_as_str)
             else:
@@ -827,11 +827,11 @@ class Config:
                         continue
                 hdbg.dassert(not isinstance(val, Config))
                 dict_[key] = val
-            # if isinstance(val, dict) and not val:
-            #     # Convert empty leaves from OrderedDict to Config.
-            #     #  Temporary measure to keep back compatibility
-            #     #  with Config string representations (CMTask2689).
-            #     dict_[key] = Config()
+            if isinstance(val, dict) and not val:
+                # Convert empty leaves from OrderedDict to Config.
+                #  Temporary measure to keep back compatibility
+                #  with Config string representations (CMTask2689).
+                dict_[key] = Config()
         return dict_
 
     @classmethod

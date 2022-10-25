@@ -153,7 +153,7 @@ class Test_subtract_configs1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        A config contains an empty dict.
+        Both config contain an empty dict.
         """
         config_dict1 = {
             "key1": [
@@ -178,9 +178,9 @@ class Test_subtract_configs1(hunitest.TestCase):
         config1 = cconfig.Config().from_dict(config_dict1)
         config2 = cconfig.Config().from_dict(config_dict2)
         actual = cconfig.subtract_config(config1, config2)
+        # Since both instances of `key2` are empty, one is subtracted.
         expected = r"""
         key1: [(2, 'value3', {})]
-        key2:
         """
         self.assert_equal(str(actual), expected, fuzzy_match=True)
 

@@ -17,6 +17,7 @@ class TestFeaturePipeline(hunitest.TestCase):
         dag_builder = dtfpifepip.FeaturePipeline()
         #
         config = dag_builder.get_config_template()
+        config.update_mode = "overwrite"
         _LOG.debug("config from dag_builder=%s", config)
         # Initialize config.
         config["load_data"] = cconfig.Config.from_dict(

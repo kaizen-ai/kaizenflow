@@ -100,7 +100,6 @@ class Test_flat_config_set1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after implementation of `__str__`")
     def test_roundtrip_transform1(self) -> None:
         """
         Test serialization/deserialization for a flat config.
@@ -751,7 +750,6 @@ class Test_nested_config_misc1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: unskip after implementation of `__str__`")
     def test_roundtrip_transform1(self) -> None:
         """
         Test serialization/deserialization for nested config.
@@ -981,7 +979,6 @@ class Test_nested_config_update2(hunitest.TestCase):
             """
             self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip("CMTask2689: Add after implementation of OverwriteError.")
     def test_assert_on_overwrite2(self) -> None:
         """
         Update with update_mode="assert_on_overwrite" and values that are
@@ -1001,10 +998,8 @@ class Test_nested_config_update2(hunitest.TestCase):
         exp = r"""
         exception=Trying to overwrite old value 'foo_bar.txt' with new value 'hello' for key 'file_name' when update_mode=assert_on_overwrite
         self=
-          file_name:
-            foo_bar.txt
-          nrows:
-            999
+          file_name: foo_bar.txt
+          nrows: 999
         key='('read_data', 'file_name')'
         config=
           read_data:
@@ -1163,9 +1158,6 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip(
-        "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
-    )
     def test_flatten2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1174,9 +1166,9 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         act = pprint.pformat(flattened)
         exp = r"""
         OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
-                     (('read_data', 'nrows'), 999),
-                     (('single_val',), 'hello'),
-                     (('zscore',), OrderedDict())])
+        (('read_data', 'nrows'), 999),
+        (('single_val',), 'hello'),
+        (('zscore',), )])
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -1335,9 +1327,6 @@ class Test_from_env_var1(hunitest.TestCase):
 
 
 class Test_make_read_only1(hunitest.TestCase):
-    @pytest.mark.skip(
-        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
-    )
     def test_set1(self) -> None:
         """
         Setting a value that already exists on a read-only config raises.
@@ -1370,9 +1359,7 @@ class Test_make_read_only1(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    @pytest.mark.skip(
-        "CMTask2689: unskip after adding `cconfig.ReadOnlyConfigError`"
-    )
+
     def test_set2(self) -> None:
         """
         Setting a value that doesn't exists on a read-only config raises.
@@ -1627,9 +1614,7 @@ class Test_to_dict2(hunitest.TestCase):
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
-    # @pytest.mark.skip(
-    #     "CMTask2689: unskip after adding `keep_leaves` param to `Config.to_dict`"
-    # )
+
     def test2(self) -> None:
         config = _get_nested_config6(self)
         # Run.
@@ -1826,9 +1811,11 @@ class Test_to_string_config(hunitest.TestCase):
         Test when config is pickle-able before applying the function.
         """
         value = "val1"
+        # TODO(Danya): Do we want to keep `mark_as_read` in pickleable strings?
         expected = r"""
-        {'key1': 'val1', 'key2': {'key3': {'key4': {}}}}
-        """
+        {'key1': ('False', 'val1'), 'key2': ('False', 'key3:
+        key4:
+        ')}"""
         should_be_pickleable_before = True
         actual = self.helper(
             value,
@@ -1843,8 +1830,9 @@ class Test_to_string_config(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""
-        {'key1': '<function Test_to_string_config.test2.<locals>.<lambda> at 0x>', 'key2': {'key3': {'key4': {}}}}
-        """
+        {'key1': ('False', '<function Test_to_string_config.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'key3:
+        key4:
+        ')}"""
         should_be_pickleable_before = False
         actual = self.helper(
             value,
@@ -1919,16 +1907,16 @@ class Test_to_string(hunitest.TestCase):
         Test when a value is a DataFrame.
         """
         value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-        expected = r"""key1 (val_type=pandas.core.frame.DataFrame)):
+        expected = r"""key1 (marked_as_read=False, val_type=pandas.core.frame.DataFrame):
         index=[0, 1]
         columns=a,b,c
         shape=(2, 3)
         a b c
         0 1 2 3
         1 4 5 6
-        key2 (val_type=core.config.config_.Config)):
-        key3 (val_type=core.config.config_.Config)):
-        key4 (val_type=core.config.config_.Config)):
+        key2 (marked_as_read=False, val_type=core.config.config_.Config):
+        key3 (marked_as_read=False, val_type=core.config.config_.Config):
+        key4 (marked_as_read=False, val_type=core.config.config_.Config):
         """
         actual = self.helper(
             value,
@@ -1942,10 +1930,10 @@ class Test_to_string(hunitest.TestCase):
         # Set function value.
         value = lambda x: x
         expected = r"""
-        key1 (val_type=function)): <function Test_to_string.test2.<locals>.<lambda>>
-        key2 (val_type=core.config.config_.Config)):
-        key3 (val_type=core.config.config_.Config)):
-        key4 (val_type=core.config.config_.Config)):
+        key1 (marked_as_read=False, val_type=function): <function Test_to_string.test2.<locals>.<lambda>>
+        key2 (marked_as_read=False, val_type=core.config.config_.Config):
+        key3 (marked_as_read=False, val_type=core.config.config_.Config):
+        key4 (marked_as_read=False, val_type=core.config.config_.Config):
         """
         actual = self.helper(
             value,
@@ -1958,12 +1946,12 @@ class Test_to_string(hunitest.TestCase):
         """
         # Set multiline string value.
         value = "This is a\ntest multiline string."
-        expected = r"""key1 (val_type=str)):
+        expected = r"""key1 (marked_as_read=False, val_type=str):
         This is a
         test multiline string.
-        key2 (val_type=core.config.config_.Config)):
-        key3 (val_type=core.config.config_.Config)):
-        key4 (val_type=core.config.config_.Config)):
+        key2 (marked_as_read=False, val_type=core.config.config_.Config):
+        key3 (marked_as_read=False, val_type=core.config.config_.Config):
+        key4 (marked_as_read=False, val_type=core.config.config_.Config):
         """
         actual = self.helper(
             value,
@@ -2068,7 +2056,6 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         mode = "str"
         self.run_steps_assert_string(workload, mode, globals())
 
-    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_assert_string_repr1(self) -> None:
         workload = []
         #
@@ -2107,12 +2094,10 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         #
         self.run_steps_check_string(workload, mode, globals())
 
-    @pytest.mark.skip("CMTask2689: Unskip after updating the `__str__` method.")
     def test_check_string_str1(self) -> None:
         mode = "str"
         self.check_string_helper1(mode)
 
-    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test_check_string_repr1(self) -> None:
         mode = "repr"
         self.check_string_helper1(mode)
@@ -2124,7 +2109,6 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 
 
 class Test_basic1(_Config_execute_stmt_TestCase1):
-    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test1(self) -> None:
         """
         Various assignments and their representations.
@@ -2156,7 +2140,6 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         """
         self.raise_stmt(stmt, AssertionError, exp, globals())
 
-    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test2(self) -> None:
         """
         Various assignments and their representations.
@@ -2183,7 +2166,6 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
-    @pytest.mark.skip("CMTask2689: Unskip after updating the `__repr__` method.")
     def test3(self) -> None:
         mode = "repr"
         # Create a Config.
@@ -2195,6 +2177,6 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (marked_as_read=False): hello.txt <class 'str'>
+        key1 (marked_as_read=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
