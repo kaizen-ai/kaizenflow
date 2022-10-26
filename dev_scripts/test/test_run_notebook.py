@@ -85,7 +85,9 @@ def _build_multiple_configs(
 
 
 def _build_config_list(values: List[bool]) -> cconfig.ConfigList:
-    config_template = cconfig.Config(update_mode="overwrite")
+    # Create config in `overwrite` mode to allow reassignment of values.
+    update_mode = "overwrite"
+    config_template = cconfig.Config(update_mode=update_mode)
     # TODO(gp): -> fail_param
     config_template["fail"] = None
     configs = _build_multiple_configs(config_template, {("fail",): values})

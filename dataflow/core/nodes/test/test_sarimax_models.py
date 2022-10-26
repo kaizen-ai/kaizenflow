@@ -334,6 +334,9 @@ class TestContinuousSarimaxModel(hunitest.TestCase):
                 "nan_mode": "drop",
             },
         )
+        # Change config update mode to allow value reassignment.
+        #  This is required since values of basic config are overwritten
+        #  inside the tests
         config.update_mode = "overwrite"
         return config
 

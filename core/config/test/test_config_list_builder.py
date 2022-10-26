@@ -37,6 +37,7 @@ class Test_build_config_list_varying_tiled_periods1(hunitest.TestCase):
         expected_num_configs: int,
     ) -> None:
         # Prepare inputs.
+        # Create a Config with `overwrite` mode to support item reassignment.
         update_mode = "overwrite"
         config = cconfig.Config(update_mode=update_mode)
         config_list = cconfig.ConfigList([config])
@@ -173,6 +174,7 @@ class Test_build_config_list_with_tiled_universe(hunitest.TestCase):
 class Test_build_config_list_with_tiled_universe_and_periods(hunitest.TestCase):
     def test1(self) -> None:
         # Prepare inputs.
+        # Create a Config with `overwrite` mode to support item reassignment.
         system_config = cconfig.Config(update_mode="overwrite")
         system_config[
             "backtest_config", "time_interval_str"

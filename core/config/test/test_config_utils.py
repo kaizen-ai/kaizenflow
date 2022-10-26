@@ -15,6 +15,7 @@ def _get_test_config1() -> cconfig.Config:
     # Create an empty config with overwritable values.
     update_mode = "overwrite"
     config = cconfig.Config(update_mode=update_mode)
+    # Add values.
     tmp_config = config.add_subconfig("build_model")
     tmp_config["activation"] = "sigmoid"
     tmp_config = config.add_subconfig("build_targets")
@@ -153,7 +154,7 @@ class Test_subtract_configs1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Both config contain an empty dict.
+        Both configs contain an empty dict.
         """
         config_dict1 = {
             "key1": [
@@ -178,6 +179,7 @@ class Test_subtract_configs1(hunitest.TestCase):
         config1 = cconfig.Config().from_dict(config_dict1)
         config2 = cconfig.Config().from_dict(config_dict2)
         actual = cconfig.subtract_config(config1, config2)
+        # An empty dict
         expected = r"""
         key1: [(2, 'value3', {})]
         key2:
