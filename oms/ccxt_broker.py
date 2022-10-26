@@ -20,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlogging as hloggin
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
