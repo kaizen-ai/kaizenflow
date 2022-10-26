@@ -583,7 +583,7 @@ def get_dag_node_timestamp(dag_dir: str) -> Dict[str, List[str]]:
     return node_timestamps
 
 
-def get_dag_node_names(dag_dir: str) -> List[str]:
+def get_dag_node_names(dag_dir: str) -> set:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
     node_names = set(node.split("df_out")[0] for node in nodes)
     return node_names
