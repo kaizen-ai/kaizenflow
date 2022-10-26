@@ -35,82 +35,6 @@ _LOG = logging.getLogger(__name__)
 _AWS_PROFILE = "ck"
 
 
-def _parse() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser.add_argument(
-        "--timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="Specifies time threshold for archival. Data for which \
-            `table_timestamp_column` > `timestamp`, gets archived and dropped",
-    )
-    parser.add_argument(
-        "--db_stage",
-        action="store",
-        required=True,
-        type=str,
-        help="DB stage to use",
-    )
-    parser.add_argument(
-        "--db_table",
-        action="store",
-        required=True,
-        type=str,
-        help="DB table to archive data from",
-    )
-    # TODO(Juraj): for now we assume that the only column used for archival
-    #  will be `timestamp`.
-    parser.add_argument(
-        "--table_timestamp_column",
-        action="store",
-        required=False,
-        default="timestamp",
-        type=str,
-        help="Table column to use when applying the time threshold",
-    )
-    # #########################################################################
-    # Only a base path needs to be provided, i.e.
-    #  when archiving db table ccxt_ohlcv for dev DB
-    #  you only need to provide s3://cryptokaizen-data/archive/
-    #  The script automatically creates/maintains the subfolder
-    #  structure for the specific stage and table, i.e.
-    parser.add_argument(
-        "--s3_path",
-        action="store",
-        required=True,
-        type=str,
-        help="S3 location to archive data into",
-    )
-    parser.add_argument(
-        "--incremental",
-        action="store_true",
-        required=False,
-        help="Archival mode, if True the script fails if there is no archive yet \
-            for the specified table at specified path, vice versa for False",
-    )
-    parser.add_argument(
-        "--skip_time_continuity_assertion",
-        action="store_true",
-        required=False,
-        help="If specified, the script only warns if the archival operation \
-            creates a time gap in the archive data \
-            but doesn't abort the execution.",
-    )
-    parser.add_argument(
-        "--dry_run",
-        action="store_true",
-        required=False,
-        help="If specified, simulates the execution but doesn't delete \
-            DB data nor save any data to s3",
-    )
-    parser = hparser.add_verbosity_arg(parser)
-    return parser  # type: ignore[no-any-return]
-
-
 def _assert_data_continuity(
     db_data: pd.DataFrame,
     last_archived_row: pd.DataFrame,
@@ -282,13 +206,87 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
                 min_age_timestamp, db_conn, db_table, table_timestamp_column
             )
         _LOG.info("Data archival finished successfully.")
-
-
+        
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _LOG.info(args)
     _archive_db_data_to_s3(args)
+        
+def _parse() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser.add_argument(
+        "--timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="Time threshold for archival. Data for which" +
+            "`table_timestamp_column` > `timestamp`, gets archived and dropped",
+    )
+    parser.add_argument(
+        "--db_stage",
+        action="store",
+        required=True,
+        type=str,
+        help="DB stage to use",
+    )
+    parser.add_argument(
+        "--db_table",
+        action="store",
+        required=True,
+        type=str,
+        help="DB table to archive data from",
+    )
+    # TODO(Juraj): for now we assume that the only column used for archival
+    #  will be `timestamp`.
+    parser.add_argument(
+        "--table_timestamp_column",
+        action="store",
+        required=False,
+        default="timestamp",
+        type=str,
+        help="Table column to use when applying the time threshold",
+    )
+    # #########################################################################
+    # Only a base path needs to be provided, i.e.
+    #  when archiving DB table `ccxt_ohlcv` for dev DB
+    #  you only need to provide s3://cryptokaizen-data/archive/
+    #  The script automatically creates/maintains the subfolder
+    #  structure for the specific stage and table.
+    parser.add_argument(
+        "--s3_path",
+        action="store",
+        required=True,
+        type=str,
+        help="S3 location to archive data into",
+    )
+    parser.add_argument(
+        "--incremental",
+        action="store_true",
+        required=False,
+        help="Archival mode, if True the script fails if there is no archive yet \
+            for the specified table at specified path, vice versa for False",
+    )
+    parser.add_argument(
+        "--skip_time_continuity_assertion",
+        action="store_true",
+        required=False,
+        help="If specified, the script only warns if the archival operation \
+            creates a time gap in the archive data \
+            but doesn't abort the execution.",
+    )
+    parser.add_argument(
+        "--dry_run",
+        action="store_true",
+        required=False,
+        help="If specified, simulates the execution but doesn't delete \
+            DB data nor save any data to s3",
+    )
+    parser = hparser.add_verbosity_arg(parser)
+    return parser  # type: ignore[no-any-return]
 
 
 if __name__ == "__main__":
