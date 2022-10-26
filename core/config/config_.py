@@ -205,6 +205,7 @@ class _OrderedConfig(_OrderedDictType):
         # 1) Handle `update_mode`.
         is_key_present = key in self
         _LOG.debug(hprint.to_str("is_key_present"))
+        _LOG.debug("Checking update_mode...")
         if update_mode == "assert_on_overwrite":
             # It is not allowed to overwrite a value.
             if is_key_present:
@@ -219,7 +220,7 @@ class _OrderedConfig(_OrderedDictType):
                 msg = "\n".join(msg)
                 raise OverwriteError(msg)
             else:
-                # Key doesn't exist, thus assign the value.
+                # Key doesn't exist, thus assign the value. 
                 assign_new_value = True
         elif update_mode == "overwrite":
             # Assign the value in any case.
@@ -243,13 +244,14 @@ class _OrderedConfig(_OrderedDictType):
         else:
             raise RuntimeError(f"Invalid update_mode='{update_mode}'")
         # 2) Handle `clobber_mode`.
+        _LOG.debug("Checking clobber_mode...")
         if clobber_mode == "allow_write_after_use":
             # Nothing to do.
             pass
         elif clobber_mode == "assert_on_write_after_use":
-            _LOG.debug("Checking clobber_mode...")
             if is_key_present:
                 marked_as_read, old_val = super().__getitem__(key)
+                
                 is_been_changed = old_val != val
                 _LOG.debug(
                     hprint.to_str("marked_as_read old_val is_been_changed")
@@ -293,8 +295,6 @@ class _OrderedConfig(_OrderedDictType):
     def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
         """
         Retrieve the value corresponding to `key`.
-
-        :param read_state: what value to mark
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
@@ -306,16 +306,23 @@ class _OrderedConfig(_OrderedDictType):
     # /////////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
+        """
+        Return Config as string with only values.
+        """
         mode = "only_values"
         ret = self.to_string(mode)
         return ret
 
     def __repr__(self) -> str:
+        """
+        Return Config as string with value types.
+        """
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
 
     # TODO(gp): -> mark_as_used
+    # TODO(Danya): Use to mark items in `__getitem__`.
     def mark_as_read(self, key: ScalarKey, read_state: bool = True) -> None:
         # Retrieve the value and the metadata.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
@@ -337,7 +344,11 @@ class _OrderedConfig(_OrderedDictType):
 
     def to_string(self, mode: str) -> str:
         """
-        Return a short string representation of this `Config`.
+        Return a string representation of this `Config`.
+
+        :param mode: `only_values` or `verbose`
+                    - `only_values` for simple string representation
+                    - `verbose` for values with `val_type` and `mark_as_read`
         """
         txt = []
         for key, (marked_as_read, val) in self.items():
@@ -354,6 +365,7 @@ class _OrderedConfig(_OrderedDictType):
                 val_as_str = hpandas.df_to_str(val, print_shape_info=True)
                 val_as_str = "\n" + hprint.indent(val_as_str)
             elif isinstance(val, Config) or isinstance (val, _OrderedConfig):
+                # Convert Configs recursively.
                 val_as_str = val.to_string(mode)
                 val_as_str = "\n" + hprint.indent(val_as_str)
             else:
@@ -456,10 +468,16 @@ class Config:
     # ////////////////////////////////////////////////////////////////////////////
 
     def __str__(self) -> str:
+        """
+        Return Config as string with only values.
+        """
         mode = "only_values"
         return self.to_string(mode)
 
     def __repr__(self) -> str:
+        """
+        Return Config as string with value types.
+        """
         mode = "verbose"
         return self.to_string(mode)
 
@@ -471,15 +489,14 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        If `key` is nested, the hierarchy of Config objects is navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
         #  try-catch around accessing the key.
         try:
-            # When we test for existence we don't want to report the config in case
-            # of error.
+            # When we test for existence we don't want to report the config
+            # in case of error.
             report_mode = "none"
             # When we test for existence we don't want to mark a key as read by
             # the client, since we don't introduce a dependency from its value.
@@ -778,11 +795,11 @@ class Config:
         config_as_str = str(self.to_dict())
         # We don't need `cconfig.` since we are inside the config module.
         config_as_str = config_as_str.replace("OrderedDict", "Config")
-        # if check:
-        #     # Check that the object can be reconstructed.
-        #     config_tmp = Config.from_python(config_as_str)
-        #     # Compare.
-        #     hdbg.dassert_eq(str(self), str(config_tmp))
+        if check:
+            # Check that the object can be reconstructed.
+            config_tmp = Config.from_python(config_as_str)
+            # Compare.
+            hdbg.dassert_eq(str(self), str(config_tmp))
         _LOG.debug("config_as_str=\n%s", config_as_str)
         return config_as_str
 
@@ -1106,6 +1123,14 @@ class Config:
     def _raise_exception(
         self, exception: Exception, key: CompoundKey, report_mode: str
     ) -> None:
+        """
+        Handle Config get/set exceptions.
+
+        These include:
+        - KeyError
+        - OverwriteError
+        - ReadOnlyConfigError
+        """
         _LOG.debug(hprint.to_str("exception key report_mode"))
         hdbg.dassert_in(report_mode, _VALID_REPORT_MODES)
         if report_mode in ("verbose_log_error", "verbose_exception"):

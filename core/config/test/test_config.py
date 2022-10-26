@@ -1166,9 +1166,9 @@ class Test_nested_config_flatten1(hunitest.TestCase):
         act = pprint.pformat(flattened)
         exp = r"""
         OrderedDict([(('read_data', 'file_name'), 'foo_bar.txt'),
-        (('read_data', 'nrows'), 999),
-        (('single_val',), 'hello'),
-        (('zscore',), )])
+                    (('read_data', 'nrows'), 999),
+                    (('single_val',), 'hello'),
+                    (('zscore',), )])
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -2104,7 +2104,6 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 # #############################################################################
 # Test_basic1
 # #############################################################################
-
 
 class Test_basic1(_Config_execute_stmt_TestCase1):
     def test1(self) -> None:
