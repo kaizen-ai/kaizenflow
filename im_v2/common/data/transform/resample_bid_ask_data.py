@@ -62,7 +62,9 @@ def _run(args: argparse.Namespace) -> None:
         pd.Timestamp(args.end_timestamp), unit="s"
     )
     # Define filters for data period.
-    filters = [("timestamp", ">=", start), ("timestamp", "<", end)]
+    # Note(Juraj): it's better from Airflow execution perspective
+    #  to keep the interval closed: [start, end].
+    filters = [("timestamp", ">=", start), ("timestamp", "<=", end)]
     for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
         data = hparque.from_parquet(
