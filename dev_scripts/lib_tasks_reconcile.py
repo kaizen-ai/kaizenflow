@@ -90,6 +90,17 @@ def _resolve_target_dir(
     return target_dir
 
 
+def _resolve_rt_timeout_in_secs_or_time(
+    rt_timeout_in_secs_or_time: Optional[int]
+) -> int:
+    """
+    Return the specified `rt_timeout_in_secs_or_time`.
+    """
+    rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
+    _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
+    return rt_timeout_in_secs_or_time
+
+
 def _sanity_check_data(file_path: str) -> None:
     """
     Check that data at the specified file path is correct.
@@ -153,6 +164,7 @@ def reconcile_dump_market_data(
     ctx,
     run_date=None,
     dst_dir=None,
+    rt_timeout_in_secs_or_time=None,
     incremental=False, 
     interactive=False,
     prevent_overwriting=True,
@@ -180,6 +192,9 @@ def reconcile_dump_market_data(
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
+    rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
+        rt_timeout_in_secs_or_time
+    )
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
@@ -187,7 +202,7 @@ def reconcile_dump_market_data(
     else:
         # TODO(Grisha): @Dan Copy logs to the specified folder.
         # pylint: disable=line-too-long
-        opts = f"--action dump_data --reconcile_sim_date {run_date}  -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
+        opts = f"--action dump_data --reconcile_sim_date {run_date} --dst_dir {dst_dir} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
         opts += "; exit ${PIPESTATUS[0]}"
         # pylint: enable=line-too-long
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
@@ -229,9 +244,11 @@ def reconcile_run_sim(
     hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
     _ = ctx
     run_date = _get_run_date(run_date)
+    # TODO(Grisha): we should use `_resolve_target_dir()`.
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
-    # TODO(Dan): Expose `rt_timeout_in_secs_or_time` as datetime as well.
-    rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
+    rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
+        rt_timeout_in_secs_or_time
+    )
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
@@ -239,7 +256,7 @@ def reconcile_run_sim(
         _system(rm_cmd)
     # Run simulation.
     # pylint: disable=line-too-long
-    opts = f"--action run_simulation --reconcile_sim_date {run_date} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} --dst_dir {dst_dir} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
+    opts = f"--action run_simulation --reconcile_sim_date {run_date} --dst_dir {dst_dir} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
     opts += "; exit ${PIPESTATUS[0]}"
     # pylint: enable=line-too-long
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
@@ -515,6 +532,7 @@ def reconcile_run_all(
         ctx,
         run_date=run_date,
         dst_dir=dst_dir,
+        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_run_sim(
