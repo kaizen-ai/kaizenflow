@@ -5,8 +5,10 @@ back.
 
 # Usage sample:
 > im_v2/common/data/transform/resample_bid_ask_data.py \
-    --src_dir 's3://<ck-data>/bid_ask/crypto_chassis/ftx' \
-    --dst_dir 's3://<ck-data>/resampled_bid_ask/ftx' \
+    --start_timestamp '20220916-000000' \
+    --end_timestamp '20220920-000000' \
+    --src_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec' \
+    --dst_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min' 
 
 Import as:
 
@@ -54,19 +56,21 @@ def _run(args: argparse.Namespace) -> None:
     ]
     # Convert dates to unix timestamps.
     start = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.start_timestamp), unit="s"
+        pd.Timestamp(args.start_timestamp), unit="s" 
     )
     end = hdateti.convert_timestamp_to_unix_epoch(
         pd.Timestamp(args.end_timestamp), unit="s"
     )
     # Define filters for data period.
-    filters = [("timestamp", ">=", start), ("timestamp", "<", end)]
+    # Note(Juraj): it's better from Airflow execution perspective
+    #  to keep the interval closed: [start, end].
+    filters = [("timestamp", ">=", start), ("timestamp", "<=", end)]
     for file in tqdm.tqdm(files_to_read):
         file_path = os.path.join(args.src_dir, file)
-        df = hparque.from_parquet(
+        data = hparque.from_parquet(
             file_path, columns=columns, filters=filters, aws_profile=aws_profile
         )
-        if df.empty:
+        if data.empty:
             _LOG.warning(
                 "Empty Dataframe: no data in %s for %s-%s time period",
                 file_path,
@@ -74,12 +78,21 @@ def _run(args: argparse.Namespace) -> None:
                 args.end_timestamp,
             )
             continue
-        df = imvcdttrut.resample_bid_ask_data(df)
+        data_resampled = imvcdttrut.resample_bid_ask_data(data)
         dst_path = os.path.join(args.dst_dir, file)
-        pq.write_table(
-            pa.Table.from_pandas(df),
+        data_resampled, partition_cols = hparque.add_date_partition_columns(
+            data_resampled, "by_year_month"
+        )
+        hparque.to_partitioned_parquet(
+            data_resampled,
+            partition_cols,
             dst_path,
-            filesystem=filesystem,
+            partition_filename=None,
+            aws_profile=aws_profile,
+        )
+        hparque.list_and_merge_pq_files(
+            dst_path, 
+            aws_profile=aws_profile, 
         )
         _LOG.info("Resampled data was uploaded to %s", args.dst_dir)
 

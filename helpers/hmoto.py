@@ -16,6 +16,7 @@ moto = pytest.importorskip("moto")
 # If not, boto3 will access real AWS.
 import boto3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
+import helpers.hdbg as hdbg
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
@@ -63,6 +64,11 @@ class S3Mock_TestCase(hunitest.TestCase):
         super().setUp()
 
     def tearDown(self) -> None:
+        # Empty the bucket otherwise deletion will fail.
+        s3 = boto3.resource("s3")
+        hdbg.dassert_eq(self.bucket_name, "mock_bucket")
+        bucket = s3.Bucket(self.bucket_name)
+        bucket.objects.all().delete()
         # Delete bucket.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         s3fs_.delete(f"s3://{self.bucket_name}", recursive=True)
