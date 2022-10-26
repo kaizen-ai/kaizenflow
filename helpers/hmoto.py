@@ -16,6 +16,7 @@ moto = pytest.importorskip("moto")
 # If not, boto3 will access real AWS.
 import boto3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
+import helpers.hdbg as hdbg
 import helpers.hs3 as hs3  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-positiona
 import helpers.hunit_test as hunitest  # noqa: E402 module level import not at top of file  # pylint: disable=wrong-import-position
 
