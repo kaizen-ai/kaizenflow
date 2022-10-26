@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -587,4 +587,3 @@ def get_dag_node_names(dag_dir: str) -> List[str]:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
     node_names = set(node.split("df_out")[0] for node in nodes)
     return node_names
-
