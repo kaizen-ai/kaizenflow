@@ -163,11 +163,10 @@ class _OrderedConfig(_OrderedDictType):
     A dict data structure that allows to read and write with strict policies.
 
     An `_OrderedConfig` is a recursive structure with:
-    - key of type str or int
-    - value that can be:
-      - a `Config` which stores another `_OrderedConfig` (but not a dict)
-      - any scalar
-      - any other Python data structure (e.g., list, tuple)
+    - any Python scalar
+    - a `Config` (which wraps another `_OrderedConfig`)
+    - Python dicts are not allowed since we want to use `Config`
+    - any other Python data structure (e.g., list, tuple)
     """
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -178,6 +177,7 @@ class _OrderedConfig(_OrderedDictType):
         self,
         key: ScalarKey,
         val: ValueTypeHint,
+        *,
         update_mode: Optional[str] = "overwrite",
         clobber_mode: Optional[str] = "allow_write_after_use"
     ) -> None:
@@ -191,9 +191,9 @@ class _OrderedConfig(_OrderedDictType):
 
         For `update_mode` and `clobber_mode` see module docstring.
 
-        Since this class is supposed to be found at leaves level,
-        by default the modes are set up as less restrictive,
-        but are inherited from `Config` in most actual uses.
+        Since this class is supposed to be found at leaves level, by default
+        the modes are set up as less restrictive, but are inherited from
+        `Config` in most actual uses.
         """
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode"))
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
@@ -232,8 +232,8 @@ class _OrderedConfig(_OrderedDictType):
                 _, old_val = super().__getitem__(key)
                 msg: List[str] = []
                 msg.append(
-                    f"Overwriting old value '{old_val}' with new value '{val}'"
-                    f" for key '{key}' since update_mode={update_mode}"
+                    f"Value '{old_val}' for key '{key}' already exists."
+                    f" Not overwriting with '{val}' since update_mode={update_mode}"
                 )
                 msg = "\n".join(msg)
                 _LOG.warning(msg)
@@ -273,7 +273,7 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
-                # If replacing valye, use the same `mark_as_read` as it had.
+                # If replacing value, use the same `mark_as_read` as the old value.
                 marked_as_read, old_val = super().__getitem__(key)
                 _ = old_val
             else:
@@ -300,6 +300,37 @@ class _OrderedConfig(_OrderedDictType):
         # Retrieve the value from the dictionary itself.
         marked_as_read, val = super().__getitem__(key)
         return val
+    
+    # TODO(gp): -> mark_as_used
+    # TODO(Danya): Use to mark items in `__getitem__`.
+    def mark_as_read(self, key: ScalarKey, read_state: bool = True) -> None:
+        """
+        Mark value as read.
+
+        The value is a tuple of (mark_as_read, value), where `mark_as_read`== True
+        if the value has been accessed via `__getitem__`. 
+
+        :param read_state: whether to mark the value as read.
+                 Values are not marked e.g. when accessed through `__contains__` method.
+        """
+        # Retrieve the value and the metadata.
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        marked_as_read, val = super().__getitem__(key)
+        _LOG.debug(hprint.to_str("marked_as_read val read_state"))
+        #
+        if read_state:
+            # Update the metadata, accounting that this data was read.
+            marked_as_read = True
+            super().__setitem__(key, (marked_as_read, val))
+        # If the value is an iterable then we need to propagate the read state.
+        if hintros.is_iterable(val):
+            for elem in val:
+                if hasattr(elem, "mark_as_read"):
+                    elem.mark_as_read(marked_as_read)
+        else:
+            if hasattr(val, "mark_as_read"):
+                val.mark_as_read(marked_as_read)
+
 
     # /////////////////////////////////////////////////////////////////////////////
     # Print.
@@ -320,27 +351,6 @@ class _OrderedConfig(_OrderedDictType):
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
-
-    # TODO(gp): -> mark_as_used
-    # TODO(Danya): Use to mark items in `__getitem__`.
-    def mark_as_read(self, key: ScalarKey, read_state: bool = True) -> None:
-        # Retrieve the value and the metadata.
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        marked_as_read, val = super().__getitem__(key)
-        _LOG.debug(hprint.to_str("marked_as_read val read_state"))
-        #
-        if read_state:
-            # Update the metadata, accounting that this data was read.
-            marked_as_read = True
-            super().__setitem__(key, (marked_as_read, val))
-        # If the value is an iterable then we need to propagate the read state.
-        if hintros.is_iterable(val):
-            for elem in val:
-                if hasattr(elem, "mark_as_read"):
-                    elem.mark_as_read(marked_as_read)
-        else:
-            if hasattr(val, "mark_as_read"):
-                val.mark_as_read(marked_as_read)
 
     def to_string(self, mode: str) -> str:
         """
@@ -563,15 +573,16 @@ class Config:
         key: CompoundKey,
         *,
         report_mode: Optional[str] = None,
-        mark_key_as_read: bool = True,
+        mark_key_as_read: bool = False,
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
         is compound, then the hierarchy is navigated until the corresponding
         element is found or we raise if the element doesn't exist.
 
-        :param mark_key_as_read: control whether we mark the key as read by the
-            client. It is True since clients use the `config[...]` notation
+        :param mark_key_as_read: whether we mark the key as read by the client.
+          Set to `False` due to accessing values from logging, and we want clients
+          to explicitely say when they want the value to be marked as read.
         :raises KeyError: if the compound key is not found in the `Config`
         """
         _LOG.debug("-> " + hprint.to_str("key report_mode self"))
@@ -581,6 +592,9 @@ class Config:
         except Exception as e:
             # After the recursion is done, in case of error print information
             # about the offending key.
+            # The Config-specific exceptions are handled by an internal method,
+            # hence the broad `except` statement. All non-Config exceptions
+            # are reported separately.
             self._raise_exception(e, key, report_mode)
         return ret
 
@@ -1005,6 +1019,7 @@ class Config:
             )
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
+            # TODO(Danya): Remove after enabling `mark_as_read` method.
             raise ReadOnlyConfigError(msg)
         update_mode = self._resolve_update_mode(update_mode)
         clobber_mode = self._resolve_clobber_mode(clobber_mode)
