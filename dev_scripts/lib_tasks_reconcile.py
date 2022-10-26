@@ -75,14 +75,12 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
-def _resolve_target_dir(
-    dst_dir: Optional[str], run_date: str
-) -> str:
+def _resolve_target_dir(dst_dir: Optional[str], run_date: str) -> str:
     """
     Return the target dir name to store reconcilation results.
 
-    If a dir name is not specified by a user then use prod reconcilation dir
-    on the shared disk with the corresponding run date subdir.
+    If a dir name is not specified by a user then use prod reconcilation
+    dir on the shared disk with the corresponding run date subdir.
     """
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     target_dir = os.path.join(dst_dir, run_date)
@@ -91,7 +89,7 @@ def _resolve_target_dir(
 
 
 def _resolve_rt_timeout_in_secs_or_time(
-    rt_timeout_in_secs_or_time: Optional[int]
+    rt_timeout_in_secs_or_time: Optional[int],
 ) -> int:
     """
     Return the specified `rt_timeout_in_secs_or_time`.
@@ -141,19 +139,21 @@ def reconcile_create_dirs(
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
     # Create a dir for reconcilation results.
-    hio.create_dir(
-        target_dir, incremental=True, abort_if_exists=abort_if_exists
-    )
+    hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Create dirs for storing prod and simulation results.
     prod_target_dir = os.path.join(target_dir, "prod")
     sim_target_dir = os.path.join(target_dir, "simulation")
-    hio.create_dir(prod_target_dir, incremental=True, abort_if_exists=abort_if_exists)
+    hio.create_dir(
+        prod_target_dir, incremental=True, abort_if_exists=abort_if_exists
+    )
     hio.create_dir(
         sim_target_dir, incremental=True, abort_if_exists=abort_if_exists
     )
     # Create dir for dumped TCA data.
     tca_target_dir = os.path.join(target_dir, "tca")
-    hio.create_dir(tca_target_dir, incremental=True, abort_if_exists=abort_if_exists)
+    hio.create_dir(
+        tca_target_dir, incremental=True, abort_if_exists=abort_if_exists
+    )
     # Sanity check the created dirs.
     cmd = f"ls -lh {target_dir}"
     _system(cmd)
@@ -165,7 +165,7 @@ def reconcile_dump_market_data(
     run_date=None,
     dst_dir=None,
     rt_timeout_in_secs_or_time=None,
-    incremental=False, 
+    incremental=False,
     interactive=False,
     prevent_overwriting=True,
 ):  # type: ignore
@@ -188,7 +188,9 @@ def reconcile_dump_market_data(
         confirm the dumping otherwise just save
     """
     # pylint: enable=line-too-long
-    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
@@ -227,7 +229,9 @@ def reconcile_dump_market_data(
     _sanity_check_data(market_data_file_target)
     #
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for file=%s", market_data_file_target)
+        _LOG.info(
+            "Removing the write permissions for file=%s", market_data_file_target
+        )
         cmd = f"chmod -w {market_data_file_target}"
         _system(cmd)
 
@@ -241,7 +245,9 @@ def reconcile_run_sim(
 
     See `reconcile_run_all()` for params description.
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
     _ = ctx
     run_date = _get_run_date(run_date)
     # TODO(Grisha): we should use `_resolve_target_dir()`.
@@ -252,7 +258,10 @@ def reconcile_run_sim(
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
-        _LOG.warning("The local_results_dir=%s already exists, removing it.", local_results_dir)
+        _LOG.warning(
+            "The local_results_dir=%s already exists, removing it.",
+            local_results_dir,
+        )
         _system(rm_cmd)
     # Run simulation.
     # pylint: disable=line-too-long
@@ -362,7 +371,9 @@ def reconcile_run_notebook(
 
     :param incremetal: see `hio.create_dir()`
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
     _ = ctx
     run_date = _get_run_date(run_date)
     # Set results destination dir and clear it if is already filled.
@@ -450,14 +461,18 @@ def reconcile_dump_tca_data(
 
     :param incremetal: see `hio.create_dir()`
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(dst_dir, run_date)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date
-    start_timestamp = (end_timestamp - datetime.timedelta(days=1)).strftime("%Y%m%d")
+    start_timestamp = (end_timestamp - datetime.timedelta(days=1)).strftime(
+        "%Y%m%d"
+    )
     local_results_dir = "./tca"
     if os.path.exists(local_results_dir):
         if incremental:
@@ -517,7 +532,9 @@ def reconcile_run_all(
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
     """
-    hdbg.dassert(hserver.is_inside_docker(), "This is runnable only inside Docker.")
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
     #
     reconcile_create_dirs(ctx, run_date=run_date, dst_dir=dst_dir)
     #
@@ -541,7 +558,12 @@ def reconcile_run_all(
         dst_dir=dst_dir,
         rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
     )
-    reconcile_copy_sim_data(ctx, run_date=run_date, dst_dir=dst_dir, prevent_overwriting=prevent_overwriting)
+    reconcile_copy_sim_data(
+        ctx,
+        run_date=run_date,
+        dst_dir=dst_dir,
+        prevent_overwriting=prevent_overwriting,
+    )
     reconcile_dump_tca_data(
         ctx,
         run_date=run_date,
