@@ -366,6 +366,7 @@ def reconcile_copy_prod_data(
     if prevent_overwriting:
         _prevent_overwriting(prod_target_dir)
 
+
 # TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
 @task
 def reconcile_run_notebook(
@@ -440,6 +441,7 @@ def reconcile_run_notebook(
     if prevent_overwriting:
         results_target_dir = os.path.join(target_dir, "result_0")
         _prevent_overwriting(results_target_dir)
+
 
 @task
 def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
@@ -537,6 +539,7 @@ def reconcile_dump_tca_data(
     #
     if prevent_overwriting:
         _prevent_overwriting(target_dir)
+
 
 @task
 def reconcile_run_all(
