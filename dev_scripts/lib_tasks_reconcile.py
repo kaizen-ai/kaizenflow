@@ -76,7 +76,7 @@ def _get_run_date(run_date: Optional[str]) -> str:
 
 
 def _prevent_overwriting(object_path: str) -> None:
-    _LOG.info("Removing the write permissions for =%s", object_path)
+    _LOG.info("Removing the write permissions for: %s", object_path)
     if os.path.isdir(object_path):
         opt = "-R"
     else:
