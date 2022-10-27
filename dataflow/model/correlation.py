@@ -5,7 +5,7 @@ import dataflow.model.correlation as dtfmodcorr
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
 
@@ -21,8 +21,6 @@ def compute_correlations(
     df2: pd.DataFrame,
     *,
     trim_outliers: bool = False,
-    # remove_outliers_columns: Optional[List[str]] = None,
-    # remove_outliers_quantiles: Tuple[Optional[float], Optional[float]] = None,
     outlier_kwargs: Optional[Dict[str, Any]] = None,
     allow_unequal_indices: bool = False,
     allow_unequal_columns: bool = False,
@@ -35,12 +33,6 @@ def compute_correlations(
     """
     # Switch to trim the outliers.
     if trim_outliers:
-        # df1 = remove_outliers(
-        #     df1, remove_outliers_columns, remove_outliers_quantiles
-        # )
-        # df2 = remove_outliers(
-        #     df2, remove_outliers_columns, remove_outliers_quantiles
-        # )
         df1 = remove_outliers(df1, **outlier_kwargs)
         df2 = remove_outliers(df2, **outlier_kwargs)
     # hpandas.dassert_axes_equal(df1, df2, sort_cols=True)
@@ -81,8 +73,6 @@ def compute_correlations(
 
 def remove_outliers(
     df: pd.DataFrame,
-    # outlier_columns: List[str],
-    # outlier_quantiles: Tuple[Optional[float], Optional[float]],
     **outlier_kwargs: Optional[Dict[str, Any]],
 ) -> pd.DataFrame:
     """
@@ -92,12 +82,7 @@ def remove_outliers(
     :param outlier_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
     :return: data with removed rows with outliers
     """
-    # outliers_idxs = detect_outliers(
-    #     df, outlier_columns, outlier_quantiles
-    # )
-    outliers_idxs = detect_outliers(
-        df, **outlier_kwargs
-    )
+    outliers_idxs = detect_outliers(df, **outlier_kwargs)
     # Collect indices that correspond to outlier values.
     idxs_to_remove = set()
     for vals in outliers_idxs.values():
