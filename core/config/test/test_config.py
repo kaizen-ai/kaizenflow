@@ -1776,11 +1776,11 @@ class Test_from_dict1(hunitest.TestCase):
 
 
 # #############################################################################
-# Test_to_string_config
+# Test_to_pickleable_string
 # #############################################################################
 
 
-class Test_to_string_config(hunitest.TestCase):
+class Test_to_pickleable_string(hunitest.TestCase):
     def helper(
         self,
         value: Any,
@@ -1796,7 +1796,7 @@ class Test_to_string_config(hunitest.TestCase):
         is_pickleable_before = hintros.is_pickleable(config["key1"])
         self.assertEqual(is_pickleable_before, should_be_pickleable_before)
         # Check if function was succesfully applied on config.
-        actual = config.to_string_config()
+        actual = config.to_pickleable_string()
         is_pickleable_after = hintros.is_pickleable(actual["key1"])
         self.assertTrue(is_pickleable_after)
         # Convert `actual` to string since `assert_equal` comparing
@@ -1828,7 +1828,7 @@ class Test_to_string_config(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""
-        {'key1': ('False', '<function Test_to_string_config.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'key3:
+        {'key1': ('False', '<function Test_to_pickleable_string.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'key3:
         key4:
         ')}"""
         should_be_pickleable_before = False
@@ -2173,7 +2173,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
-        exp = r"""
+        exp = r""" 
         key1 (marked_as_used=False, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())

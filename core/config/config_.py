@@ -762,11 +762,10 @@ class Config:
         hio.to_file(file_name, repr(self))
         # 2) As a pickle containing all values as string.
         file_name = os.path.join(log_dir, f"{tag}.values_as_strings.pkl")
-        config = self.to_string_config()
+        config = self.to_pickleable_string()
         hpickle.to_pickle(config, file_name)
 
-    # TODO(Danya): -> `to_pickleable_string`
-    def to_string_config(self) -> "Config":
+    def to_pickleable_string(self) -> "Config":
         """
         Transform this Config into a pickle-able one where all values are
         replaced with their string representation.
@@ -774,7 +773,7 @@ class Config:
         config_out = {}
         for k, v in self._config.items():
             if isinstance(v, Config):
-                config_out[k] = v.to_string_config()
+                config_out[k] = v.to_pickleable_string()
             else:
                 config_out[k] = hpickle.to_pickleable(v)
         return config_out
@@ -928,15 +927,15 @@ class Config:
         Separate the first element of a compound key from the rest.
         """
         hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
-        head_key, tail_key = key[0], key[1:]  # type: ignore
+        head_scalar_key, tail_compound_key = key[0], key[1:]  # type: ignore
         _LOG.debug(
-            "key='%s' -> head_key='%s', tail_key='%s'", key, head_key, tail_key
+            "key='%s' -> head_scalar_key='%s', tail_compound_key='%s'", key, head_scalar_key, tail_compound_key
         )
         hdbg.dassert_isinstance(
-            head_key, ScalarKeyValidTypes, "Keys can only be string or int"
+            head_scalar_key, ScalarKeyValidTypes, "Keys can only be string or int"
         )
         # TODO(gp): -> head_scalar_key, tail_compound_key
-        return head_key, tail_key
+        return head_scalar_key, tail_compound_key
 
     @staticmethod
     def _get_config_from_flattened_dict(
