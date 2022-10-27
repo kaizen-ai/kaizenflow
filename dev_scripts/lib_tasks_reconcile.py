@@ -518,6 +518,7 @@ def reconcile_run_all(
     ctx,
     run_date=None,
     dst_dir=None,
+    stage="preprod",
     rt_timeout_in_secs_or_time=None,
     prevent_overwriting=True,
     skip_notebook=False,
@@ -542,6 +543,7 @@ def reconcile_run_all(
         ctx,
         run_date=run_date,
         dst_dir=dst_dir,
+        stage=stage,
         prevent_overwriting=prevent_overwriting,
     )
     #
