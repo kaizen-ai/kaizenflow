@@ -75,13 +75,13 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
-def _prevent_overwriting(target_dir: str) -> None:
-    _LOG.info("Removing the write permissions for dir=%s", target_dir)
-    if not os.path.isdir(target_dir):
-        opt = ""
-    else:
+def _prevent_overwriting(object_path: str) -> None:
+    _LOG.info("Removing the write permissions for =%s", object_path)
+    if os.path.isdir(object_path):
         opt = "-R"
-    cmd = f"chmod {opt} -w {target_dir}"
+    else:
+        opt = ""
+    cmd = f"chmod {opt} -w {object_path}"
     _system(cmd)
 
 
@@ -92,7 +92,8 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     If a dir name is not specified by a user then use prod reconcilation
     dir on the shared disk with the corresponding run date subdir.
 
-    :param dst_dir: a dir to build target dir path
+    # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
+    :param dst_dir: a dir to build root reconciliation dir
     :return: a target dir to store reconcilation results
     """
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
@@ -281,7 +282,7 @@ def reconcile_run_sim(
         "--action run_simulation",
         f"--reconcile_sim_date {run_date}",
         f"--dst_dir {dst_dir}",
-        "--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
+        f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
     opts += "-v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
@@ -336,6 +337,8 @@ def reconcile_copy_prod_data(
 
     :param stage: development stage, e.g., `preprod`
     """
+    if stage is None:
+        stage = "preprod"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     _ = ctx
     run_date = _get_run_date(run_date)
@@ -546,7 +549,7 @@ def reconcile_run_all(
     ctx,
     run_date=None,
     dst_dir=None,
-    stage="preprod",
+    stage=None,
     rt_timeout_in_secs_or_time=None,
     prevent_overwriting=True,
     skip_notebook=False,
