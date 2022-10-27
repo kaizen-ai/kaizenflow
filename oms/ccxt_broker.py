@@ -119,6 +119,11 @@ class CcxtBroker(ombroker.Broker):
         :return: a list of filled orders
         """
         # Load previously sent orders from class state.
+        # TODO(Danya): we use `sent_orders` to:
+        #  - Get asset_ids (since you can fetch orders only by a single symbol)
+        #  - Filter fetched orders by ID, i.e. verify that fetched orders match the sent orders;
+        #  - Afterwards, we work ONLY with fetched orders which we have to manually convert to an Order
+        #  see `_convert_ccxt_order_to_oms_order` for more.
         sent_orders = self._sent_orders
         fills: List[ombroker.Fill] = []
         if sent_orders is None:
@@ -166,6 +171,12 @@ class CcxtBroker(ombroker.Broker):
                         )
                         fills.append(fill)
                         _LOG.debug(hprint.to_str("fill"))
+        # TODO(Danya): Update the function in the following way:
+        #  - Select OMS order as the base;
+        #  - Get all fills;
+        #  - From `self._sent_orders` select those that correlate to the fills by `id` 
+        #  (see line 149, but iterate over `sent_orders`)
+        #  - Convert the resulting OMS orders into Fills without the conversion.
         return fills
 
     def get_total_balance(self) -> Dict[str, float]:
@@ -419,9 +430,12 @@ class CcxtBroker(ombroker.Broker):
         'asset_id': 1467591036}
         ```
         """
+        # TODO(Danya): asset_id can be fetched from both CCXT and OMS orders.
+        #  asset_id in this case is assigned in the `get_fills` function
         asset_id = ccxt_order["asset_id"]
         type_ = "market"
         # Select creation and start date.
+        #  TODO (Danya): We can get a creation timestamp from the OMS order.
         creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
             ccxt_order["timestamp"]
         )
@@ -429,13 +443,19 @@ class CcxtBroker(ombroker.Broker):
         # Get an offset end timestamp.
         #  Note: `updateTime` is the timestamp of the latest order status change,
         #  so for filled orders this is a moment when the order is filled.
+        #  TODO(Danya): This data can be fetched only from CCXT.
         end_timestamp = hdateti.convert_unix_epoch_to_timestamp(
             int(ccxt_order["info"]["updateTime"])
         )
         # Add 1 minute to end timestamp.
         # This is done since market orders are filled instantaneously.
+        # TODO(Danya): This looks and feels like a plug. Both start and end
+        #  times are stored in the `oms.Order` object and should match.
         end_timestamp += pd.DateOffset(minutes=1)
         # Get the amount of shares in the filled order.
+        # TODO(Danya): If the filled order is filled completely,
+        #  we want to take the `diff_num_shares` from `oms.Order` object.
+        #  At least for representation and rounding.
         diff_num_shares = ccxt_order["filled"]
         if ccxt_order["side"] == "sell":
             diff_num_shares = -diff_num_shares
@@ -444,9 +464,17 @@ class CcxtBroker(ombroker.Broker):
         #  Note: This corresponds to the amount of assets
         #  before the filled order has been executed.
         #
-        symbol = self._asset_id_to_symbol_mapping[asset_id]
         # Select current position amount.
-        curr_num_shares = self._exchange.fetch_positions([symbol])[0]
+        #  TODO(Danya): This is the most troublesome plug.
+        #  We need `curr_num_shares` to correspond to the value
+        #  with which the order has been sent, while in CCXT
+        #  the value is only after the order has been filled, i.e.
+        #  the current position.
+        #  Since the System expects a Fill from the submitted OMS order,
+        #  we need to reconstruct the `curr_num_shares` before the fill.
+        #  So far it works pretty well, but we run into problems with
+        #  rounding, and the fit is not 100%.
+        #  curr_num_shares = self._exchange.fetch_positions([symbol])[0]
         _LOG.debug(
             "Before order has been filled: curr_num_shares=%s", curr_num_shares
         )
