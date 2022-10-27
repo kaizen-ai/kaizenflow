@@ -112,7 +112,7 @@ class Test_compute_correlations(hunitest.TestCase):
 
 
 class Test_remove_outliers(hunitest.TestCase):
-    def get_df(self) -> None:
+    def get_df1(self) -> None:
         nums = np.array(
             [
                 [-1.53580211, -0.88311838, -0.9268523],
@@ -155,15 +155,60 @@ class Test_remove_outliers(hunitest.TestCase):
         df = pd.DataFrame(nums, columns=["a", "b", "c"], index=dates)
         return df
 
+    def get_df2(self) -> None:
+        nums = np.array(
+            [[ 0.95688092, -1.61211317, -0.49511472],
+            [-1.18345345, -0.1784506 , -2.15030254],
+            [ 1.22679103,  2.41914244,  0.32424152],
+            [ 0.84301801,  0.66286444, -0.11545963],
+            [-0.33896853, -1.70096013,  1.87300553],
+            [-0.50184827, -0.13878928, -0.18330645],
+            [-0.07431446, -0.24753453, -0.84070791],
+            [ 1.58537025, -1.2839932 , -0.40655959],
+            [-0.63102528,  1.01691436, -2.38013045],
+            [ 0.07074936,  0.18946245, -0.47350746],
+            [-0.80159395,  0.69250321,  0.98042399],
+            [ 1.39437048,  0.93380013,  1.4213013 ],
+            [ 0.91551884,  0.48759975,  0.03499219],
+            [ 0.92336526, -0.86663111, -0.44961433],
+            [ 1.17915856,  0.23447891, -1.05031986],
+            [ 0.23184606,  0.79154335,  1.31570492],
+            [ 0.79327324, -0.37828518,  1.14849524],
+            [-0.15511277, -0.43720107, -1.3445319 ],
+            [ 0.93769945, -0.93531101,  1.38676881],
+            [-1.96857404,  0.39211937,  0.4067497 ],
+            [ 1.17083631,  1.23111748, -0.09562158],
+            [-0.00376395,  2.22474077,  0.14293839],
+            [-1.96050123, -1.58404481, -2.32508485],
+            [-0.55190869, -0.19300038,  1.57041683],
+            [ 0.03164568, -0.29209098, -0.29495549],
+            [ 0.84602043,  1.13781165, -1.0538485 ],
+            [-1.32579285,  0.76399403,  0.64146817],
+            [-0.37745564,  1.31407114,  0.62208967],
+            [-0.39312642,  0.80881361,  0.43797826],
+            [ 0.99352325,  1.35195131,  1.24468165]]
+        )
+        dates = (
+            pd.date_range(end=pd.Timestamp("2022-05-05"), periods=30)
+            .to_pydatetime()
+            .tolist()
+        )
+        df = pd.DataFrame(nums, columns=["a", "b", "c"], index=dates)
+        return df
+
     def test1(self) -> None:
         """
         Given the initial DataFrame with 30 rows make sure that the function removes outliers.
         """
-        df = self.get_df()
-        remove_outliers_columns = ["a", "b"]
-        remove_outliers_quantiles = (0.05, 0.95)
+        df = self.get_df1()
+        outlier_kwargs = {
+            "outlier_columns": ["a", "b"],
+            "outlier_quantiles": (0.05, 0.95)
+        }
+        # remove_outliers_columns = ["a", "b"]
+        # remove_outliers_quantiles = (0.05, 0.95)
         df_modified = dtfmodcorr.remove_outliers(
-            df, remove_outliers_columns, remove_outliers_quantiles
+            df, **outlier_kwargs
         )
         expected_length = 20
         expected_column_names = ["a", "b", "c"]
@@ -183,6 +228,41 @@ class Test_remove_outliers(hunitest.TestCase):
         """
         self.check_df_output(
             df_modified,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+
+    def test2(self) -> None:
+        """
+        Check that `remove_outliers()` works correctly inside `compute_correlations()`
+        """
+        df1 = self.get_df1()
+        df2 = self.get_df2()
+        outlier_kwargs = {
+            "outlier_columns": ["a", "b"],
+            "outlier_quantiles": (0.1, 0.9)
+        }
+        trim_outliers = True
+        allow_unequal_indices = True
+        corrs = dtfmodcorr.compute_correlations(
+            df1, df2, trim_outliers=trim_outliers, outlier_kwargs=outlier_kwargs, allow_unequal_indices=allow_unequal_indices)
+        expected_length = 3
+        expected_column_names = ['correlation']
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[a, c]
+        columns=correlation
+        shape=(3, 1)
+        correlation
+        a     0.317994
+        b     0.230572
+        c     0.498841
+        """
+        self.check_df_output(
+            corrs,
             expected_length,
             expected_column_names,
             expected_column_unique_values,

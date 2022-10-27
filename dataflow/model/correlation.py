@@ -5,7 +5,7 @@ import dataflow.model.correlation as dtfmodcorr
 """
 
 import logging
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Any
 
 import pandas as pd
 
@@ -19,9 +19,11 @@ _LOG = logging.getLogger(__name__)
 def compute_correlations(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
     trim_outliers: bool = False,
-    remove_outliers_columns: Optional[List[str]] = None,
-    remove_outliers_quantiles: Tuple[Optional[float], Optional[float]] = None,
+    # remove_outliers_columns: Optional[List[str]] = None,
+    # remove_outliers_quantiles: Tuple[Optional[float], Optional[float]] = None,
+    outlier_kwargs: Optional[Dict[str, Any]] = None,
     allow_unequal_indices: bool = False,
     allow_unequal_columns: bool = False,
 ) -> pd.DataFrame:
@@ -33,12 +35,14 @@ def compute_correlations(
     """
     # Switch to trim the outliers.
     if trim_outliers:
-        df1 = remove_outliers(
-            df1, remove_outliers_columns, remove_outliers_quantiles
-        )
-        df2 = remove_outliers(
-            df2, remove_outliers_columns, remove_outliers_quantiles
-        )
+        # df1 = remove_outliers(
+        #     df1, remove_outliers_columns, remove_outliers_quantiles
+        # )
+        # df2 = remove_outliers(
+        #     df2, remove_outliers_columns, remove_outliers_quantiles
+        # )
+        df1 = remove_outliers(df1, **outlier_kwargs)
+        df2 = remove_outliers(df2, **outlier_kwargs)
     # hpandas.dassert_axes_equal(df1, df2, sort_cols=True)
     if allow_unequal_indices:
         idx = df1.index.intersection(df2.index)
@@ -75,6 +79,36 @@ def compute_correlations(
     return corrs
 
 
+def remove_outliers(
+    df: pd.DataFrame,
+    # outlier_columns: List[str],
+    # outlier_quantiles: Tuple[Optional[float], Optional[float]],
+    **outlier_kwargs: Optional[Dict[str, Any]],
+) -> pd.DataFrame:
+    """
+    Remove rows with outliers in any given column.
+
+    :param outlier_columns: list of columns to proceed
+    :param outlier_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
+    :return: data with removed rows with outliers
+    """
+    # outliers_idxs = detect_outliers(
+    #     df, outlier_columns, outlier_quantiles
+    # )
+    outliers_idxs = detect_outliers(
+        df, **outlier_kwargs
+    )
+    # Collect indices that correspond to outlier values.
+    idxs_to_remove = set()
+    for vals in outliers_idxs.values():
+        idxs_to_remove = idxs_to_remove.union(set(vals))
+    idxs_to_remove = list(idxs_to_remove)
+    # Remove outliers from initial df.
+    df = df.drop(idxs_to_remove)
+    _LOG.debug("Number of outliers dropped = %s", len(idxs_to_remove))
+    return df
+
+
 def detect_outliers(
     df: pd.DataFrame,
     outlier_columns: List[str],
@@ -103,29 +137,3 @@ def detect_outliers(
         # Extract outliers' indices.
         outlier_idxs[col] = srs_tmp[srs_tmp.isna()].index
     return outlier_idxs
-
-
-def remove_outliers(
-    df: pd.DataFrame,
-    outlier_columns: List[str],
-    outlier_quantiles: Tuple[Optional[float], Optional[float]],
-) -> pd.DataFrame:
-    """
-    Remove rows with outliers in any given column.
-
-    :param remove_outliers_columns: list of columns to proceed
-    :param remove_outliers_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
-    :return: Data with removed rows with outliers
-    """
-    outliers_idxs = detect_outliers(
-        df, outlier_columns, outlier_quantiles
-    )
-    # Collect indices that correspond to outlier values.
-    idxs_to_remove = set()
-    for vals in outliers_idxs.values():
-        idxs_to_remove = idxs_to_remove.union(set(vals))
-    idxs_to_remove = list(idxs_to_remove)
-    # Remove outliers from initial df.
-    df = df.drop(idxs_to_remove)
-    _LOG.debug("Number of outliers dropped = %s", len(idxs_to_remove))
-    return df
