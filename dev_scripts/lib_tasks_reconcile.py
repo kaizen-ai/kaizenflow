@@ -327,7 +327,7 @@ def reconcile_copy_prod_data(
     ctx,
     run_date=None,
     dst_dir=None,
-    stage="preprod",
+    stage=None,
     prevent_overwriting=True,
 ):  # type: ignore
     """
