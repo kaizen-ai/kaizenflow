@@ -378,6 +378,7 @@ class ImClient(abc.ABC):
         )
         # Check that full symbol column has no NaNs.
         hdbg.dassert(df[full_symbol_col_name].notna().all())
+        
         # Check that there are no duplicates in data by index and full symbol.
         n_duplicated_rows = (
             df.reset_index()
