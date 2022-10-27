@@ -510,7 +510,9 @@ def get_system_log_paths(
         data_path_dict[k] = cur_dir
     return data_path_dict
 
-
+# TODO(Grisha): let's make `timestamp` mandatory and load
+# only for 1 timestamp, i.e. disable functionality that loads
+# for all timestamps.
 def get_dag_node_output(
     dag_dir: str,
     dag_node_name: str,
@@ -567,6 +569,10 @@ def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
     return nodes
 
 
+# TODO(Grisha): let's pass `dag_node_name` so that we get timestamps only for 1 node.
+# TODO(Grisha): let's add param `as_str=False` to return either as strings
+# # (if `as_str=True`) or as pd.Timestamps (if `as_str=False`). The output
+# format is `List[Union[str, pd.Timestamp]`.
 def get_dag_node_timestamp(dag_dir: str) -> Dict[str, List[str]]:
     """
     Get all timestamps for each node.
@@ -583,6 +589,8 @@ def get_dag_node_timestamp(dag_dir: str) -> Dict[str, List[str]]:
     return node_timestamps
 
 
+# TODO(Grisha): let's remove `.` at the end. E.g., now it is
+# `predict.8.process_forecasts.`, should be `predict.8.process_forecasts`.
 def get_dag_node_names(dag_dir: str) -> set:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
     node_names = set(node.split("df_out")[0] for node in nodes)
