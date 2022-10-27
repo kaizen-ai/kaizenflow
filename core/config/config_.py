@@ -182,9 +182,9 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: Optional[str] = "allow_write_after_use"
     ) -> None:
         """
-        Each val is encoded internally as a tuple (marked_as_read, value) where:
+        Each val is encoded internally as a tuple (marked_as_used, value) where:
 
-        - marked_as_read: stores whether the value has been already read and thus
+        - marked_as_used: stores whether the value has been already used and thus
           needs to be protected from successive writes, depending on
           clobber_mode
         - value: stores the actual value
@@ -250,13 +250,13 @@ class _OrderedConfig(_OrderedDictType):
             pass
         elif clobber_mode == "assert_on_write_after_use":
             if is_key_present:
-                marked_as_read, old_val = super().__getitem__(key)
+                marked_as_used, old_val = super().__getitem__(key)
                 
                 is_been_changed = old_val != val
                 _LOG.debug(
-                    hprint.to_str("marked_as_read old_val is_been_changed")
+                    hprint.to_str("marked_as_used old_val is_been_changed")
                 )
-                if marked_as_read and is_been_changed:
+                if marked_as_used and is_been_changed:
                     # The value has already been read and we are trying to change
                     # it, so we need to assert.
                     msg: List[str] = []
@@ -273,20 +273,20 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("assign_new_value"))
         if assign_new_value:
             if is_key_present:
-                # If replacing value, use the same `mark_as_read` as the old value.
-                marked_as_read, old_val = super().__getitem__(key)
+                # If replacing value, use the same `mark_as_used` as the old value.
+                marked_as_used, old_val = super().__getitem__(key)
                 _ = old_val
             else:
                 # The key was not present, so we just mark it not read yet.
-                marked_as_read = False
+                marked_as_used = False
             # Check if the value has already been marked as read/unread.
             #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
-                # Set new `marked_as_read` status with the same value.
-                val = (marked_as_read, val[1])
+                # Set new `marked_as_used` status with the same value.
+                val = (marked_as_used, val[1])
                 super().__setitem__(key, val)
             else:
-                super().__setitem__(key, (marked_as_read, val))
+                super().__setitem__(key, (marked_as_used, val))
             
     # /////////////////////////////////////////////////////////////////////////////
     # Get.
@@ -298,38 +298,37 @@ class _OrderedConfig(_OrderedDictType):
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
-        marked_as_read, val = super().__getitem__(key)
+        marked_as_used, val = super().__getitem__(key)
         return val
     
-    # TODO(gp): -> mark_as_used
     # TODO(Danya): Use to mark items in `__getitem__`.
-    def mark_as_read(self, key: ScalarKey, read_state: bool = True) -> None:
+    def mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
         """
         Mark value as read.
 
-        The value is a tuple of (mark_as_read, value), where `mark_as_read`== True
+        The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
         if the value has been accessed via `__getitem__`. 
 
-        :param read_state: whether to mark the value as read.
+        :param used_state: whether to mark the value as used.
                  Values are not marked e.g. when accessed through `__contains__` method.
         """
         # Retrieve the value and the metadata.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        marked_as_read, val = super().__getitem__(key)
-        _LOG.debug(hprint.to_str("marked_as_read val read_state"))
+        marked_as_used, val = super().__getitem__(key)
+        _LOG.debug(hprint.to_str("marked_as_used val read_state"))
         #
         if read_state:
             # Update the metadata, accounting that this data was read.
-            marked_as_read = True
-            super().__setitem__(key, (marked_as_read, val))
+            marked_as_used = True
+            super().__setitem__(key, (marked_as_used, val))
         # If the value is an iterable then we need to propagate the read state.
         if hintros.is_iterable(val):
             for elem in val:
-                if hasattr(elem, "mark_as_read"):
-                    elem.mark_as_read(marked_as_read)
+                if hasattr(elem, "mark_as_used"):
+                    elem.mark_as_used(marked_as_used)
         else:
-            if hasattr(val, "mark_as_read"):
-                val.mark_as_read(marked_as_read)
+            if hasattr(val, "mark_as_used"):
+                val.mark_as_used(marked_as_used)
 
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -358,16 +357,16 @@ class _OrderedConfig(_OrderedDictType):
 
         :param mode: `only_values` or `verbose`
                     - `only_values` for simple string representation
-                    - `verbose` for values with `val_type` and `mark_as_read`
+                    - `verbose` for values with `val_type` and `mark_as_used`
         """
         txt = []
-        for key, (marked_as_read, val) in self.items():
+        for key, (marked_as_used, val) in self.items():
             # 1) Process key.
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
-                # E.g., `nrows (marked_as_read=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (marked_as_read={marked_as_read}, "
+                # E.g., `nrows (marked_as_used=False, val_type=core.config.config_.Config)`
+                key_as_str = f"{key} (marked_as_used={marked_as_used}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
@@ -839,8 +838,8 @@ class Config:
         _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
         dict_: _OrderedDictType[ScalarKey, Any] = collections.OrderedDict()
-        for key, (marked_as_read, val) in self._config.items():
-            _ = marked_as_read
+        for key, (marked_as_used, val) in self._config.items():
+            _ = marked_as_used
             if keep_leaves:
                 if isinstance(val, Config):
                     # If a value is a `Config` convert to dictionary recursively.
@@ -1019,7 +1018,7 @@ class Config:
             )
             msg.append("self=\n" + hprint.indent(str(self)))
             msg = "\n".join(msg)
-            # TODO(Danya): Remove after enabling `mark_as_read` method.
+            # TODO(Danya): Remove after enabling `mark_as_used` method.
             raise ReadOnlyConfigError(msg)
         update_mode = self._resolve_update_mode(update_mode)
         clobber_mode = self._resolve_clobber_mode(clobber_mode)
