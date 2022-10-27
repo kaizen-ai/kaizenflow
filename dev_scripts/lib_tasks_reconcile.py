@@ -77,7 +77,11 @@ def _get_run_date(run_date: Optional[str]) -> str:
 
 def _prevent_overwriting(target_dir: str) -> None:
     _LOG.info("Removing the write permissions for dir=%s", target_dir)
-    cmd = f"chmod -R -w {target_dir}"
+    if not os.path.isdir(target_dir):
+        opt = ""
+    else:
+        opt = "-R"
+    cmd = f"chmod {opt} -w {target_dir}"
     _system(cmd)
 
 
@@ -243,12 +247,7 @@ def reconcile_dump_market_data(
     _sanity_check_data(market_data_file_target)
     #
     if prevent_overwriting:
-        _LOG.info(
-            "Removing the write permissions for file=%s", market_data_file_target
-        )
-        cmd = f"chmod -w {market_data_file_target}"
-        _system(cmd)
-
+        _prevent_overwriting(market_data_file_target)
 
 @task
 def reconcile_run_sim(
