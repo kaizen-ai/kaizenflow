@@ -141,7 +141,7 @@ def reconcile_create_dirs(
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Create dirs for storing prod and simulation results.
@@ -197,7 +197,7 @@ def reconcile_dump_market_data(
     )
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
         rt_timeout_in_secs_or_time
     )
@@ -298,7 +298,7 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwritin
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(sim_target_dir)
@@ -336,7 +336,7 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     prod_target_dir = os.path.join(target_dir, "prod")
     # Make sure that the target dir exists before copying.
     hdbg.dassert_dir_exists(prod_target_dir)
@@ -413,7 +413,13 @@ def reconcile_run_notebook(
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
-    cmd_run_txt = ["amp/dev_scripts/notebooks/run_notebook.py", f"--notebook {notebook_path}", f"--config_builder '{config_builder}'", f"--dst_dir {results_dir}", f"{opts}"]
+    cmd_run_txt = [
+        "amp/dev_scripts/notebooks/run_notebook.py",
+        f"--notebook {notebook_path}",
+        f"--config_builder '{config_builder}'",
+        f"--dst_dir {results_dir}",
+        f"{opts}",
+    ]
     cmd_run_txt = " ".join(cmd_run_txt)
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
@@ -425,7 +431,7 @@ def reconcile_run_notebook(
     _system(script_name)
     # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
