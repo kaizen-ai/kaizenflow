@@ -55,10 +55,8 @@ print(config)
 
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
-# system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict = {'prod': '/shared_data/prod_reconciliation/20221017/prod/system_log_dir_scheduled__2022-10-16T10:00:00+00:00_2hours',
- 'cand': '/shared_data/prod_reconciliation/20221017/prod/system_log_dir_scheduled__2022-10-16T10:00:00+00:00_2hours',
- 'sim': '/shared_data/prod_reconciliation/20221017/simulation/system_log_dir'}
+system_log_path_dict = dict(config["system_log_path"].to_dict())
+system_log_path_dict
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -102,20 +100,11 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
-corr = dag_df_dict["prod"].rolling(3).corr(dag_df_dict["sim"], axis=1)
-
-# %%
-min_corr = []
-for col in corr.columns:
-    minval = corr[col[0]].min(axis=1)
-    minval.name = col[0]
-    min_corr.append(minval)
-
-# %%
-corr.describe()
-
-# %%
-pd.concat(min_corr, axis=1)
+# Load DAG output for different experiments.
+dag_df_dict = {}
+for name, path in dag_path_dict.items():
+    dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
+hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
 prod_sim_dag_corr = dtfmod.compute_correlations(
@@ -128,14 +117,6 @@ hpandas.df_to_str(
     precision=3,
     log_level=logging.INFO,
 )
-
-# %%
-prod_sim_dag_corr
-
-# %%
-prod_sim_dag_corr.min()
-
-# %%
 
 # %%
 # Make sure they are exactly the same.
