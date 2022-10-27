@@ -207,10 +207,9 @@ def reconcile_dump_market_data(
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
         # TODO(Grisha): @Dan Copy logs to the specified folder.
-        # pylint: disable=line-too-long
-        opts = f"--action dump_data --reconcile_sim_date {run_date} --dst_dir {dst_dir} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
-        opts += "; exit ${PIPESTATUS[0]}"
-        # pylint: enable=line-too-long
+        opts = ["--action dump_data", f"--reconcile_sim_date {run_date}", f"--dst_dir {dst_dir}", f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}"]
+        opts = " ".join(opts)
+        opts += "-v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         cmd = f"{script_name} {opts}"
         _system(cmd)
@@ -268,10 +267,9 @@ def reconcile_run_sim(
         )
         _system(rm_cmd)
     # Run simulation.
-    # pylint: disable=line-too-long
-    opts = f"--action run_simulation --reconcile_sim_date {run_date} --dst_dir {dst_dir} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
-    opts += "; exit ${PIPESTATUS[0]}"
-    # pylint: enable=line-too-long
+    opts = ["--action run_simulation", f"--reconcile_sim_date {run_date}", f"--dst_dir {dst_dir}", "--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}"]
+    opts = " ".join(opts)
+    opts += "-v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
@@ -494,11 +492,13 @@ def reconcile_dump_tca_data(
     account_type = "trading"
     secrets_id = "3"
     universe = "v7.1"
-    # pylint: disable=line-too-long
-    opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
+    opts = [f"--exchange_id {exchange_id}", f"--contract_type {contract_type}", f"--stage {stage}", f"--account_type {account_type}", f"--secrets_id {secrets_id}", f"--universe {universe}""]
+    opts = " ".join(opts)
+    opts += f"--incremental -v DEBUG 2>&1 | tee {log_file}"
+    opts += "; exit ${PIPESTATUS[0]}"
     log_file = os.path.join(local_results_dir, "log.txt")
-    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {local_results_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
-    # pylint: enable=line-too-long
+    cmd_run_txt = ["amp/oms/get_ccxt_fills.py", f"--start_timestamp '{start_timestamp}'", f"--end_timestamp '{end_timestamp}'", f"--dst_dir {local_results_dir}", f"{opts}"]
+    cmd_run_txt = " ".join(cmd_run_txt)
     cmd_run_txt += "; exit ${PIPESTATUS[0]}"
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
