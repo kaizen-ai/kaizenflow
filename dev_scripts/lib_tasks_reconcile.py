@@ -75,6 +75,12 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
+def _prevent_overwriting(target_dir: str) -> None:
+    _LOG.info("Removing the write permissions for dir=%s", target_dir)
+    cmd = f"chmod -R -w {target_dir}"
+    _system(cmd)
+
+
 def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     """
     Return the target dir name to store reconcilation results.
@@ -313,10 +319,7 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwritin
     cmd = f"cp -v {pytest_log_file_path} {sim_target_dir}"
     _system(cmd)
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for dir=%s", sim_target_dir)
-        cmd = f"chmod -R -w {sim_target_dir}"
-        _system(cmd)
-
+        _prevent_overwriting(sim_target_dir)
 
 @task
 def reconcile_copy_prod_data(
@@ -361,10 +364,7 @@ def reconcile_copy_prod_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for dir=%s", prod_target_dir)
-        cmd = f"chmod -R -w {prod_target_dir}"
-        _system(cmd)
-
+        _prevent_overwriting(prod_target_dir)
 
 # TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
 @task
@@ -439,10 +439,7 @@ def reconcile_run_notebook(
     #
     if prevent_overwriting:
         results_target_dir = os.path.join(target_dir, "result_0")
-        _LOG.info("Removing the write permissions for dir=%s", results_target_dir)
-        cmd = f"chmod -R -w {results_target_dir}"
-        _system(cmd)
-
+        _prevent_overwriting(results_target_dir)
 
 @task
 def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
@@ -539,10 +536,7 @@ def reconcile_dump_tca_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for dir=%s", target_dir)
-        cmd = f"chmod -R -w {target_dir}"
-        _system(cmd)
-
+        _prevent_overwriting(target_dir)
 
 @task
 def reconcile_run_all(
