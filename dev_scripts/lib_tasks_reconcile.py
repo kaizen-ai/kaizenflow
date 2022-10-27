@@ -75,12 +75,15 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
-def _resolve_target_dir(dst_dir: Optional[str], run_date: str) -> str:
+def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     """
     Return the target dir name to store reconcilation results.
 
     If a dir name is not specified by a user then use prod reconcilation
     dir on the shared disk with the corresponding run date subdir.
+
+    :param dst_dir: a dir to build target dir path
+    :return: a target dir to store reconcilation results
     """
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     target_dir = os.path.join(dst_dir, run_date)
@@ -92,7 +95,7 @@ def _resolve_rt_timeout_in_secs_or_time(
     rt_timeout_in_secs_or_time: Optional[int],
 ) -> int:
     """
-    Return the specified `rt_timeout_in_secs_or_time`.
+    Return the specified `rt_timeout_in_secs_or_time` or a default value corresponding to 2 hours.
     """
     rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
     _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
@@ -402,7 +405,7 @@ def reconcile_run_notebook(
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     # pylint: disable=line-too-long
-    cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
+    cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {results_dir} {opts}"
     # pylint: enable=line-too-long
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
