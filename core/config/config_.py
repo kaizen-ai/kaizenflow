@@ -317,7 +317,7 @@ class _OrderedConfig(_OrderedDictType):
         marked_as_used, val = super().__getitem__(key)
         _LOG.debug(hprint.to_str("marked_as_used val read_state"))
         #
-        if read_state:
+        if used_state:
             # Update the metadata, accounting that this data was read.
             marked_as_used = True
             super().__setitem__(key, (marked_as_used, val))
@@ -916,8 +916,7 @@ class Config:
                 str(self),
             )
             _LOG.error(msg)
-            # TODO(gp): This should be KeyError
-            raise ValueError(msg)
+            raise KeyError(msg)
 
     # /////////////////////////////////////////////////////////////////////////////
     # Private methods.
@@ -1001,7 +1000,7 @@ class Config:
         :param update_mode: define the policy used for updates (see above)
             - `None` to use the value set in the constructor
         :param clobber_mode: define the policy used for controlling
-            write-after-read (see above)
+            write-after-use (see above)
             - `None` to use the value set in the constructor
         """
         _LOG.debug(hprint.to_str("key val update_mode clobber_mode self"))
