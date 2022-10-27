@@ -95,7 +95,8 @@ def _resolve_rt_timeout_in_secs_or_time(
     rt_timeout_in_secs_or_time: Optional[int],
 ) -> int:
     """
-    Return the specified `rt_timeout_in_secs_or_time` or a default value corresponding to 2 hours.
+    Return the specified `rt_timeout_in_secs_or_time` or a default value
+    corresponding to 2 hours.
     """
     rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
     _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
