@@ -413,9 +413,8 @@ def reconcile_run_notebook(
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
-    # pylint: disable=line-too-long
-    cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {results_dir} {opts}"
-    # pylint: enable=line-too-long
+    cmd_run_txt = ["amp/dev_scripts/notebooks/run_notebook.py", f"--notebook {notebook_path}", f"--config_builder '{config_builder}'", f"--dst_dir {results_dir}", f"{opts}"]
+    cmd_run_txt = " ".join(cmd_run_txt)
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
@@ -522,7 +521,6 @@ def reconcile_dump_tca_data(
         f"{opts}",
     ]
     cmd_run_txt = " ".join(cmd_run_txt)
-    cmd_run_txt += "; exit ${PIPESTATUS[0]}"
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
     hio.create_executable_script(script_name, cmd_run_txt)
