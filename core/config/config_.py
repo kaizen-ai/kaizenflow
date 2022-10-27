@@ -934,7 +934,6 @@ class Config:
         hdbg.dassert_isinstance(
             head_scalar_key, ScalarKeyValidTypes, "Keys can only be string or int"
         )
-        # TODO(gp): -> head_scalar_key, tail_compound_key
         return head_scalar_key, tail_compound_key
 
     @staticmethod
