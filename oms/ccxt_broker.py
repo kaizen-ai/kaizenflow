@@ -177,6 +177,7 @@ class CcxtBroker(ombroker.Broker):
         #  - From `self._sent_orders` select those that correlate to the fills by `id` 
         #  (see line 149, but iterate over `sent_orders`)
         #  - Convert the resulting OMS orders into Fills without the conversion.
+        #  - Add price, order closure timestamp and num_shares from CCXT
         return fills
 
     def get_total_balance(self) -> Dict[str, float]:
