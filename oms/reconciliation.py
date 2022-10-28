@@ -580,7 +580,9 @@ def get_dag_node_timestamps(
     return node_timestamps
 
 
-def get_dag_node_names(dag_dir: str, *, dag_node_name: Optional[str] = None) -> List[str]:
+def get_dag_node_names(
+    dag_dir: str, *, dag_node_name: Optional[str] = None
+) -> List[str]:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
     if dag_node_name:
         node_names = list(filter(lambda node: dag_node_name in node, nodes))
