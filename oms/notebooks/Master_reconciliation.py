@@ -21,6 +21,7 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -56,7 +57,6 @@ print(config)
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
 system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -100,13 +100,63 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
+# Get DAG node names.
+dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
+dag_node_names
+
+# %%
+# Get timestamps for the last DAG node.
+dag_node_timestamps = oms.get_dag_node_timestamps(
+    dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
+)
+dag_node_timestamps
+
+# %%
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
+    # Get DAG node names for every experiment.
+    dag_nodes = oms.get_dag_node_names(path)
+    # Get timestamps for the last node.
+    dag_node_ts = oms.get_dag_node_timestamps(
+        path, dag_nodes[-1], as_timestamp=True
+    )
+    # Get DAG output for the last node and the last timestamp.
+    dag_df_dict[name] = oms.get_dag_node_output(
+        path, dag_nodes[-1], dag_node_ts[-1]
+    )
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_multiindex_dfs(
+    dag_df_dict["prod"],
+    dag_df_dict["sim"],
+    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+diff_df.max().max()
+
+# %%
+# Plot diffs over time.
+diff_df.max(axis=1).plot()
+
+# %%
+# Plot diffs over columns.
+diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
+
+# %%
+# Plot diffs over assets.
+diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+
+# %%
+# Compute correlations.
 prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
