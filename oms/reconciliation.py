@@ -547,10 +547,15 @@ def load_config_from_pickle(
     return config_dict
 
 
-def compute_maximum_delay(df: pd.DataFrame, *, run_date: Optional[datetime.date] = None) -> None:
+def compute_maximum_delay(
+    df: pd.DataFrame, *, run_date: Optional[datetime.date] = None
+) -> None:
     if run_date:
         # Filter data frame by date.
-        next_date = datetime.date(year=run_date.year, month=run_date.month, day=(run_date.day + 1))
-        df = df[run_date:next_date]
-    df.groupby(by=["full_symbol"]).max()["delta"].sort_values(ascending=False).plot(
-    kind="bar")
+        next_date = datetime.date(
+            year=run_date.year, month=run_date.month, day=(run_date.day + 1)
+        )
+        df = df[run_date:next_date]  # type: ignore[misc]
+    df.groupby(by=["full_symbol"]).max()["delta"].sort_values(
+        ascending=False
+    ).plot(kind="bar")
