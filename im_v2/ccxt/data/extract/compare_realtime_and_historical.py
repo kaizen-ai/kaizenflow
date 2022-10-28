@@ -14,6 +14,7 @@ Use as:
    --db_table 'ccxt_ohlcv_preprod' \
    --aws_profile 'ck' \
    --resample_1min \
+   --s3_vendor 'crypto_chassis' \
    --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
 
 Import as:
@@ -22,6 +23,7 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
 import logging
+import os
 from typing import List
 
 import pandas as pd
@@ -113,6 +115,15 @@ def _parse() -> argparse.ArgumentParser:
         help="If the data should be resampled to 1 sec'",
     )
 
+    parser.add_argument(
+        "--bid_ask_accuracy",
+        action="store",
+        required=False,
+        type=int,
+        help="An accuracy threshold (in %) to apply when reconciling bid/ask data"
+        + "If the data differ above this threshold an error is raised.",
+    )
+
     parser = hparser.add_verbosity_arg(parser)
     # For `--s3_path` argument we only specify the top level path for the daily staged data,
     # the code handles appending the exchange, e.g. `binance` and data type, e.g. `bid_ask`
@@ -134,7 +145,14 @@ class RealTimeHistoricalReconciler:
                 True,
                 "One resampling option should be chosen",
             )
+            hdbg.dassert_ne(
+                args.bid_ask_accuracy,
+                None,
+                "parameter `bid_ask_accuracy` is required "
+                + "for `bid_ask` data type",
+            )
         self.data_type = args.data_type
+        self.bid_ask_accuracy = args.bid_ask_accuracy
         # Set DB connection.
         db_connection = self.get_db_connection(args)
         # Initialize CCXT client.
@@ -152,8 +170,8 @@ class RealTimeHistoricalReconciler:
             args.resample_1sec,
         )
         # Process time period.
-        self.start_ts = pd.Timestamp(args.start_timestamp, tz="UTC")
-        self.end_ts = pd.Timestamp(args.end_timestamp, tz="UTC")
+        self.start_ts = pd.Timestamp(args.start_timestamp)
+        self.end_ts = pd.Timestamp(args.end_timestamp)
         self.resample_1sec = args.resample_1sec
         #
         self.universe = self._get_universe(args.s3_vendor)
@@ -253,7 +271,7 @@ class RealTimeHistoricalReconciler:
             vendor_folder = s3_vendor
         if contract_type == "futures":
             data_type = f"{data_type}-futures"
-        s3_path = f"{s3_path}/{data_type}/{vendor_folder}/{exchange_id}"
+        s3_path = os.path.join(s3_path, data_type, vendor_folder, exchange_id)
         return s3_path
 
     @staticmethod
@@ -434,6 +452,37 @@ class RealTimeHistoricalReconciler:
                     daily_missing_data, num_rows=len(daily_missing_data)
                 )
             )
+        # Assert data has no gaps at the same place.
+        #  hpandas.find_gaps_in_dataframes will not report
+        #  if both datasets miss a data point at the same timestamp.
+        # All of the checks are done by minute apart from checking raw bid_ask data.
+        step = "S" if self.resample_1sec else "T"
+        rt_data_gaps = hpandas.find_gaps_in_time_series(
+            rt_data.index.get_level_values(0).unique(),
+            self.start_ts,
+            self.end_ts,
+            step,
+        )
+        if not rt_data_gaps.empty:
+            error_message.append("Gaps in real time data:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    rt_data_gaps.to_frame(), num_rows=len(rt_data_gaps)
+                )
+            )
+        daily_data_gaps = hpandas.find_gaps_in_time_series(
+            daily_data.index.get_level_values(0).unique(),
+            self.start_ts,
+            self.end_ts,
+            step,
+        )
+        if not daily_data_gaps.empty:
+            error_message.append("Gaps in daily data:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    daily_data_gaps.to_frame(), num_rows=len(daily_data_gaps)
+                )
+            )
         return error_message
 
     def _compare_ohlcv(
@@ -538,8 +587,8 @@ class RealTimeHistoricalReconciler:
                 diff_stats_prices, num_rows=len(diff_stats_prices)
             ),
         )
-        # Define the maximum acceptable difference as 1%.
-        threshold = 1
+        # Define the maximum acceptable difference in %.
+        threshold = self.bid_ask_accuracy
         # Log the difference.
         for index, row in diff_stats_prices.iterrows():
             if abs(row["bid_price_relative_diff_pct"]) > threshold:
