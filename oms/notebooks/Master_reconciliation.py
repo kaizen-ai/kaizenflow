@@ -106,7 +106,9 @@ dag_node_names
 
 # %%
 # Get timestamps for the last DAG node.
-dag_node_timestamps = oms.get_dag_node_timestamps(dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True)
+dag_node_timestamps = oms.get_dag_node_timestamps(
+    dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
+)
 dag_node_timestamps
 
 # %%
@@ -116,16 +118,23 @@ for name, path in dag_path_dict.items():
     # Get DAG node names for every experiment.
     dag_nodes = oms.get_dag_node_names(path)
     # Get timestamps for the last node.
-    dag_node_ts = oms.get_dag_node_timestamps(path, dag_nodes[-1], as_timestamp=True)
+    dag_node_ts = oms.get_dag_node_timestamps(
+        path, dag_nodes[-1], as_timestamp=True
+    )
     # Get DAG output for the last node and the last timestamp.
-    dag_df_dict[name] = oms.get_dag_node_output(path, dag_nodes[-1], dag_node_ts[-1])
+    dag_df_dict[name] = oms.get_dag_node_output(
+        path, dag_nodes[-1], dag_node_ts[-1]
+    )
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
 diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_dict["prod"], 
+    dag_df_dict["prod"],
     dag_df_dict["sim"],
     compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
 )

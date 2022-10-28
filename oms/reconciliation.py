@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -547,7 +547,7 @@ def get_dag_node_names(dag_dir: str) -> List[str]:
     """
     Get dag node names from a target dir.
 
-    E.g., 
+    E.g.,
     ```
     ['predict.0.read_data',
     'predict.1.resample',
@@ -566,7 +566,9 @@ def get_dag_node_names(dag_dir: str) -> List[str]:
     file_names = _get_dag_node_parquet_file_names(dag_dir)
     # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
     # And the node name is `predict.8.process_forecasts`.
-    node_names = sorted(list(set(node.split(".df_out")[0] for node in file_names)))
+    node_names = sorted(
+        list(set(node.split(".df_out")[0] for node in file_names))
+    )
     return node_names
 
 
