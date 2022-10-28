@@ -7,7 +7,9 @@ import helpers.hunit_test as hunitest
 def _build_test_config_list(
     symbols: Optional[List[str]] = None,
 ) -> cconfig.ConfigList:
-    config_template = cconfig.Config()
+    # Create an empty overwriteable config.
+    update_mode = "overwrite"
+    config_template = cconfig.Config(update_mode=update_mode)
     config_tmp = config_template.add_subconfig("read_data")
     config_tmp["symbol"] = None
     config_tmp = config_template.add_subconfig("resample")
