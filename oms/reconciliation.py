@@ -510,14 +510,11 @@ def get_system_log_paths(
         data_path_dict[k] = cur_dir
     return data_path_dict
 
-# TODO(Grisha): let's make `timestamp` mandatory and load
-# only for 1 timestamp, i.e. disable functionality that loads
-# for all timestamps.
+
 def get_dag_node_output(
     dag_dir: str,
     dag_node_name: str,
-    *,
-    timestamp: pd.Timestamp = None,
+    timestamp: pd.Timestamp,
 ) -> pd.DataFrame:
     """
     Retrieve output from the last DAG node.
@@ -525,11 +522,10 @@ def get_dag_node_output(
     This function relies on our file naming conventions.
     """
     hdbg.dassert_dir_exists(dag_dir)
+    hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+    timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
     cmd = f"find '{dag_dir}' -name {dag_node_name}*.parquet"
-    if timestamp is not None:
-        hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-        timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
-        cmd += f" | grep '{timestamp}'"
+    cmd += f" | grep '{timestamp}'"
     _, files = hsystem.system_to_string(cmd)
     files = files.split("\n")
     all_data = []
@@ -558,40 +554,39 @@ def load_config_from_pickle(
     return config_dict
 
 
-def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
+def _get_dag_node_parquet_file_names(dag_dir: str, *, dag_node_name: Optional[str] = None) -> List[str]:
     """
-    Get parquet files for all nodes in the target folder.
+    Get parquet files for nodes in the target folder.
+    
+    Get files only for a concreate node if `dag_node_name` is specified.
     """
     hdbg.dassert_dir_exists(dag_dir)
-    cmd = f"ls {dag_dir} | grep 'parquet'"
+    cmd = f"find {dag_dir}"
+    if dag_node_name:
+        cmd += f" -name {dag_node_name}*"
+    cmd += " | grep 'parquet'"
     _, nodes = hsystem.system_to_string(cmd)
     nodes = nodes.split("\n")
     return nodes
 
 
-# TODO(Grisha): let's pass `dag_node_name` so that we get timestamps only for 1 node.
-# TODO(Grisha): let's add param `as_str=False` to return either as strings
-# # (if `as_str=True`) or as pd.Timestamps (if `as_str=False`). The output
-# format is `List[Union[str, pd.Timestamp]`.
-def get_dag_node_timestamp(dag_dir: str) -> Dict[str, List[str]]:
+def get_dag_node_timestamp(dag_dir: str, dag_node_name: str, *, as_str: bool = False) -> List[Union[str, pd.Timestamp]:
     """
-    Get all timestamps for each node.
+    Get all timestamps for a node.
     """
-    nodes = _get_dag_node_parquet_file_names(dag_dir)
-    node_timestamps = {}
+    nodes = _get_dag_node_parquet_file_names(dag_dir, dag_node_name=dag_node_name)
+    node_timestamps = []
     for node in nodes:
-        node_name = node.split("df_out")[0]
+        node_name = node.split(".df_out")[0]
         ts = node.split(".")[-2]
-        if node_name not in node_timestamps.keys():
-            node_timestamps[node_name] = [ts]
-        else:
-            node_timestamps[node_name].append(ts)
+        if not as_str:
+            ts = ts.replace("_", " ")
+            ts = pd.Timestamp(ts)
+        node_timestamps.append(ts)
     return node_timestamps
 
 
-# TODO(Grisha): let's remove `.` at the end. E.g., now it is
-# `predict.8.process_forecasts.`, should be `predict.8.process_forecasts`.
 def get_dag_node_names(dag_dir: str) -> set:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
-    node_names = set(node.split("df_out")[0] for node in nodes)
+    node_names = set(node.split(".df_out")[0] for node in nodes)
     return node_names
