@@ -75,12 +75,26 @@ def _get_run_date(run_date: Optional[str]) -> str:
     return run_date
 
 
-def _resolve_target_dir(dst_dir: Optional[str], run_date: str) -> str:
+def _prevent_overwriting(object_path: str) -> None:
+    _LOG.info("Removing the write permissions for: %s", object_path)
+    if os.path.isdir(object_path):
+        opt = "-R"
+    else:
+        opt = ""
+    cmd = f"chmod {opt} -w {object_path}"
+    _system(cmd)
+
+
+def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     """
     Return the target dir name to store reconcilation results.
 
     If a dir name is not specified by a user then use prod reconcilation
     dir on the shared disk with the corresponding run date subdir.
+
+    # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
+    :param dst_dir: a dir to build root reconciliation dir
+    :return: a target dir to store reconcilation results
     """
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     target_dir = os.path.join(dst_dir, run_date)
@@ -92,7 +106,8 @@ def _resolve_rt_timeout_in_secs_or_time(
     rt_timeout_in_secs_or_time: Optional[int],
 ) -> int:
     """
-    Return the specified `rt_timeout_in_secs_or_time`.
+    Return the specified `rt_timeout_in_secs_or_time` or a default value
+    corresponding to 2 hours.
     """
     rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
     _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
@@ -137,7 +152,7 @@ def reconcile_create_dirs(
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Create dirs for storing prod and simulation results.
@@ -193,7 +208,7 @@ def reconcile_dump_market_data(
     )
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
         rt_timeout_in_secs_or_time
     )
@@ -203,10 +218,14 @@ def reconcile_dump_market_data(
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
         # TODO(Grisha): @Dan Copy logs to the specified folder.
-        # pylint: disable=line-too-long
-        opts = f"--action dump_data --reconcile_sim_date {run_date} --dst_dir {dst_dir} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt"
-        opts += "; exit ${PIPESTATUS[0]}"
-        # pylint: enable=line-too-long
+        opts = [
+            "--action dump_data",
+            f"--reconcile_sim_date {run_date}",
+            f"--dst_dir {dst_dir}",
+            f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
+        ]
+        opts = " ".join(opts)
+        opts += "-v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         cmd = f"{script_name} {opts}"
         _system(cmd)
@@ -229,12 +248,7 @@ def reconcile_dump_market_data(
     _sanity_check_data(market_data_file_target)
     #
     if prevent_overwriting:
-        _LOG.info(
-            "Removing the write permissions for file=%s", market_data_file_target
-        )
-        cmd = f"chmod -w {market_data_file_target}"
-        _system(cmd)
-
+        _prevent_overwriting(market_data_file_target)
 
 @task
 def reconcile_run_sim(
@@ -264,10 +278,14 @@ def reconcile_run_sim(
         )
         _system(rm_cmd)
     # Run simulation.
-    # pylint: disable=line-too-long
-    opts = f"--action run_simulation --reconcile_sim_date {run_date} --dst_dir {dst_dir} --rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time} -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt"
-    opts += "; exit ${PIPESTATUS[0]}"
-    # pylint: enable=line-too-long
+    opts = [
+        "--action run_simulation",
+        f"--reconcile_sim_date {run_date}",
+        f"--dst_dir {dst_dir}",
+        f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
+    ]
+    opts = " ".join(opts)
+    opts += "-v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
@@ -286,7 +304,7 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwritin
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(sim_target_dir)
@@ -301,9 +319,7 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwritin
     cmd = f"cp -v {pytest_log_file_path} {sim_target_dir}"
     _system(cmd)
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for dir=%s", sim_target_dir)
-        cmd = f"chmod -R -w {sim_target_dir}"
-        _system(cmd)
+        _prevent_overwriting(sim_target_dir)
 
 
 @task
@@ -311,7 +327,7 @@ def reconcile_copy_prod_data(
     ctx,
     run_date=None,
     dst_dir=None,
-    stage="preprod",
+    stage=None,
     prevent_overwriting=True,
 ):  # type: ignore
     """
@@ -321,10 +337,12 @@ def reconcile_copy_prod_data(
 
     :param stage: development stage, e.g., `preprod`
     """
+    if stage is None:
+        stage = "preprod"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     prod_target_dir = os.path.join(target_dir, "prod")
     # Make sure that the target dir exists before copying.
     hdbg.dassert_dir_exists(prod_target_dir)
@@ -349,9 +367,7 @@ def reconcile_copy_prod_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for dir=%s", prod_target_dir)
-        cmd = f"chmod -R -w {prod_target_dir}"
-        _system(cmd)
+        _prevent_overwriting(prod_target_dir)
 
 
 # TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
@@ -401,9 +417,14 @@ def reconcile_run_notebook(
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
-    # pylint: disable=line-too-long
-    cmd_run_txt = f"amp/dev_scripts/notebooks/run_notebook.py --notebook {notebook_path} --config_builder '{config_builder}' --dst_dir {dst_dir} {opts}"
-    # pylint: enable=line-too-long
+    cmd_run_txt = [
+        "amp/dev_scripts/notebooks/run_notebook.py",
+        f"--notebook {notebook_path}",
+        f"--config_builder '{config_builder}'",
+        f"--dst_dir {results_dir}",
+        f"{opts}",
+    ]
+    cmd_run_txt = " ".join(cmd_run_txt)
     cmd_txt.append(cmd_run_txt)
     cmd_txt = "\n".join(cmd_txt)
     # Save the commands as a script.
@@ -414,7 +435,7 @@ def reconcile_run_notebook(
     _system(script_name)
     # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
@@ -422,9 +443,7 @@ def reconcile_run_notebook(
     #
     if prevent_overwriting:
         results_target_dir = os.path.join(target_dir, "result_0")
-        _LOG.info("Removing the write permissions for dir=%s", results_target_dir)
-        cmd = f"chmod -R -w {results_target_dir}"
-        _system(cmd)
+        _prevent_overwriting(results_target_dir)
 
 
 @task
@@ -490,12 +509,26 @@ def reconcile_dump_tca_data(
     account_type = "trading"
     secrets_id = "3"
     universe = "v7.1"
-    # pylint: disable=line-too-long
-    opts = f"--exchange_id {exchange_id} --contract_type {contract_type} --stage {stage} --account_type {account_type} --secrets_id {secrets_id} --universe {universe}"
+    opts = [
+        f"--exchange_id {exchange_id}",
+        f"--contract_type {contract_type}",
+        f"--stage {stage}",
+        f"--account_type {account_type}",
+        f"--secrets_id {secrets_id}",
+        f"--universe {universe}",
+    ]
+    opts = " ".join(opts)
     log_file = os.path.join(local_results_dir, "log.txt")
-    cmd_run_txt = f"amp/oms/get_ccxt_fills.py --start_timestamp '{start_timestamp}' --end_timestamp '{end_timestamp}' --dst_dir {local_results_dir} {opts} --incremental -v DEBUG 2>&1 | tee {log_file}"
-    # pylint: enable=line-too-long
-    cmd_run_txt += "; exit ${PIPESTATUS[0]}"
+    opts += f"--incremental -v DEBUG 2>&1 | tee {log_file}"
+    opts += "; exit ${PIPESTATUS[0]}"
+    cmd_run_txt = [
+        "amp/oms/get_ccxt_fills.py",
+        f"--start_timestamp '{start_timestamp}'",
+        f"--end_timestamp '{end_timestamp}'",
+        f"--dst_dir {local_results_dir}",
+        f"{opts}",
+    ]
+    cmd_run_txt = " ".join(cmd_run_txt)
     # Save the command as a script.
     script_name = "tmp.dump_tca_data.sh"
     hio.create_executable_script(script_name, cmd_run_txt)
@@ -508,9 +541,7 @@ def reconcile_dump_tca_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        _LOG.info("Removing the write permissions for dir=%s", target_dir)
-        cmd = f"chmod -R -w {target_dir}"
-        _system(cmd)
+        _prevent_overwriting(target_dir)
 
 
 @task
@@ -518,6 +549,7 @@ def reconcile_run_all(
     ctx,
     run_date=None,
     dst_dir=None,
+    stage=None,
     rt_timeout_in_secs_or_time=None,
     prevent_overwriting=True,
     skip_notebook=False,
@@ -542,6 +574,7 @@ def reconcile_run_all(
         ctx,
         run_date=run_date,
         dst_dir=dst_dir,
+        stage=stage,
         prevent_overwriting=prevent_overwriting,
     )
     #
