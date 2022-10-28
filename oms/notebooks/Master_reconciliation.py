@@ -18,7 +18,6 @@
 # %matplotlib inline
 
 # %%
-import datetime
 import logging
 import os
 
@@ -31,7 +30,6 @@ import core.plotting as coplotti
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
-import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsql as hsql
@@ -119,7 +117,7 @@ im_client = icdcl.CcxtSqlRealTimeImClient(
 )
 
 # %%
-# Get the universe. 
+# Get the universe.
 # TODO(Grisha): get the version from the config.
 vendor = "CCXT"
 mode = "trade"
@@ -154,7 +152,9 @@ minimums = df.groupby(by=["full_symbol"]).min()["delta"]
 maximums = df.groupby(by=["full_symbol"]).max()["delta"]
 means = df.groupby(by=["full_symbol"]).mean()["delta"]
 errors = [means - minimums, maximums - means]
-df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(kind="bar", yerr=errors)
+df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(
+    kind="bar", yerr=errors
+)
 
 # %% [markdown]
 # # Compare DAG io
