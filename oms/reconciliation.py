@@ -519,7 +519,8 @@ def get_dag_node_output(
     """
     Retrieve output from the last DAG node.
 
-    This function relies on our file naming conventions.
+    This function relies on our file naming conventions, e.g.,
+    `dag/node_io/node_io.data/predict.0.read_data.df_out.20221021_060500.txt`.
     """
     hdbg.dassert_dir_exists(dag_dir)
     hdbg.dassert_isinstance(timestamp, pd.Timestamp)
@@ -568,6 +569,12 @@ def get_dag_node_timestamps(
 ) -> List[Union[str, pd.Timestamp]]:
     """
     Get all timestamps for a node.
+
+    :param dag_dir: a folder where dag nodes data is stored
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param as_str: returns `pd.Timestamp` type timestamp by default, otherwise
+        as a string
+    :return: a list of timestamps for specified node
     """
     node_file_names = get_dag_node_names(dag_dir, dag_node_name=dag_node_name)
     node_timestamps = []
@@ -583,6 +590,13 @@ def get_dag_node_timestamps(
 def get_dag_node_names(
     dag_dir: str, *, dag_node_name: Optional[str] = None
 ) -> List[str]:
+    """
+    Get dag node names from a target dir.
+
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :return: a sorted list of all dag node names, otherwise for a concrete node if
+        `dag_node_name` is specified
+    """
     nodes = _get_dag_node_parquet_file_names(dag_dir)
     if dag_node_name:
         node_names = list(filter(lambda node: dag_node_name in node, nodes))
