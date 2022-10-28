@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -554,10 +554,12 @@ def load_config_from_pickle(
     return config_dict
 
 
-def _get_dag_node_parquet_file_names(dag_dir: str, *, dag_node_name: Optional[str] = None) -> List[str]:
+def _get_dag_node_parquet_file_names(
+    dag_dir: str, *, dag_node_name: Optional[str] = None
+) -> List[str]:
     """
     Get parquet files for nodes in the target folder.
-    
+
     Get files only for a concreate node if `dag_node_name` is specified.
     """
     hdbg.dassert_dir_exists(dag_dir)
@@ -570,14 +572,15 @@ def _get_dag_node_parquet_file_names(dag_dir: str, *, dag_node_name: Optional[st
     return nodes
 
 
-def get_dag_node_timestamp(dag_dir: str, dag_node_name: str, *, as_str: bool = False) -> List[Union[str, pd.Timestamp]:
+def get_dag_node_timestamp(
+    dag_dir: str, dag_node_name: str, *, as_str: bool = False
+) -> List[Union[str, pd.Timestamp]]:
     """
     Get all timestamps for a node.
     """
     nodes = _get_dag_node_parquet_file_names(dag_dir, dag_node_name=dag_node_name)
     node_timestamps = []
     for node in nodes:
-        node_name = node.split(".df_out")[0]
         ts = node.split(".")[-2]
         if not as_str:
             ts = ts.replace("_", " ")
