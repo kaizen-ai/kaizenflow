@@ -148,12 +148,16 @@ hpandas.df_to_str(df, num_rows=5, log_level=logging.INFO)
 # Compute delay in seconds.
 df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
 # Plot the delay over assets with the errors bars.
-minimums = df.groupby(by=["full_symbol"]).min()["delta"]
-maximums = df.groupby(by=["full_symbol"]).max()["delta"]
-means = df.groupby(by=["full_symbol"]).mean()["delta"]
+delta_per_asset = df.groupby(by=["full_symbol"])["delta"]
+minimums = delta_per_asset.min()
+maximums = delta_per_asset.max()
+means = delta_per_asset.mean()
 errors = [means - minimums, maximums - means]
-df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(
-    kind="bar", yerr=errors
+# TODO(Grisha): sort by maximum delay.
+means.plot(
+    kind="bar", 
+    yerr=errors,
+    title="DB delay in seconds per asset"
 )
 
 # %% [markdown]
