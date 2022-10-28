@@ -409,6 +409,30 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+def find_gaps_in_time_series(
+    time_series: pd.Series,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    step: str,
+) -> pd.Series:
+    """
+    Find missing points on a time interval specified by [start_timestamp,
+    end_timestamp], where point distribution is determined by <step>.
+
+    :param time_series: time series to find gaps in
+    :param start_timestamp: start of the time interval to check
+    :param end_timestamp: end of the time interval to check
+    :param step: distance between two data points on the interval,
+      i.e. "S" -> second, "T" -> minute
+      for a list of aliases.
+    :return: pd.Series representing missing points in the source time series.
+    """
+    correct_time_series = pd.date_range(
+        start=start_timestamp, end=end_timestamp, freq=step
+    )
+    return correct_time_series.difference(time_series)
+
+
 def check_and_filter_matching_columns(
     df: pd.DataFrame, required_columns: List[str], filter_data_mode: str
 ) -> pd.DataFrame:
