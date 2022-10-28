@@ -21,6 +21,7 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -55,10 +56,7 @@ print(config)
 
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
-# system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict = {'prod': '/shared_data/prod_reconciliation/20221017/prod/system_log_dir_scheduled__2022-10-16T10:00:00+00:00_2hours',
- 'cand': '/shared_data/prod_reconciliation/20221017/prod/system_log_dir_scheduled__2022-10-16T10:00:00+00:00_2hours',
- 'sim': '/shared_data/prod_reconciliation/20221017/simulation/system_log_dir'}
+system_log_path_dict = dict(config["system_log_path"].to_dict())
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -94,7 +92,7 @@ date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
 start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 07:55:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -102,16 +100,54 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare DAG io
 
 # %%
+# Get DAG node names.
+dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
+dag_node_names
+
+# %%
+# Get timestamps for the last DAG node.
+dag_node_timestamps = oms.get_dag_node_timestamps(dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True)
+dag_node_timestamps
+
+# %%
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
+    # Get DAG node names for every experiment.
     dag_nodes = oms.get_dag_node_names(path)
-    # Get timestamps and output for the last node.
-    dag_node_ts = oms.get_dag_node_timestamps(path, dag_nodes[-1])
+    # Get timestamps for the last node.
+    dag_node_ts = oms.get_dag_node_timestamps(path, dag_nodes[-1], as_timestamp=True)
+    # Get DAG output for the last node and the last timestamp.
     dag_df_dict[name] = oms.get_dag_node_output(path, dag_nodes[-1], dag_node_ts[-1])
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
+diff_df = hpandas.compare_multiindex_dfs(
+    dag_df_dict["prod"], 
+    dag_df_dict["sim"],
+    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+diff_df.max().max()
+
+# %%
+# Plot diffs over time.
+diff_df.max(axis=1).plot()
+
+# %%
+# Plot diffs over columns.
+diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
+
+# %%
+# Plot diffs over assets.
+diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+
+# %%
+# Compute correlations.
 prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],

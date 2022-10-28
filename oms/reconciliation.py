@@ -454,35 +454,27 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
     return config_list
 
 
+def load_config_from_pickle(
+    system_log_path_dict: Dict[str, str]
+) -> Dict[str, cconfig.Config]:
+    """
+    Load configs from pickle files given a dict of paths.
+    """
+    config_dict = {}
+    file_name = "system_config.input.values_as_strings.pkl"
+    for stage, path in system_log_path_dict.items():
+        path = os.path.join(path, file_name)
+        hdbg.dassert_path_exists(path)
+        _LOG.debug("Reading config from %s", path)
+        config_pkl = hpickle.from_pickle(path)
+        config = cconfig.Config.from_dict(config_pkl)
+        config_dict[stage] = config
+    return config_dict
+
+
 # #############################################################################
 # Loading utils
 # #############################################################################
-
-
-def load_portfolio_dfs(
-    portfolio_path_dict: Dict[str, str],
-    portfolio_config: Dict[str, Any],
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-    """
-    Load multiple portfolios and portfolio stats from disk.
-
-    :param portfolio_path_dict: paths to portfolios for different experiments
-    :param portfolio_config: params for `load_portfolio_artifacts()`
-    :return: portfolios and portfolio stats for different experiments
-    """
-    portfolio_dfs = {}
-    portfolio_stats_dfs = {}
-    for name, path in portfolio_path_dict.items():
-        hdbg.dassert_path_exists(path)
-        _LOG.info("Processing portfolio=%s path=%s", name, path)
-        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
-            path,
-            **portfolio_config,
-        )
-        portfolio_dfs[name] = portfolio_df
-        portfolio_stats_dfs[name] = portfolio_stats_df
-    #
-    return portfolio_dfs, portfolio_stats_dfs
 
 
 def get_system_log_paths(
@@ -511,6 +503,103 @@ def get_system_log_paths(
     return data_path_dict
 
 
+def load_portfolio_dfs(
+    portfolio_path_dict: Dict[str, str],
+    portfolio_config: Dict[str, Any],
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    Load multiple portfolios and portfolio stats from disk.
+
+    :param portfolio_path_dict: paths to portfolios for different experiments
+    :param portfolio_config: params for `load_portfolio_artifacts()`
+    :return: portfolios and portfolio stats for different experiments
+    """
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_path_dict.items():
+        hdbg.dassert_path_exists(path)
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            path,
+            **portfolio_config,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    return portfolio_dfs, portfolio_stats_dfs
+
+
+def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
+    """
+    Get Parquet files for all the nodes in the target folder.
+
+    :param dag_dir: dir with the DAG output
+    :return: list of all files for all nodes and timestamps in the dir
+    """
+    hdbg.dassert_dir_exists(dag_dir)
+    cmd = f"ls {dag_dir} | grep 'parquet'"
+    _, nodes = hsystem.system_to_string(cmd)
+    nodes = nodes.split("\n")
+    return nodes
+
+
+def get_dag_node_names(dag_dir: str) -> List[str]:
+    """
+    Get dag node names from a target dir.
+
+    E.g., 
+    ```
+    ['predict.0.read_data',
+    'predict.1.resample',
+    'predict.2.compute_ret_0',
+    'predict.3.compute_vol',
+    'predict.4.adjust_rets',
+    'predict.5.compress_rets',
+    'predict.6.add_lags',
+    'predict.7.predict',
+    'predict.8.process_forecasts']
+    ```
+
+    :param dag_dir: dir with the DAG output
+    :return: a sorted list of all dag node names
+    """
+    file_names = _get_dag_node_parquet_file_names(dag_dir)
+    # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
+    # And the node name is `predict.8.process_forecasts`.
+    node_names = sorted(list(set(node.split(".df_out")[0] for node in file_names)))
+    return node_names
+
+
+def get_dag_node_timestamps(
+    dag_dir: str,
+    dag_node_name: str,
+    *,
+    as_timestamp: bool = True,
+) -> List[Union[str, pd.Timestamp]]:
+    """
+    Get all timestamps for a node.
+
+    :param dag_dir: dir with the DAG output
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param as_timestamp: if True return as `pd.Timestamp`, otherwise
+        return as string
+    :return: a list of timestamps for the specified node
+    """
+    file_names = _get_dag_node_parquet_file_names(dag_dir)
+    node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
+    node_timestamps = []
+    for file_name in node_file_names:
+        # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
+        # And the timestamp is `20221028_080000`.
+        ts = file_name.split(".")[-2]
+        if as_timestamp:
+            ts = ts.replace("_", " ")
+            # TODO(Grisha): Pass tz a param?
+            ts = pd.Timestamp(ts, tz="America/New_York")
+        node_timestamps.append(ts)
+    return node_timestamps
+
+
 def get_dag_node_output(
     dag_dir: str,
     dag_node_name: str,
@@ -520,88 +609,19 @@ def get_dag_node_output(
     Retrieve output from the last DAG node.
 
     This function relies on our file naming conventions, e.g.,
-    `dag/node_io/node_io.data/predict.0.read_data.df_out.20221021_060500.txt`.
+    `dag/node_io/node_io.data/predict.0.read_data.df_out.20221021_060500.parquet`.
+
+    :param dag_dir: dir with the DAG output
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param timestamp: bar timestamp
+    :return: a DAG node output
     """
     hdbg.dassert_dir_exists(dag_dir)
     hdbg.dassert_isinstance(timestamp, pd.Timestamp)
     timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
+    # TODO(Grisha): merge the logic with the one in `get_dag_node_names()`.
     cmd = f"find '{dag_dir}' -name {dag_node_name}*.parquet"
     cmd += f" | grep '{timestamp}'"
     _, file = hsystem.system_to_string(cmd)
     df = hparque.from_parquet(file)
     return df
-
-
-def load_config_from_pickle(
-    system_log_path_dict: Dict[str, str]
-) -> Dict[str, cconfig.Config]:
-    """
-    Load configs from pickle files given a dict of paths.
-    """
-    config_dict = {}
-    file_name = "system_config.input.values_as_strings.pkl"
-    for stage, path in system_log_path_dict.items():
-        path = os.path.join(path, file_name)
-        hdbg.dassert_path_exists(path)
-        _LOG.debug("Reading config from %s", path)
-        config_pkl = hpickle.from_pickle(path)
-        config = cconfig.Config.from_dict(config_pkl)
-        config_dict[stage] = config
-    return config_dict
-
-
-def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
-    """
-    Get parquet files for each nodes in the target folder.
-    """
-    hdbg.dassert_dir_exists(dag_dir)
-    cmd = f"ls {dag_dir} | grep 'parquet'"
-    _, nodes = hsystem.system_to_string(cmd)
-    nodes = nodes.split("\n")
-    return nodes
-
-
-def get_dag_node_timestamps(
-    dag_dir: str,
-    dag_node_name: str,
-    *,
-    as_str: bool = False,
-) -> List[Union[str, pd.Timestamp]]:
-    """
-    Get all timestamps for a node.
-
-    :param dag_dir: a folder where dag nodes data is stored
-    :param dag_node_name: a node name, e.g., `predict.0.read_data`
-    :param as_str: returns `pd.Timestamp` type timestamp by default, otherwise
-        as a string
-    :return: a list of timestamps for specified node
-    """
-    node_file_names = get_dag_node_names(dag_dir, dag_node_name=dag_node_name)
-    node_timestamps = []
-    for file_name in node_file_names:
-        ts = file_name.split(".")[-2]
-        if not as_str:
-            ts = ts.replace("_", " ")
-            ts = pd.Timestamp(ts)
-        node_timestamps.append(ts)
-    return node_timestamps
-
-
-def get_dag_node_names(
-    dag_dir: str, *, dag_node_name: Optional[str] = None
-) -> List[str]:
-    """
-    Get dag node names from a target dir.
-
-    :param dag_node_name: a node name, e.g., `predict.0.read_data`
-    :return: a sorted list of all dag node names, otherwise for a concrete node if
-        `dag_node_name` is specified
-    """
-    nodes = _get_dag_node_parquet_file_names(dag_dir)
-    if dag_node_name:
-        node_names = list(filter(lambda node: dag_node_name in node, nodes))
-    else:
-        node_names = list(set(node.split(".df_out")[0] for node in nodes))
-    # Sort in order node names.
-    node_names = sorted(node_names)
-    return node_names
