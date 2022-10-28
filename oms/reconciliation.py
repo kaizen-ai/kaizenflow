@@ -555,7 +555,9 @@ def load_config_from_pickle(
 
 
 def _get_dag_node_parquet_file_names(
-    dag_dir: str, *, dag_node_name: Optional[str] = None
+    dag_dir: str,
+    *,
+    dag_node_name: Optional[str] = None,
 ) -> List[str]:
     """
     Get parquet files for nodes in the target folder.
@@ -573,7 +575,10 @@ def _get_dag_node_parquet_file_names(
 
 
 def get_dag_node_timestamp(
-    dag_dir: str, dag_node_name: str, *, as_str: bool = False
+    dag_dir: str,
+    dag_node_name: str,
+    *,
+    as_str: bool = False,
 ) -> List[Union[str, pd.Timestamp]]:
     """
     Get all timestamps for a node.
