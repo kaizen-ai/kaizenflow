@@ -7,11 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-<<<<<<< HEAD
-from typing import Any, Dict, Optional, Tuple
-=======
 from typing import Any, Dict, List, Tuple, Union
->>>>>>> master
 
 import numpy as np
 import pandas as pd
@@ -631,22 +627,3 @@ def get_dag_node_output(
     _, file = hsystem.system_to_string(cmd)
     df = hparque.from_parquet(file)
     return df
-
-
-# #############################################################################
-# Delay statistics
-# #############################################################################
-
-
-def compute_maximum_delay(
-    df: pd.DataFrame, *, run_date: Optional[datetime.date] = None
-) -> None:
-    if run_date:
-        # Filter data frame by date.
-        next_date = datetime.date(
-            year=run_date.year, month=run_date.month, day=(run_date.day + 1)
-        )
-        df = df[run_date:next_date]  # type: ignore[misc]
-    df.groupby(by=["full_symbol"]).max()["delta"].sort_values(
-        ascending=False
-    ).plot(kind="bar")

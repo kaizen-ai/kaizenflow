@@ -98,9 +98,63 @@ date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
 start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 07:55:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
+
+# %% [markdown]
+# # Data delay analysis
+
+# %%
+# Get the real-time `ImClient`.
+# TODO(Grisha): ideally we should get the values from the config.
+resample_1min = False
+env_file = imvimlita.get_db_env_path("dev")
+connection_params = hsql.get_connection_info_from_env_file(env_file)
+db_connection = hsql.get_connection(*connection_params)
+table_name = "ccxt_ohlcv_futures"
+#
+im_client = icdcl.CcxtSqlRealTimeImClient(
+    resample_1min, db_connection, table_name
+)
+
+# %%
+# Get the universe. 
+# TODO(Grisha): get the version from the config.
+vendor = "CCXT"
+mode = "trade"
+version = "v7.1"
+as_full_symbol = True
+full_symbols = ivcu.get_vendor_universe(
+    vendor,
+    mode,
+    version=version,
+    as_full_symbol=as_full_symbol,
+)
+full_symbols
+
+# %%
+# Load the data for the reconciliation date.
+# `ImClient` operates in UTC timezone.
+start_ts = pd.Timestamp(date_str, tz="UTC")
+end_ts = start_ts + pd.Timedelta(days=1)
+columns = None
+filter_data_mode = "assert"
+df = im_client.read_data(
+    full_symbols, start_ts, end_ts, columns, filter_data_mode
+)
+hpandas.df_to_str(df, num_rows=5, log_level=logging.INFO)
+
+# %%
+# TODO(Grisha): move to a lib.
+# Compute delay in seconds.
+df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
+# Plot the delay over assets with the errors bars.
+minimums = df.groupby(by=["full_symbol"]).min()["delta"]
+maximums = df.groupby(by=["full_symbol"]).max()["delta"]
+means = df.groupby(by=["full_symbol"]).mean()["delta"]
+errors = [means - minimums, maximums - means]
+df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(kind="bar", yerr=errors)
 
 # %% [markdown]
 # # Compare DAG io
@@ -277,72 +331,3 @@ if config["meta"]["run_tca"]:
     tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
     tca = cofinanc.compute_tca_price_annotations(tca, True)
     tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
-
-# %% [markdown]
-# # Delay Analysis
-
-# %%
-resample_1min = False
-env_file = imvimlita.get_db_env_path("dev")
-# Get login info.
-connection_params = hsql.get_connection_info_from_env_file(env_file)
-# Login.
-db_connection = hsql.get_connection(*connection_params)
-# Get the real-time `ImClient`.
-# TODO(Grisha): this will print only the `futures` universe, allow also
-# to print `spot` universe.
-table_name = "ccxt_ohlcv_futures"
-#
-im_client = icdcl.CcxtSqlRealTimeImClient(
-    resample_1min, db_connection, table_name
-)
-
-# %%
-vendor = "CCXT"
-mode = "trade"
-version = "v7.1"
-as_full_symbol = True
-full_symbols = ivcu.get_vendor_universe(
-    vendor,
-    mode,
-    version=version,
-    as_full_symbol=as_full_symbol,
-)
-full_symbols
-
-# %%
-start_ts = pd.Timestamp("2022-10-25 00:00:00-04:00")
-end_ts = pd.Timestamp("2022-10-25 23:59:00-04:00")
-columns = None
-filter_data_mode = "assert"
-df = im_client.read_data(
-    full_symbols, start_ts, end_ts, columns, filter_data_mode
-)
-df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
-df
-
-# %%
-run_date = datetime.date(year=2022, month=10, day=26)
-oms.compute_maximum_delay(df, run_date=run_date)
-
-# %%
-df.groupby(by=["full_symbol"]).max()["delta"].sort_values(ascending=False).plot(
-    kind="bar"
-)
-
-# %%
-print("min", df["delta"].min().round(2))
-print("mean", df["delta"].mean().round(2))
-print("std", df["delta"].std().round(2))
-print("max", df["delta"].max().round(2))
-
-# %%
-df["delta"].plot(kind="hist", bins=50, xlim=(0, 120))
-
-# %%
-path = "/shared_data/prod_reconciliation/20221013/tca/json/fills_20221012-000000_20221013-000000_binance.preprod.trading.3.json"
-file = hio.from_json(path)
-
-# %%
-df = pd.DataFrame(file)
-df
