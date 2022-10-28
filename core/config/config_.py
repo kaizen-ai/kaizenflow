@@ -781,9 +781,6 @@ class Config:
                 for key, val in dict_.items():
                     dict_tmp[key]
 
-
-        if convert_to_dict:
-
         return dict_
 
     @classmethod

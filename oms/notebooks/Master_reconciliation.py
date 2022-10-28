@@ -47,7 +47,7 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = "20221025"
+date_str = "20221028"
 config_list = oms.build_reconciliation_configs(date_str)
 config = config_list[0]
 print(config)
@@ -97,32 +97,33 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 
 
 # %%
-file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
-df1 = pd.read_parquet(file_name1)
+# file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+# df1 = pd.read_parquet(file_name1)
 
-file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
-df2 = pd.read_parquet(file_name2)
-
-# %%
-df1.columns.levels[0]
+# file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+# df2 = pd.read_parquet(file_name2)
 
 # %%
-#asset_id = 1030828978
-asset_id = 9872743573
-#df1['vwap.ret_0.vol_adj_2_hat', asset_id] == df2['vwap.ret_0.vol_adj_2_hat', asset_id]
-#column = 'vwap.ret_0.vol_adj_2_hat'
-column = 'close'
+#df1.columns.levels[0]
 
-#pd.concat()
+# %%
+if False:
+    #asset_id = 1030828978
+    asset_id = 9872743573
+    #df1['vwap.ret_0.vol_adj_2_hat', asset_id] == df2['vwap.ret_0.vol_adj_2_hat', asset_id]
+    #column = 'vwap.ret_0.vol_adj_2_hat'
+    column = 'close'
 
-compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
-subset_multiindex_df_kwargs = {"columns_level0": [column],
-                               #"columns_level1": [asset_id]
-                              }
+    #pd.concat()
 
-hpandas.compare_multiindex_dfs(df1, df2,
-                               subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
-                               compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs )#.dropna().abs().max()
+    compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
+    subset_multiindex_df_kwargs = {"columns_level0": [column],
+                                   #"columns_level1": [asset_id]
+                                  }
+
+    hpandas.compare_multiindex_dfs(df1, df2,
+                                   subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
+                                   compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs )#.dropna().abs().max()
 
 # %%
 
