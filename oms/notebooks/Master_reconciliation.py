@@ -18,6 +18,7 @@
 # %matplotlib inline
 
 # %%
+import datetime
 import logging
 import os
 
@@ -269,6 +270,10 @@ df = im_client.read_data(
 )
 df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
 df
+
+# %%
+run_date = datetime.date(year=2022, month=10, day=26)
+oms.compute_maximum_delay(df, run_date=run_date)
 
 # %%
 df.groupby(by=["full_symbol"]).max()["delta"].sort_values(ascending=False).plot(

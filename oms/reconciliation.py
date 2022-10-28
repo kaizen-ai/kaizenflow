@@ -7,7 +7,7 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -545,3 +545,12 @@ def load_config_from_pickle(
         config = cconfig.Config.from_dict(config_pkl)
         config_dict[stage] = config
     return config_dict
+
+
+def compute_maximum_delay(df: pd.DataFrame, *, run_date: Optional[datetime.date] = None) -> None:
+    if run_date:
+        # Filter data frame by date.
+        next_date = datetime.date(year=run_date.year, month=run_date.month, day=(run_date.day + 1))
+        df = df[run_date:next_date]
+    df.groupby(by=["full_symbol"]).max()["delta"].sort_values(ascending=False).plot(
+    kind="bar")
