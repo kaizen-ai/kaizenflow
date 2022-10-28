@@ -7,7 +7,8 @@ import oms.reconciliation as omreconc
 import datetime
 import logging
 import os
-from typing import Any, Dict, Tuple
+import pprint
+from typing import Any, Dict, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -339,17 +340,20 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
 # #############################################################################
 
 
-def build_reconciliation_configs() -> cconfig.ConfigList:
+def build_reconciliation_configs(date_str: Optional[str]) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
+
+    :param date_str: specify which date to use.
     """
-    # Infer the meta-parameters from env.
-    date_key = "AM_RECONCILIATION_DATE"
-    if date_key in os.environ:
-        date_str = os.environ[date_key]
-    else:
-        date_str = datetime.date.today().strftime("%Y%m%d")
-    date_str = "20221019"
+    if date_str is None:
+        # Infer the meta-parameters from env.
+        date_key = "AM_RECONCILIATION_DATE"
+        if date_key in os.environ:
+            date_str = os.environ[date_key]
+        else:
+            date_str = datetime.date.today().strftime("%Y%m%d")
+    _LOG.info("Using date_str=%s", date_str)
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:
@@ -486,17 +490,31 @@ def load_portfolio_dfs(
     return portfolio_dfs, portfolio_stats_dfs
 
 
+# TODO(gp): verbose -> log_level?
 def get_system_log_paths(
-    system_log_path_dict: Dict[str, str], data_type: str
+    system_log_path_dict: Dict[str, str], data_type: str,
+    *,
+    verbose: bool = False,
 ) -> Dict[str, str]:
     """
     Get paths to data inside a system log dir.
 
     :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir", "sim": ...}`
-    :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
+        ```
+        {
+            "prod": "/shared_data/system_log_dir",
+            "sim": ...
+        }
+        ```
+    :param data_type: type of data to create paths for, e.g., "dag" for
+        DAG output, "portfolio" to load Portfolio
     :return: dir paths inside system log dir for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
+        ```
+        {
+            "prod": "/shared_data/system_log_dir/process_forecasts/portfolio",
+            "sim": ...
+        }
+        ```
     """
     data_path_dict = {}
     if data_type == "portfolio":
@@ -509,6 +527,8 @@ def get_system_log_paths(
         cur_dir = os.path.join(v, dir_name)
         hdbg.dassert_dir_exists(cur_dir)
         data_path_dict[k] = cur_dir
+    if verbose:
+        _LOG.info("# %s=\n%s", data_type, pprint.pformat(data_path_dict))
     return data_path_dict
 
 

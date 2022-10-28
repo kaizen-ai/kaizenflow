@@ -742,13 +742,15 @@ class Config:
             config = None
         return config
 
-    def to_dict(self, *, keep_leaves: bool = True) -> Dict[ScalarKey, Any]:
+    def to_dict(self, *, keep_leaves: bool = True, convert_to_dict: bool = False) -> Dict[ScalarKey, Any]:
         """
         Convert the Config to nested ordered dicts.
 
         :param keep_leaves: keep or skip empty leaves
+        :param convert_to_dict: return a Python dict instead of a OrderedDict
+        :return: a dictionary-like storing the content of this Config
         """
-        _LOG.debug(hprint.to_str("self keep_leaves"))
+        _LOG.debug(hprint.to_str("self keep_leaves convert_to_dict"))
         # pylint: disable=unsubscriptable-object
         dict_: collections.OrderedDict[ScalarKey, Any] = collections.OrderedDict()
         for key, val in self._config.items():
@@ -772,6 +774,16 @@ class Config:
                 #  Temporary measure to keep back compatibility
                 #  with Config string representations (CMTask2689).
                 dict_[key] = Config()
+        #
+        def _to_dict(dict_tmp: Dict) -> Dict:
+            if isinstance(dict_tmp, Dict):
+                dict_tmp = {}
+                for key, val in dict_.items():
+                    dict_tmp[key]
+
+
+        if convert_to_dict:
+
         return dict_
 
     @classmethod

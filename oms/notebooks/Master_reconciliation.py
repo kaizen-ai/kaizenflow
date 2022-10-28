@@ -20,6 +20,7 @@
 # %%
 import logging
 import os
+import pprint
 
 import pandas as pd
 
@@ -46,7 +47,8 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-config_list = oms.build_reconciliation_configs()
+date_str = "20221025"
+config_list = oms.build_reconciliation_configs(date_str)
 config = config_list[0]
 print(config)
 
@@ -54,13 +56,23 @@ print(config)
 # # Specify data to load
 
 # %% run_control={"marked": true}
-# The dict points to `system_log_dir` for different experiments.
+# Points to `system_log_dir` for different experiments.
 system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict
+print("# system_log_path_dict=\n%s" % pprint.pformat(system_log_path_dict))
+
+# Points to `system_log_dir/process_forecasts/portfolio` for different experiments.
+data_type = "portfolio"
+portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type, verbose=True)
+#print("\n# portfolio_path_dict=\n%s" % pprint.pformat(portfolio_path_dict))
+
+# Points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
+data_type = "dag"
+dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type, verbose=True)
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
 # Diff configs.
+# TODO(gp): @grisha let's add the keys as column names.
 diff_config = cconfig.build_config_diff_dataframe(
     {
         "prod_config": configs["prod"],
@@ -68,18 +80,6 @@ diff_config = cconfig.build_config_diff_dataframe(
     }
 )
 diff_config.T
-
-# %%
-# This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
-data_type = "portfolio"
-portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
-portfolio_path_dict
-
-# %%
-# This dict points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
-data_type = "dag"
-dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
-dag_path_dict
 
 # %%
 # TODO(gp): Load the TCA data for crypto.
@@ -96,6 +96,36 @@ end_timestamp = pd.Timestamp(date_str + " 07:50:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
+# %%
+file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+df1 = pd.read_parquet(file_name1)
+
+file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+df2 = pd.read_parquet(file_name2)
+
+# %%
+df1.columns.levels[0]
+
+# %%
+#asset_id = 1030828978
+asset_id = 9872743573
+#df1['vwap.ret_0.vol_adj_2_hat', asset_id] == df2['vwap.ret_0.vol_adj_2_hat', asset_id]
+#column = 'vwap.ret_0.vol_adj_2_hat'
+column = 'close'
+
+#pd.concat()
+
+compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
+subset_multiindex_df_kwargs = {"columns_level0": [column],
+                               #"columns_level1": [asset_id]
+                              }
+
+hpandas.compare_multiindex_dfs(df1, df2,
+                               subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
+                               compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs )#.dropna().abs().max()
+
+# %%
+
 # %% [markdown]
 # # Compare DAG io
 
@@ -104,11 +134,15 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
     dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
+    
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
+# Trim the data to match the target interval.
 for k, df in dag_df_dict.items():
     dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
+    
+hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
 dag_df_dict["prod"]
@@ -133,19 +167,23 @@ hpandas.df_to_str(
 # # Compute research portfolio equivalent
 
 # %%
-fep = dtfmod.ForecastEvaluatorFromPrices(
-    **config["research_forecast_evaluator_from_prices"]["init"]
-)
+# Build the ForecastEvaluator.
+forecast_evaluator_from_prices_kwargs = config["research_forecast_evaluator_from_prices"]["init"]
+print(hprint.to_str("forecast_evaluator_from_prices_kwargs", mode="pprint"))
+fep = dtfmod.ForecastEvaluatorFromPrices(**forecast_evaluator_from_prices_kwargs)
+# Run.
 annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
-].to_dict()
+]
+print(hprint.to_str("annotate_forecasts_kwargs", mode="pprint"))
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
     dag_df_dict["prod"],
-    **annotate_forecasts_kwargs,
+    **annotate_forecasts_kwargs.to_dict(),
     compute_extended_stats=True,
 )
 # TODO(gp): Move it to annotate_forecasts?
 research_portfolio_df = research_portfolio_df.sort_index(axis=1)
+
 # Align index with prod and sim portfolios.
 research_portfolio_df = research_portfolio_df.loc[start_timestamp:end_timestamp]
 research_portfolio_stats_df = research_portfolio_stats_df.loc[
@@ -183,7 +221,7 @@ hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
 portfolio_stats_dfs["research"] = research_portfolio_stats_df
 portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 #
-hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_stats_df[["prod", "research"]], num_rows=5, log_level=logging.INFO)
 
 # %%
 bars_to_burn = 1
