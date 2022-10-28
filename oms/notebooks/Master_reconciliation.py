@@ -105,7 +105,10 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    dag_df_dict[name] = oms.get_output_from_last_dag_node(path, timestamp=None)
+    dag_nodes = oms.get_dag_node_names(path)
+    # Get timestamps and output for the last node.
+    dag_node_ts = oms.get_dag_node_timestamp(path, dag_nodes[-1])
+    dag_df_dict[name] = oms.get_dag_node_output(path, dag_nodes[-1], dag_node_ts[-1])
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%

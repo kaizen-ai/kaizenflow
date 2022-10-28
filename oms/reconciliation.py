@@ -565,9 +565,10 @@ def _get_dag_node_parquet_file_names(
     Get files only for a concreate node if `dag_node_name` is specified.
     """
     hdbg.dassert_dir_exists(dag_dir)
-    cmd = f"find {dag_dir}"
     if dag_node_name:
-        cmd += f" -name {dag_node_name}*"
+        cmd = f"find {dag_dir} -name {dag_node_name}*"
+    else:
+        cmd = f"ls {dag_dir}" 
     cmd += " | grep 'parquet'"
     _, nodes = hsystem.system_to_string(cmd)
     nodes = nodes.split("\n")
@@ -594,7 +595,10 @@ def get_dag_node_timestamp(
     return node_timestamps
 
 
-def get_dag_node_names(dag_dir: str) -> set:
+def get_dag_node_names(dag_dir: str) -> List[str]:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
-    node_names = set(node.split(".df_out")[0] for node in nodes)
+    node_names = list(set(node.split(".df_out")[0] for node in nodes))
+    # Sort in order node names.
+    node_names = sorted(node_names)
+    _LOG.info(node_names)
     return node_names
