@@ -526,14 +526,9 @@ def get_dag_node_output(
     timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
     cmd = f"find '{dag_dir}' -name {dag_node_name}*.parquet"
     cmd += f" | grep '{timestamp}'"
-    _, files = hsystem.system_to_string(cmd)
-    files = files.split("\n")
-    all_data = []
-    for file in files:
-        df = hparque.from_parquet(file)
-        all_data.append(df)
-    all_data = pd.concat(all_data, axis=1)
-    return all_data
+    _, file = hsystem.system_to_string(cmd)
+    df = hparque.from_parquet(file)
+    return df
 
 
 def load_config_from_pickle(
@@ -554,28 +549,18 @@ def load_config_from_pickle(
     return config_dict
 
 
-def _get_dag_node_parquet_file_names(
-    dag_dir: str,
-    *,
-    dag_node_name: Optional[str] = None,
-) -> List[str]:
+def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
     """
-    Get parquet files for nodes in the target folder.
-
-    Get files only for a concreate node if `dag_node_name` is specified.
+    Get parquet files for each nodes in the target folder.
     """
     hdbg.dassert_dir_exists(dag_dir)
-    if dag_node_name:
-        cmd = f"find {dag_dir} -name {dag_node_name}*"
-    else:
-        cmd = f"ls {dag_dir}" 
-    cmd += " | grep 'parquet'"
+    cmd = f"ls {dag_dir} | grep 'parquet'"
     _, nodes = hsystem.system_to_string(cmd)
     nodes = nodes.split("\n")
     return nodes
 
 
-def get_dag_node_timestamp(
+def get_dag_node_timestamps(
     dag_dir: str,
     dag_node_name: str,
     *,
@@ -584,10 +569,10 @@ def get_dag_node_timestamp(
     """
     Get all timestamps for a node.
     """
-    nodes = _get_dag_node_parquet_file_names(dag_dir, dag_node_name=dag_node_name)
+    node_file_names = get_dag_node_names(dag_dir, dag_node_name=dag_node_name)
     node_timestamps = []
-    for node in nodes:
-        ts = node.split(".")[-2]
+    for file_name in node_file_names:
+        ts = file_name.split(".")[-2]
         if not as_str:
             ts = ts.replace("_", " ")
             ts = pd.Timestamp(ts)
@@ -595,10 +580,12 @@ def get_dag_node_timestamp(
     return node_timestamps
 
 
-def get_dag_node_names(dag_dir: str) -> List[str]:
+def get_dag_node_names(dag_dir: str, *, dag_node_name: Optional[str] = None) -> List[str]:
     nodes = _get_dag_node_parquet_file_names(dag_dir)
-    node_names = list(set(node.split(".df_out")[0] for node in nodes))
+    if dag_node_name:
+        node_names = list(filter(lambda node: dag_node_name in node, nodes))
+    else:
+        node_names = list(set(node.split(".df_out")[0] for node in nodes))
     # Sort in order node names.
     node_names = sorted(node_names)
-    _LOG.info(node_names)
     return node_names
