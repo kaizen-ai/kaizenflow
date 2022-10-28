@@ -31,6 +31,15 @@ import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
 
 # %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", henv.get_system_signature()[0])
+
+hprint.config_notebook()
+
+# %%
 resample_1min = False
 env_file = imvimlita.get_db_env_path("dev")
 # Get login info.
@@ -45,15 +54,6 @@ table_name = "ccxt_ohlcv_futures"
 im_client = icdcl.CcxtSqlRealTimeImClient(
     resample_1min, db_connection, table_name
 )
-
-# %%
-hdbg.init_logger(verbosity=logging.INFO)
-
-_LOG = logging.getLogger(__name__)
-
-_LOG.info("%s", henv.get_system_signature()[0])
-
-hprint.config_notebook()
 
 # %%
 vendor = "CCXT"
