@@ -21,6 +21,7 @@
 import logging
 import os
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -31,6 +32,10 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hsql as hsql
+import im_v2.ccxt.data.client as icdcl
+import im_v2.common.universe as ivcu
+import im_v2.im_lib_tasks as imvimlita
 import oms as oms
 
 # %%
@@ -56,7 +61,6 @@ print(config)
 # %% run_control={"marked": true}
 # The dict points to `system_log_dir` for different experiments.
 system_log_path_dict = dict(config["system_log_path"].to_dict())
-system_log_path_dict
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -97,16 +101,122 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 
 
 # %% [markdown]
+# # Data delay analysis
+
+# %%
+# Get the real-time `ImClient`.
+# TODO(Grisha): ideally we should get the values from the config.
+resample_1min = False
+env_file = imvimlita.get_db_env_path("dev")
+connection_params = hsql.get_connection_info_from_env_file(env_file)
+db_connection = hsql.get_connection(*connection_params)
+table_name = "ccxt_ohlcv_futures"
+#
+im_client = icdcl.CcxtSqlRealTimeImClient(
+    resample_1min, db_connection, table_name
+)
+
+# %%
+# Get the universe.
+# TODO(Grisha): get the version from the config.
+vendor = "CCXT"
+mode = "trade"
+version = "v7.1"
+as_full_symbol = True
+full_symbols = ivcu.get_vendor_universe(
+    vendor,
+    mode,
+    version=version,
+    as_full_symbol=as_full_symbol,
+)
+full_symbols
+
+# %%
+# Load the data for the reconciliation date.
+# `ImClient` operates in UTC timezone.
+start_ts = pd.Timestamp(date_str, tz="UTC")
+end_ts = start_ts + pd.Timedelta(days=1)
+columns = None
+filter_data_mode = "assert"
+df = im_client.read_data(
+    full_symbols, start_ts, end_ts, columns, filter_data_mode
+)
+hpandas.df_to_str(df, num_rows=5, log_level=logging.INFO)
+
+# %%
+# TODO(Grisha): move to a lib.
+# Compute delay in seconds.
+df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
+# Plot the delay over assets with the errors bars.
+minimums = df.groupby(by=["full_symbol"]).min()["delta"]
+maximums = df.groupby(by=["full_symbol"]).max()["delta"]
+means = df.groupby(by=["full_symbol"]).mean()["delta"]
+errors = [means - minimums, maximums - means]
+df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(
+    kind="bar", yerr=errors
+)
+
+# %% [markdown]
 # # Compare DAG io
+
+# %%
+# Get DAG node names.
+dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
+dag_node_names
+
+# %%
+# Get timestamps for the last DAG node.
+dag_node_timestamps = oms.get_dag_node_timestamps(
+    dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
+)
+dag_node_timestamps
 
 # %%
 # Load DAG output for different experiments.
 dag_df_dict = {}
 for name, path in dag_path_dict.items():
-    dag_df_dict[name] = oms.get_latest_output_from_last_dag_node(path)
+    # Get DAG node names for every experiment.
+    dag_nodes = oms.get_dag_node_names(path)
+    # Get timestamps for the last node.
+    dag_node_ts = oms.get_dag_node_timestamps(
+        path, dag_nodes[-1], as_timestamp=True
+    )
+    # Get DAG output for the last node and the last timestamp.
+    dag_df_dict[name] = oms.get_dag_node_output(
+        path, dag_nodes[-1], dag_node_ts[-1]
+    )
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_multiindex_dfs(
+    dag_df_dict["prod"],
+    dag_df_dict["sim"],
+    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+diff_df.max().max()
+
+# %%
+# Plot diffs over time.
+diff_df.max(axis=1).plot()
+
+# %%
+# Plot diffs over columns.
+diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
+
+# %%
+# Plot diffs over assets.
+diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+
+# %%
+# Compute correlations.
 prod_sim_dag_corr = dtfmod.compute_correlations(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
