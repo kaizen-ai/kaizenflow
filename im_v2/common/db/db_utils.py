@@ -244,6 +244,55 @@ def fetch_bid_ask_rt_db_data(
     return hsql.execute_query_to_df(db_connection, select_query)
 
 
+def fetch_data_by_age(
+    timestamp: pd.Timestamp,
+    db_connection: hsql.DbConnection,
+    db_table: str,
+    table_timestamp_column: str,
+) -> pd.DataFrame:
+    """
+    Fetch data strictly older than a specified timestamp from a db table.
+
+    Age is determined based on a specified column, i.e.
+    when
+
+    :param db_connection: a database connection object
+    :param db_table: name of the table to select from
+    :param table_timestamp_column: name of the column to apply the comparison on
+    :param timestamp: timestamp to filter on
+    :return DataFrame with data older than the specified `timestamp` based
+     on `table_column` value.
+    """
+    ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
+    select_query = f"""
+                    SELECT * FROM {db_table} WHERE {table_timestamp_column} < {ts_unix};
+                    """
+    return hsql.execute_query_to_df(db_connection, select_query)
+
+
+def drop_db_data_by_age(
+    timestamp: pd.Timestamp,
+    db_connection: hsql.DbConnection,
+    db_table: str,
+    table_column: str,
+) -> None:
+    """
+    Delete data strictly older than a specified timestamp from a db table.
+
+    Age is determined based on a specified column.
+
+    :param db_connection: a database connection object
+    :param db_table: name of the table to delete from
+    :param table_column: name of the column to apply the comparison on
+    :param timestamp: timestamp to filter on
+    """
+    ts_unix = hdateti.convert_timestamp_to_unix_epoch(timestamp)
+    delete_query = f"""
+                    DELETE FROM {db_table} WHERE {table_column} < {ts_unix};
+                    """
+    hsql.execute_query(db_connection, delete_query)
+
+
 # TODO(Juraj): replace all occurrences of code inserting to db with a call to
 # this function.
 # TODO(Juraj): probabl hsql is a better place for this?
