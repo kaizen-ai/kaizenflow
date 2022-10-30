@@ -12,63 +12,69 @@
 #     name: python3
 # ---
 
-# %%
-# Assume that each person has a limit order distribution given by a N(a, b) for selling and buying
+# %% [markdown]
+# - Assume that each person has a limit order distribution given by a N(a, b) for selling and buying
+#
+#    - N = number of actors
+#    - Bid = B_mean, B_std, equals to the demand on the market (orders to purchase asset)
+#    - Ask = A_mean, A_std, equals to the supply on the market (orders to sell asset)
+#
+# - The orders are inserted in a queue and matched
 
-# N = number of actors
-# Bid = B_mean, B_std
-# Ask = A_mean, A_std
-
-# The orders are inserted in a queue and matched
-
-# %%
-import numpy as np
-import pandas as pd
-import scipy as scipy
+# %% [markdown]
+# # Imports
 
 # %%
 # %load_ext autoreload
 # %autoreload 2
 
-# %%
-import lib
+import numpy as np
+import pandas as pd
+import scipy as scipy
+import lob_lib as llib
+
+# %% [markdown]
+# # Generate the data
 
 # %%
-print(ask_rv)
-print(bid_rv)
+n_samples = 10
+bid_asks_raw = llib.get_data(n_samples)
+#
+display(bid_asks_raw)
+#
+bid_asks_raw.plot.hist()
+
+# %% [markdown]
+# # Convert raw orders data into `supply-demand` state
 
 # %%
-ob = lib.get_data()
+supply_demand = llib.get_supply_demand_curve(bid_asks_raw)
+#
+display(supply_demand.head(3))
+#
+supply_demand.plot()
 
-display(ob)
-
-ob.plot.hist()
-
-# %%
-sd = lib.get_supply_demand_curve(ob)
-
-display(sd)
-
-sd.plot()
+# %% [markdown]
+# # Find the equilibrium price and quantity
 
 # %%
-sd.index[4]
+eq_price, eq_quantity = llib.find_equilibrium(supply_demand)
 
 # %%
-eq_idx = lib.find_equilibrium(sd)
-#eq_quantity = (sd.iloc[eq_idx].index.values[0] + sd.iloc[eq_idx + 1].index.values[0]) / 2
-print(sd.iloc[eq_idx].index)
-eq_quantity1 = sd.index.values[eq_idx]
-eq_quantity2 = sd.index.values[eq_idx + 1]
-#print(eq_quantity1, eq_quantity2)
-eq_quantity = np.mean([eq_quantity1, eq_quantity2])
-print(eq_idx, eq_quantity)
-ax = sd.plot()
-ymin, ymax = ax.get_ylim()
-ax.vlines(eq_quantity, ymin=ymin, ymax=ymax, color="r")
 
 # %%
-excess = df["supply"] - df["demand"]
+
+# %%
+
+# %%
+
+# %%
+
+# %%
+sd = supply_demand.copy()
+
+# %%
+excess = sd["supply"] - sd["demand"]
 excess.plot()
 zero_crossings = np.where(np.diff(np.sign(excess)))
 idx = zero_crossings[0]
@@ -81,4 +87,9 @@ idx = np.where(np.diff(np.sign(excess)) == 2)[0]
 excess.iloc[idx + 1]
 
 # %%
-a
+
+# %%
+
+# %%
+
+# %%
