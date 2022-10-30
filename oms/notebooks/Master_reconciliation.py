@@ -51,31 +51,14 @@ hprint.config_notebook()
 # %% [markdown]
 # # Config
 
-# %% [markdown]
-# ## Build reconciliation config
-
 # %%
 date_str = "20221028"
 config_list = oms.build_reconciliation_configs(date_str)
 config = config_list[0]
 print(config)
 
-# %% [markdown]
-# ## Specify paths
-
 # %% run_control={"marked": true}
-# Point to `system_log_dir` for different experiments.
-system_log_path_dict = dict(config["system_log_path"].to_dict())
-print("# system_log_path_dict=\n%s" % pprint.pformat(system_log_path_dict))
-
-# Point to `system_log_dir/process_forecasts/portfolio` for different experiments.
-data_type = "portfolio"
-portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type, verbose=True)
-#print("\n# portfolio_path_dict=\n%s" % pprint.pformat(portfolio_path_dict))
-
-# Point to `system_log_dir/dag/node_io/node_io.data` for different experiments.
-data_type = "dag"
-dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type, verbose=True)
+system_log_path_dict, portfolio_path_dict, dag_path_dict = oms.get_path_dicts(config, log_level=logging.INFO)
 
 # %%
 date_str = config["meta"]["date_str"]
@@ -228,8 +211,7 @@ for experiment_name, path in dag_path_dict.items():
     dag_df_dict[experiment_name] = oms.get_dag_node_output(
         path, dag_node_name, dag_node_timestamp,
     )
-    hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=5, log_level=logging.INFO)
-
+    hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=3, log_level=logging.INFO)
 
 # %%
 # Trim the data to match the target interval.
