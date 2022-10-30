@@ -8,7 +8,7 @@ import datetime
 import logging
 import os
 import pprint
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd

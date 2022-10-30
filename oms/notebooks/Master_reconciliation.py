@@ -49,7 +49,10 @@ _LOG.info("%s", henv.get_system_signature()[0])
 hprint.config_notebook()
 
 # %% [markdown]
-# # Build the reconciliation config
+# # Config
+
+# %% [markdown]
+# ## Build reconciliation config
 
 # %%
 date_str = "20221028"
@@ -58,21 +61,33 @@ config = config_list[0]
 print(config)
 
 # %% [markdown]
-# # Specify data to load
+# ## Specify paths
 
 # %% run_control={"marked": true}
-# Points to `system_log_dir` for different experiments.
+# Point to `system_log_dir` for different experiments.
 system_log_path_dict = dict(config["system_log_path"].to_dict())
 print("# system_log_path_dict=\n%s" % pprint.pformat(system_log_path_dict))
 
-# Points to `system_log_dir/process_forecasts/portfolio` for different experiments.
+# Point to `system_log_dir/process_forecasts/portfolio` for different experiments.
 data_type = "portfolio"
 portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type, verbose=True)
 #print("\n# portfolio_path_dict=\n%s" % pprint.pformat(portfolio_path_dict))
 
-# Points to `system_log_dir/dag/node_io/node_io.data` for different experiments.
+# Point to `system_log_dir/dag/node_io/node_io.data` for different experiments.
 data_type = "dag"
 dag_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type, verbose=True)
+
+# %%
+date_str = config["meta"]["date_str"]
+# TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
+start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
+_LOG.info("start_timestamp=%s", start_timestamp)
+end_timestamp = pd.Timestamp(date_str + " 07:50:00", tz="America/New_York")
+_LOG.info("end_timestamp=%s", end_timestamp)
+
+
+# %% [markdown]
+# # Compare configs
 
 # %%
 configs = oms.load_config_from_pickle(system_log_path_dict)
@@ -91,15 +106,6 @@ diff_config.T
 if config["meta"]["run_tca"]:
     tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
-
-# %%
-date_str = config["meta"]["date_str"]
-# TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
-_LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 07:50:00", tz="America/New_York")
-_LOG.info("end_timestamp=%s", end_timestamp)
-
 
 # %%
 # file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
@@ -129,8 +135,6 @@ if False:
     hpandas.compare_multiindex_dfs(df1, df2,
                                    subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
                                    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs )#.dropna().abs().max()
-
-# %%
 
 # %% [markdown]
 # # Data delay analysis
@@ -194,31 +198,38 @@ df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot
 # %%
 # Get DAG node names.
 dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
-dag_node_names
+print(hprint.to_str("dag_node_names"))
+
+dag_node_name = dag_node_names[-1]
+print(hprint.to_str("dag_node_name"))
 
 # %%
-# Get timestamps for the last DAG node.
+# Get timestamps for the target DAG node.
 dag_node_timestamps = oms.get_dag_node_timestamps(
-    dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
+    dag_path_dict["prod"], dag_node_name, as_timestamp=True
 )
-dag_node_timestamps
+print("dag_node_timestamps=\n%s" % hprint.indent("\n".join(map(str, dag_node_timestamps))))
+
+dag_node_timestamp = dag_node_timestamps[-1]
+print("dag_node_timestamp=%s" % dag_node_timestamp)
 
 # %%
 # Load DAG output for different experiments.
 dag_df_dict = {}
-for name, path in dag_path_dict.items():
+for experiment_name, path in dag_path_dict.items():
+    print(hprint.to_str("experiment_name"))
     # Get DAG node names for every experiment.
     dag_nodes = oms.get_dag_node_names(path)
     # Get timestamps for the last node.
     dag_node_ts = oms.get_dag_node_timestamps(
-        path, dag_nodes[-1], as_timestamp=True
+        path, dag_node_name, as_timestamp=True
     )
     # Get DAG output for the last node and the last timestamp.
-    dag_df_dict[name] = oms.get_dag_node_output(
-        path, dag_nodes[-1], dag_node_ts[-1]
+    dag_df_dict[experiment_name] = oms.get_dag_node_output(
+        path, dag_node_name, dag_node_timestamp,
     )
+    hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=5, log_level=logging.INFO)
 
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
 # Trim the data to match the target interval.
