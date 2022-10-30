@@ -27,6 +27,12 @@ import oms.target_position_and_order_generator as otpaorge
 _LOG = logging.getLogger(__name__)
 
 
+# Each function should accept a `log_level` parameters that controls at which
+# level output summarizing the results. By default it is set by functin to
+# logging.DEBUG (since we don't want to print anything).
+# The internal debugging info is printed as usual at level `logging.DEBUG`.
+
+
 # #############################################################################
 # Config
 # #############################################################################
@@ -285,6 +291,7 @@ def get_dag_node_timestamps(
     dag_node_name: str,
     *,
     as_timestamp: bool = True,
+    log_level: int = logging.DEBUG,
 ) -> List[Union[str, pd.Timestamp]]:
     """
     Get all timestamps for a node.
@@ -307,6 +314,9 @@ def get_dag_node_timestamps(
             # TODO(Grisha): Pass tz a param?
             ts = pd.Timestamp(ts, tz="America/New_York")
         node_timestamps.append(ts)
+    #
+    _LOG.log(log_level,
+            "dag_node_timestamps=\n%s", hprint.indent("\n".join(map(str, node_timestamps))))
     return node_timestamps
 
 
@@ -335,6 +345,38 @@ def get_dag_node_output(
     _, file = hsystem.system_to_string(cmd)
     df = hparque.from_parquet(file)
     return df
+
+
+def load_dag_outputs(dag_path_dict: Dict, dag_node_name: str,
+        dag_node_timestamp: pd.Timestamp, 
+        start_timestamp: Optional[pd.Timestamp],
+        end_timestamp: Optional[pd.Timestamp],
+        *, 
+        log_level: int = logging.INFO):
+    """
+    Load DAG output for different experiments.
+    """
+    dag_df_dict = {}
+    for experiment_name, path in dag_path_dict.items():
+        _LOG.log(log_level, hprint.to_str("experiment_name"))
+        # Get DAG node names for every experiment.
+        dag_nodes = get_dag_node_names(path)
+        # Get timestamps for the last node.
+        dag_node_ts = get_dag_node_timestamps(
+            path, dag_node_name, as_timestamp=True
+        )
+        # Get DAG output for the last node and the last timestamp.
+        dag_df_dict[experiment_name] = get_dag_node_output(
+            path, dag_node_name, dag_node_timestamp,
+        )
+    # Trim the data to match the target interval.
+    if start_timestamp or end_timestamp:
+        for k, df in dag_df_dict.items():
+            dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
+    # Report the output.
+    for k, df in dag_df_dict.items():
+        hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=3, log_level=log_level)
+    return dag_df_dict
 
 
 # #############################################################################

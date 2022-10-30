@@ -1366,28 +1366,34 @@ def get_random_df(
 
 # #############################################################################
 
-
+# TODO(gp): -> compare_visually_dfs
 def compare_visually_dataframes(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
-    column_mode: str = "equal",
+    *,
     row_mode: str = "equal",
+    column_mode: str = "equal",
     diff_mode: str = "diff",
     background_gradient: bool = True,
 ) -> pd.DataFrame:
     """
-    :param row_mode: controls how the rows are handled
-     - "equal": rows need to be the same
-     - "inner": compute the intersection
-    :param column_mode: same as row_mode
-    :param diff_mode: control how the dataframes are computed
-     - "diff": compute the difference between dataframes
-     - "pct_change": compute the percentage change between dataframes
+    Compare two dataframes.
+
+    This works for dataframes with and without multi-index.
+
+    :param row_mode: control how the rows are handled
+        - "equal": rows need to be the same for the two dataframes
+        - "inner": compute the common rows for the two dataframes
+    :param column_mode: same as `row_mode`
+    :param diff_mode: control how the dataframes are compared
+        - "diff": compute the difference between dataframes
+        - "pct_change": compute the percentage change between dataframes
     :param background_gradient: colorize the output
     """
     if row_mode == "equal":
         hdbg.dassert_eq(list(df1.index), list(df2.index))
     elif row_mode == "inner":
+        # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
         same_rows = list((set(df1.index)).intersection(set(df2.index)))
         df1 = df1[df1.index.isin(same_rows)]
         df2 = df2[df2.index.isin(same_rows)]
@@ -1398,16 +1404,19 @@ def compare_visually_dataframes(
         hdbg.dassert_eq(sorted(df1.columns), sorted(df2.columns))
         col_names = df1.columns
     elif column_mode == "inner":
+        # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
         col_names = sorted(list(set(df1.columns).intersection(set(df2.columns))))
+        df1 = df1[col_names]
+        df2 = df2[col_names]
     else:
         raise ValueError("Invalid column_mode='%s'" % column_mode)
-    #
+    # Compute the difference.
     if diff_mode == "diff":
-        df_diff = df1[col_names] - df2[col_names]
+        df_diff = df1 - df2
     elif diff_mode == "pct_change":
-        df_diff = 100 * (df1[col_names] - df2[col_names]) / df2[col_names]
+        df_diff = 100 * (df1 - df2) / df2
     df_diff = df_diff.add_suffix(f"_{diff_mode}")
-    #
+    # Apply colors.
     if background_gradient:
         cm = sns.diverging_palette(5, 250, as_cmap=True)
         df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
@@ -1425,7 +1434,7 @@ def subset_multiindex_df(
     columns_level1: Optional[List[str]] = None,
 ) -> pd.DataFrame:
     """
-    Filter MultiIndex DataFrame by timestamp index, and column levels.
+    Filter multi-index DataFrame by timestamp index and column levels.
 
     :param start_timestamp: see `trim_df()`
     :param end_timestamp: see `trim_df()`
@@ -1469,6 +1478,7 @@ def subset_multiindex_df(
 def compare_multiindex_dfs(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
     subset_multiindex_df_kwargs: Optional[Dict[str, Any]] = None,
     compare_visually_dataframes_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
@@ -1476,7 +1486,8 @@ def compare_multiindex_dfs(
     - Subset both Multiindex Dataframes
     - Compare their values through difference
 
-    See `subset_multiindex_df()` and `compare_visually_dataframes()` for parameters descriptions.
+    See `subset_multiindex_df()` and `compare_visually_dataframes()` for
+    parameters descriptions.
     """
     # Define kwargs for subsetting and comparison.
     if subset_multiindex_df_kwargs is None:

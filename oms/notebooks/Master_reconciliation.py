@@ -179,49 +179,48 @@ df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot
 # # Compare DAG io
 
 # %%
-# Get DAG node names.
-dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=logging.INFO)
-#print(hprint.to_str("dag_node_names"))
-
+# Select a specific node and timestamp to analyze.
+log_level = logging.DEBUG
+dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=log_level)
 dag_node_name = dag_node_names[-1]
 print(hprint.to_str("dag_node_name"))
 
-# %%
-# Get timestamps for the target DAG node.
 dag_node_timestamps = oms.get_dag_node_timestamps(
-    dag_path_dict["prod"], dag_node_name, as_timestamp=True
+    dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
 )
-print("dag_node_timestamps=\n%s" % hprint.indent("\n".join(map(str, dag_node_timestamps))))
 
 dag_node_timestamp = dag_node_timestamps[-1]
 print("dag_node_timestamp=%s" % dag_node_timestamp)
 
 # %%
-# Load DAG output for different experiments.
-dag_df_dict = {}
-for experiment_name, path in dag_path_dict.items():
-    print(hprint.to_str("experiment_name"))
-    # Get DAG node names for every experiment.
-    dag_nodes = oms.get_dag_node_names(path)
-    # Get timestamps for the last node.
-    dag_node_ts = oms.get_dag_node_timestamps(
-        path, dag_node_name, as_timestamp=True
-    )
-    # Get DAG output for the last node and the last timestamp.
-    dag_df_dict[experiment_name] = oms.get_dag_node_output(
-        path, dag_node_name, dag_node_timestamp,
-    )
-    hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=3, log_level=logging.INFO)
+# # Load DAG output for different experiments.
+# dag_df_dict = {}
+# for experiment_name, path in dag_path_dict.items():
+#     print(hprint.to_str("experiment_name"))
+#     # Get DAG node names for every experiment.
+#     dag_nodes = oms.get_dag_node_names(path)
+#     # Get timestamps for the last node.
+#     dag_node_ts = oms.get_dag_node_timestamps(
+#         path, dag_node_name, as_timestamp=True
+#     )
+#     # Get DAG output for the last node and the last timestamp.
+#     dag_df_dict[experiment_name] = oms.get_dag_node_output(
+#         path, dag_node_name, dag_node_timestamp,
+#     )
+#     hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=3, log_level=logging.INFO)
+dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
+                                   start_timestamp, end_timestamp,
+                                   log_level=logging.INFO)
 
 # %%
-# Trim the data to match the target interval.
-for k, df in dag_df_dict.items():
-    dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
+# # Trim the data to match the target interval.
+# for k, df in dag_df_dict.items():
+#     dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
 
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+# hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-dag_df_dict["prod"]
+hpandas.compare_visually_dataframes(dag_df_dict["prod"], dag_df_dict["sim"])
 
 # %%
 # Compute percentage difference.
