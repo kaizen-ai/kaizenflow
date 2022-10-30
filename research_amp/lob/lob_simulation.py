@@ -28,17 +28,16 @@
 # %load_ext autoreload
 # %autoreload 2
 
+import research_amp.lob.lob_lib as ralololi
 import numpy as np
 import pandas as pd
-import scipy as scipy
-import lob_lib as llib
 
 # %% [markdown]
 # # Generate the data
 
 # %%
 n_samples = 10
-bid_asks_raw = llib.get_data(n_samples)
+bid_asks_raw = ralololi.get_data(n_samples)
 #
 display(bid_asks_raw)
 #
@@ -48,7 +47,7 @@ bid_asks_raw.plot.hist()
 # # Convert raw orders data into `supply-demand` state
 
 # %%
-supply_demand = llib.get_supply_demand_curve(bid_asks_raw)
+supply_demand = ralololi.get_supply_demand_curve(bid_asks_raw)
 #
 display(supply_demand.head(3))
 #
@@ -58,38 +57,33 @@ supply_demand.plot()
 # # Find the equilibrium price and quantity
 
 # %%
-eq_price, eq_quantity = llib.find_equilibrium(supply_demand)
+eq_price, eq_quantity = ralololi.find_equilibrium(supply_demand)
+
+# %% [markdown]
+# # Check the supply-demand imbalances
 
 # %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-
-# %%
-sd = supply_demand.copy()
-
-# %%
-excess = sd["supply"] - sd["demand"]
+excess = supply_demand["supply"] - supply_demand["demand"]
 excess.plot()
-zero_crossings = np.where(np.diff(np.sign(excess)))
-idx = zero_crossings[0]
-print(idx)
-excess.iloc[idx]
+zero_crossings_idx = np.where(np.diff(np.sign(excess)) == 2)[0]
+print(zero_crossings_idx)
+excess.iloc[zero_crossings_idx[0] : zero_crossings_idx[0] + 2]
+
+# %% [markdown]
+# # MC simulation for equilibrium
 
 # %%
-excess
-idx = np.where(np.diff(np.sign(excess)) == 2)[0]
-excess.iloc[idx + 1]
+eq_df = pd.DataFrame()
+for i in range(1, 500):
+    ba_raw = ralololi.get_data(n_samples)
+    sd = ralololi.get_supply_demand_curve(ba_raw)
+    eq_p, eq_q = ralololi.find_equilibrium(sd, print_graph=False)
+    eq_df.loc[i, "eq_price"] = eq_p
+    eq_df.loc[i, "eq_quantity"] = eq_q
+
 
 # %%
+eq_df["eq_price"].hist(bins=30)
 
 # %%
-
-# %%
-
-# %%
+eq_df["eq_quantity"].hist(bins=20)
