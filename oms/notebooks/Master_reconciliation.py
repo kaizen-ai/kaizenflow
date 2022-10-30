@@ -180,8 +180,8 @@ df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot
 
 # %%
 # Get DAG node names.
-dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
-print(hprint.to_str("dag_node_names"))
+dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=logging.INFO)
+#print(hprint.to_str("dag_node_names"))
 
 dag_node_name = dag_node_names[-1]
 print(hprint.to_str("dag_node_name"))

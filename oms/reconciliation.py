@@ -17,6 +17,7 @@ import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
+import helpers.hprint as hprint
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
@@ -223,7 +224,6 @@ def get_path_dicts(config: cconfig.Config, *, log_level: int = logging.DEBUG) ->
     # Point to `system_log_dir/process_forecasts/portfolio` for different experiments.
     data_type = "portfolio"
     portfolio_path_dict = get_system_log_paths(system_log_path_dict, data_type, log_level=log_level)
-    #print("\n# portfolio_path_dict=\n%s" % pprint.pformat(portfolio_path_dict))
     # Point to `system_log_dir/dag/node_io/node_io.data` for different experiments.
     data_type = "dag"
     dag_path_dict = get_system_log_paths(system_log_path_dict, data_type, log_level=log_level)
@@ -249,7 +249,8 @@ def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
     return nodes
 
 
-def get_dag_node_names(dag_dir: str) -> List[str]:
+def get_dag_node_names(dag_dir: str, *,
+        log_level: int = logging.DEBUG) -> List[str]:
     """
     Get names of DAG node from a target dir.
 
@@ -268,11 +269,14 @@ def get_dag_node_names(dag_dir: str) -> List[str]:
         ```
     """
     file_names = _get_dag_node_parquet_file_names(dag_dir)
-    # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
-    # And the node name is `predict.8.process_forecasts`.
+    # E.g., if file name is
+    # `predict.8.process_forecasts.df_out.20221028_080000.parquet` then the
+    # node name is `predict.8.process_forecasts`.
     node_names = sorted(
         list(set(node.split(".df_out")[0] for node in file_names))
     )
+    _LOG.log(log_level, "dag_node_names=\n%s", hprint.indent(
+        "\n".join(map(str, node_names))))
     return node_names
 
 

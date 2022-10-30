@@ -394,123 +394,123 @@ class ResourceUsageFilter(logging.Filter):
 # #############################################################################
 
 
-# TODO(gp): Replace `force_print_format` and `force_verbose_format` with `mode`.
-def _get_logging_format(
-    force_print_format: bool,
-    force_verbose_format: bool,
-    force_no_warning: bool,
-    report_memory_usage: bool,
-    date_format_mode: str = "time",
-) -> Tuple[str, str]:
-    """
-    Compute the logging format depending whether running on notebook or in a
-    shell.
-
-    The logging format can be:
-    - print: looks like a `print` statement
-
-    :param force_print_format: force to use the non-verbose format
-    :param force_verbose_format: force to use the verbose format
-    """
-    if _is_running_in_ipynb() and not force_no_warning:
-        print("WARNING: Running in Jupyter")
-    verbose_format = not _is_running_in_ipynb()
-    #
-    assert not (force_verbose_format and force_print_format), (
-        f"Can't use both force_verbose_format={force_verbose_format} "
-        + f"and force_print_format={force_print_format}"
-    )
-    if force_verbose_format:
-        verbose_format = True
-    if force_print_format:
-        verbose_format = False
-        #
-    if verbose_format:
-        # TODO(gp): We would like to have filename:name:funcName:lineno all
-        #  justified on 15 chars.
-        #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
-        #  -alternative-formatting-styles
-        #  Something like:
-        #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
-        #
-        # %(pathname)s Full pathname of the source file where the logging call was
-        #   issued (if available).
-        # %(filename)s Filename portion of pathname.
-        # %(module)s Module (name portion of filename).
-        if True:
-            log_format = (
-                # 04-28_08:08 INFO :
-                "%(asctime)-5s %(levelname)-5s"
-            )
-            if report_memory_usage:
-                # rss=0.3GB vms=2.0GB mem_pct=2% cpu=91%
-                log_format += " [%(resource_use)-40s]"
-            log_format += (
-                # lib_tasks _delete_branches
-                " %(module)-20s: %(funcName)-30s:"
-                # 142: ...
-                " %(lineno)-4d:"
-                " %(message)s"
-            )
-        else:
-            # Super verbose: to help with debugging print more info without trimming.
-            log_format = (
-                # 04-28_08:08 INFO :
-                "%(asctime)-5s %(levelname)-5s"
-                # .../src/lem1/amp/helpers/system_interaction.py
-                # _system       :
-                " %(pathname)s %(funcName)-20s "
-                # 199: ...
-                " %(lineno)d:"
-                " %(message)s"
-            )
-        if date_format_mode == "time":
-            date_fmt = "%H:%M:%S"
-        elif date_format_mode == "date_time":
-            date_fmt = "%m-%d_%H:%M"
-        elif date_format_mode == "date_timestamp":
-            date_fmt = "%Y-%m-%d %I:%M:%S %p"
-        else:
-            raise ValueError(f"Invalid date_format_mode='{date_format_mode}'")
-    else:
-        # Make logging look like a normal print().
-        # TODO(gp): We want to still prefix with WARNING and ERROR.
-        log_format = "%(message)s"
-        date_fmt = ""
-    return date_fmt, log_format
-
-
-def set_v1_formatter(
-    ch: Any,
-    root_logger: Any,
-    force_no_warning: bool,
-    force_print_format: bool,
-    force_verbose_format: bool,
-    report_cpu_usage: bool,
-    report_memory_usage: bool,
-) -> _ColoredFormatter:
-    # Decide whether to use verbose or print format.
-    date_fmt, log_format = _get_logging_format(
-        force_print_format,
-        force_verbose_format,
-        force_no_warning,
-        report_memory_usage,
-    )
-    # Use normal formatter.
-    # formatter = logging.Formatter(log_format, datefmt=date_fmt)
-    # Use formatter with colors.
-    formatter = _ColoredFormatter(log_format, date_fmt)
-    ch.setFormatter(formatter)
-    root_logger.addHandler(ch)
-    # Report resource usage.
-    if report_memory_usage:
-        # Get root logger.
-        log = logging.getLogger("")
-        # Create filter.
-        f = ResourceUsageFilter(report_cpu_usage)
-        # The ugly part:adding filter to handler.
-        log.handlers[0].addFilter(f)
-    return formatter
+# # TODO(gp): Replace `force_print_format` and `force_verbose_format` with `mode`.
+# def _get_logging_format(
+#     force_print_format: bool,
+#     force_verbose_format: bool,
+#     force_no_warning: bool,
+#     report_memory_usage: bool,
+#     date_format_mode: str = "time",
+# ) -> Tuple[str, str]:
+#     """
+#     Compute the logging format depending whether running on notebook or in a
+#     shell.
+# 
+#     The logging format can be:
+#     - print: looks like a `print` statement
+# 
+#     :param force_print_format: force to use the non-verbose format
+#     :param force_verbose_format: force to use the verbose format
+#     """
+#     if _is_running_in_ipynb() and not force_no_warning:
+#         print("WARNING: Running in Jupyter")
+#     verbose_format = not _is_running_in_ipynb()
+#     #
+#     assert not (force_verbose_format and force_print_format), (
+#         f"Can't use both force_verbose_format={force_verbose_format} "
+#         + f"and force_print_format={force_print_format}"
+#     )
+#     if force_verbose_format:
+#         verbose_format = True
+#     if force_print_format:
+#         verbose_format = False
+#         #
+#     if verbose_format:
+#         # TODO(gp): We would like to have filename:name:funcName:lineno all
+#         #  justified on 15 chars.
+#         #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
+#         #  -alternative-formatting-styles
+#         #  Something like:
+#         #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
+#         #
+#         # %(pathname)s Full pathname of the source file where the logging call was
+#         #   issued (if available).
+#         # %(filename)s Filename portion of pathname.
+#         # %(module)s Module (name portion of filename).
+#         if True:
+#             log_format = (
+#                 # 04-28_08:08 INFO :
+#                 "%(asctime)-5s %(levelname)-5s"
+#             )
+#             if report_memory_usage:
+#                 # rss=0.3GB vms=2.0GB mem_pct=2% cpu=91%
+#                 log_format += " [%(resource_use)-40s]"
+#             log_format += (
+#                 # lib_tasks _delete_branches
+#                 " %(module)-20s: %(funcName)-30s:"
+#                 # 142: ...
+#                 " %(lineno)-4d:"
+#                 " %(message)s"
+#             )
+#         else:
+#             # Super verbose: to help with debugging print more info without trimming.
+#             log_format = (
+#                 # 04-28_08:08 INFO :
+#                 "%(asctime)-5s %(levelname)-5s"
+#                 # .../src/lem1/amp/helpers/system_interaction.py
+#                 # _system       :
+#                 " %(pathname)s %(funcName)-20s "
+#                 # 199: ...
+#                 " %(lineno)d:"
+#                 " %(message)s"
+#             )
+#         if date_format_mode == "time":
+#             date_fmt = "%H:%M:%S"
+#         elif date_format_mode == "date_time":
+#             date_fmt = "%m-%d_%H:%M"
+#         elif date_format_mode == "date_timestamp":
+#             date_fmt = "%Y-%m-%d %I:%M:%S %p"
+#         else:
+#             raise ValueError(f"Invalid date_format_mode='{date_format_mode}'")
+#     else:
+#         # Make logging look like a normal print().
+#         # TODO(gp): We want to still prefix with WARNING and ERROR.
+#         log_format = "%(message)s"
+#         date_fmt = ""
+#     return date_fmt, log_format
+# 
+# 
+# def set_v1_formatter(
+#     ch: Any,
+#     root_logger: Any,
+#     force_no_warning: bool,
+#     force_print_format: bool,
+#     force_verbose_format: bool,
+#     report_cpu_usage: bool,
+#     report_memory_usage: bool,
+# ) -> _ColoredFormatter:
+#     # Decide whether to use verbose or print format.
+#     date_fmt, log_format = _get_logging_format(
+#         force_print_format,
+#         force_verbose_format,
+#         force_no_warning,
+#         report_memory_usage,
+#     )
+#     # Use normal formatter.
+#     # formatter = logging.Formatter(log_format, datefmt=date_fmt)
+#     # Use formatter with colors.
+#     formatter = _ColoredFormatter(log_format, date_fmt)
+#     ch.setFormatter(formatter)
+#     root_logger.addHandler(ch)
+#     # Report resource usage.
+#     if report_memory_usage:
+#         # Get root logger.
+#         log = logging.getLogger("")
+#         # Create filter.
+#         f = ResourceUsageFilter(report_cpu_usage)
+#         # The ugly part:adding filter to handler.
+#         log.handlers[0].addFilter(f)
+#     return formatter
 
 
 # #############################################################################
