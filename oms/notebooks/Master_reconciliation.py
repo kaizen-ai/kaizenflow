@@ -186,12 +186,20 @@ for name, path in dag_path_dict.items():
         path, dag_nodes[-1], as_timestamp=True
     )
     # Get DAG output for the last node and the last timestamp.
+    timestamp = dag_node_ts[-2]
+    print(timestamp)
     dag_df_dict[name] = oms.get_dag_node_output(
-        path, dag_nodes[-1], dag_node_ts[-1]
+        path, dag_nodes[-1], timestamp
     )
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+#hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
+dag_df_dict["sim"]["vwap.ret_0.vol_adj_2_hat"]
+#dag_df_dict["sim"][]
+
+# %%
+col_name = "vwap.ret_0.vol_adj_2_hat_pct_change"
+
 # Compute percentage difference.
 compare_visually_dataframes_kwargs = {
     "diff_mode": "pct_change",
@@ -205,7 +213,20 @@ diff_df = hpandas.compare_multiindex_dfs(
 # Remove the sign and NaNs.
 diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
 # Check that data is the same.
-diff_df.max().max()
+diff_df[col_name].tail(1)
+
+
+# %%
+dag_df_dict["prod"]
+
+# %%
+col_name = "vwap.ret_0.vol_adj_2_hat"
+
+diff_df = (dag_df_dict["prod"][col_name].tail(1) - dag_df_dict["sim"][col_name].tail(1)).round(2)
+pd.concat([dag_df_dict["prod"][col_name].tail(1), dag_df_dict["sim"][col_name].tail(1), diff_df])
+
+# %%
+diff_df
 
 # %%
 # Plot diffs over time.
