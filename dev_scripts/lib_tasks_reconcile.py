@@ -455,7 +455,7 @@ def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
     #
