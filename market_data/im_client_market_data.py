@@ -220,6 +220,28 @@ class ImClientMarketData(mdabmada.MarketData):
         if df.empty:
             ret = None
         else:
-            ret = df.index.max()
+            # The latest timestamp is min timestamp across max timestamps
+            # across all assets. In other words, data is ready when data is
+            # ready for every asset.
+            # E.g., we have 3 assets and their data timestamps are the following:
+            # asset1: 15:58, 15:59, 16:00
+            # asset2: 15:58, 15:59
+            # asset3: 15:58, 15:59, 16:00, 16:01
+            # We are looking for end timestamp that is present for all the assets.
+            # In this case, it is 15:59 because at 16:00 the data is available
+            # only for `asset1` and `asset3`.
+            df_max_ts_per_asset = (
+                df.reset_index()
+                .groupby(by=[self._asset_id_col])
+                .max()[self._end_time_col_name]
+            )
+            _LOG.debug(
+                hpandas.df_to_str(
+                    df_max_ts_per_asset,
+                    print_shape_info=True,
+                    tag="after get_data",
+                )
+            )
+            ret = df_max_ts_per_asset.min()
         _LOG.debug("-> ret=%s", ret)
         return ret
