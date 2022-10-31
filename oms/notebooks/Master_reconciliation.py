@@ -223,10 +223,27 @@ dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timest
 #hpandas.compare_visually_dataframes(dag_df_dict["prod"], dag_df_dict["sim"])
 
 # %%
-hpandas.list_to_str([1, 2, 3, 4, 5], max_num=4)
+_ = hpandas.multiindex_df_info(dag_df_dict["prod"])
 
 # %%
-hpandas.multiindex_df_info(dag_df_dict["prod"], max_num=None)
+df_subset = hpandas.subset_multiindex_df(dag_df_dict["prod"], columns_level0="close")
+df_subset
+
+
+# %%
+def colorize_df(df: pd.DataFrame) -> pd.DataFrame:
+    import seaborn as sns
+    cm = sns.diverging_palette(5, 250, as_cmap=True)
+    df = df.style.background_gradient(axis=0, cmap=cm)
+    return df
+
+
+# %%
+df
+
+# %%
+#colorize_df(df_subset)
+#dag_df_dict["prod"]
 
 # %%
 # Compute percentage difference.
