@@ -1100,7 +1100,7 @@ class Config:
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then return the value.
-                ret = self._get_item(head_key, level=level + 1)
+                ret = self._get_item(head_key, level=level + 1, mark_key_as_used=mark_key_as_used)
             else:
                 # Compound key: recurse on the tail of the key.
                 if head_key not in self._config:
@@ -1112,7 +1112,8 @@ class Config:
                 _LOG.debug("subconfig\n=%s", self._config)
                 if isinstance(subconfig, Config):
                     # Recurse.
-                    ret = subconfig._get_item(tail_key, level=level + 1)
+                    # TODO(Danya): Note that this way values in the subconfig are marked used all the way down.
+                    ret = subconfig._get_item(tail_key, level=level + 1, mark_key_as_used=mark_key_as_used)
                 else:
                     # There are more keys to process but we have reached the leaves
                     # of the config, then we assert.
