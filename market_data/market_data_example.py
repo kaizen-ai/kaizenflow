@@ -437,7 +437,9 @@ def get_RealTimeImClientMarketData_example1(
     get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="ET", event_loop=event_loop
     )
-    # We can afford to wait only for 60 seconds in prod.
+    # We can afford to wait only for 60 seconds in prod because we need to have
+    # enough time to compute the forecasts and after one minute we start
+    # getting data for the next bar.
     time_out_in_secs = 60
     #
     market_data = mdrtmada.RealTimeMarketData2(
