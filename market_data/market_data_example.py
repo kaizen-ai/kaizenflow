@@ -448,7 +448,7 @@ def get_RealTimeImClientMarketData_example1(
         end_time_col_name,
         columns,
         get_wall_clock_time,
-        time_out_in_secs = time_out_in_secs,
+        time_out_in_secs=time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
