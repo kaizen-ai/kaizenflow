@@ -519,9 +519,9 @@ class Config:
             report_mode = "none"
             # When we test for existence we don't want to mark a key as read by
             # the client, since we don't introduce a dependency from its value.
-            mark_key_as_read = False
+            mark_key_as_used = False
             val = self.__getitem__(
-                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
+                key, report_mode=report_mode, mark_key_as_used=mark_key_as_used
             )
             _LOG.debug("Found val=%s", val)
             found = True
@@ -619,7 +619,7 @@ class Config:
         except for purposes of logging and transformation to string.
         """
         # TODO(Danya): Add assertion that a caller is not a `to_string` or `__contains__`
-        #  See CMTask3099.
+        #  See CMTask309.
         return self.__getitem__(key, mark_key_as_used=True)
 
     def get(
@@ -1064,11 +1064,11 @@ class Config:
                 if head_key in self:
                     # We mark a key as read only when it's read from a client of
                     # Config, not from the Config itself.
-                    mark_key_as_read = False
+                    mark_key_as_used = False
                     subconfig = self.__getitem__(
                         head_key,
                         report_mode="none",
-                        mark_key_as_read=mark_key_as_read,
+                        mark_key_as_used=mark_key_as_used,
                     )
                 else:
                     subconfig = self.add_subconfig(head_key)
