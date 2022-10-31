@@ -9,7 +9,6 @@ import datetime
 import logging
 from typing import Any, Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
@@ -231,7 +230,8 @@ async def process_forecasts(
     for idx, (timestamp, predictions) in tqdm(
         iter_, total=num_rows, file=tqdm_out
     ):
-        hdbg.dassert_is_not(predictions, np.nan)
+        # Assert if there are NaNs in `predictions`.
+        hdbg.dassert_eq(all(predictions.notna()), True)
         if execution_mode == "batch":
             # Update the global state tracking the current bar.
             # The loop in `RealTimeDagRunner` sets the bar based on align_on_grid.
