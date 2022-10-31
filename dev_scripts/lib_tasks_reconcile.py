@@ -455,7 +455,7 @@ def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
     """
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
     #
@@ -485,7 +485,7 @@ def reconcile_dump_tca_data(
     )
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date
@@ -519,7 +519,7 @@ def reconcile_dump_tca_data(
     ]
     opts = " ".join(opts)
     log_file = os.path.join(local_results_dir, "log.txt")
-    opts += f"--incremental -v DEBUG 2>&1 | tee {log_file}"
+    opts += f" --incremental -v DEBUG 2>&1 | tee {log_file}"
     opts += "; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/oms/get_ccxt_fills.py",

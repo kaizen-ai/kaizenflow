@@ -230,6 +230,8 @@ async def process_forecasts(
     for idx, (timestamp, predictions) in tqdm(
         iter_, total=num_rows, file=tqdm_out
     ):
+        # Assert if there are NaNs in `predictions`.
+        hdbg.dassert_eq(0, predictions.isna().sum())
         if execution_mode == "batch":
             # Update the global state tracking the current bar.
             # The loop in `RealTimeDagRunner` sets the bar based on align_on_grid.
@@ -238,6 +240,9 @@ async def process_forecasts(
         #
         current_bar_timestamp = hwacltim.get_current_bar_timestamp()
         hdbg.dassert_is_not(current_bar_timestamp, None)
+        # Avoid situations when a prediction timestamp is greater than the current bar.
+        # E.g., the prediction timestamp is 08:05 while the current bar is 08:00.
+        hdbg.dassert_lte(timestamp, current_bar_timestamp)
         current_bar_time = current_bar_timestamp.time()
         _LOG.debug(
             "\n%s",
