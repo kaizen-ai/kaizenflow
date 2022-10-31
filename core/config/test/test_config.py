@@ -1962,18 +1962,65 @@ class Test_to_string(hunitest.TestCase):
 # #############################################################################
 
 class Test_mark_as_used1(hunitest.TestCase):
-    # used_state = True, scalar;
-    # used_state = True, subconfig (nested)
-    # used_state = True, other iterable
-    #  used_state = False, scalar
     def test1(self) -> None:
+        """
+        Test marking a config with scalar values.
+        """
         test_dict = {"key1": 1, "key2": "value2"}
         test_config = cconfig.Config.from_dict(test_dict)
+        #
+        test_config._config.mark_as_used("key2")
+        #
         expected = """key1 (marked_as_used=False, val_type=int): 1
         key2 (marked_as_used=True, val_type=str): value2"""
-        test_config._config.mark_as_used("key2")
         actual = repr(test_config)
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+    
+    def test2(self) -> None:
+        """
+        Test marking a subconfig in a nested config.
+        """
+        test_nested_dict = {"key1": 1, "key2": {"key3": "value3"}}
+        test_nested_config = cconfig.Config.from_dict(test_nested_dict)
+        #
+        test_nested_config._config.mark_as_used("key2")
+        #
+        expected = """key1 (marked_as_used=False, val_type=int): 1
+        key2 (marked_as_used=True, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, val_type=str): value3"""
+        actual = repr(test_nested_config)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+    
+    def test3(self) -> None:
+        """
+        Test marking a config with iterable value.
+        """
+        test_dict = {"key1": 1, "key2": ["value2", 2,]}
+        test_config = cconfig.Config.from_dict(test_dict)
+        #
+        test_config._config.mark_as_used("key2")
+        #
+        expected = """key1 (marked_as_used=False, val_type=int): 1
+        key2 (marked_as_used=True, val_type=list): ['value2', 2]"""
+        actual = repr(test_config)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+    
+    def test4(self) -> None:
+        """
+        Test marking with `used_state` == False.
+        """
+
+        test_dict = {"key1": 1, "key2": "value2"}
+        test_config = cconfig.Config.from_dict(test_dict)
+        #
+        used_state = False
+        test_config._config.mark_as_used("key2", used_state)
+        #
+        expected = """key1 (marked_as_used=False, val_type=int): 1
+        key2 (marked_as_used=False, val_type=str): value2"""
+        actual = repr(test_config)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
 
 
 # #############################################################################

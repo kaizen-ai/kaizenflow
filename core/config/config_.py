@@ -323,6 +323,8 @@ class _OrderedConfig(_OrderedDictType):
             marked_as_used = True
             super().__setitem__(key, (marked_as_used, val))
         # If the value is an iterable then we need to propagate the read state.
+        # TODO(Danya): Do we need to mark all elements of subconfig as used if we
+        #  use a subconfig?
         if hintros.is_iterable(val):
             for elem in val:
                 if hasattr(elem, "mark_as_used"):
