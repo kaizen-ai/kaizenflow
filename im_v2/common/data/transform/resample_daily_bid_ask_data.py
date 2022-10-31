@@ -12,7 +12,7 @@ back.
 
 Import as:
 
-import im_v2.common.data.transform.resample_bid_ask_data as imvcdtrbad
+import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdba
 """
 import argparse
 import logging
@@ -29,73 +29,57 @@ import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.common.data.transform.transform_utils as imvcdttrut
+import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 _LOG = logging.getLogger(__name__)
 
 
 def _run(args: argparse.Namespace) -> None:
-    pattern = "*"
-    only_files = True
-    use_relative_paths = True
     aws_profile = "ck"
-    # Get all files in the root dir.
-    files_to_read = hs3.listdir(
-        args.src_dir,
-        pattern,
-        only_files,
-        use_relative_paths,
-        aws_profile=aws_profile,
-    )
-    filesystem = hs3.get_s3fs(aws_profile)
-    columns = [
-        "bid_price",
-        "bid_size",
-        "ask_price",
-        "ask_size",
-        "exchange_id",
-    ]
+    epoch_unit = "s"
     # Convert dates to unix timestamps.
     start = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.start_timestamp), unit="s" 
+        pd.Timestamp(args.start_timestamp), unit=epoch_unit 
     )
     end = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.end_timestamp), unit="s"
+        pd.Timestamp(args.end_timestamp), unit=epoch_unit
     )
     # Define filters for data period.
     # Note(Juraj): it's better from Airflow execution perspective
     #  to keep the interval closed: [start, end].
     filters = [("timestamp", ">=", start), ("timestamp", "<=", end)]
-    for file in tqdm.tqdm(files_to_read):
-        file_path = os.path.join(args.src_dir, file)
-        data = hparque.from_parquet(
-            file_path, columns=columns, filters=filters, aws_profile=aws_profile
-        )
-        if data.empty:
+    data = hparque.from_parquet(
+        args.src_dir, filters=filters, aws_profile=aws_profile
+    )
+    data_resampled = []
+    for currency_pair in data["currency_pair"].unique():
+        data_single = data[data["currency_pair"] == currency_pair]
+        if data_single.empty:
             _LOG.warning(
-                "Empty Dataframe: no data in %s for %s-%s time period",
-                file_path,
+                "Empty Dataframe: no data for %s in %s-%s time period",
+                currency_pair,
                 args.start_timestamp,
                 args.end_timestamp,
             )
             continue
-        data_resampled = imvcdttrut.resample_bid_ask_data(data)
-        dst_path = os.path.join(args.dst_dir, file)
-        data_resampled, partition_cols = hparque.add_date_partition_columns(
-            data_resampled, "by_year_month"
-        )
-        hparque.to_partitioned_parquet(
-            data_resampled,
-            partition_cols,
-            dst_path,
-            partition_filename=None,
-            aws_profile=aws_profile,
-        )
-        hparque.list_and_merge_pq_files(
-            dst_path, 
-            aws_profile=aws_profile, 
-        )
-        _LOG.info("Resampled data was uploaded to %s", args.dst_dir)
-
+        data_resampled_single = imvcdttrut.resample_bid_ask_data(data_single)
+        data_resampled_single["currency_pair"] = currency_pair
+        data_resampled.append(data_resampled_single)
+    # Transform the dataset to make save_parquet applicable.
+    data_resampled = pd.concat(data_resampled).reset_index()
+    data_resampled["timestamp"] = data_resampled["timestamp"].apply(
+        lambda x: hdateti.convert_timestamp_to_unix_epoch(x, "s")
+    )
+    _LOG.info(data_resampled.head())
+    _LOG.info("Resampled dataset has %i rows.", data_resampled.shape[0])
+    imvcdeexut.save_parquet(
+        data_resampled,
+        args.dst_dir,
+        "s",
+        aws_profile,
+        "bid_ask"
+    )
+    
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
