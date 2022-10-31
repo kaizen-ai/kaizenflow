@@ -231,7 +231,7 @@ async def process_forecasts(
         iter_, total=num_rows, file=tqdm_out
     ):
         # Assert if there are NaNs in `predictions`.
-        hdbg.dassert_eq(all(predictions.notna()), True)
+        hdbg.dassert_eq(0, predictions.isna().sum())
         if execution_mode == "batch":
             # Update the global state tracking the current bar.
             # The loop in `RealTimeDagRunner` sets the bar based on align_on_grid.
