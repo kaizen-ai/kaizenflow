@@ -383,7 +383,8 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
         }
         #
         fep_init_dict = {
-            "price_col": "vwap",
+            #"price_col": "vwap",
+            "price_col": "twap",
             "prediction_col": "vwap.ret_0.vol_adj_2_hat",
             "volatility_col": "vwap.ret_0.vol",
         }
