@@ -193,21 +193,7 @@ dag_node_timestamp = dag_node_timestamps[-1]
 print("dag_node_timestamp=%s" % dag_node_timestamp)
 
 # %%
-# # Load DAG output for different experiments.
-# dag_df_dict = {}
-# for experiment_name, path in dag_path_dict.items():
-#     print(hprint.to_str("experiment_name"))
-#     # Get DAG node names for every experiment.
-#     dag_nodes = oms.get_dag_node_names(path)
-#     # Get timestamps for the last node.
-#     dag_node_ts = oms.get_dag_node_timestamps(
-#         path, dag_node_name, as_timestamp=True
-#     )
-#     # Get DAG output for the last node and the last timestamp.
-#     dag_df_dict[experiment_name] = oms.get_dag_node_output(
-#         path, dag_node_name, dag_node_timestamp,
-#     )
-#     hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=3, log_level=logging.INFO)
+# Load DAG output for different experiments.
 dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
                                    start_timestamp, end_timestamp,
                                    log_level=logging.INFO)
@@ -228,22 +214,6 @@ _ = hpandas.multiindex_df_info(dag_df_dict["prod"])
 # %%
 df_subset = hpandas.subset_multiindex_df(dag_df_dict["prod"], columns_level0="close")
 df_subset
-
-
-# %%
-def colorize_df(df: pd.DataFrame) -> pd.DataFrame:
-    import seaborn as sns
-    cm = sns.diverging_palette(5, 250, as_cmap=True)
-    df = df.style.background_gradient(axis=0, cmap=cm)
-    return df
-
-
-# %%
-df
-
-# %%
-#colorize_df(df_subset)
-#dag_df_dict["prod"]
 
 # %%
 # Compute percentage difference.
@@ -331,7 +301,7 @@ portfolio_config = cconfig.Config.from_dict(
         "normalize_bar_times": True,
     }
 )
-portfolio_config
+portfolio_config.to_dict()
 
 # %%
 portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
@@ -373,8 +343,8 @@ prod_target_position_df = oms.load_target_positions(
     normalize_bar_times=True
 )
 
-cand_target_position_df = oms.load_target_positions(
-    portfolio_path_dict["cand"].strip("portfolio"),
+sim_target_position_df = oms.load_target_positions(
+    portfolio_path_dict["sim"].strip("portfolio"),
     start_timestamp,
     end_timestamp,
     config["meta"]["bar_duration"],
@@ -382,11 +352,64 @@ cand_target_position_df = oms.load_target_positions(
 )
 
 # %%
-#prod_target_position_df["target_holdings_shares"].shift(1)#
-research_portfolio_df["holdings_shares"]
+print("# prod_target_pos_df")
+_ = hpandas.multiindex_df_info(prod_target_position_df, max_num=None)
+
+print("\n# research_portfolio_df")
+_ = hpandas.multiindex_df_info(research_portfolio_df, max_num=None)
+
+# %% [markdown]
+# ## Price
 
 # %%
-research_portfolio_df["holdings_shares"].head(10)
+prod_df = prod_target_position_df["price"]
+display(prod_df.head(2))
+res_df = research_portfolio_df["price"]
+display(res_df.head(2))
+
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_visually_dataframes(
+    prod_df,
+    res_df,
+    **compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+#diff_df.max().max()
+hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ## Compare target pos
+
+# %%
+display(prod_target_position_df["target_holdings_shares"].head(5))
+
+display(research_portfolio_df["holdings_shares"].head(5))
+
+# %%
+prod_target_holdings_shares = prod_target_position_df["target_holdings_shares"].shift(1)
+research_target_holdings_shares = research_portfolio_df["holdings_shares"]
+
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_visually_dataframes(
+    prod_target_holdings_shares,
+    research_target_holdings_shares,
+    **compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+#diff_df.max().max()
+hpandas.heatmap_df(diff_df.round(2))
 
 # %%
 #prod_target_position_df.columns.levels[0]

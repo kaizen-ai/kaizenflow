@@ -1455,7 +1455,7 @@ def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
     return df
 
 
-# TODO(gp): -> compare_visually_dfs
+# TODO(gp): -> compare_dfs
 def compare_visually_dataframes(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
