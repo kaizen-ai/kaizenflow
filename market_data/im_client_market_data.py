@@ -234,8 +234,8 @@ class ImClientMarketData(mdabmada.MarketData):
             # asset2: 15:58, 15:59
             # asset3: 15:58, 15:59, 16:00, 16:01
             # We are looking for end timestamp that is present for all the assets.
-            # In this case, it is 15:59 because at 16:00 the data is available only
-            # for `asset1` and `asset3`.
+            # In this case, it is 15:59 because at 16:00 the data is available
+            # only for `asset1` and `asset3`.
             ret = df_max_ts_per_asset.min()
             _LOG.debug(
                 hpandas.df_to_str(
