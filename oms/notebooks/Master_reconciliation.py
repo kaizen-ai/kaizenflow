@@ -85,17 +85,12 @@ diff_config = cconfig.build_config_diff_dataframe(
 diff_config.T
 
 # %%
-# TODO(gp): Load the TCA data for crypto.
-if config["meta"]["run_tca"]:
-    tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
-    hdbg.dassert_file_exists(tca_csv)
+if False:
+    # file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+    # df1 = pd.read_parquet(file_name1)
 
-# %%
-# file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
-# df1 = pd.read_parquet(file_name1)
-
-# file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
-# df2 = pd.read_parquet(file_name2)
+    # file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+    # df2 = pd.read_parquet(file_name2)
 
 # %%
 #df1.columns.levels[0]
@@ -199,6 +194,36 @@ dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timest
                                    log_level=logging.INFO)
 
 # %%
+if False:
+    # Load DAG output for different experiments.
+    dag_node_timestamp = pd.Timestamp("2022-10-28 06:25:00-04:00")
+
+    # dag_node_timestamps = oms.get_dag_node_timestamps(
+    #     dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
+    # )
+    # print(dag_node_timestamps)
+
+    dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
+                                       start_timestamp, end_timestamp,
+                                       log_level=logging.INFO)
+
+
+# %%
+#column = "vwap.ret_0.vol_adj_2_hat"
+column = "twap.ret_0"
+#display(dag_df_dict["prod"][column].tail(2))
+#display(dag_df_dict["sim"][column].tail(2))
+
+diff_df = hpandas.compare_visually_dataframes(
+    dag_df_dict["prod"][column].tail(2),
+    dag_df_dict["sim"][column].tail(2),
+    diff_mode="pct_change",
+    background_gradient=False)
+
+#print(type(diff_df))
+diff_df.max().max()
+
+# %%
 # # Trim the data to match the target interval.
 # for k, df in dag_df_dict.items():
 #     dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
@@ -230,6 +255,18 @@ diff_df = hpandas.compare_multiindex_dfs(
 diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
 # Check that data is the same.
 diff_df.max().max()
+
+
+# %%
+def colorize_df(df: pd.DataFrame) -> pd.DataFrame:
+    import seaborn as sns
+    cm = sns.diverging_palette(5, 250, as_cmap=True)
+    df = df.style.background_gradient(axis=0, cmap=cm)
+    return df
+
+
+# %%
+df
 
 # %%
 # Plot diffs over time.
@@ -358,14 +395,88 @@ _ = hpandas.multiindex_df_info(prod_target_position_df, max_num=None)
 print("\n# research_portfolio_df")
 _ = hpandas.multiindex_df_info(research_portfolio_df, max_num=None)
 
+# %%
+column = "prediction"
+prod_df = prod_target_position_df[column]
+display(prod_df.head(2))
+res_df = research_portfolio_df[column]
+display(res_df.head(2))
+
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_visually_dataframes(
+    prod_df,
+    res_df,
+    **compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
+
 # %% [markdown]
 # ## Price
 
 # %%
 prod_df = prod_target_position_df["price"]
-display(prod_df.head(2))
+display(prod_df.head(3))
 res_df = research_portfolio_df["price"]
+display(res_df.head(3))
+
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_visually_dataframes(
+    prod_df,
+    res_df,
+    **compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ## Volatility
+
+# %%
+prod_df = prod_target_position_df["volatility"]
+display(prod_df.head(2))
+res_df = research_portfolio_df["volatility"]
 display(res_df.head(2))
+
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_visually_dataframes(
+    prod_df,
+    res_df,
+    **compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ## Target holdings
+
+# %%
+prod_df = prod_target_position_df["target_holdings_shares"].shift(1)
+display(prod_df.head(5))
+
+res_df = research_portfolio_df["holdings_shares"]
+display(res_df.head(5))
 
 # Compute percentage difference.
 compare_visually_dataframes_kwargs = {
@@ -384,7 +495,7 @@ diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
 hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# ## Compare target pos
+# ## Holdings
 
 # %%
 display(prod_target_position_df["target_holdings_shares"].head(5))
@@ -392,8 +503,11 @@ display(prod_target_position_df["target_holdings_shares"].head(5))
 display(research_portfolio_df["holdings_shares"].head(5))
 
 # %%
-prod_target_holdings_shares = prod_target_position_df["target_holdings_shares"].shift(1)
-research_target_holdings_shares = research_portfolio_df["holdings_shares"]
+prod_df = prod_target_position_df["holdings_shares"]
+display(prod_df.head(5))
+
+res_df = research_portfolio_df["holdings_shares"]
+display(res_df.head(5))
 
 # Compute percentage difference.
 compare_visually_dataframes_kwargs = {
@@ -401,8 +515,8 @@ compare_visually_dataframes_kwargs = {
     "background_gradient": False,
 }
 diff_df = hpandas.compare_visually_dataframes(
-    prod_target_holdings_shares,
-    research_target_holdings_shares,
+    prod_df,
+    res_df,
     **compare_visually_dataframes_kwargs,
 )
 # Remove the sign and NaNs.
@@ -411,9 +525,137 @@ diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
 #diff_df.max().max()
 hpandas.heatmap_df(diff_df.round(2))
 
+# %% [markdown]
+# # Compare prices
+
 # %%
-#prod_target_position_df.columns.levels[0]
-prod_target_position_df["holdings_shares"].head(10)
+
+# Select a specific node and timestamp to analyze.
+#log_level = logging.INFO
+log_level = logging.DEBUG
+dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=log_level)
+#dag_node_name = dag_node_names[-1]
+dag_node_name = "predict.0.read_data"
+print(hprint.to_str("dag_node_name"))
+
+dag_node_timestamps = oms.get_dag_node_timestamps(
+    dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
+)
+
+dag_node_timestamp = dag_node_timestamps[-1]
+print("dag_node_timestamp=%s" % dag_node_timestamp)
+
+
+# Load DAG output for different experiments.
+dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
+                                   start_timestamp, end_timestamp,
+                                   log_level=logging.INFO)
+
+
+# %%
+asset_id = 1030828978
+#asset_id = 1464553467
+dag_df_dict["prod"]["close"][asset_id]
+
+# 2022-10-28 06:11:00-04:00    0.4798
+# 2022-10-28 06:12:00-04:00    0.4802
+# 2022-10-28 06:13:00-04:00    0.4807
+# 2022-10-28 06:14:00-04:00    0.4809
+# 2022-10-28 06:15:00-04:00    0.4808
+
+print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:12:00-04:00": '2022-10-28 06:16:00-04:00'].mean())
+print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:11:00-04:00": '2022-10-28 06:15:00-04:00'].mean())
+
+# %% [markdown]
+# # Compare pairwise portfolio correlations
+
+# %%
+research_portfolio_df["holdings_shares"].head(10)
+
+# %%
+df
+
+# %%
+dtfmod.compute_correlations(
+    research_portfolio_df.pct_change(),
+    portfolio_dfs["prod"].pct_change(),
+    allow_unequal_indices=True,
+    allow_unequal_columns=True,
+)
+
+# %%
+dtfmod.compute_correlations(
+    research_portfolio_df,
+    portfolio_dfs["prod"],
+    allow_unequal_indices=True,
+    allow_unequal_columns=True,
+)
+
+# %%
+dtfmod.compute_correlations(
+    portfolio_dfs["prod"],
+    portfolio_dfs["sim"],
+    allow_unequal_indices=False,
+    allow_unequal_columns=False,
+)
+
+
+# %%
+# Analyze per stock
+
+# TODO(gp): Chack amp Master looking for get_asset_slice 
+
+def plot_together(df1, df2, suffix):
+    df1 = pd.DataFrame(df1)
+    df2 = pd.DataFrame(df2)
+    df = df1.merge(df2,
+                   left_index=True, right_index=True, 
+                   how="outer", suffixes=suffix)
+    return df
+    
+
+asset_id = 1966583502
+#display(oms.get_asset_slice(research_portfolio_df, asset_id).head(5))
+
+#display(oms.get_asset_slice(portfolio_dfs["prod"], asset_id).head(5))
+
+def add_prices(df):
+    df = pd.DataFrame(df)
+    df["computed_price"] = df["holdings_notional"] / df["holdings_shares"]
+    return df
+
+
+#research_portfolio_df = add_prices(research_portfolio_df)
+#portfolio_dfs["prod"] = add_prices(portfolio_dfs["prod"])
+
+#column = "executed_trades_notional"
+column = "holdings_notional"
+#column = "computed_price"
+df1 = oms.get_asset_slice(research_portfolio_df, asset_id)
+df1 = add_prices(df1)
+
+df2 = oms.get_asset_slice(portfolio_dfs["prod"], asset_id)
+df2 = add_prices(df2)
+
+df = plot_together(df1, df2, ["_res", "_prod"])
+#display(df.head(3))
+#df = df[["price", "computed_price_res", "computed_price_prod"]].pct_change()
+#df = df[["price", "computed_price_res", "computed_price_prod"]]
+#df = df[["pnl_res", "pnl_prod"]]
+df = df[["holdings_notional_res", "holdings_notional_prod"]]
+display(df)
+#df.plot()
+
+#df.plot()
+
+
+# %%
+dtfmod.compute_correlations(
+    research_portfolio_df,
+    portfolio_dfs["sim"],
+    allow_unequal_indices=True,
+    allow_unequal_columns=True,
+)
 
 # %%
 research_portfolio_df["holdings_shares"].head(10)
@@ -450,31 +692,30 @@ prod_target_position_df["target_trades_shares"][asset_id].head(20)
 prod_target_position_df["holdings_shares"][asset_id].diff()
 
 # %% [markdown]
-# # Compare pairwise portfolio correlations
+# # Fill stats
 
 # %%
-dtfmod.compute_correlations(
-    research_portfolio_df,
-    portfolio_dfs["prod"],
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
-)
+fills = oms.compute_fill_stats(prod_target_position_df)
+fills["underfill_share_count"].plot()
 
 # %%
-dtfmod.compute_correlations(
-    portfolio_dfs["prod"],
-    portfolio_dfs["sim"],
-    allow_unequal_indices=False,
-    allow_unequal_columns=False,
-)
+fills["fill_rate"].head()
 
 # %%
-dtfmod.compute_correlations(
-    research_portfolio_df,
-    portfolio_dfs["sim"],
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
-)
+fills["fill_rate"].plot()
+
+# %% [markdown]
+# # Slippage
+
+# %%
+slippage = oms.compute_share_prices_and_slippage(portfolio_dfs["prod"])
+slippage["slippage_in_bps"].plot()
+
+# %%
+slippage["slippage_in_bps"].stack().hist(bins=31)
+
+# %% [markdown]
+# # TCA
 
 # %%
 if config["meta"]["run_tca"]:
