@@ -63,8 +63,12 @@ DUMMY = "__DUMMY__"
 # - We don't allow `dict` in Config as leaves
 #   - We assume that a dict leaf represents a Config for an object
 #   - `dict` are valid in composed data structures, e.g., list, tuples
+# - By default, Config's `__getitem__` implementation does not mark values as used
+#   - Most times the value is accessed it is used to change Config representation,
+#   - convert to string or log
+# - When a value is accessed for actual use, `get_and_mark_as_used` should be called
 
-# # Issues with tracking accurately write-after-read:
+# # Issues with tracking accurately write-after-use:
 #
 # - Nested config add extra complexity mixing Dict and Config
 #   - An alternative design could have been that `Config` derives from
@@ -326,7 +330,6 @@ class _OrderedConfig(_OrderedDictType):
         return ret
 
     # TODO(Danya): Use to mark items in `__getitem__`.
-    # TODO(Danya): Add tests for the current functionality.
     def mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
         """
         Mark value as read.
@@ -606,6 +609,18 @@ class Config:
 
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
+
+    # TODO(Danya): Merge with `get` method?
+    def get_and_mark_as_used(self, key: ScalarKeyValidTypes):
+        """
+        Get the value and mark it as used.
+
+        This should be used as the only way of accessing values from configs 
+        except for purposes of logging and transformation to string.
+        """
+        # TODO(Danya): Add assertion that a caller is not a `to_string` or `__contains__`
+        #  See CMTask3097.
+        return self.__getitem__(key, mark_key_as_used=True)
 
     def get(
         self,
@@ -1076,7 +1091,7 @@ class Config:
         report an informative message reporting the entire config on
         `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's an
+        This method should be used only by `__getitem__()` since it's a
         helper of that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
