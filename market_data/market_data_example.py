@@ -420,8 +420,7 @@ def get_RealtimeMarketData2_example1(
     return market_data
 
 
-# TODO(Grisha): @Max -> `example1` after we rename `get_RealTimeImClientMarketData_example1`.
-def get_RealTimeImClientMarketData_example2(
+def get_RealTimeImClientMarketData_example1(
     im_client: icdc.ImClient,
     asset_ids: List[int],
 ) -> Tuple[mdrtmada.RealTimeMarketData2, hdateti.GetWallClockTime]:
@@ -438,6 +437,8 @@ def get_RealTimeImClientMarketData_example2(
     get_wall_clock_time = lambda: hdateti.get_current_time(
         tz="ET", event_loop=event_loop
     )
+    # We can afford to wait only for 60 seconds in prod.
+    time_out_in_secs = 60
     #
     market_data = mdrtmada.RealTimeMarketData2(
         im_client,
@@ -447,6 +448,7 @@ def get_RealTimeImClientMarketData_example2(
         end_time_col_name,
         columns,
         get_wall_clock_time,
+        time_out_in_secs = time_out_in_secs,
     )
     return market_data, get_wall_clock_time
 
