@@ -8,7 +8,7 @@ back.
     --start_timestamp '20220916-000000' \
     --end_timestamp '20220920-000000' \
     --src_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec' \
-    --dst_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min' 
+    --dst_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min'
 
 Import as:
 
@@ -16,20 +16,15 @@ import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdba
 """
 import argparse
 import logging
-import os
 
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
-import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
-import helpers.hs3 as hs3
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -39,7 +34,7 @@ def _run(args: argparse.Namespace) -> None:
     epoch_unit = "s"
     # Convert dates to unix timestamps.
     start = hdateti.convert_timestamp_to_unix_epoch(
-        pd.Timestamp(args.start_timestamp), unit=epoch_unit 
+        pd.Timestamp(args.start_timestamp), unit=epoch_unit
     )
     end = hdateti.convert_timestamp_to_unix_epoch(
         pd.Timestamp(args.end_timestamp), unit=epoch_unit
@@ -73,13 +68,9 @@ def _run(args: argparse.Namespace) -> None:
     _LOG.info(data_resampled.head())
     _LOG.info("Resampled dataset has %i rows.", data_resampled.shape[0])
     imvcdeexut.save_parquet(
-        data_resampled,
-        args.dst_dir,
-        "s",
-        aws_profile,
-        "bid_ask"
+        data_resampled, args.dst_dir, "s", aws_profile, "bid_ask"
     )
-    
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
