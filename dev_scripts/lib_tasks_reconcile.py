@@ -485,7 +485,7 @@ def reconcile_dump_tca_data(
     )
     _ = ctx
     run_date = _get_run_date(run_date)
-    target_dir = _resolve_target_dir(dst_dir, run_date)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date
