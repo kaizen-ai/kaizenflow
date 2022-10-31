@@ -1463,7 +1463,10 @@ def compare_visually_dataframes(
     row_mode: str = "equal",
     column_mode: str = "equal",
     diff_mode: str = "diff",
+    remove_inf: bool = True,
     background_gradient: bool = True,
+    assert_diff_threshold: float = 1e-3,
+    log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
     Compare two dataframes.
@@ -1478,6 +1481,7 @@ def compare_visually_dataframes(
         corresponding elements
         - "diff": use the difference
         - "pct_change": use the percentage difference
+    :param remove_inf: replace +-inf with na
     :param background_gradient: colorize the output
     """
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
@@ -1506,11 +1510,20 @@ def compare_visually_dataframes(
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
-    df_diff = df_diff.add_suffix(f"_{diff_mode}")
+    df_diff = df_diff.add_suffix(f".{diff_mode}")
+    if remove_inf:
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     # Apply colors.
     if background_gradient:
         cm = sns.diverging_palette(5, 250, as_cmap=True)
         df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
+    # Report max diff.
+    max_diff = df_diff.abs().max().max()
+    _LOG.log(log_level, "Max difference factor: \%", max_diff)
+    if assert_diff_threshold is not None:
+        hdbg.dassert_lte(assert_diff_threshold, 1.0)
+        hdbg.dassert_lte(0.0, assert_diff_threshold)
+        hdbg.dassert_lte(max_diff, assert_diff_threshold)
     return df_diff
 
 

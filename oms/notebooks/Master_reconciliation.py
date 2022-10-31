@@ -84,36 +84,6 @@ diff_config = cconfig.build_config_diff_dataframe(
 )
 diff_config.T
 
-# %%
-if False:
-    # file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
-    # df1 = pd.read_parquet(file_name1)
-
-    # file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
-    # df2 = pd.read_parquet(file_name2)
-
-# %%
-#df1.columns.levels[0]
-
-# %%
-if False:
-    #asset_id = 1030828978
-    asset_id = 9872743573
-    #df1['vwap.ret_0.vol_adj_2_hat', asset_id] == df2['vwap.ret_0.vol_adj_2_hat', asset_id]
-    #column = 'vwap.ret_0.vol_adj_2_hat'
-    column = 'close'
-
-    #pd.concat()
-
-    compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
-    subset_multiindex_df_kwargs = {"columns_level0": [column],
-                                   #"columns_level1": [asset_id]
-                                  }
-
-    hpandas.compare_multiindex_dfs(df1, df2,
-                                   subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
-                                   compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs )#.dropna().abs().max()
-
 # %% [markdown]
 # # Data delay analysis
 
@@ -173,6 +143,37 @@ df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot
 # %% [markdown]
 # # Compare DAG io
 
+# %% [markdown]
+# ## One-off reading of Parquet files
+
+# %%
+if False:
+    file_name1 = "/shared_data/prod_reconciliation/20221025/prod/system_log_dir_scheduled__2022-10-24T10:00:00+00:00_2hours/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+    df1 = pd.read_parquet(file_name1)
+
+    file_name2 = "/shared_data/prod_reconciliation/20221025/simulation/system_log_dir/dag/node_io/node_io.data/predict.8.process_forecasts.df_out.20221025_061000.parquet"
+    df2 = pd.read_parquet(file_name2)
+
+    #asset_id = 1030828978
+    asset_id = 9872743573
+    #df1['vwap.ret_0.vol_adj_2_hat', asset_id] == df2['vwap.ret_0.vol_adj_2_hat', asset_id]
+    #column = 'vwap.ret_0.vol_adj_2_hat'
+    column = 'close'
+
+    #pd.concat()
+
+    compare_visually_dataframes_kwargs = {"diff_mode": "pct_change", "background_gradient": False}
+    subset_multiindex_df_kwargs = {"columns_level0": [column],
+                                   #"columns_level1": [asset_id]
+                                  }
+
+    hpandas.compare_multiindex_dfs(df1, df2,
+                                   subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
+                                   compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs )#.dropna().abs().max()
+
+# %% [markdown]
+# ## Read last node
+
 # %%
 # Select a specific node and timestamp to analyze.
 log_level = logging.DEBUG
@@ -194,6 +195,7 @@ dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timest
                                    log_level=logging.INFO)
 
 # %%
+# Load specific timestamp and node.
 if False:
     # Load DAG output for different experiments.
     dag_node_timestamp = pd.Timestamp("2022-10-28 06:25:00-04:00")
@@ -207,28 +209,22 @@ if False:
                                        start_timestamp, end_timestamp,
                                        log_level=logging.INFO)
 
+    # Check last two rows.
+    #column = "vwap.ret_0.vol_adj_2_hat"
+    column = "twap.ret_0"
+    #display(dag_df_dict["prod"][column].tail(2))
+    #display(dag_df_dict["sim"][column].tail(2))
 
-# %%
-#column = "vwap.ret_0.vol_adj_2_hat"
-column = "twap.ret_0"
-#display(dag_df_dict["prod"][column].tail(2))
-#display(dag_df_dict["sim"][column].tail(2))
+    diff_df = hpandas.compare_visually_dataframes(
+        dag_df_dict["prod"][column].tail(2),
+        dag_df_dict["sim"][column].tail(2),
+        diff_mode="pct_change",
+        background_gradient=False)
 
-diff_df = hpandas.compare_visually_dataframes(
-    dag_df_dict["prod"][column].tail(2),
-    dag_df_dict["sim"][column].tail(2),
-    diff_mode="pct_change",
-    background_gradient=False)
+    display(diff_df)
 
-#print(type(diff_df))
-diff_df.max().max()
-
-# %%
-# # Trim the data to match the target interval.
-# for k, df in dag_df_dict.items():
-#     dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
-
-# hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+    #print(type(diff_df))
+    diff_df.max().max()
 
 # %%
 #hpandas.compare_visually_dataframes(dag_df_dict["prod"], dag_df_dict["sim"])
@@ -238,7 +234,10 @@ _ = hpandas.multiindex_df_info(dag_df_dict["prod"])
 
 # %%
 df_subset = hpandas.subset_multiindex_df(dag_df_dict["prod"], columns_level0="close")
-df_subset
+df_subset.head(2)
+
+# %% [markdown]
+# ## Compare prod vs sim DAG output
 
 # %%
 # Compute percentage difference.
@@ -251,22 +250,12 @@ diff_df = hpandas.compare_multiindex_dfs(
     dag_df_dict["sim"],
     compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-diff_df.max().max()
-
-
-# %%
-def colorize_df(df: pd.DataFrame) -> pd.DataFrame:
-    import seaborn as sns
-    cm = sns.diverging_palette(5, 250, as_cmap=True)
-    df = df.style.background_gradient(axis=0, cmap=cm)
-    return df
-
-
-# %%
-df
+display(diff_df)
+# # Remove the sign and NaNs.
+# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# display(diff_df)
+# # Check that data is the same.
+# diff_df.max().max()
 
 # %%
 # Plot diffs over time.
@@ -565,6 +554,32 @@ dag_df_dict["prod"]["close"][asset_id]
 
 print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:12:00-04:00": '2022-10-28 06:16:00-04:00'].mean())
 print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:11:00-04:00": '2022-10-28 06:15:00-04:00'].mean())
+
+# %%
+# Get the real-time `ImClient`.
+# TODO(Grisha): ideally we should get the values from the config.
+resample_1min = False
+env_file = imvimlita.get_db_env_path("dev")
+connection_params = hsql.get_connection_info_from_env_file(env_file)
+db_connection = hsql.get_connection(*connection_params)
+table_name = "ccxt_ohlcv_futures"
+#
+im_client = icdcl.CcxtSqlRealTimeImClient(
+    resample_1min, db_connection, table_name
+)
+
+# %%
+# Load the data for the reconciliation date.
+# `ImClient` operates in UTC timezone.
+start_ts = pd.Timestamp("2022-10-28 06:10:00", tz="America/New_York")
+end_ts = start_ts + pd.Timedelta(days=1)
+columns = None
+filter_data_mode = "assert"
+full_symbols = ["binance::GMT_USDT"]
+df = im_client.read_data(
+    full_symbols, start_ts, end_ts, columns, filter_data_mode
+)
+hpandas.df_to_str(df.head(10), num_rows=None, log_level=logging.INFO)
 
 # %% [markdown]
 # # Compare pairwise portfolio correlations

@@ -257,7 +257,7 @@ def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
 
 
 def get_dag_node_names(dag_dir: str, *,
-        log_level: int = logging.DEBUG) -> List[str]:
+    log_level: int = logging.DEBUG) -> List[str]:
     """
     Get names of DAG node from a target dir.
 
@@ -693,32 +693,6 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
 
 
 # #############################################################################
-
-
-def load_portfolio_dfs(
-    portfolio_path_dict: Dict[str, str],
-    portfolio_config: Dict[str, Any],
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-    """
-    Load multiple portfolios and portfolio stats from disk.
-
-    :param portfolio_path_dict: paths to portfolios for different experiments
-    :param portfolio_config: params for `load_portfolio_artifacts()`
-    :return: portfolios and portfolio stats for different experiments
-    """
-    portfolio_dfs = {}
-    portfolio_stats_dfs = {}
-    for name, path in portfolio_path_dict.items():
-        hdbg.dassert_path_exists(path)
-        _LOG.info("Processing portfolio=%s path=%s", name, path)
-        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
-            path,
-            **portfolio_config,
-        )
-        portfolio_dfs[name] = portfolio_df
-        portfolio_stats_dfs[name] = portfolio_stats_df
-    #
-    return portfolio_dfs, portfolio_stats_dfs
 
 
 def load_portfolio_dfs(
