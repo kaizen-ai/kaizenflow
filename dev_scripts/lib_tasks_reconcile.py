@@ -519,7 +519,7 @@ def reconcile_dump_tca_data(
     ]
     opts = " ".join(opts)
     log_file = os.path.join(local_results_dir, "log.txt")
-    opts += f"--incremental -v DEBUG 2>&1 | tee {log_file}"
+    opts += f" --incremental -v DEBUG 2>&1 | tee {log_file}"
     opts += "; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/oms/get_ccxt_fills.py",
