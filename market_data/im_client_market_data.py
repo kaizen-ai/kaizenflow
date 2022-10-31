@@ -235,7 +235,6 @@ class ImClientMarketData(mdabmada.MarketData):
                 .groupby(by=[self._asset_id_col])
                 .max()[self._end_time_col_name]
             )
-            ret = df_max_ts_per_asset.min()
             _LOG.debug(
                 hpandas.df_to_str(
                     df_max_ts_per_asset,
@@ -243,5 +242,6 @@ class ImClientMarketData(mdabmada.MarketData):
                     tag="after get_data",
                 )
             )
+            ret = df_max_ts_per_asset.min()
         _LOG.debug("-> ret=%s", ret)
         return ret
