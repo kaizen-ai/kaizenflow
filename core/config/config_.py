@@ -302,6 +302,7 @@ class _OrderedConfig(_OrderedDictType):
         return val
     
     # TODO(Danya): Use to mark items in `__getitem__`.
+    # TODO(Danya): Add tests for the current functionality.
     def mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
         """
         Mark value as read.
@@ -315,7 +316,7 @@ class _OrderedConfig(_OrderedDictType):
         # Retrieve the value and the metadata.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         marked_as_used, val = super().__getitem__(key)
-        _LOG.debug(hprint.to_str("marked_as_used val read_state"))
+        _LOG.debug(hprint.to_str("marked_as_used val used_state"))
         #
         if used_state:
             # Update the metadata, accounting that this data was read.

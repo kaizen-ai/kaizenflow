@@ -1958,6 +1958,25 @@ class Test_to_string(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_mark_as_used1
+# #############################################################################
+
+class Test_mark_as_used1(hunitest.TestCase):
+    # used_state = True, scalar;
+    # used_state = True, subconfig (nested)
+    # used_state = True, other iterable
+    #  used_state = False, scalar
+    def test1(self) -> None:
+        test_dict = {"key1": 1, "key2": "value2"}
+        test_config = cconfig.Config.from_dict(test_dict)
+        expected = """key1 (marked_as_used=False, val_type=int): 1
+        key2 (marked_as_used=True, val_type=str): value2"""
+        test_config._config.mark_as_used("key2")
+        actual = repr(test_config)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+
+# #############################################################################
 # _Config_execute_stmt_TestCase1
 # #############################################################################
 
