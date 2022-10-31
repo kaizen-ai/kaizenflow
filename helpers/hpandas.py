@@ -1385,9 +1385,10 @@ def compare_visually_dataframes(
         - "equal": rows need to be the same for the two dataframes
         - "inner": compute the common rows for the two dataframes
     :param column_mode: same as `row_mode`
-    :param diff_mode: control how the dataframes are compared
-        - "diff": compute the difference between dataframes
-        - "pct_change": compute the percentage change between dataframes
+    :param diff_mode: control how the dataframes are compared in terms of
+        corresponding elements
+        - "diff": use the difference
+        - "pct_change": use the percentage difference
     :param background_gradient: colorize the output
     """
     if row_mode == "equal":
@@ -1398,19 +1399,18 @@ def compare_visually_dataframes(
         df1 = df1[df1.index.isin(same_rows)]
         df2 = df2[df2.index.isin(same_rows)]
     else:
-        raise ValueError("Invalid row_mode='%s'" % row_mode)
+        raise ValueError(f"Invalid row_mode='{row_mode}'")
     #
     if column_mode == "equal":
         hdbg.dassert_eq(sorted(df1.columns), sorted(df2.columns))
-        col_names = df1.columns
     elif column_mode == "inner":
         # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
         col_names = sorted(list(set(df1.columns).intersection(set(df2.columns))))
         df1 = df1[col_names]
         df2 = df2[col_names]
     else:
-        raise ValueError("Invalid column_mode='%s'" % column_mode)
-    # Compute the difference.
+        raise ValueError("Invalid column_mode='{column_mode}'")
+    # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
@@ -1424,6 +1424,44 @@ def compare_visually_dataframes(
 
 
 # #############################################################################
+# Multi-index dfs
+# #############################################################################
+
+def list_to_str(vals: List[Any],
+    *,
+    sep: str = " ",
+    enclose
+    max_num: Optional[int] = 10,
+) -> str:
+    ret = "%s [" % len(vals)
+    if max_num is not None and len(vals) > max_num:
+        hdbg.dassert_lt(1, max_num)
+        ret += sep.join(map(str, vals[:int(max_num / 2)]))
+        ret += sep + "..." + sep
+        ret += sep.join(map(str, vals[-int(max_num / 2):]))
+    else:
+        ret += sep.join(map(str, vals))
+    ret += "]"
+    return ret
+
+
+def multiindex_df_info(
+    df: pd.DataFrame,
+    *,
+    max_num: Optional[int] = 10,
+    log_level: int = logging.INFO,
+) -> str:
+    hdbg.dassert_eq(2, len(df.columns.levels))
+    columns_level0 = df.columns.levels[0]
+    columns_level1 = df.columns.levels[1]
+    rows = df.index
+    ret = []
+    ret.append("columns_level0=%s" % list_to_str(columns_level0, max_num=max_num))
+    ret.append("columns_level1=%s" % list_to_str(columns_level1, max_num=max_num))
+    ret.append("rows=%s" % list_to_str(rows, max_num=max_num))
+    ret = "\n".join(ret)
+    _LOG.log(log_level, ret)
+    return ret
 
 
 def subset_multiindex_df(

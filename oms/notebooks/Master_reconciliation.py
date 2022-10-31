@@ -220,7 +220,13 @@ dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timest
 # hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-hpandas.compare_visually_dataframes(dag_df_dict["prod"], dag_df_dict["sim"])
+#hpandas.compare_visually_dataframes(dag_df_dict["prod"], dag_df_dict["sim"])
+
+# %%
+hpandas.list_to_str([1, 2, 3, 4, 5], max_num=4)
+
+# %%
+hpandas.multiindex_df_info(dag_df_dict["prod"], max_num=None)
 
 # %%
 # Compute percentage difference.
