@@ -2,8 +2,6 @@
 # Data Reconciliation
 # #############################################################################
 """
-
-
 Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
@@ -18,7 +16,7 @@ to run outside a Docker container:
 
 Import as:
 
-import dev_scripts.lib_tasks_reconcile as dslitare
+import dev_scripts.lib_tasks_data_reconcile as dslitadr
 """
 
 import datetime
