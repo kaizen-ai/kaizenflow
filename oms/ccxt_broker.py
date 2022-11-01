@@ -20,6 +20,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hlogging as hloggin
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hsecrets as hsecret
 import im_v2.common.universe.full_symbol as imvcufusy
@@ -687,7 +688,7 @@ class CcxtBroker(ombroker.Broker):
         # Combine all orders in a df.
         order_dicts = [order.to_dict() for order in sent_orders]
         order_df = pd.DataFrame(order_dicts)
-        _LOG.debug("order_df=%s", order_df)
+        _LOG.debug("order_df=%s", hpandas.df_to_str(order_df))
         return receipt, order_df
 
     def _build_asset_id_to_symbol_mapping(

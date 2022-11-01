@@ -75,7 +75,7 @@ def get_Cx_RealTimeMarketData_prod_instance1(
         resample_1min, db_connection, table_name
     )
     # Get the real-time `MarketData`.
-    market_data, _ = mdata.get_RealTimeImClientMarketData_example2(
+    market_data, _ = mdata.get_RealTimeImClientMarketData_example1(
         im_client, asset_ids
     )
     return market_data

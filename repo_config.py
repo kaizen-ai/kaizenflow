@@ -246,8 +246,8 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     shared_data_dirs: Optional[Dict[str, str]] = None
     if hserver.is_dev4():
         shared_data_dirs = {
-                "/local/home/share/cache": "/cache",
-                "/local/home/share/data": "/data",
+            "/local/home/share/cache": "/cache",
+            "/local/home/share/data": "/data",
         }
     elif hserver.is_dev_ck():
         shared_data_dirs = {"/data/shared": "/shared_data"}
