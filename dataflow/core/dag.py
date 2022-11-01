@@ -8,13 +8,14 @@ import itertools
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union, cast
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import networkx as networ
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import dataflow.core.node as dtfcornode
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hlist as hlist
@@ -49,6 +50,7 @@ class DAG(hobject.PrintableMixin):
         self,
         name: Optional[str] = None,
         mode: Optional[str] = None,
+        get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
     ) -> None:
         """
         Create a DAG.
@@ -59,6 +61,7 @@ class DAG(hobject.PrintableMixin):
             - "strict": asserts
             - "loose": deletes old node (also removes edges) and adds new node. This
               is useful for interactive notebooks and debugging
+        :param get_wall_clock_time: the wall clock
         """
         _LOG.debug(hprint.to_str("name mode"))
         self._nx_dag = networ.DiGraph()
@@ -70,6 +73,14 @@ class DAG(hobject.PrintableMixin):
         mode = mode or "strict"
         hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
+        #
+        if get_wall_clock_time is None:
+            event_loop = None
+            get_wall_clock_time = lambda: hdateti.get_current_time(
+                tz="ET", event_loop=event_loop
+            )
+        hdbg.dassert_isinstance(get_wall_clock_time, Callable)
+        self._get_wall_clock_time = get_wall_clock_time
         # Set default debug/logging parameters.
         self._save_node_io = ""
         self._profile_execution = False
@@ -599,8 +610,10 @@ class DAG(hobject.PrintableMixin):
         """
         dst_dir = cast(str, self._dst_dir)
         bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        wall_clock_time = self._get_wall_clock_time()
+        wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
         basename = (
-            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}"
+            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.{wall_clock_time_str}"
         )
         file_name = os.path.join(dst_dir, "node_io.data", basename)
         #
