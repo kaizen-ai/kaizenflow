@@ -63,10 +63,10 @@ DUMMY = "__DUMMY__"
 # - We don't allow `dict` in Config as leaves
 #   - We assume that a dict leaf represents a Config for an object
 #   - `dict` are valid in composed data structures, e.g., list, tuples
-# - By default, Config's `__getitem__` implementation does not mark values as used
-#   - Most times the value is accessed it is used to change Config representation,
-#   - convert to string or log
-# - When a value is accessed for actual use, `get_and_mark_as_used` should be called
+# - We require the user to explicitly mark as used a value from the config,
+#   in cases when we don't want subsequent writes to change its value
+#   - Thus, by default __getitem__() has mark_as_use=False by default,
+#  and the user needs to use `get_and_mark_as_used()` method,
 
 # # Issues with tracking accurately write-after-use:
 #
@@ -283,7 +283,7 @@ class _OrderedConfig(_OrderedDictType):
             else:
                 # The key was not present, so we just mark it not read yet.
                 marked_as_used = False
-            # Check if the value has already been marked as read/unread.
+            # Check if the value has already been marked as used/unused.
             #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
                 # Set new `marked_as_used` status with the same value.
@@ -329,13 +329,13 @@ class _OrderedConfig(_OrderedDictType):
         ret = self.to_string(mode)
         return ret
 
-    # TODO(Danya): Use to mark items in `__getitem__`.
     def _mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
         """
         Mark value as read.
 
         The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
-        if the value has been accessed via `__getitem__`.
+        if the user reported that the value will be used to build other objects,
+        and it should not be subsequently modified.
 
         :param used_state: whether to mark the value as used.
                  Values are not marked e.g. when accessed through `__contains__` method.
@@ -349,16 +349,11 @@ class _OrderedConfig(_OrderedDictType):
             # Update the metadata, accounting that this data was read.
             marked_as_used = True
             super().__setitem__(key, (marked_as_used, val))
-        # If the value is an iterable then we need to propagate the read state.
-        # TODO(Danya): Do we need to mark all elements of subconfig as used if we
-        #  usea subconfig?
-        if hintros.is_iterable(val):
-            for elem in val:
-                if hasattr(elem, "mark_as_used"):
-                    elem._mark_as_used(marked_as_used)
-        else:
-            if hasattr(val, "mark_as_used"):
-                val._mark_as_used(marked_as_used)
+        if hasattr(val, "_config"):
+            # If a value is a subconfig, mark all values down the tree.
+            for key in val._config.keys():
+                val._config._mark_as_used(key, marked_as_used)
+
 
     def to_string(self, mode: str) -> str:
         """
@@ -507,8 +502,7 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        If `key` is nested, the hierarchy of Config objects is navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -610,16 +604,13 @@ class Config:
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
 
-    # TODO(Danya): Merge with `get` method?
-    def get_and_mark_as_used(self, key: ScalarKeyValidTypes):
+    def get_and_mark_as_used(self, key: ScalarKeyValidTypes) -> Any:
         """
         Get the value and mark it as used.
 
         This should be used as the only way of accessing values from configs 
         except for purposes of logging and transformation to string.
         """
-        # TODO(Danya): Add assertion that a caller is not a `to_string` or `__contains__`
-        #  See CMTask309.
         return self.__getitem__(key, mark_key_as_used=True)
 
     def get(
@@ -1084,7 +1075,7 @@ class Config:
         )
 
     def _get_item(
-        self, key: CompoundKey, *, level: int, mark_key_as_used: bool
+        self, key: CompoundKey, level: int, mark_key_as_used: bool
     ) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
@@ -1112,7 +1103,6 @@ class Config:
                 _LOG.debug("subconfig\n=%s", self._config)
                 if isinstance(subconfig, Config):
                     # Recurse.
-                    # TODO(Danya): Note that this way values in the subconfig are marked used all the way down.
                     ret = subconfig._get_item(tail_key, level=level + 1, mark_key_as_used=mark_key_as_used)
                 else:
                     # There are more keys to process but we have reached the leaves

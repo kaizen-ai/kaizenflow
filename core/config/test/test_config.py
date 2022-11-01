@@ -1991,7 +1991,7 @@ class Test_mark_as_used1(hunitest.TestCase):
         #
         expected_config = r"""key1 (marked_as_used=False, val_type=int): 1
         key2 (marked_as_used=True, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=str): value3"""
+        key3 (marked_as_used=True, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
     
