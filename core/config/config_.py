@@ -14,6 +14,8 @@ import logging
 import os
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+import inspect
+
 
 import numpy as np
 import pandas as pd
@@ -157,6 +159,55 @@ class ClobberError(RuntimeError):
 # TODO(gp): Consider using a dict since after Python3.6 it is ordered.
 _OrderedDictType = collections.OrderedDict
 
+class ConfigWriterInfo:
+    """
+    A class used to store information on the function that used a value from a config.
+
+    The class is meant to be used with `Config._mark_as_used`, and is utilized for:
+    - Storing a full stack trace of the `_mark_as_used` method call
+    - Storing a shorthand representation with the file and function names
+    """
+    def __init__(self):
+        self._full_traceback = self._get_full_traceback()
+        self._shorthand_caller = self._get_shorthand_caller()
+    
+    def _get_full_traceback():
+        """
+        Return full traceback as str.
+        """
+        return hintros.stacktrace_to_str()
+    
+    def _get_shorthand_caller():
+        """
+        Return a short representation of the context in which the function was called.
+
+        The shorthand includes:
+        - file name
+        - line number
+        - name of the caller function
+
+        Example:
+
+        'dataflow/system/system_builder_utils.py::80::get_config_template'
+        """
+        stack = inspect.stack()
+        # Select the context in which `_mark_as_used` was called.
+        # Index=3 since the `_mark_as_read` context will be stored above:
+        #  - Context inside ConfigWriterInfo
+        #  - Context of ConfigWriterInfo called in `_mark_as_used`, e.g.:
+        #  
+        caller = stack[2]
+        print("".join(stack))
+        caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
+        return caller
+    
+    def __str__(self):
+        return self._shorthand_caller
+    
+    def __repr__(self):
+        return self._full_traceback
+
+
 
 class _OrderedConfig(_OrderedDictType):
     """
@@ -182,11 +233,13 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: Optional[str] = "allow_write_after_use"
     ) -> None:
         """
-        Each val is encoded internally as a tuple (marked_as_used, value) where:
+        Each val is encoded internally as a tuple (marked_as_used, writer, value) where:
 
         - marked_as_used: stores whether the value has been already used and thus
           needs to be protected from successive writes, depending on
           clobber_mode
+        - writer: stores the stacktrace of the function that used the value.
+          None if `marked_as_used` = False
         - value: stores the actual value
 
         For `update_mode` and `clobber_mode` see module docstring.
@@ -279,14 +332,15 @@ class _OrderedConfig(_OrderedDictType):
             else:
                 # The key was not present, so we just mark it not read yet.
                 marked_as_used = False
+                writer = None
             # Check if the value has already been marked as read/unread.
             #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
                 # Set new `marked_as_used` status with the same value.
-                val = (marked_as_used, val[1])
+                val = (marked_as_used, writer, val[1])
                 super().__setitem__(key, val)
             else:
-                super().__setitem__(key, (marked_as_used, val))
+                super().__setitem__(key, (marked_as_used, writer, val))
             
     # /////////////////////////////////////////////////////////////////////////////
     # Get.
@@ -298,7 +352,7 @@ class _OrderedConfig(_OrderedDictType):
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
-        marked_as_used, val = super().__getitem__(key)
+        marked_as_used, writer, val = super().__getitem__(key)
         return val
     
     # TODO(Danya): Use to mark items in `__getitem__`.
@@ -306,7 +360,7 @@ class _OrderedConfig(_OrderedDictType):
         """
         Mark value as read.
 
-        The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
+        The value is a tuple of (marked_as_used, writer, value), where `marked_as_used`== True
         if the value has been accessed via `__getitem__`. 
 
         :param used_state: whether to mark the value as used.
@@ -314,13 +368,14 @@ class _OrderedConfig(_OrderedDictType):
         """
         # Retrieve the value and the metadata.
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        marked_as_used, val = super().__getitem__(key)
+        marked_as_used, writer, val = super().__getitem__(key)
         _LOG.debug(hprint.to_str("marked_as_used val read_state"))
         #
         if used_state:
             # Update the metadata, accounting that this data was read.
             marked_as_used = True
-            super().__setitem__(key, (marked_as_used, val))
+            writer = ConfigWriterInfo()
+            super().__setitem__(key, (marked_as_used, writer, val))
         # If the value is an iterable then we need to propagate the read state.
         if hintros.is_iterable(val):
             for elem in val:
@@ -350,6 +405,11 @@ class _OrderedConfig(_OrderedDictType):
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
+    
+    def str_debug(self) -> str:
+        mode = "debug"
+        ret = self.to_string(mode)
+        return ret
 
     def to_string(self, mode: str) -> str:
         """
@@ -360,13 +420,17 @@ class _OrderedConfig(_OrderedDictType):
                     - `verbose` for values with `val_type` and `mark_as_used`
         """
         txt = []
-        for key, (marked_as_used, val) in self.items():
+        for key, (marked_as_used, writer, val) in self.items():
             # 1) Process key.
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
                 # E.g., `nrows (marked_as_used=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (marked_as_used={marked_as_used}, "
+                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={str(writer)}"
+                key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
+            elif mode == "debug":
+                stacktrace = repr(writer)
+                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={stacktrace}"
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
@@ -837,8 +901,9 @@ class Config:
         _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
         dict_: _OrderedDictType[ScalarKey, Any] = collections.OrderedDict()
-        for key, (marked_as_used, val) in self._config.items():
+        for key, (marked_as_used, writer, val) in self._config.items():
             _ = marked_as_used
+            _ = writer
             if keep_leaves:
                 if isinstance(val, Config):
                     # If a value is a `Config` convert to dictionary recursively.
