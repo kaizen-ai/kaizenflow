@@ -722,7 +722,12 @@ prod_order_df[mask].head(6)
 df1 = prod_target_position_df["target_holdings_shares"].shift(1)
 df2 = prod_target_position_df["holdings_shares"]
 
+#df1
 df1 - df2
+
+# %%
+display(prod_target_position_df["holdings_shares"].loc["2022-11-01 09:10:00-04:00"])
+display(prod_target_position_df["target_holdings_shares"].loc["2022-11-01 09:10:00-04:00"])
 
 # %%
 # We are getting the fills that correspond to the orders and to the change of holdings.
@@ -736,8 +741,13 @@ fills = oms.compute_fill_stats(prod_target_position_df)
 fills["underfill_share_count"].plot()
 
 # %%
+fills["underfill_share_count"].round(4)
+
+# %%
 print(fills.columns.levels[0])
-fills["underfill_share_count"].round(4).abs().max()
+fills["tracking_error_shares"]
+
+# TODO(gp): Add a check to ensure that this is never positive.
 
 # %%
 fills["fill_rate"].head()
