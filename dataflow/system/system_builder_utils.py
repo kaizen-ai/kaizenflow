@@ -462,16 +462,20 @@ def apply_ProcessForecastsNode_config_for_crypto(
     For crypto we do not filter since crypto market is open 24/7.
     """
     if is_prod:
-        prod_start_time = datetime.time(6, 00)
-        # The prod run is terminated at 8:05 a.m. ET.
-        prod_end_time = datetime.time(8, 5)
-        bar_duration_in_secs = system.config[
-            "dag_runner_config", "bar_duration_in_secs"
-        ]
-        trading_end_time = _find_last_trading_bar(
-            prod_end_time, bar_duration_in_secs
-        )
-        liquidate_at_trading_end_time = True
+        prod_start_time = None
+        prod_end_time = None
+        trading_end_time = None
+        liquidate_at_trading_end_time = False
+        # prod_start_time = datetime.time(6, 00)
+        # # The prod run is terminated at 8:05 a.m. ET.
+        # prod_end_time = datetime.time(8, 5)
+        # bar_duration_in_secs = system.config[
+        #     "dag_runner_config", "bar_duration_in_secs"
+        # ]
+        # trading_end_time = _find_last_trading_bar(
+        #     prod_end_time, bar_duration_in_secs
+        # )
+        # liquidate_at_trading_end_time = True
         #
         share_quantization = "asset_specific"
     else:
