@@ -119,6 +119,7 @@ def _parse() -> argparse.ArgumentParser:
         "--bid_ask_accuracy",
         action="store",
         required=False,
+        default=None,
         type=int,
         help="An accuracy threshold (in %) to apply when reconciling bid/ask data"
         + "If the data differ above this threshold an error is raised.",
@@ -151,8 +152,8 @@ class RealTimeHistoricalReconciler:
                 "parameter `bid_ask_accuracy` is required "
                 + "for `bid_ask` data type",
             )
+            self.bid_ask_accuracy = args.bid_ask_accuracy
         self.data_type = args.data_type
-        self.bid_ask_accuracy = args.bid_ask_accuracy
         # Set DB connection.
         db_connection = self.get_db_connection(args)
         # Initialize CCXT client.
