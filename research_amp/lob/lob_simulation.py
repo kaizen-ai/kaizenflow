@@ -28,6 +28,8 @@
 # %load_ext autoreload
 # %autoreload 2
 
+import random
+
 import numpy as np
 import pandas as pd
 
@@ -41,17 +43,16 @@ n_samples = 10
 bid_asks_raw = ralololi.get_data(n_samples)
 #
 display(bid_asks_raw)
-#
 bid_asks_raw.plot.hist()
 
 # %% [markdown]
 # # Convert raw orders data into `supply-demand` state
 
 # %%
+# TODO(Max): Invert the axes (place `price` to Y-axis).
 supply_demand = ralololi.get_supply_demand_curve(bid_asks_raw)
 #
 display(supply_demand.head(3))
-#
 supply_demand.plot()
 
 # %% [markdown]
@@ -98,7 +99,7 @@ eq_df["eq_quantity"].hist(bins=20)
 # ![image.png](attachment:image.png)
 #
 # If we go back to our case, e.g., consumer surplus will be the following area:
-# ![image-2.png](attachment:image-2.png)
+# ![image-3.png](attachment:image-3.png)
 
 # %% [markdown]
 # ## Consumer surplus
@@ -111,11 +112,16 @@ cons_surplus = cons_surplus[cons_surplus.index > eq_price]["demand"]
 cons_surplus = cons_surplus.reset_index().set_index("demand")
 cons_surplus = cons_surplus.sort_index()
 cons_surplus = cons_surplus[cons_surplus.index.notnull()]
-cons_surplus.plot()
+# cons_surplus.plot()
+
+# %% [markdown]
+# ![image.png](attachment:image.png)
 
 # %%
 # The area below the line equals to consumer surplus.
 cons_surplus_value = np.trapz(y=cons_surplus["price"], x=cons_surplus.index)
+square_cons = (cons_surplus.index.max() - cons_surplus.index.min()) * eq_price
+cons_surplus_value -= square_cons
 cons_surplus_value
 
 # %% [markdown]
@@ -129,7 +135,10 @@ prod_surplus = prod_surplus[prod_surplus.index < eq_price]["supply"]
 prod_surplus = prod_surplus.reset_index().set_index("supply")
 prod_surplus = prod_surplus.sort_index()
 prod_surplus = prod_surplus[prod_surplus.index.notnull()]
-prod_surplus.plot()
+# prod_surplus.plot()
+
+# %% [markdown]
+# ![image.png](attachment:image.png)
 
 # %%
 # The area above the line is producer surplus.
@@ -163,6 +172,8 @@ def calculate_economic_surplus(df, eq_price):
     cons_surplus = cons_surplus.sort_index()
     cons_surplus = cons_surplus[cons_surplus.index.notnull()]
     cons_surplus_value = np.trapz(y=cons_surplus["price"], x=cons_surplus.index)
+    square_cons = (cons_surplus.index.max() - cons_surplus.index.min()) * eq_price
+    cons_surplus_value -= square_cons
     # Producer surplus.
     prod_surplus = df.copy()
     prod_surplus = prod_surplus[prod_surplus.index < eq_price]["supply"]
@@ -180,6 +191,10 @@ def calculate_economic_surplus(df, eq_price):
 
 
 # %%
+# Check if the fucntion is true.
+calculate_economic_surplus(supply_demand, eq_price) == total_surplus
+
+# %%
 # MC simulation for obtaining economic surplus.
 ec_surplus_df = pd.DataFrame()
 for i in range(1, 500):
@@ -191,3 +206,30 @@ for i in range(1, 500):
 
 # %%
 ec_surplus_df.hist(bins=20)
+
+# %% [markdown]
+# ## Distribution of economic surplus depending on N
+
+# %% run_control={"marked": false}
+# MC simulation for obtaining economic surplus with random N.
+ec_surplus_df_N = pd.DataFrame()
+for i in range(1, 1000):
+    N = random.choice(range(5, 1000))
+    ba_raw = ralololi.get_data(N)
+    sd = ralololi.get_supply_demand_curve(ba_raw)
+    eq_p, _ = ralololi.find_equilibrium(sd, print_graph=False)
+    total_surplus = calculate_economic_surplus(sd, eq_p)
+    ec_surplus_df_N.loc[i, "N"] = N
+    ec_surplus_df_N.loc[i, "econ_surplus"] = total_surplus
+
+# %%
+ec_surplus_df_N["econ_surplus"].hist(bins=20)
+
+# %% [markdown]
+# More of a uniform distribution.
+
+# %% run_control={"marked": false}
+ec_surplus_df_N.set_index("N").sort_index().plot()
+
+# %% [markdown]
+# Strong dependence of economic surplus with respect to N.
