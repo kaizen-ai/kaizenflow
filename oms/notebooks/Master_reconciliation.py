@@ -52,8 +52,11 @@ hprint.config_notebook()
 # # Config
 
 # %%
-date_str = "20221028"
-config_list = oms.build_reconciliation_configs(date_str)
+#date_str = "20221028"
+#date_str = "20221031"
+date_str = "20221101"
+prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
+config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
 
@@ -63,9 +66,15 @@ system_log_path_dict, portfolio_path_dict, dag_path_dict = oms.get_path_dicts(co
 # %%
 date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
+if False:
+    start_time = "06:05:00"
+    end_time = "07:50:00"
+else:
+    start_time = "08:45:00"
+    end_time = "10:40:00"
+start_timestamp = pd.Timestamp(date_str + " " + start_time, tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " " + end_time, tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 07:50:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -420,17 +429,18 @@ display(res_df.head(3))
 compare_visually_dataframes_kwargs = {
     "diff_mode": "pct_change",
     "background_gradient": False,
+    "log_level": logging.INFO,
 }
 diff_df = hpandas.compare_visually_dataframes(
     prod_df,
     res_df,
     **compare_visually_dataframes_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
+# # Remove the sign and NaNs.
+# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# # Check that data is the same.
+# print(diff_df.max().max())
+display(hpandas.heatmap_df(diff_df.round(2)))
 
 # %% [markdown]
 # ## Volatility
@@ -445,17 +455,18 @@ display(res_df.head(2))
 compare_visually_dataframes_kwargs = {
     "diff_mode": "pct_change",
     "background_gradient": False,
+    "log_level": logging.INFO,
 }
 diff_df = hpandas.compare_visually_dataframes(
     prod_df,
     res_df,
     **compare_visually_dataframes_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
+# # Remove the sign and NaNs.
+# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# # Check that data is the same.
+# print(diff_df.max().max())
+display(hpandas.heatmap_df(diff_df.round(2)))
 
 # %% [markdown]
 # ## Target holdings
@@ -471,17 +482,18 @@ display(res_df.head(5))
 compare_visually_dataframes_kwargs = {
     "diff_mode": "pct_change",
     "background_gradient": False,
+    "log_level": logging.INFO,
 }
 diff_df = hpandas.compare_visually_dataframes(
     prod_df,
     res_df,
     **compare_visually_dataframes_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-#diff_df.max().max()
-hpandas.heatmap_df(diff_df.round(2))
+# # Remove the sign and NaNs.
+# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# # Check that data is the same.
+# #diff_df.max().max()
+display(hpandas.heatmap_df(diff_df.round(2)))
 
 # %% [markdown]
 # ## Holdings
@@ -502,93 +514,94 @@ display(res_df.head(5))
 compare_visually_dataframes_kwargs = {
     "diff_mode": "pct_change",
     "background_gradient": False,
+    "log_level": logging.INFO,
+    "assert_diff_threshold": None,
 }
 diff_df = hpandas.compare_visually_dataframes(
     prod_df,
     res_df,
     **compare_visually_dataframes_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-#diff_df.max().max()
-hpandas.heatmap_df(diff_df.round(2))
+# # Remove the sign and NaNs.
+# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# # Check that data is the same.
+# #diff_df.max().max()
+display(hpandas.heatmap_df(diff_df.round(2)))
+
+# %%
+display(prod_target_position_df["holdings_shares"].dropna().head(10))
+
+display(research_portfolio_df["holdings_shares"].dropna().head(10))
 
 # %% [markdown]
 # # Compare prices
 
 # %%
+if False:
+    # Select a specific node and timestamp to analyze.
+    #log_level = logging.INFO
+    log_level = logging.DEBUG
+    dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=log_level)
+    #dag_node_name = dag_node_names[-1]
+    dag_node_name = "predict.0.read_data"
+    print(hprint.to_str("dag_node_name"))
 
-# Select a specific node and timestamp to analyze.
-#log_level = logging.INFO
-log_level = logging.DEBUG
-dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=log_level)
-#dag_node_name = dag_node_names[-1]
-dag_node_name = "predict.0.read_data"
-print(hprint.to_str("dag_node_name"))
+    dag_node_timestamps = oms.get_dag_node_timestamps(
+        dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
+    )
 
-dag_node_timestamps = oms.get_dag_node_timestamps(
-    dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
-)
-
-dag_node_timestamp = dag_node_timestamps[-1]
-print("dag_node_timestamp=%s" % dag_node_timestamp)
-
-
-# Load DAG output for different experiments.
-dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
-                                   start_timestamp, end_timestamp,
-                                   log_level=logging.INFO)
+    dag_node_timestamp = dag_node_timestamps[-1]
+    print("dag_node_timestamp=%s" % dag_node_timestamp)
 
 
-# %%
-asset_id = 1030828978
-#asset_id = 1464553467
-dag_df_dict["prod"]["close"][asset_id]
+    # Load DAG output for different experiments.
+    dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
+                                       start_timestamp, end_timestamp,
+                                       log_level=logging.INFO)
 
-# 2022-10-28 06:11:00-04:00    0.4798
-# 2022-10-28 06:12:00-04:00    0.4802
-# 2022-10-28 06:13:00-04:00    0.4807
-# 2022-10-28 06:14:00-04:00    0.4809
-# 2022-10-28 06:15:00-04:00    0.4808
 
-print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:12:00-04:00": '2022-10-28 06:16:00-04:00'].mean())
-print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:11:00-04:00": '2022-10-28 06:15:00-04:00'].mean())
+    asset_id = 1030828978
+    #asset_id = 1464553467
+    dag_df_dict["prod"]["close"][asset_id]
 
-# %%
-# Get the real-time `ImClient`.
-# TODO(Grisha): ideally we should get the values from the config.
-resample_1min = False
-env_file = imvimlita.get_db_env_path("dev")
-connection_params = hsql.get_connection_info_from_env_file(env_file)
-db_connection = hsql.get_connection(*connection_params)
-table_name = "ccxt_ohlcv_futures"
-#
-im_client = icdcl.CcxtSqlRealTimeImClient(
-    resample_1min, db_connection, table_name
-)
+    # 2022-10-28 06:11:00-04:00    0.4798
+    # 2022-10-28 06:12:00-04:00    0.4802
+    # 2022-10-28 06:13:00-04:00    0.4807
+    # 2022-10-28 06:14:00-04:00    0.4809
+    # 2022-10-28 06:15:00-04:00    0.4808
 
-# %%
-# Load the data for the reconciliation date.
-# `ImClient` operates in UTC timezone.
-start_ts = pd.Timestamp("2022-10-28 06:10:00", tz="America/New_York")
-end_ts = start_ts + pd.Timedelta(days=1)
-columns = None
-filter_data_mode = "assert"
-full_symbols = ["binance::GMT_USDT"]
-df = im_client.read_data(
-    full_symbols, start_ts, end_ts, columns, filter_data_mode
-)
-hpandas.df_to_str(df.head(10), num_rows=None, log_level=logging.INFO)
+    print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:12:00-04:00": '2022-10-28 06:16:00-04:00'].mean())
+    print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:11:00-04:00": '2022-10-28 06:15:00-04:00'].mean())
+
+    # Get the real-time `ImClient`.
+    # TODO(Grisha): ideally we should get the values from the config.
+    resample_1min = False
+    env_file = imvimlita.get_db_env_path("dev")
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    db_connection = hsql.get_connection(*connection_params)
+    table_name = "ccxt_ohlcv_futures"
+    #
+    im_client = icdcl.CcxtSqlRealTimeImClient(
+        resample_1min, db_connection, table_name
+    )
+
+    # Load the data for the reconciliation date.
+    # `ImClient` operates in UTC timezone.
+    start_ts = pd.Timestamp("2022-10-28 06:10:00", tz="America/New_York")
+    end_ts = start_ts + pd.Timedelta(days=1)
+    columns = None
+    filter_data_mode = "assert"
+    full_symbols = ["binance::GMT_USDT"]
+    df = im_client.read_data(
+        full_symbols, start_ts, end_ts, columns, filter_data_mode
+    )
+    hpandas.df_to_str(df.head(10), num_rows=None, log_level=logging.INFO)
 
 # %% [markdown]
 # # Compare pairwise portfolio correlations
 
 # %%
 research_portfolio_df["holdings_shares"].head(10)
-
-# %%
-df
 
 # %%
 dtfmod.compute_correlations(
@@ -699,8 +712,17 @@ asset_id = 6051632686
 mask = prod_order_df["asset_id"] == asset_id
 prod_order_df[mask].head(6)
 
+# %% [markdown]
+# ## Target vs executed
+
 # %%
-prod_target_position_df["target_trades_shares"][asset_id].head(20)
+#df1 = prod_target_position_df["target_holdings_shares"][asset_id].shift(1)
+#df2 = prod_target_position_df["holdings_shares"][asset_id]
+
+df1 = prod_target_position_df["target_holdings_shares"].shift(1)
+df2 = prod_target_position_df["holdings_shares"]
+
+df1 - df2
 
 # %%
 # We are getting the fills that correspond to the orders and to the change of holdings.
@@ -712,6 +734,10 @@ prod_target_position_df["holdings_shares"][asset_id].diff()
 # %%
 fills = oms.compute_fill_stats(prod_target_position_df)
 fills["underfill_share_count"].plot()
+
+# %%
+print(fills.columns.levels[0])
+fills["underfill_share_count"].round(4).abs().max()
 
 # %%
 fills["fill_rate"].head()

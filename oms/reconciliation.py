@@ -39,7 +39,9 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): @Grisha Why returning a list of configs and not just one config?
-def build_reconciliation_configs(date_str: Optional[str]) -> cconfig.ConfigList:
+def build_reconciliation_configs(date_str: Optional[str],
+        prod_subdir: Optional[str],
+        ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
 
@@ -71,11 +73,13 @@ def build_reconciliation_configs(date_str: Optional[str]) -> cconfig.ConfigList:
         previous_day_date_str = (
             pd.Timestamp(date_str) - pd.Timedelta("1D")
         ).strftime("%Y-%m-%d")
+        if prod_subdir is None:
+            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
         prod_dir = os.path.join(
             root_dir,
             date_str,
             "prod",
-            f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
+            prod_subdir,
         )
         system_log_path_dict = {
             "prod": prod_dir,
@@ -383,6 +387,7 @@ def load_dag_outputs(dag_path_dict: Dict, dag_node_name: str,
 # #############################################################################
 
 
+# TODO(gp): This needs to go close to Portfolio?
 def load_portfolio_artifacts(
     portfolio_dir: str,
     start_timestamp: pd.Timestamp,

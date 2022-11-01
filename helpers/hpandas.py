@@ -1519,7 +1519,7 @@ def compare_visually_dataframes(
         df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
     # Report max diff.
     max_diff = df_diff.abs().max().max()
-    _LOG.log(log_level, "Max difference factor: \%", max_diff)
+    _LOG.log(log_level, "Max difference factor: %s", max_diff)
     if assert_diff_threshold is not None:
         hdbg.dassert_lte(assert_diff_threshold, 1.0)
         hdbg.dassert_lte(0.0, assert_diff_threshold)
