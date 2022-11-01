@@ -32,6 +32,7 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
+import core.config as cconfig
 
 import dev_scripts.lib_tasks_reconcile as dslitare
 
@@ -85,6 +86,16 @@ def _reconcile_data_create_dirs(
     return target_dir
 
 
+def build_dummy_config() -> cconfig.ConfigList:
+    """
+    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py
+    as a configu_builder parameter
+    """
+    config = cconfig.Config.from_dict({"dummy": "value"})
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
 # TODO(Juraj): this flow is very similiar to dslitare.reconcile_run_notebook
 #  it might be good to define common behavior.
 @task
@@ -118,27 +129,31 @@ def run_data_reconciliation_notebook(
     env_var_name_base = "DATA_RECONCILE_"
     os.environ[env_var_name_base + "DB_STAGE"] = db_stage
     os.environ[env_var_name_base + "START_TIMESTAMP"] = start_timestamp
-    """
-    os.environ[env_var_name_base + "DB_STAGE"] = db_stage
-    os.environ[env_var_name_base + "DB_STAGE"] = db_stage
-    os.environ[env_var_name_base + "DB_STAGE"] = db_stage
-    os.environ[env_var_name_base + "DB_STAGE"] = db_stage
-    """
+    os.environ[env_var_name_base + "END_TIMESTAMP"] = end_timestamp
+    os.environ[env_var_name_base + "EXCHANGE_ID"] = exchange_id
+    os.environ[env_var_name_base + "DATA_TYPE"] = data_type
+    os.environ[env_var_name_base + "CONTRACT_TYPE"] = contract_type
+    os.environ[env_var_name_base + "DB_TABLE"] = db_table
+    os.environ[env_var_name_base + "AWS_PROFILE"] = aws_profile
+    os.environ[env_var_name_base + "S3_VENDOR"] = s3_vendor
+    os.environ[env_var_name_base + "S3_PATH"] = s3_path
+    os.environ[env_var_name_base + "BID_ASK_ACCURACY"] = str(bid_ask_accuracy)
+    os.environ[env_var_name_base + "RESAMPLE_MODE"] = str(resample_mode)
     _ = ctx
     # Dir to store notebook locally.
-    results_dir = os.path.join(".", "result_0")
+    # results_dir = os.path.join(".", "result_0")
     # Add the command to run the notebook.
     notebook_path = "amp/im_v2/ccxt/notebooks/Data_reconciliation.ipynb"
     cmd_txt = []
     # TODO(Juraj): rewrite env variables logic via core.config.config_builder 
     #  if desired for code consistency.
-    config_builder = None
-    opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1"
+    config_builder = "amp.dev_scripts.lib_tasks_data_reconcile.build_dummy_config()"
+    opts = "--num_threads 'serial' --allow_errors --publish_notebook -v DEBUG 2>&1"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
         f"--notebook {notebook_path}",
         f"--config_builder '{config_builder}'",
-        f"--dst_dir {results_dir}",
+        f"--dst_dir '.'",
         f"{opts}",
     ]
     cmd_run_txt = " ".join(cmd_run_txt)
@@ -151,7 +166,6 @@ def run_data_reconciliation_notebook(
     _LOG.info("Running the notebook=%s", notebook_path)
     dslitare._system(script_name)
     # Copy the published notebook to the specified folder.
-    hdbg.dassert_dir_exists(results_dir)
     #target_dir = _reconcile_data_create_dirs(base_dst_dir, start_timestamp, end_timestamp, db_table)
     #hdbg.dassert_dir_exists(target_dir)
     #_LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
