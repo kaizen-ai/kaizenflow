@@ -306,7 +306,7 @@ class _OrderedConfig(_OrderedDictType):
         # Retrieve the value from the dictionary itself.
         marked_as_used, val = super().__getitem__(key)
         if mark_key_as_used:
-            self.mark_as_used(key)
+            self._mark_as_used(key)
         return val
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -330,7 +330,7 @@ class _OrderedConfig(_OrderedDictType):
         return ret
 
     # TODO(Danya): Use to mark items in `__getitem__`.
-    def mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
+    def _mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
         """
         Mark value as read.
 
@@ -355,10 +355,10 @@ class _OrderedConfig(_OrderedDictType):
         if hintros.is_iterable(val):
             for elem in val:
                 if hasattr(elem, "mark_as_used"):
-                    elem.mark_as_used(marked_as_used)
+                    elem._mark_as_used(marked_as_used)
         else:
             if hasattr(val, "mark_as_used"):
-                val.mark_as_used(marked_as_used)
+                val._mark_as_used(marked_as_used)
 
     def to_string(self, mode: str) -> str:
         """
