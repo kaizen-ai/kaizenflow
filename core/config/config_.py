@@ -263,7 +263,7 @@ class _OrderedConfig(_OrderedDictType):
             # It is not allowed to overwrite a value.
             if is_key_present:
                 # Key already exists, thus we need to assert.
-                _, old_val = super().__getitem__(key)
+                _, writer, old_val = super().__getitem__(key)
                 msg = []
                 msg.append(
                     f"Trying to overwrite old value '{old_val}' with new value '{val}'"
@@ -282,7 +282,7 @@ class _OrderedConfig(_OrderedDictType):
             if is_key_present:
                 # Key already exists, thus keep the old value and issue a warning
                 # that we are not writing.
-                _, old_val = super().__getitem__(key)
+                _, writer, old_val = super().__getitem__(key)
                 msg: List[str] = []
                 msg.append(
                     f"Value '{old_val}' for key '{key}' already exists."
@@ -303,7 +303,7 @@ class _OrderedConfig(_OrderedDictType):
             pass
         elif clobber_mode == "assert_on_write_after_use":
             if is_key_present:
-                marked_as_used, old_val = super().__getitem__(key)
+                marked_as_used, writer, old_val = super().__getitem__(key)
                 
                 is_been_changed = old_val != val
                 _LOG.debug(
@@ -327,7 +327,7 @@ class _OrderedConfig(_OrderedDictType):
         if assign_new_value:
             if is_key_present:
                 # If replacing value, use the same `mark_as_used` as the old value.
-                marked_as_used, old_val = super().__getitem__(key)
+                marked_as_used, writer, old_val = super().__getitem__(key)
                 _ = old_val
             else:
                 # The key was not present, so we just mark it not read yet.
@@ -426,11 +426,11 @@ class _OrderedConfig(_OrderedDictType):
                 key_as_str = str(key)
             elif mode == "verbose":
                 # E.g., `nrows (marked_as_used=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={str(writer)}"
+                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={str(writer)}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             elif mode == "debug":
                 stacktrace = repr(writer)
-                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={stacktrace}"
+                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={stacktrace}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):

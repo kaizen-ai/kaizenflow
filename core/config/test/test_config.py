@@ -1810,8 +1810,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
         """
         value = "val1"
         # TODO(Danya): Do we want to keep `mark_as_used` in pickleable strings?
-        expected = r"""
-        {'key1': ('False', 'val1'), 'key2': ('False', 'key3:
+        expected = r"""{'key1': ('False', 'None', 'val1'), 'key2': ('False', 'None', 'key3:
         key4:
         ')}"""
         should_be_pickleable_before = True
@@ -1828,7 +1827,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""
-        {'key1': ('False', '<function Test_to_pickleable_string.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'key3:
+        {'key1': ('False', 'None', '<function Test_to_pickleable_string.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'None', 'key3:
         key4:
         ')}"""
         should_be_pickleable_before = False
@@ -1905,16 +1904,16 @@ class Test_to_string(hunitest.TestCase):
         Test when a value is a DataFrame.
         """
         value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-        expected = r"""key1 (marked_as_used=False, val_type=pandas.core.frame.DataFrame):
+        expected = r"""key1 (marked_as_used=False, writer=None, val_type=pandas.core.frame.DataFrame):
         index=[0, 1]
         columns=a,b,c
         shape=(2, 3)
         a b c
         0 1 2 3
         1 4 5 6
-        key2 (marked_as_used=False, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
         actual = self.helper(
             value,
@@ -1928,10 +1927,10 @@ class Test_to_string(hunitest.TestCase):
         # Set function value.
         value = lambda x: x
         expected = r"""
-        key1 (marked_as_used=False, val_type=function): <function Test_to_string.test2.<locals>.<lambda>>
-        key2 (marked_as_used=False, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, val_type=core.config.config_.Config):
+        key1 (marked_as_used=False, writer=None, val_type=function): <function Test_to_string.test2.<locals>.<lambda>>
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
         actual = self.helper(
             value,
@@ -1944,12 +1943,12 @@ class Test_to_string(hunitest.TestCase):
         """
         # Set multiline string value.
         value = "This is a\ntest multiline string."
-        expected = r"""key1 (marked_as_used=False, val_type=str):
+        expected = r"""key1 (marked_as_used=False, writer=None, val_type=str):
         This is a
         test multiline string.
-        key2 (marked_as_used=False, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
         actual = self.helper(
             value,
@@ -2063,14 +2062,14 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         #
         stmt = 'config["nrows"] = 10000'
         exp = """
-        nrows (marked_as_used=False, val_type=int): 10000
+        nrows (marked_as_used=False, writer=None, val_type=int): 10000
         """
         workload.append((stmt, exp))
         #
         stmt = 'config.add_subconfig("read_data")'
         exp = r"""
-        nrows (marked_as_used=False, val_type=int): 10000
-        read_data (marked_as_used=False, val_type=core.config.config_.Config):
+        nrows (marked_as_used=False, writer=None, val_type=int): 10000
+        read_data (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
         workload.append((stmt, exp))
         #
@@ -2120,7 +2119,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign with a flat key.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (marked_as_used=False, val_type=str): hello.txt
+        key1 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Invalid access.
@@ -2151,15 +2150,15 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign with a compound key.
         stmt = 'config["key1", "key2"] = "hello.txt"'
         exp = r"""
-        key1 (marked_as_used=False, val_type=core.config.config_.Config):
-          key2 (marked_as_used=False, val_type=str): hello.txt
+        key1 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign with a compound key.
         stmt = 'config["key1"]["key2"] = "hello2.txt"'
         exp = r"""
-        key1 (marked_as_used=False, val_type=core.config.config_.Config):
-          key2 (marked_as_used=False, val_type=str): hello2.txt
+        key1 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=str): hello2.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
@@ -2174,6 +2173,6 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r""" 
-        key1 (marked_as_used=False, val_type=str): hello.txt
+        key1 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
