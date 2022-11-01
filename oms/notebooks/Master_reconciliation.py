@@ -94,9 +94,9 @@ if config["meta"]["run_tca"]:
 # %%
 date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date_str + " 08:45:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 07:55:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 10:40:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -186,7 +186,7 @@ for name, path in dag_path_dict.items():
         path, dag_nodes[-1], as_timestamp=True
     )
     # Get DAG output for the last node and the last timestamp.
-    timestamp = dag_node_ts[-2]
+    timestamp = dag_node_ts[-1]
     print(timestamp)
     dag_df_dict[name] = oms.get_dag_node_output(
         path, dag_nodes[-1], timestamp
@@ -222,7 +222,7 @@ dag_df_dict["prod"]
 # %%
 col_name = "vwap.ret_0.vol_adj_2_hat"
 
-diff_df = (dag_df_dict["prod"][col_name].tail(1) - dag_df_dict["sim"][col_name].tail(1)).round(2)
+#diff_df = (dag_df_dict["prod"][col_name].tail(1) - dag_df_dict["sim"][col_name].tail(1)).round(2)
 pd.concat([dag_df_dict["prod"][col_name].tail(1), dag_df_dict["sim"][col_name].tail(1), diff_df])
 
 # %%

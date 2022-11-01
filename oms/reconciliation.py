@@ -371,7 +371,8 @@ def build_reconciliation_configs() -> cconfig.ConfigList:
             root_dir,
             date_str,
             "prod",
-            f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
+            #f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
+            "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
         )
         system_log_path_dict = {
             "prod": prod_dir,
