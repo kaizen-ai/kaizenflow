@@ -159,7 +159,7 @@ class ClobberError(RuntimeError):
 # TODO(gp): Consider using a dict since after Python3.6 it is ordered.
 _OrderedDictType = collections.OrderedDict
 
-class ConfigWriterInfo:
+class _ConfigWriterInfo:
     """
     A class used to store information on the function that used a value from a config.
 
@@ -192,9 +192,9 @@ class ConfigWriterInfo:
         """
         stack = inspect.stack()
         # Select the context in which `_mark_as_used` was called.
-        # Index=3 since the `_mark_as_read` context will be stored above:
-        #  - Context inside ConfigWriterInfo
-        #  - Context of ConfigWriterInfo called in `_mark_as_used`, e.g.:
+        # Index=2 since the `_mark_as_read` context will be stored above:
+        #  - Context inside _ConfigWriterInfo
+        #  - Context of _ConfigWriterInfo called in `_mark_as_used`, e.g.:
         #  
         caller = stack[2]
         print("".join(stack))
@@ -374,7 +374,7 @@ class _OrderedConfig(_OrderedDictType):
         if used_state:
             # Update the metadata, accounting that this data was read.
             marked_as_used = True
-            writer = ConfigWriterInfo()
+            writer = _ConfigWriterInfo()
             super().__setitem__(key, (marked_as_used, writer, val))
         # If the value is an iterable then we need to propagate the read state.
         if hintros.is_iterable(val):
