@@ -28,17 +28,31 @@ import argparse
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 
 # %% [markdown]
-# ## Config
+# ## Reconciliation parameters
 #
-# To assist debugging you can override any of the config parameters after its loaded and rerun reconciler
+# To assist debugging you can override any of the parameters after its loaded and rerun reconciler
+
+# %%
+os.environ.items()
 
 # %%
 # Load relevant environment variables.
 config = filter(lambda x: x[0].startswith("DATA_RECONCILE_"), os.environ.items())
 # Transform parameter names to the naming conventions used by the reconciler.
-config = list(map(lambda x: x[0].lstrip("DATA_RECONCILE_").lower(), config))
+config = list(map(lambda x: (x[0].replace("DATA_RECONCILE_", "").lower(), x[1]), config))
 # Dict can be passed as a namespace argument.
 config = { it[0] : it[1] for it in config }
+config
+
+# %%
+# Bid_ask_accuracy needs special treatment
+#  since int is expected in the reconciler.
+config['bid_ask_accuracy'] = None if config['bid_ask_accuracy'] == 'None' else int(config['bid_ask_accuracy'])
+# Transform resample_mode to parameter supported
+#  by the reconciler
+config["resample_1sec"] = config["resample_mode"] == "resample_1sec"
+config["resample_1min"] = config["resample_mode"] == "resample_1min"
+config
 
 # %% [markdown]
 # ## Initialize Reconciler
@@ -48,4 +62,8 @@ config = { it[0] : it[1] for it in config }
 args = argparse.Namespace(**config)
 reconciler = imvcdecrah.RealTimeHistoricalReconciler(args)
 
+# %% [markdown]
+# ## Run reconciliation
+
 # %%
+reconciler.run()
