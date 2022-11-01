@@ -7,8 +7,8 @@ back.
 > im_v2/common/data/transform/resample_bid_ask_data.py \
     --start_timestamp '20220916-000000' \
     --end_timestamp '20220920-000000' \
-    --src_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec' \
-    --dst_dir 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min'
+    --src_dir 's3://bucket-name/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec' \
+    --dst_dir 's3://bucket-name/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min'
 
 Import as:
 
@@ -21,6 +21,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -63,12 +64,15 @@ def _run(args: argparse.Namespace) -> None:
     # Transform the dataset to make save_parquet applicable.
     data_resampled = pd.concat(data_resampled).reset_index()
     data_resampled["timestamp"] = data_resampled["timestamp"].apply(
-        lambda x: hdateti.convert_timestamp_to_unix_epoch(x, "s")
+        lambda x: hdateti.convert_timestamp_to_unix_epoch(x, epoch_unit)
     )
-    _LOG.info(data_resampled.head())
-    _LOG.info("Resampled dataset has %i rows.", data_resampled.shape[0])
+    _LOG.info(
+        hpandas.df_to_str(
+            data_resampled, print_shape_info=True, tag="Resampled data"
+        )
+    )
     imvcdeexut.save_parquet(
-        data_resampled, args.dst_dir, "s", aws_profile, "bid_ask"
+        data_resampled, args.dst_dir, epoch_unit, aws_profile, "bid_ask"
     )
 
 
