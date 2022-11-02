@@ -76,8 +76,7 @@ def build_reconciliation_configs(
             pd.Timestamp(date_str) - pd.Timedelta("1D")
         ).strftime("%Y-%m-%d")
         if prod_subdir is None:
-            #prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
-            prod_subdir = "system_log_dir_manual__2022-11-02T11:40:24.084143+00:00_2hours"
+            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
         prod_dir = os.path.join(
             root_dir,
             date_str,
