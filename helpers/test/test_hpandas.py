@@ -1965,6 +1965,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             column_mode="equal",
             diff_mode="diff",
             background_gradient=False,
+            assert_diff_threshold=None,
         )
         expected_length = 3
         expected_column_names = ["tsA_diff", "tsB_diff", "tsC_diff"]
@@ -2001,6 +2002,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             column_mode="equal",
             diff_mode="pct_change",
             background_gradient=False,
+            assert_diff_threshold=None,
         )
         expected_length = 3
         expected_column_names = [
@@ -2041,6 +2043,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             column_mode="inner",
             diff_mode="diff",
             background_gradient=False,
+            assert_diff_threshold=None,
         )
         expected_length = 2
         expected_column_names = ["tsA_diff", "tsB_diff"]
@@ -2076,6 +2079,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             column_mode="inner",
             diff_mode="pct_change",
             background_gradient=False,
+            assert_diff_threshold=None,
         )
         expected_length = 2
         expected_column_names = ["tsA_pct_change", "tsB_pct_change"]
@@ -2118,6 +2122,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             column_mode="equal",
             diff_mode="diff",
             background_gradient=False,
+            assert_diff_threshold=None,
         )
         expected_length = 3
         expected_column_names = ["tsA_diff", "tsB_diff", "tsC_diff"]
@@ -2647,8 +2652,8 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
         df_diff = hpandas.compare_multiindex_dfs(
             df1,
             df2,
-            subset_multiindex_df_kwargs,
-            compare_visually_dataframes_kwargs,
+            subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
+            compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
         )
         expected_length = 3
         expected_column_names = [

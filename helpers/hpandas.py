@@ -1429,9 +1429,6 @@ def remove_outliers(
         for row in all_rows:
             if row in rows:
                 df[row] = df[row].quantile([lower_quantile, upper_quantile])
-    elif axis is None:
-        assert 0
-
     else:
         raise ValueError(f"Invalid axis='{axis}'")
     return df
@@ -1653,7 +1650,7 @@ def compare_multiindex_dfs(
 ) -> pd.DataFrame:
     """
     - Subset both multi-index dfs, if needed
-    - Compare df
+    - Compare dfs
 
     :param subset_multiindex_df: params for `subset_multiindex_df()`
     :param compare_visually_dataframes_kwargs: params for `compare_visually_dataframes()`
