@@ -19,13 +19,13 @@ import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hpickle as hpickle
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
 import oms.portfolio as omportfo
 import oms.target_position_and_order_generator as otpaorge
 
 _LOG = logging.getLogger(__name__)
-
 
 # Each function should accept a `log_level` parameters that controls at which
 # level output summarizing the results. By default it is set by functin to
@@ -38,12 +38,15 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): @Grisha Why returning a list of configs and not just one config?
-def build_reconciliation_configs(date_str: Optional[str],
-        prod_subdir: Optional[str],
-        ) -> cconfig.ConfigList:
+def build_reconciliation_configs(
+    date_str: Optional[str],
+    prod_subdir: Optional[str],
+) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
+    
+    Note: the function returns list of configs because the function is used 
+    as a config builder function for the run notebook script.
 
     :param date_str: specify which date to use for reconciliation
     """
@@ -83,15 +86,14 @@ def build_reconciliation_configs(date_str: Optional[str],
         )
         system_log_path_dict = {
             "prod": prod_dir,
-            # For crypto we do not have a `candidate` so we just re-use prod.
-            #"cand": prod_dir,
+            # For crypto we do not have a `candidate`.
+            # "cand": prod_dir,
             "sim": os.path.join(
                 root_dir, date_str, "simulation", "system_log_dir"
             ),
         }
         #
         fep_init_dict = {
-            #"price_col": "vwap",
             "price_col": "twap",
             "prediction_col": "vwap.ret_0.vol_adj_2_hat",
             "volatility_col": "vwap.ret_0.vol",
@@ -189,7 +191,8 @@ def load_config_from_pickle(
 
 # TODO(gp): -> _get_system_log_paths?
 def get_system_log_paths(
-    system_log_path_dict: Dict[str, str], data_type: str,
+    system_log_path_dict: Dict[str, str],
+    data_type: str,
     *,
     log_level: int = logging.DEBUG,
 ) -> Dict[str, str]:
@@ -228,16 +231,26 @@ def get_system_log_paths(
     return data_path_dict
 
 
-def get_path_dicts(config: cconfig.Config, *, log_level: int = logging.DEBUG) -> Tuple:
+def get_path_dicts(
+    config: cconfig.Config, *, log_level: int = logging.DEBUG
+) -> Tuple:
     # Point to `system_log_dir` for different experiments.
     system_log_path_dict = dict(config["system_log_path"].to_dict())
-    _LOG.log(log_level, "# system_log_path_dict=\n%s", pprint.pformat(system_log_path_dict))
+    _LOG.log(
+        log_level,
+        "# system_log_path_dict=\n%s",
+        pprint.pformat(system_log_path_dict),
+    )
     # Point to `system_log_dir/process_forecasts/portfolio` for different experiments.
     data_type = "portfolio"
-    portfolio_path_dict = get_system_log_paths(system_log_path_dict, data_type, log_level=log_level)
+    portfolio_path_dict = get_system_log_paths(
+        system_log_path_dict, data_type, log_level=log_level
+    )
     # Point to `system_log_dir/dag/node_io/node_io.data` for different experiments.
     data_type = "dag"
-    dag_path_dict = get_system_log_paths(system_log_path_dict, data_type, log_level=log_level)
+    dag_path_dict = get_system_log_paths(
+        system_log_path_dict, data_type, log_level=log_level
+    )
     return (system_log_path_dict, portfolio_path_dict, dag_path_dict)
 
 
@@ -260,8 +273,9 @@ def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
     return nodes
 
 
-def get_dag_node_names(dag_dir: str, *,
-    log_level: int = logging.DEBUG) -> List[str]:
+def get_dag_node_names(
+    dag_dir: str, *, log_level: int = logging.DEBUG
+) -> List[str]:
     """
     Get names of DAG node from a target dir.
 
@@ -286,8 +300,11 @@ def get_dag_node_names(dag_dir: str, *,
     node_names = sorted(
         list(set(node.split(".df_out")[0] for node in file_names))
     )
-    _LOG.log(log_level, "dag_node_names=\n%s", hprint.indent(
-        "\n".join(map(str, node_names))))
+    _LOG.log(
+        log_level,
+        "dag_node_names=\n%s",
+        hprint.indent("\n".join(map(str, node_names))),
+    )
     return node_names
 
 
@@ -320,8 +337,11 @@ def get_dag_node_timestamps(
             ts = pd.Timestamp(ts, tz="America/New_York")
         node_timestamps.append(ts)
     #
-    _LOG.log(log_level,
-            "dag_node_timestamps=\n%s", hprint.indent("\n".join(map(str, node_timestamps))))
+    _LOG.log(
+        log_level,
+        "dag_node_timestamps=\n%s",
+        hprint.indent("\n".join(map(str, node_timestamps))),
+    )
     return node_timestamps
 
 
@@ -352,38 +372,45 @@ def get_dag_node_output(
     return df
 
 
-def load_dag_outputs(dag_path_dict: Dict, dag_node_name: str,
-        dag_node_timestamp: pd.Timestamp, 
-        start_timestamp: Optional[pd.Timestamp],
-        end_timestamp: Optional[pd.Timestamp],
-        *, 
-        log_level: int = logging.INFO):
+def load_dag_outputs(
+    dag_path_dict: Dict[str, str],
+    dag_node_name: str,
+    dag_node_timestamp: pd.Timestamp,
+    start_timestamp: Optional[pd.Timestamp],
+    end_timestamp: Optional[pd.Timestamp],
+    *,
+    log_level: int = logging.INFO,
+) -> Dict[str, pd.DataFrame]:
     """
     Load DAG output for different experiments.
+
+    :param dag_path_dict: dst dir for every experiment
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param dag_node_timestamp: timestamp at which a node was run
     """
     dag_df_dict = {}
     for experiment_name, path in dag_path_dict.items():
         _LOG.log(log_level, hprint.to_str("experiment_name"))
-        # Get DAG node names for every experiment.
-        dag_nodes = get_dag_node_names(path)
-        # Get timestamps for the last node.
-        dag_node_ts = get_dag_node_timestamps(
-            path, dag_node_name, as_timestamp=True
-        )
         # Get DAG output for the last node and the last timestamp.
         dag_df_dict[experiment_name] = get_dag_node_output(
-            path, dag_node_name, dag_node_timestamp,
+            path,
+            dag_node_name,
+            dag_node_timestamp,
         )
     # Trim the data to match the target interval.
     if start_timestamp or end_timestamp:
-        for k, df in dag_df_dict.items():
+        for k in dag_df_dict.keys():
             dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
     # Report the output.
-    for k, df in dag_df_dict.items():
-        hpandas.df_to_str(dag_df_dict[experiment_name], num_rows=3, log_level=log_level)
+    for k in dag_df_dict.keys():
+        hpandas.df_to_str(
+            dag_df_dict[k], num_rows=3, log_level=log_level
+        )
     return dag_df_dict
 
 
+# #############################################################################
+# Portfolio
 # #############################################################################
 
 
@@ -440,6 +467,32 @@ def load_portfolio_artifacts(
     portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:end_timestamp]
     #
     return portfolio_df, portfolio_stats_df
+
+
+def load_portfolio_dfs(
+    portfolio_path_dict: Dict[str, str],
+    portfolio_config: Dict[str, Any],
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    Load multiple portfolios and portfolio stats from disk.
+
+    :param portfolio_path_dict: paths to portfolios for different experiments
+    :param portfolio_config: params for `load_portfolio_artifacts()`
+    :return: portfolios and portfolio stats for different experiments
+    """
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_path_dict.items():
+        hdbg.dassert_path_exists(path)
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            path,
+            **portfolio_config,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    return portfolio_dfs, portfolio_stats_dfs
 
 
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -695,32 +748,3 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
         axis=1,
     )
     return fills_df
-
-
-# #############################################################################
-
-
-def load_portfolio_dfs(
-    portfolio_path_dict: Dict[str, str],
-    portfolio_config: Dict[str, Any],
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-    """
-    Load multiple portfolios and portfolio stats from disk.
-
-    :param portfolio_path_dict: paths to portfolios for different experiments
-    :param portfolio_config: params for `load_portfolio_artifacts()`
-    :return: portfolios and portfolio stats for different experiments
-    """
-    portfolio_dfs = {}
-    portfolio_stats_dfs = {}
-    for name, path in portfolio_path_dict.items():
-        hdbg.dassert_path_exists(path)
-        _LOG.info("Processing portfolio=%s path=%s", name, path)
-        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
-            path,
-            **portfolio_config,
-        )
-        portfolio_dfs[name] = portfolio_df
-        portfolio_stats_dfs[name] = portfolio_stats_df
-    #
-    return portfolio_dfs, portfolio_stats_dfs

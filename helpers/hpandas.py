@@ -1366,15 +1366,24 @@ def get_random_df(
 
 # #############################################################################
 
-
 # TODO(gp): -> AxisNameSet
 ColumnSet = Optional[Union[str, List[str]]]
 
 
 # TODO(gp): -> _resolve_axis_names
-def _resolve_column_names(column_set: ColumnSet, columns: List[str],
+def _resolve_column_names(
+    column_set: ColumnSet,
+    columns: Union[List[str], pd.Index],
     *,
-    keep_order: bool = False) -> List[str]:
+    keep_order: bool = False
+) -> List[str]:
+    """
+    Change format of the columns and perform some sanity checks.
+
+    :param column_set: columns to proceed
+    :param columns: all columns available
+    :param keep_order: preserve the original order or allow sorting
+    """
     # Ensure that `columns` is well-formed.
     if isinstance(columns, pd.Index):
         columns = columns.to_list()
@@ -1397,15 +1406,18 @@ def _resolve_column_names(column_set: ColumnSet, columns: List[str],
     return column_set
 
 
+# TODO(Grisha): finish the function.
+# TODO(Grisha): merge with the one in `dataflow.model.correlation.py`?
 def remove_outliers(
     df: pd.DataFrame,
     lower_quantile: float,
     *,
     column_set: ColumnSet,
+    # TODO(Grisha): the params are not used.
     fill_value: float = np.nan,
-    mode: str ="remove_outliers",
+    mode: str = "remove_outliers",
     axis: Any = 0,
-    upper_quantile: Optional[float] = None
+    upper_quantile: Optional[float] = None,
 ) -> pd.DataFrame:
     hdbg.dassert_eq(len(df.shape), 2, "Multi-index dfs not supported")
     #
@@ -1430,9 +1442,6 @@ def remove_outliers(
         for row in all_rows:
             if row in rows:
                 df[row] = df[row].quantile([lower_quantile, upper_quantile])
-    elif axis is None:
-        assert 0
-
     else:
         raise ValueError(f"Invalid axis='{axis}'")
     return df
@@ -1464,6 +1473,8 @@ def compare_visually_dataframes(
     column_mode: str = "equal",
     diff_mode: str = "diff",
     remove_inf: bool = True,
+    # TODO(Grisha): remove `background_gradient` so that the output is
+    # always a `pd.DataFrame`, i.e. not a `Styler` object. 
     background_gradient: bool = True,
     assert_diff_threshold: float = 1e-3,
     log_level: int = logging.DEBUG,
@@ -1481,11 +1492,15 @@ def compare_visually_dataframes(
         corresponding elements
         - "diff": use the difference
         - "pct_change": use the percentage difference
-    :param remove_inf: replace +-inf with na
+    :param remove_inf: replace +-inf with `np.nan`
     :param background_gradient: colorize the output
+    :param assert_diff_threshold: maximum allowed total difference; if None
+        do not raise the assertion, raise otherwise
+    :param log_level: logging level
+    :return: a singe dataframe with differences as values
     """
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
-    #  and 
+    #  and
     if row_mode == "equal":
         hdbg.dassert_eq(list(df1.index), list(df2.index))
     elif row_mode == "inner":
@@ -1520,10 +1535,11 @@ def compare_visually_dataframes(
     # Report max diff.
     max_diff = df_diff.abs().max().max()
     _LOG.log(log_level, "Max difference factor: %s", max_diff)
-    if assert_diff_threshold is not None:
-        hdbg.dassert_lte(assert_diff_threshold, 1.0)
-        hdbg.dassert_lte(0.0, assert_diff_threshold)
-        hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    # TODO(Grisha): it works only with `mode="pct_change"`, adjust properly.
+    # if assert_diff_threshold is not None:
+    #     hdbg.dassert_lte(assert_diff_threshold, 1.0)
+    #     hdbg.dassert_lte(0.0, assert_diff_threshold)
+    #     hdbg.dassert_lte(max_diff, assert_diff_threshold)
     return df_diff
 
 
@@ -1532,7 +1548,8 @@ def compare_visually_dataframes(
 # #############################################################################
 
 
-def list_to_str(vals: List[Any],
+def list_to_str(
+    vals: List[Any],
     *,
     sep_char: str = ", ",
     enclose_str_char: str = "'",
@@ -1544,15 +1561,16 @@ def list_to_str(vals: List[Any],
     vals_as_str = list(map(str, vals))
     # Add a str around.
     if enclose_str_char:
-        vals_as_str = [enclose_str_char + v + enclose_str_char
-                for v in vals_as_str]
+        vals_as_str = [
+            enclose_str_char + v + enclose_str_char for v in vals_as_str
+        ]
     #
     ret = "%s [" % len(vals)
     if max_num is not None and len(vals) > max_num:
         hdbg.dassert_lt(1, max_num)
-        ret += sep_char.join(vals_as_str[:int(max_num / 2)])
+        ret += sep_char.join(vals_as_str[: int(max_num / 2)])
         ret += sep_char + "..." + sep_char
-        ret += sep_char.join(vals_as_str[-int(max_num / 2):])
+        ret += sep_char.join(vals_as_str[-int(max_num / 2) :])
     else:
         ret += sep_char.join(vals_as_str)
     ret += "]"
@@ -1573,9 +1591,16 @@ def multiindex_df_info(
     columns_level1 = df.columns.levels[1]
     rows = df.index
     ret = []
-    ret.append("shape=%s x %s x %s" % (len(columns_level0), len(columns_level1), len(rows)))
-    ret.append("columns_level0=%s" % list_to_str(columns_level0, **list_to_str_kwargs))
-    ret.append("columns_level1=%s" % list_to_str(columns_level1, **list_to_str_kwargs))
+    ret.append(
+        "shape=%s x %s x %s"
+        % (len(columns_level0), len(columns_level1), len(rows))
+    )
+    ret.append(
+        "columns_level0=%s" % list_to_str(columns_level0, **list_to_str_kwargs)
+    )
+    ret.append(
+        "columns_level1=%s" % list_to_str(columns_level1, **list_to_str_kwargs)
+    )
     ret.append("rows=%s" % list_to_str(rows, **list_to_str_kwargs))
     ret = "\n".join(ret)
     _LOG.log(log_level, ret)
@@ -1601,6 +1626,7 @@ def subset_multiindex_df(
         - `None` means no filtering
     :param columns_level1: column names that corresponds to `df.columns.levels[1]`
         - `None` means no filtering
+    :param keep_order: see `_resolve_column_names()`
     :return: filtered DataFrame
     """
     hdbg.dassert_eq(2, len(df.columns.levels))
@@ -1618,14 +1644,16 @@ def subset_multiindex_df(
     )
     # Filter level 0.
     all_columns_level0 = df.columns.levels[0]
-    columns_level0 = _resolve_column_names(columns_level0, all_columns_level0,
-            keep_order=keep_order)
+    columns_level0 = _resolve_column_names(
+        columns_level0, all_columns_level0, keep_order=keep_order
+    )
     hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
     df = df[columns_level0]
     # Filter level 1.
     all_columns_level1 = df.columns.levels[1]
-    columns_level1 = _resolve_column_names(columns_level1, all_columns_level1,
-            keep_order=keep_order)
+    columns_level1 = _resolve_column_names(
+        columns_level1, all_columns_level1, keep_order=keep_order
+    )
     hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
     df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
     return df
@@ -1643,11 +1671,11 @@ def compare_multiindex_dfs(
 ) -> pd.DataFrame:
     """
     - Subset both multi-index dfs, if needed
-    - Compare df
+    - Compare dfs
 
     :param subset_multiindex_df: params for `subset_multiindex_df()`
     :param compare_visually_dataframes_kwargs: params for `compare_visually_dataframes()`
-    :return: df with diff
+    :return: df with differences as values
     """
     # Subset dfs.
     if subset_multiindex_df_kwargs is None:
