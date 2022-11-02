@@ -8,7 +8,7 @@ import datetime
 import logging
 import os
 import pprint
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -85,7 +85,7 @@ def build_reconciliation_configs(
         )
         system_log_path_dict = {
             "prod": prod_dir,
-            # For crypto we do not have a `candidate` so we just re-use prod.
+            # For crypto we do not have a `candidate`.
             # "cand": prod_dir,
             "sim": os.path.join(
                 root_dir, date_str, "simulation", "system_log_dir"
@@ -93,7 +93,6 @@ def build_reconciliation_configs(
         }
         #
         fep_init_dict = {
-            # "price_col": "vwap",
             "price_col": "twap",
             "prediction_col": "vwap.ret_0.vol_adj_2_hat",
             "volatility_col": "vwap.ret_0.vol",
@@ -373,16 +372,20 @@ def get_dag_node_output(
 
 
 def load_dag_outputs(
-    dag_path_dict: Dict,
+    dag_path_dict: Dict[str, str],
     dag_node_name: str,
     dag_node_timestamp: pd.Timestamp,
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
     *,
     log_level: int = logging.INFO,
-):
+) -> Dict[str, pd.DataFrame]:
     """
     Load DAG output for different experiments.
+
+    :param dag_path_dict: dst dir for every experiment
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param dag_node_timestamp: timestamp at which a node was run
     """
     dag_df_dict = {}
     for experiment_name, path in dag_path_dict.items():
@@ -716,198 +719,3 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
         axis=1,
     )
     return fills_df
-
-
-# #############################################################################
-# Reconciliation config
-# #############################################################################
-
-
-def build_reconciliation_configs() -> cconfig.ConfigList:
-    """
-    Build reconciliation configs that are specific of an asset class.
-    """
-    # Infer the meta-parameters from env.
-    date_key = "AM_RECONCILIATION_DATE"
-    if date_key in os.environ:
-        date_str = os.environ[date_key]
-    else:
-        date_str = datetime.date.today().strftime("%Y%m%d")
-    #
-    asset_key = "AM_ASSET_CLASS"
-    if asset_key in os.environ:
-        asset_class = os.environ[asset_key]
-    else:
-        asset_class = "crypto"
-    # Set values for variables that are specific of an asset class.
-    if asset_class == "crypto":
-        # For crypto the TCA part is not implemented yet.
-        run_tca = False
-        #
-        bar_duration = "5T"
-        #
-        root_dir = "/shared_data/prod_reconciliation"
-        # Prod system is run via AirFlow and the results are tagged with the previous day.
-        previous_day_date_str = (
-            pd.Timestamp(date_str) - pd.Timedelta("1D")
-        ).strftime("%Y-%m-%d")
-        prod_dir = os.path.join(
-            root_dir,
-            date_str,
-            "prod",
-            f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
-        )
-        system_log_path_dict = {
-            "prod": prod_dir,
-            # For crypto we do not have a `candidate` so we just re-use prod.
-            "cand": prod_dir,
-            "sim": os.path.join(
-                root_dir, date_str, "simulation", "system_log_dir"
-            ),
-        }
-        #
-        fep_init_dict = {
-            "price_col": "twap",
-            "prediction_col": "vwap.ret_0.vol_adj_2_hat",
-            "volatility_col": "vwap.ret_0.vol",
-        }
-        quantization = "asset_specific"
-        market_info = occxbrok.load_market_data_info()
-        asset_id_to_share_decimals = occxbrok.subset_market_info(
-            market_info, "amount_precision"
-        )
-        gmv = 700.0
-        liquidate_at_end_of_day = False
-    elif asset_class == "equities":
-        run_tca = True
-        #
-        bar_duration = "15T"
-        #
-        root_dir = ""
-        search_str = ""
-        prod_dir_cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
-        _, prod_dir = hsystem.system_to_string(prod_dir_cmd)
-        cand_cmd = (
-            f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
-        )
-        _, cand_dir = hsystem.system_to_string(cand_cmd)
-        system_log_path_dict = {
-            "prod": prod_dir,
-            "cand": cand_dir,
-            "sim": os.path.join(root_dir, date_str, "system_log_dir"),
-        }
-        #
-        fep_init_dict = {
-            "price_col": "twap",
-            "prediction_col": "prediction",
-            "volatility_col": "garman_klass_vol",
-        }
-        quantization = "nearest_share"
-        asset_id_to_share_decimals = None
-        gmv = 20000.0
-        liquidate_at_end_of_day = True
-    else:
-        raise ValueError(f"Unsupported asset class={asset_class}")
-    # Sanity check dirs.
-    for dir in system_log_path_dict.values():
-        hdbg.dassert_dir_exists(dir)
-    # Build the config.
-    config_dict = {
-        "meta": {
-            "date_str": date_str,
-            "asset_class": asset_class,
-            "run_tca": run_tca,
-            "bar_duration": bar_duration,
-        },
-        "system_log_path": system_log_path_dict,
-        "research_forecast_evaluator_from_prices": {
-            "init": fep_init_dict,
-            "annotate_forecasts_kwargs": {
-                "quantization": quantization,
-                "asset_id_to_share_decimals": asset_id_to_share_decimals,
-                "burn_in_bars": 3,
-                "style": "cross_sectional",
-                "bulk_frac_to_remove": 0.0,
-                "target_gmv": gmv,
-                "liquidate_at_end_of_day": liquidate_at_end_of_day,
-            },
-        },
-    }
-    config = cconfig.Config.from_dict(config_dict)
-    config_list = cconfig.ConfigList([config])
-    return config_list
-
-
-def load_config_from_pickle(
-    system_log_path_dict: Dict[str, str]
-) -> Dict[str, cconfig.Config]:
-    """
-    Load configs from pickle files given a dict of paths.
-    """
-    config_dict = {}
-    file_name = "system_config.input.values_as_strings.pkl"
-    for stage, path in system_log_path_dict.items():
-        path = os.path.join(path, file_name)
-        hdbg.dassert_path_exists(path)
-        _LOG.debug("Reading config from %s", path)
-        config_pkl = hpickle.from_pickle(path)
-        config = cconfig.Config.from_dict(config_pkl)
-        config_dict[stage] = config
-    return config_dict
-
-
-# #############################################################################
-# Loading utils
-# #############################################################################
-
-
-def get_system_log_paths(
-    system_log_path_dict: Dict[str, str], data_type: str
-) -> Dict[str, str]:
-    """
-    Get paths to data inside a system log dir.
-
-    :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir", "sim": ...}`
-    :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
-    :return: dir paths inside system log dir for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
-    """
-    data_path_dict = {}
-    if data_type == "portfolio":
-        dir_name = "process_forecasts/portfolio"
-    elif data_type == "dag":
-        dir_name = "dag/node_io/node_io.data"
-    else:
-        raise ValueError(f"Unsupported data type={data_type}")
-    for k, v in system_log_path_dict.items():
-        cur_dir = os.path.join(v, dir_name)
-        hdbg.dassert_dir_exists(cur_dir)
-        data_path_dict[k] = cur_dir
-    return data_path_dict
-
-
-def load_portfolio_dfs(
-    portfolio_path_dict: Dict[str, str],
-    portfolio_config: Dict[str, Any],
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-    """
-    Load multiple portfolios and portfolio stats from disk.
-
-    :param portfolio_path_dict: paths to portfolios for different experiments
-    :param portfolio_config: params for `load_portfolio_artifacts()`
-    :return: portfolios and portfolio stats for different experiments
-    """
-    portfolio_dfs = {}
-    portfolio_stats_dfs = {}
-    for name, path in portfolio_path_dict.items():
-        hdbg.dassert_path_exists(path)
-        _LOG.info("Processing portfolio=%s path=%s", name, path)
-        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
-            path,
-            **portfolio_config,
-        )
-        portfolio_dfs[name] = portfolio_df
-        portfolio_stats_dfs[name] = portfolio_stats_df
-    #
-    return portfolio_dfs, portfolio_stats_dfs
