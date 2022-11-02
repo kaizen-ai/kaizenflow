@@ -1971,13 +1971,17 @@ class Test_mark_as_used1(hunitest.TestCase):
         #
         expected_value = "value2"
         actual_value = test_config.get_and_mark_as_used("key2")
-        self.assert_equal(actual_value, expected_value, purify_text=True, fuzzy_match=True)
+        self.assert_equal(
+            actual_value, expected_value, purify_text=True, fuzzy_match=True
+        )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
         key2 (marked_as_used=True, writer=None, val_type=str): value2"""
         actual_config = repr(test_config)
-        self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
-    
+        self.assert_equal(
+            actual_config, expected_config, purify_text=True, fuzzy_match=True
+        )
+
     def test2(self) -> None:
         """
         Test marking a subconfig in a nested config.
@@ -1987,14 +1991,18 @@ class Test_mark_as_used1(hunitest.TestCase):
         #
         expected_value = r"key3: value3"
         actual_value = test_nested_config.get_and_mark_as_used("key2")
-        self.assert_equal(str(actual_value), expected_value, purify_text=True, fuzzy_match=True)
+        self.assert_equal(
+            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
         key2 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
         key3 (marked_as_used=True, writer=None, val_type=str): value3"""
         actual_config = repr(test_nested_config)
-        self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
-    
+        self.assert_equal(
+            actual_config, expected_config, purify_text=True, fuzzy_match=True
+        )
+
     def test3(self) -> None:
         """
         Test marking a subconfig in a deeply nested config.
@@ -2005,15 +2013,19 @@ class Test_mark_as_used1(hunitest.TestCase):
         expected_value = r"""key3:
         key4: value3"""
         actual_value = test_nested_config.get_and_mark_as_used("key2")
-        self.assert_equal(str(actual_value), expected_value, purify_text=True, fuzzy_match=True)
+        self.assert_equal(
+            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
         key2 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
         key3 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
         key4 (marked_as_used=True, writer=None, val_type=str): value3"""
         actual_config = repr(test_nested_config)
-        self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
-    
+        self.assert_equal(
+            actual_config, expected_config, purify_text=True, fuzzy_match=True
+        )
+
     def test4(self) -> None:
         """
         Test marking a config with iterable value.
@@ -2023,13 +2035,16 @@ class Test_mark_as_used1(hunitest.TestCase):
         #
         expected_value = "['value2', 2]"
         actual_value = test_config.get_and_mark_as_used("key2")
-        self.assert_equal(str(actual_value), expected_value, purify_text=True, fuzzy_match=True)
+        self.assert_equal(
+            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
         key2 (marked_as_used=True, writer=None, val_type=list): ['value2', 2]"""
         actual_config = repr(test_config)
-        self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
-
+        self.assert_equal(
+            actual_config, expected_config, purify_text=True, fuzzy_match=True
+        )
 
 
 # #############################################################################
@@ -2180,6 +2195,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 # Test_basic1
 # #############################################################################
 
+
 class Test_basic1(_Config_execute_stmt_TestCase1):
     def test1(self) -> None:
         """
@@ -2248,7 +2264,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
-        exp = r""" 
+        exp = r"""
         key1 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())

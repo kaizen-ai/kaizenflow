@@ -10,12 +10,11 @@ import core.config.config_ as cconconf
 
 import collections
 import copy
+import inspect
 import logging
 import os
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
-import inspect
-
 
 import numpy as np
 import pandas as pd
@@ -163,17 +162,26 @@ class ClobberError(RuntimeError):
 # TODO(gp): Consider using a dict since after Python3.6 it is ordered.
 _OrderedDictType = collections.OrderedDict
 
+
 class _ConfigWriterInfo:
     """
-    A class used to store information on the function that used a value from a config.
+    A class used to store information on the function that used a value from a
+    config.
 
     The class is meant to be used with `Config._mark_as_used`, and is utilized for:
     - Storing a full stack trace of the `_mark_as_used` method call
     - Storing a shorthand representation with the file and function names
     """
+
     def __init__(self):
         self._full_traceback = self._get_full_traceback()
         self._shorthand_caller = self._get_shorthand_caller()
+
+    def __str__(self):
+        return self._shorthand_caller
+
+    def __repr__(self):
+        return self._full_traceback
 
     def _get_full_traceback():
         """
@@ -183,7 +191,8 @@ class _ConfigWriterInfo:
 
     def _get_shorthand_caller():
         """
-        Return a short representation of the context in which the function was called.
+        Return a short representation of the context in which the function was
+        called.
 
         The shorthand includes:
         - file name
@@ -204,13 +213,6 @@ class _ConfigWriterInfo:
         print("".join(stack))
         caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
         return caller
-
-    def __str__(self):
-        return self._shorthand_caller
-
-    def __repr__(self):
-        return self._full_traceback
-
 
 
 class _OrderedConfig(_OrderedDictType):
@@ -237,7 +239,8 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: Optional[str] = "allow_write_after_use",
     ) -> None:
         """
-        Each val is encoded internally as a tuple (marked_as_used, writer, value) where:
+        Each val is encoded internally as a tuple (marked_as_used, writer,
+        value) where:
 
         - marked_as_used: stores whether the value has been already used and thus
           needs to be protected from successive writes, depending on
@@ -308,7 +311,7 @@ class _OrderedConfig(_OrderedDictType):
         elif clobber_mode == "assert_on_write_after_use":
             if is_key_present:
                 marked_as_used, writer, old_val = super().__getitem__(key)
-                
+
                 is_been_changed = old_val != val
                 _LOG.debug(
                     hprint.to_str("marked_as_used old_val is_been_changed")
@@ -345,7 +348,7 @@ class _OrderedConfig(_OrderedDictType):
                 super().__setitem__(key, val)
             else:
                 super().__setitem__(key, (marked_as_used, writer, val))
-            
+
     # /////////////////////////////////////////////////////////////////////////////
     # Get.
     # /////////////////////////////////////////////////////////////////////////////
@@ -362,7 +365,6 @@ class _OrderedConfig(_OrderedDictType):
         if mark_key_as_used:
             self._mark_as_used(key)
         return val
-
 
     # /////////////////////////////////////////////////////////////////////////////
     # Print.
@@ -388,31 +390,6 @@ class _OrderedConfig(_OrderedDictType):
         mode = "debug"
         ret = self.to_string(mode)
         return ret
-
-    def _mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
-        """
-        Mark value as read.
-
-        The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
-        if the user reported that the value will be used to build other objects,
-        and it should not be subsequently modified.
-
-        :param used_state: whether to mark the value as used.
-                 Values are not marked e.g. when accessed through `__contains__` method.
-        """
-        # Retrieve the value and the metadata.
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        marked_as_used, writer, val = super().__getitem__(key)
-        _LOG.debug(hprint.to_str("marked_as_used val used_state"))
-        #
-        if used_state:
-            # Update the metadata, accounting that this data was read.
-            marked_as_used = True
-            super().__setitem__(key, (marked_as_used, writer, val))
-        if hasattr(val, "_config"):
-            # If a value is a subconfig, mark all values down the tree.
-            for key in val._config.keys():
-                val._config._mark_as_used(key, marked_as_used)
 
     def to_string(self, mode: str) -> str:
         """
@@ -473,6 +450,31 @@ class _OrderedConfig(_OrderedDictType):
         memory_loc_pattern = r"(<\w+.+ object) at \dx\w+"
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
+
+    def _mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
+        """
+        Mark value as read.
+
+        The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
+        if the user reported that the value will be used to build other objects,
+        and it should not be subsequently modified.
+
+        :param used_state: whether to mark the value as used.
+                 Values are not marked e.g. when accessed through `__contains__` method.
+        """
+        # Retrieve the value and the metadata.
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        marked_as_used, writer, val = super().__getitem__(key)
+        _LOG.debug(hprint.to_str("marked_as_used val used_state"))
+        #
+        if used_state:
+            # Update the metadata, accounting that this data was read.
+            marked_as_used = True
+            super().__setitem__(key, (marked_as_used, writer, val))
+        if hasattr(val, "_config"):
+            # If a value is a subconfig, mark all values down the tree.
+            for key in val._config.keys():
+                val._config._mark_as_used(key, marked_as_used)
 
 
 # #############################################################################
@@ -565,7 +567,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -671,8 +674,9 @@ class Config:
         """
         Get the value and mark it as used.
 
-        This should be used as the only way of accessing values from configs
-        except for purposes of logging and transformation to string.
+        This should be used as the only way of accessing values from
+        configs except for purposes of logging and transformation to
+        string.
         """
         return self.__getitem__(key, mark_key_as_used=True)
 
@@ -1155,7 +1159,9 @@ class Config:
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then return the value.
-                ret = self._get_item(head_key, level=level + 1, mark_key_as_used=mark_key_as_used)
+                ret = self._get_item(
+                    head_key, level=level + 1, mark_key_as_used=mark_key_as_used
+                )
             else:
                 # Compound key: recurse on the tail of the key.
                 if head_key not in self._config:
@@ -1167,7 +1173,11 @@ class Config:
                 _LOG.debug("subconfig\n=%s", self._config)
                 if isinstance(subconfig, Config):
                     # Recurse.
-                    ret = subconfig._get_item(tail_key, level=level + 1, mark_key_as_used=mark_key_as_used)
+                    ret = subconfig._get_item(
+                        tail_key,
+                        level=level + 1,
+                        mark_key_as_used=mark_key_as_used,
+                    )
                 else:
                     # There are more keys to process but we have reached the leaves
                     # of the config, then we assert.
