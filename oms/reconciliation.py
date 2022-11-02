@@ -8,7 +8,7 @@ import datetime
 import logging
 import os
 import pprint
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -76,7 +76,8 @@ def build_reconciliation_configs(
             pd.Timestamp(date_str) - pd.Timedelta("1D")
         ).strftime("%Y-%m-%d")
         if prod_subdir is None:
-            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
+            #prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
+            prod_subdir = "system_log_dir_manual__2022-11-02T11:40:24.084143+00:00_2hours"
         prod_dir = os.path.join(
             root_dir,
             date_str,
@@ -409,6 +410,8 @@ def load_dag_outputs(
 
 
 # #############################################################################
+# Portfolio
+# #############################################################################
 
 
 # TODO(gp): This needs to go close to Portfolio?
@@ -464,6 +467,32 @@ def load_portfolio_artifacts(
     portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:end_timestamp]
     #
     return portfolio_df, portfolio_stats_df
+
+
+def load_portfolio_dfs(
+    portfolio_path_dict: Dict[str, str],
+    portfolio_config: Dict[str, Any],
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    Load multiple portfolios and portfolio stats from disk.
+
+    :param portfolio_path_dict: paths to portfolios for different experiments
+    :param portfolio_config: params for `load_portfolio_artifacts()`
+    :return: portfolios and portfolio stats for different experiments
+    """
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_path_dict.items():
+        hdbg.dassert_path_exists(path)
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            path,
+            **portfolio_config,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    return portfolio_dfs, portfolio_stats_dfs
 
 
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
