@@ -38,8 +38,6 @@ from typing import Optional
 
 from invoke import task
 
-import pandas as pd
-
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -73,8 +71,9 @@ def _get_run_date(wake_up_timestamp_str: Optional[str]) -> str:
     if wake_up_timestamp_str is None:
         run_date = datetime.date.today().strftime("%Y%m%d")
     else:
-        wake_up_timestamp = pd.Timestamp(wake_up_timestamp_str)
-        run_date = wake_up_timestamp.strftime("%Y%m%d")
+        # TODO(Dan): Add assert for `wake_up_timestamp_str` format or use `pd.Timestamp`.
+        wake_up_date = wake_up_timestamp_str.split("T")[0]
+        run_date = wake_up_date.replace("-", "")
     _LOG.info(hprint.to_str("run_date"))
     _dassert_is_date(run_date)
     return run_date
