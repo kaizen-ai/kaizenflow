@@ -38,6 +38,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.im_lib_tasks as imvimlita
+import core.config as cconfig
 
 _LOG = logging.getLogger(__name__)
 
@@ -678,6 +679,15 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _run(args)
 
+
+def build_dummy_data_reconciliation_config() -> cconfig.ConfigList:
+    """
+    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py
+    as a configu_builder parameter
+    """
+    config = cconfig.Config.from_dict({"dummy": "value"})
+    config_list = cconfig.ConfigList([config])
+    return config_list
 
 if __name__ == "__main__":
     _main(_parse())

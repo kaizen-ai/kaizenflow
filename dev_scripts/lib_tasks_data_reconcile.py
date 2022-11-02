@@ -6,12 +6,26 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_reconcile_run_all --run-date 20221017
-```
+> invoke run_data_reconciliation_notebook  \
+   --stage 'preprod' \
+   --db-stage 'dev' \
+   --start-timestamp '2022-11-01T00:00:00+00:00' \
+   --end-timestamp '2022-11-01T02:00:00+00:00' \
+   --exchange-id 'binance' \
+   --data-type 'bid_ask' \
+   --contract-type 'futures' \
+   --db-table 'ccxt_bid_ask_futures_resampled_1min_preprod' \
+   --aws-profile 'ck' \
+   --s3-vendor 'crypto_chassis' \
+   --s3-path 's3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq' \
+   --base-dst-dir '/shared_data/ecs/preprod/data_reconciliation' \
+   --bid-ask-accuracy 1 \
+   --resample-mode 'resample_1min'
+
 
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --run-date 20221017'
+> invoke docker_cmd --cmd 'invoke run_data_reconciliation_notebook ...'
 ```
 
 Import as:
@@ -32,8 +46,6 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
-import core.config as cconfig
-
 import dev_scripts.lib_tasks_reconcile as dslitare
 
 _LOG = logging.getLogger(__name__)
@@ -84,16 +96,6 @@ def _reconcile_data_create_dirs(
     cmd = f"ls -lh {target_dir}"
     dslitare._system(cmd)
     return target_dir
-
-
-def build_dummy_config() -> cconfig.ConfigList:
-    """
-    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py
-    as a configu_builder parameter
-    """
-    config = cconfig.Config.from_dict({"dummy": "value"})
-    config_list = cconfig.ConfigList([config])
-    return config_list
 
 
 # TODO(Juraj): this flow is very similiar to dslitare.reconcile_run_notebook
@@ -147,7 +149,8 @@ def run_data_reconciliation_notebook(
     cmd_txt = []
     # TODO(Juraj): rewrite env variables logic via core.config.config_builder 
     #  if desired for code consistency.
-    config_builder = "amp.dev_scripts.lib_tasks_data_reconcile.build_dummy_config()"
+    config_builder = "amp.im_v2.ccxt.data.extract.compare_realtime_and_historical." \
+                     + "build_dummy_data_reconciliation_config()"
     opts = "--num_threads 'serial' --allow_errors --publish_notebook -v DEBUG 2>&1"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
