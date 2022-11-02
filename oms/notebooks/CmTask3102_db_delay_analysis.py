@@ -30,7 +30,6 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import oms as oms
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -40,15 +39,6 @@ _LOG = logging.getLogger(__name__)
 _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
-
-# %% [markdown]
-# # Build the reconciliation config
-
-# %%
-# TODO(Dan): Fix config building approach so we could run the notebook manually.
-config_list = oms.build_reconciliation_configs()
-config = config_list[0]
-print(config)
 
 # %% [markdown]
 # # Data delay analysis
@@ -84,7 +74,8 @@ full_symbols
 # %%
 # Load the data for the reconciliation date.
 # `ImClient` operates in UTC timezone.
-date_str = config["meta"]["date_str"]
+# TODO(Grisha): ideally we should get the values from the config.
+date_str = "2022-10-28"
 start_ts = pd.Timestamp(date_str, tz="UTC")
 end_ts = start_ts + pd.Timedelta(days=1)
 columns = None
