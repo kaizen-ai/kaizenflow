@@ -47,7 +47,9 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-config_list = oms.build_reconciliation_configs()
+date_str = None
+prod_subdir = None
+config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
 
@@ -90,9 +92,9 @@ if config["meta"]["run_tca"]:
 # %%
 date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 07:45:00", tz="America/New_York")
+start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
 _LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 09:40:00", tz="America/New_York")
+end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
 _LOG.info("end_timestamp=%s", end_timestamp)
 
 
@@ -113,21 +115,32 @@ dag_node_timestamps
 
 # %%
 # Load DAG output for different experiments.
-dag_df_dict = {}
-for name, path in dag_path_dict.items():
-    # Get DAG node names for every experiment.
-    dag_nodes = oms.get_dag_node_names(path)
-    # Get timestamps for the last node.
-    dag_node_ts = oms.get_dag_node_timestamps(
-        path, dag_nodes[-1], as_timestamp=True
-    )
-    # Get DAG output for the last node and the last timestamp.
-    timestamp = dag_node_ts[-1]
-    print(timestamp)
-    dag_df_dict[name] = oms.get_dag_node_output(
-        path, dag_nodes[-1], timestamp
-    )
+dag_start_timestamp = None
+dag_end_timestamp = None
+dag_df_dict = oms.load_dag_outputs(
+    dag_path_dict,
+    dag_node_names[-1],
+    dag_node_timestamps[-1],
+    dag_start_timestamp,
+    dag_end_timestamp,
+)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+
+# %%
+# Compute percentage difference.
+compare_visually_dataframes_kwargs = {
+    "diff_mode": "pct_change",
+    "background_gradient": False,
+}
+diff_df = hpandas.compare_multiindex_dfs(
+    dag_df_dict["prod"],
+    dag_df_dict["sim"],
+    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+diff_df.max().max()
 
 # %%
 # Plot diffs over time.

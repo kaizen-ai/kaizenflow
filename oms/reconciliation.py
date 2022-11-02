@@ -85,7 +85,7 @@ def build_reconciliation_configs(
         )
         system_log_path_dict = {
             "prod": prod_dir,
-            # For crypto we do not have a `candidate` so we just re-use prod.
+            # For crypto we do not have a `candidate`.
             # "cand": prod_dir,
             "sim": os.path.join(
                 root_dir, date_str, "simulation", "system_log_dir"
@@ -93,7 +93,6 @@ def build_reconciliation_configs(
         }
         #
         fep_init_dict = {
-            # "price_col": "vwap",
             "price_col": "twap",
             "prediction_col": "vwap.ret_0.vol_adj_2_hat",
             "volatility_col": "vwap.ret_0.vol",
@@ -373,16 +372,20 @@ def get_dag_node_output(
 
 
 def load_dag_outputs(
-    dag_path_dict: Dict,
+    dag_path_dict: Dict[str, str],
     dag_node_name: str,
     dag_node_timestamp: pd.Timestamp,
     start_timestamp: Optional[pd.Timestamp],
     end_timestamp: Optional[pd.Timestamp],
     *,
     log_level: int = logging.INFO,
-):
+) -> Dict[str, pd.DataFrame]:
     """
     Load DAG output for different experiments.
+
+    :param dag_path_dict: dst dir for every experiment
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param dag_node_timestamp: timestamp at which a node was run
     """
     dag_df_dict = {}
     for experiment_name, path in dag_path_dict.items():
@@ -405,6 +408,8 @@ def load_dag_outputs(
     return dag_df_dict
 
 
+# #############################################################################
+# Portfolio
 # #############################################################################
 
 
@@ -461,6 +466,32 @@ def load_portfolio_artifacts(
     portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:end_timestamp]
     #
     return portfolio_df, portfolio_stats_df
+
+
+def load_portfolio_dfs(
+    portfolio_path_dict: Dict[str, str],
+    portfolio_config: Dict[str, Any],
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    Load multiple portfolios and portfolio stats from disk.
+
+    :param portfolio_path_dict: paths to portfolios for different experiments
+    :param portfolio_config: params for `load_portfolio_artifacts()`
+    :return: portfolios and portfolio stats for different experiments
+    """
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_path_dict.items():
+        hdbg.dassert_path_exists(path)
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            path,
+            **portfolio_config,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    return portfolio_dfs, portfolio_stats_dfs
 
 
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -715,6 +746,7 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
         },
         axis=1,
     )
+<<<<<<< HEAD
     return fills_df
 
 
@@ -913,3 +945,6 @@ def load_portfolio_dfs(
         portfolio_stats_dfs[name] = portfolio_stats_df
     #
     return portfolio_dfs, portfolio_stats_dfs
+=======
+    return fills_df
+>>>>>>> master

@@ -22,10 +22,11 @@ def detect_outliers(
     outlier_quantiles: Tuple[Optional[float], Optional[float]],
 ) -> Dict[str, pd.Series]:
     """
-    Return a series storing the indices of the outliers for the given columns.
+    Find indices of the outliers for the given columns.
 
-    :param outlier_columns: see description in `remove_outliers()`
-    :param outlier_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
+    :param outlier_columns: columns to process
+    :param outlier_quantiles: see description in `csiprout.process_outliers()`
+    :return: list of indices of the outliers for each column
     """
     outlier_idxs = {}
     # Assert that `remove_outliers_columns` in df.columns.
@@ -54,8 +55,8 @@ def remove_outliers(
     """
     Remove rows with outliers in any given column.
 
-    :param outlier_columns: list of columns to proceed
-    :param outlier_quantiles: lower and upper quantiles (see description in `csiprout.remove_outliers()`)
+    :param df: input data
+    :param outlier_kwargs: see description in `detect_outliers()`
     :return: data with removed rows with outliers
     """
     outliers_idxs = detect_outliers(df, **outlier_kwargs)

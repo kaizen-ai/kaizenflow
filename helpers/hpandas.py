@@ -1372,8 +1372,18 @@ ColumnSet = Optional[Union[str, List[str]]]
 
 # TODO(gp): -> _resolve_axis_names
 def _resolve_column_names(
-    column_set: ColumnSet, columns: List[str], *, keep_order: bool = False
+    column_set: ColumnSet,
+    columns: Union[List[str], pd.Index],
+    *,
+    keep_order: bool = False
 ) -> List[str]:
+    """
+    Change format of the columns and perform some sanity checks.
+
+    :param column_set: columns to proceed
+    :param columns: all columns available
+    :param keep_order: preserve the original order or allow sorting
+    """
     # Ensure that `columns` is well-formed.
     if isinstance(columns, pd.Index):
         columns = columns.to_list()
@@ -1396,11 +1406,14 @@ def _resolve_column_names(
     return column_set
 
 
+# TODO(Grisha): finish the function.
+# TODO(Grisha): merge with the one in `dataflow.model.correlation.py`?
 def remove_outliers(
     df: pd.DataFrame,
     lower_quantile: float,
     *,
     column_set: ColumnSet,
+    # TODO(Grisha): the params are not used.
     fill_value: float = np.nan,
     mode: str = "remove_outliers",
     axis: Any = 0,
@@ -1460,6 +1473,8 @@ def compare_visually_dataframes(
     column_mode: str = "equal",
     diff_mode: str = "diff",
     remove_inf: bool = True,
+    # TODO(Grisha): remove `background_gradient` so that the output is
+    # always a `pd.DataFrame`, i.e. not a `Styler` object. 
     background_gradient: bool = True,
     assert_diff_threshold: float = 1e-3,
     log_level: int = logging.DEBUG,
@@ -1477,8 +1492,12 @@ def compare_visually_dataframes(
         corresponding elements
         - "diff": use the difference
         - "pct_change": use the percentage difference
-    :param remove_inf: replace +-inf with na
+    :param remove_inf: replace +-inf with `np.nan`
     :param background_gradient: colorize the output
+    :param assert_diff_threshold: maximum allowed total difference; if None
+        do not raise the assertion, raise otherwise
+    :param log_level: logging level
+    :return: a singe dataframe with differences as values
     """
     # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
     #  and
@@ -1516,10 +1535,11 @@ def compare_visually_dataframes(
     # Report max diff.
     max_diff = df_diff.abs().max().max()
     _LOG.log(log_level, "Max difference factor: %s", max_diff)
-    if assert_diff_threshold is not None:
-        hdbg.dassert_lte(assert_diff_threshold, 1.0)
-        hdbg.dassert_lte(0.0, assert_diff_threshold)
-        hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    # TODO(Grisha): it works only with `mode="pct_change"`, adjust properly.
+    # if assert_diff_threshold is not None:
+    #     hdbg.dassert_lte(assert_diff_threshold, 1.0)
+    #     hdbg.dassert_lte(0.0, assert_diff_threshold)
+    #     hdbg.dassert_lte(max_diff, assert_diff_threshold)
     return df_diff
 
 
@@ -1606,6 +1626,7 @@ def subset_multiindex_df(
         - `None` means no filtering
     :param columns_level1: column names that corresponds to `df.columns.levels[1]`
         - `None` means no filtering
+    :param keep_order: see `_resolve_column_names()`
     :return: filtered DataFrame
     """
     hdbg.dassert_eq(2, len(df.columns.levels))
@@ -1654,7 +1675,7 @@ def compare_multiindex_dfs(
 
     :param subset_multiindex_df: params for `subset_multiindex_df()`
     :param compare_visually_dataframes_kwargs: params for `compare_visually_dataframes()`
-    :return: df with diff
+    :return: df with differences as values
     """
     # Subset dfs.
     if subset_multiindex_df_kwargs is None:
