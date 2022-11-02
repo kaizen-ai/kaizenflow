@@ -502,7 +502,7 @@ class _OrderedConfig(_OrderedDictType):
         if hasattr(val, "_config"):
             # If a value is a subconfig, mark all values down the tree.
             for key in val._config.keys():
-                val._config._mark_as_used(key, marked_as_used)
+                val._config._mark_as_used(key, marked_as_used=marked_as_used)
 
 
 # #############################################################################
