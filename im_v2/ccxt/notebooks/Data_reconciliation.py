@@ -20,12 +20,28 @@
 # is via invoke target `dev_scripts.lib_tasks_reconcile.run_data_reconciliation_notebook`
 
 # %% [markdown]
-# ## Imports
+# ## Imports and logging
 
 # %%
 import os
 import argparse
+import logging
+import helpers.hdbg as hdbg
+import helpers.henv as henv
+import helpers.hprint as hprint
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
+
+# %% [markdown]
+# ### Logging
+
+# %%
+hdbg.init_logger(verbosity=logging.INFO)
+
+_LOG = logging.getLogger(__name__)
+
+_LOG.info("%s", henv.get_system_signature()[0])
+
+hprint.config_notebook()
 
 # %% [markdown]
 # ## Reconciliation parameters
@@ -61,6 +77,14 @@ config
 # The class was originally intended to be used via a cmdline script
 args = argparse.Namespace(**config)
 reconciler = imvcdecrah.RealTimeHistoricalReconciler(args)
+
+# %%
+# CCXT Realtime data
+reconciler.ccxt_rt.head()
+
+# %%
+# Historical data
+reconciler.daily_data.head()
 
 # %% [markdown]
 # ## Run reconciliation
