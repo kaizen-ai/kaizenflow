@@ -1976,7 +1976,7 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=None, val_type=str): value2"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::1973::test1, val_type=str): value2"""
         actual_config = repr(test_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
@@ -1996,8 +1996,8 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, writer=None, val_type=str): value3"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::1993::test2, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::1993::test2, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
@@ -2018,9 +2018,9 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
-        key4 (marked_as_used=True, writer=None, val_type=str): value3"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2015::test3, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2015::test3, val_type=core.config.config_.Config):
+        key4 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2015::test3, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
@@ -2040,7 +2040,7 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=None, val_type=list): ['value2', 2]"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2037::test4, val_type=list): ['value2', 2]"""
         actual_config = repr(test_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True

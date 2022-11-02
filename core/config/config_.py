@@ -182,13 +182,15 @@ class _ConfigWriterInfo:
 
     def __repr__(self):
         return self._full_traceback
-
+    
+    @staticmethod
     def _get_full_traceback():
         """
         Return full traceback as str.
         """
         return hintros.stacktrace_to_str()
-
+    
+    @staticmethod
     def _get_shorthand_caller():
         """
         Return a short representation of the context in which the function was
@@ -205,13 +207,13 @@ class _ConfigWriterInfo:
         """
         stack = inspect.stack()
         # Select the context in which `_mark_as_used` was called.
-        # Index=2 since the `_mark_as_read` context will be stored above:
+        # Index=2 since the `_mark_as_used` context will be stored above:
         #  - Context inside _ConfigWriterInfo
         #  - Context of _ConfigWriterInfo called in `_mark_as_used`, e.g.:
         #
-        caller = stack[2]
-        print("".join(stack))
-        caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
+        filename = stack[0].filename
+        latest_outside_caller = next(call for call in stack if call.filename != filename)
+        caller = f"{latest_outside_caller.filename}::{latest_outside_caller.lineno}::{latest_outside_caller.function}"
         return caller
 
 
@@ -470,6 +472,7 @@ class _OrderedConfig(_OrderedDictType):
         if used_state:
             # Update the metadata, accounting that this data was read.
             marked_as_used = True
+            writer = _ConfigWriterInfo()
             super().__setitem__(key, (marked_as_used, writer, val))
         if hasattr(val, "_config"):
             # If a value is a subconfig, mark all values down the tree.
