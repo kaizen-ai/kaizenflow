@@ -2327,12 +2327,12 @@ class Test_subset_multiindex_df(hunitest.TestCase):
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
-        columns=('asset2', 'open'),('asset2', 'high'),('asset2', 'low'),('asset2', 'close')
+        columns=('asset2', 'close'),('asset2', 'high'),('asset2', 'low'),('asset2', 'open')
         shape=(2, 4)
-                                    asset2
-        timestamp                      open      high       low     close
-        2022-01-01 21:01:00+00:00  0.200999  1.407860 -0.131710  0.100234
-        2022-01-01 21:02:00+00:00 -1.059238  0.060399 -0.776521  2.045787
+                                    asset2                              
+        timestamp                     close      high       low      open
+        2022-01-01 21:01:00+00:00  0.100234  1.407860 -0.131710  0.200999
+        2022-01-01 21:02:00+00:00  2.045787  0.060399 -0.776521 -1.059238
         """
         self.check_df_output(
             df_filtered,
