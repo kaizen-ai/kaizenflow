@@ -29,6 +29,7 @@ from typing import List
 import pandas as pd
 import psycopg2
 
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
@@ -38,7 +39,6 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.im_lib_tasks as imvimlita
-import core.config as cconfig
 
 _LOG = logging.getLogger(__name__)
 
@@ -682,8 +682,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 def build_dummy_data_reconciliation_config() -> cconfig.ConfigList:
     """
-    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py
-    as a configu_builder parameter
+    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py as a
+    configu_builder parameter.
     """
     config = cconfig.Config.from_dict({"dummy": "value"})
     config_list = cconfig.ConfigList([config])

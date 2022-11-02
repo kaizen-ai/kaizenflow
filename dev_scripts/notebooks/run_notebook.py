@@ -20,7 +20,6 @@ import os
 from typing import Optional
 
 import core.config as cconfig
-
 import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -80,7 +79,7 @@ def _run_notebook(
         "--ExecutePreprocessor.kernel_name=python",
         # From https://github.com/ContinuumIO/anaconda-issues/issues/877
         "--ExecutePreprocessor.timeout=-1",
-        f"--ExecutePreprocessor.allow_errors={allow_notebook_errors}" 
+        f"--ExecutePreprocessor.allow_errors={allow_notebook_errors}"
     ]
     cmd = " ".join(cmd)
     # Prepare the log file.

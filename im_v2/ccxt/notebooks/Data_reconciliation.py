@@ -15,17 +15,18 @@
 # %% [markdown]
 # # Data reconciliation
 #
-# This notebook is used to perform reconciliation on data obtained in realtime with batch data downloaded at once, i.e. once a day. 
-# As displayed below, the notebook assumes environment variables for the reconciliation parameters. The intended use 
+# This notebook is used to perform reconciliation on data obtained in realtime with batch data downloaded at once, i.e. once a day.
+# As displayed below, the notebook assumes environment variables for the reconciliation parameters. The intended use
 # is via invoke target `dev_scripts.lib_tasks_reconcile.run_data_reconciliation_notebook`
 
 # %% [markdown]
 # ## Imports and logging
 
 # %%
-import os
 import argparse
 import logging
+import os
+
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint

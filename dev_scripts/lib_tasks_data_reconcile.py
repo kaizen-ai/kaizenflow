@@ -33,20 +33,14 @@ Import as:
 import dev_scripts.lib_tasks_data_reconcile as dslitadr
 """
 
-import datetime
 import logging
 import os
-import sys
-from typing import Optional
 
 from invoke import task
 
+import dev_scripts.lib_tasks_reconcile as dslitare
 import helpers.hdbg as hdbg
 import helpers.hio as hio
-import helpers.hprint as hprint
-import helpers.hserver as hserver
-import helpers.hsystem as hsystem
-import dev_scripts.lib_tasks_reconcile as dslitare
 
 _LOG = logging.getLogger(__name__)
 
@@ -65,7 +59,7 @@ def _reconcile_data_create_dirs(
                 result_0/
             ...
     ```
-    
+
     i.e.
     ```
     shared_data/ecs/preprod/data_reconciliation/
@@ -80,7 +74,7 @@ def _reconcile_data_create_dirs(
     :param start_timestamp: start of the reconciled time interval
     :param end_timestamp: end of the reconciled time interval
     :param db_table: DB table the reconciliation is done for, at the moment assuming
-     there is only a single reconcilation done on a particular table and particular 
+     there is only a single reconcilation done on a particular table and particular
      time range.
     :param abort_if_exists: see `hio.create_dir()`
     :return: path to the created target dir
@@ -88,7 +82,7 @@ def _reconcile_data_create_dirs(
     # Strip the timezone part of the timestamps to improve readability
     #  the context isn't lost since the raw args are present in the saved notebook
     #  and also chances of using anything else as UTC are low.
-    timestamp_dst_dir = start_timestamp.replace("+00:00", "") + "_" + end_timestamp.replace("+00:00", "") 
+    timestamp_dst_dir = start_timestamp.replace("+00:00", "") + "_" + end_timestamp.replace("+00:00", "")
     target_dir = os.path.join(base_dst_dir, timestamp_dst_dir, db_table)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
@@ -120,11 +114,11 @@ def run_data_reconciliation_notebook(
 ):  # type: ignore
     """
     Run data reconciliation notebook and store in in a stored location.
-    
+
     See `im_v2.ccxt.data.extract.compare_realtime_and_historical` for
     reconcilation params description.
 
-    :param stage: stage at which the reconciliation is executed, 
+    :param stage: stage at which the reconciliation is executed,
      influence placement of the results.
     :param base_dst_dir: dir to store data reconciliation
     """
@@ -147,7 +141,7 @@ def run_data_reconciliation_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/im_v2/ccxt/notebooks/Data_reconciliation.ipynb"
     cmd_txt = []
-    # TODO(Juraj): rewrite env variables logic via core.config.config_builder 
+    # TODO(Juraj): rewrite env variables logic via core.config.config_builder
     #  if desired for code consistency.
     config_builder = "amp.im_v2.ccxt.data.extract.compare_realtime_and_historical." \
                      + "build_dummy_data_reconciliation_config()"
