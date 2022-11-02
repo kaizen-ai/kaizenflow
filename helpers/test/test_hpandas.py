@@ -2658,18 +2658,18 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
         )
         expected_length = 3
         expected_column_names = [
-            ("asset1_pct_change", "high_pct_change"),
-            ("asset1_pct_change", "low_pct_change"),
-            ("asset2_pct_change", "high_pct_change"),
-            ("asset2_pct_change", "low_pct_change"),
+            ("asset1.pct_change", "high.pct_change"),
+            ("asset1.pct_change", "low.pct_change"),
+            ("asset2.pct_change", "high.pct_change"),
+            ("asset2.pct_change", "low.pct_change"),
         ]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:02:00+00:00, 2022-01-01 21:04:00+00:00]
-        columns=('asset1_pct_change', 'high_pct_change'),('asset1_pct_change', 'low_pct_change'),('asset2_pct_change', 'high_pct_change'),('asset2_pct_change', 'low_pct_change')
+        columns=('asset1.pct_change', 'high.pct_change'),('asset1.pct_change', 'low.pct_change'),('asset2.pct_change', 'high.pct_change'),('asset2.pct_change', 'low.pct_change')
         shape=(3, 4)
-                                asset1_pct_change                asset2_pct_change
-        timestamp                   high_pct_change low_pct_change   high_pct_change low_pct_change
+                                asset1.pct_change                asset2.pct_change               
+        timestamp                   high.pct_change low.pct_change   high.pct_change low.pct_change
         2022-01-01 21:02:00+00:00        -32.881643    -287.700041        -94.505475    -259.066028
         2022-01-01 21:03:00+00:00       -246.576815      47.525948       -137.632125      36.090517
         2022-01-01 21:04:00+00:00       -185.862978     765.280229       -153.498432    -198.418808
