@@ -385,12 +385,6 @@ def load_dag_outputs(
     dag_df_dict = {}
     for experiment_name, path in dag_path_dict.items():
         _LOG.log(log_level, hprint.to_str("experiment_name"))
-        # Get DAG node names for every experiment.
-        get_dag_node_names(path)
-        # Get timestamps for the last node.
-        dag_node_ts = get_dag_node_timestamps(
-            path, dag_node_name, as_timestamp=True
-        )
         # Get DAG output for the last node and the last timestamp.
         dag_df_dict[experiment_name] = get_dag_node_output(
             path,
