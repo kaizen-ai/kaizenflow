@@ -213,36 +213,31 @@ class _ConfigWriterInfo:
         """
         Return a shorthand for the latest outside caller of the function.
 
-        Due to abundance of internal recursive calls, we want to get the first
-        call outside of the current module. E.g. for the stacktrace:
-
-        FrameInfo(frame=<frame at 0x7fdce4718040, file '/usr/lib/python3.8/unittest/case.py', line 633, code _callTestMethod>, filename='/usr/lib/python3.8/unittest/case.py', lineno=633, function='_callTestMethod', code_context=['        method()\n'], index=0)
-        FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)
-        FrameInfo(frame=<frame at 0x4d0b9a0, file '/app/core/config/config_.py', line 684, code get_and_mark_as_used>, filename='/app/core/config/config_.py', lineno=684, function='get_and_mark_as_used', code_context=['        return self.__getitem__(key, mark_key_as_used=True)\n'], index=0)
-        FrameInfo(frame=<frame at 0x7fdce472a840, file '/app/core/config/config_.py', line 663, code __getitem__>, filename='/app/core/config/config_.py', lineno=663, function='__getitem__', code_context=['            ret = self._get_item(key, level=0, mark_key_as_used=mark_key_as_used)\n'], index=0)
-        FrameInfo(frame=<frame at 0x4cafb50, file '/app/core/config/config_.py', line 1198, code _get_item>, filename='/app/core/config/config_.py', lineno=1198, function='_get_item', code_context=['        ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore\n'], index=0)
-        FrameInfo(frame=<frame at 0x7fdce4733040, file '/app/core/config/config_.py', line 368, code __getitem__>, filename='/app/core/config/config_.py', lineno=368, function='__getitem__', code_context=['            self._mark_as_used(key)\n'], index=0)
-        FrameInfo(frame=<frame at 0x7fdce471edd0, file '/app/core/config/config_.py', line 475, code _mark_as_used>, filename='/app/core/config/config_.py', lineno=475, function='_mark_as_used', code_context=['            writer = _ConfigWriterInfo()\n'], index=0)
-        FrameInfo(frame=<frame at 0x4d0cd70, file '/app/core/config/config_.py', line 178, code __init__>, filename='/app/core/config/config_.py', lineno=178, function='__init__', code_context=['        self._shorthand_caller = self._get_shorthand_caller()\n'], index=0)
-        FrameInfo(frame=<frame at 0x7fdce471e230, file '/app/core/config/config_.py', line 210, code _get_shorthand_caller>, filename='/app/core/config/config_.py', lineno=207, function='_get_shorthand_caller', code_context=['        stack = inspect.stack()\n'], index=0)
-
-        We select the first one with a different file, i.e.
-        `FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)`
-
         The shorthand includes:
         - file name
-        - name of the caller function
+        - line where the function is called
+        - name of the caller
 
         Example of the output:
 
-        'dataflow/system/system_builder_utils.py::get_config_template'
+        'dataflow/system/system_builder_utils.py::49::get_config_template'
         """
         stack = inspect.stack()
         # Select the current filename.
         filename = stack[0].filename
         # Select the latest caller that is outside of the current module.
+        # Due to abundance of internal recursive calls, we want to get the first
+        # call outside of the current module. E.g. for the stacktrace:
+        # FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)
+        # FrameInfo(frame=<frame at 0x4cafb50, file '/app/core/config/config_.py', line 1198, code _get_item>, filename='/app/core/config/config_.py', lineno=1198, function='_get_item', code_context=['        ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore\n'], index=0)
+        # FrameInfo(frame=<frame at 0x7fdce471edd0, file '/app/core/config/config_.py', line 475, code _mark_as_used>, filename='/app/core/config/config_.py', lineno=475, function='_mark_as_used', code_context=['            writer = _ConfigWriterInfo()\n'], index=0)
+        # FrameInfo(frame=<frame at 0x4d0cd70, file '/app/core/config/config_.py', line 178, code __init__>, filename='/app/core/config/config_.py', lineno=178, function='__init__', code_context=['        self._shorthand_caller = self._get_shorthand_caller()\n'], index=0)
+        # FrameInfo(frame=<frame at 0x7fdce471e230, file '/app/core/config/config_.py', line 210, code _get_shorthand_caller>, filename='/app/core/config/config_.py', lineno=207, function='_get_shorthand_caller', code_context=['        stack = inspect.stack()\n'], index=0)
+        # We select the first one with a different file, i.e.:
+        # `FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)`
+        #
         caller = next(call for call in stack if call.filename != filename)
-        latest_outside_caller = f"{caller.filename}::{caller.function}"
+        latest_outside_caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
         return latest_outside_caller
 
 
@@ -482,7 +477,7 @@ class _OrderedConfig(_OrderedDictType):
         ret = re.sub(memory_loc_pattern, r"\1", ret)
         return ret
 
-    def _mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
+    def _mark_as_used(self, key: ScalarKey, *, used_state: bool = True) -> None:
         """
         Mark value as read.
 
@@ -949,8 +944,7 @@ class Config:
         # pylint: disable=unsubscriptable-object
         dict_: _OrderedDictType[ScalarKey, Any] = collections.OrderedDict()
         for key, (marked_as_used, writer, val) in self._config.items():
-            _ = marked_as_used
-            _ = writer
+            _ = marked_as_used, writer
             if keep_leaves:
                 if isinstance(val, Config):
                     # If a value is a `Config` convert to dictionary recursively.
