@@ -167,11 +167,9 @@ class _ConfigWriterInfo:
     """
     Store information on the function that writes a value into a Config.
     """
-
     def __init__(self):
         # Capture information about who is constructing this object.
         self._full_traceback = self._get_full_traceback()
-        hio.to_file("stack.txt", self._full_traceback)
         self._shorthand_caller = self._get_shorthand_caller()
 
     def __str__(self):
@@ -233,7 +231,6 @@ class _ConfigWriterInfo:
 
         The shorthand includes:
         - file name
-        - line number
         - name of the caller function
 
         Example of the output:
@@ -273,14 +270,13 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: Optional[str] = "allow_write_after_use",
     ) -> None:
         """
-        Each val is encoded internally as a tuple (marked_as_used, writer,
-        value) where:
+        Each val is encoded as a tuple (marked_as_used, writer, value) where:
 
         - marked_as_used: stores whether the value has been already used and thus
           needs to be protected from successive writes, depending on
           clobber_mode
         - writer: stores the stacktrace of the function that used the value.
-          Uses `_ConfigWriterInfo` if `marked_as_used` == True, otherwise None
+          Uses `_ConfigWriterInfo` if `marked_as_used` == True, otherwise `None`
         - value: stores the actual value
 
         For `update_mode` and `clobber_mode` see module docstring.
@@ -304,7 +300,7 @@ class _OrderedConfig(_OrderedDictType):
             # It is not allowed to overwrite a value.
             if is_key_present:
                 # Key already exists, thus we need to assert.
-                _, writer, old_val = super().__getitem__(key)
+                marked_as_used, writer, old_val = super().__getitem__(key)
                 msg = []
                 msg.append(
                     f"Trying to overwrite old value '{old_val}' with new value '{val}'"
@@ -323,7 +319,7 @@ class _OrderedConfig(_OrderedDictType):
             if is_key_present:
                 # Key already exists, thus keep the old value and issue a warning
                 # that we are not writing.
-                _, writer, old_val = super().__getitem__(key)
+                marked_as_used, writer, old_val = super().__getitem__(key)
                 msg: List[str] = []
                 msg.append(
                     f"Value '{old_val}' for key '{key}' already exists."
@@ -374,7 +370,7 @@ class _OrderedConfig(_OrderedDictType):
                 # The key was not present, so we just mark it not read yet.
                 marked_as_used = False
                 writer = None
-            # Check if the value has already been marked as read/unread.
+            # Check if the value has already been marked as used.
             #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
                 # Set new `marked_as_used` status with the same value.
@@ -443,6 +439,7 @@ class _OrderedConfig(_OrderedDictType):
                 key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={str(writer)}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             elif mode == "debug":
+                # Show full stacktrace of the writer.
                 stacktrace = repr(writer)
                 key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={stacktrace}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
@@ -502,8 +499,9 @@ class _OrderedConfig(_OrderedDictType):
         _LOG.debug(hprint.to_str("marked_as_used val used_state"))
         #
         if used_state:
-            # Update the metadata, accounting that this data was read.
+            # Update the metadata, accounting that this data was used.
             marked_as_used = True
+            # Get info on who used this data.
             writer = _ConfigWriterInfo()
             super().__setitem__(key, (marked_as_used, writer, val))
         if hasattr(val, "_config"):
@@ -602,8 +600,7 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        If `key` is nested, the hierarchy of Config objects is navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -709,9 +706,8 @@ class Config:
         """
         Get the value and mark it as used.
 
-        This should be used as the only way of accessing values from
-        configs except for purposes of logging and transformation to
-        string.
+        This should be used as the only way of accessing values from configs
+        except for purposes of logging and transformation to string.
         """
         return self.__getitem__(key, mark_key_as_used=True)
 
