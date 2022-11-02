@@ -395,12 +395,12 @@ def load_dag_outputs(
         )
     # Trim the data to match the target interval.
     if start_timestamp or end_timestamp:
-        for k, df in dag_df_dict.items():
+        for k in dag_df_dict.keys():
             dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
     # Report the output.
-    for k, df in dag_df_dict.items():
+    for k in dag_df_dict.keys():
         hpandas.df_to_str(
-            dag_df_dict[experiment_name], num_rows=3, log_level=log_level
+            dag_df_dict[k], num_rows=3, log_level=log_level
         )
     return dag_df_dict
 
