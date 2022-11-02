@@ -1960,6 +1960,7 @@ class Test_to_string(hunitest.TestCase):
 # Test_mark_as_used1
 # #############################################################################
 
+# TODO(Danya): Make sure the writer is not None.
 class Test_mark_as_used1(hunitest.TestCase):
     def test1(self) -> None:
         """
@@ -1972,8 +1973,8 @@ class Test_mark_as_used1(hunitest.TestCase):
         actual_value = test_config.get_and_mark_as_used("key2")
         self.assert_equal(actual_value, expected_value, purify_text=True, fuzzy_match=True)
         #
-        expected_config = r"""key1 (marked_as_used=False, val_type=int): 1
-        key2 (marked_as_used=True, val_type=str): value2"""
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=None, val_type=str): value2"""
         actual_config = repr(test_config)
         self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
     
@@ -1988,9 +1989,9 @@ class Test_mark_as_used1(hunitest.TestCase):
         actual_value = test_nested_config.get_and_mark_as_used("key2")
         self.assert_equal(str(actual_value), expected_value, purify_text=True, fuzzy_match=True)
         #
-        expected_config = r"""key1 (marked_as_used=False, val_type=int): 1
-        key2 (marked_as_used=True, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, val_type=str): value3"""
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=None, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
     
@@ -2006,10 +2007,10 @@ class Test_mark_as_used1(hunitest.TestCase):
         actual_value = test_nested_config.get_and_mark_as_used("key2")
         self.assert_equal(str(actual_value), expected_value, purify_text=True, fuzzy_match=True)
         #
-        expected_config = r"""key1 (marked_as_used=False, val_type=int): 1
-        key2 (marked_as_used=True, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, val_type=core.config.config_.Config):
-        key4 (marked_as_used=True, val_type=str): value3"""
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=True, writer=None, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
     
@@ -2024,8 +2025,8 @@ class Test_mark_as_used1(hunitest.TestCase):
         actual_value = test_config.get_and_mark_as_used("key2")
         self.assert_equal(str(actual_value), expected_value, purify_text=True, fuzzy_match=True)
         #
-        expected_config = r"""key1 (marked_as_used=False, val_type=int): 1
-        key2 (marked_as_used=True, val_type=list): ['value2', 2]"""
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=None, val_type=list): ['value2', 2]"""
         actual_config = repr(test_config)
         self.assert_equal(actual_config, expected_config, purify_text=True, fuzzy_match=True)
 

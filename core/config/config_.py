@@ -341,7 +341,7 @@ class _OrderedConfig(_OrderedDictType):
             #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
                 # Set new `marked_as_used` status with the same value.
-                val = (marked_as_used, writer, val[1])
+                val = (marked_as_used, writer, val[2])
                 super().__setitem__(key, val)
             else:
                 super().__setitem__(key, (marked_as_used, writer, val))
