@@ -6,6 +6,7 @@ import helpers.hprint as hprint
 
 import inspect
 import logging
+import pprint
 import re
 import sys
 from typing import Any, Dict, Iterable, List, Match, Optional, cast
@@ -361,10 +362,12 @@ def round_digits(
 
 def to_str(
     expression: str,
+    *,
     frame_lev: int = 1,
     print_lhs: bool = True,
     char_separator: str = ",",
     mode: str = "repr",
+    use_pprint: bool = True,
 ) -> str:
     """
     Return a string with the value of a variable / expression / multiple
@@ -386,7 +389,9 @@ def to_str(
         If expression is a space-separated compound expression, e.g.,
         `to_str("exp1 exp2 ...")`, it is converted into:
         `exp1=val1, exp2=val2, ...`
-    :param print_lhs: whether we want to print the left hand side (i.e., exp1)
+    :param print_lhs: whether we want to print the left hand side (i.e., `exp1`)
+    :param mode: select how to print the value of the expressions (e.g., `str`,
+        `repr`, `pprint`)
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -406,7 +411,7 @@ def to_str(
         txt = sep.join(values)
         return txt
     # Certain expressions are evaluated as literals.
-    if expression in ("->", ":", "\n"):
+    if expression in ("->", ":", "=", "\n"):
         return expression
     # Evaluate the expression.
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
@@ -418,15 +423,17 @@ def to_str(
         ret += str(eval_)
     elif mode == "repr":
         ret += repr(eval_)
+    elif mode == "pprint":
+        ret += "\n" + indent(pprint.pformat(eval_))
     else:
         raise ValueError(f"Invalid mode='{mode}'")
     return ret
 
 
-# TODO(timurg): In order to replace `hprint.to_str` function,
-# `frame level`(see `hprint.to_str`) should be implemented,
-# otherwise `helpers/test/test_printing.py::Test_log::test2-4` will fail,
-# see CmTask #1554.
+# TODO(timurg): In order to replace `hprint.to_str` function, `frame level`(see
+#  `hprint.to_str`) should be implemented, otherwise
+#  `helpers/test/test_printing.py::Test_log::test2-4` will fail, see CmTask
+#  #1554.
 
 
 def to_str2(*variables_values: Any) -> str:
@@ -757,8 +764,6 @@ def sort_dictionary(dict_: Dict) -> Dict:
 
 def to_pretty_str(obj: Any) -> str:
     if isinstance(obj, dict):
-        import pprint
-
         res = pprint.pformat(obj)
         # import json
         # res = json.dumps(obj, indent=4, sort_keys=True)
