@@ -37,13 +37,15 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): @Grisha Why returning a list of configs and not just one config?
 def build_reconciliation_configs(
     date_str: Optional[str],
     prod_subdir: Optional[str],
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
+    
+    Note: the function returns list of configs because the function is used 
+    as a config builder function for the run notebook script.
 
     :param date_str: specify which date to use for reconciliation
     """
