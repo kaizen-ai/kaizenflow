@@ -105,10 +105,6 @@ maximums = delta_per_asset.max()
 means = delta_per_asset.mean()
 errors = [means - minimums, maximums - means]
 # TODO(Grisha): sort by maximum delay.
-means.plot(
-    kind="bar", 
-    yerr=errors,
-    title="DB delay in seconds per asset"
-)
+means.plot(kind="bar", yerr=errors, title="DB delay in seconds per asset")
 
 # %%
