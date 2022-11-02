@@ -1884,7 +1884,7 @@ class Test_save_to_file(hunitest.TestCase):
 
 # TODO(Danya): Add `test4` testing a nested Config case.
 class Test_to_string(hunitest.TestCase):
-    def helper(
+    def get_test_config(
         self,
         value: Any,
     ) -> str:
@@ -1894,10 +1894,7 @@ class Test_to_string(hunitest.TestCase):
             "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
-        # Check if function was successfully applied on config.
-        mode = "verbose"
-        actual = config.to_string(mode)
-        return actual
+        return config
 
     def test1(self) -> None:
         """
@@ -1915,9 +1912,9 @@ class Test_to_string(hunitest.TestCase):
         key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
-        actual = self.helper(
-            value,
-        )
+        config = self.get_test_config(value)
+        mode = "verbose"
+        actual = config.to_string(mode)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
@@ -1932,9 +1929,9 @@ class Test_to_string(hunitest.TestCase):
         key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
-        actual = self.helper(
-            value,
-        )
+        config = self.get_test_config(value)
+        mode = "verbose"
+        actual = config.to_string(mode)
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -1950,10 +1947,59 @@ class Test_to_string(hunitest.TestCase):
         key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
-        actual = self.helper(
-            value,
-        )
+        config = self.get_test_config(value)
+        mode = "verbose"
+        actual = config.to_string(mode)
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test verbose mode with `marked_as_used` == True.
+        """
+        # Set multiline string value.
+        value = "value2"
+        expected = r"""key1 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test4, val_type=str): value2
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):"""
+        config = self.get_test_config(value)
+        _ = config.get_and_mark_as_used("key1")
+        mode = "verbose"
+        actual = config.to_string(mode)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+    def test5(self) -> None:
+        """
+        Test debug mode with `marked_as_used` == False.
+        """
+        # Set multiline string value.
+        value = "This is a\ntest multiline string."
+        expected = r"""key1 (marked_as_used=False, writer=None, val_type=str):
+        This is a
+        test multiline string.
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        """
+        config = self.get_test_config(value)
+        mode = "debug"
+        actual = config.to_string(mode)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+    
+    @pytest.mark.skip("Golden value changes when the line of the caller is modified.")
+    def test6(self) -> None:
+        """
+        Test debug mode with `marked_as_used` == True.
+        """
+        # Set multiline string value.
+        value = "value2"
+        config = self.get_test_config(value)
+        _ = config.get_and_mark_as_used("key1")
+        # TODO(Danya): The stacktrace is dynamic and can change whenever the line
+        #  of the caller changes. Would it be better to check the last line?
+        mode = "debug"
+        actual = config.to_string(mode)
+        self.check_string(actual, purify_text=True, fuzzy_match=True)
 
 
 # #############################################################################
@@ -1976,7 +2022,7 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::1973::test1, val_type=str): value2"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test1, val_type=str): value2"""
         actual_config = repr(test_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
@@ -1996,8 +2042,8 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::1993::test2, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::1993::test2, val_type=str): value3"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test2, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test2, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
@@ -2018,9 +2064,9 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2015::test3, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2015::test3, val_type=core.config.config_.Config):
-        key4 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2015::test3, val_type=str): value3"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test3, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test3, val_type=core.config.config_.Config):
+        key4 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test3, val_type=str): value3"""
         actual_config = repr(test_nested_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
@@ -2040,7 +2086,7 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::2037::test4, val_type=list): ['value2', 2]"""
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::test4, val_type=list): ['value2', 2]"""
         actual_config = repr(test_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
