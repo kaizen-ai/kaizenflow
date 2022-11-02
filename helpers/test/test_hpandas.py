@@ -1968,13 +1968,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         expected_length = 3
-        expected_column_names = ["tsA_diff", "tsB_diff", "tsC_diff"]
+        expected_column_names = ["tsA.diff", "tsB.diff", "tsC.diff"]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
-        columns=tsA_diff,tsB_diff,tsC_diff
+        columns=tsA.diff,tsB.diff,tsC.diff
         shape=(3, 3)
-                                tsA_diff  tsB_diff  tsC_diff
+                                tsA.diff  tsB.diff  tsC.diff
         timestamp
         2022-01-01 21:01:00+00:00     -0.10      -0.2      0.50
         2022-01-01 21:02:00+00:00      0.10       0.0     -0.60
@@ -2006,16 +2006,16 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         )
         expected_length = 3
         expected_column_names = [
-            "tsA_pct_change",
-            "tsB_pct_change",
-            "tsC_pct_change",
+            "tsA.pct_change",
+            "tsB.pct_change",
+            "tsC.pct_change",
         ]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
-        columns=tsA_pct_change,tsB_pct_change,tsC_pct_change
+        columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
         shape=(3, 3)
-                                tsA_pct_change  tsB_pct_change  tsC_pct_change
+                                tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
         2022-01-01 21:01:00+00:00     -9.090909       -4.761905        7.692308
         2022-01-01 21:02:00+00:00      5.263158        0.000000       -6.976744
@@ -2046,13 +2046,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         expected_length = 2
-        expected_column_names = ["tsA_diff", "tsB_diff"]
+        expected_column_names = ["tsA.diff", "tsB.diff"]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
-        columns=tsA_diff,tsB_diff
+        columns=tsA.diff,tsB.diff
         shape=(2, 2)
-                                tsA_diff  tsB_diff
+                                tsA.diff  tsB.diff
         timestamp
         2022-01-01 21:01:00+00:00      -0.1      -0.2
         2022-01-01 21:02:00+00:00       0.1       0.0
@@ -2082,13 +2082,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         expected_length = 2
-        expected_column_names = ["tsA_pct_change", "tsB_pct_change"]
+        expected_column_names = ["tsA.pct_change", "tsB.pct_change"]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
-        columns=tsA_pct_change,tsB_pct_change
+        columns=tsA.pct_change,tsB.pct_change
         shape=(2, 2)
-                                tsA_pct_change  tsB_pct_change
+                                tsA.pct_change  tsB.pct_change
         timestamp
         2022-01-01 21:01:00+00:00       -9.090909       -4.761905
         2022-01-01 21:02:00+00:00        5.263158        0.000000
@@ -2125,13 +2125,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         expected_length = 3
-        expected_column_names = ["tsA_diff", "tsB_diff", "tsC_diff"]
+        expected_column_names = ["tsA.diff", "tsB.diff", "tsC.diff"]
         expected_column_unique_values = None
         expected_signature = r"""# df=
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
-        columns=tsA_diff,tsB_diff,tsC_diff
+        columns=tsA.diff,tsB.diff,tsC.diff
         shape=(3, 3)
-                                tsA_diff  tsB_diff  tsC_diff
+                                tsA.diff  tsB.diff  tsC.diff
         timestamp
         2022-01-01 21:01:00+00:00         1         4         7
         2022-01-01 21:02:00+00:00         2         5         8
@@ -2648,6 +2648,7 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
             "row_mode": "inner",
             "diff_mode": "pct_change",
             "background_gradient": False,
+            "assert_diff_threshold": None,
         }
         df_diff = hpandas.compare_multiindex_dfs(
             df1,
