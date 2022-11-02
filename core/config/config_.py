@@ -65,8 +65,12 @@ DUMMY = "__DUMMY__"
 # - We don't allow `dict` in Config as leaves
 #   - We assume that a dict leaf represents a Config for an object
 #   - `dict` are valid in composed data structures, e.g., list, tuples
+# - We require the user to explicitly mark as used a value from the config,
+#   in cases when we don't want subsequent writes to change its value
+#   - Thus, by default __getitem__() has mark_as_use=False by default,
+#  and the user needs to use `get_and_mark_as_used()` method,
 
-# # Issues with tracking accurately write-after-read:
+# # Issues with tracking accurately write-after-use:
 #
 # - Nested config add extra complexity mixing Dict and Config
 #   - An alternative design could have been that `Config` derives from
@@ -170,13 +174,13 @@ class _ConfigWriterInfo:
     def __init__(self):
         self._full_traceback = self._get_full_traceback()
         self._shorthand_caller = self._get_shorthand_caller()
-    
+
     def _get_full_traceback():
         """
         Return full traceback as str.
         """
         return hintros.stacktrace_to_str()
-    
+
     def _get_shorthand_caller():
         """
         Return a short representation of the context in which the function was called.
@@ -195,15 +199,15 @@ class _ConfigWriterInfo:
         # Index=2 since the `_mark_as_read` context will be stored above:
         #  - Context inside _ConfigWriterInfo
         #  - Context of _ConfigWriterInfo called in `_mark_as_used`, e.g.:
-        #  
+        #
         caller = stack[2]
         print("".join(stack))
         caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
         return caller
-    
+
     def __str__(self):
         return self._shorthand_caller
-    
+
     def __repr__(self):
         return self._full_traceback
 
@@ -230,7 +234,7 @@ class _OrderedConfig(_OrderedDictType):
         val: ValueTypeHint,
         *,
         update_mode: Optional[str] = "overwrite",
-        clobber_mode: Optional[str] = "allow_write_after_use"
+        clobber_mode: Optional[str] = "allow_write_after_use",
     ) -> None:
         """
         Each val is encoded internally as a tuple (marked_as_used, writer, value) where:
@@ -273,7 +277,7 @@ class _OrderedConfig(_OrderedDictType):
                 msg = "\n".join(msg)
                 raise OverwriteError(msg)
             else:
-                # Key doesn't exist, thus assign the value. 
+                # Key doesn't exist, thus assign the value.
                 assign_new_value = True
         elif update_mode == "overwrite":
             # Assign the value in any case.
@@ -346,44 +350,18 @@ class _OrderedConfig(_OrderedDictType):
     # Get.
     # /////////////////////////////////////////////////////////////////////////////
 
-    def __getitem__(self, key: ScalarKey) -> ValueTypeHint:
+    def __getitem__(
+        self, key: ScalarKey, *, mark_key_as_used: bool = False
+    ) -> ValueTypeHint:
         """
         Retrieve the value corresponding to `key`.
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
         marked_as_used, writer, val = super().__getitem__(key)
+        if mark_key_as_used:
+            self._mark_as_used(key)
         return val
-    
-    # TODO(Danya): Use to mark items in `__getitem__`.
-    def mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
-        """
-        Mark value as read.
-
-        The value is a tuple of (marked_as_used, writer, value), where `marked_as_used`== True
-        if the value has been accessed via `__getitem__`. 
-
-        :param used_state: whether to mark the value as used.
-                 Values are not marked e.g. when accessed through `__contains__` method.
-        """
-        # Retrieve the value and the metadata.
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        marked_as_used, writer, val = super().__getitem__(key)
-        _LOG.debug(hprint.to_str("marked_as_used val read_state"))
-        #
-        if used_state:
-            # Update the metadata, accounting that this data was read.
-            marked_as_used = True
-            writer = _ConfigWriterInfo()
-            super().__setitem__(key, (marked_as_used, writer, val))
-        # If the value is an iterable then we need to propagate the read state.
-        if hintros.is_iterable(val):
-            for elem in val:
-                if hasattr(elem, "mark_as_used"):
-                    elem.mark_as_used(marked_as_used)
-        else:
-            if hasattr(val, "mark_as_used"):
-                val.mark_as_used(marked_as_used)
 
 
     # /////////////////////////////////////////////////////////////////////////////
@@ -405,19 +383,44 @@ class _OrderedConfig(_OrderedDictType):
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
-    
+
     def str_debug(self) -> str:
         mode = "debug"
         ret = self.to_string(mode)
         return ret
+
+    def _mark_as_used(self, key: ScalarKey, used_state: bool = True) -> None:
+        """
+        Mark value as read.
+
+        The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
+        if the user reported that the value will be used to build other objects,
+        and it should not be subsequently modified.
+
+        :param used_state: whether to mark the value as used.
+                 Values are not marked e.g. when accessed through `__contains__` method.
+        """
+        # Retrieve the value and the metadata.
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        marked_as_used, writer, val = super().__getitem__(key)
+        _LOG.debug(hprint.to_str("marked_as_used val used_state"))
+        #
+        if used_state:
+            # Update the metadata, accounting that this data was read.
+            marked_as_used = True
+            super().__setitem__(key, (marked_as_used, writer, val))
+        if hasattr(val, "_config"):
+            # If a value is a subconfig, mark all values down the tree.
+            for key in val._config.keys():
+                val._config._mark_as_used(key, marked_as_used)
 
     def to_string(self, mode: str) -> str:
         """
         Return a string representation of this `Config`.
 
         :param mode: `only_values` or `verbose`
-                    - `only_values` for simple string representation
-                    - `verbose` for values with `val_type` and `mark_as_used`
+            - `only_values` for simple string representation
+            - `verbose` for values with `val_type` and `mark_as_used`
         """
         txt = []
         for key, (marked_as_used, writer, val) in self.items():
@@ -437,7 +440,7 @@ class _OrderedConfig(_OrderedDictType):
                 # Data structures that can be printed in a fancy way.
                 val_as_str = hpandas.df_to_str(val, print_shape_info=True)
                 val_as_str = "\n" + hprint.indent(val_as_str)
-            elif isinstance(val, Config) or isinstance (val, _OrderedConfig):
+            elif isinstance(val, Config) or isinstance(val, _OrderedConfig):
                 # Convert Configs recursively.
                 val_as_str = val.to_string(mode)
                 val_as_str = "\n" + hprint.indent(val_as_str)
@@ -573,9 +576,9 @@ class Config:
             report_mode = "none"
             # When we test for existence we don't want to mark a key as read by
             # the client, since we don't introduce a dependency from its value.
-            mark_key_as_read = False
+            mark_key_as_used = False
             val = self.__getitem__(
-                key, report_mode=report_mode, mark_key_as_read=mark_key_as_read
+                key, report_mode=report_mode, mark_key_as_used=mark_key_as_used
             )
             _LOG.debug("Found val=%s", val)
             found = True
@@ -636,14 +639,14 @@ class Config:
         key: CompoundKey,
         *,
         report_mode: Optional[str] = None,
-        mark_key_as_read: bool = False,
+        mark_key_as_used: bool = False,
     ) -> Any:
         """
         Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
         is compound, then the hierarchy is navigated until the corresponding
         element is found or we raise if the element doesn't exist.
 
-        :param mark_key_as_read: whether we mark the key as read by the client.
+        :param mark_key_as_used: whether we mark the key as read by the client.
           Set to `False` due to accessing values from logging, and we want clients
           to explicitely say when they want the value to be marked as read.
         :raises KeyError: if the compound key is not found in the `Config`
@@ -651,7 +654,7 @@ class Config:
         _LOG.debug("-> " + hprint.to_str("key report_mode self"))
         report_mode = self._resolve_report_mode(report_mode)
         try:
-            ret = self._get_item(key, level=0)
+            ret = self._get_item(key, level=0, mark_key_as_used=mark_key_as_used)
         except Exception as e:
             # After the recursion is done, in case of error print information
             # about the offending key.
@@ -663,6 +666,15 @@ class Config:
 
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
+
+    def get_and_mark_as_used(self, key: ScalarKeyValidTypes) -> Any:
+        """
+        Get the value and mark it as used.
+
+        This should be used as the only way of accessing values from configs
+        except for purposes of logging and transformation to string.
+        """
+        return self.__getitem__(key, mark_key_as_used=True)
 
     def get(
         self,
@@ -994,7 +1006,10 @@ class Config:
         hdbg.dassert(hintros.is_iterable(key), "Key='%s' is not iterable", key)
         head_scalar_key, tail_compound_key = key[0], key[1:]  # type: ignore
         _LOG.debug(
-            "key='%s' -> head_scalar_key='%s', tail_compound_key='%s'", key, head_scalar_key, tail_compound_key
+            "key='%s' -> head_scalar_key='%s', tail_compound_key='%s'",
+            key,
+            head_scalar_key,
+            tail_compound_key,
         )
         hdbg.dassert_isinstance(
             head_scalar_key, ScalarKeyValidTypes, "Keys can only be string or int"
@@ -1104,11 +1119,11 @@ class Config:
                 if head_key in self:
                     # We mark a key as read only when it's read from a client of
                     # Config, not from the Config itself.
-                    mark_key_as_read = False
+                    mark_key_as_used = False
                     subconfig = self.__getitem__(
                         head_key,
                         report_mode="none",
-                        mark_key_as_read=mark_key_as_read,
+                        mark_key_as_used=mark_key_as_used,
                     )
                 else:
                     subconfig = self.add_subconfig(head_key)
@@ -1123,13 +1138,15 @@ class Config:
             key, val, update_mode=update_mode, clobber_mode=clobber_mode
         )
 
-    def _get_item(self, key: CompoundKey, *, level: int) -> Any:
+    def _get_item(
+        self, key: CompoundKey, level: int, mark_key_as_used: bool
+    ) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on
         `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's an
+        This method should be used only by `__getitem__()` since it's a
         helper of that function.
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
@@ -1138,7 +1155,7 @@ class Config:
             head_key, tail_key = self._parse_compound_key(key)
             if not tail_key:
                 # Tuple of a single element, then return the value.
-                ret = self._get_item(head_key, level=level + 1)
+                ret = self._get_item(head_key, level=level + 1, mark_key_as_used=mark_key_as_used)
             else:
                 # Compound key: recurse on the tail of the key.
                 if head_key not in self._config:
@@ -1150,7 +1167,7 @@ class Config:
                 _LOG.debug("subconfig\n=%s", self._config)
                 if isinstance(subconfig, Config):
                     # Recurse.
-                    ret = subconfig._get_item(tail_key, level=level + 1)
+                    ret = subconfig._get_item(tail_key, level=level + 1, mark_key_as_used=mark_key_as_used)
                 else:
                     # There are more keys to process but we have reached the leaves
                     # of the config, then we assert.
@@ -1165,7 +1182,7 @@ class Config:
             keys_as_str = str(list(self._config.keys()))
             msg = f"key='{key}' not in {keys_as_str} at level {level}"
             raise KeyError(msg)
-        ret = self._config[key]  # type: ignore
+        ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore
         return ret
 
     def _resolve_update_mode(self, value: Optional[str]) -> str:
