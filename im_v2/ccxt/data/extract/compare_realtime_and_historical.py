@@ -195,6 +195,10 @@ class RealTimeHistoricalReconciler:
                 "ask_size",
             ],
         }
+        # Get CCXT data.
+        self.ccxt_rt = self._get_rt_data()
+        # Get daily data.
+        self.daily_data = self._get_daily_data()
 
     @staticmethod
     def get_db_connection(args):
@@ -229,15 +233,11 @@ class RealTimeHistoricalReconciler:
         """
         Compare real time and daily data.
         """
-        # Get CCXT data.
-        ccxt_rt = self._get_rt_data()
-        # Get daily data.
-        daily_data = self._get_daily_data()
         # Compare real time and daily data.
         if self.data_type == "ohlcv":
-            self._compare_ohlcv(ccxt_rt, daily_data)
+            self._compare_ohlcv(self.ccxt_rt, self.daily_data)
         else:
-            self._compare_bid_ask(ccxt_rt, daily_data)
+            self._compare_bid_ask(self.ccxt_rt, self.daily_data)
         return
 
     @staticmethod
