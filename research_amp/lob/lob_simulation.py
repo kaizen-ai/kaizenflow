@@ -231,5 +231,94 @@ ec_surplus_df_N["econ_surplus"].hist(bins=20)
 # %% run_control={"marked": false}
 ec_surplus_df_N.set_index("N").sort_index().plot()
 
+
 # %% [markdown]
 # Strong dependence of economic surplus with respect to N.
+
+# %% [markdown]
+# # Compare economic surplus of "big" and "small" markets
+
+# %%
+def generate_three_numbers_with_given_sum(
+    final_sum: int, threshold: int = 10
+) -> list:
+    """
+    Randomly generate three numbers which sum will equal to the given number.
+    """
+    numbers = sorted(random.sample(range(final_sum), 2))
+    num1 = numbers[0]
+    num2 = numbers[1] - numbers[0]
+    num3 = final_sum - numbers[1]
+    final_list = [num1, num2, num3]
+    for x in final_list:
+        if x < threshold:
+            final_list = generate_three_numbers_with_given_sum(final_sum)
+    return final_list
+
+
+def simulate_economic_surplus(N: int):
+    ba_raw = ralololi.get_data(N)
+    sd = ralololi.get_supply_demand_curve(ba_raw)
+    eq_p, eq_q = ralololi.find_equilibrium(sd, print_graph=False)
+    total_surplus = calculate_economic_surplus(sd, eq_p)
+    return total_surplus, eq_p, eq_q
+
+
+# %%
+# MC simulation for comparing economic surplus between "big" and "small" markets.
+ec_surplus_df_N_markets = pd.DataFrame()
+for i in range(1, 1000):
+    # Generate the number of participants in a "big" market.
+    N = random.choice(range(100, 500))
+    # Simulate economic surplus for a "big" market.
+    total_surplus_big, eq_p_big, eq_q_big = simulate_economic_surplus(N)
+    ec_surplus_df_N_markets.loc[i, "N_big"] = N
+    ec_surplus_df_N_markets.loc[i, "eq_p_big"] = eq_p_big
+    ec_surplus_df_N_markets.loc[i, "eq_q_big"] = eq_q_big
+    ec_surplus_df_N_markets.loc[i, "econ_surplus_big"] = total_surplus_big
+
+    # Generate the number of participants in a three "small" markets.
+    N_small = generate_three_numbers_with_given_sum(N)
+    n1 = N_small[0]
+    n2 = N_small[1]
+    n3 = N_small[2]
+    #
+    total_surplus1, eq_p1, eq_q1 = simulate_economic_surplus(n1)
+    ec_surplus_df_N_markets.loc[i, "n1"] = n1
+    ec_surplus_df_N_markets.loc[i, "eq_p1"] = eq_p1
+    ec_surplus_df_N_markets.loc[i, "eq_q1"] = eq_q1
+    ec_surplus_df_N_markets.loc[i, "econ_surplus1"] = total_surplus1
+    #
+    total_surplus2, eq_p2, eq_q2 = simulate_economic_surplus(n2)
+    ec_surplus_df_N_markets.loc[i, "n2"] = n2
+    ec_surplus_df_N_markets.loc[i, "eq_p2"] = eq_p2
+    ec_surplus_df_N_markets.loc[i, "eq_q2"] = eq_q2
+    ec_surplus_df_N_markets.loc[i, "econ_surplus2"] = total_surplus2
+    #
+    total_surplus3, eq_p3, eq_q3 = simulate_economic_surplus(n3)
+    ec_surplus_df_N_markets.loc[i, "n3"] = n3
+    ec_surplus_df_N_markets.loc[i, "eq_p3"] = eq_p3
+    ec_surplus_df_N_markets.loc[i, "eq_q3"] = eq_q3
+    ec_surplus_df_N_markets.loc[i, "econ_surplus3"] = total_surplus3
+    #
+    ec_surplus_df_N_markets.loc[i, "econ_surplus_small_total"] = (
+        total_surplus1 + total_surplus2 + total_surplus3
+    )
+
+# %%
+big_small_surpluses = (
+    ec_surplus_df_N_markets[
+        ["N_big", "econ_surplus_big", "econ_surplus_small_total"]
+    ]
+    .set_index("N_big")
+    .sort_index()
+)
+big_small_surpluses.plot()
+
+# %%
+big_small_diff = (
+    big_small_surpluses["econ_surplus_big"]
+    - big_small_surpluses["econ_surplus_small_total"]
+)
+print(f"Mean value of difference: {big_small_diff.mean()}")
+big_small_diff.plot()
