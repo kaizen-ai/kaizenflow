@@ -47,7 +47,9 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-config_list = oms.build_reconciliation_configs()
+date_str = None
+prod_subdir = None
+config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
 
@@ -113,18 +115,15 @@ dag_node_timestamps
 
 # %%
 # Load DAG output for different experiments.
-dag_df_dict = {}
-for name, path in dag_path_dict.items():
-    # Get DAG node names for every experiment.
-    dag_nodes = oms.get_dag_node_names(path)
-    # Get timestamps for the last node.
-    dag_node_ts = oms.get_dag_node_timestamps(
-        path, dag_nodes[-1], as_timestamp=True
-    )
-    # Get DAG output for the last node and the last timestamp.
-    dag_df_dict[name] = oms.get_dag_node_output(
-        path, dag_nodes[-1], dag_node_ts[-1]
-    )
+dag_start_timestamp = None
+dag_end_timestamp = None
+dag_df_dict = oms.load_dag_outputs(
+    dag_path_dict,
+    dag_node_names[-1],
+    dag_node_timestamps[-1],
+    dag_start_timestamp,
+    dag_end_timestamp,
+)
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
