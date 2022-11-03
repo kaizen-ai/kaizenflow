@@ -208,16 +208,18 @@ class ImClientMarketData(mdabmada.MarketData):
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        # We need to find the last timestamp before the current time. We use
-        # `7D` but could also use all the data since we don't call the DB.
+        # We need to find the last timestamp before the current time. If don't have data
+        # for an asset for the past hour it does not make any sense to compute further.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
-        timedelta = pd.Timedelta("7D")
+        timedelta = pd.Timedelta("1H")
         df = self.get_data_for_last_period(timedelta)
         _LOG.debug(
             hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
         )
         if df.empty:
+            wall_clock_time = self.get_wall_clock_time()
+            _LOG.warning("No data found near wall_clock_time=%s", self.wall_clock_time)
             ret = None
         else:
             # The latest timestamp is min timestamp across max timestamps
@@ -239,7 +241,7 @@ class ImClientMarketData(mdabmada.MarketData):
                 hpandas.df_to_str(
                     df_max_ts_per_asset,
                     print_shape_info=True,
-                    tag="after get_data",
+                    tag="latest timestamp per asset",
                 )
             )
             ret = df_max_ts_per_asset.min()
