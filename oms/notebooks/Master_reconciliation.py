@@ -22,7 +22,6 @@ import logging
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -96,14 +95,20 @@ if config["meta"]["run_tca"]:
 # %%
 # Get DAG node names.
 dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
-_LOG.info("The 1st node=%s, the last node=%s", dag_node_names[0], dag_node_names[-1])
+_LOG.info(
+    "The 1st node=%s, the last node=%s", dag_node_names[0], dag_node_names[-1]
+)
 
 # %%
 # Get timestamps for the last DAG node.
 dag_node_timestamps = oms.get_dag_node_timestamps(
     dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
 )
-_LOG.info("The 1st timestamp=%s, the last timestamp=%s", dag_node_timestamps[0], dag_node_timestamps[-1])
+_LOG.info(
+    "The 1st timestamp=%s, the last timestamp=%s",
+    dag_node_timestamps[0],
+    dag_node_timestamps[-1],
+)
 
 # %%
 # Load DAG output for different experiments.
@@ -115,7 +120,7 @@ dag_df_dict = oms.load_dag_outputs(
     dag_node_timestamps[-1],
     dag_start_timestamp,
     dag_end_timestamp,
-    log_level = logging.DEBUG,
+    log_level=logging.DEBUG,
 )
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
@@ -173,8 +178,12 @@ if True:
     end_timestamp = dag_node_timestamps[-1]
 else:
     # Overwrite if needed.
-    start_timestamp = pd.Timestamp("2022-11-03 06:05:00-04:00", tz="America/New_York")
-    end_timestamp = pd.Timestamp("2022-11-03 08:00:00-04:00", tz="America/New_York")
+    start_timestamp = pd.Timestamp(
+        "2022-11-03 06:05:00-04:00", tz="America/New_York"
+    )
+    end_timestamp = pd.Timestamp(
+        "2022-11-03 08:00:00-04:00", tz="America/New_York"
+    )
 _LOG.info("start_timestamp=%s", start_timestamp)
 _LOG.info("end_timestamp=%s", end_timestamp)
 
@@ -263,7 +272,7 @@ diff_df = diff_df.abs()
 # Check that data is the same.
 max_diff = diff_df.max().max()
 _LOG.info("Max difference between prod and sim is=%s", max_diff)
-prod_sim_diff = diff_df.max().unstack().max(axis=1).map('{:,.2f}'.format)
+prod_sim_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
 hpandas.df_to_str(prod_sim_diff, num_rows=None, log_level=logging.INFO)
 
 # %%
@@ -277,7 +286,7 @@ diff_df = diff_df.abs()
 # Check that data is the same.
 max_diff = diff_df.max().max()
 _LOG.info("Max difference between prod and research is=%s", max_diff)
-prod_research_diff = diff_df.max().unstack().max(axis=1).map('{:,.2f}'.format)
+prod_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
 hpandas.df_to_str(prod_research_diff, num_rows=None, log_level=logging.INFO)
 
 # %%
@@ -291,7 +300,7 @@ diff_df = diff_df.abs()
 # Check that data is the same.
 max_diff = diff_df.max().max()
 _LOG.info("Max difference between sim and research is=%s", max_diff)
-sim_research_diff = diff_df.max().unstack().max(axis=1).map('{:,.2f}'.format)
+sim_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
 hpandas.df_to_str(sim_research_diff, num_rows=None, log_level=logging.INFO)
 
 # %%
