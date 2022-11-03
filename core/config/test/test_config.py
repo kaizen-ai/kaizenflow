@@ -1810,8 +1810,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
         """
         value = "val1"
         # TODO(Danya): Do we want to keep `mark_as_used` in pickleable strings?
-        expected = r"""
-        {'key1': ('False', 'val1'), 'key2': ('False', 'key3:
+        expected = r"""{'key1': ('False', 'None', 'val1'), 'key2': ('False', 'None', 'key3:
         key4:
         ')}"""
         should_be_pickleable_before = True
@@ -1828,7 +1827,7 @@ class Test_to_pickleable_string(hunitest.TestCase):
         # Set non-pickle-able value.
         value = lambda x: x
         expected = r"""
-        {'key1': ('False', '<function Test_to_pickleable_string.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'key3:
+        {'key1': ('False', 'None', '<function Test_to_pickleable_string.test2.<locals>.<lambda> at 0x>'), 'key2': ('False', 'None', 'key3:
         key4:
         ')}"""
         should_be_pickleable_before = False
@@ -1883,9 +1882,9 @@ class Test_save_to_file(hunitest.TestCase):
 # Test_to_string
 # #############################################################################
 
-# TODO(Danya): Add `test4` testing a nested Config case.
+
 class Test_to_string(hunitest.TestCase):
-    def helper(
+    def get_test_config(
         self,
         value: Any,
     ) -> str:
@@ -1895,30 +1894,27 @@ class Test_to_string(hunitest.TestCase):
             "key2": {"key3": {"key4": {}}},
         }
         config = cconfig.Config.from_dict(nested)
-        # Check if function was successfully applied on config.
-        mode = "verbose"
-        actual = config.to_string(mode)
-        return actual
+        return config
 
     def test1(self) -> None:
         """
         Test when a value is a DataFrame.
         """
         value = pd.DataFrame(data=[[1, 2, 3], [4, 5, 6]], columns=["a", "b", "c"])
-        expected = r"""key1 (marked_as_used=False, val_type=pandas.core.frame.DataFrame):
+        expected = r"""key1 (marked_as_used=False, writer=None, val_type=pandas.core.frame.DataFrame):
         index=[0, 1]
         columns=a,b,c
         shape=(2, 3)
         a b c
         0 1 2 3
         1 4 5 6
-        key2 (marked_as_used=False, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
-        actual = self.helper(
-            value,
-        )
+        config = self.get_test_config(value)
+        mode = "verbose"
+        actual = config.to_string(mode)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
@@ -1928,14 +1924,14 @@ class Test_to_string(hunitest.TestCase):
         # Set function value.
         value = lambda x: x
         expected = r"""
-        key1 (marked_as_used=False, val_type=function): <function Test_to_string.test2.<locals>.<lambda>>
-        key2 (marked_as_used=False, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, val_type=core.config.config_.Config):
+        key1 (marked_as_used=False, writer=None, val_type=function): <function Test_to_string.test2.<locals>.<lambda>>
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
-        actual = self.helper(
-            value,
-        )
+        config = self.get_test_config(value)
+        mode = "verbose"
+        actual = config.to_string(mode)
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test3(self) -> None:
@@ -1944,17 +1940,121 @@ class Test_to_string(hunitest.TestCase):
         """
         # Set multiline string value.
         value = "This is a\ntest multiline string."
-        expected = r"""key1 (marked_as_used=False, val_type=str):
+        expected = r"""key1 (marked_as_used=False, writer=None, val_type=str):
         This is a
         test multiline string.
-        key2 (marked_as_used=False, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
-        actual = self.helper(
-            value,
-        )
+        config = self.get_test_config(value)
+        mode = "verbose"
+        actual = config.to_string(mode)
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+
+    def test4(self) -> None:
+        """
+        Test verbose mode with `marked_as_used` == True.
+
+        Smoke test, since output of the stacktrace is unstable.
+        """
+        value = "value2"
+        config = self.get_test_config(value)
+        _ = config.get_and_mark_as_used("key1")
+        mode = "verbose"
+        _ = config.to_string(mode)
+
+    def test5(self) -> None:
+        """
+        Test debug mode with `marked_as_used` == False.
+        """
+        # Set multiline string value.
+        value = "This is a\ntest multiline string."
+        expected = r"""key1 (marked_as_used=False, writer=None, val_type=str):
+        This is a
+        test multiline string.
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        """
+        config = self.get_test_config(value)
+        mode = "debug"
+        actual = config.to_string(mode)
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
+    
+    def test6(self) -> None:
+        """
+        Test debug mode with `marked_as_used` == True.
+
+        This is a smoke test since the output of stacktrace is unstable.
+        """
+        # Set multiline string value.
+        value = "value2"
+        config = self.get_test_config(value)
+        _ = config.get_and_mark_as_used("key1")
+        mode = "debug"
+        _ = config.to_string(mode)
+
+
+# #############################################################################
+# Test_mark_as_used1
+# #############################################################################
+
+
+class Test_mark_as_used1(hunitest.TestCase):
+    # Note: config state is not asserted due to instability of `writer` output.
+    def test1(self) -> None:
+        """
+        Test marking a config with scalar values.
+        """
+        test_dict = {"key1": 1, "key2": "value2"}
+        test_config = cconfig.Config.from_dict(test_dict)
+        #
+        expected_value = "value2"
+        actual_value = test_config.get_and_mark_as_used("key2")
+        self.assert_equal(
+            actual_value, expected_value, purify_text=True, fuzzy_match=True
+        )
+
+    def test2(self) -> None:
+        """
+        Test marking a subconfig in a nested config.
+        """
+        test_nested_dict = {"key1": 1, "key2": {"key3": "value3"}}
+        test_nested_config = cconfig.Config.from_dict(test_nested_dict)
+        #
+        expected_value = r"key3: value3"
+        actual_value = test_nested_config.get_and_mark_as_used("key2")
+        self.assert_equal(
+            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
+
+    def test3(self) -> None:
+        """
+        Test marking a subconfig in a deeply nested config.
+        """
+        test_nested_dict = {"key1": 1, "key2": {"key3": {"key4": "value3"}}}
+        test_nested_config = cconfig.Config.from_dict(test_nested_dict)
+        #
+        expected_value = r"""key3:
+        key4: value3"""
+        actual_value = test_nested_config.get_and_mark_as_used("key2")
+        self.assert_equal(
+            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
+
+    def test4(self) -> None:
+        """
+        Test marking a config with iterable value.
+        """
+        test_dict = {"key1": 1, "key2": ["value2", 2]}
+        test_config = cconfig.Config.from_dict(test_dict)
+        #
+        expected_value = "['value2', 2]"
+        actual_value = test_config.get_and_mark_as_used("key2")
+        self.assert_equal(
+            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
 
 
 # #############################################################################
@@ -2063,14 +2163,14 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
         #
         stmt = 'config["nrows"] = 10000'
         exp = """
-        nrows (marked_as_used=False, val_type=int): 10000
+        nrows (marked_as_used=False, writer=None, val_type=int): 10000
         """
         workload.append((stmt, exp))
         #
         stmt = 'config.add_subconfig("read_data")'
         exp = r"""
-        nrows (marked_as_used=False, val_type=int): 10000
-        read_data (marked_as_used=False, val_type=core.config.config_.Config):
+        nrows (marked_as_used=False, writer=None, val_type=int): 10000
+        read_data (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         """
         workload.append((stmt, exp))
         #
@@ -2105,6 +2205,7 @@ class Test_nested_config_set_execute_stmt1(_Config_execute_stmt_TestCase1):
 # Test_basic1
 # #############################################################################
 
+
 class Test_basic1(_Config_execute_stmt_TestCase1):
     def test1(self) -> None:
         """
@@ -2120,7 +2221,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign with a flat key.
         stmt = 'config["key1"] = "hello.txt"'
         exp = r"""
-        key1 (marked_as_used=False, val_type=str): hello.txt
+        key1 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Invalid access.
@@ -2151,15 +2252,15 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         # Assign with a compound key.
         stmt = 'config["key1", "key2"] = "hello.txt"'
         exp = r"""
-        key1 (marked_as_used=False, val_type=core.config.config_.Config):
-          key2 (marked_as_used=False, val_type=str): hello.txt
+        key1 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign with a compound key.
         stmt = 'config["key1"]["key2"] = "hello2.txt"'
         exp = r"""
-        key1 (marked_as_used=False, val_type=core.config.config_.Config):
-          key2 (marked_as_used=False, val_type=str): hello2.txt
+        key1 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=str): hello2.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
 
@@ -2173,7 +2274,7 @@ class Test_basic1(_Config_execute_stmt_TestCase1):
         self.execute_stmt(stmt, exp, mode, globals())
         # Assign a value.
         stmt = 'config["key1"] = "hello.txt"'
-        exp = r""" 
-        key1 (marked_as_used=False, val_type=str): hello.txt
+        exp = r"""
+        key1 (marked_as_used=False, writer=None, val_type=str): hello.txt
         """
         self.execute_stmt(stmt, exp, mode, globals())
