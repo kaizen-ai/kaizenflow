@@ -489,6 +489,17 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
         _LOG.debug("last_end_time=%s", last_end_time)
+        # Align on a bar. E.g., `last_end_time` is 09:16 and we ask
+        # for data in (09:10, 09:15], not (09:11, 09:16].
+        mode = "floor"
+        bar_duration_in_secs = 5 * 60
+        last_end_time = hdateti.find_bar_timestamp(
+            last_end_time,
+            bar_duration_in_secs,
+            mode=mode,
+        )
+        _LOG.debug("last_end_time=%s", last_end_time)
+        #
         offset = pd.Timedelta(bar_duration)
         start_time = last_end_time - offset
         twap_df = self.get_twap_price(
