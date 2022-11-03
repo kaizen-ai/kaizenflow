@@ -799,6 +799,18 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         # entire allotted window to fill.
         for order in orders_to_execute:
             hdbg.dassert_lte(order.end_timestamp, wall_clock_timestamp)
+
+        df_to_remove = pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0)
+        df_to_remove = df_to_remove == "True"
+        bar_timestamp = hdatetime.find_bar_timestamp(wall_clock_timestamp)
+        _LOG.info(hprint.to_str("wall_clock_timestamp bar_timestamp"))
+        srs_to_remove = df_to_remove.loc[bar_timestamp]
+        _LOG.info("srs_to_remove:\n%s", hpandas.df_to_str(srs_to_remove))
+        for order in orders_to_execute:
+            if srs[order.asset_id]:
+                _LOG.info("Setting shares to 0")
+                order.diff_num_shares = 0
+
         # "Execute" the orders.
         # TODO(gp): Here there should be a programmable logic that decides
         #  how many shares are filled and how.
