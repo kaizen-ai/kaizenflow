@@ -149,7 +149,10 @@ class DAG(hobject.PrintableMixin):
             execution of the nodes
         :param dst_dir: directory to save node interface and execution profiling info
         """
-        hdbg.dassert_in(save_node_io, ("", "stats", "df_as_csv", "df_as_pq", "df_as_csv_and_pq"))
+        hdbg.dassert_in(
+            save_node_io,
+            ("", "stats", "df_as_csv", "df_as_pq", "df_as_csv_and_pq"),
+        )
         _LOG.debug(hprint.to_str("save_node_io profile_execution dst_dir"))
         self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
@@ -612,9 +615,7 @@ class DAG(hobject.PrintableMixin):
         bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
         wall_clock_time = self._get_wall_clock_time()
         wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
-        basename = (
-            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.{wall_clock_time_str}"
-        )
+        basename = f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.{wall_clock_time_str}"
         file_name = os.path.join(dst_dir, "node_io.data", basename)
         #
         if isinstance(obj, pd.Series):
