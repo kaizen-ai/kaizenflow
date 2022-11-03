@@ -1524,6 +1524,8 @@ def compare_dfs(
         if assert_diff_threshold is not None:
             hdbg.dassert_lte(assert_diff_threshold, 1.0)
             hdbg.dassert_lte(0.0, assert_diff_threshold)
+    else:
+        raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
     if remove_inf:
         df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
