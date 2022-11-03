@@ -1901,7 +1901,7 @@ class Test_merge_dfs1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_compare_visually_dataframes(hunitest.TestCase):
+class Test_compare_dfs(hunitest.TestCase):
     """
     - Define two DataFrames that can be either equal or different in terms of columns or rows
     - Compare its values by calculating the difference
@@ -1958,7 +1958,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "diff"
         """
         df1, df2 = self.get_test_dfs_equal()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
@@ -1995,7 +1995,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "pct_change"
         """
         df1, df2 = self.get_test_dfs_equal()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
@@ -2036,7 +2036,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "diff"
         """
         df1, df2 = self.get_test_dfs_different()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="inner",
@@ -2072,7 +2072,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "pct_change"
         """
         df1, df2 = self.get_test_dfs_different()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="inner",
@@ -2115,7 +2115,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         # Create DataFrame with zeros.
         df2 = df1 * 0
         # Compare.
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
@@ -2151,7 +2151,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         """
         df1, df2 = self.get_test_dfs_different()
         with self.assertRaises(AssertionError):
-            hpandas.compare_visually_dataframes(
+            hpandas.compare_dfs(
                 df1,
                 df2,
                 row_mode="equal",
@@ -2643,7 +2643,7 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
             "columns_level0": ["asset1", "asset2"],
             "columns_level1": ["low", "high"],
         }
-        compare_visually_dataframes_kwargs = {
+        compare_dfs_kwargs = {
             "column_mode": "inner",
             "row_mode": "inner",
             "diff_mode": "pct_change",
@@ -2654,7 +2654,7 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
             df1,
             df2,
             subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
-            compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+            compare_dfs_kwargs=compare_dfs_kwargs,
         )
         expected_length = 3
         expected_column_names = [

@@ -1375,7 +1375,7 @@ def _resolve_column_names(
     column_set: ColumnSet,
     columns: Union[List[str], pd.Index],
     *,
-    keep_order: bool = False
+    keep_order: bool = False,
 ) -> List[str]:
     """
     Change format of the columns and perform some sanity checks.
@@ -1659,14 +1659,14 @@ def compare_multiindex_dfs(
     df2: pd.DataFrame,
     *,
     subset_multiindex_df_kwargs: Optional[Dict[str, Any]] = None,
-    compare_visually_dataframes_kwargs: Optional[Dict[str, Any]] = None,
+    compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     - Subset both multi-index dfs, if needed
     - Compare dfs
 
     :param subset_multiindex_df: params for `subset_multiindex_df()`
-    :param compare_visually_dataframes_kwargs: params for `compare_visually_dataframes()`
+    :param compare_dfs_kwargs: params for `compare_dfs()`
     :return: df with differences as values
     """
     # Subset dfs.
@@ -1675,10 +1675,10 @@ def compare_multiindex_dfs(
     subset_df1 = subset_multiindex_df(df1, **subset_multiindex_df_kwargs)
     subset_df2 = subset_multiindex_df(df2, **subset_multiindex_df_kwargs)
     # Compare dfs.
-    if compare_visually_dataframes_kwargs is None:
-        compare_visually_dataframes_kwargs = {}
-    diff_df = compare_visually_dataframes(
-        subset_df1, subset_df2, **compare_visually_dataframes_kwargs
+    if compare_dfs_kwargs is None:
+        compare_dfs_kwargs = {}
+    diff_df = compare_dfs(
+        subset_df1, subset_df2, **compare_dfs_kwargs
     )
     return diff_df
 
