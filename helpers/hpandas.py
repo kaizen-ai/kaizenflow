@@ -1366,71 +1366,267 @@ def get_random_df(
 
 # #############################################################################
 
+# TODO(gp): -> AxisNameSet
+ColumnSet = Optional[Union[str, List[str]]]
 
-def compare_visually_dataframes(
-    df1: pd.DataFrame,
-    df2: pd.DataFrame,
-    column_mode: str = "equal",
-    row_mode: str = "equal",
-    diff_mode: str = "diff",
-    background_gradient: bool = True,
+
+# TODO(gp): -> _resolve_axis_names
+def _resolve_column_names(
+    column_set: ColumnSet,
+    columns: Union[List[str], pd.Index],
+    *,
+    keep_order: bool = False
+) -> List[str]:
+    """
+    Change format of the columns and perform some sanity checks.
+
+    :param column_set: columns to proceed
+    :param columns: all columns available
+    :param keep_order: preserve the original order or allow sorting
+    """
+    # Ensure that `columns` is well-formed.
+    if isinstance(columns, pd.Index):
+        columns = columns.to_list()
+    hdbg.dassert_isinstance(columns, list)
+    hdbg.dassert_lte(1, len(columns))
+    #
+    if column_set is None:
+        # Columns were not specified, thus use the list of all the columns.
+        column_set = columns
+    else:
+        if isinstance(column_set, str):
+            column_set = [column_set]
+        hdbg.dassert_isinstance(column_set, list)
+        hdbg.dassert_lte(1, len(column_set))
+        hdbg.dassert_is_subset(column_set, columns)
+        if keep_order:
+            # Keep the selected columns in the same order as in the original
+            # `columns`.
+            column_set = [c for c in columns if c in column_set]
+    return column_set
+
+
+# TODO(Grisha): finish the function.
+# TODO(Grisha): merge with the one in `dataflow.model.correlation.py`?
+def remove_outliers(
+    df: pd.DataFrame,
+    lower_quantile: float,
+    *,
+    column_set: ColumnSet,
+    # TODO(Grisha): the params are not used.
+    fill_value: float = np.nan,
+    mode: str = "remove_outliers",
+    axis: Any = 0,
+    upper_quantile: Optional[float] = None,
 ) -> pd.DataFrame:
-    """
-    :param row_mode: controls how the rows are handled
-     - "equal": rows need to be the same
-     - "inner": compute the intersection
-    :param column_mode: same as row_mode
-    :param diff_mode: control how the dataframes are computed
-     - "diff": compute the difference between dataframes
-     - "pct_change": compute the percentage change between dataframes
-    :param background_gradient: colorize the output
-    """
-    if row_mode == "equal":
-        hdbg.dassert_eq(list(df1.index), list(df2.index))
-    elif row_mode == "inner":
-        same_rows = list((set(df1.index)).intersection(set(df2.index)))
-        df1 = df1[df1.index.isin(same_rows)]
-        df2 = df2[df2.index.isin(same_rows)]
+    hdbg.dassert_eq(len(df.shape), 2, "Multi-index dfs not supported")
+    #
+    hdbg.dassert_lte(0.0, lower_quantile)
+    if upper_quantile is None:
+        upper_quantile = 1.0 - lower_quantile
+    hdbg.dassert_lte(lower_quantile, upper_quantile)
+    hdbg.dassert_lte(upper_quantile, 1.0)
+    #
+    df = df.copy()
+    if axis == 0:
+        all_columns = df.columns
+        columns = _resolve_column_names(column_set, all_columns)
+        hdbg.dassert_is_subset(columns, df.columns)
+        for column in all_columns:
+            if column in columns:
+                df[column] = df[column].quantile([lower_quantile, upper_quantile])
+    elif axis == 1:
+        all_rows = df.rows
+        rows = _resolve_column_names(column_set, all_rows)
+        hdbg.dassert_is_subset(rows, df.rows)
+        for row in all_rows:
+            if row in rows:
+                df[row] = df[row].quantile([lower_quantile, upper_quantile])
     else:
-        raise ValueError("Invalid row_mode='%s'" % row_mode)
-    #
-    if column_mode == "equal":
-        hdbg.dassert_eq(sorted(df1.columns), sorted(df2.columns))
-        col_names = df1.columns
-    elif column_mode == "inner":
-        col_names = sorted(list(set(df1.columns).intersection(set(df2.columns))))
-    else:
-        raise ValueError("Invalid column_mode='%s'" % column_mode)
-    #
-    if diff_mode == "diff":
-        df_diff = df1[col_names] - df2[col_names]
-    elif diff_mode == "pct_change":
-        df_diff = 100 * (df1[col_names] - df2[col_names]) / df2[col_names]
-    df_diff = df_diff.add_suffix(f"_{diff_mode}")
-    #
-    if background_gradient:
-        cm = sns.diverging_palette(5, 250, as_cmap=True)
-        df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
-    return df_diff
+        raise ValueError(f"Invalid axis='{axis}'")
+    return df
 
 
 # #############################################################################
 
 
-def subset_multiindex_df(
-    df: pd.DataFrame,
-    start_timestamp: Optional[pd.Timestamp] = None,
-    end_timestamp: Optional[pd.Timestamp] = None,
-    columns_level0: Optional[List[str]] = None,
-    columns_level1: Optional[List[str]] = None,
+def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
+    """
+    Colorize a df with a heatmap depending on the numeric values.
+
+    :param axis: along which axis to compute the heatmap
+        - 0 colorize along rows
+        - 1 colorize along columns
+        - None colorize
+    """
+    cm = sns.diverging_palette(5, 250, as_cmap=True)
+    df = df.style.background_gradient(axis=axis, cmap=cm)
+    return df
+
+
+# TODO(gp): -> compare_dfs
+def compare_visually_dataframes(
+    df1: pd.DataFrame,
+    df2: pd.DataFrame,
+    *,
+    row_mode: str = "equal",
+    column_mode: str = "equal",
+    diff_mode: str = "diff",
+    remove_inf: bool = True,
+    # TODO(Grisha): remove `background_gradient` so that the output is
+    # always a `pd.DataFrame`, i.e. not a `Styler` object. 
+    background_gradient: bool = True,
+    assert_diff_threshold: float = 1e-3,
+    log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
-    Filter MultiIndex DataFrame by timestamp index, and column levels.
+    Compare two dataframes.
+
+    This works for dataframes with and without multi-index.
+
+    :param row_mode: control how the rows are handled
+        - "equal": rows need to be the same for the two dataframes
+        - "inner": compute the common rows for the two dataframes
+    :param column_mode: same as `row_mode`
+    :param diff_mode: control how the dataframes are compared in terms of
+        corresponding elements
+        - "diff": use the difference
+        - "pct_change": use the percentage difference
+    :param remove_inf: replace +-inf with `np.nan`
+    :param background_gradient: colorize the output
+    :param assert_diff_threshold: maximum allowed total difference; if None
+        do not raise the assertion, raise otherwise
+    :param log_level: logging level
+    :return: a singe dataframe with differences as values
+    """
+    # TODO(gp): Factor out this logic and use it for both compare_visually_dfs
+    #  and
+    if row_mode == "equal":
+        hdbg.dassert_eq(list(df1.index), list(df2.index))
+    elif row_mode == "inner":
+        # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
+        same_rows = list((set(df1.index)).intersection(set(df2.index)))
+        df1 = df1[df1.index.isin(same_rows)]
+        df2 = df2[df2.index.isin(same_rows)]
+    else:
+        raise ValueError(f"Invalid row_mode='{row_mode}'")
+    #
+    if column_mode == "equal":
+        hdbg.dassert_eq(sorted(df1.columns), sorted(df2.columns))
+    elif column_mode == "inner":
+        # TODO(gp): Add sorting on demand, otherwise keep the columns in order.
+        col_names = sorted(list(set(df1.columns).intersection(set(df2.columns))))
+        df1 = df1[col_names]
+        df2 = df2[col_names]
+    else:
+        raise ValueError(f"Invalid column_mode='{column_mode}'")
+    # Compute the difference df.
+    if diff_mode == "diff":
+        df_diff = df1 - df2
+    elif diff_mode == "pct_change":
+        df_diff = 100 * (df1 - df2) / df2
+    df_diff = df_diff.add_suffix(f".{diff_mode}")
+    if remove_inf:
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+    # Apply colors.
+    if background_gradient:
+        cm = sns.diverging_palette(5, 250, as_cmap=True)
+        df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
+    # Report max diff.
+    max_diff = df_diff.abs().max().max()
+    _LOG.log(log_level, "Max difference factor: %s", max_diff)
+    # TODO(Grisha): it works only with `mode="pct_change"`, adjust properly.
+    # if assert_diff_threshold is not None:
+    #     hdbg.dassert_lte(assert_diff_threshold, 1.0)
+    #     hdbg.dassert_lte(0.0, assert_diff_threshold)
+    #     hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    return df_diff
+
+
+# #############################################################################
+# Multi-index dfs
+# #############################################################################
+
+
+def list_to_str(
+    vals: List[Any],
+    *,
+    sep_char: str = ", ",
+    enclose_str_char: str = "'",
+    max_num: Optional[int] = 10,
+) -> str:
+    """
+    TODO(gp): Add docstring.
+    """
+    vals_as_str = list(map(str, vals))
+    # Add a str around.
+    if enclose_str_char:
+        vals_as_str = [
+            enclose_str_char + v + enclose_str_char for v in vals_as_str
+        ]
+    #
+    ret = "%s [" % len(vals)
+    if max_num is not None and len(vals) > max_num:
+        hdbg.dassert_lt(1, max_num)
+        ret += sep_char.join(vals_as_str[: int(max_num / 2)])
+        ret += sep_char + "..." + sep_char
+        ret += sep_char.join(vals_as_str[-int(max_num / 2) :])
+    else:
+        ret += sep_char.join(vals_as_str)
+    ret += "]"
+    return ret
+
+
+def multiindex_df_info(
+    df: pd.DataFrame,
+    *,
+    log_level: int = logging.INFO,
+    **list_to_str_kwargs: Dict[str, Any],
+) -> str:
+    """
+    Report information about a multi-index df.
+    """
+    hdbg.dassert_eq(2, len(df.columns.levels))
+    columns_level0 = df.columns.levels[0]
+    columns_level1 = df.columns.levels[1]
+    rows = df.index
+    ret = []
+    ret.append(
+        "shape=%s x %s x %s"
+        % (len(columns_level0), len(columns_level1), len(rows))
+    )
+    ret.append(
+        "columns_level0=%s" % list_to_str(columns_level0, **list_to_str_kwargs)
+    )
+    ret.append(
+        "columns_level1=%s" % list_to_str(columns_level1, **list_to_str_kwargs)
+    )
+    ret.append("rows=%s" % list_to_str(rows, **list_to_str_kwargs))
+    ret = "\n".join(ret)
+    _LOG.log(log_level, ret)
+    return ret
+
+
+def subset_multiindex_df(
+    df: pd.DataFrame,
+    *,
+    # TODO(gp): Consider passing trim_df_kwargs as kwargs.
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+    columns_level0: ColumnSet = None,
+    columns_level1: ColumnSet = None,
+    keep_order: bool = False,
+) -> pd.DataFrame:
+    """
+    Filter multi-index DataFrame by timestamp index and column levels.
 
     :param start_timestamp: see `trim_df()`
     :param end_timestamp: see `trim_df()`
     :param columns_level0: column names that corresponds to `df.columns.levels[0]`
+        - `None` means no filtering
     :param columns_level1: column names that corresponds to `df.columns.levels[1]`
+        - `None` means no filtering
+    :param keep_order: see `_resolve_column_names()`
     :return: filtered DataFrame
     """
     hdbg.dassert_eq(2, len(df.columns.levels))
@@ -1446,20 +1642,20 @@ def subset_multiindex_df(
         left_close=True,
         right_close=True,
     )
-    if columns_level0 is not None:
-        # Filter by columns at level 0.
-        hdbg.dassert_lte(
-            1, len(columns_level0), "Columns subset at level 0 cannot be empty"
-        )
-        hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
-        df = df[columns_level0]
-    if columns_level1 is not None:
-        # Filter by columns at level 1.
-        hdbg.dassert_lte(
-            1, len(columns_level1), "Columns subset at level 1 cannot be empty"
-        )
-        hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
-        df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
+    # Filter level 0.
+    all_columns_level0 = df.columns.levels[0]
+    columns_level0 = _resolve_column_names(
+        columns_level0, all_columns_level0, keep_order=keep_order
+    )
+    hdbg.dassert_is_subset(columns_level0, df.columns.levels[0])
+    df = df[columns_level0]
+    # Filter level 1.
+    all_columns_level1 = df.columns.levels[1]
+    columns_level1 = _resolve_column_names(
+        columns_level1, all_columns_level1, keep_order=keep_order
+    )
+    hdbg.dassert_is_subset(columns_level1, df.columns.levels[1])
+    df = df.swaplevel(axis=1)[columns_level1].swaplevel(axis=1)
     return df
 
 
@@ -1469,24 +1665,26 @@ def subset_multiindex_df(
 def compare_multiindex_dfs(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
+    *,
     subset_multiindex_df_kwargs: Optional[Dict[str, Any]] = None,
     compare_visually_dataframes_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
-    - Subset both Multiindex Dataframes
-    - Compare their values through difference
+    - Subset both multi-index dfs, if needed
+    - Compare dfs
 
-    See `subset_multiindex_df()` and `compare_visually_dataframes()` for parameters descriptions.
+    :param subset_multiindex_df: params for `subset_multiindex_df()`
+    :param compare_visually_dataframes_kwargs: params for `compare_visually_dataframes()`
+    :return: df with differences as values
     """
-    # Define kwargs for subsetting and comparison.
+    # Subset dfs.
     if subset_multiindex_df_kwargs is None:
         subset_multiindex_df_kwargs = {}
-    if compare_visually_dataframes_kwargs is None:
-        compare_visually_dataframes_kwargs = {}
-    # Subset DataFrames.
     subset_df1 = subset_multiindex_df(df1, **subset_multiindex_df_kwargs)
     subset_df2 = subset_multiindex_df(df2, **subset_multiindex_df_kwargs)
-    # Compare.
+    # Compare dfs.
+    if compare_visually_dataframes_kwargs is None:
+        compare_visually_dataframes_kwargs = {}
     diff_df = compare_visually_dataframes(
         subset_df1, subset_df2, **compare_visually_dataframes_kwargs
     )
