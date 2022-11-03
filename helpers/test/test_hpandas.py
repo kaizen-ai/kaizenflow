@@ -1964,6 +1964,7 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="diff",
+            assert_diff_threshold=None,
         )
         expected_length = 3
         expected_column_names = ["tsA.diff", "tsB.diff", "tsC.diff"]
@@ -2040,6 +2041,7 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="inner",
             column_mode="inner",
             diff_mode="diff",
+            assert_diff_threshold=None,
         )
         expected_length = 2
         expected_column_names = ["tsA.diff", "tsB.diff"]
@@ -2116,6 +2118,7 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="diff",
+            assert_diff_threshold=None,
         )
         expected_length = 3
         expected_column_names = ["tsA.diff", "tsB.diff", "tsC.diff"]

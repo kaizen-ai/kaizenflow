@@ -1521,9 +1521,14 @@ def compare_dfs(
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
+        # TODO(Grisha): generalize for the other modes.
+        # Report max diff.
+        max_diff = df_diff.abs().max().max()
+        _LOG.log(log_level, "Max difference factor: %s", max_diff)
         if assert_diff_threshold is not None:
             hdbg.dassert_lte(assert_diff_threshold, 1.0)
             hdbg.dassert_lte(0.0, assert_diff_threshold)
+            hdbg.dassert_lte(max_diff, assert_diff_threshold)
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
@@ -1532,7 +1537,7 @@ def compare_dfs(
     # Report max diff.
     max_diff = df_diff.abs().max().max()
     _LOG.log(log_level, "Max difference factor: %s", max_diff)
-    if assert_diff_threshold is not None and diff_mode == "pct_change":
+    if assert_diff_threshold is not None:
         hdbg.dassert_lte(max_diff, assert_diff_threshold)
     return df_diff
 
@@ -1679,9 +1684,7 @@ def compare_multiindex_dfs(
     # Compare dfs.
     if compare_dfs_kwargs is None:
         compare_dfs_kwargs = {}
-    diff_df = compare_dfs(
-        subset_df1, subset_df2, **compare_dfs_kwargs
-    )
+    diff_df = compare_dfs(subset_df1, subset_df2, **compare_dfs_kwargs)
     return diff_df
 
 
