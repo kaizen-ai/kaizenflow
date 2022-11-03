@@ -45,9 +45,9 @@ class DAG(hobject.PrintableMixin):
     - manages node execution and storage of outputs within executed nodes
     """
 
-    # TODO(gp): -> name: str to simplify the interface
     def __init__(
         self,
+        *,
         name: Optional[str] = None,
         mode: Optional[str] = None,
         get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
@@ -61,7 +61,7 @@ class DAG(hobject.PrintableMixin):
             - "strict": asserts
             - "loose": deletes old node (also removes edges) and adds new node. This
               is useful for interactive notebooks and debugging
-        :param get_wall_clock_time: the wall clock
+        :param get_wall_clock_time: the function that returns the wall clock
         """
         _LOG.debug(hprint.to_str("name mode"))
         self._nx_dag = networ.DiGraph()
@@ -73,7 +73,7 @@ class DAG(hobject.PrintableMixin):
         mode = mode or "strict"
         hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
-        #
+        # If no function is passed we use the actual machine wall-clock time.
         if get_wall_clock_time is None:
             event_loop = None
             get_wall_clock_time = lambda: hdateti.get_current_time(
