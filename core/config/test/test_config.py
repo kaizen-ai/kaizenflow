@@ -3,6 +3,7 @@ import datetime
 import logging
 import os
 import pprint
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 import pandas as pd
@@ -1884,6 +1885,20 @@ class Test_save_to_file(hunitest.TestCase):
 
 
 class Test_to_string(hunitest.TestCase):
+    def remove_line_numbers(self, actual_config: str):
+        """
+        Remove line numbers from output.
+        """
+        # Remove line numbers from shorthand representations, e.g.
+        #  dataflow/system/system_builder_utils.py::***::get_config_template
+        line_regex = r"(?<=::)(\d+)(?=::)"
+        actual_config = re.sub(line_regex, "***", actual_config)
+        # Remove line numbers from stacktrace, e.g.
+        # "$GIT_ROOT/core/config/config_.py", line ***, in __init__
+        line_regex = r"(?<=line )(\d+)"
+        actual_config = re.sub(line_regex, "***", actual_config)
+        return actual_config
+
     def get_test_config(
         self,
         value: Any,
@@ -1962,7 +1977,14 @@ class Test_to_string(hunitest.TestCase):
         config = self.get_test_config(value)
         _ = config.get_and_mark_as_used("key1")
         mode = "verbose"
-        _ = config.to_string(mode)
+        actual = config.to_string(mode)
+        actual = self.remove_line_numbers(actual)
+        expected = r"""key1 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test4, val_type=str): value2
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key4 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        """
+        self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
 
     def test5(self) -> None:
         """
@@ -1981,7 +2003,7 @@ class Test_to_string(hunitest.TestCase):
         mode = "debug"
         actual = config.to_string(mode)
         self.assert_equal(actual, expected, purify_text=True, fuzzy_match=True)
-    
+
     def test6(self) -> None:
         """
         Test debug mode with `marked_as_used` == True.
@@ -1993,7 +2015,9 @@ class Test_to_string(hunitest.TestCase):
         config = self.get_test_config(value)
         _ = config.get_and_mark_as_used("key1")
         mode = "debug"
-        _ = config.to_string(mode)
+        actual = config.to_string(mode)
+        actual = self.remove_line_numbers(actual)
+        self.check_string(actual)
 
 
 # #############################################################################
@@ -2002,6 +2026,7 @@ class Test_to_string(hunitest.TestCase):
 
 
 class Test_mark_as_used1(hunitest.TestCase):
+
     # Note: config state is not asserted due to instability of `writer` output.
     def test1(self) -> None:
         """
@@ -2015,6 +2040,9 @@ class Test_mark_as_used1(hunitest.TestCase):
         self.assert_equal(
             actual_value, expected_value, purify_text=True, fuzzy_match=True
         )
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test1, val_type=str): value2"""
+        self._helper(test_config, expected_config)
 
     def test2(self) -> None:
         """
@@ -2028,6 +2056,10 @@ class Test_mark_as_used1(hunitest.TestCase):
         self.assert_equal(
             str(actual_value), expected_value, purify_text=True, fuzzy_match=True
         )
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test2, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test2, val_type=str): value3"""
+        self._helper(test_nested_config, expected_config)
 
     def test3(self) -> None:
         """
@@ -2042,6 +2074,11 @@ class Test_mark_as_used1(hunitest.TestCase):
         self.assert_equal(
             str(actual_value), expected_value, purify_text=True, fuzzy_match=True
         )
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test3, val_type=core.config.config_.Config):
+        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test3, val_type=core.config.config_.Config):
+        key4 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test3, val_type=str): value3"""
+        self._helper(test_nested_config, expected_config)
 
     def test4(self) -> None:
         """
@@ -2054,6 +2091,22 @@ class Test_mark_as_used1(hunitest.TestCase):
         actual_value = test_config.get_and_mark_as_used("key2")
         self.assert_equal(
             str(actual_value), expected_value, purify_text=True, fuzzy_match=True
+        )
+        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
+        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test4, val_type=list): ['value2', 2]"""
+        self._helper(test_config, expected_config)
+
+    def _helper(self, actual_config: cconfig.Config, expected_config: str):
+        """
+        Remove line numbers from output.
+        """
+        actual_config = repr(actual_config)
+        # Replace line numbers with '***', e.g.:
+        #  dataflow/system/system_builder_utils.py::***::get_config_template
+        line_regex = r"(?<=::)(\d+)(?=::)"
+        actual_config = re.sub(line_regex, "***", actual_config)
+        self.assert_equal(
+            actual_config, expected_config, purify_text=True, fuzzy_match=True
         )
 
 
