@@ -1521,6 +1521,12 @@ def compare_dfs(
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
+    else:
+        raise ValueError(f"diff_mode={diff_mode}")
+    df_diff = df_diff.add_suffix(f".{diff_mode}")
+    if remove_inf:
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+    if diff_mode == "pct_change" and assert_diff_threshold is not None:
         # TODO(Grisha): generalize for the other modes.
         # Report max diff.
         max_diff = df_diff.abs().max().max()
@@ -1528,12 +1534,8 @@ def compare_dfs(
         if assert_diff_threshold is not None:
             hdbg.dassert_lte(assert_diff_threshold, 1.0)
             hdbg.dassert_lte(0.0, assert_diff_threshold)
+            # TODO(Grisha): it works only if `remove_inf` is True.
             hdbg.dassert_lte(max_diff, assert_diff_threshold)
-    else:
-        raise ValueError(f"diff_mode={diff_mode}")
-    df_diff = df_diff.add_suffix(f".{diff_mode}")
-    if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     return df_diff
 
 
