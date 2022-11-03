@@ -21,7 +21,7 @@
 import logging
 import os
 
-import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
@@ -89,29 +89,26 @@ if config["meta"]["run_tca"]:
     tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
 
-# %%
-date_str = config["meta"]["date_str"]
-# TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
-_LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
-_LOG.info("end_timestamp=%s", end_timestamp)
-
-
 # %% [markdown]
 # # Compare DAG io
 
 # %%
 # Get DAG node names.
 dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
-dag_node_names
+_LOG.info(
+    "The 1st node=%s, the last node=%s", dag_node_names[0], dag_node_names[-1]
+)
 
 # %%
 # Get timestamps for the last DAG node.
 dag_node_timestamps = oms.get_dag_node_timestamps(
     dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
 )
-dag_node_timestamps
+_LOG.info(
+    "The 1st timestamp=%s, the last timestamp=%s",
+    dag_node_timestamps[0],
+    dag_node_timestamps[-1],
+)
 
 # %%
 # Load DAG output for different experiments.
@@ -123,35 +120,39 @@ dag_df_dict = oms.load_dag_outputs(
     dag_node_timestamps[-1],
     dag_start_timestamp,
     dag_end_timestamp,
+    log_level=logging.DEBUG,
 )
 hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-# Compute percentage difference.
+# Compute difference.
 compare_dfs_kwargs = {
-    "diff_mode": "pct_change",
+    # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
+    "diff_mode": "diff",
+    "remove_inf": True,
 }
 diff_df = hpandas.compare_multiindex_dfs(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
     compare_dfs_kwargs=compare_dfs_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Remove the sign.
+diff_df = diff_df.abs()
 # Check that data is the same.
 diff_df.max().max()
 
 # %%
-# Plot diffs over time.
-diff_df.max(axis=1).plot()
-
-# %%
-# Plot diffs over columns.
-diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
-
-# %%
-# Plot diffs over assets.
-diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+# Enable if the diff is big to see the detailed stats.
+if False:
+    # Plot over time.
+    diff_df.max(axis=1).plot()
+    plt.show()
+    # Plot over column names.
+    diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
+    plt.show()
+    # Plot over assets
+    diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+    plt.show()
 
 # %%
 # Compute correlations.
@@ -166,12 +167,25 @@ hpandas.df_to_str(
     log_level=logging.INFO,
 )
 
-# %%
-# Make sure they are exactly the same.
-(dag_df_dict["prod"] - dag_df_dict["sim"]).abs().max().max()
-
 # %% [markdown]
 # # Compute research portfolio equivalent
+
+# %%
+# Set Portofolio start and end timestamps.
+if True:
+    # By default use the min/max bar timestamps from the DAG.
+    start_timestamp = dag_node_timestamps[0]
+    end_timestamp = dag_node_timestamps[-1]
+else:
+    # Overwrite if needed.
+    start_timestamp = pd.Timestamp(
+        "2022-11-03 06:05:00-04:00", tz="America/New_York"
+    )
+    end_timestamp = pd.Timestamp(
+        "2022-11-03 08:00:00-04:00", tz="America/New_York"
+    )
+_LOG.info("start_timestamp=%s", start_timestamp)
+_LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 fep = dtfmod.ForecastEvaluatorFromPrices(
@@ -216,7 +230,6 @@ portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
 )
 # Add research portfolio.
 portfolio_dfs["research"] = research_portfolio_df
-#
 hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -238,7 +251,57 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Compare pairwise portfolio correlations
+# # Compare portfolios pairwise
+
+# %%
+# TODO(Grisha): @Dan factor out in a function.
+# Compute difference.
+compare_dfs_kwargs = {
+    "column_mode": "inner",
+    "diff_mode": "diff",
+    "remove_inf": True,
+    "assert_diff_threshold": None,
+}
+diff_df = hpandas.compare_multiindex_dfs(
+    portfolio_dfs["prod"],
+    portfolio_dfs["sim"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+max_diff = diff_df.max().max()
+_LOG.info("Max difference between prod and sim is=%s", max_diff)
+prod_sim_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
+hpandas.df_to_str(prod_sim_diff, num_rows=None, log_level=logging.INFO)
+
+# %%
+diff_df = hpandas.compare_multiindex_dfs(
+    portfolio_dfs["prod"],
+    portfolio_dfs["research"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+max_diff = diff_df.max().max()
+_LOG.info("Max difference between prod and research is=%s", max_diff)
+prod_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
+hpandas.df_to_str(prod_research_diff, num_rows=None, log_level=logging.INFO)
+
+# %%
+diff_df = hpandas.compare_multiindex_dfs(
+    portfolio_dfs["sim"],
+    portfolio_dfs["research"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+max_diff = diff_df.max().max()
+_LOG.info("Max difference between sim and research is=%s", max_diff)
+sim_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
+hpandas.df_to_str(sim_research_diff, num_rows=None, log_level=logging.INFO)
 
 # %%
 dtfmod.compute_correlations(
