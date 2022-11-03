@@ -1932,7 +1932,7 @@ class Test_compare_dfs(hunitest.TestCase):
         ]
         values2 = {
             "tsA": pd.Series([1.1, 1.9, 3.15]),
-            "tsB": pd.Series([np.inf, 5, 5.8]),
+            "tsB": pd.Series([0, 5, 5.8]),
             "tsC": pd.Series([6.5, 8.6, 9.07]),
             "timestamp": timestamp_index2,
         }
@@ -1974,7 +1974,7 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.diff  tsB.diff  tsC.diff
         timestamp
-        2022-01-01 21:01:00+00:00     -0.10       NaN      0.50
+        2022-01-01 21:01:00+00:00     -0.10       4.0      0.50
         2022-01-01 21:02:00+00:00      0.10       0.0     -0.60
         2022-01-01 21:03:00+00:00     -0.15       0.2     -0.07
         """
@@ -2015,7 +2015,7 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00     -9.090909        NaN             7.692308
+        2022-01-01 21:01:00+00:00     -9.090909        inf             7.692308
         2022-01-01 21:02:00+00:00      5.263158        0.000000       -6.976744
         2022-01-01 21:03:00+00:00     -4.761905        3.448276       -0.771775
         """
@@ -2050,7 +2050,7 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(2, 2)
                                 tsA.diff  tsB.diff
         timestamp
-        2022-01-01 21:01:00+00:00      -0.1       NaN
+        2022-01-01 21:01:00+00:00      -0.1       4.0
         2022-01-01 21:02:00+00:00       0.1       0.0
         """
         self.check_df_output(
@@ -2086,7 +2086,7 @@ class Test_compare_dfs(hunitest.TestCase):
                                 tsA.pct_change  tsB.pct_change
         timestamp
         2022-01-01 21:01:00+00:00       -9.090909        NaN
-        2022-01-01 21:02:00+00:00        5.263158        0.000000
+        2022-01-01 21:02:00+00:00        5.263158        0.0
         """
         self.check_df_output(
             df_diff,

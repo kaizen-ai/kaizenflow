@@ -1489,9 +1489,9 @@ def compare_dfs(
         - "diff": use the difference
         - "pct_change": use the percentage difference
     :param remove_inf: replace +-inf with `np.nan`
-    :param assert_diff_threshold: maximum allowed total difference; if None
-        do not raise the assertion, raise otherwise; works when `diff_mode` is
-        "pct_change"
+    :param assert_diff_threshold: maximum allowed total difference
+        - do not assert if `None`
+        - works when `diff_mode` is "pct_change"
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
