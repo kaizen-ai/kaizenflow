@@ -1534,11 +1534,6 @@ def compare_dfs(
     df_diff = df_diff.add_suffix(f".{diff_mode}")
     if remove_inf:
         df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
-    # Report max diff.
-    max_diff = df_diff.abs().max().max()
-    _LOG.log(log_level, "Max difference factor: %s", max_diff)
-    if assert_diff_threshold is not None:
-        hdbg.dassert_lte(max_diff, assert_diff_threshold)
     return df_diff
 
 
