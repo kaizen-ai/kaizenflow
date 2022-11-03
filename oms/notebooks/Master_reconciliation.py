@@ -54,8 +54,9 @@ hprint.config_notebook()
 # %%
 #date_str = "20221028"
 #date_str = "20221031"
-date_str = "20221101"
-prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
+date_str = "20221103"
+#prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
+prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
@@ -66,7 +67,7 @@ system_log_path_dict, portfolio_path_dict, dag_path_dict = oms.get_path_dicts(co
 # %%
 date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-if False:
+if True:
     start_time = "06:05:00"
     end_time = "07:50:00"
 else:
@@ -242,8 +243,8 @@ if False:
 _ = hpandas.multiindex_df_info(dag_df_dict["prod"])
 
 # %%
-df_subset = hpandas.subset_multiindex_df(dag_df_dict["prod"], columns_level0="close")
-df_subset.head(2)
+#df_subset = hpandas.subset_multiindex_df(dag_df_dict["prod"], columns_level0="close")
+#df_subset.head(2)
 
 # %% [markdown]
 # ## Compare prod vs sim DAG output
@@ -308,6 +309,13 @@ annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ]
 print(hprint.to_str("annotate_forecasts_kwargs", mode="pprint"))
+
+
+
+
+
+
+
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
     dag_df_dict["prod"],
     **annotate_forecasts_kwargs.to_dict(),
@@ -529,6 +537,20 @@ diff_df = hpandas.compare_visually_dataframes(
 display(hpandas.heatmap_df(diff_df.round(2)))
 
 # %%
+pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0)
+
+# %%
+(diff_df.replace(np.nan, 0).abs() > 1).to_csv("orders_to_remove.csv")
+
+# %%
+((prod_target_position_df["target_trades_shares"] * prod_target_position_df["price"]).abs() < 5.0).sum().sum()
+
+# %%
+mask = prod_target_position_df["target_trades_notional"].abs() < 10
+prod_target_position_df["target_trades_notional"][mask]
+#mask.sum()
+
+# %%
 display(prod_target_position_df["holdings_shares"].dropna().head(10))
 
 display(research_portfolio_df["holdings_shares"].dropna().head(10))
@@ -602,14 +624,6 @@ if False:
 
 # %%
 research_portfolio_df["holdings_shares"].head(10)
-
-# %%
-dtfmod.compute_correlations(
-    research_portfolio_df.pct_change(),
-    portfolio_dfs["prod"].pct_change(),
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
-)
 
 # %%
 dtfmod.compute_correlations(
@@ -726,8 +740,8 @@ df2 = prod_target_position_df["holdings_shares"]
 df1 - df2
 
 # %%
-display(prod_target_position_df["holdings_shares"].loc["2022-11-01 09:10:00-04:00"])
-display(prod_target_position_df["target_holdings_shares"].loc["2022-11-01 09:10:00-04:00"])
+#display(prod_target_position_df["holdings_shares"].loc["2022-11-01 09:10:00-04:00"])
+#display(prod_target_position_df["target_holdings_shares"].loc["2022-11-01 09:10:00-04:00"])
 
 # %%
 # We are getting the fills that correspond to the orders and to the change of holdings.
