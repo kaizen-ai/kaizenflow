@@ -212,7 +212,7 @@ class ImClientMarketData(mdabmada.MarketData):
         # `7D` but could also use all the data since we don't call the DB.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
-        timedelta = pd.Timedelta("7D")
+        timedelta = pd.Timedelta("1H")
         df = self.get_data_for_last_period(timedelta)
         _LOG.debug(
             hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
