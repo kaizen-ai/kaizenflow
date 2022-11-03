@@ -1964,7 +1964,6 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="diff",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2001,7 +2000,6 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2042,7 +2040,6 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="inner",
             column_mode="inner",
             diff_mode="diff",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 2
@@ -2078,7 +2075,6 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="inner",
             column_mode="inner",
             diff_mode="pct_change",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 2
@@ -2121,7 +2117,6 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="diff",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2157,7 +2152,6 @@ class Test_compare_dfs(hunitest.TestCase):
                 row_mode="equal",
                 column_mode="equal",
                 diff_mode="pct_change",
-                background_gradient=False,
             )
 
 
@@ -2647,7 +2641,6 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
             "column_mode": "inner",
             "row_mode": "inner",
             "diff_mode": "pct_change",
-            "background_gradient": False,
             "assert_diff_threshold": None,
         }
         df_diff = hpandas.compare_multiindex_dfs(
