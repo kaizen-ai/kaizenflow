@@ -1464,8 +1464,7 @@ def heatmap_df(df: pd.DataFrame, *, axis: Any = None) -> pd.DataFrame:
     return df
 
 
-# TODO(gp): -> compare_dfs
-def compare_visually_dataframes(
+def compare_dfs(
     df1: pd.DataFrame,
     df2: pd.DataFrame,
     *,
@@ -1473,9 +1472,6 @@ def compare_visually_dataframes(
     column_mode: str = "equal",
     diff_mode: str = "diff",
     remove_inf: bool = True,
-    # TODO(Grisha): remove `background_gradient` so that the output is
-    # always a `pd.DataFrame`, i.e. not a `Styler` object. 
-    background_gradient: bool = True,
     assert_diff_threshold: float = 1e-3,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
@@ -1493,9 +1489,9 @@ def compare_visually_dataframes(
         - "diff": use the difference
         - "pct_change": use the percentage difference
     :param remove_inf: replace +-inf with `np.nan`
-    :param background_gradient: colorize the output
     :param assert_diff_threshold: maximum allowed total difference; if None
-        do not raise the assertion, raise otherwise
+        do not raise the assertion, raise otherwise; works when `diff_mode` is
+        "pct_change"
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1525,21 +1521,17 @@ def compare_visually_dataframes(
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
+        if assert_diff_threshold is not None:
+            hdbg.dassert_lte(assert_diff_threshold, 1.0)
+            hdbg.dassert_lte(0.0, assert_diff_threshold)
     df_diff = df_diff.add_suffix(f".{diff_mode}")
     if remove_inf:
         df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
-    # Apply colors.
-    if background_gradient:
-        cm = sns.diverging_palette(5, 250, as_cmap=True)
-        df_diff = df_diff.style.background_gradient(axis=None, cmap=cm)
     # Report max diff.
     max_diff = df_diff.abs().max().max()
     _LOG.log(log_level, "Max difference factor: %s", max_diff)
-    # TODO(Grisha): it works only with `mode="pct_change"`, adjust properly.
-    # if assert_diff_threshold is not None:
-    #     hdbg.dassert_lte(assert_diff_threshold, 1.0)
-    #     hdbg.dassert_lte(0.0, assert_diff_threshold)
-    #     hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    if assert_diff_threshold is not None and diff_mode == "pct_change":
+        hdbg.dassert_lte(max_diff, assert_diff_threshold)
     return df_diff
 
 
