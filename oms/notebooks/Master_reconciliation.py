@@ -128,14 +128,13 @@ hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
+compare_dfs_kwargs = {
     "diff_mode": "pct_change",
-    "background_gradient": False,
 }
 diff_df = hpandas.compare_multiindex_dfs(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
-    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+    compare_dfs_kwargs=compare_dfs_kwargs,
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
