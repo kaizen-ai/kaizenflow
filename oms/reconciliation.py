@@ -431,21 +431,21 @@ def compute_dag_delay_in_seconds(
     `bar_timestamp` for each timestamp.
     """
     delay_in_seconds = []
-    bar_timestamp = []
+    bar_timestamps = []
     for bar_timestamp, wall_clock_timestamp in dag_node_timestamps:
-        diff = (bar_timestamp - wall_clock_timestamp).seconds
+        diff = (wall_clock_timestamp - bar_timestamp).seconds
         delay_in_seconds.append(diff)
-        bar_timestamp.append(bar_timestamp)
+        bar_timestamps.append(bar_timestamp)
     diff = pd.DataFrame(
-        delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamp
+        delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamps
     )
     diff.index.name = "bar_timestamp"
     if print_stats:
         _LOG.info(
             "Minimum delay=%s, mean delay=%s, maximum delay=%s",
-            delay_in_seconds.min(),
-            delay_in_seconds.mean(),
-            delay_in_seconds.max(),
+            diff["delay_in_seconds"].min(),
+            diff["delay_in_seconds"].mean(),
+            diff["delay_in_seconds"].max(),
         )
     if display_plot:
         diff.plot()

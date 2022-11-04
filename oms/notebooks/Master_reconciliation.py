@@ -171,11 +171,8 @@ hpandas.df_to_str(
 # # Compute DAG delay 
 
 # %%
-delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps)
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=True)
 delay_in_secs
-
-# %%
-delay_in_secs.plot()
 
 # %% [markdown]
 # # Compute research portfolio equivalent
