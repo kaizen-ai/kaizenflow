@@ -47,7 +47,7 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = None
+date_str = "20221103"
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
@@ -111,35 +111,36 @@ _LOG.info(
 )
 
 # %%
-# Load DAG output for different experiments.
-dag_start_timestamp = None
-dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
-    dag_node_names[-1],
-    dag_node_timestamps[-1],
-    dag_start_timestamp,
-    dag_end_timestamp,
     log_level=logging.DEBUG,
 )
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
-# Compute difference.
 compare_dfs_kwargs = {
     # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
     "diff_mode": "diff",
     "remove_inf": True,
 }
-diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
-    compare_dfs_kwargs=compare_dfs_kwargs,
+dag_diff_df_dict = oms.compute_dag_outputs_diff(
+    dag_df_dict, compare_dfs_kwargs
 )
+
+# %%
+node_name = list(dag_diff_df_dict.keys())[-1]
+timestamp = list(dag_diff_df_dict[node_name].keys())[-1]
+df_diff = dag_diff_df_dict[node_name][timestamp]
+df_diff
+
+# %%
 # Remove the sign.
-diff_df = diff_df.abs()
+df_diff = df_diff.abs()
 # Check that data is the same.
-diff_df.max().max()
+df_diff.max().max()
+
+# %%
+
+# %%
 
 # %%
 # Enable if the diff is big to see the detailed stats.

@@ -4,6 +4,7 @@ Import as:
 import oms.reconciliation as omreconc
 """
 
+import collections
 import datetime
 import logging
 import os
@@ -392,33 +393,37 @@ def load_dag_outputs(
     """
     dag_df_dict = {}
     for experiment, path in dag_path_dict.items():
+        # Set experiment default dict to fill it in a loop.
+        experiment_dict = collections.defaultdict(dict)
         # Get DAG node names to iterate over them.
         nodes = get_dag_node_names(path)
-        if last_node_only:
+        if only_last_node:
             nodes = [nodes[-1]]
         for node in nodes:
-            dag_df_dict[experiment] = node
             # Get DAG timestamps to iterate over them.
             dag_timestamps = get_dag_node_timestamps(path, node)
             if only_last_timestamp:
                 dag_timestamps = [dag_timestamps[-1]]
             for timestamp in dag_timestamps:
-                dag_df_dict[experiment][node] = timestamp
                 # Get DAG output for the specified node and timestamp.
                 df = get_dag_node_output(path, node, timestamp)
                 if only_last_row:
                     df = df.tail(1)
-                dag_df_dict[experiment][node][timestamp] = df
+                experiment_dict[node][timestamp] = df
+        # Populate result dict with experiment output dict.
+        dag_df_dict[experiment] = experiment_dict
     return dag_df_dict
 
 
 def compute_dag_outputs_diff(
-    dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]
+    dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
+    compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
 ) -> Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]:
     """
     Compute DAG output differences for different experiments.
 
     :param dag_df_dict: DAG output per experiment, node and timestamp
+    :param compare_dfs_kwargs: params for `compare_dfs()`
     :return: DAG output differences per experiment, node and timestamp
     """
     # TODO(Dan): Should we make it universal for any experiment names?
@@ -430,7 +435,7 @@ def compute_dag_outputs_diff(
     # # Assert that prod and sim output dicts have similar node names.
     # hdbg.dassert_set_eq(dag_dict_prod.keys(), dag_df_dict.keys())
     #
-    dag_diff_df_dict = {}
+    dag_diff_df_dict = collections.defaultdict(dict)
     for node_name in dag_dict_prod:
         # Get node DAG output dicts to iterate over them.
         dag_dict_prod_node = dag_dict_prod[node_name]
@@ -440,14 +445,13 @@ def compute_dag_outputs_diff(
         #     dag_dict_prod_node.keys(), dag_dict_sim_node.keys()
         # )
         for timestamp in dag_dict_prod_node:
-            dag_diff_df_dict[node_name] = timestamp
             # Get DAG outputs per timestamp and compare them.
             df_prod = dag_dict_prod_node[timestamp]
             df_sim = dag_dict_sim_node[timestamp]
-            df_diff = hpandas.compare_dfs(df_prod, df_sim)
+            df_diff = hpandas.compare_dfs(df_prod, df_sim, **compare_dfs_kwargs)
             #
             dag_diff_df_dict[node_name][timestamp] = df_diff
-    return dag_diff_df_dict
+    return dict(dag_diff_df_dict)
 
 
 
