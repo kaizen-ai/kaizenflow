@@ -4,6 +4,7 @@ Import as:
 import oms.reconciliation as omreconc
 """
 
+import collections
 import datetime
 import logging
 import os
@@ -43,8 +44,8 @@ def build_reconciliation_configs(
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
-    
-    Note: the function returns list of configs because the function is used 
+
+    Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
     :param date_str: specify which date to use for reconciliation
@@ -374,39 +375,106 @@ def get_dag_node_output(
 
 def load_dag_outputs(
     dag_path_dict: Dict[str, str],
-    dag_node_name: str,
-    dag_node_timestamp: pd.Timestamp,
-    start_timestamp: Optional[pd.Timestamp],
-    end_timestamp: Optional[pd.Timestamp],
     *,
+    only_last_node: bool = True,
+    only_last_timestamp: bool = True,
+    only_last_row: bool = False,
     log_level: int = logging.INFO,
-) -> Dict[str, pd.DataFrame]:
+) -> Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]:
     """
     Load DAG output for different experiments.
 
+    Output example:
+    ```
+    {
+        "prod": {
+            "predict.0.read_data": {
+                "2022-11-03 06:05:00-04:00": pd.DataFrame,
+                ...
+            },
+        },
+    }
+    ```
+
     :param dag_path_dict: dst dir for every experiment
-    :param dag_node_name: a node name, e.g., `predict.0.read_data`
-    :param dag_node_timestamp: timestamp at which a node was run
+    :param only_last_node: if `True`, get DAG output only for the last node,
+        otherwise load data for all the nodes
+    :param only_last_timestamp: if `True`, get DAG output only for the last timestamp,
+        otherwise load data for all the timestamps
+    :param only_last_row: if `True`, get DAG output only for the last data row,
+        otherwise load whole dataframes
+    :param log_level: log level
+    :return: DAG output per experiment, node and timestamp
     """
     dag_df_dict = {}
-    for experiment_name, path in dag_path_dict.items():
-        _LOG.log(log_level, hprint.to_str("experiment_name"))
-        # Get DAG output for the last node and the last timestamp.
-        dag_df_dict[experiment_name] = get_dag_node_output(
-            path,
-            dag_node_name,
-            dag_node_timestamp,
-        )
-    # Trim the data to match the target interval.
-    if start_timestamp or end_timestamp:
-        for k in dag_df_dict.keys():
-            dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
-    # Report the output.
-    for k in dag_df_dict.keys():
-        hpandas.df_to_str(
-            dag_df_dict[k], num_rows=3, log_level=log_level
-        )
+    for experiment, path in dag_path_dict.items():
+        # Set experiment default dict to fill it in the loop.
+        experiment_dict = collections.defaultdict(dict)
+        # Get DAG node names to iterate over them.
+        nodes = get_dag_node_names(path)
+        if only_last_node:
+            nodes = [nodes[-1]]
+        for node in nodes:
+            # Get DAG timestamps to iterate over them.
+            dag_timestamps = get_dag_node_timestamps(path, node)
+            if only_last_timestamp:
+                dag_timestamps = [dag_timestamps[-1]]
+            for timestamp in dag_timestamps:
+                # Get DAG output for the specified node and timestamp.
+                df = get_dag_node_output(path, node, timestamp)
+                if only_last_row:
+                    df = df.tail(1)
+                experiment_dict[node][timestamp] = df
+        # Populate result dict with experiment output dict.
+        dag_df_dict[experiment] = experiment_dict
     return dag_df_dict
+
+
+def compute_dag_outputs_diff(
+    dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
+    compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Dict[pd.Timestamp, pd.DataFrame]]:
+    """
+    Compute DAG output differences for different experiments.
+
+    :param dag_df_dict: DAG output per experiment, node and timestamp
+    :param compare_dfs_kwargs: params for `compare_dfs()`
+    :return: DAG output differences per experiment, node and timestamp
+    """
+    if compare_dfs_kwargs is None:
+        compare_dfs_kwargs = {}
+    # Get experiment DAG output dicts to iterate over them.
+    experiment_names = list(dag_df_dict.keys())
+    hdbg.dassert_eq(2, len(experiment_names))
+    dag_dict_1 = dag_df_dict[experiment_names[0]]
+    dag_dict_2 = dag_df_dict[experiment_names[1]]
+    # Assert that output dicts have similar node names.
+    hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
+    #
+    dag_diff_df_dict = collections.defaultdict(dict)
+    for node_name in dag_dict_1:
+        # Get node DAG output dicts to iterate over them.
+        dag_dict_1_node = dag_dict_1[node_name]
+        dag_dict_2_node = dag_dict_2[node_name]
+        # Assert that node dicts have similar timestamps.
+        hdbg.dassert_set_eq(dag_dict_1_node.keys(), dag_dict_2_node.keys())
+        for timestamp in dag_dict_1_node:
+            # Get DAG outputs per timestamp and compare them.
+            df_1 = dag_dict_1_node[timestamp]
+            df_2 = dag_dict_2_node[timestamp]
+            # Append asset id as index level if it is present in the data.
+            if "asset_id" in df_1.columns:
+                df_1 = df_1.set_index("asset_id", append=True)
+                df_2 = df_2.set_index("asset_id", append=True)
+            # Pick only float columns for difference computations.
+            # Only float columns are picked because int columns represent
+            # not metrics but ids, etc.
+            df_1 = df_1.select_dtypes("float")
+            df_2 = df_2.select_dtypes("float")
+            # Compute the difference and put it in the result dict
+            df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
+            dag_diff_df_dict[node_name][timestamp] = df_diff
+    return dict(dag_diff_df_dict)
 
 
 # #############################################################################
