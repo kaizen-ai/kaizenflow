@@ -390,7 +390,6 @@ def load_dag_outputs(
     only_last_node: bool = True,
     only_last_timestamp: bool = True,
     only_last_row: bool = False,
-    log_level: int = logging.INFO,
 ) -> Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]:
     """
     Load DAG output for different experiments.
@@ -428,9 +427,11 @@ def load_dag_outputs(
         for node in nodes:
             # Get DAG timestamps to iterate over them.
             dag_timestamps = get_dag_node_timestamps(path, node)
+            # Keep bar timestamps only.
+            bar_timestamps = [bar_timestamp for bar_timestamp, _ in dag_timestamps]
             if only_last_timestamp:
-                dag_timestamps = [dag_timestamps[-1]]
-            for timestamp in dag_timestamps:
+                bar_timestamps = [bar_timestamps[-1]]
+            for timestamp in bar_timestamps:
                 # Get DAG output for the specified node and timestamp.
                 df = get_dag_node_output(path, node, timestamp)
                 if only_last_row:
@@ -510,8 +511,13 @@ def compute_dag_delay_in_seconds(
         diff = (wall_clock_timestamp - bar_timestamp).seconds
         delay_in_seconds.append(diff)
         bar_timestamps.append(bar_timestamp)
+    delay_column_name = "delay_in_seconds"
     diff = pd.DataFrame(
-        delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamps
+        delay_in_seconds, columns=[delay_column_name], index=bar_timestamps
+    )
+    diff = diff.sort_values(
+        delay_column_name,
+        ascending=False,
     )
     diff.index.name = "bar_timestamp"
     if print_stats:
@@ -522,7 +528,10 @@ def compute_dag_delay_in_seconds(
             round(diff["delay_in_seconds"].max(), 2),
         )
     if display_plot:
-        diff.plot(kind="bar")
+        diff.plot(
+            kind="bar",
+            title="Difference in seconds between DAG wall clock timestamp and bar timestamp",
+        )
     return diff
 
 
