@@ -432,10 +432,10 @@ def compute_dag_delay_in_seconds(
     """
     delay_in_seconds = []
     bar_timestamp = []
-    for ts in dag_node_timestamps:
-        diff = (ts[1] - ts[0]).seconds
+    for bar_timestamp, wall_clock_timestamp in dag_node_timestamps:
+        diff = (bar_timestamp - wall_clock_timestamp).seconds
         delay_in_seconds.append(diff)
-        bar_timestamp.append(ts[0])
+        bar_timestamp.append(bar_timestamp)
     diff = pd.DataFrame(
         delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamp
     )
