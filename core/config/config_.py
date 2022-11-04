@@ -390,6 +390,17 @@ class _OrderedConfig(_OrderedDictType):
         if mark_key_as_used:
             self._mark_as_used(key)
         return val
+    
+    def check_if_used(
+        self, key: ScalarKey
+    ) -> ValueTypeHint:
+        """
+        Retrieve the value corresponding to `key`.
+        """
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        # Retrieve the value from the dictionary itself.
+        marked_as_used, writer, val = super().__getitem__(key)
+        return marked_as_used
 
     # /////////////////////////////////////////////////////////////////////////////
     # Print.
@@ -697,14 +708,28 @@ class Config:
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
 
-    def get_and_mark_as_used(self, key: ScalarKeyValidTypes) -> Any:
+    def check_if_used(self, key: ScalarKeyValidTypes) -> bool:
+        val = self.__getitem__
+
+    def get_and_mark_as_used(self, key: ScalarKeyValidTypes, *, default_value: Optional[Any] = _NO_VALUE_SPECIFIED) -> Any:
         """
         Get the value and mark it as used.
+
+        :param default_value: value to return if key was not found
 
         This should be used as the only way of accessing values from configs
         except for purposes of logging and transformation to string.
         """
-        return self.__getitem__(key, mark_key_as_used=True)
+        try:
+            ret = self.__getitem__(key, mark_key_as_used=True)
+        except KeyError as e:
+            # If a default value is provided, return.
+            if default_value != _NO_VALUE_SPECIFIED:
+                ret = default_value
+            else:
+                # No default value found, then raise.
+                raise e
+        return ret
 
     def get(
         self,

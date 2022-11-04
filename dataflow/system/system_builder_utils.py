@@ -154,8 +154,8 @@ def apply_history_lookback(
     """
     Set the `history_looback` value in the system config.
     """
-    dag_builder = system.config["dag_builder_object"]
-    dag_config = system.config["dag_config"]
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+    dag_config = system.config.get_and_mark_as_used("dag_config")
     if days is None:
         days = (
             dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
@@ -256,12 +256,12 @@ def apply_dag_property(
     are in the process of building it and it will cause infinite
     recursion.
     """
-    dag_builder = system.config["dag_builder_object"]
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
     # TODO(gp): This is not a DAG property and needs to be set-up before the DAG
     #  is built. Also each piece of config should `make_read_only` the pieces that
     #  is used.
-    fast_prod_setup = system.config.get(
-        ["dag_builder_config", "fast_prod_setup"], False
+    fast_prod_setup = system.config.get_and_mark_as_used(
+        ("dag_builder_config", "fast_prod_setup"), False
     )
     _LOG.debug(hprint.to_str("fast_prod_setup"))
     if fast_prod_setup:
@@ -271,7 +271,7 @@ def apply_dag_property(
         )
     # Set DAG properties.
     # 1) debug_mode_config
-    debug_mode_config = system.config.get(
+    debug_mode_config = system.config.get_and_mark_as_used(
         ["dag_property_config", "debug_mode_config"], None
     )
     _LOG.debug(hprint.to_str("debug_mode_config"))
@@ -279,7 +279,7 @@ def apply_dag_property(
         _LOG.warning("Setting debug mode")
         hdbg.dassert_not_in("dst_dir", debug_mode_config)
         # Infer the dst dir based on the `log_dir`.
-        log_dir = system.config["system_log_dir"]
+        log_dir = system.config.get_and_mark_as_used("system_log_dir")
         # TODO(gp): the DAG should add node_io to the passed dir.
         dst_dir = os.path.join(log_dir, "dag/node_io")
         _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)
@@ -290,7 +290,7 @@ def apply_dag_property(
         ] = dst_dir
         dag.set_debug_mode(**debug_mode_config)
     # 2) force_free_nodes
-    force_free_nodes = system.config.get(
+    force_free_nodes = system.config.get_and_mark_as_used(
         ["dag_property_config", "force_free_nodes"], False
     )
     _LOG.debug(hprint.to_str("force_free_nodes"))
@@ -767,9 +767,7 @@ def get_realtime_DagRunner_from_system(
     bar_duration_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
-    rt_timeout_in_secs_or_time = system.config["dag_runner_config"][
-        "rt_timeout_in_secs_or_time"
-    ]
+    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(("dag_runner_config","rt_timeout_in_secs_or_time"))
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
@@ -798,7 +796,7 @@ def get_RealTimeDagRunner_from_System(
     dag = system.dag
     market_data = system.market_data
     hdbg.dassert_isinstance(market_data, mdata.MarketData)
-    fit_at_beginning = system.config.get(
+    fit_at_beginning = system.config.get_and_mark_as_used(
         ("dag_runner_config", "fit_at_beginning"), False
     )
     get_wall_clock_time = market_data.get_wall_clock_time
@@ -806,10 +804,10 @@ def get_RealTimeDagRunner_from_System(
     #  config.
     _LOG.debug("system.config=\n%s", str(system.config))
     # TODO(Grisha): do not use default values.
-    wake_up_timestamp = system.config.get(
+    wake_up_timestamp = system.config.get_and_mark_as_used(
         ("dag_runner_config", "wake_up_timestamp"), None
     )
-    bar_duration_in_secs = system.config.get(
+    bar_duration_in_secs = system.config.get_and_mark_as_used(
         ("dag_runner_config", "bar_duration_in_secs"), None
     )
     execute_rt_loop_config = {
