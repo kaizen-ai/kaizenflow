@@ -54,8 +54,8 @@ hprint.config_notebook()
 # %%
 #date_str = "20221028"
 #date_str = "20221031"
-#date_str = "20221103"
-date_str = "20221104"
+date_str = "20221103"
+#date_str = "20221104"
 #prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
@@ -763,14 +763,45 @@ slippage["slippage_in_bps"].plot()
 # %%
 slippage["slippage_in_bps"].stack().hist(bins=31)
 
-# %% [markdown]
-# # TCA
+# %%
+# Load forecast dataframes
 
 # %%
-if config["meta"]["run_tca"]:
-    tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
-    tca = cofinanc.compute_tca_price_annotations(tca, True)
-    tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
+# %%
+stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
+
+# %%
+stacked[stacked["is_benchmark_profitable"] > 0]["slippage_in_bps"].hist(bins=31)
+
+# %%
+stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(bins=31)
+
+# %% [markdown]
+# # Load forecast dataframes
+
+# %%
+root_dir = "/shared_data/prod_reconciliation"
+search_str = "system_log_dir"
+runs = ["prod", "sim"]
+
+run_dir_dict = oms.get_run_dirs(root_dir, date_str, search_str, runs)
+_LOG.info(hprint.to_pretty_str(run_dir_dict))
+
+bar_duration = "5T"
+target_position_dfs = oms.load_target_position_versions(
+    run_dir_dict,
+    bar_duration,
+)
+
+target_position_dfs["prod"].columns.levels[0]
+
+# TODO: Check prod_target_positions_df["holdings_shares"].subtract(prod_portfolio_df["holdings_shares"]) is zero.
+
+fills = oms.compute_fill_stats(target_position_dfs["prod"])
+
+fills["underfill_share_count"].plot()
+
+fills["fill_rate"].plot()
 
 # %% [markdown]
 # # Total cost accounting
@@ -809,6 +840,15 @@ cost_df.plot()
 
 # %%
 cost_df[["baseline_pnl_minus_costs_minus_pnl", "underfill_notional_cost", "slippage_notional"]].iloc[2:].plot()
+
+# %%
+cost_df.columns
+
+# baseline_pnl -> research
+# baseline_pnl_minus_cost -> research with 
+# pnl -> production
+cost_df[["pnl", "baseline_pnl_minus_costs", "baseline_pnl"]].plot()
+cost_df[["pnl", "baseline_pnl_minus_costs"]].plot()
 
 # %% [markdown]
 # # Multiday reconciliation
