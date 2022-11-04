@@ -787,3 +787,72 @@ if config["meta"]["run_tca"]:
     tca = cofinanc.load_and_normalize_tca_csv(tca_csv)
     tca = cofinanc.compute_tca_price_annotations(tca, True)
     tca = cofinanc.pivot_and_accumulate_holdings(tca, "")
+
+# %% [markdown]
+# # Total cost accounting
+
+# %%
+notional_costs = oms.compute_notional_costs(
+    portfolio_dfs["prod"],
+    target_position_dfs["prod"], 
+)
+
+# %%
+notional_costs.head()
+
+# %%
+notional_costs["slippage_notional"].stack().hist(bins=101)
+
+# %%
+notional_costs["slippage_notional"].sum().sum()
+
+# %%
+notional_costs["underfill_notional_cost"].stack().hist(bins=31, log=True)
+
+# %%
+notional_costs["underfill_notional_cost"].sum().sum()
+
+# %%
+cost_df = oms.apply_costs_to_baseline(
+    portfolio_stats_dfs["research"],
+    portfolio_stats_dfs["prod"],
+    portfolio_dfs["prod"],
+    target_position_dfs["prod"], 
+)
+
+# %%
+cost_df.plot()
+
+# %%
+cost_df[["baseline_pnl_minus_costs_minus_pnl", "underfill_notional_cost", "slippage_notional"]].iloc[2:].plot()
+
+# %% [markdown]
+# # Multiday reconciliation
+
+# %%
+date_strs = oms.get_dir_dates(root_dir)
+display(date_strs)
+
+# %% run_control={"marked": false}
+(
+    dag_df,
+    portfolio_df,
+    portfolio_stats_df,
+    target_position_df,
+    slippage_df,
+    fills_df,
+) = oms.load_and_process_artifacts(root_dir, date_strs, search_str, "prod", "15T")
+
+# %%
+fep_dict
+
+# %%
+research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
+    dag_df,
+    quantization="nearest_share",
+    target_gmv=20000.,
+    compute_extended_stats=True,
+)
+
+# %%
+research_portfolio_stats_df["pnl"].resample("B").sum().cumsum().plot()
