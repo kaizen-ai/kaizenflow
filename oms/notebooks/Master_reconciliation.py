@@ -106,8 +106,8 @@ dag_node_timestamps = oms.get_dag_node_timestamps(
 )
 _LOG.info(
     "The 1st timestamp=%s, the last timestamp=%s",
-    dag_node_timestamps[0],
-    dag_node_timestamps[-1],
+    dag_node_timestamps["bar_timestamp"][0],
+    dag_node_timestamps["bar_timestamp"][-1],
 )
 
 # %%
@@ -117,7 +117,7 @@ dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
     dag_node_names[-1],
-    dag_node_timestamps[-1],
+    dag_node_timestamps["bar_timestamp"][-1],
     dag_start_timestamp,
     dag_end_timestamp,
     log_level=logging.DEBUG,
@@ -174,8 +174,8 @@ hpandas.df_to_str(
 # Set Portofolio start and end timestamps.
 if True:
     # By default use the min/max bar timestamps from the DAG.
-    start_timestamp = dag_node_timestamps[0]
-    end_timestamp = dag_node_timestamps[-1]
+    start_timestamp = dag_node_timestamps["bar_timestamp"][0]
+    end_timestamp = dag_node_timestamps["bar_timestamp"][-1]
 else:
     # Overwrite if needed.
     start_timestamp = pd.Timestamp(

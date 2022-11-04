@@ -314,7 +314,7 @@ def get_dag_node_timestamps(
     *,
     as_timestamp: bool = True,
     log_level: int = logging.DEBUG,
-) -> List[Union[str, pd.Timestamp]]:
+) -> Dict[str, List[Union[str, pd.Timestamp]]]:
     """
     Get all timestamps for a node.
 
@@ -322,20 +322,29 @@ def get_dag_node_timestamps(
     :param dag_node_name: a node name, e.g., `predict.0.read_data`
     :param as_timestamp: if True return as `pd.Timestamp`, otherwise
         return as string
-    :return: a list of timestamps for the specified node
+    :return: a dictionary of timestamps for the specified node
     """
     file_names = _get_dag_node_parquet_file_names(dag_dir)
     node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
-    node_timestamps = []
+    node_timestamps = {
+        "bar_timestamp": [],
+        "wall_clock_time_timestamp": [],
+    }
     for file_name in node_file_names:
-        # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
-        # And the timestamp is `20221028_080000`.
-        ts = file_name.split(".")[-2]
+        # E.g., file name is "predict.8.process_forecasts.df_out.20221028_080000.20221028_163000.parquet".
+        # The bar timestamp is "20221028_080000", and the wall clock time timestamp is "20221028_163000".
+        splitted_file_name = file_name.split(".")
+        bar_timestamp = splitted_file_name[-3]
+        wall_clock_time_timestamp = splitted_file_name[-2]
         if as_timestamp:
-            ts = ts.replace("_", " ")
+            bar_timestamp = bar_timestamp.replace("_", " ")
+            wall_clock_time_timestamp = wall_clock_time_timestamp.replace("_", " ")
             # TODO(Grisha): Pass tz a param?
-            ts = pd.Timestamp(ts, tz="America/New_York")
-        node_timestamps.append(ts)
+            tz = "America/New_York"
+            bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
+            wall_clock_time_timestamp = pd.Timestamp(wall_clock_time_timestamp, tz=tz)
+        node_timestamps["bar_timestamp"].append(bar_timestamp)
+        node_timestamps["wall_clock_time_timestamp"].append(wall_clock_time_timestamp)
     #
     _LOG.log(
         log_level,
