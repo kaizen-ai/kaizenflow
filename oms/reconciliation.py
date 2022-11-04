@@ -315,28 +315,39 @@ def get_dag_node_timestamps(
     *,
     as_timestamp: bool = True,
     log_level: int = logging.DEBUG,
-) -> List[Union[str, pd.Timestamp]]:
+) -> List[Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]]:
     """
-    Get all timestamps for a node.
+    Get all bar timestamps and the corresponding wall clock timestamps.
+
+    E.g., DAG node for bar timestamp `20221028_080000` was computed at
+    `20221028_080143`.
 
     :param dag_dir: dir with the DAG output
     :param dag_node_name: a node name, e.g., `predict.0.read_data`
     :param as_timestamp: if True return as `pd.Timestamp`, otherwise
         return as string
-    :return: a list of timestamps for the specified node
+    :return: a list of tuples with bar timestamps and wall clock timestamps
+        for the specified node
     """
+    _LOG.log(log_level, hprint.to_str("dag_dir dag_node_name as_timestamp"))
     file_names = _get_dag_node_parquet_file_names(dag_dir)
     node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
     node_timestamps = []
     for file_name in node_file_names:
-        # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
-        # And the timestamp is `20221028_080000`.
-        ts = file_name.split(".")[-2]
+        # E.g., file name is "predict.8.process_forecasts.df_out.20221028_080000.20221028_080143.parquet".
+        # The bar timestamp is "20221028_080000", and the wall clock timestamp
+        # is "20221028_080143".
+        splitted_file_name = file_name.split(".")
+        bar_timestamp = splitted_file_name[-3]
+        wall_clock_timestamp = splitted_file_name[-2]
         if as_timestamp:
-            ts = ts.replace("_", " ")
+            bar_timestamp = bar_timestamp.replace("_", " ")
+            wall_clock_timestamp = wall_clock_timestamp.replace("_", " ")
             # TODO(Grisha): Pass tz a param?
-            ts = pd.Timestamp(ts, tz="America/New_York")
-        node_timestamps.append(ts)
+            tz = "America/New_York"
+            bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
+            wall_clock_timestamp = pd.Timestamp(wall_clock_timestamp, tz=tz)
+        node_timestamps.append((bar_timestamp, wall_clock_timestamp))
     #
     _LOG.log(
         log_level,
@@ -475,6 +486,44 @@ def compute_dag_outputs_diff(
             df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
             dag_diff_df_dict[node_name][timestamp] = df_diff
     return dict(dag_diff_df_dict)
+
+
+def compute_dag_delay_in_seconds(
+    dag_node_timestamps: List[Tuple[pd.Timestamp, pd.Timestamp]],
+    *,
+    print_stats: bool = True,
+    display_plot: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute difference in seconds between `wall_clock_timestamp` and
+    `bar_timestamp` for each timestamp.
+
+    :param print_stats: if True print stats (i.e. min, mean, max), otherwise
+        do not print
+    :param display_plot: if True display delay chart over bar timestamp,
+        otherwise do not display
+    :return: a table with bar timestamps and corresponding delays in seconds
+    """
+    delay_in_seconds = []
+    bar_timestamps = []
+    for bar_timestamp, wall_clock_timestamp in dag_node_timestamps:
+        diff = (wall_clock_timestamp - bar_timestamp).seconds
+        delay_in_seconds.append(diff)
+        bar_timestamps.append(bar_timestamp)
+    diff = pd.DataFrame(
+        delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamps
+    )
+    diff.index.name = "bar_timestamp"
+    if print_stats:
+        _LOG.info(
+            "Minimum delay=%s, mean delay=%s, maximum delay=%s",
+            round(diff["delay_in_seconds"].min(), 2),
+            round(diff["delay_in_seconds"].mean(), 2),
+            round(diff["delay_in_seconds"].max(), 2),
+        )
+    if display_plot:
+        diff.plot(kind="bar")
+    return diff
 
 
 # #############################################################################
