@@ -385,9 +385,12 @@ def load_dag_outputs(
     Load DAG output for different experiments.
 
     :param dag_path_dict: dst dir for every experiment
-    :param only_last_node: if `True`, get DAG output only for the last node
-    :param only_last_timestamp: if `True`, get DAG output only for the last timestamp
-    :param only_last_row: if `True`, get DAG output only for the last data row
+    :param only_last_node: if `True`, get DAG output only for the last node,
+        otherwise load data for all the nodes
+    :param only_last_timestamp: if `True`, get DAG output only for the last timestamp,
+        otherwise load data for all the timestamps
+    :param only_last_row: if `True`, get DAG output only for the last data row,
+        otherwise load whole dataframes
     :param log_level: log level
     :return: DAG output per experiment, node and timestamp
     """
@@ -426,33 +429,34 @@ def compute_dag_outputs_diff(
     :param compare_dfs_kwargs: params for `compare_dfs()`
     :return: DAG output differences per experiment, node and timestamp
     """
-    # TODO(Dan): Should we make it universal for any experiment names?
+    if compare_dfs_kwargs is None:
+        compare_dfs_kwargs = {}
     # Get experiment DAG output dicts to iterate over them.
-    experiment_names = dag_df_dict.keys()
-    hdbg.dassert_set_eq(["prod", "sim"], experiment_names)
-    dag_dict_prod = dag_df_dict["prod"]
-    dag_dict_sim = dag_df_dict["sim"]
-    # # Assert that prod and sim output dicts have similar node names.
-    # hdbg.dassert_set_eq(dag_dict_prod.keys(), dag_df_dict.keys())
+    experiment_names = list(dag_df_dict.keys())
+    hdbg.dassert_eq(2, len(experiment_names))
+    dag_dict_1 = dag_df_dict[experiment_names[0]]
+    dag_dict_2 = dag_df_dict[experiment_names[1]]
+    # # Assert that output dicts have similar node names.
+    # hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
     #
     dag_diff_df_dict = collections.defaultdict(dict)
-    for node_name in dag_dict_prod:
+    for node_name in dag_dict_1:
         # Get node DAG output dicts to iterate over them.
-        dag_dict_prod_node = dag_dict_prod[node_name]
-        dag_dict_sim_node = dag_dict_sim[node_name]
-        # # Assert that prod and sim node dicts have similar timestamps.
+        dag_dict_1_node = dag_dict_1[node_name]
+        dag_dict_2_node = dag_dict_2[node_name]
+        # # Assert that node dicts have similar timestamps.
         # hdbg.dassert_set_eq(
-        #     dag_dict_prod_node.keys(), dag_dict_sim_node.keys()
+        #     dag_dict_1_node.keys(), dag_dict_2_node.keys()
         # )
-        for timestamp in dag_dict_prod_node:
+        for timestamp in dag_dict_1_node:
             # Get DAG outputs per timestamp and compare them.
-            df_prod = dag_dict_prod_node[timestamp]
-            df_sim = dag_dict_sim_node[timestamp]
+            df_1 = dag_dict_1_node[timestamp]
+            df_2 = dag_dict_2_node[timestamp]
             # Pick only float columns for difference computations.
-            df_prod = df_prod.select_dtypes("float")
-            df_sim = df_sim.select_dtypes("float")
+            df_1 = df_1.select_dtypes("float")
+            df_2 = df_2.select_dtypes("float")
             # Compute the difference and put it in the result dict
-            df_diff = hpandas.compare_dfs(df_prod, df_sim, **compare_dfs_kwargs)
+            df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
             dag_diff_df_dict[node_name][timestamp] = df_diff
     return dict(dag_diff_df_dict)
 
