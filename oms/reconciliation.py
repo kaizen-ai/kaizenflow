@@ -384,6 +384,18 @@ def load_dag_outputs(
     """
     Load DAG output for different experiments.
 
+    Output example:
+    ```
+    {
+        "prod": {
+            "predict.0.read_data": {
+                "2022-11-03 06:05:00-04:00": pd.DataFrame,
+                ...
+            },
+        },
+    }
+    ```
+
     :param dag_path_dict: dst dir for every experiment
     :param only_last_node: if `True`, get DAG output only for the last node,
         otherwise load data for all the nodes
@@ -396,7 +408,7 @@ def load_dag_outputs(
     """
     dag_df_dict = {}
     for experiment, path in dag_path_dict.items():
-        # Set experiment default dict to fill it in a loop.
+        # Set experiment default dict to fill it in the loop.
         experiment_dict = collections.defaultdict(dict)
         # Get DAG node names to iterate over them.
         nodes = get_dag_node_names(path)
@@ -421,7 +433,7 @@ def load_dag_outputs(
 def compute_dag_outputs_diff(
     dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
     compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]:
+) -> Dict[str, Dict[pd.Timestamp, pd.DataFrame]]:
     """
     Compute DAG output differences for different experiments.
 
@@ -436,23 +448,29 @@ def compute_dag_outputs_diff(
     hdbg.dassert_eq(2, len(experiment_names))
     dag_dict_1 = dag_df_dict[experiment_names[0]]
     dag_dict_2 = dag_df_dict[experiment_names[1]]
-    # # Assert that output dicts have similar node names.
-    # hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
+    # Assert that output dicts have similar node names.
+    hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
     #
     dag_diff_df_dict = collections.defaultdict(dict)
     for node_name in dag_dict_1:
         # Get node DAG output dicts to iterate over them.
         dag_dict_1_node = dag_dict_1[node_name]
         dag_dict_2_node = dag_dict_2[node_name]
-        # # Assert that node dicts have similar timestamps.
-        # hdbg.dassert_set_eq(
-        #     dag_dict_1_node.keys(), dag_dict_2_node.keys()
-        # )
+        # Assert that node dicts have similar timestamps.
+        hdbg.dassert_set_eq(
+            dag_dict_1_node.keys(), dag_dict_2_node.keys()
+        )
         for timestamp in dag_dict_1_node:
             # Get DAG outputs per timestamp and compare them.
             df_1 = dag_dict_1_node[timestamp]
             df_2 = dag_dict_2_node[timestamp]
+            # Append asset id as index level if it is present in the data.
+            if "asset_id" in df_1.columns:
+                df_1 = df_1.set_index("asset_id", append=True)
+                df_2 = df_2.set_index("asset_id", append=True)
             # Pick only float columns for difference computations.
+            # Only float columns are picked because int columns represent
+            # not metrics but ids, etc.
             df_1 = df_1.select_dtypes("float")
             df_2 = df_2.select_dtypes("float")
             # Compute the difference and put it in the result dict
