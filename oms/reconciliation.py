@@ -444,7 +444,7 @@ def compute_dag_outputs_diff(
             # Get DAG outputs per timestamp and compare them.
             df_prod = dag_dict_prod_node[timestamp]
             df_sim = dag_dict_sim_node[timestamp]
-            df_diff = hpandas.compare_visually_dataframes(df_prod, df_sim)
+            df_diff = hpandas.compare_dfs(df_prod, df_sim)
             #
             dag_diff_df_dict[node_name][timestamp] = df_diff
     return dag_diff_df_dict
