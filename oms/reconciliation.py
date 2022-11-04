@@ -44,8 +44,8 @@ def build_reconciliation_configs(
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
-    
-    Note: the function returns list of configs because the function is used 
+
+    Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
     :param date_str: specify which date to use for reconciliation
@@ -457,9 +457,7 @@ def compute_dag_outputs_diff(
         dag_dict_1_node = dag_dict_1[node_name]
         dag_dict_2_node = dag_dict_2[node_name]
         # Assert that node dicts have similar timestamps.
-        hdbg.dassert_set_eq(
-            dag_dict_1_node.keys(), dag_dict_2_node.keys()
-        )
+        hdbg.dassert_set_eq(dag_dict_1_node.keys(), dag_dict_2_node.keys())
         for timestamp in dag_dict_1_node:
             # Get DAG outputs per timestamp and compare them.
             df_1 = dag_dict_1_node[timestamp]
@@ -477,7 +475,6 @@ def compute_dag_outputs_diff(
             df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
             dag_diff_df_dict[node_name][timestamp] = df_diff
     return dict(dag_diff_df_dict)
-
 
 
 # #############################################################################
