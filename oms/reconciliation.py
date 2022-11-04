@@ -314,9 +314,12 @@ def get_dag_node_timestamps(
     *,
     as_timestamp: bool = True,
     log_level: int = logging.DEBUG,
-) -> Dict[str, List[Union[str, pd.Timestamp]]]:
+) -> List[Tuple[Union[str, pd.Timestamp]]]:
     """
-    Get all timestamps for a node.
+    Get all bar timestamps and the corresponding wall clock timestamps.
+
+    E.g., DAG node for bar timestamp `20221028_080000` was computed at 
+    `20221028_080143`.
 
     :param dag_dir: dir with the DAG output
     :param dag_node_name: a node name, e.g., `predict.0.read_data`
@@ -324,33 +327,29 @@ def get_dag_node_timestamps(
         return as string
     :return: a dictionary of timestamps for the specified node
     """
+    _LOG.log(log_level, hprint.to_str("dag_dir dag_node_name as_timestamp"))
     file_names = _get_dag_node_parquet_file_names(dag_dir)
     node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
-    node_timestamps = {
-        "bar_timestamp": [],
-        "wall_clock_time_timestamp": [],
-    }
+    node_timestamps = []
     for file_name in node_file_names:
-        # E.g., file name is "predict.8.process_forecasts.df_out.20221028_080000.20221028_163000.parquet".
-        # The bar timestamp is "20221028_080000", and the wall clock time timestamp is "20221028_163000".
+        # E.g., file name is "predict.8.process_forecasts.df_out.20221028_080000.20221028_080143.parquet".
+        # The bar timestamp is "20221028_080000", and the wall clock timestamp
+        # is "20221028_080143".
         splitted_file_name = file_name.split(".")
         bar_timestamp = splitted_file_name[-3]
-        wall_clock_time_timestamp = splitted_file_name[-2]
+        wall_clock_timestamp = splitted_file_name[-2]
         if as_timestamp:
             bar_timestamp = bar_timestamp.replace("_", " ")
-            wall_clock_time_timestamp = wall_clock_time_timestamp.replace(
+            wall_clock_timestamp = wall_clock_timestamp.replace(
                 "_", " "
             )
             # TODO(Grisha): Pass tz a param?
             tz = "America/New_York"
             bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
-            wall_clock_time_timestamp = pd.Timestamp(
-                wall_clock_time_timestamp, tz=tz
+            wall_clock_timestamp = pd.Timestamp(
+                wall_clock_timestamp, tz=tz
             )
-        node_timestamps["bar_timestamp"].append(bar_timestamp)
-        node_timestamps["wall_clock_time_timestamp"].append(
-            wall_clock_time_timestamp
-        )
+        node_timestamps.append((bar_timestamp, wall_clock_timestamp))
     #
     _LOG.log(
         log_level,
