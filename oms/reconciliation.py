@@ -428,7 +428,9 @@ def load_dag_outputs(
             # Get DAG timestamps to iterate over them.
             dag_timestamps = get_dag_node_timestamps(path, node)
             # Keep bar timestamps only.
-            bar_timestamps = [bar_timestamp for bar_timestamp, _ in dag_timestamps]
+            bar_timestamps = [
+                bar_timestamp for bar_timestamp, _ in dag_timestamps
+            ]
             if only_last_timestamp:
                 bar_timestamps = [bar_timestamps[-1]]
             for timestamp in bar_timestamps:

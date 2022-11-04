@@ -122,11 +122,7 @@ dag_df_dict = oms.load_dag_outputs(
 # the other one for all nodes, all timestamps for comparison.
 dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
-hpandas.df_to_str(
-    dag_df_prod, 
-    num_rows=5,
-    log_level=logging.INFO
-)
+hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
 # Compute difference.
@@ -172,7 +168,7 @@ hpandas.df_to_str(
 )
 
 # %% [markdown]
-# # Compute DAG delay 
+# # Compute DAG delay
 
 # %%
 delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps)
