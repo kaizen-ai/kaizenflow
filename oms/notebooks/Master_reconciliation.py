@@ -47,7 +47,7 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = "20221103"
+date_str = None
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
@@ -111,50 +111,35 @@ _LOG.info(
 )
 
 # %%
+# Load DAG output for different experiments.
+dag_start_timestamp = None
+dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
-    only_last_node=False,
-    only_last_timestamp=False,
+    dag_node_names[-1],
+    dag_node_timestamps[-1],
+    dag_start_timestamp,
+    dag_end_timestamp,
     log_level=logging.DEBUG,
 )
+hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
+# Compute difference.
 compare_dfs_kwargs = {
-    "column_mode": "inner",
-    "diff_mode": "pct_change",
+    # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
+    "diff_mode": "diff",
     "remove_inf": True,
-    "assert_diff_threshold": None,
 }
-dag_diff_df_dict = oms.compute_dag_outputs_diff(
-    dag_df_dict, compare_dfs_kwargs
+diff_df = hpandas.compare_multiindex_dfs(
+    dag_df_dict["prod"],
+    dag_df_dict["sim"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
 )
-
-# %%
-# Below is a draft representation of how stats can be plotted.
-
-# %%
-import collections
-dag_max_diff_df_dict = collections.defaultdict(dict)
-for node_name in dag_diff_df_dict:
-    df_node = dag_diff_df_dict[node_name]
-    for timestamp, df in df_node.items():
-        dag_max_diff_df_dict[node_name][timestamp] = df.max().max()
-dag_max_diff_df = pd.DataFrame.from_dict(dag_max_diff_df_dict)
-dag_max_diff_df
-
-# %%
-for col in dag_max_diff_df.columns:
-    print(col)
-    _ = dag_max_diff_df[col].plot()
-    plt.show()
-
-# %%
-for row in dag_max_diff_df.T.columns:
-    print(row)
-    _ = dag_max_diff_df.T[row].plot()
-    plt.show()
-
-# %%
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+diff_df.max().max()
 
 # %%
 # Enable if the diff is big to see the detailed stats.
