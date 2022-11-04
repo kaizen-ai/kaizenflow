@@ -43,8 +43,8 @@ def build_reconciliation_configs(
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
-    
-    Note: the function returns list of configs because the function is used 
+
+    Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
     :param date_str: specify which date to use for reconciliation
@@ -338,13 +338,19 @@ def get_dag_node_timestamps(
         wall_clock_time_timestamp = splitted_file_name[-2]
         if as_timestamp:
             bar_timestamp = bar_timestamp.replace("_", " ")
-            wall_clock_time_timestamp = wall_clock_time_timestamp.replace("_", " ")
+            wall_clock_time_timestamp = wall_clock_time_timestamp.replace(
+                "_", " "
+            )
             # TODO(Grisha): Pass tz a param?
             tz = "America/New_York"
             bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
-            wall_clock_time_timestamp = pd.Timestamp(wall_clock_time_timestamp, tz=tz)
+            wall_clock_time_timestamp = pd.Timestamp(
+                wall_clock_time_timestamp, tz=tz
+            )
         node_timestamps["bar_timestamp"].append(bar_timestamp)
-        node_timestamps["wall_clock_time_timestamp"].append(wall_clock_time_timestamp)
+        node_timestamps["wall_clock_time_timestamp"].append(
+            wall_clock_time_timestamp
+        )
     #
     _LOG.log(
         log_level,
@@ -412,9 +418,7 @@ def load_dag_outputs(
             dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
     # Report the output.
     for k in dag_df_dict.keys():
-        hpandas.df_to_str(
-            dag_df_dict[k], num_rows=3, log_level=log_level
-        )
+        hpandas.df_to_str(dag_df_dict[k], num_rows=3, log_level=log_level)
     return dag_df_dict
 
 
