@@ -419,9 +419,7 @@ def load_dag_outputs(
 
 
 def compute_dag_delay_in_seconds(
-    dag_node_timestamps: List[
-        Tuple[pd.Timestamp, pd.Timestamp]
-    ],
+    dag_node_timestamps: List[Tuple[pd.Timestamp, pd.Timestamp]],
     *,
     print_stats: bool = True,
     display_plot: bool = False,
@@ -430,7 +428,7 @@ def compute_dag_delay_in_seconds(
     Compute difference in seconds between `wall_clock_timestamp` and
     `bar_timestamp` for each timestamp.
 
-    :param print_stats: if True print stats (i.e. min, mean, max), otherwise 
+    :param print_stats: if True print stats (i.e. min, mean, max), otherwise
         do not print
     :param display_plot: if True display delay chart over bar timestamp,
         otherwise do not display
