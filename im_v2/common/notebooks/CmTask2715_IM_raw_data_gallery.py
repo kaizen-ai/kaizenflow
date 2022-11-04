@@ -13,18 +13,26 @@
 # ---
 
 # %% [markdown]
+# # Description
+#
+
+# %% [markdown]
+# This notebook examines...
+
+# %% [markdown]
 # # Imports
 
 # %%
-import collections
 import logging
-import os
 
+import pandas as pd
+
+import core.statistics.descriptive as cstadesc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.hsql as hsql
-import im_v2.ccxt.data.client as icdcl
 import im_v2.im_lib_tasks as imvimlita
 
 # %%
@@ -36,10 +44,22 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+
 # %% [markdown]
-# * Gaps in the data (e.g. data missing for a time period)
-# * Basically we want to get the earliest and the latest date and check for holes in the time range, given that the data is stored by-minute
-# * 0s and NaNs in volume and other columns, as well as their location (see description of "spikes" in gdocs above)
+# # Functions
+
+# %%
+def get_ccxt_realtime_data(db_table: str, exchange_id: str) -> pd.DataFrame:
+    # Get DB connection.
+    env_file = imvimlita.get_db_env_path("dev")
+    # Connect with the parameters from the env file.
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    # Read data from DB.
+    query = f"SELECT * FROM {db_table} WHERE exchange_id='{exchange_id}'"
+    rt_data = hsql.execute_query_to_df(connection, query)
+    return rt_data
+
 
 # %% [markdown]
 # # Realtime (the DB data and the archives stored to S3)
@@ -48,35 +68,27 @@ hprint.config_notebook()
 # ## OHLCV
 
 # %% [markdown]
-# ### CCXT (futures)
+# ### CCXT futures
 
 # %%
-# Get DB connection.
-env_file = imvimlita.get_db_env_path("dev")
-# Connect with the parameters from the env file.
-connection_params = hsql.get_connection_info_from_env_file(env_file)
-connection = hsql.get_connection(*connection_params)
-
-# %%
-ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
-    False, connection, "ccxt_ohlcv_futures"
-)
-# Get the full symbol universe.
-universe = ccxt_rt_im_client.get_universe()
 # Get the real time data.
-ccxt_rt = ccxt_rt_im_client.read_data(universe, None, None, None, "assert")
-
-# %% [markdown]
-# **Count NaNs**
+ccxt_rt = get_ccxt_realtime_data("ccxt_ohlcv_futures", "binance")
 
 # %%
-print(
-    f"Percentage of NaNs in real-time CCXT data for the period: {len(ccxt_rt[ccxt_rt.open.isna()])*100/len(ccxt_rt)}"
-)
-
+print(f"{len(ccxt_rt)} rows overall")
+print("Head:")
+display(ccxt_rt.head())
+print("Tail:")
+display(ccxt_rt.tail())
 
 # %% [markdown]
-# **Count rows with `volume` value equal to 0, typically rows with volume = 0 are duplicates**
+# #### Count NaNs
+
+# %%
+cstadesc.compute_frac_nan(ccxt_rt)
+
+# %% [markdown]
+# #### Rows with `volume` equal to 0
 
 # %%
 volume0 = ccxt_rt.loc[ccxt_rt["volume"] == 0]
@@ -91,14 +103,7 @@ print("Last 5 rows:")
 display(volume0.tail())
 
 # %%
-volume0_stats = collections.Counter(volume0["full_symbol"])
-volume0_stats
-
-# %%
-storj_usdt = "{:.2f}".format(
-    volume0_stats["binance::STORJ_USDT"] / len(volume0) * 100
-)
-print(f"'binance::STORJ_USDT' coin takes {storj_usdt}% of all rows with volume=0")
+volume0["currency_pair"].value_counts().plot(kind="bar")
 
 # %% [markdown]
 # # Historical (data updated daily)
@@ -107,32 +112,12 @@ print(f"'binance::STORJ_USDT' coin takes {storj_usdt}% of all rows with volume=0
 # ## OHLCV
 
 # %% [markdown]
-# ### CCXT (futures)
+# ### CCXT futures
 
 # %%
-# Initiate the client.
-ccxt_client = icdcl.CcxtHistoricalPqByTileClient(
-    universe_version="v3",
-    resample_1min=True,
-    root_dir=os.path.join(
-        "s3://cryptokaizen-data", "reorg", "daily_staged.airflow.pq"
-    ),
-    partition_mode="by_year_month",
-    data_snapshot="",  # does it mean all the snapshots?
-    aws_profile="ck",
-    dataset="ohlcv",
-    contract_type="futures",
-)
-
-# Get the historical data.
-ccxt_futures_daily = ccxt_client.read_data(
-    full_symbols=universe,
-    start_ts=None,
-    end_ts=None,
-    columns=None,
-    filter_data_mode="assert",
-)
-
+s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/ohlcv-futures/ccxt/binance"
+# Load daily data from s3 parquet.
+ccxt_futures_daily = hparque.from_parquet(s3_path, aws_profile="ck")
 
 # %%
 print(f"{len(ccxt_futures_daily)} rows overall")
@@ -145,18 +130,11 @@ display(ccxt_futures_daily.tail())
 # **Count NaNs**
 
 # %%
-nans_proc = "{:.6f}".format(
-    len(ccxt_futures_daily[ccxt_futures_daily.open.isna()])
-    * 100
-    / len(ccxt_futures_daily)
-)
-print(f"Percentage of NaNs in CCXT data for the period: {nans_proc}%")
-display(ccxt_futures_daily.loc[ccxt_futures_daily.open.isna()])
+cstadesc.compute_frac_nan(ccxt_futures_daily)
 
 
 # %% [markdown]
-# **Count rows with `volume` value equal to 0, typically rows with volume = 0 are duplicates**
-#
+# #### Rows with `volume` equal to 0
 
 # %%
 volume0 = ccxt_futures_daily.loc[ccxt_futures_daily["volume"] == 0]
@@ -171,15 +149,6 @@ print("Last 5 rows:")
 display(volume0.tail())
 
 # %%
-volume0_stats = collections.Counter(volume0["full_symbol"])
-volume0_stats
-
-# %%
-doge_usdt_proc = "{:.2f}".format(
-    volume0_stats["binance::DOGE_USDT"] / len(volume0) * 100
-)
-print(
-    f"'binance::DOGE_USDT' coin takes {doge_usdt_proc}% of all rows with volume=0"
-)
+volume0["currency_pair"].value_counts().plot(kind="bar")
 
 # %%
