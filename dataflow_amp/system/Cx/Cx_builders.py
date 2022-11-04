@@ -273,17 +273,6 @@ def _get_Cx_dag_prod_instance1(
     # Create the pipeline.
     # TODO(gp): Fast prod system must be set before the DAG is built.
     dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
-    # Convert to fast_prod_setup if necessary.
-    fast_prod_setup = system.config.get_and_mark_as_used(
-        ("dag_builder_config", "fast_prod_setup"), default_value=False
-    )
-    # TODO(Danya): Why do we set 'fast_prod_setup' twice, here and in `dtfsys.apply_dag_property`?
-    #  Can we remove this setup?
-    if fast_prod_setup:
-        _LOG.warning("Setting fast prod setup")
-        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
-            system.config["dag_config"]
-        )
     dag_config = system.config.get_and_mark_as_used("dag_config")
     _LOG.debug(hprint.to_str("fast_prod_setup"))
     # The config must be complete and stable here.
