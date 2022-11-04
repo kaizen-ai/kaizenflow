@@ -419,7 +419,9 @@ def load_dag_outputs(
 
 
 def compute_dag_delay_in_seconds(
-    dag_node_timestamps: List[Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]],
+    dag_node_timestamps: List[
+        Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]
+    ],
     *,
     print_stats: bool = True,
     display_plot: bool = False,
@@ -439,7 +441,12 @@ def compute_dag_delay_in_seconds(
     )
     diff.index.name = "bar_timestamp"
     if print_stats:
-        _LOG.info("Minimum delay=%s, mean delay=%s, maximum delay=%s", delay_in_seconds.min(), delay_in_seconds.mean(), delay_in_seconds.max())
+        _LOG.info(
+            "Minimum delay=%s, mean delay=%s, maximum delay=%s",
+            delay_in_seconds.min(),
+            delay_in_seconds.mean(),
+            delay_in_seconds.max(),
+        )
     if display_plot:
         diff.plot()
     return diff
