@@ -314,7 +314,7 @@ def get_dag_node_timestamps(
     *,
     as_timestamp: bool = True,
     log_level: int = logging.DEBUG,
-) -> List[Tuple[Union[str, pd.Timestamp]]]:
+) -> List[Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]]:
     """
     Get all bar timestamps and the corresponding wall clock timestamps.
 
@@ -325,7 +325,7 @@ def get_dag_node_timestamps(
     :param dag_node_name: a node name, e.g., `predict.0.read_data`
     :param as_timestamp: if True return as `pd.Timestamp`, otherwise
         return as string
-    :return: a list of tuples with a bar timestamp and a wall clock timestamp
+    :return: a list of tuples with bar timestamps and wall clock timestamps
         for the specified node
     """
     _LOG.log(log_level, hprint.to_str("dag_dir dag_node_name as_timestamp"))
@@ -419,7 +419,10 @@ def load_dag_outputs(
 
 
 def compute_dag_delay_in_seconds(
-    dag_node_timestamps: List[Tuple[Union[str, pd.Timestamp]]]
+    dag_node_timestamps: List[Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]],
+    *,
+    print_stats: bool = True,
+    display_plot: bool = False,
 ) -> pd.DataFrame:
     """
     Compute difference in seconds between `wall_clock_timestamp` and
@@ -435,6 +438,10 @@ def compute_dag_delay_in_seconds(
         delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamp
     )
     diff.index.name = "bar_timestamp"
+    if print_stats:
+        _LOG.info("Minimum delay=%s, mean delay=%s, maximum delay=%s", delay_in_seconds.min(), delay_in_seconds.mean(), delay_in_seconds.max())
+    if display_plot:
+        diff.plot()
     return diff
 
 
