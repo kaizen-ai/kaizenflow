@@ -856,3 +856,35 @@ research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
 
 # %%
 research_portfolio_stats_df["pnl"].resample("B").sum().cumsum().plot()
+
+# %% [markdown]
+# # Total cost accounting
+
+# %%
+notional_costs = oms.compute_notional_costs(
+    portfolio_dfs["prod"],
+    target_position_dfs["prod"],
+)
+
+# %%
+notional_costs.head()
+
+# %%
+notional_costs["slippage_notional"].stack().hist(bins=101)
+
+# %%
+notional_costs["slippage_notional"].sum().sum()
+
+# %%
+notional_costs["underfill_notional_cost"].stack().hist(bins=31, log=True)
+
+# %%
+notional_costs["underfill_notional_cost"].sum().sum()
+
+# %%
+cost_df = oms.apply_costs_to_baseline(
+    portfolio_stats_dfs["research"],
+    portfolio_stats_dfs["prod"],
+    portfolio_dfs["prod"],
+    target_position_dfs["prod"],
+)

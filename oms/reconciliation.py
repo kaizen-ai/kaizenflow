@@ -346,6 +346,7 @@ def get_dag_node_timestamps(
             wall_clock_timestamp = wall_clock_timestamp.replace("_", " ")
             # TODO(Grisha): Pass tz a param?
             tz = "America/New_York"
+            print(bar_timestamp)
             bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
             wall_clock_timestamp = pd.Timestamp(wall_clock_timestamp, tz=tz)
         node_timestamps.append((bar_timestamp, wall_clock_timestamp))
