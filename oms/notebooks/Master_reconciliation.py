@@ -54,7 +54,8 @@ hprint.config_notebook()
 # %%
 #date_str = "20221028"
 #date_str = "20221031"
-date_str = "20221103"
+#date_str = "20221103"
+date_str = "20221104"
 #prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
@@ -195,14 +196,25 @@ dag_node_timestamps = oms.get_dag_node_timestamps(
     dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
 )
 
-dag_node_timestamp = dag_node_timestamps[-1]
-print("dag_node_timestamp=%s" % dag_node_timestamp)
+dag_node_timestamp = dag_node_timestamps[-1][0]
+print("dag_node_timestamp=%s" % str(dag_node_timestamp))
 
 # %%
 # Load DAG output for different experiments.
-dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
-                                   start_timestamp, end_timestamp,
-                                   log_level=logging.INFO)
+dag_df_dict = oms.load_dag_outputs(dag_path_dict)#, dag_node_name, dag_node_timestamp, 
+                                   #start_timestamp, end_timestamp)
+                                   #log_level=logging.INFO)
+
+dag_df_dict["prod"] = dag_df_dict["prod"]['predict.8.process_forecasts'][dag_node_timestamp]
+dag_df_dict["sim"] = dag_df_dict["sim"]['predict.8.process_forecasts'][dag_node_timestamp]
+
+# Trim the data to match the target interval.
+if start_timestamp or end_timestamp:
+    for k, df in dag_df_dict.items():
+        dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
+# Report the output.
+for k, df in dag_df_dict.items():
+    hpandas.df_to_str(dag_df_dict[k], num_rows=3, log_level=log_level)
 
 # %%
 # Load specific timestamp and node.
@@ -251,21 +263,22 @@ _ = hpandas.multiindex_df_info(dag_df_dict["prod"])
 
 # %%
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
+compare_dfs_kwargs = {
     "diff_mode": "pct_change",
-    "background_gradient": False,
+    #"background_gradient": False,
+    "assert_diff_threshold": None,
 }
 diff_df = hpandas.compare_multiindex_dfs(
     dag_df_dict["prod"],
     dag_df_dict["sim"],
-    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+    compare_dfs_kwargs=compare_dfs_kwargs,
 )
-display(diff_df)
 # # Remove the sign and NaNs.
 # diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
 # display(diff_df)
 # # Check that data is the same.
-# diff_df.max().max()
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df)
 
 # %%
 # Plot diffs over time.
@@ -309,13 +322,6 @@ annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ]
 print(hprint.to_str("annotate_forecasts_kwargs", mode="pprint"))
-
-
-
-
-
-
-
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
     dag_df_dict["prod"],
     **annotate_forecasts_kwargs.to_dict(),
@@ -401,6 +407,9 @@ _ = hpandas.multiindex_df_info(prod_target_position_df, max_num=None)
 print("\n# research_portfolio_df")
 _ = hpandas.multiindex_df_info(research_portfolio_df, max_num=None)
 
+# %% [markdown]
+# ## Prediction
+
 # %%
 column = "prediction"
 prod_df = prod_target_position_df[column]
@@ -409,14 +418,10 @@ res_df = research_portfolio_df[column]
 display(res_df.head(2))
 
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
-    "diff_mode": "pct_change",
-    "background_gradient": False,
-}
-diff_df = hpandas.compare_visually_dataframes(
+diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    **compare_visually_dataframes_kwargs,
+    diff_mode= "pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
@@ -428,53 +433,45 @@ hpandas.heatmap_df(diff_df.round(2))
 # ## Price
 
 # %%
-prod_df = prod_target_position_df["price"]
-display(prod_df.head(3))
-res_df = research_portfolio_df["price"]
-display(res_df.head(3))
+column = "price"
+prod_df = prod_target_position_df[column]
+display(prod_df.head(2))
+res_df = research_portfolio_df[column]
+display(res_df.head(2))
 
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
-    "diff_mode": "pct_change",
-    "background_gradient": False,
-    "log_level": logging.INFO,
-}
-diff_df = hpandas.compare_visually_dataframes(
+diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    **compare_visually_dataframes_kwargs,
+    diff_mode= "pct_change",
 )
-# # Remove the sign and NaNs.
-# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# # Check that data is the same.
-# print(diff_df.max().max())
-display(hpandas.heatmap_df(diff_df.round(2)))
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
 # ## Volatility
 
 # %%
-prod_df = prod_target_position_df["volatility"]
+column = "volatility"
+prod_df = prod_target_position_df[column]
 display(prod_df.head(2))
-res_df = research_portfolio_df["volatility"]
+res_df = research_portfolio_df[column]
 display(res_df.head(2))
 
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
-    "diff_mode": "pct_change",
-    "background_gradient": False,
-    "log_level": logging.INFO,
-}
-diff_df = hpandas.compare_visually_dataframes(
+diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    **compare_visually_dataframes_kwargs,
+    diff_mode= "pct_change",
 )
-# # Remove the sign and NaNs.
-# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# # Check that data is the same.
-# print(diff_df.max().max())
-display(hpandas.heatmap_df(diff_df.round(2)))
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
 # ## Target holdings
@@ -487,21 +484,16 @@ res_df = research_portfolio_df["holdings_shares"]
 display(res_df.head(5))
 
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
-    "diff_mode": "pct_change",
-    "background_gradient": False,
-    "log_level": logging.INFO,
-}
-diff_df = hpandas.compare_visually_dataframes(
+diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    **compare_visually_dataframes_kwargs,
+    diff_mode= "pct_change",
 )
-# # Remove the sign and NaNs.
-# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# # Check that data is the same.
-# #diff_df.max().max()
-display(hpandas.heatmap_df(diff_df.round(2)))
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
 # ## Holdings
@@ -512,48 +504,40 @@ display(prod_target_position_df["target_holdings_shares"].head(5))
 display(research_portfolio_df["holdings_shares"].head(5))
 
 # %%
-prod_df = prod_target_position_df["holdings_shares"]
-display(prod_df.head(5))
-
-res_df = research_portfolio_df["holdings_shares"]
-display(res_df.head(5))
+column = "holdings_shares"
+prod_df = prod_target_position_df[column]
+display(prod_df.head(2))
+res_df = research_portfolio_df[column]
+display(res_df.head(2))
 
 # Compute percentage difference.
-compare_visually_dataframes_kwargs = {
-    "diff_mode": "pct_change",
-    "background_gradient": False,
-    "log_level": logging.INFO,
-    "assert_diff_threshold": None,
-}
-diff_df = hpandas.compare_visually_dataframes(
+diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    **compare_visually_dataframes_kwargs,
+    diff_mode= "pct_change",
+    assert_diff_threshold=None,
 )
-# # Remove the sign and NaNs.
-# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# # Check that data is the same.
-# #diff_df.max().max()
-display(hpandas.heatmap_df(diff_df.round(2)))
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
 
 # %%
-pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0)
+if False:
+    pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0)
 
-# %%
-(diff_df.replace(np.nan, 0).abs() > 1).to_csv("orders_to_remove.csv")
+    (diff_df.replace(np.nan, 0).abs() > 1).to_csv("orders_to_remove.csv")
 
-# %%
-((prod_target_position_df["target_trades_shares"] * prod_target_position_df["price"]).abs() < 5.0).sum().sum()
+    ((prod_target_position_df["target_trades_shares"] * prod_target_position_df["price"]).abs() < 5.0).sum().sum()
 
-# %%
-mask = prod_target_position_df["target_trades_notional"].abs() < 10
-prod_target_position_df["target_trades_notional"][mask]
-#mask.sum()
+    mask = prod_target_position_df["target_trades_notional"].abs() < 10
+    prod_target_position_df["target_trades_notional"][mask]
+    #mask.sum()
 
-# %%
-display(prod_target_position_df["holdings_shares"].dropna().head(10))
+    display(prod_target_position_df["holdings_shares"].dropna().head(10))
 
-display(research_portfolio_df["holdings_shares"].dropna().head(10))
+    display(research_portfolio_df["holdings_shares"].dropna().head(10))
 
 # %% [markdown]
 # # Compare prices
