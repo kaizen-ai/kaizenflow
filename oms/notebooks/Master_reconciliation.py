@@ -117,7 +117,7 @@ dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
     dag_node_names[-1],
-    dag_node_timestamps["bar_timestamp"][-1],
+    dag_node_timestamps[-1][0],
     dag_start_timestamp,
     dag_end_timestamp,
     log_level=logging.DEBUG,
@@ -166,6 +166,16 @@ hpandas.df_to_str(
     precision=3,
     log_level=logging.INFO,
 )
+
+# %% [markdown]
+# # Compute DAG delay 
+
+# %%
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps)
+delay_in_secs
+
+# %%
+delay_in_secs.plot()
 
 # %% [markdown]
 # # Compute research portfolio equivalent

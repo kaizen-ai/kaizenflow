@@ -418,6 +418,26 @@ def load_dag_outputs(
     return dag_df_dict
 
 
+def compute_dag_delay_in_seconds(
+    dag_node_timestamps: List[Tuple[Union[str, pd.Timestamp]]]
+) -> pd.DataFrame:
+    """
+    Compute difference in seconds between `wall_clock_timestamp` and
+    `bar_timestamp` for each timestamp.
+    """
+    delay_in_seconds = []
+    bar_timestamp = []
+    for ts in dag_node_timestamps:
+        diff = (ts[1] - ts[0]).seconds
+        delay_in_seconds.append(diff)
+        bar_timestamp.append(ts[0])
+    diff = pd.DataFrame(
+        delay_in_seconds, columns=["delay_in_seconds"], index=bar_timestamp
+    )
+    diff.index.name = "bar_timestamp"
+    return diff
+
+
 # #############################################################################
 # Portfolio
 # #############################################################################
