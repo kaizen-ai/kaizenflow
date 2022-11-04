@@ -167,6 +167,7 @@ class _ConfigWriterInfo:
     """
     Store information on the function that writes a value into a Config.
     """
+
     def __init__(self):
         # Capture information about who is constructing this object.
         self._full_traceback = self._get_full_traceback()
@@ -177,7 +178,7 @@ class _ConfigWriterInfo:
 
     def __repr__(self):
         return self._full_traceback
-    
+
     @staticmethod
     def _get_full_traceback():
         """
@@ -207,7 +208,7 @@ class _ConfigWriterInfo:
             txt = traceback.format_stack()
         """
         return hintros.stacktrace_to_str()
-    
+
     @staticmethod
     def _get_shorthand_caller():
         """
@@ -237,7 +238,9 @@ class _ConfigWriterInfo:
         # `FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)`
         #
         caller = next(call for call in stack if call.filename != filename)
-        latest_outside_caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
+        latest_outside_caller = (
+            f"{caller.filename}::{caller.lineno}::{caller.function}"
+        )
         return latest_outside_caller
 
 
@@ -390,18 +393,6 @@ class _OrderedConfig(_OrderedDictType):
         if mark_key_as_used:
             self._mark_as_used(key)
         return val
-    
-    # TODO(Danya): Expand the use to `Config` class.
-    def check_if_used(
-        self, key: ScalarKey
-    ) -> bool:
-        """
-        Check if the value has been used.
-        """
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        # Retrieve the value from the dictionary itself.
-        marked_as_used, writer, val = super().__getitem__(key)
-        return marked_as_used
 
     # /////////////////////////////////////////////////////////////////////////////
     # Print.
@@ -422,6 +413,16 @@ class _OrderedConfig(_OrderedDictType):
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
+
+    # TODO(Danya): Expand the use to `Config` class.
+    def check_if_used(self, key: ScalarKey) -> bool:
+        """
+        Check if the value has been used.
+        """
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        # Retrieve the value from the dictionary itself.
+        marked_as_used, writer, val = super().__getitem__(key)
+        return marked_as_used
 
     def str_debug(self) -> str:
         mode = "debug"
@@ -607,7 +608,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -710,9 +712,14 @@ class Config:
         return self._config.to_string(mode)
 
     def check_if_used(self, key: ScalarKeyValidTypes) -> bool:
-        val = self.__getitem__
+        self.__getitem__
 
-    def get_and_mark_as_used(self, key: ScalarKeyValidTypes, *, default_value: Optional[Any] = _NO_VALUE_SPECIFIED) -> Any:
+    def get_and_mark_as_used(
+        self,
+        key: ScalarKeyValidTypes,
+        *,
+        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+    ) -> Any:
         """
         Get the value and mark it as used.
 

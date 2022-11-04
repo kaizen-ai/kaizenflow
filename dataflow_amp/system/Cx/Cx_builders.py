@@ -356,15 +356,21 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     market_data = system.market_data
     dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
     dag_config = system.config.get_and_mark_as_used("dag_config")
-    trading_period_str = dag_builder.get_trading_period(
-        dag_config
-    )
+    trading_period_str = dag_builder.get_trading_period(dag_config)
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
-    cf_config_strategy = system.config.get_and_mark_as_used("cf_config", "strategy")
-    market_data_universe_version = system.config.get_and_mark_as_used("market_data_config", "universe_version")
-    market_data_asset_ids = system.config.get_and_mark_as_used("market_data_config", "asset_ids")
-    secret_identifier_config = system.config.get_and_mark_as_used("secret_identifier_config")
+    cf_config_strategy = system.config.get_and_mark_as_used(
+        "cf_config", "strategy"
+    )
+    market_data_universe_version = system.config.get_and_mark_as_used(
+        "market_data_config", "universe_version"
+    )
+    market_data_asset_ids = system.config.get_and_mark_as_used(
+        "market_data_config", "asset_ids"
+    )
+    secret_identifier_config = system.config.get_and_mark_as_used(
+        "secret_identifier_config"
+    )
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
         cf_config_strategy,
         market_data,

@@ -767,7 +767,9 @@ def get_realtime_DagRunner_from_system(
     bar_duration_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
-    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(("dag_runner_config","rt_timeout_in_secs_or_time"))
+    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "rt_timeout_in_secs_or_time")
+    )
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
