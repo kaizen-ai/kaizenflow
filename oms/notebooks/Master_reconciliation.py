@@ -21,7 +21,7 @@
 import logging
 import os
 
-import numpy as np
+import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
@@ -32,10 +32,6 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hsql as hsql
-import im_v2.ccxt.data.client as icdcl
-import im_v2.common.universe as ivcu
-import im_v2.im_lib_tasks as imvimlita
 import oms as oms
 
 # %%
@@ -51,14 +47,16 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-config_list = oms.build_reconciliation_configs()
+date_str = None
+prod_subdir = None
+config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
 
 # %% [markdown]
 # # Specify data to load
 
-# %% run_control={"marked": true}
+# %% run_control={"marked": false}
 # The dict points to `system_log_dir` for different experiments.
 system_log_path_dict = dict(config["system_log_path"].to_dict())
 
@@ -91,135 +89,76 @@ if config["meta"]["run_tca"]:
     tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
 
-# %%
-date_str = config["meta"]["date_str"]
-# TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
-start_timestamp = pd.Timestamp(date_str + " 06:05:00", tz="America/New_York")
-_LOG.info("start_timestamp=%s", start_timestamp)
-end_timestamp = pd.Timestamp(date_str + " 08:00:00", tz="America/New_York")
-_LOG.info("end_timestamp=%s", end_timestamp)
-
-
-# %% [markdown]
-# # Data delay analysis
-
-# %%
-# Get the real-time `ImClient`.
-# TODO(Grisha): ideally we should get the values from the config.
-resample_1min = False
-env_file = imvimlita.get_db_env_path("dev")
-connection_params = hsql.get_connection_info_from_env_file(env_file)
-db_connection = hsql.get_connection(*connection_params)
-table_name = "ccxt_ohlcv_futures"
-#
-im_client = icdcl.CcxtSqlRealTimeImClient(
-    resample_1min, db_connection, table_name
-)
-
-# %%
-# Get the universe.
-# TODO(Grisha): get the version from the config.
-vendor = "CCXT"
-mode = "trade"
-version = "v7.1"
-as_full_symbol = True
-full_symbols = ivcu.get_vendor_universe(
-    vendor,
-    mode,
-    version=version,
-    as_full_symbol=as_full_symbol,
-)
-full_symbols
-
-# %%
-# Load the data for the reconciliation date.
-# `ImClient` operates in UTC timezone.
-start_ts = pd.Timestamp(date_str, tz="UTC")
-end_ts = start_ts + pd.Timedelta(days=1)
-columns = None
-filter_data_mode = "assert"
-df = im_client.read_data(
-    full_symbols, start_ts, end_ts, columns, filter_data_mode
-)
-hpandas.df_to_str(df, num_rows=5, log_level=logging.INFO)
-
-# %%
-# TODO(Grisha): move to a lib.
-# Compute delay in seconds.
-df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
-# Plot the delay over assets with the errors bars.
-minimums = df.groupby(by=["full_symbol"]).min()["delta"]
-maximums = df.groupby(by=["full_symbol"]).max()["delta"]
-means = df.groupby(by=["full_symbol"]).mean()["delta"]
-errors = [means - minimums, maximums - means]
-df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(
-    kind="bar", yerr=errors
-)
-
 # %% [markdown]
 # # Compare DAG io
 
 # %%
 # Get DAG node names.
 dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"])
-dag_node_names
+_LOG.info(
+    "The 1st node=%s, the last node=%s", dag_node_names[0], dag_node_names[-1]
+)
 
 # %%
 # Get timestamps for the last DAG node.
 dag_node_timestamps = oms.get_dag_node_timestamps(
     dag_path_dict["prod"], dag_node_names[-1], as_timestamp=True
 )
-dag_node_timestamps
+_LOG.info(
+    "The 1st timestamp=%s, the last timestamp=%s",
+    dag_node_timestamps[0][0],
+    dag_node_timestamps[-1][0],
+)
 
 # %%
 # Load DAG output for different experiments.
-dag_df_dict = {}
-for name, path in dag_path_dict.items():
-    # Get DAG node names for every experiment.
-    dag_nodes = oms.get_dag_node_names(path)
-    # Get timestamps for the last node.
-    dag_node_ts = oms.get_dag_node_timestamps(
-        path, dag_nodes[-1], as_timestamp=True
-    )
-    # Get DAG output for the last node and the last timestamp.
-    dag_df_dict[name] = oms.get_dag_node_output(
-        path, dag_nodes[-1], dag_node_ts[-1]
-    )
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+dag_start_timestamp = None
+dag_end_timestamp = None
+dag_df_dict = oms.load_dag_outputs(
+    dag_path_dict,
+)
+# Get DAG output for the last node and the last timestamp.
+# TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
+# the other one for all nodes, all timestamps for comparison.
+dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-# Compute percentage difference.
-compare_visually_dataframes_kwargs = {
-    "diff_mode": "pct_change",
-    "background_gradient": False,
+# Compute difference.
+compare_dfs_kwargs = {
+    # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
+    "diff_mode": "diff",
+    "remove_inf": True,
 }
 diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
-    compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+    dag_df_prod,
+    dag_df_sim,
+    compare_dfs_kwargs=compare_dfs_kwargs,
 )
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Remove the sign.
+diff_df = diff_df.abs()
 # Check that data is the same.
 diff_df.max().max()
 
 # %%
-# Plot diffs over time.
-diff_df.max(axis=1).plot()
-
-# %%
-# Plot diffs over columns.
-diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
-
-# %%
-# Plot diffs over assets.
-diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+# Enable if the diff is big to see the detailed stats.
+if False:
+    # Plot over time.
+    diff_df.max(axis=1).plot()
+    plt.show()
+    # Plot over column names.
+    diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
+    plt.show()
+    # Plot over assets
+    diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+    plt.show()
 
 # %%
 # Compute correlations.
 prod_sim_dag_corr = dtfmod.compute_correlations(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
+    dag_df_prod,
+    dag_df_sim,
 )
 hpandas.df_to_str(
     prod_sim_dag_corr.min(),
@@ -228,12 +167,31 @@ hpandas.df_to_str(
     log_level=logging.INFO,
 )
 
+# %% [markdown]
+# # Compute DAG delay
+
 # %%
-# Make sure they are exactly the same.
-(dag_df_dict["prod"] - dag_df_dict["sim"]).abs().max().max()
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps)
 
 # %% [markdown]
 # # Compute research portfolio equivalent
+
+# %%
+# Set Portofolio start and end timestamps.
+if True:
+    # By default use the min/max bar timestamps from the DAG.
+    start_timestamp = dag_node_timestamps[0][0]
+    end_timestamp = dag_node_timestamps[-1][0]
+else:
+    # Overwrite if needed.
+    start_timestamp = pd.Timestamp(
+        "2022-11-03 06:05:00-04:00", tz="America/New_York"
+    )
+    end_timestamp = pd.Timestamp(
+        "2022-11-03 08:00:00-04:00", tz="America/New_York"
+    )
+_LOG.info("start_timestamp=%s", start_timestamp)
+_LOG.info("end_timestamp=%s", end_timestamp)
 
 # %%
 fep = dtfmod.ForecastEvaluatorFromPrices(
@@ -243,7 +201,7 @@ annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ].to_dict()
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
-    dag_df_dict["prod"],
+    dag_df_prod,
     **annotate_forecasts_kwargs,
     compute_extended_stats=True,
 )
@@ -278,7 +236,6 @@ portfolio_dfs, portfolio_stats_dfs = oms.load_portfolio_dfs(
 )
 # Add research portfolio.
 portfolio_dfs["research"] = research_portfolio_df
-#
 hpandas.df_to_str(portfolio_dfs["prod"], num_rows=5, log_level=logging.INFO)
 
 # %%
@@ -300,7 +257,57 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Compare pairwise portfolio correlations
+# # Compare portfolios pairwise
+
+# %%
+# TODO(Grisha): @Dan factor out in a function.
+# Compute difference.
+compare_dfs_kwargs = {
+    "column_mode": "inner",
+    "diff_mode": "diff",
+    "remove_inf": True,
+    "assert_diff_threshold": None,
+}
+diff_df = hpandas.compare_multiindex_dfs(
+    portfolio_dfs["prod"],
+    portfolio_dfs["sim"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+max_diff = diff_df.max().max()
+_LOG.info("Max difference between prod and sim is=%s", max_diff)
+prod_sim_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
+hpandas.df_to_str(prod_sim_diff, num_rows=None, log_level=logging.INFO)
+
+# %%
+diff_df = hpandas.compare_multiindex_dfs(
+    portfolio_dfs["prod"],
+    portfolio_dfs["research"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+max_diff = diff_df.max().max()
+_LOG.info("Max difference between prod and research is=%s", max_diff)
+prod_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
+hpandas.df_to_str(prod_research_diff, num_rows=None, log_level=logging.INFO)
+
+# %%
+diff_df = hpandas.compare_multiindex_dfs(
+    portfolio_dfs["sim"],
+    portfolio_dfs["research"],
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+# Remove the sign.
+diff_df = diff_df.abs()
+# Check that data is the same.
+max_diff = diff_df.max().max()
+_LOG.info("Max difference between sim and research is=%s", max_diff)
+sim_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
+hpandas.df_to_str(sim_research_diff, num_rows=None, log_level=logging.INFO)
 
 # %%
 dtfmod.compute_correlations(

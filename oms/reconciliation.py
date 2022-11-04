@@ -4,10 +4,12 @@ Import as:
 import oms.reconciliation as omreconc
 """
 
+import collections
 import datetime
 import logging
 import os
-from typing import Any, Dict, List, Tuple, Union
+import pprint
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
@@ -17,6 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hpickle as hpickle
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
 import oms.portfolio as omportfo
@@ -24,7 +27,522 @@ import oms.target_position_and_order_generator as otpaorge
 
 _LOG = logging.getLogger(__name__)
 
+# Each function should accept a `log_level` parameters that controls at which
+# level output summarizing the results. By default it is set by functin to
+# logging.DEBUG (since we don't want to print anything).
+# The internal debugging info is printed as usual at level `logging.DEBUG`.
 
+
+# #############################################################################
+# Config
+# #############################################################################
+
+
+def build_reconciliation_configs(
+    date_str: Optional[str],
+    prod_subdir: Optional[str],
+) -> cconfig.ConfigList:
+    """
+    Build reconciliation configs that are specific of an asset class.
+
+    Note: the function returns list of configs because the function is used
+    as a config builder function for the run notebook script.
+
+    :param date_str: specify which date to use for reconciliation
+    """
+    if date_str is None:
+        # Infer the meta-parameters from env.
+        date_key = "AM_RECONCILIATION_DATE"
+        if date_key in os.environ:
+            date_str = os.environ[date_key]
+        else:
+            date_str = datetime.date.today().strftime("%Y%m%d")
+    _LOG.info("Using date_str=%s", date_str)
+    #
+    asset_key = "AM_ASSET_CLASS"
+    if asset_key in os.environ:
+        asset_class = os.environ[asset_key]
+    else:
+        asset_class = "crypto"
+    # Set values for variables that are specific of an asset class.
+    if asset_class == "crypto":
+        # For crypto the TCA part is not implemented yet.
+        run_tca = False
+        #
+        bar_duration = "5T"
+        #
+        root_dir = "/shared_data/prod_reconciliation"
+        # Prod system is run via AirFlow and the results are tagged with the previous day.
+        previous_day_date_str = (
+            pd.Timestamp(date_str) - pd.Timedelta("1D")
+        ).strftime("%Y-%m-%d")
+        if prod_subdir is None:
+            # TODO(Grisha): @Dan Refactor hard-coded time.
+            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
+        prod_dir = os.path.join(
+            root_dir,
+            date_str,
+            "prod",
+            prod_subdir,
+        )
+        system_log_path_dict = {
+            "prod": prod_dir,
+            # For crypto we do not have a `candidate`.
+            # "cand": prod_dir,
+            "sim": os.path.join(
+                root_dir, date_str, "simulation", "system_log_dir"
+            ),
+        }
+        #
+        fep_init_dict = {
+            "price_col": "twap",
+            "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+            "volatility_col": "vwap.ret_0.vol",
+        }
+        quantization = "asset_specific"
+        market_info = occxbrok.load_market_data_info()
+        asset_id_to_share_decimals = occxbrok.subset_market_info(
+            market_info, "amount_precision"
+        )
+        gmv = 700.0
+        liquidate_at_end_of_day = False
+    elif asset_class == "equities":
+        run_tca = True
+        #
+        bar_duration = "15T"
+        #
+        root_dir = ""
+        search_str = ""
+        prod_dir_cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
+        _, prod_dir = hsystem.system_to_string(prod_dir_cmd)
+        cand_cmd = (
+            f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+        )
+        _, cand_dir = hsystem.system_to_string(cand_cmd)
+        system_log_path_dict = {
+            "prod": prod_dir,
+            "cand": cand_dir,
+            "sim": os.path.join(root_dir, date_str, "system_log_dir"),
+        }
+        #
+        fep_init_dict = {
+            "price_col": "twap",
+            "prediction_col": "prediction",
+            "volatility_col": "garman_klass_vol",
+        }
+        quantization = "nearest_share"
+        asset_id_to_share_decimals = None
+        gmv = 20000.0
+        liquidate_at_end_of_day = True
+    else:
+        raise ValueError(f"Unsupported asset class={asset_class}")
+    # Sanity check dirs.
+    for dir_name in system_log_path_dict.values():
+        hdbg.dassert_dir_exists(dir_name)
+    # Build the config.
+    config_dict = {
+        "meta": {
+            "date_str": date_str,
+            "asset_class": asset_class,
+            "run_tca": run_tca,
+            "bar_duration": bar_duration,
+        },
+        "system_log_path": system_log_path_dict,
+        "research_forecast_evaluator_from_prices": {
+            "init": fep_init_dict,
+            "annotate_forecasts_kwargs": {
+                "quantization": quantization,
+                "asset_id_to_share_decimals": asset_id_to_share_decimals,
+                "burn_in_bars": 3,
+                "style": "cross_sectional",
+                "bulk_frac_to_remove": 0.0,
+                "target_gmv": gmv,
+                "liquidate_at_end_of_day": liquidate_at_end_of_day,
+            },
+        },
+    }
+    config = cconfig.Config.from_dict(config_dict)
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+
+def load_config_from_pickle(
+    system_log_path_dict: Dict[str, str]
+) -> Dict[str, cconfig.Config]:
+    """
+    Load configs from pickle files given a dict of paths.
+    """
+    config_dict = {}
+    file_name = "system_config.input.values_as_strings.pkl"
+    for stage, path in system_log_path_dict.items():
+        path = os.path.join(path, file_name)
+        hdbg.dassert_path_exists(path)
+        _LOG.debug("Reading config from %s", path)
+        config_pkl = hpickle.from_pickle(path)
+        config = cconfig.Config.from_dict(config_pkl)
+        config_dict[stage] = config
+    return config_dict
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+
+# TODO(gp): -> _get_system_log_paths?
+def get_system_log_paths(
+    system_log_path_dict: Dict[str, str],
+    data_type: str,
+    *,
+    log_level: int = logging.DEBUG,
+) -> Dict[str, str]:
+    """
+    Get paths to data inside a system log dir.
+
+    :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
+        ```
+        {
+            "prod": "/shared_data/system_log_dir",
+            "sim": ...
+        }
+        ```
+    :param data_type: type of data to create paths for, e.g., "dag" for
+        DAG output, "portfolio" to load Portfolio
+    :return: dir paths inside system log dir for different experiments, e.g.,
+        ```
+        {
+            "prod": "/shared_data/system_log_dir/process_forecasts/portfolio",
+            "sim": ...
+        }
+        ```
+    """
+    data_path_dict = {}
+    if data_type == "portfolio":
+        dir_name = "process_forecasts/portfolio"
+    elif data_type == "dag":
+        dir_name = "dag/node_io/node_io.data"
+    else:
+        raise ValueError(f"Unsupported data type={data_type}")
+    for k, v in system_log_path_dict.items():
+        cur_dir = os.path.join(v, dir_name)
+        hdbg.dassert_dir_exists(cur_dir)
+        data_path_dict[k] = cur_dir
+    _LOG.log(log_level, "# %s=\n%s", data_type, pprint.pformat(data_path_dict))
+    return data_path_dict
+
+
+def get_path_dicts(
+    config: cconfig.Config, *, log_level: int = logging.DEBUG
+) -> Tuple:
+    # Point to `system_log_dir` for different experiments.
+    system_log_path_dict = dict(config["system_log_path"].to_dict())
+    _LOG.log(
+        log_level,
+        "# system_log_path_dict=\n%s",
+        pprint.pformat(system_log_path_dict),
+    )
+    # Point to `system_log_dir/process_forecasts/portfolio` for different experiments.
+    data_type = "portfolio"
+    portfolio_path_dict = get_system_log_paths(
+        system_log_path_dict, data_type, log_level=log_level
+    )
+    # Point to `system_log_dir/dag/node_io/node_io.data` for different experiments.
+    data_type = "dag"
+    dag_path_dict = get_system_log_paths(
+        system_log_path_dict, data_type, log_level=log_level
+    )
+    return (system_log_path_dict, portfolio_path_dict, dag_path_dict)
+
+
+# #############################################################################
+# Compare DAG
+# #############################################################################
+
+
+def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
+    """
+    Get Parquet file names for all the nodes in the target folder.
+
+    :param dag_dir: dir with the DAG output
+    :return: list of all files for all nodes and timestamps in the dir
+    """
+    hdbg.dassert_dir_exists(dag_dir)
+    cmd = f"ls {dag_dir} | grep 'parquet'"
+    _, nodes = hsystem.system_to_string(cmd)
+    nodes = nodes.split("\n")
+    return nodes
+
+
+def get_dag_node_names(
+    dag_dir: str, *, log_level: int = logging.DEBUG
+) -> List[str]:
+    """
+    Get names of DAG node from a target dir.
+
+    :param dag_dir: dir with the DAG output
+    :return: a sorted list of all DAG node names
+        ```
+        ['predict.0.read_data',
+        'predict.1.resample',
+        'predict.2.compute_ret_0',
+        'predict.3.compute_vol',
+        'predict.4.adjust_rets',
+        'predict.5.compress_rets',
+        'predict.6.add_lags',
+        'predict.7.predict',
+        'predict.8.process_forecasts']
+        ```
+    """
+    file_names = _get_dag_node_parquet_file_names(dag_dir)
+    # E.g., if file name is
+    # `predict.8.process_forecasts.df_out.20221028_080000.parquet` then the
+    # node name is `predict.8.process_forecasts`.
+    node_names = sorted(
+        list(set(node.split(".df_out")[0] for node in file_names))
+    )
+    _LOG.log(
+        log_level,
+        "dag_node_names=\n%s",
+        hprint.indent("\n".join(map(str, node_names))),
+    )
+    return node_names
+
+
+def get_dag_node_timestamps(
+    dag_dir: str,
+    dag_node_name: str,
+    *,
+    as_timestamp: bool = True,
+    log_level: int = logging.DEBUG,
+) -> List[Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]]:
+    """
+    Get all bar timestamps and the corresponding wall clock timestamps.
+
+    E.g., DAG node for bar timestamp `20221028_080000` was computed at
+    `20221028_080143`.
+
+    :param dag_dir: dir with the DAG output
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param as_timestamp: if True return as `pd.Timestamp`, otherwise
+        return as string
+    :return: a list of tuples with bar timestamps and wall clock timestamps
+        for the specified node
+    """
+    _LOG.log(log_level, hprint.to_str("dag_dir dag_node_name as_timestamp"))
+    file_names = _get_dag_node_parquet_file_names(dag_dir)
+    node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
+    node_timestamps = []
+    for file_name in node_file_names:
+        # E.g., file name is "predict.8.process_forecasts.df_out.20221028_080000.20221028_080143.parquet".
+        # The bar timestamp is "20221028_080000", and the wall clock timestamp
+        # is "20221028_080143".
+        splitted_file_name = file_name.split(".")
+        bar_timestamp = splitted_file_name[-3]
+        wall_clock_timestamp = splitted_file_name[-2]
+        if as_timestamp:
+            bar_timestamp = bar_timestamp.replace("_", " ")
+            wall_clock_timestamp = wall_clock_timestamp.replace("_", " ")
+            # TODO(Grisha): Pass tz a param?
+            tz = "America/New_York"
+            bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
+            wall_clock_timestamp = pd.Timestamp(wall_clock_timestamp, tz=tz)
+        node_timestamps.append((bar_timestamp, wall_clock_timestamp))
+    #
+    _LOG.log(
+        log_level,
+        "dag_node_timestamps=\n%s",
+        hprint.indent("\n".join(map(str, node_timestamps))),
+    )
+    return node_timestamps
+
+
+def get_dag_node_output(
+    dag_dir: str,
+    dag_node_name: str,
+    timestamp: pd.Timestamp,
+) -> pd.DataFrame:
+    """
+    Retrieve output from the last DAG node.
+
+    This function relies on our file naming conventions, e.g.,
+    `dag/node_io/node_io.data/predict.0.read_data.df_out.20221021_060500.parquet`.
+
+    :param dag_dir: dir with the DAG output
+    :param dag_node_name: a node name, e.g., `predict.0.read_data`
+    :param timestamp: bar timestamp
+    :return: a DAG node output
+    """
+    hdbg.dassert_dir_exists(dag_dir)
+    hdbg.dassert_isinstance(timestamp, pd.Timestamp)
+    timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
+    # TODO(Grisha): merge the logic with the one in `get_dag_node_names()`.
+    cmd = f"find '{dag_dir}' -name {dag_node_name}*.parquet"
+    cmd += f" | grep '{timestamp}'"
+    _, file = hsystem.system_to_string(cmd)
+    df = hparque.from_parquet(file)
+    return df
+
+
+def load_dag_outputs(
+    dag_path_dict: Dict[str, str],
+    *,
+    only_last_node: bool = True,
+    only_last_timestamp: bool = True,
+    only_last_row: bool = False,
+) -> Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]:
+    """
+    Load DAG output for different experiments.
+
+    Output example:
+    ```
+    {
+        "prod": {
+            "predict.0.read_data": {
+                "2022-11-03 06:05:00-04:00": pd.DataFrame,
+                ...
+            },
+        },
+    }
+    ```
+
+    :param dag_path_dict: dst dir for every experiment
+    :param only_last_node: if `True`, get DAG output only for the last node,
+        otherwise load data for all the nodes
+    :param only_last_timestamp: if `True`, get DAG output only for the last timestamp,
+        otherwise load data for all the timestamps
+    :param only_last_row: if `True`, get DAG output only for the last data row,
+        otherwise load whole dataframes
+    :param log_level: log level
+    :return: DAG output per experiment, node and timestamp
+    """
+    dag_df_dict = {}
+    for experiment, path in dag_path_dict.items():
+        # Set experiment default dict to fill it in the loop.
+        experiment_dict = collections.defaultdict(dict)
+        # Get DAG node names to iterate over them.
+        nodes = get_dag_node_names(path)
+        if only_last_node:
+            nodes = [nodes[-1]]
+        for node in nodes:
+            # Get DAG timestamps to iterate over them.
+            dag_timestamps = get_dag_node_timestamps(path, node)
+            # Keep bar timestamps only.
+            bar_timestamps = [
+                bar_timestamp for bar_timestamp, _ in dag_timestamps
+            ]
+            if only_last_timestamp:
+                bar_timestamps = [bar_timestamps[-1]]
+            for timestamp in bar_timestamps:
+                # Get DAG output for the specified node and timestamp.
+                df = get_dag_node_output(path, node, timestamp)
+                if only_last_row:
+                    df = df.tail(1)
+                experiment_dict[node][timestamp] = df
+        # Populate result dict with experiment output dict.
+        dag_df_dict[experiment] = experiment_dict
+    return dag_df_dict
+
+
+def compute_dag_outputs_diff(
+    dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
+    compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Dict[pd.Timestamp, pd.DataFrame]]:
+    """
+    Compute DAG output differences for different experiments.
+
+    :param dag_df_dict: DAG output per experiment, node and timestamp
+    :param compare_dfs_kwargs: params for `compare_dfs()`
+    :return: DAG output differences per experiment, node and timestamp
+    """
+    if compare_dfs_kwargs is None:
+        compare_dfs_kwargs = {}
+    # Get experiment DAG output dicts to iterate over them.
+    experiment_names = list(dag_df_dict.keys())
+    hdbg.dassert_eq(2, len(experiment_names))
+    dag_dict_1 = dag_df_dict[experiment_names[0]]
+    dag_dict_2 = dag_df_dict[experiment_names[1]]
+    # Assert that output dicts have similar node names.
+    hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
+    #
+    dag_diff_df_dict = collections.defaultdict(dict)
+    for node_name in dag_dict_1:
+        # Get node DAG output dicts to iterate over them.
+        dag_dict_1_node = dag_dict_1[node_name]
+        dag_dict_2_node = dag_dict_2[node_name]
+        # Assert that node dicts have similar timestamps.
+        hdbg.dassert_set_eq(dag_dict_1_node.keys(), dag_dict_2_node.keys())
+        for timestamp in dag_dict_1_node:
+            # Get DAG outputs per timestamp and compare them.
+            df_1 = dag_dict_1_node[timestamp]
+            df_2 = dag_dict_2_node[timestamp]
+            # Append asset id as index level if it is present in the data.
+            if "asset_id" in df_1.columns:
+                df_1 = df_1.set_index("asset_id", append=True)
+                df_2 = df_2.set_index("asset_id", append=True)
+            # Pick only float columns for difference computations.
+            # Only float columns are picked because int columns represent
+            # not metrics but ids, etc.
+            df_1 = df_1.select_dtypes("float")
+            df_2 = df_2.select_dtypes("float")
+            # Compute the difference and put it in the result dict
+            df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
+            dag_diff_df_dict[node_name][timestamp] = df_diff
+    return dict(dag_diff_df_dict)
+
+
+def compute_dag_delay_in_seconds(
+    dag_node_timestamps: List[Tuple[pd.Timestamp, pd.Timestamp]],
+    *,
+    print_stats: bool = True,
+    display_plot: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute difference in seconds between `wall_clock_timestamp` and
+    `bar_timestamp` for each timestamp.
+
+    :param print_stats: if True print stats (i.e. min, mean, max), otherwise
+        do not print
+    :param display_plot: if True display delay chart over bar timestamp,
+        otherwise do not display
+    :return: a table with bar timestamps and corresponding delays in seconds
+    """
+    delay_in_seconds = []
+    bar_timestamps = []
+    for bar_timestamp, wall_clock_timestamp in dag_node_timestamps:
+        diff = (wall_clock_timestamp - bar_timestamp).seconds
+        delay_in_seconds.append(diff)
+        bar_timestamps.append(bar_timestamp)
+    delay_column_name = "delay_in_seconds"
+    diff = pd.DataFrame(
+        delay_in_seconds, columns=[delay_column_name], index=bar_timestamps
+    )
+    diff = diff.sort_values(
+        delay_column_name,
+        ascending=False,
+    )
+    diff.index.name = "bar_timestamp"
+    if print_stats:
+        _LOG.info(
+            "Minimum delay=%s, mean delay=%s, maximum delay=%s",
+            round(diff["delay_in_seconds"].min(), 2),
+            round(diff["delay_in_seconds"].mean(), 2),
+            round(diff["delay_in_seconds"].max(), 2),
+        )
+    if display_plot:
+        diff.plot(
+            kind="bar",
+            title="Difference in seconds between DAG wall clock timestamp and bar timestamp",
+        )
+    return diff
+
+
+# #############################################################################
+# Portfolio
+# #############################################################################
+
+
+# TODO(gp): This needs to go close to Portfolio?
 def load_portfolio_artifacts(
     portfolio_dir: str,
     start_timestamp: pd.Timestamp,
@@ -77,6 +595,32 @@ def load_portfolio_artifacts(
     portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:end_timestamp]
     #
     return portfolio_df, portfolio_stats_df
+
+
+def load_portfolio_dfs(
+    portfolio_path_dict: Dict[str, str],
+    portfolio_config: Dict[str, Any],
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    """
+    Load multiple portfolios and portfolio stats from disk.
+
+    :param portfolio_path_dict: paths to portfolios for different experiments
+    :param portfolio_config: params for `load_portfolio_artifacts()`
+    :return: portfolios and portfolio stats for different experiments
+    """
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for name, path in portfolio_path_dict.items():
+        hdbg.dassert_path_exists(path)
+        _LOG.info("Processing portfolio=%s path=%s", name, path)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            path,
+            **portfolio_config,
+        )
+        portfolio_dfs[name] = portfolio_df
+        portfolio_stats_dfs[name] = portfolio_stats_df
+    #
+    return portfolio_dfs, portfolio_stats_dfs
 
 
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
@@ -332,298 +876,3 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
         axis=1,
     )
     return fills_df
-
-
-# #############################################################################
-# Reconciliation config
-# #############################################################################
-
-
-def build_reconciliation_configs() -> cconfig.ConfigList:
-    """
-    Build reconciliation configs that are specific of an asset class.
-    """
-    # Infer the meta-parameters from env.
-    date_key = "AM_RECONCILIATION_DATE"
-    if date_key in os.environ:
-        date_str = os.environ[date_key]
-    else:
-        date_str = datetime.date.today().strftime("%Y%m%d")
-    #
-    asset_key = "AM_ASSET_CLASS"
-    if asset_key in os.environ:
-        asset_class = os.environ[asset_key]
-    else:
-        asset_class = "crypto"
-    # Set values for variables that are specific of an asset class.
-    if asset_class == "crypto":
-        # For crypto the TCA part is not implemented yet.
-        run_tca = False
-        #
-        bar_duration = "5T"
-        #
-        root_dir = "/shared_data/prod_reconciliation"
-        # Prod system is run via AirFlow and the results are tagged with the previous day.
-        previous_day_date_str = (
-            pd.Timestamp(date_str) - pd.Timedelta("1D")
-        ).strftime("%Y-%m-%d")
-        prod_dir = os.path.join(
-            root_dir,
-            date_str,
-            "prod",
-            f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours",
-        )
-        system_log_path_dict = {
-            "prod": prod_dir,
-            # For crypto we do not have a `candidate` so we just re-use prod.
-            "cand": prod_dir,
-            "sim": os.path.join(
-                root_dir, date_str, "simulation", "system_log_dir"
-            ),
-        }
-        #
-        fep_init_dict = {
-            "price_col": "vwap",
-            "prediction_col": "vwap.ret_0.vol_adj_2_hat",
-            "volatility_col": "vwap.ret_0.vol",
-        }
-        quantization = "asset_specific"
-        market_info = occxbrok.load_market_data_info()
-        asset_id_to_share_decimals = occxbrok.subset_market_info(
-            market_info, "amount_precision"
-        )
-        gmv = 700.0
-        liquidate_at_end_of_day = False
-    elif asset_class == "equities":
-        run_tca = True
-        #
-        bar_duration = "15T"
-        #
-        root_dir = ""
-        search_str = ""
-        prod_dir_cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
-        _, prod_dir = hsystem.system_to_string(prod_dir_cmd)
-        cand_cmd = (
-            f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
-        )
-        _, cand_dir = hsystem.system_to_string(cand_cmd)
-        system_log_path_dict = {
-            "prod": prod_dir,
-            "cand": cand_dir,
-            "sim": os.path.join(root_dir, date_str, "system_log_dir"),
-        }
-        #
-        fep_init_dict = {
-            "price_col": "twap",
-            "prediction_col": "prediction",
-            "volatility_col": "garman_klass_vol",
-        }
-        quantization = "nearest_share"
-        asset_id_to_share_decimals = None
-        gmv = 20000.0
-        liquidate_at_end_of_day = True
-    else:
-        raise ValueError(f"Unsupported asset class={asset_class}")
-    # Sanity check dirs.
-    for dir in system_log_path_dict.values():
-        hdbg.dassert_dir_exists(dir)
-    # Build the config.
-    config_dict = {
-        "meta": {
-            "date_str": date_str,
-            "asset_class": asset_class,
-            "run_tca": run_tca,
-            "bar_duration": bar_duration,
-        },
-        "system_log_path": system_log_path_dict,
-        "research_forecast_evaluator_from_prices": {
-            "init": fep_init_dict,
-            "annotate_forecasts_kwargs": {
-                "quantization": quantization,
-                "asset_id_to_share_decimals": asset_id_to_share_decimals,
-                "burn_in_bars": 3,
-                "style": "cross_sectional",
-                "bulk_frac_to_remove": 0.0,
-                "target_gmv": gmv,
-                "liquidate_at_end_of_day": liquidate_at_end_of_day,
-            },
-        },
-    }
-    config = cconfig.Config.from_dict(config_dict)
-    config_list = cconfig.ConfigList([config])
-    return config_list
-
-
-def load_config_from_pickle(
-    system_log_path_dict: Dict[str, str]
-) -> Dict[str, cconfig.Config]:
-    """
-    Load configs from pickle files given a dict of paths.
-    """
-    config_dict = {}
-    file_name = "system_config.input.values_as_strings.pkl"
-    for stage, path in system_log_path_dict.items():
-        path = os.path.join(path, file_name)
-        hdbg.dassert_path_exists(path)
-        _LOG.debug("Reading config from %s", path)
-        config_pkl = hpickle.from_pickle(path)
-        config = cconfig.Config.from_dict(config_pkl)
-        config_dict[stage] = config
-    return config_dict
-
-
-# #############################################################################
-# Loading utils
-# #############################################################################
-
-
-def get_system_log_paths(
-    system_log_path_dict: Dict[str, str], data_type: str
-) -> Dict[str, str]:
-    """
-    Get paths to data inside a system log dir.
-
-    :param system_log_path_dict: system log dirs paths for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir", "sim": ...}`
-    :param data_type: either "dag" to load DAG output or "portfolio" to load Portfolio
-    :return: dir paths inside system log dir for different experiments, e.g.,
-        `{"prod": "/shared_data/system_log_dir/process_forecasts/portfolio", "sim": ...}`
-    """
-    data_path_dict = {}
-    if data_type == "portfolio":
-        dir_name = "process_forecasts/portfolio"
-    elif data_type == "dag":
-        dir_name = "dag/node_io/node_io.data"
-    else:
-        raise ValueError(f"Unsupported data type={data_type}")
-    for k, v in system_log_path_dict.items():
-        cur_dir = os.path.join(v, dir_name)
-        hdbg.dassert_dir_exists(cur_dir)
-        data_path_dict[k] = cur_dir
-    return data_path_dict
-
-
-def load_portfolio_dfs(
-    portfolio_path_dict: Dict[str, str],
-    portfolio_config: Dict[str, Any],
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-    """
-    Load multiple portfolios and portfolio stats from disk.
-
-    :param portfolio_path_dict: paths to portfolios for different experiments
-    :param portfolio_config: params for `load_portfolio_artifacts()`
-    :return: portfolios and portfolio stats for different experiments
-    """
-    portfolio_dfs = {}
-    portfolio_stats_dfs = {}
-    for name, path in portfolio_path_dict.items():
-        hdbg.dassert_path_exists(path)
-        _LOG.info("Processing portfolio=%s path=%s", name, path)
-        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
-            path,
-            **portfolio_config,
-        )
-        portfolio_dfs[name] = portfolio_df
-        portfolio_stats_dfs[name] = portfolio_stats_df
-    #
-    return portfolio_dfs, portfolio_stats_dfs
-
-
-def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
-    """
-    Get Parquet files for all the nodes in the target folder.
-
-    :param dag_dir: dir with the DAG output
-    :return: list of all files for all nodes and timestamps in the dir
-    """
-    hdbg.dassert_dir_exists(dag_dir)
-    cmd = f"ls {dag_dir} | grep 'parquet'"
-    _, nodes = hsystem.system_to_string(cmd)
-    nodes = nodes.split("\n")
-    return nodes
-
-
-def get_dag_node_names(dag_dir: str) -> List[str]:
-    """
-    Get dag node names from a target dir.
-
-    E.g.,
-    ```
-    ['predict.0.read_data',
-    'predict.1.resample',
-    'predict.2.compute_ret_0',
-    'predict.3.compute_vol',
-    'predict.4.adjust_rets',
-    'predict.5.compress_rets',
-    'predict.6.add_lags',
-    'predict.7.predict',
-    'predict.8.process_forecasts']
-    ```
-
-    :param dag_dir: dir with the DAG output
-    :return: a sorted list of all dag node names
-    """
-    file_names = _get_dag_node_parquet_file_names(dag_dir)
-    # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
-    # And the node name is `predict.8.process_forecasts`.
-    node_names = sorted(
-        list(set(node.split(".df_out")[0] for node in file_names))
-    )
-    return node_names
-
-
-def get_dag_node_timestamps(
-    dag_dir: str,
-    dag_node_name: str,
-    *,
-    as_timestamp: bool = True,
-) -> List[Union[str, pd.Timestamp]]:
-    """
-    Get all timestamps for a node.
-
-    :param dag_dir: dir with the DAG output
-    :param dag_node_name: a node name, e.g., `predict.0.read_data`
-    :param as_timestamp: if True return as `pd.Timestamp`, otherwise
-        return as string
-    :return: a list of timestamps for the specified node
-    """
-    file_names = _get_dag_node_parquet_file_names(dag_dir)
-    node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
-    node_timestamps = []
-    for file_name in node_file_names:
-        # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
-        # And the timestamp is `20221028_080000`.
-        ts = file_name.split(".")[-2]
-        if as_timestamp:
-            ts = ts.replace("_", " ")
-            # TODO(Grisha): Pass tz a param?
-            ts = pd.Timestamp(ts, tz="America/New_York")
-        node_timestamps.append(ts)
-    return node_timestamps
-
-
-def get_dag_node_output(
-    dag_dir: str,
-    dag_node_name: str,
-    timestamp: pd.Timestamp,
-) -> pd.DataFrame:
-    """
-    Retrieve output from the last DAG node.
-
-    This function relies on our file naming conventions, e.g.,
-    `dag/node_io/node_io.data/predict.0.read_data.df_out.20221021_060500.parquet`.
-
-    :param dag_dir: dir with the DAG output
-    :param dag_node_name: a node name, e.g., `predict.0.read_data`
-    :param timestamp: bar timestamp
-    :return: a DAG node output
-    """
-    hdbg.dassert_dir_exists(dag_dir)
-    hdbg.dassert_isinstance(timestamp, pd.Timestamp)
-    timestamp = timestamp.strftime("%Y%m%d_%H%M%S")
-    # TODO(Grisha): merge the logic with the one in `get_dag_node_names()`.
-    cmd = f"find '{dag_dir}' -name {dag_node_name}*.parquet"
-    cmd += f" | grep '{timestamp}'"
-    _, file = hsystem.system_to_string(cmd)
-    df = hparque.from_parquet(file)
-    return df

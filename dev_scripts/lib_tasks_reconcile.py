@@ -225,7 +225,7 @@ def reconcile_dump_market_data(
             f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
         ]
         opts = " ".join(opts)
-        opts += "-v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
+        opts += " -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
         script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
         cmd = f"{script_name} {opts}"
         _system(cmd)
@@ -285,7 +285,7 @@ def reconcile_run_sim(
         f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
-    opts += "-v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    opts += " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
@@ -415,13 +415,14 @@ def reconcile_run_notebook(
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    config_builder = "amp.oms.reconciliation.build_reconciliation_configs()"
+    prod_subdir = None
+    config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(date_str="{run_date}", prod_subdir={prod_subdir})'
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
         f"--notebook {notebook_path}",
         f"--config_builder '{config_builder}'",
-        f"--dst_dir {results_dir}",
+        f"--dst_dir {local_results_dir}",
         f"{opts}",
     ]
     cmd_run_txt = " ".join(cmd_run_txt)
