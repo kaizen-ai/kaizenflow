@@ -261,7 +261,7 @@ def apply_dag_property(
     #  is built. Also each piece of config should `make_read_only` the pieces that
     #  is used.
     fast_prod_setup = system.config.get_and_mark_as_used(
-        ("dag_builder_config", "fast_prod_setup"), False
+        ("dag_builder_config", "fast_prod_setup"), default_value=False
     )
     _LOG.debug(hprint.to_str("fast_prod_setup"))
     if fast_prod_setup:
@@ -272,7 +272,7 @@ def apply_dag_property(
     # Set DAG properties.
     # 1) debug_mode_config
     debug_mode_config = system.config.get_and_mark_as_used(
-        ["dag_property_config", "debug_mode_config"], None
+        ["dag_property_config", "debug_mode_config"], default_value=None
     )
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
@@ -291,7 +291,7 @@ def apply_dag_property(
         dag.set_debug_mode(**debug_mode_config)
     # 2) force_free_nodes
     force_free_nodes = system.config.get_and_mark_as_used(
-        ["dag_property_config", "force_free_nodes"], False
+        ["dag_property_config", "force_free_nodes"], default_value=False
     )
     _LOG.debug(hprint.to_str("force_free_nodes"))
     if force_free_nodes:
@@ -799,7 +799,7 @@ def get_RealTimeDagRunner_from_System(
     market_data = system.market_data
     hdbg.dassert_isinstance(market_data, mdata.MarketData)
     fit_at_beginning = system.config.get_and_mark_as_used(
-        ("dag_runner_config", "fit_at_beginning"), False
+        ("dag_runner_config", "fit_at_beginning"), default_value=False
     )
     get_wall_clock_time = market_data.get_wall_clock_time
     # TODO(gp): This should become a builder method injecting values inside the
@@ -807,10 +807,10 @@ def get_RealTimeDagRunner_from_System(
     _LOG.debug("system.config=\n%s", str(system.config))
     # TODO(Grisha): do not use default values.
     wake_up_timestamp = system.config.get_and_mark_as_used(
-        ("dag_runner_config", "wake_up_timestamp"), None
+        ("dag_runner_config", "wake_up_timestamp"), default_value=None
     )
     bar_duration_in_secs = system.config.get_and_mark_as_used(
-        ("dag_runner_config", "bar_duration_in_secs"), None
+        ("dag_runner_config", "bar_duration_in_secs"), default_value=None
     )
     execute_rt_loop_config = {
         "get_wall_clock_time": get_wall_clock_time,
