@@ -73,7 +73,7 @@ class Fill:
         self.timestamp = timestamp
         # Number of shares executed. This has the same meaning as in Order, i.e., it
         # can be positive and negative depending on long / short.
-        hdbg.dassert_ne(num_shares, 0)
+        #hdbg.dassert_ne(num_shares, 0)
         self.num_shares = num_shares
         # Price executed for the given shares.
         hdbg.dassert_lt(0, price)
@@ -800,17 +800,24 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         for order in orders_to_execute:
             hdbg.dassert_lte(order.end_timestamp, wall_clock_timestamp)
 
-        df_to_remove = pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0)
-        df_to_remove = df_to_remove == "True"
-        bar_timestamp = hdatetime.find_bar_timestamp(wall_clock_timestamp)
+        import helpers.hdatetime as hdatetime
+        df_to_remove = pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0,
+                parse_dates=True)
+        #df_to_remove = df_to_remove == "True"
+        bar_duration_in_secs = 5 * 60
+        max_distance_in_secs = 1000
+        bar_timestamp = hdatetime.find_bar_timestamp(wall_clock_timestamp, bar_duration_in_secs,
+                max_distance_in_secs=max_distance_in_secs)
         _LOG.info(hprint.to_str("wall_clock_timestamp bar_timestamp"))
-        srs_to_remove = df_to_remove.loc[bar_timestamp]
-        _LOG.info("srs_to_remove:\n%s", hpandas.df_to_str(srs_to_remove))
-        for order in orders_to_execute:
-            if srs[order.asset_id]:
-                _LOG.info("Setting shares to 0")
-                order.diff_num_shares = 0
-
+        if bar_timestamp in df_to_remove.index:
+            srs_to_remove = df_to_remove.loc[bar_timestamp]
+            _LOG.info("srs_to_remove:\n%s", hpandas.df_to_str(srs_to_remove))
+            for order in orders_to_execute:
+                if srs_to_remove[str(order.asset_id)]:
+                    _LOG.info("Setting shares to 0 for order=%s", str(order))
+                    order.diff_num_shares = 0
+        else:
+            _LOG.warning("Can't find timestamp=%s", timestamp)
         # "Execute" the orders.
         # TODO(gp): Here there should be a programmable logic that decides
         #  how many shares are filled and how.
@@ -1001,6 +1008,7 @@ class DatabaseBroker(Broker):
         _LOG.info(hprint.to_str("wall_clock_timestamp bar_timestamp"))
         srs_to_remove = df_to_remove.loc[bar_timestamp]
         _LOG.info("srs_to_remove:\n%s", hpandas.df_to_str(srs_to_remove))
+        assert 0
         for order in orders:
             if srs[order.asset_id]:
                 _LOG.info("Setting shares to 0")
