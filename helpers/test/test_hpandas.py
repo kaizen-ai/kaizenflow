@@ -1901,7 +1901,7 @@ class Test_merge_dfs1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_compare_visually_dataframes(hunitest.TestCase):
+class Test_compare_dfs(hunitest.TestCase):
     """
     - Define two DataFrames that can be either equal or different in terms of columns or rows
     - Compare its values by calculating the difference
@@ -1932,7 +1932,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         ]
         values2 = {
             "tsA": pd.Series([1.1, 1.9, 3.15]),
-            "tsB": pd.Series([4.2, 5, 5.8]),
+            "tsB": pd.Series([0, 5, 5.8]),
             "tsC": pd.Series([6.5, 8.6, 9.07]),
             "timestamp": timestamp_index2,
         }
@@ -1958,13 +1958,12 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "diff"
         """
         df1, df2 = self.get_test_dfs_equal()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
             column_mode="equal",
             diff_mode="diff",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -1976,7 +1975,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.diff  tsB.diff  tsC.diff
         timestamp
-        2022-01-01 21:01:00+00:00     -0.10      -0.2      0.50
+        2022-01-01 21:01:00+00:00     -0.10       4.0      0.50
         2022-01-01 21:02:00+00:00      0.10       0.0     -0.60
         2022-01-01 21:03:00+00:00     -0.15       0.2     -0.07
         """
@@ -1995,13 +1994,13 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "pct_change"
         """
         df1, df2 = self.get_test_dfs_equal()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            background_gradient=False,
+            remove_inf=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2017,7 +2016,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00     -9.090909       -4.761905        7.692308
+        2022-01-01 21:01:00+00:00     -9.090909        inf             7.692308
         2022-01-01 21:02:00+00:00      5.263158        0.000000       -6.976744
         2022-01-01 21:03:00+00:00     -4.761905        3.448276       -0.771775
         """
@@ -2036,13 +2035,12 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "diff"
         """
         df1, df2 = self.get_test_dfs_different()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="inner",
             column_mode="inner",
             diff_mode="diff",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 2
@@ -2054,7 +2052,7 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         shape=(2, 2)
                                 tsA.diff  tsB.diff
         timestamp
-        2022-01-01 21:01:00+00:00      -0.1      -0.2
+        2022-01-01 21:01:00+00:00      -0.1       4.0
         2022-01-01 21:02:00+00:00       0.1       0.0
         """
         self.check_df_output(
@@ -2072,13 +2070,12 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         - diff_mode = "pct_change"
         """
         df1, df2 = self.get_test_dfs_different()
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="inner",
             column_mode="inner",
             diff_mode="pct_change",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 2
@@ -2090,8 +2087,8 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         shape=(2, 2)
                                 tsA.pct_change  tsB.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00       -9.090909       -4.761905
-        2022-01-01 21:02:00+00:00        5.263158        0.000000
+        2022-01-01 21:01:00+00:00       -9.090909        NaN
+        2022-01-01 21:02:00+00:00        5.263158        0.0
         """
         self.check_df_output(
             df_diff,
@@ -2115,13 +2112,12 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         # Create DataFrame with zeros.
         df2 = df1 * 0
         # Compare.
-        df_diff = hpandas.compare_visually_dataframes(
+        df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
             column_mode="equal",
             diff_mode="diff",
-            background_gradient=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2151,13 +2147,12 @@ class Test_compare_visually_dataframes(hunitest.TestCase):
         """
         df1, df2 = self.get_test_dfs_different()
         with self.assertRaises(AssertionError):
-            hpandas.compare_visually_dataframes(
+            hpandas.compare_dfs(
                 df1,
                 df2,
                 row_mode="equal",
                 column_mode="equal",
                 diff_mode="pct_change",
-                background_gradient=False,
             )
 
 
@@ -2643,18 +2638,17 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
             "columns_level0": ["asset1", "asset2"],
             "columns_level1": ["low", "high"],
         }
-        compare_visually_dataframes_kwargs = {
+        compare_dfs_kwargs = {
             "column_mode": "inner",
             "row_mode": "inner",
             "diff_mode": "pct_change",
-            "background_gradient": False,
             "assert_diff_threshold": None,
         }
         df_diff = hpandas.compare_multiindex_dfs(
             df1,
             df2,
             subset_multiindex_df_kwargs=subset_multiindex_df_kwargs,
-            compare_visually_dataframes_kwargs=compare_visually_dataframes_kwargs,
+            compare_dfs_kwargs=compare_dfs_kwargs,
         )
         expected_length = 3
         expected_column_names = [
