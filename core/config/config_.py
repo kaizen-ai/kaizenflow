@@ -391,11 +391,12 @@ class _OrderedConfig(_OrderedDictType):
             self._mark_as_used(key)
         return val
     
+    # TODO(Danya): Expand the use to `Config` class.
     def check_if_used(
         self, key: ScalarKey
-    ) -> ValueTypeHint:
+    ) -> bool:
         """
-        Retrieve the value corresponding to `key`.
+        Check if the value has been used.
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
