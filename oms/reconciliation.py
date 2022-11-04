@@ -318,14 +318,15 @@ def get_dag_node_timestamps(
     """
     Get all bar timestamps and the corresponding wall clock timestamps.
 
-    E.g., DAG node for bar timestamp `20221028_080000` was computed at 
+    E.g., DAG node for bar timestamp `20221028_080000` was computed at
     `20221028_080143`.
 
     :param dag_dir: dir with the DAG output
     :param dag_node_name: a node name, e.g., `predict.0.read_data`
     :param as_timestamp: if True return as `pd.Timestamp`, otherwise
         return as string
-    :return: a dictionary of timestamps for the specified node
+    :return: a list of tuples with a bar timestamp and a wall clock timestamp
+        for the specified node
     """
     _LOG.log(log_level, hprint.to_str("dag_dir dag_node_name as_timestamp"))
     file_names = _get_dag_node_parquet_file_names(dag_dir)
@@ -340,15 +341,11 @@ def get_dag_node_timestamps(
         wall_clock_timestamp = splitted_file_name[-2]
         if as_timestamp:
             bar_timestamp = bar_timestamp.replace("_", " ")
-            wall_clock_timestamp = wall_clock_timestamp.replace(
-                "_", " "
-            )
+            wall_clock_timestamp = wall_clock_timestamp.replace("_", " ")
             # TODO(Grisha): Pass tz a param?
             tz = "America/New_York"
             bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
-            wall_clock_timestamp = pd.Timestamp(
-                wall_clock_timestamp, tz=tz
-            )
+            wall_clock_timestamp = pd.Timestamp(wall_clock_timestamp, tz=tz)
         node_timestamps.append((bar_timestamp, wall_clock_timestamp))
     #
     _LOG.log(
