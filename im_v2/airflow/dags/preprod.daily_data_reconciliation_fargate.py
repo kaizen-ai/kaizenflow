@@ -4,8 +4,6 @@
 
 # IMPORTANT NOTES:
 # Make sure to set correct dag schedule `schedule_interval`` parameter.
-# Make sure to set the correct timedelta for `start_timestamp` cmd line
-# argument in all variables representing bash commands.
 
 # This DAG's configuration deploys tasks to AWS Fargate to offload the EC2s
 # mainly utilized for rt download
@@ -20,7 +18,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to
+# This variable will be propagated throughout DAG definition as a prefix to 
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -36,15 +34,31 @@ _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
-_EXCHANGES = ["binance"]
-_PROVIDERS = ["ccxt"]
-_UNIVERSES = {"ccxt" : "v7"}
-#_CONTRACTS = ["spot", "futures"]
-_CONTRACTS = ["spot", "futures"]
-#_DATA_TYPES = ["bid_ask", "ohlcv"]
-_DATA_TYPES = ["ohlcv"]
-_DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data reconciliation, contracts:" \
-                + f"{_CONTRACTS}, using {_PROVIDERS} from {_EXCHANGES}."
+# List of dicts to specify parameters for each reconciliation jobs.
+_RECONCILIATION_JOBS = [
+    {
+        "data_type": "ohlcv",
+        "contract_type": "futures",
+        "db_table_base_name": "ccxt_ohlcv_futures",
+        "s3_vendor": "ccxt",
+        "add_params": []
+    },
+    {
+        "data_type": "ohlcv",
+        "contract_type": "spot",
+        "db_table_base_name": "ccxt_ohlcv",
+        "s3_vendor": "ccxt",
+        "add_params": []
+    },
+    {
+        "data_type": "bid_ask",
+        "contract_type": "futures",
+        "db_table_base_name": "ccxt_bid_ask_futures_resampled_1min",
+        "s3_vendor": "crypto_chassis",
+        "add_params": ["--resample_1min"]
+    },   
+]
+_DAG_DESCRIPTION = "Daily data reconciliation"
 _SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
 
 # Used for container overrides inside DAG task definition.
@@ -58,11 +72,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize
+# in log groups, stream prefixes and container names to minimize 
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but
+# Subnets and security group is not needed for EC2 deployment but 
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -90,39 +104,44 @@ dag = airflow.DAG(
     catchup=False,
     start_date=datetime.datetime(2022, 7, 1, 0, 0, 0),
 )
-
+s3_daily_staged_data_path = s3_daily_staged_data_path.rstrip("/")
 compare_command = [
-    "/app/amp/im_v2/{}/data/extract/compare_realtime_and_historical.py",
-    "--end_timestamp '{{ execution_date + macros.timedelta(hours=24) - macros.timedelta(minutes=var.value.daily_data_download_reconciliation_delay_min | int) }}'",
-    "--start_timestamp '{{ execution_date - macros.timedelta(minutes=var.value.daily_data_download_reconciliation_delay_min | int) }}'",
-    "--db_stage 'dev'",
-    "--exchange_id '{}'",
-    "--db_table '{}'",
+    "/app/amp/im_v2/ccxt/data/extract/compare_realtime_and_historical.py",
+    "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(minutes=1) }}'",
+    "--start_timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
     "--aws_profile 'ck'",
-    "--s3_path '{}{}/{}'"
+    "--exchange_id 'binance'",
+    "--db_stage 'dev'",
+    "--db_table '{}'",
+    "--data_type '{}'",
+    "--contract_type '{}'",
+    "--s3_vendor '{}'",
+    f"--s3_path '{s3_daily_staged_data_path}'"
 ]
 
 start_comparison = DummyOperator(task_id='start_comparison', dag=dag)
 end_comparison = DummyOperator(task_id='end_comparison', dag=dag)
 
-for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _DATA_TYPES, _CONTRACTS):
+for job in _RECONCILIATION_JOBS:
 
-    db_table = f"{provider}_{data_type}"
-    db_table += "_futures" if contract == "futures" else ""
+    db_table = job["db_table_base_name"]
     db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-
+    data_type, contract_type, s3_vendor = (
+        job["data_type"], 
+        job["contract_type"], 
+        job["s3_vendor"]
+    )
+    
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(compare_command)
-    curr_bash_command[0] = curr_bash_command[0].format(provider)
-    curr_bash_command[4] = curr_bash_command[4].format(exchange)
-    curr_bash_command[5] = curr_bash_command[5].format(db_table)
-    curr_bash_command[-1] = curr_bash_command[-1].format(
-        s3_daily_staged_data_path,
-        # For futures we need to suffix the folder.
-        f"{data_type}-futures" if contract == "futures" else data_type,
-        provider
-    )
+    curr_bash_command[6] = curr_bash_command[6].format(db_table)
+    curr_bash_command[7] = curr_bash_command[7].format(data_type)
+    curr_bash_command[8] = curr_bash_command[8].format(contract_type)
+    curr_bash_command[9] = curr_bash_command[9].format(s3_vendor)
+    
+    for param in job["add_params"]:
+        curr_bash_command.append(param)
 
     kwargs = {}
     kwargs["network_configuration"] = {
@@ -131,9 +150,9 @@ for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _
             "subnets": ecs_subnets,
         },
     }
-
+    
     comparing_task = ECSOperator(
-        task_id=f"compare_{provider}_{exchange}_{data_type}_{contract}",
+        task_id=f"compare_ccxt_rt_{data_type}_{contract_type}_with_{s3_vendor}_daily",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
@@ -145,12 +164,14 @@ for provider, exchange, data_type, contract in product(_PROVIDERS, _EXCHANGES, _
                     "name": _CONTAINER_NAME,
                     "command": curr_bash_command,
                 }
-            ]
+            ],
+            "cpu": "512",
+            "memory": "2048"
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
         execution_timeout=datetime.timedelta(minutes=15),
         **kwargs
     )
-
+    
     start_comparison >> comparing_task >> end_comparison

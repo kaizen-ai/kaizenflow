@@ -179,6 +179,19 @@ def get_currency_pair_create_table_query() -> str:
             """
     return query
 
+# TODO(Juraj): This is currently not important for the local
+#  stage of the DB but it helps to track the desired state of 
+#  the DB until we find a suitable solution to #CmTask3146.
+def get_ccxt_create_bid_ask_futures_raw_index_query() -> str:
+    """
+    Get SQL query to define index on timestamp column
+    """
+    query = """
+    CREATE INDEX IF NOT EXISTS ccxt_bid_ask_futures_raw_timestamp_index 
+            ON ccxt_bid_ask_futures_raw(timestamp)
+            """
+    return query
+
 
 # #############################################################################
 
