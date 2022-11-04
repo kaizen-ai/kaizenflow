@@ -113,32 +113,46 @@ _LOG.info(
 # %%
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
+    only_last_node=False,
+    only_last_timestamp=False,
     log_level=logging.DEBUG,
 )
 
 # %%
 compare_dfs_kwargs = {
-    # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
-    "diff_mode": "diff",
+    "column_mode": "inner",
+    "diff_mode": "pct_change",
     "remove_inf": True,
+    "assert_diff_threshold": None,
 }
 dag_diff_df_dict = oms.compute_dag_outputs_diff(
     dag_df_dict, compare_dfs_kwargs
 )
 
 # %%
-node_name = list(dag_diff_df_dict.keys())[-1]
-timestamp = list(dag_diff_df_dict[node_name].keys())[-1]
-df_diff = dag_diff_df_dict[node_name][timestamp]
-df_diff
+# Below is a draft representation of how stats can be plotted.
 
 # %%
-# Remove the sign.
-df_diff = df_diff.abs()
-# Check that data is the same.
-df_diff.max().max()
+import collections
+dag_max_diff_df_dict = collections.defaultdict(dict)
+for node_name in dag_diff_df_dict:
+    df_node = dag_diff_df_dict[node_name]
+    for timestamp, df in df_node.items():
+        dag_max_diff_df_dict[node_name][timestamp] = df.max().max()
+dag_max_diff_df = pd.DataFrame.from_dict(dag_max_diff_df_dict)
+dag_max_diff_df
 
 # %%
+for col in dag_max_diff_df.columns:
+    print(col)
+    _ = dag_max_diff_df[col].plot()
+    plt.show()
+
+# %%
+for row in dag_max_diff_df.T.columns:
+    print(row)
+    _ = dag_max_diff_df.T[row].plot()
+    plt.show()
 
 # %%
 
