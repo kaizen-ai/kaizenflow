@@ -1,12 +1,9 @@
-# #############################################################################
-# Data Reconciliation
-# #############################################################################
 """
 Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_data_reconciliation_notebook  \
+docker> invoke run_data_reconciliation_notebook  \
    --stage 'preprod' \
    --db-stage 'dev' \
    --start-timestamp '2022-11-01T00:00:00+00:00' \
@@ -46,7 +43,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _reconcile_data_create_dirs(
-    base_dst_dir, start_timestamp, end_timestamp, db_table, abort_if_exists=True
+    base_dst_dir: str, start_timestamp: str, end_timestamp: str, db_table:str, abort_if_exists=True
 ) -> str:
     """
     Create dirs for storing data reconciliation results.
@@ -63,7 +60,7 @@ def _reconcile_data_create_dirs(
     i.e.
     ```
     shared_data/ecs/preprod/data_reconciliation/
-         2022-10-21_00:00:00_2022-10-21_21:00:00 \
+         20221021_000000.20221021_210000 \
              ccxt_ohlcv_futures_preprod/
                 result_0
             ...
@@ -79,10 +76,15 @@ def _reconcile_data_create_dirs(
     :param abort_if_exists: see `hio.create_dir()`
     :return: path to the created target dir
     """
-    # Strip the timezone part of the timestamps to improve readability
+    # Transform the timestamp arguments to avoid special characters
+    #  i.e. 2022-11-01T00:02:00+00:00 -> 2022-11-01_000200
     #  the context isn't lost since the raw args are present in the saved notebook
     #  and also chances of using anything else as UTC are low.
-    timestamp_dst_dir = start_timestamp.replace("+00:00", "") + "_" + end_timestamp.replace("+00:00", "")
+    start_timestamp = start_timestamp.replace("T", "_")
+    end_timestamp = end_timestamp.replace("T", "_")
+    start_timestamp = start_timestamp.replace("+00:00", "").translate(None, "+:")
+    end_timestamp = end_timestamp.replace("+00:00", "").translate(None, "+:")
+    timestamp_dst_dir = f"{start_timestamp}.{end_timestamp}"
     target_dir = os.path.join(base_dst_dir, timestamp_dst_dir, db_table)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
@@ -122,6 +124,9 @@ def run_data_reconciliation_notebook(
      influence placement of the results.
     :param base_dst_dir: dir to store data reconciliation
     """
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
     env_var_name_base = "DATA_RECONCILE_"
     os.environ[env_var_name_base + "DB_STAGE"] = db_stage
     os.environ[env_var_name_base + "START_TIMESTAMP"] = start_timestamp
