@@ -165,7 +165,8 @@ def get_ProcessForecastsNode_dict_instance1(
     if is_prod:
         compute_target_positions_kwargs = {
             "bulk_frac_to_remove": 0.0,
-            "target_gmv": 700.0,
+            "target_gmv": 1500.0,
+            #"target_gmv": 700.0,
         }
         root_log_dir = system.config.get("system_log_dir")
     else:
