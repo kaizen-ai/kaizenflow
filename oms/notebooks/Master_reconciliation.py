@@ -106,8 +106,8 @@ dag_node_timestamps = oms.get_dag_node_timestamps(
 )
 _LOG.info(
     "The 1st timestamp=%s, the last timestamp=%s",
-    dag_node_timestamps[0],
-    dag_node_timestamps[-1],
+    dag_node_timestamps[0][0],
+    dag_node_timestamps[-1][0],
 )
 
 # %%
@@ -116,13 +116,13 @@ dag_start_timestamp = None
 dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
-    dag_node_names[-1],
-    dag_node_timestamps[-1],
-    dag_start_timestamp,
-    dag_end_timestamp,
-    log_level=logging.DEBUG,
 )
-hpandas.df_to_str(dag_df_dict["prod"], num_rows=5, log_level=logging.INFO)
+# Get DAG output for the last node and the last timestamp.
+# TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
+# the other one for all nodes, all timestamps for comparison.
+dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
 # Compute difference.
@@ -132,8 +132,8 @@ compare_dfs_kwargs = {
     "remove_inf": True,
 }
 diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
+    dag_df_prod,
+    dag_df_sim,
     compare_dfs_kwargs=compare_dfs_kwargs,
 )
 # Remove the sign.
@@ -157,8 +157,8 @@ if False:
 # %%
 # Compute correlations.
 prod_sim_dag_corr = dtfmod.compute_correlations(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
+    dag_df_prod,
+    dag_df_sim,
 )
 hpandas.df_to_str(
     prod_sim_dag_corr.min(),
@@ -168,14 +168,20 @@ hpandas.df_to_str(
 )
 
 # %% [markdown]
+# # Compute DAG delay
+
+# %%
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps)
+
+# %% [markdown]
 # # Compute research portfolio equivalent
 
 # %%
 # Set Portofolio start and end timestamps.
 if True:
     # By default use the min/max bar timestamps from the DAG.
-    start_timestamp = dag_node_timestamps[0]
-    end_timestamp = dag_node_timestamps[-1]
+    start_timestamp = dag_node_timestamps[0][0]
+    end_timestamp = dag_node_timestamps[-1][0]
 else:
     # Overwrite if needed.
     start_timestamp = pd.Timestamp(
@@ -195,7 +201,7 @@ annotate_forecasts_kwargs = config["research_forecast_evaluator_from_prices"][
     "annotate_forecasts_kwargs"
 ].to_dict()
 research_portfolio_df, research_portfolio_stats_df = fep.annotate_forecasts(
-    dag_df_dict["prod"],
+    dag_df_prod,
     **annotate_forecasts_kwargs,
     compute_extended_stats=True,
 )
