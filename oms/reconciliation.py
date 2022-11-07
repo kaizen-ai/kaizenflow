@@ -623,6 +623,32 @@ def load_portfolio_dfs(
     return portfolio_dfs, portfolio_stats_dfs
 
 
+# TODO(gp): Merge with load_portfolio_dfs
+def load_portfolio_versions(
+    run_dir_dict: Dict[str, dict],
+    normalize_bar_times_freq: Optional[str] = None,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for run, dirs in run_dir_dict.items():
+        _LOG.info("Processing portfolio=%s", run)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            dirs["portfolio"],
+            normalize_bar_times_freq,
+        )
+        if start_timestamp is not None:
+            portfolio_df = portfolio_df.loc[start_timestamp:]
+            portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:]
+        if end_timestamp is not None:
+            portfolio_df = portfolio_df.loc[:end_timestamp]
+            portfolio_stats_df = portfolio_stats_df.loc[:end_timestamp]
+        portfolio_dfs[run] = portfolio_df
+        portfolio_stats_dfs[run] = portfolio_stats_df
+    return portfolio_dfs, portfolio_stats_dfs
+
+
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
     normalized_df = df.copy()
     normalized_df.drop(-1, axis=1, level=1, inplace=True)
@@ -684,6 +710,116 @@ def load_target_positions(
     target_position_df = target_position_df.loc[start_timestamp:end_timestamp]
     #
     return target_position_df
+
+
+def load_target_position_versions(
+    run_dir_dict: Dict[str, dict],
+    normalize_bar_times_freq: Optional[str] = None,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+) -> Dict[str, pd.DataFrame]:
+    dfs = {}
+    for run, dirs in run_dir_dict.items():
+        _LOG.info("Processing run=%s", run)
+        df = load_target_positions(
+            dirs["target_positions"],
+            normalize_bar_times_freq,
+        )
+        if start_timestamp is not None:
+            df = df.loc[start_timestamp:]
+        if end_timestamp is not None:
+            df = df.loc[:end_timestamp]
+        dfs[run] = df
+    return dfs
+
+
+# #############################################################################
+# Costs derived from Portfolio and Target Positions
+# #############################################################################
+
+
+def compute_notional_costs(
+    portfolio_df: pd.DataFrame,
+    target_position_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Compute notional slippage and underfill costs.
+
+    This is more accurate than slippage computed from `Portfolio` alone,
+    because `target_position_df` provides baseline prices even when
+    `holdings_shares` is zero (in which case we cannot compute the
+    baseline price from `Portfolio`).
+    """
+    executed_trades_shares = portfolio_df["executed_trades_shares"]
+    target_trades_shares = target_position_df["target_trades_shares"]
+    underfill_share_count = (
+        target_trades_shares.shift(1).abs() - executed_trades_shares.abs()
+    )
+    # Get baseline price.
+    price = target_position_df["price"]
+    # Compute underfill opportunity cost with respect to baseline price.
+    side = np.sign(target_position_df["target_trades_shares"].shift(2))
+    underfill_notional_cost = (
+        side * underfill_share_count.shift(1) * price.subtract(price.shift(1))
+    )
+    # Compute notional slippage.
+    executed_trades_notional = portfolio_df["executed_trades_notional"]
+    slippage_notional = executed_trades_notional - (
+        price * executed_trades_shares
+    )
+    # Aggregate results.
+    cost_df = pd.concat(
+        {
+            "underfill_notional_cost": underfill_notional_cost,
+            "slippage_notional": slippage_notional,
+        },
+        axis=1,
+    )
+    return cost_df
+
+
+def apply_costs_to_baseline(
+    baseline_portfolio_stats_df: pd.DataFrame,
+    portfolio_stats_df: pd.DataFrame,
+    portfolio_df: pd.DataFrame,
+    target_position_df: pd.DataFrame,
+) -> pd.DataFrame:
+    srs = []
+    # Add notional pnls.
+    baseline_pnl = baseline_portfolio_stats_df["pnl"].rename("baseline_pnl")
+    srs.append(baseline_pnl)
+    pnl = portfolio_stats_df["pnl"].rename("pnl")
+    srs.append(pnl)
+    # Compute notional costs.
+    costs = compute_notional_costs(portfolio_df, target_position_df)
+    slippage = costs["slippage_notional"].sum(axis=1).rename("slippage_notional")
+    srs.append(slippage)
+    underfill_cost = (
+        costs["underfill_notional_cost"]
+        .sum(axis=1)
+        .rename("underfill_notional_cost")
+    )
+    srs.append(underfill_cost)
+    # Adjust baseline pnl by costs.
+    baseline_pnl_minus_costs = (baseline_pnl - slippage - underfill_cost).rename(
+        "baseline_pnl_minus_costs"
+    )
+    srs.append(baseline_pnl_minus_costs)
+    # Compare adjusted baseline pnl to pnl.
+    baseline_pnl_minus_costs_minus_pnl = (baseline_pnl_minus_costs - pnl).rename(
+        "baseline_pnl_minus_costs_minus_pnl"
+    )
+    srs.append(baseline_pnl_minus_costs_minus_pnl)
+    # Compare baseline pnl to pnl.
+    baseline_pnl_minus_pnl = (baseline_pnl - pnl).rename("baseline_pnl_minus_pnl")
+    srs.append(baseline_pnl_minus_pnl)
+    df = pd.concat(srs, axis=1)
+    return df
+
+
+# #############################################################################
+# Slippage derived from Portfolio
+# #############################################################################
 
 
 def compute_shares_traded(
@@ -876,3 +1012,129 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
         axis=1,
     )
     return fills_df
+
+
+# #############################################################################
+# Multiday loader
+# #############################################################################
+
+
+def get_dir(root_dir: str, date_str: str, search_str: str, mode: str) -> str:
+    """
+    Get base log directory for a specific date.
+    """
+    hdbg.dassert(root_dir)
+    hdbg.dassert_dir_exists(root_dir)
+    if mode == "sim":
+        dir_ = os.path.join(f"{root_dir}/{date_str}/system_log_dir")
+    else:
+        if mode == "prod":
+            cmd = f"find {root_dir}/{date_str}/job.live* -name '{search_str}'"
+        elif mode == "cand":
+            cmd = (
+                f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+            )
+        else:
+            raise ValueError("Invalid mode %s", mode)
+        rc, dir_ = hsystem.system_to_string(cmd)
+    hdbg.dassert(dir_)
+    hdbg.dassert_dir_exists(dir_)
+    return dir_
+
+
+def get_run_dirs(
+    root_dir: str, date_str: str, search_str: str, modes: List[str]
+) -> Dict[str, dict]:
+    """
+    Get a dictionary of base and derived run directories for a specific date.
+    """
+    run_dir_dict = {}
+    for run in modes:
+        dir_ = get_dir(root_dir, date_str, search_str, run)
+        dict_ = {
+            "base": dir_,
+            "dag": os.path.join(dir_, "dag/node_io/node_io.data"),
+            "portfolio": os.path.join(dir_, "process_forecasts/portfolio"),
+            "target_positions": os.path.join(dir_, "process_forecasts"),
+        }
+        run_dir_dict[run] = dict_
+    return run_dir_dict
+
+
+def load_and_process_artifacts(
+    root_dir: str,
+    date_strs: List[str],
+    search_str: str,
+    mode: str,
+    normalize_bar_times_freq: Optional[str] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    hdbg.dassert(date_strs)
+    runs = {}
+    dag_dfs = []
+    portfolio_dfs = []
+    portfolio_stats_dfs = []
+    target_position_dfs = []
+    slippage_dfs = []
+    fills_dfs = []
+    for date_str in date_strs:
+        try:
+            run_dir_dict = get_run_dirs(root_dir, date_str, search_str, [mode])
+            runs[date_str] = run_dir_dict
+        except:
+            _LOG.warning("Unable to get directories for %s", date_str)
+        try:
+
+            def warn_if_duplicates_exist(df, name):
+                if df.index.has_duplicates:
+                    _LOG.warning(
+                        "df %s has duplicates on date_str=%s", name, date_str
+                    )
+
+            # Load DAG.
+            dag_df = get_latest_output_from_last_dag_node(
+                run_dir_dict[mode]["dag"]
+            )
+            warn_if_duplicates_exist(dag_df, "dag")
+            # Localize DAG to `date_str`.
+            dag_df = dag_df.loc[date_str]
+            dag_dfs.append(dag_df)
+            # Load Portfolio.
+            portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+                run_dir_dict[mode]["portfolio"],
+                normalize_bar_times_freq,
+            )
+            warn_if_duplicates_exist(portfolio_df, "portfolio")
+            warn_if_duplicates_exist(portfolio_stats_df, "portfolio_stats")
+            portfolio_dfs.append(portfolio_df)
+            portfolio_stats_dfs.append(portfolio_stats_df)
+            # Load target positions.
+            target_position_df = load_target_positions(
+                run_dir_dict[mode]["target_positions"], normalize_bar_times_freq
+            )
+            warn_if_duplicates_exist(target_position_df, "target_positions")
+            target_position_dfs.append(target_position_df)
+            # Compute slippage.
+            slippage_df = compute_share_prices_and_slippage(portfolio_df)
+            slippage_dfs.append(slippage_df)
+            # Compute fills.
+            fills_df = compute_fill_stats(target_position_df)
+            fills_dfs.append(fills_df)
+        except:
+            _LOG.warning("Unable to load data for %s", date_str)
+    _ = runs
+    dag_df = pd.concat(dag_dfs)
+    portfolio_df = pd.concat(portfolio_dfs)
+    portfolio_stats_df = pd.concat(portfolio_stats_dfs)
+    target_position_df = pd.concat(target_position_dfs)
+    slippage_df = pd.concat(slippage_dfs)
+    fills_df = pd.concat(fills_dfs)
+    return (
+        dag_df,
+        portfolio_df,
+        portfolio_stats_df,
+        target_position_df,
+        slippage_df,
+        fills_df,
+    )
+
+
