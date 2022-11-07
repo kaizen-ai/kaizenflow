@@ -1473,6 +1473,7 @@ def compare_dfs(
     diff_mode: str = "diff",
     remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
+    pct_change_threshold: float = 1e-3,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1492,6 +1493,7 @@ def compare_dfs(
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
+    :param pct_change_threshold: 
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1520,7 +1522,13 @@ def compare_dfs(
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
-        df_diff = 100 * (df1 - df2) / df2
+        df1_lt = df1 < pct_change_threshold
+        df2_lt = df2 < pct_change_threshold
+        if df1[[df1_lt]] or df2[[df2_lt]:
+            df_diff = df1 - df2
+        elif df1[~[df1_lt]] or df2[~[df2_lt]]:
+            df_diff = 100 * (df1 - df2) / df2
+        max_diff = df_diff.abs().max().max()
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
