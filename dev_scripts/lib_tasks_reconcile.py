@@ -354,17 +354,18 @@ def reconcile_copy_prod_data(
     shared_dir = f"/shared_data/ecs/{stage}"
     cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
-    _, system_log_dir = hsystem.system_to_string(cmd)
+    #_, system_log_dir = hsystem.system_to_string(cmd)
+    system_log_dir = "system_log_dir_manual__2022-11-07T15:12:00.832111+00:00_2hours"
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
-    # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
-    _, log_file = hsystem.system_to_string(cmd)
-    hdbg.dassert_file_exists(log_file)
-    cmd = f"cp -v {log_file} {prod_target_dir}"
-    _system(cmd)
+    # cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    # # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
+    # _, log_file = hsystem.system_to_string(cmd)
+    # hdbg.dassert_file_exists(log_file)
+    # cmd = f"cp -v {log_file} {prod_target_dir}"
+    # _system(cmd)
     #
     if prevent_overwriting:
         _prevent_overwriting(prod_target_dir)
