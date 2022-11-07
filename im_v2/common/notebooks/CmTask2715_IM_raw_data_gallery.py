@@ -199,13 +199,15 @@ print("Tail:")
 display(cc_ba_daily.tail())
 
 # %% [markdown]
-# #### Compute NaNs 
+# #### Count NaNs 
 
 # %%
 cstadesc.compute_frac_nan(cc_ba_daily)
 
 # %% [markdown]
-# #### Compute zeros
+# #### Count zeros
 
 # %%
 cstadesc.compute_frac_zero(cc_ba_daily)
+
+# %%
