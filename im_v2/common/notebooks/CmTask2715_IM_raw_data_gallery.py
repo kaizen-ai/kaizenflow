@@ -177,12 +177,6 @@ display(cc_ba_futures_daily.tail())
 cstadesc.compute_frac_nan(cc_ba_futures_daily)
 
 # %% [markdown]
-# #### Count zeros
-
-# %%
-cstadesc.compute_frac_zero(cc_ba_futures_daily)
-
-# %% [markdown]
 # ### CC spot
 
 # %%
@@ -203,11 +197,5 @@ display(cc_ba_daily.tail())
 
 # %%
 cstadesc.compute_frac_nan(cc_ba_daily)
-
-# %% [markdown]
-# #### Count zeros
-
-# %%
-cstadesc.compute_frac_zero(cc_ba_daily)
 
 # %%
