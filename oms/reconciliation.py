@@ -4,6 +4,7 @@ Import as:
 import oms.reconciliation as omreconc
 """
 
+import collections
 import datetime
 import logging
 import os
@@ -43,8 +44,8 @@ def build_reconciliation_configs(
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
-    
-    Note: the function returns list of configs because the function is used 
+
+    Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
     :param date_str: specify which date to use for reconciliation
@@ -314,28 +315,39 @@ def get_dag_node_timestamps(
     *,
     as_timestamp: bool = True,
     log_level: int = logging.DEBUG,
-) -> List[Union[str, pd.Timestamp]]:
+) -> List[Tuple[Union[str, pd.Timestamp], Union[str, pd.Timestamp]]]:
     """
-    Get all timestamps for a node.
+    Get all bar timestamps and the corresponding wall clock timestamps.
+
+    E.g., DAG node for bar timestamp `20221028_080000` was computed at
+    `20221028_080143`.
 
     :param dag_dir: dir with the DAG output
     :param dag_node_name: a node name, e.g., `predict.0.read_data`
     :param as_timestamp: if True return as `pd.Timestamp`, otherwise
         return as string
-    :return: a list of timestamps for the specified node
+    :return: a list of tuples with bar timestamps and wall clock timestamps
+        for the specified node
     """
+    _LOG.log(log_level, hprint.to_str("dag_dir dag_node_name as_timestamp"))
     file_names = _get_dag_node_parquet_file_names(dag_dir)
     node_file_names = list(filter(lambda node: dag_node_name in node, file_names))
     node_timestamps = []
     for file_name in node_file_names:
-        # E.g., file name is `predict.8.process_forecasts.df_out.20221028_080000.parquet`.
-        # And the timestamp is `20221028_080000`.
-        ts = file_name.split(".")[-2]
+        # E.g., file name is "predict.8.process_forecasts.df_out.20221028_080000.20221028_080143.parquet".
+        # The bar timestamp is "20221028_080000", and the wall clock timestamp
+        # is "20221028_080143".
+        splitted_file_name = file_name.split(".")
+        bar_timestamp = splitted_file_name[-3]
+        wall_clock_timestamp = splitted_file_name[-2]
         if as_timestamp:
-            ts = ts.replace("_", " ")
+            bar_timestamp = bar_timestamp.replace("_", " ")
+            wall_clock_timestamp = wall_clock_timestamp.replace("_", " ")
             # TODO(Grisha): Pass tz a param?
-            ts = pd.Timestamp(ts, tz="America/New_York")
-        node_timestamps.append(ts)
+            tz = "America/New_York"
+            bar_timestamp = pd.Timestamp(bar_timestamp, tz=tz)
+            wall_clock_timestamp = pd.Timestamp(wall_clock_timestamp, tz=tz)
+        node_timestamps.append((bar_timestamp, wall_clock_timestamp))
     #
     _LOG.log(
         log_level,
@@ -374,39 +386,155 @@ def get_dag_node_output(
 
 def load_dag_outputs(
     dag_path_dict: Dict[str, str],
-    dag_node_name: str,
-    dag_node_timestamp: pd.Timestamp,
-    start_timestamp: Optional[pd.Timestamp],
-    end_timestamp: Optional[pd.Timestamp],
     *,
-    log_level: int = logging.INFO,
-) -> Dict[str, pd.DataFrame]:
+    only_last_node: bool = True,
+    only_last_timestamp: bool = True,
+    only_last_row: bool = False,
+) -> Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]]:
     """
     Load DAG output for different experiments.
 
+    Output example:
+    ```
+    {
+        "prod": {
+            "predict.0.read_data": {
+                "2022-11-03 06:05:00-04:00": pd.DataFrame,
+                ...
+            },
+        },
+    }
+    ```
+
     :param dag_path_dict: dst dir for every experiment
-    :param dag_node_name: a node name, e.g., `predict.0.read_data`
-    :param dag_node_timestamp: timestamp at which a node was run
+    :param only_last_node: if `True`, get DAG output only for the last node,
+        otherwise load data for all the nodes
+    :param only_last_timestamp: if `True`, get DAG output only for the last timestamp,
+        otherwise load data for all the timestamps
+    :param only_last_row: if `True`, get DAG output only for the last data row,
+        otherwise load whole dataframes
+    :param log_level: log level
+    :return: DAG output per experiment, node and timestamp
     """
     dag_df_dict = {}
-    for experiment_name, path in dag_path_dict.items():
-        _LOG.log(log_level, hprint.to_str("experiment_name"))
-        # Get DAG output for the last node and the last timestamp.
-        dag_df_dict[experiment_name] = get_dag_node_output(
-            path,
-            dag_node_name,
-            dag_node_timestamp,
-        )
-    # Trim the data to match the target interval.
-    if start_timestamp or end_timestamp:
-        for k in dag_df_dict.keys():
-            dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
-    # Report the output.
-    for k in dag_df_dict.keys():
-        hpandas.df_to_str(
-            dag_df_dict[k], num_rows=3, log_level=log_level
-        )
+    for experiment, path in dag_path_dict.items():
+        # Set experiment default dict to fill it in the loop.
+        experiment_dict = collections.defaultdict(dict)
+        # Get DAG node names to iterate over them.
+        nodes = get_dag_node_names(path)
+        if only_last_node:
+            nodes = [nodes[-1]]
+        for node in nodes:
+            # Get DAG timestamps to iterate over them.
+            dag_timestamps = get_dag_node_timestamps(path, node)
+            # Keep bar timestamps only.
+            bar_timestamps = [
+                bar_timestamp for bar_timestamp, _ in dag_timestamps
+            ]
+            if only_last_timestamp:
+                bar_timestamps = [bar_timestamps[-1]]
+            for timestamp in bar_timestamps:
+                # Get DAG output for the specified node and timestamp.
+                df = get_dag_node_output(path, node, timestamp)
+                if only_last_row:
+                    df = df.tail(1)
+                experiment_dict[node][timestamp] = df
+        # Populate result dict with experiment output dict.
+        dag_df_dict[experiment] = experiment_dict
     return dag_df_dict
+
+
+def compute_dag_outputs_diff(
+    dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
+    compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Dict[pd.Timestamp, pd.DataFrame]]:
+    """
+    Compute DAG output differences for different experiments.
+
+    :param dag_df_dict: DAG output per experiment, node and timestamp
+    :param compare_dfs_kwargs: params for `compare_dfs()`
+    :return: DAG output differences per experiment, node and timestamp
+    """
+    if compare_dfs_kwargs is None:
+        compare_dfs_kwargs = {}
+    # Get experiment DAG output dicts to iterate over them.
+    experiment_names = list(dag_df_dict.keys())
+    hdbg.dassert_eq(2, len(experiment_names))
+    dag_dict_1 = dag_df_dict[experiment_names[0]]
+    dag_dict_2 = dag_df_dict[experiment_names[1]]
+    # Assert that output dicts have similar node names.
+    hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
+    #
+    dag_diff_df_dict = collections.defaultdict(dict)
+    for node_name in dag_dict_1:
+        # Get node DAG output dicts to iterate over them.
+        dag_dict_1_node = dag_dict_1[node_name]
+        dag_dict_2_node = dag_dict_2[node_name]
+        # Assert that node dicts have similar timestamps.
+        hdbg.dassert_set_eq(dag_dict_1_node.keys(), dag_dict_2_node.keys())
+        for timestamp in dag_dict_1_node:
+            # Get DAG outputs per timestamp and compare them.
+            df_1 = dag_dict_1_node[timestamp]
+            df_2 = dag_dict_2_node[timestamp]
+            # Append asset id as index level if it is present in the data.
+            if "asset_id" in df_1.columns:
+                df_1 = df_1.set_index("asset_id", append=True)
+                df_2 = df_2.set_index("asset_id", append=True)
+            # Pick only float columns for difference computations.
+            # Only float columns are picked because int columns represent
+            # not metrics but ids, etc.
+            df_1 = df_1.select_dtypes("float")
+            df_2 = df_2.select_dtypes("float")
+            # Compute the difference and put it in the result dict
+            df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
+            dag_diff_df_dict[node_name][timestamp] = df_diff
+    return dict(dag_diff_df_dict)
+
+
+def compute_dag_delay_in_seconds(
+    dag_node_timestamps: List[Tuple[pd.Timestamp, pd.Timestamp]],
+    *,
+    print_stats: bool = True,
+    display_plot: bool = False,
+) -> pd.DataFrame:
+    """
+    Compute difference in seconds between `wall_clock_timestamp` and
+    `bar_timestamp` for each timestamp.
+
+    :param print_stats: if True print stats (i.e. min, mean, max), otherwise
+        do not print
+    :param display_plot: if True display delay chart over bar timestamp,
+        otherwise do not display
+    :return: a table with bar timestamps and corresponding delays in seconds
+    """
+    delay_in_seconds = []
+    bar_timestamps = []
+    for bar_timestamp, wall_clock_timestamp in dag_node_timestamps:
+        diff = (wall_clock_timestamp - bar_timestamp).seconds
+        delay_in_seconds.append(diff)
+        bar_timestamps.append(bar_timestamp)
+    delay_column_name = "delay_in_seconds"
+    diff = pd.DataFrame(
+        delay_in_seconds, columns=[delay_column_name], index=bar_timestamps
+    )
+    diff = diff.sort_values(
+        delay_column_name,
+        ascending=False,
+    )
+    diff.index.name = "bar_timestamp"
+    if print_stats:
+        _LOG.info(
+            "Minimum delay=%s, mean delay=%s, maximum delay=%s",
+            round(diff["delay_in_seconds"].min(), 2),
+            round(diff["delay_in_seconds"].mean(), 2),
+            round(diff["delay_in_seconds"].max(), 2),
+        )
+    if display_plot:
+        diff.plot(
+            kind="bar",
+            title="Difference in seconds between DAG wall clock timestamp and bar timestamp",
+        )
+    return diff
 
 
 # #############################################################################
@@ -495,6 +623,32 @@ def load_portfolio_dfs(
     return portfolio_dfs, portfolio_stats_dfs
 
 
+# TODO(gp): Merge with load_portfolio_dfs
+def load_portfolio_versions(
+    run_dir_dict: Dict[str, dict],
+    normalize_bar_times_freq: Optional[str] = None,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
+    portfolio_dfs = {}
+    portfolio_stats_dfs = {}
+    for run, dirs in run_dir_dict.items():
+        _LOG.info("Processing portfolio=%s", run)
+        portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+            dirs["portfolio"],
+            normalize_bar_times_freq,
+        )
+        if start_timestamp is not None:
+            portfolio_df = portfolio_df.loc[start_timestamp:]
+            portfolio_stats_df = portfolio_stats_df.loc[start_timestamp:]
+        if end_timestamp is not None:
+            portfolio_df = portfolio_df.loc[:end_timestamp]
+            portfolio_stats_df = portfolio_stats_df.loc[:end_timestamp]
+        portfolio_dfs[run] = portfolio_df
+        portfolio_stats_dfs[run] = portfolio_stats_df
+    return portfolio_dfs, portfolio_stats_dfs
+
+
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
     normalized_df = df.copy()
     normalized_df.drop(-1, axis=1, level=1, inplace=True)
@@ -556,6 +710,116 @@ def load_target_positions(
     target_position_df = target_position_df.loc[start_timestamp:end_timestamp]
     #
     return target_position_df
+
+
+def load_target_position_versions(
+    run_dir_dict: Dict[str, dict],
+    normalize_bar_times_freq: Optional[str] = None,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+) -> Dict[str, pd.DataFrame]:
+    dfs = {}
+    for run, dirs in run_dir_dict.items():
+        _LOG.info("Processing run=%s", run)
+        df = load_target_positions(
+            dirs["target_positions"],
+            normalize_bar_times_freq,
+        )
+        if start_timestamp is not None:
+            df = df.loc[start_timestamp:]
+        if end_timestamp is not None:
+            df = df.loc[:end_timestamp]
+        dfs[run] = df
+    return dfs
+
+
+# #############################################################################
+# Costs derived from Portfolio and Target Positions
+# #############################################################################
+
+
+def compute_notional_costs(
+    portfolio_df: pd.DataFrame,
+    target_position_df: pd.DataFrame,
+) -> pd.DataFrame:
+    """
+    Compute notional slippage and underfill costs.
+
+    This is more accurate than slippage computed from `Portfolio` alone,
+    because `target_position_df` provides baseline prices even when
+    `holdings_shares` is zero (in which case we cannot compute the
+    baseline price from `Portfolio`).
+    """
+    executed_trades_shares = portfolio_df["executed_trades_shares"]
+    target_trades_shares = target_position_df["target_trades_shares"]
+    underfill_share_count = (
+        target_trades_shares.shift(1).abs() - executed_trades_shares.abs()
+    )
+    # Get baseline price.
+    price = target_position_df["price"]
+    # Compute underfill opportunity cost with respect to baseline price.
+    side = np.sign(target_position_df["target_trades_shares"].shift(2))
+    underfill_notional_cost = (
+        side * underfill_share_count.shift(1) * price.subtract(price.shift(1))
+    )
+    # Compute notional slippage.
+    executed_trades_notional = portfolio_df["executed_trades_notional"]
+    slippage_notional = executed_trades_notional - (
+        price * executed_trades_shares
+    )
+    # Aggregate results.
+    cost_df = pd.concat(
+        {
+            "underfill_notional_cost": underfill_notional_cost,
+            "slippage_notional": slippage_notional,
+        },
+        axis=1,
+    )
+    return cost_df
+
+
+def apply_costs_to_baseline(
+    baseline_portfolio_stats_df: pd.DataFrame,
+    portfolio_stats_df: pd.DataFrame,
+    portfolio_df: pd.DataFrame,
+    target_position_df: pd.DataFrame,
+) -> pd.DataFrame:
+    srs = []
+    # Add notional pnls.
+    baseline_pnl = baseline_portfolio_stats_df["pnl"].rename("baseline_pnl")
+    srs.append(baseline_pnl)
+    pnl = portfolio_stats_df["pnl"].rename("pnl")
+    srs.append(pnl)
+    # Compute notional costs.
+    costs = compute_notional_costs(portfolio_df, target_position_df)
+    slippage = costs["slippage_notional"].sum(axis=1).rename("slippage_notional")
+    srs.append(slippage)
+    underfill_cost = (
+        costs["underfill_notional_cost"]
+        .sum(axis=1)
+        .rename("underfill_notional_cost")
+    )
+    srs.append(underfill_cost)
+    # Adjust baseline pnl by costs.
+    baseline_pnl_minus_costs = (baseline_pnl - slippage - underfill_cost).rename(
+        "baseline_pnl_minus_costs"
+    )
+    srs.append(baseline_pnl_minus_costs)
+    # Compare adjusted baseline pnl to pnl.
+    baseline_pnl_minus_costs_minus_pnl = (baseline_pnl_minus_costs - pnl).rename(
+        "baseline_pnl_minus_costs_minus_pnl"
+    )
+    srs.append(baseline_pnl_minus_costs_minus_pnl)
+    # Compare baseline pnl to pnl.
+    baseline_pnl_minus_pnl = (baseline_pnl - pnl).rename("baseline_pnl_minus_pnl")
+    srs.append(baseline_pnl_minus_pnl)
+    df = pd.concat(srs, axis=1)
+    return df
+
+
+# #############################################################################
+# Slippage derived from Portfolio
+# #############################################################################
 
 
 def compute_shares_traded(
@@ -748,3 +1012,129 @@ def compute_fill_stats(df: pd.DataFrame) -> pd.DataFrame:
         axis=1,
     )
     return fills_df
+
+
+# #############################################################################
+# Multiday loader
+# #############################################################################
+
+
+def get_dir(root_dir: str, date_str: str, search_str: str, mode: str) -> str:
+    """
+    Get base log directory for a specific date.
+    """
+    hdbg.dassert(root_dir)
+    hdbg.dassert_dir_exists(root_dir)
+    if mode == "sim":
+        dir_ = os.path.join(f"{root_dir}/{date_str}/system_log_dir")
+    else:
+        if mode == "prod":
+            cmd = f"find {root_dir}/{date_str}/job.live* -name '{search_str}'"
+        elif mode == "cand":
+            cmd = (
+                f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+            )
+        else:
+            raise ValueError("Invalid mode %s", mode)
+        rc, dir_ = hsystem.system_to_string(cmd)
+    hdbg.dassert(dir_)
+    hdbg.dassert_dir_exists(dir_)
+    return dir_
+
+
+def get_run_dirs(
+    root_dir: str, date_str: str, search_str: str, modes: List[str]
+) -> Dict[str, dict]:
+    """
+    Get a dictionary of base and derived run directories for a specific date.
+    """
+    run_dir_dict = {}
+    for run in modes:
+        dir_ = get_dir(root_dir, date_str, search_str, run)
+        dict_ = {
+            "base": dir_,
+            "dag": os.path.join(dir_, "dag/node_io/node_io.data"),
+            "portfolio": os.path.join(dir_, "process_forecasts/portfolio"),
+            "target_positions": os.path.join(dir_, "process_forecasts"),
+        }
+        run_dir_dict[run] = dict_
+    return run_dir_dict
+
+
+def load_and_process_artifacts(
+    root_dir: str,
+    date_strs: List[str],
+    search_str: str,
+    mode: str,
+    normalize_bar_times_freq: Optional[str] = None,
+) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    hdbg.dassert(date_strs)
+    runs = {}
+    dag_dfs = []
+    portfolio_dfs = []
+    portfolio_stats_dfs = []
+    target_position_dfs = []
+    slippage_dfs = []
+    fills_dfs = []
+    for date_str in date_strs:
+        try:
+            run_dir_dict = get_run_dirs(root_dir, date_str, search_str, [mode])
+            runs[date_str] = run_dir_dict
+        except:
+            _LOG.warning("Unable to get directories for %s", date_str)
+        try:
+
+            def warn_if_duplicates_exist(df, name):
+                if df.index.has_duplicates:
+                    _LOG.warning(
+                        "df %s has duplicates on date_str=%s", name, date_str
+                    )
+
+            # Load DAG.
+            dag_df = get_latest_output_from_last_dag_node(
+                run_dir_dict[mode]["dag"]
+            )
+            warn_if_duplicates_exist(dag_df, "dag")
+            # Localize DAG to `date_str`.
+            dag_df = dag_df.loc[date_str]
+            dag_dfs.append(dag_df)
+            # Load Portfolio.
+            portfolio_df, portfolio_stats_df = load_portfolio_artifacts(
+                run_dir_dict[mode]["portfolio"],
+                normalize_bar_times_freq,
+            )
+            warn_if_duplicates_exist(portfolio_df, "portfolio")
+            warn_if_duplicates_exist(portfolio_stats_df, "portfolio_stats")
+            portfolio_dfs.append(portfolio_df)
+            portfolio_stats_dfs.append(portfolio_stats_df)
+            # Load target positions.
+            target_position_df = load_target_positions(
+                run_dir_dict[mode]["target_positions"], normalize_bar_times_freq
+            )
+            warn_if_duplicates_exist(target_position_df, "target_positions")
+            target_position_dfs.append(target_position_df)
+            # Compute slippage.
+            slippage_df = compute_share_prices_and_slippage(portfolio_df)
+            slippage_dfs.append(slippage_df)
+            # Compute fills.
+            fills_df = compute_fill_stats(target_position_df)
+            fills_dfs.append(fills_df)
+        except:
+            _LOG.warning("Unable to load data for %s", date_str)
+    _ = runs
+    dag_df = pd.concat(dag_dfs)
+    portfolio_df = pd.concat(portfolio_dfs)
+    portfolio_stats_df = pd.concat(portfolio_stats_dfs)
+    target_position_df = pd.concat(target_position_dfs)
+    slippage_df = pd.concat(slippage_dfs)
+    fills_df = pd.concat(fills_dfs)
+    return (
+        dag_df,
+        portfolio_df,
+        portfolio_stats_df,
+        target_position_df,
+        slippage_df,
+        fills_df,
+    )
+
+
