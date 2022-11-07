@@ -355,7 +355,7 @@ def reconcile_copy_prod_data(
     cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
     #_, system_log_dir = hsystem.system_to_string(cmd)
-    system_log_dir = "system_log_dir_manual__2022-11-07T15:12:00.832111+00:00_2hours"
+    system_log_dir = os.path.join(shared_dir, "system_log_dir_manual__2022-11-07T15:12:00.832111+00:00_2hours")
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
