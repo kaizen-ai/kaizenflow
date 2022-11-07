@@ -159,7 +159,7 @@ volume0["currency_pair"].value_counts().plot(kind="bar")
 
 # %%
 # Get historical data.
-s3_path = "s3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
+s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
 # Load daily data from s3 parquet.
 cc_ba_futures_daily = hparque.from_parquet(s3_path, aws_profile="ck")
 
@@ -181,7 +181,7 @@ cstadesc.compute_frac_nan(cc_ba_futures_daily)
 
 # %%
 # Get historical data.
-s3_path = "s3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
+s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
 # Load daily data from s3 parquet.
 cc_ba_daily = hparque.from_parquet(s3_path, aws_profile="ck")
 
@@ -197,5 +197,3 @@ display(cc_ba_daily.tail())
 
 # %%
 cstadesc.compute_frac_nan(cc_ba_daily)
-
-# %%
