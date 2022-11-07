@@ -17,7 +17,7 @@
 #
 
 # %% [markdown]
-# This notebook examines...
+# This notebook shows raw data for CCXT OHLCV and Crypto Chassis bid-ask data.
 
 # %% [markdown]
 # # Imports
@@ -77,9 +77,9 @@ ccxt_rt = get_ccxt_realtime_data("ccxt_ohlcv_futures", "binance")
 # %%
 print(f"{len(ccxt_rt)} rows overall")
 print("Head:")
-display(ccxt_rt.head())
+display(ccxt_rt.head(3))
 print("Tail:")
-display(ccxt_rt.tail())
+display(ccxt_rt.tail(3))
 
 # %% [markdown]
 # #### Count NaNs
@@ -151,4 +151,61 @@ display(volume0.tail())
 # %%
 volume0["currency_pair"].value_counts().plot(kind="bar")
 
+# %% [markdown]
+# ## BID-ASK
+
+# %% [markdown]
+# ### CC futures
+
 # %%
+# Get historical data.
+s3_path = "s3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
+# Load daily data from s3 parquet.
+cc_ba_futures_daily = hparque.from_parquet(s3_path, aws_profile="ck")
+
+# %%
+print(f"{len(cc_ba_futures_daily)} rows overall")
+print("Head:")
+display(cc_ba_futures_daily.head())
+print("Tail:")
+display(cc_ba_futures_daily.tail())
+
+# %% [markdown]
+# #### Count NaNs
+
+# %%
+cstadesc.compute_frac_nan(cc_ba_futures_daily)
+
+# %% [markdown]
+# #### Count zeros
+
+# %%
+cstadesc.compute_frac_zero(cc_ba_futures_daily)
+
+# %% [markdown]
+# ### CC spot
+
+# %%
+# Get historical data.
+s3_path = "s3://cryptokaizen-data.preprod/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
+# Load daily data from s3 parquet.
+cc_ba_daily = hparque.from_parquet(s3_path, aws_profile="ck")
+
+# %%
+print(f"{len(cc_ba_daily)} rows overall")
+print("Head:")
+display(cc_ba_daily.head())
+print("Tail:")
+display(cc_ba_daily.tail())
+
+# %% [markdown]
+# #### Compute NaNs 
+
+# %%
+cstadesc.compute_frac_nan(cc_ba_daily)
+
+# %% [markdown]
+# #### Compute zeros
+
+# %%
+cstadesc.compute_frac_zero(cc_ba_daily)
