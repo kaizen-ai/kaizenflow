@@ -2147,7 +2147,7 @@ class Test_compare_dfs(hunitest.TestCase):
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
 
-        DataFrames have numbers below the threshold.
+        The second DataFrame has numbers below the threshold.
         """
         df1, df2 = self.get_test_dfs_equal()
         df2[2:] = df2[2:] / 1e8
