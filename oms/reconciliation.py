@@ -78,8 +78,7 @@ def build_reconciliation_configs(
         ).strftime("%Y-%m-%d")
         if prod_subdir is None:
             # TODO(Grisha): @Dan Refactor hard-coded time.
-            #prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
-            prod_subdir = "system_log_dir_manual__2022-11-07T15:12:00.832111+00:00_2hours"
+            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
         prod_dir = os.path.join(
             root_dir,
             date_str,
