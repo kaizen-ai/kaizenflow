@@ -1523,15 +1523,13 @@ def compare_dfs(
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
-        # If numbers are below the threshold, compute the relative difference. Otherwise,
-        # compute the absolute one.
-        mask_lt = lambda x: x < pct_change_threshold
-        check = lambda x, y: any([x.notna().values.any(), y.notna().values.any()])
-        if check(df1[mask_lt], df2[mask_lt]):
-            df_diff = df1 - df2
-        else:
-            df_diff = 100 * (df1 - df2) / df2
-            max_diff = df_diff.abs().max().max()
+        mask_lt = lambda x: abs(x) < pct_change_threshold
+        mask_gt = lambda x: abs(x) > pct_change_threshold
+        #
+        abs_diff = abs(df1[mask_lt] - df2[mask_lt])
+        pct_change = 100 * (df1[mask_gt] - df2[mask_gt]) / df2[mask_gt]
+        #
+        df_diff = pd.concat([abs_diff, pct_change], ignore_index=True)
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
