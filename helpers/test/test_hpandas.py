@@ -2329,7 +2329,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
         columns=('asset2', 'close'),('asset2', 'high'),('asset2', 'low'),('asset2', 'open')
         shape=(2, 4)
-                                    asset2                              
+                                    asset2
         timestamp                     close      high       low      open
         2022-01-01 21:01:00+00:00  0.100234  1.407860 -0.131710  0.200999
         2022-01-01 21:02:00+00:00  2.045787  0.060399 -0.776521 -1.059238
@@ -2662,7 +2662,7 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
         index=[2022-01-01 21:02:00+00:00, 2022-01-01 21:04:00+00:00]
         columns=('asset1.pct_change', 'high.pct_change'),('asset1.pct_change', 'low.pct_change'),('asset2.pct_change', 'high.pct_change'),('asset2.pct_change', 'low.pct_change')
         shape=(3, 4)
-                                asset1.pct_change                asset2.pct_change               
+                                asset1.pct_change                asset2.pct_change
         timestamp                   high.pct_change low.pct_change   high.pct_change low.pct_change
         2022-01-01 21:02:00+00:00         -0.387540       1.174296         -1.038852      -1.264697
         2022-01-01 21:03:00+00:00          0.761005       0.518832         -1.766080       0.273193
