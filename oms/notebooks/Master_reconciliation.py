@@ -54,8 +54,8 @@ hprint.config_notebook()
 # %%
 #date_str = "20221028"
 #date_str = "20221031"
-date_str = "20221103"
-#date_str = "20221104"
+#date_str = "20221103"
+date_str = "20221104"
 #prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
