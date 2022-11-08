@@ -1522,7 +1522,7 @@ def compare_dfs(
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
-        # Round small numbers up to 0 to exclude them from diff computation.
+        # Round small numbers up to 0 to exclude them from the diff computation.
         mask_lt = lambda x: abs(x) < pct_change_threshold
         df1[mask_lt] = df1[mask_lt].round(0)
         df2[mask_lt] = df2[mask_lt].round(0)
