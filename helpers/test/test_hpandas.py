@@ -2140,17 +2140,17 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
-    
+
     def test6(self) -> None:
         """
         - DataFrames are equal
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
 
-        DataFrames have numbers below the threshold. 
+        DataFrames have numbers below the threshold.
         """
         df1, df2 = self.get_test_dfs_equal()
-        df2[2:] = df2[2:] / 1e+8
+        df2[2:] = df2[2:] / 1e8
         df_diff = hpandas.compare_dfs(
             df1,
             df2,
@@ -2373,7 +2373,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
         columns=('asset2', 'close'),('asset2', 'high'),('asset2', 'low'),('asset2', 'open')
         shape=(2, 4)
-                                    asset2                              
+                                    asset2
         timestamp                     close      high       low      open
         2022-01-01 21:01:00+00:00  0.100234  1.407860 -0.131710  0.200999
         2022-01-01 21:02:00+00:00  2.045787  0.060399 -0.776521 -1.059238
@@ -2706,7 +2706,7 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
         index=[2022-01-01 21:02:00+00:00, 2022-01-01 21:04:00+00:00]
         columns=('asset1.pct_change', 'high.pct_change'),('asset1.pct_change', 'low.pct_change'),('asset2.pct_change', 'high.pct_change'),('asset2.pct_change', 'low.pct_change')
         shape=(3, 4)
-                                asset1.pct_change                asset2.pct_change               
+                                asset1.pct_change                asset2.pct_change
         timestamp                   high.pct_change low.pct_change   high.pct_change low.pct_change
         2022-01-01 21:02:00+00:00        -32.881643    -287.700041        -94.505475    -259.066028
         2022-01-01 21:03:00+00:00       -246.576815      47.525948       -137.632125      36.090517
