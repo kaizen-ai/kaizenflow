@@ -2140,6 +2140,50 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
+    
+    def test6(self) -> None:
+        """
+        - DataFrames are equal
+        - Column and row modes are `equal`
+        - diff_mode = "pct_change"
+
+        DataFrames have numbers below the threshold. 
+        """
+        df1, df2 = self.get_test_dfs_equal()
+        df2[2:] = df2[2:] / 1e+8
+        df_diff = hpandas.compare_dfs(
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="pct_change",
+            remove_inf=True,
+            assert_diff_threshold=None,
+        )
+        expected_length = 3
+        expected_column_names = [
+            "tsA.pct_change",
+            "tsB.pct_change",
+            "tsC.pct_change",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
+        columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
+        shape=(3, 3)
+                                tsA.pct_change  tsB.pct_change  tsC.pct_change
+        timestamp
+        2022-01-01 21:01:00+00:00       -9.090909             NaN        7.692308
+        2022-01-01 21:02:00+00:00        5.263158             0.0       -6.976744
+        2022-01-01 21:03:00+00:00             NaN             NaN             NaN
+        """
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
 
     def test_invalid_input(self) -> None:
         """
