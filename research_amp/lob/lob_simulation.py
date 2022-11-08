@@ -331,8 +331,21 @@ big_small_diff.plot()
 # ## General function
 
 # %%
-def generate_demand_curve(mode: str, params: dict):
-    if mode == "linear":
+def generate_supply_demand_curve(curve_mode: str, mode: str, params: dict):
+    """
+    The output looks the following:
+    ```
+                  price
+    quantity
+    
+    50.000000 10.000000
+    49.322034 11.525424
+    ...
+    10.677966 98.474576
+    10.000000 100.000000
+    ```
+    """
+    if curve_mode == "linear":
         # Compute a linear curve between params["min_q"], params["min_price"]
         # and params["max_q"], params["max_price"] with params["n_agents"].
         prices = pd.Series(
@@ -342,36 +355,16 @@ def generate_demand_curve(mode: str, params: dict):
                 num=params["n_agents"],
             )
         )
+        if mode == "demand":
+            param_min = params["max_q"]
+            param_max = params["min_q"]
+        elif mode == "supply":
+            param_min = params["min_q"]
+            param_max = params["max_q"]
         quantities = pd.Series(
             np.linspace(
-                params["max_q"],
-                params["min_q"],
-                num=params["n_agents"],
-            )
-        )
-        # Combine prices and quantities together.
-        df = pd.concat([prices, quantities], axis=1)
-        df.columns = ["price", "quantity"]
-        df = df.set_index("quantity")
-        return df
-
-
-# Note: the supply curve will be the same, but params params["max_q"] and params["min_q"] will change its positions.
-def generate_supply_curve(mode: str, params: dict):
-    if mode == "linear":
-        # Compute a linear curve between params["min_q"], params["min_price"]
-        # and params["max_q"], params["max_price"] with params["n_agents"].
-        prices = pd.Series(
-            np.linspace(
-                params["min_price"],
-                params["max_price"],
-                num=params["n_agents"],
-            )
-        )
-        quantities = pd.Series(
-            np.linspace(
-                params["min_q"],
-                params["max_q"],
+                param_min,
+                param_max,
                 num=params["n_agents"],
             )
         )
@@ -383,7 +376,9 @@ def generate_supply_curve(mode: str, params: dict):
 
 
 # %%
-mode = "linear"
+curve_mode = "linear"
+supply_mode = "supply"
+demand_mode = "demand"
 params = {
     "min_q": 10,
     "min_price": 10,
@@ -391,8 +386,8 @@ params = {
     "max_price": 100,
     "n_agents": 60,
 }
-demand = generate_demand_curve(mode, params)
-supply = generate_supply_curve(mode, params)
+demand = generate_supply_demand_curve(curve_mode, demand_mode, params)
+supply = generate_supply_demand_curve(curve_mode, supply_mode, params)
 # Combine supply and demand curves.
 market = pd.concat([demand, supply], axis=1)
 market.columns = ["demand", "supply"]
@@ -404,9 +399,9 @@ market.plot()
 
 # %%
 # Step 1.
-def randomize_price_groups(n_price_groups: int, n_agents: int) -> list:
+def randomize_agents_on_prices(prices: int, n_agents: int) -> list:
     """
-    Generate random number of agents for each of price groups.
+    Allocate n_agents on the available prices ensuring that there is at least one for each price.
     E.g.,:
     If there are 3 price groups (e.g., prices are [1,5,10]) and `n_agents` was set as 5,
     the possible outcome may be: [2,2,1]
@@ -415,45 +410,72 @@ def randomize_price_groups(n_price_groups: int, n_agents: int) -> list:
     - for price=5 -> 2 buyers
     - for price=10 -> 1 buyer
 
-    :param n_price_groups: number of price points in supply/demand curve.
+    :param prices: number of price points in supply/demand curve.
     :param n_agents: how many agents are operating in the market
     :return: number of agent for each of price groups
     """
-    n_agents_in_groups = np.random.multinomial(
-        n_agents, [1 / n_price_groups] * n_price_groups
-    )
     # Set the constraint that it should be at least one buyer in each group.
-    if np.any(n_agents_in_groups == 0):
-        n_agents_in_groups = randomize_price_groups(n_price_groups, n_agents)
+    n_agents_in_groups = [1]*prices
+    # Allocate the remaining agents.
+    remaining_agents = n_agents - prices
+    # Probability of allocation.
+    p = [1 / prices] * prices
+    remaining_n_agents_in_groups = np.random.multinomial(remaining_agents, p)
+    # Combine the initial agents (constrains) and the remaining ones.
+    n_agents_in_groups = n_agents_in_groups+remaining_n_agents_in_groups
     return n_agents_in_groups
 
 
 # Step 2.
-def distribute_agents_across_quantities(
+# def allocate_agents_on_quantities(
+#     n_agents_in_groups: list, quantities: list
+# ) -> dict:
+#     """
+#     Calculate the indidual quantity distribution for each of supply or demand quantity.
+
+#     :param n_agents_in_groups: see `return` in `randomize_agents_on_prices()`
+#     :param quantities: quantity points in supply/demand curve
+#     :return: dict[supply quantity] = individual agents' quantities
+#     """
+#     agents_dict = {}
+#     # For the first quantity group the sum of individual quantities is
+#     # the whole quantity value from supply curve.
+#     n_agents_in_first_group = n_agents_in_groups[0]
+#     first_group = (
+#         np.random.dirichlet(np.ones(n_agents_in_first_group)) * quantities[0]
+#     )
+#     agents_dict[quantities[0]] = list(first_group)
+#     # For the n+1 quantity group the sum of individual quantities is
+#     # the diff between neighbour quantity values from supply curve.
+#     for i in range(1, len(n_agents_in_groups[1:]) + 1):
+#         ith_group = np.random.dirichlet(np.ones(n_agents_in_groups[i])) * (
+#             quantities[i] - quantities[i - 1]
+#         )
+#         agents_dict[quantities[i]] = list(ith_group)
+#     return agents_dict
+
+def allocate_agents_on_quantities(
     n_agents_in_groups: list, quantities: list
 ) -> dict:
     """
-    Calculate the indidual agents' quantity distribution for each of supply
-    quantity.
+    Calculate the indidual quantity distribution for each of supply or demand quantity.
 
-    :param n_agents_in_groups: see `return` in `randomize_price_groups()`
+    :param n_agents_in_groups: see `return` in `randomize_agents_on_prices()`
     :param quantities: quantity points in supply/demand curve
     :return: dict[supply quantity] = individual agents' quantities
     """
     agents_dict = {}
-    # For the first quantity group the sum of individual quantities is
-    # the whole quantity value from supply curve.
-    n_agents_in_first_group = n_agents_in_groups[0]
-    first_group = (
-        np.random.dirichlet(np.ones(n_agents_in_first_group)) * quantities[0]
-    )
-    agents_dict[quantities[0]] = list(first_group)
-    # For the n+1 quantity group the sum of individual quantities is
-    # the diff between neighbour quantity values from supply curve.
-    for i in range(1, len(n_agents_in_groups[1:]) + 1):
-        ith_group = np.random.dirichlet(np.ones(n_agents_in_groups[i])) * (
-            quantities[i] - quantities[i - 1]
-        )
+    for i in range(len(n_agents_in_groups)):
+        if i == 0:
+            # For the first quantity group the sum of individual quantities is
+            # the whole quantity value from supply curve.
+            quantity_in_group = quantities[i]
+        else:
+            # For the n+1 quantity group the sum of individual quantities is
+            # the diff between neighbour quantity values from supply curve.
+            quantity_in_group = quantities[i] - quantities[i - 1]
+        # Allocate quantities for prices.
+        ith_group = np.random.dirichlet(np.ones(n_agents_in_groups[i])) * (quantity_in_group)
         agents_dict[quantities[i]] = list(ith_group)
     return agents_dict
 
@@ -466,17 +488,17 @@ def get_buyers_from_supply_curve(
     Compute the quantities for num_buyers that yields the given supply curve.
 
     :param supply_curve: supply data
-    :param num_buyers: see `n_agents` param in `randomize_price_groups()`
-    :return: see `return` param in `distribute_agents_across_quantities()`
+    :param num_buyers: see `n_agents` param in `randomize_agents_on_prices()`
+    :return: see `return` param in `allocate_agents_on_quantities()`
     """
     quantities = list(supply_curve.index)
-    n_price_groups = len(quantities)
+    prices = len(quantities)
     # Generate random number of agents for each of price groups.
-    n_agents_in_groups = randomize_price_groups(n_price_groups, num_buyers)
+    n_agents_in_groups = randomize_agents_on_prices(prices, num_buyers)
     # For debugging.
     print(f"Number of Agents in groups:", n_agents_in_groups)
     # Calculate the indidual agents' quantity distribution for each of supply quantity.
-    buyers_distribution = distribute_agents_across_quantities(
+    buyers_distribution = allocate_agents_on_quantities(
         n_agents_in_groups, quantities
     )
     return buyers_distribution
@@ -503,3 +525,5 @@ buyers
 # Quick check: the whole sum of quantities from individual agents
 # should be equal to the max quantity of supply curve.
 supply.index.max() == sum([sum(buyers[key]) for key in buyers.keys()])
+
+# %%
