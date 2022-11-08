@@ -1493,7 +1493,7 @@ def compare_dfs(
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
-    :param pct_change_threshold: 
+    :param pct_change_threshold:
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1522,11 +1522,11 @@ def compare_dfs(
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
-        df1_lt = df1 < pct_change_threshold
-        df2_lt = df2 < pct_change_threshold
-        if df1[[df1_lt]] or df2[[df2_lt]:
+        mask_lt = lambda x: x < pct_change_threshold
+        check = lambda x, y: any([x.notna().values.any(), y.notna().values.any()])
+        if check(df1[mask_lt], df2[mask_lt]):
             df_diff = df1 - df2
-        elif df1[~[df1_lt]] or df2[~[df2_lt]]:
+        else:
             df_diff = 100 * (df1 - df2) / df2
         max_diff = df_diff.abs().max().max()
     else:
