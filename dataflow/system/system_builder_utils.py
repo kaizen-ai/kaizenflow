@@ -154,8 +154,8 @@ def apply_history_lookback(
     """
     Set the `history_looback` value in the system config.
     """
-    dag_builder = system.config["dag_builder_object"]
-    dag_config = system.config["dag_config"]
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+    dag_config = system.config.get_and_mark_as_used("dag_config")
     if days is None:
         days = (
             dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
@@ -256,12 +256,12 @@ def apply_dag_property(
     are in the process of building it and it will cause infinite
     recursion.
     """
-    dag_builder = system.config["dag_builder_object"]
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
     # TODO(gp): This is not a DAG property and needs to be set-up before the DAG
     #  is built. Also each piece of config should `make_read_only` the pieces that
     #  is used.
-    fast_prod_setup = system.config.get(
-        ["dag_builder_config", "fast_prod_setup"], False
+    fast_prod_setup = system.config.get_and_mark_as_used(
+        ("dag_builder_config", "fast_prod_setup"), default_value=False
     )
     _LOG.debug(hprint.to_str("fast_prod_setup"))
     if fast_prod_setup:
@@ -271,15 +271,15 @@ def apply_dag_property(
         )
     # Set DAG properties.
     # 1) debug_mode_config
-    debug_mode_config = system.config.get(
-        ["dag_property_config", "debug_mode_config"], None
+    debug_mode_config = system.config.get_and_mark_as_used(
+        ("dag_property_config", "debug_mode_config"), default_value=None
     )
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
         _LOG.warning("Setting debug mode")
         hdbg.dassert_not_in("dst_dir", debug_mode_config)
         # Infer the dst dir based on the `log_dir`.
-        log_dir = system.config["system_log_dir"]
+        log_dir = system.config.get_and_mark_as_used("system_log_dir")
         # TODO(gp): the DAG should add node_io to the passed dir.
         dst_dir = os.path.join(log_dir, "dag/node_io")
         _LOG.info("Inferring dst_dir for dag as '%s'", dst_dir)
@@ -290,8 +290,8 @@ def apply_dag_property(
         ] = dst_dir
         dag.set_debug_mode(**debug_mode_config)
     # 2) force_free_nodes
-    force_free_nodes = system.config.get(
-        ["dag_property_config", "force_free_nodes"], False
+    force_free_nodes = system.config.get_and_mark_as_used(
+        ("dag_property_config", "force_free_nodes"), default_value=False
     )
     _LOG.debug(hprint.to_str("force_free_nodes"))
     if force_free_nodes:
@@ -482,7 +482,9 @@ def get_DataFramePortfolio_from_System(
         for simulation
     """
     market_data = system.market_data
-    asset_ids = system.config["market_data_config", "asset_ids"]
+    asset_ids = system.config.get_and_mark_as_used(
+        ("market_data_config", "asset_ids")
+    )
     if is_prod:
         # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
@@ -490,12 +492,14 @@ def get_DataFramePortfolio_from_System(
         )
     else:
         # Set event loop object for `SimulatedBroker` used in simulation.
-        event_loop = system.config["event_loop_object"]
+        event_loop = system.config.get_and_mark_as_used("event_loop_object")
         # Initialize `Portfolio` with parameters from the system config.
-        mark_to_market_col = system.config[
-            "portfolio_config", "mark_to_market_col"
-        ]
-        pricing_method = system.config["portfolio_config", "pricing_method"]
+        mark_to_market_col = system.config.get_and_mark_as_used(
+            ("portfolio_config", "mark_to_market_col")
+        )
+        pricing_method = system.config.get_and_mark_as_used(
+            ("portfolio_config", "pricing_method")
+        )
         portfolio = oms.get_DataFramePortfolio_example1(
             event_loop,
             market_data=market_data,
@@ -505,9 +509,9 @@ def get_DataFramePortfolio_from_System(
         )
     # TODO(gp): We should pass the column_remap to the Portfolio builder,
     # instead of injecting it after the fact.
-    portfolio.broker._column_remap = system.config[
-        "portfolio_config", "column_remap"
-    ]
+    portfolio.broker._column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
     return portfolio
 
 
@@ -767,9 +771,9 @@ def get_realtime_DagRunner_from_system(
     bar_duration_in_secs = 5 * 60
     # Set up the event loop.
     get_wall_clock_time = system.market_data.get_wall_clock_time
-    rt_timeout_in_secs_or_time = system.config["dag_runner_config"][
-        "rt_timeout_in_secs_or_time"
-    ]
+    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "rt_timeout_in_secs_or_time")
+    )
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": bar_duration_in_secs,
@@ -798,28 +802,29 @@ def get_RealTimeDagRunner_from_System(
     dag = system.dag
     market_data = system.market_data
     hdbg.dassert_isinstance(market_data, mdata.MarketData)
-    fit_at_beginning = system.config.get(
-        ("dag_runner_config", "fit_at_beginning"), False
+    fit_at_beginning = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "fit_at_beginning"), default_value=False
     )
     get_wall_clock_time = market_data.get_wall_clock_time
     # TODO(gp): This should become a builder method injecting values inside the
     #  config.
     _LOG.debug("system.config=\n%s", str(system.config))
     # TODO(Grisha): do not use default values.
-    wake_up_timestamp = system.config.get(
-        ("dag_runner_config", "wake_up_timestamp"), None
+    wake_up_timestamp = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "wake_up_timestamp"), default_value=None
     )
-    bar_duration_in_secs = system.config.get(
-        ("dag_runner_config", "bar_duration_in_secs"), None
+    bar_duration_in_secs = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "bar_duration_in_secs"), default_value=None
+    )
+    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "rt_timeout_in_secs_or_time")
     )
     execute_rt_loop_config = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": system.config[
             "dag_runner_config", "bar_duration_in_secs"
         ],
-        "rt_timeout_in_secs_or_time": system.config[
-            "dag_runner_config", "rt_timeout_in_secs_or_time"
-        ],
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
     }
     dag_runner_kwargs = {
         "dag": dag,
