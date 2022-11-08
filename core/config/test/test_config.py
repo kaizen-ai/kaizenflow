@@ -1885,6 +1885,9 @@ class Test_save_to_file(hunitest.TestCase):
 
 
 class TestCaseConfigToString(hunitest.TestCase):
+    """
+    TestCase with added function for config-specific string cleanup.
+    """
     def remove_line_numbers(self, actual_config: str) -> str:
         """
         Remove line numbers from shorthand representations, e.g.
