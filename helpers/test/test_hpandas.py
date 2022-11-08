@@ -2119,7 +2119,6 @@ class Test_compare_dfs(hunitest.TestCase):
             column_mode="equal",
             diff_mode="diff",
             assert_diff_threshold=None,
-            pct_change_threshold=1e-6,
         )
         expected_length = 3
         expected_column_names = ["tsA.diff", "tsB.diff", "tsC.diff"]
@@ -2160,6 +2159,7 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=True,
             assert_diff_threshold=None,
+            pct_change_threshold=1e-6,
         )
         expected_length = 3
         expected_column_names = [
