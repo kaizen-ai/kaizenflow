@@ -274,7 +274,6 @@ def _get_Cx_dag_prod_instance1(
     # TODO(gp): Fast prod system must be set before the DAG is built.
     dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
     dag_config = system.config.get_and_mark_as_used("dag_config")
-    _LOG.debug(hprint.to_str("fast_prod_setup"))
     # The config must be complete and stable here.
     dag = dag_builder.get_dag(dag_config)
     system = dtfsys.apply_dag_property(dag, system)
@@ -302,7 +301,7 @@ def _get_Cx_dag_prod_instance1(
     # Assemble.
     market_data = system.market_data
     market_data_history_lookback = system.config.get_and_mark_as_used(
-        "market_data_config", "history_lookback"
+        ("market_data_config", "history_lookback")
     )
     process_forecasts_node_dict = system.config.get_and_mark_as_used(
         "process_forecasts_node_dict"
@@ -349,13 +348,13 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
     cf_config_strategy = system.config.get_and_mark_as_used(
-        "cf_config", "strategy"
+        ("cf_config", "strategy")
     )
     market_data_universe_version = system.config.get_and_mark_as_used(
-        "market_data_config", "universe_version"
+        ("market_data_config", "universe_version")
     )
     market_data_asset_ids = system.config.get_and_mark_as_used(
-        "market_data_config", "asset_ids"
+        ("market_data_config", "asset_ids")
     )
     secret_identifier_config = system.config.get_and_mark_as_used(
         "secret_identifier_config"

@@ -272,7 +272,7 @@ def apply_dag_property(
     # Set DAG properties.
     # 1) debug_mode_config
     debug_mode_config = system.config.get_and_mark_as_used(
-        ["dag_property_config", "debug_mode_config"], default_value=None
+        ("dag_property_config", "debug_mode_config"), default_value=None
     )
     _LOG.debug(hprint.to_str("debug_mode_config"))
     if debug_mode_config:
@@ -291,7 +291,7 @@ def apply_dag_property(
         dag.set_debug_mode(**debug_mode_config)
     # 2) force_free_nodes
     force_free_nodes = system.config.get_and_mark_as_used(
-        ["dag_property_config", "force_free_nodes"], default_value=False
+        ("dag_property_config", "force_free_nodes"), default_value=False
     )
     _LOG.debug(hprint.to_str("force_free_nodes"))
     if force_free_nodes:
