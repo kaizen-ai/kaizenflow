@@ -482,7 +482,9 @@ def get_DataFramePortfolio_from_System(
         for simulation
     """
     market_data = system.market_data
-    asset_ids = system.config["market_data_config", "asset_ids"]
+    asset_ids = system.config.get_and_mark_as_used(
+        ("market_data_config", "asset_ids")
+    )
     if is_prod:
         # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
@@ -490,12 +492,14 @@ def get_DataFramePortfolio_from_System(
         )
     else:
         # Set event loop object for `SimulatedBroker` used in simulation.
-        event_loop = system.config["event_loop_object"]
+        event_loop = system.config.get_and_mark_as_used("event_loop_object")
         # Initialize `Portfolio` with parameters from the system config.
-        mark_to_market_col = system.config[
-            "portfolio_config", "mark_to_market_col"
-        ]
-        pricing_method = system.config["portfolio_config", "pricing_method"]
+        mark_to_market_col = system.config.get_and_mark_as_used(
+            ("portfolio_config", "mark_to_market_col")
+        )
+        pricing_method = system.config.get_and_mark_as_used(
+            ("portfolio_config", "pricing_method")
+        )
         portfolio = oms.get_DataFramePortfolio_example1(
             event_loop,
             market_data=market_data,
@@ -505,9 +509,9 @@ def get_DataFramePortfolio_from_System(
         )
     # TODO(gp): We should pass the column_remap to the Portfolio builder,
     # instead of injecting it after the fact.
-    portfolio.broker._column_remap = system.config[
-        "portfolio_config", "column_remap"
-    ]
+    portfolio.broker._column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
     return portfolio
 
 
@@ -812,14 +816,15 @@ def get_RealTimeDagRunner_from_System(
     bar_duration_in_secs = system.config.get_and_mark_as_used(
         ("dag_runner_config", "bar_duration_in_secs"), default_value=None
     )
+    rt_timeout_in_secs_or_time = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "rt_timeout_in_secs_or_time")
+    )
     execute_rt_loop_config = {
         "get_wall_clock_time": get_wall_clock_time,
         "bar_duration_in_secs": system.config[
             "dag_runner_config", "bar_duration_in_secs"
         ],
-        "rt_timeout_in_secs_or_time": system.config[
-            "dag_runner_config", "rt_timeout_in_secs_or_time"
-        ],
+        "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
     }
     dag_runner_kwargs = {
         "dag": dag,
