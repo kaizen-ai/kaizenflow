@@ -1493,7 +1493,8 @@ def compare_dfs(
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
-    :param pct_change_threshold:
+    :param pct_change_threshold: compute the difference instead of the percentage
+        one for numbers below the threshhold
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1522,13 +1523,15 @@ def compare_dfs(
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
+        # If numbers are below the threshold, compute the relative difference. Otherwise,
+        # compute the absolute one.
         mask_lt = lambda x: x < pct_change_threshold
         check = lambda x, y: any([x.notna().values.any(), y.notna().values.any()])
         if check(df1[mask_lt], df2[mask_lt]):
             df_diff = df1 - df2
         else:
             df_diff = 100 * (df1 - df2) / df2
-        max_diff = df_diff.abs().max().max()
+            max_diff = df_diff.abs().max().max()
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
