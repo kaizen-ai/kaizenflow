@@ -2016,9 +2016,9 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00           -0.10             4.0            0.50
-        2022-01-01 21:02:00+00:00            0.10             0.0           -0.60
-        2022-01-01 21:03:00+00:00           -0.15             0.2           -0.07
+        2022-01-01 21:01:00+00:00     -9.090909        inf             7.692308
+        2022-01-01 21:02:00+00:00      5.263158        0.000000       -6.976744
+        2022-01-01 21:03:00+00:00     -4.761905        3.448276       -0.771775
         """
         self.check_df_output(
             df_diff,
@@ -2087,8 +2087,8 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(2, 2)
                                 tsA.pct_change  tsB.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00            -0.1             4.0
-        2022-01-01 21:02:00+00:00             0.1             0.0
+        2022-01-01 21:01:00+00:00       -9.090909        NaN
+        2022-01-01 21:02:00+00:00        5.263158        0.0
         """
         self.check_df_output(
             df_diff,
@@ -2329,7 +2329,7 @@ class Test_subset_multiindex_df(hunitest.TestCase):
         index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:02:00+00:00]
         columns=('asset2', 'close'),('asset2', 'high'),('asset2', 'low'),('asset2', 'open')
         shape=(2, 4)
-                                    asset2
+                                    asset2                              
         timestamp                     close      high       low      open
         2022-01-01 21:01:00+00:00  0.100234  1.407860 -0.131710  0.200999
         2022-01-01 21:02:00+00:00  2.045787  0.060399 -0.776521 -1.059238
@@ -2662,11 +2662,11 @@ class Test_compare_multiindex_dfs(hunitest.TestCase):
         index=[2022-01-01 21:02:00+00:00, 2022-01-01 21:04:00+00:00]
         columns=('asset1.pct_change', 'high.pct_change'),('asset1.pct_change', 'low.pct_change'),('asset2.pct_change', 'high.pct_change'),('asset2.pct_change', 'low.pct_change')
         shape=(3, 4)
-                                asset1.pct_change                asset2.pct_change
+                                asset1.pct_change                asset2.pct_change               
         timestamp                   high.pct_change low.pct_change   high.pct_change low.pct_change
-        2022-01-01 21:02:00+00:00         -0.387540       1.174296         -1.038852      -1.264697
-        2022-01-01 21:03:00+00:00          0.761005       0.518832         -1.766080       0.273193
-        2022-01-01 21:04:00+00:00          1.905693      -1.720811         -0.906465       3.040766
+        2022-01-01 21:02:00+00:00        -32.881643    -287.700041        -94.505475    -259.066028
+        2022-01-01 21:03:00+00:00       -246.576815      47.525948       -137.632125      36.090517
+        2022-01-01 21:04:00+00:00       -185.862978     765.280229       -153.498432    -198.418808
         """
         self.check_df_output(
             df_diff,
