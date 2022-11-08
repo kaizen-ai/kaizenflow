@@ -165,7 +165,7 @@ if False:
 # )
 
 # %% [markdown]
-# # Compare DAG io
+# # Compare DAG io (prod vs sim)
 
 # %% [markdown]
 # ## One-off reading of Parquet files
@@ -320,7 +320,7 @@ if False:
     )
 
 # %% [markdown]
-# # Compute research portfolio equivalent
+# # Compute research portfolio
 
 # %%
 # Build the ForecastEvaluator.
@@ -349,7 +349,7 @@ research_portfolio_stats_df = research_portfolio_stats_df.loc[
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %% [markdown]
-# # Load logged portfolios
+# # Logged portfolios (prod vs research vs sim)
 
 # %%
 portfolio_config = cconfig.Config.from_dict(
@@ -391,7 +391,7 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Load target positions
+# # Target positions (prod vs research)
 
 # %%
 prod_target_position_df = oms.load_target_positions(
@@ -402,13 +402,14 @@ prod_target_position_df = oms.load_target_positions(
     normalize_bar_times=True
 )
 
-sim_target_position_df = oms.load_target_positions(
-    portfolio_path_dict["sim"].strip("portfolio"),
-    start_timestamp,
-    end_timestamp,
-    config["meta"]["bar_duration"],
-    normalize_bar_times=True
-)
+if False:
+    sim_target_position_df = oms.load_target_positions(
+        portfolio_path_dict["sim"].strip("portfolio"),
+        start_timestamp,
+        end_timestamp,
+        config["meta"]["bar_duration"],
+        normalize_bar_times=True
+    )
 
 # %%
 print("# prod_target_pos_df")
@@ -620,6 +621,9 @@ if False:
 # %%
 research_portfolio_df["holdings_shares"].head(10)
 
+# %% [markdown]
+# ## Prod vs research
+
 # %%
 dtfmod.compute_correlations(
     research_portfolio_df,
@@ -627,6 +631,9 @@ dtfmod.compute_correlations(
     allow_unequal_indices=True,
     allow_unequal_columns=True,
 )
+
+# %% [markdown]
+# ## Prod vs sim
 
 # %%
 dtfmod.compute_correlations(
@@ -685,6 +692,9 @@ display(df)
 
 #df.plot()
 
+
+# %% [markdown]
+# ## Research vs sim
 
 # %%
 dtfmod.compute_correlations(
@@ -791,6 +801,7 @@ stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(bins=31)
 # # Load forecast dataframes
 
 # %%
+# TODO(gp): @Grisha fix this
 root_dir = "/shared_data/prod_reconciliation"
 search_str = "system_log_dir"
 runs = ["prod", "sim"]
@@ -863,6 +874,9 @@ cost_df[["pnl", "baseline_pnl_minus_costs"]].plot()
 
 # %% [markdown]
 # # Multiday reconciliation
+
+# %%
+assert 0
 
 # %%
 date_strs = oms.get_dir_dates(root_dir)

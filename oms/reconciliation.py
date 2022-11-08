@@ -105,7 +105,8 @@ def build_reconciliation_configs(
         asset_id_to_share_decimals = occxbrok.subset_market_info(
             market_info, "amount_precision"
         )
-        gmv = 700.0
+        #gmv = 700.0
+        gmv = 1500.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
         run_tca = True
@@ -1071,7 +1072,9 @@ def get_dir(root_dir: str, date_str: str, search_str: str, mode: str) -> str:
         dir_ = os.path.join(f"{root_dir}/{date_str}/simulation/system_log_dir")
     else:
         if mode == "prod":
-            cmd = f"find {root_dir}/{date_str}/prod -name '*system_log_dir_scheduled*'"
+            # TODO(gp): @Grisha generalize this.
+            #cmd = f"find {root_dir}/{date_str}/prod -name '*system_log_dir_scheduled*'"
+            cmd = f"find {root_dir}/{date_str}/prod -name '*system_log_dir*'"
         elif mode == "cand":
             cmd = (
                 f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
