@@ -154,9 +154,9 @@ def apply_history_lookback(
     """
     Set the `history_looback` value in the system config.
     """
-    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
-    dag_config = system.config.get_and_mark_as_used("dag_config")
     if days is None:
+        dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+        dag_config = system.config.get_and_mark_as_used("dag_config")
         days = (
             dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
         )
@@ -256,7 +256,7 @@ def apply_dag_property(
     are in the process of building it and it will cause infinite
     recursion.
     """
-    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+    dag_builder = system.config["dag_builder_object"]
     # TODO(gp): This is not a DAG property and needs to be set-up before the DAG
     #  is built. Also each piece of config should `make_read_only` the pieces that
     #  is used.
