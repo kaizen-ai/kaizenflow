@@ -24,6 +24,7 @@
 
 # %%
 import logging
+from typing import List
 
 import pandas as pd
 
@@ -59,6 +60,32 @@ def get_ccxt_realtime_data(db_table: str, exchange_id: str) -> pd.DataFrame:
     query = f"SELECT * FROM {db_table} WHERE exchange_id='{exchange_id}'"
     rt_data = hsql.execute_query_to_df(connection, query)
     return rt_data
+
+
+# %%
+def load_parquet_by_period(
+    start_ts: str, end_ts: str, s3_path: str
+) -> pd.DataFrame:
+    start_ts = pd.Timestamp(start_ts, tz="UTC")
+    end_ts = pd.Timestamp(end_ts, tz="UTC")
+    # Create timestamp filters.
+    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+        "by_year_month", start_ts, end_ts
+    )
+    # Load daily data from s3 parquet.
+    cc_ba_futures_daily = hparque.from_parquet(
+        s3_path, filters=timestamp_filters, aws_profile="ck"
+    )
+    cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
+    return cc_ba_futures_daily
+
+
+# %%
+def combine_stats(stats: List[pd.Series]) -> pd.Series:
+    base_stat = stats[0]
+    for stat in stats[1:]:
+        base_stat = base_stat.add(stat)
+    return base_stat
 
 
 # %% [markdown]
@@ -158,42 +185,103 @@ volume0["currency_pair"].value_counts().plot(kind="bar")
 # ### CC futures
 
 # %%
-# Get historical data.
 s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
-# Load daily data from s3 parquet.
-cc_ba_futures_daily = hparque.from_parquet(s3_path, aws_profile="ck")
+overall_rows = 0
+
+# %% [markdown]
+# The amount of data is too big to process it all at once, so the data will be loaded separately for each month and all statistics will be aggregated.
+
+# %% [markdown]
+# Process June and July
 
 # %%
-print(f"{len(cc_ba_futures_daily)} rows overall")
-print("Head:")
-display(cc_ba_futures_daily.head())
-print("Tail:")
-display(cc_ba_futures_daily.tail())
+start_ts = "20220627-000000"
+end_ts = "20220730-000000"
+cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
+display(cc_ba_futures_daily.head(2))
+display(cc_ba_futures_daily.tail(2))
+overall_rows += len(cc_ba_futures_daily)
+
+# %%
+# Count NaNs for June and July.
+june_july_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
+# Count zeros for June and July.
+june_july_zeros = cstadesc.compute_frac_zero(
+    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
+)
+
+# %% [markdown]
+# Process August
+
+# %%
+start_ts = "20220801-000000"
+end_ts = "20220831-000000"
+cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
+display(cc_ba_futures_daily.head(2))
+display(cc_ba_futures_daily.tail(2))
+overall_rows += len(cc_ba_futures_daily)
+
+# %%
+# Count NaNs for August.
+aug_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
+# Count zeros for August.
+aug_zeros = cstadesc.compute_frac_zero(
+    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
+)
+
+# %% [markdown]
+# Process September
+
+# %%
+# Load Sept.
+start_ts = "20220901-000000"
+end_ts = "20220930-000000"
+cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
+display(cc_ba_futures_daily.head(2))
+display(cc_ba_futures_daily.tail(2))
+overall_rows += len(cc_ba_futures_daily)
+
+# %%
+# Count NaNs for September.
+sept_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
+# Count zeros for September.
+sept_zeros = cstadesc.compute_frac_zero(
+    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
+)
+
+# %% [markdown]
+# Process October and November
+
+# %%
+# Load Oct and Nov.
+start_ts = "20221001-000000"
+end_ts = "20221101-000000"
+cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
+display(cc_ba_futures_daily.head(2))
+display(cc_ba_futures_daily.tail(2))
+overall_rows += len(cc_ba_futures_daily)
+
+# %%
+# Count NaNs for October and November.
+oct_nov_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
+# Count zeros for October and November.
+oct_nov_zeros = cstadesc.compute_frac_zero(
+    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
+)
+
+# %%
+print(f"{overall_rows} rows overall")
 
 # %% [markdown]
 # #### Count NaNs
 
-# %%
-cstadesc.compute_frac_nan(cc_ba_futures_daily)
+# %% run_control={"marked": false}
+combine_stats([june_july_nans, aug_nans, sept_nans, oct_nov_nans])
 
 # %% [markdown]
-# ### CC spot
+# #### Count zeros
 
 # %%
-# Get historical data.
-s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
-# Load daily data from s3 parquet.
-cc_ba_daily = hparque.from_parquet(s3_path, aws_profile="ck")
+combine_stats([june_july_zeros, aug_zeros, sept_zeros, oct_nov_zeros])
 
 # %%
-print(f"{len(cc_ba_daily)} rows overall")
-print("Head:")
-display(cc_ba_daily.head())
-print("Tail:")
-display(cc_ba_daily.tail())
-
-# %% [markdown]
-# #### Count NaNs 
-
-# %%
-cstadesc.compute_frac_nan(cc_ba_daily)
