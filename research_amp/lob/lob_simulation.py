@@ -427,33 +427,6 @@ def randomize_agents_on_prices(prices: int, n_agents: int) -> list:
 
 
 # Step 2.
-# def allocate_agents_on_quantities(
-#     n_agents_in_groups: list, quantities: list
-# ) -> dict:
-#     """
-#     Calculate the indidual quantity distribution for each of supply or demand quantity.
-
-#     :param n_agents_in_groups: see `return` in `randomize_agents_on_prices()`
-#     :param quantities: quantity points in supply/demand curve
-#     :return: dict[supply quantity] = individual agents' quantities
-#     """
-#     agents_dict = {}
-#     # For the first quantity group the sum of individual quantities is
-#     # the whole quantity value from supply curve.
-#     n_agents_in_first_group = n_agents_in_groups[0]
-#     first_group = (
-#         np.random.dirichlet(np.ones(n_agents_in_first_group)) * quantities[0]
-#     )
-#     agents_dict[quantities[0]] = list(first_group)
-#     # For the n+1 quantity group the sum of individual quantities is
-#     # the diff between neighbour quantity values from supply curve.
-#     for i in range(1, len(n_agents_in_groups[1:]) + 1):
-#         ith_group = np.random.dirichlet(np.ones(n_agents_in_groups[i])) * (
-#             quantities[i] - quantities[i - 1]
-#         )
-#         agents_dict[quantities[i]] = list(ith_group)
-#     return agents_dict
-
 def allocate_agents_on_quantities(
     n_agents_in_groups: list, quantities: list
 ) -> dict:
@@ -525,5 +498,3 @@ buyers
 # Quick check: the whole sum of quantities from individual agents
 # should be equal to the max quantity of supply curve.
 supply.index.max() == sum([sum(buyers[key]) for key in buyers.keys()])
-
-# %%
