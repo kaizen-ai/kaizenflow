@@ -272,19 +272,9 @@ def _get_Cx_dag_prod_instance1(
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     # Create the pipeline.
-    dag_builder = system.config["dag_builder_object"]
-    dag_config = system.config["dag_config"]
     # TODO(gp): Fast prod system must be set before the DAG is built.
-    dag_builder = system.config["dag_builder_object"]
-    fast_prod_setup = system.config.get(
-        ["dag_builder_config", "fast_prod_setup"], False
-    )
-    _LOG.debug(hprint.to_str("fast_prod_setup"))
-    if fast_prod_setup:
-        _LOG.warning("Setting fast prod setup")
-        system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
-            system.config["dag_config"]
-        )
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+    dag_config = system.config.get_and_mark_as_used("dag_config")
     # The config must be complete and stable here.
     dag = dag_builder.get_dag(dag_config)
     system = dtfsys.apply_dag_property(dag, system)
@@ -311,12 +301,12 @@ def _get_Cx_dag_prod_instance1(
     system = dtfsys.apply_ProcessForecastsNode_config_for_crypto(system, is_prod)
     # Assemble.
     market_data = system.market_data
-    market_data_history_lookback = system.config[
-        "market_data_config", "history_lookback"
-    ]
-    process_forecasts_node_dict = system.config[
+    market_data_history_lookback = system.config.get_and_mark_as_used(
+        ("market_data_config", "history_lookback")
+    )
+    process_forecasts_node_dict = system.config.get_and_mark_as_used(
         "process_forecasts_node_dict"
-    ].to_dict()
+    ).to_dict()
     ts_col_name = "timestamp_db"
     # TODO(Grisha): should we use `add_real_time_data_source` and
     # `add_ProcessForecastsNode` from `system_builder_utils.py`?
@@ -353,19 +343,30 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     Build Portfolio instance for production.
     """
     market_data = system.market_data
-    dag_builder = system.config["dag_builder_object"]
-    trading_period_str = dag_builder.get_trading_period(
-        system.config["dag_config"]
-    )
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+    dag_config = system.config.get_and_mark_as_used("dag_config")
+    trading_period_str = dag_builder.get_trading_period(dag_config)
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
+    cf_config_strategy = system.config.get_and_mark_as_used(
+        ("cf_config", "strategy")
+    )
+    market_data_universe_version = system.config.get_and_mark_as_used(
+        ("market_data_config", "universe_version")
+    )
+    market_data_asset_ids = system.config.get_and_mark_as_used(
+        ("market_data_config", "asset_ids")
+    )
+    secret_identifier_config = system.config.get_and_mark_as_used(
+        "secret_identifier_config"
+    )
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
-        system.config["cf_config", "strategy"],
+        cf_config_strategy,
         market_data,
-        system.config["market_data_config", "universe_version"],
-        system.config["market_data_config", "asset_ids"],
+        market_data_universe_version,
+        market_data_asset_ids,
         pricing_method,
-        system.config["secret_identifier_config"],
+        secret_identifier_config,
     )
     return portfolio
 
