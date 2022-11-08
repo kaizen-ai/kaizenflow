@@ -1473,7 +1473,7 @@ def compare_dfs(
     diff_mode: str = "diff",
     remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
-    pct_change_threshold: float = 1e-3,
+    pct_change_threshold: float = 1e-6,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1493,8 +1493,7 @@ def compare_dfs(
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
-    :param pct_change_threshold: compute the difference instead of the percentage
-        one for numbers below the threshhold
+    :param pct_change_threshold: round numbers below the threshold up to 0
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1523,13 +1522,11 @@ def compare_dfs(
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
+        # Round small numbers up to 0 to exclude them from diff computation.
         mask_lt = lambda x: abs(x) < pct_change_threshold
-        mask_gt = lambda x: abs(x) > pct_change_threshold
-        #
-        abs_diff = abs(df1[mask_lt] - df2[mask_lt])
-        pct_change = 100 * (df1[mask_gt] - df2[mask_gt]) / df2[mask_gt]
-        #
-        df_diff = pd.concat([abs_diff, pct_change], ignore_index=True)
+        df1[mask_lt] = df1[mask_lt].round(0)
+        df2[mask_lt] = df2[mask_lt].round(0)
+        df_diff = 100 * (df1 - df2) / df2
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
