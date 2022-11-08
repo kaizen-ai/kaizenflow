@@ -55,9 +55,11 @@ hprint.config_notebook()
 #date_str = "20221028"
 #date_str = "20221031"
 #date_str = "20221103"
-date_str = "20221104"
+#date_str = "20221104"
+date_str = "20221107"
 #prod_subdir = "system_log_dir_manual__2022-11-01T12:39:45.395761+00:00_2hours"
-prod_subdir = None
+prod_subdir = "system_log_dir_manual__2022-11-07T15:12:00.832111+00:00_2hours"
+#prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
@@ -69,8 +71,8 @@ system_log_path_dict, portfolio_path_dict, dag_path_dict = oms.get_path_dicts(co
 date_str = config["meta"]["date_str"]
 # TODO(gp): @Grisha infer this from the data from prod Portfolio df, but allow to overwrite.
 if True:
-    start_time = "06:05:00"
-    end_time = "07:50:00"
+    start_time = "10:15:00"
+    end_time = "12:10:00"
 else:
     start_time = "08:45:00"
     end_time = "10:40:00"
@@ -96,60 +98,71 @@ diff_config = cconfig.build_config_diff_dataframe(
 diff_config.T
 
 # %% [markdown]
-# # Data delay analysis
+# # DAG delay
 
 # %%
-# Get the real-time `ImClient`.
-# TODO(Grisha): ideally we should get the values from the config.
-resample_1min = False
-env_file = imvimlita.get_db_env_path("dev")
-connection_params = hsql.get_connection_info_from_env_file(env_file)
-db_connection = hsql.get_connection(*connection_params)
-table_name = "ccxt_ohlcv_futures"
-#
-im_client = icdcl.CcxtSqlRealTimeImClient(
-    resample_1min, db_connection, table_name
-)
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=True)
+
+# %% [markdown]
+# ## DB delay
 
 # %%
-# Get the universe.
-# TODO(Grisha): get the version from the config.
-vendor = "CCXT"
-mode = "trade"
-version = "v7.1"
-as_full_symbol = True
-full_symbols = ivcu.get_vendor_universe(
-    vendor,
-    mode,
-    version=version,
-    as_full_symbol=as_full_symbol,
-)
-full_symbols
+if False:
+    
+    pass
 
 # %%
-# Load the data for the reconciliation date.
-# `ImClient` operates in UTC timezone.
-start_ts = pd.Timestamp(date_str, tz="UTC")
-end_ts = start_ts + pd.Timedelta(days=1)
-columns = None
-filter_data_mode = "assert"
-df = im_client.read_data(
-    full_symbols, start_ts, end_ts, columns, filter_data_mode
-)
-hpandas.df_to_str(df, num_rows=5, log_level=logging.INFO)
+# # Get the real-time `ImClient`.
+# # TODO(Grisha): ideally we should get the values from the config.
+# resample_1min = False
+# env_file = imvimlita.get_db_env_path("dev")
+# connection_params = hsql.get_connection_info_from_env_file(env_file)
+# db_connection = hsql.get_connection(*connection_params)
+# table_name = "ccxt_ohlcv_futures"
+# #
+# im_client = icdcl.CcxtSqlRealTimeImClient(
+#     resample_1min, db_connection, table_name
+# )
 
 # %%
-# TODO(Grisha): move to a lib.
-# Compute delay in seconds.
-df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
-# Plot the delay over assets with the errors bars.
-minimums = df.groupby(by=["full_symbol"]).min()["delta"]
-maximums = df.groupby(by=["full_symbol"]).max()["delta"]
-means = df.groupby(by=["full_symbol"]).mean()["delta"]
-errors = [means - minimums, maximums - means]
-df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(
-    kind="bar", yerr=errors
-)
+# # Get the universe.
+# # TODO(Grisha): get the version from the config.
+# vendor = "CCXT"
+# mode = "trade"
+# version = "v7.1"
+# as_full_symbol = True
+# full_symbols = ivcu.get_vendor_universe(
+#     vendor,
+#     mode,
+#     version=version,
+#     as_full_symbol=as_full_symbol,
+# )
+# full_symbols
+
+# %%
+# # Load the data for the reconciliation date.
+# # `ImClient` operates in UTC timezone.
+# start_ts = pd.Timestamp(date_str, tz="UTC")
+# end_ts = start_ts + pd.Timedelta(days=1)
+# columns = None
+# filter_data_mode = "assert"
+# df = im_client.read_data(
+#     full_symbols, start_ts, end_ts, columns, filter_data_mode
+# )
+# hpandas.df_to_str(df, num_rows=5, log_level=logging.INFO)
+
+# %%
+# # TODO(Grisha): move to a lib.
+# # Compute delay in seconds.
+# df["delta"] = (df["knowledge_timestamp"] - df.index).dt.total_seconds()
+# # Plot the delay over assets with the errors bars.
+# minimums = df.groupby(by=["full_symbol"]).min()["delta"]
+# maximums = df.groupby(by=["full_symbol"]).max()["delta"]
+# means = df.groupby(by=["full_symbol"]).mean()["delta"]
+# errors = [means - minimums, maximums - means]
+# df.groupby(by=["full_symbol"]).mean()["delta"].sort_values(ascending=False).plot(
+#     kind="bar", yerr=errors
+# )
 
 # %% [markdown]
 # # Compare DAG io
@@ -293,21 +306,18 @@ diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
 diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
 
 # %%
-# Compute correlations.
-prod_sim_dag_corr = dtfmod.compute_correlations(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
-)
-hpandas.df_to_str(
-    prod_sim_dag_corr.min(),
-    num_rows=None,
-    precision=3,
-    log_level=logging.INFO,
-)
-
-# %%
-# Make sure they are exactly the same.
-(dag_df_dict["prod"] - dag_df_dict["sim"]).abs().max().max()
+if False:
+    # Compute correlations.
+    prod_sim_dag_corr = dtfmod.compute_correlations(
+        dag_df_dict["prod"],
+        dag_df_dict["sim"],
+    )
+    hpandas.df_to_str(
+        prod_sim_dag_corr.min(),
+        num_rows=None,
+        precision=3,
+        log_level=logging.INFO,
+    )
 
 # %% [markdown]
 # # Compute research portfolio equivalent
@@ -381,7 +391,7 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Load forecast dataframes
+# # Load target positions
 
 # %%
 prod_target_position_df = oms.load_target_positions(
@@ -406,28 +416,6 @@ _ = hpandas.multiindex_df_info(prod_target_position_df, max_num=None)
 
 print("\n# research_portfolio_df")
 _ = hpandas.multiindex_df_info(research_portfolio_df, max_num=None)
-
-# %% [markdown]
-# ## Prediction
-
-# %%
-column = "prediction"
-prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
-res_df = research_portfolio_df[column]
-display(res_df.head(2))
-
-# Compute percentage difference.
-diff_df = hpandas.compare_dfs(
-    prod_df,
-    res_df,
-    diff_mode= "pct_change",
-)
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
 # ## Price
@@ -474,6 +462,28 @@ print(diff_df.max().max())
 hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
+# ## Prediction
+
+# %%
+column = "prediction"
+prod_df = prod_target_position_df[column]
+display(prod_df.head(2))
+res_df = research_portfolio_df[column]
+display(res_df.head(2))
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+# Check that data is the same.
+print(diff_df.max().max())
+hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
 # ## Target holdings
 
 # %%
@@ -488,6 +498,7 @@ diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
     diff_mode= "pct_change",
+    assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
