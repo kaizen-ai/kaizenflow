@@ -1908,7 +1908,7 @@ class Test_compare_dfs(hunitest.TestCase):
     """
     
     @staticmethod
-    def get_test_dfs_equal() -> pd.DataFrame:
+    def get_test_dfs_equal() -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         Both DataFrames have only equal rows and columns names.
         """
@@ -1941,7 +1941,7 @@ class Test_compare_dfs(hunitest.TestCase):
         df2 = df2.set_index("timestamp")
         return df1, df2
 
-    def get_test_dfs_different(self) -> pd.DataFrame:
+    def get_test_dfs_different(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
         DataFrames have both unique and equal rows and columns.
         """
@@ -1953,7 +1953,7 @@ class Test_compare_dfs(hunitest.TestCase):
         return df1, df2
 
     @staticmethod
-    def get_test_dfs_close_to_zero() -> None:
+    def get_test_dfs_close_to_zero() -> Tuple[pd.DataFrame, pd.DataFrame]:
         timestamp_index1 = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
             pd.Timestamp("2022-01-01 21:02:00+00:00"),
@@ -1968,16 +1968,11 @@ class Test_compare_dfs(hunitest.TestCase):
         df1 = pd.DataFrame(data=values1)
         df1 = df1.set_index("timestamp")
         #
-        timestamp_index2 = [
-            pd.Timestamp("2022-01-01 21:01:00+00:00"),
-            pd.Timestamp("2022-01-01 21:02:00+00:00"),
-            pd.Timestamp("2022-01-01 21:03:00+00:00"),
-        ]
         values2 = {
             "tsA": pd.Series([0, 9e-8, 15e-8]),
             "tsB": pd.Series([0, 5e-11, 5e-9]),
             "tsC": pd.Series([5e-7, 8e-12, 9e-9]),
-            "timestamp": timestamp_index2,
+            "timestamp": timestamp_index1,
         }
         df2 = pd.DataFrame(data=values2)
         df2 = df2.set_index("timestamp")
@@ -2193,8 +2188,6 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
-            close_to_zero_threshold=1e-6,
-            zero_vs_zero_is_zero=True,
         )
         expected_length = 3
         expected_column_names = [
@@ -2241,8 +2234,6 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
-            close_to_zero_threshold=1e-6,
-            zero_vs_zero_is_zero=True,
         )
         expected_length = 3
         expected_column_names = [
@@ -2288,8 +2279,6 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
-            close_to_zero_threshold=1e-6,
-            zero_vs_zero_is_zero=True,
         )
         expected_length = 3
         expected_column_names = [
