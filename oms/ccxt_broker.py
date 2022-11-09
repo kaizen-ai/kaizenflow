@@ -606,19 +606,23 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_single_order(
-        self, order: omorder.Order
+        self, 
+        order: omorder.Order,
+        reduce_only: bool,
     ) -> Optional[omorder.Order]:
         """
         Submit a single order.
 
         :param order: order to be submitted
-
+        :param reduce_only: see `_submit_orders()`
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
         submitted_order: Optional[omorder.Order] = None
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
         _LOG.debug("Submitting order=%s", str(order))
+        if reduce_only:
+            _LOG.warning("closing position=%s", str(order))
         # TODO(Juraj): separate the retry logic from the code that does the work.
         for _ in range(self.max_order_submit_retries):
             try:
@@ -635,6 +639,7 @@ class CcxtBroker(ombroker.Broker):
                     params={
                         "portfolio_id": self._portfolio_id,
                         "client_oid": order.order_id,
+                        "reduceOnly": reduce_only,
                     },
                 )
                 _LOG.debug("CCXT order response order_resp=%s", order_resp)
@@ -667,14 +672,17 @@ class CcxtBroker(ombroker.Broker):
         wall_clock_timestamp: pd.Timestamp,
         *,
         dry_run: bool,
+        reduce_only: bool = False,
     ) -> Tuple[str, pd.DataFrame]:
         """
         Submit orders.
+
+        :param reduce_only:
         """
         self.last_order_execution_ts = pd.Timestamp.now()
         sent_orders: List[omorder.Order] = []
         for order in orders:
-            sent_order = await self._submit_single_order(order)
+            sent_order = await self._submit_single_order(order, reduce_only)
             # If order was submitted successfully append it to
             # the list of sent orders.
             if sent_order:

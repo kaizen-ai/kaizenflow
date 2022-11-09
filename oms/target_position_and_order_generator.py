@@ -258,7 +258,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             self._log_state()
             self._portfolio.log_state(os.path.join(self._log_dir, "portfolio"))
 
-    async def submit_orders(self, orders: List[omorder.Order]) -> None:
+    async def submit_orders(self, orders: List[omorder.Order], liquidate_holdings: bool) -> None:
         """
         Submit `orders` to the broker confirming receipt and log the object
         state.
@@ -266,10 +266,15 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         :param orders: list of orders to execute
         """
         # Submit orders.
+        optimizer_backend = self._optimizer_dict["backend"]
         if orders:
             broker = self._portfolio.broker
             _LOG.debug("Event: awaiting broker.submit_orders()...")
-            await broker.submit_orders(orders)
+            if optimizer_backend == "cc_pomo":
+                reduce_only = liquidate_holdings
+                await broker.submit_orders(orders, reduce_only)
+            else:
+                await broker.submit_orders(orders)
             _LOG.debug("Event: awaiting broker.submit_orders() done.")
         else:
             _LOG.debug("No orders to submit to broker.")
@@ -405,7 +410,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         else:
             raise ValueError("Unsupported `backend`=%s", backend)
         # Package the output df.
-        if liquidate_holdings:
+        if liquidate_holdings and backend != "cc_pomo":
             # If we want to liquidate all the holdings, we want to trade to flatten
             # the current positions.
             target_trades_shares = -df["holdings_shares"]

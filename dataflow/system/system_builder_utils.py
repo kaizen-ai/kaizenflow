@@ -390,27 +390,24 @@ def apply_log_dir(
     system.config["system_log_dir"] = log_dir
 
 
-def apply_ProcessForecastsNode_config_for_equities(
-    system: dtfsyssyst.System,
-) -> dtfsyssyst.System:
+def _find_last_trading_bar(
+    trading_end_time: datetime.time,
+    bar_duration_in_secs: int,
+) -> datetime.time:
     """
-    Set the trading hours for equities.
+    Compute the time of the last bar before trading end time.
 
-    Equities market is open only during certain hours.
+    :param trading_end_time: time at which the trading is stopped
+    :param bar_duration_in_secs: duration of a bar in seconds
+    :return: time of the last bar before trading end time
     """
-    ath_start_time = datetime.time(9, 30)
-    # Compute the time of the last bar before 16:00 given the trading
-    # frequency.
-    ath_end_time = datetime.time(16, 00)
+    _LOG.debug(hprint.to_str("trading_end_time bar_duration_in_secs"))
     trading_end_time = pd.Timestamp.today().replace(
-        hour=ath_end_time.hour,
-        minute=ath_end_time.minute,
-        second=ath_end_time.second,
+        hour=trading_end_time.hour,
+        minute=trading_end_time.minute,
+        second=trading_end_time.second,
         microsecond=0,
     )
-    bar_duration_in_secs = system.config[
-        "dag_runner_config", "bar_duration_in_secs"
-    ]
     # We need to find the bar that includes 1 minute before the trading end
     # time.
     mode = "floor"
@@ -420,6 +417,26 @@ def apply_ProcessForecastsNode_config_for_equities(
         mode=mode,
     )
     trading_end_time = trading_end_time.time()
+    _LOG.debug(hprint.to_str("trading_end_time"))
+    return trading_end_time
+
+
+def apply_ProcessForecastsNode_config_for_equities(
+    system: dtfsyssyst.System,
+) -> dtfsyssyst.System:
+    """
+    Set the trading hours for equities.
+
+    Equities market is open only during certain hours.
+    """
+    ath_start_time = datetime.time(9, 30)
+    ath_end_time = datetime.time(16, 00)
+    bar_duration_in_secs = system.config[
+        "dag_runner_config", "bar_duration_in_secs"
+    ]
+    trading_end_time = _find_last_trading_bar(
+        ath_end_time, bar_duration_in_secs
+    )
     #
     dict_ = {
         "ath_start_time": ath_start_time,
@@ -445,18 +462,36 @@ def apply_ProcessForecastsNode_config_for_crypto(
     For crypto we do not filter since crypto market is open 24/7.
     """
     if is_prod:
+        prod_start_time = datetime.time(6, 00)
+        # The prod run is terminated at 8:05 a.m. ET.
+        prod_end_time = datetime.time(8, 5)
+        bar_duration_in_secs = system.config[
+            "dag_runner_config", "bar_duration_in_secs"
+        ]
+        trading_end_time = _find_last_trading_bar(
+            prod_end_time, bar_duration_in_secs
+        )
+        liquidate_at_trading_end_time = True
         share_quantization = "asset_specific"
     else:
+        # For tests and simulations do not liquidate.
+        prod_start_time = None
+        prod_end_time = None
+        trading_end_time = None
+        liquidate_at_trading_end_time = False
         # For simplicity in the non-prod system we do not use quantization so that
         # we do not need to pass `asset_ids_to_decimals` (that we receive from
         # broker) around.
         share_quantization = "no_quantization"
+    # TODO(Grisha): for crypto there is no ATH, but we have to
+    # pass `ath_start{end}_time` to make things work. Find a
+    # better mechanism.
     dict_ = {
-        "ath_start_time": None,
-        "trading_start_time": None,
-        "ath_end_time": None,
-        "trading_end_time": None,
-        "liquidate_at_trading_end_time": False,
+        "ath_start_time": prod_start_time,
+        "trading_start_time": prod_start_time,
+        "ath_end_time": prod_end_time,
+        "trading_end_time": trading_end_time,
+        "liquidate_at_trading_end_time": liquidate_at_trading_end_time,
         "share_quantization": share_quantization,
     }
     config = cconfig.Config.from_dict(dict_)
