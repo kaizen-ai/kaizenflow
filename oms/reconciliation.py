@@ -518,7 +518,8 @@ def compute_dag_output_diff_stats(
     display_plot: bool = True,
 ) -> pd.Series:
     """
-    Compute DAG outputs max absolute differences using the specified aggregation level.
+    Compute DAG outputs max absolute differences using the specified
+    aggregation level.
 
     :param dag_diff_df: DAG output differences data
     :param aggregation_level: used to determine the groups for `groupby`
@@ -1209,5 +1210,3 @@ def load_and_process_artifacts(
         slippage_df,
         fills_df,
     )
-
-
