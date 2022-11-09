@@ -289,16 +289,11 @@ def apply_dag_property(
             "dag_property_config", "debug_mode_config", "dst_dir"
         ] = dst_dir
         # Mark keys for the debug mode as used.
-        # TODO(Danya): This is a suggestion on how the marking would look like
-        #  if we avoid marking entire subconfigs.
-        save_node_io_key = ("dag_property_config", "debug_mode_config", "save_node_io")
-        save_node_io = system.config.get_and_mark_as_used(save_node_io_key)
-        profile_execution_key = ("dag_property_config", "debug_mode_config", "profile_execution")
-        profile_execution = system.config.get_and_mark_as_used(profile_execution_key)
-        dst_dir_key = ("dag_property_config", "debug_mode_config", "dst_dir")
-        dst_dir = system.config.get_and_mark_as_used(dst_dir_key)
-        #
-        dag.set_debug_mode(save_node_io, profile_execution, dst_dir)
+        # TODO(Danya): This is a suggestion on how the marking would look like.
+        debug_mode_config = system.config.get_and_mark_as_used(
+            ("dag_property_config", "debug_mode_config")
+        )
+        dag.set_debug_mode(debug_mode_config)
     # 2) force_free_nodes
     force_free_nodes = system.config.get_and_mark_as_used(
         ("dag_property_config", "force_free_nodes"), default_value=False
