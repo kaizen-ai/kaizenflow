@@ -1521,13 +1521,13 @@ def compare_dfs(
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
     mask_lt = lambda x: abs(x) < close_to_zero_threshold
+    # Round small numbers up to 0 to exclude them from the diff computation.
+    df1[mask_lt] = df1[mask_lt].round(0)
+    df2[mask_lt] = df2[mask_lt].round(0)
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
-        # Round small numbers up to 0 to exclude them from the diff computation.
-        df1[mask_lt] = df1[mask_lt].round(0)
-        df2[mask_lt] = df2[mask_lt].round(0)
         df_diff = 100 * (df1 - df2) / df2
         if zero_vs_zero_is_zero:
             # Look for zeros in the df2 to replace inf as a result of division by 0.
