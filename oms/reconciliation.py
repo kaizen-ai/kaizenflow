@@ -451,9 +451,9 @@ def compute_dag_outputs_df(
     """
     Compute DAG output differences for different experiments.
 
-    :param dag_df_dict: DAG output per experiment, node and timestamp
+    :param dag_df_dict: DAG output per experiment, node and bar timestamp
     :param compare_dfs_kwargs: params for `compare_dfs()`
-    :return: DAG output differences for each experiment, node and timestamp
+    :return: DAG output differences for each experiment, node and bar timestamp
     """
     if compare_dfs_kwargs is None:
         compare_dfs_kwargs = {}
@@ -462,35 +462,38 @@ def compute_dag_outputs_df(
     hdbg.dassert_eq(2, len(experiment_names))
     dag_dict_1 = dag_df_dict[experiment_names[0]]
     dag_dict_2 = dag_df_dict[experiment_names[1]]
-    # Assert that output dicts have similar node names.
+    # Assert that output dicts have equal node names.
     hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
-    #
-    dag_diff_df_dict = collections.defaultdict(dict)
-    for node_name in dag_dict_1:
+    # Get node names and set a list to store nodes data.
+    node_names = list(dag_dict_1.keys())
+    node_dfs = []
+    for node_name in node_names:
         # Get node DAG output dicts to iterate over them.
         dag_dict_1_node = dag_dict_1[node_name]
         dag_dict_2_node = dag_dict_2[node_name]
-        # Assert that node dicts have similar timestamps.
+        # Assert that node dicts have equal bar timestamps.
         hdbg.dassert_set_eq(dag_dict_1_node.keys(), dag_dict_2_node.keys())
-        for timestamp in dag_dict_1_node:
+        # Get bar timestamps and set a list to store bar timestamp data.
+        bar_timestamps = list(dag_dict_1_node.keys())
+        bar_timestamp_dfs = []
+        for bar_timestamp in bar_timestamps:
             # Get DAG outputs per timestamp and compare them.
-            df_1 = dag_dict_1_node[timestamp]
-            df_2 = dag_dict_2_node[timestamp]
+            df_1 = dag_dict_1_node[bar_timestamp]
+            df_2 = dag_dict_2_node[bar_timestamp]
             # Pick only float columns for difference computations.
             # Only float columns are picked because int columns represent
             # not metrics but ids, etc.
             df_1 = df_1.select_dtypes("float")
             df_2 = df_2.select_dtypes("float")
-            # Compute the difference and put it in the result dict
+            # Compute the difference.
             df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
-            dag_diff_df_dict[node_name][timestamp] = df_diff
-    # TODO(Dan): Build a multiindex output in the cycle, do not use `pd.json_normalize()`.
-    # Convert DAG output differences dict to a multiindex dataframe.
-    dag_diff_df = pd.json_normalize(dict(dag_diff_df_dict), sep="/")
-    dag_diff_df.columns = dag_diff_df.columns.str.split('/', expand=True)
-    dag_diff_df = pd.concat(
-        list(dag_diff_df.values[0]), axis=1, keys=dag_diff_df.columns
-    )
+            # Add bar timestamp diff data to the corresponding list.
+            bar_timestamp_dfs.append(df_diff)
+        # Merge bar timestamp diff data into node diff data.
+        node_df = pd.concat(bar_timestamp_dfs, axis=1, keys=bar_timestamps)
+        node_dfs.append(node_df)
+    # Merge node diff data into result diff data.
+    dag_diff_df = pd.concat(node_dfs, axis=1, keys=node_names)
     return dag_diff_df
 
 
@@ -519,7 +522,6 @@ def plot_dag_max_diff(
         hdbg.dassert_isinstance(node, str)
         if by != "bar_timestamp":
             hdbg.dassert_type_is(bar_timestamp, pd.Timestamp)
-            bar_timestamp = str(bar_timestamp)
     # Remove the sign.
     dag_diff_df = dag_diff_df.abs()
     #
