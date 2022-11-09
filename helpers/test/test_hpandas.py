@@ -2295,7 +2295,6 @@ class Test_compare_dfs(hunitest.TestCase):
         columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp
         timestamp                                                                
         2022-01-01 21:01:00+00:00             0.0             0.0             0.0
         2022-01-01 21:02:00+00:00          -100.0          -100.0             0.0
