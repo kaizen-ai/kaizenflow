@@ -1906,7 +1906,7 @@ class Test_compare_dfs(hunitest.TestCase):
     - Define two DataFrames that can be either equal or different in terms of columns or rows
     - Compare its values by calculating the difference
     """
-    
+
     @staticmethod
     def get_test_dfs_equal() -> Tuple[pd.DataFrame, pd.DataFrame]:
         """
@@ -1941,17 +1941,6 @@ class Test_compare_dfs(hunitest.TestCase):
         df2 = df2.set_index("timestamp")
         return df1, df2
 
-    def get_test_dfs_different(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
-        """
-        DataFrames have both unique and equal rows and columns.
-        """
-        df1, df2 = self.get_test_dfs_equal()
-        df2 = df2.rename(
-            columns={"tsC": "extra_col"},
-            index={pd.Timestamp("2022-01-01 21:03:00+00:00"): "extra_row"},
-        )
-        return df1, df2
-
     @staticmethod
     def get_test_dfs_close_to_zero() -> Tuple[pd.DataFrame, pd.DataFrame]:
         timestamp_index1 = [
@@ -1976,6 +1965,17 @@ class Test_compare_dfs(hunitest.TestCase):
         }
         df2 = pd.DataFrame(data=values2)
         df2 = df2.set_index("timestamp")
+        return df1, df2
+
+    def get_test_dfs_different(self) -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        DataFrames have both unique and equal rows and columns.
+        """
+        df1, df2 = self.get_test_dfs_equal()
+        df2 = df2.rename(
+            columns={"tsC": "extra_col"},
+            index={pd.Timestamp("2022-01-01 21:03:00+00:00"): "extra_row"},
+        )
         return df1, df2
 
     def test1(self) -> None:
@@ -2167,7 +2167,7 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
-    
+
     def test6(self) -> None:
         """
         - DataFrames are equal
@@ -2201,7 +2201,7 @@ class Test_compare_dfs(hunitest.TestCase):
         columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp                                                                
+        timestamp
         2022-01-01 21:01:00+00:00             0.0             0.0             0.0
         2022-01-01 21:02:00+00:00             0.0             0.0             0.0
         2022-01-01 21:03:00+00:00             0.0             0.0             0.0
@@ -2213,7 +2213,7 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
-    
+
     def test7(self) -> None:
         """
         - DataFrames are equal
@@ -2247,7 +2247,7 @@ class Test_compare_dfs(hunitest.TestCase):
         columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp                                                                
+        timestamp
         2022-01-01 21:01:00+00:00          -100.0             NaN          -100.0
         2022-01-01 21:02:00+00:00          -100.0          -100.0          -100.0
         2022-01-01 21:03:00+00:00          -100.0          -100.0          -100.0
@@ -2292,7 +2292,7 @@ class Test_compare_dfs(hunitest.TestCase):
         columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp                                                                
+        timestamp
         2022-01-01 21:01:00+00:00             NaN             NaN             NaN
         2022-01-01 21:02:00+00:00             NaN             NaN             NaN
         2022-01-01 21:03:00+00:00             NaN             NaN             NaN
@@ -2305,7 +2305,6 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_signature,
         )
 
-    
     def test_invalid_input(self) -> None:
         """
         Put two different DataFrames with `equal` mode.
