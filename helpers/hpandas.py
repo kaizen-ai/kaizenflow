@@ -413,24 +413,30 @@ def find_gaps_in_time_series(
     time_series: pd.Series,
     start_timestamp: pd.Timestamp,
     end_timestamp: pd.Timestamp,
-    step: str,
+    freq: str,
 ) -> pd.Series:
     """
     Find missing points on a time interval specified by [start_timestamp,
     end_timestamp], where point distribution is determined by <step>.
 
+    If the passed time series is of a unix epoch format. It is
+    automatically tranformed to pd.Timestamp.
+
     :param time_series: time series to find gaps in
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
-    :param step: distance between two data points on the interval,
-      i.e. "S" -> second, "T" -> minute
-      for a list of aliases.
+    :param freq: distance between two data points on the interval.
+      Aliases correspond to pandas.date_range's freq parameter,
+      i.e. "S" -> second, "T" -> minute.
     :return: pd.Series representing missing points in the source time series.
     """
+    _time_series = time_series
+    if str(time_series.dtype) in ["int32", "int64"]:
+        _time_series = _time_series.map(hdateti.convert_unix_epoch_to_timestamp)
     correct_time_series = pd.date_range(
-        start=start_timestamp, end=end_timestamp, freq=step
+        start=start_timestamp, end=end_timestamp, freq=freq
     )
-    return correct_time_series.difference(time_series)
+    return correct_time_series.difference(_time_series)
 
 
 def check_and_filter_matching_columns(

@@ -24,7 +24,7 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import argparse
 import logging
 import os
-from typing import List
+from typing import Dict, List
 
 import pandas as pd
 import psycopg2
@@ -41,6 +41,35 @@ import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
+
+
+def build_dummy_data_reconciliation_config() -> cconfig.ConfigList:
+    """
+    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py as a
+    configu_builder parameter.
+    """
+    config = cconfig.Config.from_dict({"dummy": "value"})
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
+def build_data_reconciliation_config_env_var(
+    config_as_dict: Dict[str, str]
+) -> str:
+    """
+    Transform config dict to a python code string.
+
+    The string can be passed into a single var which can be ready via
+    Config.from_env_var at notebook level.
+
+    :param config_as_dict: config dict for data reconciliation
+    """
+    # config = cconfig.Config.from_dict(config_as_dict)
+    # config_str = config.to_python()
+    # return config_str
+
+
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -147,12 +176,9 @@ class RealTimeHistoricalReconciler:
                 True,
                 "One resampling option should be chosen",
             )
-            hdbg.dassert_ne(
-                args.bid_ask_accuracy,
-                None,
-                "parameter `bid_ask_accuracy` is required "
-                + "for `bid_ask` data type",
-            )
+            # Check that bid_ask_accuracy param
+            #  is set to a valid percentage.
+            hdbg.dassert_lgt(0, args.bid_ask_accuracy, 100, True, True)
             self.bid_ask_accuracy = args.bid_ask_accuracy
         self.data_type = args.data_type
         # Set DB connection.
@@ -454,16 +480,17 @@ class RealTimeHistoricalReconciler:
                     daily_missing_data, num_rows=len(daily_missing_data)
                 )
             )
-        # Assert data has no gaps at the same place.
-        #  hpandas.find_gaps_in_dataframes will not report
-        #  if both datasets miss a data point at the same timestamp.
+        # Assert neither of the datasets has contains gaps
+        #  in datetime index.
         # All of the checks are done by minute apart from checking raw bid_ask data.
-        step = "S" if self.resample_1sec else "T"
+        # TODO(Juraj): This is still not a 100% check, it should be applied
+        #  to each symbol respectively.
+        freq = "S" if self.resample_1sec else "T"
         rt_data_gaps = hpandas.find_gaps_in_time_series(
             rt_data.index.get_level_values(0).unique(),
             self.start_ts,
             self.end_ts,
-            step,
+            freq,
         )
         if not rt_data_gaps.empty:
             error_message.append("Gaps in real time data:")
@@ -476,7 +503,7 @@ class RealTimeHistoricalReconciler:
             daily_data.index.get_level_values(0).unique(),
             self.start_ts,
             self.end_ts,
-            step,
+            freq,
         )
         if not daily_data_gaps.empty:
             error_message.append("Gaps in daily data:")
@@ -596,13 +623,13 @@ class RealTimeHistoricalReconciler:
             if abs(row["bid_price_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between bid prices in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
             if abs(row["ask_price_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between ask prices in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
         # Show stats for differences for sizes.
@@ -620,16 +647,15 @@ class RealTimeHistoricalReconciler:
             if abs(row["bid_size_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between bid sizes in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
             if abs(row["ask_size_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between ask sizes in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
-        error_message += self._compare_general(rt_data, daily_data)
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
@@ -679,15 +705,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _run(args)
 
-
-def build_dummy_data_reconciliation_config() -> cconfig.ConfigList:
-    """
-    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py as a
-    configu_builder parameter.
-    """
-    config = cconfig.Config.from_dict({"dummy": "value"})
-    config_list = cconfig.ConfigList([config])
-    return config_list
 
 if __name__ == "__main__":
     _main(_parse())

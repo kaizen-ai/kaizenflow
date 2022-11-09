@@ -17,7 +17,7 @@
 #
 # This notebook is used to perform reconciliation on data obtained in realtime with batch data downloaded at once, i.e. once a day.
 # As displayed below, the notebook assumes environment variables for the reconciliation parameters. The intended use
-# is via invoke target `dev_scripts.lib_tasks_reconcile.run_data_reconciliation_notebook`
+# is via invoke target `dev_scripts.lib_tasks_reconcile.reconcile_data_run_notebook`
 
 # %% [markdown]
 # ## Imports and logging
@@ -25,11 +25,12 @@
 # %%
 import argparse
 import logging
-import os
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+import helpers.hio as hio
+import core.config as cconfig
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 
 # %% [markdown]
@@ -50,25 +51,19 @@ hprint.config_notebook()
 # To assist debugging you can override any of the parameters after its loaded and rerun reconciler
 
 # %%
-os.environ.items()
+env_var_name = "CK_DATA_RECONCILIATION_CONFIG"
+config = cconfig.Config.from_env_var(env_var_name)
 
 # %%
-# Load relevant environment variables.
-config = filter(lambda x: x[0].startswith("DATA_RECONCILE_"), os.environ.items())
-# Transform parameter names to the naming conventions used by the reconciler.
-config = list(map(lambda x: (x[0].replace("DATA_RECONCILE_", "").lower(), x[1]), config))
-# Dict can be passed as a namespace argument.
-config = { it[0] : it[1] for it in config }
-config
-
-# %%
-# Bid_ask_accuracy needs special treatment
-#  since int is expected in the reconciler.
-config['bid_ask_accuracy'] = None if config['bid_ask_accuracy'] == 'None' else int(config['bid_ask_accuracy'])
 # Transform resample_mode to parameter supported
 #  by the reconciler
 config["resample_1sec"] = config["resample_mode"] == "resample_1sec"
 config["resample_1min"] = config["resample_mode"] == "resample_1min"
+
+# %%
+config = config.to_dict()
+# bid_ask_accuracy needs to be cast to int if its defined
+config["bid_ask_accuracy"] = int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
 config
 
 # %% [markdown]
@@ -91,4 +86,16 @@ reconciler.daily_data.head()
 # ## Run reconciliation
 
 # %%
-reconciler.run()
+try:
+    reconciler.run()
+except Exception as e:
+    # Pass information about success or failure of the reconciliation
+    #  back to the task that invoked it.
+    data_reconciliation_outcome = "FAILURE"
+    raise e
+# If no exception was raised mark the reconciliation as successful.
+data_reconciliation_outcome = "SUCCESS"
+
+# %%
+# This can be read by the invoke task to find out if reconciliation was successful.
+hio.to_file("ck_data_reconciliation_success.txt", data_reconciliation_outcome)

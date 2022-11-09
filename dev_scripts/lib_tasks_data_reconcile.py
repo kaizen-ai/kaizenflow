@@ -3,8 +3,7 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-docker> invoke run_data_reconciliation_notebook  \
-   --stage 'preprod' \
+docker> invoke reconcile_data_run_notebook  \
    --db-stage 'dev' \
    --start-timestamp '2022-11-01T00:00:00+00:00' \
    --end-timestamp '2022-11-01T02:00:00+00:00' \
@@ -19,31 +18,37 @@ docker> invoke run_data_reconciliation_notebook  \
    --bid-ask-accuracy 1 \
    --resample-mode 'resample_1min'
 
-
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_data_reconciliation_notebook ...'
+> invoke docker_cmd --cmd 'invoke reconcile_data_run_notebook ...'
 ```
 
 Import as:
 
-import dev_scripts.lib_tasks_data_reconcile as dslitadr
+import dev_scripts.lib_tasks_data_reconcile as dsltdare
 """
 
 import logging
 import os
+import re
 
 from invoke import task
 
+import core.config as cconfig
 import dev_scripts.lib_tasks_reconcile as dslitare
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hserver as hserver
 
 _LOG = logging.getLogger(__name__)
 
 
 def _reconcile_data_create_dirs(
-    base_dst_dir: str, start_timestamp: str, end_timestamp: str, db_table:str, abort_if_exists=True
+    base_dst_dir: str,
+    start_timestamp: str,
+    end_timestamp: str,
+    db_table: str,
+    abort_if_exists=True,
 ) -> str:
     """
     Create dirs for storing data reconciliation results.
@@ -77,13 +82,15 @@ def _reconcile_data_create_dirs(
     :return: path to the created target dir
     """
     # Transform the timestamp arguments to avoid special characters
-    #  i.e. 2022-11-01T00:02:00+00:00 -> 2022-11-01_000200
+    #  i.e. 2022-11-01T00:02:00+00:00 -> 20221101_000200
     #  the context isn't lost since the raw args are present in the saved notebook
     #  and also chances of using anything else as UTC are low.
+    start_timestamp = start_timestamp.replace("+00:00", "")
+    end_timestamp = end_timestamp.replace("+00:00", "")
+    start_timestamp = re.sub(r"[^A-Za-z0-9 ]+", "", start_timestamp)
+    end_timestamp = re.sub(r"[^A-Za-z0-9 ]+", "", end_timestamp)
     start_timestamp = start_timestamp.replace("T", "_")
     end_timestamp = end_timestamp.replace("T", "_")
-    start_timestamp = start_timestamp.replace("+00:00", "").translate(None, "+:")
-    end_timestamp = end_timestamp.replace("+00:00", "").translate(None, "+:")
     timestamp_dst_dir = f"{start_timestamp}.{end_timestamp}"
     target_dir = os.path.join(base_dst_dir, timestamp_dst_dir, db_table)
     # Create a dir for reconcilation results.
@@ -96,23 +103,25 @@ def _reconcile_data_create_dirs(
 
 # TODO(Juraj): this flow is very similiar to dslitare.reconcile_run_notebook
 #  it might be good to define common behavior.
+# TODO(Juraj): divide into smaller invokes and then run in a single
+#  reconcile_data_run_all.
+# TODO(Juraj): add prevent_overwriting option.
 @task
-def run_data_reconciliation_notebook(
-   ctx,
-   stage,
-   db_stage,
-   start_timestamp,
-   end_timestamp,
-   exchange_id,
-   data_type,
-   contract_type,
-   db_table,
-   aws_profile,
-   s3_vendor,
-   s3_path,
-   base_dst_dir,
-   bid_ask_accuracy=None,
-   resample_mode=None
+def reconcile_data_run_notebook(
+    ctx,
+    db_stage,
+    start_timestamp,
+    end_timestamp,
+    exchange_id,
+    data_type,
+    contract_type,
+    db_table,
+    aws_profile,
+    s3_vendor,
+    s3_path,
+    base_dst_dir,
+    bid_ask_accuracy=None,
+    resample_mode=None,
 ):  # type: ignore
     """
     Run data reconciliation notebook and store in in a stored location.
@@ -120,37 +129,40 @@ def run_data_reconciliation_notebook(
     See `im_v2.ccxt.data.extract.compare_realtime_and_historical` for
     reconcilation params description.
 
-    :param stage: stage at which the reconciliation is executed,
-     influence placement of the results.
     :param base_dst_dir: dir to store data reconciliation
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
-    env_var_name_base = "DATA_RECONCILE_"
-    os.environ[env_var_name_base + "DB_STAGE"] = db_stage
-    os.environ[env_var_name_base + "START_TIMESTAMP"] = start_timestamp
-    os.environ[env_var_name_base + "END_TIMESTAMP"] = end_timestamp
-    os.environ[env_var_name_base + "EXCHANGE_ID"] = exchange_id
-    os.environ[env_var_name_base + "DATA_TYPE"] = data_type
-    os.environ[env_var_name_base + "CONTRACT_TYPE"] = contract_type
-    os.environ[env_var_name_base + "DB_TABLE"] = db_table
-    os.environ[env_var_name_base + "AWS_PROFILE"] = aws_profile
-    os.environ[env_var_name_base + "S3_VENDOR"] = s3_vendor
-    os.environ[env_var_name_base + "S3_PATH"] = s3_path
-    os.environ[env_var_name_base + "BID_ASK_ACCURACY"] = str(bid_ask_accuracy)
-    os.environ[env_var_name_base + "RESAMPLE_MODE"] = str(resample_mode)
+    config_dict = {
+        "db_stage": db_stage,
+        "start_timestamp": start_timestamp,
+        "end_timestamp": end_timestamp,
+        "exchange_id": exchange_id,
+        "data_type": data_type,
+        "contract_type": contract_type,
+        "db_table": db_table,
+        "aws_profile": aws_profile,
+        "s3_vendor": s3_vendor,
+        "s3_path": s3_path,
+        "bid_ask_accuracy": bid_ask_accuracy,
+        "resample_mode": resample_mode,
+    }
+    config = cconfig.Config.from_dict(config_dict)
+    os.environ["CK_DATA_RECONCILIATION_CONFIG"] = config.to_python()
     _ = ctx
     # Set directory to store results locally
     results_dir = "."
     # Add the command to run the notebook.
     notebook_path = "amp/im_v2/ccxt/notebooks/Data_reconciliation.ipynb"
     cmd_txt = []
-    # TODO(Juraj): rewrite env variables logic via core.config.config_builder
-    #  if desired for code consistency.
-    config_builder = "amp.im_v2.ccxt.data.extract.compare_realtime_and_historical." \
-                     + "build_dummy_data_reconciliation_config()"
-    opts = "--num_threads 'serial' --allow_errors --publish_notebook -v DEBUG 2>&1"
+    config_builder = (
+        "amp.im_v2.ccxt.data.extract.compare_realtime_and_historical."
+        + "build_dummy_data_reconciliation_config()"
+    )
+    opts = (
+        "--num_threads 'serial' --allow_errors --publish_notebook -v DEBUG 2>&1"
+    )
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
         f"--notebook {notebook_path}",
@@ -169,10 +181,25 @@ def run_data_reconciliation_notebook(
     dslitare._system(script_name)
     # Assert directory generated by `run_notebook` was created.`
     results_dir = os.path.join(results_dir, "result_0")
-    hdbg.dassert_dir_exists(results_dir)
+    # hdbg.dassert_dir_exists(results_dir)
     # Copy the published notebook to the specified folder.
-    target_dir = _reconcile_data_create_dirs(base_dst_dir, start_timestamp, end_timestamp, db_table)
+    target_dir = _reconcile_data_create_dirs(
+        base_dst_dir, start_timestamp, end_timestamp, db_table
+    )
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
     dslitare._system(cmd)
+    # This is a workaround to get outcome of the data reconciliation from the notebook.
+    reconc_sucess = hio.from_file(
+        "amp/im_v2/ccxt/notebooks/ck_data_reconciliation_success.txt"
+    )
+    if reconc_sucess.strip() == "SUCCESS":
+        _LOG.info(
+            "Data reconciliation was successful, results stored in '%s'",
+            target_dir,
+        )
+    else:
+        hdbg.dfatal(
+            message=f"Data reconciliation failed, results stored in '{target_dir}'"
+        )
