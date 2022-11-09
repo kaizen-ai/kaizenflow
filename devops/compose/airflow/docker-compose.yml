@@ -1,0 +1,123 @@
+# Adapted from https://github.com/resdevd/docker-compose-airflow/blob/main/docker-compose.yml
+version: '3'
+services:
+  postgres:
+    image: postgres:14.0
+    container_name: postgres_cont
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=airflow
+      - POSTGRES_PORT=5432
+    volumes:
+    - ck-airflow-database-data:/var/lib/postgresql/data/
+    ports:
+      - 5532:5432
+
+  #redis:
+  #  image: redis:latest
+  #  container_name: redis_cont
+  #  restart: always
+  #  ports:
+  #    - 6379:6379
+
+  airflow:
+    build: .
+    image: resdev-airflow:latest
+    container_name: airflow_cont
+    env_file:
+      - .env
+    restart: always
+    command: webserver
+    depends_on:
+      - postgres
+    ports:
+      - 8090:8080
+    volumes:
+      - ./ck-airflow-data/dags:/opt/airflow/dags
+      - ./ck-airflow-data/plugins:/opt/airflow/plugins
+      - ck-airflow-log-volume:/opt/airflow/log
+    extra_hosts:
+      - "host.docker.internal:host-gateway" 
+
+  airflow-scheduler:
+    build: .
+    image: resdev-airflow:latest
+    container_name: airflow_scheduler_cont
+    env_file:
+      - .env
+    restart: always
+    command: scheduler
+    depends_on:
+      - postgres
+    volumes:
+      - ./ck-airflow-data/dags:/opt/airflow/dags
+      - ./ck-airflow-data/plugins:/opt/airflow/plugins
+      - ck-airflow-log-volume:/opt/airflow/logs
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  
+
+  #airflow-worker1:
+  #  build: .
+  #  image: resdev-airflow:latest
+  #  container_name: airflow_worker1_cont
+  #  env_file:
+  #    - .env
+  #  restart: always
+  #  command: celery worker
+  #  depends_on:
+  #    - postgres
+  #  volumes:
+  #    - ./ck-airflow-data/dags:/opt/airflow/dags
+  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
+  #    - ck-airflow-log-volume:/opt/airflow/logs
+#
+  #airflow-worker2:
+  #  build: .
+  #  image: resdev-airflow:latest
+  #  container_name: airflow_worker2_cont
+  #  env_file:
+  #    - .env
+  #  restart: always
+  #  command: celery worker
+  #  depends_on:
+  #    - postgres
+  #  volumes:
+  #    - ./ck-airflow-data/dags:/opt/airflow/dags
+  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
+  #    - ck-airflow-log-volume:/opt/airflow/logs
+#
+  #airflow-worker3:
+  #  build: .
+  #  image: resdev-airflow:latest
+  #  container_name: airflow_worker3_cont
+  #  env_file:
+  #    - .env
+  #  restart: always
+  #  depends_on:
+  #    - postgres
+  #  command: celery worker
+  #  volumes:
+  #    - ./ck-airflow-data/dags:/opt/airflow/dags
+  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
+  #    - ck-airflow-log-volume:/opt/airflow/logs
+
+  #airflow-flower:
+  #  build: .
+  #  image: resdev-airflow:latest
+  #  container_name: airflow_flower_cont
+  #  depends_on:
+  #    - postgres
+  #  volumes:
+  #    - ./ck-airflow-data/dags:/opt/airflow/dags
+  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
+  #    - ck-airflow-log-volume:/opt/airflow/logs
+  #  env_file:
+  #    - .env
+  #  restart: always
+  #  command: celery flower
+  #  ports:
+  #    - 5555:5555
+volumes:
+  ck-airflow-database-data:
+  ck-airflow-log-volume:
