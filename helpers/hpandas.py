@@ -1503,6 +1503,8 @@ def compare_dfs(
     diff_mode: str = "diff",
     remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
+    close_to_zero_threshold: float = 1e-6,
+    zero_vs_zero_is_zero: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1522,6 +1524,8 @@ def compare_dfs(
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
+    :param close_to_zero_threshold: round numbers below the threshold up to 0
+    :param zero_vs_zero_is_zero: if True, replace inf as a result of division by 0
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1546,11 +1550,21 @@ def compare_dfs(
         df2 = df2[col_names]
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
+    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
+    # Round small numbers up to 0 to exclude them from the diff computation.
+    df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
+    df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
+        if zero_vs_zero_is_zero:
+            # Look for zeros to replace NaNs as a result of division by 0.
+            df1_mask = df1 == 0
+            df2_mask = df2 == 0
+            zero_vs_zero_mask =  df1_mask & df2_mask
+            df_diff[zero_vs_zero_mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
