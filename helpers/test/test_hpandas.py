@@ -1958,9 +1958,9 @@ class Test_compare_dfs(hunitest.TestCase):
         df1 = df1.set_index("timestamp")
         #
         values2 = {
-            "tsA": pd.Series([0, 9e-8, 15e-8]),
-            "tsB": pd.Series([0, 5e-11, 5e-9]),
-            "tsC": pd.Series([5e-7, 8e-12, 9e-9]),
+            "tsA": pd.Series([0, 9e-8, 15e-3]),
+            "tsB": pd.Series([0, 5e-4, 5e-9]),
+            "tsC": pd.Series([5e-7, 8e-12, 9e-6]),
             "timestamp": timestamp_index1,
         }
         df2 = pd.DataFrame(data=values2)
@@ -2189,7 +2189,7 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            remove_inf=True,
+            remove_inf=False,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2205,9 +2205,9 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00             NaN             NaN             NaN
-        2022-01-01 21:02:00+00:00             NaN             NaN             NaN
-        2022-01-01 21:03:00+00:00             NaN             NaN             NaN
+        2022-01-01 21:01:00+00:00             inf             inf             inf
+        2022-01-01 21:02:00+00:00             inf        999900.0             inf
+        2022-01-01 21:03:00+00:00         19900.0             inf      99999900.0
         """
         self.check_df_output(
             df_diff,
@@ -2297,8 +2297,8 @@ class Test_compare_dfs(hunitest.TestCase):
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
         2022-01-01 21:01:00+00:00             0.0             0.0             0.0
-        2022-01-01 21:02:00+00:00             0.0             0.0             0.0
-        2022-01-01 21:03:00+00:00             0.0             0.0             0.0
+        2022-01-01 21:02:00+00:00             0.0          -100.0             0.0
+        2022-01-01 21:03:00+00:00          -100.0             0.0          -100.0
         """
         self.check_df_output(
             df_diff,

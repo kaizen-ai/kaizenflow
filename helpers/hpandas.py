@@ -1530,7 +1530,7 @@ def compare_dfs(
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
         if zero_vs_zero_is_zero:
-            # Look for zeros in the df2 to replace inf as a result of division by 0.
+            # Look for zeros to replace NaNs as a result of division by 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
             zero_vs_zero_mask =  df1_mask & df2_mask
