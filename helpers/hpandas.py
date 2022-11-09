@@ -1539,7 +1539,7 @@ def compare_dfs(
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
     if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], 0)
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     if diff_mode == "pct_change" and assert_diff_threshold is not None:
         # TODO(Grisha): generalize for the other modes.
         # Report max diff.

@@ -1906,8 +1906,9 @@ class Test_compare_dfs(hunitest.TestCase):
     - Define two DataFrames that can be either equal or different in terms of columns or rows
     - Compare its values by calculating the difference
     """
-
-    def get_test_dfs_equal(self) -> pd.DataFrame:
+    
+    @staticmethod
+    def get_test_dfs_equal() -> pd.DataFrame:
         """
         Both DataFrames have only equal rows and columns names.
         """
@@ -1951,6 +1952,7 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         return df1, df2
 
+    @staticmethod
     def get_test_dfs_close_to_zero() -> None:
         timestamp_index1 = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
@@ -1958,9 +1960,9 @@ class Test_compare_dfs(hunitest.TestCase):
             pd.Timestamp("2022-01-01 21:03:00+00:00"),
         ]
         values1 = {
-            "tsA": pd.Series([1e-8, 2e-10, 3e-9]),
-            "tsB": pd.Series([4e-9, 5e-8, 6e-12]),
-            "tsC": pd.Series([7e-8, 8e-11, 9e-7]),
+            "tsA": pd.Series([0, 2e-10, 3e-9]),
+            "tsB": pd.Series([0, 5e-8, 6e-12]),
+            "tsC": pd.Series([7e-8, 0, 9e-7]),
             "timestamp": timestamp_index1,
         }
         df1 = pd.DataFrame(data=values1)
@@ -2170,26 +2172,29 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_column_unique_values,
             expected_signature,
         )
-
+    
     def test6(self) -> None:
         """
         - DataFrames are equal
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
+        - close_to_zero_threshold = 1e-6
+        - zero_vs_zero_is_zero = True
 
         The second DataFrame has numbers below the close_to_zero_threshold.
         """
-        df1, df2 = self.get_test_dfs_equal()
-        df2 = df2 / 1e8
+        df1, _ = self.get_test_dfs_equal()
+        _, df2 = self.get_test_dfs_close_to_zero()
         df_diff = hpandas.compare_dfs(
             df1,
             df2,
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            remove_inf=True,
+            remove_inf=False,
             assert_diff_threshold=None,
-            pct_change_threshold=1e-6,
+            close_to_zero_threshold=1e-6,
+            zero_vs_zero_is_zero=True,
         )
         expected_length = 3
         expected_column_names = [
@@ -2203,9 +2208,104 @@ class Test_compare_dfs(hunitest.TestCase):
         columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp
-        2022-01-01 21:01:00+00:00       -9.090909             NaN        7.692308
-        2022-01-01 21:02:00+00:00        5.263158             0.0       -6.976744
+        timestamp                                                                
+        2022-01-01 21:01:00+00:00             0.0             0.0             0.0
+        2022-01-01 21:02:00+00:00             0.0             0.0             0.0
+        2022-01-01 21:03:00+00:00             0.0             0.0             0.0
+        """
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+    
+    def test7(self) -> None:
+        """
+        - DataFrames are equal
+        - Column and row modes are `equal`
+        - diff_mode = "pct_change"
+        - close_to_zero_threshold = 1e-6
+        - zero_vs_zero_is_zero = True
+
+        The first DataFrame has numbers below the close_to_zero_threshold.
+        """
+        _, df2 = self.get_test_dfs_equal()
+        df1, _ = self.get_test_dfs_close_to_zero()
+        df_diff = hpandas.compare_dfs(
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="pct_change",
+            remove_inf=False,
+            assert_diff_threshold=None,
+            close_to_zero_threshold=1e-6,
+            zero_vs_zero_is_zero=True,
+        )
+        expected_length = 3
+        expected_column_names = [
+            "tsA.pct_change",
+            "tsB.pct_change",
+            "tsC.pct_change",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
+        columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
+        shape=(3, 3)
+                                tsA.pct_change  tsB.pct_change  tsC.pct_change
+        timestamp                                                                
+        2022-01-01 21:01:00+00:00          -100.0             NaN          -100.0
+        2022-01-01 21:02:00+00:00          -100.0          -100.0          -100.0
+        2022-01-01 21:03:00+00:00          -100.0          -100.0          -100.0
+        """
+        self.check_df_output(
+            df_diff,
+            expected_length,
+            expected_column_names,
+            expected_column_unique_values,
+            expected_signature,
+        )
+
+    def test8(self) -> None:
+        """
+        - DataFrames are equal
+        - Column and row modes are `equal`
+        - diff_mode = "pct_change"
+        - close_to_zero_threshold = 1e-6
+        - zero_vs_zero_is_zero = True
+
+        Both DataFrames have numbers below the close_to_zero_threshold.
+        """
+        df1, df2 = self.get_test_dfs_close_to_zero()
+        df_diff = hpandas.compare_dfs(
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="pct_change",
+            remove_inf=False,
+            assert_diff_threshold=None,
+            close_to_zero_threshold=1e-6,
+            zero_vs_zero_is_zero=True,
+        )
+        expected_length = 3
+        expected_column_names = [
+            "tsA.pct_change",
+            "tsB.pct_change",
+            "tsC.pct_change",
+        ]
+        expected_column_unique_values = None
+        expected_signature = r"""# df=
+        index=[2022-01-01 21:01:00+00:00, 2022-01-01 21:03:00+00:00]
+        columns=tsA.pct_change,tsB.pct_change,tsC.pct_change
+        shape=(3, 3)
+                                tsA.pct_change  tsB.pct_change  tsC.pct_change
+        timestamp                                                                
+        2022-01-01 21:01:00+00:00             NaN             NaN             NaN
+        2022-01-01 21:02:00+00:00             NaN             NaN             NaN
         2022-01-01 21:03:00+00:00             NaN             NaN             NaN
         """
         self.check_df_output(
@@ -2216,6 +2316,7 @@ class Test_compare_dfs(hunitest.TestCase):
             expected_signature,
         )
 
+    
     def test_invalid_input(self) -> None:
         """
         Put two different DataFrames with `equal` mode.
