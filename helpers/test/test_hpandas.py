@@ -2019,6 +2019,8 @@ class Test_compare_dfs(hunitest.TestCase):
         - DataFrames are equal
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
+        - remove_inf = False,
+        - zero_vs_zero_is_zero = False
         """
         df1, df2 = self.get_test_dfs_equal()
         df_diff = hpandas.compare_dfs(
@@ -2029,6 +2031,7 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
+            zero_vs_zero_is_zero=False,
         )
         expected_length = 3
         expected_column_names = [
@@ -2114,7 +2117,7 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(2, 2)
                                 tsA.pct_change  tsB.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00       -9.090909        NaN
+        2022-01-01 21:01:00+00:00       -9.090909        0.0
         2022-01-01 21:02:00+00:00        5.263158        0.0
         """
         self.check_df_output(
