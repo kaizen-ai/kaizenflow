@@ -271,7 +271,7 @@ def apply_dag_property(
         )
     # Set DAG properties.
     # 1) debug_mode_config
-    debug_mode_config = system.config.get_and_mark_as_used(
+    debug_mode_config = system.config.get(
         ("dag_property_config", "debug_mode_config"), default_value=None
     )
     _LOG.debug(hprint.to_str("debug_mode_config"))
@@ -288,7 +288,17 @@ def apply_dag_property(
         system.config[
             "dag_property_config", "debug_mode_config", "dst_dir"
         ] = dst_dir
-        dag.set_debug_mode(**debug_mode_config)
+        # Mark keys for the debug mode as used.
+        # TODO(Danya): This is a suggestion on how the marking would look like
+        #  if we avoid marking entire subconfigs.
+        save_node_io_key = ("dag_property_config", "debug_mode_config", "save_node_io")
+        save_node_io = system.config.get_and_mark_as_used(save_node_io_key)
+        profile_execution_key = ("dag_property_config", "debug_mode_config", "profile_execution")
+        profile_execution = system.config.get_and_mark_as_used(profile_execution_key)
+        dst_dir_key = ("dag_property_config", "debug_mode_config", "dst_dir")
+        dst_dir = system.config.get_and_mark_as_used(dst_dir_key)
+        #
+        dag.set_debug_mode(save_node_io, profile_execution, dst_dir)
     # 2) force_free_nodes
     force_free_nodes = system.config.get_and_mark_as_used(
         ("dag_property_config", "force_free_nodes"), default_value=False
@@ -643,7 +653,6 @@ def _apply_DagRunner_config(
         "bar_duration_in_secs": bar_duration_in_secs,
         "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
         # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
-        "trading_period_str": trading_period_str,
     }
     system.config["dag_runner_config"] = cconfig.Config.from_dict(
         real_time_config
