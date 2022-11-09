@@ -1520,10 +1520,10 @@ def compare_dfs(
         df2 = df2[col_names]
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
-    mask_lt = lambda x: abs(x) < close_to_zero_threshold
+    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
     # Round small numbers up to 0 to exclude them from the diff computation.
-    df1[mask_lt] = df1[mask_lt].round(0)
-    df2[mask_lt] = df2[mask_lt].round(0)
+    df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
+    df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2

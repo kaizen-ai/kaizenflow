@@ -2189,7 +2189,7 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            remove_inf=False,
+            remove_inf=True,
             assert_diff_threshold=None,
         )
         expected_length = 3
@@ -2205,9 +2205,9 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00             inf             inf             inf
-        2022-01-01 21:02:00+00:00             inf             inf             inf
-        2022-01-01 21:03:00+00:00             inf             inf             inf
+        2022-01-01 21:01:00+00:00             NaN             NaN             NaN
+        2022-01-01 21:02:00+00:00             NaN             NaN             NaN
+        2022-01-01 21:03:00+00:00             NaN             NaN             NaN
         """
         self.check_df_output(
             df_diff,
