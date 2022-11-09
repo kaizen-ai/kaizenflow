@@ -1951,6 +1951,36 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         return df1, df2
 
+    def get_test_dfs_close_to_zero() -> None:
+        timestamp_index1 = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+        ]
+        values1 = {
+            "tsA": pd.Series([1e-8, 2e-10, 3e-9]),
+            "tsB": pd.Series([4e-9, 5e-8, 6e-12]),
+            "tsC": pd.Series([7e-8, 8e-11, 9e-7]),
+            "timestamp": timestamp_index1,
+        }
+        df1 = pd.DataFrame(data=values1)
+        df1 = df1.set_index("timestamp")
+        #
+        timestamp_index2 = [
+            pd.Timestamp("2022-01-01 21:01:00+00:00"),
+            pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
+        ]
+        values2 = {
+            "tsA": pd.Series([0, 9e-8, 15e-8]),
+            "tsB": pd.Series([0, 5e-11, 5e-9]),
+            "tsC": pd.Series([5e-7, 8e-12, 9e-9]),
+            "timestamp": timestamp_index2,
+        }
+        df2 = pd.DataFrame(data=values2)
+        df2 = df2.set_index("timestamp")
+        return df1, df2
+
     def test1(self) -> None:
         """
         - DataFrames are equal

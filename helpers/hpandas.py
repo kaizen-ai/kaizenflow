@@ -1494,7 +1494,8 @@ def compare_dfs(
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
-    :param pct_change_threshold: round numbers below the threshold up to 0
+    :param close_to_zero_threshold: round numbers below the threshold up to 0
+    :param zero_vs_zero_is_zero: if True, replace inf as a result of division by 0
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1527,20 +1528,18 @@ def compare_dfs(
         # Round small numbers up to 0 to exclude them from the diff computation.
         df1[mask_lt] = df1[mask_lt].round(0)
         df2[mask_lt] = df2[mask_lt].round(0)
+        df_diff = 100 * (df1 - df2) / df2
         if zero_vs_zero_is_zero:
-            zero_vs_zero_is_zero_func = lambda x: x == 0
-            df_diff = zero_vs_zero_is_zero_func(df1) & zero_vs_zero_is_zero_func(
-                df2
-            )
-            if df_diff.any().max().max():
-                df_diff = 0
-            else:
-                df_diff = 100 * (df1 - df2) / df2
+            # Look for zeros in the df2 to replace inf as aresult of division by 0.
+            df2_mask = df2 == 0
+            df_diff_mask = df_diff == np.inf
+            mask = df2_mask & df_diff_mask
+            df_diff[mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
     if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
+        df_diff = df_diff.replace([np.inf, -np.inf], 0)
     if diff_mode == "pct_change" and assert_diff_threshold is not None:
         # TODO(Grisha): generalize for the other modes.
         # Report max diff.
