@@ -11,6 +11,7 @@ import os
 import pprint
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -562,6 +563,7 @@ def compute_dag_output_diff_stats(
             _ = stats.dropna().plot.line()
         else:
             _ = stats.plot.bar()
+        plt.show()
     return stats
 
 

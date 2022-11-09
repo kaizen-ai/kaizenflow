@@ -140,14 +140,14 @@ max_diff = dag_diff_df.abs().max().max()
 _LOG.info("Maximum absolute difference for DAG output=%s", max_diff)
 
 # %%
-if True:
+if False:
     # Plot differences across nodes.
     aggregation_level = "node"
     display_plot=True
     node_diff_stats = oms.compute_dag_output_diff_stats(
         dag_diff_df, aggregation_level, display_plot=display_plot
     )
-if True:
+if False:
     # Plot differences across bar timestamps.
     aggregation_level = "bar_timestamp"
     node = "predict.2.compute_ret_0"
@@ -155,7 +155,7 @@ if True:
     bar_timestamp_diff_stats = oms.compute_dag_output_diff_stats(
         dag_diff_df, aggregation_level, node=node, display_plot=display_plot
     )
-if True:
+if False:
     # Plot differences across timestamps in a diff df.
     aggregation_level = "time"
     node = "predict.2.compute_ret_0"
@@ -168,7 +168,7 @@ if True:
         bar_timestamp=bar_timestamp,
         display_plot=display_plot,
     )
-if True:
+if False:
     # Plot differences across columns names.
     aggregation_level = "column"
     node = "predict.2.compute_ret_0"
@@ -181,7 +181,7 @@ if True:
         bar_timestamp=bar_timestamp,
         display_plot=display_plot,
     )
-if True:
+if False:
     # Plot differences across asset ids.
     aggregation_level = "asset_id"
     node = "predict.2.compute_ret_0"
@@ -194,16 +194,16 @@ if True:
         bar_timestamp=bar_timestamp,
         display_plot=display_plot,
     )
-if True:
+if False:
     # Spot check using heatmap.
     check_node_name = "predict.2.compute_ret_0"
     check_bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
-    check_column_name = "close.ret_0.diff"
+    check_column_name = "close.ret_0.pct_change"
     check_heatmap_df = hpandas.heatmap_df(
         dag_diff_df[check_node_name][check_bar_timestamp][check_column_name],
         axis=1,
     )
-    check_heatmap_df
+    display(check_heatmap_df)
 
 # %%
 # Compute correlations.
