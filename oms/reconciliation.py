@@ -444,12 +444,24 @@ def load_dag_outputs(
     return dag_df_dict
 
 
-def compute_dag_outputs_df(
+def compute_dag_outputs_diff(
     dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
     compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
     Compute DAG output differences for different experiments.
+
+    Output example:
+    ```
+                               predict.0.read_data
+                               2022-11-04 06:05:00-04:00
+                               close.pct_change
+                               1891737434.pct_change  1966583502.pct_change
+    end_timestamp
+    2022-01-01 21:01:00+00:00                  -0.0                   +0.23
+    2022-01-01 21:02:00+00:00                 -1.11                    -3.4
+    2022-01-01 21:03:00+00:00                  12.2                   -32.0
+    ```
 
     :param dag_df_dict: DAG output per experiment, node and bar timestamp
     :param compare_dfs_kwargs: params for `compare_dfs()`
@@ -497,46 +509,59 @@ def compute_dag_outputs_df(
     return dag_diff_df
 
 
-# TODO(Dan): Add plot kwargs.
-def plot_dag_max_diff(
-    dag_diff_df: pd.DataFrame(),
-    by: str,
+def compute_dag_output_diff_stats(
+    dag_diff_df: pd.DataFrame,
+    aggregation_level: str,
     *,
     node: Optional[str] = None,
     bar_timestamp: Optional[pd.Timestamp] = None,
-):
+    display_plot: bool = True,
+) -> pd.Series:
     """
-    Plot DAG output max differences by the specified data piece.
+    Compute DAG outputs max absolute differences using the specified aggregation level.
 
     :param dag_diff_df: DAG output differences data
-    :param by: on what to plot the max difference
-        - "node": by each node
-        - "bar_timestamp": by each bar timestamp in a node
-        - "time": by the lookback time period in a node and a bar timestamp
-        - "column": by each column in a node and a bar timestamp
-        - "asset_id": by each asset id in a node and a bar timestamp
-    :param node: node name to plot the diffs by
-    :param bar_timestamp: bar timestamp to plot the diffs by
+    :param aggregation_level: used to determine the groups for `groupby`
+        - "node": for each node
+        - "bar_timestamp": for each bar timestamp
+            - for a given node
+        - "time": by the timestamp in a diff df
+            - for a given node and a given bar timestamp
+        - "column": by each column
+            - for a given node and a given bar timestamp
+        - "asset_id": by each asset id
+            - for a given node and a given bar timestamp
+    :param node: node name to aggregate for
+    :param bar_timestamp: bar timestamp to aggregate by
+    :param display_plot: if `True` plot the stats, do not plot otherwise
+    :return: DAG outputs max absolute differences for the specified aggregation level
     """
-    if by in ["bar_timestamp", "time", "column", "asset_id"]:
+    if aggregation_level in ["bar_timestamp", "time", "column", "asset_id"]:
         hdbg.dassert_isinstance(node, str)
-        if by != "bar_timestamp":
+        if aggregation_level != "bar_timestamp":
             hdbg.dassert_type_is(bar_timestamp, pd.Timestamp)
     # Remove the sign.
     dag_diff_df = dag_diff_df.abs()
     #
-    if by == "node":
-        _ = dag_diff_df.max().groupby(level=[0]).max().plot.bar()
-    elif by == "bar_timestamp":
-        _ = dag_diff_df[node].max().groupby(level=[0]).max().plot.bar()
-    elif by == "time":
-        _ = dag_diff_df[node][bar_timestamp].T.max().dropna().plot()
-    elif by == "column":
-        _ = dag_diff_df[node][bar_timestamp].max().groupby(level=[0]).max().plot.bar()
-    elif by == "asset_id":
-        _ = dag_diff_df[node][bar_timestamp].max().groupby(level=[1]).max().plot.bar()
+    if aggregation_level == "node":
+        stats = dag_diff_df.max().groupby(level=[0]).max()
+    elif aggregation_level == "bar_timestamp":
+        stats = dag_diff_df[node].max().groupby(level=[0]).max()
+    elif aggregation_level == "time":
+        stats = dag_diff_df[node][bar_timestamp].T.max()
+    elif aggregation_level == "column":
+        stats = dag_diff_df[node][bar_timestamp].max().groupby(level=[0]).max()
+    elif aggregation_level == "asset_id":
+        stats = dag_diff_df[node][bar_timestamp].max().groupby(level=[1]).max()
     else:
-        raise ValueError(f"Invalid value for by='{by}'")
+        raise ValueError(f"Invalid aggregation_level='{aggregation_level}'")
+    #
+    if display_plot:
+        if aggregation_level == "time":
+            _ = stats.dropna().plot.line()
+        else:
+            _ = stats.plot.bar()
+    return stats
 
 
 def compute_dag_delay_in_seconds(

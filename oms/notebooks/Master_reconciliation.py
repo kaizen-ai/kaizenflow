@@ -131,7 +131,7 @@ compare_dfs_kwargs ={
     "diff_mode": "pct_change",
     "assert_diff_threshold": None,
 }
-dag_diff_df = oms.compute_dag_outputs_df(
+dag_diff_df = oms.compute_dag_outputs_diff(
     dag_df_dict, compare_dfs_kwargs
 )
 
@@ -141,35 +141,45 @@ max_diff
 
 # %%
 if max_diff > 0:
-    by = "node"
-    oms.plot_dag_max_diff(dag_diff_df, by)
+    aggregation_level = "node"
+    node_diff_stats = oms.compute_dag_output_diff_stats(
+        dag_diff_df, aggregation_level
+    )
 
 # %%
-if True:
-    by = "bar_timestamp"
+if False:
+    aggregation_level = "bar_timestamp"
     node = "predict.2.compute_ret_0"
-    oms.plot_dag_max_diff(dag_diff_df, by, node=node)
+    bar_timestamp_diff_stats = oms.compute_dag_output_diff_stats(
+        dag_diff_df, aggregation_level, node=node
+    )
 
 # %%
-if True:
-    by = "time"
-    node = "predict.2.compute_ret_0"
-    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
-    oms.plot_dag_max_diff(dag_diff_df, by, node=node, bar_timestamp=bar_timestamp)
-
-# %%
-if True:
-    by = "column"
+if False:
+    aggregation_level = "time"
     node = "predict.2.compute_ret_0"
     bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
-    oms.plot_dag_max_diff(dag_diff_df, by, node=node, bar_timestamp=bar_timestamp)
+    time_diff_stats = oms.compute_dag_output_diff_stats(
+        dag_diff_df, aggregation_level, node=node, bar_timestamp=bar_timestamp
+    )
 
 # %%
-if True:
-    by = "asset_id"
+if False:
+    aggregation_level = "column"
     node = "predict.2.compute_ret_0"
     bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
-    oms.plot_dag_max_diff(dag_diff_df, by, node=node, bar_timestamp=bar_timestamp)
+    column_diff_stats = oms.compute_dag_output_diff_stats(
+        dag_diff_df, aggregation_level, node=node, bar_timestamp=bar_timestamp
+    )
+
+# %%
+if False:
+    aggregation_level = "asset_id"
+    node = "predict.2.compute_ret_0"
+    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    asset_id_diff_stats = oms.compute_dag_output_diff_stats(
+        dag_diff_df, aggregation_level, node=node, bar_timestamp=bar_timestamp
+    )
 
 # %%
 
