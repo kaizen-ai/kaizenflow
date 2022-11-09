@@ -47,7 +47,7 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = "20221104"
+date_str = None
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
@@ -137,81 +137,73 @@ dag_diff_df = oms.compute_dag_outputs_diff(
 
 # %%
 max_diff = dag_diff_df.abs().max().max()
-max_diff
+_LOG.info("Maximum absolute difference for DAG output=%s", max_diff)
 
 # %%
-if max_diff > 0:
+if True:
+    # Plot differences across nodes.
     aggregation_level = "node"
+    display_plot=True
     node_diff_stats = oms.compute_dag_output_diff_stats(
-        dag_diff_df, aggregation_level
+        dag_diff_df, aggregation_level, display_plot=display_plot
     )
-
-# %%
-if False:
+if True:
+    # Plot differences across bar timestamps.
     aggregation_level = "bar_timestamp"
     node = "predict.2.compute_ret_0"
+    display_plot=True
     bar_timestamp_diff_stats = oms.compute_dag_output_diff_stats(
-        dag_diff_df, aggregation_level, node=node
+        dag_diff_df, aggregation_level, node=node, display_plot=display_plot
     )
-
-# %%
-if False:
+if True:
+    # Plot differences across timestamps in a diff df.
     aggregation_level = "time"
     node = "predict.2.compute_ret_0"
-    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+    display_plot=True
     time_diff_stats = oms.compute_dag_output_diff_stats(
-        dag_diff_df, aggregation_level, node=node, bar_timestamp=bar_timestamp
+        dag_diff_df,
+        aggregation_level,
+        node=node,
+        bar_timestamp=bar_timestamp,
+        display_plot=display_plot,
     )
-
-# %%
-if False:
+if True:
+    # Plot differences across columns names.
     aggregation_level = "column"
     node = "predict.2.compute_ret_0"
-    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+    display_plot=True
     column_diff_stats = oms.compute_dag_output_diff_stats(
-        dag_diff_df, aggregation_level, node=node, bar_timestamp=bar_timestamp
+        dag_diff_df,
+        aggregation_level,
+        node=node,
+        bar_timestamp=bar_timestamp,
+        display_plot=display_plot,
     )
-
-# %%
-if False:
+if True:
+    # Plot differences across asset ids.
     aggregation_level = "asset_id"
     node = "predict.2.compute_ret_0"
-    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+    display_plot=True
     asset_id_diff_stats = oms.compute_dag_output_diff_stats(
-        dag_diff_df, aggregation_level, node=node, bar_timestamp=bar_timestamp
+        dag_diff_df,
+        aggregation_level,
+        node=node,
+        bar_timestamp=bar_timestamp,
+        display_plot=display_plot,
     )
-
-# %%
-
-# %%
-# Compute difference.
-compare_dfs_kwargs = {
-    # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
-    "diff_mode": "diff",
-    "remove_inf": True,
-}
-diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_prod,
-    dag_df_sim,
-    compare_dfs_kwargs=compare_dfs_kwargs,
-)
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-diff_df.max().max()
-
-# %%
-# Enable if the diff is big to see the detailed stats.
-if False:
-    # Plot over time.
-    diff_df.max(axis=1).plot()
-    plt.show()
-    # Plot over column names.
-    diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
-    plt.show()
-    # Plot over assets
-    diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
-    plt.show()
+if True:
+    # Spot check using heatmap.
+    check_node_name = "predict.2.compute_ret_0"
+    check_bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+    check_column_name = "close.ret_0.diff"
+    check_heatmap_df = hpandas.heatmap_df(
+        dag_diff_df[check_node_name][check_bar_timestamp][check_column_name],
+        axis=1,
+    )
+    check_heatmap_df
 
 # %%
 # Compute correlations.
