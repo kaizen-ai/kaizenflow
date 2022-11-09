@@ -1473,7 +1473,8 @@ def compare_dfs(
     diff_mode: str = "diff",
     remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
-    pct_change_threshold: float = 1e-6,
+    close_to_zero_threshold: float = 1e-6,
+    zero_vs_zero_is_zero: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1518,15 +1519,23 @@ def compare_dfs(
         df2 = df2[col_names]
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
+    mask_lt = lambda x: abs(x) < close_to_zero_threshold
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         # Round small numbers up to 0 to exclude them from the diff computation.
-        mask_lt = lambda x: abs(x) < pct_change_threshold
         df1[mask_lt] = df1[mask_lt].round(0)
         df2[mask_lt] = df2[mask_lt].round(0)
-        df_diff = 100 * (df1 - df2) / df2
+        if zero_vs_zero_is_zero:
+            zero_vs_zero_is_zero_func = lambda x: x == 0
+            df_diff = zero_vs_zero_is_zero_func(df1) & zero_vs_zero_is_zero_func(
+                df2
+            )
+            if df_diff.any().max().max():
+                df_diff = 0
+            else:
+                df_diff = 100 * (df1 - df2) / df2
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")

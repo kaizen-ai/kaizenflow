@@ -2147,10 +2147,10 @@ class Test_compare_dfs(hunitest.TestCase):
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
 
-        The second DataFrame has numbers below the threshold.
+        The second DataFrame has numbers below the close_to_zero_threshold.
         """
         df1, df2 = self.get_test_dfs_equal()
-        df2[2:] = df2[2:] / 1e8
+        df2 = df2 / 1e8
         df_diff = hpandas.compare_dfs(
             df1,
             df2,
