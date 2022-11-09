@@ -17,12 +17,12 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_reconcile_run_all --wake-up-timestamp-str 2022-10-17T06:35:00-04:00
+> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"
 ```
 
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --wake-up-timestamp-str 2022-10-17T06:35:00-04:00'
+> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"'
 ```
 
 Import as:
@@ -62,18 +62,17 @@ def _dassert_is_date(date: str) -> None:
         raise ValueError(f"date='{date}' doesn't have the right format: {e}")
 
 
-def _get_run_date(wake_up_timestamp_str: Optional[str]) -> str:
+def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
-    Return the run date from wake up timestamp.
+    Return the run date as string from start timestamp, e.g. "20221017"
 
-    If a wake up timestamp is not specified by a user then return current date.
+    If start timestamp is not specified by a user then return current date.
     """
-    if wake_up_timestamp_str is None:
+    if start_timestamp_as_str is None:
         run_date = datetime.date.today().strftime("%Y%m%d")
     else:
-        # TODO(Dan): Add assert for `wake_up_timestamp_str` format or use `pd.Timestamp`.
-        wake_up_date = wake_up_timestamp_str.split("T")[0]
-        run_date = wake_up_date.replace("-", "")
+        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
+        run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
     _dassert_is_date(run_date)
     return run_date
@@ -135,7 +134,7 @@ def _sanity_check_data(file_path: str) -> None:
 
 @task
 def reconcile_create_dirs(
-    ctx, wake_up_timestamp_str=None, dst_dir=None, abort_if_exists=True
+    ctx, start_timestamp_as_str=None, dst_dir=None, abort_if_exists=True
 ):  # type: ignore
     """
     Create dirs for storing reconciliation data.
@@ -156,7 +155,7 @@ def reconcile_create_dirs(
     :param abort_if_exists: see `hio.create_dir()`
     """
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
@@ -182,7 +181,7 @@ def reconcile_create_dirs(
 @task
 def reconcile_dump_market_data(
     ctx,
-    wake_up_timestamp_str=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     rt_timeout_in_secs_or_time=None,
     incremental=False,
@@ -212,7 +211,7 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
         rt_timeout_in_secs_or_time
@@ -226,7 +225,7 @@ def reconcile_dump_market_data(
         # TODO(Grisha): @Dan Remove unnecessary opts.
         opts = [
             "--action dump_data",
-            f"--wake_up_timestamp_str {wake_up_timestamp_str}",
+            f"--start_timestamp_as_str {start_timestamp_as_str}",
             f"--dst_dir {dst_dir}",
             f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
         ]
@@ -259,7 +258,7 @@ def reconcile_dump_market_data(
 @task
 def reconcile_run_sim(
     ctx,
-    wake_up_timestamp_str=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     rt_timeout_in_secs_or_time=None,
 ):  # type: ignore
@@ -287,7 +286,7 @@ def reconcile_run_sim(
     # Run simulation.
     opts = [
         "--action run_simulation",
-        f"--wake_up_timestamp_str {wake_up_timestamp_str}",
+        f"--start_timestamp_as_str {start_timestamp_as_str}",
         f"--dst_dir {dst_dir}",
         f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
@@ -304,7 +303,7 @@ def reconcile_run_sim(
 
 @task
 def reconcile_copy_sim_data(
-    ctx, wake_up_timestamp_str=None, dst_dir=None, prevent_overwriting=True
+    ctx, start_timestamp_as_str=None, dst_dir=None, prevent_overwriting=True
 ):  # type: ignore
     """
     Copy the output of the simulation run to the specified folder.
@@ -312,7 +311,7 @@ def reconcile_copy_sim_data(
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
@@ -334,7 +333,7 @@ def reconcile_copy_sim_data(
 @task
 def reconcile_copy_prod_data(
     ctx,
-    wake_up_timestamp_str=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
     prevent_overwriting=True,
@@ -350,7 +349,7 @@ def reconcile_copy_prod_data(
         stage = "preprod"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     prod_target_dir = os.path.join(target_dir, "prod")
     # Make sure that the target dir exists before copying.
@@ -382,11 +381,11 @@ def reconcile_copy_prod_data(
 
 
 # TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
-# TODO(Grisha): @Dan Expose `wake_up_timestamp_str` use in the notebook.
+# TODO(Grisha): @Dan Expose `start_timestamp_as_str` use in the notebook.
 @task
 def reconcile_run_notebook(
     ctx,
-    wake_up_timestamp_str=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     incremental=False,
     prevent_overwriting=True,
@@ -403,7 +402,7 @@ def reconcile_run_notebook(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     # Set results destination dir and clear it if is already filled.
     local_results_dir = "."
     results_dir = os.path.join(local_results_dir, "result_0")
@@ -460,14 +459,14 @@ def reconcile_run_notebook(
 
 
 @task
-def reconcile_ls(ctx, wake_up_timestamp_str=None, dst_dir=None):  # type: ignore
+def reconcile_ls(ctx, start_timestamp_as_str=None, dst_dir=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
 
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
@@ -481,7 +480,7 @@ def reconcile_ls(ctx, wake_up_timestamp_str=None, dst_dir=None):  # type: ignore
 @task
 def reconcile_dump_tca_data(
     ctx,
-    wake_up_timestamp_str=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     incremental=False,
     prevent_overwriting=True,
@@ -497,7 +496,7 @@ def reconcile_dump_tca_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(wake_up_timestamp_str)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
@@ -560,7 +559,7 @@ def reconcile_dump_tca_data(
 @task
 def reconcile_run_all(
     ctx,
-    wake_up_timestamp_str=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
     rt_timeout_in_secs_or_time=None,
@@ -570,7 +569,7 @@ def reconcile_run_all(
     """
     Run all phases of prod vs simulation reconciliation.
 
-    :param wake_up_timestamp_str: string representation of timestamp
+    :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
     :param dst_dir: dir to store reconcilation results in
     :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
@@ -584,13 +583,13 @@ def reconcile_run_all(
     #
     reconcile_create_dirs(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
     )
     #
     reconcile_copy_prod_data(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         stage=stage,
         prevent_overwriting=prevent_overwriting,
@@ -598,26 +597,26 @@ def reconcile_run_all(
     #
     reconcile_dump_market_data(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_run_sim(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
     )
     reconcile_copy_sim_data(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_dump_tca_data(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
@@ -625,12 +624,12 @@ def reconcile_run_all(
     if not skip_notebook:
         reconcile_run_notebook(
             ctx,
-            wake_up_timestamp_str=wake_up_timestamp_str,
+            start_timestamp_as_str=start_timestamp_as_str,
             dst_dir=dst_dir,
             prevent_overwriting=prevent_overwriting,
         )
     reconcile_ls(
         ctx,
-        wake_up_timestamp_str=wake_up_timestamp_str,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
     )
