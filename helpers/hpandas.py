@@ -1530,11 +1530,11 @@ def compare_dfs(
         df2[mask_lt] = df2[mask_lt].round(0)
         df_diff = 100 * (df1 - df2) / df2
         if zero_vs_zero_is_zero:
-            # Look for zeros in the df2 to replace inf as aresult of division by 0.
+            # Look for zeros in the df2 to replace inf as a result of division by 0.
+            df1_mask = df1 == 0
             df2_mask = df2 == 0
-            df_diff_mask = df_diff == np.inf
-            mask = df2_mask & df_diff_mask
-            df_diff[mask] = 0
+            zero_vs_zero_mask =  df1_mask & df2_mask
+            df_diff[zero_vs_zero_mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")

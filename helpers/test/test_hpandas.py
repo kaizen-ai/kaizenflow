@@ -2117,7 +2117,7 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(2, 2)
                                 tsA.pct_change  tsB.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00       -9.090909        0.0
+        2022-01-01 21:01:00+00:00       -9.090909        NaN
         2022-01-01 21:02:00+00:00        5.263158        0.0
         """
         self.check_df_output(
@@ -2205,9 +2205,9 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00             0.0             0.0             0.0
-        2022-01-01 21:02:00+00:00             0.0             0.0             0.0
-        2022-01-01 21:03:00+00:00             0.0             0.0             0.0
+        2022-01-01 21:01:00+00:00             inf             inf             inf
+        2022-01-01 21:02:00+00:00             inf             inf             inf
+        2022-01-01 21:03:00+00:00             inf             inf             inf
         """
         self.check_df_output(
             df_diff,
@@ -2251,7 +2251,7 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00          -100.0             NaN          -100.0
+        2022-01-01 21:01:00+00:00          -100.0             0.0          -100.0
         2022-01-01 21:02:00+00:00          -100.0          -100.0          -100.0
         2022-01-01 21:03:00+00:00          -100.0          -100.0          -100.0
         """
@@ -2296,9 +2296,9 @@ class Test_compare_dfs(hunitest.TestCase):
         shape=(3, 3)
                                 tsA.pct_change  tsB.pct_change  tsC.pct_change
         timestamp
-        2022-01-01 21:01:00+00:00             NaN             NaN             NaN
-        2022-01-01 21:02:00+00:00             NaN             NaN             NaN
-        2022-01-01 21:03:00+00:00             NaN             NaN             NaN
+        2022-01-01 21:01:00+00:00             0.0             0.0             0.0
+        2022-01-01 21:02:00+00:00             0.0             0.0             0.0
+        2022-01-01 21:03:00+00:00             0.0             0.0             0.0
         """
         self.check_df_output(
             df_diff,
