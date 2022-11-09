@@ -444,16 +444,16 @@ def load_dag_outputs(
     return dag_df_dict
 
 
-def compute_dag_outputs_diff(
+def compute_dag_outputs_df(
     dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
     compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Dict[pd.Timestamp, pd.DataFrame]]:
+) -> pd.DataFrame:
     """
     Compute DAG output differences for different experiments.
 
     :param dag_df_dict: DAG output per experiment, node and timestamp
     :param compare_dfs_kwargs: params for `compare_dfs()`
-    :return: DAG output differences per experiment, node and timestamp
+    :return: DAG output differences for each experiment, node and timestamp
     """
     if compare_dfs_kwargs is None:
         compare_dfs_kwargs = {}
@@ -476,10 +476,6 @@ def compute_dag_outputs_diff(
             # Get DAG outputs per timestamp and compare them.
             df_1 = dag_dict_1_node[timestamp]
             df_2 = dag_dict_2_node[timestamp]
-            # Append asset id as index level if it is present in the data.
-            if "asset_id" in df_1.columns:
-                df_1 = df_1.set_index("asset_id", append=True)
-                df_2 = df_2.set_index("asset_id", append=True)
             # Pick only float columns for difference computations.
             # Only float columns are picked because int columns represent
             # not metrics but ids, etc.
@@ -488,7 +484,57 @@ def compute_dag_outputs_diff(
             # Compute the difference and put it in the result dict
             df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
             dag_diff_df_dict[node_name][timestamp] = df_diff
-    return dict(dag_diff_df_dict)
+    # TODO(Dan): Build a multiindex output in the cycle, do not use `pd.json_normalize()`.
+    # Convert DAG output differences dict to a multiindex dataframe.
+    dag_diff_df = pd.json_normalize(dict(dag_diff_df_dict), sep="/")
+    dag_diff_df.columns = dag_diff_df.columns.str.split('/', expand=True)
+    dag_diff_df = pd.concat(
+        list(dag_diff_df.values[0]), axis=1, keys=dag_diff_df.columns
+    )
+    return dag_diff_df
+
+
+# TODO(Dan): Add plot kwargs.
+def plot_dag_max_diff(
+    dag_diff_df: pd.DataFrame(),
+    by: str,
+    *,
+    node: Optional[str] = None,
+    bar_timestamp: Optional[pd.Timestamp] = None,
+):
+    """
+    Plot DAG output max differences by the specified data piece.
+
+    :param dag_diff_df: DAG output differences data
+    :param by: on what to plot the max difference
+        - "node": by each node
+        - "bar_timestamp": by each bar timestamp in a node
+        - "time": by the lookback time period in a node and a bar timestamp
+        - "column": by each column in a node and a bar timestamp
+        - "asset_id": by each asset id in a node and a bar timestamp
+    :param node: node name to plot the diffs by
+    :param bar_timestamp: bar timestamp to plot the diffs by
+    """
+    if by in ["bar_timestamp", "time", "column", "asset_id"]:
+        hdbg.dassert_isinstance(node, str)
+        if by != "bar_timestamp":
+            hdbg.dassert_type_is(bar_timestamp, pd.Timestamp)
+            bar_timestamp = str(bar_timestamp)
+    # Remove the sign.
+    dag_diff_df = dag_diff_df.abs()
+    #
+    if by == "node":
+        _ = dag_diff_df.max().groupby(level=[0]).max().plot.bar()
+    elif by == "bar_timestamp":
+        _ = dag_diff_df[node].max().groupby(level=[0]).max().plot.bar()
+    elif by == "time":
+        _ = dag_diff_df[node][bar_timestamp].T.max().dropna().plot()
+    elif by == "column":
+        _ = dag_diff_df[node][bar_timestamp].max().groupby(level=[0]).max().plot.bar()
+    elif by == "asset_id":
+        _ = dag_diff_df[node][bar_timestamp].max().groupby(level=[1]).max().plot.bar()
+    else:
+        raise ValueError(f"Invalid value for by='{by}'")
 
 
 def compute_dag_delay_in_seconds(

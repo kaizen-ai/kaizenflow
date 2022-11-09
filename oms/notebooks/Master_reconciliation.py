@@ -47,7 +47,7 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = None
+date_str = "20221104"
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
@@ -116,6 +116,8 @@ dag_start_timestamp = None
 dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
+    only_last_node=False,
+    only_last_timestamp=False,
 )
 # Get DAG output for the last node and the last timestamp.
 # TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
@@ -123,6 +125,53 @@ dag_df_dict = oms.load_dag_outputs(
 dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
+
+# %%
+compare_dfs_kwargs ={
+    "diff_mode": "pct_change",
+    "assert_diff_threshold": None,
+}
+dag_diff_df = oms.compute_dag_outputs_df(
+    dag_df_dict, compare_dfs_kwargs
+)
+
+# %%
+max_diff = dag_diff_df.abs().max().max()
+max_diff
+
+# %%
+if max_diff > 0:
+    by = "node"
+    oms.plot_dag_max_diff(dag_diff_df, by)
+
+# %%
+if True:
+    by = "bar_timestamp"
+    node = "predict.2.compute_ret_0"
+    oms.plot_dag_max_diff(dag_diff_df, by, node=node)
+
+# %%
+if True:
+    by = "time"
+    node = "predict.2.compute_ret_0"
+    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    oms.plot_dag_max_diff(dag_diff_df, by, node=node, bar_timestamp=bar_timestamp)
+
+# %%
+if True:
+    by = "column"
+    node = "predict.2.compute_ret_0"
+    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    oms.plot_dag_max_diff(dag_diff_df, by, node=node, bar_timestamp=bar_timestamp)
+
+# %%
+if True:
+    by = "asset_id"
+    node = "predict.2.compute_ret_0"
+    bar_timestamp = pd.Timestamp("2022-11-04 06:05:00-04:00")
+    oms.plot_dag_max_diff(dag_diff_df, by, node=node, bar_timestamp=bar_timestamp)
+
+# %%
 
 # %%
 # Compute difference.
