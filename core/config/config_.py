@@ -167,6 +167,7 @@ class _ConfigWriterInfo:
     """
     Store information on the function that writes a value into a Config.
     """
+
     def __init__(self):
         # Capture information about who is constructing this object.
         self._full_traceback = self._get_full_traceback()
@@ -177,7 +178,7 @@ class _ConfigWriterInfo:
 
     def __repr__(self):
         return self._full_traceback
-    
+
     @staticmethod
     def _get_full_traceback():
         """
@@ -207,7 +208,7 @@ class _ConfigWriterInfo:
             txt = traceback.format_stack()
         """
         return hintros.stacktrace_to_str()
-    
+
     @staticmethod
     def _get_shorthand_caller():
         """
@@ -237,7 +238,9 @@ class _ConfigWriterInfo:
         # `FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)`
         #
         caller = next(call for call in stack if call.filename != filename)
-        latest_outside_caller = f"{caller.filename}::{caller.lineno}::{caller.function}"
+        latest_outside_caller = (
+            f"{caller.filename}::{caller.lineno}::{caller.function}"
+        )
         return latest_outside_caller
 
 
@@ -410,6 +413,16 @@ class _OrderedConfig(_OrderedDictType):
         mode = "verbose"
         ret = self.to_string(mode)
         return ret
+
+    # TODO(Danya): Expand the use to `Config` class.
+    def check_if_used(self, key: ScalarKey) -> bool:
+        """
+        Check if the value has been used.
+        """
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        # Retrieve the value from the dictionary itself.
+        marked_as_used, writer, val = super().__getitem__(key)
+        return marked_as_used
 
     def str_debug(self) -> str:
         mode = "debug"
@@ -595,7 +608,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -697,14 +711,33 @@ class Config:
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
 
-    def get_and_mark_as_used(self, key: ScalarKeyValidTypes) -> Any:
+    def check_if_used(self, key: ScalarKeyValidTypes) -> bool:
+        self.__getitem__
+
+    def get_and_mark_as_used(
+        self,
+        key: ScalarKeyValidTypes,
+        *,
+        default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
+    ) -> Any:
         """
         Get the value and mark it as used.
+
+        :param default_value: value to return if key was not found
 
         This should be used as the only way of accessing values from configs
         except for purposes of logging and transformation to string.
         """
-        return self.__getitem__(key, mark_key_as_used=True)
+        try:
+            ret = self.__getitem__(key, mark_key_as_used=True)
+        except KeyError as e:
+            # If a default value is provided, return.
+            if default_value != _NO_VALUE_SPECIFIED:
+                ret = default_value
+            else:
+                # No default value found, then raise.
+                raise e
+        return ret
 
     def get(
         self,
