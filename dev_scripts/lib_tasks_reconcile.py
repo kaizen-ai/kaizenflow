@@ -553,7 +553,8 @@ def reconcile_dump_tca_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        _prevent_overwriting(target_dir)
+        tca_dir = os.path.join(target_dir, "tca")
+        _prevent_overwriting(tca_dir)
 
 
 @task
