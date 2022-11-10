@@ -4,7 +4,7 @@ import logging
 import os
 import time
 import uuid
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -1949,7 +1949,7 @@ class Test_compare_dfs(hunitest.TestCase):
         ]
         values1 = {
             "tsA": [0, 3e-9],
-            "tsB": [0,  6e-3],
+            "tsB": [0, 6e-3],
             "timestamp": timestamp_index,
         }
         df1 = pd.DataFrame(data=values1)
@@ -2096,7 +2096,7 @@ class Test_compare_dfs(hunitest.TestCase):
             remove_inf=False,
             assert_diff_threshold=None,
         )
-        # 
+        #
         actual = hpandas.df_to_str(df_diff)
         self.check_string(actual)
 
