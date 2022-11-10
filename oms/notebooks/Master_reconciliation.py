@@ -61,17 +61,6 @@ print(config)
 system_log_path_dict = dict(config["system_log_path"].to_dict())
 
 # %%
-configs = oms.load_config_from_pickle(system_log_path_dict)
-# Diff configs.
-diff_config = cconfig.build_config_diff_dataframe(
-    {
-        "prod_config": configs["prod"],
-        "sim_config": configs["sim"],
-    }
-)
-diff_config
-
-# %%
 # This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
 data_type = "portfolio"
 portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
@@ -90,7 +79,26 @@ if config["meta"]["run_tca"]:
     hdbg.dassert_file_exists(tca_csv)
 
 # %% [markdown]
-# # Compare DAG io
+# # Compare configs (prod vs vim)
+
+# %%
+configs = oms.load_config_from_pickle(system_log_path_dict)
+# Diff configs.
+# TODO(Grisha): the output is only on subconfig level, we should
+# compare value vs value instead.
+diff_config = cconfig.build_config_diff_dataframe(
+    {
+        "prod_config": configs["prod"],
+        "sim_config": configs["sim"],
+    }
+)
+diff_config.T
+
+# %% [markdown]
+# # DAG io
+
+# %% [markdown]
+# ## Compare DAG io (prod vs sim)
 
 # %%
 # Get DAG node names.
@@ -116,6 +124,8 @@ dag_start_timestamp = None
 dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
+    # TODO(Grisha): maybe load just the last node and timestamp otherwise
+    # it takes 2 minutes to load the data.
     only_last_node=False,
     only_last_timestamp=False,
 )
@@ -146,26 +156,30 @@ if False:
     )
 
 # %%
-# Compute correlations.
-prod_sim_dag_corr = dtfmod.compute_correlations(
-    dag_df_prod,
-    dag_df_sim,
-)
-hpandas.df_to_str(
-    prod_sim_dag_corr.min(),
-    num_rows=None,
-    precision=3,
-    log_level=logging.INFO,
-)
+if False:
+    # Compute correlations.
+    prod_sim_dag_corr = dtfmod.compute_correlations(
+        dag_df_prod,
+        dag_df_sim,
+    )
+    hpandas.df_to_str(
+        prod_sim_dag_corr.min(),
+        num_rows=None,
+        precision=3,
+        log_level=logging.INFO,
+    )
 
 # %% [markdown]
-# # Compute DAG delay
+# ## Compute DAG delay
 
 # %%
-delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps)
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=False)
 
 # %% [markdown]
-# # Compute research portfolio equivalent
+# # Portfolio
+
+# %% [markdown]
+# ## Compute research portfolio equivalent
 
 # %%
 # Set Portofolio start and end timestamps.
@@ -207,7 +221,7 @@ research_portfolio_stats_df = research_portfolio_stats_df.loc[
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %% [markdown]
-# # Load logged portfolios
+# ## Load logged portfolios (prod & sim)
 
 # %%
 portfolio_config = cconfig.Config.from_dict(
@@ -236,6 +250,9 @@ portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 #
 hpandas.df_to_str(portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
+# %% [markdown]
+# ## Compute Portfolio statistics (prod vs research vs sim)
+
 # %%
 bars_to_burn = 1
 coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
@@ -248,7 +265,13 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Compare portfolios pairwise
+# ## Compare portfolios pairwise (prod vs research vs sim)
+
+# %% [markdown]
+# ### Differences
+
+# %% [markdown]
+# #### Prod vs sim
 
 # %%
 report_stats = False
@@ -267,29 +290,258 @@ portfolio_diff_df = oms.compare_portfolios(
 )
 hpandas.df_to_str(portfolio_diff_df, num_rows=None, log_level=logging.INFO)
 
-# %%
-dtfmod.compute_correlations(
-    research_portfolio_df,
-    portfolio_dfs["prod"],
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
-)
+# %% [markdown]
+# ### Correlations
+
+# %% [markdown]
+# #### Prod vs sim
 
 # %%
-dtfmod.compute_correlations(
-    portfolio_dfs["prod"],
-    portfolio_dfs["sim"],
-    allow_unequal_indices=False,
-    allow_unequal_columns=False,
-)
+if False:
+    dtfmod.compute_correlations(
+        portfolio_dfs["prod"],
+        portfolio_dfs["sim"],
+        allow_unequal_indices=False,
+        allow_unequal_columns=False,
+    )
+
+# %% [markdown]
+# #### Prod vs research
 
 # %%
-dtfmod.compute_correlations(
-    research_portfolio_df,
-    portfolio_dfs["sim"],
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
+if False:
+    dtfmod.compute_correlations(
+        research_portfolio_df,
+        portfolio_dfs["prod"],
+        allow_unequal_indices=True,
+        allow_unequal_columns=True,
+    )
+
+# %% [markdown]
+# #### Sim vs research
+
+# %%
+if False:
+    dtfmod.compute_correlations(
+        research_portfolio_df,
+        portfolio_dfs["sim"],
+        allow_unequal_indices=True,
+        allow_unequal_columns=True,
+    )
+
+# %% [markdown]
+# # Target positions
+
+# %% [markdown]
+# ## Load target positions (prod)
+
+# %%
+prod_target_position_df = oms.load_target_positions(
+    portfolio_path_dict["prod"].strip("portfolio"),
+    start_timestamp,
+    end_timestamp,
+    config["meta"]["bar_duration"],
+    normalize_bar_times=True
 )
+hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
+if False:
+    # TODO(Grisha): compare prod vs sim at some point.
+    sim_target_position_df = oms.load_target_positions(
+        portfolio_path_dict["sim"].strip("portfolio"),
+        start_timestamp,
+        end_timestamp,
+        config["meta"]["bar_duration"],
+        normalize_bar_times=True
+    )
+
+# %% [markdown]
+# ## Compare positions target vs executed (prod)
+
+# %%
+# TODO(Grisha): use `hpandas.compare_dfs()`.
+df1 = prod_target_position_df["target_holdings_shares"].shift(1)
+df2 = prod_target_position_df["holdings_shares"]
+diff = df1 - df2
+hpandas.df_to_str(diff, num_rows=5, log_level=logging.INFO)
+
+# %% [markdown]
+# ## Compare target positions (prod vs research)
+
+# %% [markdown]
+# ### Price
+
+# %% run_control={"marked": true}
+# TODO(Grisha): wrap in a function since it's common for all columns.
+column = "price"
+prod_df = prod_target_position_df[column]
+res_df = research_portfolio_df[column]
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.abs()
+# Check that data is the same.
+print(diff_df.max().max())
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ### Volatility
+
+# %%
+column = "volatility"
+prod_df = prod_target_position_df[column]
+res_df = research_portfolio_df[column]
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.abs()
+# Check that data is the same.
+print(diff_df.max().max())
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ### Prediction
+
+# %%
+column = "prediction"
+prod_df = prod_target_position_df[column]
+res_df = research_portfolio_df[column]
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.abs()
+# Check that data is the same.
+print(diff_df.max().max())
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ### Current holdings
+
+# %%
+column = "holdings_shares"
+prod_df = prod_target_position_df[column]
+res_df = research_portfolio_df[column]
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+    assert_diff_threshold=None,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.abs()
+# Check that data is the same.
+print(diff_df.max().max())
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# ### Target holdings
+
+# %%
+prod_df = prod_target_position_df["target_holdings_shares"].shift(1)
+res_df = research_portfolio_df["holdings_shares"]
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+    assert_diff_threshold=None,
+)
+# Remove the sign and NaNs.
+diff_df = diff_df.abs()
+# Check that data is the same.
+print(diff_df.max().max())
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# # Orders 
+
+# %% [markdown]
+# ## Load orders (prod & sim)
+
+# %%
+prod_order_df = oms.TargetPositionAndOrderGenerator.load_orders(
+    portfolio_path_dict["prod"].strip("portfolio"),
+)
+hpandas.df_to_str(prod_order_df, num_rows=5, log_level=logging.INFO)
+sim_order_df = oms.TargetPositionAndOrderGenerator.load_orders(
+    portfolio_path_dict["sim"].strip("portfolio"),
+)
+hpandas.df_to_str(sim_order_df, num_rows=5, log_level=logging.INFO)
+
+# %% [markdown]
+# ## Compare orders (prod vs sim)
+
+# %%
+# TODO(Grisha): add comparison using the usual `pct_change` approach.
+
+# %% [markdown]
+# # Fills statistics
+
+# %%
+fills = oms.compute_fill_stats(prod_target_position_df)
+hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
+fills["fill_rate"].plot()
+
+# %% [markdown]
+# # Slippage
+
+# %%
+slippage = oms.compute_share_prices_and_slippage(portfolio_dfs["prod"])
+hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
+slippage["slippage_in_bps"].plot()
+
+# %%
+stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
+stacked[stacked["is_benchmark_profitable"] > 0]["slippage_in_bps"].hist(bins=31)
+stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(bins=31)
+
+# %% [markdown]
+# # Total cost accounting
+
+# %%
+notional_costs = oms.compute_notional_costs(
+    portfolio_dfs["prod"],
+    prod_target_position_df, 
+)
+hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
+
+# %%
+cost_df = oms.apply_costs_to_baseline(
+    portfolio_stats_dfs["research"],
+    portfolio_stats_dfs["prod"],
+    portfolio_dfs["prod"],
+    prod_target_position_df, 
+)
+hpandas.df_to_str(cost_df, num_rows=5, log_level=logging.INFO)
+
+# %%
+cost_df[["pnl", "baseline_pnl_minus_costs", "baseline_pnl"]].plot()
+cost_df[["pnl", "baseline_pnl_minus_costs"]].plot()
+
+# %% [markdown]
+# # TCA
 
 # %%
 if config["meta"]["run_tca"]:
