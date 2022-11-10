@@ -332,7 +332,7 @@ def reconcile_copy_prod_data(
     run_date=None,
     dst_dir=None,
     stage=None,
-    mode="scheduled",
+    mode=None,
     prevent_overwriting=True,
 ):  # type: ignore
     """
@@ -565,7 +565,7 @@ def reconcile_run_all(
     dst_dir=None,
     stage=None,
     rt_timeout_in_secs_or_time=None,
-    mode="scheduled",
+    mode=None,
     prevent_overwriting=True,
     skip_notebook=False,
 ):  # type: ignore
