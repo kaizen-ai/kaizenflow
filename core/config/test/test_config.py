@@ -1885,7 +1885,7 @@ class Test_save_to_file(hunitest.TestCase):
 
 
 class Test_to_string(hunitest.TestCase):
-    def remove_line_numbers(self, actual_config: str):
+    def remove_line_numbers(actual_config: str):
         # Remove line numbers from shorthand representations, e.g.
         #  dataflow/system/system_builder_utils.py::***::get_config_template
         line_regex = r"(?<=::)(\d+)(?=::)"
