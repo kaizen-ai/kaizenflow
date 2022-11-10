@@ -79,6 +79,7 @@ def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
 
 
 def _prevent_overwriting(object_path: str) -> None:
+    hdbg.dassert_path_exists(object_path)
     _LOG.info("Removing the write permissions for: %s", object_path)
     if os.path.isdir(object_path):
         opt = "-R"
@@ -194,7 +195,7 @@ def reconcile_dump_market_data(
 
     The output df looks like:
     ```
-                                 asset_id              knowledge_timestamp     open     high      low    close     volume            end_download_timestamp       id        full_symbol            start_timestamp
+                               asset_id              knowledge_timestamp     open     high      low    close     volume            end_download_timestamp       id        full_symbol            start_timestamp
     end_timestamp
     2022-09-27 10:35:00-04:00  1030828978 2022-09-27 14:36:12.230330+00:00   0.7233   0.7247   0.7215   0.7241  3291381.0  2022-09-27 14:36:11.727196+00:00  3409049  binance::GMT_USDT  2022-09-27 10:34:00-04:00
     2022-09-27 10:35:00-04:00  1464553467 2022-09-27 14:36:05.788923+00:00  1384.23  1386.24  1383.19  1385.63   5282.272  2022-09-27 14:36:05.284506+00:00  3409043  binance::ETH_USDT  2022-09-27 10:34:00-04:00
@@ -255,6 +256,7 @@ def reconcile_dump_market_data(
     if prevent_overwriting:
         _prevent_overwriting(market_data_file_target)
 
+
 @task
 def reconcile_run_sim(
     ctx,
@@ -291,7 +293,9 @@ def reconcile_run_sim(
         f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
-    opts += " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    opts += (
+        " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    )
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
@@ -336,6 +340,7 @@ def reconcile_copy_prod_data(
     start_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
+    mode=None,
     prevent_overwriting=True,
 ):  # type: ignore
     """
@@ -344,10 +349,16 @@ def reconcile_copy_prod_data(
     See `reconcile_run_all()` for params description.
 
     :param stage: development stage, e.g., `preprod`
+    :param mode: the prod system run mode which defines a prod system log dir name
+        - "scheduled": the system is run at predefined time automatically
+        - "manual": the system run is triggered manually
     """
     if stage is None:
         stage = "preprod"
+    if mode is None:
+        mode = "scheduled"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
+    hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
@@ -362,14 +373,14 @@ def reconcile_copy_prod_data(
         run_datetime - datetime.timedelta(days=1)
     ).strftime("%Y-%m-%d")
     shared_dir = f"/shared_data/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
+    cmd = f"find '{shared_dir}' -name system_log_dir_{mode}__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
     _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    cmd = f"find '{shared_dir}/logs' -name log_{mode}__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
     hdbg.dassert_file_exists(log_file)
@@ -427,7 +438,9 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     prod_subdir = None
+    # pylint: disable=line-too-long
     config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(date_str="{run_date}", prod_subdir={prod_subdir})'
+    # pylint: enable=line-too-long
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
@@ -564,6 +577,7 @@ def reconcile_run_all(
     dst_dir=None,
     stage=None,
     rt_timeout_in_secs_or_time=None,
+    mode=None,
     prevent_overwriting=True,
     skip_notebook=False,
 ):  # type: ignore
@@ -574,6 +588,7 @@ def reconcile_run_all(
         at which to start reconcile run
     :param dst_dir: dir to store reconcilation results in
     :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
+    :param mode: see `reconcile_copy_prod_data()`
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
@@ -593,6 +608,7 @@ def reconcile_run_all(
         start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         stage=stage,
+        mode=mode,
         prevent_overwriting=prevent_overwriting,
     )
     #
