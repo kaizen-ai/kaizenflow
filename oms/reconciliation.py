@@ -20,6 +20,7 @@ import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
+import helpers.hprint as hprint
 import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
@@ -106,7 +107,8 @@ def build_reconciliation_configs(
         asset_id_to_share_decimals = occxbrok.subset_market_info(
             market_info, "amount_precision"
         )
-        gmv = 700.0
+        #gmv = 700.0
+        gmv = 1500.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
         run_tca = True
@@ -340,8 +342,14 @@ def get_dag_node_timestamps(
         # The bar timestamp is "20221028_080000", and the wall clock timestamp
         # is "20221028_080143".
         splitted_file_name = file_name.split(".")
-        bar_timestamp = splitted_file_name[-3]
-        wall_clock_timestamp = splitted_file_name[-2]
+        if True:
+            # new format.
+            bar_timestamp = splitted_file_name[-3]
+            wall_clock_timestamp = splitted_file_name[-2]
+        else:
+            # old format.
+            bar_timestamp = splitted_file_name[-2]
+            wall_clock_timestamp = splitted_file_name[-2]
         if as_timestamp:
             bar_timestamp = bar_timestamp.replace("_", " ")
             wall_clock_timestamp = wall_clock_timestamp.replace("_", " ")
@@ -934,6 +942,41 @@ def load_target_positions(
     return target_position_df
 
 
+def load_target_positions2(
+    target_position_dir: str,
+    normalize_bar_times_freq: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Load a target position dataframe.
+    """
+    # Make sure the directory exists.
+    hdbg.dassert_dir_exists(target_position_dir)
+    # Load the target position dataframe.
+    target_position_df = (
+        otpaorge.TargetPositionAndOrderGenerator.load_target_positions(
+            target_position_dir
+        )
+    )
+    # Sanity-check the dataframe.
+    hpandas.dassert_time_indexed_df(
+        target_position_df, allow_empty=False, strictly_increasing=True
+    )
+    # Sanity-check the date ranges of the dataframes against the start and
+    # end timestamps.
+    first_timestamp = target_position_df.index[0]
+    _LOG.debug("First target_position_df timestamp=%s", first_timestamp)
+    last_timestamp = target_position_df.index[-1]
+    _LOG.debug("Last target_position_df timestamp=%s", last_timestamp)
+    # Maybe normalize the bar times to `freq` grid.
+    if normalize_bar_times_freq is not None:
+        hdbg.dassert_isinstance(normalize_bar_times_freq, str)
+        _LOG.debug("Normalizing bar times to %s grid", normalize_bar_times_freq)
+        target_position_df.index = target_position_df.index.round(
+            normalize_bar_times_freq
+        )
+    return target_position_df
+
+
 def load_target_position_versions(
     run_dir_dict: Dict[str, dict],
     normalize_bar_times_freq: Optional[str] = None,
@@ -943,7 +986,7 @@ def load_target_position_versions(
     dfs = {}
     for run, dirs in run_dir_dict.items():
         _LOG.info("Processing run=%s", run)
-        df = load_target_positions(
+        df = load_target_positions2(
             dirs["target_positions"],
             normalize_bar_times_freq,
         )
@@ -1248,18 +1291,21 @@ def get_dir(root_dir: str, date_str: str, search_str: str, mode: str) -> str:
     hdbg.dassert(root_dir)
     hdbg.dassert_dir_exists(root_dir)
     if mode == "sim":
-        dir_ = os.path.join(f"{root_dir}/{date_str}/system_log_dir")
+        dir_ = os.path.join(f"{root_dir}/{date_str}/simulation/system_log_dir")
     else:
         if mode == "prod":
-            cmd = f"find {root_dir}/{date_str}/job.live* -name '{search_str}'"
+            # TODO(gp): @Grisha generalize this.
+            #cmd = f"find {root_dir}/{date_str}/prod -name '*system_log_dir_scheduled*'"
+            cmd = f"find {root_dir}/{date_str}/prod -name '*system_log_dir*'"
         elif mode == "cand":
             cmd = (
                 f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
             )
         else:
             raise ValueError("Invalid mode %s", mode)
+        print(cmd)
         rc, dir_ = hsystem.system_to_string(cmd)
-    hdbg.dassert(dir_)
+    hdbg.dassert(dir_, msg="")
     hdbg.dassert_dir_exists(dir_)
     return dir_
 

@@ -210,307 +210,242 @@ def shutup_chatty_modules(
 # #############################################################################
 
 
-# From https://stackoverflow.com/questions/32402502
-class _LocalTimeZoneFormatter:
-    """
-    Override logging.Formatter to use an aware datetime object.
-    """
-
-    def __init__(self, *args: Any, **kwargs: Any):
-        super().__init__(*args, **kwargs)  # type: ignore[call-arg]
-        try:
-            # TODO(gp): Automatically detect the time zone. It might be complicated in
-            #  Docker.
-            from dateutil import tz
-
-            # self._tzinfo = pytz.timezone('America/New_York')
-            self._tzinfo = tz.gettz("America/New_York")
-        except ModuleNotFoundError as e:
-            print(f"Can't import dateutil: using UTC\n{str(e)}")
-            self._tzinfo = None
-
-    def converter(self, timestamp: float) -> datetime.datetime:
-        # To make the linter happy and respecting the signature of the
-        # superclass method.
-        _ = self
-        # timestamp=1622423570.0147252
-        dt = datetime.datetime.utcfromtimestamp(timestamp)
-        # Convert it to an aware datetime object in UTC time.
-        dt = dt.replace(tzinfo=datetime.timezone.utc)
-        if self._tzinfo is not None:
-            # Convert it to desired timezone.
-            dt = dt.astimezone(self._tzinfo)
-        return dt
-
-    def formatTime(
-        self, record: logging.LogRecord, datefmt: Optional[str] = None
-    ) -> str:
-        dt = self.converter(record.created)
-        if datefmt:
-            s = dt.strftime(datefmt)
-        else:
-            try:
-                s = dt.isoformat(timespec="milliseconds")
-            except TypeError:
-                s = dt.isoformat()
-        return s
-
-
-# #############################################################################
-
-
-# [mypy] error: Definition of "converter" in base class
-# "_LocalTimeZoneFormatter" is incompatible with definition in base class
-# "Formatter"
-class _ColoredFormatter(  # type: ignore[misc]
-    _LocalTimeZoneFormatter, logging.Formatter
-):
-    """
-    Logging formatter using colors for different levels.
-    """
-
-    _SKIP_DEBUG = True
-
-    def format(self, record: logging.LogRecord) -> str:
-        colored_record = copy.copy(record)
-        # `levelname` is the internal name and can't be changed to `level_name`
-        # as per our conventions.
-        levelname = colored_record.levelname
-        if _ColoredFormatter._SKIP_DEBUG and levelname == "DEBUG":
-            colored_levelname = ""
-        else:
-            # Use white as default.
-            prefix = "\033["
-            suffix = "\033[0m"
-            assert levelname in _COLOR_MAPPING, "Can't find info '%s'"
-            color_code, tag = _COLOR_MAPPING[levelname]
-            # Align the level name.
-            colored_levelname = f"{prefix}{color_code}m{tag}{suffix}"
-        colored_record.levelname = colored_levelname
-        return logging.Formatter.format(self, colored_record)
-
-
-# From https://stackoverflow.com/questions/2183233
-def addLoggingLevel(levelName, levelNum, methodName=None):
-    """
-    Comprehensively adds a new logging level to the `logging` module and the
-    currently configured logging class.
-
-    `levelName` becomes an attribute of the `logging` module with the value
-    `levelNum`. `methodName` becomes a convenience method for both `logging`
-    itself and the class returned by `logging.getLoggerClass()` (usually just
-    `logging.Logger`). If `methodName` is not specified, `levelName.lower()` is
-    used.
-
-    To avoid accidental clobberings of existing attributes, this method will
-    raise an `AttributeError` if the level name is already an attribute of the
-    `logging` module or if the method name is already present
-
-    Example
-    -------
-    >>> addLoggingLevel('TRACE', logging.DEBUG - 5)
-    >>> logging.getLogger(__name__).setLevel("TRACE")
-    >>> logging.getLogger(__name__).trace('that worked')
-    >>> logging.trace('so did this')
-    >>> logging.TRACE
-    5
-
-    """
-    if not methodName:
-        methodName = levelName.lower()
-
-    if hasattr(logging, levelName):
-       raise AttributeError('{} already defined in logging module'.format(levelName))
-    if hasattr(logging, methodName):
-       raise AttributeError('{} already defined in logging module'.format(methodName))
-    if hasattr(logging.getLoggerClass(), methodName):
-       raise AttributeError('{} already defined in logger class'.format(methodName))
-
-    # This method was inspired by the answers to Stack Overflow post
-    # http://stackoverflow.com/q/2183233/2988730, especially
-    # http://stackoverflow.com/a/13638084/2988730
-    def logForLevel(self, message, *args, **kwargs):
-        if self.isEnabledFor(levelNum):
-            self._log(levelNum, message, args, **kwargs)
-    def logToRoot(message, *args, **kwargs):
-        logging.log(levelNum, message, *args, **kwargs)
-
-    logging.addLevelName(levelNum, levelName)
-    setattr(logging, levelName, levelNum)
-    setattr(logging.getLoggerClass(), methodName, logForLevel)
-    setattr(logging, methodName, logToRoot)
-
-
-addLoggingLevel('TRACE', 5)
-
-
-# Note that this doesn't avoid evaluating the call.
-# The only way to be completely sure that there is no evaluation is:
-# ```
-# if False: _LOG.debug(...)
-# ```
-def shut_up_log_debug(logger: logging.Logger) -> None:
-    logging.disable(logging.DEBUG)
-    #logger.debug = lambda *_: 0
-    #logger.trace = lambda *_: 0
-
-
-# #############################################################################
-
-
-# From https://stackoverflow.com/questions/10848342
-# and https://docs.python.org/3/howto/logging-cookbook.html#filters-contextual
-class ResourceUsageFilter(logging.Filter):
-    """
-    Add fields to the logger about memory and CPU use.
-    """
-
-    def __init__(self, report_cpu_usage: bool):
-        super().__init__()
-        import psutil
-
-        self._process = psutil.Process()
-        self._report_cpu_usage = report_cpu_usage
-        if self._report_cpu_usage:
-            # Start sampling the CPU usage.
-            self._process.cpu_percent(interval=1.0)
-
-    def filter(self, record: logging.LogRecord) -> bool:
-        """
-        Override `logging.Filter()`, adding several fields to the logger.
-        """
-        p = self._process
-        # Report memory usage.
-        resource_use = get_memory_usage_as_str(p)
-        # Report CPU usage.
-        if self._report_cpu_usage:
-            # CPU usage since the previous call.
-            cpu_use = p.cpu_percent(interval=None)
-            resource_use += " cpu=%.0f%%" % cpu_use
-        record.resource_use = resource_use  # type: ignore
-        return True
-
-
-# #############################################################################
-
-
-# TODO(gp): Replace `force_print_format` and `force_verbose_format` with `mode`.
-def _get_logging_format(
-    force_print_format: bool,
-    force_verbose_format: bool,
-    force_no_warning: bool,
-    report_memory_usage: bool,
-    date_format_mode: str = "time",
-) -> Tuple[str, str]:
-    """
-    Compute the logging format depending whether running on notebook or in a
-    shell.
-
-    The logging format can be:
-    - print: looks like a `print` statement
-
-    :param force_print_format: force to use the non-verbose format
-    :param force_verbose_format: force to use the verbose format
-    """
-    if _is_running_in_ipynb() and not force_no_warning:
-        print("WARNING: Running in Jupyter")
-    verbose_format = not _is_running_in_ipynb()
-    #
-    assert not (force_verbose_format and force_print_format), (
-        f"Can't use both force_verbose_format={force_verbose_format} "
-        + f"and force_print_format={force_print_format}"
-    )
-    if force_verbose_format:
-        verbose_format = True
-    if force_print_format:
-        verbose_format = False
-        #
-    if verbose_format:
-        # TODO(gp): We would like to have filename:name:funcName:lineno all
-        #  justified on 15 chars.
-        #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
-        #  -alternative-formatting-styles
-        #  Something like:
-        #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
-        #
-        # %(pathname)s Full pathname of the source file where the logging call was
-        #   issued (if available).
-        # %(filename)s Filename portion of pathname.
-        # %(module)s Module (name portion of filename).
-        if True:
-            log_format = (
-                # 04-28_08:08 INFO :
-                "%(asctime)-5s %(levelname)-5s"
-            )
-            if report_memory_usage:
-                # rss=0.3GB vms=2.0GB mem_pct=2% cpu=91%
-                log_format += " [%(resource_use)-40s]"
-            log_format += (
-                # lib_tasks _delete_branches
-                " %(module)-20s: %(funcName)-30s:"
-                # 142: ...
-                " %(lineno)-4d:"
-                " %(message)s"
-            )
-        else:
-            # Super verbose: to help with debugging print more info without trimming.
-            log_format = (
-                # 04-28_08:08 INFO :
-                "%(asctime)-5s %(levelname)-5s"
-                # .../src/lem1/amp/helpers/system_interaction.py
-                # _system       :
-                " %(pathname)s %(funcName)-20s "
-                # 199: ...
-                " %(lineno)d:"
-                " %(message)s"
-            )
-        if date_format_mode == "time":
-            date_fmt = "%H:%M:%S"
-        elif date_format_mode == "date_time":
-            date_fmt = "%m-%d_%H:%M"
-        elif date_format_mode == "date_timestamp":
-            date_fmt = "%Y-%m-%d %I:%M:%S %p"
-        else:
-            raise ValueError(f"Invalid date_format_mode='{date_format_mode}'")
-    else:
-        # Make logging look like a normal print().
-        # TODO(gp): We want to still prefix with WARNING and ERROR.
-        log_format = "%(message)s"
-        date_fmt = ""
-    return date_fmt, log_format
-
-
-def set_v1_formatter(
-    ch: Any,
-    root_logger: Any,
-    force_no_warning: bool,
-    force_print_format: bool,
-    force_verbose_format: bool,
-    report_cpu_usage: bool,
-    report_memory_usage: bool,
-) -> _ColoredFormatter:
-    # Decide whether to use verbose or print format.
-    date_fmt, log_format = _get_logging_format(
-        force_print_format,
-        force_verbose_format,
-        force_no_warning,
-        report_memory_usage,
-    )
-    # Use normal formatter.
-    # formatter = logging.Formatter(log_format, datefmt=date_fmt)
-    # Use formatter with colors.
-    formatter = _ColoredFormatter(log_format, date_fmt)
-    ch.setFormatter(formatter)
-    root_logger.addHandler(ch)
-    # Report resource usage.
-    if report_memory_usage:
-        # Get root logger.
-        log = logging.getLogger("")
-        # Create filter.
-        f = ResourceUsageFilter(report_cpu_usage)
-        # The ugly part:adding filter to handler.
-        log.handlers[0].addFilter(f)
-    return formatter
+# # From https://stackoverflow.com/questions/32402502
+# class _LocalTimeZoneFormatter:
+#     """
+#     Override logging.Formatter to use an aware datetime object.
+#     """
+#
+#     def __init__(self, *args: Any, **kwargs: Any):
+#         super().__init__(*args, **kwargs)  # type: ignore[call-arg]
+#         try:
+#             # TODO(gp): Automatically detect the time zone. It might be complicated in
+#             #  Docker.
+#             from dateutil import tz
+#
+#             # self._tzinfo = pytz.timezone('America/New_York')
+#             self._tzinfo = tz.gettz("America/New_York")
+#         except ModuleNotFoundError as e:
+#             print(f"Can't import dateutil: using UTC\n{str(e)}")
+#             self._tzinfo = None
+#
+#     def converter(self, timestamp: float) -> datetime.datetime:
+#         # To make the linter happy and respecting the signature of the
+#         # superclass method.
+#         _ = self
+#         # timestamp=1622423570.0147252
+#         dt = datetime.datetime.utcfromtimestamp(timestamp)
+#         # Convert it to an aware datetime object in UTC time.
+#         dt = dt.replace(tzinfo=datetime.timezone.utc)
+#         if self._tzinfo is not None:
+#             # Convert it to desired timezone.
+#             dt = dt.astimezone(self._tzinfo)
+#         return dt
+#
+#     def formatTime(
+#         self, record: logging.LogRecord, datefmt: Optional[str] = None
+#     ) -> str:
+#         dt = self.converter(record.created)
+#         if datefmt:
+#             s = dt.strftime(datefmt)
+#         else:
+#             try:
+#                 s = dt.isoformat(timespec="milliseconds")
+#             except TypeError:
+#                 s = dt.isoformat()
+#         return s
+#
+#
+# # #############################################################################
+#
+#
+# # [mypy] error: Definition of "converter" in base class
+# # "_LocalTimeZoneFormatter" is incompatible with definition in base class
+# # "Formatter"
+# class _ColoredFormatter(  # type: ignore[misc]
+#     _LocalTimeZoneFormatter, logging.Formatter
+# ):
+#     """
+#     Logging formatter using colors for different levels.
+#     """
+#
+#     _SKIP_DEBUG = True
+#
+#     def format(self, record: logging.LogRecord) -> str:
+#         colored_record = copy.copy(record)
+#         # `levelname` is the internal name and can't be changed to `level_name`
+#         # as per our conventions.
+#         levelname = colored_record.levelname
+#         if _ColoredFormatter._SKIP_DEBUG and levelname == "DEBUG":
+#             colored_levelname = ""
+#         else:
+#             # Use white as default.
+#             prefix = "\033["
+#             suffix = "\033[0m"
+#             assert levelname in _COLOR_MAPPING, "Can't find info '%s'"
+#             color_code, tag = _COLOR_MAPPING[levelname]
+#             # Align the level name.
+#             colored_levelname = f"{prefix}{color_code}m{tag}{suffix}"
+#         colored_record.levelname = colored_levelname
+#         return logging.Formatter.format(self, colored_record)
+#
+#
+# # #############################################################################
+#
+#
+# # From https://stackoverflow.com/questions/10848342
+# # and https://docs.python.org/3/howto/logging-cookbook.html#filters-contextual
+# class ResourceUsageFilter(logging.Filter):
+#     """
+#     Add fields to the logger about memory and CPU use.
+#     """
+#
+#     def __init__(self, report_cpu_usage: bool):
+#         super().__init__()
+#         import psutil
+#
+#         self._process = psutil.Process()
+#         self._report_cpu_usage = report_cpu_usage
+#         if self._report_cpu_usage:
+#             # Start sampling the CPU usage.
+#             self._process.cpu_percent(interval=1.0)
+#
+#     def filter(self, record: logging.LogRecord) -> bool:
+#         """
+#         Override `logging.Filter()`, adding several fields to the logger.
+#         """
+#         p = self._process
+#         # Report memory usage.
+#         resource_use = get_memory_usage_as_str(p)
+#         # Report CPU usage.
+#         if self._report_cpu_usage:
+#             # CPU usage since the previous call.
+#             cpu_use = p.cpu_percent(interval=None)
+#             resource_use += " cpu=%.0f%%" % cpu_use
+#         record.resource_use = resource_use  # type: ignore
+#         return True
+#
+#
+# # #############################################################################
+#
+#
+# # TODO(gp): Replace `force_print_format` and `force_verbose_format` with `mode`.
+# def _get_logging_format(
+#     force_print_format: bool,
+#     force_verbose_format: bool,
+#     force_no_warning: bool,
+#     report_memory_usage: bool,
+#     date_format_mode: str = "time",
+# ) -> Tuple[str, str]:
+#     """
+#     Compute the logging format depending whether running on notebook or in a
+#     shell.
+# 
+#     The logging format can be:
+#     - print: looks like a `print` statement
+# 
+#     :param force_print_format: force to use the non-verbose format
+#     :param force_verbose_format: force to use the verbose format
+#     """
+#     if _is_running_in_ipynb() and not force_no_warning:
+#         print("WARNING: Running in Jupyter")
+#     verbose_format = not _is_running_in_ipynb()
+#     #
+#     assert not (force_verbose_format and force_print_format), (
+#         f"Can't use both force_verbose_format={force_verbose_format} "
+#         + f"and force_print_format={force_print_format}"
+#     )
+#     if force_verbose_format:
+#         verbose_format = True
+#     if force_print_format:
+#         verbose_format = False
+#         #
+#     if verbose_format:
+#         # TODO(gp): We would like to have filename:name:funcName:lineno all
+#         #  justified on 15 chars.
+#         #  See https://docs.python.org/3/howto/logging-cookbook.html#use-of
+#         #  -alternative-formatting-styles
+#         #  Something like:
+#         #   {{asctime}-5s {{filename}{name}{funcname}{linedo}d}-15s {message}
+#         #
+#         # %(pathname)s Full pathname of the source file where the logging call was
+#         #   issued (if available).
+#         # %(filename)s Filename portion of pathname.
+#         # %(module)s Module (name portion of filename).
+#         if True:
+#             log_format = (
+#                 # 04-28_08:08 INFO :
+#                 "%(asctime)-5s %(levelname)-5s"
+#             )
+#             if report_memory_usage:
+#                 # rss=0.3GB vms=2.0GB mem_pct=2% cpu=91%
+#                 log_format += " [%(resource_use)-40s]"
+#             log_format += (
+#                 # lib_tasks _delete_branches
+#                 " %(module)-20s: %(funcName)-30s:"
+#                 # 142: ...
+#                 " %(lineno)-4d:"
+#                 " %(message)s"
+#             )
+#         else:
+#             # Super verbose: to help with debugging print more info without trimming.
+#             log_format = (
+#                 # 04-28_08:08 INFO :
+#                 "%(asctime)-5s %(levelname)-5s"
+#                 # .../src/lem1/amp/helpers/system_interaction.py
+#                 # _system       :
+#                 " %(pathname)s %(funcName)-20s "
+#                 # 199: ...
+#                 " %(lineno)d:"
+#                 " %(message)s"
+#             )
+#         if date_format_mode == "time":
+#             date_fmt = "%H:%M:%S"
+#         elif date_format_mode == "date_time":
+#             date_fmt = "%m-%d_%H:%M"
+#         elif date_format_mode == "date_timestamp":
+#             date_fmt = "%Y-%m-%d %I:%M:%S %p"
+#         else:
+#             raise ValueError(f"Invalid date_format_mode='{date_format_mode}'")
+#     else:
+#         # Make logging look like a normal print().
+#         # TODO(gp): We want to still prefix with WARNING and ERROR.
+#         log_format = "%(message)s"
+#         date_fmt = ""
+#     return date_fmt, log_format
+# 
+# 
+# def set_v1_formatter(
+#     ch: Any,
+#     root_logger: Any,
+#     force_no_warning: bool,
+#     force_print_format: bool,
+#     force_verbose_format: bool,
+#     report_cpu_usage: bool,
+#     report_memory_usage: bool,
+# ) -> _ColoredFormatter:
+#     # Decide whether to use verbose or print format.
+#     date_fmt, log_format = _get_logging_format(
+#         force_print_format,
+#         force_verbose_format,
+#         force_no_warning,
+#         report_memory_usage,
+#     )
+#     # Use normal formatter.
+#     # formatter = logging.Formatter(log_format, datefmt=date_fmt)
+#     # Use formatter with colors.
+#     formatter = _ColoredFormatter(log_format, date_fmt)
+#     ch.setFormatter(formatter)
+#     root_logger.addHandler(ch)
+#     # Report resource usage.
+#     if report_memory_usage:
+#         # Get root logger.
+#         log = logging.getLogger("")
+#         # Create filter.
+#         f = ResourceUsageFilter(report_cpu_usage)
+#         # The ugly part:adding filter to handler.
+#         log.handlers[0].addFilter(f)
+#     return formatter
 
 
 # #############################################################################
@@ -739,6 +674,9 @@ def set_v2_formatter(
     return formatter
 
 
+# #############################################################################
+
+
 @contextlib.contextmanager
 def set_level(logger: Any, level: int) -> None:
     """
@@ -751,6 +689,79 @@ def set_level(logger: Any, level: int) -> None:
     finally:
         logger.setLevel(previous_level)
     assert logger.getEffectiveLevel() == previous_level
+
+
+# #############################################################################
+# trace()
+# #############################################################################
+
+
+# From https://stackoverflow.com/questions/2183233
+def _add_logging_level(levelName, levelNum, methodName=None):
+    """
+    Comprehensively adds a new logging level to the `logging` module and the
+    currently configured logging class.
+
+    `levelName` becomes an attribute of the `logging` module with the value
+    `levelNum`. `methodName` becomes a convenience method for both `logging`
+    itself and the class returned by `logging.getLoggerClass()` (usually just
+    `logging.Logger`). If `methodName` is not specified, `levelName.lower()` is
+    used.
+
+    To avoid accidental clobberings of existing attributes, this method will
+    raise an `AttributeError` if the level name is already an attribute of the
+    `logging` module or if the method name is already present
+
+    Example
+    -------
+    >>> _add_logging_level('TRACE', logging.DEBUG - 5)
+    >>> logging.getLogger(__name__).setLevel("TRACE")
+    >>> logging.getLogger(__name__).trace('that worked')
+    >>> logging.trace('so did this')
+    >>> logging.TRACE
+    5
+
+    """
+    if not methodName:
+        methodName = levelName.lower()
+
+    if hasattr(logging, levelName):
+        raise AttributeError('{} already defined in logging module'.format(levelName))
+    if hasattr(logging, methodName):
+        raise AttributeError('{} already defined in logging module'.format(methodName))
+    if hasattr(logging.getLoggerClass(), methodName):
+        raise AttributeError('{} already defined in logger class'.format(methodName))
+
+    # This method was inspired by the answers to Stack Overflow post
+    # http://stackoverflow.com/q/2183233/2988730, especially
+    # http://stackoverflow.com/a/13638084/2988730
+    def logForLevel(self, message, *args, **kwargs):
+        if self.isEnabledFor(levelNum):
+            self._log(levelNum, message, args, **kwargs)
+    def logToRoot(message, *args, **kwargs):
+        logging.log(levelNum, message, *args, **kwargs)
+
+    logging.addLevelName(levelNum, levelName)
+    setattr(logging, levelName, levelNum)
+    setattr(logging.getLoggerClass(), methodName, logForLevel)
+    setattr(logging, methodName, logToRoot)
+
+
+_add_logging_level('TRACE', 5)
+
+
+# #############################################################################
+
+
+# Note that this doesn't avoid evaluating the call.
+# The only way to be completely sure that there is no evaluation is:
+# ```
+# if False: _LOG.debug(...)
+# ```
+def shut_up_log_debug(logger: logging.Logger) -> None:
+    logging.disable(logging.DEBUG)
+    #logger.debug = lambda *_: 0
+    #logger.trace = lambda *_: 0
 
 
 # #############################################################################
