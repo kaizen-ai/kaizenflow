@@ -588,8 +588,8 @@ def reconcile_run_all(
         run_date=run_date,
         dst_dir=dst_dir,
         stage=stage,
-        prevent_overwriting=prevent_overwriting,
         mode=mode,
+        prevent_overwriting=prevent_overwriting,
     )
     #
     reconcile_dump_market_data(
