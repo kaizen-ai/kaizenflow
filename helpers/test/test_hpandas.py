@@ -1946,18 +1946,19 @@ class Test_compare_dfs(hunitest.TestCase):
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
             pd.Timestamp("2022-01-01 21:02:00+00:00"),
+            pd.Timestamp("2022-01-01 21:03:00+00:00"),
         ]
         values1 = {
-            "tsA": [0, 3e-9],
-            "tsB": [0, 6e-3],
+            "tsA": [0, 3e-9, -3e-9],
+            "tsB": [0, 6e-3, 4e-9],
             "timestamp": timestamp_index,
         }
         df1 = pd.DataFrame(data=values1)
         df1 = df1.set_index("timestamp")
         #
         values2 = {
-            "tsA": [9e-2, 15e-3],
-            "tsB": [0, 5e-9],
+            "tsA": [9e-2, 15e-3, -5e-9],
+            "tsB": [0, 5e-9, 3e-9],
             "timestamp": timestamp_index,
         }
         df2 = pd.DataFrame(data=values2)
@@ -2119,9 +2120,32 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
-            close_to_zero_threshold=0,
             zero_vs_zero_is_zero=False,
         )
+        actual = hpandas.df_to_str(df_diff)
+        self.check_string(actual)
+
+    def test8(self) -> None:
+        """
+        - DataFrames are equal
+        - Column and row modes are `equal`
+        - diff_mode = "pct_change"
+        - close_to_zero_threshold = 1e-6
+        - zero_vs_zero_is_zero = False
+
+        The second DataFrame has numbers below the close_to_zero_threshold.
+        """
+        df1, df2 = self.get_test_dfs_close_to_zero()
+        df_diff = hpandas.compare_dfs(
+            df1,
+            df2,
+            row_mode="equal",
+            column_mode="equal",
+            diff_mode="pct_change",
+            remove_inf=False,
+            assert_diff_threshold=None,
+        )
+        #
         actual = hpandas.df_to_str(df_diff)
         self.check_string(actual)
 
