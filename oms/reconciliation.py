@@ -106,8 +106,7 @@ def build_reconciliation_configs(
         asset_id_to_share_decimals = occxbrok.subset_market_info(
             market_info, "amount_precision"
         )
-        gmv = 1500.0
-        #gmv = 700.0
+        gmv = 700.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
         run_tca = True
