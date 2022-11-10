@@ -50,10 +50,12 @@ hprint.config_notebook()
 # # Functions
 
 # %%
-def get_raw_ccxt_realtime_data(db_table: str,
-                               exchange_id: str,
-                               start_ts: Optional[str],
-                               end_ts: Optional[str]) -> pd.DataFrame:
+def get_raw_ccxt_realtime_data(
+    db_table: str,
+    exchange_id: str,
+    start_ts: Optional[str],
+    end_ts: Optional[str],
+) -> pd.DataFrame:
     """
     Read raw data for given exchange from the RT DB.
 
@@ -67,13 +69,13 @@ def get_raw_ccxt_realtime_data(db_table: str,
     # Read data from DB.
     query = f"SELECT * FROM {db_table} WHERE exchange_id='{exchange_id}'"
     if start_ts:
-        start_ts=pd.Timestamp(start_ts)
+        start_ts = pd.Timestamp(start_ts)
         unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_ts)
         query += f" AND timestamp >='{unix_start_timestamp}'"
     if end_ts:
-        end_ts=pd.Timestamp(end_ts)
+        end_ts = pd.Timestamp(end_ts)
         unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-        query += f" AND timestamp <='{unix_end_timestamp}'"   
+        query += f" AND timestamp <='{unix_end_timestamp}'"
     rt_data = hsql.execute_query_to_df(connection, query)
     return rt_data
 
@@ -103,9 +105,9 @@ def load_parquet_by_period(
 def combine_stats(stats: List[pd.Series]) -> pd.Series:
     """
     Sum several pandas Series with statistics.
-    
+
     Example of statistics:
-    
+
         bid_price    0.0
         bid_size     0.0
         ask_price    0.0
@@ -125,10 +127,10 @@ def find_gaps_in_time_series(
     end_timestamp: pd.Timestamp,
     step: str,
 ) -> pd.Series:
-    """    
+    """
     Find missing points on a time interval specified by [start_timestamp,
     end_timestamp], where point distribution is determined by <step>.
-    
+
     :param time_series: time series to find gaps in
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
@@ -144,21 +146,24 @@ def find_gaps_in_time_series(
 
 
 # %%
-def count_data_py_parts(start_ts: str, end_ts: str, s3_path: str) -> List[pd.Series]:
+def count_data_py_parts(
+    start_ts: str, end_ts: str, s3_path: str
+) -> List[pd.Series]:
     """
     Load S3 historical data by parts and count the statisticts.
     """
     overall_rows = 0
+    gaps_count = 0
     nans_stats = []
     zeros_stats = []
     start_ts = pd.Timestamp(start_ts, tz="UTC")
     end_ts = pd.Timestamp(end_ts, tz="UTC")
-    # Separate time range to months.
+    # Separate time period to months.
     dates = pd.date_range(start_ts, end_ts, freq="M")
     for i in range(0, len(dates), 2):
-        start_end = dates[i:i+2]
+        start_end = dates[i : i + 2]
         if len(start_end) == 2:
-            start, end = dates[i:i+2]
+            start, end = dates[i : i + 2]
             print(f"Loading data for {start.month}th and {end.month}th months")
         else:
             start = dates[0]
@@ -175,11 +180,19 @@ def count_data_py_parts(start_ts: str, end_ts: str, s3_path: str) -> List[pd.Ser
         nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
         # Count zeros.
         zeros = cstadesc.compute_frac_zero(
-            cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
-        ) 
+            cc_ba_futures_daily[
+                ["bid_price", "bid_size", "ask_price", "ask_size"]
+            ]
+        )
         nans_stats.append(nans)
         zeros_stats.append(zeros)
+        # Count gaps in time series.
+        gaps = find_gaps_in_time_series(
+            cc_ba_futures_daily.index, start, end, "T"
+        )
+        gaps_count += len(gaps)
     print(f"{overall_rows} rows overall")
+    print(f"Found {gaps_count} missing points on a time interval, step - minutes")
     return nans_stats, zeros_stats
 
 
@@ -194,7 +207,9 @@ def count_data_py_parts(start_ts: str, end_ts: str, s3_path: str) -> List[pd.Ser
 
 # %%
 # Get the real time data from DB.
-ccxt_rt = get_raw_ccxt_realtime_data("ccxt_ohlcv_futures", "binance", start_ts=None, end_ts=None)
+ccxt_rt = get_raw_ccxt_realtime_data(
+    "ccxt_ohlcv_futures", "binance", start_ts=None, end_ts=None
+)
 
 # %%
 print(f"{len(ccxt_rt)} rows overall")
@@ -226,7 +241,7 @@ display(volume0.tail())
 
 # %%
 ax = volume0["currency_pair"].value_counts().plot(kind="bar")
-ax = ax.bar_label(ax.containers[-1], label_type='edge')
+ax = ax.bar_label(ax.containers[-1], label_type="edge")
 
 # %% [markdown]
 # # Historical (data updated daily)
@@ -273,7 +288,7 @@ display(volume0.tail())
 
 # %%
 ax = volume0["currency_pair"].value_counts().plot(kind="bar")
-ax = ax.bar_label(ax.containers[-1], label_type='edge')
+ax = ax.bar_label(ax.containers[-1], label_type="edge")
 
 # %% [markdown]
 # ## BID-ASK
