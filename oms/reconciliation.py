@@ -6,11 +6,13 @@ import oms.reconciliation as omreconc
 
 import collections
 import datetime
+import itertools
 import logging
 import os
 import pprint
 from typing import Any, Dict, List, Optional, Tuple, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -649,6 +651,63 @@ def load_portfolio_versions(
     return portfolio_dfs, portfolio_stats_dfs
 
 
+def compare_portfolios(
+    portfolio_dict: Dict[str, pd.DataFrame],
+    *,
+    report_stats: bool = True,
+    display_plot: bool = False,
+    compare_dfs_kwargs: Any = None,
+) -> pd.DataFrame:
+    """
+    Compute pairwise max absolute portfolio stats differences.
+
+    :param portfolio_dict: portfolio stats
+    :param report_stats: print max abs diff for each pair if True,
+        do not print otherwise
+    :param display_plot: display plot for each pair if True,
+        do not pplot otherwise
+    :param compare_dfs_kwargs: kwargs for `compare_dfs()`
+    :return: pairwise max absolute portfolio stats differences
+    """
+    # Get a list of portfolio names.
+    portfolio_names = sorted(list(portfolio_dict.keys()))
+    hdbg.dassert_eq(portfolio_names, ["prod", "research", "sim"])
+    # Set a list for pairwise stats data.
+    portfolios_diff_dfs = []
+    # Iterate over all the possible portfolio pairs.
+    for name_pair in itertools.combinations(portfolio_names, 2):
+        # Compute all the pairwise portfolio differences.
+        name1 = name_pair[0]
+        name2 = name_pair[1]
+        diff_df = hpandas.compare_multiindex_dfs(
+            portfolio_dict[name1],
+            portfolio_dict[name2],
+            compare_dfs_kwargs=compare_dfs_kwargs,
+        )
+        # Remove the sign.
+        diff_df = diff_df.abs()
+        if report_stats:
+            max_diff = diff_df.max().max()
+            _LOG.info(
+                "Max difference between %s and %s is=%s",
+                name1,
+                name2,
+                max_diff,
+            )
+        # Compute pairwise portfolio differences stats.
+        portfolios_diff = diff_df.max().unstack().max(axis=1)
+        portfolios_diff.name = "_".join([name1, name2, "diff"])
+        if display_plot:
+            _ = portfolios_diff.plot.bar()
+            plt.xticks(rotation=0)
+            plt.show()
+        # Add stats data to the result list.
+        portfolios_diff_dfs.append(portfolios_diff)
+    # Combine the stats.
+    res_diff_df = pd.concat(portfolios_diff_dfs, axis=1)
+    return res_diff_df
+
+
 def normalize_portfolio_df(df: pd.DataFrame) -> pd.DataFrame:
     normalized_df = df.copy()
     normalized_df.drop(-1, axis=1, level=1, inplace=True)
@@ -1136,5 +1195,3 @@ def load_and_process_artifacts(
         slippage_df,
         fills_df,
     )
-
-
