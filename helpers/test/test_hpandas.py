@@ -2105,7 +2105,7 @@ class Test_compare_dfs(hunitest.TestCase):
         - DataFrames are equal
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
-        - close_to_zero_threshold = 1e-6
+        - close_to_zero_threshold = 0
         - zero_vs_zero_is_zero = False
 
         The first DataFrame has numbers below the close_to_zero_threshold.
@@ -2119,6 +2119,7 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
+            close_to_zero_threshold=0,
             zero_vs_zero_is_zero=False,
         )
         actual = hpandas.df_to_str(df_diff)
