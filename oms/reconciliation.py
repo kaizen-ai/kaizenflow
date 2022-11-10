@@ -665,7 +665,7 @@ def compare_portfolios(
     :param report_stats: print max abs diff for each pair if True,
         do not print otherwise
     :param display_plot: display plot for each pair if True,
-        do not pplot otherwise
+        do not plot otherwise
     :param compare_dfs_kwargs: kwargs for `compare_dfs()`
     :return: pairwise max absolute portfolio stats differences
     """

@@ -260,12 +260,11 @@ display(stats_sxs)
 # # Compare portfolios pairwise
 
 # %%
-report_stats = True
-display_plot = True
+report_stats = False
+display_plot = False
 compare_dfs_kwargs = {
     "column_mode": "inner",
-#     "diff_mode": "pct_change",
-    "diff_mode": "diff",
+    "diff_mode": "pct_change",
     "remove_inf": True,
     "assert_diff_threshold": None,
 }
