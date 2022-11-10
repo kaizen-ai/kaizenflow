@@ -124,6 +124,8 @@ dag_start_timestamp = None
 dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
+    # TODO(Grisha): maybe load just the last node and timestamp otherwise
+    # it takes 2 minutes to load the data.
     only_last_node=False,
     only_last_timestamp=False,
 )
@@ -343,7 +345,7 @@ prod_target_position_df = oms.load_target_positions(
 )
 hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
 if False:
-    # TODO(Grisha): do we need to compare sim also?
+    # TODO(Grisha): compare prod vs sim at some point.
     sim_target_position_df = oms.load_target_positions(
         portfolio_path_dict["sim"].strip("portfolio"),
         start_timestamp,
@@ -356,7 +358,7 @@ if False:
 # ## Compare positions target vs executed (prod)
 
 # %%
-# TODO(Grisha): decide what is the expected output.
+# TODO(Grisha): use `hpandas.compare_dfs()`.
 df1 = prod_target_position_df["target_holdings_shares"].shift(1)
 df2 = prod_target_position_df["holdings_shares"]
 diff = df1 - df2
@@ -369,11 +371,10 @@ hpandas.df_to_str(diff, num_rows=5, log_level=logging.INFO)
 # ### Price
 
 # %% run_control={"marked": true}
+# TODO(Grisha): wrap in a function since it's common for all columns.
 column = "price"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -394,9 +395,7 @@ if False:
 # %%
 column = "volatility"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -417,9 +416,7 @@ if False:
 # %%
 column = "prediction"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -440,9 +437,7 @@ if False:
 # %%
 column = "holdings_shares"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -463,10 +458,7 @@ if False:
 
 # %%
 prod_df = prod_target_position_df["target_holdings_shares"].shift(1)
-display(prod_df.head(5))
-
 res_df = research_portfolio_df["holdings_shares"]
-display(res_df.head(5))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -508,19 +500,17 @@ hpandas.df_to_str(sim_order_df, num_rows=5, log_level=logging.INFO)
 # # Fills statistics
 
 # %%
-# TODO(Grisha): what should we do here?
 fills = oms.compute_fill_stats(prod_target_position_df)
 hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
-fills["underfill_share_count"].sum(axis=1).plot()
+fills["fill_rate"].plot()
 
 # %% [markdown]
 # # Slippage
 
 # %%
-# TODO(Grisha): what should we do here?
 slippage = oms.compute_share_prices_and_slippage(portfolio_dfs["prod"])
 hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
-slippage["slippage_in_bps"].sum(axis=1).plot()
+slippage["slippage_in_bps"].plot()
 
 # %%
 stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
