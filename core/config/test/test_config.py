@@ -1883,22 +1883,17 @@ class Test_save_to_file(hunitest.TestCase):
 # Test_to_string
 # #############################################################################
 
-
-class TestCaseConfigToString(hunitest.TestCase):
+def _remove_line_numbers(self, actual_config: str) -> str:
     """
-    TestCase with added function for config-specific string cleanup.
+    Remove line numbers from shorthand representations, e.g.
+    `dataflow/system/system_builder_utils.py::***::get_config_template`
     """
-    def remove_line_numbers(self, actual_config: str) -> str:
-        """
-        Remove line numbers from shorthand representations, e.g.
-        `dataflow/system/system_builder_utils.py::***::get_config_template`
-        """
-        line_regex = r"(?<=::)(\d+)(?=::)"
-        actual_config = re.sub(line_regex, "***", actual_config)
-        return actual_config
+    line_regex = r"(?<=::)(\d+)(?=::)"
+    actual_config = re.sub(line_regex, "***", actual_config)
+    return actual_config
 
 
-class Test_to_string(TestCaseConfigToString):
+class Test_to_string(hunitest.TestCase):
     def get_test_config(
         self,
         value: Any,
@@ -1983,7 +1978,7 @@ class Test_to_string(TestCaseConfigToString):
         #
         mode = "verbose"
         actual = config.to_string(mode)
-        actual = self.remove_line_numbers(actual)
+        actual = _remove_line_numbers(actual)
         #
         expected = r"""key1 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test4, val_type=str): value2
         key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
@@ -2033,7 +2028,7 @@ class Test_to_string(TestCaseConfigToString):
 # #############################################################################
 
 
-class Test_mark_as_used1(TestCaseConfigToString):
+class Test_mark_as_used1(hunitest.TestCase):
     def helper(self, actual_config: cconfig.Config, expected_config: str):
         """
         Remove line numbers from config string and compare to expected value..
@@ -2041,7 +2036,7 @@ class Test_mark_as_used1(TestCaseConfigToString):
         actual_config = repr(actual_config)
         # Replace line numbers with '***', e.g.:
         #  dataflow/system/system_builder_utils.py::***::get_config_template
-        actual_config = self.remove_line_numbers(actual_config)
+        actual_config = _remove_line_numbers(actual_config)
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
         )
