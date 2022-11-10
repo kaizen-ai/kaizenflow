@@ -191,7 +191,7 @@ def reconcile_dump_market_data(
 
     The output df looks like:
     ```
-                                 asset_id              knowledge_timestamp     open     high      low    close     volume            end_download_timestamp       id        full_symbol            start_timestamp
+                               asset_id              knowledge_timestamp     open     high      low    close     volume            end_download_timestamp       id        full_symbol            start_timestamp
     end_timestamp
     2022-09-27 10:35:00-04:00  1030828978 2022-09-27 14:36:12.230330+00:00   0.7233   0.7247   0.7215   0.7241  3291381.0  2022-09-27 14:36:11.727196+00:00  3409049  binance::GMT_USDT  2022-09-27 10:34:00-04:00
     2022-09-27 10:35:00-04:00  1464553467 2022-09-27 14:36:05.788923+00:00  1384.23  1386.24  1383.19  1385.63   5282.272  2022-09-27 14:36:05.284506+00:00  3409043  binance::ETH_USDT  2022-09-27 10:34:00-04:00
@@ -251,6 +251,7 @@ def reconcile_dump_market_data(
     if prevent_overwriting:
         _prevent_overwriting(market_data_file_target)
 
+
 @task
 def reconcile_run_sim(
     ctx, run_date=None, dst_dir=None, rt_timeout_in_secs_or_time=None
@@ -286,7 +287,9 @@ def reconcile_run_sim(
         f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
-    opts += " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    opts += (
+        " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    )
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
@@ -330,7 +333,7 @@ def reconcile_copy_prod_data(
     dst_dir=None,
     stage=None,
     prevent_overwriting=True,
-    mode="scheduled"
+    mode="scheduled",
 ):  # type: ignore
     """
     Copy the output of the prod run to the specified folder.
@@ -417,8 +420,9 @@ def reconcile_run_notebook(
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    prod_subdir = None
+    # pylint: enable=line-too-long
     config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(date_str="{run_date}", prod_subdir={prod_subdir})'
+    # pylint: disable=line-too-long
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
