@@ -76,6 +76,7 @@ def _get_run_date(run_date: Optional[str]) -> str:
 
 
 def _prevent_overwriting(object_path: str) -> None:
+    hdbg.dassert_path_exists(object_path)
     _LOG.info("Removing the write permissions for: %s", object_path)
     if os.path.isdir(object_path):
         opt = "-R"
@@ -329,6 +330,7 @@ def reconcile_copy_prod_data(
     dst_dir=None,
     stage=None,
     prevent_overwriting=True,
+    mode="scheduled"
 ):  # type: ignore
     """
     Copy the output of the prod run to the specified folder.
@@ -352,14 +354,14 @@ def reconcile_copy_prod_data(
     # Prod system is run via AirFlow and the results are tagged with the previous day.
     prod_run_date = (run_date - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
     shared_dir = f"/shared_data/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
+    cmd = f"find '{shared_dir}' -name system_log_dir_{mode}__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
     _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    cmd = f"find '{shared_dir}/logs' -name log_{mode}__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
     hdbg.dassert_file_exists(log_file)
@@ -554,6 +556,7 @@ def reconcile_run_all(
     rt_timeout_in_secs_or_time=None,
     prevent_overwriting=True,
     skip_notebook=False,
+    mode="scheduled",
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
@@ -564,6 +567,9 @@ def reconcile_run_all(
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
+    :param mode: use to add mode to system log dir name
+        - E.g., "/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
+        - could be "scheduled" or "manual"
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
@@ -577,6 +583,7 @@ def reconcile_run_all(
         dst_dir=dst_dir,
         stage=stage,
         prevent_overwriting=prevent_overwriting,
+        mode=mode,
     )
     #
     reconcile_dump_market_data(
