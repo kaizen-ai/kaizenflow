@@ -251,54 +251,21 @@ display(stats_sxs)
 # # Compare portfolios pairwise
 
 # %%
-# TODO(Grisha): @Dan factor out in a function.
-# Compute difference.
+report_stats = False
+display_plot = False
 compare_dfs_kwargs = {
     "column_mode": "inner",
-    "diff_mode": "diff",
+    "diff_mode": "pct_change",
     "remove_inf": True,
     "assert_diff_threshold": None,
 }
-diff_df = hpandas.compare_multiindex_dfs(
-    portfolio_dfs["prod"],
-    portfolio_dfs["sim"],
+portfolio_diff_df = oms.compare_portfolios(
+    portfolio_dfs,
+    report_stats=report_stats,
+    display_plot=display_plot,
     compare_dfs_kwargs=compare_dfs_kwargs,
 )
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-max_diff = diff_df.max().max()
-_LOG.info("Max difference between prod and sim is=%s", max_diff)
-prod_sim_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
-hpandas.df_to_str(prod_sim_diff, num_rows=None, log_level=logging.INFO)
-
-# %%
-diff_df = hpandas.compare_multiindex_dfs(
-    portfolio_dfs["prod"],
-    portfolio_dfs["research"],
-    compare_dfs_kwargs=compare_dfs_kwargs,
-)
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-max_diff = diff_df.max().max()
-_LOG.info("Max difference between prod and research is=%s", max_diff)
-prod_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
-hpandas.df_to_str(prod_research_diff, num_rows=None, log_level=logging.INFO)
-
-# %%
-diff_df = hpandas.compare_multiindex_dfs(
-    portfolio_dfs["sim"],
-    portfolio_dfs["research"],
-    compare_dfs_kwargs=compare_dfs_kwargs,
-)
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-max_diff = diff_df.max().max()
-_LOG.info("Max difference between sim and research is=%s", max_diff)
-sim_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
-hpandas.df_to_str(sim_research_diff, num_rows=None, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_diff_df, num_rows=None, log_level=logging.INFO)
 
 # %%
 dtfmod.compute_correlations(
