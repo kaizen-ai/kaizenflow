@@ -575,10 +575,10 @@ def reconcile_run_all(
     :param run_date: date of the reconcile run
     :param dst_dir: dir to store reconcilation results in
     :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
+    :param mode: see `reconcile_copy_prod_data()`
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
-    :param mode: see reconcile_copy_prod_data()`
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
