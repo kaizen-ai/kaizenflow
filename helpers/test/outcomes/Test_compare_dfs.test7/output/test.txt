@@ -1,0 +1,4 @@
+                           tsA.pct_change  tsB.pct_change
+timestamp                                                
+2022-01-01 21:01:00+00:00          -100.0             NaN
+2022-01-01 21:02:00+00:00          -100.0             inf
