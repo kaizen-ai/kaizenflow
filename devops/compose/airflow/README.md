@@ -2,11 +2,19 @@
 
 - This implements a dockerized Airflow system that can run on a machine locally
 
+## 
+- Inspect the Dockerfile and the compose file:
+  ```
+  vi docker-compose.yml
+  vi Dockerfile
+  vi .env
+  ```
+
 - Build the Airflow container and bring up the service
-```
-> cd devops/compose/airflow/
-> docker-compose up
-```
+  ```
+  > cd devops/compose/airflow/
+  > docker-compose up
+  ```
 
 - Building the container for the first time takes a few minutes
 
@@ -70,16 +78,41 @@ airflow_scheduler_cont  | [2022-11-10 17:09:29 +0000] [22] [INFO] Booting worker
   `172.30.2.136:8090`)
 - The default login credentials are `airflow`:`airflow`
 
-## 
+## Managing Airflow
 
-## 
+- You can bring down the service (persisting the state) with:
+  ```
+  > docker compose down
 
-docker compose restart
-docker compose down
-docker compose rm -svf
+  > docker container ls
+  > docker volume ls
+  ```
+- The containers are only paused
 
-# Remove all containers and volumes
-docker-compose down -v --rmi all
+- Restarting the service keeps the volume which contains the state of Postgres:
+  ```
+  docker compose restart
+
+  > docker container ls
+  > docker volume ls
+  ```
+- The containers are recreated
+
+- To remove all containers and volumes
+  ```
+  > docker-compose down -v --rmi all
+  Removing airflow_scheduler_cont ... done
+  Removing airflow_cont           ... done
+  Removing postgres_cont          ... done
+  Removing network airflow_default
+  Removing volume airflow_ck-airflow-database-data
+  Removing volume airflow_ck-airflow-log-volume
+  Removing image postgres:14.0
+  Removing image resdev-airflow:latest
+
+  > docker container ls
+  > docker volume ls
+  ```
 
 ## Notes
 - The current solution uses `SequentialExecutor` so task parallelization is not
@@ -92,5 +125,3 @@ docker-compose down -v --rmi all
 ```
 > docker-compose up --build --force-recreate
 ```
-
-

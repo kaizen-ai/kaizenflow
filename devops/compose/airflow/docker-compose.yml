@@ -1,5 +1,6 @@
 # Adapted from https://github.com/resdevd/docker-compose-airflow/blob/main/docker-compose.yml
 version: '3'
+
 services:
   postgres:
     image: postgres:14.0
@@ -34,9 +35,9 @@ services:
     ports:
       - 8090:8080
     volumes:
-      - ./ck-airflow-data/dags:/opt/airflow/dags
-      - ./ck-airflow-data/plugins:/opt/airflow/plugins
-      - ck-airflow-log-volume:/opt/airflow/log
+      - ./airflow_data/dags:/opt/airflow/dags
+      - ./airflow_data/plugins:/opt/airflow/plugins
+      - ./airflow_data/log_volume:/opt/airflow/log
     extra_hosts:
       - "host.docker.internal:host-gateway" 
 
@@ -51,9 +52,9 @@ services:
     depends_on:
       - postgres
     volumes:
-      - ./ck-airflow-data/dags:/opt/airflow/dags
-      - ./ck-airflow-data/plugins:/opt/airflow/plugins
-      - ck-airflow-log-volume:/opt/airflow/logs
+      - ./airflow_data/dags:/opt/airflow/dags
+      - ./airflow_data/plugins:/opt/airflow/plugins
+      - ./airflow_data/log_volume:/opt/airflow/log
     extra_hosts:
       - "host.docker.internal:host-gateway"  
 
@@ -68,10 +69,10 @@ services:
   #  depends_on:
   #    - postgres
   #  volumes:
-  #    - ./ck-airflow-data/dags:/opt/airflow/dags
-  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
-  #    - ck-airflow-log-volume:/opt/airflow/logs
-#
+  #    - ./airflow_data/dags:/opt/airflow/dags
+  #    - ./airflow_data/plugins:/opt/airflow/plugins
+  #    - ./airflow_data/log_volume:/opt/airflow/log
+
   #airflow-worker2:
   #  build: .
   #  image: resdev-airflow:latest
@@ -83,10 +84,10 @@ services:
   #  depends_on:
   #    - postgres
   #  volumes:
-  #    - ./ck-airflow-data/dags:/opt/airflow/dags
-  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
-  #    - ck-airflow-log-volume:/opt/airflow/logs
-#
+  #    - ./airflow_data/dags:/opt/airflow/dags
+  #    - ./airflow_data/plugins:/opt/airflow/plugins
+  #    - ./airflow_data/log_volume:/opt/airflow/log
+
   #airflow-worker3:
   #  build: .
   #  image: resdev-airflow:latest
@@ -98,9 +99,9 @@ services:
   #    - postgres
   #  command: celery worker
   #  volumes:
-  #    - ./ck-airflow-data/dags:/opt/airflow/dags
-  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
-  #    - ck-airflow-log-volume:/opt/airflow/logs
+  #    - ./airflow_data/dags:/opt/airflow/dags
+  #    - ./airflow_data/plugins:/opt/airflow/plugins
+  #    - ./airflow_data/log_volume:/opt/airflow/log
 
   #airflow-flower:
   #  build: .
@@ -109,9 +110,9 @@ services:
   #  depends_on:
   #    - postgres
   #  volumes:
-  #    - ./ck-airflow-data/dags:/opt/airflow/dags
-  #    - ./ck-airflow-data/plugins:/opt/airflow/plugins
-  #    - ck-airflow-log-volume:/opt/airflow/logs
+  #    - ./airflow_data/dags:/opt/airflow/dags
+  #    - ./airflow_data/plugins:/opt/airflow/plugins
+  #    - ./airflow_data/log_volume:/opt/airflow/log
   #  env_file:
   #    - .env
   #  restart: always
