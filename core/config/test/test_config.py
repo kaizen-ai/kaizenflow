@@ -1883,7 +1883,7 @@ class Test_save_to_file(hunitest.TestCase):
 # Test_to_string
 # #############################################################################
 
-def _remove_line_numbers(self, actual_config: str) -> str:
+def _remove_line_numbers(actual_config: str) -> str:
     """
     Remove line numbers from shorthand representations, e.g.
     `dataflow/system/system_builder_utils.py::***::get_config_template`
