@@ -293,7 +293,7 @@ def apply_dag_property(
         debug_mode_config = system.config.get_and_mark_as_used(
             ("dag_property_config", "debug_mode_config")
         )
-        dag.set_debug_mode(debug_mode_config)
+        dag.set_debug_mode(**debug_mode_config)
     # 2) force_free_nodes
     force_free_nodes = system.config.get_and_mark_as_used(
         ("dag_property_config", "force_free_nodes"), default_value=False
@@ -647,7 +647,6 @@ def _apply_DagRunner_config(
         "wake_up_timestamp": wake_up_timestamp,
         "bar_duration_in_secs": bar_duration_in_secs,
         "rt_timeout_in_secs_or_time": rt_timeout_in_secs_or_time,
-        # TODO(Grisha): do we need `trading_period_str` to initialize the `RealTimeDagRunner`?
     }
     system.config["dag_runner_config"] = cconfig.Config.from_dict(
         real_time_config
