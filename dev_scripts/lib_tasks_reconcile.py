@@ -332,8 +332,8 @@ def reconcile_copy_prod_data(
     run_date=None,
     dst_dir=None,
     stage=None,
-    prevent_overwriting=True,
     mode="scheduled",
+    prevent_overwriting=True,
 ):  # type: ignore
     """
     Copy the output of the prod run to the specified folder.
@@ -345,6 +345,7 @@ def reconcile_copy_prod_data(
     if stage is None:
         stage = "preprod"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
+    hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
     run_date = _get_run_date(run_date)
     target_dir = _resolve_target_dir(run_date, dst_dir)
@@ -558,9 +559,9 @@ def reconcile_run_all(
     dst_dir=None,
     stage=None,
     rt_timeout_in_secs_or_time=None,
+    mode="scheduled",
     prevent_overwriting=True,
     skip_notebook=False,
-    mode="scheduled",
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
@@ -572,8 +573,8 @@ def reconcile_run_all(
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
     :param mode: use to add mode to system log dir name
-        - E.g., "/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
         - could be "scheduled" or "manual"
+        - prod system log dir layout is "/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
