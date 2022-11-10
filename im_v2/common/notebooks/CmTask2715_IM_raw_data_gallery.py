@@ -24,7 +24,7 @@
 
 # %%
 import logging
-from typing import List
+from typing import List, Optional
 
 import pandas as pd
 
@@ -50,7 +50,15 @@ hprint.config_notebook()
 # # Functions
 
 # %%
-def get_ccxt_realtime_data(db_table: str, exchange_id: str) -> pd.DataFrame:
+def get_raw_ccxt_realtime_data(db_table: str,
+                               exchange_id: str,
+                               start_ts: Optional[str],
+                               end_ts: Optional[str]) -> pd.DataFrame:
+    """
+    Read raw data for given exchange from the RT DB.
+
+    Bypasses the IM Client to avoid any on-the-fly transformations.
+    """
     # Get DB connection.
     env_file = imvimlita.get_db_env_path("dev")
     # Connect with the parameters from the env file.
@@ -58,16 +66,27 @@ def get_ccxt_realtime_data(db_table: str, exchange_id: str) -> pd.DataFrame:
     connection = hsql.get_connection(*connection_params)
     # Read data from DB.
     query = f"SELECT * FROM {db_table} WHERE exchange_id='{exchange_id}'"
+    if start_ts:
+        start_ts=pd.Timestamp(start_ts)
+        unix_start_timestamp = hdateti.convert_timestamp_to_unix_epoch(start_ts)
+        query += f" AND timestamp >='{unix_start_timestamp}'"
+    if end_ts:
+        end_ts=pd.Timestamp(end_ts)
+        unix_end_timestamp = hdateti.convert_timestamp_to_unix_epoch(end_ts)
+        query += f" AND timestamp <='{unix_end_timestamp}'"   
     rt_data = hsql.execute_query_to_df(connection, query)
     return rt_data
 
 
 # %%
 def load_parquet_by_period(
-    start_ts: str, end_ts: str, s3_path: str
+    start_ts: pd.Timestamp, end_ts: pd.Timestamp, s3_path: str
 ) -> pd.DataFrame:
-    start_ts = pd.Timestamp(start_ts, tz="UTC")
-    end_ts = pd.Timestamp(end_ts, tz="UTC")
+    """
+    Read raw historical data from the S3.
+
+    Bypasses the IM Client to avoid any on-the-fly transformations.
+    """
     # Create timestamp filters.
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
         "by_year_month", start_ts, end_ts
@@ -82,14 +101,90 @@ def load_parquet_by_period(
 
 # %%
 def combine_stats(stats: List[pd.Series]) -> pd.Series:
+    """
+    Sum several pandas Series with statistics.
+    
+    Example of statistics:
+    
+        bid_price    0.0
+        bid_size     0.0
+        ask_price    0.0
+        ask_size     0.0
+        dtype: float64
+    """
     base_stat = stats[0]
     for stat in stats[1:]:
         base_stat = base_stat.add(stat)
     return base_stat
 
 
+# %%
+def find_gaps_in_time_series(
+    time_series: pd.Series,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    step: str,
+) -> pd.Series:
+    """    
+    Find missing points on a time interval specified by [start_timestamp,
+    end_timestamp], where point distribution is determined by <step>.
+    
+    :param time_series: time series to find gaps in
+    :param start_timestamp: start of the time interval to check
+    :param end_timestamp: end of the time interval to check
+    :param step: distance between two data points on the interval,
+      i.e. "S" -> second, "T" -> minute
+      for a list of aliases.
+    :return: pd.Series representing missing points in the source time series.
+    """
+    correct_time_series = pd.date_range(
+        start=start_timestamp, end=end_timestamp, freq=step
+    )
+    return correct_time_series.difference(time_series)
+
+
+# %%
+def count_data_py_parts(start_ts: str, end_ts: str, s3_path: str) -> List[pd.Series]:
+    """
+    Load S3 historical data by parts and count the statisticts.
+    """
+    overall_rows = 0
+    nans_stats = []
+    zeros_stats = []
+    start_ts = pd.Timestamp(start_ts, tz="UTC")
+    end_ts = pd.Timestamp(end_ts, tz="UTC")
+    # Separate time range to months.
+    dates = pd.date_range(start_ts, end_ts, freq="M")
+    for i in range(0, len(dates), 2):
+        start_end = dates[i:i+2]
+        if len(start_end) == 2:
+            start, end = dates[i:i+2]
+            print(f"Loading data for {start.month}th and {end.month}th months")
+        else:
+            start = dates[0]
+            end = None
+            print(f"Loading data for {start.month}th month")
+        # Load the data of the time period.
+        cc_ba_futures_daily = load_parquet_by_period(start, end, s3_path)
+        overall_rows += len(cc_ba_futures_daily)
+        print("Head:")
+        display(cc_ba_futures_daily.head(2))
+        print("Tail:")
+        display(cc_ba_futures_daily.tail(2))
+        # Count NaNs.
+        nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
+        # Count zeros.
+        zeros = cstadesc.compute_frac_zero(
+            cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
+        ) 
+        nans_stats.append(nans)
+        zeros_stats.append(zeros)
+    print(f"{overall_rows} rows overall")
+    return nans_stats, zeros_stats
+
+
 # %% [markdown]
-# # Realtime (the DB data and the archives stored to S3)
+# # Realtime (the DB data)
 
 # %% [markdown]
 # ## OHLCV
@@ -98,8 +193,8 @@ def combine_stats(stats: List[pd.Series]) -> pd.Series:
 # ### CCXT futures
 
 # %%
-# Get the real time data.
-ccxt_rt = get_ccxt_realtime_data("ccxt_ohlcv_futures", "binance")
+# Get the real time data from DB.
+ccxt_rt = get_raw_ccxt_realtime_data("ccxt_ohlcv_futures", "binance", start_ts=None, end_ts=None)
 
 # %%
 print(f"{len(ccxt_rt)} rows overall")
@@ -130,7 +225,8 @@ print("Last 5 rows:")
 display(volume0.tail())
 
 # %%
-volume0["currency_pair"].value_counts().plot(kind="bar")
+ax = volume0["currency_pair"].value_counts().plot(kind="bar")
+ax = ax.bar_label(ax.containers[-1], label_type='edge')
 
 # %% [markdown]
 # # Historical (data updated daily)
@@ -176,7 +272,8 @@ print("Last 5 rows:")
 display(volume0.tail())
 
 # %%
-volume0["currency_pair"].value_counts().plot(kind="bar")
+ax = volume0["currency_pair"].value_counts().plot(kind="bar")
+ax = ax.bar_label(ax.containers[-1], label_type='edge')
 
 # %% [markdown]
 # ## BID-ASK
@@ -186,102 +283,25 @@ volume0["currency_pair"].value_counts().plot(kind="bar")
 
 # %%
 s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
-overall_rows = 0
 
 # %% [markdown]
 # The amount of data is too big to process it all at once, so the data will be loaded separately for each month and all statistics will be aggregated.
 
-# %% [markdown]
-# Process June and July
-
 # %%
 start_ts = "20220627-000000"
-end_ts = "20220730-000000"
-cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
-display(cc_ba_futures_daily.head(2))
-display(cc_ba_futures_daily.tail(2))
-overall_rows += len(cc_ba_futures_daily)
-
-# %%
-# Count NaNs for June and July.
-june_july_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
-# Count zeros for June and July.
-june_july_zeros = cstadesc.compute_frac_zero(
-    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
-)
-
-# %% [markdown]
-# Process August
-
-# %%
-start_ts = "20220801-000000"
-end_ts = "20220831-000000"
-cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
-display(cc_ba_futures_daily.head(2))
-display(cc_ba_futures_daily.tail(2))
-overall_rows += len(cc_ba_futures_daily)
-
-# %%
-# Count NaNs for August.
-aug_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
-# Count zeros for August.
-aug_zeros = cstadesc.compute_frac_zero(
-    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
-)
-
-# %% [markdown]
-# Process September
-
-# %%
-# Load Sept.
-start_ts = "20220901-000000"
-end_ts = "20220930-000000"
-cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
-display(cc_ba_futures_daily.head(2))
-display(cc_ba_futures_daily.tail(2))
-overall_rows += len(cc_ba_futures_daily)
-
-# %%
-# Count NaNs for September.
-sept_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
-# Count zeros for September.
-sept_zeros = cstadesc.compute_frac_zero(
-    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
-)
-
-# %% [markdown]
-# Process October and November
-
-# %%
-# Load Oct and Nov.
-start_ts = "20221001-000000"
-end_ts = "20221101-000000"
-cc_ba_futures_daily = load_parquet_by_period(start_ts, end_ts, s3_path)
-display(cc_ba_futures_daily.head(2))
-display(cc_ba_futures_daily.tail(2))
-overall_rows += len(cc_ba_futures_daily)
-
-# %%
-# Count NaNs for October and November.
-oct_nov_nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
-# Count zeros for October and November.
-oct_nov_zeros = cstadesc.compute_frac_zero(
-    cc_ba_futures_daily[["bid_price", "bid_size", "ask_price", "ask_size"]]
-)
-
-# %%
-print(f"{overall_rows} rows overall")
+end_ts = "20221130-000000"
+nans_stats, zeros_stats = count_data_py_parts(start_ts, end_ts, s3_path)
 
 # %% [markdown]
 # #### Count NaNs
 
 # %% run_control={"marked": false}
-combine_stats([june_july_nans, aug_nans, sept_nans, oct_nov_nans])
+combine_stats(nans_stats)
 
 # %% [markdown]
 # #### Count zeros
 
 # %%
-combine_stats([june_july_zeros, aug_zeros, sept_zeros, oct_nov_zeros])
+combine_stats(zeros_stats)
 
 # %%
