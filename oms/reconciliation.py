@@ -449,13 +449,25 @@ def load_dag_outputs(
 def compute_dag_outputs_diff(
     dag_df_dict: Dict[str, Dict[str, Dict[pd.Timestamp, pd.DataFrame]]],
     compare_dfs_kwargs: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Dict[pd.Timestamp, pd.DataFrame]]:
+) -> pd.DataFrame:
     """
     Compute DAG output differences for different experiments.
 
-    :param dag_df_dict: DAG output per experiment, node and timestamp
+    Output example:
+    ```
+                               predict.0.read_data
+                               2022-11-04 06:05:00-04:00
+                               close.pct_change
+                               1891737434.pct_change  1966583502.pct_change
+    end_timestamp
+    2022-01-01 21:01:00+00:00                  -0.0                   +0.23
+    2022-01-01 21:02:00+00:00                 -1.11                    -3.4
+    2022-01-01 21:03:00+00:00                  12.2                   -32.0
+    ```
+
+    :param dag_df_dict: DAG output per experiment, node and bar timestamp
     :param compare_dfs_kwargs: params for `compare_dfs()`
-    :return: DAG output differences per experiment, node and timestamp
+    :return: DAG output differences for each experiment, node and bar timestamp
     """
     if compare_dfs_kwargs is None:
         compare_dfs_kwargs = {}
@@ -464,33 +476,184 @@ def compute_dag_outputs_diff(
     hdbg.dassert_eq(2, len(experiment_names))
     dag_dict_1 = dag_df_dict[experiment_names[0]]
     dag_dict_2 = dag_df_dict[experiment_names[1]]
-    # Assert that output dicts have similar node names.
+    # Assert that output dicts have equal node names.
     hdbg.dassert_set_eq(dag_dict_1.keys(), dag_dict_2.keys())
-    #
-    dag_diff_df_dict = collections.defaultdict(dict)
-    for node_name in dag_dict_1:
+    # Get node names and set a list to store nodes data.
+    node_names = list(dag_dict_1.keys())
+    node_dfs = []
+    for node_name in node_names:
         # Get node DAG output dicts to iterate over them.
         dag_dict_1_node = dag_dict_1[node_name]
         dag_dict_2_node = dag_dict_2[node_name]
-        # Assert that node dicts have similar timestamps.
+        # Assert that node dicts have equal bar timestamps.
         hdbg.dassert_set_eq(dag_dict_1_node.keys(), dag_dict_2_node.keys())
-        for timestamp in dag_dict_1_node:
+        # Get bar timestamps and set a list to store bar timestamp data.
+        bar_timestamps = list(dag_dict_1_node.keys())
+        bar_timestamp_dfs = []
+        for bar_timestamp in bar_timestamps:
             # Get DAG outputs per timestamp and compare them.
-            df_1 = dag_dict_1_node[timestamp]
-            df_2 = dag_dict_2_node[timestamp]
-            # Append asset id as index level if it is present in the data.
-            if "asset_id" in df_1.columns:
-                df_1 = df_1.set_index("asset_id", append=True)
-                df_2 = df_2.set_index("asset_id", append=True)
+            df_1 = dag_dict_1_node[bar_timestamp]
+            df_2 = dag_dict_2_node[bar_timestamp]
             # Pick only float columns for difference computations.
             # Only float columns are picked because int columns represent
             # not metrics but ids, etc.
             df_1 = df_1.select_dtypes("float")
             df_2 = df_2.select_dtypes("float")
-            # Compute the difference and put it in the result dict
+            # Compute the difference.
             df_diff = hpandas.compare_dfs(df_1, df_2, **compare_dfs_kwargs)
-            dag_diff_df_dict[node_name][timestamp] = df_diff
-    return dict(dag_diff_df_dict)
+            # Add bar timestamp diff data to the corresponding list.
+            bar_timestamp_dfs.append(df_diff)
+        # Merge bar timestamp diff data into node diff data.
+        node_df = pd.concat(bar_timestamp_dfs, axis=1, keys=bar_timestamps)
+        node_dfs.append(node_df)
+    # Merge node diff data into result diff data.
+    dag_diff_df = pd.concat(node_dfs, axis=1, keys=node_names)
+    return dag_diff_df
+
+
+def compute_dag_output_diff_stats(
+    dag_diff_df: pd.DataFrame,
+    aggregation_level: str,
+    *,
+    node: Optional[str] = None,
+    bar_timestamp: Optional[pd.Timestamp] = None,
+    display_plot: bool = True,
+) -> pd.Series:
+    """
+    Compute DAG outputs max absolute differences using the specified
+    aggregation level.
+
+    :param dag_diff_df: DAG output differences data
+    :param aggregation_level: used to determine the groups for `groupby`
+        - "node": for each node
+        - "bar_timestamp": for each bar timestamp
+            - for a given node
+        - "time": by the timestamp in a diff df
+            - for a given node and a given bar timestamp
+        - "column": by each column
+            - for a given node and a given bar timestamp
+        - "asset_id": by each asset id
+            - for a given node and a given bar timestamp
+    :param node: node name to aggregate for
+    :param bar_timestamp: bar timestamp to aggregate by
+    :param display_plot: if `True` plot the stats, do not plot otherwise
+    :return: DAG outputs max absolute differences for the specified aggregation level
+    """
+    if aggregation_level in ["bar_timestamp", "time", "column", "asset_id"]:
+        hdbg.dassert_isinstance(node, str)
+        if aggregation_level != "bar_timestamp":
+            hdbg.dassert_type_is(bar_timestamp, pd.Timestamp)
+    # Remove the sign.
+    dag_diff_df = dag_diff_df.abs()
+    #
+    if aggregation_level == "node":
+        stats = dag_diff_df.max().groupby(level=[0]).max()
+    elif aggregation_level == "bar_timestamp":
+        stats = dag_diff_df[node].max().groupby(level=[0]).max()
+    elif aggregation_level == "time":
+        stats = dag_diff_df[node][bar_timestamp].T.max()
+    elif aggregation_level == "column":
+        stats = dag_diff_df[node][bar_timestamp].max().groupby(level=[0]).max()
+    elif aggregation_level == "asset_id":
+        stats = dag_diff_df[node][bar_timestamp].max().groupby(level=[1]).max()
+    else:
+        raise ValueError(f"Invalid aggregation_level='{aggregation_level}'")
+    #
+    if display_plot:
+        if aggregation_level == "time":
+            _ = stats.dropna().plot.line()
+        else:
+            _ = stats.plot.bar()
+        plt.show()
+    return stats
+
+
+def compute_dag_output_diff_detailed_stats(
+    dag_diff_df: pd.DataFrame,
+) -> Dict[str, pd.DataFrame]:
+    """
+    Compute and plot detailed DAG output diff stats.
+
+    Tweak the params to change the output.
+
+    :param dag_diff_df: DAG output differences
+    :return: dict of detailed DAG output diff stats
+    """
+    res_dict = {}
+    if False:
+        # Plot differences across nodes.
+        aggregation_level = "node"
+        display_plot = True
+        node_diff_stats = compute_dag_output_diff_stats(
+            dag_diff_df, aggregation_level, display_plot=display_plot
+        )
+        res_dict["node_diff_stats"] = node_diff_stats
+    if False:
+        # Plot differences across bar timestamps.
+        aggregation_level = "bar_timestamp"
+        node = "predict.2.compute_ret_0"
+        display_plot = True
+        bar_timestamp_diff_stats = compute_dag_output_diff_stats(
+            dag_diff_df,
+            aggregation_level,
+            node=node,
+            display_plot=display_plot,
+        )
+        res_dict["bar_timestamp_diff_stats"] = bar_timestamp_diff_stats
+    if False:
+        # Plot differences across timestamps in a diff df.
+        aggregation_level = "time"
+        node = "predict.2.compute_ret_0"
+        bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+        display_plot = True
+        time_diff_stats = compute_dag_output_diff_stats(
+            dag_diff_df,
+            aggregation_level,
+            node=node,
+            bar_timestamp=bar_timestamp,
+            display_plot=display_plot,
+        )
+        res_dict["time_diff_stats"] = time_diff_stats
+    if False:
+        # Plot differences across columns names.
+        aggregation_level = "column"
+        node = "predict.2.compute_ret_0"
+        bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+        display_plot = True
+        column_diff_stats = compute_dag_output_diff_stats(
+            dag_diff_df,
+            aggregation_level,
+            node=node,
+            bar_timestamp=bar_timestamp,
+            display_plot=display_plot,
+        )
+        res_dict["column_diff_stats"] = column_diff_stats
+    if False:
+        # Plot differences across asset ids.
+        aggregation_level = "asset_id"
+        node = "predict.2.compute_ret_0"
+        bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+        display_plot = True
+        asset_id_diff_stats = compute_dag_output_diff_stats(
+            dag_diff_df,
+            aggregation_level,
+            node=node,
+            bar_timestamp=bar_timestamp,
+            display_plot=display_plot,
+        )
+        res_dict["asset_id_diff_stats"] = asset_id_diff_stats
+    if False:
+        # Spot check using heatmap.
+        check_node_name = "predict.2.compute_ret_0"
+        check_bar_timestamp = pd.Timestamp("2022-11-09 06:05:00-04:00")
+        check_column_name = "close.ret_0.pct_change"
+        check_heatmap_df = hpandas.heatmap_df(
+            dag_diff_df[check_node_name][check_bar_timestamp][check_column_name],
+            axis=1,
+        )
+        display(check_heatmap_df)
+        res_dict["check_heatmap_df"] = check_heatmap_df
+    return res_dict
 
 
 def compute_dag_delay_in_seconds(
