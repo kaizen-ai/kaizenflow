@@ -116,6 +116,8 @@ dag_start_timestamp = None
 dag_end_timestamp = None
 dag_df_dict = oms.load_dag_outputs(
     dag_path_dict,
+    only_last_node=False,
+    only_last_timestamp=False,
 )
 # Get DAG output for the last node and the last timestamp.
 # TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
@@ -125,34 +127,23 @@ dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-# Compute difference.
-compare_dfs_kwargs = {
-    # TODO(Grisha): use `pct_change` once it is fixed for small numbers.
-    "diff_mode": "diff",
-    "remove_inf": True,
+compare_dfs_kwargs ={
+    "diff_mode": "pct_change",
+    "assert_diff_threshold": None,
 }
-diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_prod,
-    dag_df_sim,
-    compare_dfs_kwargs=compare_dfs_kwargs,
+dag_diff_df = oms.compute_dag_outputs_diff(
+    dag_df_dict, compare_dfs_kwargs
 )
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-diff_df.max().max()
 
 # %%
-# Enable if the diff is big to see the detailed stats.
+max_diff = dag_diff_df.abs().max().max()
+_LOG.info("Maximum absolute difference for DAG output=%s", max_diff)
+
+# %%
 if False:
-    # Plot over time.
-    diff_df.max(axis=1).plot()
-    plt.show()
-    # Plot over column names.
-    diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
-    plt.show()
-    # Plot over assets
-    diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
-    plt.show()
+    dag_diff_detailed_stats = oms.compute_dag_output_diff_detailed_stats(
+        dag_diff_df
+    )
 
 # %%
 # Compute correlations.
@@ -260,54 +251,21 @@ display(stats_sxs)
 # # Compare portfolios pairwise
 
 # %%
-# TODO(Grisha): @Dan factor out in a function.
-# Compute difference.
+report_stats = False
+display_plot = False
 compare_dfs_kwargs = {
     "column_mode": "inner",
-    "diff_mode": "diff",
+    "diff_mode": "pct_change",
     "remove_inf": True,
     "assert_diff_threshold": None,
 }
-diff_df = hpandas.compare_multiindex_dfs(
-    portfolio_dfs["prod"],
-    portfolio_dfs["sim"],
+portfolio_diff_df = oms.compare_portfolios(
+    portfolio_dfs,
+    report_stats=report_stats,
+    display_plot=display_plot,
     compare_dfs_kwargs=compare_dfs_kwargs,
 )
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-max_diff = diff_df.max().max()
-_LOG.info("Max difference between prod and sim is=%s", max_diff)
-prod_sim_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
-hpandas.df_to_str(prod_sim_diff, num_rows=None, log_level=logging.INFO)
-
-# %%
-diff_df = hpandas.compare_multiindex_dfs(
-    portfolio_dfs["prod"],
-    portfolio_dfs["research"],
-    compare_dfs_kwargs=compare_dfs_kwargs,
-)
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-max_diff = diff_df.max().max()
-_LOG.info("Max difference between prod and research is=%s", max_diff)
-prod_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
-hpandas.df_to_str(prod_research_diff, num_rows=None, log_level=logging.INFO)
-
-# %%
-diff_df = hpandas.compare_multiindex_dfs(
-    portfolio_dfs["sim"],
-    portfolio_dfs["research"],
-    compare_dfs_kwargs=compare_dfs_kwargs,
-)
-# Remove the sign.
-diff_df = diff_df.abs()
-# Check that data is the same.
-max_diff = diff_df.max().max()
-_LOG.info("Max difference between sim and research is=%s", max_diff)
-sim_research_diff = diff_df.max().unstack().max(axis=1).map("{:,.2f}".format)
-hpandas.df_to_str(sim_research_diff, num_rows=None, log_level=logging.INFO)
+hpandas.df_to_str(portfolio_diff_df, num_rows=None, log_level=logging.INFO)
 
 # %%
 dtfmod.compute_correlations(
