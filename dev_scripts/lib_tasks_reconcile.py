@@ -341,9 +341,14 @@ def reconcile_copy_prod_data(
     See `reconcile_run_all()` for params description.
 
     :param stage: development stage, e.g., `preprod`
+    :param mode: the prod system run mode which defines a prod system log dir name
+        - "scheduled": the system is run at predefined time automatically
+        - "manual": the system run is triggered manually
     """
     if stage is None:
         stage = "preprod"
+    if mode is None:
+        mode = "scheduled"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
@@ -573,9 +578,7 @@ def reconcile_run_all(
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
-    :param mode: use to add mode to system log dir name
-        - could be "scheduled" or "manual"
-        - prod system log dir layout is "/system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours"
+    :param mode: see reconcile_copy_prod_data()`
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
