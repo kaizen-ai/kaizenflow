@@ -579,7 +579,7 @@ def compute_dag_output_diff_detailed_stats(
     :return: dict of detailed DAG output diff stats
     """
     res_dict = {}
-    if True:
+    if False:
         # Plot differences across nodes.
         aggregation_level = "node"
         display_plot = True
@@ -587,7 +587,7 @@ def compute_dag_output_diff_detailed_stats(
             dag_diff_df, aggregation_level, display_plot=display_plot
         )
         res_dict["node_diff_stats"] = node_diff_stats
-    if True:
+    if False:
         # Plot differences across bar timestamps.
         aggregation_level = "bar_timestamp"
         node = "predict.2.compute_ret_0"
