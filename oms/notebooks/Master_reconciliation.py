@@ -86,43 +86,10 @@ _LOG.info("end_timestamp=%s", end_timestamp)
 # # Compare configs
 
 # %%
-configs = oms.load_config_from_pickle(system_log_path_dict)
-# Diff configs.
-# TODO(gp): @grisha let's add the keys as column names.
-diff_config = cconfig.build_config_diff_dataframe(
-    {
-        "prod_config": configs["prod"],
-        "sim_config": configs["sim"],
-    }
-)
-diff_config.T
-
-# %% [markdown]
-# # DAG delay
-
-# %%
-delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=True)
-
-# %% [markdown]
-# ## DB delay
-
-# %%
-if False:
-    
-    pass
-
-# %%
-# # Get the real-time `ImClient`.
-# # TODO(Grisha): ideally we should get the values from the config.
-# resample_1min = False
-# env_file = imvimlita.get_db_env_path("dev")
-# connection_params = hsql.get_connection_info_from_env_file(env_file)
-# db_connection = hsql.get_connection(*connection_params)
-# table_name = "ccxt_ohlcv_futures"
-# #
-# im_client = icdcl.CcxtSqlRealTimeImClient(
-#     resample_1min, db_connection, table_name
-# )
+# This dict points to `system_log_dir/process_forecasts/portfolio` for different experiments.
+data_type = "portfolio"
+portfolio_path_dict = oms.get_system_log_paths(system_log_path_dict, data_type)
+portfolio_path_dict
 
 # %%
 # # Get the universe.
@@ -165,10 +132,26 @@ if False:
 # )
 
 # %% [markdown]
-# # Compare DAG io (prod vs sim)
+# # Compare configs (prod vs vim)
+
+# %%
+configs = oms.load_config_from_pickle(system_log_path_dict)
+# Diff configs.
+# TODO(Grisha): the output is only on subconfig level, we should
+# compare value vs value instead.
+diff_config = cconfig.build_config_diff_dataframe(
+    {
+        "prod_config": configs["prod"],
+        "sim_config": configs["sim"],
+    }
+)
+diff_config.T
 
 # %% [markdown]
-# ## One-off reading of Parquet files
+# # DAG io
+
+# %% [markdown]
+# ## Compare DAG io (prod vs sim)
 
 # %%
 if False:
@@ -214,96 +197,66 @@ print("dag_node_timestamp=%s" % str(dag_node_timestamp))
 
 # %%
 # Load DAG output for different experiments.
-dag_df_dict = oms.load_dag_outputs(dag_path_dict)#, dag_node_name, dag_node_timestamp, 
-                                   #start_timestamp, end_timestamp)
-                                   #log_level=logging.INFO)
-
-dag_df_dict["prod"] = dag_df_dict["prod"]['predict.8.process_forecasts'][dag_node_timestamp]
-dag_df_dict["sim"] = dag_df_dict["sim"]['predict.8.process_forecasts'][dag_node_timestamp]
-
-# Trim the data to match the target interval.
-if start_timestamp or end_timestamp:
-    for k, df in dag_df_dict.items():
-        dag_df_dict[k] = dag_df_dict[k].loc[start_timestamp:end_timestamp]
-# Report the output.
-for k, df in dag_df_dict.items():
-    hpandas.df_to_str(dag_df_dict[k], num_rows=3, log_level=log_level)
-
-# %%
-# Load specific timestamp and node.
-if False:
-    # Load DAG output for different experiments.
-    dag_node_timestamp = pd.Timestamp("2022-10-28 06:25:00-04:00")
-
-    # dag_node_timestamps = oms.get_dag_node_timestamps(
-    #     dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
-    # )
-    # print(dag_node_timestamps)
-
-    dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
-                                       start_timestamp, end_timestamp,
-                                       log_level=logging.INFO)
-
-    # Check last two rows.
-    #column = "vwap.ret_0.vol_adj_2_hat"
-    column = "twap.ret_0"
-    #display(dag_df_dict["prod"][column].tail(2))
-    #display(dag_df_dict["sim"][column].tail(2))
-
-    diff_df = hpandas.compare_visually_dataframes(
-        dag_df_dict["prod"][column].tail(2),
-        dag_df_dict["sim"][column].tail(2),
-        diff_mode="pct_change",
-        background_gradient=False)
-
-    display(diff_df)
-
-    #print(type(diff_df))
-    diff_df.max().max()
+dag_start_timestamp = None
+dag_end_timestamp = None
+dag_df_dict = oms.load_dag_outputs(
+    dag_path_dict,
+    # TODO(Grisha): maybe load just the last node and timestamp otherwise
+    # it takes 2 minutes to load the data.
+    only_last_node=False,
+    only_last_timestamp=False,
+)
+# Get DAG output for the last node and the last timestamp.
+# TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
+# the other one for all nodes, all timestamps for comparison.
+dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-#hpandas.compare_visually_dataframes(dag_df_dict["prod"], dag_df_dict["sim"])
-
-# %%
-_ = hpandas.multiindex_df_info(dag_df_dict["prod"])
-
-# %%
-#df_subset = hpandas.subset_multiindex_df(dag_df_dict["prod"], columns_level0="close")
-#df_subset.head(2)
-
-# %% [markdown]
-# ## Compare prod vs sim DAG output
-
-# %%
-# Compute percentage difference.
-compare_dfs_kwargs = {
+compare_dfs_kwargs ={
     "diff_mode": "pct_change",
-    #"background_gradient": False,
     "assert_diff_threshold": None,
 }
-diff_df = hpandas.compare_multiindex_dfs(
-    dag_df_dict["prod"],
-    dag_df_dict["sim"],
-    compare_dfs_kwargs=compare_dfs_kwargs,
+dag_diff_df = oms.compute_dag_outputs_diff(
+    dag_df_dict, compare_dfs_kwargs
 )
-# # Remove the sign and NaNs.
-# diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# display(diff_df)
-# # Check that data is the same.
-print(diff_df.max().max())
-hpandas.heatmap_df(diff_df)
 
 # %%
-# Plot diffs over time.
-diff_df.max(axis=1).plot()
+max_diff = dag_diff_df.abs().max().max()
+_LOG.info("Maximum absolute difference for DAG output=%s", max_diff)
 
 # %%
-# Plot diffs over columns.
-diff_df.max(axis=0).unstack().max(axis=1).plot(kind="bar")
+if False:
+    dag_diff_detailed_stats = oms.compute_dag_output_diff_detailed_stats(
+        dag_diff_df
+    )
 
 # %%
-# Plot diffs over assets.
-diff_df.max(axis=0).unstack().max(axis=0).plot(kind="bar")
+if False:
+    # Compute correlations.
+    prod_sim_dag_corr = dtfmod.compute_correlations(
+        dag_df_prod,
+        dag_df_sim,
+    )
+    hpandas.df_to_str(
+        prod_sim_dag_corr.min(),
+        num_rows=None,
+        precision=3,
+        log_level=logging.INFO,
+    )
+
+# %% [markdown]
+# ## Compute DAG delay
+
+# %%
+delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=False)
+
+# %% [markdown]
+# # Portfolio
+
+# %% [markdown]
+# ## Compute research portfolio equivalent
 
 # %%
 if False:
@@ -349,7 +302,7 @@ research_portfolio_stats_df = research_portfolio_stats_df.loc[
 hpandas.df_to_str(research_portfolio_stats_df, num_rows=5, log_level=logging.INFO)
 
 # %% [markdown]
-# # Logged portfolios (prod vs research vs sim)
+# ## Load logged portfolios (prod & sim)
 
 # %%
 portfolio_config = cconfig.Config.from_dict(
@@ -379,6 +332,9 @@ portfolio_stats_df = pd.concat(portfolio_stats_dfs, axis=1)
 #
 hpandas.df_to_str(portfolio_stats_df[["prod", "research"]], num_rows=5, log_level=logging.INFO)
 
+# %% [markdown]
+# ## Compute Portfolio statistics (prod vs research vs sim)
+
 # %%
 bars_to_burn = 1
 coplotti.plot_portfolio_stats(portfolio_stats_df.iloc[bars_to_burn:])
@@ -391,7 +347,75 @@ stats_sxs, _ = stats_computer.compute_portfolio_stats(
 display(stats_sxs)
 
 # %% [markdown]
-# # Target positions (prod vs research)
+# ## Compare portfolios pairwise (prod vs research vs sim)
+
+# %% [markdown]
+# ### Differences
+
+# %% [markdown]
+# #### Prod vs sim
+
+# %%
+report_stats = False
+display_plot = False
+compare_dfs_kwargs = {
+    "column_mode": "inner",
+    "diff_mode": "pct_change",
+    "remove_inf": True,
+    "assert_diff_threshold": None,
+}
+portfolio_diff_df = oms.compare_portfolios(
+    portfolio_dfs,
+    report_stats=report_stats,
+    display_plot=display_plot,
+    compare_dfs_kwargs=compare_dfs_kwargs,
+)
+hpandas.df_to_str(portfolio_diff_df, num_rows=None, log_level=logging.INFO)
+
+# %% [markdown]
+# ### Correlations
+
+# %% [markdown]
+# #### Prod vs sim
+
+# %%
+if False:
+    dtfmod.compute_correlations(
+        portfolio_dfs["prod"],
+        portfolio_dfs["sim"],
+        allow_unequal_indices=False,
+        allow_unequal_columns=False,
+    )
+
+# %% [markdown]
+# #### Prod vs research
+
+# %%
+if False:
+    dtfmod.compute_correlations(
+        research_portfolio_df,
+        portfolio_dfs["prod"],
+        allow_unequal_indices=True,
+        allow_unequal_columns=True,
+    )
+
+# %% [markdown]
+# #### Sim vs research
+
+# %%
+if False:
+    dtfmod.compute_correlations(
+        research_portfolio_df,
+        portfolio_dfs["sim"],
+        allow_unequal_indices=True,
+        allow_unequal_columns=True,
+    )
+
+# %% [markdown]
+# # Target positions
+
+# %% [markdown]
+# ## Load target positions (prod)
 
 # %%
 prod_target_position_df = oms.load_target_positions(
@@ -401,8 +425,9 @@ prod_target_position_df = oms.load_target_positions(
     config["meta"]["bar_duration"],
     normalize_bar_times=True
 )
-
+hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
 if False:
+    # TODO(Grisha): compare prod vs sim at some point.
     sim_target_position_df = oms.load_target_positions(
         portfolio_path_dict["sim"].strip("portfolio"),
         start_timestamp,
@@ -411,22 +436,27 @@ if False:
         normalize_bar_times=True
     )
 
-# %%
-print("# prod_target_pos_df")
-_ = hpandas.multiindex_df_info(prod_target_position_df, max_num=None)
+# %% [markdown]
+# ## Compare positions target vs executed (prod)
 
-print("\n# research_portfolio_df")
-_ = hpandas.multiindex_df_info(research_portfolio_df, max_num=None)
+# %%
+# TODO(Grisha): use `hpandas.compare_dfs()`.
+df1 = prod_target_position_df["target_holdings_shares"].shift(1)
+df2 = prod_target_position_df["holdings_shares"]
+diff = df1 - df2
+hpandas.df_to_str(diff, num_rows=5, log_level=logging.INFO)
 
 # %% [markdown]
-# ## Price
+# ## Compare target positions (prod vs research)
 
-# %%
+# %% [markdown]
+# ### Price
+
+# %% run_control={"marked": true}
+# TODO(Grisha): wrap in a function since it's common for all columns.
 column = "price"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -435,20 +465,19 @@ diff_df = hpandas.compare_dfs(
     diff_mode= "pct_change",
 )
 # Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+diff_df = diff_df.abs()
 # Check that data is the same.
 print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# ## Volatility
+# ### Volatility
 
 # %%
 column = "volatility"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -457,20 +486,19 @@ diff_df = hpandas.compare_dfs(
     diff_mode= "pct_change",
 )
 # Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+diff_df = diff_df.abs()
 # Check that data is the same.
 print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# ## Prediction
+# ### Prediction
 
 # %%
 column = "prediction"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -479,48 +507,19 @@ diff_df = hpandas.compare_dfs(
     diff_mode= "pct_change",
 )
 # Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+diff_df = diff_df.abs()
 # Check that data is the same.
 print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# ## Target holdings
-
-# %%
-prod_df = prod_target_position_df["target_holdings_shares"].shift(1)
-display(prod_df.head(5))
-
-res_df = research_portfolio_df["holdings_shares"]
-display(res_df.head(5))
-
-# Compute percentage difference.
-diff_df = hpandas.compare_dfs(
-    prod_df,
-    res_df,
-    diff_mode= "pct_change",
-    assert_diff_threshold=None,
-)
-# Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
-# Check that data is the same.
-print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
-
-# %% [markdown]
-# ## Holdings
-
-# %%
-display(prod_target_position_df["target_holdings_shares"].head(5))
-
-display(research_portfolio_df["holdings_shares"].head(5))
+# ### Current holdings
 
 # %%
 column = "holdings_shares"
 prod_df = prod_target_position_df[column]
-display(prod_df.head(2))
 res_df = research_portfolio_df[column]
-display(res_df.head(2))
 
 # Compute percentage difference.
 diff_df = hpandas.compare_dfs(
@@ -530,118 +529,88 @@ diff_df = hpandas.compare_dfs(
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
-diff_df = diff_df.replace([np.inf, -np.inf], np.nan).abs()
+diff_df = diff_df.abs()
 # Check that data is the same.
 print(diff_df.max().max())
-hpandas.heatmap_df(diff_df.round(2))
-
-# %%
 if False:
-    pd.read_csv("/app/amp/oms/notebooks/orders_to_remove.csv", index_col=0)
-
-    (diff_df.replace(np.nan, 0).abs() > 1).to_csv("orders_to_remove.csv")
-
-    ((prod_target_position_df["target_trades_shares"] * prod_target_position_df["price"]).abs() < 5.0).sum().sum()
-
-    mask = prod_target_position_df["target_trades_notional"].abs() < 10
-    prod_target_position_df["target_trades_notional"][mask]
-    #mask.sum()
-
-    display(prod_target_position_df["holdings_shares"].dropna().head(10))
-
-    display(research_portfolio_df["holdings_shares"].dropna().head(10))
+    hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# # Compare prices
-
-# %%
-if False:
-    # Select a specific node and timestamp to analyze.
-    #log_level = logging.INFO
-    log_level = logging.DEBUG
-    dag_node_names = oms.get_dag_node_names(dag_path_dict["prod"], log_level=log_level)
-    #dag_node_name = dag_node_names[-1]
-    dag_node_name = "predict.0.read_data"
-    print(hprint.to_str("dag_node_name"))
-
-    dag_node_timestamps = oms.get_dag_node_timestamps(
-        dag_path_dict["prod"], dag_node_name, as_timestamp=True, log_level=log_level
-    )
-
-    dag_node_timestamp = dag_node_timestamps[-1]
-    print("dag_node_timestamp=%s" % dag_node_timestamp)
-
-
-    # Load DAG output for different experiments.
-    dag_df_dict = oms.load_dag_outputs(dag_path_dict, dag_node_name, dag_node_timestamp, 
-                                       start_timestamp, end_timestamp,
-                                       log_level=logging.INFO)
-
-
-    asset_id = 1030828978
-    #asset_id = 1464553467
-    dag_df_dict["prod"]["close"][asset_id]
-
-    # 2022-10-28 06:11:00-04:00    0.4798
-    # 2022-10-28 06:12:00-04:00    0.4802
-    # 2022-10-28 06:13:00-04:00    0.4807
-    # 2022-10-28 06:14:00-04:00    0.4809
-    # 2022-10-28 06:15:00-04:00    0.4808
-
-    print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:12:00-04:00": '2022-10-28 06:16:00-04:00'].mean())
-    print(dag_df_dict["prod"]["close"][asset_id]["2022-10-28 06:11:00-04:00": '2022-10-28 06:15:00-04:00'].mean())
-
-    # Get the real-time `ImClient`.
-    # TODO(Grisha): ideally we should get the values from the config.
-    resample_1min = False
-    env_file = imvimlita.get_db_env_path("dev")
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    db_connection = hsql.get_connection(*connection_params)
-    table_name = "ccxt_ohlcv_futures"
-    #
-    im_client = icdcl.CcxtSqlRealTimeImClient(
-        resample_1min, db_connection, table_name
-    )
-
-    # Load the data for the reconciliation date.
-    # `ImClient` operates in UTC timezone.
-    start_ts = pd.Timestamp("2022-10-28 06:10:00", tz="America/New_York")
-    end_ts = start_ts + pd.Timedelta(days=1)
-    columns = None
-    filter_data_mode = "assert"
-    full_symbols = ["binance::GMT_USDT"]
-    df = im_client.read_data(
-        full_symbols, start_ts, end_ts, columns, filter_data_mode
-    )
-    hpandas.df_to_str(df.head(10), num_rows=None, log_level=logging.INFO)
-
-# %% [markdown]
-# # Compare pairwise portfolio correlations
-
-# %%
-research_portfolio_df["holdings_shares"].head(10)
-
-# %% [markdown]
-# ## Prod vs research
-
-# %%
-dtfmod.compute_correlations(
-    research_portfolio_df,
-    portfolio_dfs["prod"],
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
-)
+# ### Target holdings
 
 # %% [markdown]
 # ## Prod vs sim
 
 # %%
-dtfmod.compute_correlations(
-    portfolio_dfs["prod"],
-    portfolio_dfs["sim"],
-    allow_unequal_indices=False,
-    allow_unequal_columns=False,
+prod_df = prod_target_position_df["target_holdings_shares"].shift(1)
+res_df = research_portfolio_df["holdings_shares"]
+
+# Compute percentage difference.
+diff_df = hpandas.compare_dfs(
+    prod_df,
+    res_df,
+    diff_mode= "pct_change",
+    assert_diff_threshold=None,
 )
+# Remove the sign and NaNs.
+diff_df = diff_df.abs()
+# Check that data is the same.
+print(diff_df.max().max())
+if False:
+    hpandas.heatmap_df(diff_df.round(2))
+
+# %% [markdown]
+# # Orders 
+
+# %% [markdown]
+# ## Load orders (prod & sim)
+
+# %%
+prod_order_df = oms.TargetPositionAndOrderGenerator.load_orders(
+    portfolio_path_dict["prod"].strip("portfolio"),
+)
+hpandas.df_to_str(prod_order_df, num_rows=5, log_level=logging.INFO)
+sim_order_df = oms.TargetPositionAndOrderGenerator.load_orders(
+    portfolio_path_dict["sim"].strip("portfolio"),
+)
+hpandas.df_to_str(sim_order_df, num_rows=5, log_level=logging.INFO)
+
+# %% [markdown]
+# ## Compare orders (prod vs sim)
+
+# %%
+# TODO(Grisha): add comparison using the usual `pct_change` approach.
+
+# %% [markdown]
+# # Fills statistics
+
+# %%
+fills = oms.compute_fill_stats(prod_target_position_df)
+hpandas.df_to_str(fills, num_rows=5, log_level=logging.INFO)
+fills["fill_rate"].plot()
+
+# %% [markdown]
+# # Slippage
+
+# %%
+slippage = oms.compute_share_prices_and_slippage(portfolio_dfs["prod"])
+hpandas.df_to_str(slippage, num_rows=5, log_level=logging.INFO)
+slippage["slippage_in_bps"].plot()
+
+# %%
+stacked = slippage[["slippage_in_bps", "is_benchmark_profitable"]].stack()
+stacked[stacked["is_benchmark_profitable"] > 0]["slippage_in_bps"].hist(bins=31)
+stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(bins=31)
+
+# %% [markdown]
+# # Total cost accounting
+
+# %%
+notional_costs = oms.compute_notional_costs(
+    portfolio_dfs["prod"],
+    prod_target_position_df, 
+)
+hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
 
 
 # %%
@@ -697,12 +666,20 @@ display(df)
 # ## Research vs sim
 
 # %%
-dtfmod.compute_correlations(
-    research_portfolio_df,
-    portfolio_dfs["sim"],
-    allow_unequal_indices=True,
-    allow_unequal_columns=True,
+cost_df = oms.apply_costs_to_baseline(
+    portfolio_stats_dfs["research"],
+    portfolio_stats_dfs["prod"],
+    portfolio_dfs["prod"],
+    prod_target_position_df, 
 )
+hpandas.df_to_str(cost_df, num_rows=5, log_level=logging.INFO)
+
+# %%
+cost_df[["pnl", "baseline_pnl_minus_costs", "baseline_pnl"]].plot()
+cost_df[["pnl", "baseline_pnl_minus_costs"]].plot()
+
+# %% [markdown]
+# # TCA
 
 # %%
 research_portfolio_df["holdings_shares"].head(10)
