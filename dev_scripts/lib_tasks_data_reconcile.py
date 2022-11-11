@@ -131,9 +131,11 @@ def reconcile_data_run_notebook(
 
     :param base_dst_dir: dir to store data reconciliation
     """
-    hdbg.dassert(
-        hserver.is_inside_docker(), "This is runnable only inside Docker."
-    )
+    # TODO(Juraj): this does not work in the cmamp prod container when ran
+    #  via AWS ECS.
+    #hdbg.dassert(
+    #    hserver.is_inside_docker(), "This is runnable only inside Docker."
+    #)
     config_dict = {
         "db_stage": db_stage,
         "start_timestamp": start_timestamp,
@@ -191,15 +193,16 @@ def reconcile_data_run_notebook(
     cmd = f"cp -vr {results_dir} {target_dir}"
     dslitare._system(cmd)
     # This is a workaround to get outcome of the data reconciliation from the notebook.
-    reconc_sucess = hio.from_file(
-        "amp/im_v2/ccxt/notebooks/ck_data_reconciliation_success.txt"
+    reconc_outcome = hio.from_file(
+        "/app/ck_data_reconciliation_outcome.txt"
     )
-    if reconc_sucess.strip() == "SUCCESS":
+    if reconc_outcome.strip() == "SUCCESS":
         _LOG.info(
             "Data reconciliation was successful, results stored in '%s'",
             target_dir,
         )
     else:
         hdbg.dfatal(
-            message=f"Data reconciliation failed, results stored in '{target_dir}'"
+            message=f"Data reconciliation failed:\n {reconc_outcome} \n" +
+            f"Results stored in '{target_dir}'"
         )

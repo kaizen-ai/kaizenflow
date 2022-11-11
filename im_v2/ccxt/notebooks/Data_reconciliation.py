@@ -91,11 +91,11 @@ try:
 except Exception as e:
     # Pass information about success or failure of the reconciliation
     #  back to the task that invoked it.
-    data_reconciliation_outcome = "FAILURE"
+    data_reconciliation_outcome = str(e)
     raise e
 # If no exception was raised mark the reconciliation as successful.
 data_reconciliation_outcome = "SUCCESS"
 
 # %%
 # This can be read by the invoke task to find out if reconciliation was successful.
-hio.to_file("ck_data_reconciliation_success.txt", data_reconciliation_outcome)
+hio.to_file("/app/ck_data_reconciliation_outcome.txt", data_reconciliation_outcome)
