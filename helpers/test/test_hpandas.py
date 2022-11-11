@@ -1943,6 +1943,9 @@ class Test_compare_dfs(hunitest.TestCase):
 
     @staticmethod
     def get_test_dfs_close_to_zero() -> Tuple[pd.DataFrame, pd.DataFrame]:
+        """
+        DataFrames with values that are close to 0.
+        """
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
             pd.Timestamp("2022-01-01 21:02:00+00:00"),
@@ -2004,8 +2007,8 @@ class Test_compare_dfs(hunitest.TestCase):
         - DataFrames are equal
         - Column and row modes are `equal`
         - diff_mode = "pct_change"
-        - remove_inf = False,
         - zero_vs_zero_is_zero = False
+        - remove_inf = False
         """
         df1, df2 = self.get_test_dfs_equal()
         df_diff = hpandas.compare_dfs(
@@ -2014,9 +2017,9 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            remove_inf=False,
             assert_diff_threshold=None,
             zero_vs_zero_is_zero=False,
+            remove_inf=False,
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
@@ -2111,6 +2114,7 @@ class Test_compare_dfs(hunitest.TestCase):
         - diff_mode = "pct_change"
         - close_to_zero_threshold = 1e-6
         - zero_vs_zero_is_zero = True
+        - remove_inf = True
 
         The second DataFrame has numbers below the close_to_zero_threshold.
         """
@@ -2121,14 +2125,15 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            remove_inf=False,
             assert_diff_threshold=None,
+            zero_vs_zero_is_zero=True,
+            remove_inf=True,
         )
         #
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                    tsA.pct_change  tsB.pct_change
         timestamp                                                
-        2022-01-01 21:01:00+00:00          -100.0             inf
+        2022-01-01 21:01:00+00:00          -100.0             NaN
         2022-01-01 21:02:00+00:00             0.0             0.0
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -2140,6 +2145,7 @@ class Test_compare_dfs(hunitest.TestCase):
         - diff_mode = "pct_change"
         - close_to_zero_threshold = 1e-6
         - zero_vs_zero_is_zero = False
+        - remove_inf = False
 
         The second DataFrame has numbers below the close_to_zero_threshold.
         """
@@ -2150,9 +2156,9 @@ class Test_compare_dfs(hunitest.TestCase):
             row_mode="equal",
             column_mode="equal",
             diff_mode="pct_change",
-            remove_inf=False,
             assert_diff_threshold=None,
-            zero_vs_zero_is_zero=False
+            zero_vs_zero_is_zero=False,
+            remove_inf=False,
         )
         #
         actual = hpandas.df_to_str(df_diff)

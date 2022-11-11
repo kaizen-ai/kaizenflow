@@ -1471,10 +1471,10 @@ def compare_dfs(
     row_mode: str = "equal",
     column_mode: str = "equal",
     diff_mode: str = "diff",
-    remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
     close_to_zero_threshold: float = 1e-6,
     zero_vs_zero_is_zero: bool = True,
+    remove_inf: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1490,13 +1490,13 @@ def compare_dfs(
         corresponding elements
         - "diff": use the difference
         - "pct_change": use the percentage difference
-    :param remove_inf: replace +-inf with `np.nan`
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
     :param close_to_zero_threshold: round numbers below the threshold to 0
     :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0 
         if True, otherwise keep the actual result
+    :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1539,8 +1539,6 @@ def compare_dfs(
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
-    if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     if diff_mode == "pct_change" and assert_diff_threshold is not None:
         # TODO(Grisha): generalize for the other modes.
         # Report max diff.
@@ -1551,6 +1549,8 @@ def compare_dfs(
             hdbg.dassert_lte(0.0, assert_diff_threshold)
             # TODO(Grisha): it works only if `remove_inf` is True.
             hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    if remove_inf:
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     return df_diff
 
 
