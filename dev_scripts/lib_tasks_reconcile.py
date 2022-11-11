@@ -107,18 +107,6 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     return target_dir
 
 
-def _resolve_rt_timeout_in_secs_or_time(
-    rt_timeout_in_secs_or_time: Optional[int],
-) -> int:
-    """
-    Return the specified `rt_timeout_in_secs_or_time` or a default value
-    corresponding to 2 hours.
-    """
-    rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
-    _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
-    return rt_timeout_in_secs_or_time
-
-
 def _sanity_check_data(file_path: str) -> None:
     """
     Check that data at the specified file path is correct.
@@ -183,8 +171,8 @@ def reconcile_create_dirs(
 def reconcile_dump_market_data(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
-    rt_timeout_in_secs_or_time=None,
     incremental=False,
     interactive=False,
     prevent_overwriting=True,
@@ -214,9 +202,6 @@ def reconcile_dump_market_data(
     _ = ctx
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
-    rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
@@ -227,8 +212,8 @@ def reconcile_dump_market_data(
         opts = [
             "--action dump_data",
             f"--start_timestamp_as_str {start_timestamp_as_str}",
+            f"--end_timestamp_as_str {end_timestamp_as_str}",
             f"--dst_dir {dst_dir}",
-            f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
         ]
         opts = " ".join(opts)
         opts += " -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
@@ -261,8 +246,8 @@ def reconcile_dump_market_data(
 def reconcile_run_sim(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
-    rt_timeout_in_secs_or_time=None,
 ):  # type: ignore
     """
     Run the simulation given a run date.
@@ -274,9 +259,6 @@ def reconcile_run_sim(
     )
     _ = ctx
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
-    rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
@@ -289,8 +271,8 @@ def reconcile_run_sim(
     opts = [
         "--action run_simulation",
         f"--start_timestamp_as_str {start_timestamp_as_str}",
+        f"--end_timestamp_as_str {end_timestamp_as_str}",
         f"--dst_dir {dst_dir}",
-        f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
     opts += (
@@ -391,8 +373,7 @@ def reconcile_copy_prod_data(
         _prevent_overwriting(prod_target_dir)
 
 
-# TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
-# TODO(Grisha): @Dan Expose `start_timestamp_as_str` use in the notebook.
+# TODO(Grisha): @Dan Expose `start_timestamp_as_str` and `start_timestamp_as_str` use in the notebook.
 @task
 def reconcile_run_notebook(
     ctx,
@@ -574,9 +555,9 @@ def reconcile_dump_tca_data(
 def reconcile_run_all(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
-    rt_timeout_in_secs_or_time=None,
     mode=None,
     prevent_overwriting=True,
     skip_notebook=False,
@@ -586,8 +567,9 @@ def reconcile_run_all(
 
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
+    :param end_timestamp_as_str: string representation of timestamp
+        at which to end reconcile run
     :param dst_dir: dir to store reconcilation results in
-    :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
     :param mode: see `reconcile_copy_prod_data()`
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
@@ -615,15 +597,15 @@ def reconcile_run_all(
     reconcile_dump_market_data(
         ctx,
         start_timestamp_as_str=start_timestamp_as_str,
+        end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_run_sim(
         ctx,
         start_timestamp_as_str=start_timestamp_as_str,
+        end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
     )
     reconcile_copy_sim_data(
         ctx,
