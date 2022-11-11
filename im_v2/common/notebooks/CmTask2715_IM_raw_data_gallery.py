@@ -104,9 +104,9 @@ def load_parquet_by_period(
 # %%
 def combine_stats(stats: List[pd.Series]) -> pd.Series:
     """
-    Sum several pandas Series with statistics.
+    Summarize the statistics from pandas Series.
 
-    Example of statistics:
+    Example of one statistic Series:
 
         bid_price    0.0
         bid_size     0.0
@@ -146,7 +146,7 @@ def find_gaps_in_time_series(
 
 
 # %%
-def count_data_py_parts(
+def process_s3_data_partially(
     start_ts: str, end_ts: str, s3_path: str
 ) -> List[pd.Series]:
     """
@@ -166,29 +166,31 @@ def count_data_py_parts(
             start, end = dates[i : i + 2]
             print(f"Loading data for {start.month}th and {end.month}th months")
         else:
-            start = dates[0]
+            start = dates[i]
             end = None
             print(f"Loading data for {start.month}th month")
         # Load the data of the time period.
-        cc_ba_futures_daily = load_parquet_by_period(start, end, s3_path)
-        overall_rows += len(cc_ba_futures_daily)
+        daily_data = load_parquet_by_period(start, end, s3_path)
+        overall_rows += len(daily_data)
         print("Head:")
-        display(cc_ba_futures_daily.head(2))
+        display(daily_data.head(2))
         print("Tail:")
-        display(cc_ba_futures_daily.tail(2))
+        display(daily_data.tail(2))
         # Count NaNs.
-        nans = cstadesc.compute_frac_nan(cc_ba_futures_daily)
+        nans = cstadesc.compute_frac_nan(daily_data)
         # Count zeros.
         zeros = cstadesc.compute_frac_zero(
-            cc_ba_futures_daily[
+            daily_data[
                 ["bid_price", "bid_size", "ask_price", "ask_size"]
             ]
         )
         nans_stats.append(nans)
         zeros_stats.append(zeros)
         # Count gaps in time series.
+        if end is None:
+            end = daily_data.index[-1]
         gaps = find_gaps_in_time_series(
-            cc_ba_futures_daily.index, start, end, "T"
+            daily_data.index, start, end, "T"
         )
         gaps_count += len(gaps)
     print(f"{overall_rows} rows overall")
@@ -305,12 +307,35 @@ s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/
 # %%
 start_ts = "20220627-000000"
 end_ts = "20221130-000000"
-nans_stats, zeros_stats = count_data_py_parts(start_ts, end_ts, s3_path)
+nans_stats, zeros_stats = process_s3_data_partially(start_ts, end_ts, s3_path)
 
 # %% [markdown]
 # #### Count NaNs
 
 # %% run_control={"marked": false}
+combine_stats(nans_stats)
+
+# %% [markdown]
+# #### Count zeros
+
+# %%
+combine_stats(zeros_stats)
+
+# %% [markdown]
+# ### CC spot
+
+# %%
+s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
+
+# %%
+start_ts = "20220501-000000"
+end_ts = "20221130-000000"
+nans_stats, zeros_stats = process_s3_data_partially(start_ts, end_ts, s3_path)
+
+# %% [markdown]
+# #### Count NaNs
+
+# %%
 combine_stats(nans_stats)
 
 # %% [markdown]
