@@ -48,7 +48,7 @@ hprint.config_notebook()
 tile_dict = {
     # Base line.
     #"dir_name": "/app/build_tile_configs.C3a.ccxt_v7-all.5T.2019-09-01_2022-10-31.run0/tiled_results",
-    "dir_name": "/app/build_tile_configs.C3a.ccxt_v7-all.5T.2022-01-01_2022-11-30.run0/tiled_results",
+    "dir_name": "/app/build_tile_configs.C3a.ccxt_v7-all.5T.2019-09-01_2022-11-30.run0/tiled_results",
     "asset_id_col": "asset_id",
 }
 tile_config = cconfig.Config.from_dict(tile_dict)
@@ -132,7 +132,7 @@ backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     #datetime.date(2011, 1, 1),
     #datetime.date(2018, 12, 31),
     #datetime.date(2019, 9, 1),
-    datetime.date(2022, 10, 1),
+    datetime.date(2022, 1, 1),
     datetime.date(2022, 11, 15),
     tile_config["asset_id_col"],
     data_cols=fep.get_cols(),
