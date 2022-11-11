@@ -17,12 +17,12 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"
+> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_0635"
 ```
 
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"'
+> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_0635"'
 ```
 
 Import as:
