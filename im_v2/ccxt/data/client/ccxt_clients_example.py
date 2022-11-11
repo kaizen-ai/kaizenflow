@@ -127,7 +127,9 @@ def get_CcxtHistoricalPqByTileClient_example1(
     """
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    # TODO(gp): We need to pass also this.
+    #root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    root_dir = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq"
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,

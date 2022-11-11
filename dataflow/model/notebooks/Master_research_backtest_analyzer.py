@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -46,7 +46,9 @@ hprint.config_notebook()
 
 # %%
 tile_dict = {
-    "dir_name": "/app/build_tile_config_list.../tiled_results/",
+    # Base line.
+    #"dir_name": "/app/build_tile_configs.C3a.ccxt_v7-all.5T.2019-09-01_2022-10-31.run0/tiled_results",
+    "dir_name": "/app/build_tile_configs.C3a.ccxt_v7-all.5T.2022-01-01_2022-11-30.run0/tiled_results",
     "asset_id_col": "asset_id",
 }
 tile_config = cconfig.Config.from_dict(tile_dict)
@@ -100,9 +102,12 @@ single_tile_df.head(3)
 
 # %%
 fep_dict = {
+    #"price_col": "vwap",
+    #"volatility_col": "vwap.ret_0.vol",
+    #"prediction_col": "vwap.ret_0.vol_adj_2_hat",
     "price_col": "vwap",
-    "volatility_col": "vwap.ret_0.vol",
-    "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+    "volatility_col": 'garman_klass_vol',
+    "prediction_col": 'feature', 
     # "bulk_frac_to_remove": 0.0,
     # "bulk_fill_method": "zero",
     # "target_gmv": 1e6,
@@ -124,8 +129,11 @@ fep = dtfmod.ForecastEvaluatorFromPrices(
 # Create backtest dataframe tile iterator.
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
-    datetime.date(2011, 1, 1),
-    datetime.date(2018, 12, 31),
+    #datetime.date(2011, 1, 1),
+    #datetime.date(2018, 12, 31),
+    #datetime.date(2019, 9, 1),
+    datetime.date(2022, 10, 1),
+    datetime.date(2022, 11, 15),
     tile_config["asset_id_col"],
     data_cols=fep.get_cols(),
     asset_ids=None,
@@ -142,6 +150,8 @@ for df in backtest_df_iter:
         quantization=fep_config["quantization"],
         burn_in_bars=fep_config["burn_in_bars"],
         style=fep_config["style"],
+        liquidate_at_end_of_day=False,
+        initialize_beginning_of_day_trades_to_zero=False,
     )
     bar_metrics.append(bar_metrics_slice)
 bar_metrics = pd.concat(bar_metrics)
