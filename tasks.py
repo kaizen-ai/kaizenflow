@@ -3,6 +3,7 @@ import os
 from typing import Any
 
 import repo_config as rconf
+import oms as oms
 
 # Expose the pytest targets.
 # Extract with:
@@ -98,7 +99,9 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     run_tests,
     traceback,
 )
-
+from oms.ccxt_lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+    get_current_open_positions_from_binance
+)
 # # TODO(gp): This is due to the coupling between code in linter container and
 # #  the code being linted.
 # try:
