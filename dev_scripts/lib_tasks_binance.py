@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.lib_tasks_binance as dslitabi
+"""
+
 import logging
 
 from invoke import task
@@ -17,7 +23,9 @@ def _get_CcxtBroker(secret_id: str) -> occxbrok.CcxtBroker:
     exchange_id = "binance"
     stage = "preprod"
     account_type = "trading"
-    secret_identifier = omssec.SecretIdentifier(exchange_id, stage, account_type, secret_id)
+    secret_identifier = omssec.SecretIdentifier(
+        exchange_id, stage, account_type, secret_id
+    )
     ccxt_broker = occxbrok.get_CcxtBroker_prod_instance1(
         market_data,
         universe_version,
@@ -34,4 +42,3 @@ def get_open_positions(ctx, secret_id):
     open_positions = ccxt_broker.get_open_positions()
     file_name = "open_positions_from_binance.txt"
     hio.to_file(file_name, str(open_positions))
-
