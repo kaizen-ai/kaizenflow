@@ -3,7 +3,6 @@ import os
 from typing import Any
 
 import repo_config as rconf
-import oms as oms
 
 # Expose the pytest targets.
 # Extract with:
