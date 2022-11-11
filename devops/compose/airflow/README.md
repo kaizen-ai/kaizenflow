@@ -78,6 +78,13 @@ airflow_scheduler_cont  | [2022-11-10 17:09:29 +0000] [22] [INFO] Booting worker
   `172.30.2.136:8090`)
 - The default login credentials are `airflow`:`airflow`
 
+- You can check the version with:
+  ```
+  > docker_bash.sh
+  airflow@d47496583402:/opt/airflow$ airflow version
+  2.2.2
+  ```
+
 ## Managing Airflow
 
 - You can bring down the service (persisting the state) with:
@@ -98,7 +105,7 @@ airflow_scheduler_cont  | [2022-11-10 17:09:29 +0000] [22] [INFO] Booting worker
   ```
 - The containers are recreated
 
-- To remove all containers and volumes
+- To remove all containers and volumes:
   ```
   > docker-compose down -v --rmi all
   Removing airflow_scheduler_cont ... done
@@ -113,6 +120,29 @@ airflow_scheduler_cont  | [2022-11-10 17:09:29 +0000] [22] [INFO] Booting worker
   > docker container ls
   > docker volume ls
   ```
+- Since you are starting from scratch here you need to re-run
+  `./init_airflow_setup.sh`
+
+## CLI
+
+- List the DAGs
+  ```
+  > docker_cmd.sh airflow dags list
+  + docker exec -ti airflow_cont airflow dags list
+  dag_id   | filepath            | owner   | paused
+  =========+=====================+=========+=======
+  tutorial | airflow_tutorial.py | airflow | False
+  ```
+
+# print the list of active DAGs
+airflow dags list
+
+# prints the list of tasks in the "tutorial" DAG
+airflow tasks list tutorial
+
+# prints the hierarchy of tasks in the "tutorial" DAG
+airflow tasks list tutorial --tree
+
 
 ## Notes
 - The current solution uses `SequentialExecutor` so task parallelization is not
