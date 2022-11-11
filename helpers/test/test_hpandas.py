@@ -1946,19 +1946,18 @@ class Test_compare_dfs(hunitest.TestCase):
         timestamp_index = [
             pd.Timestamp("2022-01-01 21:01:00+00:00"),
             pd.Timestamp("2022-01-01 21:02:00+00:00"),
-            pd.Timestamp("2022-01-01 21:03:00+00:00"),
         ]
         values1 = {
-            "tsA": [0, 3e-9, -3e-9],
-            "tsB": [0, 6e-3, 4e-9],
+            "tsA": [3e-9, -3e-9],
+            "tsB": [6e-3, 4e-9],
             "timestamp": timestamp_index,
         }
         df1 = pd.DataFrame(data=values1)
         df1 = df1.set_index("timestamp")
         #
         values2 = {
-            "tsA": [9e-2, 15e-3, -5e-9],
-            "tsB": [0, 5e-9, 3e-9],
+            "tsA": [15e-3, -5e-9],
+            "tsB": [5e-9, 3e-9],
             "timestamp": timestamp_index,
         }
         df2 = pd.DataFrame(data=values2)
@@ -1992,7 +1991,13 @@ class Test_compare_dfs(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""                           tsA.diff  tsB.diff  tsC.diff
+        timestamp                                              
+        2022-01-01 21:01:00+00:00     -0.10       4.0      0.50
+        2022-01-01 21:02:00+00:00      0.10       0.0     -0.60
+        2022-01-01 21:03:00+00:00     -0.15       0.2     -0.07
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test2(self) -> None:
         """
@@ -2014,7 +2019,13 @@ class Test_compare_dfs(hunitest.TestCase):
             zero_vs_zero_is_zero=False,
         )
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
+        timestamp                                                                
+        2022-01-01 21:01:00+00:00       -9.090909             inf        7.692308
+        2022-01-01 21:02:00+00:00        5.263158        0.000000       -6.976744
+        2022-01-01 21:03:00+00:00       -4.761905        3.448276       -0.771775
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test3(self) -> None:
         """
@@ -2032,7 +2043,12 @@ class Test_compare_dfs(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""               tsA.diff  tsB.diff
+        timestamp                                    
+        2022-01-01 21:01:00+00:00      -0.1       4.0
+        2022-01-01 21:02:00+00:00       0.1       0.0
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test4(self) -> None:
         """
@@ -2050,7 +2066,12 @@ class Test_compare_dfs(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""                     tsA.pct_change  tsB.pct_change
+        timestamp                                                
+        2022-01-01 21:01:00+00:00       -9.090909             NaN
+        2022-01-01 21:02:00+00:00        5.263158             0.0
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test5(self) -> None:
         """
@@ -2075,7 +2096,13 @@ class Test_compare_dfs(hunitest.TestCase):
             assert_diff_threshold=None,
         )
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""                  tsA.diff  tsB.diff  tsC.diff
+        timestamp                                              
+        2022-01-01 21:01:00+00:00         1         4         7
+        2022-01-01 21:02:00+00:00         2         5         8
+        2022-01-01 21:03:00+00:00         3         6         9
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test6(self) -> None:
         """
@@ -2099,33 +2126,14 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         #
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""                    tsA.pct_change  tsB.pct_change
+        timestamp                                                
+        2022-01-01 21:01:00+00:00          -100.0             inf
+        2022-01-01 21:02:00+00:00             0.0             0.0
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test7(self) -> None:
-        """
-        - DataFrames are equal
-        - Column and row modes are `equal`
-        - diff_mode = "pct_change"
-        - close_to_zero_threshold = 0
-        - zero_vs_zero_is_zero = False
-
-        The first DataFrame has numbers below the close_to_zero_threshold.
-        """
-        df1, df2 = self.get_test_dfs_close_to_zero()
-        df_diff = hpandas.compare_dfs(
-            df1,
-            df2,
-            row_mode="equal",
-            column_mode="equal",
-            diff_mode="pct_change",
-            remove_inf=False,
-            assert_diff_threshold=None,
-            zero_vs_zero_is_zero=False,
-        )
-        actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
-
-    def test8(self) -> None:
         """
         - DataFrames are equal
         - Column and row modes are `equal`
@@ -2144,10 +2152,16 @@ class Test_compare_dfs(hunitest.TestCase):
             diff_mode="pct_change",
             remove_inf=False,
             assert_diff_threshold=None,
+            zero_vs_zero_is_zero=False
         )
         #
         actual = hpandas.df_to_str(df_diff)
-        self.check_string(actual)
+        expected = r"""                    tsA.pct_change  tsB.pct_change
+        timestamp                                                
+        2022-01-01 21:01:00+00:00          -100.0             inf
+        2022-01-01 21:02:00+00:00             NaN             NaN
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_invalid_input(self) -> None:
         """
