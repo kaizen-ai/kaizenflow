@@ -200,6 +200,14 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = "_".join(
+            [datetime.date.today().strftime("%Y%m%d"), "0605"]
+        )
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = "_".join(
+            [datetime.date.today().strftime("%Y%m%d"), "0800"]
+        )
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     market_data_file = "test_data.csv.gz"
@@ -258,6 +266,14 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = "_".join(
+            [datetime.date.today().strftime("%Y%m%d"), "0605"]
+        )
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = "_".join(
+            [datetime.date.today().strftime("%Y%m%d"), "0800"]
+        )
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
