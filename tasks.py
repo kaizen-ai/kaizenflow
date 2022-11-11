@@ -98,7 +98,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     run_tests,
     traceback,
 )
-from oms.ccxt_lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+from oms.lib_tasks_binance import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
     get_current_open_positions_from_binance
 )
 # # TODO(gp): This is due to the coupling between code in linter container and
