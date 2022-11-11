@@ -342,8 +342,8 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     Build Portfolio instance for production.
     """
     market_data = system.market_data
-    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
-    dag_config = system.config.get_and_mark_as_used("dag_config")
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
     trading_period_str = dag_builder.get_trading_period(dag_config)
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str

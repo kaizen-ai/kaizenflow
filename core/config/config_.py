@@ -415,9 +415,9 @@ class _OrderedConfig(_OrderedDictType):
         return ret
 
     # TODO(Danya): Expand the use to `Config` class.
-    def check_if_used(self, key: ScalarKey) -> bool:
+    def marked_as_used(self, key: ScalarKey) -> bool:
         """
-        Check if the value has been used.
+        Return True if the value has been used.
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
@@ -608,8 +608,7 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is
-        navigated.
+        If `key` is nested, the hierarchy of Config objects is navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -711,9 +710,6 @@ class Config:
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
 
-    def check_if_used(self, key: ScalarKeyValidTypes) -> bool:
-        self.__getitem__
-
     def get_and_mark_as_used(
         self,
         key: ScalarKeyValidTypes,
@@ -727,6 +723,45 @@ class Config:
 
         This should be used as the only way of accessing values from configs
         except for purposes of logging and transformation to string.
+
+        Examples of use:
+        - When the value is used inside another constructor:
+            ```
+            process_forecasts_node_dict = system.config.get_and_mark_as_used(
+                "process_forecasts_node_dict"
+            ).to_dict()
+            dag = dtfsys.adapt_dag_to_real_time(
+                dag,
+                market_data,
+                market_data_history_lookback,
+                process_forecasts_node_dict,
+                ts_col_name,
+            )
+            ```
+        - When the value determines the behavior of the function:
+            ```
+            fast_prod_setup = system.config.get_and_mark_as_used(
+                ("dag_builder_config", "fast_prod_setup"), default_value=False
+            )
+            ...
+            if fast_prod_setup:
+                system.config["dag_config"] = dag_builder.convert_to_fast_prod_setup(
+                    system.config["dag_config"]
+                )
+            ```
+
+        Examples of when it should not be used:
+            - Logging and printing:
+                ```
+                fast_prod_setup = config["dag_builder_config", "fast_prod_setup"]
+                _LOG.debug(hprint.to_str("fast_prod_setup"))
+                ```
+            - If the value is a subconfig with multiple values inside:
+                ```
+                dag_config = system.config["dag_config"]
+                # Here 'trading_period' will be marked as used.
+                trading = dag_builder.get_trading_period(dag_config)
+                ```
         """
         try:
             ret = self.__getitem__(key, mark_key_as_used=True)
