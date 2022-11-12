@@ -1,12 +1,7 @@
-"""
-Import as:
-
-import dev_scripts.lib_tasks_binance as dslitabi
-"""
-
 import logging
 
 from invoke import task
+import pandas as pd
 
 import helpers.hio as hio
 import market_data as mdata
@@ -17,7 +12,8 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_CcxtBroker(secret_id: str) -> occxbrok.CcxtBroker:
-    market_data = mdata.get_ReplayedTimeMarketData_example3(None)[0]
+    asset_ids = None
+    market_data, _ =  mdata.get_ReplayedTimeMarketData_example3(asset_ids)
     universe_version = "v7"
     strategy_id = "C1b"
     exchange_id = "binance"
@@ -36,9 +32,9 @@ def _get_CcxtBroker(secret_id: str) -> occxbrok.CcxtBroker:
 
 
 @task
-def get_open_positions(ctx, secret_id):
+def binance_get_open_positions(ctx, secret_id):
     _ = ctx
     ccxt_broker = _get_CcxtBroker(secret_id)
     open_positions = ccxt_broker.get_open_positions()
-    file_name = "open_positions_from_binance.txt"
-    hio.to_file(file_name, str(open_positions))
+    df = pd.DataFrame(data=open_positions, columns=["symbol", "side", "contracts", "contractSize", "notional"])
+    _LOG.info("\n%s", df)
