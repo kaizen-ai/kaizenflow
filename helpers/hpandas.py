@@ -1494,7 +1494,7 @@ def compare_dfs(
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
     :param close_to_zero_threshold: round numbers below the threshold to 0
-    :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0 
+    :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0
         if True, otherwise keep the actual result
     :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
