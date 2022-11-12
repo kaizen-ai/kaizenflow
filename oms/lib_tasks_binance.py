@@ -36,5 +36,10 @@ def binance_get_open_positions(ctx, secret_id):
     _ = ctx
     ccxt_broker = _get_CcxtBroker(secret_id)
     open_positions = ccxt_broker.get_open_positions()
-    df = pd.DataFrame(data=open_positions, columns=["symbol", "side", "contracts", "contractSize", "notional"])
+    df = pd.DataFrame(
+        data=open_positions,
+        columns=[
+            "symbol", "side", "contracts", "contractSize", "notional"
+        ]
+    )
     _LOG.info("\n%s", df)
