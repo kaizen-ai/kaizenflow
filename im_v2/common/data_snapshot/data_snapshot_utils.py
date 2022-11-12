@@ -47,7 +47,7 @@ def get_data_snapshot(
          im_client = ImClient(root_dir, ..., data_snapshot, ...)
          ```
     """
-    # TODO(Toma): commented out since CmTask2704, should think about 
+    # TODO(Toma): commented out since CmTask2704, should think about
     # whether we really need this check here.
     #_dassert_is_valid_root_dir(aws_profile, root_dir)
     if data_snapshot == "latest":
