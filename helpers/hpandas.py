@@ -52,6 +52,15 @@ def to_series(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
+def as_series(data: Union[pd.DataFrame, pd.Series]) -> pd.Series:
+    """
+    Convert a single-column dataframe to a series or no-op if already a series.
+    """
+    if isinstance(data, pd.Series):
+        return data
+    return to_series(data)
+
+
 def dassert_is_days(
     timedelta: pd.Timedelta, *, min_num_days: Optional[int] = None
 ) -> None:
@@ -844,6 +853,43 @@ def merge_dfs(
     #
     res_df = df1.merge(df2, **pd_merge_kwargs)
     return res_df
+
+
+# TODO(gp): Is this (ironically) a duplicate of drop_duplicates?
+def drop_duplicated(
+    df: pd.DataFrame, *, subset: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """
+    Implement `df.duplicated` but considering also the index and ignoring nans.
+    """
+    _LOG.debug("before df=\n%s", df_to_str(df))
+    # Move the index to the df.
+    old_index_name = df.index.name
+    new_index_name = "_index.tmp"
+    hdbg.dassert_not_in(new_index_name, df.columns)
+    df.index.name = new_index_name
+    df.reset_index(drop=False, inplace=True)
+    # Remove duplicates by ignoring nans.
+    if subset is not None:
+        hdbg.dassert_isinstance(subset, list)
+        subset = [new_index_name] + subset
+    duplicated = df.fillna(0.0).duplicated(subset=subset, keep="first")
+    # Report the result of the operation.
+    if duplicated.sum() > 0:
+        num_rows_before = df.shape[0]
+        _LOG.debug("Removing duplicates df=\n%s", df_to_str(df.loc[duplicated]))
+        df = df.loc[~duplicated]
+        num_rows_after = df.shape[0]
+        _LOG.warning(
+            "Removed repeated rows num_rows=%s",
+            hprint.perc(num_rows_before - num_rows_after, num_rows_before),
+        )
+    _LOG.debug("after removing duplicates df=\n%s", df_to_str(df))
+    # Set the index back.
+    df.set_index(new_index_name, inplace=True)
+    df.index.name = old_index_name
+    _LOG.debug("after df=\n%s", df_to_str(df))
+    return df
 
 
 # #############################################################################

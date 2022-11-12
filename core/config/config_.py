@@ -34,7 +34,7 @@ _LOG = logging.getLogger(__name__)
 
 # Mute this module unless we want to debug it.
 # NOTE: Keep this enabled when committing.
-# _LOG.setLevel(logging.INFO)
+_LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
