@@ -78,10 +78,15 @@ def is_dev4() -> bool:
     Return whether it's running on dev4.
     """
     host_name = os.uname()[1]
-    dev4 = "cf-spm-dev4"
     am_host_name = os.environ.get("AM_HOST_NAME", None)
+    dev4 = "cf-spm-dev4"
     _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
     is_dev4_ = dev4 in (host_name, am_host_name)
+    #
+    if not is_dev4_:
+        dev4 = "cf-spm-dev8"
+        _LOG.debug("host_name=%s am_host_name=%s", host_name, am_host_name)
+        is_dev4_ = dev4 in (host_name, am_host_name)
     return is_dev4_
 
 

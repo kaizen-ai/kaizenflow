@@ -29,6 +29,8 @@ else
   else
     if [[ $SERVER_NAME == "cf-spm-dev4" ]]; then
       HOME_DIR=$HOME
+    elif [[ $SERVER_NAME == "cf-spm-dev8" ]]; then
+      HOME_DIR=$HOME
     fi;
   fi;
 fi;

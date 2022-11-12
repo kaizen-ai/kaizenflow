@@ -700,6 +700,28 @@ def select_cols_by_greedy_volume(
     return selected_cols
 
 
+def combine_cols_instance1(
+    df: pd.DataFrame,
+    cols: Tuple[Union[int, str]],
+) -> pd.DataFrame:
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_container_type(cols, container_type=tuple, elem_type=(int, str))
+    hdbg.dassert_eq(3, len(cols))
+    hdbg.dassert_is_subset(cols, df.columns)
+    col_0 = df[cols[0]]
+    col_1 = df[cols[1]]
+    col_2 = df[cols[2]]
+    const1 = 0.450158158
+    do = (const1 * col_0 + const1 * col_1 + 0.5 * col_2).rename("do")
+    const2 = 2.221441469
+    la = (-2 * col_0 - 2 * col_1 + const2 * col_2).rename("la")
+    const3 = 2.094395102
+    const4 = 2.624934991
+    ti = (-const3 * col_0 + const3 * col_1 + const4 * col_2.abs()).rename("ti")
+    out_df = pd.concat([do, la, ti], axis=1)
+    return out_df
+
+
 def _drop_nans_for_svd(
     df: pd.DataFrame,
 ) -> pd.DataFrame:

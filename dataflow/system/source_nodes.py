@@ -369,29 +369,35 @@ def _convert_to_multiindex(df: pd.DataFrame, asset_id_col: str) -> pd.DataFrame:
 
     Note that the `asset_id` column is removed.
     """
-
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_lte(1, df.shape[0])
     # Copied from `_load_multiple_instrument_data()`.
     _LOG.debug(
-        "Before multiindex conversion\n:%s",
+        "Before multiindex conversion:\n%s",
         hpandas.df_to_str(df.head()),
     )
+    # Remove duplicates if any.
+    df = hpandas.drop_duplicated(df, subset=[asset_id_col])
+    #
     dfs = {}
     # TODO(Paul): Pass the column name through the constructor, so we can make it
     #  programmable.
     hdbg.dassert_in(asset_id_col, df.columns)
     hpandas.dassert_series_type_is(df[asset_id_col], np.int64)
     for asset_id, df in df.groupby(asset_id_col):
+        hpandas.dassert_strictly_increasing_index(df)
+        #
+        hdbg.dassert_not_in(asset_id, dfs.keys())
         dfs[asset_id] = df
     # Reorganize the data into the desired format.
+    _LOG.debug("keys=%s", str(dfs.keys()))
     df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
     df = df.swaplevel(i=0, j=1, axis=1)
     df.sort_index(axis=1, level=0, inplace=True)
     # Remove the asset_id column, since it's redundant.
     del df[asset_id_col]
     _LOG.debug(
-        "After multiindex conversion\n:%s",
+        "After multiindex conversion:\n%s",
         hpandas.df_to_str(df.head()),
     )
     return df

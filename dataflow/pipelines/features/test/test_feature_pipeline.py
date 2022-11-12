@@ -18,9 +18,9 @@ class TestFeaturePipeline(hunitest.TestCase):
         #
         config = dag_builder.get_config_template()
         # Set up `overwrite` mode to allow reassignment of values.
-        #  Note: by default the `update_mode` does not allow overwrites,
-        #  btut they are required by the FeaturePipeline.
-        config.update_mode = "overwrite"
+        # Note: by default the `update_mode` does not allow overwrites,
+        # but they are required by the FeaturePipeline.
+        cofig.update_mode = "overwrite"
         _LOG.debug("config from dag_builder=%s", config)
         # Initialize config.
         config["load_data"] = cconfig.Config.from_dict(

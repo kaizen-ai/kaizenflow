@@ -109,3 +109,35 @@ def compute_stochastic(
     stochastic = (2 * close - high - low) / (high - low)
     stochastic.name = "stochastic"
     return stochastic.to_frame()
+
+
+def normalize_bar(
+    df: pd.DataFrame,
+    open_col: str = "open",
+    high_col: str = "high",
+    low_col: str = "low",
+    close_col: str = "close",
+    volume_col: str = "volume",
+) -> pd.DataFrame:
+    """
+    Perform standard bar translation/rescaling of price.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    cols = [open_col, high_col, low_col, close_col, volume_col]
+    hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
+    hdbg.dassert_is_subset(cols, df.columns)
+    hdbg.dassert_lte(0.0, df[volume_col].min())
+    #
+    translated_hlc = df[[high_col, low_col, close_col]].subtract(
+        df[open_col], axis=0
+    )
+    normalized_hlc = translated_hlc.divide(np.sqrt(df[volume_col]), axis=0)
+    normalized_hlc = normalized_hlc.replace([-np.inf, np.inf], np.nan)
+    normalized_hlc = normalized_hlc.rename(
+        columns={
+            high_col: "adj_high",
+            low_col: "adj_low",
+            close_col: "adj_close",
+        },
+    )
+    return normalized_hlc

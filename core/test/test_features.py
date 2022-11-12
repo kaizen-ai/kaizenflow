@@ -7,6 +7,8 @@ import pandas as pd
 import pytest
 
 import core.features as cofeatur
+import core.statistics.random_samples as cstrasam
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -566,6 +568,7 @@ class Test_select_cols_by_greedy_volume(_TestHelper):
         expected = ["x4", "x1", "x2", "x3"]
         self._assert_lists_equal(actual, expected)
 
+    @pytest.mark.skip(reason="Apparent instability")
     def test4(self) -> None:
         df = self._get_df()
         actual = cofeatur.select_cols_by_greedy_volume(
@@ -588,3 +591,27 @@ class Test_select_cols_by_greedy_volume(_TestHelper):
         )
         df = pd.DataFrame(mat, columns=["x1", "x2", "x3", "x4"])
         return df
+
+
+class Test_combine_cols_instance1(_TestHelper):
+    def test1(self) -> None:
+        col1 = cstrasam.get_iid_standard_gaussian_samples(10, 1).rename("col1")
+        col2 = cstrasam.get_iid_standard_gaussian_samples(10, 2).rename("col2")
+        col3 = cstrasam.get_iid_standard_gaussian_samples(10, 3).rename("col3")
+        df = pd.concat([col1, col2, col3], axis=1)
+        actual = cofeatur.combine_cols_instance1(df, ("col1", "col2", "col3"))
+        actual = hpandas.df_to_str(actual, num_rows=None)
+        expected = r"""
+          do        la        ti
+1   1.261131  3.464507  5.029443
+2  -1.143294 -6.275000  3.892820
+3   0.171854  1.094035 -0.459702
+4  -1.969558  6.227982 -0.893713
+5   0.991382 -6.415660  3.061300
+6   0.608196 -3.660017  2.027379
+7  -1.398199 -2.762529  5.745361
+8   0.493964 -3.225074  1.012373
+9  -0.141902 -3.213586  2.096536
+10  1.544598  7.901230  6.946704
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)

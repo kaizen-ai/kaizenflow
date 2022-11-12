@@ -12,6 +12,7 @@ import pandas as pd
 import pywt
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,11 +65,7 @@ def get_swt(
     # Choice of wavelet may significantly impact results.
     wavelet = wavelet or "haar"
     # _LOG.debug("wavelet=`%s`", wavelet)
-    if isinstance(sig, pd.DataFrame):
-        hdbg.dassert_eq(
-            sig.shape[1], 1, "Input dataframe must have a single column."
-        )
-        sig = sig.squeeze()
+    sig = hpandas.as_series(sig)
     if timing_mode is None:
         timing_mode = "knowledge_time"
     # _LOG.debug("timing_mode=`%s`", timing_mode)
@@ -141,8 +138,8 @@ def get_swt(
 
 def get_swt_level(
     sig: Union[pd.DataFrame, pd.Series],
-    wavelet: str,
     level: int,
+    wavelet: Optional[str] = None,
     timing_mode: Optional[str] = None,
     output_mode: Optional[str] = None,
 ) -> pd.Series:
@@ -150,8 +147,8 @@ def get_swt_level(
     Wraps `get_swt` and extracts a single wavelet level.
 
     :param sig: input signal
-    :param wavelet: pywt wavelet name, e.g., "db8"
     :param level: the wavelet level to extract
+    :param wavelet: pywt wavelet name, e.g., "db8"
     :param timing_mode: supported timing modes are
         - "knowledge_time":
             - reindex transform according to knowledge times
@@ -176,6 +173,98 @@ def get_swt_level(
     )
     hdbg.dassert_in(level, swt.columns)
     return swt[level]
+
+
+# #############################################################################
+# Low/high pass filters
+# #############################################################################
+
+
+def compute_swt_low_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: Optional[str] = None,
+    timing_mode: Optional[str] = None,
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Perform a FIR low-pass filtering using the `level` swt smooth.
+    """
+    if isinstance(sig, pd.Series):
+        return _compute_swt_low_pass(
+            sig,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    df = sig.apply(
+        lambda x: _compute_swt_low_pass(
+            x,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    )
+    return df
+
+
+def _compute_swt_low_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: Optional[str] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.Series:
+    sig = hpandas.as_series(sig)
+    signal_name = sig.name
+    low_freq = get_swt_level(sig, level, wavelet, timing_mode, "smooth")
+    low_freq.name = signal_name
+    return low_freq
+
+
+def compute_swt_high_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: Optional[str] = None,
+    timing_mode: Optional[str] = None,
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Perform a FIR high-pass filtering by subtracting the `level` swt smooth.
+    """
+    if isinstance(sig, pd.Series):
+        return _compute_swt_high_pass(
+            sig,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    df = sig.apply(
+        lambda x: _compute_swt_high_pass(
+            x,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    )
+    return df
+
+
+def _compute_swt_high_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: str = "haar",
+    timing_mode: Optional[str] = None,
+) -> pd.Series:
+    sig = hpandas.as_series(sig)
+    signal_name = sig.name
+    low_freq = compute_swt_low_pass(sig, level, wavelet, timing_mode)
+    # Remove the low frequency component.
+    high_freq = sig - low_freq
+    high_freq.name = signal_name
+    return high_freq
+
+
+# #############################################################################
+# Wavelet properties
+# #############################################################################
 
 
 def get_knowledge_time_warmup_lengths(
@@ -298,6 +387,11 @@ def _reindex_by_knowledge_time(
     return srs.shift(warmup_region)
 
 
+# #############################################################################
+# Wavelet variance/covariance
+# #############################################################################
+
+
 def compute_swt_var(
     sig: Union[pd.DataFrame, pd.Series],
     wavelet: Optional[str] = None,
@@ -383,58 +477,41 @@ def compute_swt_covar(
     return pd.concat(results, axis=1)
 
 
-def compute_swt_sum(
-    sig: Union[pd.DataFrame, pd.Series],
-    wavelet: Optional[str] = None,
-    depth: Optional[int] = None,
-    timing_mode: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Get swt coefficient sums using levels up to `depth`.
-
-    Params as in `get_swt()`.
-    """
-    df = get_swt(
-        sig,
-        wavelet=wavelet,
-        depth=depth,
-        timing_mode=timing_mode,
-        output_mode="detail",
-    )
-    srs = -1 * df.sum(axis=1, skipna=False)
-    srs.name = "swt_sum"
-    return srs.to_frame()
-
-
 # TODO(*): Make this a decorator.
 def compute_fir_zscore(
     signal: Union[pd.DataFrame, pd.Series],
     dyadic_tau: int,
-    variance_dyadic_tau: Optional[int] = None,
-    delay: int = 0,
-    variance_delay: Optional[int] = None,
+    demean: bool = True,
+    variance_delay: int = 0,
     wavelet: Optional[str] = None,
-    variance_wavelet: Optional[str] = None,
 ) -> pd.DataFrame:
+    """
+    Z-score with a FIR filter.
+
+    :param signal: a series of dataframe of series
+    :param dyadic_tau: a larger number means more smoothing and a longer
+        lookback
+    :param demean: demean before variance-adjusting; set to `False` if, e.g.,
+        there are prior reasons to suppose the true mean of `signal` is zero
+    :param variance_delay: amount by which to lag the variance adjustment
+    :param wavelet: wavelet to use in filtering
+    :return: a dataframe (single-column if the input was a series)
+    """
     if isinstance(signal, pd.Series):
         return _compute_fir_zscore(
             signal,
             dyadic_tau,
-            variance_dyadic_tau,
-            delay,
+            demean,
             variance_delay,
             wavelet,
-            variance_wavelet,
         )
     df = signal.apply(
         lambda x: _compute_fir_zscore(
             x,
             dyadic_tau,
-            variance_dyadic_tau,
-            delay,
+            demean,
             variance_delay,
             wavelet,
-            variance_wavelet,
         )
     )
     return df
@@ -443,42 +520,24 @@ def compute_fir_zscore(
 def _compute_fir_zscore(
     signal: Union[pd.DataFrame, pd.Series],
     dyadic_tau: int,
-    variance_dyadic_tau: Optional[int] = None,
-    delay: int = 0,
-    variance_delay: Optional[int] = None,
+    demean: bool = True,
+    variance_delay: int = 0,
     wavelet: Optional[str] = None,
-    variance_wavelet: Optional[str] = None,
 ) -> pd.Series:
     """
     Z-score with a FIR filter.
     """
-    if variance_dyadic_tau is None:
-        variance_dyadic_tau = dyadic_tau
-    if variance_delay is None:
-        variance_delay = delay
-    if variance_wavelet is None:
-        variance_wavelet = wavelet
-    if isinstance(signal, pd.DataFrame):
-        hdbg.dassert_eq(
-            signal.shape[1], 1, "Input dataframe must have a single column."
-        )
-        signal = signal.squeeze()
-    # _LOG.debug("signal=%s", hpandas.df_to_str(signal))
-    # TODO(Paul): Add an swt high-pass filter function.
-    mean = get_swt(
-        signal, wavelet=wavelet, depth=dyadic_tau, output_mode="smooth"
-    )[dyadic_tau].shift(delay)
-    demeaned = signal - mean
-    # TODO(Paul): Replace with a call to `compute_swt_var()`.
-    var = get_swt(
-        demeaned**2,
-        wavelet=variance_wavelet,
-        depth=variance_dyadic_tau,
-        output_mode="smooth",
-    )[variance_dyadic_tau].shift(variance_delay)
+    signal = hpandas.as_series(signal)
+    if demean:
+        _LOG.debug("Demeaning signal...")
+        signal = compute_swt_high_pass(signal, dyadic_tau, wavelet)
+    var = compute_swt_low_pass(
+        signal**2,
+        dyadic_tau,
+        wavelet,
+    ).shift(variance_delay)
     # TODO(Paul): Maybe add delay-based rescaling.
-    srs = demeaned / np.sqrt(var)
-    srs.name = signal.name
+    srs = signal / np.sqrt(var)
     srs = srs.replace([-np.inf, np.inf], np.nan)
     return srs
 
