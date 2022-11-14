@@ -47,7 +47,7 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = None
+date_str = "20221109"
 prod_subdir = None
 config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
@@ -135,6 +135,19 @@ dag_df_dict = oms.load_dag_outputs(
 dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
+
+
+# %%
+def compare_past_predictions(df: pd.DataFrame) -> pd.DataFrame:
+    df_copy = df.copy()
+    df_copy = df_copy.reset_index(drop=False)
+    merged_df = df_copy.merge(df_copy[:-1], how="inner")
+    return merged_df
+
+
+# %%
+prod_comparison = compare_past_predictions(dag_df_prod)
+hpandas.df_to_str(prod_comparison, num_rows=5, log_level=logging.INFO)
 
 # %%
 compare_dfs_kwargs ={
