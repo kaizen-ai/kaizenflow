@@ -1,3 +1,5 @@
+-- IMPORTANT NOTE
+-- This script assumes an empty database with an empty schema 'public'
 --
 -- PostgreSQL database dump
 --

@@ -24,6 +24,7 @@ import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.htimer as htimer
+import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
@@ -126,6 +127,17 @@ def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
     # `https:://hub.docker.com/_/postgres`.
     connection_parameters = DbConnectionInfo(**params)
     return connection_parameters
+
+
+def get_connection_from_env_file(stage: str) -> DbConnection:
+    """
+    Get DB connection from environment file.
+
+    :param stage: stage of DB to connect to
+    """
+    env_file = imvimlita.get_db_env_path(stage)
+    connection_params = get_connection_info_from_env_file(env_file)
+    return get_connection(*connection_params)
 
 
 def check_db_connection(
