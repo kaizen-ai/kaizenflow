@@ -156,8 +156,11 @@ def get_ProcessForecastsNode_dict_instance1(
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
-    prediction_col = "vwap.ret_0.vol_adj_2_hat"
-    volatility_col = "vwap.ret_0.vol"
+    # TODO(Grisha): we should pass the column names.
+    prediction_col = "feature"
+    volatility_col = "garman_klass_vol"
+    #prediction_col = "vwap.ret_0.vol_adj_2_hat"
+    #volatility_col = "vwap.ret_0.vol"
     spread_col = None
     style = "cross_sectional"
     # For prod we use smaller GMV so that we can trade at low capacity while
