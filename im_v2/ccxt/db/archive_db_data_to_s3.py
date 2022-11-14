@@ -173,7 +173,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         )
     else:
         _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
-    
+
     # Fetch latest S3 row upon incremental archival.
     if incremental:
         # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
@@ -206,13 +206,13 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
                 min_age_timestamp, db_conn, db_table, table_timestamp_column
             )
         _LOG.info("Data archival finished successfully.")
-        
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _LOG.info(args)
     _archive_db_data_to_s3(args)
-        
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,

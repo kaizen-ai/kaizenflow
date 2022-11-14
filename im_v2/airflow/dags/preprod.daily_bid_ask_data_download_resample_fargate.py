@@ -12,7 +12,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -28,7 +28,7 @@ _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
-_EXCHANGES = ["binance"] 
+_EXCHANGES = ["binance"]
 _PROVIDERS = ["crypto_chassis"]
 _UNIVERSES = { "crypto_chassis": "v3"}
 _CONTRACTS = ["spot", "futures"]
@@ -48,11 +48,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -63,7 +63,7 @@ s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{V
 # Pass default parameters for the DAG.
 default_args = {
     "retries": 1,
-    # CryptoChassis might throw 
+    # CryptoChassis might throw
     # too many request error, wait a couple min to retry.
     "retry_delay": datetime.timedelta(minutes=5),
     "email": [Variable.get(f'{_STAGE}_notification_email')],
@@ -93,7 +93,7 @@ download_command = [
      "--aws_profile 'ck'",
      "--data_type '{}'",
      "--file_format 'parquet'",
-     # The command needs to be executed manually first because --incremental 
+     # The command needs to be executed manually first because --incremental
      # assumes appending to existing folder.
      "--incremental",
      "--contract_type '{}'",
@@ -127,7 +127,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
         "-futures" if contract == "futures" else "",
         f"{provider}.downloaded_1sec"
     )
-    
+
     kwargs = {}
     kwargs["network_configuration"] = {
         "awsvpcConfiguration": {
@@ -135,7 +135,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
             "subnets": ecs_subnets,
         },
     }
-    
+
     downloading_task = ECSOperator(
         task_id=f"download_{provider}_{exchange}_{contract}",
         dag=dag,
@@ -159,7 +159,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
         execution_timeout=datetime.timedelta(minutes=15),
         **kwargs
     )
-    
+
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(resample_command)
@@ -177,7 +177,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
         f"{provider}.resampled_1min",
         exchange
     )
-    
+
     resampling_task = ECSOperator(
         task_id=f"resample_{provider}_{exchange}_{contract}",
         dag=dag,
@@ -201,5 +201,5 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
         execution_timeout=datetime.timedelta(minutes=15),
         **kwargs
     )
-    
+
     start_task >> downloading_task >> resampling_task >> end_download
