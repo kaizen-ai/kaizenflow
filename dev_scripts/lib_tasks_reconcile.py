@@ -43,7 +43,6 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
-import oms as oms
 
 
 _LOG = logging.getLogger(__name__)
@@ -354,6 +353,8 @@ def reconcile_copy_prod_data(
         - "scheduled": the system is run at predefined time automatically
         - "manual": the system run is triggered manually
     """
+    import oms
+
     if start_timestamp_as_str is None:
         start_timestamp_as_str = _resolve_timestamps("0605")
     if end_timestamp_as_str is None:
