@@ -7,7 +7,6 @@ import pytest
 
 import helpers.hdatetime as hdateti
 import helpers.henv as henv
-import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
@@ -27,6 +26,9 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
     ]
     _ohlcv_dataframe_sample = None
     _bid_ask_dataframe_sample = None
+
+    _test_start_timestamp = "2021-09-15T23:45:00+00:00"
+    _test_end_timestamp = "2021-09-15T23:54:00+00:00"
 
     @staticmethod
     def get_s3_path() -> str:
@@ -57,7 +59,6 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         """
         ohlcv_sample = pd.DataFrame(
             columns=[
-                "timestamp",
                 "open",
                 "high",
                 "low",
@@ -68,20 +69,25 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             # fmt: off
             # pylint: disable=line-too-long
             data=[
-                [1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT"],
-                [1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT"],
-                [1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT"],
-                [1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT"],
-                [1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT"],
-                [1631145900000, 38, 39, 50, 61, 71, "binance::SOL_USDT"],
-                [1631145940000, 31, 45, 54, 60, 75, "binance::ETH_USDT"],
-                [1631145960000, 33, 43, 57, 63, 73, "binance::ADA_USDT"],
-                [1631145970000, 34, 40, 52, 62, 72, "binance::SOL_USDT"],
-                [1631145990000, 37, 44, 51, 64, 72, "kucoin::ETH_USDT"],
+                [30, 40, 50, 60, 70, "binance::BTC_USDT"],
+                [31, 41, 51, 61, 71, "binance::BTC_USDT"],
+                [34, 44, 54, 64, 74, "binance::BTC_USDT"],
+                [34, 44, 54, 64, 74, "binance::BTC_USDT"],
+                [34, 44, 54, 64, 74, "binance::BTC_USDT"],
+                [38, 39, 50, 61, 71, "binance::BTC_USDT"],
+                [31, 45, 54, 60, 75, "binance::BTC_USDT"],
+                [33, 43, 57, 63, 73, "binance::BTC_USDT"],
+                [34, 40, 52, 62, 72, "binance::BTC_USDT"],
+                [37, 44, 51, 64, 72, "binance::BTC_USDT"],
             ]
             # pylint: enable=line-too-long
             # fmt: on
         )
+        ohlcv_sample["timestamp"] = pd.date_range(
+            start=self._test_start_timestamp,
+            end=self._test_end_timestamp,
+            freq="T",
+        ).map(hdateti.convert_timestamp_to_unix_epoch)
         ohlcv_sample = ohlcv_sample.set_index(["timestamp", "full_symbol"])
         self._ohlcv_dataframe_sample = ohlcv_sample
         return self._ohlcv_dataframe_sample.copy()
@@ -92,7 +98,6 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         """
         bid_ask_sample = pd.DataFrame(
             columns=[
-                "timestamp",
                 "full_symbol",
                 "bid_price",
                 "bid_size",
@@ -102,20 +107,25 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             # fmt: off
             # pylint: disable=line-too-long
             data=[
-                [1631145600000, "binance::BTC_USDT", 19505.817, 1185.347, 19504.541, 859.472],
-                [1631145600000, "binance::ETH_USDT", 1321.790, 7004.761, 1321.699, 3670.681],
-                [1631145840000, "binance::BTC_USDT", 19500.714, 1019.649, 19502.706, 1101.954],
-                [1631145840000, "binance::ETH_USDT", 1321.400, 3675.864, 1321.278, 4320.231],
-                [1631145900000, "binance::BTC_USDT", 19483.345, 1689.938, 19484.335, 1095.325],
-                [1631145900000, "binance::ETH_USDT", 1320.022, 4612.925, 1320.102, 6404.481],
-                [1631145940000, "binance::BTC_USDT", 19483.128, 1528.736, 19482.422, 958.668],
-                [1631145940000, "binance::ETH_USDT", 1319.769, 3754.403, 1319.654, 4775.201],
-                [1631145970000, "binance::BTC_USDT", 19473.500, 4.351, 19473.600, 15.578],
-                [1631145970000, "binance::ETH_USDT", 1319.030, 43.404, 1319.040, 48.725],
+                ["binance::BTC_USDT", 19505.817, 1185.347, 19504.541, 859.472],
+                ["binance::BTC_USDT", 1321.790, 7004.761, 1321.699, 3670.681],
+                ["binance::BTC_USDT", 19500.714, 1019.649, 19502.706, 1101.954],
+                ["binance::BTC_USDT", 1321.400, 3675.864, 1321.278, 4320.231],
+                ["binance::BTC_USDT", 19483.345, 1689.938, 19484.335, 1095.325],
+                ["binance::BTC_USDT", 1320.022, 4612.925, 1320.102, 6404.481],
+                ["binance::BTC_USDT", 19483.128, 1528.736, 19482.422, 958.668],
+                ["binance::BTC_USDT", 1319.769, 3754.403, 1319.654, 4775.201],
+                ["binance::BTC_USDT", 19473.500, 4.351, 19473.600, 15.578],
+                ["binance::BTC_USDT", 1319.030, 43.404, 1319.040, 48.725],
             ]
             # pylint: enable=line-too-long
             # fmt: on
         )
+        bid_ask_sample["timestamp"] = pd.date_range(
+            start=self._test_start_timestamp,
+            end=self._test_end_timestamp,
+            freq="T",
+        ).map(hdateti.convert_timestamp_to_unix_epoch)
         bid_ask_sample = bid_ask_sample.set_index(["timestamp", "full_symbol"])
         self._bid_ask_dataframe_sample = bid_ask_sample
         return self._bid_ask_dataframe_sample.copy()
@@ -155,7 +165,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         Test function call with specific arguments that are mimicking command
         line arguments.
 
-        Missing realtime data.
+        Differing realtime data.
         """
         sample_rt = self.ohlcv_dataframe_sample()
         sample_daily = self.ohlcv_dataframe_sample()
@@ -192,8 +202,8 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         df.full=
         open            timestamp        full_symbol
         self other
-        1   31   666  1631145660000  binance::BTC_USDT
-        3   34   666  1631145840000  binance::ETH_USDT
+        1   31   666  1631749560000  binance::BTC_USDT
+        3   34   666  1631749680000  binance::BTC_USDT
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -209,8 +219,10 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         sample_rt = self.ohlcv_dataframe_sample()
         sample_daily = self.ohlcv_dataframe_sample()
         for position in [2, 4]:
-            # Edit original realtime data for mismatch.
-            sample_daily.iloc[position, sample_daily.columns.get_loc("open")] = 999
+            # Edit original daily data for mismatch.
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("open")
+            ] = 999
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
         )
@@ -241,12 +253,11 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         df.full=
         open            timestamp        full_symbol
         self other
-        2  999    34  1631145840000  binance::BTC_USDT
-        4  999    34  1631145840000   kucoin::ETH_USDT
+        2  999    34  1631749620000  binance::BTC_USDT
+        4  999    34  1631749740000   binance::BTC_USDT
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
-
 
     @pytest.mark.slow
     def test_compare_ohlcv_4(self) -> None:
@@ -263,7 +274,9 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             sample_rt.iloc[position, sample_rt.columns.get_loc("open")] = 666
         for position in [2, 4]:
             # Edit original daily data for mismatch.
-            sample_daily.iloc[position, sample_daily.columns.get_loc("open")] = 999
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("open")
+            ] = 999
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
         )
@@ -295,20 +308,39 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         df.full=
                                         open  high  low  close  volume
         timestamp     full_symbol
-        1631145900000 binance::SOL_USDT    38    39   50     61      71
-        1631145940000 binance::ETH_USDT    31    45   54     60      75
-        1631145960000 binance::ADA_USDT   999    43   57     63      73
-        1631145970000 binance::SOL_USDT    34    40   52     62      72
-        1631145990000 kucoin::ETH_USDT    999    44   51     64      72
+        1631749800000 binance::BTC_USDT    38    39   50     61      71
+        1631749860000 binance::BTC_USDT    31    45   54     60      75
+        1631749920000 binance::BTC_USDT   999    43   57     63      73
+        1631749980000 binance::BTC_USDT    34    40   52     62      72
+        1631750040000 binance::BTC_USDT    999    44   51     64      72
         Missing daily data:
         df.shape=(4, 5)
         df.full=
                                         open  high  low  close  volume
         timestamp     full_symbol
-        1631145600000 binance::BTC_USDT    30    40   50     60      70
-        1631145660000 binance::BTC_USDT   666    41   51     61      71
-        1631145840000 binance::BTC_USDT    34    44   54     64      74
-                    binance::ETH_USDT   666    44   54     64      74
+        1631749500000 binance::BTC_USDT    30    40   50     60      70
+        1631749560000 binance::BTC_USDT   666    41   51     61      71
+        1631749620000 binance::BTC_USDT    34    44   54     64      74
+        1631749680000 binance::BTC_USDT   666    44   54     64      74
+        Gaps in real time data:
+        df.shape=(6, 1)
+        df.full=
+                                                        0
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        2021-09-15 23:50:00+00:00 2021-09-15 23:50:00+00:00
+        2021-09-15 23:51:00+00:00 2021-09-15 23:51:00+00:00
+        2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
+        2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
+        2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
+        Gaps in daily data:
+        df.shape=(5, 1)
+        df.full=
+                                                        0
+        2021-09-15 23:45:00+00:00 2021-09-15 23:45:00+00:00
+        2021-09-15 23:46:00+00:00 2021-09-15 23:46:00+00:00
+        2021-09-15 23:47:00+00:00 2021-09-15 23:47:00+00:00
+        2021-09-15 23:48:00+00:00 2021-09-15 23:48:00+00:00
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -354,7 +386,9 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         sample_daily = self.bid_ask_dataframe_sample()
         for position in [1, 3]:
             # Edit original realtime data for mismatch.
-            sample_rt.iloc[position, sample_rt.columns.get_loc("bid_size")] = 666.667
+            sample_rt.iloc[
+                position, sample_rt.columns.get_loc("bid_size")
+            ] = 666.667
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
         )
@@ -380,7 +414,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Difference between bid sizes in real time and daily data for `binance::ETH_USDT` coin is more that 1%
+        Difference between bid sizes in real time and daily data for `binance::BTC_USDT` coin is more than 1%
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -397,7 +431,9 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         sample_daily = self.bid_ask_dataframe_sample()
         for position in [2, 4]:
             # Edit original realtime data for mismatch.
-            sample_daily.iloc[position, sample_daily.columns.get_loc("ask_price")] = 999.876
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("ask_price")
+            ] = 999.876
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
         )
@@ -423,11 +459,10 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more that 1%
+        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more than 1%
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
-
 
     @pytest.mark.slow
     def test_compare_bid_ask_4(self) -> None:
@@ -441,10 +476,14 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         sample_daily = self.bid_ask_dataframe_sample().head(4)
         for position in [1, 3]:
             # Edit original realtime data for mismatch.
-            sample_rt.iloc[position, sample_rt.columns.get_loc("bid_size")] = 2279.667
+            sample_rt.iloc[
+                position, sample_rt.columns.get_loc("bid_size")
+            ] = 2279.667
         for position in [2, 3]:
             # Edit original daily data for mismatch.
-            sample_daily.iloc[position, sample_daily.columns.get_loc("ask_price")] = 3224.678
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("ask_price")
+            ] = 3224.678
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
         )
@@ -470,9 +509,28 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more that 1%
-        Difference between ask prices in real time and daily data for `binance::ETH_USDT` coin is more that 1%
-        Difference between bid sizes in real time and daily data for `binance::ETH_USDT` coin is more that 1%
+        Gaps in real time data:
+        df.shape=(6, 1)
+        df.full=
+                                                        0
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        2021-09-15 23:50:00+00:00 2021-09-15 23:50:00+00:00
+        2021-09-15 23:51:00+00:00 2021-09-15 23:51:00+00:00
+        2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
+        2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
+        2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
+        Gaps in daily data:
+        df.shape=(6, 1)
+        df.full=
+                                                        0
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        2021-09-15 23:50:00+00:00 2021-09-15 23:50:00+00:00
+        2021-09-15 23:51:00+00:00 2021-09-15 23:51:00+00:00
+        2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
+        2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
+        2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
+        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more than 1%
+        Difference between bid sizes in real time and daily data for `binance::BTC_USDT` coin is more than 1%
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -516,6 +574,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "resample_1min": "True",
             "resample_1sec": "False",
             "s3_vendor": "crypto_chassis",
+            "bid_ask_accuracy": None,
         }
         self.assertDictEqual(actual, expected)
 
@@ -534,14 +593,16 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             table_name="ccxt_ohlcv",
         )
 
-    def _test_function_call(self, data_type, contract_type, resample_1min) -> None:
+    def _test_function_call(
+        self, data_type, contract_type, resample_1min
+    ) -> None:
         """
         Test directly _run function for coverage increase.
         """
         # Prepare inputs.
         kwargs = {
-            "start_timestamp": "20210915-235500",
-            "end_timestamp": "20220917-000500",
+            "start_timestamp": self._test_start_timestamp,
+            "end_timestamp": self._test_end_timestamp,
             "db_stage": "local",
             "exchange_id": "binance",
             "db_table": "ccxt_ohlcv",
@@ -553,6 +614,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "contract_type": contract_type,
             "resample_1min": True,
             "s3_vendor": "crypto_chassis",
+            "bid_ask_accuracy": 1,
         }
         if resample_1min:
             kwargs["resample_1min"] = True
@@ -566,38 +628,6 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
 
 
 class TestFilterDuplicates(hunitest.TestCase):
-    @staticmethod
-    def _get_test_data() -> pd.DataFrame:
-        """
-        Create a test CCXT OHLCV dataframe.
-        """
-        test_data = pd.DataFrame(
-            columns=[
-                "id",
-                "timestamp",
-                "open",
-                "high",
-                "low",
-                "close",
-                "volume",
-                "full_symbol",
-                "end_download_timestamp",
-                "knowledge_timestamp",
-            ],
-            # fmt: off
-            # pylint: disable=line-too-long
-            data=[
-                [0, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [1, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [2, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [3, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-                [4, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
-            ]
-            # pylint: enable=line-too-long
-            # fmt: on
-        )
-        return test_data
-
     def test_filter_duplicates(self) -> None:
         """
         Verify that duplicated data is filtered correctly.
@@ -605,7 +635,9 @@ class TestFilterDuplicates(hunitest.TestCase):
         input_data = self._get_duplicated_test_data()
         self.assertEqual(input_data.shape, (10, 10))
         # Filter duplicates.
-        actual_data = imvcdecrah.RealTimeHistoricalReconciler._filter_duplicates(input_data)
+        actual_data = imvcdecrah.RealTimeHistoricalReconciler._filter_duplicates(
+            input_data
+        )
         expected_length = 6
         expected_column_names = [
             "close",
@@ -641,6 +673,38 @@ class TestFilterDuplicates(hunitest.TestCase):
             None,
             expected_signature,
         )
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "full_symbol",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [0, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [1, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [2, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [3, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
 
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
