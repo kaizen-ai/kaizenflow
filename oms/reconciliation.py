@@ -192,6 +192,16 @@ def load_config_from_pickle(
 # /////////////////////////////////////////////////////////////////////////////
 
 
+def get_prod_system_log_dir(
+    mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
+) -> str:
+    system_log_dir = (
+        f"system_log_dir.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
+    )
+    _LOG.info(hprint.to_str("system_log_dir"))
+    return system_log_dir
+
+
 # TODO(gp): -> _get_system_log_paths?
 def get_system_log_paths(
     system_log_path_dict: Dict[str, str],

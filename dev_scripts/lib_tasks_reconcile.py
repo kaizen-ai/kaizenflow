@@ -43,6 +43,8 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
+import oms as oms
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -64,9 +66,10 @@ def _dassert_is_date(date: str) -> None:
 
 def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
-    Return the run date as string from start timestamp, e.g. "20221017"
+    Return the run date as string from start timestamp, e.g. "20221017".
 
-    If start timestamp is not specified by a user then return current date.
+    If start timestamp is not specified by a user then return current
+    date.
     """
     if start_timestamp_as_str is None:
         run_date = datetime.date.today().strftime("%Y%m%d")
@@ -105,6 +108,13 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     target_dir = os.path.join(dst_dir, run_date)
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
+
+
+def _resolve_timestamps(time_as_str: str) -> str:
+    timestamp_as_str = "_".join(
+        [datetime.date.today().strftime("%Y%m%d"), time_as_str]
+    )
+    return timestamp_as_str
 
 
 def _sanity_check_data(file_path: str) -> None:
@@ -267,13 +277,9 @@ def reconcile_run_sim(
     )
     _ = ctx
     if start_timestamp_as_str is None:
-        start_timestamp_as_str = "_".join(
-            [datetime.date.today().strftime("%Y%m%d"), "0605"]
-        )
+        start_timestamp_as_str = _resolve_timestamps("0605")
     if end_timestamp_as_str is None:
-        end_timestamp_as_str = "_".join(
-            [datetime.date.today().strftime("%Y%m%d"), "0800"]
-        )
+        end_timestamp_as_str = _resolve_timestamps("0800")
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
@@ -336,6 +342,7 @@ def reconcile_copy_sim_data(
 def reconcile_copy_prod_data(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
     mode=None,
@@ -351,6 +358,10 @@ def reconcile_copy_prod_data(
         - "scheduled": the system is run at predefined time automatically
         - "manual": the system run is triggered manually
     """
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = _resolve_timestamps("0605")
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = _resolve_timestamps("0800")
     if stage is None:
         stage = "preprod"
     if mode is None:
@@ -367,19 +378,23 @@ def reconcile_copy_prod_data(
     # Copy prod run results to the target dir.
     run_datetime = datetime.datetime.strptime(run_date, "%Y%m%d")
     # Prod system is run via AirFlow and the results are tagged with the previous day.
-    prod_run_date = (
-        run_datetime - datetime.timedelta(days=1)
-    ).strftime("%Y-%m-%d")
+    prod_run_date = (run_datetime - datetime.timedelta(days=1)).strftime(
+        "%Y-%m-%d"
+    )
     shared_dir = f"/shared_data/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_{mode}__*2hours | grep '{prod_run_date}'"
-    # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
+    system_log_dir = oms.get_prod_system_log_dir(
+        mode, start_timestamp_as_str, end_timestamp_as_str
+    )
+    cmd = f"find '{shared_dir}' -name {system_log_dir} | grep '{prod_run_date}'"
+    # E.g., `.../system_log_dir.manual.20221101_0845.20221101_1025`.
     _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    cmd = f"find '{shared_dir}/logs' -name log_{mode}__*2hours.txt | grep '{prod_run_date}'"
-    # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
+    prod_logs = "log_{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
+    cmd = f"find '{shared_dir}/logs' -name {prod_logs}.txt | grep '{prod_run_date}'"
+    # E.g., `.../log_scheduled.20221101_0845.20221101_1025.txt`.
     _, log_file = hsystem.system_to_string(cmd)
     hdbg.dassert_file_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
