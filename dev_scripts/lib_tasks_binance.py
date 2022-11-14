@@ -11,7 +11,6 @@ import pandas as pd
 
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hserver as hserver
 import oms.ccxt_broker as occxbrok
 import oms.hsecrets as omssec
@@ -23,7 +22,7 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
     # `MarketData` is not strictly needed to talk to exchange, but since it is
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
-    market_data =  dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
+    market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
     universe_version = "v7"
     strategy_id = "C1b"
     exchange_id = "binance"
@@ -56,8 +55,6 @@ def binance_get_open_positions(ctx, secret_id):
     open_positions = ccxt_broker.get_open_positions()
     df = pd.DataFrame(
         data=open_positions,
-        columns=[
-            "symbol", "side", "contracts", "contractSize", "notional"
-        ]
+        columns=["symbol", "side", "contracts", "contractSize", "notional"],
     )
     _LOG.info("\n%s", df)
