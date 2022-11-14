@@ -98,6 +98,12 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     run_tests,
     traceback,
 )
+try:
+    from dev_scripts.lib_tasks_binance import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
+        binance_get_open_positions,
+    )
+except ImportError as e:
+    pass
 # # TODO(gp): This is due to the coupling between code in linter container and
 # #  the code being linted.
 # try:
