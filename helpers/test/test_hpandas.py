@@ -1995,7 +1995,7 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                           tsA.diff  tsB.diff  tsC.diff
-        timestamp                                              
+        timestamp
         2022-01-01 21:01:00+00:00     -0.10       4.0      0.50
         2022-01-01 21:02:00+00:00      0.10       0.0     -0.60
         2022-01-01 21:03:00+00:00     -0.15       0.2     -0.07
@@ -2023,7 +2023,7 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                  tsA.pct_change  tsB.pct_change  tsC.pct_change
-        timestamp                                                                
+        timestamp
         2022-01-01 21:01:00+00:00       -9.090909             inf        7.692308
         2022-01-01 21:02:00+00:00        5.263158        0.000000       -6.976744
         2022-01-01 21:03:00+00:00       -4.761905        3.448276       -0.771775
@@ -2047,7 +2047,7 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""               tsA.diff  tsB.diff
-        timestamp                                    
+        timestamp
         2022-01-01 21:01:00+00:00      -0.1       4.0
         2022-01-01 21:02:00+00:00       0.1       0.0
         """
@@ -2070,7 +2070,7 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                     tsA.pct_change  tsB.pct_change
-        timestamp                                                
+        timestamp
         2022-01-01 21:01:00+00:00       -9.090909             NaN
         2022-01-01 21:02:00+00:00        5.263158             0.0
         """
@@ -2100,7 +2100,7 @@ class Test_compare_dfs(hunitest.TestCase):
         )
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                  tsA.diff  tsB.diff  tsC.diff
-        timestamp                                              
+        timestamp
         2022-01-01 21:01:00+00:00         1         4         7
         2022-01-01 21:02:00+00:00         2         5         8
         2022-01-01 21:03:00+00:00         3         6         9
@@ -2132,7 +2132,7 @@ class Test_compare_dfs(hunitest.TestCase):
         #
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                    tsA.pct_change  tsB.pct_change
-        timestamp                                                
+        timestamp
         2022-01-01 21:01:00+00:00          -100.0             NaN
         2022-01-01 21:02:00+00:00             0.0             0.0
         """
@@ -2163,7 +2163,7 @@ class Test_compare_dfs(hunitest.TestCase):
         #
         actual = hpandas.df_to_str(df_diff)
         expected = r"""                    tsA.pct_change  tsB.pct_change
-        timestamp                                                
+        timestamp
         2022-01-01 21:01:00+00:00          -100.0             inf
         2022-01-01 21:02:00+00:00             NaN             NaN
         """

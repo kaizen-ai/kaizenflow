@@ -475,7 +475,7 @@ if False:
     hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# # Orders 
+# # Orders
 
 # %% [markdown]
 # ## Load orders (prod & sim)
@@ -523,7 +523,7 @@ stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(bins=31)
 # %%
 notional_costs = oms.compute_notional_costs(
     portfolio_dfs["prod"],
-    prod_target_position_df, 
+    prod_target_position_df,
 )
 hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
 
@@ -532,7 +532,7 @@ cost_df = oms.apply_costs_to_baseline(
     portfolio_stats_dfs["research"],
     portfolio_stats_dfs["prod"],
     portfolio_dfs["prod"],
-    prod_target_position_df, 
+    prod_target_position_df,
 )
 hpandas.df_to_str(cost_df, num_rows=5, log_level=logging.INFO)
 
