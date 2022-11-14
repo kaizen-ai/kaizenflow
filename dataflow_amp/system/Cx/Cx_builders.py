@@ -280,7 +280,10 @@ def _get_Cx_dag_prod_instance1(
     #
     system = dtfsys.apply_DagRunner_config_for_crypto(system)
     # Build Portfolio.
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    # TODO(Grisha): this is a hack, we should enforece that all `DagBuilder`
+    # objects have `get_trading_period` method.
+    trading_period_str = "5T"
+    #trading_period_str = dag_builder.get_trading_period(dag_config)
     # TODO(gp): Add a param to get_trading_period to return the int.
     order_duration_in_mins = int(trading_period_str.replace("T", ""))
     system.config[
@@ -344,7 +347,10 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     market_data = system.market_data
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    # TODO(Grisha): this is a hack, we should enforece that all `DagBuilder`
+    # objects have `get_trading_period` method.
+    trading_period_str = "5T"
+    #trading_period_str = dag_builder.get_trading_period(dag_config)
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
     cf_config_strategy = system.config.get_and_mark_as_used(

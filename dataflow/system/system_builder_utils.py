@@ -157,9 +157,12 @@ def apply_history_lookback(
     if days is None:
         dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
         dag_config = system.config.get_and_mark_as_used("dag_config")
-        days = (
-            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
-        )
+        # TODO(Grisha): it is a hack, we should enforce that a `DagBuilder`
+        # has `_get_required_lookback_in_effective_days()` method.
+        days = 4
+        # days = (
+        #     dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+        # )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
         "market_data_config", "history_lookback"
@@ -663,8 +666,10 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     """
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
-    #
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    # TODO(Grisha): this is a hack, we should enforece that all `DagBuilder`
+    # objects have `get_trading_period` method.
+    trading_period_str = "5T"
+    #trading_period_str = dag_builder.get_trading_period(dag_config)
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
     #
     bar_duration_in_secs = pd.Timedelta(trading_period_str).seconds
