@@ -21,7 +21,6 @@ import logging
 
 import pandas as pd
 
-import core.config as cconfig
 import helpers.hdbg as hdbg
 import optimizer.single_period_optimization as osipeopt
 
@@ -72,13 +71,11 @@ dict_ = {
     "solver": "ECOS",
 }
 
-spo_config = cconfig.Config.from_dict(dict_)
-
 # %% [markdown]
 # # Optimize
 
 # %%
-spo = osipeopt.SinglePeriodOptimizer(spo_config, df)
+spo = osipeopt.SinglePeriodOptimizer(dict_, df)
 
 # %%
 opt_results = spo.optimize()
@@ -150,11 +147,17 @@ import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
 # %%
 fewo = ofevwiop.ForecastEvaluatorWithOptimizer(
-    "price", "volatility", "prediction", spo_config
+    "price",
+    "volatility",
+    "prediction",
+    dict_,
 )
 
 # %%
-portfolio_df, portfolio_stats_df, targets_dict = fewo.annotate_forecasts(
+dag_df
+
+# %%
+portfolio_df, portfolio_stats_df = fewo.annotate_forecasts(
     dag_df, quantization="nearest_share"
 )
 
@@ -165,6 +168,4 @@ portfolio_df
 portfolio_stats_df
 
 # %%
-targets_dict[idx[2]]
-
-# %%
+dfs = fewo.compute_portfolio(dag_df, quantization="nearest_share")

@@ -10,7 +10,6 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import optimizer.base as opbase
@@ -32,13 +31,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def optimize(
-    config: cconfig.Config,
+    config_dict: dict,
     df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Wrapper around `SinglePeriodOptimizer`.
     """
-    spo = SinglePeriodOptimizer(config, df)
+    spo = SinglePeriodOptimizer(config_dict, df)
     output_df = spo.optimize()
     return output_df
 
@@ -46,7 +45,7 @@ def optimize(
 class SinglePeriodOptimizer:
     def __init__(
         self,
-        config: cconfig.Config,
+        config_dict: dict,
         df: pd.DataFrame,
         *,
         restrictions: Optional[pd.DataFrame] = None,
@@ -62,31 +61,19 @@ class SinglePeriodOptimizer:
             - some restriction constraints are position-dependent
         :param restrictions: restrictions dataframe
         """
-        # Process `config` and extract parameters.
-        config.check_params(
-            [
-                "dollar_neutrality_penalty",
-                "volatility_penalty",
-                "turnover_penalty",
-                "target_gmv",
-                "target_gmv_upper_bound_penalty",
-                "target_gmv_hard_upper_bound_multiple",
-                "relative_holding_penalty",
-                "relative_holding_max_frac_of_gmv",
-            ]
-        )
-        self._dollar_neutrality_penalty = config["dollar_neutrality_penalty"]
-        self._volatility_penalty = config["volatility_penalty"]
-        self._turnover_penalty = config["turnover_penalty"]
-        self._target_gmv = config["target_gmv"]
-        self._target_gmv_upper_bound_penalty = config[
+        # Process `config_dict` and extract parameters.
+        self._dollar_neutrality_penalty = config_dict["dollar_neutrality_penalty"]
+        self._volatility_penalty = config_dict["volatility_penalty"]
+        self._turnover_penalty = config_dict["turnover_penalty"]
+        self._target_gmv = config_dict["target_gmv"]
+        self._target_gmv_upper_bound_penalty = config_dict[
             "target_gmv_upper_bound_penalty"
         ]
-        self._target_gmv_hard_upper_bound_multiple = config[
+        self._target_gmv_hard_upper_bound_multiple = config_dict[
             "target_gmv_hard_upper_bound_multiple"
         ]
-        self._relative_holding_penalty = config["relative_holding_penalty"]
-        self._relative_holding_max_frac_of_gmv = config[
+        self._relative_holding_penalty = config_dict["relative_holding_penalty"]
+        self._relative_holding_max_frac_of_gmv = config_dict[
             "relative_holding_max_frac_of_gmv"
         ]
         SinglePeriodOptimizer._validate_df(df)
@@ -108,8 +95,8 @@ class SinglePeriodOptimizer:
             "current_weights=\n%s", hpandas.df_to_str(self._current_weights)
         )
         # We pass "solver" as a string to avoid propagating `cvx` dependencies.
-        if "solver" in config:
-            solver = config["solver"]
+        if "solver" in config_dict:
+            solver = config_dict["solver"]
             if solver == "ECOS":
                 self._solver = cvx.ECOS
             elif solver == "OSQP":
@@ -120,7 +107,7 @@ class SinglePeriodOptimizer:
                 raise ValueError("solver=%s not supported", solver)
         else:
             self._solver = None
-        self._verbose = config.get("verbose", False)
+        self._verbose = config_dict.get("verbose", False)
 
     def optimize(self) -> pd.DataFrame:
         """

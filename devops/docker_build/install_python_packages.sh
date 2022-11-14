@@ -77,6 +77,12 @@ if [[ ! -e /usr/bin/pip ]]; then
     ln -s /usr/bin/pip3 /usr/bin/pip
 fi;
 
+# We install cvxpy here after poetry since it doesn't work with poetry
+# ```
+# ERROR: cvxpy-1.2.2-cp38-cp38-manylinux_2_24_x86_64.whl is not a supported wheel on this platform.
+# ```
+pip3 install cvxpy
+
 # Update the bashrc.
 echo "" >>~/.bashrc
 echo "set -o vi" >>~/.bashrc
