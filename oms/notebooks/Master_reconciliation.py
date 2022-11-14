@@ -138,15 +138,29 @@ hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 
 # %%
-def compare_past_predictions(df: pd.DataFrame) -> pd.DataFrame:
-    df_copy = df.copy()
-    df_copy = df_copy.reset_index(drop=False)
-    merged_df = df_copy.merge(df_copy[:-1], how="inner")
+def compare_past_predictions(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+    df1_copy = df1.copy()
+    df1_copy = df1_copy.reset_index(drop=False)
+    #
+    df2_copy = df2.copy()
+    df2_copy = df2_copy.reset_index(drop=False)
+    merged_df = df1_copy.merge(df2_copy, how="inner")
     return merged_df
 
 
 # %%
-prod_comparison = compare_past_predictions(dag_df_prod)
+dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]][1:]
+dag_df_prod_past.equals(dag_df_prod[:-1])
+
+# %%
+dag_df_prod_past.index.min(), dag_df_prod_past.index.max()
+
+# %%
+dag_df_prod.index.min(), dag_df_prod.index.max() 
+
+# %%
+prod_comparison = compare_past_predictions(dag_df_prod_past, dag_df_prod[:-1])
+display(prod_comparison.shape)
 hpandas.df_to_str(prod_comparison, num_rows=5, log_level=logging.INFO)
 
 # %%
