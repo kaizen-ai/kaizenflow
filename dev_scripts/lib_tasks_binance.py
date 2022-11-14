@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import dev_scripts.lib_tasks_binance as dslitabi
+"""
+
 import logging
 
 from invoke import task
