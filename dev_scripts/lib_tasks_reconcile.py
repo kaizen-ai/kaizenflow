@@ -211,13 +211,9 @@ def reconcile_dump_market_data(
     )
     _ = ctx
     if start_timestamp_as_str is None:
-        start_timestamp_as_str = "_".join(
-            [datetime.date.today().strftime("%Y%m%d"), "0605"]
-        )
+        start_timestamp_as_str = _resolve_timestamps("0605")
     if end_timestamp_as_str is None:
-        end_timestamp_as_str = "_".join(
-            [datetime.date.today().strftime("%Y%m%d"), "0800"]
-        )
+        end_timestamp_as_str = _resolve_timestamps("0800")
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     market_data_file = "test_data.csv.gz"
@@ -619,6 +615,7 @@ def reconcile_run_all(
     reconcile_copy_prod_data(
         ctx,
         start_timestamp_as_str=start_timestamp_as_str,
+        end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
         stage=stage,
         mode=mode,
