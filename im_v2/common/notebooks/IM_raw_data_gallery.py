@@ -146,17 +146,6 @@ def find_gaps_in_time_series(
 
 
 # %%
-start_ts = pd.Timestamp("20221004", tz="UTC")
-end_ts = pd.Timestamp("20221204", tz="UTC")
-# Separate time period to months.
-# 
-dates = pd.date_range(start_ts, end_ts, freq="M")
-
-# %%
-dates
-
-
-# %%
 def process_s3_data_in_chunks(
     start_ts: str, end_ts: str, s3_path: str
 ) -> List[pd.Series]:
