@@ -192,6 +192,19 @@ def load_config_from_pickle(
 # /////////////////////////////////////////////////////////////////////////////
 
 
+def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
+    # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
+    hdbg.dassert_isinstance(timestamp_as_str, str)
+    timestamp_as_str = timestamp_as_str.replace("_", " ")
+    # Add timezone offset in order to standartize the time.
+    timestamp_as_str = "".join([timestamp_as_str, "-04:00"])
+    timestamp = pd.Timestamp(timestamp_as_str, tz="America/New_York")
+    return timestamp
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+
 def get_prod_system_log_dir(
     mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
 ) -> str:
