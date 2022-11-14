@@ -18,7 +18,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -34,7 +34,7 @@ _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
-# Base name of the db tables to archive, stage will be appended later. 
+# Base name of the db tables to archive, stage will be appended later.
 _DB_TABLES = ["ccxt_bid_ask_futures_raw"]
 # If _DRY_RUN = True the data is not actually archived/deleted.
 _DRY_RUN = False
@@ -53,11 +53,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -84,14 +84,14 @@ dag = airflow.DAG(
     catchup=True,
     start_date=datetime.datetime(2022, 11, 3, 12, 0, 0),
 )
-    
+
 archival_command = [
    "/app/amp/im_v2/ccxt/db/archive_db_data_to_s3.py",
    "--db_stage 'dev'",
    "--timestamp '{{ data_interval_end - macros.timedelta(hours=var.value.db_archival_delay_hours | int) }}'",
    "--db_table '{}'",
    f"--s3_path '{s3_db_archival_data_path}'",
-   # The command needs to be executed manually first because --incremental 
+   # The command needs to be executed manually first because --incremental
    # assumes appending to existing folder.
    "--incremental"
 ]
@@ -103,7 +103,7 @@ for db_table in _DB_TABLES:
 
     db_table_with_stage = db_table
     db_table_with_stage += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-    
+
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(archival_command)
@@ -118,7 +118,7 @@ for db_table in _DB_TABLES:
             "subnets": ecs_subnets,
         },
     }
-    
+
     archiving_task = ECSOperator(
         task_id=f"archive_{db_table_with_stage}",
         dag=dag,
@@ -141,5 +141,5 @@ for db_table in _DB_TABLES:
         execution_timeout=datetime.timedelta(minutes=20),
         **kwargs
     )
-    
+
     start_archival >> archiving_task >> end_archival

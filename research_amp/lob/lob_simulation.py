@@ -337,7 +337,7 @@ def generate_supply_demand_curve(curve_mode: str, mode: str, params: dict):
     ```
                   price
     quantity
-    
+
     50.000000 10.000000
     49.322034 11.525424
     ...
