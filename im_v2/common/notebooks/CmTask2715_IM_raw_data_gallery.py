@@ -146,7 +146,18 @@ def find_gaps_in_time_series(
 
 
 # %%
-def process_s3_data_partially(
+start_ts = pd.Timestamp("20221004", tz="UTC")
+end_ts = pd.Timestamp("20221204", tz="UTC")
+# Separate time period to months.
+# 
+dates = pd.date_range(start_ts, end_ts, freq="M")
+
+# %%
+dates
+
+
+# %%
+def process_s3_data_in_chunks(
     start_ts: str, end_ts: str, s3_path: str
 ) -> List[pd.Series]:
     """
@@ -159,16 +170,22 @@ def process_s3_data_partially(
     start_ts = pd.Timestamp(start_ts, tz="UTC")
     end_ts = pd.Timestamp(end_ts, tz="UTC")
     # Separate time period to months.
+    # E.g. of `dates` sequence `['2022-10-31 00:00:00+00:00', '2022-11-30 00:00:00+00:00']`.
     dates = pd.date_range(start_ts, end_ts, freq="M")
     for i in range(0, len(dates), 2):
+        # Iterate through the dates to select the loading period boundaries.
+        # One chunk of data is loaded for two months. 
+        # E.g. the sequence of ['2022-09-31', '2022-10-30', '2022-11-31', '2022-12-31']
+        # should be divided into two periods: ['2022-09-31', '2022-10-30']
+        # and ['2022-11-31', '2022-12-31'] 
         start_end = dates[i : i + 2]
         if len(start_end) == 2:
             start, end = dates[i : i + 2]
-            print(f"Loading data for {start.month}th and {end.month}th months")
+            print(f"Loading data for the months {start.month} and {end.month}")
         else:
             start = dates[i]
             end = None
-            print(f"Loading data for {start.month}th month")
+            print(f"Loading data for the month {start.month}")
         # Load the data of the time period.
         daily_data = load_parquet_by_period(start, end, s3_path)
         overall_rows += len(daily_data)
@@ -307,7 +324,7 @@ s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/
 # %%
 start_ts = "20220627-000000"
 end_ts = "20221130-000000"
-nans_stats, zeros_stats = process_s3_data_partially(start_ts, end_ts, s3_path)
+nans_stats, zeros_stats = process_s3_data_in_chunks(start_ts, end_ts, s3_path)
 
 # %% [markdown]
 # #### Count NaNs
@@ -330,7 +347,7 @@ s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_c
 # %%
 start_ts = "20220501-000000"
 end_ts = "20221130-000000"
-nans_stats, zeros_stats = process_s3_data_partially(start_ts, end_ts, s3_path)
+nans_stats, zeros_stats = process_s3_data_in_chunks(start_ts, end_ts, s3_path)
 
 # %% [markdown]
 # #### Count NaNs
