@@ -285,7 +285,6 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     return df
 
 
-# TODO(Juraj): extend to support deeper levels of order book.
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
     Transform raw bid/ask realtime data and resample to 1-min.
@@ -316,8 +315,9 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     )
     df_raw = df_raw.set_index("timestamp")
     dfs_resampled = []
-    for currency_pair in df_raw["currency_pair"].unique():
-        df_part = df_raw[df_raw["currency_pair"] == currency_pair]
+    for currency_pair, level in zip(df_raw["currency_pair"].unique(), df_raw["level"].unique()):
+        df_bool_mask = (df_raw["currency_pair"] == currency_pair) & (df_raw["level"] == level)
+        df_part = df_raw[df_bool_mask]
         # Resample to 1 sec.
         df_part = (
             df_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
@@ -337,10 +337,8 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     df_resampled["timestamp"] = df_resampled["timestamp"].map(
         hdateti.convert_timestamp_to_unix_epoch
     )
-    # This data is only reloaded so end_download_timestamp is None.
+    # This data is only reloaded from our DB so end_download_timestamp is None.
     df_resampled["end_download_timestamp"] = None
-    # At the level column back.
-    df_resampled["level"] = 1
     # Round column values for readability.
     round_cols_dict = {
         col: 6 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
