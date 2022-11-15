@@ -140,6 +140,8 @@ _VALID_CLOBBER_MODES = (
 _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 
 
+_VALID_UNUSED_VARIABLES_MODES = ("warning_on_error", "assert_on_error")
+
 # #############################################################################
 # _OrderedConfig
 # #############################################################################
@@ -414,7 +416,6 @@ class _OrderedConfig(_OrderedDictType):
         ret = self.to_string(mode)
         return ret
 
-    # TODO(Danya): Expand the use to `Config` class.
     def marked_as_used(self, key: ScalarKey) -> bool:
         """
         Return True if the value has been used.
@@ -553,6 +554,7 @@ class Config:
         update_mode: str = "assert_on_overwrite",
         clobber_mode: str = "assert_on_write_after_use",
         report_mode: str = "verbose_log_error",
+        unused_variables_mode: str = "warning_on_error"
     ) -> None:
         """
         Build a config from a list of (key, value).
@@ -568,6 +570,7 @@ class Config:
         self.update_mode = update_mode
         self.clobber_mode = clobber_mode
         self.report_mode = report_mode
+        self.unused_variables_mode = unused_variables_mode
         # Control whether a config can be modified or not. This needs to be
         # initialized before assigning values with `__setitem__()`, since this
         # function needs to check `_read_only`.
@@ -710,6 +713,20 @@ class Config:
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
 
+    def check_unused_variables(self, *, unused_variables_mode: Optional[str] = None) -> List[str]:
+        # 1. Go over the entire tree.
+        # 2. Check if the value is a config or not.
+        # 3. If config, skip
+        # 4. If not config, use "marked_as_used", if False, append to unused variables.
+        if unused_variables:
+            if mode == "warning_on_error":
+                _LOG.warning(hprint.to_str("unused_variables"))
+            elif mode=="assert_on_error":
+                raise ValueError(unused_variables)
+            else:
+                raise ValueError(mode)
+        return unused_variables
+
     def get_and_mark_as_used(
         self,
         key: ScalarKeyValidTypes,
@@ -718,6 +735,8 @@ class Config:
     ) -> Any:
         """
         Get the value and mark it as used.
+
+        Similar to the `get` method.
 
         :param default_value: value to return if key was not found
 
@@ -774,6 +793,8 @@ class Config:
                 raise e
         return ret
 
+
+    
     def get(
         self,
         key: CompoundKey,
@@ -1305,6 +1326,12 @@ class Config:
             value, self._report_mode, _VALID_REPORT_MODES, "report_mode"
         )
         return report_mode
+    
+    def _resolve_unused_variables_mode(self, value: Optional[str]) -> str:
+        unused_variables_mode = self._resolve_mode(
+            value, self._report_mode, _VALID_UNUSED_VARIABLES_MODES, "unused_variable_mode"
+        )
+        return unused_variables_mode
 
     def _dassert_base_case(self, key: CompoundKey) -> None:
         """
