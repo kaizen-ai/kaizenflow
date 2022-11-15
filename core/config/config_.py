@@ -140,6 +140,13 @@ _VALID_CLOBBER_MODES = (
 _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 
 
+# unused_variables_mode specifies how to treat unused variables
+#  when `check_unused_variables` is called. The method should be called:
+# - when objects using the Config have been built,
+# - and they will not be updated
+# The modes are:
+# - `warning_on_error` (default): show unused variables in the logger
+# - `assert_on_error`: raise a ValueError if unused variables are found
 _VALID_UNUSED_VARIABLES_MODES = ("warning_on_error", "assert_on_error")
 
 # #############################################################################
@@ -509,9 +516,11 @@ class _OrderedConfig(_OrderedDictType):
             for key in val._config.keys():
                 val._config._mark_as_used(key, used_state=marked_as_used)
 
-    def _marked_as_used(self, key):
+    def _marked_as_used(self, key: ScalarKey) -> bool:
+        """
+        Get the value for `marked_as_used` for a leaf value.
+        """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        # Retrieve the value from the dictionary itself.
         marked_as_used, writer, val = super().__getitem__(key)
         return marked_as_used
 
@@ -715,14 +724,7 @@ class Config:
         report_mode: Optional[str] = None,
     ) -> Any:
         """
-        Get value for `key` or raise `KeyError` if it doesn't exist. If `key`
-        is compound, then the hierarchy is navigated until the corresponding
-        element is found or we raise if the element doesn't exist.
-
-        :param mark_key_as_used: whether we mark the key as read by the client.
-          Set to `False` due to accessing values from logging, and we want clients
-          to explicitely say when they want the value to be marked as read.
-        :raises KeyError: if the compound key is not found in the `Config`
+        Get the bool value for whether `key` is marked as used.
         """
         _LOG.debug("-> " + hprint.to_str("key report_mode self"))
         report_mode = self._resolve_report_mode(report_mode)
@@ -731,11 +733,6 @@ class Config:
                 key, level=0, mark_key_as_used=False, get_marked_as_used=True
             )
         except Exception as e:
-            # After the recursion is done, in case of error print information
-            # about the offending key.
-            # The Config-specific exceptions are handled by an internal method,
-            # hence the broad `except` statement. All non-Config exceptions
-            # are reported separately.
             self._raise_exception(e, key, report_mode)
         return ret
 
@@ -745,18 +742,28 @@ class Config:
     def check_unused_variables(
         self, *, unused_variables_mode: Optional[str] = None
     ) -> List[str]:
-        # 1. Go over the entire tree.
-        self.keys()
-        # 2. Check if the value is a config or not.
-        # 3. If config, skip
-        # 4. If not config, use "marked_as_used", if False, append to unused variables.
+        """
+        Check variables with `marked_as_used` == False.
+        """
+        unused_variables = []
+        # Get scalar and compound keys in the dict.
+        keys = list(self.flatten().keys())
+        for key in keys:
+            # Get the value and whether it was marked as used.
+            val = self[key]
+            marked_as_used = self.marked_as_used(key)
+            # Save `marked_as_used` for leaves, ignoring subconfigs.
+            if (
+                not isinstance(val, (Config, _OrderedConfig))
+                and not marked_as_used
+            ):
+                unused_variables.append(key)
         if unused_variables:
+            mode = self._resolve_unused_variables_mode(unused_variables_mode)
             if mode == "warning_on_error":
                 _LOG.warning(hprint.to_str("unused_variables"))
             elif mode == "assert_on_error":
                 raise ValueError(unused_variables)
-            else:
-                raise ValueError(mode)
         return unused_variables
 
     def get_and_mark_as_used(
@@ -1299,8 +1306,10 @@ class Config:
         report an informative message reporting the entire config on
         `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's a
-        helper of that function.
+        This method should be used only by `__getitem__()` and `marked_as_used()` since it's a
+        helper of those function.
+
+        :param get_marked_as_used: if True, return if the value is marked as used
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is compound.
@@ -1346,8 +1355,10 @@ class Config:
             msg = f"key='{key}' not in {keys_as_str} at level {level}"
             raise KeyError(msg)
         if get_marked_as_used:
+            # Return `marked_as_used` for the key.
             ret = self._config._marked_as_used(key)  # type: ignore
         else:
+            # Return the value for the key.
             ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore
         return ret
 
@@ -1372,7 +1383,7 @@ class Config:
     def _resolve_unused_variables_mode(self, value: Optional[str]) -> str:
         unused_variables_mode = self._resolve_mode(
             value,
-            self._report_mode,
+            self.unused_variables_mode,
             _VALID_UNUSED_VARIABLES_MODES,
             "unused_variable_mode",
         )

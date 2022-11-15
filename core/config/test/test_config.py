@@ -2131,7 +2131,7 @@ class Test_mark_as_used1(hunitest.TestCase):
 
     def _helper(self, actual_config: cconfig.Config, expected_config: str):
         """
-        Remove line numbers from config string and compare to expected value..
+        Remove line numbers from config string and compare to expected value.
         """
         actual_config = repr(actual_config)
         # Replace line numbers with '***', e.g.:
@@ -2149,6 +2149,10 @@ class Test_mark_as_used1(hunitest.TestCase):
 
 
 class Test_marked_as_used1(hunitest.TestCase):
+    """
+    Verify that marked_as_used parameter is displayed correctly.
+    """
+
     def test1(self) -> None:
         config = {"key1": "value1", "key2": {"key3": {"key4": "value2"}}}
         config = cconfig.Config.from_dict(config)
@@ -2164,6 +2168,52 @@ class Test_marked_as_used1(hunitest.TestCase):
         config.get_and_mark_as_used("key2")
         is_key2_marked = config.marked_as_used("key2")
         self.assertFalse(is_key2_marked)
+
+
+# #############################################################################
+# Test_check_unused_variables1
+# #############################################################################
+
+
+class Test_check_unused_variables1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Verify that a single unused variable is correctly identified.
+        """
+        config = {"key1": "value1", "key2": "value2"}
+        config = cconfig.Config.from_dict(config)
+        config.get_and_mark_as_used("key1")
+        unused_variables = config.check_unused_variables()
+        expected = [("key2",)]
+        self.assertListEqual(unused_variables, expected)
+
+    def test2(self) -> None:
+        """
+        Verify that a nested unused variable is correctly identified.
+        """
+        config = {
+            "key1": "value1",
+            "key2": {"key3": {"key4": "value2", "key5": "value3"}},
+        }
+        config = cconfig.Config.from_dict(config)
+        config.get_and_mark_as_used("key1")
+        config.get_and_mark_as_used(("key2", "key3", "key5"))
+        unused_variables = config.check_unused_variables()
+        expected = [("key2", "key3", "key4")]
+        self.assertListEqual(unused_variables, expected)
+
+    def test3(self) -> None:
+        """
+        Verify that all unused variables are correctly identified.
+        """
+        config = {
+            "key1": "value1",
+            "key2": {"key3": {"key4": "value2", "key5": "value3"}},
+        }
+        config = cconfig.Config.from_dict(config)
+        unused_variables = config.check_unused_variables()
+        expected = [("key1",), ("key2", "key3", "key4"), ("key2", "key3", "key5")]
+        self.assertListEqual(unused_variables, expected)
 
 
 # #############################################################################
