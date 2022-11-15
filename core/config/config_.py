@@ -1309,7 +1309,7 @@ class Config:
             if not tail_key:
                 # Tuple of a single element, then return the value.
                 ret = self._get_item(
-                    head_key, level=level + 1, mark_key_as_used=mark_key_as_used
+                    head_key, level=level + 1, mark_key_as_used=mark_key_as_used, get_marked_as_used=get_marked_as_used
                 )
             else:
                 # Compound key: recurse on the tail of the key.
@@ -1326,6 +1326,7 @@ class Config:
                         tail_key,
                         level=level + 1,
                         mark_key_as_used=mark_key_as_used,
+                        get_marked_as_used=get_marked_as_used
                     )
                 else:
                     # There are more keys to process but we have reached the leaves
