@@ -64,10 +64,10 @@ DUMMY = "__DUMMY__"
 # - We don't allow `dict` in Config as leaves
 #   - We assume that a dict leaf represents a Config for an object
 #   - `dict` are valid in composed data structures, e.g., list, tuples
-# - We require the user to explicitly mark as used a value from the config,
-#   in cases when we don't want subsequent writes to change its value
-#   - Thus, by default __getitem__() has mark_as_use=False by default,
-#  and the user needs to use `get_and_mark_as_used()` method.
+# - We require the user to explicitly mark a value from the config as used,
+#   when we don't want subsequent writes to change its value
+#   - Thus, by default __getitem__() has mark_as_use=False and the user needs
+#     to explicitly use `get_and_mark_as_used()` method
 
 # # Issues with tracking accurately write-after-use:
 #
@@ -141,7 +141,7 @@ _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 
 
 # #############################################################################
-# _OrderedConfig
+# _ConfigWriterInfo
 # #############################################################################
 
 
@@ -185,27 +185,17 @@ class _ConfigWriterInfo:
         Return full traceback as str.
 
         Example of a traceback string:
-
+        ```
         File "/usr/lib/python3.8/unittest/case.py", line 633, in _callTestMethod
             method()
         File "/app/core/config/test/test_config.py", line 2037, in test4
             actual_value = test_config.get_and_mark_as_used("key2")
-        File "/app/core/config/config_.py", line 693, in get_and_mark_as_used
-            return self.__getitem__(key, mark_key_as_used=True)
-        File "/app/core/config/config_.py", line 672, in __getitem__
-            ret = self._get_item(key, level=0, mark_key_as_used=mark_key_as_used)
-        File "/app/core/config/config_.py", line 1207, in _get_item
-            ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore
-        File "/app/core/config/config_.py", line 377, in __getitem__
-            self._mark_as_used(key)
-        File "/app/core/config/config_.py", line 484, in _mark_as_used
-            writer = _ConfigWriterInfo()
-        File "/app/core/config/config_.py", line 173, in __init__
-            self._full_traceback = self._get_full_traceback()
+        ...
         File "/app/core/config/config_.py", line 188, in _get_full_traceback
             return hintros.stacktrace_to_str()
         File "/app/helpers/hintrospection.py", line 254, in stacktrace_to_str
             txt = traceback.format_stack()
+        ```
         """
         return hintros.stacktrace_to_str()
 
@@ -229,11 +219,13 @@ class _ConfigWriterInfo:
         # Select the latest caller that is outside of the current module.
         # Due to abundance of internal recursive calls, we want to get the first
         # call outside of the current module. E.g. for the stacktrace:
+        # ```
         # FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)
         # FrameInfo(frame=<frame at 0x4cafb50, file '/app/core/config/config_.py', line 1198, code _get_item>, filename='/app/core/config/config_.py', lineno=1198, function='_get_item', code_context=['        ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore\n'], index=0)
         # FrameInfo(frame=<frame at 0x7fdce471edd0, file '/app/core/config/config_.py', line 475, code _mark_as_used>, filename='/app/core/config/config_.py', lineno=475, function='_mark_as_used', code_context=['            writer = _ConfigWriterInfo()\n'], index=0)
         # FrameInfo(frame=<frame at 0x4d0cd70, file '/app/core/config/config_.py', line 178, code __init__>, filename='/app/core/config/config_.py', lineno=178, function='__init__', code_context=['        self._shorthand_caller = self._get_shorthand_caller()\n'], index=0)
         # FrameInfo(frame=<frame at 0x7fdce471e230, file '/app/core/config/config_.py', line 210, code _get_shorthand_caller>, filename='/app/core/config/config_.py', lineno=207, function='_get_shorthand_caller', code_context=['        stack = inspect.stack()\n'], index=0)
+        # ```
         # We select the first one with a different file, i.e.:
         # `FrameInfo(frame=<frame at 0x7fdce4734230, file '/app/core/config/test/test_config.py', line 2037, code test4>, filename='/app/core/config/test/test_config.py', lineno=2037, function='test4', code_context=['        actual_value = test_config.get_and_mark_as_used("key2")\n'], index=0)`
         #
@@ -242,6 +234,11 @@ class _ConfigWriterInfo:
             f"{caller.filename}::{caller.lineno}::{caller.function}"
         )
         return latest_outside_caller
+
+
+# #############################################################################
+# _OrderedConfig
+# #############################################################################
 
 
 class _OrderedConfig(_OrderedDictType):
@@ -339,8 +336,14 @@ class _OrderedConfig(_OrderedDictType):
         elif clobber_mode == "assert_on_write_after_use":
             if is_key_present:
                 marked_as_used, writer, old_val = super().__getitem__(key)
-
-                is_been_changed = old_val != val
+                # Sometimes it's not possible to compare objects, e.g., when
+                # assigning (e.g., Series).
+                try:
+                    is_been_changed = old_val != val
+                except ValueError as e:
+                    _LOG.debug("Can't compute is_been_changed, assuming False: "
+                        "exception=%s ", str(e))
+                    is_been_changed = True
                 _LOG.debug(
                     hprint.to_str("marked_as_used old_val is_been_changed")
                 )

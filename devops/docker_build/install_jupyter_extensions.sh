@@ -68,7 +68,16 @@ cat << EOT >> ~/.jupyter/jupyter_notebook_config.py
 #------------------------------------------------------------------------------
 # Jupytext
 #------------------------------------------------------------------------------
-c.NotebookApp.contents_manager_class = "jupytext.TextFileContentsManager"
+# The following line yields:
+# ```
+# [C 14:54:35.676 NotebookApp] Bad config encountered during initialization:
+# The 'contents_manager_class' trait of a NotebookApp instance expected a
+# subclass of notebook.services.contents.manager.ContentsManager or
+# jupyter_server.contents.services.managers.ContentsManage, not the
+# JupytextContentsManager JupytextContentsManager.
+# ```
+# Not needed according to https://bytemeta.vip/repo/mwouts/jupytext/issues/953
+#c.NotebookApp.contents_manager_class = "jupytext.TextFileContentsManager"
 # Always pair ipynb notebooks to py files
 c.ContentsManager.default_jupytext_formats = "ipynb,py"
 # Use the percent format when saving as py

@@ -132,7 +132,6 @@ class ForecastEvaluatorWithOptimizer:
                 log_level=logging.INFO,
             )
         )
-        _LOG.info("act=%s", act)
         act = "\n".join(act)
         return act
 
@@ -142,7 +141,7 @@ class ForecastEvaluatorWithOptimizer:
         *,
         quantization: str = "no_quantization",
         liquidate_at_end_of_day: bool = True,
-        # initialize_beginning_of_day_trades_to_zero: bool = True,
+        initialize_beginning_of_day_trades_to_zero: bool = True,
         # adjust_for_splits: bool = False,
         reindex_like_input: bool = False,
         burn_in_bars: int = 0,
@@ -186,6 +185,9 @@ class ForecastEvaluatorWithOptimizer:
         executed_trades_notional_dict[
             initial_timestamp
         ] = initial_conditions.rename("executed_trades_notional")
+        bod_timestamps = cofinanc.retrieve_beginning_of_day_timestamps(
+            df[self._price_col]
+        )
         eod_timestamps = cofinanc.retrieve_end_of_day_timestamps(
             df[self._price_col]
         )
@@ -195,8 +197,10 @@ class ForecastEvaluatorWithOptimizer:
                 next_timestamp = iter_idx[idx + 1]
             else:
                 next_timestamp = None
-            _LOG.info(
-                "timestamp=%s, next_timestamp=%s", timestamp, next_timestamp
+            _LOG.debug(
+                "Processing timestamp=%s; next_timestamp=%s",
+                timestamp,
+                next_timestamp,
             )
             next_timestamp_is_eod = False
             if (
@@ -204,6 +208,12 @@ class ForecastEvaluatorWithOptimizer:
                 and eod_timestamps.loc[next_timestamp.date()][0] == next_timestamp
             ):
                 next_timestamp_is_eod = True
+            next_timestamp_is_bod = False
+            if (
+                next_timestamp is not None
+                and bod_timestamps.loc[next_timestamp.date()][0] == next_timestamp
+            ):
+                next_timestamp_is_bod = True
             dag_slice = self._extract_and_normalize_slice(dag_data)
             # Get the holdings in shares corresponding to the current DAG row.
             holdings_shares = holdings_shares_dict[timestamp]
@@ -240,12 +250,23 @@ class ForecastEvaluatorWithOptimizer:
             # share holdings and executed trades in shares (assuming orders
             # are fully filled).
             if next_timestamp is not None:
-                holdings_shares_dict[
-                    next_timestamp
-                ] = target_holdings_shares.rename("holdings_shares")
-                executed_trades_shares_dict[next_timestamp] = (
-                    target_holdings_shares - holdings_shares
-                ).rename("executed_trades_shares")
+                if (
+                    next_timestamp_is_bod
+                    and initialize_beginning_of_day_trades_to_zero
+                ):
+                    holdings_shares_dict[next_timestamp] = holdings_shares.rename(
+                        "holdings_shares"
+                    )
+                    executed_trades_shares_dict[next_timestamp] = pd.Series(
+                        0, asset_ids, name="executed_trades_shares"
+                    )
+                else:
+                    holdings_shares_dict[
+                        next_timestamp
+                    ] = target_holdings_shares.rename("holdings_shares")
+                    executed_trades_shares_dict[next_timestamp] = (
+                        target_holdings_shares - holdings_shares
+                    ).rename("executed_trades_shares")
         # Create the portfolio dataframe.
         holdings_shares = pd.DataFrame(holdings_shares_dict).T
         holdings_notional = pd.DataFrame(holdings_notional_dict).T
@@ -286,12 +307,6 @@ class ForecastEvaluatorWithOptimizer:
         Compute target positions, PnL, and portfolio stats.
 
         :param df: multiindexed dataframe with predictions, price, volatility
-        :param quantization: indicate whether to round to nearest share / lot
-        :param liquidate_at_end_of_day: force holdings to zero at the last
-            trade if true (otherwise hold overnight)
-        :return: dictionary of portfolio dataframes, with keys
-            ["holdings_shares", "holdings_notional", "executed_trades_shares",
-             "executed_trades_notional", "pnl", "stats"]
         """
         derived_dfs = self.compute_portfolio(df, **kwargs)
         dfs = {

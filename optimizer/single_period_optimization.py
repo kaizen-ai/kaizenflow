@@ -231,7 +231,7 @@ class SinglePeriodOptimizer:
         optimal_value = problem.solve(self._solver, verbose=self._verbose)
         if problem.status != "optimal":
             _LOG.warning("problem.status=%s", problem.status)
-        _LOG.info("`optimal_value`=%0.2f", optimal_value)
+        _LOG.debug("`optimal_value`=%0.2f", optimal_value)
         # TODO(Paul): Compute estimates for PnL, costs.
         return target_weights, target_weight_diffs
 

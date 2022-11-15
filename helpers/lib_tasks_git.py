@@ -855,7 +855,7 @@ def git_branch_diff_with(  # type: ignore
         - `master`: diff with respect to `origin/master`
         - `head`: diff modified files
         - `hash`: diff with respect to hash specified in `hash`
-    :param hash_: the hash to use with target="hash"
+    :param hash_value: the hash to use with target="hash"
     :param include_submodules: run recursively on all submodules
     :param diff_type: files to diff using git `--diff-filter` options
     :param keep_extensions: a comma-separated list of extensions to check, e.g.,
@@ -870,17 +870,17 @@ def git_branch_diff_with(  # type: ignore
     hdbg.dassert_in(target, ("base", "master", "head", "hash"))
     if target == "base":
         hdbg.dassert_eq(hash_value, "")
-        hash_ = hgit.get_branch_hash(dir_name=dir_name)
+        hash_value = hgit.get_branch_hash(dir_name=dir_name)
         tag = "base"
     elif target == "master":
         hdbg.dassert_eq(hash_value, "")
-        hash_ = "origin/master"
+        hash_value = "origin/master"
         tag = "origin_master"
     elif target == "head":
         hdbg.dassert_eq(hash_value, "")
         # This will execute `git diff --name-only HEAD` to find the files, which
         # corresponds to finding all the files modified in the client.
-        hash_ = ""
+        hash_value = ""
         tag = "head"
     elif target == "hash":
         hdbg.dassert_ne(hash_value, "")
