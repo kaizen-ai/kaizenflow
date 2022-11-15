@@ -409,6 +409,36 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+def find_gaps_in_time_series(
+    time_series: pd.Series,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    freq: str,
+) -> pd.Series:
+    """
+    Find missing points on a time interval specified by [start_timestamp,
+    end_timestamp], where point distribution is determined by <step>.
+
+    If the passed time series is of a unix epoch format. It is
+    automatically tranformed to pd.Timestamp.
+
+    :param time_series: time series to find gaps in
+    :param start_timestamp: start of the time interval to check
+    :param end_timestamp: end of the time interval to check
+    :param freq: distance between two data points on the interval.
+      Aliases correspond to pandas.date_range's freq parameter,
+      i.e. "S" -> second, "T" -> minute.
+    :return: pd.Series representing missing points in the source time series.
+    """
+    _time_series = time_series
+    if str(time_series.dtype) in ["int32", "int64"]:
+        _time_series = _time_series.map(hdateti.convert_unix_epoch_to_timestamp)
+    correct_time_series = pd.date_range(
+        start=start_timestamp, end=end_timestamp, freq=freq
+    )
+    return correct_time_series.difference(_time_series)
+
+
 def check_and_filter_matching_columns(
     df: pd.DataFrame, required_columns: List[str], filter_data_mode: str
 ) -> pd.DataFrame:
@@ -1471,10 +1501,10 @@ def compare_dfs(
     row_mode: str = "equal",
     column_mode: str = "equal",
     diff_mode: str = "diff",
-    remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
     close_to_zero_threshold: float = 1e-6,
     zero_vs_zero_is_zero: bool = True,
+    remove_inf: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1490,12 +1520,13 @@ def compare_dfs(
         corresponding elements
         - "diff": use the difference
         - "pct_change": use the percentage difference
-    :param remove_inf: replace +-inf with `np.nan`
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
-    :param close_to_zero_threshold: round numbers below the threshold up to 0
-    :param zero_vs_zero_is_zero: if True, replace inf as a result of division by 0
+    :param close_to_zero_threshold: round numbers below the threshold to 0
+    :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0
+        if True, otherwise keep the actual result
+    :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1521,7 +1552,7 @@ def compare_dfs(
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
     close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
-    # Round small numbers up to 0 to exclude them from the diff computation.
+    # Round small numbers to 0 to exclude them from the diff computation.
     df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
     df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
     # Compute the difference df.
@@ -1530,7 +1561,7 @@ def compare_dfs(
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
         if zero_vs_zero_is_zero:
-            # Look for zeros to replace NaNs as a result of division by 0.
+            # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
             zero_vs_zero_mask =  df1_mask & df2_mask
@@ -1538,8 +1569,6 @@ def compare_dfs(
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
-    if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     if diff_mode == "pct_change" and assert_diff_threshold is not None:
         # TODO(Grisha): generalize for the other modes.
         # Report max diff.
@@ -1550,6 +1579,8 @@ def compare_dfs(
             hdbg.dassert_lte(0.0, assert_diff_threshold)
             # TODO(Grisha): it works only if `remove_inf` is True.
             hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    if remove_inf:
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     return df_diff
 
 

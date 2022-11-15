@@ -17,12 +17,12 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_reconcile_run_all --run-date 20221017
+> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"
 ```
 
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --run-date 20221017'
+> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"'
 ```
 
 Import as:
@@ -62,20 +62,24 @@ def _dassert_is_date(date: str) -> None:
         raise ValueError(f"date='{date}' doesn't have the right format: {e}")
 
 
-def _get_run_date(run_date: Optional[str]) -> str:
+def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
-    Return the run date.
+    Return the run date as string from start timestamp, e.g. "20221017"
 
-    If a date is not specified by a user then return current date.
+    If start timestamp is not specified by a user then return current date.
     """
-    if run_date is None:
+    if start_timestamp_as_str is None:
         run_date = datetime.date.today().strftime("%Y%m%d")
+    else:
+        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
+        run_date = start_timestamp_as_str.split("_")[0]
     _LOG.info(hprint.to_str("run_date"))
     _dassert_is_date(run_date)
     return run_date
 
 
 def _prevent_overwriting(object_path: str) -> None:
+    hdbg.dassert_path_exists(object_path)
     _LOG.info("Removing the write permissions for: %s", object_path)
     if os.path.isdir(object_path):
         opt = "-R"
@@ -93,6 +97,7 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     dir on the shared disk with the corresponding run date subdir.
 
     # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
+    :param run_date: string representation of the reconcile run start date
     :param dst_dir: a dir to build root reconciliation dir
     :return: a target dir to store reconcilation results
     """
@@ -130,7 +135,7 @@ def _sanity_check_data(file_path: str) -> None:
 
 @task
 def reconcile_create_dirs(
-    ctx, run_date=None, dst_dir=None, abort_if_exists=True
+    ctx, start_timestamp_as_str=None, dst_dir=None, abort_if_exists=True
 ):  # type: ignore
     """
     Create dirs for storing reconciliation data.
@@ -151,7 +156,7 @@ def reconcile_create_dirs(
     :param abort_if_exists: see `hio.create_dir()`
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
@@ -177,7 +182,7 @@ def reconcile_create_dirs(
 @task
 def reconcile_dump_market_data(
     ctx,
-    run_date=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     rt_timeout_in_secs_or_time=None,
     incremental=False,
@@ -190,7 +195,7 @@ def reconcile_dump_market_data(
 
     The output df looks like:
     ```
-                                 asset_id              knowledge_timestamp     open     high      low    close     volume            end_download_timestamp       id        full_symbol            start_timestamp
+                               asset_id              knowledge_timestamp     open     high      low    close     volume            end_download_timestamp       id        full_symbol            start_timestamp
     end_timestamp
     2022-09-27 10:35:00-04:00  1030828978 2022-09-27 14:36:12.230330+00:00   0.7233   0.7247   0.7215   0.7241  3291381.0  2022-09-27 14:36:11.727196+00:00  3409049  binance::GMT_USDT  2022-09-27 10:34:00-04:00
     2022-09-27 10:35:00-04:00  1464553467 2022-09-27 14:36:05.788923+00:00  1384.23  1386.24  1383.19  1385.63   5282.272  2022-09-27 14:36:05.284506+00:00  3409043  binance::ETH_USDT  2022-09-27 10:34:00-04:00
@@ -207,7 +212,7 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
         rt_timeout_in_secs_or_time
@@ -218,9 +223,10 @@ def reconcile_dump_market_data(
         _LOG.warning("Skipping generating %s", market_data_file)
     else:
         # TODO(Grisha): @Dan Copy logs to the specified folder.
+        # TODO(Grisha): @Dan Remove unnecessary opts.
         opts = [
             "--action dump_data",
-            f"--reconcile_sim_date {run_date}",
+            f"--start_timestamp_as_str {start_timestamp_as_str}",
             f"--dst_dir {dst_dir}",
             f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
         ]
@@ -250,9 +256,13 @@ def reconcile_dump_market_data(
     if prevent_overwriting:
         _prevent_overwriting(market_data_file_target)
 
+
 @task
 def reconcile_run_sim(
-    ctx, run_date=None, dst_dir=None, rt_timeout_in_secs_or_time=None
+    ctx,
+    start_timestamp_as_str=None,
+    dst_dir=None,
+    rt_timeout_in_secs_or_time=None,
 ):  # type: ignore
     """
     Run the simulation given a run date.
@@ -263,8 +273,6 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(run_date)
-    # TODO(Grisha): we should use `_resolve_target_dir()`.
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
         rt_timeout_in_secs_or_time
@@ -280,12 +288,14 @@ def reconcile_run_sim(
     # Run simulation.
     opts = [
         "--action run_simulation",
-        f"--reconcile_sim_date {run_date}",
+        f"--start_timestamp_as_str {start_timestamp_as_str}",
         f"--dst_dir {dst_dir}",
         f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
-    opts += " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    opts += (
+        " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
+    )
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
@@ -296,14 +306,16 @@ def reconcile_run_sim(
 
 
 @task
-def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwriting=True):  # type: ignore
+def reconcile_copy_sim_data(
+    ctx, start_timestamp_as_str=None, dst_dir=None, prevent_overwriting=True
+):  # type: ignore
     """
     Copy the output of the simulation run to the specified folder.
 
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
@@ -325,9 +337,10 @@ def reconcile_copy_sim_data(ctx, run_date=None, dst_dir=None, prevent_overwritin
 @task
 def reconcile_copy_prod_data(
     ctx,
-    run_date=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
+    mode=None,
     prevent_overwriting=True,
 ):  # type: ignore
     """
@@ -336,30 +349,38 @@ def reconcile_copy_prod_data(
     See `reconcile_run_all()` for params description.
 
     :param stage: development stage, e.g., `preprod`
+    :param mode: the prod system run mode which defines a prod system log dir name
+        - "scheduled": the system is run at predefined time automatically
+        - "manual": the system run is triggered manually
     """
     if stage is None:
         stage = "preprod"
+    if mode is None:
+        mode = "scheduled"
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
+    hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     prod_target_dir = os.path.join(target_dir, "prod")
     # Make sure that the target dir exists before copying.
     hdbg.dassert_dir_exists(prod_target_dir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
-    run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
+    run_datetime = datetime.datetime.strptime(run_date, "%Y%m%d")
     # Prod system is run via AirFlow and the results are tagged with the previous day.
-    prod_run_date = (run_date - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+    prod_run_date = (
+        run_datetime - datetime.timedelta(days=1)
+    ).strftime("%Y-%m-%d")
     shared_dir = f"/shared_data/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_scheduled__*2hours | grep '{prod_run_date}'"
+    cmd = f"find '{shared_dir}' -name system_log_dir_{mode}__*2hours | grep '{prod_run_date}'"
     # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
     _, system_log_dir = hsystem.system_to_string(cmd)
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    cmd = f"find '{shared_dir}/logs' -name log_scheduled__*2hours.txt | grep '{prod_run_date}'"
+    cmd = f"find '{shared_dir}/logs' -name log_{mode}__*2hours.txt | grep '{prod_run_date}'"
     # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
     _, log_file = hsystem.system_to_string(cmd)
     hdbg.dassert_file_exists(log_file)
@@ -371,10 +392,11 @@ def reconcile_copy_prod_data(
 
 
 # TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
+# TODO(Grisha): @Dan Expose `start_timestamp_as_str` use in the notebook.
 @task
 def reconcile_run_notebook(
     ctx,
-    run_date=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     incremental=False,
     prevent_overwriting=True,
@@ -391,7 +413,7 @@ def reconcile_run_notebook(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     # Set results destination dir and clear it if is already filled.
     local_results_dir = "."
     results_dir = os.path.join(local_results_dir, "result_0")
@@ -416,7 +438,9 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     prod_subdir = None
+    # pylint: disable=line-too-long
     config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(date_str="{run_date}", prod_subdir={prod_subdir})'
+    # pylint: enable=line-too-long
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
@@ -448,14 +472,14 @@ def reconcile_run_notebook(
 
 
 @task
-def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
+def reconcile_ls(ctx, start_timestamp_as_str=None, dst_dir=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
 
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
@@ -469,7 +493,7 @@ def reconcile_ls(ctx, run_date=None, dst_dir=None):  # type: ignore
 @task
 def reconcile_dump_tca_data(
     ctx,
-    run_date=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     incremental=False,
     prevent_overwriting=True,
@@ -485,7 +509,7 @@ def reconcile_dump_tca_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(run_date)
+    run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
@@ -542,25 +566,29 @@ def reconcile_dump_tca_data(
     _system(cmd)
     #
     if prevent_overwriting:
-        _prevent_overwriting(target_dir)
+        tca_dir = os.path.join(target_dir, "tca")
+        _prevent_overwriting(tca_dir)
 
 
 @task
 def reconcile_run_all(
     ctx,
-    run_date=None,
+    start_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
     rt_timeout_in_secs_or_time=None,
+    mode=None,
     prevent_overwriting=True,
     skip_notebook=False,
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
 
-    :param run_date: date of the reconcile run
+    :param start_timestamp_as_str: string representation of timestamp
+        at which to start reconcile run
     :param dst_dir: dir to store reconcilation results in
     :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
+    :param mode: see `reconcile_copy_prod_data()`
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
@@ -569,38 +597,43 @@ def reconcile_run_all(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     #
-    reconcile_create_dirs(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_create_dirs(
+        ctx,
+        start_timestamp_as_str=start_timestamp_as_str,
+        dst_dir=dst_dir,
+    )
     #
     reconcile_copy_prod_data(
         ctx,
-        run_date=run_date,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         stage=stage,
+        mode=mode,
         prevent_overwriting=prevent_overwriting,
     )
     #
     reconcile_dump_market_data(
         ctx,
-        run_date=run_date,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_run_sim(
         ctx,
-        run_date=run_date,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
     )
     reconcile_copy_sim_data(
         ctx,
-        run_date=run_date,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_dump_tca_data(
         ctx,
-        run_date=run_date,
+        start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
@@ -608,8 +641,12 @@ def reconcile_run_all(
     if not skip_notebook:
         reconcile_run_notebook(
             ctx,
-            run_date=run_date,
+            start_timestamp_as_str=start_timestamp_as_str,
             dst_dir=dst_dir,
             prevent_overwriting=prevent_overwriting,
         )
-    reconcile_ls(ctx, run_date=run_date, dst_dir=dst_dir)
+    reconcile_ls(
+        ctx,
+        start_timestamp_as_str=start_timestamp_as_str,
+        dst_dir=dst_dir,
+    )
