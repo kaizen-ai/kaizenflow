@@ -11,6 +11,7 @@ import asyncio
 import copy
 import logging
 import os
+import re
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -679,6 +680,8 @@ def download_historical_data(
             converted_currency_pair,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
+            # If data_type = ohlcv, depth is ignored.
+            depth=args.get("bid_ask_depth")
         )
         if data.empty:
             continue
@@ -696,6 +699,7 @@ def download_historical_data(
                 args["unit"],
                 args["aws_profile"],
                 args["data_type"],
+                mode="append"
             )
         elif args["file_format"] == "csv":
             save_csv(
@@ -720,7 +724,11 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
         _LOG.warning("Extracted Dataframe contains NaNs")
     for column in data.columns:
         # Extract the expected type of the column from the schema.
-        expected_type = DATASET_SCHEMA[column]
+        #  Bid/ask columns have level suffix _l1, _l2 etc.
+        #  for simplicity we store only base names in the schema
+        #  table.
+        column_re = re.sub("_l\d+$", "", column)
+        expected_type = DATASET_SCHEMA[column_re]
         if (
             expected_type in ["float64", "int32", "int64"]
             and pd.to_numeric(data[column], errors="coerce").notnull().all()
