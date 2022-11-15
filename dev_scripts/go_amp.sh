@@ -14,6 +14,7 @@ if [[ -z $IDX ]]; then
     exit -1
 fi;
 
+#DIR_NAME="$HOME/src_vc/$DIR_PREFIX$IDX"
 DIR_NAME="$HOME/src/$DIR_PREFIX$IDX"
 if [[ ! -d $DIR_NAME ]]; then
     echo "Can't find dir $DIR_NAME"
