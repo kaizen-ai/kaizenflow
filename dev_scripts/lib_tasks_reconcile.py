@@ -34,7 +34,7 @@ import datetime
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from invoke import task
 
@@ -43,7 +43,6 @@ import helpers.hio as hio
 import helpers.hprint as hprint
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
-
 
 _LOG = logging.getLogger(__name__)
 
@@ -109,11 +108,15 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     return target_dir
 
 
-def _resolve_timestamps(time_as_str: str) -> str:
-    timestamp_as_str = "_".join(
-        [datetime.date.today().strftime("%Y%m%d"), time_as_str]
-    )
-    return timestamp_as_str
+def _resolve_timestamps(
+    start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
+) -> Tuple(str):
+    today_as_str = datetime.date.today().strftime("%Y%m%d")
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = "_".join([today_as_str, "0605"])
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = "_".join([today_as_str, "0800"])
+    return start_timestamp_as_str, end_timestamp_as_str
 
 
 def _sanity_check_data(file_path: str) -> None:
@@ -209,10 +212,9 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    if start_timestamp_as_str is None:
-        start_timestamp_as_str = _resolve_timestamps("0605")
-    if end_timestamp_as_str is None:
-        end_timestamp_as_str = _resolve_timestamps("0800")
+    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     market_data_file = "test_data.csv.gz"
@@ -271,10 +273,9 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    if start_timestamp_as_str is None:
-        start_timestamp_as_str = _resolve_timestamps("0605")
-    if end_timestamp_as_str is None:
-        end_timestamp_as_str = _resolve_timestamps("0800")
+    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
@@ -355,10 +356,9 @@ def reconcile_copy_prod_data(
     """
     import oms
 
-    if start_timestamp_as_str is None:
-        start_timestamp_as_str = _resolve_timestamps("0605")
-    if end_timestamp_as_str is None:
-        end_timestamp_as_str = _resolve_timestamps("0800")
+    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
     if stage is None:
         stage = "preprod"
     if mode is None:
@@ -373,26 +373,17 @@ def reconcile_copy_prod_data(
     hdbg.dassert_dir_exists(prod_target_dir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
-    run_datetime = datetime.datetime.strptime(run_date, "%Y%m%d")
-    # Prod system is run via AirFlow and the results are tagged with the previous day.
-    prod_run_date = (run_datetime - datetime.timedelta(days=1)).strftime(
-        "%Y-%m-%d"
-    )
     shared_dir = f"/shared_data/ecs/{stage}"
     system_log_dir = oms.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
-    cmd = f"find '{shared_dir}' -name {system_log_dir} | grep '{prod_run_date}'"
-    # E.g., `.../system_log_dir.manual.20221101_0845.20221101_1025`.
-    _, system_log_dir = hsystem.system_to_string(cmd)
+    system_log_dir = os.path.join(shared_dir, system_log_dir)
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    prod_logs = "log_{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
-    cmd = f"find '{shared_dir}/logs' -name {prod_logs}.txt | grep '{prod_run_date}'"
-    # E.g., `.../log_scheduled.20221101_0845.20221101_1025.txt`.
-    _, log_file = hsystem.system_to_string(cmd)
+    log_file = "log_{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
+    log_file = os.path.join(shared_dir, log_file)
     hdbg.dassert_file_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
