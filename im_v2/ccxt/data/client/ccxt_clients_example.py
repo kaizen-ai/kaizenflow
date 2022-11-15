@@ -122,12 +122,21 @@ def get_CcxtHistoricalPqByTileClient_example1(
     data_snapshot: str,
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
-    Get `CcxtHistoricalPqByTileClient` object for the prod model reading actual
-    historical data, which is stored on S3.
+    Get `CcxtHistoricalPqByTileClient` object for the prod model reading CCXT
+    historical or real-time data.
     """
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    if data_snapshot == "":
+        # Use the data updated in real-time.
+        root_dir = os.path.join(
+            s3_bucket_path, "reorg", "daily_staged.airflow.pq"
+        )
+    else:
+        # Use the the historical data.
+        root_dir = os.path.join(
+            s3_bucket_path, "reorg", "historical.manual.pq"
+        )
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
