@@ -115,19 +115,30 @@ def get_CcxtParquetByAssetClient_example1(
 
 
 def get_CcxtHistoricalPqByTileClient_example1(
+    # TODO(Grisha): make it optional since it is not needed for real-time data.
     universe_version: str,
+    # TODO(Grisha): always use `resample_1min = False`.
     resample_1min: bool,
     dataset: str,
     contract_type: str,
     data_snapshot: str,
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
-    Get `CcxtHistoricalPqByTileClient` object for the prod model reading actual
-    historical data, which is stored on S3.
+    Get `CcxtHistoricalPqByTileClient` object for the prod model reading CCXT
+    historical or real-time data.
     """
     aws_profile = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    if data_snapshot == "":
+        # Use the data updated in real-time.
+        root_dir = os.path.join(
+            s3_bucket_path, "reorg", "daily_staged.airflow.pq"
+        )
+    else:
+        # Use the the historical data.
+        root_dir = os.path.join(
+            s3_bucket_path, "reorg", "historical.manual.pq"
+        )
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
@@ -163,35 +174,6 @@ def get_CcxtHistoricalPqByTileClient_example2(
     dataset = "ohlcv"
     contract_type = "spot"
     data_snapshot = "20220705"
-    ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
-        universe_version,
-        resample_1min,
-        root_dir,
-        partition_mode,
-        dataset,
-        contract_type,
-        data_snapshot,
-        aws_profile=aws_profile,
-    )
-    return ccxt_parquet_client
-
-
-def get_CcxtHistoricalPqByTileClient_example3() -> imvcdccccl.CcxtHistoricalPqByTileClient:
-    """
-    Client is initialized to process real-time CCXT data for:
-
-    - contract type: "futures"
-    - data_snapshot: ""
-    """
-    resample_1min = False
-    universe_version = None
-    aws_profile = "ck"
-    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
-    root_dir = os.path.join(s3_bucket_path, "reorg", "daily_staged.airflow.pq")
-    partition_mode = "by_year_month"
-    dataset = "ohlcv"
-    contract_type = "futures"
-    data_snapshot = ""
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
         resample_1min,
