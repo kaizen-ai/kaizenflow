@@ -1292,7 +1292,7 @@ class Config:
         level: int,
         mark_key_as_used: bool,
         *,
-        get_marked_as_used: bool = False,
+        get_marked_as_used: Optional[bool] = False,
     ) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
