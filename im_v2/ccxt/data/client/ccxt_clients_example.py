@@ -115,7 +115,9 @@ def get_CcxtParquetByAssetClient_example1(
 
 
 def get_CcxtHistoricalPqByTileClient_example1(
+    # TODO(Grisha): make it optional since it is not needed for real-time data.
     universe_version: str,
+    # TODO(Grisha): always use `resample_1min = False`.
     resample_1min: bool,
     dataset: str,
     contract_type: str,
