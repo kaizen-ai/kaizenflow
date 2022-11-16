@@ -156,6 +156,7 @@ def get_ProcessForecastsNode_dict_instance1(
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
+    # TODO(Grisha): see CmTask3206 "Add more abstract methods to DagBuilder".
     dag_builder_class = system.config["dag_builder_class"]
     if dag_builder_class == "C1b_DagBuilder":
         prediction_col = "vwap.ret_0.vol_adj_2_hat"
