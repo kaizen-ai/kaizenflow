@@ -1,3 +1,5 @@
 report_memory_usage=False report_cpu_usage=False
-## docker_ps:
+## docker_ps: 
 docker ps --format='table {{.ID}}\t{{.Label "user"}}\t{{.Image}}\t{{.Command}}\t{{.RunningFor}}\t{{.Status}}\t{{.Ports}}\t{{.Label "com.docker.compose.service"}}'
+07:16:06 - WARN  hcache.py clear_global_cache:293                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+07:16:06 - WARN  hcache.py clear_global_cache:303                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
