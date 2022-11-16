@@ -313,10 +313,16 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     )
     df_raw = df_raw.set_index("timestamp")
     dfs_resampled = []
-    for currency_pair, level in zip(df_raw["currency_pair"].unique(), df_raw["level"].unique()):
-        df_bool_mask = (df_raw["currency_pair"] == currency_pair) & (df_raw["level"] == level)
+    for currency_pair, level in zip(
+        df_raw["currency_pair"].unique(), df_raw["level"].unique()
+    ):
+        df_bool_mask = (df_raw["currency_pair"] == currency_pair) & (
+            df_raw["level"] == level
+        )
         df_part = df_raw[df_bool_mask]
         # Resample to 1 sec.
+        # Temporarily remove currency_pair and level columns.
+        #  to match resample_bid_ask_data() interface.
         df_part = (
             df_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
             # Label right is used to match conventions used by CryptoChassis.
@@ -327,7 +333,9 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         df_part["exchange_id"] = exchange_id
         # Resample to 1 min.
         df_part = resample_bid_ask_data(df_part)
+        # Add the removed columns back.
         df_part["currency_pair"] = currency_pair
+        df_part["level"] = level
         dfs_resampled.append(df_part)
     df_resampled = pd.concat(dfs_resampled)
     # Convert back to unix timestamp after resampling

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
 Download historical data from Crypto-Chassis and save to S3. The script is
-meant to run daily for reconciliation with realtime data and downloadng
-larger historical data snapshots.
+meant to run daily for reconciliation with realtime data and downloadng larger
+historical data snapshots.
 
 Use as:
 

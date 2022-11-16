@@ -681,7 +681,7 @@ def download_historical_data(
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
             # If data_type = ohlcv, depth is ignored.
-            depth=args.get("bid_ask_depth")
+            depth=args.get("bid_ask_depth"),
         )
         if data.empty:
             continue
@@ -699,7 +699,7 @@ def download_historical_data(
                 args["unit"],
                 args["aws_profile"],
                 args["data_type"],
-                mode="append"
+                mode="append",
             )
         elif args["file_format"] == "csv":
             save_csv(

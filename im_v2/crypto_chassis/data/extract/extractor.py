@@ -101,34 +101,35 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         query_url = f"{base_url}?{joined_params}"
         return query_url
 
-
-    def _transform_raw_bid_ask_data(
-        self,
-        raw_data: pd.DataFrame
-    ) -> pd.DataFrame:
+    def _transform_raw_bid_ask_data(self, raw_data: pd.DataFrame) -> pd.DataFrame:
         """
-        Transform raw bid ask data as received from the API into our representation.
-        
+        Transform raw bid ask data as received from the API into our
+        representation.
+
         Example:
-        
+
         Raw data:
-        
+
         time_seconds,bid_price_bid_size|...,ask_price_ask_size|...
         1668384000,0.3296_28544|0.3295_34010,0.3297_19228|0.3298_91197
-            
+
         Transformed:
-        
-        timestamp,bid_price_l1,bid_size_l1,bid_price_l2,bid_size_l2,ask_price_l1...     
+
+        timestamp,bid_price_l1,bid_size_l1,bid_price_l2,bid_size_l2,ask_price_l1...
         1668384000,0.3296,28544,0.3295,34010,0.3297
-        
-        
+
+
         :param raw_data: data loaded from CC API.
         :return formatted bid/ask data, example above.
         """
-        # When data contains more than order book level 1 the returned 
-        #  bid/ask columns are named "bid_price_bid_size|...", 
+        # When data contains more than order book level 1 the returned
+        #  bid/ask columns are named "bid_price_bid_size|...",
         #  "ask_price_ask_size|..." so we translate the names.
-        raw_data.columns = ["timestamp", "bid_price&bid_size", "ask_price&ask_size"]
+        raw_data.columns = [
+            "timestamp",
+            "bid_price&bid_size",
+            "ask_price&ask_size",
+        ]
         # Separate bid/ask data columns by levels.
         price_size_levels = []
         for ob_column in ["bid_price&bid_size", "ask_price&ask_size"]:
@@ -136,10 +137,14 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
             for level in price_size_composite.columns:
                 # Start counting the levels from 1.
                 str_level = str(int(level) + 1)
-                single_price_size = price_size_composite[level].str.split("_", expand=True)
+                single_price_size = price_size_composite[level].str.split(
+                    "_", expand=True
+                )
                 # Transform bid_price&bid_size at level 1 into
-                #  bid_price_l1 and bid_size_l1 
-                single_price_size.columns = list(map(lambda x: x + f"_l{str_level}", ob_column.split("&")))
+                #  bid_price_l1 and bid_size_l1
+                single_price_size.columns = list(
+                    map(lambda x: x + f"_l{str_level}", ob_column.split("&"))
+                )
                 price_size_levels.append(single_price_size)
         price_size_levels = pd.concat(price_size_levels, axis=1)
         # Remove deprecated columns.
@@ -148,7 +153,9 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         )
         bid_ask_cols = list(price_size_levels.columns)
         transformed_data = pd.concat([raw_data, price_size_levels], axis=1)
-        transformed_data = self.coerce_to_numeric(transformed_data, float_columns=bid_ask_cols)
+        transformed_data = self.coerce_to_numeric(
+            transformed_data, float_columns=bid_ask_cols
+        )
         return transformed_data
 
     def _download_bid_ask(
