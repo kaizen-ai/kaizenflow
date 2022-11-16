@@ -195,7 +195,7 @@ def load_config_from_pickle(
 
 def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
     """
-    Convert the given string timestamp to timestamp with a timezone info.
+    Convert the given string timestamp to the timestamp with a timezone info.
     """
     # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
     hdbg.dassert_isinstance(timestamp_as_str, str)

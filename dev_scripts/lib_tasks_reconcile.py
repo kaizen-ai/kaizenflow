@@ -111,6 +111,12 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
 def _resolve_timestamps(
     start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
 ) -> Tuple(str):
+    """
+    Return start and end timestamps.
+
+    If a timestamps is not specified by a user then set a default value for it
+    and return it.
+    """
     today_as_str = datetime.date.today().strftime("%Y%m%d")
     if start_timestamp_as_str is None:
         start_timestamp_as_str = "_".join([today_as_str, "0605"])
