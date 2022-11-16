@@ -101,7 +101,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
             get_shared_data_dirs='{'/data/shared': '/shared_data'}'
             has_dind_support='True'
             has_docker_sudo='True'
-            is_CK_S3_available='False'
+            is_CK_S3_available='True'
             run_docker_as_root='False'
             skip_submodules_test='False'
             use_docker_db_container_name_to_connect='False'
@@ -116,11 +116,11 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
               is_mac(version='Catalina')='False'
               is_mac(version='Monterey')='False'
         # Env vars:
-          AM_AWS_ACCESS_KEY_ID=empty
-          AM_AWS_DEFAULT_REGION=''
+          AM_AWS_ACCESS_KEY_ID=undef
+          AM_AWS_DEFAULT_REGION=undef
           AM_AWS_PROFILE='am'
           AM_AWS_S3_BUCKET='$AM_AWS_S3_BUCKET'
-          AM_AWS_SECRET_ACCESS_KEY=empty
+          AM_AWS_SECRET_ACCESS_KEY=undef
           AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
           AM_FORCE_TEST_FAIL=''
@@ -129,7 +129,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
           AM_TELEGRAM_TOKEN=***
           CI=''
           GH_ACTION_ACCESS_TOKEN=empty
-        """
+          """
         hunteuti.check_env_to_str(self, exp)
 
     def test_mac(self) -> None:

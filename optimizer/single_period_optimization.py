@@ -10,7 +10,6 @@ from typing import List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
-import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import optimizer.base as opbase
@@ -32,13 +31,13 @@ _LOG = logging.getLogger(__name__)
 
 
 def optimize(
-    config: cconfig.Config,
+    config_dict: dict,
     df: pd.DataFrame,
 ) -> pd.DataFrame:
     """
     Wrapper around `SinglePeriodOptimizer`.
     """
-    spo = SinglePeriodOptimizer(config, df)
+    spo = SinglePeriodOptimizer(config_dict, df)
     output_df = spo.optimize()
     return output_df
 
@@ -46,7 +45,7 @@ def optimize(
 class SinglePeriodOptimizer:
     def __init__(
         self,
-        config: cconfig.Config,
+        config_dict: dict,
         df: pd.DataFrame,
         *,
         restrictions: Optional[pd.DataFrame] = None,
@@ -62,22 +61,20 @@ class SinglePeriodOptimizer:
             - some restriction constraints are position-dependent
         :param restrictions: restrictions dataframe
         """
-        # Process `config` and extract parameters.
-        config.check_params(
-            [
-                "dollar_neutrality_penalty",
-                "volatility_penalty",
-                "turnover_penalty",
-                "target_gmv",
-                "target_gmv_upper_bound_multiple",
-            ]
-        )
-        self._dollar_neutrality_penalty = config["dollar_neutrality_penalty"]
-        self._volatility_penalty = config["volatility_penalty"]
-        self._turnover_penalty = config["turnover_penalty"]
-        self._target_gmv = config["target_gmv"]
-        self._target_gmv_upper_bound_multiple = config[
-            "target_gmv_upper_bound_multiple"
+        # Process `config_dict` and extract parameters.
+        self._dollar_neutrality_penalty = config_dict["dollar_neutrality_penalty"]
+        self._volatility_penalty = config_dict["volatility_penalty"]
+        self._turnover_penalty = config_dict["turnover_penalty"]
+        self._target_gmv = config_dict["target_gmv"]
+        self._target_gmv_upper_bound_penalty = config_dict[
+            "target_gmv_upper_bound_penalty"
+        ]
+        self._target_gmv_hard_upper_bound_multiple = config_dict[
+            "target_gmv_hard_upper_bound_multiple"
+        ]
+        self._relative_holding_penalty = config_dict["relative_holding_penalty"]
+        self._relative_holding_max_frac_of_gmv = config_dict[
+            "relative_holding_max_frac_of_gmv"
         ]
         SinglePeriodOptimizer._validate_df(df)
         self._df = df
@@ -88,16 +85,18 @@ class SinglePeriodOptimizer:
         #
         self._asset_ids = self._df["asset_id"]
         self._n_assets = df.shape[0]
-        positions = self._df["position"]
-        _LOG.debug("positions=\n%s", hpandas.df_to_str(positions))
-        self._gmv = positions.abs().sum()
-        self._current_weights = positions * self._n_assets / self._target_gmv
+        holdings_notional = self._df["holdings_notional"]
+        _LOG.debug("holdings_notional=\n%s", hpandas.df_to_str(holdings_notional))
+        self._gmv = holdings_notional.abs().sum()
+        self._current_weights = (
+            holdings_notional * self._n_assets / self._target_gmv
+        )
         _LOG.debug(
             "current_weights=\n%s", hpandas.df_to_str(self._current_weights)
         )
         # We pass "solver" as a string to avoid propagating `cvx` dependencies.
-        if "solver" in config:
-            solver = config["solver"]
+        if "solver" in config_dict:
+            solver = config_dict["solver"]
             if solver == "ECOS":
                 self._solver = cvx.ECOS
             elif solver == "OSQP":
@@ -108,21 +107,21 @@ class SinglePeriodOptimizer:
                 raise ValueError("solver=%s not supported", solver)
         else:
             self._solver = None
-        self._verbose = config.get("verbose", False)
+        self._verbose = config_dict.get("verbose", False)
 
     def optimize(self) -> pd.DataFrame:
         """
-        Get target positions (in units of money).
+        Get target notional positions.
         """
         target_weights, target_weight_diffs = self._optimize_weights()
         result_df = self._process_results(target_weights, target_weight_diffs)
         return result_df
 
     def compute_stats(self, df: pd.DataFrame) -> pd.DataFrame:
-        gross_volume = df["target_notional_trade"].abs().sum()
-        net_volume = df["target_notional_trade"].sum()
-        gmv = df["target_position"].abs().sum()
-        nmv = df["target_position"].sum()
+        gross_volume = df["target_trades_notional"].abs().sum()
+        net_volume = df["target_trades_notional"].sum()
+        gmv = df["target_holdings_notional"].abs().sum()
+        nmv = df["target_holdings_notional"].sum()
         notional_stats = pd.Series(
             {
                 "gross_volume": gross_volume,
@@ -141,7 +140,18 @@ class SinglePeriodOptimizer:
         """
         SinglePeriodOptimizer._is_df_with_asset_id_col(df)
         # Ensure the dataframe has the expected columns.
-        expected_cols = ["volatility", "prediction", "position"]
+        # NOTE: Compare to columns of `TargetPositionAndOrderGenerator()` df.
+        #  We should see the leading columns and the optimizer should supply
+        #  the trailing columns (target holdings and trades, both notional and
+        #  shares).
+        expected_cols = [
+            "holdings_shares",
+            "price",
+            "holdings_notional",
+            "prediction",
+            "volatility",
+            # "spread",
+        ]
         hdbg.dassert_is_subset(expected_cols, df.columns)
         # Ensure that the dataframe has a range-index.
         hdbg.dassert_isinstance(df.index, pd.RangeIndex)
@@ -221,7 +231,7 @@ class SinglePeriodOptimizer:
         optimal_value = problem.solve(self._solver, verbose=self._verbose)
         if problem.status != "optimal":
             _LOG.warning("problem.status=%s", problem.status)
-        _LOG.info("`optimal_value`=%0.2f", optimal_value)
+        _LOG.debug("`optimal_value`=%0.2f", optimal_value)
         # TODO(Paul): Compute estimates for PnL, costs.
         return target_weights, target_weight_diffs
 
@@ -234,11 +244,21 @@ class SinglePeriodOptimizer:
             volatility, self._volatility_penalty
         )
         soft_constraints.append(diagonal_risk)
+        # Add GMV contraint.
+        target_gmv_constraint = osofcons.TargetGmvUpperBoundSoftConstraint(
+            self._target_gmv_upper_bound_penalty
+        )
+        soft_constraints.append(target_gmv_constraint)
         # Add dollar neutrality constraint.
         dollar_neutrality = osofcons.DollarNeutralitySoftConstraint(
             self._dollar_neutrality_penalty
         )
         soft_constraints.append(dollar_neutrality)
+        # Add relative holding constraint.
+        relative_holding = osofcons.RelativeHoldingSoftConstraint(
+            self._relative_holding_penalty
+        )
+        soft_constraints.append(relative_holding)
         # Add turnover soft constraint.
         turnover = osofcons.TurnoverSoftConstraint(self._turnover_penalty)
         soft_constraints.append(turnover)
@@ -248,11 +268,16 @@ class SinglePeriodOptimizer:
         # Create hard constraints.
         hard_constraints = []
         # Add target GMV hard constraint.
-        target_gmv_constraint = oharcons.TargetGmvHardConstraint(
+        target_gmv_constraint = oharcons.TargetGmvUpperBoundHardConstraint(
             self._target_gmv,
-            self._target_gmv_upper_bound_multiple,
+            self._target_gmv_hard_upper_bound_multiple,
         )
         hard_constraints.append(target_gmv_constraint)
+        # Add relative holding constraint.
+        relative_holding_constraint = oharcons.RelativeHoldingHardConstraint(
+            self._relative_holding_max_frac_of_gmv
+        )
+        hard_constraints.append(relative_holding_constraint)
         if self._restrictions is not None:
             restriction_constraints = self._get_restriction_constraints()
             if restriction_constraints:
@@ -264,15 +289,15 @@ class SinglePeriodOptimizer:
         df = self._df.merge(self._restrictions, how="left", on="asset_id").fillna(
             False
         )
-        do_not_buy = ((df["position"] >= 0) & df["is_buy_restricted"]) | (
-            (df["position"] < 0) & df["is_buy_cover_restricted"]
+        do_not_buy = ((df["holdings_shares"] >= 0) & df["is_buy_restricted"]) | (
+            (df["holdings_shares"] < 0) & df["is_buy_cover_restricted"]
         )
         if do_not_buy.any():
             do_not_buy_constraint = oharcons.DoNotBuyHardConstraint(do_not_buy)
             constraints.append(do_not_buy_constraint)
-        do_not_sell = ((df["position"] > 0) & df["is_sell_long_restricted"]) | (
-            (df["position"] <= 0) & df["is_sell_short_restricted"]
-        )
+        do_not_sell = (
+            (df["holdings_shares"] > 0) & df["is_sell_long_restricted"]
+        ) | ((df["holdings_shares"] <= 0) & df["is_sell_short_restricted"])
         if do_not_sell.any():
             do_not_sell_constraint = oharcons.DoNotSellHardConstraint(do_not_sell)
             constraints.append(do_not_sell_constraint)
@@ -297,20 +322,20 @@ class SinglePeriodOptimizer:
         srs_list = []
         #
         rescaling = self._target_gmv / self._n_assets
-        # Target positions (notional).
-        target_positions = pd.Series(
+        # Target notional holdings.
+        target_holdings_notional = pd.Series(
             index=self._asset_ids,
             data=target_weights.value * rescaling,
-            name="target_position",
+            name="target_holdings_notional",
         )
-        srs_list.append(target_positions)
-        # Target trades (notional).
-        target_trades = pd.Series(
+        srs_list.append(target_holdings_notional)
+        # Target notional trades.
+        target_trades_notional = pd.Series(
             index=self._asset_ids,
             data=target_weight_diffs.value * rescaling,
-            name="target_notional_trade",
+            name="target_trades_notional",
         )
-        srs_list.append(target_trades)
+        srs_list.append(target_trades_notional)
         # Target weights.
         target_weights = pd.Series(
             index=self._asset_ids,

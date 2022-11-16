@@ -238,6 +238,7 @@ class ImClient(abc.ABC):
                 start_ts,
                 end_ts,
             )
+            # TODO(gp): Difference between amp and cmamp.
             self._dassert_output_data_is_valid(
                 df_tmp,
                 full_symbol_col_name,
@@ -378,7 +379,6 @@ class ImClient(abc.ABC):
         )
         # Check that full symbol column has no NaNs.
         hdbg.dassert(df[full_symbol_col_name].notna().all())
-
         # Check that there are no duplicates in data by index and full symbol.
         n_duplicated_rows = (
             df.reset_index()
