@@ -12,13 +12,14 @@ import pandas as pd
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.hserver as hserver
-import oms.ccxt_broker as occxbrok
-import oms.hsecrets as omssec
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
+def _get_CcxtBroker(secret_id: int):
+    # Moved inside the function due to `oms` dependency. See CMTask #3151.
+    import oms
+
     # `MarketData` is not strictly needed to talk to exchange, but since it is
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
@@ -28,10 +29,10 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
     exchange_id = "binance"
     stage = "preprod"
     account_type = "trading"
-    secret_identifier = omssec.SecretIdentifier(
+    secret_identifier = oms.SecretIdentifier(
         exchange_id, stage, account_type, secret_id
     )
-    ccxt_broker = occxbrok.get_CcxtBroker_prod_instance1(
+    ccxt_broker = oms.get_CcxtBroker_prod_instance1(
         market_data,
         universe_version,
         strategy_id,
