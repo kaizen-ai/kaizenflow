@@ -469,6 +469,8 @@ class CcxtBroker(ombroker.Broker):
             curr_num_shares,
             diff_num_shares,
         )
+        _LOG.debug("After CCXT to OMS transform:")
+        _LOG.debug("oms_order=%s", str(oms_order))
         return oms_order
 
     def _get_market_info(self) -> Dict[int, Any]:
