@@ -146,7 +146,19 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         - data_snapshot = ""
         """
         # Initialize client.
-        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example3()
+        universe_version = None
+        resample_1min = False
+        dataset = "ohlcv"
+        contract_type = "futures"
+        data_snapshot = ""
+        im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
+            universe_version,
+            resample_1min,
+            dataset,
+            contract_type,
+            data_snapshot,
+        )
+        # Set expected values.
         full_symbols = ["binance::APE_USDT", "binance::BTC_USDT"]
         start_ts = pd.Timestamp("2022-08-28 15:45:00+00:00")
         end_ts = pd.Timestamp("2022-08-28 15:50:00+00:00")

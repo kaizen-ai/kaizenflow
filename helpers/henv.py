@@ -358,6 +358,8 @@ def get_system_signature(git_commit_type: str = "all") -> Tuple[str, int]:
     # import sys
     # print(sys.version)
     libs = [
+        "cvxopt",
+        "cvxpy",
         "gluonnlp",
         "gluonts",
         "joblib",
