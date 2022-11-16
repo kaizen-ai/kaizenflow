@@ -424,7 +424,7 @@ class StatsComputer:
         )
         results.append(pd.concat([dollar_turnover_and_bias], keys=["dollar"]))
         # Add percentage return, volatility, drawdown.
-        srs = df["pnl"] / df["gmv"]
+        srs = df["pnl"] / df["gmv"].mean()
         name = "percentage"
         functions = [
             costatis.compute_annualized_return_and_volatility,
@@ -442,8 +442,8 @@ class StatsComputer:
         results.append(pd.concat([pnl_stats], keys=["percentage"]))
         # Add dollar turnover, bias.
         percentage_turnover_and_bias = 100 * costatis.compute_turnover_and_bias(
-            df["gross_volume"] / df["gmv"],
-            df["nmv"] / df["gmv"],
+            df["gross_volume"] / df["gmv"].mean(),
+            df["nmv"] / df["gmv"].mean(),
         )
         results.append(
             pd.concat([percentage_turnover_and_bias], keys=["percentage"])
