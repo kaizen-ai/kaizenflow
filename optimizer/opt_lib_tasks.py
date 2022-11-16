@@ -348,12 +348,16 @@ def _get_opt_docker_up_cmd(
 
     :param detach: whether to run in detached mode or not
     """
+    service_name = "app"
+    generate_docker_compose_file = True
     extra_env_vars = None
     extra_docker_compose_files = None
     docker_up_cmd_ = hlitadoc._get_docker_base_cmd(
         base_image,
         stage,
         version,
+        service_name, 
+        generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
     )
@@ -408,12 +412,16 @@ def _get_opt_docker_down_cmd(
         down
     ```
     """
+    service_name = "app"
+    generate_docker_compose_file = True
     extra_env_vars = None
     extra_docker_compose_files = None
     docker_down_cmd_ = hlitadoc._get_docker_base_cmd(
         base_image,
         stage,
         version,
+        service_name, 
+        generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
     )
