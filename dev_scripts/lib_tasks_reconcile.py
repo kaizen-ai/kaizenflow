@@ -354,6 +354,7 @@ def reconcile_copy_prod_data(
         - "scheduled": the system is run at predefined time automatically
         - "manual": the system run is triggered manually
     """
+    # Moved inside the function due to `oms` dependency. See CMTask #3151.
     import oms
 
     start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
