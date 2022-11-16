@@ -240,8 +240,9 @@ async def process_forecasts(
         #
         current_bar_timestamp = hwacltim.get_current_bar_timestamp()
         hdbg.dassert_is_not(current_bar_timestamp, None)
-        # Avoid situations when a prediction timestamp is greater than the current bar.
-        # E.g., the prediction timestamp is 08:05 while the current bar is 08:00.
+        # Avoid situations when a prediction timestamp is greater than the
+        # current bar. E.g., the prediction timestamp is 08:05 while the
+        # current bar is 08:00.
         hdbg.dassert_lte(timestamp, current_bar_timestamp)
         current_bar_time = current_bar_timestamp.time()
         _LOG.debug(
