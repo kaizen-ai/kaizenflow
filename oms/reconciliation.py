@@ -195,7 +195,7 @@ def load_config_from_pickle(
 
 def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
     """
-    Convert a given string timestamp to one with a timezone info.
+    Convert the given string timestamp to timestamp with a timezone info.
     """
     # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
     hdbg.dassert_isinstance(timestamp_as_str, str)
@@ -213,8 +213,12 @@ def get_prod_system_log_dir(
     mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
 ) -> str:
     """
-    Get a prod system log dir, e.g.,
+    Get a prod system log dir. 
+
+    E.g.:
     "system_log_dir.manual.20221109_0605.20221109_0800".
+
+    See `lib_tasks_reconcile.reconcile_run_all()` for params description.
     """
     system_log_dir = (
         f"system_log_dir.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
