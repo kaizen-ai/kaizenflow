@@ -136,32 +136,63 @@ dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]
 dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
+# %%
+dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]]
+dag_df_prod_past.equals(dag_df_prod[:-1])
 
 # %%
-def compare_past_predictions(df1: pd.DataFrame, df2: pd.DataFrame) -> pd.DataFrame:
+prod_comparison2 = compare_past_predictions(dag_df_prod_past, dag_df_prod_past2)
+display(prod_comparison2.shape)
+
+# %%
+inter = set(list(dag_df_prod_past)).difference(set(list(dag_df_prod_past2)))
+set(list(dag_df_prod_past.index)).difference(set(list(prod_comparison2.index)))
+
+# %%
+past2 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-3][0]]
+past3 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]][1:]
+inter(past3, past2)
+
+# %%
+past4 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]]
+past5 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-5][0]][1:]
+inter(past5, past4)
+
+# %%
+past6 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-5][0]]
+past7 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-6][0]][1:]
+inter(past7, past6)
+
+# %%
+past8 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-6][0]]
+past9 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-7][0]][1:]
+inter(past9, past8)
+
+# %%
+past8.index.min(), past8.index.max()
+
+# %%
+past9.index.min(), past9.index.max()
+
+
+# %%
+def compare_past_predictions(df1: pd.DataFrame, df2: pd.DataFrame):
     df1_copy = df1.copy()
     df1_copy = df1_copy.reset_index(drop=False)
     #
     df2_copy = df2.copy()
     df2_copy = df2_copy.reset_index(drop=False)
     merged_df = df1_copy.merge(df2_copy, how="inner")
+    merged_df.set_index("end_timestamp", inplace=True)
     return merged_df
 
 
-# %%
-dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]][1:]
-dag_df_prod_past.equals(dag_df_prod[:-1])
+def inter(past_df, late_df):
+    comparison = compare_past_predictions(past_df, late_df)
+    inter = set(list(past_df)).difference(set(list(late_df)))
+    diff = set(list(late_df.index)).difference(set(list(comparison.index)))
+    return diff
 
-# %%
-dag_df_prod_past.index.min(), dag_df_prod_past.index.max()
-
-# %%
-dag_df_prod.index.min(), dag_df_prod.index.max() 
-
-# %%
-prod_comparison = compare_past_predictions(dag_df_prod_past, dag_df_prod[:-1])
-display(prod_comparison.shape)
-hpandas.df_to_str(prod_comparison, num_rows=5, log_level=logging.INFO)
 
 # %%
 compare_dfs_kwargs ={
