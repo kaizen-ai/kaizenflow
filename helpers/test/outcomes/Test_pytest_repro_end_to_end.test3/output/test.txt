@@ -8,7 +8,3 @@ pytest dataflow/core/test/test_builders.py::TestMvnReturnsBuilder::test1
 pytest dataflow/pipelines/real_time/test/test_dataflow_pipelines_real_time_pipeline.py::TestRealTimeMvnReturnsWithOms1::test1
 # To run the tests:
 > $GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test3/tmp.scratch/tmp.pytest_repro.sh
-HH:MM:SS - INFO  hcache.py clear_global_cache:292                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=32.0 KB
-HH:MM:SS - WARN  hcache.py clear_global_cache:293                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
-HH:MM:SS - WARN  hcache.py clear_global_cache:303                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
-HH:MM:SS - INFO  hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
