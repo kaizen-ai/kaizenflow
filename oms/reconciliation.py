@@ -213,7 +213,7 @@ def get_prod_system_log_dir(
     mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
 ) -> str:
     """
-    Get a prod system log dir. 
+    Get a prod system log dir.
 
     E.g.:
     "system_log_dir.manual.20221109_0605.20221109_0800".
