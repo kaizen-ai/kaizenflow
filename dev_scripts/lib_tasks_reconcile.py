@@ -110,7 +110,7 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
 
 def _resolve_timestamps(
     start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
-) -> Tuple(str):
+) -> Tuple:
     """
     Return start and end timestamps.
 
