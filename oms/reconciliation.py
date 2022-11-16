@@ -74,13 +74,14 @@ def build_reconciliation_configs(
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        # Prod system is run via AirFlow and the results are tagged with the previous day.
-        previous_day_date_str = (
-            pd.Timestamp(date_str) - pd.Timedelta("1D")
-        ).strftime("%Y-%m-%d")
         if prod_subdir is None:
-            # TODO(Grisha): @Dan Refactor hard-coded time.
-            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
+            # TODO(Grisha): pass `mode` as a param.
+            mode = "preprod"
+            start_timestamp_as_str = "_".join(date_str, "0605")
+            end_timestamp_as_str = "_".join(date_str, "0800")
+            prod_subdir = get_prod_system_log_dir(
+                mode, start_timestamp_as_str, end_timestamp_as_str
+            )
         prod_dir = os.path.join(
             root_dir,
             date_str,
@@ -212,7 +213,8 @@ def get_prod_system_log_dir(
     mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
 ) -> str:
     """
-    Get a prod system log dir, e.g., "system_log_dir.manual.20221109_0605.20221109_0800".
+    Get a prod system log dir, e.g.,
+    "system_log_dir.manual.20221109_0605.20221109_0800".
     """
     system_log_dir = (
         f"system_log_dir.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
