@@ -832,7 +832,7 @@ def _git_diff_with_branch_wrapper(
 def git_branch_diff_with(  # type: ignore
     ctx,
     target="base",
-    hash_="",
+    hash_value="",
     # Where to diff.
     subdir="",
     include_submodules=False,
@@ -855,6 +855,7 @@ def git_branch_diff_with(  # type: ignore
         - `master`: diff with respect to `origin/master`
         - `head`: diff modified files
         - `hash`: diff with respect to hash specified in `hash`
+    :param hash_value: the hash to use with target="hash"
     :param include_submodules: run recursively on all submodules
     :param diff_type: files to diff using git `--diff-filter` options
     :param keep_extensions: a comma-separated list of extensions to check, e.g.,
@@ -868,27 +869,27 @@ def git_branch_diff_with(  # type: ignore
     dir_name = "."
     hdbg.dassert_in(target, ("base", "master", "head", "hash"))
     if target == "base":
-        hdbg.dassert_eq(hash_, "")
-        hash_ = hgit.get_branch_hash(dir_name=dir_name)
+        hdbg.dassert_eq(hash_value, "")
+        hash_value = hgit.get_branch_hash(dir_name=dir_name)
         tag = "base"
     elif target == "master":
-        hdbg.dassert_eq(hash_, "")
-        hash_ = "origin/master"
+        hdbg.dassert_eq(hash_value, "")
+        hash_value = "origin/master"
         tag = "origin_master"
     elif target == "head":
-        hdbg.dassert_eq(hash_, "")
+        hdbg.dassert_eq(hash_value, "")
         # This will execute `git diff --name-only HEAD` to find the files, which
         # corresponds to finding all the files modified in the client.
-        hash_ = ""
+        hash_value = ""
         tag = "head"
     elif target == "hash":
-        hdbg.dassert_ne(hash_, "")
-        tag = f"hash@{hash_}"
+        hdbg.dassert_ne(hash_value, "")
+        tag = f"hash@{hash_value}"
     else:
         raise ValueError(f"Invalid target='{target}")
     _git_diff_with_branch_wrapper(
         ctx,
-        hash_,
+        hash_value,
         tag,
         #
         dir_name,

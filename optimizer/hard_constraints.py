@@ -52,7 +52,26 @@ class DollarNeutralityHardConstraint(opbase.Expression):
         return sum(target_weights) == 0
 
 
-class TargetGmvHardConstraint(opbase.Expression):
+class RelativeHoldingHardConstraint(opbase.Expression):
+    """
+    Restrict the maximum fraction of GMV that can be allocated to an asset.
+    """
+
+    def __init__(self, max_frac_of_gmv: float) -> None:
+        hdbg.dassert_lte(0, max_frac_of_gmv)
+        hdbg.dassert_lte(max_frac_of_gmv, 1)
+        self._max_frac_of_gmv = max_frac_of_gmv
+
+    def get_expr(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
+        _ = target_weight_diffs
+        _ = gmv
+        return (
+            cvx.norm(target_weights, "inf")
+            <= self._max_frac_of_gmv * target_weights.shape[0]
+        )
+
+
+class TargetGmvUpperBoundHardConstraint(opbase.Expression):
     """
     Impose an upper bound on GMV.
     """
