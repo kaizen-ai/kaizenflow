@@ -459,6 +459,7 @@ class Test_pytest_repro1(hunitest.TestCase):
         return self._build_pytest_filehelper(txt)
 
 
+@pytest.mark.slow
 class Test_pytest_repro_end_to_end(hunitest.TestCase):
     """
     - Run the `pytest_repro` invoke from command line
