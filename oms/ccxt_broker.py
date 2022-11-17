@@ -491,12 +491,10 @@ class CcxtBroker(ombroker.Broker):
         # See more more about the output format:
         # https://docs.ccxt.com/en/latest/manual.html#leverage-tiers-structure.
         leverage_info = self._exchange.fetchLeverageTiers(symbols)
-        hdbg.dassert_lte(1, len(leverage_info))
         symbol_to_max_leverage = {}
         for symbol in symbols:
             # Select the lowest tier.
             tier_0_leverage_info = leverage_info[symbol][0]
-            hdbg.dassert_isinstance(tier_0_leverage_info, dict)
             max_leverage_float = tier_0_leverage_info["maxLeverage"]
             try:
                 # Convert max leverage to int, raw value is a float.
