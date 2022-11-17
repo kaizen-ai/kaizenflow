@@ -15,6 +15,7 @@ import core.finance.resampling as cfinresa
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.htimer as htimer
+import itertools
 
 _LOG = logging.getLogger(__name__)
 
@@ -337,7 +338,7 @@ def resample_multilevel_bid_ask_data(
 
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
-    Transform raw bid/ask realtime data and resample to 1-min.
+    Transform raw bid/ask realtime data and resample to 1 min.
 
     The function expects raw bid/ask data from a single exchange
     sampled multiple times per second In the first step the raw data
@@ -363,7 +364,7 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     )
     df_raw = df_raw.set_index("timestamp")
     dfs_resampled = []
-    for currency_pair, level in zip(
+    for currency_pair, level in itertools.product(
         df_raw["currency_pair"].unique(), df_raw["level"].unique()
     ):
         df_bool_mask = (df_raw["currency_pair"] == currency_pair) & (
