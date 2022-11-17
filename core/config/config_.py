@@ -773,7 +773,7 @@ class Config:
                 ```
         """
         try:
-            ret = self.__getitem__(key, mark_key_as_used=mark_as_used)
+            ret = self.__getitem__(key, mark_key_as_used=mark_key_as_used)
         except KeyError as e:
             # If a default value is provided, return.
             if default_value != _NO_VALUE_SPECIFIED:
