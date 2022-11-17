@@ -109,7 +109,7 @@ class CcxtBroker(ombroker.Broker):
         # Set minimal order limits.
         self.market_info = self._get_market_info()
         # Extract info about max leverage.
-        self._get_symbol_to_max_leverage_mapping()
+        self._symbol_to_max_leverage = self._get_symbol_to_max_leverage_mapping()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # Set up empty sent orders for the first run of the system.
