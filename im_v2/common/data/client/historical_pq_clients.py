@@ -405,7 +405,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         # E.g., `crypto_chassis.resampled_1min` for resampled data.
         vendor = self._vendor.lower()
         if self._tag:
-            vendor = ".".join(vendor, self._tag)
+            vendor = ".".join([vendor, self._tag])
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
