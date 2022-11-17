@@ -279,6 +279,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         contract_type: str,
         data_snapshot: str,
         *,
+        tag: str = "",
         aws_profile: Optional[str] = None,
     ) -> None:
         """
@@ -288,6 +289,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
 
         :param dataset: the dataset type, e.g. "ohlcv", "bid_ask"
         :param data_snapshot: same format used in `get_data_snapshot()`
+        :param tag: resample type, e.g., "resampled_1min", "downloaded_1sec"
         """
         infer_exchange_id = True
         super().__init__(
@@ -313,6 +315,8 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             root_dir, data_snapshot, aws_profile
         )
         self._data_snapshot = data_snapshot
+        hdbg.dassert_in(tag, ["", "downloaded_1sec", "resampled_1min"])
+        self._tag = tag
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
@@ -398,11 +402,15 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
             contract_type = ""
         # E.g., `ohlcv-futures` for futures.
         dataset = "".join([self._dataset, contract_type_separator, contract_type])
+        # E.g., `crypto_chassis.resampled_1min` for resampled data.
+        vendor = self._vendor.lower()
+        if self._tag:
+            vendor = ".".join(vendor, self._tag)
         root_dir = os.path.join(
             self._root_dir,
             self._data_snapshot,
             dataset,
-            self._vendor.lower(),
+            vendor,
         )
         # Split full symbols into exchange id and currency pair tuples, e.g.,
         # [('binance', 'ADA_USDT'),
