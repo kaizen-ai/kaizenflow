@@ -124,7 +124,10 @@ class TestCryptoChassisHistoricalPqByTileClient2(icdc.ImClientTestCase):
         contract_type = "futures"
         tag = "resampled_1min"
         client = imvccdcccce.get_CryptoChassisHistoricalPqByTileClient_example2(
-            universe_version, resample_1min, contract_type, tag,
+            universe_version,
+            resample_1min,
+            contract_type,
+            tag,
         )
         full_symbols = ["binance::BTC_USDT", "binance::DOGE_USDT"]
         start_ts = pd.Timestamp("2022-11-05 13:00:00+00:00")
@@ -134,7 +137,7 @@ class TestCryptoChassisHistoricalPqByTileClient2(icdc.ImClientTestCase):
         columns=full_symbol,bid_price,bid_size,ask_price,ask_size
         shape=(122, 5)
                                   full_symbol     bid_price     bid_size     ask_price     ask_size
-        timestamp                                                                                          
+        timestamp
         2022-11-05 13:00:00+00:00   binance::BTC_USDT  21295.193172     1056.388  21294.732442     1306.262
         2022-11-05 13:00:00+00:00  binance::DOGE_USDT      0.127876  2341262.000      0.127916  3669090.000
         2022-11-05 13:01:00+00:00   binance::BTC_USDT  21292.477087     1439.011  21289.924597     1084.776
