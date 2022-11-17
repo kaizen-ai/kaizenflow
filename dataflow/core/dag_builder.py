@@ -109,7 +109,9 @@ class DagBuilder(abc.ABC):
         """
 
     @abc.abstractmethod
-    def get_trading_period(self) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         Return the current trading period.
 
