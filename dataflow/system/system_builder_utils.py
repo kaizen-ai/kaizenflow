@@ -161,7 +161,7 @@ def apply_history_lookback(
         # has `_get_required_lookback_in_effective_days()` method.
         days = 4
         # days = (
-        #     dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+        #     dag_builder.get_required_lookback_in_effective_days(dag_config) * 2
         # )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[

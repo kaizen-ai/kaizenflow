@@ -108,8 +108,8 @@ class CcxtBroker(ombroker.Broker):
         }
         # Set minimal order limits.
         self.market_info = self._get_market_info()
-        #
-        self._symbol_to_max_leverage = self._get_leverage_info()
+        # Extract info about max leverage.
+        self._symbol_to_max_leverage = self._get_symbol_to_max_leverage_mapping()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
         # Set up empty sent orders for the first run of the system.
@@ -475,13 +475,33 @@ class CcxtBroker(ombroker.Broker):
         _LOG.debug("oms_order=%s", str(oms_order))
         return oms_order
 
-    def _get_leverage_info(self):
+    # TODO(Grisha): extend the functionality to work with different
+    # leverage tiers.
+    def _get_symbol_to_max_leverage_mapping(self) -> Dict[str, int]:
+        """
+        Get a maximum leverage for each coin.
+
+        On binance leverage depends on a coin and on
+        a position size.
+
+        For now it is assumed that all positions belong to the lowest
+        tier.
+        """
         symbols = list(self._symbol_to_asset_id_mapping.keys())
-        print("symbols=", symbols)
+        # See more more about the output format:
+        # https://docs.ccxt.com/en/latest/manual.html#leverage-tiers-structure.
         leverage_info = self._exchange.fetchLeverageTiers(symbols)
         symbol_to_max_leverage = {}
         for symbol in symbols:
-            max_leverage = leverage_info[symbol][0]["maxLeverage"]
+            # Select the lowest tier.
+            tier_0_leverage_info = leverage_info[symbol][0]
+            max_leverage_float = tier_0_leverage_info["maxLeverage"]
+            try:
+                # Convert max leverage to int, raw value is a float.
+                max_leverage = int(max_leverage_float)
+            except ValueError as e:
+                _LOG.warning("Max leverage=%s should be of int type", max_leverage_float)
+                raise e
             symbol_to_max_leverage[symbol] = max_leverage
         return symbol_to_max_leverage
 
@@ -632,18 +652,27 @@ class CcxtBroker(ombroker.Broker):
         submitted_order: Optional[omorder.Order] = None
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
+        position_size = abs(order.diff_num_shares)
+        # Get max leverage for a given order.
         max_leverage = self._symbol_to_max_leverage[symbol]
         # TODO(Juraj): separate the retry logic from the code that does the work.
         for _ in range(self.max_order_submit_retries):
             try:
-                _LOG.debug("Max leverage for symbol=%s is set to %s", symbol, max_leverage)
-                self._exchange.setLeverage(int(max_leverage), symbol)
+                # Make sure that leverage is within the acceptable range
+                # before submitting the order.
+                _LOG.debug(
+                    "Max leverage for symbol=%s and position size=%s is set to %s",
+                    symbol,
+                    position_size,
+                    max_leverage,
+                )
+                self._exchange.setLeverage(max_leverage, symbol)
                 _LOG.debug("Submitting order=%s", str(order))
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
                     type="market",
                     side=side,
-                    amount=abs(order.diff_num_shares),
+                    amount=position_size,
                     # id = order.order_id,
                     # id=order.order_id,
                     # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
