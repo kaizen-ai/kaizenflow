@@ -273,6 +273,7 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
         )
     else:
         raise ValueError(f"Invalid mode='{mode}'")
+    # TODO(Danya): @Juraj why does the function remove the currency_pair?
     df = cfinresa.resample(data, **resample_kwargs).agg(
         {
             "bid_size": "sum",

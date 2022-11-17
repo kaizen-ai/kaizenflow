@@ -34,6 +34,7 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -53,12 +54,12 @@ def get_example_config() -> cconfig.Config:
     """
     Config for comparison of 1sec CryptoChassis and 1sec CCXT bid/ask data
     """
-    # TODO(Danya): parameters: 1sec/1min, bid/ask//ohclv, vendors
     config = cconfig.Config()
     param_dict = {
         "data": {
             # Whether to resample 1sec data to 1min using our production flow.
-            "resample_1min" = False
+            # TODO(Danya): Variable overlaps with `resample_1min` parameter for clients.
+            "resample_1min": False,
             # Parameters for client initialization.
             "cc_im_client": {
                 "universe_version": None,
@@ -78,8 +79,8 @@ def get_example_config() -> cconfig.Config:
             # Parameters for data query.
             "read_data": {
                 # Get start/end ts as inputs to script.
-                "start_ts": pd.Timestamp("2022-11-15 00:00:00+00:00"),
-                "end_ts": pd.Timestamp("2022-11-15 00:00:15+00:00"),
+                "start_ts": pd.Timestamp("2022-11-16 00:00:00+00:00"),
+                "end_ts": pd.Timestamp("2022-11-16 00:10:00+00:00"),
                 "columns": None,
                 "filter_data_mode": "assert",
             },
@@ -105,10 +106,15 @@ print(config)
 # # Clients
 
 # %%
+#TODO(Danya): To make notebook universal, replace client instances with constructors like
+#  `get_..._example`
+
 # CCXT client.
-ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**config["data"]["ccxt_im_client"])
+ccxt_im_client_config = config.get_and_mark_as_used(("data", "ccxt_im_client"))
+ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**ccxt_im_client_config)
 # CC client.
-cc_parquet_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(**config["data"]["cc_im_client"])
+cc_parquet_client_config = config.get_and_mark_as_used(("data", "cc_im_client"))
+cc_parquet_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(**cc_parquet_client_config)
 
 # %% [markdown]
 # # Universe
@@ -130,14 +136,17 @@ print(compare_universe)
 # %% [markdown]
 # # Load data
 
+# %%
+read_data_config = config.get_and_mark_as_used(("data","read_data"))
+
 # %% [markdown]
 # ## Load CCXT
 
 # %% run_control={"marked": true}
-ccxt_df = ccxt_im_client.read_data(universe, **config["data"]["read_data"])
+ccxt_df = ccxt_im_client.read_data(universe, **read_data_config)
 
 # %%
-ccxt_df.head(10)
+display(ccxt_df.head(10))
 
 # %% [markdown]
 # On the first glance:
@@ -148,6 +157,9 @@ ccxt_df.head(10)
 # ### Clean CCXT data
 
 # %% run_control={"marked": true}
+# TODO(Danya): What can be done to make these transformations universal? 
+#  "if"-switches based on vendor and type?
+
 # Remove level suffix in the TOB column name.
 ccxt_df.columns = ccxt_df.columns.str.replace("_1", "")
 # Remove all levels.
@@ -158,24 +170,32 @@ ccxt_df = ccxt_df[target_columns]
 ccxt_df.index = ccxt_df.reset_index()["timestamp"].apply(
             lambda x: x.round(freq="S")
         )
-ccxt_df = ccxt_df.reset_index().set_index(["timestamp", "full_symbol"])
 display(ccxt_df.head(10))
 
 # %% [markdown]
-# ## Load CCXT
+# ## Load СС
 
 # %%
-cc_df = cc_parquet_client.read_data(universe, **config["data"]["read_data"])
-cc_df = cc_df.reset_index().set_index(["timestamp", "full_symbol"])
+cc_df = cc_parquet_client.read_data(universe, **read_data_config)
 display(cc_df.head(10))
 
 # %% [markdown]
 # # Resampling data
 
 # %%
+# Perform VWAP resampling if required by config.
 resample_1min = config.get_and_mark_as_used(("data", "resample_1min"))
 if resample_1min:
-    ccxt_df = 
+    # Add column for the resampling function.
+    ccxt_df["exchange_id"] = "binance"
+    # TODO(Danya): Function as-is has VWAP and TWAP modes and removes the `full_symbol` column.
+    ccxt_df = imvcdttrut.resample_bid_ask_data(ccxt_df, mode="VWAP")
+    # Add column for the resampling function.
+    cc_df["exchange_id"] = "binance"
+    cc_df = imvcdttrut.resample_bid_ask_data(ccxt_df, mode="VWAP")
+    #
+    ccxt_df = ccxt_df.drop("exchange_id", axis=1)
+    cc_df = cc_df.drop("exchange_id", axis=1)
 
 # %% [markdown]
 # # Analysis
@@ -183,6 +203,10 @@ if resample_1min:
 # %% [markdown]
 # ## Merge CC and DB data into one DataFrame
 #
+
+# %%
+ccxt_df = ccxt_df.reset_index().set_index(["timestamp", "full_symbol"])
+cc_df = cc_df.reset_index().set_index(["timestamp", "full_symbol"])
 
 # %%
 data = ccxt_df.merge(
@@ -219,7 +243,7 @@ display(data.tail())
 
 # %%
 # Full symbol will not be relevant in calculation loops below.
-bid_ask_cols = config["column_names"]["bid_ask_cols"]
+bid_ask_cols = config.get_and_mark_as_used(("column_names","bid_ask_cols"))
 # Each bid ask value will have a notional and a relative difference between two sources.
 for col in bid_ask_cols:
     # Notional difference: CC value - DB value.
@@ -292,3 +316,12 @@ ask_size_corr_matrix = (
     data[["ask_size_cc", "ask_size_ccxt"]].groupby(level=1).corr()
 )
 display(ask_size_corr_matrix)
+
+# %% [markdown]
+# # Check unused variables in config
+
+# %% run_control={"marked": true}
+# TODO(Danya): Add checking for unused variables once CMTask3125 is merged.
+display(config)
+
+# %%
