@@ -108,24 +108,25 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
-    @abc.abstractmethod
-    def get_trading_period(
-        self, config: cconfig.Config, mark_key_as_used: bool
-    ) -> str:
-        """
-        Return the current trading period.
+    # TODO(Grisha): @Dan Uncomment when methods are implemented in C3.
+    # @abc.abstractmethod
+    # def get_trading_period(
+    #     self, config: cconfig.Config, mark_key_as_used: bool
+    # ) -> str:
+    #     """
+    #     Return the current trading period.
 
-        :return: string representation of a time interval, e.g., "1T", "5T"
-        """
+    #     :return: string representation of a time interval, e.g., "1T", "5T"
+    #     """
 
-    @abc.abstractmethod
-    def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
-    ) -> int:
-        """
-        Return the number of days needed to execute pipeline at the frequency
-        given by config.
-        """
+    # @abc.abstractmethod
+    # def get_required_lookback_in_effective_days(
+    #     self, config: cconfig.Config
+    # ) -> int:
+    #     """
+    #     Return the number of days needed to execute pipeline at the frequency
+    #     given by config.
+    #     """
 
     def get_dag(
         self, config: cconfig.Config, mode: str = "strict", validate: bool = True
