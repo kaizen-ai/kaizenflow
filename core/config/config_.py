@@ -717,7 +717,7 @@ class Config:
         self,
         key: ScalarKeyValidTypes,
         *,
-        mark_key_as_used: bool = True
+        mark_key_as_used: bool = True,
         default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
     ) -> Any:
         """
