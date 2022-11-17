@@ -214,13 +214,11 @@ class CcxtExtractor(imvcdexex.Extractor):
          (not used, kept for compatibility with parent class).
         :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param bid_ask_depth: how many levels of order book to download
-         (the value is set globally for the entire class on each method call)
         """
         currency_pair = self.convert_currency_pair(
             currency_pair,
         )
-        self._bid_ask_depth = bid_ask_depth
-        await self._async_exchange.watchOrderBook(currency_pair)
+        await self._async_exchange.watchOrderBook(currency_pair, limit=bid_ask_depth)
 
     async def _subscribe_to_websocket_trades(self, **kwargs: Any) -> None:
         raise NotImplementedError(
@@ -255,9 +253,7 @@ class CcxtExtractor(imvcdexex.Extractor):
                 data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
-                data = self._async_exchange.orderbooks[pair].limit(
-                    self._bid_ask_depth
-                )
+                data = self._async_exchange.orderbooks[pair].limit()
             else:
                 raise ValueError(
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
@@ -266,7 +262,8 @@ class CcxtExtractor(imvcdexex.Extractor):
             return data
         except KeyError as e:
             _LOG.error(
-                f"Websocket {data_type} data for {exchange_id} and {currency_pair} is not available. Have you subscribed to the websocket?"
+                f"Websocket {data_type} data for {exchange_id} and {currency_pair} is not available. "
+                + "Have you subscribed to the websocket?"
             )
             raise e
 
