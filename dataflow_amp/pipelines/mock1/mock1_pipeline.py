@@ -40,7 +40,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         return val
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.
