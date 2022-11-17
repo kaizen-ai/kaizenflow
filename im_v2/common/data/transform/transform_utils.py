@@ -161,7 +161,9 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     # It can happen that the orderbook did not change between iteration
     #  in this case we get duplicated data with different end_download_timestamp
     #  these can be safely dropped.
-    non_metadata_columns = list(filter(lambda x: x != "end_download_timestamp"), list(df.columns))
+    non_metadata_columns = list(
+        filter(lambda x: x != "end_download_timestamp", list(df.columns))
+    )
     df = df.drop_duplicates(non_metadata_columns)
     # For clarity, add +1 so the levels start from 1.
     df["level"] = df.groupby(groupby_cols).cumcount().add(1)

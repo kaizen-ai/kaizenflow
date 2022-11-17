@@ -395,7 +395,8 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
                     data_type, exchange_id, curr_pair
                 )
             )
-            data_buffer.append(data_point)
+            if data_point != None:
+                data_buffer.append(data_point)
         # If the buffer is full or this is the last iteration, process and save buffered data.
         if (
             len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"]

@@ -6,7 +6,7 @@ import im_v2.ccxt.data.extract.extractor as ivcdexex
 
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ccxt
 import ccxt.pro as ccxtpro
@@ -218,16 +218,31 @@ class CcxtExtractor(imvcdexex.Extractor):
         currency_pair = self.convert_currency_pair(
             currency_pair,
         )
-        await self._async_exchange.watchOrderBook(currency_pair, limit=bid_ask_depth)
+        await self._async_exchange.watchOrderBook(
+            currency_pair, limit=bid_ask_depth
+        )
 
     async def _subscribe_to_websocket_trades(self, **kwargs: Any) -> None:
         raise NotImplementedError(
             "Trades websocket data is not implemented for CCXT vendor yet."
         )
 
+    def _pad_bids_asks_to_equal_len(
+        self, bids: List[List], asks: List[List]
+    ) -> Tuple[List[List], List[List]]:
+        """
+        Pad list of bids and asks to the same length.
+        """
+        max_len = max(len(bids), len(asks))
+        pad_bids_num = min(len(bids) - max_len, 0)
+        pad_asks_num = min(len(bids) - max_len, 0)
+        bids = bids + [[None, None]] * pad_bids_num
+        asks = asks + [[None, None]] * pad_asks_num
+        return bids, asks
+
     def _download_websocket_data(
         self, exchange_id: str, currency_pair: str, data_type: str
-    ) -> Dict:
+    ) -> Optional[Dict]:
         """
         Get the most recent websocket data for a specified currency pair and
         data type.
@@ -253,16 +268,28 @@ class CcxtExtractor(imvcdexex.Extractor):
                 data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
-                data = self._async_exchange.orderbooks[pair].limit()
+                if self._async_exchange.orderbooks.get(pair):
+                    data = self._async_exchange.orderbooks[pair].limit()
+                    # It can happen that the length of bids and asks does not match
+                    #  it that case the shorter side gets padded wit Nones to equal length.
+                    #  This minor preprocessing is performed this early to make transormations
+                    #  simpler later down the pipeline.
+                    if data.get("bids") and data.get("asks"):
+                        data["bids"], data["asks"] = self._pad_bids_asks_to_equal_len(
+                            data["bids"], data["asks"]
+                        )
+                else:
+                    data = None
             else:
                 raise ValueError(
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
                 )
-            data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+            if data:
+                data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
             return data
         except KeyError as e:
             _LOG.error(
-                f"Websocket {data_type} data for {exchange_id} and {currency_pair} is not available. "
+                f"Websocket {data_type} data for {exchange_id} {currency_pair} is not available. "
                 + "Have you subscribed to the websocket?"
             )
             raise e
