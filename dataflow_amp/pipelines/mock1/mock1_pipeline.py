@@ -24,6 +24,17 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
     A pipeline similar to real models.
     """
 
+    def get_trading_period(self, config: cconfig.Config) -> str:
+        """
+        See description in the parent class.
+        """
+        _ = self
+        # Get a key for trading period inside the config.
+        resample_nid = self._get_nid("resample")
+        key = (resample_nid, "transformer_kwargs", "rule")
+        val: str = config.get_and_mark_as_used(key)
+        return val
+
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
             self._get_nid("filter_ath"): {

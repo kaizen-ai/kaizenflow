@@ -108,6 +108,14 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
+    @abc.abstractmethod
+    def get_trading_period(self) -> str:
+        """
+        Return the current trading period.
+
+        :return: string representation of a time interval, e.g., "1T", "5T"
+        """
+
     def get_dag(
         self, config: cconfig.Config, mode: str = "strict", validate: bool = True
     ) -> dtfcordag.DAG:
