@@ -108,6 +108,23 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
+    @abc.abstractmethod
+    def get_trading_period(self) -> str:
+        """
+        Return the current trading period.
+
+        :return: string representation of a time interval, e.g., "1T", "5T"
+        """
+
+    @abc.abstractmethod
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> int:
+        """
+        Return the number of days needed to execute pipeline at the frequency
+        given by config.
+        """
+
     def get_dag(
         self, config: cconfig.Config, mode: str = "strict", validate: bool = True
     ) -> dtfcordag.DAG:
@@ -163,7 +180,7 @@ class DagBuilder(abc.ABC):
         Return the start_timestamp needed to execute pipeline to get a result
         on 'end_timestamp'.
         """
-        effective_days = self._get_required_lookback_in_effective_days(config)
+        effective_days = self.get_required_lookback_in_effective_days(config)
         # TODO(gp): We should a trading calendar to handle holidays and half days.
         #  For now we just consider business days as an approximation.
         return end_timestamp - pd.tseries.offsets.BDay(effective_days)
@@ -212,16 +229,6 @@ class DagBuilder(abc.ABC):
         nid = node.nid
         nid = cast(str, nid)
         return nid
-
-    # TODO(gp): This should become abstract and public at some point.
-    def _get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
-    ) -> int:
-        """
-        Return the number of days needed to execute pipeline at the frequency
-        given by config.
-        """
-        raise NotImplementedError
 
     def _get_nid(self, stage_name: str) -> str:
         hdbg.dassert_isinstance(stage_name, str)
