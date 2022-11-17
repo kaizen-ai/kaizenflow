@@ -144,14 +144,6 @@ compare_universe = hprint.set_diff_to_str(
 )
 print(compare_universe)
 
-# %%
-# Even though they're in the intersected universe,
-# they are not downloaded in CC.
-universe.remove("binance::XRP_USDT")
-universe.remove("binance::DOT_USDT")
-# These two symbols crashes the downloads on `tz-conversion` stage.
-universe
-
 # %% [markdown]
 # # Load data
 
