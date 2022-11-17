@@ -20,7 +20,6 @@
 # %autoreload 2
 
 import logging
-import os
 
 import pandas as pd
 
@@ -29,12 +28,11 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.crypto_chassis.data.client as iccdc
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -52,7 +50,7 @@ hprint.config_notebook()
 # %%
 def get_example_config() -> cconfig.Config:
     """
-    Config for comparison of 1sec CryptoChassis and 1sec CCXT bid/ask data
+    Config for comparison of 1sec CryptoChassis and 1sec CCXT bid/ask data.
     """
     config = cconfig.Config()
     param_dict = {
@@ -65,7 +63,7 @@ def get_example_config() -> cconfig.Config:
                 "universe_version": None,
                 "resample_1min": False,
                 "contract_type": "futures",
-                "tag":"downloaded_1sec"
+                "tag": "downloaded_1sec",
             },
             "ccxt_im_client": {
                 "resample_1min": False,
@@ -106,7 +104,7 @@ print(config)
 # # Clients
 
 # %%
-#TODO(Danya): To make notebook universal, replace client instances with constructors like
+# TODO(Danya): To make notebook universal, replace client instances with constructors like
 #  `get_..._example`
 
 # CCXT client.
@@ -114,7 +112,9 @@ ccxt_im_client_config = config.get_and_mark_as_used(("data", "ccxt_im_client"))
 ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**ccxt_im_client_config)
 # CC client.
 cc_parquet_client_config = config.get_and_mark_as_used(("data", "cc_im_client"))
-cc_parquet_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(**cc_parquet_client_config)
+cc_parquet_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(
+    **cc_parquet_client_config
+)
 
 # %% [markdown]
 # # Universe
@@ -137,7 +137,7 @@ print(compare_universe)
 # # Load data
 
 # %%
-read_data_config = config.get_and_mark_as_used(("data","read_data"))
+read_data_config = config.get_and_mark_as_used(("data", "read_data"))
 
 # %% [markdown]
 # ## Load CCXT
@@ -157,19 +157,21 @@ display(ccxt_df.head(10))
 # ### Clean CCXT data
 
 # %% run_control={"marked": true}
-# TODO(Danya): What can be done to make these transformations universal? 
+# TODO(Danya): What can be done to make these transformations universal?
 #  "if"-switches based on vendor and type?
 
 # Remove level suffix in the TOB column name.
 ccxt_df.columns = ccxt_df.columns.str.replace("_1", "")
 # Remove all levels.
 target_columns = [col for col in ccxt_df.columns if not col[-1].isnumeric()]
-target_columns = [col for col in target_columns if col!="end_download_timestamp"]
+target_columns = [
+    col for col in target_columns if col != "end_download_timestamp"
+]
 ccxt_df = ccxt_df[target_columns]
 # CCXT timestamp data goes up to milliseconds, so one needs to round it to seconds.
 ccxt_df.index = ccxt_df.reset_index()["timestamp"].apply(
-            lambda x: x.round(freq="S")
-        )
+    lambda x: x.round(freq="S")
+)
 display(ccxt_df.head(10))
 
 # %% [markdown]
@@ -243,7 +245,7 @@ display(data.tail())
 
 # %%
 # Full symbol will not be relevant in calculation loops below.
-bid_ask_cols = config.get_and_mark_as_used(("column_names","bid_ask_cols"))
+bid_ask_cols = config.get_and_mark_as_used(("column_names", "bid_ask_cols"))
 # Each bid ask value will have a notional and a relative difference between two sources.
 for col in bid_ask_cols:
     # Notional difference: CC value - DB value.
@@ -270,7 +272,9 @@ diff_stats = pd.concat(diff_stats, axis=1)
 # ### Prices
 
 # %%
-display(diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]])
+display(
+    diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]]
+)
 
 # %% [markdown]
 # ### Sizes
