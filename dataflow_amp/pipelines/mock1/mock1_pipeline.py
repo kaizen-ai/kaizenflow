@@ -35,6 +35,14 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         val: str = config.get_and_mark_as_used(key)
         return val
 
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
             self._get_nid("filter_ath"): {

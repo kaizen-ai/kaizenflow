@@ -41,6 +41,14 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         """
         raise NotImplementedError
 
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
@@ -79,6 +87,14 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
         key = (resample_nid, "func_kwargs", "rule")
         val: str = config.get_and_mark_as_used(key)
         return val
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     def get_config_template(self) -> cconfig.Config:
         """
@@ -217,6 +233,14 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         key = (resample_nid, "func_kwargs", "rule")
         val: str = config.get_and_mark_as_used(key)
         return val
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     def get_config_template(self) -> cconfig.Config:
         """
@@ -369,6 +393,14 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
         key = (resample_nid, "transformer_kwargs", "rule")
         val: str = config.get_and_mark_as_used(key)
         return val
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     def get_config_template(self) -> cconfig.Config:
         config = cconfig.Config.from_dict(
