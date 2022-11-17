@@ -168,7 +168,7 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     database insertion.
 
     :param df: DataFrame formed from raw bid/ask dict data.
-    :return transformed DataFrame
+    :return transformed DataFrame 
     """
     df["currency_pair"] = df["currency_pair"].str.replace("/", "_")
     # Each message stores ohlcv candles as a list of lists.
@@ -245,12 +245,21 @@ def calculate_vwap(
     return calculated_price
 
 
+# TODO(Juraj): CmTask #3235 remove dependency on having exchange column
+#  it adds unnecessary complexity.
 def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
-    Resample bid/ask data to 1 minute interval.
+    Resample bid/ask data to 1 minute interval for single symbol.
+    
+    The method expects data in the following format:
+              exchange,id bid_size,bid_price,ask_size,ask_price
+    timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25
+    
+    The method expects data coming from a single exchange.
 
     :param mode: designate strategy to use, i.e. volume-weighted average
         (VWAP) or time-weighted average price (TWAP)
+    :return data resampled to 1 minute.
     """
     resample_kwargs = {
         "rule": "T",
@@ -284,6 +293,42 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
     return df
 
+def resample_multilevel_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
+    """
+    Resample multilevel bid/ask data to 1 minute interval for single symbol.
+    
+    The method expects data in the following format:
+              exchange,id bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
+    timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25...
+    
+    The method assumes 10 levels of order book and a data coming 
+    from single exchange.
+
+    :param mode: designate strategy to use, i.e. volume-weighted average
+        (VWAP) or time-weighted average price (TWAP)
+    :return DataFrame resampled to 1 minute.
+    """
+    all_levels_resampled = []
+    # The order of columns matches the output of resample_bid_ask_data().
+    bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
+    for i in range(1, 11):
+        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", bid_ask_cols)
+        one_level_resampling_cols = list(bid_ask_cols_level) + ["exchange_id"]
+        data_one_level = data[one_level_resampling_cols]
+        # Canonize column name for resampling function.
+        data_one_level.columns = bid_ask_cols + ["exchange_id"]
+        data_one_level = resample_bid_ask_data(data_one_level, mode)
+        # Uncanonize the column levels back.
+        data_one_level.columns = one_level_resampling_cols
+        # Temporarily remove exchange_id column to avoid duplicate
+        #  column error when applying pd.concat().
+        data_one_level = data_one_level.drop(["exchange_id"], axis=1)
+        all_levels_resampled.append(data_one_level)
+    # Drop duplicate columns because a vetical concatenation follows.
+    data_resampled = pd.concat(all_levels_resampled, axis=1)
+    # Insert exchange_id column back as it was removed inside loop.
+    data_resampled["exchange_id"] = data["exchange_id"].iloc[0]
+    return data_resampled
 
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
