@@ -18,6 +18,7 @@ import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
 
+BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 
 def convert_timestamp_column(
     datetime_col_name: pd.Series,
@@ -313,13 +314,13 @@ def resample_multilevel_bid_ask_data(
     """
     all_levels_resampled = []
     # The order of columns matches the output of resample_bid_ask_data().
-    bid_ask_cols = ["bid_price", "bid_size", "ask_price", "ask_size"]
+    BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
     for i in range(1, 11):
-        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", bid_ask_cols)
+        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", BID_ASK_COLS)
         one_level_resampling_cols = list(bid_ask_cols_level) + ["exchange_id"]
         data_one_level = data[one_level_resampling_cols]
         # Canonize column name for resampling function.
-        data_one_level.columns = bid_ask_cols + ["exchange_id"]
+        data_one_level.columns = BID_ASK_COLS + ["exchange_id"]
         data_one_level = resample_bid_ask_data(data_one_level, mode)
         # Uncanonize the column levels back.
         data_one_level.columns = one_level_resampling_cols
