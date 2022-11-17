@@ -76,7 +76,7 @@ def build_reconciliation_configs(
         root_dir = "/shared_data/prod_reconciliation"
         if prod_subdir is None:
             # TODO(Grisha): pass `mode` as a param.
-            mode = "manual"
+            mode = "scheduled"
             start_timestamp_as_str = "_".join(date_str, "0605")
             end_timestamp_as_str = "_".join(date_str, "0800")
             prod_subdir = get_prod_system_log_dir(
