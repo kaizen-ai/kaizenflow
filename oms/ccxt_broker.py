@@ -655,7 +655,12 @@ class CcxtBroker(ombroker.Broker):
             try:
                 # Make sure that leverage is within the acceptable range
                 # before submitting the order.
-                _LOG.debug("Max leverage for symbol=%s and position size=%s is set to %s", symbol, position_size, max_leverage)
+                _LOG.debug(
+                    "Max leverage for symbol=%s and position size=%s is set to %s",
+                    symbol,
+                    position_size,
+                    max_leverage,
+                )
                 self._exchange.setLeverage(max_leverage, symbol)
                 _LOG.debug("Submitting order=%s", str(order))
                 order_resp = self._exchange.createOrder(
