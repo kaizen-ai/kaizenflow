@@ -24,7 +24,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class FeaturePipeline(dtfcore.DagBuilder):
-
     def get_trading_period(self, config: cconfig.Config) -> str:
         """
         See description in the parent class.
