@@ -58,7 +58,9 @@ def _run(args: argparse.Namespace) -> None:
                 args.end_timestamp,
             )
             continue
-        data_resampled_single = imvcdttrut.resample_multilevel_bid_ask_data(data_single)
+        data_resampled_single = imvcdttrut.resample_multilevel_bid_ask_data(
+            data_single
+        )
         data_resampled_single["currency_pair"] = currency_pair
         data_resampled.append(data_resampled_single)
     # Transform the dataset to make save_parquet applicable.

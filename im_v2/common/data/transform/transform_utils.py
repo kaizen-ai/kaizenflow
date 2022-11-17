@@ -168,7 +168,7 @@ def _transform_ohlcv_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     database insertion.
 
     :param df: DataFrame formed from raw bid/ask dict data.
-    :return transformed DataFrame 
+    :return transformed DataFrame
     """
     df["currency_pair"] = df["currency_pair"].str.replace("/", "_")
     # Each message stores ohlcv candles as a list of lists.
@@ -250,11 +250,11 @@ def calculate_vwap(
 def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
     Resample bid/ask data to 1 minute interval for single symbol.
-    
+
     The method expects data in the following format:
               exchange,id bid_size,bid_price,ask_size,ask_price
     timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25
-    
+
     The method expects data coming from a single exchange.
 
     :param mode: designate strategy to use, i.e. volume-weighted average
@@ -293,15 +293,18 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     df.insert(2, "ask_price", bid_ask_price_df["ask_size"])
     return df
 
-def resample_multilevel_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
+
+def resample_multilevel_bid_ask_data(
+    data: pd.DataFrame, mode: str = "VWAP"
+) -> pd.DataFrame:
     """
     Resample multilevel bid/ask data to 1 minute interval for single symbol.
-    
+
     The method expects data in the following format:
               exchange,id bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
     timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25...
-    
-    The method assumes 10 levels of order book and a data coming 
+
+    The method assumes 10 levels of order book and a data coming
     from single exchange.
 
     :param mode: designate strategy to use, i.e. volume-weighted average
@@ -329,6 +332,7 @@ def resample_multilevel_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> 
     # Insert exchange_id column back as it was removed inside loop.
     data_resampled["exchange_id"] = data["exchange_id"].iloc[0]
     return data_resampled
+
 
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
