@@ -158,7 +158,7 @@ def apply_history_lookback(
         dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
         dag_config = system.config.get_and_mark_as_used("dag_config")
         days = (
-            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+            dag_builder.get_required_lookback_in_effective_days(dag_config) * 2
         )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
