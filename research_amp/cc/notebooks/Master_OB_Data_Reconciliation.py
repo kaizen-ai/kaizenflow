@@ -12,14 +12,6 @@
 #     name: python3
 # ---
 
-# %%
-# TODO(Max): convert to master notebook.
-# TODO(Max): the notebook is runnable only from branch: `CMTask2703_Perform_manual_reconciliation_of_OB_data`.
-
-# %% [markdown]
-# - CCXT data = CCXT real-time DB bid-ask data collection for futures
-# - CC data = CryptoChassis historical Parquet bid-ask futures data
-
 # %% [markdown]
 # # Imports
 
@@ -65,20 +57,14 @@ def get_example_config() -> cconfig.Config:
     config = cconfig.Config()
     param_dict = {
         "data": {
+            # Whether to resample 1sec data to 1min using our production flow.
+            "resample_1min" = False
             # Parameters for client initialization.
             "cc_im_client": {
                 "universe_version": None,
                 "resample_1min": False,
-                "root_dir": os.path.join(
-                    hs3.get_s3_bucket_path("ck"),
-                    "reorg",
-                    "daily_staged.airflow.pq",
-                ),
-                "partition_mode": "by_year_month",
-                "dataset": "bid_ask",
                 "contract_type": "futures",
-                "data_snapshot": "",
-                "aws_profile": "ck",
+                "tag":"downloaded_1sec"
             },
             "ccxt_im_client": {
                 "resample_1min": False,
@@ -92,8 +78,8 @@ def get_example_config() -> cconfig.Config:
             # Parameters for data query.
             "read_data": {
                 # Get start/end ts as inputs to script.
-                "start_ts": pd.Timestamp("2022-11-16 00:00:00+00:00"),
-                "end_ts": pd.Timestamp("2022-11-16 00:00:15+00:00"),
+                "start_ts": pd.Timestamp("2022-11-15 00:00:00+00:00"),
+                "end_ts": pd.Timestamp("2022-11-15 00:00:15+00:00"),
                 "columns": None,
                 "filter_data_mode": "assert",
             },
@@ -104,7 +90,6 @@ def get_example_config() -> cconfig.Config:
                 "bid_size",
                 "ask_price",
                 "ask_size",
-                "full_symbol",
             ],
         },
         "order_level": 1,
@@ -123,9 +108,7 @@ print(config)
 # CCXT client.
 ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**config["data"]["ccxt_im_client"])
 # CC client.
-cc_parquet_client = iccdc.CryptoChassisHistoricalPqByTileClient(
-    **config["data"]["cc_im_client"]
-)
+cc_parquet_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(**config["data"]["cc_im_client"])
 
 # %% [markdown]
 # # Universe
@@ -147,13 +130,165 @@ print(compare_universe)
 # %% [markdown]
 # # Load data
 
+# %% [markdown]
+# ## Load CCXT
+
 # %% run_control={"marked": true}
 ccxt_df = ccxt_im_client.read_data(universe, **config["data"]["read_data"])
 
 # %%
-ccxt_df
+ccxt_df.head(10)
+
+# %% [markdown]
+# On the first glance:
+# - It has levels where they are not expected to be
+# - The level columns are empty
+
+# %% [markdown]
+# ### Clean CCXT data
+
+# %% run_control={"marked": true}
+# Remove level suffix in the TOB column name.
+ccxt_df.columns = ccxt_df.columns.str.replace("_1", "")
+# Remove all levels.
+target_columns = [col for col in ccxt_df.columns if not col[-1].isnumeric()]
+target_columns = [col for col in target_columns if col!="end_download_timestamp"]
+ccxt_df = ccxt_df[target_columns]
+# CCXT timestamp data goes up to milliseconds, so one needs to round it to seconds.
+ccxt_df.index = ccxt_df.reset_index()["timestamp"].apply(
+            lambda x: x.round(freq="S")
+        )
+ccxt_df = ccxt_df.reset_index().set_index(["timestamp", "full_symbol"])
+display(ccxt_df.head(10))
+
+# %% [markdown]
+# ## Load CCXT
 
 # %%
 cc_df = cc_parquet_client.read_data(universe, **config["data"]["read_data"])
+cc_df = cc_df.reset_index().set_index(["timestamp", "full_symbol"])
+display(cc_df.head(10))
+
+# %% [markdown]
+# # Resampling data
 
 # %%
+resample_1min = config.get_and_mark_as_used(("data", "resample_1min"))
+if resample_1min:
+    ccxt_df = 
+
+# %% [markdown]
+# # Analysis
+
+# %% [markdown]
+# ## Merge CC and DB data into one DataFrame
+#
+
+# %%
+data = ccxt_df.merge(
+    cc_df,
+    how="outer",
+    left_index=True,
+    right_index=True,
+    suffixes=("_ccxt", "_cc"),
+)
+_LOG.info("Start date = %s", data.reset_index()["timestamp"].min())
+_LOG.info("End date = %s", data.reset_index()["timestamp"].max())
+_LOG.info(
+    "Avg observations per coin = %s",
+    len(data) / len(data.reset_index()["full_symbol"].unique()),
+)
+# Move the same metrics from two vendors together.
+data = data.reindex(sorted(data.columns), axis=1)
+# NaNs observation.
+_LOG.info(
+    "Number of observations with NaNs in CryptoChassis = %s",
+    len(data[data["bid_price_cc"].isna()]),
+)
+_LOG.info(
+    "Number of observations with NaNs in CCXT = %s",
+    len(data[data["bid_price_ccxt"].isna()]),
+)
+# Remove NaNs.
+data = hpandas.dropna(data, report_stats=True)
+#
+display(data.tail())
+
+# %% [markdown]
+# ## Calculate differences
+
+# %%
+# Full symbol will not be relevant in calculation loops below.
+bid_ask_cols = config["column_names"]["bid_ask_cols"]
+# Each bid ask value will have a notional and a relative difference between two sources.
+for col in bid_ask_cols:
+    # Notional difference: CC value - DB value.
+    data[f"{col}_diff"] = data[f"{col}_cc"] - data[f"{col}_ccxt"]
+    # Relative value: (CC value - DB value)/DB value.
+    data[f"{col}_relative_diff_pct"] = (
+        100 * (data[f"{col}_cc"] - data[f"{col}_ccxt"]) / data[f"{col}_ccxt"]
+    )
+
+# %%
+# Calculate the mean value of differences for each coin.
+diff_stats = []
+grouper = data.groupby(["full_symbol"])
+for col in bid_ask_cols:
+    diff_stats.append(grouper[f"{col}_diff"].mean())
+    diff_stats.append(grouper[f"{col}_relative_diff_pct"].mean())
+#
+diff_stats = pd.concat(diff_stats, axis=1)
+
+# %% [markdown]
+# ## Show stats for differences (in %)
+
+# %% [markdown]
+# ### Prices
+
+# %%
+display(diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]])
+
+# %% [markdown]
+# ### Sizes
+
+# %%
+display(diff_stats[["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]])
+
+# %% [markdown]
+# ## Correlations
+
+# %% [markdown]
+# ### Bid price
+
+# %%
+bid_price_corr_matrix = (
+    data[["bid_price_cc", "bid_price_ccxt"]].groupby(level=1).corr()
+)
+display(bid_price_corr_matrix)
+
+# %% [markdown]
+# ### Ask price
+
+# %%
+ask_price_corr_matrix = (
+    data[["ask_price_cc", "ask_price_ccxt"]].groupby(level=1).corr()
+)
+display(ask_price_corr_matrix)
+
+# %% [markdown]
+# ### Bid size
+
+# %%
+bid_size_corr_matrix = (
+    data[["bid_size_cc", "bid_size_ccxt"]].groupby(level=1).corr()
+)
+display(bid_size_corr_matrix)
+
+# %% [markdown]
+# ### Ask size
+
+# %%
+ask_size_corr_matrix = (
+    data[["ask_size_cc", "ask_size_ccxt"]].groupby(level=1).corr()
+)
+display(ask_size_corr_matrix)
