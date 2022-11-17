@@ -24,6 +24,20 @@ _LOG = logging.getLogger(__name__)
 
 
 class FeaturePipeline(dtfcore.DagBuilder):
+    def get_trading_period(self, config: cconfig.Config) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_config_template(self) -> cconfig.Config:
         dict_ = {
             self._get_nid("load_data"): {
