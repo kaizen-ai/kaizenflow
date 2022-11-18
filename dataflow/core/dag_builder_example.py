@@ -37,14 +37,16 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         config = cconfig.Config.from_dict(dict_)
         return config
 
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
         raise NotImplementedError
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.
@@ -95,7 +97,9 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
 
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
@@ -103,11 +107,13 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
         # Get a key for trading period inside the config.
         resample_nid = self._get_nid("rets/resample")
         key = (resample_nid, "func_kwargs", "rule")
-        val: str = config.get_and_mark_as_used(key)
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
         return val
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.
@@ -258,7 +264,9 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from an ARMA process.
     """
 
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
@@ -266,11 +274,13 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         # Get a key for trading period inside the config.
         resample_nid = self._get_nid("rets/resample")
         key = (resample_nid, "func_kwargs", "rule")
-        val: str = config.get_and_mark_as_used(key)
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
         return val
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.
@@ -435,7 +445,9 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     process.
     """
 
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
@@ -443,11 +455,13 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
         # Get a key for trading period inside the config.
         resample_nid = self._get_nid("resample")
         key = (resample_nid, "transformer_kwargs", "rule")
-        val: str = config.get_and_mark_as_used(key)
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
         return val
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.

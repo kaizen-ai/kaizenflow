@@ -108,18 +108,20 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
-    # TODO(Grisha): @Dan Uncomment when these methods are implemented in C3.
+    # TODO(Grisha): @Dan Uncomment when methods are implemented in C3.
     # @abc.abstractmethod
-    # def get_trading_period(self) -> str:
+    # def get_trading_period(
+    #     self, config: cconfig.Config, mark_key_as_used: bool
+    # ) -> str:
     #     """
     #     Return the current trading period.
-
+    #
     #     :return: string representation of a time interval, e.g., "1T", "5T"
     #     """
 
     # @abc.abstractmethod
     # def get_required_lookback_in_effective_days(
-    #     self, config: cconfig.Config
+    #     self, config: cconfig.Config, mark_key_as_used: bool
     # ) -> int:
     #     """
     #     Return the number of days needed to execute pipeline at the frequency
@@ -197,7 +199,10 @@ class DagBuilder(abc.ABC):
         Return the start_timestamp needed to execute pipeline to get a result
         on 'end_timestamp'.
         """
-        effective_days = self.get_required_lookback_in_effective_days(config)
+        mark_key_as_used = True
+        effective_days = self.get_required_lookback_in_effective_days(
+            config, mark_key_as_used
+        )
         # TODO(gp): We should a trading calendar to handle holidays and half days.
         #  For now we just consider business days as an approximation.
         return end_timestamp - pd.tseries.offsets.BDay(effective_days)
