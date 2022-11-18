@@ -665,7 +665,7 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
     #
-    mark_key_as_used = False
+    mark_key_as_used = True
     trading_period_str = dag_builder.get_trading_period(
         dag_config, mark_key_as_used
     )

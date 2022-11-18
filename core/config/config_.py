@@ -723,9 +723,7 @@ class Config:
         """
         Get the value and mark it as used.
 
-        :param mark_key_as_used: whether we mark the key as read by the client.
-            Set to `False` due to accessing values from logging, and we want clients
-            to explicitely say when they want the value to be marked as read.
+        :param mark_key_as_used: see `_mark_as_used()` for description
         :param default_value: value to return if key was not found
 
         This should be used as the only way of accessing values from configs
@@ -765,11 +763,9 @@ class Config:
                 ```
             - If the value is a subconfig with multiple values inside:
                 ```
+                # Note that `dag_config` is a subconfig so we just get it
+                # without marking as used.
                 dag_config = system.config["dag_config"]
-                # Here 'trading_period' will be marked as used.
-                trading = dag_builder.get_trading_period(
-                    dag_config, mark_key_as_used=False
-                )
                 ```
         """
         try:

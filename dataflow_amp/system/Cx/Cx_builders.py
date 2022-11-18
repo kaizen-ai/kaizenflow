@@ -288,7 +288,7 @@ def _get_Cx_dag_prod_instance1(
     #
     system = dtfsys.apply_DagRunner_config_for_crypto(system)
     # Build Portfolio.
-    mark_key_as_used = False
+    mark_key_as_used = True
     trading_period_str = dag_builder.get_trading_period(
         dag_config, mark_key_as_used
     )
@@ -355,7 +355,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     market_data = system.market_data
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
-    mark_key_as_used = False
+    mark_key_as_used = True
     trading_period_str = dag_builder.get_trading_period(
         dag_config, mark_key_as_used
     )
