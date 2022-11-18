@@ -255,9 +255,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         try:
             pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
-                data = copy.deepcopy(
-                    self._async_exchange.ohlcvs[pair]
-                )
+                data = copy.deepcopy(self._async_exchange.ohlcvs[pair])
                 for key in data:
                     # One of the returned key:value pairs is:
                     #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
