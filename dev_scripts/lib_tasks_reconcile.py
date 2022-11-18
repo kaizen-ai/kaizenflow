@@ -9,6 +9,7 @@
 # 4) Dump market data for simulation
 # 5) Run simulation
 # 6) Copy simulation data to a target folder
+# TODO(Grisha): do we need TCA?
 # 7) Dump TCA data
 # 8) Run the reconciliation notebook and publish it
 
@@ -55,6 +56,11 @@ def _system(cmd: str) -> int:
 
 
 def _dassert_is_date(date: str) -> None:
+    """
+    Check if an input string is a date.
+
+    :param date: date as string, e.g., "20221101"
+    """
     hdbg.dassert_isinstance(date, str)
     try:
         _ = datetime.datetime.strptime(date, "%Y%m%d")
@@ -68,6 +74,8 @@ def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
 
     If start timestamp is not specified by a user then return current
     date.
+
+    E.g., "20221101_064500" -> "20221101".
     """
     if start_timestamp_as_str is None:
         run_date = datetime.date.today().strftime("%Y%m%d")
@@ -79,14 +87,19 @@ def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     return run_date
 
 
-def _prevent_overwriting(object_path: str) -> None:
-    hdbg.dassert_path_exists(object_path)
-    _LOG.info("Removing the write permissions for: %s", object_path)
-    if os.path.isdir(object_path):
+def _prevent_overwriting(path: str) -> None:
+    """
+    Remove write permissions.
+
+    :param path: path to a file or to a dir
+    """
+    hdbg.dassert_path_exists(path)
+    _LOG.info("Removing the write permissions for: %s", path)
+    if os.path.isdir(path):
         opt = "-R"
     else:
         opt = ""
-    cmd = f"chmod {opt} -w {object_path}"
+    cmd = f"chmod {opt} -w {path}"
     _system(cmd)
 
 
@@ -97,9 +110,11 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     If a dir name is not specified by a user then use prod reconcilation
     dir on the shared disk with the corresponding run date subdir.
 
+    E.g., "/shared_data/prod_reconciliation/20221101".
+
     # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
-    :param run_date: string representation of the reconcile run start date
-    :param dst_dir: a dir to build root reconciliation dir
+    :param run_date: string representation of the reconcile run date
+    :param dst_dir: a root dir for prod system reconciliation
     :return: a target dir to store reconcilation results
     """
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
@@ -110,7 +125,7 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
 
 def _resolve_timestamps(
     start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
-) -> Tuple:
+) -> Tuple[str, str]:
     """
     Return start and end timestamps.
 
@@ -197,7 +212,7 @@ def reconcile_dump_market_data(
 ):  # type: ignore
     # pylint: disable=line-too-long
     """
-    Dump the market data image and save it to the specified folder.
+    Dump the market data image and copy it to the specified folder.
 
     The output df looks like:
     ```
@@ -271,7 +286,7 @@ def reconcile_run_sim(
     dst_dir=None,
 ):  # type: ignore
     """
-    Run the simulation given a run date.
+    Run the simulation given an interval [start_timestamp, end_timestamp].
 
     See `reconcile_run_all()` for params description.
     """
@@ -282,6 +297,7 @@ def reconcile_run_sim(
     start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
+    # TODO(Grisha): maybe include date for a default value? i.e. `.../20221101`.
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
@@ -305,7 +321,7 @@ def reconcile_run_sim(
     script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
-    # Check that system log dir exists and is not empty.
+    # Check that the required dirs were created.
     hdbg.dassert_dir_exists(os.path.join(local_results_dir, "dag"))
     hdbg.dassert_dir_exists(os.path.join(local_results_dir, "process_forecasts"))
     # TODO(Grisha): @Dan Add asserts on the latest files so we confirm that simulation was completed.
