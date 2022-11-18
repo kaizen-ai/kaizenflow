@@ -77,8 +77,8 @@ def build_reconciliation_configs(
         if prod_subdir is None:
             # TODO(Grisha): pass `mode` as a param.
             mode = "scheduled"
-            start_timestamp_as_str = "_".join(date_str, "0605")
-            end_timestamp_as_str = "_".join(date_str, "0800")
+            start_timestamp_as_str = "_".join(date_str, "060500")
+            end_timestamp_as_str = "_".join(date_str, "080000")
             prod_subdir = get_prod_system_log_dir(
                 mode, start_timestamp_as_str, end_timestamp_as_str
             )
@@ -216,7 +216,7 @@ def get_prod_system_log_dir(
     Get a prod system log dir.
 
     E.g.:
-    "system_log_dir.manual.20221109_0605.20221109_0800".
+    "system_log_dir.manual.20221109_0605.20221109_080000".
 
     See `lib_tasks_reconcile.reconcile_run_all()` for params description.
     """
