@@ -7,6 +7,8 @@ import dataflow.pipelines.features.pipeline as dtfpifepip
 import datetime
 import logging
 
+import pandas as pd
+
 import core.config as cconfig
 import core.features as cofeatur
 import core.finance as cofinanc
@@ -33,15 +35,33 @@ class FeaturePipeline(dtfcore.DagBuilder):
     def get_volatility_col_name() -> str:
         raise NotImplementedError
     
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
         raise NotImplementedError
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
         """
         See description in the parent class.
         """
