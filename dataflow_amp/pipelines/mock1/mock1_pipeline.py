@@ -24,6 +24,15 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
     A pipeline similar to real models.
     """
 
+    def get_price_col_name() -> str:
+        raise NotImplementedError
+
+    def get_prediction_col_name() -> str:
+        raise NotImplementedError
+
+    def get_volatility_col_name() -> str:
+        raise NotImplementedError
+
     def get_trading_period(self, config: cconfig.Config) -> str:
         """
         See description in the parent class.

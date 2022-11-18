@@ -35,6 +35,15 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         config = cconfig.Config.from_dict(dict_)
         return config
 
+    def get_price_col_name() -> str:
+        raise NotImplementedError
+
+    def get_prediction_col_name() -> str:
+        raise NotImplementedError
+
+    def get_volatility_col_name() -> str:
+        raise NotImplementedError
+
     def get_trading_period(self, config: cconfig.Config) -> str:
         """
         See description in the parent class.
@@ -76,6 +85,15 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
+
+    def get_price_col_name() -> str:
+        raise NotImplementedError
+
+    def get_prediction_col_name() -> str:
+        raise NotImplementedError
+
+    def get_volatility_col_name() -> str:
+        raise NotImplementedError
 
     def get_trading_period(self, config: cconfig.Config) -> str:
         """
@@ -222,6 +240,15 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an ARMA process.
     """
+
+    def get_price_col_name() -> str:
+        raise NotImplementedError
+
+    def get_prediction_col_name() -> str:
+        raise NotImplementedError
+
+    def get_volatility_col_name() -> str:
+        raise NotImplementedError
 
     def get_trading_period(self, config: cconfig.Config) -> str:
         """
@@ -382,6 +409,15 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from an Multivariate Normal
     process.
     """
+
+    def get_price_col_name() -> str:
+        raise NotImplementedError
+
+    def get_prediction_col_name() -> str:
+        raise NotImplementedError
+
+    def get_volatility_col_name() -> str:
+        raise NotImplementedError
 
     def get_trading_period(self, config: cconfig.Config) -> str:
         """

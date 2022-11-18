@@ -156,16 +156,7 @@ def get_ProcessForecastsNode_dict_instance1(
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
-    # TODO(Grisha): see CmTask3206 "Add more abstract methods to DagBuilder".
-    dag_builder_class = system.config["dag_builder_class"]
-    if dag_builder_class == "C1b_DagBuilder":
-        prediction_col = "vwap.ret_0.vol_adj_2_hat"
-        volatility_col = "vwap.ret_0.vol"
-    elif dag_builder_class == "C3a_DagBuilder":
-        prediction_col = "feature"
-        volatility_col = "garman_klass_vol"
-    else:
-        raise ValueError(f"Invalid dag_builder_class='{dag_builder_class}'")
+    dag_builder = system.config["dag_builder_object"]
     spread_col = None
     style = "cross_sectional"
     # For prod we use smaller GMV so that we can trade at low capacity while
@@ -186,8 +177,8 @@ def get_ProcessForecastsNode_dict_instance1(
         root_log_dir = None
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
-        prediction_col,
-        volatility_col,
+        dag_builder.prediction_col_name,
+        dag_builder.volatility_col_name,
         spread_col,
         order_duration_in_mins,
         style,
@@ -441,14 +432,14 @@ def apply_Cx_DagRunner_config(
     return system
 
 
-# TODO(Grisha): @Dan pass values as params.
 def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
     """
     Extend system config with parameters for research PNL computations.
     """
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj_2_hat"
+    dag_builder = system.config["dag_builder_object"]
+    system.config["research_pnl", "price_col"] = dag_builder.price_col_name
+    system.config["research_pnl", "volatility_col"] = dag_builder.volatility_col_name
+    system.config["research_pnl", "prediction_col"] = dag_builder.prediction_col_name
     return system
 
 

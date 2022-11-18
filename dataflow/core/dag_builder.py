@@ -99,6 +99,18 @@ class DagBuilder(abc.ABC):
     def nid_prefix(self) -> str:
         return self._nid_prefix
 
+    @property
+    def price_col_name(self) -> str:
+        return self.get_price_col_name()
+
+    @property
+    def prediction_col_name(self) -> str:
+        return self.get_prediction_col_name()
+    
+    @property
+    def volatility_col_name(self) -> str:
+        return self.get_volatility_col_name()
+
     @abc.abstractmethod
     def get_config_template(self) -> cconfig.Config:
         """
@@ -123,6 +135,24 @@ class DagBuilder(abc.ABC):
         """
         Return the number of days needed to execute pipeline at the frequency
         given by config.
+        """
+
+    @abc.abstractmethod
+    def get_price_col_name(self) -> str:
+        """
+        Return price column name.
+        """
+
+    @abc.abstractmethod
+    def get_prediction_col_name(self) -> str:
+        """
+        Return prediction column name.
+        """
+
+    @abc.abstractmethod
+    def get_volatility_col_name(self) -> str:
+        """
+        Return prediction column name.
         """
 
     def get_dag(
