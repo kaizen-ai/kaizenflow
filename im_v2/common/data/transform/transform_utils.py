@@ -145,18 +145,19 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     df["currency_pair"] = df["symbol"].str.replace("/", "_")
     groupby_cols = ["currency_pair", "timestamp"]
     # Drop duplicates before computing level column.
-    df = df[
-        [
-            "currency_pair",
-            "timestamp",
-            "bid_price",
-            "bid_size",
-            "ask_price",
-            "ask_size",
-            "end_download_timestamp",
-        ]
+    non_metadata_columns = [
+        "currency_pair",
+        "timestamp",
+        "bid_price",
+        "bid_size",
+        "ask_price",
+        "ask_size",
     ]
-    df = df.drop_duplicates()
+    df = df[non_metadata_columns + ["end_download_timestamp"]]
+    # It can happen that the orderbook did not change between iteration
+    #  in this case we get duplicated data with different end_download_timestamp
+    #  these can be safely dropped.
+    df = df.drop_duplicates(non_metadata_columns)
     # For clarity, add +1 so the levels start from 1.
     df["level"] = df.groupby(groupby_cols).cumcount().add(1)
     return df
