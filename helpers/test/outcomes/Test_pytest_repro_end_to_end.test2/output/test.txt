@@ -10,3 +10,7 @@ pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoric
 pytest im_v2/common/data/client/test/test_historical_pq_clients.py::TestHistoricalPqByTileClient1::test_read_data5
 # To run the tests:
 > $GIT_ROOT/helpers/test/outcomes/Test_pytest_repro_end_to_end.test2/tmp.scratch/tmp.pytest_repro.sh
+HH:MM:SS - INFO  hcache.py clear_global_cache:292                       Before clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=32.0 KB
+HH:MM:SS - WARN  hcache.py clear_global_cache:293                       Resetting 'global mem' cache '/mnt/tmpfs/tmp.cache.mem'
+HH:MM:SS - WARN  hcache.py clear_global_cache:303                       Destroying '/mnt/tmpfs/tmp.cache.mem' ...
+HH:MM:SS - INFO  hcache.py clear_global_cache:319                       After clear_global_cache: 'global mem' cache: path='/mnt/tmpfs/tmp.cache.mem', size=nan
