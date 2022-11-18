@@ -37,13 +37,13 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         config = cconfig.Config.from_dict(dict_)
         return config
 
-    def get_price_col_name() -> str:
+    def _get_price_col_name() -> str:
         raise NotImplementedError
 
-    def get_prediction_col_name() -> str:
+    def _get_prediction_col_name() -> str:
         raise NotImplementedError
 
-    def get_volatility_col_name() -> str:
+    def _get_volatility_col_name() -> str:
         raise NotImplementedError
 
     def get_trading_period(
@@ -106,13 +106,13 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
 
-    def get_price_col_name() -> str:
+    def _get_price_col_name() -> str:
         raise NotImplementedError
 
-    def get_prediction_col_name() -> str:
+    def _get_prediction_col_name() -> str:
         raise NotImplementedError
 
-    def get_volatility_col_name() -> str:
+    def _get_volatility_col_name() -> str:
         raise NotImplementedError
 
     def get_trading_period(
@@ -282,13 +282,13 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from an ARMA process.
     """
 
-    def get_price_col_name() -> str:
+    def _get_price_col_name() -> str:
         raise NotImplementedError
 
-    def get_prediction_col_name() -> str:
+    def _get_prediction_col_name() -> str:
         raise NotImplementedError
 
-    def get_volatility_col_name() -> str:
+    def _get_volatility_col_name() -> str:
         raise NotImplementedError
 
     def get_trading_period(
@@ -472,13 +472,13 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     process.
     """
 
-    def get_price_col_name() -> str:
+    def _get_price_col_name() -> str:
         raise NotImplementedError
 
-    def get_prediction_col_name() -> str:
+    def _get_prediction_col_name() -> str:
         raise NotImplementedError
 
-    def get_volatility_col_name() -> str:
+    def _get_volatility_col_name() -> str:
         raise NotImplementedError
 
     def get_trading_period(
