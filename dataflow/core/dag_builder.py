@@ -108,22 +108,39 @@ class DagBuilder(abc.ABC):
             "dummy" required paths.
         """
 
-    @abc.abstractmethod
-    def get_trading_period(self) -> str:
-        """
-        Return the current trading period.
+    # TODO(Grisha): @Dan Uncomment when these methods are implemented in C3.
+    # @abc.abstractmethod
+    # def get_trading_period(self) -> str:
+    #     """
+    #     Return the current trading period.
 
-        :return: string representation of a time interval, e.g., "1T", "5T"
-        """
+    #     :return: string representation of a time interval, e.g., "1T", "5T"
+    #     """
 
-    @abc.abstractmethod
-    def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
-    ) -> int:
-        """
-        Return the number of days needed to execute pipeline at the frequency
-        given by config.
-        """
+    # @abc.abstractmethod
+    # def get_required_lookback_in_effective_days(
+    #     self, config: cconfig.Config
+    # ) -> int:
+    #     """
+    #     Return the number of days needed to execute pipeline at the frequency
+    #     given by config.
+    #     """
+
+    # @abc.abstractmethod
+    # def set_weights(
+    #     self, config: cconfig.Config, weights: pd.Series
+    # ) -> cconfig.Config:
+    #     """
+    #     Return a modified copy of `config` using given feature `weights`.
+    #     """
+
+    # @abc.abstractmethod
+    # def convert_to_fast_prod_setup(
+    #     self, config: cconfig.Config
+    # ) -> cconfig.Config:
+    #     """
+    #     Convert trading period to fast prod setup.
+    #     """
 
     def get_dag(
         self, config: cconfig.Config, mode: str = "strict", validate: bool = True
