@@ -74,13 +74,14 @@ def build_reconciliation_configs(
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        # Prod system is run via AirFlow and the results are tagged with the previous day.
-        previous_day_date_str = (
-            pd.Timestamp(date_str) - pd.Timedelta("1D")
-        ).strftime("%Y-%m-%d")
         if prod_subdir is None:
-            # TODO(Grisha): @Dan Refactor hard-coded time.
-            prod_subdir = f"system_log_dir_scheduled__{previous_day_date_str}T10:00:00+00:00_2hours"
+            # TODO(Grisha): pass `mode` as a param.
+            mode = "scheduled"
+            start_timestamp_as_str = "_".join(date_str, "060500")
+            end_timestamp_as_str = "_".join(date_str, "080000")
+            prod_subdir = get_prod_system_log_dir(
+                mode, start_timestamp_as_str, end_timestamp_as_str
+            )
         prod_dir = os.path.join(
             root_dir,
             date_str,
@@ -190,6 +191,40 @@ def load_config_from_pickle(
 
 
 # /////////////////////////////////////////////////////////////////////////////
+
+
+def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
+    """
+    Convert the given string timestamp to the timestamp with a timezone info.
+    """
+    # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
+    hdbg.dassert_isinstance(timestamp_as_str, str)
+    timestamp_as_str = timestamp_as_str.replace("_", " ")
+    # Add timezone offset in order to standartize the time.
+    timestamp_as_str = "".join([timestamp_as_str, "-04:00"])
+    timestamp = pd.Timestamp(timestamp_as_str, tz="America/New_York")
+    return timestamp
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+
+def get_prod_system_log_dir(
+    mode: str, start_timestamp_as_str: str, end_timestamp_as_str: str
+) -> str:
+    """
+    Get a prod system log dir.
+
+    E.g.:
+    "system_log_dir.manual.20221109_0605.20221109_080000".
+
+    See `lib_tasks_reconcile.reconcile_run_all()` for params description.
+    """
+    system_log_dir = (
+        f"system_log_dir.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}"
+    )
+    _LOG.info(hprint.to_str("system_log_dir"))
+    return system_log_dir
 
 
 # TODO(gp): -> _get_system_log_paths?

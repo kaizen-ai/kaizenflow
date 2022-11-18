@@ -34,7 +34,7 @@ import datetime
 import logging
 import os
 import sys
-from typing import Optional
+from typing import Optional, Tuple
 
 from invoke import task
 
@@ -64,9 +64,10 @@ def _dassert_is_date(date: str) -> None:
 
 def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
-    Return the run date as string from start timestamp, e.g. "20221017"
+    Return the run date as string from start timestamp, e.g. "20221017".
 
-    If start timestamp is not specified by a user then return current date.
+    If start timestamp is not specified by a user then return current
+    date.
     """
     if start_timestamp_as_str is None:
         run_date = datetime.date.today().strftime("%Y%m%d")
@@ -107,16 +108,21 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     return target_dir
 
 
-def _resolve_rt_timeout_in_secs_or_time(
-    rt_timeout_in_secs_or_time: Optional[int],
-) -> int:
+def _resolve_timestamps(
+    start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
+) -> Tuple:
     """
-    Return the specified `rt_timeout_in_secs_or_time` or a default value
-    corresponding to 2 hours.
+    Return start and end timestamps.
+
+    If a timestamps is not specified by a user then set a default value for it
+    and return it.
     """
-    rt_timeout_in_secs_or_time = rt_timeout_in_secs_or_time or 2 * 60 * 60
-    _LOG.info(hprint.to_str("rt_timeout_in_secs_or_time"))
-    return rt_timeout_in_secs_or_time
+    today_as_str = datetime.date.today().strftime("%Y%m%d")
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = "_".join([today_as_str, "060500"])
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = "_".join([today_as_str, "080000"])
+    return start_timestamp_as_str, end_timestamp_as_str
 
 
 def _sanity_check_data(file_path: str) -> None:
@@ -183,8 +189,8 @@ def reconcile_create_dirs(
 def reconcile_dump_market_data(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
-    rt_timeout_in_secs_or_time=None,
     incremental=False,
     interactive=False,
     prevent_overwriting=True,
@@ -212,11 +218,11 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
+    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
-    rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
-    )
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
@@ -227,8 +233,8 @@ def reconcile_dump_market_data(
         opts = [
             "--action dump_data",
             f"--start_timestamp_as_str {start_timestamp_as_str}",
+            f"--end_timestamp_as_str {end_timestamp_as_str}",
             f"--dst_dir {dst_dir}",
-            f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
         ]
         opts = " ".join(opts)
         opts += " -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
@@ -261,8 +267,8 @@ def reconcile_dump_market_data(
 def reconcile_run_sim(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
-    rt_timeout_in_secs_or_time=None,
 ):  # type: ignore
     """
     Run the simulation given a run date.
@@ -273,10 +279,10 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
-    rt_timeout_in_secs_or_time = _resolve_rt_timeout_in_secs_or_time(
-        rt_timeout_in_secs_or_time
+    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
     )
+    dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
@@ -289,8 +295,8 @@ def reconcile_run_sim(
     opts = [
         "--action run_simulation",
         f"--start_timestamp_as_str {start_timestamp_as_str}",
+        f"--end_timestamp_as_str {end_timestamp_as_str}",
         f"--dst_dir {dst_dir}",
-        f"--rt_timeout_in_secs_or_time {rt_timeout_in_secs_or_time}",
     ]
     opts = " ".join(opts)
     opts += (
@@ -338,6 +344,7 @@ def reconcile_copy_sim_data(
 def reconcile_copy_prod_data(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
     mode=None,
@@ -353,6 +360,12 @@ def reconcile_copy_prod_data(
         - "scheduled": the system is run at predefined time automatically
         - "manual": the system run is triggered manually
     """
+    # Moved inside the function due to `oms` dependency. See CMTask #3151.
+    import oms
+
+    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
     if stage is None:
         stage = "preprod"
     if mode is None:
@@ -367,22 +380,17 @@ def reconcile_copy_prod_data(
     hdbg.dassert_dir_exists(prod_target_dir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
-    run_datetime = datetime.datetime.strptime(run_date, "%Y%m%d")
-    # Prod system is run via AirFlow and the results are tagged with the previous day.
-    prod_run_date = (
-        run_datetime - datetime.timedelta(days=1)
-    ).strftime("%Y-%m-%d")
     shared_dir = f"/shared_data/ecs/{stage}"
-    cmd = f"find '{shared_dir}' -name system_log_dir_{mode}__*2hours | grep '{prod_run_date}'"
-    # E.g., `.../system_log_dir_scheduled__2022-10-03T10:00:00+00:00_2hours`.
-    _, system_log_dir = hsystem.system_to_string(cmd)
+    system_log_dir = oms.get_prod_system_log_dir(
+        mode, start_timestamp_as_str, end_timestamp_as_str
+    )
+    system_log_dir = os.path.join(shared_dir, system_log_dir)
     hdbg.dassert_dir_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    cmd = f"find '{shared_dir}/logs' -name log_{mode}__*2hours.txt | grep '{prod_run_date}'"
-    # E.g., `.../log_scheduled__2022-10-05T10:00:00+00:00_2hours.txt`.
-    _, log_file = hsystem.system_to_string(cmd)
+    log_file = f"log_{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
+    log_file = os.path.join(shared_dir, log_file)
     hdbg.dassert_file_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
@@ -391,8 +399,7 @@ def reconcile_copy_prod_data(
         _prevent_overwriting(prod_target_dir)
 
 
-# TODO(Grisha): @Dan Expose `rt_timeout_in_secs_or_time` in this invoke.
-# TODO(Grisha): @Dan Expose `start_timestamp_as_str` use in the notebook.
+# TODO(Grisha): @Dan Expose `start_timestamp_as_str` and `start_timestamp_as_str` use in the notebook.
 @task
 def reconcile_run_notebook(
     ctx,
@@ -574,9 +581,9 @@ def reconcile_dump_tca_data(
 def reconcile_run_all(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
     stage=None,
-    rt_timeout_in_secs_or_time=None,
     mode=None,
     prevent_overwriting=True,
     skip_notebook=False,
@@ -586,8 +593,9 @@ def reconcile_run_all(
 
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
+    :param end_timestamp_as_str: string representation of timestamp
+        at which to end reconcile run
     :param dst_dir: dir to store reconcilation results in
-    :param rt_timeout_in_secs_or_time: duration of reconcilation run in seconds
     :param mode: see `reconcile_copy_prod_data()`
     :param prevent_overwriting: if True write permissions are remove otherwise
         a permissions remain as they are
@@ -606,6 +614,7 @@ def reconcile_run_all(
     reconcile_copy_prod_data(
         ctx,
         start_timestamp_as_str=start_timestamp_as_str,
+        end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
         stage=stage,
         mode=mode,
@@ -615,15 +624,15 @@ def reconcile_run_all(
     reconcile_dump_market_data(
         ctx,
         start_timestamp_as_str=start_timestamp_as_str,
+        end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
         prevent_overwriting=prevent_overwriting,
     )
     reconcile_run_sim(
         ctx,
         start_timestamp_as_str=start_timestamp_as_str,
+        end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
-        rt_timeout_in_secs_or_time=rt_timeout_in_secs_or_time,
     )
     reconcile_copy_sim_data(
         ctx,
