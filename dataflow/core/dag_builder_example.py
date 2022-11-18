@@ -37,15 +37,6 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         config = cconfig.Config.from_dict(dict_)
         return config
 
-    def _get_price_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name() -> str:
-        raise NotImplementedError
-
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
@@ -78,6 +69,15 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         """
         raise NotImplementedError
 
+    def _get_price_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_prediction_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_volatility_col_name(self) -> str:
+        raise NotImplementedError
+
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
@@ -105,15 +105,6 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
-
-    def _get_price_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name() -> str:
-        raise NotImplementedError
 
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
@@ -208,6 +199,15 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
         )
         return config
 
+    def _get_price_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_prediction_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_volatility_col_name(self) -> str:
+        raise NotImplementedError
+
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
@@ -281,15 +281,6 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an ARMA process.
     """
-
-    def _get_price_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name() -> str:
-        raise NotImplementedError
 
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
@@ -395,6 +386,15 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         )
         return config
 
+    def _get_price_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_prediction_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_volatility_col_name(self) -> str:
+        raise NotImplementedError
+
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
@@ -471,15 +471,6 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from an Multivariate Normal
     process.
     """
-
-    def _get_price_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name() -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name() -> str:
-        raise NotImplementedError
 
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
@@ -584,6 +575,15 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
             },
         )
         return config
+
+    def _get_price_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_prediction_col_name(self) -> str:
+        raise NotImplementedError
+
+    def _get_volatility_col_name(self) -> str:
+        raise NotImplementedError
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"

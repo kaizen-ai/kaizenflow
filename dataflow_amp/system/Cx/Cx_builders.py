@@ -444,8 +444,12 @@ def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
     """
     dag_builder = system.config["dag_builder_object"]
     system.config["research_pnl", "price_col"] = dag_builder.price_col_name
-    system.config["research_pnl", "volatility_col"] = dag_builder.volatility_col_name
-    system.config["research_pnl", "prediction_col"] = dag_builder.prediction_col_name
+    system.config[
+        "research_pnl", "volatility_col"
+    ] = dag_builder.volatility_col_name
+    system.config[
+        "research_pnl", "prediction_col"
+    ] = dag_builder.prediction_col_name
     return system
 
 
