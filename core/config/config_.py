@@ -267,13 +267,13 @@ class _OrderedConfig(_OrderedDictType):
         clobber_mode: Optional[str] = "allow_write_after_use",
     ) -> None:
         """
-        Each val is encoded as a tuple (marked_as_used, writer, value) where:
+        Each val is encoded as a tuple (get_marked_as_used, writer, value) where:
 
-        - marked_as_used: stores whether the value has been already used and thus
+        - get_marked_as_used: stores whether the value has been already used and thus
           needs to be protected from successive writes, depending on
           clobber_mode
         - writer: stores the stacktrace of the function that used the value.
-          Uses `_ConfigWriterInfo` if `marked_as_used` == True, otherwise `None`
+          Uses `_ConfigWriterInfo` if `get_marked_as_used` == True, otherwise `None`
         - value: stores the actual value
 
         For `update_mode` and `clobber_mode` see module docstring.
@@ -297,7 +297,7 @@ class _OrderedConfig(_OrderedDictType):
             # It is not allowed to overwrite a value.
             if is_key_present:
                 # Key already exists, thus we need to assert.
-                marked_as_used, writer, old_val = super().__getitem__(key)
+                get_marked_as_used, writer, old_val = super().__getitem__(key)
                 msg = []
                 msg.append(
                     f"Trying to overwrite old value '{old_val}' with new value '{val}'"
@@ -316,7 +316,7 @@ class _OrderedConfig(_OrderedDictType):
             if is_key_present:
                 # Key already exists, thus keep the old value and issue a warning
                 # that we are not writing.
-                marked_as_used, writer, old_val = super().__getitem__(key)
+                get_marked_as_used, writer, old_val = super().__getitem__(key)
                 msg: List[str] = []
                 msg.append(
                     f"Value '{old_val}' for key '{key}' already exists."
@@ -337,7 +337,7 @@ class _OrderedConfig(_OrderedDictType):
             pass
         elif clobber_mode == "assert_on_write_after_use":
             if is_key_present:
-                marked_as_used, writer, old_val = super().__getitem__(key)
+                get_marked_as_used, writer, old_val = super().__getitem__(key)
                 # Sometimes it's not possible to compare objects, e.g., when
                 # assigning (e.g., Series).
                 try:
@@ -347,9 +347,9 @@ class _OrderedConfig(_OrderedDictType):
                         "exception=%s ", str(e))
                     is_been_changed = True
                 _LOG.debug(
-                    hprint.to_str("marked_as_used old_val is_been_changed")
+                    hprint.to_str("get_marked_as_used old_val is_been_changed")
                 )
-                if marked_as_used and is_been_changed:
+                if get_marked_as_used and is_been_changed:
                     # The value has already been read and we are trying to change
                     # it, so we need to assert.
                     msg: List[str] = []
@@ -367,20 +367,20 @@ class _OrderedConfig(_OrderedDictType):
         if assign_new_value:
             if is_key_present:
                 # If replacing value, use the same `mark_as_used` as the old value.
-                marked_as_used, writer, old_val = super().__getitem__(key)
+                get_marked_as_used, writer, old_val = super().__getitem__(key)
                 _ = old_val
             else:
                 # The key was not present, so we just mark it not read yet.
-                marked_as_used = False
+                get_marked_as_used = False
                 writer = None
             # Check if the value has already been marked as used.
             #  Required for `copy()` method.
             if isinstance(val, tuple) and val and isinstance(val[0], bool):
-                # Set new `marked_as_used` status with the same value.
-                val = (marked_as_used, writer, val[2])
+                # Set new `get_marked_as_used` status with the same value.
+                val = (get_marked_as_used, writer, val[2])
                 super().__setitem__(key, val)
             else:
-                super().__setitem__(key, (marked_as_used, writer, val))
+                super().__setitem__(key, (get_marked_as_used, writer, val))
 
     # /////////////////////////////////////////////////////////////////////////////
     # Get.
@@ -394,7 +394,7 @@ class _OrderedConfig(_OrderedDictType):
         """
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         # Retrieve the value from the dictionary itself.
-        marked_as_used, writer, val = super().__getitem__(key)
+        get_marked_as_used, writer, val = super().__getitem__(key)
         if mark_key_as_used:
             self._mark_as_used(key)
         return val
@@ -433,18 +433,18 @@ class _OrderedConfig(_OrderedDictType):
             - `verbose` for values with `val_type` and `mark_as_used`
         """
         txt = []
-        for key, (marked_as_used, writer, val) in self.items():
+        for key, (get_marked_as_used, writer, val) in self.items():
             # 1) Process key.
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
-                # E.g., `nrows (marked_as_used=False, val_type=core.config.config_.Config)`
-                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={str(writer)}, "
+                # E.g., `nrows (get_marked_as_used=False, val_type=core.config.config_.Config)`
+                key_as_str = f"{key} (get_marked_as_used={get_marked_as_used}, writer={str(writer)}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             elif mode == "debug":
                 # Show full stacktrace of the writer.
                 stacktrace = repr(writer)
-                key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={stacktrace}, "
+                key_as_str = f"{key} (get_marked_as_used={get_marked_as_used}, writer={stacktrace}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             # 2) Process value.
             if isinstance(val, (pd.DataFrame, pd.Series, pd.Index)):
@@ -487,9 +487,9 @@ class _OrderedConfig(_OrderedDictType):
 
     def _mark_as_used(self, key: ScalarKey, *, used_state: bool = True) -> None:
         """
-        Mark value as read.
+        Mark value as used.
 
-        The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
+        The value is a tuple of (get_marked_as_used, value), where `get_marked_as_used`== True
         if the user reported that the value will be used to build other objects,
         and it should not be subsequently modified.
 
@@ -500,22 +500,20 @@ class _OrderedConfig(_OrderedDictType):
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         marked_as_used, writer, val = super().__getitem__(key)
         _LOG.debug(hprint.to_str("marked_as_used val used_state"))
-        if used_state and not isinstance(val, (Config, _OrderedConfig)):
-            # Update the metadata, accounting that this data was used.
-            # TODO(gp): @Danya subconfigs are not marked as used for now,
-            #  but we should recursively mark the objects as used.
-            marked_as_used = True
-            # Get info on who used this data.
-            writer = _ConfigWriterInfo()
-            super().__setitem__(key, (marked_as_used, writer, val))
-        if hasattr(val, "_config"):
-            # If a value is a subconfig, mark all values down the tree.
-            for key in val._config.keys():
-                val._config._mark_as_used(key, used_state=marked_as_used)
+        if used_state:
+            if hasattr(val, "_config"):
+                # If a value is a subconfig, mark all values down the tree.
+                for key in val._config.keys():
+                    val._config._mark_as_used(key)
+            else:
+                # Update the metadata, accounting that this data was used.
+                marked_as_used = True
+                # Get info on who used this data.
+                writer = _ConfigWriterInfo()
+                super().__setitem__(key, (marked_as_used, writer, val))
 
 
-    # TODO(gp): @Danya -> _get_marked_as_used
-    def _marked_as_used(self, key: ScalarKey) -> bool:
+    def _get_marked_as_used(self, key: ScalarKey) -> bool:
         """
         Get the value for `marked_as_used` for a leaf value.
         """
@@ -719,8 +717,7 @@ class Config:
             self._raise_exception(e, key, report_mode)
         return ret
 
-    # TODO(gp): -> get_marked_as_used
-    def marked_as_used(
+    def get_marked_as_used(
         self,
         key: CompoundKey,
         *,
@@ -732,7 +729,7 @@ class Config:
         _LOG.debug("-> " + hprint.to_str("key report_mode self"))
         try:
             ret = self._get_item(
-                key, level=0, mark_key_as_used=False, get_marked_as_used=True
+                key, level=0, mark_key_as_used=False, get_get_get_marked_as_used=True
             )
         except Exception as e:
             report_mode = self._resolve_report_mode(report_mode)
@@ -754,11 +751,11 @@ class Config:
         for key in keys:
             # Get the value and whether it was marked as used.
             val = self[key]
-            marked_as_used = self.marked_as_used(key)
-            # Save `marked_as_used` for leaves, ignoring subconfigs.
+            get_marked_as_used = self.get_marked_as_used(key)
+            # Save `get_marked_as_used` for leaves, ignoring subconfigs.
             if (
                 not isinstance(val, (Config, _OrderedConfig))
-                and not marked_as_used
+                and not get_marked_as_used
             ):
                 unused_variables.append(key)
         if unused_variables:
@@ -1072,8 +1069,8 @@ class Config:
         _LOG.debug(hprint.to_str("self keep_leaves"))
         # pylint: disable=unsubscriptable-object
         dict_: _OrderedDictType[ScalarKey, Any] = collections.OrderedDict()
-        for key, (marked_as_used, writer, val) in self._config.items():
-            _ = marked_as_used, writer
+        for key, (get_marked_as_used, writer, val) in self._config.items():
+            _ = get_marked_as_used, writer
             if keep_leaves:
                 if isinstance(val, Config):
                     # If a value is a `Config` convert to dictionary recursively.
@@ -1309,9 +1306,9 @@ class Config:
         report an informative message reporting the entire config on
         `KeyError`.
 
-        This method is an helper for `__getitem__()` and `marked_as_used()`.
+        This method is an helper for `__getitem__()` and `get_marked_as_used()`.
 
-        :param get_marked_as_used: if True, return if the value is marked as
+        :param get_get_get_marked_as_used: if True, return if the value is marked as
             used, instead of the value itself.
         :return: value associated to the key (or mark_as_used)
         """
@@ -1359,8 +1356,8 @@ class Config:
             msg = f"key='{key}' not in {keys_as_str} at level {level}"
             raise KeyError(msg)
         if get_marked_as_used:
-            # Return `marked_as_used` for the key.
-            ret = self._config._marked_as_used(key)  # type: ignore
+            # Return `get_marked_as_used` for the key.
+            ret = self._config._get_marked_as_used(key)  # type: ignore
         else:
             # Return the value associated to the key.
             ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore

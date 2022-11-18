@@ -2148,7 +2148,7 @@ class Test_mark_as_used1(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_marked_as_used1(hunitest.TestCase):
+class Test_get_marked_as_used1(hunitest.TestCase):
     """
     Verify that marked_as_used parameter is displayed correctly.
     """
@@ -2158,15 +2158,15 @@ class Test_marked_as_used1(hunitest.TestCase):
         config = cconfig.Config.from_dict(config)
         # Verify that marked_as_used for a single value is correctly marked as used.
         config.get_and_mark_as_used("key1")
-        is_key1_marked = config.marked_as_used("key1")
+        is_key1_marked = config.get_marked_as_used("key1")
         self.assertTrue(is_key1_marked)
         # Verify that marked_as_used for nested single value is correctly displayed.
         config.get_and_mark_as_used(("key2", "key3", "key4"))
-        is_key4_marked = config.marked_as_used(("key2", "key3", "key4"))
+        is_key4_marked = config.get_marked_as_used(("key2", "key3", "key4"))
         self.assertTrue(is_key4_marked)
         # Verify that marked_as_used for a subconfig is correctly displayed.
         config.get_and_mark_as_used("key2")
-        is_key2_marked = config.marked_as_used("key2")
+        is_key2_marked = config.get_marked_as_used("key2")
         self.assertFalse(is_key2_marked)
 
 
