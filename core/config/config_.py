@@ -441,7 +441,7 @@ class _OrderedConfig(_OrderedDictType):
             if mode == "only_values":
                 key_as_str = str(key)
             elif mode == "verbose":
-                # E.g., `nrows (get_marked_as_used=False, val_type=core.config.config_.Config)`
+                # E.g., `nrows (marked_as_used=False, val_type=core.config.config_.Config)`
                 key_as_str = f"{key} (marked_as_used={marked_as_used}, writer={str(writer)}, "
                 key_as_str += "val_type=%s)" % hprint.type_to_string(type(val))
             elif mode == "debug":
@@ -773,6 +773,7 @@ class Config:
         self,
         key: ScalarKeyValidTypes,
         *,
+        mark_key_as_used: bool = True,
         default_value: Optional[Any] = _NO_VALUE_SPECIFIED,
     ) -> Any:
         """
@@ -780,6 +781,7 @@ class Config:
 
         Similar to the `get` method. The value is not marked unless it is a leaf.
 
+        :param mark_key_as_used: see `_mark_as_used()` for description
         :param default_value: value to return if key was not found
 
         This should be used as the only way of accessing values from configs
@@ -819,13 +821,13 @@ class Config:
                 ```
             - If the value is a subconfig with multiple values inside:
                 ```
+                # Note that `dag_config` is a subconfig so we just get it
+                # without marking as used.
                 dag_config = system.config["dag_config"]
-                # Here 'trading_period' will be marked as used.
-                trading = dag_builder.get_trading_period(dag_config)
                 ```
         """
         try:
-            ret = self.__getitem__(key, mark_key_as_used=True)
+            ret = self.__getitem__(key, mark_key_as_used=mark_key_as_used)
         except KeyError as e:
             # If a default value is provided, return.
             if default_value != _NO_VALUE_SPECIFIED:
