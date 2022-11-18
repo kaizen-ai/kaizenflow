@@ -17,12 +17,12 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_0635"
+> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"
 ```
 
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_0635"'
+> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"'
 ```
 
 Import as:
@@ -119,9 +119,9 @@ def _resolve_timestamps(
     """
     today_as_str = datetime.date.today().strftime("%Y%m%d")
     if start_timestamp_as_str is None:
-        start_timestamp_as_str = "_".join([today_as_str, "0605"])
+        start_timestamp_as_str = "_".join([today_as_str, "060500"])
     if end_timestamp_as_str is None:
-        end_timestamp_as_str = "_".join([today_as_str, "0800"])
+        end_timestamp_as_str = "_".join([today_as_str, "080000"])
     return start_timestamp_as_str, end_timestamp_as_str
 
 
