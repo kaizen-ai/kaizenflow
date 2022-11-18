@@ -44,7 +44,7 @@ WEBSOCKET_CONFIG = {
         "max_buffer_size": 0,
         "sleep_between_iter_in_ms": 60000,
     },
-    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter_in_ms": 200},
+    "bid_ask": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
 }
 
 

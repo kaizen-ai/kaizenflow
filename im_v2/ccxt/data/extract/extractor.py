@@ -235,8 +235,8 @@ class CcxtExtractor(imvcdexex.Extractor):
         Pad list of bids and asks to the same length.
         """
         max_len = max(len(bids), len(asks))
-        pad_bids_num = min(len(bids) - max_len, 0)
-        pad_asks_num = min(len(bids) - max_len, 0)
+        pad_bids_num = max_len - len(bids)
+        pad_asks_num = max_len - len(asks)
         bids = bids + [[None, None]] * pad_bids_num
         asks = asks + [[None, None]] * pad_asks_num
         return bids, asks
@@ -255,7 +255,9 @@ class CcxtExtractor(imvcdexex.Extractor):
         try:
             pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
-                data = self._async_exchange.ohlcvs[pair]
+                data = copy.deepcopy(
+                    self._async_exchange.ohlcvs[pair]
+                )
                 for key in data:
                     # One of the returned key:value pairs is:
                     #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
