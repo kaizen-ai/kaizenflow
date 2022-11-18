@@ -135,7 +135,6 @@ def _transform_bid_ask_websocket_dataframe(df: pd.DataFrame) -> pd.DataFrame:
     :param df: DataFrame formed from raw bid/ask dict data.
     :return transformed DataFrame
     """
-    df.to_csv("juraj_transform.csv")
     df = df.explode(["asks", "bids"])
     df[["bid_price", "bid_size"]] = pd.DataFrame(
         df["bids"].to_list(), index=df.index
