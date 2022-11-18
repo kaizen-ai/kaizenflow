@@ -25,7 +25,9 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
     A pipeline similar to real models.
     """
 
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
@@ -33,11 +35,13 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         # Get a key for trading period inside the config.
         resample_nid = self._get_nid("resample")
         key = (resample_nid, "transformer_kwargs", "rule")
-        val: str = config.get_and_mark_as_used(key)
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
         return val
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.
