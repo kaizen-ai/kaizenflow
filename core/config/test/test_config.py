@@ -2058,22 +2058,11 @@ class Test_mark_as_used1(hunitest.TestCase):
         self.assert_equal(
             str(actual_value), expected_value, purify_text=True, fuzzy_match=True
         )
-        #
-        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, writer=None, val_type=str): value3"""
-        self._helper(test_nested_config, expected_config)
-        #
-        # Test marking a value in the subconfig.
-        expected_value = r"value3"
-        actual_value = test_nested_config.get_and_mark_as_used(("key2", "key3"))
-        self.assert_equal(
-            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
-        )
-        #
+        # Test marking the subconfig.
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
         key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test2, val_type=str): value3"""
+        self._helper(test_nested_config, expected_config)
         self._helper(test_nested_config, expected_config)
 
     def test3(self) -> None:
@@ -2087,21 +2076,6 @@ class Test_mark_as_used1(hunitest.TestCase):
         expected_value = r"""key3:
         key4: value3"""
         actual_value = test_nested_config.get_and_mark_as_used("key2")
-        self.assert_equal(
-            str(actual_value), expected_value, purify_text=True, fuzzy_match=True
-        )
-        #
-        expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
-        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
-        key4 (marked_as_used=False, writer=None, val_type=str): value3"""
-        self._helper(test_nested_config, expected_config)
-        #
-        # Test marking a value in the subconfig.
-        expected_value = r"value3"
-        actual_value = test_nested_config.get_and_mark_as_used(
-            ("key2", "key3", "key4")
-        )
         self.assert_equal(
             str(actual_value), expected_value, purify_text=True, fuzzy_match=True
         )
