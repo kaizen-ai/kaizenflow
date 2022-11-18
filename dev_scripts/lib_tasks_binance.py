@@ -11,6 +11,7 @@ from invoke import task
 
 import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 import helpers.hserver as hserver
 import oms.ccxt_broker as occxbrok
 import oms.hsecrets as omssec
@@ -19,6 +20,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
+    """
+    Get a `CcxtBroker` instance.
+    """
     # `MarketData` is not strictly needed to talk to exchange, but since it is
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
@@ -43,10 +47,10 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
 @task
 def binance_get_open_positions(ctx, secret_id):
     """
-    Get binance open positions.
+    Get current open positions from binance and display in a human-readable
+    format.
 
-    :param secret_id: a SecretIdentifier holding a full name of secret to
-        look for in AWS SecretsManager
+    :param secret_id: same as in `CcxtBroker`
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
@@ -61,4 +65,5 @@ def binance_get_open_positions(ctx, secret_id):
         data=open_positions,
         columns=columns,
     )
-    _LOG.info("\n%s", df)
+    df_str = hpandas.df_to_str(df, num_rows=None)
+    _LOG.info("\n%s", df_str)

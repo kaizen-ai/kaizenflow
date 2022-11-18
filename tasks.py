@@ -98,7 +98,8 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
     run_tests,
     traceback,
 )
-# All invokes are failed to run due to `ModuleNotFoundError` because of this import.
+# A lib contains dependencies that exist only in a Docker environment. Skipping the import
+# if needed in order not to break other invoke targets.
 try:
     from dev_scripts.lib_tasks_binance import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
         binance_get_open_positions,
