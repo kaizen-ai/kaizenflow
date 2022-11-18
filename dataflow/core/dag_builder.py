@@ -115,7 +115,7 @@ class DagBuilder(abc.ABC):
     # ) -> str:
     #     """
     #     Return the current trading period.
-
+    #
     #     :return: string representation of a time interval, e.g., "1T", "5T"
     #     """
 
@@ -126,6 +126,22 @@ class DagBuilder(abc.ABC):
     #     """
     #     Return the number of days needed to execute pipeline at the frequency
     #     given by config.
+    #     """
+
+    # @abc.abstractmethod
+    # def set_weights(
+    #     self, config: cconfig.Config, weights: pd.Series
+    # ) -> cconfig.Config:
+    #     """
+    #     Return a modified copy of `config` using given feature `weights`.
+    #     """
+
+    # @abc.abstractmethod
+    # def convert_to_fast_prod_setup(
+    #     self, config: cconfig.Config
+    # ) -> cconfig.Config:
+    #     """
+    #     Convert trading period to fast prod setup.
     #     """
 
     def get_dag(
