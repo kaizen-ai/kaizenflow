@@ -4,6 +4,7 @@ Import as:
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 """
 
+import copy
 import logging
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -12,7 +13,6 @@ import ccxt
 import ccxt.pro as ccxtpro
 import pandas as pd
 import tqdm
-import copy
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -272,13 +272,18 @@ class CcxtExtractor(imvcdexex.Extractor):
                 if self._async_exchange.orderbooks.get(pair):
                     # CCXT uses their own 'dict-like' structure for storing the data
                     #  deepcopy is needed to retain the older data.
-                    data = copy.deepcopy(self._async_exchange.orderbooks[pair].limit())
+                    data = copy.deepcopy(
+                        self._async_exchange.orderbooks[pair].limit()
+                    )
                     # It can happen that the length of bids and asks does not match
                     #  it that case the shorter side gets padded wit Nones to equal length.
                     #  This minor preprocessing is performed this early to make transormations
                     #  simpler later down the pipeline.
                     if data.get("bids") != None and data.get("asks") != None:
-                        data["bids"], data["asks"] = self._pad_bids_asks_to_equal_len(
+                        (
+                            data["bids"],
+                            data["asks"],
+                        ) = self._pad_bids_asks_to_equal_len(
                             data["bids"], data["asks"]
                         )
                 else:
@@ -288,7 +293,9 @@ class CcxtExtractor(imvcdexex.Extractor):
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
                 )
             if data:
-                data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+                data["end_download_timestamp"] = str(
+                    hdateti.get_current_time("UTC")
+                )
             return data
         except KeyError as e:
             _LOG.error(
