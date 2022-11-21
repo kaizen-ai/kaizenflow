@@ -720,8 +720,8 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
         _LOG.warning("Extracted Dataframe contains NaNs")
     for column in data.columns:
         # Extract the expected type of the column from the schema.
-        #  Bid/ask columns have level suffix _l1, _l2 etc.
-        #  for simplicity we store only base names in the schema
+        #  Bid/ask columns have level suffix equal to _l1, _l2 etc.
+        #  For simplicity we store only base names in the schema
         #  table.
         column_re = re.sub("_l\d+$", "", column)
         expected_type = DATASET_SCHEMA[column_re]
