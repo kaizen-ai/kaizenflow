@@ -50,6 +50,18 @@ hprint.config_notebook()
 # # Functions
 
 # %%
+def get_db_connection():
+    """
+    Connect to DB.
+    """
+    # Get DB connection.
+    env_file = imvimlita.get_db_env_path("dev")
+    # Connect with the parameters from the env file.
+    connection_params = hsql.get_connection_info_from_env_file(env_file)
+    connection = hsql.get_connection(*connection_params)
+    return connection
+
+
 def get_raw_ccxt_realtime_data(
     db_table: str,
     exchange_id: str,
@@ -62,10 +74,7 @@ def get_raw_ccxt_realtime_data(
     Bypasses the IM Client to avoid any on-the-fly transformations.
     """
     # Get DB connection.
-    env_file = imvimlita.get_db_env_path("dev")
-    # Connect with the parameters from the env file.
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
+    connection = get_db_connection()
     # Read data from DB.
     query = f"SELECT * FROM {db_table} WHERE exchange_id='{exchange_id}'"
     if start_ts:
@@ -80,25 +89,29 @@ def get_raw_ccxt_realtime_data(
     return rt_data
 
 
-# %%
-def load_parquet_by_period(
-    start_ts: pd.Timestamp, end_ts: pd.Timestamp, s3_path: str
-) -> pd.DataFrame:
+def show_db_table_head_tail(db_table: str) -> None:
     """
-    Read raw historical data from the S3.
+    Get head or tail of the table.
+    """
+    connection = get_db_connection()
+    query_head = f"SELECT * FROM {db_table} ORDER BY timestamp ASC LIMIT 5"
+    query_tail = f"SELECT * FROM {db_table} ORDER BY timestamp DESC LIMIT 5"
+    head = hsql.execute_query_to_df(connection, query_head)
+    print(f"`{db_table}` table head, sorted by `timestamp` column:")
+    display(head)
+    tail = hsql.execute_query_to_df(connection, query_tail)
+    print(f"`{db_table}` table tail, sorted by `timestamp` column:")
+    display(tail)
 
-    Bypasses the IM Client to avoid any on-the-fly transformations.
+
+def count_table_rows(db_table: str) -> int:
     """
-    # Create timestamp filters.
-    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
-        "by_year_month", start_ts, end_ts
-    )
-    # Load daily data from s3 parquet.
-    cc_ba_futures_daily = hparque.from_parquet(
-        s3_path, filters=timestamp_filters, aws_profile="ck"
-    )
-    cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
-    return cc_ba_futures_daily
+    Count the amount of rows in DB.
+    """
+    connection = get_db_connection()
+    query = f"SELECT COUNT(*) FROM {db_table}"
+    count_data = hsql.execute_query_to_df(connection, query)
+    return count_data["count"][0]
 
 
 # %%
@@ -120,7 +133,6 @@ def combine_stats(stats: List[pd.Series]) -> pd.Series:
     return base_stat
 
 
-# %%
 def find_gaps_in_time_series(
     time_series: pd.Series,
     start_timestamp: pd.Timestamp,
@@ -146,6 +158,32 @@ def find_gaps_in_time_series(
 
 
 # %%
+def load_parquet_by_period(
+    s3_path: str,
+    start_ts: Optional[pd.Timestamp],
+    end_ts: Optional[pd.Timestamp],
+    columns: Optional[List[str]],
+    sort_index: bool = True,
+) -> pd.DataFrame:
+    """
+    Read raw historical data from the S3.
+
+    Bypasses the IM Client to avoid any on-the-fly transformations.
+    """
+    # Create timestamp filters.
+    timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+        "by_year_month", start_ts, end_ts
+    )
+    # Load daily data from s3 parquet.
+    cc_ba_futures_daily = hparque.from_parquet(
+        s3_path, filters=timestamp_filters, columns=columns, aws_profile="ck"
+    )
+    if sort_index:
+        cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
+    return cc_ba_futures_daily
+
+
+# %%
 def process_s3_data_in_chunks(
     start_ts: str, end_ts: str, s3_path: str
 ) -> List[pd.Series]:
@@ -163,10 +201,10 @@ def process_s3_data_in_chunks(
     dates = pd.date_range(start_ts, end_ts, freq="M")
     for i in range(0, len(dates), 2):
         # Iterate through the dates to select the loading period boundaries.
-        # One chunk of data is loaded for two months. 
+        # One chunk of data is loaded for two months.
         # E.g. the sequence of ['2022-09-31', '2022-10-30', '2022-11-31', '2022-12-31']
         # should be divided into two periods: ['2022-09-31', '2022-10-30']
-        # and ['2022-11-31', '2022-12-31'] 
+        # and ['2022-11-31', '2022-12-31']
         start_end = dates[i : i + 2]
         if len(start_end) == 2:
             start, end = dates[i : i + 2]
@@ -176,7 +214,7 @@ def process_s3_data_in_chunks(
             end = None
             print(f"Loading data for the month {start.month}")
         # Load the data of the time period.
-        daily_data = load_parquet_by_period(start, end, s3_path)
+        daily_data = load_parquet_by_period(s3_path, start, end, None)
         overall_rows += len(daily_data)
         print("Head:")
         display(daily_data.head(2))
@@ -186,22 +224,39 @@ def process_s3_data_in_chunks(
         nans = cstadesc.compute_frac_nan(daily_data)
         # Count zeros.
         zeros = cstadesc.compute_frac_zero(
-            daily_data[
-                ["bid_price", "bid_size", "ask_price", "ask_size"]
-            ]
+            daily_data[["bid_price", "bid_size", "ask_price", "ask_size"]]
         )
         nans_stats.append(nans)
         zeros_stats.append(zeros)
         # Count gaps in time series.
         if end is None:
             end = daily_data.index[-1]
-        gaps = find_gaps_in_time_series(
-            daily_data.index, start, end, "T"
-        )
+        gaps = find_gaps_in_time_series(daily_data.index, start, end, "T")
         gaps_count += len(gaps)
     print(f"{overall_rows} rows overall")
     print(f"Found {gaps_count} missing points on a time interval, step - minutes")
     return nans_stats, zeros_stats
+
+
+# %%
+def get_large_pq_data_meta(s3_path: str) -> None:
+    """
+    Load the meta info about archived data from s3://cryptokaizen-
+    data/db_archive/dev/ccxt_bid_ask_futures_raw/timestamp.
+    """
+    # Load the whole `timestamp` column to get the actual length of the data.
+    ccxt_bid_ask_column = load_parquet_by_period(
+        s3_path, None, None, ["timestamp"], sort_index=False
+    )
+    print(f"{len(ccxt_bid_ask_column)} rows overall")
+    #
+    start_timestamp = ccxt_bid_ask_column["timestamp"].min()
+    start_timestamp = pd.Timestamp(start_timestamp, unit="ms", tz="UTC")
+    print(f"Start timestamp: {start_timestamp}")
+    #
+    end_timestamp = ccxt_bid_ask_column["timestamp"].max()
+    end_timestamp = pd.Timestamp(end_timestamp, unit="ms", tz="UTC")
+    print(f"End timestamp: {end_timestamp}")
 
 
 # %% [markdown]
@@ -250,6 +305,39 @@ display(volume0.tail())
 # %%
 ax = volume0["currency_pair"].value_counts().plot(kind="bar")
 ax = ax.bar_label(ax.containers[-1], label_type="edge")
+
+# %% [markdown]
+# ## BID-ASK
+
+# %% [markdown]
+# ### CCXT futures archived
+
+# %% [markdown]
+# Load archived real-time CCXT bid-ask futures data. Since the data contains 293 millions of rows, only the meta information can be loaded, i.e. start/end dates and the actual length.
+
+# %%
+s3_path = (
+    "s3://cryptokaizen-data/db_archive/dev/ccxt_bid_ask_futures_raw/timestamp"
+)
+get_large_pq_data_meta(s3_path)
+
+# %% [markdown]
+# ### CCXT futures
+
+# %%
+show_db_table_head_tail("ccxt_bid_ask_futures_raw")
+
+# %%
+count_table_rows("ccxt_bid_ask_futures_raw")
+
+# %% [markdown]
+# ### CCXT futures resampled to 1 min
+
+# %%
+show_db_table_head_tail("ccxt_bid_ask_futures_resampled_1min")
+
+# %%
+count_table_rows("ccxt_bid_ask_futures_resampled_1min")
 
 # %% [markdown]
 # # Historical (data updated daily)
