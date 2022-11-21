@@ -504,10 +504,10 @@ class _OrderedConfig(_OrderedDictType):
         marked_as_used, writer, val = super().__getitem__(key)
         _LOG.debug(hprint.to_str("marked_as_used val used_state"))
         if used_state:
-            if hasattr(val, "_config"):
+            if isinstance(val, (Config, _OrderedConfig)):
                 # If a value is a subconfig, mark all values down the tree.
                 for key in val._config.keys():
-                    val._config._mark_as_used(key)
+                    val._config._mark_as_used(key, used_state=used_state)
             else:
                 # Update the metadata, accounting that this data was used.
                 marked_as_used = True
