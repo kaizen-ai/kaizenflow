@@ -575,7 +575,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "resample_1sec": "False",
             "s3_vendor": "crypto_chassis",
             "bid_ask_accuracy": None,
-            "bid_ask_depth": 10
+            "bid_ask_depth": 10,
         }
         self.assertDictEqual(actual, expected)
 
@@ -616,7 +616,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "resample_1min": True,
             "s3_vendor": "crypto_chassis",
             "bid_ask_accuracy": 1,
-            "bid_ask_depth": 1
+            "bid_ask_depth": 1,
         }
         if resample_1min:
             kwargs["resample_1min"] = True

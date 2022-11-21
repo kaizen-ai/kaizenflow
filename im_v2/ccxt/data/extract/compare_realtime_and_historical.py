@@ -37,9 +37,9 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.im_lib_tasks as imvimlita
-import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -72,10 +72,11 @@ def build_data_reconciliation_config_env_var(
 
 # #############################################################################
 
+
 def get_multilevel_bid_ask_column_names(depth: int = 10) -> List[str]:
     """
     Construct list of bid ask column names for multilevel setup.
-    
+
     Example for depth = 2
         [bid_price_l1, bid_size_l1, ask_size_l1, ask_price_l1, bid_price_l2,...]
     """
@@ -85,7 +86,7 @@ def get_multilevel_bid_ask_column_names(depth: int = 10) -> List[str]:
         for col in bid_ask_cols_level:
             multilevel_bid_ask_cols.append(col)
     return multilevel_bid_ask_cols
-        
+
 
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
@@ -184,6 +185,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
+
 # TODO(Juraj): Move this into a qa/ folder.
 class RealTimeHistoricalReconciler:
     def __init__(self, args) -> None:
@@ -238,7 +240,8 @@ class RealTimeHistoricalReconciler:
             "bid_ask": [
                 "timestamp",
                 "full_symbol",
-                ] + get_multilevel_bid_ask_column_names(args.bid_ask_depth),
+            ]
+            + get_multilevel_bid_ask_column_names(args.bid_ask_depth),
         }
         # Get CCXT data.
         self.ccxt_rt = self._get_rt_data()
@@ -344,13 +347,13 @@ class RealTimeHistoricalReconciler:
         return data
 
     # TODO(Juraj): Cleanup/Remove this code.
-    #@staticmethod
-    #def _clean_data_for_orderbook_level(
+    # @staticmethod
+    # def _clean_data_for_orderbook_level(
     #    df: pd.DataFrame, level: int = 1
-    #) -> pd.DataFrame:
+    # ) -> pd.DataFrame:
     #    """
     #    Specify the order book level in CCXT bid ask data.
-#
+    #
     #    :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
     #    :return: Data where specific level has common name (i.e., bid_price)
     #    """
@@ -363,8 +366,7 @@ class RealTimeHistoricalReconciler:
     #    df = df.rename(columns=col_dict)
     #    #
     #    return df
-    
-    
+
     @staticmethod
     def _resample_to_1sec(data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -399,7 +401,7 @@ class RealTimeHistoricalReconciler:
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
         ccxt_rt = ccxt_rt.reset_index()
-        #if self.data_type == "bid_ask":
+        # if self.data_type == "bid_ask":
         #    # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
         #    ccxt_rt["timestamp"] = ccxt_rt["timestamp"].apply(
         #        lambda x: x.round(freq="T")
@@ -625,10 +627,10 @@ class RealTimeHistoricalReconciler:
         diff_stats = pd.concat(diff_stats, axis=1)
         # Show stats for differences for prices.
         diff_stats_prices_cols = filter(lambda col: "price" in col, bid_ask_cols)
-        diff_stats_prices_cols = list(map(lambda col: f"{col}_relative_diff_pct", diff_stats_prices_cols))
-        diff_stats_prices = diff_stats[
-            diff_stats_prices_cols
-        ]
+        diff_stats_prices_cols = list(
+            map(lambda col: f"{col}_relative_diff_pct", diff_stats_prices_cols)
+        )
+        diff_stats_prices = diff_stats[diff_stats_prices_cols]
         _LOG.info(
             "Difference stats for prices: %s",
             hpandas.get_df_signature(
@@ -649,10 +651,10 @@ class RealTimeHistoricalReconciler:
                     error_message.append(message)
         # Show stats for differences for sizes.
         diff_stats_sizes_cols = filter(lambda col: "size" in col, bid_ask_cols)
-        diff_stats_sizes_cols = list(map(lambda col: f"{col}_relative_diff_pct", diff_stats_sizes_cols))
-        diff_stats_sizes = diff_stats[
-            diff_stats_sizes_cols
-        ]
+        diff_stats_sizes_cols = list(
+            map(lambda col: f"{col}_relative_diff_pct", diff_stats_sizes_cols)
+        )
+        diff_stats_sizes = diff_stats[diff_stats_sizes_cols]
         _LOG.info(
             "Difference stats for sizes: %s",
             hpandas.get_df_signature(
