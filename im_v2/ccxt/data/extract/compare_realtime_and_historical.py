@@ -81,7 +81,7 @@ def get_multilevel_bid_ask_column_names(depth: int = 10) -> List[str]:
     """
     multilevel_bid_ask_cols = []
     for i in range(1, depth + 1):
-        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", BID_ASK_COLS)
+        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", imvcdttrut.BID_ASK_COLS)
         for col in bid_ask_cols_level:
             multilevel_bid_ask_cols.append(col)
     return multilevel_bid_ask_cols
@@ -153,13 +153,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="If the data should be resampled to 1 min'",
     )
-
     parser.add_argument(
         "--resample_1sec",
         action="store_true",
         help="If the data should be resampled to 1 sec'",
     )
-
     parser.add_argument(
         "--bid_ask_accuracy",
         action="store",
@@ -168,6 +166,15 @@ def _parse() -> argparse.ArgumentParser:
         type=int,
         help="An accuracy threshold (in %) to apply when reconciling bid/ask data"
         + "If the data differ above this threshold an error is raised.",
+    )
+    parser.add_argument(
+        "--bid_ask_depth",
+        action="store",
+        required=False,
+        default=10,
+        type=int,
+        help="Market depth to compare to (applicable for data_type=bid_ask)."
+        + " Allowed values are 1-10 (Default is 10)",
     )
 
     parser = hparser.add_verbosity_arg(parser)
@@ -231,7 +238,7 @@ class RealTimeHistoricalReconciler:
             "bid_ask": [
                 "timestamp",
                 "full_symbol",
-                ] + get_multilevel_bid_ask_column_names(),
+                ] + get_multilevel_bid_ask_column_names(args.bid_ask_depth),
         }
         # Get CCXT data.
         self.ccxt_rt = self._get_rt_data()
@@ -583,7 +590,7 @@ class RealTimeHistoricalReconciler:
         data = data.reindex(sorted(data.columns), axis=1)
         # NaNs observation.
         _LOG.info(
-            "Number of observations with NaN in any of the columns.",
+            "Number of observations with NaN in any of the columns = %s",
             len(data[data.isna().any(axis=1)]),
         )
         _LOG.info(
@@ -617,8 +624,10 @@ class RealTimeHistoricalReconciler:
         #
         diff_stats = pd.concat(diff_stats, axis=1)
         # Show stats for differences for prices.
+        diff_stats_prices_cols = filter(lambda col: "price" in col, bid_ask_cols)
+        diff_stats_prices_cols = list(map(lambda col: f"{col}_relative_diff_pct", diff_stats_prices_cols))
         diff_stats_prices = diff_stats[
-            ["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]
+            diff_stats_prices_cols
         ]
         _LOG.info(
             "Difference stats for prices: %s",
@@ -630,21 +639,19 @@ class RealTimeHistoricalReconciler:
         threshold = self.bid_ask_accuracy
         # Log the difference.
         for index, row in diff_stats_prices.iterrows():
-            if abs(row["bid_price_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between bid prices in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
-            if abs(row["ask_price_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between ask prices in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
+            for price_col in diff_stats_prices_cols:
+                if abs(row[price_col]) > threshold:
+                    price_col_base = price_col.rstrip("_relative_diff_pct")
+                    message = (
+                        f"Difference between {price_col_base} in real time and daily "
+                        f"data for `{index}` coin is more than {threshold}%."
+                    )
+                    error_message.append(message)
         # Show stats for differences for sizes.
+        diff_stats_sizes_cols = filter(lambda col: "size" in col, bid_ask_cols)
+        diff_stats_sizes_cols = list(map(lambda col: f"{col}_relative_diff_pct", diff_stats_sizes_cols))
         diff_stats_sizes = diff_stats[
-            ["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]
+            diff_stats_sizes_cols
         ]
         _LOG.info(
             "Difference stats for sizes: %s",
@@ -654,18 +661,14 @@ class RealTimeHistoricalReconciler:
         )
         # Log the difference.
         for index, row in diff_stats_sizes.iterrows():
-            if abs(row["bid_size_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between bid sizes in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
-            if abs(row["ask_size_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between ask sizes in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
+            for size_col in diff_stats_sizes_cols:
+                if abs(row[size_col]) > threshold:
+                    size_col_base = size_col.rstrip("_relative_diff_pct")
+                    message = (
+                        f"Difference between {size_col_base} in real time and daily "
+                        f"data for `{index}` coin is more than {threshold}%."
+                    )
+                    error_message.append(message)
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
