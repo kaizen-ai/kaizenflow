@@ -315,8 +315,6 @@ def resample_multilevel_bid_ask_data(
     :return DataFrame resampled to 1 minute.
     """
     all_levels_resampled = []
-    # The order of columns matches the output of resample_bid_ask_data().
-    BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
     for i in range(1, 11):
         bid_ask_cols_level = map(lambda x: f"{x}_l{i}", BID_ASK_COLS)
         one_level_resampling_cols = list(bid_ask_cols_level) + ["exchange_id"]
