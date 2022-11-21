@@ -4,9 +4,10 @@ Import as:
 import im_v2.ccxt.data.extract.extractor as ivcdexex
 """
 
+import copy
 import logging
 import time
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Tuple, Union
 
 import ccxt
 import ccxt.pro as ccxtpro
@@ -214,22 +215,35 @@ class CcxtExtractor(imvcdexex.Extractor):
          (not used, kept for compatibility with parent class).
         :param currency_pair: currency pair, e.g. "BTC_USDT"
         :param bid_ask_depth: how many levels of order book to download
-         (the value is set globally for the entire class on each method call)
         """
         currency_pair = self.convert_currency_pair(
             currency_pair,
         )
-        self._bid_ask_depth = bid_ask_depth
-        await self._async_exchange.watchOrderBook(currency_pair)
+        await self._async_exchange.watchOrderBook(
+            currency_pair, limit=bid_ask_depth
+        )
 
     async def _subscribe_to_websocket_trades(self, **kwargs: Any) -> None:
         raise NotImplementedError(
             "Trades websocket data is not implemented for CCXT vendor yet."
         )
 
+    def _pad_bids_asks_to_equal_len(
+        self, bids: List[List], asks: List[List]
+    ) -> Tuple[List[List], List[List]]:
+        """
+        Pad list of bids and asks to the same length.
+        """
+        max_len = max(len(bids), len(asks))
+        pad_bids_num = max_len - len(bids)
+        pad_asks_num = max_len - len(asks)
+        bids = bids + [[None, None]] * pad_bids_num
+        asks = asks + [[None, None]] * pad_asks_num
+        return bids, asks
+
     def _download_websocket_data(
         self, exchange_id: str, currency_pair: str, data_type: str
-    ) -> Dict:
+    ) -> Optional[Dict]:
         """
         Get the most recent websocket data for a specified currency pair and
         data type.
@@ -241,7 +255,7 @@ class CcxtExtractor(imvcdexex.Extractor):
         try:
             pair = self.convert_currency_pair(currency_pair)
             if data_type == "ohlcv":
-                data = self._async_exchange.ohlcvs[pair]
+                data = copy.deepcopy(self._async_exchange.ohlcvs[pair])
                 for key in data:
                     # One of the returned key:value pairs is:
                     #  "timeframe": [o, h, l, c, v] where timeframe is e.g. '1m' and
@@ -255,18 +269,38 @@ class CcxtExtractor(imvcdexex.Extractor):
                 data["ohlcv"] = ohlcv
                 data["currency_pair"] = pair
             elif data_type == "bid_ask":
-                data = self._async_exchange.orderbooks[pair].limit(
-                    self._bid_ask_depth
-                )
+                if self._async_exchange.orderbooks.get(pair):
+                    # CCXT uses their own 'dict-like' structure for storing the data
+                    #  deepcopy is needed to retain the older data.
+                    data = copy.deepcopy(
+                        self._async_exchange.orderbooks[pair].limit()
+                    )
+                    # It can happen that the length of bids and asks does not match
+                    #  it that case the shorter side gets padded wit Nones to equal length.
+                    #  This minor preprocessing is performed this early to make transormations
+                    #  simpler later down the pipeline.
+                    if data.get("bids") != None and data.get("asks") != None:
+                        (
+                            data["bids"],
+                            data["asks"],
+                        ) = self._pad_bids_asks_to_equal_len(
+                            data["bids"], data["asks"]
+                        )
+                else:
+                    data = None
             else:
                 raise ValueError(
                     f"{data_type} not supported. Supported data types: ohlcv, bid_ask"
                 )
-            data["end_download_timestamp"] = str(hdateti.get_current_time("UTC"))
+            if data:
+                data["end_download_timestamp"] = str(
+                    hdateti.get_current_time("UTC")
+                )
             return data
         except KeyError as e:
             _LOG.error(
-                f"Websocket {data_type} data for {exchange_id} and {currency_pair} is not available. Have you subscribed to the websocket?"
+                f"Websocket {data_type} data for {exchange_id} {currency_pair} is not available. "
+                + "Have you subscribed to the websocket?"
             )
             raise e
 
