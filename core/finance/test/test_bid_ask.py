@@ -254,7 +254,7 @@ class Test_handle_orderbook_levels(hunitest.TestCase):
         )
         #
         expected_outcome = r"""
-                                        knowledge_timestamp  bid_price_1  bid_price_2  bid_price_3  bid_size_1  bid_size_2  bid_size_3  ask_price_1  ask_price_2  ask_price_3  ask_size_1  ask_size_2  ask_size_3
+                                        knowledge_timestamp  bid_price_l1  bid_price_l2  bid_pricel_3  bid_size_l1  bid_size_l2  bid_size_l3  ask_price_l1  ask_price_l2  ask_price_l3  ask_size_l1  ask_size_l2  ask_size_l3
         timestamp
         2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33         1.1         2.2         3.3         2.34         3.24         2.35         4.4         5.5         6.6
         """
