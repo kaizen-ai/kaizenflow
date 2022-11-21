@@ -115,9 +115,8 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
 
         Transformed:
 
-        timestamp,bid_price_l1,bid_size_l1,bid_price_l2,bid_size_l2,ask_price_l1...
+        timestamp,bid_price_l1,bid_size_l1,bid_price_l2,bid_size_l2,ask_price_l2...
         1668384000,0.3296,28544,0.3295,34010,0.3297
-
 
         :param raw_data: data loaded from CC API.
         :return formatted bid/ask data, example above.
@@ -177,7 +176,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to exchange, e.g. `btc-usd`
         :param start_timestamp: start of processing
-        :param depth: download orderbook up to depth-th level, allowed values: 1 to 10.
+        :param depth: depth of the orderbook to download, 1 to 10
         :return: bid/ask data
         """
         hdbg.dassert_isinstance(

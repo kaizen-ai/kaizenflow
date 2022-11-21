@@ -177,7 +177,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
-
+# TODO(Juraj): Move this into a qa/ folder.
 class RealTimeHistoricalReconciler:
     def __init__(self, args) -> None:
         hdbg.dassert_in(
@@ -336,7 +336,7 @@ class RealTimeHistoricalReconciler:
         _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
         return data
 
-    
+    # TODO(Juraj): Cleanup/Remove this code.
     #@staticmethod
     #def _clean_data_for_orderbook_level(
     #    df: pd.DataFrame, level: int = 1
