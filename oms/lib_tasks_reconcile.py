@@ -395,7 +395,7 @@ def reconcile_copy_prod_data(
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
     shared_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
-    system_log_dir = oms.get_prod_system_log_dir(
+    system_log_dir = omreconc.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
     system_log_dir = os.path.join(shared_dir, system_log_dir)
