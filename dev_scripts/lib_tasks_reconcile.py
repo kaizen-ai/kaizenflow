@@ -396,7 +396,7 @@ def reconcile_copy_prod_data(
     hdbg.dassert_dir_exists(prod_target_dir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
-    shared_dir = f"/shared_data/ecs/{stage}"
+    shared_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
     system_log_dir = oms.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
@@ -406,7 +406,7 @@ def reconcile_copy_prod_data(
     _system(cmd)
     # Copy prod run logs to the specified folder.
     log_file = f"log_{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
-    log_file = os.path.join(shared_dir, log_file)
+    log_file = os.path.join(shared_dir, "logs", log_file)
     hdbg.dassert_file_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
