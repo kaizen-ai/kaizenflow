@@ -72,12 +72,12 @@ class DagBuilder(abc.ABC):
         txt = "\n".join(txt)
         return txt
 
-    @staticmethod
-    @abc.abstractmethod
-    def get_column_name(tag: str) -> str:
-        """
-        Return the name of the column corresponding to `tag`.
-        """
+    # @staticmethod
+    # @abc.abstractmethod
+    # def get_column_name(tag: str) -> str:
+    #     """
+    #     Return the name of the column corresponding to `tag`.
+    #     """
 
     def to_string(self) -> str:
         """
