@@ -35,7 +35,7 @@ class TestRealTimeDagRunner1(hunitest.TestCase):
         Test `RealTimeDagRunner` using a simple DAG triggering every 2 seconds.
         """
         # Get a naive pipeline as DAG.
-        dag_builder = dtfcore.MvnReturnsBuilder()
+        dag_builder = dtfcore.MvnReturns_DagBuilder()
         #
         data_source_config = cconfig.Config.from_dict(
             {

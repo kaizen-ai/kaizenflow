@@ -8,7 +8,6 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 import argparse
 import asyncio
-import copy
 import logging
 import os
 import time
@@ -45,7 +44,7 @@ WEBSOCKET_CONFIG = {
         "max_buffer_size": 0,
         "sleep_between_iter_in_ms": 60000,
     },
-    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter_in_ms": 200},
+    "bid_ask": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
 }
 
 
@@ -388,14 +387,11 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     while pd.Timestamp.now(tz) < stop_time:
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
-            # CCXT uses their own 'dict-like' structure for storing the data
-            #  deepcopy is needed to retain the older data.
-            data_point = copy.deepcopy(
-                exchange.download_websocket_data(
-                    data_type, exchange_id, curr_pair
-                )
+            data_point = exchange.download_websocket_data(
+                data_type, exchange_id, curr_pair
             )
-            data_buffer.append(data_point)
+            if data_point != None:
+                data_buffer.append(data_point)
         # If the buffer is full or this is the last iteration, process and save buffered data.
         if (
             len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"]

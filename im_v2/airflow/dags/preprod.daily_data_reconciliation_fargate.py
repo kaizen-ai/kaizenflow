@@ -18,7 +18,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -56,7 +56,7 @@ _RECONCILIATION_JOBS = [
         "db_table_base_name": "ccxt_bid_ask_futures_resampled_1min",
         "s3_vendor": "crypto_chassis",
         "add_params": ["--resample_1min"]
-    },   
+    },
 ]
 _DAG_DESCRIPTION = "Daily data reconciliation"
 _SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
@@ -72,11 +72,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -127,11 +127,11 @@ for job in _RECONCILIATION_JOBS:
     db_table = job["db_table_base_name"]
     db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
     data_type, contract_type, s3_vendor = (
-        job["data_type"], 
-        job["contract_type"], 
+        job["data_type"],
+        job["contract_type"],
         job["s3_vendor"]
     )
-    
+
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(compare_command)
@@ -139,7 +139,7 @@ for job in _RECONCILIATION_JOBS:
     curr_bash_command[7] = curr_bash_command[7].format(data_type)
     curr_bash_command[8] = curr_bash_command[8].format(contract_type)
     curr_bash_command[9] = curr_bash_command[9].format(s3_vendor)
-    
+
     for param in job["add_params"]:
         curr_bash_command.append(param)
 
@@ -150,7 +150,7 @@ for job in _RECONCILIATION_JOBS:
             "subnets": ecs_subnets,
         },
     }
-    
+
     comparing_task = ECSOperator(
         task_id=f"compare_ccxt_rt_{data_type}_{contract_type}_with_{s3_vendor}_daily",
         dag=dag,
@@ -173,5 +173,5 @@ for job in _RECONCILIATION_JOBS:
         execution_timeout=datetime.timedelta(minutes=15),
         **kwargs
     )
-    
+
     start_comparison >> comparing_task >> end_comparison

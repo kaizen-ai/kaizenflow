@@ -122,7 +122,8 @@ def get_config_from_experiment_list_params(
 
 # #############################################################################
 
-
+# TODO(gp): rename to get_experiment_config_from_env since it's a particular
+# case of passing certain params.
 def get_config_from_env() -> Optional[cconconf.Config]:
     """
     Build a config passed through environment vars, if possible, or return

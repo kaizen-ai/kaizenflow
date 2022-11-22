@@ -50,7 +50,7 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
     """
 
     def test1(self) -> None:
-        dag_builder = dtfcdabuex.MvnReturnsBuilder()
+        dag_builder = dtfcdabuex.MvnReturns_DagBuilder()
         #
         overriding_config = cconfig.Config()
         overriding_config["load_prices"] = cconfig.Config.from_dict(
@@ -118,6 +118,6 @@ class TestMvnReturnsBuilder(hunitest.TestCase):
         np.testing.assert_equal(df_out.dropna(how="all").shape, (702, 28))
 
     def test_str1(self) -> None:
-        dag_builder = dtfcdabuex.MvnReturnsBuilder()
+        dag_builder = dtfcdabuex.MvnReturns_DagBuilder()
         act = str(dag_builder)
         self.check_string(act)

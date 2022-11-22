@@ -156,8 +156,16 @@ def get_ProcessForecastsNode_dict_instance1(
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
-    prediction_col = "vwap.ret_0.vol_adj_2_hat"
-    volatility_col = "vwap.ret_0.vol"
+    # TODO(Grisha): see CmTask3206 "Add more abstract methods to DagBuilder".
+    dag_builder_class = system.config["dag_builder_class"]
+    if dag_builder_class == "C1b_DagBuilder":
+        prediction_col = "vwap.ret_0.vol_adj_2_hat"
+        volatility_col = "vwap.ret_0.vol"
+    elif dag_builder_class == "C3a_DagBuilder":
+        prediction_col = "feature"
+        volatility_col = "garman_klass_vol"
+    else:
+        raise ValueError(f"Invalid dag_builder_class='{dag_builder_class}'")
     spread_col = None
     style = "cross_sectional"
     # For prod we use smaller GMV so that we can trade at low capacity while
@@ -282,7 +290,10 @@ def _get_Cx_dag_prod_instance1(
     #
     system = dtfsys.apply_DagRunner_config_for_crypto(system)
     # Build Portfolio.
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
     # TODO(gp): Add a param to get_trading_period to return the int.
     order_duration_in_mins = int(trading_period_str.replace("T", ""))
     system.config[
@@ -344,9 +355,12 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     Build Portfolio instance for production.
     """
     market_data = system.market_data
-    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
-    dag_config = system.config.get_and_mark_as_used("dag_config")
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
     cf_config_strategy = system.config.get_and_mark_as_used(

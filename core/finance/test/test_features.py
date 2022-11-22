@@ -122,6 +122,29 @@ class Test_compute_money_transacted(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
+class Test_normalize_bar(hunitest.TestCase):
+    def test1(self) -> None:
+        df = get_data()
+        feature = cfinfeat.normalize_bar(
+            df, "open", "high", "low", "close", "volume"
+        )
+        actual = hpandas.df_to_str(feature, num_rows=None)
+        expected = r"""
+   adj_high   adj_low  adj_close
+0  0.005103 -0.016585  -0.016585
+1  0.001894 -0.037556  -0.020829
+2  0.005398 -0.011748  -0.000318
+3  0.001288 -0.038307  -0.038307
+4  0.000000 -0.034979  -0.031198
+5  0.001527 -0.015577  -0.010384
+6  0.027542  0.000000   0.017294
+7  0.016705 -0.007389   0.015741
+8  0.000000 -0.065571  -0.065571
+9  0.004407 -0.014796  -0.000630
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
 def get_data() -> pd.DataFrame:
     start_datetime = pd.Timestamp("2000-01-03 09:30:00", tz="America/New_York")
     end_datetime = pd.Timestamp("2000-01-03 12:00", tz="America/New_York")
