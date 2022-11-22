@@ -7,6 +7,7 @@ import unittest.mock as umock
 from typing import List
 
 import pandas as pd
+import pytest
 
 import helpers.hio as hio
 import helpers.hpandas as hpandas
@@ -438,7 +439,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         self.assertEqual(actual_time, expected_time)
 
 
-# @pytest.mark.skip(reason="Run manually.")
+@pytest.mark.skip(reason="Run manually.")
 class TestSaveMarketInfo(hunitest.TestCase):
     """
     Capture market info data from a CCXT broker so that it can be reused in
