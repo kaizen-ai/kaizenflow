@@ -112,8 +112,6 @@ class TalosExtractor(ivcdexex.Extractor):
         :param bar_per_iteration: number of bars per iteration
         :return: dataframe with OHLCV data
         """
-        # Assign depth for compatibility with other extractors.
-        _ = depth
         # Verify that date parameters are of correct format.
         hdbg.dassert_isinstance(
             end_timestamp,
