@@ -30,13 +30,11 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         """
         See description in the parent class.
         """
-        if tag == "price_col":
+        if tag == "price":
             res_col = "vwap"
-        elif tag == "volatility_col":
+        elif tag == "volatility":
             res_col = "vwap.ret_0.vol"
-        elif tag == "prediction_col":
-            res_col = "prediction"
-        elif tag == "feature1":
+        elif tag == "prediction":
             res_col = "feature1"
         else:
             raise ValueError(f"Invalid tag='{tag}'")
@@ -97,6 +95,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         return config
 
     def get_config_template(self) -> cconfig.Config:
+        volatility_col = self.get_column_name("volatility")
         dict_ = {
             self._get_nid("filter_ath"): {
                 "col_mode": "replace_all",
@@ -150,7 +149,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
             },
             self._get_nid("compute_vol"): {
                 "in_col_group": ("vwap.ret_0",),
-                "out_col_group": (self.get_column_name("volatility_col"),),
+                "out_col_group": (volatility_col,),
                 "drop_nans": True,
                 "permitted_exceptions": (ValueError,),
             },
@@ -211,7 +210,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
                             "vwap.ret_0.vol_adj.c.lag2",
                             "vwap.ret_0.vol_adj.c.lag3",
                         ],
-                        name=self.get_column_name("prediction_col"),
+                        name="prediction",
                     ),
                     "convert_to_dataframe": True,
                 },

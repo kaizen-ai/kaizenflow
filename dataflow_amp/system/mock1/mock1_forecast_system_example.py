@@ -36,12 +36,15 @@ def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
     system.config["market_data_config", "im_client_config"] = cconfig.Config()
     # Set the research PNL parameters.
     dag_builder = system.config["dag_builder_object"]
+    price_col = dag_builder.get_column_name("price")
+    volatility_col = dag_builder.get_column_name("volatility")
+    prediction_col = dag_builder.get_column_name("prediction")
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",
         "init": {
-            "price_col": dag_builder.get_column_name("price_col"),
-            "volatility_col": dag_builder.get_column_name("volatility_col"),
-            "prediction_col": dag_builder.get_column_name("prediction_col"),
+            "price_col": price_col,
+            "volatility_col": volatility_col,
+            "prediction_col": prediction_col,
         },
         "kwargs": {
             "target_gmv": 1e5,
@@ -85,12 +88,15 @@ def get_Mock1_Time_ForecastSystem_with_DataFramePortfolio_example1(
     ] = rt_timeout_in_secs_or_time
     # PnL config.
     dag_builder = system.config["dag_builder_object"]
+    price_col = dag_builder.get_column_name("price")
+    volatility_col = dag_builder.get_column_name("volatility")
+    prediction_col = dag_builder.get_column_name("prediction")
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",
         "init": {
-            "price_col": dag_builder.get_column_name("price_col"),
-            "volatility_col": dag_builder.get_column_name("volatility_col"),
-            "prediction_col": dag_builder.get_column_name("feature1"),
+            "price_col": price_col,
+            "volatility_col": volatility_col,
+            "prediction_col": prediction_col,
         },
         "kwargs": {
             "target_gmv": 1e5,
@@ -136,12 +142,15 @@ def get_Mock1_Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_exam
     ] = rt_timeout_in_secs_or_time
     # PnL config.
     dag_builder = system.config["dag_builder_object"]
+    price_col = dag_builder.get_column_name("price")
+    volatility_col = dag_builder.get_column_name("volatility")
+    prediction_col = dag_builder.get_column_name("prediction")
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",
         "init": {
-            "price_col": dag_builder.get_column_name("price_col"),
-            "volatility_col": dag_builder.get_column_name("volatility_col"),
-            "prediction_col": dag_builder.get_column_name("feature1"),
+            "price_col": price_col,
+            "volatility_col": volatility_col,
+            "prediction_col": prediction_col,
         },
         "kwargs": {
             "target_gmv": 1e5,
@@ -201,15 +210,12 @@ def get_Mock1_NonTime_ForecastSystem_example1(
     # Set the research PNL parameters.
     # TODO(gp): Use `apply_research_pnl` instead.
     dag_builder = system.config["dag_builder_object"]
-    system.config["research_pnl", "price_col"] = dag_builder.get_column_name(
-        "price_col"
-    )
-    system.config["research_pnl", "volatility_col"] = dag_builder.get_column_name(
-        "volatility_col"
-    )
-    system.config["research_pnl", "prediction_col"] = dag_builder.get_column_name(
-        "feature1"
-    )
+    price_col = dag_builder.get_column_name("price")
+    volatility_col = dag_builder.get_column_name("volatility")
+    prediction_col = dag_builder.get_column_name("prediction")
+    system.config["research_pnl", "price_col"] = price_col
+    system.config["research_pnl", "volatility_col"] = volatility_col
+    system.config["research_pnl", "prediction_col"] = prediction_col
     return system
 
 

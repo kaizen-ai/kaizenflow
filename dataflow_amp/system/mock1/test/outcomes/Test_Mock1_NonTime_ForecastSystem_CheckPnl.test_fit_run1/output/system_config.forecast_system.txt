@@ -92,7 +92,7 @@ research_forecast_evaluator_from_prices:
   init:
     price_col: vwap
     volatility_col: vwap.ret_0.vol
-    prediction_col: prediction
+    prediction_col: feature1
   kwargs:
     target_gmv: 100000.0
     liquidate_at_end_of_day: False
