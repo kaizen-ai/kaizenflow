@@ -28,7 +28,7 @@ to run outside a Docker container:
 
 Import as:
 
-import dev_scripts.lib_tasks_reconcile as dslitare
+import oms.lib_tasks_reconcile as omlitare
 """
 
 import datetime
