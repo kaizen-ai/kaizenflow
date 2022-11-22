@@ -88,6 +88,18 @@ def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     return run_date
 
 
+def _allow_update(dst_dir: str) -> None:
+    """
+    Allow to overwrite reconcilation results files.
+
+    :param dst_dir: dir to store reconcilation results in
+    """
+    hdbg.dassert_path_exists(dst_dir)
+    _LOG.info("Allow to overwrite files at: %s", dst_dir)
+    cmd = f"chmod -R +w {dst_dir}"
+    _system(cmd)
+
+
 def _prevent_overwriting(path: str) -> None:
     """
     Remove write permissions.
@@ -601,6 +613,7 @@ def reconcile_run_all(
     mode=None,
     prevent_overwriting=True,
     skip_notebook=False,
+    allow_update=False,
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
@@ -611,9 +624,11 @@ def reconcile_run_all(
         at which to end reconcile run
     :param dst_dir: dir to store reconcilation results in
     :param mode: see `reconcile_copy_prod_data()`
-    :param prevent_overwriting: if True write permissions are remove otherwise
+    :param prevent_overwriting: if True write permissions are removed otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
+    :param allow_update: if True allow to overwrite reconcilation result files
+        otherwise retain permissions as they are
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
@@ -673,3 +688,7 @@ def reconcile_run_all(
         start_timestamp_as_str=start_timestamp_as_str,
         dst_dir=dst_dir,
     )
+    if allow_update:
+        # The dir looks like `.../20221110/`.
+        _ = _allow_update(dst_dir)
+
