@@ -121,6 +121,7 @@ def reconcile_data_run_notebook(
     s3_path,
     base_dst_dir,
     bid_ask_accuracy=None,
+    bid_ask_depth=10,
     resample_mode=None,
 ):  # type: ignore
     """
@@ -148,6 +149,7 @@ def reconcile_data_run_notebook(
         "s3_vendor": s3_vendor,
         "s3_path": s3_path,
         "bid_ask_accuracy": bid_ask_accuracy,
+        "bid_ask_depth": bid_ask_depth,
         "resample_mode": resample_mode,
     }
     config = cconfig.Config.from_dict(config_dict)

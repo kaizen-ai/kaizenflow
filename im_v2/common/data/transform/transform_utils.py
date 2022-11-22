@@ -15,9 +15,11 @@ import core.finance.resampling as cfinresa
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.htimer as htimer
+import itertools
 
 _LOG = logging.getLogger(__name__)
 
+BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 
 def convert_timestamp_column(
     datetime_col_name: pd.Series,
@@ -246,12 +248,21 @@ def calculate_vwap(
     return calculated_price
 
 
+# TODO(Juraj): CmTask #3235 remove dependency on having exchange column
+#  it adds unnecessary complexity.
 def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
-    Resample bid/ask data to 1 minute interval.
+    Resample bid/ask data to 1 minute interval for single symbol.
+
+    The method expects data in the following format:
+              exchange,id bid_size,bid_price,ask_size,ask_price
+    timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25
+
+    The method expects data coming from a single exchange.
 
     :param mode: designate strategy to use, i.e. volume-weighted average
         (VWAP) or time-weighted average price (TWAP)
+    :return data resampled to 1 minute.
     """
     resample_kwargs = {
         "rule": "T",
@@ -286,10 +297,47 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     return df
 
 
-# TODO(Juraj): extend to support deeper levels of order book.
+def resample_multilevel_bid_ask_data(
+    data: pd.DataFrame, mode: str = "VWAP"
+) -> pd.DataFrame:
+    """
+    Resample multilevel bid/ask data to 1 minute interval for single symbol.
+
+    The method expects data in the following format:
+              exchange,id bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
+    timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25...
+
+    The method assumes 10 levels of order book and a data coming
+    from single exchange.
+
+    :param mode: designate strategy to use, i.e. volume-weighted average
+        (VWAP) or time-weighted average price (TWAP)
+    :return DataFrame resampled to 1 minute.
+    """
+    all_levels_resampled = []
+    for i in range(1, 11):
+        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", BID_ASK_COLS)
+        one_level_resampling_cols = list(bid_ask_cols_level) + ["exchange_id"]
+        data_one_level = data[one_level_resampling_cols]
+        # Canonize column name for resampling function.
+        data_one_level.columns = BID_ASK_COLS + ["exchange_id"]
+        data_one_level = resample_bid_ask_data(data_one_level, mode)
+        # Uncanonize the column levels back.
+        data_one_level.columns = one_level_resampling_cols
+        # Temporarily remove exchange_id column to avoid duplicate
+        #  column error when applying pd.concat().
+        data_one_level = data_one_level.drop(["exchange_id"], axis=1)
+        all_levels_resampled.append(data_one_level)
+    # Drop duplicate columns because a vetical concatenation follows.
+    data_resampled = pd.concat(all_levels_resampled, axis=1)
+    # Insert exchange_id column back as it was removed inside loop.
+    data_resampled["exchange_id"] = data["exchange_id"].iloc[0]
+    return data_resampled
+
+
 def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame:
     """
-    Transform raw bid/ask realtime data and resample to 1-min.
+    Transform raw bid/ask realtime data and resample to 1 min.
 
     The function expects raw bid/ask data from a single exchange
     sampled multiple times per second In the first step the raw data
@@ -306,8 +354,6 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         "Only data from single exchange are supported",
     )
     exchange_id = df_raw["exchange_id"].unique()[0]
-    # Currently only top of the book is supported.
-    df_raw = df_raw[df_raw["level"] == 1]
     # Remove duplicates, keep the latest record.
     df_raw = df_raw.sort_values("knowledge_timestamp", ascending=False)
     df_raw = df_raw.drop_duplicates(["timestamp", "exchange_id", "currency_pair"])
@@ -317,9 +363,16 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     )
     df_raw = df_raw.set_index("timestamp")
     dfs_resampled = []
-    for currency_pair in df_raw["currency_pair"].unique():
-        df_part = df_raw[df_raw["currency_pair"] == currency_pair]
+    for currency_pair, level in itertools.product(
+        df_raw["currency_pair"].unique(), df_raw["level"].unique()
+    ):
+        df_bool_mask = (df_raw["currency_pair"] == currency_pair) & (
+            df_raw["level"] == level
+        )
+        df_part = df_raw[df_bool_mask]
         # Resample to 1 sec.
+        # Temporarily remove currency_pair and level columns.
+        #  to match resample_bid_ask_data() interface.
         df_part = (
             df_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
             # Label right is used to match conventions used by CryptoChassis.
@@ -330,7 +383,9 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         df_part["exchange_id"] = exchange_id
         # Resample to 1 min.
         df_part = resample_bid_ask_data(df_part)
+        # Add the removed columns back.
         df_part["currency_pair"] = currency_pair
+        df_part["level"] = level
         dfs_resampled.append(df_part)
     df_resampled = pd.concat(dfs_resampled)
     # Convert back to unix timestamp after resampling
@@ -338,10 +393,8 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     df_resampled["timestamp"] = df_resampled["timestamp"].map(
         hdateti.convert_timestamp_to_unix_epoch
     )
-    # This data is only reloaded so end_download_timestamp is None.
+    # This data is only reloaded from our DB so end_download_timestamp is None.
     df_resampled["end_download_timestamp"] = None
-    # At the level column back.
-    df_resampled["level"] = 1
     # Round column values for readability.
     round_cols_dict = {
         col: 6 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
