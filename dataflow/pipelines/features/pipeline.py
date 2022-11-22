@@ -26,6 +26,13 @@ _LOG = logging.getLogger(__name__)
 
 
 class FeaturePipeline(dtfcore.DagBuilder):
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
@@ -59,6 +66,9 @@ class FeaturePipeline(dtfcore.DagBuilder):
         raise NotImplementedError
 
     def get_config_template(self) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
         dict_ = {
             self._get_nid("load_data"): {
                 cconfig.DUMMY: None,
@@ -96,15 +106,6 @@ class FeaturePipeline(dtfcore.DagBuilder):
         }
         config = cconfig.Config.from_dict(dict_)
         return config
-
-    def _get_price_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name(self) -> str:
-        raise NotImplementedError
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"

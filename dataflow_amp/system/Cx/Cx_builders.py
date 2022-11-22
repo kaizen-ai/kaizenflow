@@ -156,7 +156,6 @@ def get_ProcessForecastsNode_dict_instance1(
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
-    dag_builder = system.config["dag_builder_object"]
     spread_col = None
     style = "cross_sectional"
     # For prod we use smaller GMV so that we can trade at low capacity while
@@ -175,10 +174,11 @@ def get_ProcessForecastsNode_dict_instance1(
         }
         # TODO(Grisha): @Dan CmTask2849 "Pass an actual `system_log_dir` for simulation".
         root_log_dir = None
+    dag_builder = system.config["dag_builder_object"]
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
-        dag_builder.prediction_col_name,
-        dag_builder.volatility_col_name,
+        dag_builder.get_column_name("prediction_col"),
+        dag_builder.get_column_name("volatility_col"),
         spread_col,
         order_duration_in_mins,
         style,
@@ -443,13 +443,15 @@ def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
     Extend system config with parameters for research PNL computations.
     """
     dag_builder = system.config["dag_builder_object"]
-    system.config["research_pnl", "price_col"] = dag_builder.price_col_name
-    system.config[
-        "research_pnl", "volatility_col"
-    ] = dag_builder.volatility_col_name
-    system.config[
-        "research_pnl", "prediction_col"
-    ] = dag_builder.prediction_col_name
+    system.config["research_pnl", "price_col"] = dag_builder.get_column_name(
+        "price_col"
+    )
+    system.config["research_pnl", "volatility_col"] = dag_builder.get_column_name(
+        "volatility_col"
+    )
+    system.config["research_pnl", "prediction_col"] = dag_builder.get_column_name(
+        "prediction_col"
+    )
     return system
 
 

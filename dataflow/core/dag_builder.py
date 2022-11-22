@@ -72,6 +72,13 @@ class DagBuilder(abc.ABC):
         txt = "\n".join(txt)
         return txt
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_column_name(tag: str) -> str:
+        """
+        Return the name of the column corresponding to `tag`.
+        """
+
     def to_string(self) -> str:
         """
         Return a string with a (verbose) representation of the DagBuilder.
@@ -98,18 +105,6 @@ class DagBuilder(abc.ABC):
     @property
     def nid_prefix(self) -> str:
         return self._nid_prefix
-
-    @property
-    def price_col_name(self) -> str:
-        return self._get_price_col_name()
-
-    @property
-    def prediction_col_name(self) -> str:
-        return self._get_prediction_col_name()
-
-    @property
-    def volatility_col_name(self) -> str:
-        return self._get_volatility_col_name()
 
     @abc.abstractmethod
     def get_config_template(self) -> cconfig.Config:
@@ -263,24 +258,6 @@ class DagBuilder(abc.ABC):
     #     """
     #     Convert trading period to fast prod setup.
     #     """
-
-    @abc.abstractmethod
-    def _get_price_col_name(self) -> str:
-        """
-        Return price column name.
-        """
-
-    @abc.abstractmethod
-    def _get_prediction_col_name(self) -> str:
-        """
-        Return prediction column name.
-        """
-
-    @abc.abstractmethod
-    def _get_volatility_col_name(self) -> str:
-        """
-        Return prediction column name.
-        """
 
     def _get_nid(self, stage_name: str) -> str:
         hdbg.dassert_isinstance(stage_name, str)

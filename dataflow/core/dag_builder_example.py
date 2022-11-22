@@ -25,9 +25,16 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
     Pipeline containing a single node with a data source node factory.
     """
 
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_config_template(self) -> cconfig.Config:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         dict_ = {
             self._get_nid("load_prices"): {
@@ -69,20 +76,11 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         """
         raise NotImplementedError
 
-    def _get_price_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name(self) -> str:
-        raise NotImplementedError
-
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         dag = dtfcordag.DAG(mode=mode)
         _LOG.debug("%s", config)
@@ -105,6 +103,13 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
+
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
 
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
@@ -148,7 +153,7 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
 
     def get_config_template(self) -> cconfig.Config:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         config = cconfig.Config.from_dict(
             {
@@ -199,20 +204,11 @@ class Returns_DagBuilder(dtfcodabui.DagBuilder):
         )
         return config
 
-    def _get_price_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name(self) -> str:
-        raise NotImplementedError
-
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         dag = dtfcordag.DAG(mode=mode)
         _LOG.debug("%s", config)
@@ -282,6 +278,13 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     Pipeline for generating filtered returns from an ARMA process.
     """
 
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
@@ -324,7 +327,7 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
 
     def get_config_template(self) -> cconfig.Config:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         config = cconfig.Config.from_dict(
             {
@@ -386,20 +389,11 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
         )
         return config
 
-    def _get_price_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name(self) -> str:
-        raise NotImplementedError
-
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
         """
-        Same as abstract method.
+        See description in the parent class.
         """
         dag = dtfcordag.DAG(mode=mode)
         _LOG.debug("%s", config)
@@ -472,6 +466,13 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     process.
     """
 
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
@@ -513,6 +514,9 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
         return config
 
     def get_config_template(self) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
         config = cconfig.Config.from_dict(
             {
                 self._get_nid("filter_ath"): {
@@ -575,15 +579,6 @@ class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
             },
         )
         return config
-
-    def _get_price_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name(self) -> str:
-        raise NotImplementedError
 
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"

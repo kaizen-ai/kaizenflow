@@ -25,6 +25,23 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
     A pipeline similar to real models.
     """
 
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        if tag == "price_col":
+            res_col = "vwap"
+        elif tag == "volatility_col":
+            res_col = "vwap.ret_0.vol"
+        elif tag == "prediction_col":
+            res_col = "prediction"
+        elif tag == "feature1":
+            res_col = "feature1"
+        else:
+            raise ValueError(f"Invalid tag='{tag}'")
+        return res_col
+
     def get_trading_period(
         self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
@@ -133,7 +150,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
             },
             self._get_nid("compute_vol"): {
                 "in_col_group": ("vwap.ret_0",),
-                "out_col_group": ("vwap.ret_0.vol",),
+                "out_col_group": (self.get_column_name("volatility_col"),),
                 "drop_nans": True,
                 "permitted_exceptions": (ValueError,),
             },
@@ -194,7 +211,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
                             "vwap.ret_0.vol_adj.c.lag2",
                             "vwap.ret_0.vol_adj.c.lag3",
                         ],
-                        name="prediction",
+                        name=self.get_column_name("prediction_col"),
                     ),
                     "convert_to_dataframe": True,
                 },
@@ -203,15 +220,6 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         }
         config = cconfig.Config.from_dict(dict_)
         return config
-
-    def _get_price_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_prediction_col_name(self) -> str:
-        raise NotImplementedError
-
-    def _get_volatility_col_name(self) -> str:
-        raise NotImplementedError
 
     def _get_dag(
         self,
