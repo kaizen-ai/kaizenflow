@@ -328,6 +328,37 @@ combine_stats(nans_stats)
 combine_stats(zeros_stats)
 
 # %% [markdown]
+# ### CC futures resampled to 1 min
+
+# %%
+s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis.resampled_1min/binance"
+# Load daily data from s3 parquet.
+cc_ba_futures_resampled = hparque.from_parquet(s3_path, aws_profile="ck")
+
+# %%
+print(f"{len(cc_ba_futures_resampled)} rows overall")
+print("Head:")
+display(cc_ba_futures_resampled.head())
+print("Tail:")
+display(cc_ba_futures_resampled.tail())
+
+# %% [markdown]
+# #### Count NaNs
+
+# %%
+cstadesc.compute_frac_nan(cc_ba_futures_resampled)
+
+# %% [markdown]
+# #### Count zeros
+
+# %%
+cstadesc.compute_frac_zero(
+            cc_ba_futures_resampled[
+                ["bid_price", "bid_size", "ask_price", "ask_size"]
+            ]
+        )
+
+# %% [markdown]
 # ### CC spot
 
 # %%
@@ -350,4 +381,33 @@ combine_stats(nans_stats)
 # %%
 combine_stats(zeros_stats)
 
+# %% [markdown]
+# ### CC spot resampled to 1 min
+
 # %%
+s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.resampled_1min/binance"
+# Load daily data from s3 parquet.
+cc_ba_spot_resampled = hparque.from_parquet(s3_path, aws_profile="ck")
+
+# %%
+print(f"{len(cc_ba_spot_resampled)} rows overall")
+print("Head:")
+display(cc_ba_spot_resampled.head())
+print("Tail:")
+display(cc_ba_spot_resampled.tail())
+
+# %% [markdown]
+# #### Count NaNs
+
+# %%
+cstadesc.compute_frac_nan(cc_ba_spot_resampled)
+
+# %% [markdown]
+# #### Count zeros
+
+# %%
+cstadesc.compute_frac_zero(
+            cc_ba_spot_resampled[
+                ["bid_price", "bid_size", "ask_price", "ask_size"]
+            ]
+        )
