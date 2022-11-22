@@ -38,6 +38,7 @@ def get_Mock1_NonTime_ForecastSystem_for_simulation_example1(
     dag_builder = system.config["dag_builder_object"]
     price_col = dag_builder.get_column_name("price")
     volatility_col = dag_builder.get_column_name("volatility")
+    # TODO(Dan): Investigate why passing with `DagBuilder` leads to test breaks.
     prediction_col = "prediction"
     forecast_evaluator_from_prices_dict = {
         "style": "cross_sectional",
