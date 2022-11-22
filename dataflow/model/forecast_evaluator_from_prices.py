@@ -933,7 +933,7 @@ class ForecastEvaluatorFromPrices:
             first_date = pd.Timestamp(date_idx[burn_in_days], tz=df.index.tz)
             _LOG.info("Initial date after burn-in=%s", first_date)
             for key, value in derived_dfs.items():
-                derived_dfs[key] = value.iloc[first_date:]
+                derived_dfs[key] = value.loc[first_date:]
         # Possibly reindex dataframes.
         if input_idx is not None:
             for key, value in derived_dfs.items():

@@ -52,6 +52,15 @@ def to_series(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
+def as_series(data: Union[pd.DataFrame, pd.Series]) -> pd.Series:
+    """
+    Convert a single-column dataframe to a series or no-op if already a series.
+    """
+    if isinstance(data, pd.Series):
+        return data
+    return to_series(data)
+
+
 def dassert_is_days(
     timedelta: pd.Timedelta, *, min_num_days: Optional[int] = None
 ) -> None:
@@ -407,6 +416,36 @@ def find_gaps_in_dataframes(
     second_missing_indices = df1.index.difference(df2.index)
     second_missing_data = df1.loc[second_missing_indices]
     return first_missing_data, second_missing_data
+
+
+def find_gaps_in_time_series(
+    time_series: pd.Series,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    freq: str,
+) -> pd.Series:
+    """
+    Find missing points on a time interval specified by [start_timestamp,
+    end_timestamp], where point distribution is determined by <step>.
+
+    If the passed time series is of a unix epoch format. It is
+    automatically tranformed to pd.Timestamp.
+
+    :param time_series: time series to find gaps in
+    :param start_timestamp: start of the time interval to check
+    :param end_timestamp: end of the time interval to check
+    :param freq: distance between two data points on the interval.
+      Aliases correspond to pandas.date_range's freq parameter,
+      i.e. "S" -> second, "T" -> minute.
+    :return: pd.Series representing missing points in the source time series.
+    """
+    _time_series = time_series
+    if str(time_series.dtype) in ["int32", "int64"]:
+        _time_series = _time_series.map(hdateti.convert_unix_epoch_to_timestamp)
+    correct_time_series = pd.date_range(
+        start=start_timestamp, end=end_timestamp, freq=freq
+    )
+    return correct_time_series.difference(_time_series)
 
 
 def check_and_filter_matching_columns(
@@ -844,6 +883,43 @@ def merge_dfs(
     #
     res_df = df1.merge(df2, **pd_merge_kwargs)
     return res_df
+
+
+# TODO(gp): Is this (ironically) a duplicate of drop_duplicates?
+def drop_duplicated(
+    df: pd.DataFrame, *, subset: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """
+    Implement `df.duplicated` but considering also the index and ignoring nans.
+    """
+    _LOG.debug("before df=\n%s", df_to_str(df))
+    # Move the index to the df.
+    old_index_name = df.index.name
+    new_index_name = "_index.tmp"
+    hdbg.dassert_not_in(new_index_name, df.columns)
+    df.index.name = new_index_name
+    df.reset_index(drop=False, inplace=True)
+    # Remove duplicates by ignoring nans.
+    if subset is not None:
+        hdbg.dassert_isinstance(subset, list)
+        subset = [new_index_name] + subset
+    duplicated = df.fillna(0.0).duplicated(subset=subset, keep="first")
+    # Report the result of the operation.
+    if duplicated.sum() > 0:
+        num_rows_before = df.shape[0]
+        _LOG.debug("Removing duplicates df=\n%s", df_to_str(df.loc[duplicated]))
+        df = df.loc[~duplicated]
+        num_rows_after = df.shape[0]
+        _LOG.warning(
+            "Removed repeated rows num_rows=%s",
+            hprint.perc(num_rows_before - num_rows_after, num_rows_before),
+        )
+    _LOG.debug("after removing duplicates df=\n%s", df_to_str(df))
+    # Set the index back.
+    df.set_index(new_index_name, inplace=True)
+    df.index.name = old_index_name
+    _LOG.debug("after df=\n%s", df_to_str(df))
+    return df
 
 
 # #############################################################################
@@ -1471,8 +1547,10 @@ def compare_dfs(
     row_mode: str = "equal",
     column_mode: str = "equal",
     diff_mode: str = "diff",
-    remove_inf: bool = True,
     assert_diff_threshold: float = 1e-3,
+    close_to_zero_threshold: float = 1e-6,
+    zero_vs_zero_is_zero: bool = True,
+    remove_inf: bool = True,
     log_level: int = logging.DEBUG,
 ) -> pd.DataFrame:
     """
@@ -1488,10 +1566,13 @@ def compare_dfs(
         corresponding elements
         - "diff": use the difference
         - "pct_change": use the percentage difference
-    :param remove_inf: replace +-inf with `np.nan`
     :param assert_diff_threshold: maximum allowed total difference
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
+    :param close_to_zero_threshold: round numbers below the threshold to 0
+    :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0
+        if True, otherwise keep the actual result
+    :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
     :return: a singe dataframe with differences as values
     """
@@ -1516,16 +1597,24 @@ def compare_dfs(
         df2 = df2[col_names]
     else:
         raise ValueError(f"Invalid column_mode='{column_mode}'")
+    close_to_zero_threshold_mask = lambda x: abs(x) < close_to_zero_threshold
+    # Round small numbers to 0 to exclude them from the diff computation.
+    df1[close_to_zero_threshold_mask] = df1[close_to_zero_threshold_mask].round(0)
+    df2[close_to_zero_threshold_mask] = df2[close_to_zero_threshold_mask].round(0)
     # Compute the difference df.
     if diff_mode == "diff":
         df_diff = df1 - df2
     elif diff_mode == "pct_change":
         df_diff = 100 * (df1 - df2) / df2
+        if zero_vs_zero_is_zero:
+            # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
+            df1_mask = df1 == 0
+            df2_mask = df2 == 0
+            zero_vs_zero_mask =  df1_mask & df2_mask
+            df_diff[zero_vs_zero_mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")
     df_diff = df_diff.add_suffix(f".{diff_mode}")
-    if remove_inf:
-        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     if diff_mode == "pct_change" and assert_diff_threshold is not None:
         # TODO(Grisha): generalize for the other modes.
         # Report max diff.
@@ -1536,6 +1625,8 @@ def compare_dfs(
             hdbg.dassert_lte(0.0, assert_diff_threshold)
             # TODO(Grisha): it works only if `remove_inf` is True.
             hdbg.dassert_lte(max_diff, assert_diff_threshold)
+    if remove_inf:
+        df_diff = df_diff.replace([np.inf, -np.inf], np.nan)
     return df_diff
 
 

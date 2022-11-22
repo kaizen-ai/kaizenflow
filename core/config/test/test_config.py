@@ -1884,14 +1884,15 @@ class Test_save_to_file(hunitest.TestCase):
 # #############################################################################
 
 
-class Test_to_string(hunitest.TestCase):
-    def remove_line_numbers(self, actual_config: str):
-        # Remove line numbers from shorthand representations, e.g.
-        #  dataflow/system/system_builder_utils.py::***::get_config_template
-        line_regex = r"(?<=::)(\d+)(?=::)"
-        actual_config = re.sub(line_regex, "***", actual_config)
-        return actual_config
+def remove_line_numbers(actual_config: str):
+    # Remove line numbers from shorthand representations, e.g.
+    #  dataflow/system/system_builder_utils.py::***::get_config_template
+    line_regex = r"(?<=::)(\d+)(?=::)"
+    actual_config = re.sub(line_regex, "***", actual_config)
+    return actual_config
 
+
+class Test_to_string(hunitest.TestCase):
     def get_test_config(
         self,
         value: Any,
@@ -1976,7 +1977,7 @@ class Test_to_string(hunitest.TestCase):
         #
         mode = "verbose"
         actual = config.to_string(mode)
-        actual = self.remove_line_numbers(actual)
+        actual = remove_line_numbers(actual)
         #
         expected = r"""key1 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test4, val_type=str): value2
         key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
@@ -2046,20 +2047,22 @@ class Test_mark_as_used1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        Test marking a subconfig in a nested config.
+        Test marking a value in a nested config.
         """
         test_nested_dict = {"key1": 1, "key2": {"key3": "value3"}}
         test_nested_config = cconfig.Config.from_dict(test_nested_dict)
         #
+        # Test marking the subconfig.
         expected_value = r"key3: value3"
         actual_value = test_nested_config.get_and_mark_as_used("key2")
         self.assert_equal(
             str(actual_value), expected_value, purify_text=True, fuzzy_match=True
         )
-        #
+        # Test marking the subconfig.
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test2, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test2, val_type=str): value3"""
+        self._helper(test_nested_config, expected_config)
         self._helper(test_nested_config, expected_config)
 
     def test3(self) -> None:
@@ -2069,6 +2072,7 @@ class Test_mark_as_used1(hunitest.TestCase):
         test_nested_dict = {"key1": 1, "key2": {"key3": {"key4": "value3"}}}
         test_nested_config = cconfig.Config.from_dict(test_nested_dict)
         #
+        # Test marking the nested subconfig.
         expected_value = r"""key3:
         key4: value3"""
         actual_value = test_nested_config.get_and_mark_as_used("key2")
@@ -2077,8 +2081,8 @@ class Test_mark_as_used1(hunitest.TestCase):
         )
         #
         expected_config = r"""key1 (marked_as_used=False, writer=None, val_type=int): 1
-        key2 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test3, val_type=core.config.config_.Config):
-        key3 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test3, val_type=core.config.config_.Config):
+        key2 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
+        key3 (marked_as_used=False, writer=None, val_type=core.config.config_.Config):
         key4 (marked_as_used=True, writer=$GIT_ROOT/core/config/test/test_config.py::***::test3, val_type=str): value3"""
         self._helper(test_nested_config, expected_config)
 
@@ -2101,7 +2105,7 @@ class Test_mark_as_used1(hunitest.TestCase):
 
     def _helper(self, actual_config: cconfig.Config, expected_config: str):
         """
-        Remove line numbers from config string and compare to expected value..
+        Remove line numbers from config string and compare to expected value.
         """
         actual_config = repr(actual_config)
         # Replace line numbers with '***', e.g.:
@@ -2111,6 +2115,79 @@ class Test_mark_as_used1(hunitest.TestCase):
         self.assert_equal(
             actual_config, expected_config, purify_text=True, fuzzy_match=True
         )
+
+
+# #############################################################################
+# Test_marked_as_used1
+# #############################################################################
+
+
+class Test_get_marked_as_used1(hunitest.TestCase):
+    """
+    Verify that marked_as_used parameter is displayed correctly.
+    """
+
+    def test1(self) -> None:
+        config = {"key1": "value1", "key2": {"key3": {"key4": "value2"}}}
+        config = cconfig.Config.from_dict(config)
+        # Verify that marked_as_used for a single value is correctly marked as used.
+        config.get_and_mark_as_used("key1")
+        is_key1_marked = config.get_marked_as_used("key1")
+        self.assertTrue(is_key1_marked)
+        # Verify that marked_as_used for nested single value is correctly displayed.
+        config.get_and_mark_as_used(("key2", "key3", "key4"))
+        is_key4_marked = config.get_marked_as_used(("key2", "key3", "key4"))
+        self.assertTrue(is_key4_marked)
+        # Verify that marked_as_used for a subconfig is correctly displayed.
+        config.get_and_mark_as_used("key2")
+        is_key2_marked = config.get_marked_as_used("key2")
+        self.assertFalse(is_key2_marked)
+
+
+# #############################################################################
+# Test_check_unused_variables1
+# #############################################################################
+
+
+class Test_check_unused_variables1(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Verify that a single unused variable is correctly identified.
+        """
+        config = {"key1": "value1", "key2": "value2"}
+        config = cconfig.Config.from_dict(config)
+        config.get_and_mark_as_used("key1")
+        unused_variables = config.check_unused_variables()
+        expected = [("key2",)]
+        self.assertListEqual(unused_variables, expected)
+
+    def test2(self) -> None:
+        """
+        Verify that a nested unused variable is correctly identified.
+        """
+        config = {
+            "key1": "value1",
+            "key2": {"key3": {"key4": "value2", "key5": "value3"}},
+        }
+        config = cconfig.Config.from_dict(config)
+        config.get_and_mark_as_used("key1")
+        config.get_and_mark_as_used(("key2", "key3", "key5"))
+        unused_variables = config.check_unused_variables()
+        expected = [("key2", "key3", "key4")]
+        self.assertListEqual(unused_variables, expected)
+
+    def test3(self) -> None:
+        """
+        Verify that all unused variables are correctly identified.
+        """
+        config = {
+            "key1": "value1",
+            "key2": {"key3": {"key4": "value2", "key5": "value3"}},
+        }
+        config = cconfig.Config.from_dict(config)
+        unused_variables = config.check_unused_variables()
+        expected = [("key1",), ("key2", "key3", "key4"), ("key2", "key3", "key5")]
+        self.assertListEqual(unused_variables, expected)
 
 
 # #############################################################################

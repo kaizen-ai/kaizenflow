@@ -14,6 +14,7 @@ Use as:
    --db_table 'ccxt_ohlcv_preprod' \
    --aws_profile 'ck' \
    --resample_1min \
+   --s3_vendor 'crypto_chassis' \
    --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
 
 Import as:
@@ -22,11 +23,13 @@ import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 """
 import argparse
 import logging
-from typing import List
+import os
+from typing import Dict, List
 
 import pandas as pd
 import psycopg2
 
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
@@ -38,6 +41,35 @@ import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
+
+
+def build_dummy_data_reconciliation_config() -> cconfig.ConfigList:
+    """
+    Dummy function to pass into amp/dev_scripts/notebooks/run_notebook.py as a
+    configu_builder parameter.
+    """
+    config = cconfig.Config.from_dict({"dummy": "value"})
+    config_list = cconfig.ConfigList([config])
+    return config_list
+
+
+def build_data_reconciliation_config_env_var(
+    config_as_dict: Dict[str, str]
+) -> str:
+    """
+    Transform config dict to a python code string.
+
+    The string can be passed into a single var which can be ready via
+    Config.from_env_var at notebook level.
+
+    :param config_as_dict: config dict for data reconciliation
+    """
+    # config = cconfig.Config.from_dict(config_as_dict)
+    # config_str = config.to_python()
+    # return config_str
+
+
+# #############################################################################
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -113,6 +145,16 @@ def _parse() -> argparse.ArgumentParser:
         help="If the data should be resampled to 1 sec'",
     )
 
+    parser.add_argument(
+        "--bid_ask_accuracy",
+        action="store",
+        required=False,
+        default=None,
+        type=int,
+        help="An accuracy threshold (in %) to apply when reconciling bid/ask data"
+        + "If the data differ above this threshold an error is raised.",
+    )
+
     parser = hparser.add_verbosity_arg(parser)
     # For `--s3_path` argument we only specify the top level path for the daily staged data,
     # the code handles appending the exchange, e.g. `binance` and data type, e.g. `bid_ask`
@@ -134,6 +176,10 @@ class RealTimeHistoricalReconciler:
                 True,
                 "One resampling option should be chosen",
             )
+            # Check that bid_ask_accuracy param
+            #  is set to a valid percentage.
+            hdbg.dassert_lgt(0, args.bid_ask_accuracy, 100, True, True)
+            self.bid_ask_accuracy = args.bid_ask_accuracy
         self.data_type = args.data_type
         # Set DB connection.
         db_connection = self.get_db_connection(args)
@@ -152,8 +198,8 @@ class RealTimeHistoricalReconciler:
             args.resample_1sec,
         )
         # Process time period.
-        self.start_ts = pd.Timestamp(args.start_timestamp, tz="UTC")
-        self.end_ts = pd.Timestamp(args.end_timestamp, tz="UTC")
+        self.start_ts = pd.Timestamp(args.start_timestamp)
+        self.end_ts = pd.Timestamp(args.end_timestamp)
         self.resample_1sec = args.resample_1sec
         #
         self.universe = self._get_universe(args.s3_vendor)
@@ -176,6 +222,10 @@ class RealTimeHistoricalReconciler:
                 "ask_size",
             ],
         }
+        # Get CCXT data.
+        self.ccxt_rt = self._get_rt_data()
+        # Get daily data.
+        self.daily_data = self._get_daily_data()
 
     @staticmethod
     def get_db_connection(args):
@@ -210,15 +260,11 @@ class RealTimeHistoricalReconciler:
         """
         Compare real time and daily data.
         """
-        # Get CCXT data.
-        ccxt_rt = self._get_rt_data()
-        # Get daily data.
-        daily_data = self._get_daily_data()
         # Compare real time and daily data.
         if self.data_type == "ohlcv":
-            self._compare_ohlcv(ccxt_rt, daily_data)
+            self._compare_ohlcv(self.ccxt_rt, self.daily_data)
         else:
-            self._compare_bid_ask(ccxt_rt, daily_data)
+            self._compare_bid_ask(self.ccxt_rt, self.daily_data)
         return
 
     @staticmethod
@@ -253,7 +299,7 @@ class RealTimeHistoricalReconciler:
             vendor_folder = s3_vendor
         if contract_type == "futures":
             data_type = f"{data_type}-futures"
-        s3_path = f"{s3_path}/{data_type}/{vendor_folder}/{exchange_id}"
+        s3_path = os.path.join(s3_path, data_type, vendor_folder, exchange_id)
         return s3_path
 
     @staticmethod
@@ -434,6 +480,38 @@ class RealTimeHistoricalReconciler:
                     daily_missing_data, num_rows=len(daily_missing_data)
                 )
             )
+        # Assert neither of the datasets has contains gaps
+        #  in datetime index.
+        # All of the checks are done by minute apart from checking raw bid_ask data.
+        # TODO(Juraj): This is still not a 100% check, it should be applied
+        #  to each symbol respectively.
+        freq = "S" if self.resample_1sec else "T"
+        rt_data_gaps = hpandas.find_gaps_in_time_series(
+            rt_data.index.get_level_values(0).unique(),
+            self.start_ts,
+            self.end_ts,
+            freq,
+        )
+        if not rt_data_gaps.empty:
+            error_message.append("Gaps in real time data:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    rt_data_gaps.to_frame(), num_rows=len(rt_data_gaps)
+                )
+            )
+        daily_data_gaps = hpandas.find_gaps_in_time_series(
+            daily_data.index.get_level_values(0).unique(),
+            self.start_ts,
+            self.end_ts,
+            freq,
+        )
+        if not daily_data_gaps.empty:
+            error_message.append("Gaps in daily data:")
+            error_message.append(
+                hpandas.get_df_signature(
+                    daily_data_gaps.to_frame(), num_rows=len(daily_data_gaps)
+                )
+            )
         return error_message
 
     def _compare_ohlcv(
@@ -538,20 +616,20 @@ class RealTimeHistoricalReconciler:
                 diff_stats_prices, num_rows=len(diff_stats_prices)
             ),
         )
-        # Define the maximum acceptable difference as 1%.
-        threshold = 1
+        # Define the maximum acceptable difference in %.
+        threshold = self.bid_ask_accuracy
         # Log the difference.
         for index, row in diff_stats_prices.iterrows():
             if abs(row["bid_price_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between bid prices in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
             if abs(row["ask_price_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between ask prices in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
         # Show stats for differences for sizes.
@@ -569,16 +647,15 @@ class RealTimeHistoricalReconciler:
             if abs(row["bid_size_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between bid sizes in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
             if abs(row["ask_size_relative_diff_pct"]) > threshold:
                 message = (
                     f"Difference between ask sizes in real time and daily "
-                    f"data for `{index}` coin is more that 1%"
+                    f"data for `{index}` coin is more than {threshold}%"
                 )
                 error_message.append(message)
-        error_message += self._compare_general(rt_data, daily_data)
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
