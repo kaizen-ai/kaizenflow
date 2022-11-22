@@ -600,7 +600,9 @@ class CcxtBroker(ombroker.Broker):
                 # Convert max leverage to int, raw value is a float.
                 max_leverage = int(max_leverage_float)
             except ValueError as e:
-                _LOG.warning("Max leverage=%s should be of int type", max_leverage_float)
+                _LOG.warning(
+                    "Max leverage=%s should be of int type", max_leverage_float
+                )
                 raise e
             minimal_order_limits[asset_id]["max_leverage"] = max_leverage
         return minimal_order_limits

@@ -7,7 +7,6 @@ import unittest.mock as umock
 from typing import List
 
 import pandas as pd
-import pytest
 
 import helpers.hio as hio
 import helpers.hpandas as hpandas
