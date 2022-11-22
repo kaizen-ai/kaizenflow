@@ -305,7 +305,7 @@ def _get_last_timestamp(
     for full_symbol in full_symbols:
         last_timestamp = client.get_end_ts_for_symbol(full_symbol)
         last_timestamps.append(last_timestamp)
-    last_timestamp = max(last_timestamps) + pd.Timedelta(minutes=1)
+    last_timestamp = min(last_timestamps) + pd.Timedelta(minutes=1)
     return last_timestamp
 
 
