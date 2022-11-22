@@ -28,7 +28,7 @@ to run outside a Docker container:
 
 Import as:
 
-import dev_scripts.lib_tasks_reconcile as dslitare
+import oms.lib_tasks_reconcile as omlitare
 """
 
 import datetime
@@ -403,7 +403,7 @@ def reconcile_copy_prod_data(
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
-    log_file = f"log_{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
+    log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
     log_file = os.path.join(shared_dir, "logs", log_file)
     hdbg.dassert_file_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
