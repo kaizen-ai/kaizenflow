@@ -7,6 +7,8 @@ import dataflow.core.dag_builder_example as dtfcdabuex
 import datetime
 import logging
 
+import pandas as pd
+
 import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.core.dag as dtfcordag
@@ -35,6 +37,38 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
         config = cconfig.Config.from_dict(dict_)
         return config
 
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def _get_dag(
         self, config: cconfig.Config, mode: str = "strict"
     ) -> dtfcordag.DAG:
@@ -58,11 +92,50 @@ class LoadPrices_DagBuilder(dtfcodabui.DagBuilder):
 # #############################################################################
 
 
-# TODO(gp): Builder -> _DagBuiler
-class ReturnsBuilder(dtfcodabui.DagBuilder):
+class Returns_DagBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from a given `DataSource` node.
     """
+
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        _ = self
+        # Get a key for trading period inside the config.
+        resample_nid = self._get_nid("rets/resample")
+        key = (resample_nid, "func_kwargs", "rule")
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
+        return val
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        config[self._get_nid("rets/resample")]["func_kwargs"]["rule"] = "2T"
+        return config
 
     def get_config_template(self) -> cconfig.Config:
         """
@@ -190,6 +263,46 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an ARMA process.
     """
+
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        _ = self
+        # Get a key for trading period inside the config.
+        resample_nid = self._get_nid("rets/resample")
+        key = (resample_nid, "func_kwargs", "rule")
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
+        return val
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        config[self._get_nid("rets/resample")]["func_kwargs"]["rule"] = "2T"
+        return config
 
     def get_config_template(self) -> cconfig.Config:
         """
@@ -326,12 +439,51 @@ class ArmaReturnsBuilder(dtfcodabui.DagBuilder):
 # #############################################################################
 
 
-# TODO(gp): Builder -> _DagBuiler
-class MvnReturnsBuilder(dtfcodabui.DagBuilder):
+class MvnReturns_DagBuilder(dtfcodabui.DagBuilder):
     """
     Pipeline for generating filtered returns from an Multivariate Normal
     process.
     """
+
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        _ = self
+        # Get a key for trading period inside the config.
+        resample_nid = self._get_nid("resample")
+        key = (resample_nid, "transformer_kwargs", "rule")
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
+        return val
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        config[self._get_nid("resample")]["transformer_kwargs"]["rule"] = "2T"
+        return config
 
     def get_config_template(self) -> cconfig.Config:
         config = cconfig.Config.from_dict(

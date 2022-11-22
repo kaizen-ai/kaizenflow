@@ -24,7 +24,7 @@ class Test_adapt_dag_to_real_time1(hunitest.TestCase):
         txt = []
         # Build a DagBuilder.
         # TODO(Paul): Replace this with `MvnReturnsBuilder()`.
-        dag_builder = dtfcobuexa.ReturnsBuilder()
+        dag_builder = dtfcobuexa.Returns_DagBuilder()
         txt.append(hprint.frame("dag_builder"))
         txt.append(hprint.indent(str(dag_builder)))
         # Build initial DAG.
