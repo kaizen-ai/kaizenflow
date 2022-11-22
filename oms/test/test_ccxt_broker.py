@@ -439,7 +439,7 @@ class TestCcxtBroker1(hunitest.TestCase):
         self.assertEqual(actual_time, expected_time)
 
 
-@pytest.mark.skip(reason="Run manually.")
+# @pytest.mark.skip(reason="Run manually.")
 class TestSaveMarketInfo(hunitest.TestCase):
     """
     Capture market info data from a CCXT broker so that it can be reused in
