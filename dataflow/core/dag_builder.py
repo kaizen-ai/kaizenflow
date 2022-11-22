@@ -72,13 +72,6 @@ class DagBuilder(abc.ABC):
         txt = "\n".join(txt)
         return txt
 
-    # @staticmethod
-    # @abc.abstractmethod
-    # def get_column_name(tag: str) -> str:
-    #     """
-    #     Return the name of the column corresponding to `tag`.
-    #     """
-
     def to_string(self) -> str:
         """
         Return a string with a (verbose) representation of the DagBuilder.
@@ -257,6 +250,13 @@ class DagBuilder(abc.ABC):
     # ) -> cconfig.Config:
     #     """
     #     Convert trading period to fast prod setup.
+    #     """
+
+    # @staticmethod
+    # @abc.abstractmethod
+    # def get_column_name(tag: str) -> str:
+    #     """
+    #     Return the name of the column corresponding to `tag`.
     #     """
 
     def _get_nid(self, stage_name: str) -> str:
