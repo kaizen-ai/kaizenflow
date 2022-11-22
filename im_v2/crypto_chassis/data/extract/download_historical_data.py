@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
 Download historical data from Crypto-Chassis and save to S3. The script is
-meant to run daily for reconciliation with realtime data and downloadng
-larger historical data snapshots.
+meant to run daily for reconciliation with realtime data and downloadng larger
+historical data snapshots.
 
 Use as:
 
@@ -16,7 +16,8 @@ Use as:
     --contract_type 'spot' \
     --file_format 'parquet' \
     --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data/reorg/historical.manual.pq/20220620/ohlcv/crypto_chassis/'
+    --s3_path 's3://cryptokaizen-data/reorg/historical.manual.pq/20220620/ohlcv/crypto_chassis/' \
+    --bid_ask_depth 10
 """
 
 import argparse

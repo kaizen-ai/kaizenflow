@@ -15,7 +15,7 @@ Use as:
    --aws_profile 'ck' \
    --resample_1min \
    --s3_vendor 'crypto_chassis' \
-   --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
+   --s3_path 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq'
 
 Import as:
 
@@ -37,6 +37,7 @@ import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.im_lib_tasks as imvimlita
 
@@ -70,6 +71,21 @@ def build_data_reconciliation_config_env_var(
 
 
 # #############################################################################
+
+
+def get_multilevel_bid_ask_column_names(depth: int = 10) -> List[str]:
+    """
+    Construct list of bid ask column names for multilevel setup.
+
+    Example for depth = 2
+        [bid_price_l1, bid_size_l1, ask_size_l1, ask_price_l1, bid_price_l2,...]
+    """
+    multilevel_bid_ask_cols = []
+    for i in range(1, depth + 1):
+        bid_ask_cols_level = map(lambda x: f"{x}_l{i}", imvcdttrut.BID_ASK_COLS)
+        for col in bid_ask_cols_level:
+            multilevel_bid_ask_cols.append(col)
+    return multilevel_bid_ask_cols
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -138,13 +154,11 @@ def _parse() -> argparse.ArgumentParser:
         action="store_true",
         help="If the data should be resampled to 1 min'",
     )
-
     parser.add_argument(
         "--resample_1sec",
         action="store_true",
         help="If the data should be resampled to 1 sec'",
     )
-
     parser.add_argument(
         "--bid_ask_accuracy",
         action="store",
@@ -153,6 +167,15 @@ def _parse() -> argparse.ArgumentParser:
         type=int,
         help="An accuracy threshold (in %) to apply when reconciling bid/ask data"
         + "If the data differ above this threshold an error is raised.",
+    )
+    parser.add_argument(
+        "--bid_ask_depth",
+        action="store",
+        required=False,
+        default=10,
+        type=int,
+        help="Market depth to compare to (applicable for data_type=bid_ask)."
+        + " Allowed values are 1-10 (Default is 10)",
     )
 
     parser = hparser.add_verbosity_arg(parser)
@@ -163,6 +186,7 @@ def _parse() -> argparse.ArgumentParser:
     return parser  # type: ignore[no-any-return]
 
 
+# TODO(Juraj): Move this into a qa/ folder.
 class RealTimeHistoricalReconciler:
     def __init__(self, args) -> None:
         hdbg.dassert_in(
@@ -216,11 +240,8 @@ class RealTimeHistoricalReconciler:
             "bid_ask": [
                 "timestamp",
                 "full_symbol",
-                "bid_price",
-                "bid_size",
-                "ask_price",
-                "ask_size",
-            ],
+            ]
+            + get_multilevel_bid_ask_column_names(args.bid_ask_depth),
         }
         # Get CCXT data.
         self.ccxt_rt = self._get_rt_data()
@@ -325,25 +346,26 @@ class RealTimeHistoricalReconciler:
         _LOG.info("Dataframe length after duplicate rows removed: %s", len(data))
         return data
 
-    @staticmethod
-    def _clean_data_for_orderbook_level(
-        df: pd.DataFrame, level: int = 1
-    ) -> pd.DataFrame:
-        """
-        Specify the order book level in CCXT bid ask data.
-
-        :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
-        :return: Data where specific level has common name (i.e., bid_price)
-        """
-        level_cols = [col for col in df.columns if col.endswith(f"_{level}")]
-        level_cols_cleaned = [elem[:-2] for elem in level_cols]
-        #
-        zip_iterator = zip(level_cols, level_cols_cleaned)
-        col_dict = dict(zip_iterator)
-        #
-        df = df.rename(columns=col_dict)
-        #
-        return df
+    # TODO(Juraj): Cleanup/Remove this code.
+    # @staticmethod
+    # def _clean_data_for_orderbook_level(
+    #    df: pd.DataFrame, level: int = 1
+    # ) -> pd.DataFrame:
+    #    """
+    #    Specify the order book level in CCXT bid ask data.
+    #
+    #    :param df: Data with multiple levels (e.g., bid_price_1, bid_price_2, etc.)
+    #    :return: Data where specific level has common name (i.e., bid_price)
+    #    """
+    #    level_cols = [col for col in df.columns if col.endswith(f"_{level}")]
+    #    level_cols_cleaned = [elem[:-2] for elem in level_cols]
+    #    #
+    #    zip_iterator = zip(level_cols, level_cols_cleaned)
+    #    col_dict = dict(zip_iterator)
+    #    #
+    #    df = df.rename(columns=col_dict)
+    #    #
+    #    return df
 
     @staticmethod
     def _resample_to_1sec(data: pd.DataFrame) -> pd.DataFrame:
@@ -373,18 +395,19 @@ class RealTimeHistoricalReconciler:
         """
         Load and process real time data.
         """
-        # Load real time data from the database.
+        # Load real time data from the datab
+        # ase.
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
         ccxt_rt = ccxt_rt.reset_index()
-        if self.data_type == "bid_ask":
-            # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
-            ccxt_rt["timestamp"] = ccxt_rt["timestamp"].apply(
-                lambda x: x.round(freq="T")
-            )
-            # Choose the specific order level (first level by default).
-            ccxt_rt = self._clean_data_for_orderbook_level(ccxt_rt)
+        # if self.data_type == "bid_ask":
+        #    # CCXT timestamp data goes up to milliseconds, so one needs to round it to minutes.
+        #    ccxt_rt["timestamp"] = ccxt_rt["timestamp"].apply(
+        #        lambda x: x.round(freq="T")
+        #    )
+        #    # Choose the specific order level (first level by default).
+        #    ccxt_rt = self._clean_data_for_orderbook_level(ccxt_rt)
         # Remove duplicated columns and reindex real time data.
         _LOG.info("Filter duplicates in real time data")
         ccxt_rt = self._preprocess_data(ccxt_rt)
@@ -440,7 +463,11 @@ class RealTimeHistoricalReconciler:
         # Remove duplicated rows in the data.
         data = self._filter_duplicates(data)
         expected_columns = self.expected_columns[self.data_type]
-        # Filter the columns.
+        missing_columns = set(expected_columns) - set(data.columns)
+        if len(missing_columns) != 0:
+            _LOG.warning("Missing expected columns %s", missing_columns)
+            # Fill missing columns with None so reconciliation can continue.
+            data[list(missing_columns)] = None
         data = data[expected_columns]
         return data
 
@@ -569,18 +596,15 @@ class RealTimeHistoricalReconciler:
         data = data.reindex(sorted(data.columns), axis=1)
         # NaNs observation.
         _LOG.info(
-            "Number of observations with NaNs in CryptoChassis = %s",
-            len(data[data["bid_price_cc"].isna()]),
-        )
-        _LOG.info(
-            "Number of observations with NaNs in CCXT = %s",
-            len(data[data["bid_price_ccxt"].isna()]),
+            "Number of observations with NaN in any of the columns = %s",
+            len(data[data.isna().any(axis=1)]),
         )
         _LOG.info(
             "Number of observations with NaNs for both vendors = %s",
             len(data[data.isna().all(axis=1)]),
         )
         # Remove NaNs.
+        # TODO(Juraj): If NaNs appear, log and add to the error message.
         data = hpandas.dropna(data, report_stats=True)
         #
         # Full symbol will not be relevant in calculation loops below.
@@ -607,9 +631,11 @@ class RealTimeHistoricalReconciler:
         #
         diff_stats = pd.concat(diff_stats, axis=1)
         # Show stats for differences for prices.
-        diff_stats_prices = diff_stats[
-            ["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]
-        ]
+        diff_stats_prices_cols = filter(lambda col: "price" in col, bid_ask_cols)
+        diff_stats_prices_cols = list(
+            map(lambda col: f"{col}_relative_diff_pct", diff_stats_prices_cols)
+        )
+        diff_stats_prices = diff_stats[diff_stats_prices_cols]
         _LOG.info(
             "Difference stats for prices: %s",
             hpandas.get_df_signature(
@@ -620,22 +646,20 @@ class RealTimeHistoricalReconciler:
         threshold = self.bid_ask_accuracy
         # Log the difference.
         for index, row in diff_stats_prices.iterrows():
-            if abs(row["bid_price_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between bid prices in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
-            if abs(row["ask_price_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between ask prices in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
+            for price_col in diff_stats_prices_cols:
+                if abs(row[price_col]) > threshold:
+                    price_col_base = price_col.rstrip("_relative_diff_pct")
+                    message = (
+                        f"Difference between {price_col_base} in real time and daily "
+                        f"data for `{index}` coin is more than {threshold}%."
+                    )
+                    error_message.append(message)
         # Show stats for differences for sizes.
-        diff_stats_sizes = diff_stats[
-            ["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]
-        ]
+        diff_stats_sizes_cols = filter(lambda col: "size" in col, bid_ask_cols)
+        diff_stats_sizes_cols = list(
+            map(lambda col: f"{col}_relative_diff_pct", diff_stats_sizes_cols)
+        )
+        diff_stats_sizes = diff_stats[diff_stats_sizes_cols]
         _LOG.info(
             "Difference stats for sizes: %s",
             hpandas.get_df_signature(
@@ -644,18 +668,14 @@ class RealTimeHistoricalReconciler:
         )
         # Log the difference.
         for index, row in diff_stats_sizes.iterrows():
-            if abs(row["bid_size_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between bid sizes in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
-            if abs(row["ask_size_relative_diff_pct"]) > threshold:
-                message = (
-                    f"Difference between ask sizes in real time and daily "
-                    f"data for `{index}` coin is more than {threshold}%"
-                )
-                error_message.append(message)
+            for size_col in diff_stats_sizes_cols:
+                if abs(row[size_col]) > threshold:
+                    size_col_base = size_col.rstrip("_relative_diff_pct")
+                    message = (
+                        f"Difference between {size_col_base} in real time and daily "
+                        f"data for `{index}` coin is more than {threshold}%."
+                    )
+                    error_message.append(message)
         if error_message:
             hdbg.dfatal(message="\n".join(error_message))
         _LOG.info("No differences were found between real time and daily data")
