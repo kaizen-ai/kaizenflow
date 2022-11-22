@@ -15,7 +15,7 @@ Use as:
    --aws_profile 'ck' \
    --resample_1min \
    --s3_vendor 'crypto_chassis' \
-   --s3_path 's3://cryptokaizen-data/reorg/daily_staged.airflow.pq'
+   --s3_path 's3://cryptokaizen-data-test/reorg/daily_staged.airflow.pq'
 
 Import as:
 
@@ -463,7 +463,11 @@ class RealTimeHistoricalReconciler:
         # Remove duplicated rows in the data.
         data = self._filter_duplicates(data)
         expected_columns = self.expected_columns[self.data_type]
-        # Filter the columns.
+        missing_columns = set(expected_columns) - set(data.columns)
+        if len(missing_columns) != 0:
+            _LOG.warning("Missing expected columns %s", missing_columns)
+            # Fill missing columns with None so reconciliation can continue.
+            data[list(missing_columns)] = None
         data = data[expected_columns]
         return data
 
@@ -600,6 +604,7 @@ class RealTimeHistoricalReconciler:
             len(data[data.isna().all(axis=1)]),
         )
         # Remove NaNs.
+        # TODO(Juraj): If NaNs appear, log and add to the error message.
         data = hpandas.dropna(data, report_stats=True)
         #
         # Full symbol will not be relevant in calculation loops below.
