@@ -29,22 +29,12 @@ import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
-# There are 2 levels of debugging:
-# 1) _LOG.debug: which can be enabled or disabled for this module.
-
 # Mute this module unless we want to debug it.
 # NOTE: Keep this enabled when committing.
 _LOG.setLevel(logging.INFO)
 
 # Disable _LOG.debug.
 # _LOG.debug = lambda *_: 0
-
-# 2) _LOG.verb_debug: reports even more detailed information. It can be
-#    enabled or disabled for this module.
-
-# Enable or disable _LOG.verb_debug
-# _LOG.verb_debug = lambda *_: 0
-# _LOG.verb_debug = _LOG.debug
 
 
 # Placeholder value used in configs, when configs are built in multiple phases.
@@ -106,6 +96,7 @@ _NO_VALUE_SPECIFIED = "__NO_VALUE_SPECIFIED__"
 
 # `update_mode` specifies how values are written when a key already exists
 #   inside a Config
+# The modes are:
 #   - `None`: use the default behavior specified in the constructor
 #   - `assert_on_overwrite`: don't allow any overwrite (in order to be safe)
 #       - if a key already exists, then assert
@@ -123,6 +114,7 @@ _VALID_UPDATE_MODES = (
 
 # `clobber_mode` specifies whether values can be updated after they have been
 #   used
+# The modes are:
 #   - `allow_write_after_use`: allow to write a key even after that key was
 #     already used. A warning is issued in this case
 #   - `assert_on_write_after_use`: assert if an outside user tries to write a
@@ -132,13 +124,23 @@ _VALID_CLOBBER_MODES = (
     "assert_on_write_after_use",
 )
 
-# report_mode specifies how to report an error
-# - `none` (default): only report the exception from `_get_item()`
-# - `verbose_log_error`: report the full key and config in the log
-# - `verbose_exception`: report the full key and config in the exception
-#   (e.g., used in the unit tests)
+# `report_mode` specifies how to report an error
+# The modes are:
+#   - `none` (default): only report the exception from `_get_item()`
+#   - `verbose_log_error`: report the full key and config in the log
+#   - `verbose_exception`: report the full key and config in the exception
+#     (e.g., used in the unit tests)
 _VALID_REPORT_MODES = ("verbose_log_error", "verbose_exception", "none")
 
+
+# `unused_variables_mode` specifies how to treat unused variables when
+# `check_unused_variables()` is called. This method should be called
+# when all the objects using the Config have been built and thus we are
+# guaranteed that everything is stable.
+# The modes are:
+#   - `warning_on_error` (default): report a warning for unused variables
+#   - `assert_on_error`: raise an error for unused variables
+_VALID_UNUSED_VARIABLES_MODES = ("warning_on_error", "assert_on_error")
 
 # #############################################################################
 # _ConfigWriterInfo
@@ -173,14 +175,14 @@ class _ConfigWriterInfo:
         self._full_traceback = self._get_full_traceback()
         self._shorthand_caller = self._get_shorthand_caller()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self._shorthand_caller
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return self._full_traceback
 
     @staticmethod
-    def _get_full_traceback():
+    def _get_full_traceback() -> str:
         """
         Return full traceback as str.
 
@@ -200,7 +202,7 @@ class _ConfigWriterInfo:
         return hintros.stacktrace_to_str()
 
     @staticmethod
-    def _get_shorthand_caller():
+    def _get_shorthand_caller() -> str:
         """
         Return a shorthand for the latest outside caller of the function.
 
@@ -341,8 +343,11 @@ class _OrderedConfig(_OrderedDictType):
                 try:
                     is_been_changed = old_val != val
                 except ValueError as e:
-                    _LOG.debug("Can't compute is_been_changed, assuming False: "
-                        "exception=%s ", str(e))
+                    _LOG.debug(
+                        "Can't compute is_been_changed, assuming False: "
+                        "exception=%s ",
+                        str(e),
+                    )
                     is_been_changed = True
                 _LOG.debug(
                     hprint.to_str("marked_as_used old_val is_been_changed")
@@ -417,16 +422,6 @@ class _OrderedConfig(_OrderedDictType):
         ret = self.to_string(mode)
         return ret
 
-    # TODO(Danya): Expand the use to `Config` class.
-    def marked_as_used(self, key: ScalarKey) -> bool:
-        """
-        Return True if the value has been used.
-        """
-        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
-        # Retrieve the value from the dictionary itself.
-        marked_as_used, writer, val = super().__getitem__(key)
-        return marked_as_used
-
     def str_debug(self) -> str:
         mode = "debug"
         ret = self.to_string(mode)
@@ -495,7 +490,7 @@ class _OrderedConfig(_OrderedDictType):
 
     def _mark_as_used(self, key: ScalarKey, *, used_state: bool = True) -> None:
         """
-        Mark value as read.
+        Mark value as used.
 
         The value is a tuple of (marked_as_used, value), where `marked_as_used`== True
         if the user reported that the value will be used to build other objects,
@@ -508,17 +503,26 @@ class _OrderedConfig(_OrderedDictType):
         hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
         marked_as_used, writer, val = super().__getitem__(key)
         _LOG.debug(hprint.to_str("marked_as_used val used_state"))
-        #
         if used_state:
-            # Update the metadata, accounting that this data was used.
-            marked_as_used = True
-            # Get info on who used this data.
-            writer = _ConfigWriterInfo()
-            super().__setitem__(key, (marked_as_used, writer, val))
-        if hasattr(val, "_config"):
-            # If a value is a subconfig, mark all values down the tree.
-            for key in val._config.keys():
-                val._config._mark_as_used(key, used_state=marked_as_used)
+            if isinstance(val, (Config, _OrderedConfig)):
+                # If a value is a subconfig, mark all values down the tree.
+                for key in val._config.keys():
+                    val._config._mark_as_used(key, used_state=used_state)
+            else:
+                # Update the metadata, accounting that this data was used.
+                marked_as_used = True
+                # Get info on who used this data.
+                writer = _ConfigWriterInfo()
+                super().__setitem__(key, (marked_as_used, writer, val))
+
+    def _get_marked_as_used(self, key: ScalarKey) -> bool:
+        """
+        Get the value for `marked_as_used` for a leaf value.
+        """
+        hdbg.dassert_isinstance(key, ScalarKeyValidTypes)
+        marked_as_used, writer, val = super().__getitem__(key)
+        _ = writer, val
+        return marked_as_used
 
 
 # #############################################################################
@@ -556,6 +560,7 @@ class Config:
         update_mode: str = "assert_on_overwrite",
         clobber_mode: str = "assert_on_write_after_use",
         report_mode: str = "verbose_log_error",
+        unused_variables_mode: str = "warning_on_error",
     ) -> None:
         """
         Build a config from a list of (key, value).
@@ -565,12 +570,16 @@ class Config:
         :param clobber_mode: define the policy used for controlling
             write-after-read (see above)
         :param report_mode: define the policy used for reporting errors (see above)
+        :param unused_variables_mode: define the policy used for reporting
+            variables that were not used by the time `check_unused_variables`
+            is called (see above)
         """
         _LOG.debug(hprint.to_str("update_mode clobber_mode report_mode"))
         self._config = _OrderedConfig()
         self.update_mode = update_mode
         self.clobber_mode = clobber_mode
         self.report_mode = report_mode
+        self.unused_variables_mode = unused_variables_mode
         # Control whether a config can be modified or not. This needs to be
         # initialized before assigning values with `__setitem__()`, since this
         # function needs to check `_read_only`.
@@ -611,7 +620,8 @@ class Config:
         """
         Implement membership operator like `key in config`.
 
-        If `key` is nested, the hierarchy of Config objects is navigated.
+        If `key` is nested, the hierarchy of Config objects is
+        navigated.
         """
         _LOG.debug("key=%s self=\n%s", key, self)
         # This is implemented lazily (or Pythonically) with a
@@ -710,8 +720,54 @@ class Config:
             self._raise_exception(e, key, report_mode)
         return ret
 
+    def get_marked_as_used(
+        self,
+        key: CompoundKey,
+        *,
+        report_mode: Optional[str] = None,
+    ) -> bool:
+        """
+        Return whether `key` is marked as used.
+        """
+        _LOG.debug("-> " + hprint.to_str("key report_mode self"))
+        try:
+            ret = self._get_item(
+                key, level=0, mark_key_as_used=False, get_marked_as_used=True
+            )
+        except Exception as e:
+            report_mode = self._resolve_report_mode(report_mode)
+            self._raise_exception(e, key, report_mode)
+        return ret
+
     def to_string(self, mode: str) -> str:
         return self._config.to_string(mode)
+
+    def check_unused_variables(
+        self, *, unused_variables_mode: Optional[str] = None
+    ) -> List[str]:
+        """
+        Check if variables in the config were not used.
+        """
+        unused_variables = []
+        # Get scalar and compound keys in the dict.
+        keys = list(self.flatten().keys())
+        for key in keys:
+            # Get the value and whether it was marked as used.
+            val = self[key]
+            marked_as_used = self.get_marked_as_used(key)
+            # Save `get_marked_as_used` for leaves, ignoring subconfigs.
+            if (
+                not isinstance(val, (Config, _OrderedConfig))
+                and not marked_as_used
+            ):
+                unused_variables.append(key)
+        if unused_variables:
+            mode = self._resolve_unused_variables_mode(unused_variables_mode)
+            if mode == "warning_on_error":
+                _LOG.warning(hprint.to_str("unused_variables"))
+            elif mode == "assert_on_error":
+                raise ValueError(unused_variables)
+        return unused_variables
 
     def get_and_mark_as_used(
         self,
@@ -722,6 +778,8 @@ class Config:
     ) -> Any:
         """
         Get the value and mark it as used.
+
+        Similar to the `get` method. The value is not marked unless it is a leaf.
 
         :param mark_key_as_used: see `_mark_as_used()` for description
         :param default_value: value to return if key was not found
@@ -1241,15 +1299,23 @@ class Config:
         )
 
     def _get_item(
-        self, key: CompoundKey, level: int, mark_key_as_used: bool
+        self,
+        key: CompoundKey,
+        level: int,
+        mark_key_as_used: bool,
+        *,
+        get_marked_as_used: Optional[bool] = False,
     ) -> Any:
         """
         Implement `__getitem__()` but keeping track of the depth of the key to
         report an informative message reporting the entire config on
         `KeyError`.
 
-        This method should be used only by `__getitem__()` since it's a
-        helper of that function.
+        This method is a helper for `__getitem__()` and `get_marked_as_used()`.
+
+        :param get_marked_as_used: if True, return if the value is marked as
+            used, instead of the value itself.
+        :return: value associated to the key (or mark_as_used)
         """
         _LOG.debug("key=%s level=%s self=\n%s", key, level, self)
         # Check if the key is compound.
@@ -1258,7 +1324,10 @@ class Config:
             if not tail_key:
                 # Tuple of a single element, then return the value.
                 ret = self._get_item(
-                    head_key, level=level + 1, mark_key_as_used=mark_key_as_used
+                    head_key,
+                    level + 1,
+                    mark_key_as_used,
+                    get_marked_as_used=get_marked_as_used,
                 )
             else:
                 # Compound key: recurse on the tail of the key.
@@ -1273,8 +1342,9 @@ class Config:
                     # Recurse.
                     ret = subconfig._get_item(
                         tail_key,
-                        level=level + 1,
-                        mark_key_as_used=mark_key_as_used,
+                        level + 1,
+                        mark_key_as_used,
+                        get_marked_as_used=get_marked_as_used,
                     )
                 else:
                     # There are more keys to process but we have reached the leaves
@@ -1290,7 +1360,12 @@ class Config:
             keys_as_str = str(list(self._config.keys()))
             msg = f"key='{key}' not in {keys_as_str} at level {level}"
             raise KeyError(msg)
-        ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore
+        if get_marked_as_used:
+            # Return `get_marked_as_used` for the key.
+            ret = self._config._get_marked_as_used(key)  # type: ignore
+        else:
+            # Return the value associated to the key.
+            ret = self._config.__getitem__(key, mark_key_as_used=mark_key_as_used)  # type: ignore
         return ret
 
     def _resolve_update_mode(self, value: Optional[str]) -> str:
@@ -1310,6 +1385,15 @@ class Config:
             value, self._report_mode, _VALID_REPORT_MODES, "report_mode"
         )
         return report_mode
+
+    def _resolve_unused_variables_mode(self, value: Optional[str]) -> str:
+        unused_variables_mode = self._resolve_mode(
+            value,
+            self.unused_variables_mode,
+            _VALID_UNUSED_VARIABLES_MODES,
+            "unused_variable_mode",
+        )
+        return unused_variables_mode
 
     def _dassert_base_case(self, key: CompoundKey) -> None:
         """
