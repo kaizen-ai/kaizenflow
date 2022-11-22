@@ -64,6 +64,8 @@ config["resample_1min"] = config["resample_mode"] == "resample_1min"
 config = config.to_dict()
 # bid_ask_accuracy needs to be cast to int if its defined
 config["bid_ask_accuracy"] = int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
+# bid_ask_depth needs to be cast to int if its defined
+config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
 config
 
 # %% [markdown]
