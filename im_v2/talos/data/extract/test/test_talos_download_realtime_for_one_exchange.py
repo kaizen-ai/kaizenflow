@@ -37,7 +37,8 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         --s3_path 's3://cryptokaizen-data-test/realtime/' \
         --interval_min '1' \
         --start_time '{start_time}' \
-        --stop_time '{stop_time}'"
+        --stop_time '{stop_time}' \
+        --method 'rest'"
         start_delay = 0
         stop_delay = 1
         download_started_marker = "Starting data download"
