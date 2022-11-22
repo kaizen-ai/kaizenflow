@@ -574,6 +574,9 @@ class CcxtBroker(ombroker.Broker):
         symbols = list(self._symbol_to_asset_id_mapping.keys())
         # Load market information from CCXT.
         exchange_markets = self._exchange.load_markets()
+        # Download leverage information.
+        # See more more about the output format:
+        # https://docs.ccxt.com/en/latest/manual.html#leverage-tiers-structure.
         leverage_info = self._exchange.fetchLeverageTiers(symbols)
         for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
             minimal_order_limits[asset_id] = {}
@@ -591,9 +594,7 @@ class CcxtBroker(ombroker.Broker):
             amount_precision = currency_market["precision"]["amount"]
             minimal_order_limits[asset_id]["amount_precision"] = amount_precision
             #
-            # Download leverage information.
-            # See more more about the output format:
-            # https://docs.ccxt.com/en/latest/manual.html#leverage-tiers-structure.
+            # For now it is assumed that all positions belong to the lowest tier.
             tier_0_leverage_info = leverage_info[symbol][0]
             max_leverage_float = tier_0_leverage_info["maxLeverage"]
             try:
