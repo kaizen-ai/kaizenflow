@@ -400,11 +400,11 @@ def reconcile_copy_prod_data(
         stage = "preprod"
     if mode is None:
         mode = "scheduled"
-    if prod_data_source_dir is None:
-        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
+    if prod_data_source_dir is None:
+        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
     _ = ctx
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
