@@ -42,6 +42,7 @@ from invoke import task
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hprint as hprint
+import helpers.hs3 as hs3
 import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import oms.reconciliation as omreconc
@@ -67,6 +68,20 @@ def _dassert_is_date(date: str) -> None:
         _ = datetime.datetime.strptime(date, "%Y%m%d")
     except ValueError as e:
         raise ValueError(f"date='{date}' doesn't have the right format: {e}")
+
+
+def _dassert_source_path_exists(path: str) -> None:
+    """
+    Check if a data source path exists
+
+    :param path: path to the data required for the test
+    """
+    hdbg.dassert_isinstance(path, str)
+    if hs3.is_s3_path(path):
+        aws_profile = "ck"
+        hs3.dassert_path_exists(path, aws_profile)
+    else:
+        hdbg.dassert_dir_exists(path)
 
 
 def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
@@ -310,7 +325,6 @@ def reconcile_run_sim(
     start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
-    # TODO(Grisha): maybe include date for a default value? i.e. `.../20221101`.
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
@@ -375,6 +389,7 @@ def reconcile_copy_prod_data(
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
+    prod_data_source_dir=None,
     stage=None,
     mode=None,
     prevent_overwriting=True,
@@ -384,6 +399,7 @@ def reconcile_copy_prod_data(
 
     See `reconcile_run_all()` for params description.
 
+    :param prod_data_source_dir: path to the prod data required for the test
     :param stage: development stage, e.g., `preprod`
     :param mode: the prod system run mode which defines a prod system log dir name
         - "scheduled": the system is run at predefined time automatically
@@ -396,6 +412,7 @@ def reconcile_copy_prod_data(
         stage = "preprod"
     if mode is None:
         mode = "scheduled"
+    _dassert_source_path_exists(prod_data_source_dir)
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
@@ -406,18 +423,17 @@ def reconcile_copy_prod_data(
     hdbg.dassert_dir_exists(prod_target_dir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
-    shared_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
     system_log_dir = omreconc.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
-    system_log_dir = os.path.join(shared_dir, system_log_dir)
-    hdbg.dassert_dir_exists(system_log_dir)
+    system_log_dir = os.path.join(prod_data_source_dir, system_log_dir)
+    _dassert_source_path_exists(system_log_dir)
     cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
     log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
-    log_file = os.path.join(shared_dir, "logs", log_file)
-    hdbg.dassert_file_exists(log_file)
+    log_file = os.path.join(prod_data_source_dir, "logs", log_file)
+    _dassert_source_path_exists(log_file)
     cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
     #
@@ -609,6 +625,7 @@ def reconcile_run_all(
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
+    prod_data_source_dir=None,
     stage=None,
     mode=None,
     prevent_overwriting=True,
@@ -645,6 +662,7 @@ def reconcile_run_all(
         start_timestamp_as_str=start_timestamp_as_str,
         end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
+        prod_data_source_dir=prod_data_source_dir,
         stage=stage,
         mode=mode,
         prevent_overwriting=prevent_overwriting,
