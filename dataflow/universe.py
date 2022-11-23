@@ -314,6 +314,9 @@ def get_universe(universe_str: str) -> List[Amid]:
     elif universe_version == "ccxt_v7":
         version = "v7"
         ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7_1":
+        version = "v7.3"
+        ret = _get_ccxt_universe(version, top_n)
     elif universe_version == "ccxt_v7_3":
         version = "v7.3"
         ret = _get_ccxt_universe(version, top_n)
