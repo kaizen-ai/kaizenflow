@@ -117,11 +117,11 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         )
         self.coerce_to_numeric_mock.return_value = pd.DataFrame(
             {
-                "time_seconds": [1660780800],
-                "bid_price": [23341.25],
-                "bid_size": [0.003455],
-                "ask_price": [23344.58],
-                "ask_size": [0.052201],
+                "timestamp": [1660780800],
+                "bid_price_l1": [23341.25],
+                "bid_size_l1": [0.003455],
+                "ask_price_l1": [23344.58],
+                "ask_size_l1": [0.052201],
             }
         )
         # Get the data for `spot` contract.
@@ -146,7 +146,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         client_futures = imvccdexex.CryptoChassisExtractor("futures")
         # Get the data for `futures` contract.
         client_futures._download_bid_ask(
-            exchange_id, currency_pair, start_timestamp, end_timestamp
+            exchange_id, currency_pair, start_timestamp, end_timestamp, depth=1
         )
         # Check calls against `convert_currency`.
         self.assertEqual(self.convert_currency_pair_mock.call_count, 2)
@@ -191,16 +191,16 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         # Reproduce the structure of the arguments.
         exp_arg_df = pd.DataFrame(
             {
-                "time_seconds": [1660780800],
-                "bid_price": ["23341.25"],
-                "bid_size": ["0.003455"],
-                "ask_price": ["23344.58"],
-                "ask_size": ["0.052201"],
+                "timestamp": [1660780800],
+                "bid_price_l1": ["23341.25"],
+                "bid_size_l1": ["0.003455"],
+                "ask_price_l1": ["23344.58"],
+                "ask_size_l1": ["0.052201"],
             }
         )
         expected_args = (
             (exp_arg_df,),
-            {"float_columns": ["bid_price", "bid_size", "ask_price", "ask_size"]},
+            {"float_columns": ["bid_price_l1", "bid_size_l1", "ask_price_l1", "ask_size_l1"]},
         )
         # Convert Dataframes to string.
         expected_df_str = hpandas.df_to_str(expected_args[0][0])
@@ -213,14 +213,18 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         bidask_expected = pd.DataFrame(
             {
                 "timestamp": [1660780800],
-                "bid_price": [23341.25],
-                "bid_size": [0.003455],
-                "ask_price": [23344.58],
-                "ask_size": [0.052201],
+                "bid_price_l1": [23341.25],
+                "bid_size_l1": [0.003455],
+                "ask_price_l1": [23344.58],
+                "ask_size_l1": [0.052201],
             }
         )
         expected_df_str = hpandas.df_to_str(bidask_expected)
+        with open("expected.txt", mode="w") as f:
+            f.write(expected_df_str)
         actual_df_str = hpandas.df_to_str(bidask_data)
+        with open("actual.txt", mode="w") as f:
+            f.write(actual_df_str)
         self.assertEqual(actual_df_str, expected_df_str)
         # Run with invalid exchange name.
         exchange = "bibance"
@@ -231,7 +235,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         }
         self.requests_mock.get.return_value = response_mock
         df = client._download_bid_ask(
-            exchange, currency_pair, start_timestamp, end_timestamp
+            exchange, currency_pair, start_timestamp, end_timestamp, depth=1
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -243,7 +247,7 @@ class TestCryptoChassisExtractor1(hunitest.TestCase):
         response_mock.json = lambda: {"message": "Unsupported pair = btc-busdt."}
         self.requests_mock.get.return_value = response_mock
         df = client._download_bid_ask(
-            exchange, currency_pair, start_timestamp, end_timestamp
+            exchange, currency_pair, start_timestamp, end_timestamp, depth=1
         )
         actual = hpandas.convert_df_to_json_string(df)
         self.assert_equal(expected, actual, fuzzy_match=True)
@@ -264,7 +268,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         client = imvccdexex.CryptoChassisExtractor(contract_type)
         with self.assertRaises(AssertionError) as cm:
             client._download_bid_ask(
-                exchange, currency_pair, start_timestamp, end_timestamp
+                exchange, currency_pair, start_timestamp, end_timestamp, depth=1
             )
         # Check output for error.
         actual = str(cm.exception)
@@ -287,7 +291,7 @@ Instance of 'invalid' is '<class 'str'>' instead of '<class 'pandas._libs.tslibs
         client = imvccdexex.CryptoChassisExtractor(contract_type)
         with self.assertRaises(AssertionError) as cm:
             client._download_bid_ask(
-                exchange, currency_pair, start_timestamp, end_timestamp
+                exchange, currency_pair, start_timestamp, end_timestamp, depth=1
             )
         # Check output for error.
         actual = str(cm.exception)

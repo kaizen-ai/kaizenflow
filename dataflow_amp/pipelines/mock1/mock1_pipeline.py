@@ -15,6 +15,7 @@ import core.features as cofeatur
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import dataflow.core as dtfcore
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -24,7 +25,24 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
     A pipeline similar to real models.
     """
 
-    def get_trading_period(self, config: cconfig.Config) -> str:
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        if tag == "price":
+            res_col = "vwap"
+        elif tag == "volatility":
+            res_col = "vwap.ret_0.vol"
+        elif tag == "prediction":
+            res_col = "feature1"
+        else:
+            raise ValueError(f"Invalid tag='{tag}'")
+        return res_col
+
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
         """
         See description in the parent class.
         """
@@ -32,18 +50,52 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
         # Get a key for trading period inside the config.
         resample_nid = self._get_nid("resample")
         key = (resample_nid, "transformer_kwargs", "rule")
-        val: str = config.get_and_mark_as_used(key)
+        val: str = config.get_and_mark_as_used(
+            key, mark_key_as_used=mark_key_as_used
+        )
         return val
 
     def get_required_lookback_in_effective_days(
-        self, config: cconfig.Config
+        self, config: cconfig.Config, mark_key_as_used: bool
     ) -> str:
         """
         See description in the parent class.
         """
         raise NotImplementedError
 
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        hdbg.dassert_isinstance(config, cconfig.Config)
+        hdbg.dassert_isinstance(weights, pd.Series)
+        # Index must be an Int64Index of consecutive integers starting at 1.
+        idx = weights.index
+        hdbg.dassert_isinstance(idx, pd.Int64Index)
+        # idx_size = idx.size
+        # hdbg.dassert_set_eq(weights.index.to_list(), list(range(1, idx_size + 1)))
+        # Generate the number of features corresponding to the weights.
+        # config[self._get_nid("cswt")]["transformer_kwargs"]["depth"] = idx_size
+        config[self._get_nid("predict")]["in_col_groups"] = [(x,) for x in idx]
+        # Set the weights.
+        config[self._get_nid("predict")]["transformer_kwargs"][
+            "weights"
+        ] = weights.rename("prediction")
+        return config
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        config[self._get_nid("resample")]["transformer_kwargs"]["rule"] = "2T"
+        return config
+
     def get_config_template(self) -> cconfig.Config:
+        volatility_col = self.get_column_name("volatility")
         dict_ = {
             self._get_nid("filter_ath"): {
                 "col_mode": "replace_all",
@@ -97,7 +149,7 @@ class Mock1_DagBuilder(dtfcore.DagBuilder):
             },
             self._get_nid("compute_vol"): {
                 "in_col_group": ("vwap.ret_0",),
-                "out_col_group": ("vwap.ret_0.vol",),
+                "out_col_group": (volatility_col,),
                 "drop_nans": True,
                 "permitted_exceptions": (ValueError,),
             },
