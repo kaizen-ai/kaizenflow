@@ -99,10 +99,10 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         bid_ask_sample = pd.DataFrame(
             columns=[
                 "full_symbol",
-                "bid_price",
-                "bid_size",
-                "ask_price",
-                "ask_size",
+                "bid_price_l1",
+                "bid_size_l1",
+                "ask_price_l1",
+                "ask_size_l1",
             ],
             # fmt: off
             # pylint: disable=line-too-long
@@ -387,7 +387,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         for position in [1, 3]:
             # Edit original realtime data for mismatch.
             sample_rt.iloc[
-                position, sample_rt.columns.get_loc("bid_size")
+                position, sample_rt.columns.get_loc("bid_size_l1")
             ] = 666.667
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
@@ -414,7 +414,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Difference between bid sizes in real time and daily data for `binance::BTC_USDT` coin is more than 1%
+        Difference between bid_size_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -432,7 +432,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         for position in [2, 4]:
             # Edit original realtime data for mismatch.
             sample_daily.iloc[
-                position, sample_daily.columns.get_loc("ask_price")
+                position, sample_daily.columns.get_loc("ask_price_l1")
             ] = 999.876
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
@@ -459,7 +459,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more than 1%
+        Difference between ask_price_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -477,12 +477,12 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         for position in [1, 3]:
             # Edit original realtime data for mismatch.
             sample_rt.iloc[
-                position, sample_rt.columns.get_loc("bid_size")
+                position, sample_rt.columns.get_loc("bid_size_l1")
             ] = 2279.667
         for position in [2, 3]:
             # Edit original daily data for mismatch.
             sample_daily.iloc[
-                position, sample_daily.columns.get_loc("ask_price")
+                position, sample_daily.columns.get_loc("ask_price_l1")
             ] = 3224.678
         mock_get_rt_data_patch = umock.patch.object(
             imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
@@ -529,8 +529,8 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
         2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
         2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
-        Difference between ask prices in real time and daily data for `binance::BTC_USDT` coin is more than 1%
-        Difference between bid sizes in real time and daily data for `binance::BTC_USDT` coin is more than 1%
+        Difference between ask_price_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
+        Difference between bid_size_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
         ################################################################################
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -575,6 +575,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "resample_1sec": "False",
             "s3_vendor": "crypto_chassis",
             "bid_ask_accuracy": None,
+            "bid_ask_depth": 10,
         }
         self.assertDictEqual(actual, expected)
 
@@ -615,6 +616,7 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "resample_1min": True,
             "s3_vendor": "crypto_chassis",
             "bid_ask_accuracy": 1,
+            "bid_ask_depth": 1,
         }
         if resample_1min:
             kwargs["resample_1min"] = True
