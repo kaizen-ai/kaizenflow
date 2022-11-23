@@ -27,7 +27,7 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
     market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
-    universe_version = "v7.3"
+    universe_version = "v7.1"
     strategy_id = "C1b"
     exchange_id = "binance"
     stage = "preprod"
