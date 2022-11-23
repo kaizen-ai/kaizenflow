@@ -418,23 +418,30 @@ def reconcile_copy_prod_data(
     _ = ctx
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
-    prod_target_dir = os.path.join(target_dir, "prod")
-    # Make sure that the target dir exists before copying.
-    hdbg.dassert_dir_exists(prod_target_dir)
-    _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
-    system_log_dir = omreconc.get_prod_system_log_dir(
+    system_log_subdir = omreconc.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
-    system_log_dir = os.path.join(prod_data_source_dir, system_log_dir)
+    system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     _dassert_source_path_exists(system_log_dir)
-    cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
+    #
+    prod_target_dir = os.path.join(target_dir, "prod", system_log_subdir)
+    _LOG.info("Copying results to '%s'", prod_target_dir)
+    #
+    if hs3.is_s3_path(system_log_dir):
+        cmd = f"aws s3 cp {system_log_dir} {prod_target_dir} --recursive"
+    else:
+        cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
     log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
     log_file = os.path.join(prod_data_source_dir, "logs", log_file)
     _dassert_source_path_exists(log_file)
-    cmd = f"cp -v {log_file} {prod_target_dir}"
+    #
+    if hs3.is_s3_path(log_file):
+        cmd = f"aws s3 cp {log_file} {prod_target_dir} --recursive"
+    else:
+        cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
     #
     if prevent_overwriting:
