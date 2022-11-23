@@ -418,16 +418,16 @@ def reconcile_copy_prod_data(
     _ = ctx
     run_date = _get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
-    # Copy prod run results to the target dir.
+    # Set source log dir.
     system_log_subdir = omreconc.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     _dassert_source_path_exists(system_log_dir)
-    #
+    # Set target dir.
     prod_target_dir = os.path.join(target_dir, "prod", system_log_subdir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
-    #
+    # Copy prod run results to the target dir.
     if hs3.is_s3_path(system_log_dir):
         cmd = f"aws s3 cp {system_log_dir} {prod_target_dir} --recursive"
     else:
