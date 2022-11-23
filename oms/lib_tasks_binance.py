@@ -1,7 +1,7 @@
 """
 Import as:
 
-import dev_scripts.lib_tasks_binance as dslitabi
+import oms.lib_tasks_binance as olitabin
 """
 
 import logging
@@ -27,7 +27,7 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
     #  required to init the `Broker` we pass something to make it work.
     asset_ids = None
     market_data = dtfamsysc.get_Cx_RealTimeMarketData_prod_instance1(asset_ids)
-    universe_version = "v7"
+    universe_version = "v7.3"
     strategy_id = "C1b"
     exchange_id = "binance"
     stage = "preprod"
@@ -45,7 +45,7 @@ def _get_CcxtBroker(secret_id: int) -> occxbrok.CcxtBroker:
 
 
 @task
-def binance_get_open_positions(ctx, secret_id):
+def binance_get_open_positions(ctx, secret_id):  # type: ignore
     """
     Get current open positions from binance and display in a human-readable
     format.
