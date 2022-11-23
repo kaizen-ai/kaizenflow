@@ -141,17 +141,25 @@ dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-
 dag_df_prod_past.equals(dag_df_prod[:-1])
 
 # %%
-prod_comparison2 = compare_past_predictions(dag_df_prod_past, dag_df_prod_past2)
-display(prod_comparison2.shape)
-
-# %%
-inter = set(list(dag_df_prod_past)).difference(set(list(dag_df_prod_past2)))
-set(list(dag_df_prod_past.index)).difference(set(list(prod_comparison2.index)))
-
-# %%
 past2 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-3][0]]
 past3 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]][1:]
 inter(past3, past2)
+
+# %%
+cond = (past2.index > pd.Timestamp('2022-11-06 04:00:00-0500')) & (past2.index < pd.Timestamp('2022-11-06 04:35:00-0500'))
+cond1 = (past3.index > pd.Timestamp('2022-11-06 04:00:00-0500')) & (past3.index < pd.Timestamp('2022-11-06 04:35:00-0500'))
+past2.name = "late"
+past2.insert(0, "df_name", past2.name)
+
+cols_concat = pd.concat([past2[cond], past3[cond1]], axis=1)
+idx_concat = pd.concat([past2[cond], past3[cond1]], axis=0)
+
+# %%
+past3.name = "early"
+past3.insert(0, "df_name", past3.name)
+
+# %%
+idx_concat.T
 
 # %%
 past4 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]]
