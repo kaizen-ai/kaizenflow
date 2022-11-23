@@ -70,20 +70,6 @@ def _dassert_is_date(date: str) -> None:
         raise ValueError(f"date='{date}' doesn't have the right format: {e}")
 
 
-def _dassert_source_path_exists(path: str) -> None:
-    """
-    Check if a data source path exists.
-
-    :param path: path to the data required for the test
-    """
-    hdbg.dassert_isinstance(path, str)
-    if hs3.is_s3_path(path):
-        aws_profile = "ck"
-        hs3.dassert_path_exists(path, aws_profile)
-    else:
-        hdbg.dassert_dir_exists(path)
-
-
 def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     """
     Return the run date as string from start timestamp, e.g. "20221017".
@@ -103,13 +89,20 @@ def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
     return run_date
 
 
-def _allow_update(dst_dir: str) -> None:
+def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     """
-    Allow to overwrite reconcilation results files.
+    Allow to overwrite reconcilation outcomes in the date-specific target dir.
 
-    :param dst_dir: dir to store reconcilation results in
+    :param start_timestamp_as_str: string representation of timestamp
+        at which to start reconcile run
+    :param dst_dir: dir to store reconcilation outcomes in, e.g.
+        `/data/shared/prod_reconciliation/system_reconciliation/20221122/`
     """
     hdbg.dassert_path_exists(dst_dir)
+    # Get date-specific target dir.
+    run_date = _get_run_date(start_timestamp_as_str)
+    target_dir = _resolve_target_dir(run_date, dst_dir)
+    # Allow overwritting.
     _LOG.info("Allow to overwrite files at: %s", dst_dir)
     cmd = f"chmod -R +w {dst_dir}"
     _system(cmd)
@@ -393,17 +386,12 @@ def reconcile_copy_prod_data(
     stage=None,
     mode=None,
     prevent_overwriting=True,
+    aws_profile=None,
 ):  # type: ignore
     """
     Copy the output of the prod run to the specified folder.
 
     See `reconcile_run_all()` for params description.
-
-    :param prod_data_source_dir: path to the prod data required for the test
-    :param stage: development stage, e.g., `preprod`
-    :param mode: the prod system run mode which defines a prod system log dir name
-        - "scheduled": the system is run at predefined time automatically
-        - "manual": the system run is triggered manually
     """
     start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
@@ -412,7 +400,9 @@ def reconcile_copy_prod_data(
         stage = "preprod"
     if mode is None:
         mode = "scheduled"
-    _dassert_source_path_exists(prod_data_source_dir)
+    if prod_data_source_dir is None:
+        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
+    hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
@@ -423,7 +413,7 @@ def reconcile_copy_prod_data(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
-    _dassert_source_path_exists(system_log_dir)
+    hs3.dassert_path_exists(system_log_dir, aws_profile)
     # Set target dir.
     prod_target_dir = os.path.join(target_dir, "prod", system_log_subdir)
     _LOG.info("Copying results to '%s'", prod_target_dir)
@@ -436,7 +426,7 @@ def reconcile_copy_prod_data(
     # Copy prod run logs to the specified folder.
     log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
     log_file = os.path.join(prod_data_source_dir, "logs", log_file)
-    _dassert_source_path_exists(log_file)
+    hs3.dassert_path_exists(log_file, aws_profile)
     #
     if hs3.is_s3_path(log_file):
         cmd = f"aws s3 cp {log_file} {prod_target_dir} --recursive"
@@ -638,6 +628,7 @@ def reconcile_run_all(
     prevent_overwriting=True,
     skip_notebook=False,
     allow_update=False,
+    aws_profile=None,
 ):  # type: ignore
     """
     Run all phases of prod vs simulation reconciliation.
@@ -647,12 +638,18 @@ def reconcile_run_all(
     :param end_timestamp_as_str: string representation of timestamp
         at which to end reconcile run
     :param dst_dir: dir to store reconcilation results in
-    :param mode: see `reconcile_copy_prod_data()`
+    :param prod_data_source_dir: path to the prod run outcomes
+        (i.e. system log dir, logs)
+    :param stage: development stage, e.g., `preprod`
+    :param mode: the prod system run mode which defines a prod system log dir name
+        - "scheduled": the system is run at predefined time automatically
+        - "manual": the system run is triggered manually
     :param prevent_overwriting: if True write permissions are removed otherwise
         a permissions remain as they are
     :param skip_notebook: if True do not run the reconcilation notebook otherwise run
-    :param allow_update: if True allow to overwrite reconcilation result files
+    :param allow_update: if True allow to overwrite reconcilation outcomes
         otherwise retain permissions as they are
+    :param aws_profile: AWS profile, e.g., "ck"
     """
     hdbg.dassert(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
@@ -673,6 +670,7 @@ def reconcile_run_all(
         stage=stage,
         mode=mode,
         prevent_overwriting=prevent_overwriting,
+        aws_profile=aws_profile,
     )
     #
     reconcile_dump_market_data(
@@ -714,6 +712,5 @@ def reconcile_run_all(
         dst_dir=dst_dir,
     )
     if allow_update:
-        # The dir looks like `.../20221110/`.
-        _ = _allow_update(dst_dir)
+        _allow_update(start_timestamp_as_str, dst_dir)
 
