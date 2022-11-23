@@ -72,7 +72,7 @@ def _dassert_is_date(date: str) -> None:
 
 def _dassert_source_path_exists(path: str) -> None:
     """
-    Check if a data source path exists
+    Check if a data source path exists.
 
     :param path: path to the data required for the test
     """
