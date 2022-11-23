@@ -264,10 +264,11 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
         (VWAP) or time-weighted average price (TWAP)
     :return data resampled to 1 minute.
     """
+    # Set resample arguments according to our data invariant [a, b).
     resample_kwargs = {
         "rule": "T",
-        "closed": None,
-        "label": None,
+        "closed": "left",
+        "label": "left",
     }
     if mode == "VWAP":
         bid_price = calculate_vwap(
@@ -375,8 +376,8 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         #  to match resample_bid_ask_data() interface.
         df_part = (
             df_part[["bid_size", "bid_price", "ask_size", "ask_price"]]
-            # Label right is used to match conventions used by CryptoChassis.
-            .resample("S", label="right").mean()
+            # Set resample arguments according to our data invariant [a, b).
+            .resample(rule="S", closed="left", label="left").mean()
         )
         # Add the exchange_id column back for compatibility with the
         # 1 min resampling function.
