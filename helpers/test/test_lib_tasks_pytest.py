@@ -488,6 +488,8 @@ class Test_pytest_repro_end_to_end(hunitest.TestCase):
         test_output_start = lines.index("## pytest_repro: ")
         lines_test_output = lines[test_output_start:]
         act = "\n".join([line_cmd] + lines_test_output)
+        regex = "(WARN|INFO)\s+hcache.py"
+        act = hunitest.filter_text(regex, act)
         # Check the outcome.
         self.check_string(act, purify_text=True)
 
