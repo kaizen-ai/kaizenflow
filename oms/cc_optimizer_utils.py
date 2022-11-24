@@ -37,7 +37,8 @@ def _apply_cc_limits(
         if final_order_amount < 0:
             final_order_amount = -min_amount
     elif stage in ["preprod", "prod"]:
-        # 1) Ensure that the amount of shares is above the minimum required.
+        # 1) Set the target number of shares to 0 if the order's number of
+        # shares is below the minimum required.
         if abs(final_order_amount) < min_amount:
             _LOG.warning(
                 "Order: %s\nAmount of asset in order = %s is below minimal value = %s. "
@@ -47,7 +48,8 @@ def _apply_cc_limits(
                 min_amount,
             )
             final_order_amount = 0.0
-        # 2) Ensure that the order value is above the minimal cost.
+        # 2) Set the target number of shares to 0 if the order's notional value
+        # is below the minimal cost.
         # We estimate the total value of the order using the order's `price`.
         total_cost = price * abs(order["target_trades_shares"])
         if total_cost <= min_cost:
@@ -81,6 +83,9 @@ def apply_cc_limits(
 ) -> pd.DataFrame:
     """
     Apply notional limits for DataFrame of multiple orders.
+
+    Target amount of order shares is set to 0 if its actual values are below
+    the notional limits.
 
     :param forecast_df: DataFrame with forecasts, e.g.
         ```
@@ -138,7 +143,7 @@ def apply_cc_limits(
     forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
     forecast_df_tmp.index.name = forecast_df.index.name
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
-    forecast_df = forecast_df_tmp#.dropna(subset=["target_trades_shares"])
+    forecast_df = forecast_df_tmp
     _LOG.debug(
         "Order df after adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
