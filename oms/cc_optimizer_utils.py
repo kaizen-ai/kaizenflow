@@ -9,6 +9,7 @@ import logging
 import os
 from typing import Any, Dict, Optional, Tuple
 
+import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -39,42 +40,37 @@ def _apply_cc_limits(
     elif stage in ["preprod", "prod"]:
         # 1) Ensure that the amount of shares is above the minimum required.
         if abs(final_order_amount) < min_amount:
-            if final_order_amount < 0:
-                min_amount = -min_amount
             _LOG.warning(
-                "Order: %s\nAmount of asset in order is below minimal value: %s. "
-                + "Setting to min amount: %s",
+                "Order: %s\nAmount of asset in order = %s is below minimal value = %s. "
+                + "Setting to `np.nan`",
                 str(order),
                 final_order_amount,
                 min_amount,
             )
-            final_order_amount = min_amount
+            final_order_amount = np.nan
         # 2) Ensure that the order value is above the minimal cost.
         # We estimate the total value of the order using the order's `price`.
         total_cost = price * abs(order["target_trades_shares"])
         if total_cost <= min_cost:
-            # Set amount based on minimal notional price.
-            min_amount = min_cost * 3 / price
-            # Apply back the sign.
-            if final_order_amount < 0:
-                min_amount = -min_amount
             _LOG.warning(
-                "Order: %s\nAmount of asset in order is below minimal value: %s. "
-                + "Setting to following amount based on notional limit: %s",
+                "Order: %s\nAmount of asset in order = %s is below minimal value = %s. "
+                + "Setting to `np.nan`",
                 str(order),
                 final_order_amount,
                 min_amount,
             )
-            # Update the number of shares.
-            final_order_amount = min_amount
-    # 3) Round the order amount in accordance with exchange rules.
-    amount_precision = asset_market_info["amount_precision"]
-    final_order_amount = round(final_order_amount, amount_precision)
-    _LOG.debug(
-        "Rounding order amount to %s decimal points. Result: %s",
-        amount_precision,
-        final_order_amount,
-    )
+            final_order_amount = np.nan
+    else:
+        raise ValueError(f"Unsupported stage={stage}")
+    if final_order_amount:
+        # 3) Round the order amount in accordance with exchange rules.
+        amount_precision = asset_market_info["amount_precision"]
+        final_order_amount = round(final_order_amount, amount_precision)
+        _LOG.debug(
+            "Rounding order amount to %s decimal points. Result: %s",
+            amount_precision,
+            final_order_amount,
+        )
     #
     order["target_trades_shares"] = final_order_amount
     _LOG.debug("Order after adjustments: %s", order)
@@ -142,7 +138,8 @@ def apply_cc_limits(
     forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
     forecast_df_tmp.index.name = forecast_df.index.name
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
-    forecast_df = forecast_df_tmp
+    # Drop empty orders.
+    forecast_df = forecast_df_tmp.dropna(subset=["target_trades_shares"])
     _LOG.debug(
         "Order df after adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
