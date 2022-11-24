@@ -39,27 +39,31 @@ def _apply_cc_limits(
             final_order_amount = -min_amount
     elif stage in ["preprod", "prod"]:
         # 1) Ensure that the amount of shares is above the minimum required.
+        print("final_order_amount", final_order_amount)
+        print("min_amount", min_amount)
         if abs(final_order_amount) < min_amount:
             _LOG.warning(
                 "Order: %s\nAmount of asset in order = %s is below minimal value = %s. "
-                + "Setting to `np.nan`",
+                + "Setting to target number of shares to 0.",
                 str(order),
                 final_order_amount,
                 min_amount,
             )
-            final_order_amount = np.nan
+            final_order_amount = 0.0
         # 2) Ensure that the order value is above the minimal cost.
         # We estimate the total value of the order using the order's `price`.
         total_cost = price * abs(order["target_trades_shares"])
+        print("total_cost", total_cost)
+        print("min_cost", min_cost)
         if total_cost <= min_cost:
             _LOG.warning(
-                "Order: %s\nAmount of asset in order = %s is below minimal value = %s. "
-                + "Setting to `np.nan`",
+                "Order: %s\nNotional value of asset in order = %s is below minimal value = %s. "
+                + "Setting to target number of shares to 0.",
                 str(order),
                 final_order_amount,
-                min_amount,
+                min_cost,
             )
-            final_order_amount = np.nan
+            final_order_amount = 0.0
     else:
         raise ValueError(f"Unsupported stage={stage}")
     if final_order_amount:
@@ -138,8 +142,7 @@ def apply_cc_limits(
     forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
     forecast_df_tmp.index.name = forecast_df.index.name
     hdbg.dassert_eq(str(forecast_df.shape), str(forecast_df_tmp.shape))
-    # Drop empty orders.
-    forecast_df = forecast_df_tmp.dropna(subset=["target_trades_shares"])
+    forecast_df = forecast_df_tmp#.dropna(subset=["target_trades_shares"])
     _LOG.debug(
         "Order df after adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
