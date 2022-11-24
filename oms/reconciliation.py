@@ -198,13 +198,13 @@ def load_config_from_pickle(
 
 def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
     """
-    Convert the given string timestamp to the timestamp with a timezone info.
+    Convert the given string UTC timestamp to the ET timezone timestamp.
     """
     # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
     hdbg.dassert_isinstance(timestamp_as_str, str)
     timestamp_as_str = timestamp_as_str.replace("_", " ")
     # Add timezone offset in order to standartize the time.
-    timestamp_as_str = "".join([timestamp_as_str, "-04:00"])
+    timestamp_as_str = "".join([timestamp_as_str, "+00:00"])
     timestamp = pd.Timestamp(timestamp_as_str, tz="America/New_York")
     return timestamp
 
