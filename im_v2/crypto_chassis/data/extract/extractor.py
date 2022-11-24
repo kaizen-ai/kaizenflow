@@ -249,6 +249,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         *,
         interval: Optional[str] = "1m",
         include_realtime: bool = False,
+        **kwargs
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.

@@ -79,8 +79,8 @@ def build_reconciliation_configs(
             # TODO(Grisha): pass `mode` as a param.
             mode = "scheduled"
             # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
-            start_timestamp_as_str = "_".join(date_str, "060500")
-            end_timestamp_as_str = "_".join(date_str, "080000")
+            start_timestamp_as_str = "_".join(date_str, "100500")
+            end_timestamp_as_str = "_".join(date_str, "120000")
             prod_subdir = get_prod_system_log_dir(
                 mode, start_timestamp_as_str, end_timestamp_as_str
             )
@@ -200,13 +200,13 @@ def load_config_from_pickle(
 
 def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
     """
-    Convert the given string timestamp to the timestamp with a timezone info.
+    Convert the given string UTC timestamp to the ET timezone timestamp.
     """
     # TODO(Dan): Add assert for `start_timestamp_as_str` and `end_timestamp_as_str` regex.
     hdbg.dassert_isinstance(timestamp_as_str, str)
     timestamp_as_str = timestamp_as_str.replace("_", " ")
     # Add timezone offset in order to standartize the time.
-    timestamp_as_str = "".join([timestamp_as_str, "-04:00"])
+    timestamp_as_str = "".join([timestamp_as_str, "+00:00"])
     timestamp = pd.Timestamp(timestamp_as_str, tz="America/New_York")
     return timestamp
 
