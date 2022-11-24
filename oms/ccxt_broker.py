@@ -641,7 +641,7 @@ class CcxtBroker(ombroker.Broker):
         side = "buy" if order.diff_num_shares > 0 else "sell"
         position_size = abs(order.diff_num_shares)
         # Get max leverage for a given order.
-        max_leverage = self.market_info[order.asset_id]
+        max_leverage = self.market_info[order.asset_id]["max_leverage"]
         # TODO(Juraj): separate the retry logic from the code that does the work.
         for _ in range(self.max_order_submit_retries):
             try:
