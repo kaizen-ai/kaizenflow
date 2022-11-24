@@ -155,9 +155,9 @@ def _resolve_timestamps(
     """
     today_as_str = datetime.date.today().strftime("%Y%m%d")
     if start_timestamp_as_str is None:
-        start_timestamp_as_str = "_".join([today_as_str, "060500"])
+        start_timestamp_as_str = "_".join([today_as_str, "100500"])
     if end_timestamp_as_str is None:
-        end_timestamp_as_str = "_".join([today_as_str, "080000"])
+        end_timestamp_as_str = "_".join([today_as_str, "120000"])
     return start_timestamp_as_str, end_timestamp_as_str
 
 
