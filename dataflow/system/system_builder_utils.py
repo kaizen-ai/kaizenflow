@@ -688,7 +688,9 @@ def apply_DagRunner_config_for_crypto(
         trading_period_str,
         bar_duration_in_secs,
     ) = _get_trading_period_str_and_bar_duration_in_secs(system)
-    wake_up_timestamp = None
+    wake_up_timestamp = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "wake_up_timestamp"), default_value=None
+    )
     rt_timeout_in_secs_or_time = None
     #
     system = _apply_DagRunner_config(
