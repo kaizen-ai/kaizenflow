@@ -374,7 +374,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             )
             if backend == "cc_pomo":
                 # Apply notional limits to all the orders.
-                #  Note: Target amount of order shares is set to 0 if its actual
+                #  Note: target amount of order shares is set to 0 if its actual
                 #  values are below limits.
                 df = occoputi.apply_cc_limits(
                     df, self._portfolio.broker, self._log_dir
