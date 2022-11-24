@@ -79,8 +79,8 @@ def build_reconciliation_configs(
             # TODO(Grisha): pass `mode` as a param.
             mode = "scheduled"
             # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
-            start_timestamp_as_str = "_".join(date_str, "060500")
-            end_timestamp_as_str = "_".join(date_str, "080000")
+            start_timestamp_as_str = "_".join(date_str, "100500")
+            end_timestamp_as_str = "_".join(date_str, "120000")
             prod_subdir = get_prod_system_log_dir(
                 mode, start_timestamp_as_str, end_timestamp_as_str
             )
