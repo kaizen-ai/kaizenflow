@@ -107,7 +107,7 @@ def _resolve_target_dir(
     :param dst_dir: a root dir for prod system reconciliation
     :return: a target dir to store reconcilation results
     """
-    hdbg.assert_isinstance(start_timestamp_as_str, str)
+    hdbg.dassert_isinstance(start_timestamp_as_str, str)
     run_date = omreconc.get_run_date(start_timestamp_as_str)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     target_dir = os.path.join(dst_dir, run_date)
