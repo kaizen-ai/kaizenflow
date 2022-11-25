@@ -189,8 +189,12 @@ def load_config_from_pickle(
 # /////////////////////////////////////////////////////////////////////////////
 
 
-def resolve_run_mode(mode: str) -> str:
-    hdbg.dassert_isinstance(mode, str)
+def resolve_run_mode(mode: Optional[str]) -> str:
+    """
+    Return run mode.
+
+    If a mode is not specified by a user, set a default value.
+    """
     if mode is None:
         mode = "scheduled"
     hdbg.dassert_in(mode, ["scheduled", "manual"])
@@ -206,7 +210,7 @@ def resolve_timestamps(
     """
     Return start and end timestamps.
 
-    If a timestamps is not specified by a user then set a default value
+    If timestamps are not specified by a user then set a default value
     for it and return it.
     """
     today_as_str = datetime.date.today().strftime("%Y%m%d")
