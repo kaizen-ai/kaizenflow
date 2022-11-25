@@ -434,6 +434,7 @@ def purify_from_environment(txt: str) -> str:
             txt_out.append(line)
             continue
         line = line.replace(user_name, "$USER_NAME")
+        txt_out.append(line)
     txt = "\n".join(txt_out)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
