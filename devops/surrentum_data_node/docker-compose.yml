@@ -11,7 +11,7 @@ services:
       - POSTGRES_DB=airflow
       - POSTGRES_PORT=5432
     volumes:
-    - ck-airflow-database-data:/var/lib/postgresql/data/
+    - airflow-database-data:/var/lib/postgresql/data/
     ports:
       - 5532:5432
 
@@ -119,6 +119,7 @@ services:
   #  command: celery flower
   #  ports:
   #    - 5555:5555
+
 volumes:
-  ck-airflow-database-data:
-  ck-airflow-log-volume:
+  airflow-database-data:
+  airflow-log-volume:
