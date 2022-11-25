@@ -28,14 +28,14 @@ to run outside a Docker container:
 
 Import as:
 
-import oms.lib_tasks_reconcile as omlitare
+import oms.lib_tasks_reconcile as olitarec
 """
 
 import datetime
 import logging
 import os
 import sys
-from typing import Optional, Tuple
+from typing import Optional
 
 from invoke import task
 
@@ -101,7 +101,7 @@ def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     hdbg.dassert_path_exists(dst_dir)
     # Get date-specific target dir.
     run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    _resolve_target_dir(run_date, dst_dir)
     # Allow overwritting.
     _LOG.info("Allow to overwrite files at: %s", dst_dir)
     cmd = f"chmod -R +w {dst_dir}"
@@ -142,23 +142,6 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     target_dir = os.path.join(dst_dir, run_date)
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
-
-
-def _resolve_timestamps(
-    start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
-) -> Tuple[str, str]:
-    """
-    Return start and end timestamps.
-
-    If a timestamps is not specified by a user then set a default value for it
-    and return it.
-    """
-    today_as_str = datetime.date.today().strftime("%Y%m%d")
-    if start_timestamp_as_str is None:
-        start_timestamp_as_str = "_".join([today_as_str, "100500"])
-    if end_timestamp_as_str is None:
-        end_timestamp_as_str = "_".join([today_as_str, "120000"])
-    return start_timestamp_as_str, end_timestamp_as_str
 
 
 def _sanity_check_data(file_path: str) -> None:
@@ -254,7 +237,7 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
     run_date = _get_run_date(start_timestamp_as_str)
@@ -315,7 +298,7 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
@@ -393,13 +376,12 @@ def reconcile_copy_prod_data(
 
     See `reconcile_run_all()` for params description.
     """
-    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
     if stage is None:
         stage = "preprod"
-    if mode is None:
-        mode = "scheduled"
+    mode = omreconc.resolve_run_mode(mode)
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
@@ -438,12 +420,13 @@ def reconcile_copy_prod_data(
         _prevent_overwriting(prod_target_dir)
 
 
-# TODO(Grisha): @Dan Expose `start_timestamp_as_str` and `start_timestamp_as_str` use in the notebook.
 @task
 def reconcile_run_notebook(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     incremental=False,
     prevent_overwriting=True,
 ):  # type: ignore
@@ -483,9 +466,8 @@ def reconcile_run_notebook(
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    prod_subdir = None
     # pylint: disable=line-too-long
-    config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(date_str="{run_date}", prod_subdir={prod_subdir})'
+    config_builder = f"amp.oms.reconciliation.build_reconciliation_configs(mode, start_timestamp_as_str, end_timestamp_as_str)"
     # pylint: enable=line-too-long
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
@@ -713,4 +695,3 @@ def reconcile_run_all(
     )
     if allow_update:
         _allow_update(start_timestamp_as_str, dst_dir)
-

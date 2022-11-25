@@ -24,6 +24,7 @@ import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
+import oms.lib_tasks_reconcile as olitarec
 import oms.portfolio as omportfo
 import oms.target_position_and_order_generator as otpaorge
 
@@ -41,9 +42,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def build_reconciliation_configs(
-    # TODO(Grisha): pass start{end}_timestamps instead of `date_str`.
-    date_str: Optional[str],
-    prod_subdir: Optional[str],
+    mode: str,
+    start_timestamp_as_str: str,
+    end_timestamp_as_str: str,
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
@@ -53,14 +54,15 @@ def build_reconciliation_configs(
 
     :param date_str: specify which date to use for reconciliation
     """
-    if date_str is None:
-        # Infer the meta-parameters from env.
-        date_key = "AM_RECONCILIATION_DATE"
-        if date_key in os.environ:
-            date_str = os.environ[date_key]
-        else:
-            date_str = datetime.date.today().strftime("%Y%m%d")
-    _LOG.info("Using date_str=%s", date_str)
+    mode = resolve_run_mode(mode)
+    start_timestamp_as_str, end_timestamp_as_str = resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
+    run_date = olitarec._get_run_date(start_timestamp_as_str)
+    _LOG.info("Using run_date=%s", run_date)
+    prod_subdir = get_prod_system_log_dir(
+        mode, start_timestamp_as_str, end_timestamp_as_str
+    )
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:
@@ -75,19 +77,10 @@ def build_reconciliation_configs(
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        if prod_subdir is None:
-            # TODO(Grisha): pass `mode` as a param.
-            mode = "scheduled"
-            # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
-            start_timestamp_as_str = "_".join(date_str, "100500")
-            end_timestamp_as_str = "_".join(date_str, "120000")
-            prod_subdir = get_prod_system_log_dir(
-                mode, start_timestamp_as_str, end_timestamp_as_str
-            )
         # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
         prod_dir = os.path.join(
             root_dir,
-            date_str,
+            run_date,
             "prod",
             prod_subdir,
         )
@@ -96,7 +89,7 @@ def build_reconciliation_configs(
             # For crypto we do not have a `candidate`.
             # "cand": prod_dir,
             "sim": os.path.join(
-                root_dir, date_str, "simulation", "system_log_dir"
+                root_dir, run_date, "simulation", "system_log_dir"
             ),
         }
         #
@@ -119,16 +112,16 @@ def build_reconciliation_configs(
         #
         root_dir = ""
         search_str = ""
-        prod_dir_cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
+        prod_dir_cmd = f"find {root_dir}/{run_date}/prod -name '{search_str}'"
         _, prod_dir = hsystem.system_to_string(prod_dir_cmd)
         cand_cmd = (
-            f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+            f"find {root_dir}/{run_date}/job.candidate.* -name '{search_str}'"
         )
         _, cand_dir = hsystem.system_to_string(cand_cmd)
         system_log_path_dict = {
             "prod": prod_dir,
             "cand": cand_dir,
-            "sim": os.path.join(root_dir, date_str, "system_log_dir"),
+            "sim": os.path.join(root_dir, run_date, "system_log_dir"),
         }
         #
         fep_init_dict = {
@@ -148,7 +141,7 @@ def build_reconciliation_configs(
     # Build the config.
     config_dict = {
         "meta": {
-            "date_str": date_str,
+            "date_str": run_date,
             "asset_class": asset_class,
             "run_tca": run_tca,
             "bar_duration": bar_duration,
@@ -194,6 +187,34 @@ def load_config_from_pickle(
 
 
 # /////////////////////////////////////////////////////////////////////////////
+
+
+def resolve_run_mode(mode: str) -> str:
+    hdbg.dassert_isinstance(mode, str)
+    if mode is None:
+        mode = "scheduled"
+    hdbg.dassert_in(mode, ["scheduled", "manual"])
+    return mode
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+
+def resolve_timestamps(
+    start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
+) -> Tuple[str, str]:
+    """
+    Return start and end timestamps.
+
+    If a timestamps is not specified by a user then set a default value
+    for it and return it.
+    """
+    today_as_str = datetime.date.today().strftime("%Y%m%d")
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = "_".join([today_as_str, "100500"])
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = "_".join([today_as_str, "120000"])
+    return start_timestamp_as_str, end_timestamp_as_str
 
 
 def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
