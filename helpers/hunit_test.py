@@ -427,6 +427,14 @@ def purify_from_environment(txt: str) -> str:
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
+    txt_out = []
+    for line in txt.splitlines():
+        if "take_square_root" in line:
+            # Skip replacing the user since it can be `root` interfering with the replacement.
+            txt_out.append(line)
+            continue
+        line = line.replace(user_name, "$USER_NAME")
+    txt = "\n".join(txt_out)
     txt = txt.replace(user_name, "$USER_NAME")
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
