@@ -72,6 +72,13 @@ class DagBuilder(abc.ABC):
         txt = "\n".join(txt)
         return txt
 
+    @staticmethod
+    @abc.abstractmethod
+    def get_column_name(tag: str) -> str:
+        """
+        Return the name of the column corresponding to `tag`.
+        """
+
     def to_string(self) -> str:
         """
         Return a string with a (verbose) representation of the DagBuilder.
@@ -171,6 +178,41 @@ class DagBuilder(abc.ABC):
         #  For now we just consider business days as an approximation.
         return end_timestamp - pd.tseries.offsets.BDay(effective_days)
 
+    @abc.abstractmethod
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        Return the current trading period.
+
+        :return: string representation of a time interval, e.g., "1T", "5T"
+        """
+
+    @abc.abstractmethod
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> int:
+        """
+        Return the number of days needed to execute pipeline at the frequency
+        given by config.
+        """
+
+    @abc.abstractmethod
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        Return a modified copy of `config` using given feature `weights`.
+        """
+
+    @abc.abstractmethod
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        Convert trading period to fast prod setup.
+        """
+
     # ////////////////////////////////////////////////////////////////////////////
 
     @staticmethod
@@ -215,49 +257,6 @@ class DagBuilder(abc.ABC):
         nid = node.nid
         nid = cast(str, nid)
         return nid
-
-    # TODO(Grisha): @Dan Uncomment when methods are implemented in C3.
-    # @abc.abstractmethod
-    # def get_trading_period(
-    #     self, config: cconfig.Config, mark_key_as_used: bool
-    # ) -> str:
-    #     """
-    #     Return the current trading period.
-    #
-    #     :return: string representation of a time interval, e.g., "1T", "5T"
-    #     """
-
-    # @abc.abstractmethod
-    # def get_required_lookback_in_effective_days(
-    #     self, config: cconfig.Config, mark_key_as_used: bool
-    # ) -> int:
-    #     """
-    #     Return the number of days needed to execute pipeline at the frequency
-    #     given by config.
-    #     """
-
-    # @abc.abstractmethod
-    # def set_weights(
-    #     self, config: cconfig.Config, weights: pd.Series
-    # ) -> cconfig.Config:
-    #     """
-    #     Return a modified copy of `config` using given feature `weights`.
-    #     """
-
-    # @abc.abstractmethod
-    # def convert_to_fast_prod_setup(
-    #     self, config: cconfig.Config
-    # ) -> cconfig.Config:
-    #     """
-    #     Convert trading period to fast prod setup.
-    #     """
-
-    # @staticmethod
-    # @abc.abstractmethod
-    # def get_column_name(tag: str) -> str:
-    #     """
-    #     Return the name of the column corresponding to `tag`.
-    #     """
 
     def _get_nid(self, stage_name: str) -> str:
         hdbg.dassert_isinstance(stage_name, str)
