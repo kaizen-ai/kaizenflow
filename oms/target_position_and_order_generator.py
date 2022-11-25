@@ -372,10 +372,10 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 quantization=self._share_quantization,
                 asset_id_to_decimals=asset_ids_to_decimals,
             )
-            if False and backend == "cc_pomo":
-                # Verify that all orders are above the notional limit.
-                #  Note: orders that are below the minimal amount of asset
-                #  for the exchange are modified to go slightly above the limit.
+            if False backend == "cc_pomo":
+                # Apply notional limits to all the orders.
+                #  Note: target amount of order shares is set to 0 if its actual
+                #  values are below limits.
                 df = occoputi.apply_cc_limits(
                     df, self._portfolio.broker, self._log_dir
                 )
