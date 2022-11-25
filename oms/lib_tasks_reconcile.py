@@ -57,38 +57,6 @@ def _system(cmd: str) -> int:
     return hsystem.system(cmd, suppress_output=False, log_level="echo")
 
 
-def _dassert_is_date(date: str) -> None:
-    """
-    Check if an input string is a date.
-
-    :param date: date as string, e.g., "20221101"
-    """
-    hdbg.dassert_isinstance(date, str)
-    try:
-        _ = datetime.datetime.strptime(date, "%Y%m%d")
-    except ValueError as e:
-        raise ValueError(f"date='{date}' doesn't have the right format: {e}")
-
-
-def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
-    """
-    Return the run date as string from start timestamp, e.g. "20221017".
-
-    If start timestamp is not specified by a user then return current
-    date.
-
-    E.g., "20221101_064500" -> "20221101".
-    """
-    if start_timestamp_as_str is None:
-        run_date = datetime.date.today().strftime("%Y%m%d")
-    else:
-        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
-        run_date = start_timestamp_as_str.split("_")[0]
-    _LOG.info(hprint.to_str("run_date"))
-    _dassert_is_date(run_date)
-    return run_date
-
-
 def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     """
     Allow to overwrite reconcilation outcomes in the date-specific target dir.
@@ -100,8 +68,7 @@ def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     """
     hdbg.dassert_path_exists(dst_dir)
     # Get date-specific target dir.
-    run_date = _get_run_date(start_timestamp_as_str)
-    _resolve_target_dir(run_date, dst_dir)
+    dst_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     # Allow overwritting.
     _LOG.info("Allow to overwrite files at: %s", dst_dir)
     cmd = f"chmod -R +w {dst_dir}"
@@ -124,7 +91,9 @@ def _prevent_overwriting(path: str) -> None:
     _system(cmd)
 
 
-def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
+def _resolve_target_dir(
+    start_timestamp_as_str: str, dst_dir: Optional[str]
+) -> str:
     """
     Return the target dir name to store reconcilation results.
 
@@ -134,10 +103,12 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     E.g., "/shared_data/prod_reconciliation/20221101".
 
     # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
-    :param run_date: string representation of the reconcile run date
+    :param start_timestamp_as_str: string representation of the reconcile run date
     :param dst_dir: a root dir for prod system reconciliation
     :return: a target dir to store reconcilation results
     """
+    hdbg.assert_isinstance(start_timestamp_as_str, str)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     target_dir = os.path.join(dst_dir, run_date)
     _LOG.info(hprint.to_str("target_dir"))
@@ -181,8 +152,7 @@ def reconcile_create_dirs(
     :param abort_if_exists: see `hio.create_dir()`
     """
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Create dirs for storing prod and simulation results.
@@ -240,8 +210,7 @@ def reconcile_dump_market_data(
     start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
@@ -340,8 +309,7 @@ def reconcile_copy_sim_data(
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(sim_target_dir)
@@ -388,8 +356,7 @@ def reconcile_copy_prod_data(
     if prod_data_source_dir is None:
         prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     # Set source log dir.
     system_log_subdir = omreconc.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
@@ -442,7 +409,7 @@ def reconcile_run_notebook(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     # Set results destination dir and clear it if is already filled.
     local_results_dir = "."
     results_dir = os.path.join(local_results_dir, "result_0")
@@ -467,7 +434,7 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     # pylint: disable=line-too-long
-    config_builder = f"amp.oms.reconciliation.build_reconciliation_configs(mode, start_timestamp_as_str, end_timestamp_as_str)"
+    config_builder = f"amp.oms.reconciliation.build_reconciliation_configs({mode}, {start_timestamp_as_str}, {end_timestamp_as_str})"
     # pylint: enable=line-too-long
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
@@ -507,7 +474,7 @@ def reconcile_ls(ctx, start_timestamp_as_str=None, dst_dir=None):  # type: ignor
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     target_dir = _resolve_target_dir(run_date, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
@@ -537,8 +504,8 @@ def reconcile_dump_tca_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date

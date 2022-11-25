@@ -24,7 +24,6 @@ import helpers.hpickle as hpickle
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
-import oms.lib_tasks_reconcile as olitarec
 import oms.portfolio as omportfo
 import oms.target_position_and_order_generator as otpaorge
 
@@ -58,7 +57,7 @@ def build_reconciliation_configs(
     start_timestamp_as_str, end_timestamp_as_str = resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
-    run_date = olitarec._get_run_date(start_timestamp_as_str)
+    run_date = get_run_date(start_timestamp_as_str)
     _LOG.info("Using run_date=%s", run_date)
     prod_subdir = get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
@@ -202,6 +201,38 @@ def resolve_run_mode(mode: Optional[str]) -> str:
 
 
 # /////////////////////////////////////////////////////////////////////////////
+
+
+def _dassert_is_date(date: str) -> None:
+    """
+    Check if an input string is a date.
+
+    :param date: date as string, e.g., "20221101"
+    """
+    hdbg.dassert_isinstance(date, str)
+    try:
+        _ = datetime.datetime.strptime(date, "%Y%m%d")
+    except ValueError as e:
+        raise ValueError(f"date='{date}' doesn't have the right format: {e}")
+
+
+def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
+    """
+    Return the run date as string from start timestamp, e.g. "20221017".
+
+    If start timestamp is not specified by a user then return current
+    date.
+
+    E.g., "20221101_064500" -> "20221101".
+    """
+    if start_timestamp_as_str is None:
+        run_date = datetime.date.today().strftime("%Y%m%d")
+    else:
+        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
+        run_date = start_timestamp_as_str.split("_")[0]
+    _LOG.info(hprint.to_str("run_date"))
+    _dassert_is_date(run_date)
+    return run_date
 
 
 def resolve_timestamps(
