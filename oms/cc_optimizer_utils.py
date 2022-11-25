@@ -37,44 +37,41 @@ def _apply_cc_limits(
         if final_order_amount < 0:
             final_order_amount = -min_amount
     elif stage in ["preprod", "prod"]:
-        # 1) Ensure that the amount of shares is above the minimum required.
+        # 1) Set the target number of shares to 0 if the order's number of
+        # shares is below the minimum required.
         if abs(final_order_amount) < min_amount:
-            if final_order_amount < 0:
-                min_amount = -min_amount
             _LOG.warning(
-                "Order: %s\nAmount of asset in order is below minimal value: %s. "
-                + "Setting to min amount: %s",
+                "Order: %s\nAmount of asset in order = %s is below minimal value = %s. "
+                + "Setting the target number of shares to 0.",
                 str(order),
-                final_order_amount,
+                abs(final_order_amount),
                 min_amount,
             )
-            final_order_amount = min_amount
-        # 2) Ensure that the order value is above the minimal cost.
+            final_order_amount = 0.0
+        # 2) Set the target number of shares to 0 if the order's notional value
+        # is below the minimal cost.
         # We estimate the total value of the order using the order's `price`.
         total_cost = price * abs(order["target_trades_shares"])
         if total_cost <= min_cost:
-            # Set amount based on minimal notional price.
-            min_amount = min_cost * 3 / price
-            # Apply back the sign.
-            if final_order_amount < 0:
-                min_amount = -min_amount
             _LOG.warning(
-                "Order: %s\nAmount of asset in order is below minimal value: %s. "
-                + "Setting to following amount based on notional limit: %s",
+                "Order: %s\nNotional value of asset in order = %s is below minimal value = %s. "
+                + "Setting the target number of shares to 0.",
                 str(order),
-                final_order_amount,
-                min_amount,
+                total_cost,
+                min_cost,
             )
-            # Update the number of shares.
-            final_order_amount = min_amount
-    # 3) Round the order amount in accordance with exchange rules.
-    amount_precision = asset_market_info["amount_precision"]
-    final_order_amount = round(final_order_amount, amount_precision)
-    _LOG.debug(
-        "Rounding order amount to %s decimal points. Result: %s",
-        amount_precision,
-        final_order_amount,
-    )
+            final_order_amount = 0.0
+    else:
+        raise ValueError(f"Unsupported stage={stage}")
+    if final_order_amount:
+        # 3) Round the order amount in accordance with exchange rules.
+        amount_precision = asset_market_info["amount_precision"]
+        final_order_amount = round(final_order_amount, amount_precision)
+        _LOG.debug(
+            "Rounding order amount to %s decimal points. Result: %s",
+            amount_precision,
+            final_order_amount,
+        )
     #
     order["target_trades_shares"] = final_order_amount
     _LOG.debug("Order after adjustments: %s", order)
@@ -86,6 +83,9 @@ def apply_cc_limits(
 ) -> pd.DataFrame:
     """
     Apply notional limits for DataFrame of multiple orders.
+
+    Target amount of order shares is set to 0 if its actual values are below
+    the notional limits.
 
     :param forecast_df: DataFrame with forecasts, e.g.
         ```
@@ -104,6 +104,7 @@ def apply_cc_limits(
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
     # Create a logging directory.
+    # TODO(Grisha): remove logging.
     if log_dir is not None:
         log_dir = os.path.join(log_dir, "apply_cc_limits")
         hio.create_dir(log_dir, incremental=True)
