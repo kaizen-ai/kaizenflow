@@ -435,7 +435,7 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     # pylint: disable=line-too-long
-    config_builder = f"amp.oms.reconciliation.build_reconciliation_configs({mode}, {start_timestamp_as_str}, {end_timestamp_as_str})"
+    config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(mode="{mode}", start_timestamp_as_str="{start_timestamp_as_str}", end_timestamp_as_str="{end_timestamp_as_str}")'
     # pylint: enable=line-too-long
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
