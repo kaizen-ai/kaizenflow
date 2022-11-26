@@ -47,9 +47,10 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = None
-prod_subdir = None
-config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
+mode = None
+start_timestamp_as_str = None
+end_timestamp_as_str = None
+config_list = oms.build_reconciliation_configs(mode, start_timestamp_as_str, end_timestamp_as_str)
 config = config_list[0]
 print(config)
 
@@ -75,7 +76,7 @@ dag_path_dict
 # %%
 # TODO(gp): Load the TCA data for crypto.
 if config["meta"]["run_tca"]:
-    tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
+    tca_csv = os.path.join(root_dir, config["meta"]["date_str"], "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
 
 # %% [markdown]
