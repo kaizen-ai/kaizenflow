@@ -66,9 +66,9 @@ def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     :param dst_dir: dir to store reconcilation outcomes in, e.g.
         `/data/shared/prod_reconciliation/system_reconciliation/20221122/`
     """
-    hdbg.dassert_path_exists(dst_dir)
     # Get date-specific target dir.
     dst_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
+    hdbg.dassert_path_exists(dst_dir)
     # Allow overwritting.
     _LOG.info("Allow to overwrite files at: %s", dst_dir)
     cmd = f"chmod -R +w {dst_dir}"
@@ -103,7 +103,8 @@ def _resolve_target_dir(
     E.g., "/shared_data/prod_reconciliation/20221101".
 
     # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
-    :param start_timestamp_as_str: string representation of the reconcile run date
+    :param start_timestamp_as_str: string representation of the reconcile
+        run timestamp
     :param dst_dir: a root dir for prod system reconciliation
     :return: a target dir to store reconcilation results
     """
@@ -350,11 +351,11 @@ def reconcile_copy_prod_data(
     if stage is None:
         stage = "preprod"
     mode = omreconc.resolve_run_mode(mode)
-    hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
         prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
+    hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
     target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     # Set source log dir.
@@ -455,7 +456,7 @@ def reconcile_run_notebook(
     _system(script_name)
     # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
@@ -474,8 +475,7 @@ def reconcile_ls(ctx, start_timestamp_as_str=None, dst_dir=None):  # type: ignor
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = omreconc.get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
     #
