@@ -430,7 +430,8 @@ def purify_from_environment(txt: str) -> str:
     txt_out = []
     for line in txt.splitlines():
         if "take_square_root" in line:
-            # Skip replacing the user since it can be `root` interfering with the replacement.
+            # Skip replacing the user since it can be `root` interfering with
+            # the replacement.
             txt_out.append(line)
             continue
         line = line.replace(user_name, "$USER_NAME")
