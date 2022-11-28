@@ -33,13 +33,14 @@ import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import im_v2.common.notebooks.master_raw_data_gallery_lib as imvcnmrdgl
+from im_v2.common.notebooks.master_raw_data_gallery_lib import *
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
+log_level = logging.INFO
 
 _LOG = logging.getLogger(__name__)
-log_level = logging.INFO
+
 _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
@@ -52,7 +53,7 @@ hprint.config_notebook()
 
 # %%
 # Get the real time data from DB.
-ccxt_rt = imvcnmrdgl.get_raw_data_from_db(
+ccxt_rt = get_raw_data_from_db(
     "ccxt_ohlcv_futures", "binance", start_ts=None, end_ts=None
 )
 _LOG.info(f"{len(ccxt_rt)} rows overall")
@@ -81,7 +82,7 @@ _LOG.log(log_level, hpandas.df_to_str(ccxt_futures_daily, log_level=log_level))
 s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
 start_ts = "20220627-000000"
 end_ts = "20221130-000000"
-imvcnmrdgl.process_s3_data_in_chunks(start_ts, end_ts, s3_path, log_level, 3)
+process_s3_data_in_chunks(start_ts, end_ts, s3_path, 3)
 
 # %% [markdown]
 # ## historical.daily.parquet.bid_ask.futures.1_min.crypto_chassis.binance
@@ -102,7 +103,7 @@ _LOG.log(
 s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
 start_ts = "20220501-000000"
 end_ts = "20221130-000000"
-imvcnmrdgl.process_s3_data_in_chunks(start_ts, end_ts, s3_path, log_level, 3)
+process_s3_data_in_chunks(start_ts, end_ts, s3_path, 3)
 
 # %% [markdown]
 # ## historical.daily.parquet.bid_ask.spot.1_min.crypto_chassis.binance

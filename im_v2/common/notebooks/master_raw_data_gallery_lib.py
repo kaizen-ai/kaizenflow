@@ -1,9 +1,9 @@
 """
-Helpers functions for im_v2/common/notebooks/Master_raw_data_gallery.ipynb.
+Helper functions for im_v2/common/notebooks/Master_raw_data_gallery.ipynb.
 
 Import as:
 
-import im_v2.common.notebooks.master_raw_data_gallery_lib as imvcnmrdgl
+from im_v2.common.notebooks.master_raw_data_gallery_lib import *
 """
 import logging
 from typing import Optional
@@ -57,9 +57,12 @@ def get_raw_data_from_db(
 
 def load_parquet_by_period(
     start_ts: pd.Timestamp, end_ts: pd.Timestamp, s3_path: str
-) -> None:
+) -> pd.DataFrame:
     """
-    Read raw historical data from the S3.
+    Read raw historical data from the S3 by time period.
+
+    Suitable for small data, to process larger parquets in chunks 
+      use `process_s3_data_in_chunks`.
 
     Bypasses the IM Client to avoid any on-the-fly transformations.
 
@@ -76,22 +79,21 @@ def load_parquet_by_period(
     cc_ba_futures_daily = hparque.from_parquet(
         s3_path, filters=timestamp_filters, aws_profile="ck"
     )
-
     cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
     return cc_ba_futures_daily
 
 
 def process_s3_data_in_chunks(
-    start_ts: str, end_ts: str, s3_path: str, log_level: int, step: int
+    start_ts: str, end_ts: str, s3_path: str, step: int
 ) -> None:
     """
-    Load S3 historical data by parts.
+    Process wide period of S3 historical data by smaller parts, 
+      display head and tail of each part.
 
     :param start_ts: the start date of the time filter
     :param end_ts: the end date of the time filter
     :param s3_path: the path to S3 directory, e.g.
       "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
-    :param log_level: the level of logging, e.g. `logging.INFO`
     :param step: the number of months to load for one chunk of data
     """
     overall_rows = 0
@@ -121,8 +123,8 @@ def process_s3_data_in_chunks(
         daily_data = load_parquet_by_period(start, end, s3_path)
         overall_rows += len(daily_data)
         _LOG.info("Head:")
-        hpandas._display(log_level, daily_data.head(2))
+        hpandas._display(logging.INFO, daily_data.head(2))
         _LOG.info("Tail:")
-        hpandas._display(log_level, daily_data.tail(2))
+        hpandas._display(logging.INFO, daily_data.tail(2))
     print(f"{overall_rows} rows overall")
     return
