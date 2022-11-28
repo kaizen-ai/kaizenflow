@@ -100,11 +100,11 @@ def apply_cc_limits(
 
     :param forecast_df: DataFrame with forecasts, e.g.
         ```
-                    curr_num_shares      price   position      wall_clock_timestamp  prediction  volatility  spread  target_position  target_notional_trade  diff_num_shares
-        asset_id
-        6051632686         2.524753   5.040333  12.725596 2022-09-15 10:35:11-04:00    0.475591    0.004876       0        12.018895              -0.706701        -0.140209
-        8717633868              0.0      18.77        0.0 2022-09-15 10:35:11-04:00   -0.134599     0.00312       0       -29.341767             -29.341767        -1.563227
-        2540896331              0.0  12.958333        0.0 2022-09-15 10:35:11-04:00    0.103423    0.002859       0         0.000000                    0.0              0.0
+                    holdings_shares     price  holdings_notional             wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
+        asset_id                                                                                                                                                                                                   
+        6051632686                0    4.1756                  0 2022-11-28 14:26:43.876138-05:00   -0.103183    0.002433       0                    4.1756                  4.1756                   1.0                     1.0
+        8717633868                0   12.3396                  0 2022-11-28 14:26:43.876138-05:00   -0.597408    0.001374       0                  -12.3396                -12.3396                  -1.0                    -1.0
+        2540896331                0    6.5356                  0 2022-11-28 14:26:43.876138-05:00   -0.561495    0.000781       0                  -52.2848                -52.2848                  -8.0                    -1.0
         ```
     :param broker: Broker class instance
     :param round_mode: shares roundning mode
@@ -116,14 +116,9 @@ def apply_cc_limits(
         "Order df before adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    # Add diff_num_shares to calculate notional limit.
-    hdbg.dassert_is_subset(
-        ["target_trades_notional", "price"], forecast_df.columns
+    hdbg.dassert_in(
+        "target_trades_shares", forecast_df.columns
     )
-    forecast_df["target_trades_shares"] = (
-        forecast_df["target_trades_notional"] / forecast_df["price"]
-    )
-    #
     stage = broker.stage
     hdbg.dassert_in(stage, ["local", "prod", "preprod"])
     market_info = broker.market_info

@@ -140,11 +140,13 @@ def convert_target_holdings_and_trades_to_shares_and_adjust_notional(
         target_trades_shares_before_quantization.fillna(0)
     )
     # Compute `target_trades_shares` post-quantization.
+    target_trades_shares_before_quantization.to_frame().to_csv("./before_q.csv")
     target_trades_shares = cofinanc.quantize_shares(
         target_trades_shares_before_quantization,
         quantization,
         asset_id_to_decimals,
     )
+    target_trades_shares.to_frame().to_csv("./after_q.csv")
     # hdbg.dassert(np.isfinite(target_trades_shares).all())
     _LOG.debug(
         "Post-quantization target_trades_shares adjusted from %s to %s",

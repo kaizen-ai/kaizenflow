@@ -32,6 +32,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
             "spread",
             "target_holdings_notional",
             "target_trades_notional",
+            "target_trades_shares",
+            "target_holdings_shares",
         ]
         if below_min:
             # Create DataFrame with orders below limit.
@@ -49,6 +51,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
                         0,
                         -1.01,
                         -0.01,
+                        -0.04655092876707745,
+                        -0.000460900284822549,
                     ],
                     [
                         6051632686,
@@ -61,6 +65,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
                         0,
                         -2.01,
                         0.01,
+                        -0.37019983423888014,
+                        0.0018417902200939314,
                     ],
                 ],
             )
@@ -80,6 +86,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
                         0,
                         -27.075329,
                         -5.378662,
+                        3.42342342,
+                        4.342423432,
                     ],
                     [
                         6051632686,
@@ -92,6 +100,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
                         0,
                         -33.701572,
                         -22.8425729,
+                        2.512351512,
+                        5.513513512,
                     ],
                 ],
             )
@@ -162,8 +172,8 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         below_min = False
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
-        log_dir = None
-        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        round_mode = "round"
+        actual = occoputi.apply_cc_limits(order_df, broker, round_mode)
         actual = hpandas.df_to_str(actual)
         self.check_string(actual)
 
@@ -175,11 +185,24 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         below_min = True
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
-        log_dir = None
+        round_mode = "round"
         # Run.
-        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = occoputi.apply_cc_limits(order_df, broker, round_mode)
         actual = hpandas.df_to_str(actual)
         self.check_string(actual)
+
+    def test_apply_prod_limits3(self) -> None:
+        """
+        Check that the assertion is raised when a number is not rounded.
+        """
+        # Build orders and broker.
+        below_min = False
+        order_df = self.get_test_orders(below_min)
+        broker = self.get_mock_broker()
+        round_mode = "check"
+        # Run.
+        with self.assertRaises(AssertionError):
+            _ = occoputi.apply_cc_limits(order_df, broker, round_mode)
 
     def test_apply_testnet_limits1(self) -> None:
         """
@@ -189,10 +212,10 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
         below_min = True
         order_df = self.get_test_orders(below_min)
         broker = self.get_mock_broker()
-        log_dir = None
+        round_mode = "round"
         # Set broker stage to imitate testnet.
         broker.stage = "local"
         # Run.
-        actual = occoputi.apply_cc_limits(order_df, broker, log_dir)
+        actual = occoputi.apply_cc_limits(order_df, broker, round_mode)
         actual = hpandas.df_to_str(actual)
         self.check_string(actual)
