@@ -50,18 +50,6 @@ hprint.config_notebook()
 # # Functions
 
 # %%
-def get_db_connection():
-    """
-    Connect to DB.
-    """
-    # Get DB connection.
-    env_file = imvimlita.get_db_env_path("dev")
-    # Connect with the parameters from the env file.
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    connection = hsql.get_connection(*connection_params)
-    return connection
-
-
 def get_raw_ccxt_realtime_data(
     db_table: str,
     exchange_id: str,
@@ -87,31 +75,6 @@ def get_raw_ccxt_realtime_data(
         query += f" AND timestamp <='{unix_end_timestamp}'"
     rt_data = hsql.execute_query_to_df(connection, query)
     return rt_data
-
-
-def show_db_table_head_tail(db_table: str) -> None:
-    """
-    Get head or tail of the table.
-    """
-    connection = get_db_connection()
-    query_head = f"SELECT * FROM {db_table} ORDER BY timestamp ASC LIMIT 5"
-    query_tail = f"SELECT * FROM {db_table} ORDER BY timestamp DESC LIMIT 5"
-    head = hsql.execute_query_to_df(connection, query_head)
-    print(f"`{db_table}` table head, sorted by `timestamp` column:")
-    display(head)
-    tail = hsql.execute_query_to_df(connection, query_tail)
-    print(f"`{db_table}` table tail, sorted by `timestamp` column:")
-    display(tail)
-
-
-def count_table_rows(db_table: str) -> int:
-    """
-    Count the amount of rows in DB.
-    """
-    connection = get_db_connection()
-    query = f"SELECT COUNT(*) FROM {db_table}"
-    count_data = hsql.execute_query_to_df(connection, query)
-    return count_data["count"][0]
 
 
 # %%
@@ -163,7 +126,6 @@ def load_parquet_by_period(
     start_ts: Optional[pd.Timestamp],
     end_ts: Optional[pd.Timestamp],
     columns: Optional[List[str]],
-    sort_index: bool = True,
 ) -> pd.DataFrame:
     """
     Read raw historical data from the S3.
@@ -178,8 +140,7 @@ def load_parquet_by_period(
     cc_ba_futures_daily = hparque.from_parquet(
         s3_path, filters=timestamp_filters, columns=columns, aws_profile="ck"
     )
-    if sort_index:
-        cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
+    cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
     return cc_ba_futures_daily
 
 
@@ -238,27 +199,6 @@ def process_s3_data_in_chunks(
     return nans_stats, zeros_stats
 
 
-# %%
-def get_large_pq_data_meta(s3_path: str) -> None:
-    """
-    Load the meta info about archived data from s3://cryptokaizen-
-    data/db_archive/dev/ccxt_bid_ask_futures_raw/timestamp.
-    """
-    # Load the whole `timestamp` column to get the actual length of the data.
-    ccxt_bid_ask_column = load_parquet_by_period(
-        s3_path, None, None, ["timestamp"], sort_index=False
-    )
-    print(f"{len(ccxt_bid_ask_column)} rows overall")
-    #
-    start_timestamp = ccxt_bid_ask_column["timestamp"].min()
-    start_timestamp = pd.Timestamp(start_timestamp, unit="ms", tz="UTC")
-    print(f"Start timestamp: {start_timestamp}")
-    #
-    end_timestamp = ccxt_bid_ask_column["timestamp"].max()
-    end_timestamp = pd.Timestamp(end_timestamp, unit="ms", tz="UTC")
-    print(f"End timestamp: {end_timestamp}")
-
-
 # %% [markdown]
 # # Realtime (the DB data)
 
@@ -305,39 +245,6 @@ display(volume0.tail())
 # %%
 ax = volume0["currency_pair"].value_counts().plot(kind="bar")
 ax = ax.bar_label(ax.containers[-1], label_type="edge")
-
-# %% [markdown]
-# ## BID-ASK
-
-# %% [markdown]
-# ### CCXT futures archived
-
-# %% [markdown]
-# Load archived real-time CCXT bid-ask futures data. Since the data contains 293 millions of rows, only the meta information can be loaded, i.e. start/end dates and the actual length.
-
-# %%
-s3_path = (
-    "s3://cryptokaizen-data/db_archive/dev/ccxt_bid_ask_futures_raw/timestamp"
-)
-get_large_pq_data_meta(s3_path)
-
-# %% [markdown]
-# ### CCXT futures
-
-# %%
-show_db_table_head_tail("ccxt_bid_ask_futures_raw")
-
-# %%
-count_table_rows("ccxt_bid_ask_futures_raw")
-
-# %% [markdown]
-# ### CCXT futures resampled to 1 min
-
-# %%
-show_db_table_head_tail("ccxt_bid_ask_futures_resampled_1min")
-
-# %%
-count_table_rows("ccxt_bid_ask_futures_resampled_1min")
 
 # %% [markdown]
 # # Historical (data updated daily)
