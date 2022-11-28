@@ -7,7 +7,7 @@ import oms.cc_optimizer_utils as occoputi
 import glob
 import logging
 import os
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 import pandas as pd
 
@@ -20,7 +20,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def _apply_cc_limits(
-    order: pd.Series, asset_market_info: Dict[str, Any], stage: str
+    order: pd.Series, asset_market_info: Dict[str, Any], stage: str, round_mode: str
 ) -> pd.Series:
     hdbg.dassert_isinstance(order, pd.Series)
     _LOG.debug("Order before adjustments: %s", order)
@@ -63,15 +63,26 @@ def _apply_cc_limits(
             final_order_amount = 0.0
     else:
         raise ValueError(f"Unsupported stage={stage}")
-    if final_order_amount:
+    # No need to round Nones or zeros.
+    if final_order_amount and final_order_amount != 0:
+        hdbg.dassert_isinstance(final_order_amount, float)
         # 3) Round the order amount in accordance with exchange rules.
         amount_precision = asset_market_info["amount_precision"]
-        final_order_amount = round(final_order_amount, amount_precision)
-        _LOG.debug(
-            "Rounding order amount to %s decimal points. Result: %s",
-            amount_precision,
-            final_order_amount,
-        )
+        rounded_order_amount = round(final_order_amount, amount_precision)
+        if round_mode == "round":
+            # Round the number.
+            final_order_amount = rounded_order_amount
+            _LOG.debug(
+                "Rounding order amount to %s decimal points. Result: %s",
+                amount_precision,
+                final_order_amount,
+            )
+        elif round_mode == "check":
+            # Check that the number of digits is the correct one according
+            # to exchange rules. 
+            hdbg.dassert_eq(final_order_amount, rounded_order_amount)
+        else:
+            raise ValueError(f"Unsupported round_mode={round_mode}")
     #
     order["target_trades_shares"] = final_order_amount
     _LOG.debug("Order after adjustments: %s", order)
@@ -79,7 +90,7 @@ def _apply_cc_limits(
 
 
 def apply_cc_limits(
-    forecast_df: pd.DataFrame, broker: ombroker.Broker, log_dir: Optional[str]
+    forecast_df: pd.DataFrame, broker: ombroker.Broker, round_mode: str
 ) -> pd.DataFrame:
     """
     Apply notional limits for DataFrame of multiple orders.
@@ -96,28 +107,15 @@ def apply_cc_limits(
         2540896331              0.0  12.958333        0.0 2022-09-15 10:35:11-04:00    0.103423    0.002859       0         0.000000                    0.0              0.0
         ```
     :param broker: Broker class instance
-    :param log_dir: directory to store order transformations
+    :param round_mode: shares roundning mode
+        "round": round the amount of shares according to the exchange rules
+        "check": check with an assertion whether target shares are rounded or not
     :return: DataFrame with updated orders
     """
     _LOG.debug(
         "Order df before adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    # Create a logging directory.
-    # TODO(Grisha): remove logging.
-    if log_dir is not None:
-        log_dir = os.path.join(log_dir, "apply_cc_limits")
-        hio.create_dir(log_dir, incremental=True)
-    # Select the timestamp of order creation for logging.
-    log_timestamp = broker.market_data.get_wall_clock_time()
-    log_timestamp = log_timestamp.strftime("%Y%m%d_%H%M%S")
-    # Save orders before applying the constraints.
-    if log_dir is not None:
-        file_name = os.path.join(
-            log_dir, f"forecast_df_before_apply_cc_limits.{log_timestamp}.csv"
-        )
-        forecast_df.to_csv(file_name)
-        _LOG.debug("Saved orders after adjustments to %s", file_name)
     # Add diff_num_shares to calculate notional limit.
     hdbg.dassert_is_subset(
         ["target_trades_notional", "price"], forecast_df.columns
@@ -137,7 +135,7 @@ def apply_cc_limits(
     forecast_df_tmp = []
     # Apply exchange restrictions to individual orders.
     for idx, row in forecast_df.iterrows():
-        row_tmp = _apply_cc_limits(row, market_info[idx], stage)
+        row_tmp = _apply_cc_limits(row, market_info[idx], stage, round_mode)
         forecast_df_tmp.append(row_tmp)
     # Combine orders into one dataframe.
     forecast_df_tmp = pd.concat(forecast_df_tmp, axis=1).T
@@ -148,15 +146,10 @@ def apply_cc_limits(
         "Order df after adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    if log_dir is not None:
-        file_name = os.path.join(
-            log_dir, f"forecast_df_after_apply_cc_limits.{log_timestamp}.csv"
-        )
-        forecast_df.to_csv(file_name)
-        _LOG.debug("Saved orders after adjustments to %s", file_name)
     return forecast_df
 
 
+# TODO(Grisha): should we remove since we do not the logging anymore?
 def read_apply_cc_limits_logs(
     log_dir: str,
 ) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:

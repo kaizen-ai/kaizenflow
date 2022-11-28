@@ -376,8 +376,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 # Apply notional limits to all the orders.
                 #  Note: target amount of order shares is set to 0 if its actual
                 #  values are below limits.
+                # TODO(Grisha): ideally we should remove rounding from `apply_cc_limits()`
+                # and use `quantize_shares()` only.
+                round_mode = "check"
                 df = occoputi.apply_cc_limits(
-                    df, self._portfolio.broker, self._log_dir
+                    df, self._portfolio.broker, round_mode
                 )
         elif backend == "batch_optimizer":
             import optimizer.single_period_optimization as osipeopt
