@@ -1,10 +1,12 @@
 """
-Helpers functions for im_v2/common/notebooks/Master_raw_data_gallery.ipynb
+Helpers functions for im_v2/common/notebooks/Master_raw_data_gallery.ipynb.
 
-import im_v2.commom.notebooks.master_raw_data_gallery as icnmgal
+Import as:
+
+import im_v2.common.notebooks.master_raw_data_gallery_lib as imvcnmrdgl
 """
 import logging
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 
@@ -16,6 +18,7 @@ import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
 
+
 def get_raw_data_from_db(
     db_table: str,
     exchange_id: str,
@@ -23,9 +26,15 @@ def get_raw_data_from_db(
     end_ts: Optional[str],
 ) -> pd.DataFrame:
     """
-    Read raw data for given exchange from the RT DB.
+    Read raw data for the given exchange from the RT DB.
 
     Bypasses the IM Client to avoid any on-the-fly transformations.
+
+    :param db_table: the name of the table in the DB
+    :param exchange_id: the name of exchange, e.g. `binance`
+    :param start_ts: the start date of the time filter
+    :param end_ts: the end date of the time filter
+    :return: the raw data loaded from DB
     """
     # Get DB connection.
     env_file = imvimlita.get_db_env_path("dev")
@@ -48,11 +57,16 @@ def get_raw_data_from_db(
 
 def load_parquet_by_period(
     start_ts: pd.Timestamp, end_ts: pd.Timestamp, s3_path: str
-) -> pd.DataFrame:
+) -> None:
     """
     Read raw historical data from the S3.
 
     Bypasses the IM Client to avoid any on-the-fly transformations.
+
+    :param start_ts: the start date of the time filter
+    :param end_ts: the end date of the time filter
+    :param s3_path: the path to S3 directory, e.g.
+      "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/ohlcv-futures/ccxt/binance"
     """
     # Create timestamp filters.
     timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
@@ -62,16 +76,23 @@ def load_parquet_by_period(
     cc_ba_futures_daily = hparque.from_parquet(
         s3_path, filters=timestamp_filters, aws_profile="ck"
     )
-    
+
     cc_ba_futures_daily = cc_ba_futures_daily.sort_index()
     return cc_ba_futures_daily
 
 
 def process_s3_data_in_chunks(
-    start_ts: str, end_ts: str, s3_path: str
-) -> List[pd.Series]:
+    start_ts: str, end_ts: str, s3_path: str, log_level: int, step: int
+) -> None:
     """
-    Load S3 historical data by parts and count the statisticts.
+    Load S3 historical data by parts.
+
+    :param start_ts: the start date of the time filter
+    :param end_ts: the end date of the time filter
+    :param s3_path: the path to S3 directory, e.g.
+      "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
+    :param log_level: the level of logging, e.g. `logging.INFO`
+    :param step: the number of months to load for one chunk of data
     """
     overall_rows = 0
     start_ts = pd.Timestamp(start_ts, tz="UTC")
@@ -79,29 +100,29 @@ def process_s3_data_in_chunks(
     # Separate time period to months.
     # E.g. of `dates` sequence `['2022-10-31 00:00:00+00:00', '2022-11-30 00:00:00+00:00']`.
     dates = pd.date_range(start_ts, end_ts, freq="M")
-    for i in range(0, len(dates), 2):
+    for i in range(0, len(dates), step):
         # Iterate through the dates to select the loading period boundaries.
-        # One chunk of data is loaded for two months. 
-        # E.g. the sequence of ['2022-09-31', '2022-10-30', '2022-11-31', '2022-12-31']
+        # E.g. if the chunk of data is loaded for two months.
+        # the sequence of ['2022-09-31', '2022-10-30', '2022-11-31', '2022-12-31']
         # should be divided into two periods: ['2022-09-31', '2022-10-30']
         # and ['2022-11-31', '2022-12-31']
-        # TODO(Danya): Pass a month timedelta as a parameter.
-        start_end = dates[i : i + 2]
-        if len(start_end) == 2:
-            start, end = dates[i : i + 2]
-            _LOG.info(f"Loading data for the months {start.month} and {end.month}")
-        else:
+        period = dates[i : i + step]
+        if len(period) == 1:
             start = dates[i]
-            end = None
+            end = dates[i]
             _LOG.info(f"Loading data for the month {start.month}")
+        else:
+            start = period[0]
+            end = period[-1]
+            _LOG.info(
+                f"Loading data for the period of {start.month}-{end.month} months"
+            )
         # Load the data of the time period.
         daily_data = load_parquet_by_period(start, end, s3_path)
         overall_rows += len(daily_data)
         _LOG.info("Head:")
-        hpandas._display(daily_data.head(2)) 
+        hpandas._display(log_level, daily_data.head(2))
         _LOG.info("Tail:")
-        hpandas._display(daily_data.tail(2))
+        hpandas._display(log_level, daily_data.tail(2))
     print(f"{overall_rows} rows overall")
     return
-
-

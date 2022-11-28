@@ -27,19 +27,13 @@
 
 # %%
 import logging
-from typing import List, Optional
 
-import pandas as pd
-
-import core.statistics.descriptive as cstadesc
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hprint as hprint
-import helpers.hsql as hsql
-import im_v2.common.notebooks.master_raw_data_gallery_lib as icnmgal
-import im_v2.im_lib_tasks as imvimlita
+import im_v2.common.notebooks.master_raw_data_gallery_lib as imvcnmrdgl
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -58,7 +52,7 @@ hprint.config_notebook()
 
 # %%
 # Get the real time data from DB.
-ccxt_rt = icnmgal.get_raw_data_from_db(
+ccxt_rt = imvcnmrdgl.get_raw_data_from_db(
     "ccxt_ohlcv_futures", "binance", start_ts=None, end_ts=None
 )
 _LOG.info(f"{len(ccxt_rt)} rows overall")
@@ -80,16 +74,14 @@ _LOG.log(log_level, hpandas.df_to_str(ccxt_futures_daily, log_level=log_level))
 # %% [markdown]
 # ## historical.daily.parquet.bid_ask.futures.1_sec.crypto_chassis.binance
 
+# %% [markdown]
+# The amount of data is too big to process it all at once, so the data will be loaded separately for each month.
+
 # %%
 s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
-
-# %% [markdown]
-# The amount of data is too big to process it all at once, so the data will be loaded separately for each month and all statistics will be aggregated.
-
-# %%
 start_ts = "20220627-000000"
 end_ts = "20221130-000000"
-nans_stats, zeros_stats = icnmgal.process_s3_data_in_chunks(start_ts, end_ts, s3_path)
+imvcnmrdgl.process_s3_data_in_chunks(start_ts, end_ts, s3_path, log_level, 3)
 
 # %% [markdown]
 # ## historical.daily.parquet.bid_ask.futures.1_min.crypto_chassis.binance
@@ -99,7 +91,9 @@ s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/
 # Load daily data from s3 parquet.
 cc_ba_futures_resampled = hparque.from_parquet(s3_path, aws_profile="ck")
 _LOG.info(f"{len(cc_ba_futures_resampled)} rows overall")
-_LOG.log(log_level, hpandas.df_to_str(cc_ba_futures_resampled, log_level=log_level))
+_LOG.log(
+    log_level, hpandas.df_to_str(cc_ba_futures_resampled, log_level=log_level)
+)
 
 # %% [markdown]
 # ## historical.daily.parquet.bid_ask.spot.1_sec.crypto_chassis.binance
@@ -110,7 +104,7 @@ s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_c
 # %%
 start_ts = "20220501-000000"
 end_ts = "20221130-000000"
-nans_stats, zeros_stats = icnmgal.process_s3_data_in_chunks(start_ts, end_ts, s3_path)
+imvcnmrdgl.process_s3_data_in_chunks(start_ts, end_ts, s3_path, log_level, 3)
 
 # %% [markdown]
 # ## historical.daily.parquet.bid_ask.spot.1_min.crypto_chassis.binance
