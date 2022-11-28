@@ -100,8 +100,6 @@ _LOG.log(
 
 # %%
 s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis/binance"
-
-# %%
 start_ts = "20220501-000000"
 end_ts = "20221130-000000"
 imvcnmrdgl.process_s3_data_in_chunks(start_ts, end_ts, s3_path, log_level, 3)
