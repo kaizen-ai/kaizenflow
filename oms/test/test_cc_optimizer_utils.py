@@ -65,7 +65,7 @@ class TestCcOptimizerUtils1(hunitest.TestCase):
                         0,
                         -2.01,
                         0.01,
-                        -0.37019983423888014,
+                        1.5,
                         0.0018417902200939314,
                     ],
                 ],

@@ -89,7 +89,6 @@ def quantize_shares(
         if isinstance(shares, pd.Series):
             quantized_shares = quantized_shares.squeeze()
             quantized_shares.name = shares.name
-        print("quantize_shares()")
     else:
         raise ValueError(f"Invalid quantization strategy `{quantization}`")
     _LOG.debug("`quantized_shares`=\n%s", hpandas.df_to_str(quantized_shares))
