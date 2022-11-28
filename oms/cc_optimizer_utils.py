@@ -12,7 +12,6 @@ from typing import Any, Dict, Tuple
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import helpers.hio as hio
 import helpers.hpandas as hpandas
 import oms.broker as ombroker
 
@@ -20,7 +19,10 @@ _LOG = logging.getLogger(__name__)
 
 
 def _apply_cc_limits(
-    order: pd.Series, asset_market_info: Dict[str, Any], stage: str, round_mode: str
+    order: pd.Series,
+    asset_market_info: Dict[str, Any],
+    stage: str,
+    round_mode: str,
 ) -> pd.Series:
     hdbg.dassert_isinstance(order, pd.Series)
     _LOG.debug("Order before adjustments: %s", order)
@@ -79,7 +81,7 @@ def _apply_cc_limits(
             )
         elif round_mode == "check":
             # Check that the number of digits is the correct one according
-            # to exchange rules. 
+            # to exchange rules.
             hdbg.dassert_eq(final_order_amount, rounded_order_amount)
         else:
             raise ValueError(f"Unsupported round_mode={round_mode}")
@@ -101,7 +103,7 @@ def apply_cc_limits(
     :param forecast_df: DataFrame with forecasts, e.g.
         ```
                     holdings_shares     price  holdings_notional             wall_clock_timestamp  prediction  volatility  spread  target_holdings_notional  target_trades_notional  target_trades_shares  target_holdings_shares
-        asset_id                                                                                                                                                                                                   
+        asset_id
         6051632686                0    4.1756                  0 2022-11-28 14:26:43.876138-05:00   -0.103183    0.002433       0                    4.1756                  4.1756                   1.0                     1.0
         8717633868                0   12.3396                  0 2022-11-28 14:26:43.876138-05:00   -0.597408    0.001374       0                  -12.3396                -12.3396                  -1.0                    -1.0
         2540896331                0    6.5356                  0 2022-11-28 14:26:43.876138-05:00   -0.561495    0.000781       0                  -52.2848                -52.2848                  -8.0                    -1.0
@@ -116,9 +118,7 @@ def apply_cc_limits(
         "Order df before adjustments: forecast_df=\n%s",
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
-    hdbg.dassert_in(
-        "target_trades_shares", forecast_df.columns
-    )
+    hdbg.dassert_in("target_trades_shares", forecast_df.columns)
     stage = broker.stage
     hdbg.dassert_in(stage, ["local", "prod", "preprod"])
     market_info = broker.market_info
