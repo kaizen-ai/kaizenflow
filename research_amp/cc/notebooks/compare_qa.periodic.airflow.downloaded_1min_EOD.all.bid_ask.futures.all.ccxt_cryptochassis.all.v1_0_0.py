@@ -13,6 +13,21 @@
 # ---
 
 # %% [markdown]
+# This notebook conducts the cross-vendor QA between following datasets:
+#
+# - periodic.airflow.downloaded_1min.postgres.bid_ask.futures.v7_3.ccxt.binance.
+# - periodic.airflow.downloaded_EOD.postgres.bid_ask.futures.v3.cryptochassis.binance
+#
+# The QA consists of the following data checks:
+#
+# - Start and End date for both datasets
+# - Number of observations pet coin for both datasets
+# - Number of NaNs per dataset
+# - Notional difference (CC value - CCXT value) for `bid_price`, `ask_price`, `bid_size`, `ask_size` columns
+# - Relative difference (CC value - CCXT value)/CCXT value for `bid_price`, `ask_price`, `bid_size`, `ask_size` columns
+# - Pearson correlation for `bid_price`, `ask_price`, `bid_size`, `ask_size` between both datasets
+
+# %% [markdown]
 # # Imports
 
 # %%
@@ -77,8 +92,8 @@ def get_example_config() -> cconfig.Config:
             # Parameters for data query.
             "read_data": {
                 # Get start/end ts as inputs to script.
-                "start_ts": pd.Timestamp("2022-11-16 00:00:00+00:00"),
-                "end_ts": pd.Timestamp("2022-11-16 00:10:00+00:00"),
+                "start_ts": pd.Timestamp("2022-11-28 00:00:00+00:00"),
+                "end_ts": pd.Timestamp("2022-11-29 00:00:00+00:00"),
                 "columns": None,
                 "filter_data_mode": "assert",
             },
@@ -104,9 +119,6 @@ print(config)
 # # Clients
 
 # %%
-# TODO(Danya): To make notebook universal, replace client instances with constructors like
-#  `get_..._example`
-
 # CCXT client.
 ccxt_im_client_config = config.get_and_mark_as_used(("data", "ccxt_im_client"))
 ccxt_im_client = icdcl.CcxtSqlRealTimeImClient(**ccxt_im_client_config)
@@ -161,7 +173,7 @@ display(ccxt_df.head(10))
 #  "if"-switches based on vendor and type?
 
 # Remove level suffix in the TOB column name.
-ccxt_df.columns = ccxt_df.columns.str.replace("_1", "")
+ccxt_df.columns = ccxt_df.columns.str.replace("_l1", "")
 # Remove all levels.
 target_columns = [col for col in ccxt_df.columns if not col[-1].isnumeric()]
 target_columns = [
@@ -325,7 +337,4 @@ display(ask_size_corr_matrix)
 # # Check unused variables in config
 
 # %% run_control={"marked": true}
-# TODO(Danya): Add checking for unused variables once CMTask3125 is merged.
 display(config)
-
-# %%
