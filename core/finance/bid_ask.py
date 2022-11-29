@@ -146,7 +146,7 @@ def handle_orderbook_levels(
         2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        3       2.33
 
     to:
-                                        knowledge_timestamp  bid_price_1  bid_price_2  bid_price_3
+                                        knowledge_timestamp  bid_price_l1  bid_price_l2  bid_price_3
         timestamp
         2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33
     """
@@ -173,7 +173,7 @@ def handle_orderbook_levels(
         values=bid_ask_cols,
     )
     # Rename the columns to a desired {value}_{level} format.
-    pivoted_data.columns = pivoted_data.columns.map("{0[0]}_{0[1]}".format)
+    pivoted_data.columns = pivoted_data.columns.map("{0[0]}_l{0[1]}".format)
     # Fix indices.
     df = pivoted_data.reset_index(non_bid_ask_cols)
     df = df.set_index(timestamp_col)
