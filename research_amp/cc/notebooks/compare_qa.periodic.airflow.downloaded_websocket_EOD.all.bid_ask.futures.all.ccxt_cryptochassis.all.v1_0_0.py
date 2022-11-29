@@ -13,9 +13,12 @@
 # ---
 
 # %% [markdown]
+# # Description
+
+# %% [markdown]
 # This notebook conducts the cross-vendor QA between following datasets:
 #
-# - periodic.airflow.downloaded_1min.postgres.bid_ask.futures.v7_3.ccxt.binance.
+# - periodic.airflow.websocket.postgres.bid_ask.futures.v7_3.ccxt.binance.
 # - periodic.airflow.downloaded_EOD.postgres.bid_ask.futures.v3.cryptochassis.binance
 #
 # The QA consists of the following data checks:
@@ -72,7 +75,7 @@ def get_example_config() -> cconfig.Config:
         "data": {
             # Whether to resample 1sec data to 1min using our production flow.
             # TODO(Danya): Variable overlaps with `resample_1min` parameter for clients.
-            "resample_1min": False,
+            "resample_1sec_to_1min": False,
             # Parameters for client initialization.
             "cc_im_client": {
                 "universe_version": None,
@@ -92,6 +95,8 @@ def get_example_config() -> cconfig.Config:
             # Parameters for data query.
             "read_data": {
                 # Get start/end ts as inputs to script.
+                #  Note: DB data is archived to S3 every 3 days, so we should use
+                #  only the latest dates.
                 "start_ts": pd.Timestamp("2022-11-28 00:00:00+00:00"),
                 "end_ts": pd.Timestamp("2022-11-29 00:00:00+00:00"),
                 "columns": None,
@@ -182,7 +187,7 @@ target_columns = [
 ccxt_df = ccxt_df[target_columns]
 # CCXT timestamp data goes up to milliseconds, so one needs to round it to seconds.
 ccxt_df.index = ccxt_df.reset_index()["timestamp"].apply(
-    lambda x: x.round(freq="S")
+    lambda x: x.ceil(freq="S")
 )
 display(ccxt_df.head(10))
 
@@ -198,7 +203,7 @@ display(cc_df.head(10))
 
 # %%
 # Perform VWAP resampling if required by config.
-resample_1min = config.get_and_mark_as_used(("data", "resample_1min"))
+resample_1min = config.get_and_mark_as_used(("data", "resample_1sec_to_1min"))
 if resample_1min:
     # Add column for the resampling function.
     ccxt_df["exchange_id"] = "binance"
@@ -225,11 +230,17 @@ cc_df = cc_df.reset_index().set_index(["timestamp", "full_symbol"])
 # %%
 data = ccxt_df.merge(
     cc_df,
-    how="outer",
+    how="inner",
     left_index=True,
     right_index=True,
     suffixes=("_ccxt", "_cc"),
 )
+
+# %%
+# Conduct a data sanity check.
+# Get number of values for both datasets.
+len_cc_data = len(cc_df)
+len_ccxt_data = len(ccxt_df)
 _LOG.info("Start date = %s", data.reset_index()["timestamp"].min())
 _LOG.info("End date = %s", data.reset_index()["timestamp"].max())
 _LOG.info(
@@ -239,16 +250,61 @@ _LOG.info(
 # Move the same metrics from two vendors together.
 data = data.reindex(sorted(data.columns), axis=1)
 # NaNs observation.
+nans_cc = len(data[data["bid_price_cc"].isna()])
+nans_ccxt = len(data[data["bid_price_ccxt"].isna()])
 _LOG.info(
-    "Number of observations with NaNs in CryptoChassis = %s",
-    len(data[data["bid_price_cc"].isna()]),
+    "Number of observations with NaNs in CryptoChassis = %s (%s%%)",
+    nans_cc,
+    nans_cc / len_cc_data,
 )
 _LOG.info(
-    "Number of observations with NaNs in CCXT = %s",
-    len(data[data["bid_price_ccxt"].isna()]),
+    "Number of observations with NaNs in CCXT = %s (%s%%)",
+    nans_ccxt,
+    nans_ccxt / len_ccxt_data,
 )
 # Remove NaNs.
 data = hpandas.dropna(data, report_stats=True)
+#
+# Zero bid size.
+zero_bid_size_cc = len(data[data["bid_size_cc"] == 0])
+_LOG.info(
+    "Number of observations with bid_size=0 in CryptoChassis = %s (%s%%)",
+    zero_bid_size_cc,
+    zero_bid_size_cc / len_cc_data,
+)
+zero_bid_size_ccxt = len(data[data["bid_size_ccxt"] == 0])
+_LOG.info(
+    "Number of observations with bid_size=0 in CCXT = %s (%s%%)",
+    zero_bid_size_cc,
+    zero_bid_size_ccxt / len_ccxt_data,
+)
+# Zero ask size.
+zero_ask_size_cc = len(data[data["ask_size_cc"] == 0])
+_LOG.info(
+    "Number of observations with ask_size=0 in CryptoChassis = %s (%s%%)",
+    zero_ask_size_cc,
+    zero_ask_size_cc / len_cc_data,
+)
+zero_ask_size_ccxt = len(data[data["ask_size_ccxt"] == 0])
+_LOG.info(
+    "Number of observations with ask_size=0 in CCXT = %s (%s%%)",
+    zero_ask_size_cc,
+    zero_ask_size_ccxt / len_ccxt_data,
+)
+#
+# Bid !< Ask.
+small_bid_cc = len(data[data["ask_price_cc"] >= data["bid_price_cc"]])
+_LOG.info(
+    "Number of observations with ask_price >= bid_price in CryptoChassis = %s (%s%%)",
+    small_bid_cc,
+    small_bid_cc / len_cc_data,
+)
+small_bid_ccxt = len(data[data["ask_price_ccxt"] >= data["bid_price_ccxt"]])
+_LOG.info(
+    "Number of observations with ask_price >= bid_price in CCXT = %s (%s%%)",
+    small_bid_ccxt,
+    small_bid_ccxt / len_ccxt_data,
+)
 #
 display(data.tail())
 
@@ -263,7 +319,7 @@ for col in bid_ask_cols:
     # Notional difference: CC value - DB value.
     data[f"{col}_diff"] = data[f"{col}_cc"] - data[f"{col}_ccxt"]
     # Relative value: (CC value - DB value)/DB value.
-    data[f"{col}_relative_diff_pct"] = (
+    data[f"{col}_relative_pct_diff"] = (
         100 * (data[f"{col}_cc"] - data[f"{col}_ccxt"]) / data[f"{col}_ccxt"]
     )
 
@@ -273,7 +329,7 @@ diff_stats = []
 grouper = data.groupby(["full_symbol"])
 for col in bid_ask_cols:
     diff_stats.append(grouper[f"{col}_diff"].mean())
-    diff_stats.append(grouper[f"{col}_relative_diff_pct"].mean())
+    diff_stats.append(grouper[f"{col}_relative_pct_diff"].mean())
 #
 diff_stats = pd.concat(diff_stats, axis=1)
 
@@ -285,14 +341,14 @@ diff_stats = pd.concat(diff_stats, axis=1)
 
 # %%
 display(
-    diff_stats[["bid_price_relative_diff_pct", "ask_price_relative_diff_pct"]]
+    diff_stats[["bid_price_relative_pct_diff", "ask_price_relative_pct_diff"]]
 )
 
 # %% [markdown]
 # ### Sizes
 
 # %%
-display(diff_stats[["bid_size_relative_diff_pct", "ask_size_relative_diff_pct"]])
+display(diff_stats[["bid_size_relative_pct_diff", "ask_size_relative_pct_diff"]])
 
 # %% [markdown]
 # ## Correlations
