@@ -143,7 +143,7 @@ dag_df_prod_past.equals(dag_df_prod[:-1])
 # %%
 past2 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-3][0]]
 past3 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]][1:]
-# inter(past3, past2)
+inter(past3, past2)
 
 # %%
 cond = (past2.index > pd.Timestamp('2022-11-06 04:00:00-0500')) & (past2.index < pd.Timestamp('2022-11-06 04:35:00-0500'))
@@ -162,8 +162,8 @@ idx_concat.T.style.set_sticky(axis=1)
 idx_concat.T
 
 # %%
-past4 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]]
-past5 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-5][0]][1:]
+past4 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[1][0]]
+past5 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[0][0]][1:]
 inter(past5, past4)
 
 # %%
