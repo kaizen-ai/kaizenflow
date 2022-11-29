@@ -429,9 +429,9 @@ def purify_from_environment(txt: str) -> str:
     user_name = hsystem.get_user_name()
     txt_out = []
     for line in txt.splitlines():
-        # Skip replacing the user since it can be `root` interfering with
-        # the replacement.
         if not "take_square_root" in line:
+            # Replace user name except for the cases when ‘root’ can be
+            # interfering with the replacement.
             line = line.replace(user_name, "$USER_NAME")
         txt_out.append(line)
     txt = "\n".join(txt_out)
