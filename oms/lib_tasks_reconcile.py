@@ -410,6 +410,10 @@ def reconcile_run_notebook(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
+    mode = omreconc.resolve_run_mode(mode)
     run_date = omreconc.get_run_date(start_timestamp_as_str)
     # Set results destination dir and clear it if is already filled.
     local_results_dir = "."
@@ -435,7 +439,7 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = (
-        f"amp.oms.reconciliation.build_reconciliation_configs"
+        f'amp.oms.reconciliation.build_reconciliation_configs'
         + f'(mode="{mode}", start_timestamp_as_str="{start_timestamp_as_str}", '
         + f'end_timestamp_as_str="{end_timestamp_as_str}")'
     )
