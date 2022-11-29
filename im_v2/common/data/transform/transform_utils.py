@@ -264,11 +264,12 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
         (VWAP) or time-weighted average price (TWAP)
     :return data resampled to 1 minute.
     """
-    # Set resample arguments according to our data invariant [a, b).
+    # Set resample arguments according to our data invariant [a, b) and
+    #  set label to 'b';
     resample_kwargs = {
         "rule": "T",
         "closed": "left",
-        "label": "left",
+        "label": "right",
     }
     if mode == "VWAP":
         bid_price = calculate_vwap(
@@ -281,7 +282,7 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     elif mode == "TWAP":
         bid_ask_price_df = (
             data[["bid_size", "ask_size"]]
-            .groupby(pd.Grouper(freq=resample_kwargs["rule"]))
+            .groupby(pd.Grouper(freq=resample_kwargs["rule"], label=resample_kwargs["label"]))
             .mean()
         )
     else:
