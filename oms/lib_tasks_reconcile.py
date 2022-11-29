@@ -365,7 +365,7 @@ def reconcile_copy_prod_data(
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     hs3.dassert_path_exists(system_log_dir, aws_profile)
     # Set target dir.
-    prod_target_dir = os.path.join(target_dir, "prod", system_log_subdir)
+    prod_target_dir = os.path.join(target_dir, "prod")
     _LOG.info("Copying results to '%s'", prod_target_dir)
     # Copy prod run results to the target dir.
     if hs3.is_s3_path(system_log_dir):
