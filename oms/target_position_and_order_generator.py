@@ -409,6 +409,19 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             raise ValueError("Unsupported `backend`=%s", backend)
         # Package the output df.
         if liquidate_holdings:
+            if backend == "cc_pomo":
+                broker = self._portfolio.broker
+                open_positions = broker.get_open_positions()
+                dfs = []
+                for position in open_positions:
+                    curr_num_shares = float(position["info"]["positionAmt"])
+                    full_symbol = position["symbol"]
+                    asset_id = broker._symbol_to_asset_id_mapping[full_symbol]
+                    tmp_df = pd.DataFrame([asset_id, curr_num_shares])
+                    dfs.append(tmp_df)
+                df = pd.concat(dfs)
+                # Then we need to map `curr_num_shares` to the input df.
+                # and do.
             # If we want to liquidate all the holdings, we want to trade to flatten
             # the current positions.
             target_trades_shares = -df["holdings_shares"]
