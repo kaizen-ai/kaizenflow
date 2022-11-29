@@ -429,6 +429,9 @@ def find_bar_timestamp(
     elif mode == "floor":
         bar_timestamp = current_timestamp.floor(reference_timestamp)
         hdbg.dassert_lte(bar_timestamp, current_timestamp)
+    elif mode == "ceil":
+        bar_timestamp = current_timestamp.ceil(reference_timestamp)
+        hdbg.dassert_lte(current_timestamp, bar_timestamp)
     else:
         raise ValueError(f"Invalid mode='{mode}'")
     _LOG.debug(
