@@ -97,7 +97,7 @@ class Test_get_configs_from_command_line_Amp1(hunitest.TestCase):
             experiment_list_config = "universe_v2_0-top2.5T.2020-01-01_2020-03-01"
             config_builder = (
                 "dataflow.backtest.test.test_dataflow_backtest_utils.build_tile_config_list"
-                + f'(backtest_config={experiment_list_config})'
+                + f'("{experiment_list_config}")'
             )
             dst_dir = "./dst_dir"
             experiment_builder = (
