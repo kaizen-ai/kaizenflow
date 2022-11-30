@@ -57,6 +57,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         }
         self.assertDictEqual(actual, expected)
 
+    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
     @umock.patch.object(imvcdeexut, "download_realtime_for_one_exchange")
     def test_main(self, mock_download_realtime: umock.MagicMock) -> None:
         """
