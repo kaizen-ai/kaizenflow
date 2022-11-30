@@ -900,3 +900,58 @@ def load_market_data_info() -> Dict[int, Dict[str, Union[float, int]]]:
     # Convert to int, because asset ids are strings.
     market_info = {int(k): v for k, v in market_info.items()}
     return market_info
+
+
+# #############################################################################
+# NotarizedCcxtBroker
+# #############################################################################
+
+class NotarizedCcxtBroker(ombroker.Broker):
+    def __init__(
+        self,
+        *args: Any,
+        market_info: Dict[int, float],
+        **kwargs: Any,
+    ) -> None:
+        """
+        Ctor.
+
+        :param market_info: it is needed outside the class, e.g., in `TargetPositionAndOrderGenerator`
+        """
+        super().__init__(*args, **kwargs)
+        self.market_info = market_info
+
+    def get_fills(self) -> List[ombroker.Fill]:
+        return self._get_fills_helper()
+
+    async def _submit_orders(
+        self,
+        orders: List[omorder.Order],
+        wall_clock_timestamp: pd.Timestamp,
+        *,
+        dry_run: bool,
+    ) -> Tuple[str, pd.DataFrame]:
+        # Combine all orders in a df.
+        order_dicts = [order.to_dict() for order in orders]
+        order_df = pd.DataFrame(order_dicts)
+        _LOG.debug("order_df=%s", hpandas.df_to_str(order_df))
+        # Save the orders to a log dir.
+        wall_clock_timestamp_as_str = wall_clock_timestamp.strftime("%Y%m%d_%H%M%S")
+        filename = f"{wall_clock_timestamp_as_str}.csv.gz"
+        file_path = os.path.join(self._log_dir, "ccxt_orders", filename)
+        hio.create_enclosing_dir(
+            file_path, incremental=True
+        )
+        order_df.to_csv(file_path)
+        return filename, order_df
+
+    async def _wait_for_accepted_orders(
+        self,
+        file_name: str,
+    ) -> None:
+        """
+        Same as abstract method.
+        """
+        # Orders are always immediately accepted in simulation, so there is
+        # nothing to do here.
+        _ = file_name
