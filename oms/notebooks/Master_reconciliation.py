@@ -155,6 +155,16 @@ dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-
 dassert_equal_dfs(dag_df_prod_past, dag_df_prod[:-1])
 
 # %%
+node_df = dag_df_dict["prod"][dag_node_names[-1]]
+# Check that all dfs in the node are equal.
+for i in range(len(dag_node_timestamps) - 1):
+    past = node_df[dag_node_timestamps[i][0]][1:]
+    late = node_df[dag_node_timestamps[i+1][0]][:-1]
+    is_equal = dassert_equal_dfs(past, late)
+    if not is_equal:
+        _LOG.info(dag_node_timestamps[i][0])
+
+# %%
 compare_dfs_kwargs ={
     "diff_mode": "pct_change",
     "assert_diff_threshold": None,
