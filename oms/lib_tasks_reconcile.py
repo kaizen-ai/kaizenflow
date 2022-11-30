@@ -439,9 +439,9 @@ def reconcile_run_notebook(
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = (
-        f'amp.oms.reconciliation.build_reconciliation_configs'
-        + f'(mode="{mode}", start_timestamp_as_str="{start_timestamp_as_str}", '
-        + f'end_timestamp_as_str="{end_timestamp_as_str}")'
+        f"amp.oms.reconciliation.build_reconciliation_configs"
+        + f"(mode={mode}, start_timestamp_as_str={start_timestamp_as_str},"
+        + f" end_timestamp_as_str={end_timestamp_as_str})"
     )
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
@@ -581,7 +581,7 @@ def reconcile_run_all(
     stage=None,
     mode=None,
     prevent_overwriting=True,
-    skip_notebook=False,
+    run_notebook=False,
     allow_update=False,
     aws_profile=None,
 ):  # type: ignore
@@ -601,7 +601,7 @@ def reconcile_run_all(
         - "manual": the system run is triggered manually
     :param prevent_overwriting: if True write permissions are removed otherwise
         a permissions remain as they are
-    :param skip_notebook: if True do not run the reconcilation notebook otherwise run
+    :param run_notebook: if True run the reconcilation notebook otherwise do not run
     :param allow_update: if True allow to overwrite reconcilation outcomes
         otherwise retain permissions as they are
     :param aws_profile: AWS profile, e.g., "ck"
@@ -654,7 +654,7 @@ def reconcile_run_all(
         prevent_overwriting=prevent_overwriting,
     )
     #
-    if not skip_notebook:
+    if run_notebook:
         reconcile_run_notebook(
             ctx,
             start_timestamp_as_str=start_timestamp_as_str,

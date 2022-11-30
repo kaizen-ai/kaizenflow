@@ -36,17 +36,22 @@ def get_config_list_from_builder(config_builder: str) -> ccocolis.ConfigList:
     # TODO(gp): Fix this.
     m = cast(re.Match, m)
     import_, function, args = m.groups()
+    if args:
+        # Get config builder kwargs from a string of args.
+        kwargs = [arg.split("=") for arg in args.split(", ")]
+        kwargs = {param:value for param, value in kwargs}
+    else:
+        # Set empty kwargs if no args are passed.
+        kwargs = {}
     _LOG.debug("import=%s", import_)
     _LOG.debug("function=%s", function)
-    _LOG.debug("args=%s", args)
+    _LOG.debug("kwargs=%s", kwargs)
     # Import the needed module.
     imp = importlib.import_module(import_)
     # Force the linter not to remove this import which is needed in the following
     # eval.
     _ = imp
-    python_code = "imp.%s(%s)" % (function, args)
-    _LOG.debug("executing '%s'", python_code)
-    config_list = eval(python_code)
+    config_list = eval(f"imp.{function}")(**kwargs)
     _LOG.debug("type(config_list)=%s", str(type(config_list)))
     hdbg.dassert_isinstance(config_list, ccocolis.ConfigList)
     config_list.validate_config_list()

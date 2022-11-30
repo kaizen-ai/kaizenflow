@@ -47,11 +47,13 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-mode = None
-start_timestamp_as_str = None
-end_timestamp_as_str = None
-config_list = oms.build_reconciliation_configs(mode, start_timestamp_as_str, end_timestamp_as_str)
-config = config_list[0]
+config = cconfig.get_config_from_env()
+if not config:
+    mode = None
+    start_timestamp_as_str = None
+    end_timestamp_as_str = None
+    config_list = oms.build_reconciliation_configs(mode, start_timestamp_as_str, end_timestamp_as_str)
+    config = config_list[0]
 print(config)
 
 # %% [markdown]
