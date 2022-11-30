@@ -21,6 +21,7 @@ def process_bid_ask(
     ask_col: str,
     bid_volume_col: str,
     ask_volume_col: str,
+    *,
     requested_cols: Optional[List[str]] = None,
     join_output_with_input: bool = False,
 ) -> pd.DataFrame:
@@ -42,7 +43,7 @@ def process_bid_ask(
     hdbg.dassert_in(ask_col, df.columns)
     hdbg.dassert_in(bid_volume_col, df.columns)
     hdbg.dassert_in(ask_volume_col, df.columns)
-    hdbg.dassert(not (df[bid_col] > df[ask_col]).any())
+    #hdbg.dassert(not (df[bid_col] > df[ask_col]).any())
     supported_cols = [
         "mid",
         "geometric_mid",
