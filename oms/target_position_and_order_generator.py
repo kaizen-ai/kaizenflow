@@ -417,11 +417,14 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                     curr_num_shares = float(position["info"]["positionAmt"])
                     full_symbol = position["symbol"]
                     asset_id = broker._symbol_to_asset_id_mapping[full_symbol]
-                    tmp_df = pd.DataFrame([asset_id, curr_num_shares])
+                    side = position["side"]
+                    tmp_df = pd.DataFrame([asset_id, side, curr_num_shares])
                     dfs.append(tmp_df)
                 df = pd.concat(dfs)
-                # Then we need to map `curr_num_shares` to the input df.
-                # and do.
+                # Once we receive all open positions (curr_num_shares), we need
+                # to update `holdings_shares` in the input df. We can use `pd.map()`
+                # to map the values using asset_ids. Moreoverer, we need to flip
+                # the sign based on `side` of an order.
             # If we want to liquidate all the holdings, we want to trade to flatten
             # the current positions.
             target_trades_shares = -df["holdings_shares"]
