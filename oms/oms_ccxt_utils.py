@@ -94,7 +94,7 @@ def get_CcxtBroker_example1(
     :return: initialized CCXT broker
     """
     # Set default broker values.
-    universe = "v5"
+    universe = "v7"
     portfolio_id = "ccxt_portfolio_id"
     strategy_id = "SAU1"
     account_type = "trading"
