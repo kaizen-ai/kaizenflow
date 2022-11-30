@@ -47,9 +47,9 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = "20221109"
-prod_subdir = None
-config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
+# date_str = "20221123"
+# prod_subdir = None
+config_list = oms.build_reconciliation_configs("manual", "20221123_101249", "20221123_121249")
 config = config_list[0]
 print(config)
 
@@ -133,36 +133,38 @@ dag_df_dict = oms.load_dag_outputs(
 # TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
 # the other one for all nodes, all timestamps for comparison.
 dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
-dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+# dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 
 # %%
-def dassert_equal_dfs(past_df, late_df) -> bool:
+def dassert_equal_dfs(
+        past_df: pd.DataFrame, late_df: pd.DataFrame
+) -> None:
     """
     Check that two data frames are equal.
     """
-    # Pick indices of rows that are different.
-    cut_past_df = past_df[1:253]
-    cut_late_df = late_df[1:253]
-    past_df = pd.concat([cut_past_df, past_df[260:]])
-    late_df = pd.concat([cut_late_df, late_df[260:]])
-    return past_df.equals(late_df)
+    # Make dfs start and end timestamps are the same for
+    # both dfs.
+    past_df = past_df[1:]
+    late_df = late_df[:-1]
+    # Remove the first raw from both dfs.
+    past_df = past_df[1:]
+    late_df = late_df[1:]
+    # Exclude the time range `04:10:00-05:00 - 04:40:00-05:00`
+    # 3 days before the prod run.
+    cut_past_df = past_df.drop(past_df.index[253:260])
+    cut_late_df = late_df.drop(late_df.index[253:260])
+    #
+    is_equal = cut_past_df.equals(cut_late_df)
+    hdbg.dassert(is_equal)
 
 
 # %%
-dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]][1:]
-dassert_equal_dfs(dag_df_prod_past, dag_df_prod[:-1])
-
-# %%
-node_df = dag_df_dict["prod"][dag_node_names[-1]]
-# Check that all dfs in the node are equal.
-for i in range(len(dag_node_timestamps) - 1):
-    past = node_df[dag_node_timestamps[i][0]][1:]
-    late = node_df[dag_node_timestamps[i+1][0]][:-1]
-    is_equal = dassert_equal_dfs(past, late)
-    if not is_equal:
-        _LOG.info(dag_node_timestamps[i][0])
+node_dfs = list(dag_df_dict["prod"][dag_node_names[-1]].values())
+# Check that all dfs of the node are equal.
+for previous_df, current_df in zip(node_dfs, node_dfs[1:]):
+    dassert_equal_dfs(previous_df, current_df)
 
 # %%
 compare_dfs_kwargs ={
