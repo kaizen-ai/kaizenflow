@@ -637,8 +637,18 @@ def save_parquet(
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
-
-
+        
+def _build_s3_dataset_path(s3_bucket: str, *, args: Dict[str, Any]) -> str:
+    """
+    Build a path to the dataset 
+    """
+    # Read the latest version of data schema im im_v2/common/data/extract/data_schema
+    #  we can add support to read custom version later. 
+    # We can reuse some of the logic from loading and working with asset universe.
+    # We also validate the arguments based on allowed values. 
+    pass
+    
+# TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
@@ -650,7 +660,7 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
+    path_to_exchange = os.path.join(args["s3_path"]
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])

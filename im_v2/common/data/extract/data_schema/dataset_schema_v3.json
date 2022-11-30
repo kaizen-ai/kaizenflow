@@ -1,0 +1,10 @@
+{
+    "dataset_signature": 
+        "download_mode.downloading_entity.action_tag.data_format.data_type.asset_type.universe.vendor.exchange.version",
+    "allowed_values": {
+        "download_mode": ["bulk", "periodic_daily"],
+        "downloading_entity": ["airflow", "manual"],
+        "action_tag": ["downloaded_1sec", "resampled_1min"]      
+    },
+    "version": "v3" 
+}
