@@ -441,9 +441,6 @@ def reconcile_run_notebook(
     config_builder = (
         f'amp.oms.reconciliation.build_reconciliation_configs'
         + f'("{mode}", "{start_timestamp_as_str}", "{end_timestamp_as_str}")'
-        # f"amp.oms.reconciliation.build_reconciliation_configs"
-        # + f"(mode={mode}, start_timestamp_as_str={start_timestamp_as_str},"
-        # + f" end_timestamp_as_str={end_timestamp_as_str})"
     )
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
