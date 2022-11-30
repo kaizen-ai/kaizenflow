@@ -92,7 +92,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type
-    # TODO(Grisha): @Dan Should we pass stage as param?
     stage = "preprod"
     broker = oomccuti.get_CcxtBroker_example1(
         market_data, exchange_id, contract_type, stage

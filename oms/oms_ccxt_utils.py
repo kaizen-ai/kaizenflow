@@ -86,7 +86,7 @@ def get_CcxtBroker_example1(
     stage: str,
 ) -> occxbrok.CcxtBroker:
     """
-    Set up an example broker in testnet for debugging.
+    See `CcxtBroker` ctor for parameters description.
 
     :param exchange_id: name of exchange, e.g. "binance"
     :param contract_type: e.g. "futures"
@@ -94,11 +94,14 @@ def get_CcxtBroker_example1(
     :return: initialized CCXT broker
     """
     # Set default broker values.
-    universe = "v7"
-    portfolio_id = "ccxt_portfolio_id"
-    strategy_id = "SAU1"
+    universe = "v7.1"
+    portfolio_id = "ccxt_portfolio_1"
+    strategy_id = "C1b"
     account_type = "trading"
-    secret_id = ohsseide.SecretIdentifier(exchange_id, stage, account_type, 1)
+    secret_id = 1
+    secret_identifier = ohsseide.SecretIdentifier(
+        exchange_id, stage, account_type, secret_id
+    )
     # Initialize the broker.
     broker = occxbrok.CcxtBroker(
         exchange_id,
@@ -107,7 +110,7 @@ def get_CcxtBroker_example1(
         account_type,
         portfolio_id,
         contract_type,
-        secret_id,
+        secret_identifier,
         market_data=market_data,
         strategy_id=strategy_id,
     )
