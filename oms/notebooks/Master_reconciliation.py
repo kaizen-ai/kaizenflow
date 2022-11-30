@@ -136,71 +136,25 @@ dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]
 dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
-# %%
-dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]]
-dag_df_prod_past.equals(dag_df_prod[:-1])
 
 # %%
-past2 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-3][0]]
-past3 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-4][0]][1:]
-inter(past3, past2)
-
-# %%
-cond = (past2.index > pd.Timestamp('2022-11-06 04:00:00-0500')) & (past2.index < pd.Timestamp('2022-11-06 04:35:00-0500'))
-cond1 = (past3.index > pd.Timestamp('2022-11-06 04:00:00-0500')) & (past3.index < pd.Timestamp('2022-11-06 04:35:00-0500'))
-past2.name = "late"
-past2.insert(0, "df_name", past2.name)
-past3.name = "early"
-past3.insert(0, "df_name", past3.name)
-cols_concat = pd.concat([past2[cond], past3[cond1]], axis=1)
-idx_concat = pd.concat([past2[cond], past3[cond1]], axis=0)
-
-# %%
-idx_concat.T.style.set_sticky(axis=1)
-
-# %%
-idx_concat.T
-
-# %%
-past4 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[1][0]]
-past5 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[0][0]][1:]
-inter(past5, past4)
-
-# %%
-past6 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-5][0]]
-past7 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-6][0]][1:]
-inter(past7, past6)
-
-# %%
-past8 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-6][0]]
-past9 = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-7][0]][1:]
-inter(past9, past8)
-
-# %%
-past8.index.min(), past8.index.max()
-
-# %%
-past9.index.min(), past9.index.max()
-
-
-# %%
-def compare_past_predictions(df1: pd.DataFrame, df2: pd.DataFrame):
-    df1_copy = df1.copy()
-    df1_copy = df1_copy.reset_index(drop=False)
+def dassert_equal_dfs(past_df, late_df) -> bool:
+    """
+    Check that two data frames are equal.
+    """
+    # Pick indices of rows that are different.
+    cond = past_df.compare(late_df)
+    past_df_cond = past_df.index.isin(cond.index)
+    late_df_cond = late_df.index.isin(cond.index)
     #
-    df2_copy = df2.copy()
-    df2_copy = df2_copy.reset_index(drop=False)
-    merged_df = df1_copy.merge(df2_copy, how="inner")
-    merged_df.set_index("end_timestamp", inplace=True)
-    return merged_df
+    past_df = past_df[~past_df_cond]
+    late_df = late_df[~late_df_cond]
+    return past_df.equals(late_df)
 
 
-def inter(past_df, late_df):
-    comparison = compare_past_predictions(past_df, late_df)
-    inter = set(list(past_df)).difference(set(list(late_df)))
-    diff = set(list(late_df.index)).difference(set(list(comparison.index)))
-    return diff
-
+# %%
+dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]][1:]
+compare_dfs(dag_df_prod_past, dag_df_prod[:-1])
 
 # %%
 compare_dfs_kwargs ={
