@@ -16,6 +16,7 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
         """
         `dataset = bid_ask`
         `contract_type = futures`
+        `tag = ""`
         """
         universe_version = "v2"
         resample_1min = True
@@ -94,6 +95,62 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
             "full_symbol": ["binance::BTC_USDT", "binance::DOGE_USDT"]
         }
         expected_column_names = None
+        self._test_read_data5(
+            client,
+            full_symbols,
+            start_ts,
+            end_ts,
+            expected_signature=expected_signature,
+            expected_length=expected_length,
+            expected_column_names=expected_column_names,
+            expected_column_unique_values=expected_column_unique_values,
+        )
+
+
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
+class TestCryptoChassisHistoricalPqByTileClient2(icdc.ImClientTestCase):
+    @pytest.mark.slow("Slow via GH, fast on the server")
+    def test1(self) -> None:
+        """
+        `dataset = bid_ask`
+        `contract_type = futures`
+        `tag = resampled_1min`
+        """
+        universe_version = "v2"
+        resample_1min = True
+        contract_type = "futures"
+        tag = "resampled_1min"
+        client = imvccdcccce.get_CryptoChassisHistoricalPqByTileClient_example2(
+            universe_version,
+            resample_1min,
+            contract_type,
+            tag,
+        )
+        full_symbols = ["binance::BTC_USDT", "binance::DOGE_USDT"]
+        start_ts = pd.Timestamp("2022-11-05 13:00:00+00:00")
+        end_ts = pd.Timestamp("2022-11-05 14:00:00+00:00")
+        expected_signature = r"""# df=
+        index=[2022-11-05 13:00:00+00:00, 2022-11-05 14:00:00+00:00]
+        columns=full_symbol,bid_price,bid_size,ask_price,ask_size
+        shape=(122, 5)
+                                  full_symbol     bid_price     bid_size     ask_price     ask_size
+        timestamp
+        2022-11-05 13:00:00+00:00   binance::BTC_USDT  21295.193172     1056.388  21294.732442     1306.262
+        2022-11-05 13:00:00+00:00  binance::DOGE_USDT      0.127876  2341262.000      0.127916  3669090.000
+        2022-11-05 13:01:00+00:00   binance::BTC_USDT  21292.477087     1439.011  21289.924597     1084.776
+        ...
+        2022-11-05 13:59:00+00:00  binance::DOGE_USDT      0.127682  1841378.000      0.127619  2266535.000
+        2022-11-05 14:00:00+00:00   binance::BTC_USDT  21262.852986     1275.421  21262.126973      492.722
+        2022-11-05 14:00:00+00:00  binance::DOGE_USDT      0.127745  2805192.000      0.127770  2139891.000
+        """
+        expected_length = 122
+        expected_column_names = None
+        expected_column_unique_values = {
+            "full_symbol": ["binance::BTC_USDT", "binance::DOGE_USDT"]
+        }
         self._test_read_data5(
             client,
             full_symbols,

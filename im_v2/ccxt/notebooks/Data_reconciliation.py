@@ -17,7 +17,7 @@
 #
 # This notebook is used to perform reconciliation on data obtained in realtime with batch data downloaded at once, i.e. once a day.
 # As displayed below, the notebook assumes environment variables for the reconciliation parameters. The intended use
-# is via invoke target `dev_scripts.lib_tasks_reconcile.reconcile_data_run_notebook`
+# is via invoke target `oms.lib_tasks_reconcile.reconcile_data_run_notebook`
 
 # %% [markdown]
 # ## Imports and logging
@@ -64,6 +64,8 @@ config["resample_1min"] = config["resample_mode"] == "resample_1min"
 config = config.to_dict()
 # bid_ask_accuracy needs to be cast to int if its defined
 config["bid_ask_accuracy"] = int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
+# bid_ask_depth needs to be cast to int if its defined
+config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
 config
 
 # %% [markdown]

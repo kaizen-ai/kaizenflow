@@ -116,8 +116,6 @@ VAL=$(which python)
 echo "which python: $VAL"
 VAL=$(python -V)
 echo "python -V: $VAL"
-VAL=$(python -c "import pandas; print(pandas.__version__)")
-echo "pandas: $VAL"
 VAL=$(python -c "import helpers; print(helpers)")
 echo "helpers: $VAL"
 

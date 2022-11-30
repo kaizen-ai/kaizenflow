@@ -157,8 +157,12 @@ def apply_history_lookback(
     if days is None:
         dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
         dag_config = system.config.get_and_mark_as_used("dag_config")
+        mark_key_as_used = True
         days = (
-            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+            dag_builder.get_required_lookback_in_effective_days(
+                dag_config, mark_key_as_used
+            )
+            * 2
         )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
@@ -664,7 +668,10 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
     #
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
     #
     bar_duration_in_secs = pd.Timedelta(trading_period_str).seconds
@@ -684,7 +691,9 @@ def apply_DagRunner_config_for_crypto(
         trading_period_str,
         bar_duration_in_secs,
     ) = _get_trading_period_str_and_bar_duration_in_secs(system)
-    wake_up_timestamp = None
+    wake_up_timestamp = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "wake_up_timestamp"), default_value=None
+    )
     rt_timeout_in_secs_or_time = None
     #
     system = _apply_DagRunner_config(

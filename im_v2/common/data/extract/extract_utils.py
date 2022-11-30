@@ -8,9 +8,9 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 import argparse
 import asyncio
-import copy
 import logging
 import os
+import re
 import time
 from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
@@ -45,7 +45,7 @@ WEBSOCKET_CONFIG = {
         "max_buffer_size": 0,
         "sleep_between_iter_in_ms": 60000,
     },
-    "bid_ask": {"max_buffer_size": 500, "sleep_between_iter_in_ms": 200},
+    "bid_ask": {"max_buffer_size": 250, "sleep_between_iter_in_ms": 200},
 }
 
 
@@ -388,14 +388,11 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     while pd.Timestamp.now(tz) < stop_time:
         iter_start_time = pd.Timestamp.now(tz)
         for curr_pair in currency_pairs:
-            # CCXT uses their own 'dict-like' structure for storing the data
-            #  deepcopy is needed to retain the older data.
-            data_point = copy.deepcopy(
-                exchange.download_websocket_data(
-                    data_type, exchange_id, curr_pair
-                )
+            data_point = exchange.download_websocket_data(
+                data_type, exchange_id, curr_pair
             )
-            data_buffer.append(data_point)
+            if data_point != None:
+                data_buffer.append(data_point)
         # If the buffer is full or this is the last iteration, process and save buffered data.
         if (
             len(data_buffer) >= WEBSOCKET_CONFIG[data_type]["max_buffer_size"]
@@ -679,6 +676,8 @@ def download_historical_data(
             converted_currency_pair,
             start_timestamp=start_timestamp,
             end_timestamp=end_timestamp,
+            # If data_type = ohlcv, depth is ignored.
+            depth=args.get("bid_ask_depth"),
         )
         if data.empty:
             continue
@@ -696,6 +695,7 @@ def download_historical_data(
                 args["unit"],
                 args["aws_profile"],
                 args["data_type"],
+                mode="append",
             )
         elif args["file_format"] == "csv":
             save_csv(
@@ -720,7 +720,11 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
         _LOG.warning("Extracted Dataframe contains NaNs")
     for column in data.columns:
         # Extract the expected type of the column from the schema.
-        expected_type = DATASET_SCHEMA[column]
+        #  Bid/ask columns have level suffix equal to _l1, _l2 etc.
+        #  For simplicity we store only base names in the schema
+        #  table.
+        column_re = re.sub("_l\d+$", "", column)
+        expected_type = DATASET_SCHEMA[column_re]
         if (
             expected_type in ["float64", "int32", "int64"]
             and pd.to_numeric(data[column], errors="coerce").notnull().all()

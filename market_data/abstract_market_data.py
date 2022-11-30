@@ -149,6 +149,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._sleep_in_secs = sleep_in_secs
         #
         self._timezone = timezone
+        if column_remap is not None:
+            hdbg.dassert_isinstance(column_remap, dict)
         self._column_remap = column_remap
         #
         self._filter_data_mode = filter_data_mode

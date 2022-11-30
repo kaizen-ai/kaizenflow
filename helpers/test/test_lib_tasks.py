@@ -167,6 +167,8 @@ class TestDryRunTasks1(hunitest.TestCase):
         cmd = f"SKIP_VERSION_CHECK=1 invoke {opts} {target} | grep -v INFO | grep -v '>>ENV<<:'"
         _, act = hsystem.system_to_string(cmd)
         act = hprint.remove_non_printable_chars(act)
+        regex = "(WARN|INFO)\s+hcache.py"
+        act = hunitest.filter_text(regex, act)
         if check_string:
             self.check_string(act)
 
@@ -197,6 +199,7 @@ class TestDryRunTasks1(hunitest.TestCase):
     # #########################################################################
     # TODO(gp): -> TestDockerCommands1
 
+    @pytest.mark.slow("~6 sec.")
     @pytest.mark.skipif(
         hserver.is_inside_ci(), reason="In CI the output is different"
     )
@@ -207,6 +210,7 @@ class TestDryRunTasks1(hunitest.TestCase):
         check_string = False
         self.dry_run(target, check_string=check_string)
 
+    @pytest.mark.slow("~6 sec.")
     def test_docker_ps(self) -> None:
         target = "docker_ps"
         self.dry_run(target)

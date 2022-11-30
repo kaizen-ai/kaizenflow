@@ -800,12 +800,12 @@ def _dassert_is_subsequent_version(
     container_dir_name: str = ".",
 ) -> None:
     """
-    Check that version is strictly bigger than the current one as specified in
-    the changelog.
+    Check that version is bigger than the current one as specified in the
+    changelog.
     """
     if version != _IMAGE_VERSION_FROM_CHANGELOG:
         current_version = hversio.get_changelog_version(container_dir_name)
-        hdbg.dassert_lt(current_version, version)
+        hdbg.dassert_lte(current_version, version)
 
 
 # ////////////////////////////////////////////////////////////////////////////////
