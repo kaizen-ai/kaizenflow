@@ -143,18 +143,16 @@ def dassert_equal_dfs(past_df, late_df) -> bool:
     Check that two data frames are equal.
     """
     # Pick indices of rows that are different.
-    cond = past_df.compare(late_df)
-    past_df_cond = past_df.index.isin(cond.index)
-    late_df_cond = late_df.index.isin(cond.index)
-    #
-    past_df = past_df[~past_df_cond]
-    late_df = late_df[~late_df_cond]
+    cut_past_df = past_df[1:253]
+    cut_late_df = late_df[1:253]
+    past_df = pd.concat([cut_past_df, past_df[260:]])
+    late_df = pd.concat([cut_late_df, late_df[260:]])
     return past_df.equals(late_df)
 
 
 # %%
 dag_df_prod_past = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-2][0]][1:]
-compare_dfs(dag_df_prod_past, dag_df_prod[:-1])
+dassert_equal_dfs(dag_df_prod_past, dag_df_prod[:-1])
 
 # %%
 compare_dfs_kwargs ={
