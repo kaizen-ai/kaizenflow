@@ -65,9 +65,8 @@ def _apply_cc_limits(
             final_order_amount = 0.0
     else:
         raise ValueError(f"Unsupported stage={stage}")
-    # No need to round Nones or zeros.
-    if final_order_amount and final_order_amount != 0:
-        hdbg.dassert_isinstance(final_order_amount, float)
+    hdbg.dassert_isinstance(final_order_amount, float)
+    if final_order_amount != 0:
         # 3) Round the order amount in accordance with exchange rules.
         amount_precision = asset_market_info["amount_precision"]
         rounded_order_amount = round(final_order_amount, amount_precision)
@@ -109,7 +108,7 @@ def apply_cc_limits(
         2540896331                0    6.5356                  0 2022-11-28 14:26:43.876138-05:00   -0.561495    0.000781       0                  -52.2848                -52.2848                  -8.0                    -1.0
         ```
     :param broker: Broker class instance
-    :param round_mode: shares roundning mode
+    :param round_mode: shares rounding mode
         "round": round the amount of shares according to the exchange rules
         "check": check with an assertion whether target shares are rounded or not
     :return: DataFrame with updated orders
@@ -142,33 +141,3 @@ def apply_cc_limits(
         hpandas.df_to_str(forecast_df, num_rows=None),
     )
     return forecast_df
-
-
-# TODO(Grisha): should we remove since we do not the logging anymore?
-def read_apply_cc_limits_logs(
-    log_dir: str,
-) -> Tuple[Dict[str, pd.DataFrame], Dict[str, pd.DataFrame]]:
-    """
-    Read logs for logs on application of cc limits.
-
-    The function reads orders before and after application of
-    constraints, each type combined into a separate dataframe.
-    """
-    # Get the file names.
-    log_pattern = os.path.join(log_dir, "forecast_df*.csv")
-    file_names = glob.glob(log_pattern)
-    # Read orders before exchange constraints.
-    file_names_before = [f for f in file_names if "before_apply_cc_limits" in f]
-    forecast_df_before = []
-    for file_name in file_names_before:
-        df_tmp = pd.read_csv(file_name)
-        forecast_df_before.append(df_tmp)
-    forecast_df_before = pd.concat(forecast_df_before)
-    # Read orders after exchange constraints.
-    file_names_after = [f for f in file_names if "after_apply_cc_limits" in f]
-    forecast_df_after = []
-    for file_name in file_names_after:
-        df_tmp = pd.read_csv(file_name)
-        forecast_df_after.append(df_tmp)
-    forecast_df_after = pd.concat(forecast_df_after)
-    return forecast_df_before, forecast_df_after
