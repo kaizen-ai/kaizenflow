@@ -308,8 +308,8 @@ def _prepare_dfs_for_comparison(
     """
     Prepare 2 consecutive node dataframes for comparison.
 
-    Dataframes contain a 30-minutes burn-in interval required for volatility
-    computations. This interval should be dropped. 
+    Dataframes contain a 30-minutes burn-in interval required for
+    volatility computations. This interval should be dropped.
     """
     # Assert that both dfs are sorted by timestamp.
     hpandas.dassert_strictly_increasing_index(previous_df)
