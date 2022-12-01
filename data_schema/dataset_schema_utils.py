@@ -108,7 +108,21 @@ def _validate_dataset_signature_semantics(signature: str, dataset_schema: Dict[s
     :param dataset_schema: dataset schema to validate against
     :return: True if the signature is semantically correct, False otherwise
     """
-    return False
+    # TODO(Juraj): syntax checks starts the same, avoid duplication
+    #  according to DRY.
+    token_separator_char = dataset_schema["token_separator_character"]
+    signature_list = signature.split(token_separator_char)
+    schema_signature_list = dataset_schema["dataset_signature"].split(token_separator_char)
+    allowed_values_dict = dataset_schema["allowed_values"]
+    # Assumes the syntax check has been performed.
+    is_semantics_correct = True
+    for token, value in zip(schema_signature_list, signature_list):
+        if value not in allowed_values_dict[token]:
+            _LOG.warning(f"Identifier {token} contains invalid value: {value}, \
+                        allowed_values: {allowed_values_dict[token]}")
+            is_semantics_correct = False
+    return is_semantics_correct
+    
 
 def validate_dataset_signature(signature: str, dataset_schema: Dict[str, Any]) -> bool:
     """
@@ -123,13 +137,16 @@ def validate_dataset_signature(signature: str, dataset_schema: Dict[str, Any]) -
     :return: True if the signature is syntactically AND semantically correct, False otherwise
     """
     # TODO(Juraj): Ideally this function should
-    # encapsulate a final state machine-like validator
-    # but for now the primitive check is good enough.
-    # Check signature syntax
-    is_correct_signature = _validate_dataset_signature_syntax(signature)
+    #  encapsulate a final state machine-like validator
+    #  but for now this more primitive check is good enough.
+    # Check syntax of the signature.
+    # Currently the smenatic check implicitly decides the syntactic check
+    #  as well, but later down the line the syntax/semantics 
+    #  distinction might make sense.
+    is_correct_signature = _validate_dataset_signature_syntax(signature, dataset_schema)
     # If syntax is correct, check the semantics.
     if is_correct_signature:
-        is_correct_signature = _validate_dataset_signature_semantics(signatue)
+        is_correct_signature = _validate_dataset_signature_semantics(signature, dataset_schema)
     else:
-        _LOG.warning("Syntax validation failed, skipping semantic validation")
+        _LOG.warning("Syntax validation failed, skipping semantic validation.")
     return is_correct_signature

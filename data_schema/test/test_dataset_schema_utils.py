@@ -19,7 +19,7 @@ class TestGetDatasetSchema1(hunit_test.TestCase):
     
     @umock.patch.object(dsdascut, "_get_dataset_schema_file_path")
     @umock.patch.object(hio, "from_json")
-    def test_get_dataset_schema(
+    def test_get_dataset_schema1(
         self, 
         mock_from_json: umock.MagicMock,  
         mock_get_dataset_schema_file_path: umock.MagicMock
@@ -36,39 +36,61 @@ class TestGetDatasetSchema1(hunit_test.TestCase):
         self.assertDictEqual(expected_value, actual_value)
         
     
-class TestValidateDatasetSignatureSyntax(hunit_test.TestCase):
-    def test_validate_dataset_signature_syntax_valid(self) -> None:
+class TestValidateDatasetSignatureSyntax1(hunit_test.TestCase):
+    def test_validate_dataset_signature_syntax_valid1(self) -> None:
         """
         Assure that valid signature passes the syntax check.
         """
         # This signature is valid according to the DUMMY_SCHEMA.
-        valid_signature = 
-        
-        pass
+        valid_signature = "bulk.airflow.downloaded_1sec"
+        self.assertTrue(dsdascut._validate_dataset_signature_syntax(valid_signature, DUMMY_SCHEMA))
     
-    def test_validate_dataset_signature_syntax_invalid(self) -> None:
+    def test_validate_dataset_signature_syntax_invalid1(self) -> None:
         """
         Assure that invalid signature fails the syntax check.
         """
-        pass
+        # This signature is invalid according to the DUMMY_SCHEMA.
+        invalid_signature = "airflow.downloaded_1sec"
+        self.assertFalse(dsdascut._validate_dataset_signature_syntax(invalid_signature, DUMMY_SCHEMA))
         
-class TestValidateDatasetSignatureSemantics(hunit_test.TestCase):
-    def test_validate_dataset_signature_semantics_valid(self) -> None:
+class TestValidateDatasetSignatureSemantics1(hunit_test.TestCase):
+    def test_validate_dataset_signature_semantics_valid1(self) -> None:
         """
+        Assure that valid signature passes the semantics check.
         """
-        pass
+        # This signature is valid according to the DUMMY_SCHEMA.
+        valid_signature = "bulk.airflow.downloaded_1sec"
+        self.assertTrue(dsdascut._validate_dataset_signature_semantics(valid_signature, DUMMY_SCHEMA))
     
-    def test_validate_dataset_signature_semantics_invalid(self) -> None:
+    def test_validate_dataset_signature_semantics_invalid1(self) -> None:
         """
+        Assure that invalid signature fails the semantics check.
         """
-        pass
+        # This signature is invalid according to the DUMMY_SCHEMA.
+        invalid_signature = "bulk.airflow.downloaded_48sec"
+        self.assertFalse(dsdascut._validate_dataset_signature_semantics(invalid_signature, DUMMY_SCHEMA))
         
-class TestValidateDatasetSignature(hunit_test.TestCase):
-    def test_validate_dataset_signature_valid(self) -> None:
+class TestValidateDatasetSignature1(hunit_test.TestCase):
+    def test_validate_dataset_signature_valid1(self) -> None:
         """
+        Assure that valid signature passes the validation.
         """
-        pass
+        # This signature is valid according to the DUMMY_SCHEMA.
+        valid_signature = "bulk.airflow.downloaded_1sec"
+        self.assertTrue(dsdascut.validate_dataset_signature(valid_signature, DUMMY_SCHEMA))
     
-    def test_validate_dataset_signature_invalid(self) -> None:
+    def test_validate_dataset_signature_invalid1(self) -> None:
         """
+        Assure that syntactically invalid signature fails the validation.
         """
+        # This signature is invalid according to the DUMMY_SCHEMA.
+        invalid_signature = "bulk.downloaded_48sec"
+        self.assertFalse(dsdascut.validate_dataset_signature(invalid_signature, DUMMY_SCHEMA))
+        
+    def test_validate_dataset_signature_invalid2(self) -> None:
+        """
+        Assure that semantically invalid signature fails the validation.
+        """
+        # This signature is invalid according to the DUMMY_SCHEMA.
+        invalid_signature = "madeup.airflow.downloaded_1sec"
+        self.assertFalse(dsdascut.validate_dataset_signature(invalid_signature, DUMMY_SCHEMA))
