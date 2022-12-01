@@ -47,8 +47,11 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
+# Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
+# in the system reconciliation flow.
 config = cconfig.get_config_from_env()
 if not config:
+    # Specify the config directly when running the notebook manually.
     mode = None
     start_timestamp_as_str = None
     end_timestamp_as_str = None

@@ -51,7 +51,12 @@ def build_reconciliation_configs(
     Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
-    :param date_str: specify which date to use for reconciliation
+    :param mode: reconciliation run mode
+    :param start_timestamp_as_str: string representation of timestamp
+        at which to start reconcile run, e.g. "20221010_060500"
+    :param end_timestamp_as_str: string representation of timestamp
+            at which to end reconcile run, e.g. "20221010_080000"
+    :return: list of reconciliation configs
     """
     mode = resolve_run_mode(mode)
     start_timestamp_as_str, end_timestamp_as_str = resolve_timestamps(
