@@ -20,6 +20,7 @@
 # %%
 import logging
 import os
+from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -46,11 +47,9 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-# date_str = "20221123"
-# prod_subdir = None
-config_list = oms.build_reconciliation_configs(
-    "manual", "20221123_101249", "20221123_121249"
-)
+date_str = "20221128"
+prod_subdir = None
+config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
 config = config_list[0]
 print(config)
 
@@ -134,41 +133,62 @@ dag_df_dict = oms.load_dag_outputs(
 # TODO(Grisha): use 2 dicts -- one for the last node, last timestamp,
 # the other one for all nodes, all timestamps for comparison.
 dag_df_prod = dag_df_dict["prod"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
-# dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
+dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 
 # %%
 # TODO(Nina): move to a lib.
-def dassert_equal_dfs(
+def _prepare_dfs_for_comparison(
     previous_df: pd.DataFrame, current_df: pd.DataFrame
-) -> None:
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
     # Check that all the node dataframes are equal.
     """
-    # Align dataframe indices.
+    # Assert that both dfs are sorted by timestamp.
+    hpandas.dassert_strictly_increasing_index(previous_df)
+    hpandas.dassert_strictly_increasing_index(current_df)
+    # Align the indices.
     previous_df = previous_df[1:]
     current_df = current_df[:-1]
-    # Remove the first raw from both dataframes since some metrics
-    # are not being computed right away.
+    # Remove the first rows.
     previous_df = previous_df[1:]
     current_df = current_df[1:]
-    # 21 hour after the data starts there is a 30 minute interval
-    # at which previous dataframe is missing values for several
-    # columns that require some data to burn-in. We should remove
-    # them before the comparison.
+    # Remove burn-in interval.
     previous_df = previous_df.drop(previous_df.index[253:260])
     current_df = current_df.drop(current_df.index[253:260])
-    #
-    is_equal = previous_df.equals(current_df)
-    hdbg.dassert(is_equal)
+    # Assert both dfs have equal size.
+    hdbg.dassert_eq(previous_df.shape, current_df.shape)
+    return previous_df, current_df
+
+
+def check_dag_output_self_consistency(node_dfs: Dict[pd.Timestamp, pd.DataFrame]) -> None:
+    # Make sure that the dict is sorted by timestamp.
+    node_dfs = dict(sorted(node_dfs.items()))
+    node_dfs = list(node_dfs.items())
+    for i in range(len(node_dfs)-1):
+        previous_timestamp = node_dfs[i][0]
+        previous_df = node_dfs[i][1]
+        previous_df = previous_df.sort_index()
+        #
+        current_timestamp = node_dfs[i+1][0]
+        current_df = node_dfs[i+1][1]
+        current_df = current_df.sort_index()
+        _LOG.debug("Comparing dfs for timestamps %s and %s", current_timestamp, previous_timestamp)
+        previous_df, current_df = _prepare_dfs_for_comparison(previous_df, current_df)
+        # Assert if the difference is above the specified threshold.
+        assert_diff_threshold = 1e-3
+        _ = hpandas.compare_dfs(
+            previous_df,
+            current_df,
+            diff_mode = "pct_change", 
+            assert_diff_threshold=assert_diff_threshold
+        )
 
 
 # %%
-node_dfs = list(dag_df_dict["prod"][dag_node_names[-1]].values())
-# Check that all dfs of the node are equal.
-for previous_df, current_df in zip(node_dfs, node_dfs[1:]):
-    dassert_equal_dfs(previous_df, current_df)
+node_dfs = dag_df_dict["prod"][dag_node_names[-1]]
+check_dag_output_self_consistency(node_dfs)
 
 # %%
 compare_dfs_kwargs = {
