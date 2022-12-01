@@ -21,7 +21,6 @@
 import logging
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
@@ -49,7 +48,9 @@ hprint.config_notebook()
 # %%
 # date_str = "20221123"
 # prod_subdir = None
-config_list = oms.build_reconciliation_configs("manual", "20221123_101249", "20221123_121249")
+config_list = oms.build_reconciliation_configs(
+    "manual", "20221123_101249", "20221123_121249"
+)
 config = config_list[0]
 print(config)
 
@@ -140,7 +141,7 @@ hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 # %%
 # TODO(Nina): move to a lib.
 def dassert_equal_dfs(
-        previous_df: pd.DataFrame, current_df: pd.DataFrame
+    previous_df: pd.DataFrame, current_df: pd.DataFrame
 ) -> None:
     """
     # Check that all the node dataframes are equal.
@@ -148,13 +149,13 @@ def dassert_equal_dfs(
     # Align dataframe indices.
     previous_df = previous_df[1:]
     current_df = current_df[:-1]
-    # Remove the first raw from both dataframes since some metrics 
+    # Remove the first raw from both dataframes since some metrics
     # are not being computed right away.
     previous_df = previous_df[1:]
     current_df = current_df[1:]
-    # 21 hour after the data starts there is a 30 minute interval 
-    # at which previous dataframe is missing values for several 
-    # columns that require some data to burn-in. We should remove 
+    # 21 hour after the data starts there is a 30 minute interval
+    # at which previous dataframe is missing values for several
+    # columns that require some data to burn-in. We should remove
     # them before the comparison.
     previous_df = previous_df.drop(previous_df.index[253:260])
     current_df = current_df.drop(current_df.index[253:260])
@@ -170,13 +171,11 @@ for previous_df, current_df in zip(node_dfs, node_dfs[1:]):
     dassert_equal_dfs(previous_df, current_df)
 
 # %%
-compare_dfs_kwargs ={
+compare_dfs_kwargs = {
     "diff_mode": "pct_change",
     "assert_diff_threshold": None,
 }
-dag_diff_df = oms.compute_dag_outputs_diff(
-    dag_df_dict, compare_dfs_kwargs
-)
+dag_diff_df = oms.compute_dag_outputs_diff(dag_df_dict, compare_dfs_kwargs)
 
 # %%
 max_diff = dag_diff_df.abs().max().max()
@@ -206,7 +205,9 @@ if False:
 # ## Compute DAG delay
 
 # %%
-delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=False)
+delay_in_secs = oms.compute_dag_delay_in_seconds(
+    dag_node_timestamps, display_plot=False
+)
 
 # %% [markdown]
 # # Portfolio
@@ -374,7 +375,7 @@ prod_target_position_df = oms.load_target_positions(
     start_timestamp,
     end_timestamp,
     config["meta"]["bar_duration"],
-    normalize_bar_times=True
+    normalize_bar_times=True,
 )
 hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
 if False:
@@ -384,7 +385,7 @@ if False:
         start_timestamp,
         end_timestamp,
         config["meta"]["bar_duration"],
-        normalize_bar_times=True
+        normalize_bar_times=True,
     )
 
 # %% [markdown]
@@ -413,7 +414,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -434,7 +435,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -455,7 +456,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -476,7 +477,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
@@ -497,7 +498,7 @@ res_df = research_portfolio_df["holdings_shares"]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
