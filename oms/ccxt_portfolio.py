@@ -57,7 +57,7 @@ def get_CcxtPortfolio_prod_instance1(
     :param asset_ids: see `Portfolio.from_cash()`
     """
     # We prefer to configure code statically (e.g., without switches) but in this
-    # case the prod system vs its simulat-able version are so close (and we want to
+    # case the prod Porfolio vs its simulat-able version are so close (and we want to
     # keep them close) that we use a switch.
     if not use_simulation:
         # Build `CcxtBroker` that is connected to the real exchange.

@@ -388,22 +388,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
 def get_Cx_portfolio(
     system: dtfsys.System,
 ) -> oms.Portfolio:
-    # We prefer to configure code statically (e.g., without switches) but in this
-    # case the prod system vs its simulat-able version are so close (and we want to
-    # keep them close) that we use a switch.
-    if not system.use_simulation:
-        # Prod.
-        portfolio = get_Cx_portfolio_prod_instance1(system)
-    else:
-        # Simulation.
-        # TODO(gp): This needs to be fixed before reconciliation.
-        # _LOG.warning("Configuring for simulation")
-        # portfolio = oms.get_DatabasePortfolio_example3(
-        #     system.config["db_connection_object"],
-        #     system.config["event_loop_object"],
-        #     system.market_data,
-        # )
-        pass
+    portfolio = get_Cx_portfolio_prod_instance1(system)
     return portfolio
 
 
