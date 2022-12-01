@@ -65,7 +65,6 @@ def _apply_cc_limits(
             final_order_amount = 0.0
     else:
         raise ValueError(f"Unsupported stage={stage}")
-    # No need to round Nones or zeros.
     hdbg.dassert_isinstance(final_order_amount, float)
     if final_order_amount:
         # 3) Round the order amount in accordance with exchange rules.
