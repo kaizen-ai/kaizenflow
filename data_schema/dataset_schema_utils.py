@@ -4,9 +4,11 @@ import helpers.hgit as hgit
 import helpers.hstring as hstring
 import helpers.hdbg as hdbg
 import os
+import logging
 # TODO(Juraj): At high level this module essentially performs the same thing as 
 #  im_v2/common/universe/universe.py -> try to extract the common logic
 #  according to DRY principle.
+_LOG = logging.getLogger(__name__)
 
 
 def _get_dataset_schema_file_path() -> str:
@@ -24,3 +26,10 @@ def _get_dataset_schema_file_path() -> str:
 def get_dataset_schema() -> Dict[str, Any]:
     ds_file_path = _get_dataset_schema_file_path
     return
+
+
+def validate_dataset_signature(signature: str) -> bool:
+    # TODO(Juraj): Ideally this function should 
+    # encapsulate a final state machine-like validator
+    # but for now the primitive check is good enough.
+    return False
