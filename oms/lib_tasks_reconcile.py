@@ -364,14 +364,15 @@ def reconcile_copy_prod_data(
     )
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     hs3.dassert_path_exists(system_log_dir, aws_profile)
-    # Set target dir.
+    # Set target dirs.
     prod_target_dir = os.path.join(target_dir, "prod")
-    _LOG.info("Copying results to '%s'", prod_target_dir)
+    prod_results_target_dir = os.path.join(prod_target_dir, system_log_subdir)
+    _LOG.info("Copying prod results to '%s'", prod_results_target_dir)
     # Copy prod run results to the target dir.
     if hs3.is_s3_path(system_log_dir):
-        cmd = f"aws s3 cp {system_log_dir} {prod_target_dir} --recursive"
+        cmd = f"aws s3 cp {system_log_dir} {prod_results_target_dir} --recursive"
     else:
-        cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
+        cmd = f"cp -vr {system_log_dir} {prod_results_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
     log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
@@ -379,7 +380,7 @@ def reconcile_copy_prod_data(
     hs3.dassert_path_exists(log_file, aws_profile)
     #
     if hs3.is_s3_path(log_file):
-        cmd = f"aws s3 cp {log_file} {prod_target_dir} --recursive"
+        cmd = f"aws s3 cp {log_file} {prod_target_dir}"
     else:
         cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
