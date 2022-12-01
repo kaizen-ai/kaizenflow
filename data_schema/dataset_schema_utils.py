@@ -31,10 +31,10 @@ def _get_dataset_schema_file_path(*, version: Optional[str] = None) -> str:
     # TODO(Juraj): Implement dynamic version resolving and remove hardcoded logic.
     ds_file_path = os.path.join(
         hgit.get_amp_abs_path(),
-        "im_v2/common/data/extract/data_schema/dataset_schema_v3.json",
+        "data_schema/dataset_schema_versions/dataset_schema_v3.json",
     )
     hdbg.dassert_path_exists(ds_file_path)
-    _LOG.info(f"Fetched dataset schema file: {ds_file_path}")
+    _LOG.info(f"Loading dataset schema file: {ds_file_path}")
     return ds_file_path
 
 
@@ -69,7 +69,7 @@ def get_dataset_schema(*, version: Optional[str] = None) -> Dict[str, Any]:
     # Transform version to string and remove trailing zero.
     ds_version = "v" + ".".join(map(str, ds_version)).rstrip(".0")
     # Append version from the file name to the schema dictionary.
-    _LOG.info(f"Fetched dataset schema version {ds_version}")
+    _LOG.info(f"Loaded dataset schema version {ds_version}")
     dataset_schema["version"] = ds_version
     # TODO(Juraj): assert that the schema file itself is well-formed.
     return dataset_schema
@@ -91,8 +91,8 @@ def _validate_dataset_signature_syntax(signature: str, dataset_schema: Dict[str,
     schema_signature_list = dataset_schema["dataset_signature"].split(token_separator_char)
     is_syntax_correct = len(signature_list) == len(schema_signature_list)
     if not is_syntax_correct:
-        _LOG.warning(f"Signature is malformed. Expected number of tokens \
-                        is: {len(signature_list)}, actual number of tokens is: {len(schema_signature_list)}")
+        _LOG.warning(f"Signature is malformed. Expected number of tokens" +
+                        f" is: {len(signature_list)}, actual number of tokens is: {len(schema_signature_list)}")
     return is_syntax_correct
     
 
@@ -118,8 +118,8 @@ def _validate_dataset_signature_semantics(signature: str, dataset_schema: Dict[s
     is_semantics_correct = True
     for token, value in zip(schema_signature_list, signature_list):
         if value not in allowed_values_dict[token]:
-            _LOG.warning(f"Identifier {token} contains invalid value: {value}, \
-                        allowed_values: {allowed_values_dict[token]}")
+            _LOG.warning(f"Identifier {token} contains invalid value: {value}, " +
+                         f"allowed_values: {allowed_values_dict[token]}")
             is_semantics_correct = False
     return is_semantics_correct
     

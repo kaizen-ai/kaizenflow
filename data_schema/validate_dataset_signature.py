@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Perform syntactic and semantic validation of a specified dataset signature.
 Signature is validated by the latest dataset schema version. Syntax validation
@@ -13,7 +14,7 @@ Semantic validation checks if the signature tokens are correct.
 
 Use as:
 > data_schema/validate_dataset_signature.py \
-    --signature '2022-02-09'
+    --signature 'bulk.airflow.downloaded_1sec'
 
 Import as:
 
@@ -24,6 +25,7 @@ import argparse
 import logging
 
 import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import data_schema.dataset_schema_utils as dsdascut
 
 _LOG = logging.getLogger(__name__)
@@ -41,17 +43,20 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="Dataset signature to validate",
     )
+    parser = hparser.add_verbosity_arg(parser)
     return parser  # type: ignore[no-any-return]
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = vars(parser.parse_args())
-    hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    hdbg.init_logger(verbosity=args["log_level"], use_exec_path=True)
     signature = args["signature"]
-    if dsdascut.validate_dataset_signature():
-        _LOG.info(f"Signature {signature} is valid.")
+    dataset_schema = dsdascut.get_dataset_schema()
+    if dsdascut.validate_dataset_signature(signature, dataset_schema):
+        _LOG.info(f"Signature '{signature}' is valid.")
     else:
-        _LOG.error(f"Signatue {signature} is invalid!")
+        _LOG.error(f"Signature '{signature}' is invalid!")
+        exit(-1)
 
 
 if __name__ == "__main__":
