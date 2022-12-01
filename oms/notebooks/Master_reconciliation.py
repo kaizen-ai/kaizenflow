@@ -143,16 +143,19 @@ def dassert_equal_dfs(
         previous_df: pd.DataFrame, current_df: pd.DataFrame
 ) -> None:
     """
-    Check that two consecutive node dataframes are equal.
+    # Check that all the node dataframes are equal.
     """
-    # Make dfs start and end timestamps are the same for
-    # both dfs.
+    # Align dataframe indices.
     previous_df = previous_df[1:]
     current_df = current_df[:-1]
-    # Remove the first raw from both dfs.
+    # Remove the first raw from both dataframes since some metrics 
+    # are not being computed right away.
     previous_df = previous_df[1:]
     current_df = current_df[1:]
-    # Exclude the time range `04:10:00-05:00 - 04:40:00-05:00`.
+    # 21 hour after the data starts there is a 30 minute interval 
+    # at which previous dataframe is missing values for several 
+    # columns that require some data to burn-in. We should remove 
+    # them before the comparison.
     previous_df = previous_df.drop(previous_df.index[253:260])
     current_df = current_df.drop(current_df.index[253:260])
     #
