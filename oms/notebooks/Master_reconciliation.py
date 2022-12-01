@@ -138,25 +138,25 @@ hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 
 # %%
+# TODO(Nina): move to a lib.
 def dassert_equal_dfs(
-        past_df: pd.DataFrame, late_df: pd.DataFrame
+        previous_df: pd.DataFrame, current_df: pd.DataFrame
 ) -> None:
     """
-    Check that two data frames are equal.
+    Check that two consecutive node dataframes are equal.
     """
     # Make dfs start and end timestamps are the same for
     # both dfs.
-    past_df = past_df[1:]
-    late_df = late_df[:-1]
+    previous_df = previous_df[1:]
+    current_df = current_df[:-1]
     # Remove the first raw from both dfs.
-    past_df = past_df[1:]
-    late_df = late_df[1:]
-    # Exclude the time range `04:10:00-05:00 - 04:40:00-05:00`
-    # 3 days before the prod run.
-    cut_past_df = past_df.drop(past_df.index[253:260])
-    cut_late_df = late_df.drop(late_df.index[253:260])
+    previous_df = previous_df[1:]
+    current_df = current_df[1:]
+    # Exclude the time range `04:10:00-05:00 - 04:40:00-05:00`.
+    previous_df = previous_df.drop(previous_df.index[253:260])
+    current_df = current_df.drop(current_df.index[253:260])
     #
-    is_equal = cut_past_df.equals(cut_late_df)
+    is_equal = previous_df.equals(current_df)
     hdbg.dassert(is_equal)
 
 
