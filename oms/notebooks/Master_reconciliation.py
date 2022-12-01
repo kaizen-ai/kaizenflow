@@ -162,27 +162,35 @@ def _prepare_dfs_for_comparison(
     return previous_df, current_df
 
 
-def check_dag_output_self_consistency(node_dfs: Dict[pd.Timestamp, pd.DataFrame]) -> None:
+def check_dag_output_self_consistency(
+    node_dfs: Dict[pd.Timestamp, pd.DataFrame]
+) -> None:
     # Make sure that the dict is sorted by timestamp.
     node_dfs = dict(sorted(node_dfs.items()))
     node_dfs = list(node_dfs.items())
-    for i in range(len(node_dfs)-1):
+    for i in range(len(node_dfs) - 1):
         previous_timestamp = node_dfs[i][0]
         previous_df = node_dfs[i][1]
         previous_df = previous_df.sort_index()
         #
-        current_timestamp = node_dfs[i+1][0]
-        current_df = node_dfs[i+1][1]
+        current_timestamp = node_dfs[i + 1][0]
+        current_df = node_dfs[i + 1][1]
         current_df = current_df.sort_index()
-        _LOG.debug("Comparing dfs for timestamps %s and %s", current_timestamp, previous_timestamp)
-        previous_df, current_df = _prepare_dfs_for_comparison(previous_df, current_df)
+        _LOG.debug(
+            "Comparing dfs for timestamps %s and %s",
+            current_timestamp,
+            previous_timestamp,
+        )
+        previous_df, current_df = _prepare_dfs_for_comparison(
+            previous_df, current_df
+        )
         # Assert if the difference is above the specified threshold.
         assert_diff_threshold = 1e-3
         _ = hpandas.compare_dfs(
             previous_df,
             current_df,
-            diff_mode = "pct_change", 
-            assert_diff_threshold=assert_diff_threshold
+            diff_mode="pct_change",
+            assert_diff_threshold=assert_diff_threshold,
         )
 
 
