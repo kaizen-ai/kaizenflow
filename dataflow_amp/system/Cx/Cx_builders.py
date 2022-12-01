@@ -345,7 +345,18 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     """
     Build Portfolio instance for production.
     """
+    use_simulation = system.config.get_and_mark_as_used("use_simulation")
+    cf_config_strategy = system.config.get_and_mark_as_used(
+        ("cf_config", "strategy")
+    )
     market_data = system.market_data
+    universe_version = system.config.get_and_mark_as_used(
+        ("market_data_config", "universe_version")
+    )
+    secret_identifier_config = system.config.get_and_mark_as_used(
+        "secret_identifier_config"
+    )
+    #
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
     mark_key_as_used = True
@@ -354,25 +365,19 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     )
     _LOG.debug(hprint.to_str("trading_period_str"))
     pricing_method = "twap." + trading_period_str
-    cf_config_strategy = system.config.get_and_mark_as_used(
-        ("cf_config", "strategy")
-    )
-    market_data_universe_version = system.config.get_and_mark_as_used(
-        ("market_data_config", "universe_version")
-    )
-    market_data_asset_ids = system.config.get_and_mark_as_used(
+    #
+    asset_ids = system.config.get_and_mark_as_used(
         ("market_data_config", "asset_ids")
     )
-    secret_identifier_config = system.config.get_and_mark_as_used(
-        "secret_identifier_config"
-    )
+    #
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
+        use_simulation,
         cf_config_strategy,
         market_data,
-        market_data_universe_version,
-        market_data_asset_ids,
-        pricing_method,
+        universe_version,
         secret_identifier_config,
+        pricing_method,
+        asset_ids,
     )
     return portfolio
 

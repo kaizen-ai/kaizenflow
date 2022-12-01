@@ -37,23 +37,45 @@ class CcxtPortfolio(omportfo.DataFramePortfolio):
 
 
 def get_CcxtPortfolio_prod_instance1(
+    use_simulation: bool,
     strategy_id: str,
     market_data: mdata.MarketData,
     universe_version: str,
-    asset_ids: Optional[List[int]],
-    pricing_method: str,
     secret_identifier: omssec.SecretIdentifier,
+    pricing_method: str,
+    asset_ids: Optional[List[int]],
 ) -> CcxtPortfolio:
     """
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
+
+    :param use_simulation: see `_Cx_ProdSystem`
+    :param strategy_id: see `Broker`
+    :param market_data: see `Broker`
+    :param universe_version: see `CcxtBroker`
+    :param secret_identifier: see `CcxtBroker`
+    :param pricing_method: see `Portfolio` ctor
+    :param asset_ids: see `Portfolio.from_cash()`
     """
-    # Build CcxtBroker.
-    broker = occxbrok.get_CcxtBroker_prod_instance1(
-        market_data,
-        universe_version,
-        strategy_id,
-        secret_identifier
-    )
+    # We prefer to configure code statically (e.g., without switches) but in this
+    # case the prod system vs its simulat-able version are so close (and we want to
+    # keep them close) that we use a switch.
+    if not use_simulation:
+        # Build `CcxtBroker` that is connected to the real exchange.
+        broker = occxbrok.get_CcxtBroker_prod_instance1(
+            strategy_id,
+            market_data,
+            universe_version,
+            secret_identifier
+        )
+    else:
+        # Use the `SimulatedCcxtBroker`, i.e. no interaction with
+        # the real exchange.
+        stage = secret_identifier.stage
+        broker = occxbrok.SimulatedCcxtBroker(
+            strategy_id,
+            market_data,
+            stage,
+        )
     # Build CcxtPortfolio.
     mark_to_market_col = "close"
     initial_cash = 700
@@ -61,7 +83,7 @@ def get_CcxtPortfolio_prod_instance1(
         broker,
         mark_to_market_col,
         pricing_method,
-        initial_cash=initial_cash,
+        initial_cash,
         asset_ids=asset_ids,
     )
     return portfolio
