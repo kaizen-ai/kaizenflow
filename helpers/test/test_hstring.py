@@ -1,9 +1,9 @@
 from typing import List, Tuple
 
-import helpers.hstring as hstring
-import helpers.hunit_test as hunitest
 import pytest
 
+import helpers.hstring as hstring
+import helpers.hunit_test as hunitest
 
 # #############################################################################
 # TestExtractUniverseVersion1
@@ -57,19 +57,25 @@ class TestExtractVersionFromFileName(hunitest.TestCase):
         """
         Verify function raises AssertionError on incorrect input format.
         """
-        self._test_extract_version_from_file_name_incorrect_format("universe_vxx.json")
+        self._test_extract_version_from_file_name_incorrect_format(
+            "universe_vxx.json"
+        )
 
     def test_extract_version_from_file_name_incorrect_format3(self) -> None:
         """
         Verify function raises AssertionError on incorrect input format.
         """
-        self._test_extract_version_from_file_name_incorrect_format("universe_v.1.json")
+        self._test_extract_version_from_file_name_incorrect_format(
+            "universe_v.1.json"
+        )
 
     def test_extract_version_from_file_name_incorrect_format4(self) -> None:
         """
         Verify function raises AssertionError on incorrect input format.
         """
-        self._test_extract_version_from_file_name_incorrect_format("universe_11.json")
+        self._test_extract_version_from_file_name_incorrect_format(
+            "universe_11.json"
+        )
 
     def _test_extract_version_from_file_name(
         self, version: str, expected: Tuple[int, int]
@@ -96,12 +102,12 @@ class TestExtractVersionFromFileName(hunitest.TestCase):
         with pytest.raises(AssertionError) as fail:
             _ = hstring.extract_version_from_file_name(file_name)
         self.assertIn(expected_fail, str(fail.value))
-        
-    
+
+
 # #############################################################################
 # TestGetDocstringLineIndices
 # #############################################################################
-    
+
 
 class TestGetDocstringLineIndices(hunitest.TestCase):
     """

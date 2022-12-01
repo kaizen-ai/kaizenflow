@@ -5,8 +5,7 @@ import im_v2.common.universe.universe as imvcounun
 """
 import glob
 import os
-import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
@@ -30,16 +29,18 @@ def _get_universe_file_path(
     hdbg.dassert_in(mode, ["download", "trade"])
     vendor = vendor.lower()
     # Get path to vendor universe dir.
-    vendor_dir = os.path.join(hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/{mode}")
+    vendor_dir = os.path.join(
+        hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/{mode}"
+    )
     hdbg.dassert_dir_exists(vendor_dir)
     if version is None:
         # Find all universe files.
-        vendor_universe_pattern = os.path.join(
-            vendor_dir, f"universe_v*.json"
-        )
+        vendor_universe_pattern = os.path.join(vendor_dir, f"universe_v*.json")
         universe_files = list(glob.glob(vendor_universe_pattern))
         hdbg.dassert_ne(len(universe_files), 0)
-        file_path = max(universe_files, key=hstring.extract_version_from_file_name)
+        file_path = max(
+            universe_files, key=hstring.extract_version_from_file_name
+        )
     else:
         # TODO(Juraj): #1487 Assert version format (include 'small').
         file_name = "".join(["universe_", version, ".json"])

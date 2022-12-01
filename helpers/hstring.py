@@ -4,14 +4,14 @@ Import as:
 import helpers.hstring as hstring
 """
 import logging
+import os
 import re
 import tempfile
-import os
 from typing import List, Optional, Tuple, cast
 
+import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hsystem as hsystem
-import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -96,10 +96,9 @@ def get_docstring_line_indices(lines: List[str]) -> List[int]:
 def extract_version_from_file_name(file_name: str) -> Tuple[int, int]:
     """
     Extract version number from filename_vXX.json file. e.g.
-    'universe_v3.1.json' -> (3, 1)
-    'universe_v1.json' -> (1, 0)
+    'universe_v3.1.json' -> (3, 1) 'universe_v1.json' -> (1, 0)
     'dataset_schema_v3.json' -> (3, 0)
-    
+
     Currently only JSON file extension is supported.
 
     :param file_name: file to extract version part from
