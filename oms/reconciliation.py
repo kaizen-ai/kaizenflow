@@ -302,6 +302,68 @@ def get_path_dicts(
 # #############################################################################
 
 
+def _prepare_dfs_for_comparison(
+    previous_df: pd.DataFrame, current_df: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Prepare 2 consecutive node dataframes for comparison.
+
+    Dataframes contain a 30-minutes burn-in interval required for volatility
+    computations. This interval should be dropped. 
+    """
+    # Assert that both dfs are sorted by timestamp.
+    hpandas.dassert_strictly_increasing_index(previous_df)
+    hpandas.dassert_strictly_increasing_index(current_df)
+    # Align the indices.
+    previous_df = previous_df[1:]
+    current_df = current_df[:-1]
+    # Remove the first rows.
+    previous_df = previous_df[1:]
+    current_df = current_df[1:]
+    # Remove burn-in interval.
+    previous_df = previous_df.drop(previous_df.index[253:260])
+    current_df = current_df.drop(current_df.index[253:260])
+    # Assert both dfs have equal size.
+    hdbg.dassert_eq(previous_df.shape, current_df.shape)
+    return previous_df, current_df
+
+
+def check_dag_output_self_consistency(
+    node_dfs: Dict[pd.Timestamp, pd.DataFrame]
+) -> None:
+    """
+    Check that all the dag output dataframes are equal at intersecting time
+    intervals.
+    """
+    # Make sure that the dict is sorted by timestamp.
+    node_dfs = dict(sorted(node_dfs.items()))
+    node_dfs = list(node_dfs.items())
+    for i in range(len(node_dfs) - 1):
+        previous_timestamp = node_dfs[i][0]
+        previous_df = node_dfs[i][1]
+        previous_df = previous_df.sort_index()
+        #
+        current_timestamp = node_dfs[i + 1][0]
+        current_df = node_dfs[i + 1][1]
+        current_df = current_df.sort_index()
+        _LOG.debug(
+            "Comparing dfs for timestamps %s and %s",
+            current_timestamp,
+            previous_timestamp,
+        )
+        previous_df, current_df = _prepare_dfs_for_comparison(
+            previous_df, current_df
+        )
+        # Assert if the difference is above the specified threshold.
+        assert_diff_threshold = 1e-3
+        _ = hpandas.compare_dfs(
+            previous_df,
+            current_df,
+            diff_mode="pct_change",
+            assert_diff_threshold=assert_diff_threshold,
+        )
+
+
 def _get_dag_node_parquet_file_names(dag_dir: str) -> List[str]:
     """
     Get Parquet file names for all the nodes in the target folder.
