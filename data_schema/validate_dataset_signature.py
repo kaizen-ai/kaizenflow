@@ -24,9 +24,9 @@ import data_schema.validate_dataset_signature as dsvadasi
 import argparse
 import logging
 
+import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import data_schema.dataset_schema_utils as dsdascut
 
 _LOG = logging.getLogger(__name__)
 
