@@ -1,9 +1,10 @@
 {
-    "dataset_signature": 
+    "dataset_signature":
         "download_mode.downloading_entity.action_tag.data_format.data_type.asset_type.universe.vendor.exchange.version",
+    "token_separator_character": ".",
     "allowed_values": {
         "download_mode": ["bulk", "periodic_daily"],
         "downloading_entity": ["airflow", "manual"],
-        "action_tag": ["downloaded_1sec", "resampled_1min"]      
+        "action_tag": ["downloaded_1sec", "resampled_1min"]
     }
 }

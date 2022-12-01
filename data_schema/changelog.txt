@@ -1,6 +1,6 @@
 v3
 - 2022-11-30
-- Initial version which support surrentum protocol 
+- Initial version which support surrentum protocol
 - based on surrentum protocol v0.1
 - prod data stored in s3://cryptokaizen-data/v3
 
