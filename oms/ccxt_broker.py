@@ -859,8 +859,8 @@ def get_SimulatedCcxtBroker_instance1(
     broker = SimulatedCcxtBroker(
         strategy_id,
         market_data,
-        stage,
-        market_info,
+        stage=stage,
+        market_info=market_info,
     )
     return broker
 

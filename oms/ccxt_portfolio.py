@@ -72,7 +72,7 @@ def get_CcxtPortfolio_prod_instance1(
         # Use the `SimulatedCcxtBroker`, i.e. no interaction with
         # the real exchange.
         stage = secret_identifier.stage
-        broker = occxbrok.SimulatedCcxtBroker(
+        broker = occxbrok.get_SimulatedCcxtBroker_instance1(
             strategy_id,
             market_data,
             stage,
@@ -84,7 +84,7 @@ def get_CcxtPortfolio_prod_instance1(
         broker,
         mark_to_market_col,
         pricing_method,
-        initial_cash,
+        initial_cash=initial_cash,
         asset_ids=asset_ids,
     )
     return portfolio
