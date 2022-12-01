@@ -52,10 +52,10 @@ hprint.config_notebook()
 config = cconfig.get_config_from_env()
 if not config:
     # Specify the config directly when running the notebook manually.
-    mode = None
     start_timestamp_as_str = None
     end_timestamp_as_str = None
-    config_list = oms.build_reconciliation_configs(mode, start_timestamp_as_str, end_timestamp_as_str)
+    mode = None
+    config_list = oms.build_reconciliation_configs(start_timestamp_as_str, end_timestamp_as_str, mode)
     config = config_list[0]
 print(config)
 

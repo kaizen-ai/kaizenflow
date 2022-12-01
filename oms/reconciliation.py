@@ -41,9 +41,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def build_reconciliation_configs(
-    mode: str,
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
+    mode: Optional[str],
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
@@ -51,22 +51,18 @@ def build_reconciliation_configs(
     Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
-    :param mode: reconciliation run mode
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run, e.g. "20221010_060500"
     :param end_timestamp_as_str: string representation of timestamp
-            at which to end reconcile run, e.g. "20221010_080000"
+        at which to end reconcile run, e.g. "20221010_080000"
+    :param mode: reconciliation run mode
     :return: list of reconciliation configs
     """
-    mode = resolve_run_mode(mode)
     start_timestamp_as_str, end_timestamp_as_str = resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
     run_date = get_run_date(start_timestamp_as_str)
     _LOG.info("Using run_date=%s", run_date)
-    prod_subdir = get_prod_system_log_dir(
-        mode, start_timestamp_as_str, end_timestamp_as_str
-    )
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:
@@ -75,6 +71,10 @@ def build_reconciliation_configs(
         asset_class = "crypto"
     # Set values for variables that are specific of an asset class.
     if asset_class == "crypto":
+        mode = resolve_run_mode(mode)
+        prod_subdir = get_prod_system_log_dir(
+            mode, start_timestamp_as_str, end_timestamp_as_str
+        )
         # For crypto the TCA part is not implemented yet.
         run_tca = False
         #
