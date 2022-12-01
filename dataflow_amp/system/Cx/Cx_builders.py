@@ -341,6 +341,9 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
 # #############################################################################
 
 
+# TODO(gp): We should dump the state of the portfolio and load it back.
+# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
+#  so we can generalize the class to be not E8 specific.
 def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     """
     Build Portfolio instance for production.
@@ -379,16 +382,6 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         pricing_method,
         asset_ids,
     )
-    return portfolio
-
-
-# TODO(gp): We should dump the state of the portfolio and load it back.
-# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
-#  so we can generalize the class to be not E8 specific.
-def get_Cx_portfolio(
-    system: dtfsys.System,
-) -> oms.Portfolio:
-    portfolio = get_Cx_portfolio_prod_instance1(system)
     return portfolio
 
 

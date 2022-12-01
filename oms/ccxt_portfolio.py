@@ -68,6 +68,7 @@ def get_CcxtPortfolio_prod_instance1(
             secret_identifier
         )
     else:
+        _LOG.warning("Running the system with the simulated Broker")
         # Use the `SimulatedCcxtBroker`, i.e. no interaction with
         # the real exchange.
         stage = secret_identifier.stage
