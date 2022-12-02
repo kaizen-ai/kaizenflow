@@ -866,7 +866,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         # Remove `DataFrame*` and `Database*` to avoid mismatches from the fact
         # that the systems are different.
         regex = (
-            "DataFramePortfolio|DatabasePortfolio|SimulatedBroker|DatabaseBroker"
+            "DataFramePortfolio|DatabasePortfolio|DataFrameBroker|DatabaseBroker"
         )
         actual = hunitest.filter_text(regex, actual)
         expected = hunitest.filter_text(regex, expected)

@@ -40,10 +40,10 @@ def get_DataFramePortfolio_example1(
     Contain:
     - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
-    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
+    - a `DataFrameBroker` (i.e., a broker that executes the orders immediately)
     """
-    # Build a SimulatedBroker.
-    broker = obroexam.get_SimulatedBroker_example1(
+    # Build a DataFrameBroker.
+    broker = obroexam.get_DataFrameBroker_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
@@ -77,12 +77,12 @@ def get_DataFramePortfolio_example2(
     Contain:
     - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
-    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
+    - a `DataFrameBroker` (i.e., a broker that executes the orders immediately)
 
     exposing all the parameters for creating these objects.
     """
-    # Build SimulatedBroker.
-    broker = ombroker.SimulatedBroker(
+    # Build DataFrameBroker.
+    broker = ombroker.DataFrameBroker(
         strategy_id,
         market_data,
         account=account,
@@ -109,9 +109,9 @@ def get_DataFramePortfolio_example3(
     Contain:
     - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
-    - a `SimulatedBroker` for prod (i.e., a broker that executes the orders immediately)
+    - a `DataFrameBroker` for prod (i.e., a broker that executes the orders immediately)
     """
-    # Build a SimulatedBroker.
+    # Build a DataFrameBroker.
     broker = occxbrok.get_SimulatedCcxtBroker_instance1(market_data)
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.

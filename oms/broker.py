@@ -576,7 +576,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 
     The broker contains all the logic to handle fills:
     - in the set-up with `DataFramePortfolio`, the broker (specifically the
-      `SimulatedBroker`) executes the orders in terms of price and fills.
+      `DataFrameBroker`) executes the orders in terms of price and fills.
     - in the set-up with `DatabasePortfolio` and `OrderProcessor`, the broker
       (specifically the `DatabaseBroker`) passes information to the `OrderProcessor`
       about the timing of the fills
@@ -833,7 +833,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 
 
 # #############################################################################
-# SimulatedBroker
+# DataFrameBroker
 # #############################################################################
 
 

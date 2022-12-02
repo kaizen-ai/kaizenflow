@@ -837,7 +837,7 @@ def get_CcxtBroker_prod_instance1(
 # #############################################################################
 
 
-class SimulatedCcxtBroker(ombroker.SimulatedBroker):
+class SimulatedCcxtBroker(ombroker.DataFrameBroker):
     def __init__(
         self,
         *args: Any,
@@ -852,7 +852,7 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
 
 def get_SimulatedCcxtBroker_instance1(
     market_data: pd.DataFrame,
-) -> ombroker.SimulatedBroker:
+) -> ombroker.DataFrameBroker:
     market_info = load_market_data_info()
     stage = "preprod"
     strategy_id = "C1b"
