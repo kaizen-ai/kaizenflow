@@ -146,11 +146,6 @@ dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-# Check that all the DAG output dataframes are equal at intersecting time intervals.
-node_dfs = dag_df_dict["prod"][dag_node_names[-1]]
-oms.check_dag_output_self_consistency(node_dfs)
-
-# %%
 compare_dfs_kwargs = {
     "diff_mode": "pct_change",
     "assert_diff_threshold": None,
@@ -180,6 +175,14 @@ if False:
         precision=3,
         log_level=logging.INFO,
     )
+
+# %% [markdown]
+# ## Check DAG io self-consistency 
+
+# %%
+# Check that all the DAG output dataframes are equal at intersecting time intervals.
+node_dfs = dag_df_dict["prod"][dag_node_names[-1]]
+oms.check_dag_output_self_consistency(node_dfs)
 
 # %% [markdown]
 # ## Compute DAG delay
