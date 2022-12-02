@@ -373,10 +373,15 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         ("market_data_config", "asset_ids")
     )
     #
+    system = dtfsys.apply_Portfolio_config(system)
+    column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
         use_simulation,
         cf_config_strategy,
         market_data,
+        column_remap,
         universe_version,
         secret_identifier_config,
         pricing_method,

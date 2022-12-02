@@ -853,12 +853,14 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
 def get_SimulatedCcxtBroker_instance1(
     strategy_id: str,
     market_data: pd.DataFrame,
+    column_remap: Dict[str, str],
     stage: str,
 ) -> ombroker.SimulatedBroker:
     market_info = load_market_data_info()
     broker = SimulatedCcxtBroker(
         strategy_id,
         market_data,
+        column_remap=column_remap,
         stage=stage,
         market_info=market_info,
     )

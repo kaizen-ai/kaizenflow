@@ -5,7 +5,7 @@ import oms.ccxt_portfolio as occxport
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional
 
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
@@ -40,6 +40,7 @@ def get_CcxtPortfolio_prod_instance1(
     use_simulation: bool,
     strategy_id: str,
     market_data: mdata.MarketData,
+    column_remap: Dict[str, str],
     universe_version: str,
     secret_identifier: omssec.SecretIdentifier,
     pricing_method: str,
@@ -75,6 +76,7 @@ def get_CcxtPortfolio_prod_instance1(
         broker = occxbrok.get_SimulatedCcxtBroker_instance1(
             strategy_id,
             market_data,
+            column_remap,
             stage,
         )
     # Build CcxtPortfolio.
