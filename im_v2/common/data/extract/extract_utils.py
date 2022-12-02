@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import psycopg2
 
+import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
@@ -28,7 +29,6 @@ import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
 import im_v2.im_lib_tasks as imvimlita
-import data_schema.dataset_schema_utils as dsdascuts
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -638,8 +638,8 @@ def save_parquet(
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
-        
-    
+
+
 # TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
@@ -652,7 +652,9 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(args["s3_path"], args)
+    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
+        args["s3_path"], args
+    )
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])

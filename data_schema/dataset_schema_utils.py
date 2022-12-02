@@ -169,13 +169,16 @@ def validate_dataset_signature(
         _LOG.warning("Syntax validation failed, skipping semantic validation.")
     return is_correct_signature
 
-def _build_dataset_signature_from_args(args: Dict[str, Any], dataset_schema: Dict[str, Any]) -> str:
+
+def _build_dataset_signature_from_args(
+    args: Dict[str, Any], dataset_schema: Dict[str, Any]
+) -> str:
     """
     Build a dataset signature from provided arguments.
-    
+
     :param args: arguments to build the dataset signature from
     :param dataset_schema: dataset schema to build signature from.
-    :return: 
+    :return:
     """
     token_separator_char = dataset_schema["token_separator_character"]
     schema_signature_list = dataset_schema["dataset_signature"].split(
@@ -186,30 +189,36 @@ def _build_dataset_signature_from_args(args: Dict[str, Any], dataset_schema: Dic
     try:
         dataset_signature = list(map(lambda x: args[x], schema_signature_list))
     except KeyError as e:
-        raise KeyError("Missing required identifier for schema version" +
-                        f" {dataset_schema['version']}: {str(e)}" 
-                )
+        raise KeyError(
+            "Missing required identifier for schema version"
+            + f" {dataset_schema['version']}: {str(e)}"
+        )
     return token_separator_char.join(dataset_signature)
-    
-    
-def build_s3_dataset_path_from_args(s3_base_path: str, args: Dict[str, Any], *, version=None) -> str:
+
+
+def build_s3_dataset_path_from_args(
+    s3_base_path: str, args: Dict[str, Any], *, version=None
+) -> str:
     """
-    Build an S3 path given a bucket and a dict of arguments based on 
-    dataset schema of the given version.
-    
+    Build an S3 path given a bucket and a dict of arguments based on dataset
+    schema of the given version.
+
     If the provided arguments form an invalid signature an exception is raised.
-    
+
     :param s3_base_path: Base S3 path to use, i.e. s3://cryptokaizen-data
     :param args: arguments to build the dataset signature from
-    :param version: version of the dataset schema to use, if None, latest version 
+    :param version: version of the dataset schema to use, if None, latest version
     """
     s3_path = s3_base_path
     schema = get_dataset_schema(version=version)
     s3_path = os.path.join(s3_path, schema["version"])
     dataset_signature = _build_dataset_signature_from_args(args, schema)
     if not validate_dataset_signature(dataset_signature, schema):
-        raise ValueError(f"Invalid argument values for schema version: {schema['version']}")
-    dataset_signature = dataset_signature.replace(schema["token_separator_character"], "/")
+        raise ValueError(
+            f"Invalid argument values for schema version: {schema['version']}"
+        )
+    dataset_signature = dataset_signature.replace(
+        schema["token_separator_character"], "/"
+    )
     s3_path = os.path.join(s3_path, dataset_signature)
     return s3_path
-    
