@@ -68,18 +68,22 @@ def _run_notebook(
     # Export config function and its `id` to the notebook.
     config_builder = config[("backtest_config", "config_builder")]
     dst_dir = config[("backtest_config", "dst_dir")]
+    # Note the quotation marks, `config_builder` should be surrounded by single
+    # quotes so that the potential strings in `config_builder` params are
+    # parsed correctly. E.g.,
+    # `export __CONFIG_BUILDER__='amp.oms.reconciliation.build_reconciliation_configs("20221128_101500", "20221128_1210", "scheduled")'`.
     cmd = [
-        f'export __CONFIG_BUILDER__="{config_builder}";',
+        f"export __CONFIG_BUILDER__='{config_builder}';",
         f'export __CONFIG_IDX__="{idx}";',
         f'export __CONFIG_DST_DIR__="{dst_dir}"',
-        f"; jupyter nbconvert {notebook_file}",
-        "--execute",
-        "--to notebook",
-        f"--output {dst_file}",
-        "--ExecutePreprocessor.kernel_name=python",
+        f'; jupyter nbconvert {notebook_file}',
+        '--execute',
+        '--to notebook',
+        f'--output {dst_file}',
+        '--ExecutePreprocessor.kernel_name=python',
         # From https://github.com/ContinuumIO/anaconda-issues/issues/877
-        "--ExecutePreprocessor.timeout=-1",
-        f"--ExecutePreprocessor.allow_errors={allow_notebook_errors}"
+        '--ExecutePreprocessor.timeout=-1',
+        f'--ExecutePreprocessor.allow_errors={allow_notebook_errors}'
     ]
     cmd = " ".join(cmd)
     # Prepare the log file.
