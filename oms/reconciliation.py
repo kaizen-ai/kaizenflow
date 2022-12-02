@@ -389,7 +389,7 @@ def _prepare_dfs_for_comparison(
     current_df = current_df[:-1]
     # Remove the first rows. Since we remove the first row from `previous_df`
     # above and do not for `current_df`, the first rows now have different
-    # values because of burn-in interval. 
+    # values because of burn-in interval.
     previous_df = previous_df[1:]
     current_df = current_df[1:]
     # Remove burn-in interval.
