@@ -382,9 +382,6 @@ def _prepare_dfs_for_comparison(
     previous_df = previous_df[1:]
     current_df = current_df[1:]
     # Remove burn-in interval.
-    # TODO(Grisha): @Dan Parametrise the approach to selecting data interval
-    # to drop, i.e. use 30 minutes burn-in interval and avoid using direct
-    # indices.
     previous_df = previous_df.drop(previous_df.index[253:260])
     current_df = current_df.drop(current_df.index[253:260])
     # Assert both dfs have equal size.
@@ -396,7 +393,7 @@ def check_dag_output_self_consistency(
     node_dfs: Dict[pd.Timestamp, pd.DataFrame]
 ) -> None:
     """
-    Check that all the DAG output dataframes are equal at intersecting time
+    Check that all the dag output dataframes are equal at intersecting time
     intervals.
     """
     # Make sure that the dict is sorted by timestamp.

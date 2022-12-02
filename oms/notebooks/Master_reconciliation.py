@@ -20,6 +20,7 @@
 # %%
 import logging
 import os
+from typing import Dict, Tuple
 
 import pandas as pd
 
@@ -54,9 +55,7 @@ if not config:
     start_timestamp_as_str = None
     end_timestamp_as_str = None
     mode = None
-    config_list = oms.build_reconciliation_configs(
-        start_timestamp_as_str, end_timestamp_as_str, mode
-    )
+    config_list = oms.build_reconciliation_configs(start_timestamp_as_str, end_timestamp_as_str, mode)
     config = config_list[0]
 print(config)
 
@@ -82,9 +81,7 @@ dag_path_dict
 # %%
 # TODO(gp): Load the TCA data for crypto.
 if config["meta"]["run_tca"]:
-    tca_csv = os.path.join(
-        root_dir, config["meta"]["date_str"], "tca/sau1_tca.csv"
-    )
+    tca_csv = os.path.join(root_dir, config["meta"]["date_str"], "tca/sau1_tca.csv")
     hdbg.dassert_file_exists(tca_csv)
 
 # %% [markdown]
@@ -146,9 +143,8 @@ dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-# Check that all the DAG output dataframes are equal at intersecting time intervals.
 node_dfs = dag_df_dict["prod"][dag_node_names[-1]]
-oms.check_dag_output_self_consistency(node_dfs)
+check_dag_output_self_consistency(node_dfs)
 
 # %%
 compare_dfs_kwargs = {
