@@ -369,8 +369,17 @@ def _prepare_dfs_for_comparison(
     """
     Prepare 2 consecutive node dataframes for comparison.
 
+    Preparation includes:
+        - Aligning the indices
+        - Removing the burn-in interval
+        - Sanity checks
+
     Dataframes contain a 30-minutes burn-in interval required for
     volatility computations. This interval should be dropped.
+
+    :param previous_df: DAG node output that corresponds to the (i-1)-th timestamp
+    :param current_df: DAG node output that corresponds to the i-th timestamp
+    :return: processed DAG node outputs
     """
     # Assert that both dfs are sorted by timestamp.
     hpandas.dassert_strictly_increasing_index(previous_df)
@@ -378,7 +387,9 @@ def _prepare_dfs_for_comparison(
     # Align the indices.
     previous_df = previous_df[1:]
     current_df = current_df[:-1]
-    # Remove the first rows.
+    # Remove the first rows. Since we remove the first row from `previous_df`
+    # above and do not for `current_df`, the first rows now have different
+    # values because of burn-in interval. 
     previous_df = previous_df[1:]
     current_df = current_df[1:]
     # Remove burn-in interval.
@@ -388,7 +399,7 @@ def _prepare_dfs_for_comparison(
     previous_df = previous_df.drop(previous_df.index[253:260])
     current_df = current_df.drop(current_df.index[253:260])
     # Assert both dfs have equal size.
-    hdbg.dassert_eq(previous_df.shape, current_df.shape)
+    hdbg.dassert_eq(previous_df.shape[0], current_df.shape[0])
     return previous_df, current_df
 
 
@@ -398,6 +409,8 @@ def check_dag_output_self_consistency(
     """
     Check that all the DAG output dataframes are equal at intersecting time
     intervals.
+
+    :param node_dfs: timestamp to DAG output mapping
     """
     # Make sure that the dict is sorted by timestamp.
     node_dfs = dict(sorted(node_dfs.items()))
