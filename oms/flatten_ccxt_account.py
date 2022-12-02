@@ -41,6 +41,20 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="'futures' or 'spot'. Note: only futures contracts are supported.",
     )
+    parser.add_argument(
+        "--stage",
+        action="store",
+        required=True,
+        type=str,
+        help="Stage to run at: local, preprod, prod.",
+    )
+    parser.add_argument(
+        "--secret_id",
+        action="store",
+        required=True,
+        type=int,
+        help="ID of the API Keys to use as they are stored in AWS SecretsManager.",
+    )
     parser = hparser.add_verbosity_arg(parser)
     return parser
 
@@ -63,9 +77,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize CcxtBroker connected to testnet.
     exchange_id = args.exchange_id
     contract_type = args.contract_type
-    stage = "preprod"
+    stage = args.stage
+    secret_id = args.secret_id
     broker = oomccuti.get_CcxtBroker_example1(
-        market_data, exchange_id, contract_type, stage
+        market_data, exchange_id, contract_type, stage, secret_id
     )
     # Close all open positions.
     oomccuti.flatten_ccxt_account(broker, dry_run=False)

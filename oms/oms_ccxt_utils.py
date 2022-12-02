@@ -8,7 +8,6 @@ import logging
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
@@ -84,6 +83,7 @@ def get_CcxtBroker_example1(
     exchange_id: str,
     contract_type: str,
     stage: str,
+    secret_id: int,
 ) -> occxbrok.CcxtBroker:
     """
     See `CcxtBroker` ctor for parameters description.
@@ -91,6 +91,7 @@ def get_CcxtBroker_example1(
     :param exchange_id: name of exchange, e.g. "binance"
     :param contract_type: e.g. "futures"
     :param stage: e.g. "preprod"
+    :param secret_id: e.g., 1
     :return: initialized CCXT broker
     """
     # Set default broker values.
@@ -98,7 +99,6 @@ def get_CcxtBroker_example1(
     portfolio_id = "ccxt_portfolio_1"
     strategy_id = "C1b"
     account_type = "trading"
-    secret_id = 1
     secret_identifier = ohsseide.SecretIdentifier(
         exchange_id, stage, account_type, secret_id
     )
