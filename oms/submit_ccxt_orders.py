@@ -93,8 +93,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     exchange_id = args.exchange_id
     contract_type = args.contract_type
     stage = "preprod"
+    secret_id = 1
     broker = oomccuti.get_CcxtBroker_example1(
-        market_data, exchange_id, contract_type, stage
+        market_data, exchange_id, contract_type, stage, secret_id
     )
     if args.orders_file is None:
         orders = omorder.orders_from_string(DEFAULT_ORDERS)

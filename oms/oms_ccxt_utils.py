@@ -91,6 +91,7 @@ def get_CcxtBroker_example1(
     :param exchange_id: name of exchange, e.g. "binance"
     :param contract_type: e.g. "futures"
     :param stage: e.g. "preprod"
+    :param secret_id: e.g., 1
     :return: initialized CCXT broker
     """
     # Set default broker values.

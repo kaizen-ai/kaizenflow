@@ -87,4 +87,4 @@ def binance_flatten_account(ctx, stage, secret_id):  # type: ignore
         + f" --contract_type {contract_type} --stage {stage}"
         + f" --secret_id {secret_id}"
     )
-    hsystem.system(cmd)
+    hsystem.system(cmd, suppress_output=False)

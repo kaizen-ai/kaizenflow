@@ -46,13 +46,13 @@ def _parse() -> argparse.ArgumentParser:
         action="store",
         required=True,
         type=str,
-        help="Stage to run at: local, preprod.",
+        help="Stage to run at: local, preprod, prod.",
     )
     parser.add_argument(
         "--secret_id",
         action="store",
         required=True,
-        type=str,
+        type=int,
         help="ID of the API Keys to use as they are stored in AWS SecretsManager.",
     )
     parser = hparser.add_verbosity_arg(parser)
