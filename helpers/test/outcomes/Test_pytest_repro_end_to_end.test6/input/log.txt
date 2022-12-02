@@ -1474,7 +1474,7 @@ amp/oms/test/test_api.py::Test_Position1::test_diff2 (0.00 s) [32mPASSED[0m[3
 amp/oms/test/test_api.py::Test_Position1::test_diff3 (0.00 s) [32mPASSED[0m[31m              [ 74%][0m
 amp/oms/test/test_api.py::Test_OMS1::test1 [33mSKIPPED[0m (unconditional skip)[31m  [ 74%][0m
 amp/oms/test/test_api.py::Test_OMS1::test2 [33mSKIPPED[0m (unconditional skip)[31m  [ 74%][0m
-amp/oms/test/test_broker.py::TestDataFrameBroker1::test_submit_and_fill1 (0.05 s) [32mPASSED[0m[31m [ 74%][0m
+amp/oms/test/test_broker.py::TestSimulatedBroker1::test_submit_and_fill1 (0.05 s) [32mPASSED[0m[31m [ 74%][0m
 amp/oms/test/test_broker.py::TestMockedBroker1::test1 [33mSKIPPED[0m (Need ...)[31m [ 74%][0m
 amp/oms/test/test_order.py::TestOrder1::test1 (0.00 s) [32mPASSED[0m[31m                     [ 74%][0m
 amp/oms/test/test_order.py::TestOrders1::test1 (0.00 s) [32mPASSED[0m[31m                    [ 74%][0m
