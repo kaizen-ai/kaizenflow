@@ -41,9 +41,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def build_reconciliation_configs(
-    # TODO(Grisha): pass start{end}_timestamps instead of `date_str`.
-    date_str: Optional[str],
-    prod_subdir: Optional[str],
+    start_timestamp_as_str: str,
+    end_timestamp_as_str: str,
+    mode: Optional[str],
 ) -> cconfig.ConfigList:
     """
     Build reconciliation configs that are specific of an asset class.
@@ -51,16 +51,18 @@ def build_reconciliation_configs(
     Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
-    :param date_str: specify which date to use for reconciliation
+    :param start_timestamp_as_str: string representation of timestamp
+        at which to start reconcile run, e.g. "20221010_060500"
+    :param end_timestamp_as_str: string representation of timestamp
+        at which to end reconcile run, e.g. "20221010_080000"
+    :param mode: reconciliation run mode
+    :return: list of reconciliation configs
     """
-    if date_str is None:
-        # Infer the meta-parameters from env.
-        date_key = "AM_RECONCILIATION_DATE"
-        if date_key in os.environ:
-            date_str = os.environ[date_key]
-        else:
-            date_str = datetime.date.today().strftime("%Y%m%d")
-    _LOG.info("Using date_str=%s", date_str)
+    start_timestamp_as_str, end_timestamp_as_str = resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
+    run_date = get_run_date(start_timestamp_as_str)
+    _LOG.info("Using run_date=%s", run_date)
     #
     asset_key = "AM_ASSET_CLASS"
     if asset_key in os.environ:
@@ -69,25 +71,20 @@ def build_reconciliation_configs(
         asset_class = "crypto"
     # Set values for variables that are specific of an asset class.
     if asset_class == "crypto":
+        mode = resolve_run_mode(mode)
+        prod_subdir = get_prod_system_log_dir(
+            mode, start_timestamp_as_str, end_timestamp_as_str
+        )
         # For crypto the TCA part is not implemented yet.
         run_tca = False
         #
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        if prod_subdir is None:
-            # TODO(Grisha): pass `mode` as a param.
-            mode = "scheduled"
-            # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
-            start_timestamp_as_str = "_".join(date_str, "100500")
-            end_timestamp_as_str = "_".join(date_str, "120000")
-            prod_subdir = get_prod_system_log_dir(
-                mode, start_timestamp_as_str, end_timestamp_as_str
-            )
         # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
         prod_dir = os.path.join(
             root_dir,
-            date_str,
+            run_date,
             "prod",
             prod_subdir,
         )
@@ -96,7 +93,7 @@ def build_reconciliation_configs(
             # For crypto we do not have a `candidate`.
             # "cand": prod_dir,
             "sim": os.path.join(
-                root_dir, date_str, "simulation", "system_log_dir"
+                root_dir, run_date, "simulation", "system_log_dir"
             ),
         }
         #
@@ -121,16 +118,16 @@ def build_reconciliation_configs(
         #
         root_dir = ""
         search_str = ""
-        prod_dir_cmd = f"find {root_dir}/{date_str}/prod -name '{search_str}'"
+        prod_dir_cmd = f"find {root_dir}/{run_date}/prod -name '{search_str}'"
         _, prod_dir = hsystem.system_to_string(prod_dir_cmd)
         cand_cmd = (
-            f"find {root_dir}/{date_str}/job.candidate.* -name '{search_str}'"
+            f"find {root_dir}/{run_date}/job.candidate.* -name '{search_str}'"
         )
         _, cand_dir = hsystem.system_to_string(cand_cmd)
         system_log_path_dict = {
             "prod": prod_dir,
             "cand": cand_dir,
-            "sim": os.path.join(root_dir, date_str, "system_log_dir"),
+            "sim": os.path.join(root_dir, run_date, "system_log_dir"),
         }
         #
         fep_init_dict = {
@@ -150,7 +147,7 @@ def build_reconciliation_configs(
     # Build the config.
     config_dict = {
         "meta": {
-            "date_str": date_str,
+            "date_str": run_date,
             "asset_class": asset_class,
             "run_tca": run_tca,
             "bar_duration": bar_duration,
@@ -196,6 +193,70 @@ def load_config_from_pickle(
 
 
 # /////////////////////////////////////////////////////////////////////////////
+
+
+def resolve_run_mode(mode: Optional[str]) -> str:
+    """
+    Return run mode.
+
+    If a mode is not specified by a user, set a default value.
+    """
+    if mode is None:
+        mode = "scheduled"
+    hdbg.dassert_in(mode, ["scheduled", "manual"])
+    return mode
+
+
+# /////////////////////////////////////////////////////////////////////////////
+
+
+def _dassert_is_date(date: str) -> None:
+    """
+    Check if an input string is a date.
+
+    :param date: date as string, e.g., "20221101"
+    """
+    hdbg.dassert_isinstance(date, str)
+    try:
+        _ = datetime.datetime.strptime(date, "%Y%m%d")
+    except ValueError as e:
+        raise ValueError(f"date='{date}' doesn't have the right format: {e}")
+
+
+def get_run_date(start_timestamp_as_str: Optional[str]) -> str:
+    """
+    Return the run date as string from start timestamp, e.g. "20221017".
+
+    If start timestamp is not specified by a user then return current
+    date.
+
+    E.g., "20221101_064500" -> "20221101".
+    """
+    if start_timestamp_as_str is None:
+        run_date = datetime.date.today().strftime("%Y%m%d")
+    else:
+        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
+        run_date = start_timestamp_as_str.split("_")[0]
+    _LOG.info(hprint.to_str("run_date"))
+    _dassert_is_date(run_date)
+    return run_date
+
+
+def resolve_timestamps(
+    start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
+) -> Tuple[str, str]:
+    """
+    Return start and end timestamps.
+
+    If timestamps are not specified by a user then set a default value
+    for it and return it.
+    """
+    today_as_str = datetime.date.today().strftime("%Y%m%d")
+    if start_timestamp_as_str is None:
+        start_timestamp_as_str = "_".join([today_as_str, "100500"])
+    if end_timestamp_as_str is None:
+        end_timestamp_as_str = "_".join([today_as_str, "120000"])
+    return start_timestamp_as_str, end_timestamp_as_str
 
 
 def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:

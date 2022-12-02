@@ -28,14 +28,14 @@ to run outside a Docker container:
 
 Import as:
 
-import oms.lib_tasks_reconcile as omlitare
+import oms.lib_tasks_reconcile as olitarec
 """
 
 import datetime
 import logging
 import os
 import sys
-from typing import Optional, Tuple
+from typing import Optional
 
 from invoke import task
 
@@ -57,38 +57,6 @@ def _system(cmd: str) -> int:
     return hsystem.system(cmd, suppress_output=False, log_level="echo")
 
 
-def _dassert_is_date(date: str) -> None:
-    """
-    Check if an input string is a date.
-
-    :param date: date as string, e.g., "20221101"
-    """
-    hdbg.dassert_isinstance(date, str)
-    try:
-        _ = datetime.datetime.strptime(date, "%Y%m%d")
-    except ValueError as e:
-        raise ValueError(f"date='{date}' doesn't have the right format: {e}")
-
-
-def _get_run_date(start_timestamp_as_str: Optional[str]) -> str:
-    """
-    Return the run date as string from start timestamp, e.g. "20221017".
-
-    If start timestamp is not specified by a user then return current
-    date.
-
-    E.g., "20221101_064500" -> "20221101".
-    """
-    if start_timestamp_as_str is None:
-        run_date = datetime.date.today().strftime("%Y%m%d")
-    else:
-        # TODO(Dan): Add assert for `start_timestamp_as_str` regex.
-        run_date = start_timestamp_as_str.split("_")[0]
-    _LOG.info(hprint.to_str("run_date"))
-    _dassert_is_date(run_date)
-    return run_date
-
-
 def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     """
     Allow to overwrite reconcilation outcomes in the date-specific target dir.
@@ -98,10 +66,9 @@ def _allow_update(start_timestamp_as_str: str, dst_dir: str) -> None:
     :param dst_dir: dir to store reconcilation outcomes in, e.g.
         `/data/shared/prod_reconciliation/system_reconciliation/20221122/`
     """
-    hdbg.dassert_path_exists(dst_dir)
     # Get date-specific target dir.
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    dst_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
+    hdbg.dassert_path_exists(dst_dir)
     # Allow overwritting.
     _LOG.info("Allow to overwrite files at: %s", dst_dir)
     cmd = f"chmod -R +w {dst_dir}"
@@ -124,7 +91,9 @@ def _prevent_overwriting(path: str) -> None:
     _system(cmd)
 
 
-def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
+def _resolve_target_dir(
+    start_timestamp_as_str: str, dst_dir: Optional[str]
+) -> str:
     """
     Return the target dir name to store reconcilation results.
 
@@ -134,31 +103,17 @@ def _resolve_target_dir(run_date: str, dst_dir: Optional[str]) -> str:
     E.g., "/shared_data/prod_reconciliation/20221101".
 
     # TODO(Grisha): use `root_dir` everywhere, for a date specific dir use `dst_dir`.
-    :param run_date: string representation of the reconcile run date
+    :param start_timestamp_as_str: string representation of the reconcile
+        run timestamp
     :param dst_dir: a root dir for prod system reconciliation
     :return: a target dir to store reconcilation results
     """
+    hdbg.dassert_isinstance(start_timestamp_as_str, str)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     target_dir = os.path.join(dst_dir, run_date)
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
-
-
-def _resolve_timestamps(
-    start_timestamp_as_str: Optional[str], end_timestamp_as_str: Optional[str]
-) -> Tuple[str, str]:
-    """
-    Return start and end timestamps.
-
-    If a timestamps is not specified by a user then set a default value for it
-    and return it.
-    """
-    today_as_str = datetime.date.today().strftime("%Y%m%d")
-    if start_timestamp_as_str is None:
-        start_timestamp_as_str = "_".join([today_as_str, "100500"])
-    if end_timestamp_as_str is None:
-        end_timestamp_as_str = "_".join([today_as_str, "120000"])
-    return start_timestamp_as_str, end_timestamp_as_str
 
 
 def _sanity_check_data(file_path: str) -> None:
@@ -198,8 +153,7 @@ def reconcile_create_dirs(
     :param abort_if_exists: see `hio.create_dir()`
     """
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
     # Create dirs for storing prod and simulation results.
@@ -254,11 +208,10 @@ def reconcile_dump_market_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
     if incremental and os.path.exists(market_data_file):
@@ -315,7 +268,7 @@ def reconcile_run_sim(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
@@ -357,8 +310,7 @@ def reconcile_copy_sim_data(
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
     hdbg.dassert_dir_exists(sim_target_dir)
@@ -393,35 +345,34 @@ def reconcile_copy_prod_data(
 
     See `reconcile_run_all()` for params description.
     """
-    start_timestamp_as_str, end_timestamp_as_str = _resolve_timestamps(
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
     if stage is None:
         stage = "preprod"
-    if mode is None:
-        mode = "scheduled"
+    mode = omreconc.resolve_run_mode(mode)
+    hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
+    hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
         prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
-    hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
-    hdbg.dassert_in(mode, ("scheduled", "manual"))
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     # Set source log dir.
     system_log_subdir = omreconc.get_prod_system_log_dir(
         mode, start_timestamp_as_str, end_timestamp_as_str
     )
     system_log_dir = os.path.join(prod_data_source_dir, system_log_subdir)
     hs3.dassert_path_exists(system_log_dir, aws_profile)
-    # Set target dir.
-    prod_target_dir = os.path.join(target_dir, "prod", system_log_subdir)
-    _LOG.info("Copying results to '%s'", prod_target_dir)
+    # Set target dirs.
+    prod_target_dir = os.path.join(target_dir, "prod")
+    prod_results_target_dir = os.path.join(prod_target_dir, system_log_subdir)
+    _LOG.info("Copying prod results to '%s'", prod_results_target_dir)
     # Copy prod run results to the target dir.
     if hs3.is_s3_path(system_log_dir):
-        cmd = f"aws s3 cp {system_log_dir} {prod_target_dir} --recursive"
+        cmd = f"aws s3 cp {system_log_dir} {prod_results_target_dir} --recursive"
     else:
-        cmd = f"cp -vr {system_log_dir} {prod_target_dir}"
+        cmd = f"cp -vr {system_log_dir} {prod_results_target_dir}"
     _system(cmd)
     # Copy prod run logs to the specified folder.
     log_file = f"log.{mode}.{start_timestamp_as_str}.{end_timestamp_as_str}.txt"
@@ -429,7 +380,7 @@ def reconcile_copy_prod_data(
     hs3.dassert_path_exists(log_file, aws_profile)
     #
     if hs3.is_s3_path(log_file):
-        cmd = f"aws s3 cp {log_file} {prod_target_dir} --recursive"
+        cmd = f"aws s3 cp {log_file} {prod_target_dir}"
     else:
         cmd = f"cp -v {log_file} {prod_target_dir}"
     _system(cmd)
@@ -438,12 +389,13 @@ def reconcile_copy_prod_data(
         _prevent_overwriting(prod_target_dir)
 
 
-# TODO(Grisha): @Dan Expose `start_timestamp_as_str` and `start_timestamp_as_str` use in the notebook.
 @task
 def reconcile_run_notebook(
     ctx,
     start_timestamp_as_str=None,
+    end_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     incremental=False,
     prevent_overwriting=True,
 ):  # type: ignore
@@ -459,7 +411,11 @@ def reconcile_run_notebook(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
+    start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
+        start_timestamp_as_str, end_timestamp_as_str
+    )
+    mode = omreconc.resolve_run_mode(mode)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     # Set results destination dir and clear it if is already filled.
     local_results_dir = "."
     results_dir = os.path.join(local_results_dir, "result_0")
@@ -483,10 +439,10 @@ def reconcile_run_notebook(
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
-    prod_subdir = None
-    # pylint: disable=line-too-long
-    config_builder = f'amp.oms.reconciliation.build_reconciliation_configs(date_str="{run_date}", prod_subdir={prod_subdir})'
-    # pylint: enable=line-too-long
+    config_builder = (
+        f"amp.oms.reconciliation.build_reconciliation_configs"
+        + f'("{start_timestamp_as_str}", "{end_timestamp_as_str}", "{mode}")'
+    )
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
         "amp/dev_scripts/notebooks/run_notebook.py",
@@ -506,7 +462,7 @@ def reconcile_run_notebook(
     _system(script_name)
     # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
@@ -525,8 +481,7 @@ def reconcile_ls(ctx, start_timestamp_as_str=None, dst_dir=None):  # type: ignor
     See `reconcile_run_all()` for params description.
     """
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
     #
@@ -555,8 +510,8 @@ def reconcile_dump_tca_data(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     _ = ctx
-    run_date = _get_run_date(start_timestamp_as_str)
-    target_dir = _resolve_target_dir(run_date, dst_dir)
+    target_dir = _resolve_target_dir(start_timestamp_as_str, dst_dir)
+    run_date = omreconc.get_run_date(start_timestamp_as_str)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
     # TODO(Grisha): add as params to the interface.
     end_timestamp = run_date
@@ -626,7 +581,7 @@ def reconcile_run_all(
     stage=None,
     mode=None,
     prevent_overwriting=True,
-    skip_notebook=False,
+    run_notebook=False,
     allow_update=False,
     aws_profile=None,
 ):  # type: ignore
@@ -646,7 +601,7 @@ def reconcile_run_all(
         - "manual": the system run is triggered manually
     :param prevent_overwriting: if True write permissions are removed otherwise
         a permissions remain as they are
-    :param skip_notebook: if True do not run the reconcilation notebook otherwise run
+    :param run_notebook: if True run the reconcilation notebook otherwise do not run
     :param allow_update: if True allow to overwrite reconcilation outcomes
         otherwise retain permissions as they are
     :param aws_profile: AWS profile, e.g., "ck"
@@ -699,7 +654,7 @@ def reconcile_run_all(
         prevent_overwriting=prevent_overwriting,
     )
     #
-    if not skip_notebook:
+    if run_notebook:
         reconcile_run_notebook(
             ctx,
             start_timestamp_as_str=start_timestamp_as_str,
@@ -713,4 +668,3 @@ def reconcile_run_all(
     )
     if allow_update:
         _allow_update(start_timestamp_as_str, dst_dir)
-

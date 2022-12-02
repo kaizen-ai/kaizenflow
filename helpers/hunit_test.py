@@ -427,7 +427,16 @@ def purify_from_environment(txt: str) -> str:
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    txt = txt.replace(user_name, "$USER_NAME")
+    txt_out = []
+    for line in txt.splitlines():
+        if "take_square_root" in line:
+            # Skip replacing the user since it can be `root` interfering with
+            # the replacement.
+            txt_out.append(line)
+            continue
+        line = line.replace(user_name, "$USER_NAME")
+        txt_out.append(line)
+    txt = "\n".join(txt_out)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -496,7 +505,7 @@ def purify_from_env_vars(txt: str) -> str:
         "AM_AWS_S3_BUCKET",
         "AM_TELEGRAM_TOKEN",
         "CK_AWS_S3_BUCKET",
-        "CK_ECR_BASE_PATH"
+        "CK_ECR_BASE_PATH",
     ]:
         if env_var in os.environ:
             val = os.environ[env_var]
@@ -534,8 +543,9 @@ def purify_today_date(txt: str) -> str:
     today_date = datetime.date.today()
     today_date_as_str = today_date.strftime("%Y%m%d")
     # Replace predict.3.compress_tails.df_out.20220627_094500.YYYYMMDD_171106.csv.gz.
-    txt = re.sub(today_date_as_str + "_\d{6}", "YYYYMMDD_HHMMSS", txt,
-        flags=re.MULTILINE)
+    txt = re.sub(
+        today_date_as_str + "_\d{6}", "YYYYMMDD_HHMMSS", txt, flags=re.MULTILINE
+    )
     txt = re.sub(today_date_as_str, "YYYYMMDD", txt, flags=re.MULTILINE)
     return txt
 
@@ -1381,9 +1391,12 @@ class TestCase(unittest.TestCase):
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(hprint.to_str(
-            "dedent purify_text fuzzy_match ignore_line_breaks sort "
-            "tag abort_on_error"))
+        _LOG.debug(
+            hprint.to_str(
+                "dedent purify_text fuzzy_match ignore_line_breaks sort "
+                "tag abort_on_error"
+            )
+        )
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)

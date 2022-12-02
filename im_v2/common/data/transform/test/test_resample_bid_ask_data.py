@@ -33,8 +33,8 @@ class TestResampleBidAskData(hunitest.TestCase):
         `mode = VWAP`
         """
         expected_signature = r"""  bid_price  bid_size   ask_price  ask_size exchange_id
-        2020-01-10 00:00:00+00:00  388.041932    137.91  385.860446    258.91         ftx
-        2020-01-10 00:01:00+00:00  386.243237    163.40  385.699519    145.40         ftx
+        2020-01-10 00:01:00+00:00  388.041932    137.91  385.860446    258.91         ftx
+        2020-01-10 00:02:00+00:00  386.243237    163.40  385.699519    145.40         ftx
         """
         actual = hpandas.df_to_str(self._actual_vwap_df)
         self.assert_equal(actual, expected_signature, fuzzy_match=True)
@@ -116,8 +116,8 @@ class TestResampleBidAskData(hunitest.TestCase):
         `mode = TWAP`
         """
         expected_signature = r"""   bid_price  bid_size  ask_price  ask_size exchange_id
-        2020-01-10 00:00:00+00:00  45.970000    137.91  86.303333    258.91         ftx
-        2020-01-10 00:01:00+00:00  54.466667    163.40  48.466667    145.40         ftx
+        2020-01-10 00:01:00+00:00  45.970000    137.91  86.303333    258.91         ftx
+        2020-01-10 00:02:00+00:00  54.466667    163.40  48.466667    145.40         ftx
         """
         actual = hpandas.df_to_str(self._actual_twap_df)
         self.assert_equal(actual, expected_signature, fuzzy_match=True)
