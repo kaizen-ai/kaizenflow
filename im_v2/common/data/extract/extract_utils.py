@@ -660,7 +660,7 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_exchange = os.path.join(args["s3_path"]
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
