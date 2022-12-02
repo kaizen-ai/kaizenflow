@@ -84,6 +84,7 @@ def get_CcxtBroker_example1(
     exchange_id: str,
     contract_type: str,
     stage: str,
+    secret_id: int,
 ) -> occxbrok.CcxtBroker:
     """
     See `CcxtBroker` ctor for parameters description.
@@ -98,7 +99,6 @@ def get_CcxtBroker_example1(
     portfolio_id = "ccxt_portfolio_1"
     strategy_id = "C1b"
     account_type = "trading"
-    secret_id = 1
     secret_identifier = ohsseide.SecretIdentifier(
         exchange_id, stage, account_type, secret_id
     )

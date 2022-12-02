@@ -13,6 +13,7 @@ import dataflow_amp.system.Cx as dtfamsysc
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hserver as hserver
+import helpers.hsystem as hsystem
 import oms.ccxt_broker as occxbrok
 import oms.hsecrets as omssec
 
@@ -64,3 +65,26 @@ def binance_get_open_positions(ctx, secret_id):  # type: ignore
     df = pd.DataFrame(data=open_positions, columns=columns)
     df_str = hpandas.df_to_str(df, num_rows=None)
     _LOG.info("\n%s", df_str)
+
+
+@task
+def binance_flatten_account(ctx, stage, secret_id):  # type: ignore
+    """
+    Flatten all open positions in test account.
+
+    See CcxtBroker's ctor for parameters description.
+    """
+    hdbg.dassert(
+        hserver.is_inside_docker(), "This is runnable only inside Docker."
+    )
+    _ = ctx
+    hdbg.dassert(secret_id.isnumeric())
+    secret_id = int(secret_id)
+    exchange_id = "binance"
+    contract_type = "futures"
+    cmd = (
+        f"oms/flatten_ccxt_account.py --exchange_id {exchange_id}"
+        + f" --contract_type {contract_type} --stage {stage}"
+        + f" --secret_id {secret_id}"
+    )
+    hsystem.system(cmd)
