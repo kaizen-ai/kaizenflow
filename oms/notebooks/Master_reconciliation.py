@@ -21,7 +21,6 @@
 import logging
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
@@ -55,7 +54,9 @@ if not config:
     start_timestamp_as_str = None
     end_timestamp_as_str = None
     mode = None
-    config_list = oms.build_reconciliation_configs(start_timestamp_as_str, end_timestamp_as_str, mode)
+    config_list = oms.build_reconciliation_configs(
+        start_timestamp_as_str, end_timestamp_as_str, mode
+    )
     config = config_list[0]
 print(config)
 
@@ -81,7 +82,9 @@ dag_path_dict
 # %%
 # TODO(gp): Load the TCA data for crypto.
 if config["meta"]["run_tca"]:
-    tca_csv = os.path.join(root_dir, config["meta"]["date_str"], "tca/sau1_tca.csv")
+    tca_csv = os.path.join(
+        root_dir, config["meta"]["date_str"], "tca/sau1_tca.csv"
+    )
     hdbg.dassert_file_exists(tca_csv)
 
 # %% [markdown]
@@ -143,13 +146,11 @@ dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-compare_dfs_kwargs ={
+compare_dfs_kwargs = {
     "diff_mode": "pct_change",
     "assert_diff_threshold": None,
 }
-dag_diff_df = oms.compute_dag_outputs_diff(
-    dag_df_dict, compare_dfs_kwargs
-)
+dag_diff_df = oms.compute_dag_outputs_diff(dag_df_dict, compare_dfs_kwargs)
 
 # %%
 max_diff = dag_diff_df.abs().max().max()
@@ -176,10 +177,20 @@ if False:
     )
 
 # %% [markdown]
+# ## Check DAG io self-consistency 
+
+# %%
+# Check that all the DAG output dataframes are equal at intersecting time intervals.
+node_dfs = dag_df_dict["prod"][dag_node_names[-1]]
+oms.check_dag_output_self_consistency(node_dfs)
+
+# %% [markdown]
 # ## Compute DAG delay
 
 # %%
-delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=False)
+delay_in_secs = oms.compute_dag_delay_in_seconds(
+    dag_node_timestamps, display_plot=False
+)
 
 # %% [markdown]
 # # Portfolio
@@ -347,7 +358,7 @@ prod_target_position_df = oms.load_target_positions(
     start_timestamp,
     end_timestamp,
     config["meta"]["bar_duration"],
-    normalize_bar_times=True
+    normalize_bar_times=True,
 )
 hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
 if False:
@@ -357,7 +368,7 @@ if False:
         start_timestamp,
         end_timestamp,
         config["meta"]["bar_duration"],
-        normalize_bar_times=True
+        normalize_bar_times=True,
     )
 
 # %% [markdown]
@@ -386,7 +397,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -407,7 +418,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -428,7 +439,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -449,7 +460,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
@@ -470,7 +481,7 @@ res_df = research_portfolio_df["holdings_shares"]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
