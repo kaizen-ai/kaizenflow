@@ -112,7 +112,7 @@ def get_DataFramePortfolio_example3(
     - a `DataFrameBroker` for prod (i.e., a broker that executes the orders immediately)
     """
     # Build a DataFrameBroker.
-    broker = occxbrok.get_SimulatedCcxtBroker_instance1(market_data)
+    broker = occxbrok.get_DataFrameCcxtBroker_instance1(market_data)
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.
     initial_cash = 700
