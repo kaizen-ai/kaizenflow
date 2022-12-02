@@ -8,7 +8,6 @@ import logging
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
