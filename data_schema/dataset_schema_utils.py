@@ -123,15 +123,16 @@ def _validate_dataset_signature_semantics(
     )
     allowed_values_dict = dataset_schema["allowed_values"]
     # Assumes the syntax check has been performed.
-    is_semantics_correct = True
+    warning_messages = []
     for token, value in zip(schema_signature_list, signature_list):
         if value not in allowed_values_dict[token]:
-            _LOG.warning(
+            warning_messages.append(
                 f"Identifier {token} contains invalid value: {value}, "
                 + f"allowed_values: {allowed_values_dict[token]}"
             )
-            is_semantics_correct = False
-    return is_semantics_correct
+    if warning_messages:
+        _LOG.warning("\n".join(warning_messages))
+    return warning_messages == []
 
 
 def validate_dataset_signature(
@@ -141,7 +142,7 @@ def validate_dataset_signature(
     Validate syntax and semantics of a dataset signature based on provided
     schema.
 
-    For example refer to docstirng of
+    For example refer to the docstring of
     data_schema/validate_dataset_signature.py
 
     :param signature: dataset signature to validate
@@ -159,6 +160,7 @@ def validate_dataset_signature(
         signature, dataset_schema
     )
     # If syntax is correct, check the semantics.
+    # TODO(Juraj): Add strictness parameter `assert_mode`
     if is_correct_signature:
         is_correct_signature = _validate_dataset_signature_semantics(
             signature, dataset_schema
