@@ -14,6 +14,7 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.key_sorted_ordered_dict as cksoordi
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hio as hio
@@ -86,6 +87,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         _ = hdict.typed_get(
             order_dict, "order_duration_in_mins", expected_type=int
         )
+        self._order_duration_in_mins = order_dict["order_duration_in_mins"]
         self._offset_min = pd.DateOffset(
             minutes=order_dict["order_duration_in_mins"]
         )
@@ -617,6 +619,12 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Create a config for `Order`.
         timestamp_start = wall_clock_timestamp
         timestamp_end = wall_clock_timestamp + self._offset_min
+        # Round down to the nearest bar.
+        mode="floor"
+        bar_duration_in_secs = 5 * 60
+        timestamp_end = hdateti.find_bar_timestamp(
+            timestamp_end, bar_duration_in_secs, mode=mode,
+        )
         order_dict = {
             "type_": self._order_dict["order_type"],
             "creation_timestamp": wall_clock_timestamp,

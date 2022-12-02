@@ -775,6 +775,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
         """
         Implement logic simulating orders being filled.
         """
+        _LOG.warning("_deadline_timestamp_to_orders=\n%s", self._deadline_timestamp_to_orders)
         # We should always get the "next" orders, for this reason one should use
         # a priority queue.
         wall_clock_timestamp = self._get_wall_clock_time()
