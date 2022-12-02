@@ -70,7 +70,7 @@ def binance_get_open_positions(ctx, secret_id):  # type: ignore
 @task
 def binance_flatten_account(ctx, stage, secret_id):  # type: ignore
     """
-    Flatten all open positions in account.
+    Close all open positions in a binance account.
 
     See CcxtBroker's ctor for parameters description.
     """
