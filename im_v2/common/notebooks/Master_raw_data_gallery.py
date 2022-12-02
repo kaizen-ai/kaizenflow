@@ -122,5 +122,3 @@ s3_path = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_c
 # Load daily data from s3 parquet.
 cc_ba_spot_resampled = hparque.from_parquet(s3_path, aws_profile="ck")
 _LOG.log(log_level, hpandas.df_to_str(cc_ba_spot_resampled, log_level=log_level))
-
-# %%
