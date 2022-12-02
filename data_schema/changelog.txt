@@ -3,6 +3,7 @@ v3
 - Initial version which support surrentum protocol
 - based on surrentum protocol v0.1
 - prod data stored in s3://cryptokaizen-data/v3
+- values for universe version and dataset versions are hardcoded, will be addressed later
 
 v2
 - Before surrentum protocol was put in place
