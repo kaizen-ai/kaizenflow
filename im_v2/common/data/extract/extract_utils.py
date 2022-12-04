@@ -638,7 +638,7 @@ def save_parquet(
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
-
+    
 
 # TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
@@ -652,9 +652,7 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
-        args["s3_path"], args
-    )
+    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
