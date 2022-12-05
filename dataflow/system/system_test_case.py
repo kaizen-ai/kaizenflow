@@ -404,7 +404,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     - a timed DAG
     - ReplayedMarketData
     - DataFrame portfolio
-    - Simulated broker
+    - DataFrame Broker
 
     Freeze the config and the output of the system.
     """
