@@ -393,6 +393,7 @@ class TestDownloadRealtimeForOneExchange1(
             8   9  1636539060000    242.5400    242.5400    242.3500    242.3500  4.506200e+02      SOL_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
+    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
     @pytest.mark.slow
     @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
@@ -579,7 +580,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "binance/currency_pair=SOL_USDT/year=2022/month=1",
         ]
         self.assertListEqual(parquet_path_list, expected_list)
-
+    
+    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
     def test_function_call2(self) -> None:
         """
         Verify error on non incremental run.
@@ -593,7 +595,8 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertIn(
             "S3 path 's3://mock_bucket/binance' already exist!", str(fail.value)
         )
-
+        
+    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
     def test_function_call3(self) -> None:
         """
         Verify error on incremental run.
