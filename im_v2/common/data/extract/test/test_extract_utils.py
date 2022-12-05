@@ -496,7 +496,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "aws_profile": self.mock_aws_profile,
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
-            "file_format": "parquet",
+            "data_format": "parquet",
             "unit": "ms",
         }
         exchange = imvcdexex.CcxtExtractor(

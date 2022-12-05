@@ -711,7 +711,7 @@ def download_historical_data(
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
-        if args["file_format"] == "parquet":
+        if args["data_format"] == "parquet":
             save_parquet(
                 data,
                 path_to_dataset,
@@ -720,7 +720,7 @@ def download_historical_data(
                 args["data_type"],
                 mode="append",
             )
-        elif args["file_format"] == "csv":
+        elif args["data_format"] == "csv":
             save_csv(
                 data,
                 path_to_dataset,
@@ -729,7 +729,7 @@ def download_historical_data(
                 args["aws_profile"],
             )
         else:
-            hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
+            hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
 def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
