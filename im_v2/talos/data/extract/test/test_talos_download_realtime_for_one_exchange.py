@@ -12,10 +12,11 @@ import helpers.hunit_test as hunitest
 import im_v2.talos.utils as imv2tauti
 
 
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
+#@pytest.mark.skipif(
+#    not henv.execute_repo_config_code("is_CK_S3_available()"),
+#    reason="Run only if CK S3 is available",
+#)
+@pytest.mark.skip(reason="Talos as a vendor is deprecated.")
 class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
     @pytest.mark.superslow("~40 seconds.")
     def test_amount_of_downloads(self) -> None:
