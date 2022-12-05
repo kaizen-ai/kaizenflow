@@ -18,6 +18,7 @@ from typing import Any, Dict, List, Optional
 import pandas as pd
 import psycopg2
 
+import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
@@ -637,8 +638,9 @@ def save_parquet(
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
+    
 
-
+# TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
@@ -653,9 +655,9 @@ def download_historical_data(
     path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
-        hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
+        hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
     elif not args["incremental"]:
-        hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
+        hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
     # Load currency pairs.
     mode = "download"
     universe = ivcu.get_vendor_universe(
@@ -691,7 +693,7 @@ def download_historical_data(
         if args["file_format"] == "parquet":
             save_parquet(
                 data,
-                path_to_exchange,
+                path_to_dataset,
                 args["unit"],
                 args["aws_profile"],
                 args["data_type"],
@@ -700,7 +702,7 @@ def download_historical_data(
         elif args["file_format"] == "csv":
             save_csv(
                 data,
-                path_to_exchange,
+                path_to_dataset,
                 currency_pair,
                 args["incremental"],
                 args["aws_profile"],
