@@ -153,6 +153,15 @@ len(issues)
 # %% [markdown]
 # ## Repositories
 
+# %% [markdown]
+# The search can be performed not only on repositories, we also can search:
+# 1) Code `https://api.github.com/search/code?q=Q`
+# 2) By label in the specific repo `https://api.github.com/search/labels?repository_id=REPOSITORY_ID&q=Q`
+# 3) Issues and PRs `https://api.github.com/search/issues?q=Q`
+# 4) Commits `https://api.github.com/search/commits?q=Q`
+# 5) Users `https://api.github.com/search/users?q=Q`
+# 6) Topics `https://api.github.com/search/topics?q=Q`
+
 # %%
 query = "blockchain"
 search_repos = requests.get(f"https://api.github.com/search/repositories?q={query}").json()
