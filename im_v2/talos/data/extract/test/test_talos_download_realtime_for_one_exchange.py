@@ -46,10 +46,10 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         # Amount of downloads depends on the start time and stop time.
         expected_downloads_amount = stop_delay - start_delay
         start_time = pd.Timestamp.now(tz="UTC") + datetime.timedelta(
-            minutes=start_delay, seconds=5
+            minutes=start_delay, seconds=15
         )
         stop_time = pd.Timestamp.now(tz="UTC") + datetime.timedelta(
-            minutes=stop_delay, seconds=5
+            minutes=stop_delay, seconds=15
         )
         # Call Python script in order to get output.
         cmd = cmd.format(
