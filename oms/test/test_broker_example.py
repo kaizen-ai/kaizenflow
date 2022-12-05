@@ -15,7 +15,7 @@ import oms.test.oms_db_helper as omtodh
 class Test_Broker_builders1(hunitest.TestCase):
     def test1(self) -> None:
         event_loop = None
-        broker = obroexam.get_SimulatedBroker_example1(event_loop)
+        broker = obroexam.get_DataFrameBroker_example1(event_loop)
         # Check.
         hobject.test_object_signature(self, broker)
 
