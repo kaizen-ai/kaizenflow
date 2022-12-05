@@ -5,108 +5,13 @@ import im_v2.common.universe.test_universe as imvcounte
 """
 
 import os
-from typing import List, Tuple
-
-import pytest
+from typing import List
 
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hunit_test as hunitest
 import im_v2.common.universe.full_symbol as imvcufusy
 import im_v2.common.universe.universe as imvcounun
-
-# #############################################################################
-# TestExtractUniverseVersion1
-# #############################################################################
-
-
-class TestExtractUniverseVersion1(hunitest.TestCase):
-    def test_extract_universe_version1(self) -> None:
-        """
-        Verify function provides expected output on valid input.
-        """
-        self._test_extract_universe_version("1.1", (1, 1))
-
-    def test_extract_universe_version2(self) -> None:
-        """
-        Verify function provides expected output on valid input.
-        """
-        self._test_extract_universe_version("4", (4, 0))
-
-    def test_extract_universe_version3(self) -> None:
-        """
-        Verify function provides expected output on valid input.
-        """
-        self._test_extract_universe_version("1.0", (1, 0))
-
-    def test_extract_universe_version4(self) -> None:
-        """
-        Verify function provides expected output on valid input.
-        """
-        self._test_extract_universe_version("3.11", (3, 11))
-
-    def test_extract_universe_version5(self) -> None:
-        """
-        Verify function provides expected output on valid input.
-        """
-        self._test_extract_universe_version("16.2", (16, 2))
-
-    def test_extract_universe_version6(self) -> None:
-        """
-        Verify function provides expected output on valid input.
-        """
-        self._test_extract_universe_version("25.11", (25, 11))
-
-    def test_extract_universe_version_incorrect_format1(self) -> None:
-        """
-        Verify function raises AssertionError on incorrect input format.
-        """
-        self._test_extract_universe_version_incorrect_format("incorrect")
-
-    def test_extract_universe_version_incorrect_format2(self) -> None:
-        """
-        Verify function raises AssertionError on incorrect input format.
-        """
-        self._test_extract_universe_version_incorrect_format("universe_vxx.json")
-
-    def test_extract_universe_version_incorrect_format3(self) -> None:
-        """
-        Verify function raises AssertionError on incorrect input format.
-        """
-        self._test_extract_universe_version_incorrect_format("universe_v.1.json")
-
-    def test_extract_universe_version_incorrect_format4(self) -> None:
-        """
-        Verify function raises AssertionError on incorrect input format.
-        """
-        self._test_extract_universe_version_incorrect_format("universe_11.json")
-
-    def _test_extract_universe_version(
-        self, version: str, expected: Tuple[int, int]
-    ) -> None:
-        """
-        Verify function provides expected output on valid inputs.
-
-        :param version: version in string format to input, e.g. 1.0
-        :param expected: expected output version in (major, minor) format
-        """
-        fn = f"/app/im_v2/ccxt/universe/download/universe_v{version}.json"
-        self.assertEqual(imvcounun._extract_universe_version(fn), expected)
-
-    def _test_extract_universe_version_incorrect_format(
-        self, file_name: str
-    ) -> None:
-        """
-        Helper function to verify function raises AssertionError on incorrect
-        input format.
-
-        :param file_name: incorrect file_name to test
-        """
-        expected_fail = "Can't parse file"
-        with pytest.raises(AssertionError) as fail:
-            _ = imvcounun._extract_universe_version(file_name)
-        self.assertIn(expected_fail, str(fail.value))
-
 
 # #############################################################################
 # TestGetUniverse
