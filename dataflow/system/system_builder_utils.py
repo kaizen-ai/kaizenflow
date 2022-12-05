@@ -500,7 +500,7 @@ def get_DataFramePortfolio_from_System(
             market_data=market_data, asset_ids=asset_ids
         )
     else:
-        # Set event loop object for `SimulatedBroker` used in simulation.
+        # Set event loop object for `DataFrameBroker` used in simulation.
         event_loop = system.config.get_and_mark_as_used("event_loop_object")
         # Initialize `Portfolio` with parameters from the system config.
         mark_to_market_col = system.config.get_and_mark_as_used(
