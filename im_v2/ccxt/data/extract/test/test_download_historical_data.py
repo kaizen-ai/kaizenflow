@@ -23,7 +23,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         parser = imvcdedhda._parse()
         cmd = []
         cmd.extend(["--download_mode", "periodic_daily"])
-        cmd.extend(["--download_entity", "manual"])
+        cmd.extend(["--downloading_entity", "manual"])
         cmd.extend(["--action_tag", "downloaded_1min"])
         cmd.extend(["--data_type", "ohlcv"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
@@ -37,7 +37,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         actual = vars(args)
         expected = {
             "download_mode": "periodic_daily",
-            "download_entity": "manual",
+            "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
             "data_type": "ohlcv",
             "start_timestamp": "2022-02-08",
@@ -74,7 +74,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         )
         kwargs = {
             "download_mode": "bulk",
-            "download_entity": "manual",
+            "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
             "data_type": "ohlcv",
             "start_timestamp": "2021-12-31 23:00:00",

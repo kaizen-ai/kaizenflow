@@ -64,7 +64,7 @@ def _add_common_download_args(
         help="What type of download is this (e.g., 'periodic_daily')",
     )
     parser.add_argument(
-        "--download_entity",
+        "--downloading_entity",
         action="store",
         required=True,
         type=str,
@@ -620,7 +620,7 @@ def save_csv(
 
 def save_parquet(
     data: pd.DataFrame,
-    path_to_exchange: str,
+    path_to_dataset: str,
     unit: str,
     aws_profile: Optional[str],
     data_type: str,
@@ -648,14 +648,14 @@ def save_parquet(
     hparque.to_partitioned_parquet(
         data,
         ["currency_pair"] + partition_cols,
-        path_to_exchange,
+        path_to_dataset,
         partition_filename=None,
         aws_profile=aws_profile,
     )
     # Merge all new parquet into a single `data.parquet`.
     if mode == "list_and_merge":
         hparque.list_and_merge_pq_files(
-            path_to_exchange,
+            path_to_dataset,
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
@@ -673,7 +673,12 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
+    # TODO(Juraj): refactor cmd line arguments to accept `asset_type`
+    #  instead of `contract_type` once a decision is made.
+    args["asset_type"] = args["contract_type"]
+    # TODO(Juraj): Handle dataset version #CmTask3348.
+    args["version"] = "v1_0_0"
+    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(args["s3_path"], args)
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
@@ -711,6 +716,7 @@ def download_historical_data(
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
+        _LOG.info("Saving the dataset into %s", path_to_dataset)
         if args["data_format"] == "parquet":
             save_parquet(
                 data,

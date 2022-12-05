@@ -28,7 +28,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         parser = imvcdedrfoe._parse()
         cmd = []
         cmd.extend(["--download_mode", "realtime"])
-        cmd.extend(["--download_entity", "manual"])
+        cmd.extend(["--downloading_entity", "manual"])
         cmd.extend(["--action_tag", "downloaded_1min"])
         cmd.extend(["--start_timestamp", "20211110-101100"])
         cmd.extend(["--end_timestamp", "20211110-101200"])
@@ -44,7 +44,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         actual = vars(args)
         expected = {
             "download_mode": "realtime",
-            "download_entity": "manual",
+            "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
@@ -75,7 +75,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         )
         kwargs = {
             "download_mode": "realtime",
-            "download_entity": "manual",
+            "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
