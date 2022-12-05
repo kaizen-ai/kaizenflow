@@ -57,6 +57,27 @@ def _add_common_download_args(
     Add command line arguments common to all downloaders.
     """
     parser.add_argument(
+        "--download_mode",
+        action="store",
+        required=True,
+        type=str,
+        help="What type of download is this (e.g., 'periodic_daily')",
+    )
+    parser.add_argument(
+        "--download_entity",
+        action="store",
+        required=True,
+        type=str,
+        help="Who is the executor (e.g. airflow, manual)",
+    )
+    parser.add_argument(
+        "--action_tag",
+        action="store",
+        required=True,
+        type=str,
+        help="Capture the nature of the task and data (e.g. downloaded_1min)",
+    )
+    parser.add_argument(
         "--exchange_id",
         action="store",
         required=True,
@@ -94,6 +115,13 @@ def _add_common_download_args(
         help="Specifies depth of order book to \
             download (applies when data_type=bid_ask).",
     )
+    parser.add_argument(
+        "--data_format",
+        action="store",
+        required=True,
+        type=str,
+        help="Format of the data (e.g. csv, parquet, postgres)",
+    )
     return parser
 
 
@@ -117,15 +145,6 @@ def add_exchange_download_args(
         required=False,
         type=str,
         help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--file_format",
-        action="store",
-        required=False,
-        default="parquet",
-        type=str,
-        choices=["csv", "parquet"],
-        help="File format to save files on disk",
     )
     parser.add_argument(
         "--incremental",
@@ -177,6 +196,8 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
+# TODO(Juraj): separate into individual schemas for
+#  each data type
 DATASET_SCHEMA = {
     "ask_price": "float64",
     "ask_size": "float64",

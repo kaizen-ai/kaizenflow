@@ -22,16 +22,23 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         """
         parser = imvcdedhda._parse()
         cmd = []
+        cmd.extend(["--download_mode", "periodic_daily"])
+        cmd.extend(["--download_entity", "manual"])
+        cmd.extend(["--action_tag", "downloaded_1min"])
         cmd.extend(["--data_type", "ohlcv"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
         cmd.extend(["--end_timestamp", "2022-02-09"])
         cmd.extend(["--exchange_id", "binance"])
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--aws_profile", "ck"])
-        cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
+        cmd.extend(["--s3_path", "s3://cryptokaizen-data-test/"])
+        cmd.extend(["--data_format", "parquet"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
+            "download_mode": "periodic_daily",
+            "download_entity": "manual",
+            "action_tag": "downloaded_1min",
             "data_type": "ohlcv",
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
@@ -40,9 +47,9 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "universe": "v3",
             "incremental": False,
             "aws_profile": "ck",
-            "s3_path": "s3://cryptokaizen-data/realtime/",
+            "s3_path": "s3://cryptokaizen-data-test/",
             "log_level": "INFO",
-            "file_format": "parquet",
+            "data_format": "parquet",
             "bid_ask_depth": None,
         }
         self.assertDictEqual(actual, expected)
@@ -66,13 +73,16 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             argparse.ArgumentParser, spec_set=True
         )
         kwargs = {
+            "download_mode": "bulk",
+            "download_entity": "manual",
+            "action_tag": "downloaded_1min",
             "data_type": "ohlcv",
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
             "universe": "v3",
             "exchange_id": "binance",
             "contract_type": "spot",
-            "file_format": "parquet",
+            "data_format": "parquet",
             "incremental": False,
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
