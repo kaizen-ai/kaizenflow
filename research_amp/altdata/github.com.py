@@ -21,6 +21,16 @@
 #  
 # Obviously, the actual list of github API endpoints is much longer than presented in this notebook. 
 # The data from the endpoints presented here are assumed to have the biggest predictive power.
+#
+# Endpoints used in this notebook (using `bitcoin` repo as an example):
+# 1) https://api.github.com/repos/bitcoin/bitcoin - common repo info
+# 2) https://api.github.com/repos/bitcoin/bitcoin/stats/commit_activity - last yeat of commit activity
+# 3) https://api.github.com/repos/bitcoin/bitcoin/stats/code_frequency - historical weekly aggregate of commits
+# 4) https://api.github.com/repos/bitcoin/bitcoin/stats/participation - total commits of repo owner vs. non owners
+# 5) https://api.github.com/repos/bitcoin/bitcoin/stats/punch_card - hourly commit count for the last week
+# 6) https://api.github.com/repos/bitcoin/bitcoin/issues - open issues
+# 7) https://api.github.com/search/repositories?q=blockchain - search repos by `blockchain keyword`
+# 8) https://api.github.com/rate_limit - search api rate limits
 
 # %% [markdown]
 # # Imports
@@ -47,9 +57,7 @@ hprint.config_notebook()
 
 # %%
 common = requests.get("https://api.github.com/repos/bitcoin/bitcoin").json()
-
-# %%
-common
+display(common)
 
 # %% [markdown]
 # # Stars
@@ -58,7 +66,7 @@ common
 # Get the current number of stars for the repository.
 
 # %% run_control={"marked": false}
-common["stargazers_count"]
+display(common["stargazers_count"])
 
 # %% [markdown]
 # # Commits
@@ -78,7 +86,7 @@ commits_yearly = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stat
 # E.g. in the array [8, 11, 10, 25, 5, 13, 2] 8 is the number of commits for Sun, 11 - for Monday, 10 - for Tuesday, 25 - for Wednesday, 5 - for Thursday, 13 - for Friday and 2 - for Saturday
 
 # %%
-commits_yearly[:5]
+display(commits_yearly[:5])
 
 # %% [markdown]
 # ## /code_frequency
@@ -92,8 +100,10 @@ all_commits_weekly_aggregated = requests.get("https://api.github.com/repos/bitco
 # %%
 # First date Sun Aug 30 2009 00:00:00 GMT+0000, but common info says that repository was created on '2010-12-19T15:16:43Z'
 # How is it possible?
-print("First five weeks:", commits_weekly_aggregated[:5])
-print("Last five weeks:", commits_weekly_aggregated[-5:])
+print("First five weeks:")
+display(all_commits_weekly_aggregated[:5])
+print("Last five weeks:")
+display(all_commits_weekly_aggregated[-5:])
 
 # %% [markdown]
 # ## /participation
@@ -105,9 +115,7 @@ print("Last five weeks:", commits_weekly_aggregated[-5:])
 
 # %%
 total_commits = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stats/participation").json()
-
-# %%
-print(total_commits)
+display(total_commits)
 
 # %% [markdown]
 # ## /punch_card
@@ -126,9 +134,7 @@ print(total_commits)
 
 # %%
 hourly_commits = requests.get("https://api.github.com/repos/bitcoin/bitcoin/stats/punch_card").json()
-
-# %%
-hourly_commits
+display(hourly_commits)
 
 # %% [markdown]
 # # ISSUES
@@ -142,7 +148,7 @@ hourly_commits
 issues = requests.get("https://api.github.com/repos/bitcoin/bitcoin/issues").json()
 
 # %%
-len(issues)
+display(len(issues))
 
 # %% [markdown]
 # # Search
@@ -165,13 +171,11 @@ len(issues)
 # %%
 query = "blockchain"
 search_repos = requests.get(f"https://api.github.com/search/repositories?q={query}").json()
-
-# %%
-search_repos["total_count"]
+display(search_repos["total_count"])
 
 # %%
 # First result for "blockchain" search query.
-search_repos["items"][:1]
+display(search_repos["items"][:1])
 
 # %% [markdown]
 # # Rate Limit
@@ -190,6 +194,7 @@ search_repos["items"][:1]
 # The integration_manifest object provides your rate limit status for the GitHub App Manifest code conversion endpoint.
 
 # %%
-requests.get("https://api.github.com/rate_limit").json()
+rate_limit = requests.get("https://api.github.com/rate_limit").json()
+display(rate_limit)
 
 # %%
