@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -44,11 +44,12 @@ _LOG = logging.getLogger(__name__)
 
 hprint.config_notebook()
 
-
 # %% [markdown]
 # # Config
 
 # %%
+import helpers.hs3 as hs3
+
 def get_gallery_dataflow_example_config() -> cconconf.Config:
     """
     Get config, that specifies params for getting raw data.
@@ -85,7 +86,8 @@ print(config)
 # Specify params.
 universe_version = "v3"
 resample_1min = True
-root_dir = config["load"]["data_dir"]
+#root_dir = config["load"]["data_dir"]
+root_dir = "s3://cryptokaizen-data/reorg/historical.manual.pq/"
 partition_mode = config["load"]["partition_mode"]
 dataset = config["load"]["dataset"]
 contract_type = config["load"]["contract_type"]
