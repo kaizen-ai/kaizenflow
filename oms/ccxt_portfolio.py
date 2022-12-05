@@ -9,9 +9,8 @@ from typing import Any, Dict, List, Optional
 
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
-import oms.portfolio as omportfo
 import oms.hsecrets as omssec
-
+import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
 
@@ -63,10 +62,7 @@ def get_CcxtPortfolio_prod_instance1(
     if not use_simulation:
         # Build `CcxtBroker` that is connected to the real exchange.
         broker = occxbrok.get_CcxtBroker_prod_instance1(
-            strategy_id,
-            market_data,
-            universe_version,
-            secret_identifier
+            strategy_id, market_data, universe_version, secret_identifier
         )
     else:
         _LOG.warning("Running the system with the simulated Broker")

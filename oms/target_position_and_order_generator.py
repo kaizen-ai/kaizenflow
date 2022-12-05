@@ -614,12 +614,18 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Enter position between now and the next `order_duration_in_mins` minutes.
         # Create a config for `Order`.
         timestamp_start = wall_clock_timestamp
-        timestamp_end = timestamp_start + pd.DateOffset(minutes=self._order_duration_in_mins)
+        timestamp_end = timestamp_start + pd.DateOffset(
+            minutes=self._order_duration_in_mins
+        )
         # Align on a bar.
-        mode="floor"
-        bar_duration_in_secs = hdateti.convert_minutes_to_seconds(self._order_duration_in_mins)
+        mode = "floor"
+        bar_duration_in_secs = hdateti.convert_minutes_to_seconds(
+            self._order_duration_in_mins
+        )
         timestamp_end_aligned = hdateti.find_bar_timestamp(
-            timestamp_end, bar_duration_in_secs, mode=mode,
+            timestamp_end,
+            bar_duration_in_secs,
+            mode=mode,
         )
         order_dict = {
             "type_": self._order_dict["order_type"],
