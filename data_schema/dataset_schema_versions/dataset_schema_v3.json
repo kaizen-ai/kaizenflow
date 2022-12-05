@@ -3,10 +3,10 @@
         "download_mode.downloading_entity.action_tag.data_format.data_type.asset_type.universe.vendor.exchange.version",
     "token_separator_character": ".",
     "allowed_values": {
-        "download_mode": ["bulk", "periodic_daily"],
+        "download_mode": ["bulk", "periodic_daily", "realtime"],
         "downloading_entity": ["airflow", "manual"],
         "action_tag": ["downloaded_1sec", "resampled_1min", "downloaded_1min"],
-        "data_format": ["pq", "csv"],
+        "data_format": ["pq", "csv", "postgres"],
         "data_type": ["ohlcv", "bid_ask"],
         "asset_type": ["futures", "spot"],
         "universe": ["v7", "v3", "v7_1", "v7_3"],
