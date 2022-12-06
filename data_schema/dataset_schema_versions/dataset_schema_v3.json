@@ -6,7 +6,7 @@
         "download_mode": ["bulk", "periodic_daily", "realtime"],
         "downloading_entity": ["airflow", "manual"],
         "action_tag": ["downloaded_1sec", "resampled_1min", "downloaded_1min"],
-        "data_format": ["pq", "csv", "postgres"],
+        "data_format": ["parquet", "csv", "postgres"],
         "data_type": ["ohlcv", "bid_ask"],
         "asset_type": ["futures", "spot"],
         "universe": ["v7", "v3", "v7_1", "v7_3"],

@@ -30,6 +30,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         cmd.extend(["--download_mode", "realtime"])
         cmd.extend(["--downloading_entity", "manual"])
         cmd.extend(["--action_tag", "downloaded_1min"])
+        cmd.extend(["--vendor", "ccxt"])
         cmd.extend(["--start_timestamp", "20211110-101100"])
         cmd.extend(["--end_timestamp", "20211110-101200"])
         cmd.extend(["--exchange_id", "binance"])
@@ -46,6 +47,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "download_mode": "realtime",
             "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
+            "vendor": "ccxt",
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",
@@ -77,6 +79,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "download_mode": "realtime",
             "downloading_entity": "manual",
             "action_tag": "downloaded_1min",
+            "vendor": "ccxt",
             "start_timestamp": "20211110-101100",
             "end_timestamp": "20211110-101200",
             "exchange_id": "binance",

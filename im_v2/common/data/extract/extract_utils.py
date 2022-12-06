@@ -78,6 +78,13 @@ def _add_common_download_args(
         help="Capture the nature of the task and data (e.g. downloaded_1min)",
     )
     parser.add_argument(
+        "--vendor",
+        action="store",
+        required=True,
+        type=str,
+        help="Vendor to use for downloading (e.g., 'ccxt')",
+    )
+    parser.add_argument(
         "--exchange_id",
         action="store",
         required=True,
@@ -307,6 +314,7 @@ def download_realtime_for_one_exchange(
         imvcddbut.save_data_to_db(
             data, data_type, db_connection, db_table, str(start_timestamp.tz)
         )
+        # TODO(Juraj): rewrite to conform to surrentum specs.
         # Save data to S3 bucket.
         if args["s3_path"]:
             # Connect to S3 filesystem.
