@@ -5,7 +5,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
-import im_v2.common.data.extract.download_bulk as imvcdexdb
+import im_v2.common.data.extract.download_bulk as imvcdedobu
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
@@ -20,7 +20,7 @@ class TestDownloadBulkData1(hunitest.TestCase):
 
         Mostly for coverage and to detect argument changes.
         """
-        parser = imvcdexdb._parse()
+        parser = imvcdedobu._parse()
         cmd = []
         cmd.extend(["--download_mode", "periodic_daily"])
         cmd.extend(["--downloading_entity", "manual"])
@@ -57,7 +57,7 @@ class TestDownloadBulkData1(hunitest.TestCase):
         self.assertDictEqual(actual, expected)
 
     @umock.patch.object(
-        imvcdexdb.imvcdexex, "CcxtExtractor", autospec=True, spec_set=True
+        imvcdedobu.imvcdexex, "CcxtExtractor", autospec=True, spec_set=True
     )
     @umock.patch.object(
         imvcdeexut, "download_historical_data", autospec=True, spec_set=True
@@ -94,7 +94,7 @@ class TestDownloadBulkData1(hunitest.TestCase):
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
-        imvcdexdb._main(mock_argument_parser)
+        imvcdedobu._main(mock_argument_parser)
         # Check args.
         self.assertEqual(len(download_historical_mock.call_args), 2)
         actual_args = download_historical_mock.call_args.args

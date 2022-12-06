@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Download data from Crypto-Chassis/CCXT and save to S3 in a parquet on csv format. 
-The script is meant to run daily for in collaboration with realtime data QA or
-downloadng bulk data snapshots.
+Download data from Crypto-Chassis/CCXT and save to S3 in a parquet on csv
+format. The script is meant to run daily for in collaboration with realtime
+data QA or downloadng bulk data snapshots.
 
 Use as:
 
@@ -21,7 +21,7 @@ Use as:
     --data_format 'parquet' \
     --contract_type 'futures' \
     --s3_path 's3://cryptokaizen-data-test/'
-    
+
 Import as:
 
 import im_v2.common.data.extract.download_bulk as imvcdexdb

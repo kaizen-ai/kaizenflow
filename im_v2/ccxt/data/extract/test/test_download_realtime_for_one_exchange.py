@@ -6,7 +6,7 @@ import pytest
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
@@ -61,11 +61,13 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
             "data_format": "postgres",
             "data_type": "ohlcv",
             "bid_ask_depth": None,
-            "s3_path": None
+            "s3_path": None,
         }
         self.assertDictEqual(actual, expected)
 
-    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
+    @pytest.mark.skip(
+        "Cannot be run from the US due to 451 error API error. Run manually."
+    )
     @umock.patch.object(imvcdeexut, "download_realtime_for_one_exchange")
     def test_main(self, mock_download_realtime: umock.MagicMock) -> None:
         """
@@ -101,5 +103,6 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
         self.assertEqual(len(mock_download_realtime.call_args), 2)
         self.assertEqual(mock_download_realtime.call_args.args[0], kwargs)
         self.assertEqual(
-            type(mock_download_realtime.call_args.args[1]), ivcdexex.CcxtExtractor
+            type(mock_download_realtime.call_args.args[1]),
+            imvcdexex.CcxtExtractor,
         )

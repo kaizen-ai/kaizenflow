@@ -667,7 +667,7 @@ def save_parquet(
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
-    
+
 
 # TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
@@ -686,7 +686,9 @@ def download_historical_data(
     args["asset_type"] = args["contract_type"]
     # TODO(Juraj): Handle dataset version #CmTask3348.
     args["version"] = "v1_0_0"
-    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(args["s3_path"], args)
+    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
+        args["s3_path"], args
+    )
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])

@@ -5,8 +5,8 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
+import im_v2.common.data.extract.download_bulk as imvcdedobu
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.common.data.extract.download_bulk as imvcdexdb
 
 
 @pytest.mark.skipif(
@@ -20,7 +20,7 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
 
         Mostly for coverage and to detect argument changes.
         """
-        parser = imvcdexdb._parse()
+        parser = imvcdedobu._parse()
         cmd = []
         cmd.extend(["--download_mode", "periodic_daily"])
         cmd.extend(["--downloading_entity", "manual"])
@@ -57,13 +57,18 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         }
         self.assertDictEqual(actual, expected)
 
-
     @umock.patch.object(
-        imvcdexdb.imvccdexex, "CryptoChassisExtractor", autospec=True, spec_set=True
+        imvcdedobu.imvccdexex,
+        "CryptoChassisExtractor",
+        autospec=True,
+        spec_set=True,
     )
     @umock.patch.object(imvcdeexut, "download_historical_data")
     def test_main(
-        self, mock_download_historical: umock.MagicMock, chassis_extractor_mock: umock.MagicMock) -> None:
+        self,
+        mock_download_historical: umock.MagicMock,
+        chassis_extractor_mock: umock.MagicMock,
+    ) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
         """
@@ -91,13 +96,15 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
-        imvcdexdb._main(mock_argument_parser)
+        imvcdedobu._main(mock_argument_parser)
         # Check call.
         self.assertEqual(len(mock_download_historical.call_args), 2)
         actual_args = mock_download_historical.call_args.args
         self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "s"}})
         # Verify that `CryptoChassisExtractor` instance is passed.
-        self.assertEqual(actual_args[1]._extract_mock_name(), "CryptoChassisExtractor()")
+        self.assertEqual(
+            actual_args[1]._extract_mock_name(), "CryptoChassisExtractor()"
+        )
         # Verify that `CryptoChassisExtractor` instance creation is properly called.
         self.assertEqual(chassis_extractor_mock.call_count, 1)
         actual_args = tuple(chassis_extractor_mock.call_args)
