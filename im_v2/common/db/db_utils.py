@@ -24,6 +24,7 @@ import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.im_lib_tasks as imvimlita
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
@@ -311,7 +312,7 @@ def save_data_to_db(
     if data.empty:
         _LOG.warning("The DataFame is empty, nothing to insert.")
         return
-    data["knowledge_timestamp"] = hdateti.get_current_time(time_zone)
+    data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
     if data_type == "ohlcv":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":

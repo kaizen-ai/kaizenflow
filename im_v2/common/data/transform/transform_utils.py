@@ -21,6 +21,18 @@ _LOG = logging.getLogger(__name__)
 
 BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 
+def add_knowledge_timestamp_col(df: pd.DataFrame, tz: str) -> pd.DataFrame:
+    """
+    Add 'knowledge_timestamp' column to a DataFrame and set the value
+    to a current time using helpers.hdatetime.get_current_time.
+    
+    :param df: DataFrame to modify
+    :param tz: timezone to use
+    :return: input DataFrame with an added knowledge_timestamp column
+    """
+    df["knowledge_timestamp"] = hdateti.get_current_time(tz)
+    return df
+
 def convert_timestamp_column(
     datetime_col_name: pd.Series,
     unit: str = "ms",

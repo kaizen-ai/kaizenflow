@@ -722,9 +722,7 @@ def download_historical_data(
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args["exchange_id"]
-        # Get current time of download.
-        knowledge_timestamp = hdateti.get_current_time("UTC")
-        data["knowledge_timestamp"] = knowledge_timestamp
+        data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
         # Save data to S3 filesystem.
         _LOG.info("Saving the dataset into %s", path_to_dataset)
         if args["data_format"] == "parquet":
