@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-Download data from Crypto-Chassis/CCXT and save to S3 in a parquet on csv
+Download data from Crypto-Chassis/CCXT and save to S3 in a Parquet/CSV
 format. The script is meant to run daily for in collaboration with realtime
-data QA or downloadng bulk data snapshots.
+data QA or downloading bulk data snapshots.
 
 Use as:
 

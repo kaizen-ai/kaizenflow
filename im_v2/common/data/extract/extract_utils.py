@@ -203,8 +203,8 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
-# TODO(Juraj): separate into individual schemas for
-#  each data type
+# TODO(Juraj): separate into individual 
+# schemas for each data type.
 DATASET_SCHEMA = {
     "ask_price": "float64",
     "ask_size": "float64",
