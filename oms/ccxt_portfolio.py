@@ -37,6 +37,7 @@ class CcxtPortfolio(omportfo.DataFramePortfolio):
 
 
 def get_CcxtPortfolio_prod_instance1(
+    run_mode: str,
     strategy_id: str,
     market_data: mdata.MarketData,
     universe_version: str,
@@ -48,12 +49,17 @@ def get_CcxtPortfolio_prod_instance1(
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
     """
     # Build CcxtBroker.
-    broker = occxbrok.get_CcxtBroker_prod_instance1(
-        market_data,
-        universe_version,
-        strategy_id,
-        secret_identifier
-    )
+    if run_mode == "prod":
+        broker = occxbrok.get_CcxtBroker_prod_instance1(
+            market_data,
+            universe_version,
+            strategy_id,
+            secret_identifier
+        )
+    elif run_mode in ["paper_trading", "simulation"]:
+        broker = occxbrok.get_DataFrameCcxtBroker_instance1(market_data)
+    else:
+        raise ValueError(f"Invalid run_mode='{run_mode}'")
     # Build CcxtPortfolio.
     mark_to_market_col = "close"
     initial_cash = 700

@@ -345,6 +345,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     """
     Build Portfolio instance for production.
     """
+    run_mode = system.config["run_mode"]
     market_data = system.market_data
     dag_builder = system.config["dag_builder_object"]
     dag_config = system.config["dag_config"]
@@ -367,6 +368,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         "secret_identifier_config"
     )
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
+        run_mode,
         cf_config_strategy,
         market_data,
         market_data_universe_version,
