@@ -14,7 +14,7 @@ Use as:
     --universe 'v2' \
     --data_type 'ohlcv' \
     --contract_type 'spot' \
-    --file_format 'parquet' \
+    --data_format 'parquet' \
     --aws_profile 'ck' \
     --s3_path 's3://cryptokaizen-data/reorg/historical.manual.pq/20220620/ohlcv/crypto_chassis/' \
     --bid_ask_depth 10

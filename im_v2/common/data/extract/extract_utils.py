@@ -57,6 +57,34 @@ def _add_common_download_args(
     Add command line arguments common to all downloaders.
     """
     parser.add_argument(
+        "--download_mode",
+        action="store",
+        required=True,
+        type=str,
+        help="What type of download is this (e.g., 'periodic_daily')",
+    )
+    parser.add_argument(
+        "--downloading_entity",
+        action="store",
+        required=True,
+        type=str,
+        help="Who is the executor (e.g. airflow, manual)",
+    )
+    parser.add_argument(
+        "--action_tag",
+        action="store",
+        required=True,
+        type=str,
+        help="Capture the nature of the task and data (e.g. downloaded_1min)",
+    )
+    parser.add_argument(
+        "--vendor",
+        action="store",
+        required=True,
+        type=str,
+        help="Vendor to use for downloading (e.g., 'ccxt')",
+    )
+    parser.add_argument(
         "--exchange_id",
         action="store",
         required=True,
@@ -94,6 +122,13 @@ def _add_common_download_args(
         help="Specifies depth of order book to \
             download (applies when data_type=bid_ask).",
     )
+    parser.add_argument(
+        "--data_format",
+        action="store",
+        required=True,
+        type=str,
+        help="Format of the data (e.g. csv, parquet, postgres)",
+    )
     return parser
 
 
@@ -117,15 +152,6 @@ def add_exchange_download_args(
         required=False,
         type=str,
         help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--file_format",
-        action="store",
-        required=False,
-        default="parquet",
-        type=str,
-        choices=["csv", "parquet"],
-        help="File format to save files on disk",
     )
     parser.add_argument(
         "--incremental",
@@ -177,6 +203,8 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
+# TODO(Juraj): separate into individual 
+# schemas for each data type.
 DATASET_SCHEMA = {
     "ask_price": "float64",
     "ask_size": "float64",
@@ -286,6 +314,7 @@ def download_realtime_for_one_exchange(
         imvcddbut.save_data_to_db(
             data, data_type, db_connection, db_table, str(start_timestamp.tz)
         )
+        # TODO(Juraj): rewrite to conform to surrentum specs.
         # Save data to S3 bucket.
         if args["s3_path"]:
             # Connect to S3 filesystem.
@@ -599,7 +628,7 @@ def save_csv(
 
 def save_parquet(
     data: pd.DataFrame,
-    path_to_exchange: str,
+    path_to_dataset: str,
     unit: str,
     aws_profile: Optional[str],
     data_type: str,
@@ -627,18 +656,18 @@ def save_parquet(
     hparque.to_partitioned_parquet(
         data,
         ["currency_pair"] + partition_cols,
-        path_to_exchange,
+        path_to_dataset,
         partition_filename=None,
         aws_profile=aws_profile,
     )
     # Merge all new parquet into a single `data.parquet`.
     if mode == "list_and_merge":
         hparque.list_and_merge_pq_files(
-            path_to_exchange,
+            path_to_dataset,
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
-    
+
 
 # TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
@@ -652,7 +681,14 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
+    # TODO(Juraj): refactor cmd line arguments to accept `asset_type`
+    #  instead of `contract_type` once a decision is made.
+    args["asset_type"] = args["contract_type"]
+    # TODO(Juraj): Handle dataset version #CmTask3348.
+    args["version"] = "v1_0_0"
+    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
+        args["s3_path"], args
+    )
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
         hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
@@ -690,7 +726,8 @@ def download_historical_data(
         knowledge_timestamp = hdateti.get_current_time("UTC")
         data["knowledge_timestamp"] = knowledge_timestamp
         # Save data to S3 filesystem.
-        if args["file_format"] == "parquet":
+        _LOG.info("Saving the dataset into %s", path_to_dataset)
+        if args["data_format"] == "parquet":
             save_parquet(
                 data,
                 path_to_dataset,
@@ -699,7 +736,7 @@ def download_historical_data(
                 args["data_type"],
                 mode="append",
             )
-        elif args["file_format"] == "csv":
+        elif args["data_format"] == "csv":
             save_csv(
                 data,
                 path_to_dataset,
@@ -708,7 +745,7 @@ def download_historical_data(
                 args["aws_profile"],
             )
         else:
-            hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
+            hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
 def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
