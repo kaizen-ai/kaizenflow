@@ -13,7 +13,10 @@ _LOG = logging.getLogger(__name__)
 
 
 class Test_process_bid_ask(hunitest.TestCase):
-    def helper(self, expected_txt: str, requested_cols: List[str]):
+    def helper(self, expected_txt: str, requested_cols: List[str]) -> None:
+        """
+        Initialize a test DataFrame and compare against expected outcome.
+        """
         bid_col = "bid"
         ask_col = "ask"
         bid_volume_col = "bid_volume"
@@ -121,7 +124,7 @@ datetime,centered_order_book_imbalance
 """
         self.helper(expected_txt, requested_cols)
 
-    def test_centered_order_book_imbalance(self) -> None:
+    def test_log_order_book_imbalance(self) -> None:
         requested_cols = ["log_order_book_imbalance"]
         expected_txt = """
 datetime,centered_order_book_imbalance
@@ -166,16 +169,83 @@ datetime,mid_value
 """
         self.helper(expected_txt, requested_cols)
 
-    @staticmethod
-    def _get_df() -> pd.DataFrame:
-        txt = """
-datetime,bid,ask,bid_volume,ask_volume
-2016-01-04 12:00:00,100.01,100.02,200,200
-2016-01-04 12:01:00,100.01,100.02,200,300
-2016-01-04 12:02:00,99.99,100.01,300,300
-2016-01-04 12:03:00,99.98,100.02,200,400
+    def test_multiindex(self) -> None:
+        """
+        Verify that the bid/ask feature functions work with multiindex.
+        """
+        requested_cols = ["mid", "mid_value"]
+        bid_col = "bid"
+        ask_col = "ask"
+        bid_volume_col = "bid_volume"
+        ask_volume_col = "ask_volume"
+        df = self._get_df(multiindex=True)
+        actual = cfibiask.process_bid_ask(
+            df,
+            bid_col,
+            ask_col,
+            bid_volume_col,
+            ask_volume_col,
+            requested_cols=requested_cols,
+        )
+        expected = """                  mid                 mid_value
+           3303714233  8968126878    3303714233     8968126878
+2022-11-02   0.385073  319.837513  2.013201e+06  542315.407201
+2022-11-03   0.385128  319.891286  2.152799e+06  634970.410301
 """
-        df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        self.assert_equal(str(actual), expected)
+
+    @staticmethod
+    def _get_df(*, multiindex: bool = False) -> pd.DataFrame:
+        """
+        Generate a test DataFrame.
+
+        :param multiindex: create a DataFrame with a wide multiindex
+        """
+        if not multiindex:
+            txt = """
+    datetime,bid,ask,bid_volume,ask_volume
+    2016-01-04 12:00:00,100.01,100.02,200,200
+    2016-01-04 12:01:00,100.01,100.02,200,300
+    2016-01-04 12:02:00,99.99,100.01,300,300
+    2016-01-04 12:03:00,99.98,100.02,200,400
+    """
+            df = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        else:
+            df_dict = {
+                ("ask", 3303714233): {
+                    pd.Timestamp("2022-11-02"): 0.38511623,
+                    pd.Timestamp("2022-11-03"): 0.38516256,
+                },
+                ("ask", 8968126878): {
+                    pd.Timestamp("2022-11-02"): 319.88035623,
+                    pd.Timestamp("2022-11-03"): 319.89215654,
+                },
+                ("ask_volume", 3303714233): {
+                    pd.Timestamp("2022-11-02"): 5721881.0,
+                    pd.Timestamp("2022-11-03"): 4595196.0,
+                },
+                ("ask_volume", 8968126878): {
+                    pd.Timestamp("2022-11-02"): 1968.96,
+                    pd.Timestamp("2022-11-03"): 2677.81,
+                },
+                ("bid", 3303714233): {
+                    pd.Timestamp("2022-11-02"): 0.38502958,
+                    pd.Timestamp("2022-11-03"): 0.3850937,
+                },
+                ("bid", 8968126878): {
+                    pd.Timestamp("2022-11-02"): 319.79467022,
+                    pd.Timestamp("2022-11-03"): 319.89041475,
+                },
+                ("bid_volume", 3303714233): {
+                    pd.Timestamp("2022-11-02"): 4734217.0,
+                    pd.Timestamp("2022-11-03"): 6584631.0,
+                },
+                ("bid_volume", 8968126878): {
+                    pd.Timestamp("2022-11-02"): 1422.16,
+                    pd.Timestamp("2022-11-03"): 1292.1,
+                },
+            }
+            df = pd.DataFrame(df_dict)
         return df
 
 
