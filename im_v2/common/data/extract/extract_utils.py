@@ -314,24 +314,6 @@ def download_realtime_for_one_exchange(
         imvcddbut.save_data_to_db(
             data, data_type, db_connection, db_table, str(start_timestamp.tz)
         )
-        # TODO(Juraj): rewrite to conform to surrentum specs.
-        # Save data to S3 bucket.
-        if args["s3_path"]:
-            # Connect to S3 filesystem.
-            fs = hs3.get_s3fs(args["aws_profile"])
-            # Get file name.
-            file_name = (
-                currency_pair
-                + "_"
-                + hdateti.get_current_timestamp_as_string("UTC")
-                + ".csv"
-            )
-            path_to_file = os.path.join(
-                args["s3_path"], args["exchange_id"], file_name
-            )
-            # Save data to S3 filesystem.
-            with fs.open(path_to_file, "w") as f:
-                data.to_csv(f, index=False)
 
 
 @timeout(TIMEOUT_SEC)
