@@ -5,36 +5,13 @@ import im_v2.common.universe.universe as imvcounun
 """
 import glob
 import os
-import re
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Optional, Union
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hstring as hstring
 import im_v2.common.universe.full_symbol as imvcufusy
-
-
-def _extract_universe_version(universe_file: str) -> Tuple[int, int]:
-    """
-    Extract version number from universe_vXX.json file. e.g.
-    'universe_v3.1.json' -> (3, 1), 'universe_v1.json' -> (1,
-    0)
-
-    :param file_name: universe file to extract version part from
-    :return: universe file version tuple in format (major, minor)
-    """
-    basename = os.path.basename(universe_file).rstrip(".json")
-    m = re.search(r"v(\d+(\.\d+)?)$", basename)
-    hdbg.dassert(
-        m,
-        "Can't parse file '%s', correct format is e.g. 'universe_v03.json'.",
-        basename,
-    )
-    # Groups return tuple.
-    version = m.groups(1)[0].split(".")  # type: ignore[arg-type, union-attr]
-    major, minor = int(version[0]), 0 if len(version) == 1 else int(version[1])
-
-    return major, minor
 
 
 def _get_universe_file_path(
@@ -52,16 +29,18 @@ def _get_universe_file_path(
     hdbg.dassert_in(mode, ["download", "trade"])
     vendor = vendor.lower()
     # Get path to vendor universe dir.
-    vendor_dir = os.path.join(hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/{mode}")
+    vendor_dir = os.path.join(
+        hgit.get_amp_abs_path(), f"im_v2/{vendor}/universe/{mode}"
+    )
     hdbg.dassert_dir_exists(vendor_dir)
     if version is None:
         # Find all universe files.
-        vendor_universe_pattern = os.path.join(
-            vendor_dir, f"universe_v*.json"
-        )
+        vendor_universe_pattern = os.path.join(vendor_dir, f"universe_v*.json")
         universe_files = list(glob.glob(vendor_universe_pattern))
         hdbg.dassert_ne(len(universe_files), 0)
-        file_path = max(universe_files, key=_extract_universe_version)
+        file_path = max(
+            universe_files, key=hstring.extract_version_from_file_name
+        )
     else:
         # TODO(Juraj): #1487 Assert version format (include 'small').
         file_name = "".join(["universe_", version, ".json"])

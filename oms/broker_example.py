@@ -13,14 +13,14 @@ import oms.broker as ombroker
 import oms.oms_db as oomsdb
 
 
-def get_SimulatedBroker_example1(
+def get_DataFrameBroker_example1(
     event_loop: Optional[asyncio.AbstractEventLoop],
     *,
     market_data: Optional[mdata.MarketData] = None,
     timestamp_col: str = "end_datetime",
-) -> ombroker.SimulatedBroker:
+) -> ombroker.DataFrameBroker:
     """
-    Build a `SimulatedBroker` using a `MarketData`, unless specified.
+    Build a `DataFrameBroker` using a `MarketData`, unless specified.
     """
     # Build MarketData, if needed.
     if market_data is None:
@@ -28,10 +28,10 @@ def get_SimulatedBroker_example1(
             market_data,
             _,
         ) = mdata.get_ReplayedTimeMarketData_example3(event_loop)
-    # Build SimulatedBroker.
+    # Build DataFrameBroker.
     strategy_id = "SAU1"
     account = "candidate"
-    broker = ombroker.SimulatedBroker(
+    broker = ombroker.DataFrameBroker(
         strategy_id, market_data, account=account, timestamp_col=timestamp_col
     )
     return broker
