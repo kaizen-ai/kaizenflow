@@ -4,7 +4,7 @@ Script to download OHLCV data for a single exchange from CCXT.
 
 Use as:
 
-# Download OHLCV data for binance 'v7', saving dev_stage:
+# Download OHLCV spot data for binance 'v7', saving dev_stage:
 > im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
     --download_mode 'periodic_1min' \
     --downloading_entity 'manual' \
