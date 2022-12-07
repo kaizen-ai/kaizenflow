@@ -68,9 +68,7 @@ def _run(args: argparse.Namespace) -> None:
     data_resampled["timestamp"] = data_resampled["timestamp"].apply(
         lambda x: hdateti.convert_timestamp_to_unix_epoch(x, epoch_unit)
     )
-    # TODO(Juraj): #CmTask3297 wrap this in a function to create a common interface
-    #  for adding knowledge_timestamp across the codebase.
-    data_resampled["knowledge_timestamp"] = hdateti.get_current_time("UTC")
+    data_resampled = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
     _LOG.info(
         hpandas.df_to_str(
             data_resampled, print_shape_info=True, tag="Resampled data"
