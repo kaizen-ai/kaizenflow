@@ -753,7 +753,7 @@ def resample_rt_bid_ask_data_periodically(
     tz = start_ts.tz
     hdbg.dassert_lt(datetime.now(tz), start_ts, "start_ts is in the past")
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
-    db_connection = imvcddbut.DBConnectionManager.get_connection(args["db_stage"])
+    db_connection = imvcddbut.DBConnectionManager.get_connection(db_stage)
     tz = start_ts.tz
     start_delay = (start_ts - datetime.now(tz)).total_seconds()
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
