@@ -593,7 +593,7 @@ def reconcile_run_all(
     """
     Run all phases of prod vs simulation reconciliation.
 
-    :param dag_builder_name: Name of the DAG builder, e.g. "C1b".
+    :param dag_builder_name: Name of the DAG builder, e.g. "C1b"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
     :param end_timestamp_as_str: string representation of timestamp

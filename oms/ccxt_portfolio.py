@@ -9,9 +9,8 @@ from typing import Any, List, Optional
 
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
-import oms.portfolio as omportfo
 import oms.hsecrets as omssec
-
+import oms.portfolio as omportfo
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,10 +50,7 @@ def get_CcxtPortfolio_prod_instance1(
     # Build CcxtBroker.
     if run_mode == "prod":
         broker = occxbrok.get_CcxtBroker_prod_instance1(
-            market_data,
-            universe_version,
-            strategy_id,
-            secret_identifier
+            market_data, universe_version, strategy_id, secret_identifier
         )
     elif run_mode == "paper_trading":
         broker = occxbrok.get_DataFrameCcxtBroker_instance1(market_data)
