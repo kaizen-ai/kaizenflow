@@ -262,12 +262,6 @@ def download_realtime_for_one_exchange(
         end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
             end_timestamp
         )
-    elif data_type == "bid_ask":
-        # Make sure depth is set for bid/ask data.
-        hdbg.dassert_lt(0, bid_ask_depth)
-        # When downloading bid / ask data, CCXT returns the last data
-        # ignoring the requested timestamp, so we set them to None.
-        start_timestamp, end_timestamp = None, None
     else:
         raise ValueError(
             "Downloading for %s data_type is not implemented.", data_type
