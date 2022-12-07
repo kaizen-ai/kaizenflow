@@ -146,7 +146,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     s3_path = os.path.join(s3_path, db_stage, db_table, table_timestamp_column)
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
-    db_conn = imvcddbut.DBConnectionManager.get_connection(db_stage)
+    db_conn = imvcddbut.DbConnectionManager.get_connection(db_stage)
     # Perform argument assertions.
     _assert_db_args(db_conn, db_table, table_timestamp_column)
     _assert_archival_mode(

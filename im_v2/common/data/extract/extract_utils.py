@@ -241,7 +241,7 @@ def download_exchange_data_to_db(
     )
     currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
-    db_connection = imvcddbut.DBConnectionManager.get_connection(args["db_stage"])
+    db_connection = imvcddbut.DbConnectionManager.get_connection(args["db_stage"])
     # Load DB table to save data to.
     db_table = args["db_table"]
     data_type = args["data_type"]
@@ -340,7 +340,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     )
     exchange_id = args["exchange_id"]
     currency_pairs = universe[exchange_id]
-    db_connection = imvcddbut.DBConnectionManager.get_connection(args["db_stage"])
+    db_connection = imvcddbut.DbConnectionManager.get_connection(args["db_stage"])
     db_table = args["db_table"]
     for currency_pair in currency_pairs:
         await exchange.subscribe_to_websocket_data(
@@ -753,7 +753,7 @@ def resample_rt_bid_ask_data_periodically(
     tz = start_ts.tz
     hdbg.dassert_lt(datetime.now(tz), start_ts, "start_ts is in the past")
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
-    db_connection = imvcddbut.DBConnectionManager.get_connection(db_stage)
+    db_connection = imvcddbut.DbConnectionManager.get_connection(db_stage)
     tz = start_ts.tz
     start_delay = (start_ts - datetime.now(tz)).total_seconds()
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
