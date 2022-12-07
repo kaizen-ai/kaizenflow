@@ -90,17 +90,6 @@ def _assert_archival_mode(
         hs3.dassert_path_not_exists(s3_path, aws_profile=_AWS_PROFILE)
 
 
-def _get_db_connection(db_stage: str) -> hsql.DbConnection:
-    """
-    Get connection to the database.
-
-    Assumes the use of env file.
-    """
-    env_file = imvimlita.get_db_env_path(db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    return hsql.get_connection(*connection_params)
-
-
 # TODO(Juraj): Create a mechanism to check data continuity.
 # def _fetch_latest_row_from_s3(
 #     s3_path: str, timestamp: pd.Timestamp
@@ -157,7 +146,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     s3_path = os.path.join(s3_path, db_stage, db_table, table_timestamp_column)
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
-    db_conn = _get_db_connection(db_stage)
+    db_conn = imvcddbut.DBConnectionManager.get_connection(db_stage)
     # Perform argument assertions.
     _assert_db_args(db_conn, db_table, table_timestamp_column)
     _assert_archival_mode(

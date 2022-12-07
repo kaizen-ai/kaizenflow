@@ -22,6 +22,7 @@ _LOG = logging.getLogger(__name__)
 BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 
 
+#TODO(Juraj): add argument to pass custom callable to get current time.
 def add_knowledge_timestamp_col(df: pd.DataFrame, tz: str) -> pd.DataFrame:
     """
     Add 'knowledge_timestamp' column to a DataFrame and set the value to a

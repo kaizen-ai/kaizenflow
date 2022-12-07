@@ -9,7 +9,7 @@ Use as:
     --action_tag 'downloaded_1min' \
     --vendor 'ccxt' \
     --exchange_id 'binance' \
-    --universe 'v' \
+    --universe 'v7' \
     --db_stage 'dev' \
     --db_table 'ccxt_ohlcv_test' \
     --aws_profile 'ck' \
@@ -18,7 +18,8 @@ Use as:
     --contract_type 'spot' \
     --interval_min '1' \
     --start_time '2022-05-16 00:45:00' \
-    --stop_time '2022-05-16 00:55:00'
+    --stop_time '2022-05-16 00:55:00' \
+    --method 'rest'
 """
 
 import argparse
@@ -49,7 +50,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize the CCXT Extractor class.
     exchange = imvcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
-    imvcdeexut.download_exchange_data_to_db_periodically(args, exchange)
+    # The vendor argument is added for compatibility so for CCXT-specific
+    #  scripts it should be 'ccxt'.
+    hdbg.dassert_eq(args["vendor"], "ccxt")
+    imvcdeexut.download_realtime_for_one_exchange_periodically(args, exchange)
 
 
 if __name__ == "__main__":

@@ -49,6 +49,8 @@ OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
 
 class DBConnectionManager:
     """
+    Create and store DB connection.
+    
     Provide a singleton-like functionality in order to avoid overhead of many
     shortlived DB connection.
 
@@ -63,12 +65,13 @@ class DBConnectionManager:
     def get_connection(cls, db_stage: str):
         if cls.db_stage is not None and cls.db_stage != db_stage:
             raise ValueError(
-                f"The connection has already been established to a stage"
+                f"The connection has already been established to a different stage"
             )
         if cls.connection is None:
             env_file = imvimlita.get_db_env_path(db_stage)
             try:
                 # Connect with the parameters from the env file.
+                #  Usually for test and dev stage.
                 connection_params = hsql.get_connection_info_from_env_file(
                     env_file
                 )
@@ -86,6 +89,8 @@ class DBConnectionManager:
                 #    password=actual_details["password"],
                 # )
                 # db_connection = hsql.get_connection(*connection_params)
+                # TODO(Juraj): use this for prod connection injected as env
+                #  vars into containers #CmTask3080.
                 cls.connection = hsql.get_connection_from_env_vars()
         return cls.connection
 

@@ -225,8 +225,6 @@ DATASET_SCHEMA = {
 }
 
 
-# TODO(Juraj): Refactor the method, divide into submethods
-# by data type.
 def download_exchange_data_to_db(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
