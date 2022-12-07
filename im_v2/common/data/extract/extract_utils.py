@@ -109,8 +109,7 @@ def _add_common_download_args(
     parser.add_argument(
         "--contract_type",
         action="store",
-        required=False,
-        default="spot",
+        required=True,
         type=str,
         help="Type of contract, spot or futures",
     )
@@ -247,22 +246,7 @@ def download_realtime_for_one_exchange(
     )
     currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
-    env_file = imvimlita.get_db_env_path(args["db_stage"])
-    try:
-        # Connect with the parameters from the env file.
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        db_connection = hsql.get_connection(*connection_params)
-    except psycopg2.OperationalError:
-        # Connect with the dynamic parameters (usually during tests).
-        actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
-        connection_params = hsql.DbConnectionInfo(
-            host=actual_details["host"],
-            dbname=actual_details["dbname"],
-            port=int(actual_details["port"]),
-            user=actual_details["user"],
-            password=actual_details["password"],
-        )
-        db_connection = hsql.get_connection(*connection_params)
+    db_connection = imvcddbut.DBConnectionManager.get_connection(args["db_stage"])
     # Load DB table to save data to.
     db_table = args["db_table"]
     data_type = args["data_type"]
@@ -367,12 +351,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     )
     exchange_id = args["exchange_id"]
     currency_pairs = universe[exchange_id]
-    # DB related arguments.
-    # TODO(Juraj): create a common function to creation connection
-    # and pass earlier in the call stack.
-    env_file = imvimlita.get_db_env_path(args["db_stage"])
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    db_connection = hsql.get_connection(*connection_params)
+    db_connection = imvcddbut.DBConnectionManager.get_connection(args["db_stage"])
     db_table = args["db_table"]
     for currency_pair in currency_pairs:
         await exchange.subscribe_to_websocket_data(
@@ -785,9 +764,7 @@ def resample_rt_bid_ask_data_periodically(
     tz = start_ts.tz
     hdbg.dassert_lt(datetime.now(tz), start_ts, "start_ts is in the past")
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
-    env_file = imvimlita.get_db_env_path(db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    db_connection = hsql.get_connection(*connection_params)
+    db_connection = imvcddbut.DBConnectionManager.get_connection(args["db_stage"])
     tz = start_ts.tz
     start_delay = (start_ts - datetime.now(tz)).total_seconds()
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)
