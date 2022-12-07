@@ -4,7 +4,7 @@ Import as:
 import core.finance.bid_ask as cfibiask
 """
 import logging
-from typing import List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -43,7 +43,8 @@ def process_bid_ask(
     hdbg.dassert_in(ask_col, df.columns)
     hdbg.dassert_in(bid_volume_col, df.columns)
     hdbg.dassert_in(ask_volume_col, df.columns)
-    #hdbg.dassert(not (df[bid_col] > df[ask_col]).any())
+    # if not (df[bid_col] > df[ask_col]).any():
+    #     _LOG.warning("Some bid price values are larget than ask price.")
     supported_cols = [
         "mid",
         "geometric_mid",
@@ -69,58 +70,52 @@ def process_bid_ask(
     )
     hdbg.dassert(requested_cols)
     requested_cols = set(requested_cols)
-    results = []
+    results: Dict[str, Union[pd.Series, pd.DataFrame]] = {}
     if "mid" in requested_cols:
-        srs = ((df[bid_col] + df[ask_col]) / 2).rename("mid")
-        results.append(srs)
+        srs = (df[bid_col] + df[ask_col]) / 2
+        results["mid"] = srs
     if "geometric_mid" in requested_cols:
         srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
-        results.append(srs)
+        results["geometric_mid"] = srs
     if "quoted_spread" in requested_cols:
         srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
-        results.append(srs)
+        results["quoted_spread"] = srs
     if "relative_spread" in requested_cols:
         srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
-        srs = srs.rename("relative_spread")
-        results.append(srs)
+        results["relative_spread"] = srs
     if "log_relative_spread" in requested_cols:
         srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
             "log_relative_spread"
         )
-        results.append(srs)
+        results["log_relative_spread"] = srs
     if "weighted_mid" in requested_cols:
         srs = (
             df[bid_col] * df[ask_volume_col] + df[ask_col] * df[bid_volume_col]
         ) / (df[ask_volume_col] + df[bid_volume_col])
-        srs = srs.rename("weighted_mid")
-        results.append(srs)
+        results["weighted_mid"] = srs
     if "order_book_imbalance" in requested_cols:
         srs = df[bid_volume_col] / (df[bid_volume_col] + df[ask_volume_col])
-        srs = srs.rename("order_book_imbalance")
-        results.append(srs)
+        results["order_book_imbalance"] = srs
     if "centered_order_book_imbalance" in requested_cols:
         srs = (df[bid_volume_col] - df[ask_volume_col]) / (
             df[bid_volume_col] + df[ask_volume_col]
         )
-        srs = srs.rename("centered_order_book_imbalance")
-        results.append(srs)
+        results["centered_order_book_imbalance"] = srs
     if "log_order_book_imbalance" in requested_cols:
         srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
-        srs = srs.rename("log_order_book_imbalance")
-        results.append(srs)
+        results["log_order_book_imbalance"] = srs
     if "bid_value" in requested_cols:
         srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
-        results.append(srs)
+        results["bid_value"] = srs
     if "ask_value" in requested_cols:
         srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
-        results.append(srs)
+        results["ask_value"] = srs
     if "mid_value" in requested_cols:
         srs = (
             df[bid_col] * df[bid_volume_col] + df[ask_col] * df[ask_volume_col]
         ) / 2
-        srs = srs.rename("mid_value")
-        results.append(srs)
-    out_df = pd.concat(results, axis=1)
+        results["mid_value"] = srs
+    out_df = pd.concat(results.values(), keys=results.keys(), axis=1)
     # TODO(gp): Maybe factor out this in a `_maybe_join_output_with_input` since
     #  it seems a common idiom.
     if join_output_with_input:
