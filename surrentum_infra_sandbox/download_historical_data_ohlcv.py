@@ -10,13 +10,13 @@ Use as:
     --output_file test1.csv
 """
 import argparse
-import dataclasses
-import csv
 import logging
 from typing import Tuple, Generator
+import time
 
 import requests
 import pandas as pd
+import tqdm
 
 import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
@@ -67,6 +67,7 @@ OHLCV_HEADERS = [
     "close",
     "volume"
 ]
+THROTTLE_DELAY = 0.5
 
 def _build_url(
         start_time: int,
@@ -75,6 +76,7 @@ def _build_url(
         interval: str = DEFAULT_INTERVAL,
         limit: int = 500
 ) -> str:
+    """Build up url with the placeholders from the args"""
     return (f"{BASE_URL}?startTime={start_time}&endTime={end_time}"
             f"&symbol={symbol}&interval={interval}&limit={limit}")
 
@@ -110,6 +112,7 @@ def add_download_args(
 
 
 def _process_symbol(symbol: str):
+    """Dumb helper that transform symbol from universe to Binance format"""
     return symbol.replace('_', '')
 
 
@@ -126,6 +129,19 @@ def _split_period_to_days(
         start_time: int,
         end_time: int
 ) -> Generator[Tuple[int, int], None, None]:
+    """
+    Chop period to chunks of the days.
+    
+    TLDR:
+        The reason is: 
+            Binance API don't allow to get more then 1500 rows at once.
+            So if we trying to get 1m interval, then we need to chop a period to 
+            chunks which Binance allow to get
+
+    :param start_time: Timestamp for the start time
+    :param end_time: Timestamp for the end time
+    :return: Generator for loop
+    """
     step = 1000*60*MAX_LINES
     for i in range(start_time, end_time, step):
         yield i, min(i + step, end_time)
@@ -146,42 +162,47 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
         end_timestamp
     )
-    with open(args.output_file, 'w') as output_file:
-        writer = csv.DictWriter(output_file, fieldnames=OHLCV_HEADERS)
-        writer.writeheader()
-        for symbol in UNIVERSE['binance']:
-            for start_time, end_time in _split_period_to_days(
-                start_time=start_timestamp_as_unix,
-                end_time=end_timestamp_as_unix
-            ):
-                url = _build_url(
-                    start_time=start_time,
-                    end_time=end_time,
-                    symbol=_process_symbol(symbol),
-                    limit=MAX_LINES
-                )
-                response = requests.request(
-                    method="GET",
-                    url=url,
-                    headers=headers,
-                    data={}
-                )
-                hdbg.dassert_eq(response.status_code, 200)
-                data = pd.DataFrame(
-                    [
-                        {
-                            "symbol": symbol,
-                            "open_time": row[0],
-                            "open": row[1],
-                            "high": row[2],
-                            "low": row[3],
-                            "close": row[4],
-                            "volume": row[5]
-                        }
-                        for row in response.json()
-                    ]
-                )
-                data.to_csv(args.output_file, index=False)
+    hdbg.dassert_lt(
+        start_timestamp_as_unix,
+        end_timestamp_as_unix,
+        msg="End timestamp should be greater the start timestamp."
+    )
+    add_headers = True
+    for symbol in tqdm.tqdm(UNIVERSE['binance']):
+        for start_time, end_time in _split_period_to_days(
+            start_time=start_timestamp_as_unix,
+            end_time=end_timestamp_as_unix
+        ):
+            url = _build_url(
+                start_time=start_time,
+                end_time=end_time,
+                symbol=_process_symbol(symbol),
+                limit=MAX_LINES
+            )
+            response = requests.request(
+                method="GET",
+                url=url,
+                headers=headers,
+                data={}
+            )
+            hdbg.dassert_eq(response.status_code, 200)
+            data = pd.DataFrame(
+                [
+                    {
+                        "symbol": symbol,
+                        "open_time": row[0],
+                        "open": row[1],
+                        "high": row[2],
+                        "low": row[3],
+                        "close": row[4],
+                        "volume": row[5]
+                    }
+                    for row in response.json()
+                ]
+            )
+            data.to_csv(args.output_file, mode='a', index=False, header=add_headers)
+            add_headers = False
+            time.sleep(THROTTLE_DELAY)
 
 
 if __name__ == "__main__":
