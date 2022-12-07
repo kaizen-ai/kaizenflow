@@ -26,6 +26,7 @@ class TestDownloadBulkData1(hunitest.TestCase):
         cmd.extend(["--downloading_entity", "manual"])
         cmd.extend(["--action_tag", "downloaded_1min"])
         cmd.extend(["--data_type", "ohlcv"])
+        cmd.extend(["--contract_type", "spot"])
         cmd.extend(["--vendor", "ccxt"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
         cmd.extend(["--end_timestamp", "2022-02-09"])
