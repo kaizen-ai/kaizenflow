@@ -27,7 +27,7 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
@@ -50,7 +50,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
+    exchange = imvcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
     # The vendor argument is added for compatibility so for CCXT-specific
     #  scripts it should be 'ccxt'.

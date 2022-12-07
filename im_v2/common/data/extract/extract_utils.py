@@ -16,19 +16,16 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import psycopg2
 
 import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
-import helpers.hsql as hsql
 import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
-import im_v2.im_lib_tasks as imvimlita
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -202,7 +199,7 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
-# TODO(Juraj): separate into individual 
+# TODO(Juraj): separate into individual
 # schemas for each data type.
 DATASET_SCHEMA = {
     "ask_price": "float64",
@@ -302,8 +299,8 @@ def _download_exchange_data_to_db_with_timeout(
     end_timestamp: datetime,
 ) -> None:
     """
-    Wrapper for download_exchange_data_to_db. Download data for given
-    time range, raise Interrupt in case if timeout occured.
+    Wrapper for download_exchange_data_to_db. Download data for given time
+    range, raise Interrupt in case if timeout occured.
 
     :param args: arguments passed on script run
     :param start_timestamp: beginning of the downloaded period

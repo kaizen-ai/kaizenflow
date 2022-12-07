@@ -6,6 +6,7 @@ Import as:
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 """
 
+import itertools
 import logging
 from typing import Dict, List
 
@@ -15,23 +16,24 @@ import core.finance.resampling as cfinresa
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.htimer as htimer
-import itertools
 
 _LOG = logging.getLogger(__name__)
 
 BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 
+
 def add_knowledge_timestamp_col(df: pd.DataFrame, tz: str) -> pd.DataFrame:
     """
-    Add 'knowledge_timestamp' column to a DataFrame and set the value
-    to a current time using helpers.hdatetime.get_current_time.
-    
+    Add 'knowledge_timestamp' column to a DataFrame and set the value to a
+    current time using helpers.hdatetime.get_current_time.
+
     :param df: DataFrame to modify
     :param tz: timezone to use
     :return: input DataFrame with an added knowledge_timestamp column
     """
     df["knowledge_timestamp"] = hdateti.get_current_time(tz)
     return df
+
 
 def convert_timestamp_column(
     datetime_col_name: pd.Series,
@@ -294,7 +296,11 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     elif mode == "TWAP":
         bid_ask_price_df = (
             data[["bid_size", "ask_size"]]
-            .groupby(pd.Grouper(freq=resample_kwargs["rule"], label=resample_kwargs["label"]))
+            .groupby(
+                pd.Grouper(
+                    freq=resample_kwargs["rule"], label=resample_kwargs["label"]
+                )
+            )
             .mean()
         )
     else:
