@@ -153,8 +153,7 @@ def prepend(txt: str, prefix: str) -> str:
     return res
 
 
-# TODO(gp): It should use *.
-def indent(txt: str, num_spaces: int = 2) -> str:
+def indent(txt: Optional[str], *, num_spaces: int = 2) -> str:
     """
     Add `num_spaces` spaces before each line of the passed string.
     """
