@@ -4,17 +4,20 @@ Script to download OHLCV data for a single exchange from CCXT.
 
 Use as:
 
-# Download OHLCV data for binance 'v3', saving dev_stage:
+# Download OHLCV data for binance 'v7', saving dev_stage:
 > im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
-    --start_timestamp '20211110-101100' \
-    --end_timestamp '20211110-101200' \
+    --download_mode 'periodic_1min' \
+    --downloading_entity 'manual' \
+    --action_tag 'downloaded_1min' \
+    --vendor 'ccxt' \
+    --start_timestamp '2022-11-03 18:00:00+00:00' \
+    --end_timestamp '2022-11-03 19:10:00+00:00' \
     --exchange_id 'binance' \
-    --universe 'v3' \
+    --universe 'v7' \
     --db_stage 'dev' \
     --db_table 'ccxt_ohlcv_test' \
-    --aws_profile 'ck' \
-    --s3_path 's3://cryptokaizen-data-test/realtime/' \
     --data_type 'ohlcv' \
+    --data_format 'postgres' \
     --contract_type 'spot'
 """
 
