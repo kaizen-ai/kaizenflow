@@ -119,7 +119,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         self._asset_id_col = self.market_data.asset_id_col
         self._mark_to_market_col = mark_to_market_col
         # Parse `pricing_method`.
-        self._pricing_type, self._bar_duration = self._parse_pricing_method(
+        self._pricing_type, self._bar_duration_as_pd_str = self._parse_pricing_method(
             pricing_method
         )
         # Initialize bookkeeping dictionaries.
@@ -258,7 +258,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         txt_tmp.append("_asset_id_col=%s" % self._asset_id_col)
         txt_tmp.append("_mark_to_market_col=%s" % self._mark_to_market_col)
         txt_tmp.append("_pricing_type=%s" % self._pricing_type)
-        txt_tmp.append("_bar_duration=%s" % self._bar_duration)
+        txt_tmp.append("_bar_duration_as_pd_str=%s" % self._bar_duration_as_pd_str)
         txt_tmp.append("_max_num_bars=%s" % self._max_num_bars)
         txt_tmp = "\n".join(txt_tmp)
         txt.append(hprint.indent(txt_tmp))
@@ -706,7 +706,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             )
         elif self._pricing_type == "twap":
             prices_df = self.market_data.get_last_twap_price(
-                self._bar_duration,
+                self._bar_duration_as_pd_str,
                 self._timestamp_col,
                 asset_ids,
                 self._mark_to_market_col,
@@ -796,7 +796,7 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
         hdbg.dassert_isinstance(pricing_method, str)
         if pricing_method == "last":
             pricing_type = "last"
-            bar_duration = None
+            bar_duration_as_pd_str = None
         else:
             split_str = pricing_method.split(".")
             hdbg.dassert_eq(len(split_str), 2)
@@ -804,13 +804,13 @@ class Portfolio(abc.ABC, hobject.PrintableMixin):
             pricing_type = split_str[0]
             hdbg.dassert_in(pricing_type, ["twap", "vwap"])
             #
-            bar_duration = split_str[1]
+            bar_duration_as_pd_str = split_str[1]
             hdbg.dassert(
-                pd.Timedelta(bar_duration),
+                pd.Timedelta(bar_duration_as_pd_str),
                 "Cannot convert %s to `pd.Timedelta`",
-                bar_duration,
+                bar_duration_as_pd_str,
             )
-        return pricing_type, bar_duration
+        return pricing_type, bar_duration_as_pd_str
 
     @staticmethod
     def _compute_pnl(
