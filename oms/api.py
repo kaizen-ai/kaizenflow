@@ -156,7 +156,8 @@ class Position:
         ret.append("contract=%s" % self.contract)
         ret.append("position=%s" % self.position)
         ret = "\n".join(ret)
-        ret = "Position:\n" + hprint.indent(ret, 2)
+        num_spaces = 2
+        ret = "Position:\n" + hprint.indent(ret, num_spaces=num_spaces)
         return ret
 
     def __hash__(self):
@@ -264,7 +265,8 @@ class Trade:
         ret.append("order_status=%s" % self.order_status)
         ret.append("timestamp=%s" % self.timestamp)
         ret = "\n".join(ret)
-        ret = "Trade:\n" + hprint.indent(ret, 2)
+        num_spaces = 2
+        ret = "Trade:\n" + hprint.indent(ret, num_spaces=num_spaces)
         return ret
 
     def to_position(self) -> Position:
