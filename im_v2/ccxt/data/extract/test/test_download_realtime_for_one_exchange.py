@@ -5,7 +5,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.download_realtime_for_one_exchange as imvcdedrfoe
+import im_v2.ccxt.data.extract.download_exchange_data_to_db as imvcdedrfoe
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
@@ -68,7 +68,7 @@ class TestDownloadRealtimeForOneExchange1(hunitest.TestCase):
     @pytest.mark.skip(
         "Cannot be run from the US due to 451 error API error. Run manually."
     )
-    @umock.patch.object(imvcdeexut, "download_realtime_for_one_exchange")
+    @umock.patch.object(imvcdeexut, "download_exchange_data_to_db")
     def test_main(self, mock_download_realtime: umock.MagicMock) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.

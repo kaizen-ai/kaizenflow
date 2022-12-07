@@ -3,7 +3,7 @@
 Script to download OHLCV data for a single exchange from Talos periodically.
 
 Use as:
-> im_v2/talos/data/extract/download_realtime_for_one_exchange_periodically.py \
+> im_v2/talos/data/extract/download_exchange_data_to_db_periodically.py \
     --exchange_id 'binance' \
     --universe 'v1' \
     --db_stage 'dev' \
@@ -52,7 +52,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize the Talos Extractor class.
     exchange = imvtdeexcl.TalosExtractor(args.api_stage)
     args = vars(args)
-    imvcdeexut.download_realtime_for_one_exchange_periodically(
+    imvcdeexut.download_exchange_data_to_db_periodically(
         args, exchange
     )
 

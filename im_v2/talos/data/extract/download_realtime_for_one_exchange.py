@@ -5,7 +5,7 @@ Script to download OHLCV data for a single exchange from Talos.
 Use as:
 
 # Download OHLCV data for binance 'v03', saving dev_stage:
-> im_v2/talos/data/extract/download_realtime_for_one_exchange.py \
+> im_v2/talos/data/extract/download_exchange_data_to_db.py \
     --start_timestamp '2021-11-10T10:11:00.000000Z' \
     --end_timestamp '2021-11-10T10:12:00.000000Z' \
     --exchange_id 'binance' \
@@ -65,7 +65,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Initialize the Talos Extractor class.
     exchange = imvtdeex.TalosExtractor(args.api_stage)
     args = vars(args)
-    imvcdeexut.download_realtime_for_one_exchange(args, exchange)
+    imvcdeexut.download_exchange_data_to_db(args, exchange)
 
 
 if __name__ == "__main__":

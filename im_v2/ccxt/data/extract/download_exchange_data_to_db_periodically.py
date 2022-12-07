@@ -1,37 +1,34 @@
 #!/usr/bin/env python
 """
-Script to download OHLCV data for a single exchange from CCXT.
+Script to download OHLCV data for a single exchange from CCXT periodically.
 
 Use as:
-
-# Download OHLCV spot data for binance 'v7', saving dev_stage:
-> im_v2/ccxt/data/extract/download_realtime_for_one_exchange.py \
+> im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py \
     --download_mode 'periodic_1min' \
     --downloading_entity 'manual' \
     --action_tag 'downloaded_1min' \
     --vendor 'ccxt' \
-    --start_timestamp '2022-11-03 18:00:00+00:00' \
-    --end_timestamp '2022-11-03 19:10:00+00:00' \
     --exchange_id 'binance' \
-    --universe 'v7' \
+    --universe 'v' \
     --db_stage 'dev' \
     --db_table 'ccxt_ohlcv_test' \
+    --aws_profile 'ck' \
     --data_type 'ohlcv' \
     --data_format 'postgres' \
-    --contract_type 'spot'
+    --contract_type 'spot' \
+    --interval_min '1' \
+    --start_time '2022-05-16 00:45:00' \
+    --stop_time '2022-05-16 00:55:00'
 """
 
 import argparse
-import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import im_v2.ccxt.data.extract.extractor as ivcdexex
+import im_v2.ccxt.data.extract.extractor as imvcdeex
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
-
-_LOG = logging.getLogger(__name__)
 
 
 def _parse() -> argparse.ArgumentParser:
@@ -39,8 +36,8 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
+    parser = imvcdeexut.add_periodical_download_args(parser)
     parser = hparser.add_verbosity_arg(parser)
-    parser = imvcdeexut.add_exchange_download_args(parser)
     parser = imvcddbut.add_db_args(parser)
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
@@ -50,9 +47,11 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     # Initialize the CCXT Extractor class.
-    exchange = ivcdexex.CcxtExtractor(args.exchange_id, args.contract_type)
+    exchange = imvcdeex.CcxtExtractor(args.exchange_id, args.contract_type)
     args = vars(args)
-    imvcdeexut.download_realtime_for_one_exchange(args, exchange)
+    imvcdeexut.download_exchange_data_to_db_periodically(
+        args, exchange
+    )
 
 
 if __name__ == "__main__":

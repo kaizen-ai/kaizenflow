@@ -12,7 +12,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         """
         Test Python script call, check return value and amount of downloads.
         """
-        cmd = "im_v2/ccxt/data/extract/download_realtime_for_one_exchange_periodically.py \
+        cmd = "im_v2/ccxt/data/extract/download_exchange_data_to_db_periodically.py \
         --data_type 'ohlcv' \
         --exchange_id 'binance' \
         --universe 'small' \

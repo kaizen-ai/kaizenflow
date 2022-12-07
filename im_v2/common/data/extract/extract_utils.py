@@ -230,7 +230,7 @@ DATASET_SCHEMA = {
 
 # TODO(Juraj): Refactor the method, divide into submethods
 # by data type.
-def download_realtime_for_one_exchange(
+def download_exchange_data_to_db(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
@@ -295,14 +295,14 @@ def download_realtime_for_one_exchange(
 
 
 @timeout(TIMEOUT_SEC)
-def _download_realtime_for_one_exchange_with_timeout(
+def _download_exchange_data_to_db_with_timeout(
     args: Dict[str, Any],
     exchange_class: ivcdexex.Extractor,
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
     """
-    Wrapper for download_realtime_for_one_exchange. Download data for given
+    Wrapper for download_exchange_data_to_db. Download data for given
     time range, raise Interrupt in case if timeout occured.
 
     :param args: arguments passed on script run
@@ -318,7 +318,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    download_realtime_for_one_exchange(args, exchange_class)
+    download_exchange_data_to_db(args, exchange_class)
 
 
 # TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
@@ -456,7 +456,7 @@ def _download_rest_realtime_for_one_exchange_periodically(
         start_timestamp = start_timestamp.floor("min")
         end_timestamp = pd.to_datetime(datetime.now(tz)).floor("min")
         try:
-            _download_realtime_for_one_exchange_with_timeout(
+            _download_exchange_data_to_db_with_timeout(
                 args, exchange, start_timestamp, end_timestamp
             )
             # Reset failures counter.
