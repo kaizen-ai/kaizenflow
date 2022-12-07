@@ -56,7 +56,7 @@ def get_CcxtPortfolio_prod_instance1(
             strategy_id,
             secret_identifier
         )
-    elif run_mode in ["paper_trading", "simulation"]:
+    elif run_mode == "paper_trading":
         broker = occxbrok.get_DataFrameCcxtBroker_instance1(market_data)
     else:
         raise ValueError(f"Invalid run_mode='{run_mode}'")

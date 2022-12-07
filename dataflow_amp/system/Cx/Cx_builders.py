@@ -379,31 +379,6 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     return portfolio
 
 
-# TODO(gp): We should dump the state of the portfolio and load it back.
-# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
-#  so we can generalize the class to be not E8 specific.
-def get_Cx_portfolio(
-    system: dtfsys.System,
-) -> oms.Portfolio:
-    # We prefer to configure code statically (e.g., without switches) but in this
-    # case the prod system vs its simulat-able version are so close (and we want to
-    # keep them close) that we use a switch.
-    if not system.use_simulation:
-        # Prod.
-        portfolio = get_Cx_portfolio_prod_instance1(system)
-    else:
-        # Simulation.
-        # TODO(gp): This needs to be fixed before reconciliation.
-        # _LOG.warning("Configuring for simulation")
-        # portfolio = oms.get_DatabasePortfolio_example3(
-        #     system.config["db_connection_object"],
-        #     system.config["event_loop_object"],
-        #     system.market_data,
-        # )
-        pass
-    return portfolio
-
-
 # #############################################################################
 # Apply config utils.
 # #############################################################################
