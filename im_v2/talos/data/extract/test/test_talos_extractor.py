@@ -6,7 +6,6 @@ import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
-import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import im_v2.talos.data.extract.extractor as imvtdexex
@@ -14,10 +13,11 @@ import im_v2.talos.data.extract.extractor as imvtdexex
 _LOG = logging.getLogger(__name__)
 
 
-@pytest.mark.skipif(
-    not henv.execute_repo_config_code("is_CK_S3_available()"),
-    reason="Run only if CK S3 is available",
-)
+# @pytest.mark.skipif(
+#    not henv.execute_repo_config_code("is_CK_S3_available()"),
+#    reason="Run only if CK S3 is available",
+# )
+@pytest.mark.skip(reason="Talos as a vendor is deprecated.")
 class TestTalosExtractor1(hunitest.TestCase):
     def test_initialize_class(self) -> None:
         """

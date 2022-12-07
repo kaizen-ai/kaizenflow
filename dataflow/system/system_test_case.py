@@ -404,7 +404,7 @@ class Time_ForecastSystem_with_DataFramePortfolio_TestCase1(hunitest.TestCase):
     - a timed DAG
     - ReplayedMarketData
     - DataFrame portfolio
-    - Simulated broker
+    - DataFrame Broker
 
     Freeze the config and the output of the system.
     """
@@ -866,7 +866,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         # Remove `DataFrame*` and `Database*` to avoid mismatches from the fact
         # that the systems are different.
         regex = (
-            "DataFramePortfolio|DatabasePortfolio|SimulatedBroker|DatabaseBroker"
+            "DataFramePortfolio|DatabasePortfolio|DataFrameBroker|DatabaseBroker"
         )
         actual = hunitest.filter_text(regex, actual)
         expected = hunitest.filter_text(regex, expected)
