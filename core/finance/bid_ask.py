@@ -43,8 +43,8 @@ def process_bid_ask(
     hdbg.dassert_in(ask_col, df.columns)
     hdbg.dassert_in(bid_volume_col, df.columns)
     hdbg.dassert_in(ask_volume_col, df.columns)
-    # if not (df[bid_col] > df[ask_col]).any():
-    #     _LOG.warning("Some bid price values are larget than ask price.")
+    if not (df[bid_col] >= df[ask_col]).any():
+        _LOG.warning("Some bid price values are larget than ask price.")
     supported_cols = [
         "mid",
         "geometric_mid",
@@ -72,45 +72,57 @@ def process_bid_ask(
     requested_cols = set(requested_cols)
     results: Dict[str, Union[pd.Series, pd.DataFrame]] = {}
     if "mid" in requested_cols:
+        # (bid + ask) / 2.
         srs = (df[bid_col] + df[ask_col]) / 2
         results["mid"] = srs
     if "geometric_mid" in requested_cols:
+        # sqrt(bid * ask).
         srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
         results["geometric_mid"] = srs
     if "quoted_spread" in requested_cols:
+        # bid - ask.
         srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
         results["quoted_spread"] = srs
     if "relative_spread" in requested_cols:
+        # 2(ask - bid) / (ask + bid).
         srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
         results["relative_spread"] = srs
     if "log_relative_spread" in requested_cols:
+        # log(ask) - log(bid).
         srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
             "log_relative_spread"
         )
         results["log_relative_spread"] = srs
     if "weighted_mid" in requested_cols:
+        # bid * ask_volume + ask * bid_volume.
         srs = (
             df[bid_col] * df[ask_volume_col] + df[ask_col] * df[bid_volume_col]
         ) / (df[ask_volume_col] + df[bid_volume_col])
         results["weighted_mid"] = srs
     if "order_book_imbalance" in requested_cols:
+        # bid_volume / (bid_volume + ask_volume).
         srs = df[bid_volume_col] / (df[bid_volume_col] + df[ask_volume_col])
         results["order_book_imbalance"] = srs
     if "centered_order_book_imbalance" in requested_cols:
+        # (bid_volume - ask_volume) / (bid_volume + ask_volume).
         srs = (df[bid_volume_col] - df[ask_volume_col]) / (
             df[bid_volume_col] + df[ask_volume_col]
         )
         results["centered_order_book_imbalance"] = srs
     if "log_order_book_imbalance" in requested_cols:
+        # log(bid_volume) - log(ask_volume).
         srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
         results["log_order_book_imbalance"] = srs
     if "bid_value" in requested_cols:
+        # bid * bid_volume.
         srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
         results["bid_value"] = srs
     if "ask_value" in requested_cols:
+        # ask * ask_volume.
         srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
         results["ask_value"] = srs
     if "mid_value" in requested_cols:
+        # (bid * bid_volume + ask * ask_volume) / 2.
         srs = (
             df[bid_col] * df[bid_volume_col] + df[ask_col] * df[ask_volume_col]
         ) / 2
