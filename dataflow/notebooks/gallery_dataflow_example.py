@@ -59,9 +59,9 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
-    s3_path = os.path.join(s3_bucket_path, "historical")
+    s3_path = os.path.join(s3_bucket_path)
     config["load"]["data_dir"] = os.path.join(
-        s3_path, "historical"
+        s3_path, "cryptokaizen-data", "reorg", "historical.manual.pq"
     )
     config["load"]["data_snapshot"] = "latest"
     config["load"]["partition_mode"] = "by_year_month"
