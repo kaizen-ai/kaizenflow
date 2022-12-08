@@ -58,19 +58,19 @@ def get_CcxtPortfolio_prod_instance1(
     :param asset_ids: see `Portfolio.from_cash()`
     """
     # We prefer to configure code statically (e.g., without switches) but in this
-    # case the prod Porfolio vs its simulat-able and paper-trading versions are
-    # so close (and we want to keep them close) that we use a switch.
+    # case the prod Porfolio vs its paper-trading version are so close
+    # (and we want to keep them close) that we use a switch.
     if run_mode == "prod":
         # Build `CcxtBroker` that is connected to the real exchange.
         broker = occxbrok.get_CcxtBroker_prod_instance1(
             strategy_id, market_data, universe_version, secret_identifier
         )
-    elif run_mode in ["paper_trading", "simulation"]:
-        _LOG.warning("Running the system with the simulated Broker")
-        # Use the `SimulatedCcxtBroker`, i.e. no interaction with
+    elif run_mode == "paper_trading":
+        _LOG.warning("Running the system with the `DataFrameCcxtBroker`")
+        # Use the `DataFrameCcxtBroker`, i.e. no interaction with
         # the real exchange.
         stage = secret_identifier.stage
-        broker = occxbrok.get_SimulatedCcxtBroker_instance1(
+        broker = occxbrok.get_DataFrameCcxtBroker_instance1(
             strategy_id,
             market_data,
             column_remap,

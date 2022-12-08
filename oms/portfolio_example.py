@@ -113,6 +113,7 @@ def get_DataFramePortfolio_example3(
     - a `DataFrameBroker` for prod (i.e., a broker that executes the orders immediately)
     """
     # Build a DataFrameBroker.
+    strategy_id = "Cx"
     stage = "preprod"
     broker = occxbrok.get_DataFrameCcxtBroker_instance1(
         strategy_id,

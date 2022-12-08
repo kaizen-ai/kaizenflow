@@ -490,8 +490,6 @@ def get_DataFramePortfolio_from_System(
     :param is_prod: whether the system is going to be used for production or
         for simulation
     """
-    # TODO(Dan): What `strategy_id` to use?
-    strategy_id = "N/A"
     market_data = system.market_data
     column_remap = system.config.get_and_mark_as_used(
         ("portfolio_config", "column_remap")
@@ -502,7 +500,7 @@ def get_DataFramePortfolio_from_System(
     if is_prod:
         # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
-            strategy_id, column_remap, market_data, asset_ids
+            column_remap, market_data, asset_ids
         )
     else:
         # Set event loop object for `DataFrameBroker` used in simulation.
