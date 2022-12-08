@@ -266,7 +266,10 @@ def _get_execution_prices(
     price_type, timing = config
     # Get the price depending on the price_type.
     if price_type in ("price", "midpoint"):
+        print("ABB")
+        print(column_remap)
         column = column_remap[price_type]
+        print(column)
         prices = _get_price_per_share(
             market_data,
             start_timestamp,
