@@ -16,6 +16,7 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
+from pyarrow.parquet import ParquetFile
 from tqdm.autonotebook import tqdm
 
 import helpers.hdataframe as hdatafr
@@ -53,6 +54,7 @@ def from_parquet(
     *,
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
+    n_rows: Optional[int] = None,
     schema: Optional[List[Tuple[str, pa.DataType]]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
@@ -67,7 +69,8 @@ def from_parquet(
     :param file_name: path to a Parquet dataset
     :param columns: columns to return, skipping reading columns that are not requested
        - `None` means return all available columns
-    :param filters: Parquet query filters
+    :param filters: Parquet query
+    :param n_rows: the number of rows to load, load all data if `None`
     :param schema: see `pyarrow.Schema`, e.g., `schema =
         [("int_col", pa.int32()), ("str_col", pa.string())]`
     :param log_level: logging level to execute at
@@ -97,26 +100,37 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
-        if schema is not None:
-            # Pass partition columns types explicitly.
-            schema = pa.schema(schema)
-        partitioning = ds.partitioning(schema, flavor="hive")
-        dataset = pq.ParquetDataset(
-            # Replace URI with path.
-            file_name,
-            filesystem=filesystem,
-            filters=filters,
-            partitioning=partitioning,
-            use_legacy_dataset=False,
-        )
-        if columns:
-            # Note: `schema.names` also includes and index.
-            hdbg.dassert_is_subset(columns, dataset.schema.names)
-        # To read also the index we need to use `read_pandas()`, instead of
-        # `read_table()`.
-        # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
-        table = dataset.read_pandas(columns=columns)
-        df = table.to_pandas()
+        if n_rows:
+            # Get the latest parquet file in the directory.
+            last_pq_file = hs3.get_latest_pq_in_s3_dir(file_name, aws_profile)
+            file = s3_filesystem.open(last_pq_file, "rb")
+            # Load the data.
+            parquet_file = ParquetFile(file)
+            # Get the head of the data.
+            first_ten_rows = next(parquet_file.iter_batches(batch_size=n_rows))
+            df = pa.Table.from_batches([first_ten_rows]).to_pandas()
+        else:
+            if schema is not None:
+                # Pass partition columns types explicitly.
+                schema = pa.schema(schema)
+            partitioning = ds.partitioning(schema, flavor="hive")
+            dataset = pq.ParquetDataset(
+                # Replace URI with path.
+                file_name,
+                filesystem=filesystem,
+                filters=filters,
+                partitioning=partitioning,
+                use_legacy_dataset=False,
+            )
+            if columns:
+                # Note: `schema.names` also includes and index.
+                hdbg.dassert_is_subset(columns, dataset.schema.names)
+            # To read also the index we need to use `read_pandas()`, instead of
+            # `read_table()`.
+            # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
+            table = dataset.read_pandas(columns=columns)
+            df = table.to_pandas()
+
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()

@@ -43,7 +43,6 @@ import logging
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
 
@@ -73,48 +72,48 @@ _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 # # Historical (data updated daily)
 
 # %% [markdown]
-# ## bulk.airflow.downloaded_1min.pq.ohlcv.futures.v7.ccxt.binance.v1_0_0
+# ## bulk.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0
 
 # %%
-signature = "bulk.airflow.downloaded_1min.pq.ohlcv.futures.v7.ccxt.binance.v1_0_0"
+signature = (
+    "bulk.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0"
+)
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## bulk.airflow.downloaded_1sec.pq.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0
+# ## bulk.airflow.downloaded_1sec.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0
 
 # %%
-signature = "bulk.airflow.downloaded_1sec.pq.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
+signature = "bulk.airflow.downloaded_1sec.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## bulk.airflow.resampled_1min.pq.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0
+# ## bulk.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0
 
 # %%
-signature = "bulk.airflow.resampled_1min.pq.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
+signature = "bulk.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0"
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## bulk.airflow.downloaded_1sec.pq.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0
+# ## bulk.airflow.downloaded_1sec.parquet.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0
 
 # %%
-signature = "bulk.airflow.downloaded_1sec.pq.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0"
+signature = "bulk.airflow.downloaded_1sec.parquet.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0"
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
 
 # %% [markdown]
-# ## bulk.airflow.resampled_1min.pq.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0
+# ## bulk.airflow.resampled_1min.parquet.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0
 
 # %%
-signature = "bulk.airflow.downloaded_1sec.pq.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0"
+signature = "bulk.airflow.downloaded_1sec.parquet.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0"
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
-
-# %%

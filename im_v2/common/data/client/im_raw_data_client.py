@@ -7,17 +7,14 @@ import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
 """
 
 import logging
-from typing import Any, Dict
 
 import pandas as pd
-import pyarrow as pa
-from pyarrow.parquet import ParquetFile
 
 import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdbg as hdbg
-import helpers.hsql_implementation as hsqlimpl
-import helpers.hs3 as hs3
+import helpers.hparquet as hparque
 import helpers.hsql as hsql
+import helpers.hsql_implementation as hsqlimpl
 import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
@@ -37,18 +34,20 @@ class RawDataReader:
         """
         # Validate signature schema.
         dataset_schema = dsdascut.get_dataset_schema()
-        self.args = dsdascut._parse_dataset_signature_to_args(signature, dataset_schema)
+        self.args = dsdascut._parse_dataset_signature_to_args(
+            signature, dataset_schema
+        )
 
     def read_data(self) -> pd.DataFrame:
         """
         Load the data sample.
         """
-        if self.args["data_format"] == "pq":
+        if self.args["data_format"] == "parquet":
             # Load the data from S3.
             data = self.load_parquet_head()
         else:
             # Load the data from DB.
-            data = self.load_db_table()
+            data = self.load_db_table_head()
         return data
 
     def load_parquet_head(self) -> pd.DataFrame:
@@ -59,18 +58,11 @@ class RawDataReader:
         """
         # Build s3 path.
         s3_pq_file_path = self._build_s3_pq_file_path()
-        _LOG.info(f"Loading the data from `{s3_pq_file_path}` parquet file")
-        aws_profile = "ck"
-        s3fs_ = hs3.get_s3fs(aws_profile)
-        file = s3fs_.open(s3_pq_file_path, "rb")
-        # Load the data.
-        parquet_file = ParquetFile(file)
-        # Get the head of the data.
-        first_ten_rows = next(parquet_file.iter_batches(batch_size=10))
-        df = pa.Table.from_batches([first_ten_rows]).to_pandas()
+        _LOG.info(f"Loading the data from `{s3_pq_file_path}`")
+        df = hparque.from_parquet(s3_pq_file_path, n_rows=10, aws_profile="ck")
         return df
 
-    def load_db_table(self) -> pd.DataFrame:
+    def load_db_table_head(self) -> pd.DataFrame:
         """
         Load the head of the DB table.
         """
@@ -81,7 +73,9 @@ class RawDataReader:
         hdbg.dassert_in(table_name, db_tables, f"`{table_name} doesn't exist`")
         # Load the head of the data.
         _LOG.info(f"Loading the data from `{table_name}` table")
-        query_head = f"SELECT * FROM {table_name} ORDER BY timestamp DESC LIMIT 10"
+        query_head = (
+            f"SELECT * FROM {table_name} ORDER BY timestamp DESC LIMIT 10"
+        )
         head = hsql.execute_query_to_df(connection, query_head)
         return head
 
@@ -117,10 +111,6 @@ class RawDataReader:
         """
         # Use the hardcoded base URL.
         s3_path_base = "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq"
-        # Use the specific parquet file to load the sample of the data from.
-        pq_file_common_path = (
-            "currency_pair=ETH_USDT/year=2022/month=11/data.parquet"
-        )
         # Get the full data type, e.g. `bid_ask` or `bid_ask-futures.`
         if self.args["asset_type"] == "futures":
             data_type = f'{self.args["data_type"]}-futures'
@@ -130,5 +120,7 @@ class RawDataReader:
             vendor = f'{self.args["vendor"]}.{self.args["action_tag"]}'
         else:
             vendor = self.args["vendor"]
-        s3_path = f'{s3_path_base}/{data_type}/{vendor}/{self.args["exchange"]}/{pq_file_common_path}'
-        return s3_path
+        s3_dir_path = (
+            f'{s3_path_base}/{data_type}/{vendor}/{self.args["exchange_id"]}'
+        )
+        return s3_dir_path
