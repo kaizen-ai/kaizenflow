@@ -43,13 +43,15 @@ def process_bid_ask(
     hdbg.dassert_in(ask_col, df.columns)
     hdbg.dassert_in(bid_volume_col, df.columns)
     hdbg.dassert_in(ask_volume_col, df.columns)
-    try:
-        # Check if bid >= ask in any row.
-        if not (df[bid_col] >= df[ask_col]).any():
-            _LOG.warning("Some bid price values are larger than ask price.")
-    except ValueError:
-        # For multiindex dataframes, the check is not conducted.
-        _LOG.warning("Unable to check the bid >= ask in multiindex dataframes.")
+    #
+    if df.columns.nlevels == 1:
+        # Single level column.
+        hdbg.dassert(not (df[bid_col] > df[ask_col]).any())
+    elif df.columns.nlevels == 2:
+        # Multiindex df.
+        hdbg.dassert(not (df[bid_col] >= df[ask_col]).any().any())
+    else:
+        raise ValueError("DataFrame type not supported:\n%s", df.head(3))
     supported_cols = [
         "mid",
         "geometric_mid",
@@ -89,7 +91,6 @@ def process_bid_ask(
         hdbg.dassert_isinstance(srs, (pd.Series, pd.DataFrame))
         hdbg.dassert_not_in(tag, results.keys())
         results[tag] = srs
-
     #
     for tag in requested_cols:
         if tag == "mid":
@@ -102,7 +103,7 @@ def process_bid_ask(
             # bid - ask.
             srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
         if tag == "relative_spread":
-            # 2(ask - bid) / (ask + bid).
+            # 2*(ask - bid) / (ask + bid).
             srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
         if tag == "log_relative_spread":
             # log(ask) - log(bid).
