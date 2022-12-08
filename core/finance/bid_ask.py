@@ -70,63 +70,67 @@ def process_bid_ask(
     )
     hdbg.dassert(requested_cols)
     requested_cols = set(requested_cols)
+    #
     results: Dict[str, Union[pd.Series, pd.DataFrame]] = {}
-    if "mid" in requested_cols:
-        # (bid + ask) / 2.
-        srs = (df[bid_col] + df[ask_col]) / 2
-        results["mid"] = srs
-    if "geometric_mid" in requested_cols:
-        # sqrt(bid * ask).
-        srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
-        results["geometric_mid"] = srs
-    if "quoted_spread" in requested_cols:
-        # bid - ask.
-        srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
-        results["quoted_spread"] = srs
-    if "relative_spread" in requested_cols:
-        # 2(ask - bid) / (ask + bid).
-        srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
-        results["relative_spread"] = srs
-    if "log_relative_spread" in requested_cols:
-        # log(ask) - log(bid).
-        srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
-            "log_relative_spread"
-        )
-        results["log_relative_spread"] = srs
-    if "weighted_mid" in requested_cols:
-        # bid * ask_volume + ask * bid_volume.
-        srs = (
-            df[bid_col] * df[ask_volume_col] + df[ask_col] * df[bid_volume_col]
-        ) / (df[ask_volume_col] + df[bid_volume_col])
-        results["weighted_mid"] = srs
-    if "order_book_imbalance" in requested_cols:
-        # bid_volume / (bid_volume + ask_volume).
-        srs = df[bid_volume_col] / (df[bid_volume_col] + df[ask_volume_col])
-        results["order_book_imbalance"] = srs
-    if "centered_order_book_imbalance" in requested_cols:
-        # (bid_volume - ask_volume) / (bid_volume + ask_volume).
-        srs = (df[bid_volume_col] - df[ask_volume_col]) / (
-            df[bid_volume_col] + df[ask_volume_col]
-        )
-        results["centered_order_book_imbalance"] = srs
-    if "log_order_book_imbalance" in requested_cols:
-        # log(bid_volume) - log(ask_volume).
-        srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
-        results["log_order_book_imbalance"] = srs
-    if "bid_value" in requested_cols:
-        # bid * bid_volume.
-        srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
-        results["bid_value"] = srs
-    if "ask_value" in requested_cols:
-        # ask * ask_volume.
-        srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
-        results["ask_value"] = srs
-    if "mid_value" in requested_cols:
-        # (bid * bid_volume + ask * ask_volume) / 2.
-        srs = (
-            df[bid_col] * df[bid_volume_col] + df[ask_col] * df[ask_volume_col]
-        ) / 2
-        results["mid_value"] = srs
+    #
+    # A helper function to add the feature Series to all results.
+    def _append_feature_srs(tag: str, srs: Union[pd.Series, pd.DataFrame]) -> None:
+        """
+        Assert result type and append to general results.
+        """
+        hdbg.dassert_isinstance(tag, str)
+        hdbg.dassert_isinstance(srs, pd.Series)
+        hdbg.dassert_not_in(tag, results.keys())
+        results[tag] = srs
+    #
+    for tag in requested_cols:
+        if tag == "mid":
+            # (bid + ask) / 2.
+            srs = (df[bid_col] + df[ask_col]) / 2
+        if tag == "geometric_mid":
+            # sqrt(bid * ask).
+            srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
+        if tag == "quoted_spread":
+            # bid - ask.
+            srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
+        if tag == "relative_spread":
+            # 2(ask - bid) / (ask + bid).
+            srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
+            results["relative_spread"] = srs
+        if tag == "log_relative_spread":
+            # log(ask) - log(bid).
+            srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
+                "log_relative_spread"
+            )
+        if tag == "weighted_mid":
+            # bid * ask_volume + ask * bid_volume.
+            srs = (
+                df[bid_col] * df[ask_volume_col] + df[ask_col] * df[bid_volume_col]
+            ) / (df[ask_volume_col] + df[bid_volume_col])
+        if tag == "order_book_imbalance":
+            # bid_volume / (bid_volume + ask_volume).
+            srs = df[bid_volume_col] / (df[bid_volume_col] + df[ask_volume_col])
+        if tag == "centered_order_book_imbalance":
+            # (bid_volume - ask_volume) / (bid_volume + ask_volume).
+            srs = (df[bid_volume_col] - df[ask_volume_col]) / (
+                df[bid_volume_col] + df[ask_volume_col]
+            )
+        if tag == "log_order_book_imbalance":
+            # log(bid_volume) - log(ask_volume).
+            srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
+        if tag == "bid_value":
+            # bid * bid_volume.
+            srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
+        if tag == "ask_value":
+            # ask * ask_volume.
+            srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
+        if tag == "mid_value":
+            # (bid * bid_volume + ask * ask_volume) / 2.
+            srs = (
+                df[bid_col] * df[bid_volume_col] + df[ask_col] * df[ask_volume_col]
+            ) / 2
+        # Add to general results.
+        _append_feature_srs(tag, srs)
     out_df = pd.concat(results.values(), keys=results.keys(), axis=1)
     # TODO(gp): Maybe factor out this in a `_maybe_join_output_with_input` since
     #  it seems a common idiom.
