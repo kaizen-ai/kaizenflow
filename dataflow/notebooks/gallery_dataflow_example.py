@@ -61,12 +61,12 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
     s3_path = os.path.join(s3_bucket_path)
     config["load"]["data_dir"] = os.path.join(
-        s3_path, "cryptokaizen-data", "reorg", "historical.manual.pq"
+        s3_path, "reorg", "historical.manual.pq"
     )
     config["load"]["data_snapshot"] = "latest"
     config["load"]["partition_mode"] = "by_year_month"
     config["load"]["dataset"] = "ohlcv"
-    config["load"]["contract_type"] = "spot"
+    config["load"]["contract_type"] = "futures"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["start_date"] = pd.Timestamp("2021-09-01", tz="UTC")
@@ -86,8 +86,7 @@ print(config)
 # Specify params.
 universe_version = "v3"
 resample_1min = True
-#root_dir = config["load"]["data_dir"]
-root_dir = "s3://cryptokaizen-data/reorg/historical.manual.pq/"
+root_dir = config["load"]["data_dir"]
 partition_mode = config["load"]["partition_mode"]
 dataset = config["load"]["dataset"]
 contract_type = config["load"]["contract_type"]
@@ -114,9 +113,10 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
 full_symbols = ["binance::ADA_USDT", "binance::AVAX_USDT"]
 start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
-
+columns = None
+filter_data_mode = None
 # Load the data.
-data_hist = historical_client.read_data(full_symbols, start_date, end_date)
+data_hist = historical_client.read_data(full_symbols, start_date, end_date, columns, filter_data_mode)
 display(data_hist.shape)
 display(data_hist.head(3))
 

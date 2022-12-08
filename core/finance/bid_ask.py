@@ -43,8 +43,13 @@ def process_bid_ask(
     hdbg.dassert_in(ask_col, df.columns)
     hdbg.dassert_in(bid_volume_col, df.columns)
     hdbg.dassert_in(ask_volume_col, df.columns)
-    if not (df[bid_col] >= df[ask_col]).any():
-        _LOG.warning("Some bid price values are larget than ask price.")
+    try:
+        # Check if bid >= ask in any row.
+        if not (df[bid_col] >= df[ask_col]).any():
+            _LOG.warning("Some bid price values are larger than ask price.")
+    except ValueError:
+        # For multiindex dataframes, the check is not conducted.
+        _LOG.warning("Unable to check the bid >= ask in multiindex dataframes.")
     supported_cols = [
         "mid",
         "geometric_mid",
@@ -74,14 +79,17 @@ def process_bid_ask(
     results: Dict[str, Union[pd.Series, pd.DataFrame]] = {}
     #
     # A helper function to add the feature Series to all results.
-    def _append_feature_srs(tag: str, srs: Union[pd.Series, pd.DataFrame]) -> None:
+    def _append_feature_srs(
+        tag: str, srs: Union[pd.Series, pd.DataFrame]
+    ) -> None:
         """
         Assert result type and append to general results.
         """
         hdbg.dassert_isinstance(tag, str)
-        hdbg.dassert_isinstance(srs, pd.Series)
+        hdbg.dassert_isinstance(srs, (pd.Series, pd.DataFrame))
         hdbg.dassert_not_in(tag, results.keys())
         results[tag] = srs
+
     #
     for tag in requested_cols:
         if tag == "mid":
@@ -96,7 +104,6 @@ def process_bid_ask(
         if tag == "relative_spread":
             # 2(ask - bid) / (ask + bid).
             srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
-            results["relative_spread"] = srs
         if tag == "log_relative_spread":
             # log(ask) - log(bid).
             srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
@@ -105,7 +112,8 @@ def process_bid_ask(
         if tag == "weighted_mid":
             # bid * ask_volume + ask * bid_volume.
             srs = (
-                df[bid_col] * df[ask_volume_col] + df[ask_col] * df[bid_volume_col]
+                df[bid_col] * df[ask_volume_col]
+                + df[ask_col] * df[bid_volume_col]
             ) / (df[ask_volume_col] + df[bid_volume_col])
         if tag == "order_book_imbalance":
             # bid_volume / (bid_volume + ask_volume).
@@ -127,7 +135,8 @@ def process_bid_ask(
         if tag == "mid_value":
             # (bid * bid_volume + ask * ask_volume) / 2.
             srs = (
-                df[bid_col] * df[bid_volume_col] + df[ask_col] * df[ask_volume_col]
+                df[bid_col] * df[bid_volume_col]
+                + df[ask_col] * df[ask_volume_col]
             ) / 2
         # Add to general results.
         _append_feature_srs(tag, srs)
