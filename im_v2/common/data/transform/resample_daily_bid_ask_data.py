@@ -68,7 +68,7 @@ def _run(args: argparse.Namespace) -> None:
     data_resampled["timestamp"] = data_resampled["timestamp"].apply(
         lambda x: hdateti.convert_timestamp_to_unix_epoch(x, epoch_unit)
     )
-    data_resampled = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
+    data_resampled = imvcdttrut.add_knowledge_timestamp_col(data_resampled, "UTC")
     _LOG.info(
         hpandas.df_to_str(
             data_resampled, print_shape_info=True, tag="Resampled data"
