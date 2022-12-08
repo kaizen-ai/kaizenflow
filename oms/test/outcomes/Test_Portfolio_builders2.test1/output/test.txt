@@ -61,5 +61,5 @@ repr:
   _asset_id_col=asset_id
   _mark_to_market_col=price
   _pricing_type=last
-  _bar_duration=None
+  _bar_duration_as_pd_str=None
   _max_num_bars=100
