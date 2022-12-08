@@ -518,6 +518,7 @@ def get_DataFramePortfolio_from_System(
             mark_to_market_col=mark_to_market_col,
             pricing_method=pricing_method,
             asset_ids=asset_ids,
+            column_remap=column_remap,
         )
     return portfolio
 

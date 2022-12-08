@@ -35,6 +35,7 @@ def get_DataFramePortfolio_example1(
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
     Contain:
@@ -47,6 +48,7 @@ def get_DataFramePortfolio_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
+        column_remap=column_remap,
     )
     # Build a DataFramePortfolio.
     mark_to_market_col = mark_to_market_col
