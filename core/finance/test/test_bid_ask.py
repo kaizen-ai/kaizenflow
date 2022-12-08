@@ -187,6 +187,7 @@ datetime,mid_value
             ask_volume_col,
             requested_cols=requested_cols,
         )
+        actual = actual.sort_index(axis=1)
         expected = """                  mid                 mid_value
            3303714233  8968126878    3303714233     8968126878
 2022-11-02   0.385073  319.837513  2.013201e+06  542315.407201
