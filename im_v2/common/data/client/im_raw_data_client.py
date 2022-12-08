@@ -18,7 +18,7 @@ import helpers.hdbg as hdbg
 import helpers.hsql_implementation as hsqlimpl
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import im_v2.im_lib_tasks as imvimlita
+import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
 
@@ -37,53 +37,21 @@ class RawDataReader:
         """
         # Validate signature schema.
         dataset_schema = dsdascut.get_dataset_schema()
-        hdbg.dassert_eq(
-            dsdascut.validate_dataset_signature(signature, dataset_schema), True
-        )
-        self.args = self.parse_signature_to_args(signature, dataset_schema)
-
-    @staticmethod
-    def get_db_connection() -> hsqlimpl.DbConnection:
-        """
-        Connect to the DB.
-        """
-        # Get DB connection.
-        env_file = imvimlita.get_db_env_path("dev")
-        # Connect with the parameters from the env file.
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        connection = hsql.get_connection(*connection_params)
-        return connection
-
-    @staticmethod
-    def parse_signature_to_args(
-        signature: str, dataset_schema: Dict[str, Any]
-    ) -> Dict[str, str]:
-        """
-        Parse signature string into key-value mapping according to the schema.
-
-        :param signature: dataset signature to parse,
-          e.g. `bulk.airflow.resampled_1min.pq.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0`
-        :dataset_schema: dataset schema to parse against
-        """
-        token_separator = dataset_schema["token_separator_character"]
-        keys = dataset_schema["dataset_signature"].split(token_separator)
-        values = signature.split(token_separator)
-        args = {keys[i]: values[i] for i in range(len(keys))}
-        return args
+        self.args = dsdascut._parse_dataset_signature_to_args(signature, dataset_schema)
 
     def read_data(self) -> pd.DataFrame:
         """
         Load the data sample.
         """
-        if self.args["download_mode"] == "bulk":
+        if self.args["data_format"] == "pq":
             # Load the data from S3.
-            data = self.load_parquet()
+            data = self.load_parquet_head()
         else:
             # Load the data from DB.
             data = self.load_db_table()
         return data
 
-    def load_parquet(self) -> pd.DataFrame:
+    def load_parquet_head(self) -> pd.DataFrame:
         """
         Load the head of a sample parquet file.
 
@@ -106,23 +74,22 @@ class RawDataReader:
         """
         Load the head of the DB table.
         """
-        connection = self.get_db_connection()
-        db_name = self._build_db_table_name()
-        _LOG.info(f"Loading the data from `{db_name}` table")
-        query_head = f"SELECT * FROM {db_name} ORDER BY timestamp ASC LIMIT 10"
+        connection = imvcddbut.DbConnectionManager.get_connection("dev")
+        table_name = self._get_db_table_name()
+        # Check if the table name exists.
+        db_tables = hsqlimpl.get_table_names(connection)
+        hdbg.dassert_in(table_name, db_tables, f"`{table_name} doesn't exist`")
+        # Load the head of the data.
+        _LOG.info(f"Loading the data from `{table_name}` table")
+        query_head = f"SELECT * FROM {table_name} ORDER BY timestamp DESC LIMIT 10"
         head = hsql.execute_query_to_df(connection, query_head)
         return head
 
-    def _build_db_table_name(self) -> str:
+    def _get_db_table_name(self) -> str:
         """
         Build the name of DB table according to the signature arguments.
         """
-        hdbg.dassert_eq(
-            self.args["vendor"],
-            "ccxt",
-            "Crypto Chassis vendor is not represented in the DB",
-        )
-        vendor = "ccxt"
+        vendor = self.args["vendor"]
         # Get asset type.
         if self.args["asset_type"] == "futures":
             data_type = f'{self.args["data_type"]}_futures'
