@@ -101,7 +101,8 @@ def get_DataFramePortfolio_example2(
 
 # TODO(Grisha): @Dan Combine with other examples.
 def get_DataFramePortfolio_example3(
-    *,
+    strategy_id: str,
+    column_remap: Dict[str, str],
     market_data: Optional[mdata.MarketData] = None,
     asset_ids: Optional[List[int]] = None,
 ) -> omportfo.DataFramePortfolio:
@@ -112,7 +113,13 @@ def get_DataFramePortfolio_example3(
     - a `DataFrameBroker` for prod (i.e., a broker that executes the orders immediately)
     """
     # Build a DataFrameBroker.
-    broker = occxbrok.get_DataFrameCcxtBroker_instance1(market_data)
+    stage = "preprod"
+    broker = occxbrok.get_DataFrameCcxtBroker_instance1(
+        strategy_id,
+        market_data,
+        column_remap,
+        stage,
+    )
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.
     initial_cash = 700
