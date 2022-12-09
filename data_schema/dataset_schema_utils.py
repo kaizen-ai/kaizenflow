@@ -202,9 +202,21 @@ def _parse_dataset_signature_to_args(
     Parse signature string into key-value mapping according to the data schema.
 
     :param signature: dataset signature to parse,
-        e.g. `bulk.airflow.resampled_1min.pq.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0`
-    :dataset_schema: dataset schema to parse against
-    :return:
+        e.g. `bulk.airflow.resampled_1min.parquet.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0`
+    :param dataset_schema: dataset schema to parse against
+    :return: signature arguments mapping, e.g. 
+        {
+            "download_mode": "bulk",
+            "downloading_entity": "airflow",
+            "action_tag": "resampled_1min",
+            "data_format": "parquet",
+            "data_type": "bid_ask",
+            "asset_type": "spot",
+            "universe": "v3",
+            "vendor": "crypto_chassis",
+            "exchange_id": "binance",
+            "version": "v1_0_0"
+        }
     """
     hdbg.dassert_eq(
         validate_dataset_signature(signature, dataset_schema), True
