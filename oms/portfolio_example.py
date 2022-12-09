@@ -103,8 +103,9 @@ def get_DataFramePortfolio_example2(
 
 # TODO(Grisha): @Dan Combine with other examples.
 def get_DataFramePortfolio_example3(
-    column_remap: Dict[str, str],
+    *,
     market_data: Optional[mdata.MarketData] = None,
+    column_remap: Dict[str, str] = None,
     asset_ids: Optional[List[int]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
@@ -119,8 +120,8 @@ def get_DataFramePortfolio_example3(
     broker = occxbrok.get_DataFrameCcxtBroker_instance1(
         strategy_id,
         market_data,
-        column_remap,
         stage,
+        column_remap=column_remap,
     )
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.

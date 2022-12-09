@@ -40,7 +40,7 @@ def get_CcxtPortfolio_prod_instance1(
     run_mode: str,
     strategy_id: str,
     market_data: mdata.MarketData,
-    column_remap: Dict[str, str],
+    column_remap: Optional[Dict[str, str]],
     universe_version: str,
     secret_identifier: omssec.SecretIdentifier,
     pricing_method: str,
@@ -73,11 +73,11 @@ def get_CcxtPortfolio_prod_instance1(
         broker = occxbrok.get_DataFrameCcxtBroker_instance1(
             strategy_id,
             market_data,
-            column_remap,
             stage,
+            column_remap=column_remap,
         )
     else:
-        raise ValueError(f"Invalid run_mode='{self.run_mode}'")
+        raise ValueError(f"Invalid run_mode='{run_mode}'")
     # Build CcxtPortfolio.
     mark_to_market_col = "close"
     initial_cash = 700
