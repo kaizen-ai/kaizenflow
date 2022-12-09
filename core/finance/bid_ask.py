@@ -100,18 +100,16 @@ def process_bid_ask(
             srs = (df[bid_col] + df[ask_col]) / 2
         if tag == "geometric_mid":
             # sqrt(bid * ask).
-            srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
+            srs = np.sqrt(df[bid_col] * df[ask_col])
         if tag == "quoted_spread":
             # bid - ask.
-            srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
+            srs = (df[ask_col] - df[bid_col])
         if tag == "relative_spread":
             # 2*(ask - bid) / (ask + bid).
             srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
         if tag == "log_relative_spread":
             # log(ask) - log(bid).
-            srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
-                "log_relative_spread"
-            )
+            srs = (np.log(df[ask_col]) - np.log(df[bid_col]))
         if tag == "weighted_mid":
             # bid * ask_volume + ask * bid_volume.
             srs = (
@@ -131,10 +129,10 @@ def process_bid_ask(
             srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
         if tag == "bid_value":
             # bid * bid_volume.
-            srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
+            srs = (df[bid_col] * df[bid_volume_col])
         if tag == "ask_value":
             # ask * ask_volume.
-            srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
+            srs = (df[ask_col] * df[ask_volume_col])
         if tag == "mid_value":
             # (bid * bid_volume + ask * ask_volume) / 2.
             srs = (
