@@ -7,6 +7,7 @@ Import as:
 import helpers.hsystem as hsystem
 """
 
+import contextlib
 import getpass
 import logging
 import os
@@ -19,9 +20,12 @@ from typing import Any, Callable, List, Match, Optional, Tuple, Union, cast
 
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
+import helpers.hlogging as hlogging
 import helpers.hprint as hprint
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)
@@ -32,26 +36,7 @@ _LOG.setLevel(logging.INFO)
 # #############################################################################
 
 
-# TODO(gp): Maybe move to henv.py
-def is_inside_docker() -> bool:
-    """
-    Return whether we are inside a container or not.
-    """
-    # From https://stackoverflow.com/questions/23513045
-    return os.path.exists("/.dockerenv")
-
-
-def is_inside_ci() -> bool:
-    """
-    Return whether we are running inside the Continuous Integration flow.
-    """
-    if "CI" not in os.environ:
-        ret = False
-    else:
-        ret = os.environ["CI"] != ""
-    return ret
-
-
+# TODO(gp): Maybe move to hserver.py
 def is_running_in_ipynb() -> bool:
     # From https://stackoverflow.com/questions/15411967
     try:
@@ -62,7 +47,7 @@ def is_running_in_ipynb() -> bool:
     return res
 
 
-# TODO(gp): Use this everywhere in the code base.
+# TODO(gp): Use is_mac()
 def is_running_on_macos() -> bool:
     return get_os_name() == "Darwin"
 
@@ -115,7 +100,7 @@ def get_os_name() -> str:
 
 def get_env_var(env_var_name: str) -> str:
     if env_var_name not in os.environ:
-        msg = "Can't find '%s': re-run dev_scripts/setenv.sh?" % env_var_name
+        msg = f"Can't find '{env_var_name}': re-run dev_scripts/setenv.sh?"
         _LOG.error(msg)
         raise RuntimeError(msg)
     return os.environ[env_var_name]
@@ -158,12 +143,15 @@ def _system(
     :param output_file: redirect stdout and stderr to this file
     :param num_error_lines: number of lines of the output to display when
         raising `RuntimeError`
-    :param tee: if True, tee stdout and stderr to output_file
-    :param dry_run: just print the final command but not execute it
+    :param tee: if True, tee append (i.e., `tee -a`) stdout and stderr to
+        `output_file`
+    :param dry_run: print the final command but not execute it
     :param log_level: print the command to execute at level "log_level".
-        - If "echo" then print the command line to screen as print and not
+        - If `echo` then print the command line to screen as `print()` and not
           logging
-    :return: return code (int), output of the command (str)
+    :return:
+        - return code as int
+        - output of the command as str
     """
     _LOG.debug("##> %s", cmd)
     _LOG.debug(
@@ -173,6 +161,7 @@ def _system(
         )
     )
     orig_cmd = cmd[:]
+    _LOG.debug("orig_cmd=%s", orig_cmd)
     # Handle `suppress_output`.
     hdbg.dassert_in(suppress_output, ("ON_DEBUG_LEVEL", True, False))
     if suppress_output == "ON_DEBUG_LEVEL":
@@ -184,19 +173,21 @@ def _system(
         suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
     _LOG.debug(hprint.to_str("suppress_output"))
     # Prepare the command line.
-    cmd = "(%s)" % cmd
+    cmd = f"({cmd})"
     hdbg.dassert_imply(tee, output_file is not None)
     if output_file is not None:
         # Redirect to a file.
         dir_name = os.path.dirname(output_file)
+        if not dir_name:
+            dir_name = "."
         if not os.path.exists(dir_name):
             _LOG.debug("Dir '%s' doesn't exist: creating", dir_name)
             hdbg.dassert(bool(dir_name), "dir_name='%s'", dir_name)
             os.makedirs(dir_name)
         if tee:
-            cmd += " 2>&1 | tee %s" % output_file
+            cmd += f" 2>&1 | tee -a {output_file}"
         else:
-            cmd += " 2>&1 >%s" % output_file
+            cmd += f" 2>&1 >{output_file}"
     else:
         # Do not redirect to a file.
         cmd += " 2>&1"
@@ -204,26 +195,32 @@ def _system(
     if wrapper:
         cmd = wrapper + " && " + cmd
     # Handle `log_level`.
-    # TODO(gp): Add a check for the valid values.
-    # TODO(gp): Make it "ECHO".
+    # TODO(gp): Make it "ECHO" or "PRINT".
     if isinstance(log_level, str):
-        hdbg.dassert_eq(log_level, "echo")
-        print("> %s" % orig_cmd)
+        hdbg.dassert_in(log_level, ("echo", "echo_frame"))
+        if log_level == "echo_frame":
+            print(hprint.frame(f"> {cmd}"))
+        elif log_level == "echo":
+            print(f"> {cmd}")
+        else:
+            raise ValueError(f"Invalid log_level='{log_level}'")
         _LOG.debug("> %s", cmd)
     else:
         _LOG.log(log_level, "> %s", cmd)
     output = ""
     # Handle `dry_run`.
     if dry_run:
-        _LOG.warning("Not executing cmd\n%s\nas per user request", cmd)
+        _LOG.warning("As per user request, not executing command:\n%s", cmd)
         rc = 0
         return rc, output
     # Execute the command.
     try:
         stdout = subprocess.PIPE
         stderr = subprocess.STDOUT
-        # Only for debug.
+        # We want to print the command line even if this module logging is disabled.
         # print("  ==> cmd=%s" % cmd)
+        with hlogging.set_level(_LOG, logging.DEBUG):
+            _LOG.debug("> %s", cmd)
         with subprocess.Popen(
             cmd, shell=True, executable="/bin/bash", stdout=stdout, stderr=stderr
         ) as p:
@@ -235,7 +232,8 @@ def _system(
                     if not line:
                         break
                     if not suppress_output:
-                        print("  ==> %s" % line.rstrip("\n"))
+                        # print("  ==> %s" % line.rstrip("\n"))
+                        print("  ... %s" % line.rstrip("\n"))
                     output += line
                 p.stdout.close()  # type: ignore
                 rc = p.wait()
@@ -267,17 +265,16 @@ def _system(
     if abort_on_error and rc != 0:
         msg = (
             "\n"
-            + hprint.frame("cmd='%s' failed with rc='%s'" % (cmd, rc))
-            + "\nOutput of the failing command is:\n%s\n%s\n%s"
-            % (hprint.line(">"), output, hprint.line("<"))
+            + hprint.frame(f"cmd='{cmd}' failed with rc='{rc}'")
+            + f"\nOutput of the failing command is:\n{hprint.line('>')}"
+            + f"\n{output}\n{hprint.line('<')}"
         )
         _LOG.error("%s", msg)
         # Report the first `num_error_lines` of the output.
         num_error_lines = num_error_lines or 30
         output_error = "\n".join(output.split("\n")[:num_error_lines])
         raise RuntimeError(
-            "cmd='%s' failed with rc='%s'\ntruncated output=\n%s"
-            % (cmd, rc, output_error)
+            f"cmd='{cmd}' failed with rc='{rc}'\ntruncated output=\n{output_error}"
         )
     # hdbg.dassert_type_in(output, (str, ))
     return rc, output
@@ -375,6 +372,8 @@ def get_first_line(output: str) -> str:
     """
     output = hprint.remove_empty_lines(output)
     output_as_arr: List[str] = output.split("\n")
+    # Remove the annoying spurious matches under `tmp.base`.
+    output_as_arr = [line for line in output_as_arr if "/tmp.base/" not in line]
     hdbg.dassert_eq(len(output_as_arr), 1, "output='%s'", output)
     output = output_as_arr[0]
     output = output.rstrip().lstrip()
@@ -463,7 +462,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
     if mode == "assert_unless_one_result":
         # Expect to have a single result and return that.
         if len(files) == 0:
-            hdbg.dfatal("mode=%s: didn't find file" % mode)
+            hdbg.dfatal(f"mode={mode}: didn't find file")
         elif len(files) > 1:
             hdbg.dfatal(
                 "mode=%s: found multiple files:\n%s" % (mode, "\n".join(files))
@@ -473,7 +472,7 @@ def select_result_file_from_list(files: List[str], mode: str) -> List[str]:
         # Return all files.
         res = files
     else:
-        hdbg.dfatal("Invalid mode='%s'" % mode)
+        hdbg.dfatal(f"Invalid mode='{mode}'")
     return res
 
 
@@ -630,6 +629,14 @@ def query_yes_no(question: str, abort_on_no: bool = True) -> bool:
     return ret
 
 
+def press_enter_to_continue(prompt: str = "") -> None:
+    hdbg.dassert_isinstance(prompt, str)
+    if not prompt:
+        prompt = "Press Enter to continue..."
+    sys.stdout.write(prompt)
+    _ = input()
+
+
 # #############################################################################
 # Functions similar to Linux commands.
 # #############################################################################
@@ -642,7 +649,7 @@ def check_exec(tool: str) -> bool:
     :return: True if the executables "tool" can be executed.
     """
     suppress_output = _LOG.getEffectiveLevel() > logging.DEBUG
-    cmd = "which %s" % tool
+    cmd = f"which {tool}"
     abort_on_error = False
     rc = system(
         cmd,
@@ -653,18 +660,16 @@ def check_exec(tool: str) -> bool:
     return rc == 0
 
 
-def du(path_name: str, human_format: bool = False) -> Union[int, str]:
+# TODO(Nikola): Use filesystem's `du` and move to `hio` instead?
+def du(path: str, human_format: bool = False) -> Union[int, str]:
     """
     Return the size in bytes of a file or a directory (recursively).
 
     :param human_format: represent the size in KB, MB, ... instead of bytes
         using `hintrospection.format_size()`
     """
-    if not os.path.exists(path_name):
-        _LOG.warning("Path '%s' doesn't exist", path_name)
-        return 0
-    hdbg.dassert_path_exists(path_name)
-    cmd = f"du -d 0 {path_name}" + " | awk '{print $1}'"
+    hdbg.dassert_path_exists(path)
+    cmd = f"du -d 0 {path}" + " | awk '{print $1}'"
     # > du -d 0 core
     # 20    core
     _, txt = system_to_one_line(cmd)
@@ -776,6 +781,25 @@ def find_file_with_dir(
     res = select_result_file_from_list(matching_files, mode)
     _LOG.debug("-> res=%s", str(res))
     return res
+
+
+# https://stackoverflow.com/questions/169070
+@contextlib.contextmanager
+def cd(dir_name: str) -> None:
+    """
+    Context manager managing changing directory.
+    """
+    hdbg.dassert_dir_exists(dir_name)
+    current_dir = os.getcwd()
+    _LOG.debug("Entering ctx manager: " + hprint.to_str("current_dir"))
+    try:
+        os.chdir(dir_name)
+        _LOG.debug("Switched to dir '%s'", os.getcwd())
+        yield
+    finally:
+        _LOG.debug("Switching back to dir '%s'", current_dir)
+        os.chdir(current_dir)
+    _LOG.debug("Exiting ctx manager")
 
 
 # #############################################################################

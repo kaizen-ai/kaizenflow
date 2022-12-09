@@ -5,15 +5,16 @@ import helpers.test.test_unit_test as ttutes
 """
 
 import logging
+import os
 import tempfile
 import unittest.mock as umock
 from typing import Optional, Tuple
 
-import numpy as np
 import pandas as pd
 import pytest
 
 import helpers.hdbg as hdbg
+import helpers.henv as henv
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hprint as hprint
@@ -25,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 def _git_add(file_name: str) -> None:
     # pylint: disable=unreachable
-    cmd = "git add -u %s" % file_name
+    cmd = f"git add -u {file_name}"
     _LOG.debug("> %s", cmd)
     rc = hsystem.system(cmd, abort_on_error=False)
     if rc:
@@ -37,6 +38,8 @@ def _git_add(file_name: str) -> None:
 
 def _to_skip_on_update_outcomes() -> bool:
     """
+    Determine whether to skip on `--update_outcomes`.
+
     Some tests can't pass with `--update_outcomes`, since they exercise the
     logic in `--update_outcomes` itself.
 
@@ -165,14 +168,14 @@ class TestTestCase1(hunitest.TestCase):
 
     def test_assert_not_equal1(self) -> None:
         actual = "hello world"
-        expected = "hello world "
+        expected = "hello world w"
         tmp_dir = tempfile.mkdtemp()
         with self.assertRaises(RuntimeError):
             self.assert_equal(actual, expected, dst_dir=tmp_dir)
 
     def test_assert_not_equal2(self) -> None:
         actual = "hello world"
-        expected = "hello world "
+        expected = "hello world w"
         # Create a dir like `/var/tmp/tmph_kun9xq`.
         tmp_dir = tempfile.mkdtemp()
         self.assert_equal(actual, expected, abort_on_error=False, dst_dir=tmp_dir)
@@ -183,7 +186,7 @@ class TestTestCase1(hunitest.TestCase):
         act = hunitest.purify_txt_from_client(act)
         act = act.replace(tmp_dir, "$TMP_DIR")
         # pylint: disable=line-too-long
-        exp = """
+        exp ="""
         # Dir structure
         $TMP_DIR
         $TMP_DIR/tmp_diff.sh
@@ -191,9 +194,17 @@ class TestTestCase1(hunitest.TestCase):
         len(file_names)=1
         file_names=$TMP_DIR/tmp_diff.sh
         # $TMP_DIR/tmp_diff.sh
-        num_lines=1
+        num_lines=9
         '''
-        vimdiff helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.expected.txt
+        #!/bin/bash
+        if [[ $1 == "wrap" ]]; then
+            cmd='vimdiff -c "windo set wrap"'
+        else
+            cmd='vimdiff'
+        fi;
+        cmd="$cmd helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.actual.txt helpers/test/outcomes/TestTestCase1.test_assert_not_equal2/tmp.final.expected.txt"
+        eval $cmd
+
         '''
         """
         # pylint: enable=line-too-long
@@ -313,16 +324,15 @@ completed failure Lint    Run_linter                                      |  com
 completed       success Lint    Fast_tests                                (
 completed       success Lint    Slow_tests                                (
 Diff with:
-> vimdiff helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.actual.txt helpers/test/outcomes/Test_AssertEqual1.test_not_equal1/tmp.scratch/tmp.expected.txt
-or running:
 > ./tmp_diff.sh
 --------------------------------------------------------------------------------
-EXPECTED VARIABLE: Test_AssertEqual1.test_not_equal1
+ACTUAL VARIABLE: Test_AssertEqual1.test_not_equal1
 --------------------------------------------------------------------------------
 exp = r"""
 completed failure Lint    Run_linter
 completed       success Lint    Fast_tests
-completed       success Lint    Slow_tests"""'''
+completed       success Lint    Slow_tests
+"""'''
         if act != exp:
             hio.to_file("act.txt", act)
             hio.to_file("exp.txt", exp)
@@ -909,28 +919,6 @@ dev_scripts/test/Test_linter_py1.test_linter1/tmp.scratch/input.py:3: error: Nam
 # #############################################################################
 
 
-class TestSubsetDf1(hunitest.TestCase):
-    def test1(self) -> None:
-        # Generate some random data.
-        np.random.seed(42)
-        df = pd.DataFrame(
-            np.random.randint(0, 100, size=(20, 4)), columns=list("ABCD")
-        )
-        # Subset.
-        df2 = hunitest.subset_df(df, nrows=5, seed=43)
-        # Check.
-        act = []
-        act.append("df=")
-        act.append(str(df))
-        act.append("df2=")
-        act.append(str(df2))
-        act = "\n".join(act)
-        self.check_string(act)
-
-
-# #############################################################################
-
-
 class Test_get_dir_signature1(hunitest.TestCase):
     def helper(self, include_file_content: bool) -> str:
         in_dir = self.get_input_dir()
@@ -996,13 +984,83 @@ class Test_purify_txt_from_client1(hunitest.TestCase):
         self.helper(txt, exp)
 
 
+class Test_purify_from_env_vars(hunitest.TestCase):
+    """
+    Test purification from env vars.
+    """
+
+    def helper(self, env_var: str) -> None:
+        env_var_value = os.environ[env_var]
+        input_ = f"s3://{env_var_value}/"
+        act = hunitest.purify_from_env_vars(input_)
+        exp = f"s3://${env_var}/"
+        self.assert_equal(act, exp, fuzzy_match=True)
+
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
+    def test1(self) -> None:
+        """
+        - $CK_AWS_S3_BUCKET
+        """
+        env_var = "CK_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test2(self) -> None:
+        """
+        - $AM_TELEGRAM_TOKEN
+        """
+        env_var = "AM_TELEGRAM_TOKEN"
+        self.helper(env_var)
+
+    def test3(self) -> None:
+        """
+        - $AM_AWS_S3_BUCKET
+        """
+        env_var = "AM_AWS_S3_BUCKET"
+        self.helper(env_var)
+
+    def test4(self) -> None:
+        """
+        - $AM_ECR_BASE_PATH
+        """
+        env_var = "AM_ECR_BASE_PATH"
+        self.helper(env_var)
+
+    @pytest.mark.skipif(
+        not henv.execute_repo_config_code("get_name()") == "//cmamp",
+        reason="Run only in //cmamp",
+    )
+    def test_end_to_end(self) -> None:
+        """
+        - Multiple env vars.
+        """
+        am_aws_s3_bucket = os.environ["AM_AWS_S3_BUCKET"]
+        ck_aws_s3_bucket = os.environ["CK_AWS_S3_BUCKET"]
+        am_telegram_token = os.environ["AM_TELEGRAM_TOKEN"]
+        am_ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
+        #
+        text = f"""
+        $AM_AWS_S3_BUCKET = {am_aws_s3_bucket}
+        $CK_AWS_S3_BUCKET = {ck_aws_s3_bucket}
+        $AM_TELEGRAM_TOKEN = {am_telegram_token}
+        $AM_ECR_BASE_PATH = {am_ecr_base_path}
+        """
+        #
+        actual = hunitest.purify_from_env_vars(text)
+        self.check_string(actual, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_purify_object_representation1
 # #############################################################################
 
 
-class Test_purify_object_reference1(hunitest.TestCase):
+class Test_purify_object_representation1(hunitest.TestCase):
     def helper(self, txt: str, exp: str) -> None:
         txt = hprint.dedent(txt)
-        act = hunitest.purify_object_reference(txt)
+        act = hunitest.purify_object_representation(txt)
         exp = hprint.dedent(exp)
         self.assert_equal(act, exp)
 
@@ -1056,6 +1114,45 @@ class Test_purify_object_reference1(hunitest.TestCase):
         datetime.time(9, 30), 'trading_start_time': datetime.time(9, 30),
         'ath_end_time': datetime.time(16, 40), 'trading_end_time':
         datetime.time(16, 4  0)}}"""
+        self.helper(txt, exp)
+
+    def test4(self) -> None:
+        """
+        Test replacing wall_clock_time=Timestamp('..., tz='America/New_York'))
+        """
+        txt = """
+        _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
+        <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 900} <dict>,
+        _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
+        _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>,
+        _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
+        10:05:00-0500', tz='America/New_York'),
+        wall_clock_time=Timestamp('2022-08-04 09:29:13.441715-0400',
+        tz='America/New_York')), Event(num_it=2,
+        current_time=Timestamp('2000-01-01 10:10:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04
+        09:29:13.892793-0400', tz='America/New_York')), Event(num_it=3,
+        current_time=Timestamp('2000-01-01 10:15:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('2022-08-04
+        09:29:14.131619-0400', tz='America/New_York'))] <list>)
+        """
+        exp = """
+        _knowledge_datetime_col_name='timestamp_db' <str> _delay_in_secs='0'
+        <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 900} <dict>,
+        _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>,
+        _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>,
+        _events=[Event(num_it=1, current_time=Timestamp('2000-01-01
+        10:05:00-0500', tz='America/New_York'),
+        wall_clock_time=Timestamp('xxx', tz='America/New_York')),
+        Event(num_it=2, current_time=Timestamp('2000-01-01 10:10:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('xxx',
+        tz='America/New_York')), Event(num_it=3,
+        current_time=Timestamp('2000-01-01 10:15:00-0500',
+        tz='America/New_York'), wall_clock_time=Timestamp('xxx',
+        tz='America/New_York'))] <list>)
+        """
+        txt = " ".join(hprint.dedent(txt).split("\n"))
+        exp = " ".join(hprint.dedent(exp).split("\n"))
         self.helper(txt, exp)
 
 

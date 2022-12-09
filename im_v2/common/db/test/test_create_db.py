@@ -9,6 +9,11 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestCreateDb1(imvcddbut.TestImDbHelper):
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     @pytest.mark.slow("11 seconds.")
     def test_up1(self) -> None:
         """
@@ -25,7 +30,12 @@ class TestCreateDb1(imvcddbut.TestImDbHelper):
         imvcddbut.create_all_tables(self.connection)
         expected = sorted(
             [
+                "ccxt_bid_ask_raw",
+                "ccxt_bid_ask_futures_raw",
+                "ccxt_bid_ask_resampled_1min",
+                "ccxt_bid_ask_futures_resampled_1min",
                 "ccxt_ohlcv",
+                "ccxt_ohlcv_futures",
                 "currency_pair",
                 "exchange",
                 "exchange_name",

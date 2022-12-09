@@ -1,34 +1,45 @@
 import argparse
+import os
 import unittest.mock as umock
 
 import pandas as pd
 import pytest
 
-import helpers.hparquet as hparque
+import helpers.hdatetime as hdateti
+import helpers.henv as henv
+import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.db.db_utils as imvcddbut
 
 
-@pytest.mark.skip("Enable after CMTask1292 is resolved.")
+@pytest.mark.skipif(
+    not henv.execute_repo_config_code("is_CK_S3_available()"),
+    reason="Run only if CK S3 is available",
+)
 class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
-    S3_PATH = "s3://cryptokaizen-data/unit_test/parquet/historical"
     FILTERS = [
-        [
-            ("year", "==", 2021),
-            ("month", ">=", 12),
-            ("year", "==", 2021),
-            ("month", "<=", 12),
-        ],
-        [
-            ("year", "==", 2022),
-            ("month", ">=", 1),
-            ("year", "==", 2022),
-            ("month", "<=", 1),
-        ],
+        [("year", "==", 2021), ("month", ">=", 12)],
+        [("year", "==", 2022), ("month", "<=", 1)],
     ]
     _ohlcv_dataframe_sample = None
+    _bid_ask_dataframe_sample = None
+
+    _test_start_timestamp = "2021-09-15T23:45:00+00:00"
+    _test_end_timestamp = "2021-09-15T23:54:00+00:00"
+
+    @staticmethod
+    def get_s3_path() -> str:
+        aws_profile = "ck"
+        s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+        s3_path = os.path.join(s3_bucket_path, "reorg/daily_staged.airflow.pq")
+        return s3_path
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
 
     def setUp(self) -> None:
         super().setUp()
@@ -43,188 +54,490 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
     def ohlcv_dataframe_sample(self) -> pd.DataFrame:
-        if self._ohlcv_dataframe_sample is None:
-            file_name = f"{self.S3_PATH}/binance/"
-            ohlcv_sample = hparque.from_parquet(
-                file_name, filters=self.FILTERS, aws_profile="ck"
-            )
-            # Matching exact timespan as in test function call.
-            self._ohlcv_dataframe_sample = ohlcv_sample.loc[
-                "2021-12-31 23:55:00":"2022-01-01 00:05:00"
+        """
+        Get OHLCV data sample.
+        """
+        ohlcv_sample = pd.DataFrame(
+            columns=[
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "full_symbol",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [30, 40, 50, 60, 70, "binance::BTC_USDT"],
+                [31, 41, 51, 61, 71, "binance::BTC_USDT"],
+                [34, 44, 54, 64, 74, "binance::BTC_USDT"],
+                [34, 44, 54, 64, 74, "binance::BTC_USDT"],
+                [34, 44, 54, 64, 74, "binance::BTC_USDT"],
+                [38, 39, 50, 61, 71, "binance::BTC_USDT"],
+                [31, 45, 54, 60, 75, "binance::BTC_USDT"],
+                [33, 43, 57, 63, 73, "binance::BTC_USDT"],
+                [34, 40, 52, 62, 72, "binance::BTC_USDT"],
+                [37, 44, 51, 64, 72, "binance::BTC_USDT"],
             ]
-        # Deep copy (which is default for `pd.DataFrame.copy()`) is used to
-        # preserve original data for each test.
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        ohlcv_sample["timestamp"] = pd.date_range(
+            start=self._test_start_timestamp,
+            end=self._test_end_timestamp,
+            freq="T",
+        ).map(hdateti.convert_timestamp_to_unix_epoch)
+        ohlcv_sample = ohlcv_sample.set_index(["timestamp", "full_symbol"])
+        self._ohlcv_dataframe_sample = ohlcv_sample
         return self._ohlcv_dataframe_sample.copy()
 
-    def test_function_call1(self) -> None:
+    def bid_ask_dataframe_sample(self) -> pd.DataFrame:
+        """
+        Get bid-ask data sample.
+        """
+        bid_ask_sample = pd.DataFrame(
+            columns=[
+                "full_symbol",
+                "bid_price_l1",
+                "bid_size_l1",
+                "ask_price_l1",
+                "ask_size_l1",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                ["binance::BTC_USDT", 19505.817, 1185.347, 19504.541, 859.472],
+                ["binance::BTC_USDT", 1321.790, 7004.761, 1321.699, 3670.681],
+                ["binance::BTC_USDT", 19500.714, 1019.649, 19502.706, 1101.954],
+                ["binance::BTC_USDT", 1321.400, 3675.864, 1321.278, 4320.231],
+                ["binance::BTC_USDT", 19483.345, 1689.938, 19484.335, 1095.325],
+                ["binance::BTC_USDT", 1320.022, 4612.925, 1320.102, 6404.481],
+                ["binance::BTC_USDT", 19483.128, 1528.736, 19482.422, 958.668],
+                ["binance::BTC_USDT", 1319.769, 3754.403, 1319.654, 4775.201],
+                ["binance::BTC_USDT", 19473.500, 4.351, 19473.600, 15.578],
+                ["binance::BTC_USDT", 1319.030, 43.404, 1319.040, 48.725],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        bid_ask_sample["timestamp"] = pd.date_range(
+            start=self._test_start_timestamp,
+            end=self._test_end_timestamp,
+            freq="T",
+        ).map(hdateti.convert_timestamp_to_unix_epoch)
+        bid_ask_sample = bid_ask_sample.set_index(["timestamp", "full_symbol"])
+        self._bid_ask_dataframe_sample = bid_ask_sample
+        return self._bid_ask_dataframe_sample.copy()
+
+    @pytest.mark.slow
+    def test_compare_ohlcv_1(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
 
-        Both realtime and daily data are the same.
+        No data missing.
         """
         sample = self.ohlcv_dataframe_sample()
-        self._save_sample_in_db(sample)
-        self._test_function_call()
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample
+        self._test_function_call("ohlcv", "spot", True)
+        #
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
 
-    def test_function_call2(self) -> None:
+    @pytest.mark.slow
+    def test_compare_ohlcv_2(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
 
-        Missing realtime data.
+        Differing realtime data.
         """
-        # Prepare and save sample data in db.
-        sample = self.ohlcv_dataframe_sample().head(90)
-        self._save_sample_in_db(sample)
+        sample_rt = self.ohlcv_dataframe_sample()
+        sample_daily = self.ohlcv_dataframe_sample()
+        for position in [1, 3]:
+            # Edit original realtime data for mismatch.
+            sample_rt.iloc[position, sample_rt.columns.get_loc("open")] = 666
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
         # Run.
         with pytest.raises(AssertionError) as fail:
-            self._test_function_call()
+            self._test_function_call("ohlcv", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Missing real time data:
-        df.shape=(9, 5)
+        Differing table contents:
+        df.shape=(2, 4)
         df.full=
-                                       open    high     low   close   volume
-        timestamp     currency_pair
-        1640995020000 SOL_USDT       170.17  170.29  170.11  170.19   747.91
-        1640995080000 SOL_USDT       170.20  170.20  169.76  169.93  1203.06
-        1640995140000 SOL_USDT       169.90  170.07  169.90  169.99   304.42
-        1640995200000 SOL_USDT       170.01  170.22  169.93  170.14   810.27
-        1640995260000 SOL_USDT       170.09  170.52  170.06  170.40  1504.74
-        1640995320000 SOL_USDT       170.46  170.60  170.33  170.53   520.30
-        1640995380000 SOL_USDT       170.53  170.60  170.27  170.34  1175.03
-        1640995440000 SOL_USDT       170.33  170.49  170.31  170.40   318.96
-        1640995500000 SOL_USDT       170.41  170.73  170.25  170.65   612.02
-        ################################################################################"""
+        open            timestamp        full_symbol
+        self other
+        1   31   666  1631749560000  binance::BTC_USDT
+        3   34   666  1631749680000  binance::BTC_USDT
+        ################################################################################
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test_function_call3(self) -> None:
+    @pytest.mark.slow
+    def test_compare_ohlcv_3(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
 
-        Missing daily data.
+        Missing daily data.s
         """
-        # Prepare and save sample data in db.
-        sample = self.ohlcv_dataframe_sample()
-        self._save_sample_in_db(sample)
-        # Mock `from_parquet` so data is obtained through mock instead of s3.
-        mock_from_parquet_patch = umock.patch.object(
-            imvcdecrah.hparque, "from_parquet"
+        sample_rt = self.ohlcv_dataframe_sample()
+        sample_daily = self.ohlcv_dataframe_sample()
+        for position in [2, 4]:
+            # Edit original daily data for mismatch.
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("open")
+            ] = 999
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
         )
-        mock_from_parquet = mock_from_parquet_patch.start()
-        mock_from_parquet.return_value = self.ohlcv_dataframe_sample().tail(90)
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
         # Run.
         with pytest.raises(AssertionError) as fail:
-            self._test_function_call()
-        # Stop `from_parquet` mock and check calls and arguments.
-        mock_from_parquet_patch.stop()
-        self.assertEqual(mock_from_parquet.call_count, 1)
-        self.assertEqual(
-            mock_from_parquet.call_args.args,
-            (f"{self.S3_PATH}/binance/",),
-        )
-        self.assertEqual(
-            mock_from_parquet.call_args.kwargs,
-            {
-                "filters": self.FILTERS,
-                "aws_profile": "ck",
-            },
-        )
+            self._test_function_call("ohlcv", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Missing daily data:
-        df.shape=(9, 5)
+        Differing table contents:
+        df.shape=(2, 4)
         df.full=
-                                      open   high    low  close    volume
-        timestamp     currency_pair
-        1640994900000 ADA_USDT       1.309  1.310  1.308  1.309   47265.6
-        1640994960000 ADA_USDT       1.309  1.310  1.308  1.309   45541.6
-        1640995020000 ADA_USDT       1.309  1.310  1.309  1.310   23032.3
-        1640995080000 ADA_USDT       1.310  1.310  1.306  1.306  179644.8
-        1640995140000 ADA_USDT       1.306  1.310  1.306  1.308  373664.9
-        1640995200000 ADA_USDT       1.308  1.310  1.307  1.310   98266.8
-        1640995260000 ADA_USDT       1.310  1.314  1.308  1.312  132189.4
-        1640995320000 ADA_USDT       1.312  1.318  1.311  1.317  708964.2
-        1640995380000 ADA_USDT       1.317  1.317  1.315  1.315  219213.9
-        ################################################################################"""
+        open            timestamp        full_symbol
+        self other
+        2  999    34  1631749620000  binance::BTC_USDT
+        4  999    34  1631749740000   binance::BTC_USDT
+        ################################################################################
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test_function_call4(self) -> None:
+    @pytest.mark.slow
+    def test_compare_ohlcv_4(self) -> None:
         """
         Test function call with specific arguments that are mimicking command
         line arguments.
 
         Mismatch between realtime and daily data with missing data.
         """
-        # Prepare and save sample data in db.
-        sample = self.ohlcv_dataframe_sample().head(95)
-        for position in [8, 15, 33]:
+        sample_rt = self.ohlcv_dataframe_sample().head(4)
+        sample_daily = self.ohlcv_dataframe_sample().tail(5)
+        for position in [1, 3]:
             # Edit original realtime data for mismatch.
-            sample.iloc[position, sample.columns.get_loc("open")] = 666
-        self._save_sample_in_db(sample)
-        # Mock `from_parquet` so data is obtained through mock instead of s3.
-        mock_from_parquet_patch = umock.patch.object(
-            imvcdecrah.hparque, "from_parquet"
-        )
-        mock_from_parquet = mock_from_parquet_patch.start()
-        # Prepare and attach sample to mocked function.
-        mock_parquet_sample = self.ohlcv_dataframe_sample().tail(95)
-        for position in [6, 13, 56]:
+            sample_rt.iloc[position, sample_rt.columns.get_loc("open")] = 666
+        for position in [2, 4]:
             # Edit original daily data for mismatch.
-            mock_parquet_sample.iloc[
-                position, mock_parquet_sample.columns.get_loc("open")
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("open")
             ] = 999
-        mock_from_parquet.return_value = mock_parquet_sample
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
         # Run.
         with pytest.raises(AssertionError) as fail:
-            self._test_function_call()
-        # Args and calls are checked in previous test.
-        mock_from_parquet_patch.stop()
+            self._test_function_call("ohlcv", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+
+        ################################################################################
+        Missing real time data:
+        df.shape=(5, 5)
+        df.full=
+                                        open  high  low  close  volume
+        timestamp     full_symbol
+        1631749800000 binance::BTC_USDT    38    39   50     61      71
+        1631749860000 binance::BTC_USDT    31    45   54     60      75
+        1631749920000 binance::BTC_USDT   999    43   57     63      73
+        1631749980000 binance::BTC_USDT    34    40   52     62      72
+        1631750040000 binance::BTC_USDT    999    44   51     64      72
+        Missing daily data:
+        df.shape=(4, 5)
+        df.full=
+                                        open  high  low  close  volume
+        timestamp     full_symbol
+        1631749500000 binance::BTC_USDT    30    40   50     60      70
+        1631749560000 binance::BTC_USDT   666    41   51     61      71
+        1631749620000 binance::BTC_USDT    34    44   54     64      74
+        1631749680000 binance::BTC_USDT   666    44   54     64      74
+        Gaps in real time data:
+        df.shape=(6, 1)
+        df.full=
+                                                        0
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        2021-09-15 23:50:00+00:00 2021-09-15 23:50:00+00:00
+        2021-09-15 23:51:00+00:00 2021-09-15 23:51:00+00:00
+        2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
+        2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
+        2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
+        Gaps in daily data:
+        df.shape=(5, 1)
+        df.full=
+                                                        0
+        2021-09-15 23:45:00+00:00 2021-09-15 23:45:00+00:00
+        2021-09-15 23:46:00+00:00 2021-09-15 23:46:00+00:00
+        2021-09-15 23:47:00+00:00 2021-09-15 23:47:00+00:00
+        2021-09-15 23:48:00+00:00 2021-09-15 23:48:00+00:00
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_1(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        No data missing.
+        """
+        sample = self.bid_ask_dataframe_sample()
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample
+        self._test_function_call("bid_ask", "futures", True)
+        #
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_2(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        Missing realtime data.
+        """
+        sample_rt = self.bid_ask_dataframe_sample()
+        sample_daily = self.bid_ask_dataframe_sample()
+        for position in [1, 3]:
+            # Edit original realtime data for mismatch.
+            sample_rt.iloc[
+                position, sample_rt.columns.get_loc("bid_size_l1")
+            ] = 666.667
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            self._test_function_call("bid_ask", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
         # Check output.
         actual = str(fail.value)
         expected = r"""
         ################################################################################
-        Missing real time data:
-        df.shape=(4, 5)
+        Difference between bid_size_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_3(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        Missing daily data.
+        """
+        sample_rt = self.bid_ask_dataframe_sample()
+        sample_daily = self.bid_ask_dataframe_sample()
+        for position in [2, 4]:
+            # Edit original realtime data for mismatch.
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("ask_price_l1")
+            ] = 999.876
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            self._test_function_call("bid_ask", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+        ################################################################################
+        Difference between ask_price_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
+        ################################################################################
+        """
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    @pytest.mark.slow
+    def test_compare_bid_ask_4(self) -> None:
+        """
+        Test function call with specific arguments that are mimicking command
+        line arguments.
+
+        Mismatch between realtime and daily data with missing data.
+        """
+        sample_rt = self.bid_ask_dataframe_sample().head(4)
+        sample_daily = self.bid_ask_dataframe_sample().head(4)
+        for position in [1, 3]:
+            # Edit original realtime data for mismatch.
+            sample_rt.iloc[
+                position, sample_rt.columns.get_loc("bid_size_l1")
+            ] = 2279.667
+        for position in [2, 3]:
+            # Edit original daily data for mismatch.
+            sample_daily.iloc[
+                position, sample_daily.columns.get_loc("ask_price_l1")
+            ] = 3224.678
+        mock_get_rt_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_rt_data"
+        )
+        mock_get_rt_data = mock_get_rt_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_rt_data.return_value = sample_rt
+        #
+        mock_get_daily_data_patch = umock.patch.object(
+            imvcdecrah.RealTimeHistoricalReconciler, "_get_daily_data"
+        )
+        mock_get_daily_data = mock_get_daily_data_patch.start()
+        # Prepare and attach sample to mocked function.
+        mock_get_daily_data.return_value = sample_daily
+        # Run.
+        with pytest.raises(AssertionError) as fail:
+            self._test_function_call("bid_ask", "spot", True)
+        # Stop the patches.
+        mock_get_rt_data_patch.stop()
+        mock_get_daily_data_patch.stop()
+        self.assertEqual(mock_get_rt_data.call_count, 1)
+        self.assertEqual(mock_get_daily_data.call_count, 1)
+        # Check output.
+        actual = str(fail.value)
+        expected = r"""
+        ################################################################################
+        Gaps in real time data:
+        df.shape=(6, 1)
         df.full=
-                                       open    high     low   close   volume
-        timestamp     currency_pair
-        1640995320000 SOL_USDT       170.46  170.60  170.33  170.53   520.30
-        1640995380000 SOL_USDT       170.53  170.60  170.27  170.34  1175.03
-        1640995440000 SOL_USDT       170.33  170.49  170.31  170.40   318.96
-        1640995500000 SOL_USDT       170.41  170.73  170.25  170.65   612.02
-        Missing daily data:
-        df.shape=(4, 5)
+                                                        0
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        2021-09-15 23:50:00+00:00 2021-09-15 23:50:00+00:00
+        2021-09-15 23:51:00+00:00 2021-09-15 23:51:00+00:00
+        2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
+        2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
+        2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
+        Gaps in daily data:
+        df.shape=(6, 1)
         df.full=
-                                      open  high    low  close    volume
-        timestamp     currency_pair
-        1640994900000 ADA_USDT       1.309  1.31  1.308  1.309   47265.6
-        1640994960000 ADA_USDT       1.309  1.31  1.308  1.309   45541.6
-        1640995020000 ADA_USDT       1.309  1.31  1.309  1.310   23032.3
-        1640995080000 ADA_USDT       1.310  1.31  1.306  1.306  179644.8
-        Differing table contents:
-        df.shape=(6, 2)
-        df.full=
-                 open
-                 self    other
-        2   46285.790  666.000
-        33    109.410  666.000
-        46    999.000    3.033
-        51    999.000  109.750
-        67      1.317  666.000
-        83    999.000    1.315
-        ################################################################################"""
+                                                        0
+        2021-09-15 23:49:00+00:00 2021-09-15 23:49:00+00:00
+        2021-09-15 23:50:00+00:00 2021-09-15 23:50:00+00:00
+        2021-09-15 23:51:00+00:00 2021-09-15 23:51:00+00:00
+        2021-09-15 23:52:00+00:00 2021-09-15 23:52:00+00:00
+        2021-09-15 23:53:00+00:00 2021-09-15 23:53:00+00:00
+        2021-09-15 23:54:00+00:00 2021-09-15 23:54:00+00:00
+        Difference between ask_price_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
+        Difference between bid_size_l1 in real time and daily data for `binance::BTC_USDT` coin is more than 1%.
+        ################################################################################
+        """
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test_parser(self) -> None:
         """
-        Tests arg parser for predefined args in the script.
+        Test arg parser for predefined args in the script.
 
         Mostly for coverage and to detect argument changes.
         """
@@ -236,9 +549,17 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
         cmd.extend(["--db_stage", "dev"])
         cmd.extend(["--db_table", "ccxt_ohlcv"])
         cmd.extend(["--aws_profile", "ck"])
-        cmd.extend(["--s3_path", "s3://cryptokaizen-data/historical/"])
+        cmd.extend(
+            ["--s3_path", "s3://cryptokaizen-data/reorg/historical.manual.pq/"]
+        )
+        cmd.extend(["--data_type", "ohlcv"])
+        cmd.extend(["--contract_type", "spot"])
+        cmd.extend(["--s3_vendor", "crypto_chassis"])
         args = parser.parse_args(cmd)
         actual = vars(args)
+        # Change bool values to string type to pass the check.
+        actual["resample_1min"] = "True"
+        actual["resample_1sec"] = "False"
         expected = {
             "start_timestamp": "20220216-000000",
             "end_timestamp": "20220217-000000",
@@ -247,7 +568,14 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": "s3://cryptokaizen-data/historical/",
+            "s3_path": "s3://cryptokaizen-data/reorg/historical.manual.pq/",
+            "data_type": "ohlcv",
+            "contract_type": "spot",
+            "resample_1min": "True",
+            "resample_1sec": "False",
+            "s3_vendor": "crypto_chassis",
+            "bid_ask_accuracy": None,
+            "bid_ask_depth": 10,
         }
         self.assertDictEqual(actual, expected)
 
@@ -266,21 +594,176 @@ class TestCompareRealtimeAndHistoricalData1(imvcddbut.TestImDbHelper):
             table_name="ccxt_ohlcv",
         )
 
-    def _test_function_call(self) -> None:
+    def _test_function_call(
+        self, data_type, contract_type, resample_1min
+    ) -> None:
         """
-        Tests directly _run function for coverage increase.
+        Test directly _run function for coverage increase.
         """
         # Prepare inputs.
         kwargs = {
-            "start_timestamp": "20211231-235500",
-            "end_timestamp": "20220101-000500",
+            "start_timestamp": self._test_start_timestamp,
+            "end_timestamp": self._test_end_timestamp,
             "db_stage": "local",
             "exchange_id": "binance",
             "db_table": "ccxt_ohlcv",
             "log_level": "INFO",
             "aws_profile": "ck",
-            "s3_path": f"{self.S3_PATH}/",
+            "s3_path": f"{self.get_s3_path()}",
+            "connection": self.connection,
+            "data_type": data_type,
+            "contract_type": contract_type,
+            "resample_1min": True,
+            "s3_vendor": "crypto_chassis",
+            "bid_ask_accuracy": 1,
+            "bid_ask_depth": 1,
         }
+        if resample_1min:
+            kwargs["resample_1min"] = True
+            kwargs["resample_1sec"] = False
+        else:
+            kwargs["resample_1min"] = False
+            kwargs["resample_1sec"] = True
         # Run.
         args = argparse.Namespace(**kwargs)
         imvcdecrah._run(args)
+
+
+class TestFilterDuplicates(hunitest.TestCase):
+    def test_filter_duplicates(self) -> None:
+        """
+        Verify that duplicated data is filtered correctly.
+        """
+        input_data = self._get_duplicated_test_data()
+        self.assertEqual(input_data.shape, (10, 10))
+        # Filter duplicates.
+        actual_data = imvcdecrah.RealTimeHistoricalReconciler._filter_duplicates(
+            input_data
+        )
+        expected_length = 6
+        expected_column_names = [
+            "close",
+            "full_symbol",
+            "end_download_timestamp",
+            "high",
+            "id",
+            "knowledge_timestamp",
+            "low",
+            "open",
+            "timestamp",
+            "volume",
+        ]
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[0, 5]
+        columns=id,timestamp,open,high,low,close,volume,full_symbol,end_download_timestamp,knowledge_timestamp
+        shape=(6, 10)
+        id                 timestamp  open  high  low  close  volume        full_symbol    end_download_timestamp       knowledge_timestamp
+        0   1 2021-09-09 00:00:00+00:00    30    40   50     60      70  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        1   2 2021-09-09 00:01:00+00:00    31    41   51     61      71  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        2   3 2021-09-09 00:02:00+00:00    32    42   52     62      72  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        3   4 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::BTC_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        4   5 2021-09-09 00:04:00+00:00    34    44   54     64      74  binance::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        5   6 2021-09-09 00:04:00+00:00    34    44   54     64      74   kucoin::ETH_USDT 2021-09-09 00:00:00+00:00 2021-09-09 00:00:00+00:00
+        """
+        # pylint: enable=line-too-long
+        self.check_df_output(
+            actual_data,
+            expected_length,
+            expected_column_names,
+            None,
+            expected_signature,
+        )
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "full_symbol",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [0, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [1, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [2, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [3, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
+
+    @staticmethod
+    def _get_test_data() -> pd.DataFrame:
+        """
+        Create a test CCXT OHLCV dataframe.
+        """
+        test_data = pd.DataFrame(
+            columns=[
+                "id",
+                "timestamp",
+                "open",
+                "high",
+                "low",
+                "close",
+                "volume",
+                "full_symbol",
+                "end_download_timestamp",
+                "knowledge_timestamp",
+            ],
+            # fmt: off
+            # pylint: disable=line-too-long
+            data=[
+                [1, 1631145600000, 30, 40, 50, 60, 70, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [2, 1631145660000, 31, 41, 51, 61, 71, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [3, 1631145720000, 32, 42, 52, 62, 72, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [4, 1631145840000, 34, 44, 54, 64, 74, "binance::BTC_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [5, 1631145840000, 34, 44, 54, 64, 74, "binance::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+                [6, 1631145840000, 34, 44, 54, 64, 74, "kucoin::ETH_USDT", pd.Timestamp("2021-09-09"), pd.Timestamp("2021-09-09")],
+            ]
+            # pylint: enable=line-too-long
+            # fmt: on
+        )
+        return test_data
+
+    def _get_duplicated_test_data(self) -> pd.DataFrame:
+        """
+        Get test data with duplicates for `_filter_duplicates` method test.
+        """
+        test_data = self._get_test_data()
+        #
+        # TODO(Danya): Add timezone info to test data in client tests.
+        test_data["knowledge_timestamp"] = test_data[
+            "knowledge_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["end_download_timestamp"] = test_data[
+            "end_download_timestamp"
+        ].dt.tz_localize("UTC")
+        test_data["timestamp"] = test_data["timestamp"].apply(
+            hdateti.convert_unix_epoch_to_timestamp
+        )
+        # Add duplicated rows.
+        dupes = test_data.loc[0:3]
+        dupes["knowledge_timestamp"] = dupes[
+            "knowledge_timestamp"
+        ] - pd.Timedelta("40s")
+        dupes["end_download_timestamp"] = dupes[
+            "end_download_timestamp"
+        ] - pd.Timedelta("40s")
+        test_data = pd.concat([test_data, dupes]).reset_index(drop=True)
+        return test_data

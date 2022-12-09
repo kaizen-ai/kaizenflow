@@ -278,6 +278,13 @@ def _parse() -> argparse.ArgumentParser:
         help="Partition Parquet dataframe by time",
     )
     parser.add_argument(
+        "--custom_partition_cols",
+        action="store",
+        type=str,
+        default=None,
+        help="Overrides default partition by time",
+    )
+    parser.add_argument(
         "--reset_index",
         action="store_true",
         help="Resets dataframe index to default sequential integer values",
@@ -303,6 +310,7 @@ def _run(parser: argparse.ArgumentParser) -> None:
     assets = args.assets
     assets = assets.split(",")
     asset_col_name = args.asset_col_name
+    custom_partition_cols = args.custom_partition_cols
     dst_dir = args.dst_dir
     # Run dataframe generation.
     pdg = ParquetDataFrameGenerator(
@@ -313,9 +321,19 @@ def _run(parser: argparse.ArgumentParser) -> None:
     df, partition_cols = hparque.add_date_partition_columns(
         parquet_df, partition_mode
     )
+    if custom_partition_cols:
+        # If custom partition is provided, it will override date partition.
+        # Sample: `["asset", "year", "month"]`
+        custom_partition_cols = custom_partition_cols.split(",")
+        # Ensure that date partition columns are present.
+        hdbg.dassert_is_subset(partition_cols, custom_partition_cols)
+        partition_cols = custom_partition_cols
     # Partition and write dataset.
     if args.reset_index:
         df = df.reset_index(drop=True)
+    # TODO(Nikola): When direct run is possible, expose usage of `aws_profile`
+    #   so generator can be used in conjunction with `helpers.hmoto.S3Mock_TestCase`.
+    #   Will probably be part of CMTask #1490.
     hparque.to_partitioned_parquet(df, partition_cols, dst_dir)
 
 

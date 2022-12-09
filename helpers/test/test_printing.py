@@ -83,7 +83,8 @@ class Test_to_str2(hunitest.TestCase):
 
     def test1(self) -> None:
         """
-        Test printing arguments that are declared on the different than function call line.
+        Test printing arguments that are declared on the different than
+        function call line.
         """
         x = [1, "hello", "world"]
         y = "Hello"
@@ -234,7 +235,8 @@ class Test_indent1(hunitest.TestCase):
 class TestHelloWorld(hunitest.TestCase):
     bar
 """
-        act = hprint.indent(txt, 2)
+        num_spaces = 2
+        act = hprint.indent(txt, num_spaces=num_spaces)
         exp = """  foo
 
   class TestHelloWorld(hunitest.TestCase):
@@ -289,7 +291,8 @@ zscore:
 
 class TestHelloWorld(hunitest.TestCase):
     bar"""
-        txt2 = hprint.indent(txt1, 3)
+        num_spaces = 3
+        txt2 = hprint.indent(txt1, num_spaces=num_spaces)
         txt3 = hprint.dedent(txt2)
         self.assert_equal(txt1, txt3, fuzzy_match=False)
 

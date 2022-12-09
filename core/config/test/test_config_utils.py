@@ -1,4 +1,5 @@
 import collections
+from typing import Any
 
 import pandas as pd
 
@@ -11,7 +12,10 @@ def _get_test_config1() -> cconfig.Config:
     """
     Build a test config for Crude Oil asset.
     """
-    config = cconfig.Config()
+    # Create an empty config with overwritable values.
+    update_mode = "overwrite"
+    config = cconfig.Config(update_mode=update_mode)
+    # Add values.
     tmp_config = config.add_subconfig("build_model")
     tmp_config["activation"] = "sigmoid"
     tmp_config = config.add_subconfig("build_targets")
@@ -25,8 +29,10 @@ def _get_test_config1() -> cconfig.Config:
 
 def _get_test_config2() -> cconfig.Config:
     """
-    Same as `_get_test_config1()` but with "Gold" instead of "Crude Oil" for
-    target asset.
+    Build a test config.
+
+    Same as `_get_test_config1()` but with "Gold" instead of "Crude Oil"
+    for target asset.
     """
     config = _get_test_config1().copy()
     config[("build_targets", "target_asset")] = "Gold"
@@ -35,7 +41,7 @@ def _get_test_config2() -> cconfig.Config:
 
 def _get_test_config3() -> cconfig.Config:
     """
-    :return: Test config.
+    Build a test config.
     """
     config = _get_test_config1().copy()
     config["hello"] = "world"
@@ -43,8 +49,11 @@ def _get_test_config3() -> cconfig.Config:
 
 
 # #############################################################################
+# Test_validate_configs1
+# #############################################################################
 
 
+# TODO(gp): -> validate_config_list
 class Test_validate_configs1(hunitest.TestCase):
     def test_check_same_configs_error(self) -> None:
         """
@@ -56,9 +65,10 @@ class Test_validate_configs1(hunitest.TestCase):
             _get_test_config1(),
             _get_test_config2(),
         ]
+        config_list = cconfig.ConfigList()
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
-            cconfig.validate_configs(configs)
+            config_list.configs = configs
         act = str(cm.exception)
         self.check_string(act, fuzzy_match=True)
 
@@ -71,109 +81,13 @@ class Test_validate_configs1(hunitest.TestCase):
             _get_test_config2(),
             _get_test_config3(),
         ]
-        cconfig.validate_configs(configs)
+        config_list = cconfig.ConfigList()
+        config_list.configs = configs
+        config_list.validate_config_list()
 
 
 # #############################################################################
-
-
-class Test_get_config_from_flattened_dict1(hunitest.TestCase):
-    def test1(self) -> None:
-        flattened = collections.OrderedDict(
-            [
-                (("read_data", "file_name"), "foo_bar.txt"),
-                (("read_data", "nrows"), 999),
-                (("single_val",), "hello"),
-                (("zscore", "style"), "gaz"),
-                (("zscore", "com"), 28),
-            ]
-        )
-        config = cconfig.get_config_from_flattened_dict(flattened)
-        act = str(config)
-        exp = r"""
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28"""
-        exp = hprint.dedent(exp)
-        self.assert_equal(act, exp, fuzzy_match=False)
-
-    def test2(self) -> None:
-        flattened = collections.OrderedDict(
-            [
-                (("read_data", "file_name"), "foo_bar.txt"),
-                (("read_data", "nrows"), 999),
-                (("single_val",), "hello"),
-                (("zscore",), cconfig.Config()),
-            ]
-        )
-        config = cconfig.get_config_from_flattened_dict(flattened)
-        act = str(config)
-        exp = r"""
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-        """
-        exp = hprint.dedent(exp)
-        self.assert_equal(act, exp, fuzzy_match=False)
-
-
-# #############################################################################
-
-
-class Test_get_config_from_nested_dict1(hunitest.TestCase):
-    def test1(self) -> None:
-        nested = {
-            "read_data": {
-                "file_name": "foo_bar.txt",
-                "nrows": 999,
-            },
-            "single_val": "hello",
-            "zscore": {
-                "style": "gaz",
-                "com": 28,
-            },
-        }
-        config = cconfig.get_config_from_nested_dict(nested)
-        act = str(config)
-        exp = r"""
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-          style: gaz
-          com: 28"""
-        exp = hprint.dedent(exp)
-        self.assert_equal(act, exp, fuzzy_match=False)
-
-    def test2(self) -> None:
-        nested = {
-            "read_data": {
-                "file_name": "foo_bar.txt",
-                "nrows": 999,
-            },
-            "single_val": "hello",
-            "zscore": cconfig.Config(),
-        }
-        config = cconfig.get_config_from_nested_dict(nested)
-        act = str(config)
-        exp = r"""
-        read_data:
-          file_name: foo_bar.txt
-          nrows: 999
-        single_val: hello
-        zscore:
-        """
-        exp = hprint.dedent(exp)
-        self.assert_equal(act, exp, fuzzy_match=False)
-
-
+# Test_intersect_configs1
 # #############################################################################
 
 
@@ -210,6 +124,8 @@ class Test_intersect_configs1(hunitest.TestCase):
 
 
 # #############################################################################
+# Test_subtract_configs1
+# #############################################################################
 
 
 class Test_subtract_configs1(hunitest.TestCase):
@@ -236,7 +152,68 @@ class Test_subtract_configs1(hunitest.TestCase):
         exp = hprint.dedent(exp)
         self.assert_equal(str(act), str(exp))
 
+    def test2(self) -> None:
+        """
+        Both configs contain an empty dict.
+        """
+        config_dict1 = {
+            "key1": [
+                (
+                    2,
+                    "value3",
+                    {},
+                )
+            ],
+            "key2": {},
+        }
+        config_dict2 = {
+            "key1": [
+                (
+                    (1, 3),
+                    "value3",
+                    None,
+                )
+            ],
+            "key2": {},
+        }
+        config1 = cconfig.Config().from_dict(config_dict1)
+        config2 = cconfig.Config().from_dict(config_dict2)
+        actual = cconfig.subtract_config(config1, config2)
+        # An empty dict
+        expected = r"""
+        key1: [(2, 'value3', {})]
+        key2:
+        """
+        self.assert_equal(str(actual), expected, fuzzy_match=True)
 
+    def test3(self) -> None:
+        """
+        A config contains a non-empty empty dict.
+        """
+        config_dict1 = {
+            "key1": {"key2": "value2", "key3": {"key4": "value3", "key5": 5}}
+        }
+        config_dict2 = {
+            "key1": {
+                "key3": "value3",
+            },
+            "key2": {},
+        }
+        config1 = cconfig.Config().from_dict(config_dict1)
+        config2 = cconfig.Config().from_dict(config_dict2)
+        actual = cconfig.subtract_config(config1, config2)
+        expected = r"""
+        key1:
+          key2: value2
+          key3:
+            key4: value3
+            key5: 5
+        """
+        self.assert_equal(str(actual), expected, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_diff_configs1
 # #############################################################################
 
 
@@ -280,13 +257,11 @@ class Test_diff_configs1(hunitest.TestCase):
         act = cconfig.diff_configs([config1, config2])
         exp = [
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.get_config_from_nested_dict(
-                {"build_targets": {"target_asset": "Gold"}}
-            ),
+            cconfig.Config.from_dict({"build_targets": {"target_asset": "Gold"}}),
         ]
         self.assert_equal(str(act), str(exp))
 
@@ -300,15 +275,13 @@ class Test_diff_configs1(hunitest.TestCase):
         #
         exp = [
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}}
             ),
             #
-            cconfig.get_config_from_nested_dict(
-                {"build_targets": {"target_asset": "Gold"}}
-            ),
+            cconfig.Config.from_dict({"build_targets": {"target_asset": "Gold"}}),
             #
-            cconfig.get_config_from_nested_dict(
+            cconfig.Config.from_dict(
                 {"build_targets": {"target_asset": "Crude Oil"}, "hello": "world"}
             ),
         ]
@@ -316,6 +289,8 @@ class Test_diff_configs1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
 
+# #############################################################################
+# Test_convert_to_dataframe1
 # #############################################################################
 
 
@@ -345,6 +320,8 @@ class Test_convert_to_dataframe1(hunitest.TestCase):
         self.assert_equal(str(act), str(exp))
 
 
+# #############################################################################
+# Test_build_config_diff_dataframe1
 # #############################################################################
 
 
@@ -403,3 +380,104 @@ class Test_build_config_diff_dataframe1(hunitest.TestCase):
         2                  Crude Oil  world
         """
         self.assert_equal(str(act), exp, fuzzy_match=True)
+
+
+# #############################################################################
+# Test_make_hashable
+# #############################################################################
+
+
+class Test_make_hashable(hunitest.TestCase):
+    def helper(self, obj: Any, is_hashable: bool, expected: str) -> None:
+        is_hashable_before = isinstance(obj, collections.Hashable)
+        self.assertEqual(is_hashable_before, is_hashable)
+        #
+        hashable_obj = cconfig.make_hashable(obj)
+        is_hashable_after = isinstance(hashable_obj, collections.Hashable)
+        self.assertTrue(is_hashable_after)
+        #
+        actual = str(hashable_obj)
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test1(self) -> None:
+        """
+        Test an unhashable nested object.
+        """
+        obj = [
+            (
+                2,
+                {
+                    "key": "value",
+                    "key2": "value2",
+                    "key3": 4,
+                },
+                "value3",
+                {},
+            )
+        ]
+        is_hashable = False
+        expected = "((2, (('key', 'value'), ('key2', 'value2'), ('key3', 4)), 'value3', ()),)"
+        self.helper(obj, is_hashable, expected)
+
+    def test2(self) -> None:
+        """
+        Test an unhashable nested object.
+        """
+        obj = {
+            1: [
+                "value1",
+                {},
+                {
+                    "key2": {},
+                    "key3": (3, "4", [5, {6: "7"}]),
+                },
+            ],
+            (8, 9, 0): "value2",
+            "key4": [],
+        }
+        is_hashable = False
+        expected = r"""
+        ((1, ('value1', (), (('key2', ()), ('key3', (3, '4', (5, ((6, '7'),))))))), ((8, 9, 0), 'value2'), ('key4', ()))
+        """
+        self.helper(obj, is_hashable, expected)
+
+    def test3(self) -> None:
+        """
+        Test a nested Tuple.
+        """
+        obj = (
+            1,
+            ["2", 3],
+        )
+        is_hashable = True
+        expected = r"(1, ('2', 3))"
+        self.helper(obj, is_hashable, expected)
+
+    def test4(self) -> None:
+        """
+        Test a dictionary.
+        """
+        obj = {
+            1: "2",
+        }
+        is_hashable = False
+        expected = r"((1, '2'),)"
+        self.helper(obj, is_hashable, expected)
+
+    def test5(self) -> None:
+        """
+        Test a string.
+        """
+        obj = "1"
+        is_hashable = True
+        expected = r"1"
+        self.helper(obj, is_hashable, expected)
+
+    def test6(self) -> None:
+        """
+        Test a hashable object.
+        """
+        obj = 2
+        is_hashable = True
+        expected = r"2"
+        self.helper(obj, is_hashable, expected)

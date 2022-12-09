@@ -41,7 +41,7 @@ import im.common.data.transform.transform as imcdatrtr
 import im.kibot.data.config as imkidacon
 import im.kibot.data.load as ikdloa
 import im.kibot.data.load.dataset_name_parser as imkdldnapa
-import im.kibot.data.load.kibot_sql_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_sql_data_loader as imkdlksdlo
 import im.kibot.data.transform.kibot_s3_to_sql_transformer as imkdtkstst
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.sql_writer as imkisqwri
@@ -152,7 +152,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         port=args.dbport,
     )
     #
-    sql_data_loader = ikdlksdlo.KibotSqlDataLoader(
+    sql_data_loader = imkdlksdlo.KibotSqlDataLoader(
         dbname=args.dbname,
         user=args.dbuser,
         password=args.dbpass,

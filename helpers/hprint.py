@@ -6,13 +6,16 @@ import helpers.hprint as hprint
 
 import inspect
 import logging
+import pprint
 import re
 import sys
-from typing import Any, Callable, Dict, Iterable, List, Match, Optional, cast
+from typing import Any, Dict, Iterable, List, Match, Optional, cast
 
 import helpers.hdbg as hdbg
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)
@@ -78,9 +81,36 @@ def frame(
     num_chars: Optional[int] = None,
     char2: Optional[str] = None,
     thickness: int = 1,
+    level: int = 0,
 ) -> str:
     """
     Print a frame around a message.
+
+    :param char1: char for top line of the frame
+    :param num_chars: how many chars in each line (by default 80 chars)
+    :param char2: char for bottom line of the frame
+    :param thickness: how many overlapping lines
+        - E.g., thickness = 2
+        ```
+        # #######...
+        # #######...
+        # hello
+        # #######...
+        # #######...
+        ```
+    :param level:  level of framing indent based on `#` char:
+        - E.g., level = 0
+        ```
+        #######...
+        hello
+        #######...
+        ```
+        - E.g., level = 1
+        ```
+        # #######...
+        # hello
+        # #######...
+        ```
     """
     # Fill in the default values.
     if char1 is None:
@@ -90,23 +120,26 @@ def frame(
         # User specified only one char.
         char2 = char1
     elif char1 is None and char2 is not None:
-        # User specified the second char, but not the first.
-        hdbg.dfatal("Invalid char1='%s' char2='%s'" % (char1, char2))
+        # User specified the second char, but not the first one.
+        hdbg.dfatal(f"Invalid char1='{char1}' char2='{char2}'")
     else:
         # User specified both chars. Nothing to do.
         pass
     num_chars = 80 if num_chars is None else num_chars
     # Sanity check.
-    hdbg.dassert_lte(1, thickness)
     hdbg.dassert_eq(len(char1), 1)
-    hdbg.dassert_eq(len(char2), 1)
     hdbg.dassert_lte(1, num_chars)
+    hdbg.dassert_eq(len(char2), 1)
+    hdbg.dassert_lte(1, thickness)
+    hdbg.dassert_lte(0, level)
     # Build the return value.
+    prefix = ""
+    if level:
+        prefix = "#" * level + " "
     ret = (
-        (line(char1, num_chars) + "\n") * thickness
-        + message
-        + "\n"
-        + (line(char2, num_chars) + "\n") * thickness
+        (prefix + (line(char1, num_chars) + "\n") * thickness)
+        + (prefix + message + "\n")
+        + (prefix + (line(char2, num_chars) + "\n") * thickness)
     ).rstrip("\n")
     return ret
 
@@ -120,10 +153,12 @@ def prepend(txt: str, prefix: str) -> str:
     return res
 
 
-def indent(txt: str, num_spaces: int = 2) -> str:
+def indent(txt: Optional[str], *, num_spaces: int = 2) -> str:
     """
     Add `num_spaces` spaces before each line of the passed string.
     """
+    if txt is None:
+        return ""
     spaces = " " * num_spaces
     txt_out = []
     for curr_line in txt.split("\n"):
@@ -136,6 +171,7 @@ def indent(txt: str, num_spaces: int = 2) -> str:
     return res
 
 
+# TODO(gp): It should use *.
 def dedent(txt: str, remove_empty_leading_trailing_lines: bool = True) -> str:
     """
     Remove from each line the minimum number of spaces to align the text on the
@@ -229,6 +265,21 @@ def vars_to_debug_string(vars_as_str: List[str], locals_: Dict[str, Any]) -> str
 # #############################################################################
 
 
+def to_object_str(obj: Any) -> str:
+    return "%s at %s" % (
+        obj.__class__.__name__,
+        hex(id(obj)),
+    )
+
+
+def to_object_repr(obj: Any) -> str:
+    return "<%s.%s at %s>" % (
+        obj.__class__.__module__,
+        obj.__class__.__name__,
+        hex(id(obj)),
+    )
+
+
 def thousand_separator(v: float) -> str:
     v = "{0:,}".format(v)
     return v
@@ -310,7 +361,14 @@ def round_digits(
 # name of variables from the caller.
 
 
-def to_str(expression: str, frame_lev: int = 1) -> str:
+def to_str(
+    expression: str,
+    *,
+    frame_lev: int = 1,
+    print_lhs: bool = True,
+    char_separator: str = ",",
+    mode: str = "repr",
+) -> str:
     """
     Return a string with the value of a variable / expression / multiple
     variables.
@@ -320,10 +378,20 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
 
     This is similar to Python 3.8 f-string syntax `f"{foo=} {bar=}"`.
     We don't want to force to use Python 3.8 just for this feature.
-
-    >>> x = 1
-    >>> to_str("x+1")
+    ```
+    > x = 1
+    > to_str("x+1")
     x+1=2
+    ```
+
+    :param expression: the variable / expression to evaluate and print. E.g.,
+        `to_str("exp1")` is converted into `exp1=val1`.
+        If expression is a space-separated compound expression, e.g.,
+        `to_str("exp1 exp2 ...")`, it is converted into:
+        `exp1=val1, exp2=val2, ...`
+    :param print_lhs: whether we want to print the left hand side (i.e., `exp1`)
+    :param mode: select how to print the value of the expressions (e.g., `str`,
+        `repr`, `pprint`)
     """
     # TODO(gp): If we pass an object it would be nice to find the name of it.
     # E.g., https://github.com/pwwang/python-varname
@@ -332,21 +400,40 @@ def to_str(expression: str, frame_lev: int = 1) -> str:
         # If expression is a list of space-separated expression, convert each in a
         # string.
         exprs = [v.lstrip().rstrip() for v in expression.split(" ")]
+        # Remove empty names.
+        exprs = [v for v in exprs if v.strip().rstrip() != ""]
+        # Convert each expression into a value.
         _to_str = lambda x: to_str(x, frame_lev=frame_lev + 2)
-        return ", ".join(list(map(_to_str, exprs)))
+        values = list(map(_to_str, exprs))
+        # Assemble in a return value.
+        hdbg.dassert_lte(len(char_separator), 1)
+        sep = char_separator + " "
+        txt = sep.join(values)
+        return txt
+    # Certain expressions are evaluated as literals.
+    if expression in ("->", ":", "=", "\n"):
+        return expression
+    # Evaluate the expression.
     frame_ = sys._getframe(frame_lev)  # pylint: disable=protected-access
-    ret = (
-        expression
-        + "="
-        + repr(eval(expression, frame_.f_globals, frame_.f_locals))
-    )
+    ret = ""
+    if print_lhs:
+        ret += expression + "="
+    eval_ = eval(expression, frame_.f_globals, frame_.f_locals)
+    if mode == "str":
+        ret += str(eval_)
+    elif mode == "repr":
+        ret += repr(eval_)
+    elif mode == "pprint":
+        ret += "\n" + indent(pprint.pformat(eval_))
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
     return ret
 
 
-# TODO(timurg): In order to replace `hprint.to_str` function,
-# `frame level`(see `hprint.to_str`) should be implemented,
-# otherwise `helpers/test/test_printing.py::Test_log::test2-4` will fail,
-# see CmTask #1554.
+# TODO(timurg): In order to replace `hprint.to_str` function, `frame level`(see
+#  `hprint.to_str`) should be implemented, otherwise
+#  `helpers/test/test_printing.py::Test_log::test2-4` will fail, see CmTask
+#  #1554.
 
 
 def to_str2(*variables_values: Any) -> str:
@@ -366,7 +453,8 @@ def to_str2(*variables_values: Any) -> str:
     Limitations: can't work with an argument that contains parenthesis,
     e.g.,: `to_str(to_str(a, b), c)`.
 
-    Dependencies: funtion call index depends on the Python version, `frame.lineno` is
+    Dependencies: function call index depends on the Python version, `frame.lineno`
+        is:
        - Last argument line in Python >=3.6 and < 3.9
        - Function call line in Python 3.9 and above
 
@@ -390,7 +478,7 @@ def to_str2(*variables_values: Any) -> str:
     ]
     source_code_string = "".join(stripped_code_lines)
     # Find the name of the current function in the code.
-    regex = fr"{current_frame.function}\((.*?)\)"
+    regex = rf"{current_frame.function}\((.*?)\)"
     matches = re.findall(regex, source_code_string)
     hdbg.dassert_ne(
         len(matches),
@@ -487,38 +575,6 @@ def log_frame(
     logger.log(verbosity, "%s", msg)
 
 
-# TODO(gp): This can be injected in `hlogger.py` and then controlled through
-#  command line, e.g., `-v VERBOSE`. We should be able to tweak the verbosity
-#  of each module independently.
-def install_log_verb_debug(logger: logging.Logger, *, verbose: bool) -> Callable:
-    """
-    Create in a module a _LOG.verb_debug() that can be disabled in a
-    centralized way.
-
-    This is useful when we want to have an higher-level of verbose debugging that
-    can be enabled programmatically.
-
-    Use example:
-    ```
-    _LOG = logging.getLogger(__name__)
-    # Assign this not to confuse the linter about a symbol that doesn't exist
-    # in the code.
-    _LOG.verb_debug = hprint.install_log_verb_debug(_LOG,
-        # Enable the very verbose output.
-        verbose=True)
-
-    _LOG.verb_debug(...)
-    ```
-    """
-    hdbg.dassert_isinstance(logger, logging.Logger)
-
-    def _verb_debug(*args: Any, **kwargs: Any) -> None:
-        if verbose:
-            logger.debug(*args, **kwargs)
-
-    return _verb_debug
-
-
 # #############################################################################
 
 
@@ -541,7 +597,7 @@ def type_to_string(type_as_str: str) -> str:
 
 
 def type_obj_to_str(obj: Any) -> str:
-    ret = "(%s) %s" % (type(obj), obj)
+    ret = f"({type(obj)}) {obj}"
     return ret
 
 
@@ -562,8 +618,8 @@ def format_list(
     n = len(list_)
     txt = ""
     if tag is not None:
-        txt += "%s: " % tag
-    txt += "(%s) " % n
+        txt += f"{tag}: "
+    txt += f"({n}) "
     if n < max_n:
         txt += sep.join(map(str, list_))
     else:
@@ -592,21 +648,21 @@ def list_to_str(
     txt = ""
     if axis == 0:
         if list_ is None:
-            txt += "%s: (%s) %s" % (tag, 0, "None") + "\n"
+            txt += f"{tag}: (0) None\n"
         else:
             # hdbg.dassert_in(type(l), (list, pd.Index, pd.Int64Index))
             vals = list(map(str, list_))
             if sort:
                 vals = sorted(vals)
-            txt += "%s: (%s) %s" % (tag, len(list_), " ".join(vals)) + "\n"
+            txt += f"{tag}: ({len(list_)}) {' '.join(vals)}\n"
     elif axis == 1:
-        txt += "%s (%s):" % (tag, len(list_)) + "\n"
+        txt += f"{tag} ({len(list_)}):\n"
         vals = list(map(str, list_))
         if sort:
             vals = sorted(vals)
         txt += "\n".join(vals) + "\n"
     else:
-        raise ValueError("Invalid axis='%s'" % axis)
+        raise ValueError(f"Invalid axis='{axis}'")
     return txt
 
 
@@ -637,34 +693,28 @@ def set_diff_to_str(
     # obj1.
     obj1 = set(obj1)
     hdbg.dassert_lte(1, len(obj1))
-    res.append("* %s: (%s) %s" % (obj1_name, len(obj1), _to_string(obj1)))
+    res.append(f"* {obj1_name}: ({len(obj1)}) {_to_string(obj1)}")
     if add_space:
         res.append("")
     # obj2.
     obj2 = set(obj2)
     hdbg.dassert_lte(1, len(obj2))
-    res.append("* %s: (%s) %s" % (obj2_name, len(obj2), _to_string(obj2)))
+    res.append(f"* {obj2_name}: ({len(obj2)}) {_to_string(obj2)}")
     if add_space:
         res.append("")
     # obj1 intersect obj2.
     intersection = obj1.intersection(obj2)
-    res.append(
-        "* intersect=(%s) %s" % (len(intersection), _to_string(intersection))
-    )
+    res.append(f"* intersect=({len(intersection)}) {_to_string(intersection)}")
     if add_space:
         res.append("")
     # obj1 - obj2.
     diff = obj1 - obj2
-    res.append(
-        "* %s-%s=(%s) %s" % (obj1_name, obj2_name, len(diff), _to_string(diff))
-    )
+    res.append(f"* {obj1_name}-{obj2_name}=({len(diff)}) {_to_string(diff)}")
     if add_space:
         res.append("")
     # obj2 - obj1.
     diff = obj2 - obj1
-    res.append(
-        "* %s-%s=(%s) %s" % (obj2_name, obj1_name, len(diff), _to_string(diff))
-    )
+    res.append(f"* {obj2_name}-{obj1_name}=({len(diff)}) {_to_string(diff)}")
     if add_space:
         res.append("")
     #
@@ -672,92 +722,7 @@ def set_diff_to_str(
     return res
 
 
-def obj_to_str(
-    obj: Any,
-    attr_mode: str = "__dict__",
-    print_type: bool = False,
-    callable_mode: str = "skip",
-    private_mode: str = "skip_dunder",
-) -> str:
-    """
-    Print attributes of an object.
-
-    :param using_dict: use `__dict__` instead of `dir`
-    :param print_type: print the type of the attribute
-    :param callable_mode: how to handle attributes that are callable (i.e.,
-        methods)
-        - skip: skip the methods
-        - only: print only the methods
-        - all: print variables and callable
-    """
-
-    def _to_skip_callable(attr: Any, callable_mode: str) -> bool:
-        hdbg.dassert_in(callable_mode, ("skip", "only", "all"))
-        is_callable = callable(attr)
-        skip = False
-        if callable_mode == "skip" and is_callable:
-            skip = True
-        if callable_mode == "only" and not is_callable:
-            skip = True
-        return skip
-
-    def _to_skip_private(name: str, private_mode: str) -> bool:
-        hdbg.dassert_in(
-            private_mode,
-            ("skip_dunder", "only_dunder", "skip_private", "only_private", "all"),
-        )
-        is_dunder = name.startswith("__") and name.endswith("__")
-        is_private = not is_dunder and name.startswith("_")
-        skip = False
-        if private_mode == "skip_dunder" and is_dunder:
-            skip = True
-        if private_mode == "only_dunder" and not is_dunder:
-            skip = True
-        if private_mode == "skip_private" and is_private:
-            skip = True
-        if private_mode == "only_private" and not is_private:
-            skip = True
-        return skip
-
-    def _to_str(attr: Any, print_type: bool) -> str:
-        if print_type:
-            out = "%s= (%s) %s" % (v, type(attr), str(attr))
-        else:
-            out = "%s= %s" % (v, str(attr))
-        return out
-
-    ret = []
-    if attr_mode == "__dict__":
-        for v in sorted(obj.__dict__):
-            attr = obj.__dict__[v]
-            # Handle dunder / private methods.
-            skip = _to_skip_private(v, private_mode)
-            if skip:
-                continue
-            # Handle callable methods.
-            skip = _to_skip_callable(attr, callable_mode)
-            if skip:
-                continue
-            #
-            out = _to_str(attr, print_type)
-            ret.append(out)
-    elif attr_mode == "dir":
-        for v in dir(obj):
-            attr = getattr(obj, v)
-            # Handle dunder / private methods.
-            skip = _to_skip_private(v, private_mode)
-            if skip:
-                continue
-            # Handle callable methods.
-            skip = _to_skip_callable(attr, callable_mode)
-            if skip:
-                continue
-            #
-            out = _to_str(attr, print_type)
-            ret.append(out)
-    else:
-        hdbg.dassert("Invalid attr_mode='%s'" % attr_mode)
-    return "\n".join(ret)
+# #############################################################################
 
 
 def remove_non_printable_chars(txt: str) -> str:
@@ -799,8 +764,6 @@ def sort_dictionary(dict_: Dict) -> Dict:
 
 def to_pretty_str(obj: Any) -> str:
     if isinstance(obj, dict):
-        import pprint
-
         res = pprint.pformat(obj)
         # import json
         # res = json.dumps(obj, indent=4, sort_keys=True)
@@ -809,6 +772,7 @@ def to_pretty_str(obj: Any) -> str:
     return res
 
 
+# TODO(gp): -> remove_lines?
 def filter_text(regex: str, txt: str) -> str:
     """
     Remove lines in `txt` that match the regex `regex`.

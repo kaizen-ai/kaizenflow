@@ -10,18 +10,21 @@ import logging
 import os
 from typing import Any, Callable, Iterator, List, Optional, Tuple, Union
 
+import numpy as np
 import pandas as pd
 import pyarrow as pa
+import pyarrow.dataset as ds
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
 from tqdm.autonotebook import tqdm
 
+import helpers.hdataframe as hdatafr
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import helpers.hsystem as hsystem
 import helpers.htimer as htimer
 
 _LOG = logging.getLogger(__name__)
@@ -44,26 +47,45 @@ def get_pyarrow_s3fs(*args: Any, **kwargs: Any) -> pafs.S3FileSystem:
     return s3fs_
 
 
+# TODO(Dan): Add mode to allow querying even when some non-existing columns are passed.
 def from_parquet(
     file_name: str,
     *,
     columns: Optional[List[str]] = None,
     filters: Optional[List[Any]] = None,
+    schema: Optional[List[Tuple[str, pa.DataType]]] = None,
     log_level: int = logging.DEBUG,
     report_stats: bool = False,
-    aws_profile: Optional[str] = None,
+    aws_profile: hs3.AwsProfile = None,
 ) -> pd.DataFrame:
     """
     Load a dataframe from a Parquet file.
 
     The difference with `pd.read_pq` is that here we use Parquet
     Dataset.
+
+    :param file_name: path to a Parquet dataset
+    :param columns: columns to return, skipping reading columns that are not requested
+       - `None` means return all available columns
+    :param filters: Parquet query filters
+    :param schema: see `pyarrow.Schema`, e.g., `schema =
+        [("int_col", pa.int32()), ("str_col", pa.string())]`
+    :param log_level: logging level to execute at
+    :param report_stats: whether to report Parquet file size or not
+    :param aws_profile: AWS profile to use if and only if using an S3 path,
+        otherwise `None` for local path
+    :return: data from Parquet dataset
     """
-    _LOG.debug(hprint.to_str("file_name columns filters"))
+    _LOG.debug(hprint.to_str("file_name columns filters schema"))
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
-        filesystem = get_pyarrow_s3fs(aws_profile)
+    hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
+    if hs3.is_s3_path(file_name):
+        if isinstance(aws_profile, str):
+            filesystem = get_pyarrow_s3fs(aws_profile)
+        else:
+            # Note: `s3fs` filesystem is only to be used on exact file path
+            # as `pq.ParquetDataset` is not properly handling directory path.
+            filesystem = aws_profile
         # Pyarrow S3FileSystem does not have `exists` method.
         s3_filesystem = hs3.get_s3fs(aws_profile)
         hs3.dassert_path_exists(file_name, s3_filesystem)
@@ -75,13 +97,21 @@ def from_parquet(
     with htimer.TimedScope(
         logging.DEBUG, f"# Reading Parquet file '{file_name}'"
     ) as ts:
+        if schema is not None:
+            # Pass partition columns types explicitly.
+            schema = pa.schema(schema)
+        partitioning = ds.partitioning(schema, flavor="hive")
         dataset = pq.ParquetDataset(
             # Replace URI with path.
             file_name,
             filesystem=filesystem,
             filters=filters,
+            partitioning=partitioning,
             use_legacy_dataset=False,
         )
+        if columns:
+            # Note: `schema.names` also includes and index.
+            hdbg.dassert_is_subset(columns, dataset.schema.names)
         # To read also the index we need to use `read_pandas()`, instead of
         # `read_table()`.
         # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
@@ -93,7 +123,7 @@ def from_parquet(
     _LOG.debug("df.memory_usage=%s", hintros.format_size(mem))
     # Report stats about the Parquet file size.
     if report_stats:
-        file_size = hsystem.du(file_name, human_format=True)
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Loaded '%s' (size=%s, time=%.1fs)",
@@ -105,7 +135,7 @@ def from_parquet(
 
 
 # Copied from `hio.create_enclosing_dir()` to avoid circular dependencies.
-def _create_enclosing_dir(file_name: str) -> str:
+def _create_enclosing_dir(file_name: str) -> Optional[str]:
     dir_name = os.path.dirname(file_name)
     if dir_name != "":
         _LOG.debug(
@@ -118,7 +148,7 @@ def _create_enclosing_dir(file_name: str) -> str:
         if os.path.exists(dir_name):
             # The dir exists and we want to keep it, so we are done.
             _LOG.debug("The dir '%s' exists: exiting", dir_name)
-            return
+            return None
         _LOG.debug("Creating directory '%s'", dir_name)
         try:
             os.makedirs(dir_name)
@@ -148,15 +178,15 @@ def to_parquet(
     """
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert_isinstance(file_name, str)
-    if aws_profile is not None:
-        hdbg.dassert(hs3.is_s3_path(file_name))
+    hs3.dassert_is_valid_aws_profile(file_name, aws_profile)
+    if hs3.is_s3_path(file_name):
         filesystem = hs3.get_s3fs(aws_profile)
-        hs3.dassert_path_exists(file_name, filesystem)
+        hs3.dassert_path_not_exists(file_name, filesystem)
         file_name = file_name.lstrip("s3://")
     else:
         filesystem = None
         hdbg.dassert_path_not_exists(file_name)
-    hdbg.dassert_file_extension(file_name, "parquet")
+    hdbg.dassert_file_extension(file_name, ["parquet", "pq"])
     # There is no concept of directory on S3.
     # Only applicable to local filesystem.
     if aws_profile is None:
@@ -170,11 +200,19 @@ def to_parquet(
         logging.DEBUG, f"# Writing Parquet file '{file_name}'"
     ) as ts:
         table = pa.Table.from_pandas(df)
-        pq.write_table(table, file_name, filesystem=filesystem)
+        # This is needed to handle:
+        # ```
+        # pyarrow.lib.ArrowInvalid: Casting from timestamp[ns, tz=America/New_York]
+        #   to timestamp[us] would lose data: 1663595160000000030
+        # ```
+        parquet_args = {
+            "coerce_timestamps": "us",
+            "allow_truncated_timestamps": True,
+        }
+        pq.write_table(table, file_name, filesystem=filesystem, **parquet_args)
     # Report stats about the Parquet file size.
-    # TODO(Nikola): CMTask1437 Extend hsystem.du to support S3.
-    if report_stats and aws_profile is None:
-        file_size = hsystem.du(file_name, human_format=True)
+    if report_stats:
+        file_size = hs3.du(file_name, human_format=True, aws_profile=aws_profile)
         _LOG.log(
             log_level,
             "Saved '%s' (size=%s, time=%.1fs)",
@@ -185,6 +223,65 @@ def to_parquet(
 
 
 # #############################################################################
+
+
+def _yield_parquet_tile(
+    file_name: str,
+    columns: List[str],
+    filters: List[Any],
+    asset_id_col: str,
+) -> Iterator[pd.DataFrame]:
+    """
+    Yield Parquet data in a single tile given the filters.
+
+    It is assumed that data is partitioned by asset_id, year and month, i.e.
+    the file layout is:
+
+    ```
+    file_name/
+        asset_id=1032127330/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+        ...
+        asset_id=2133227690/
+            year=2021/
+                month=12/
+                    data.parquet
+            year=2022/
+                month=01/
+                    data.parquet
+    ```
+
+    :param file_name: see `from_parquet()`
+    :param columns: see `from_parquet()`
+    :param filters: see `from_parquet()`
+    :param asset_id_col: name of the column with asset ids
+    :return: a generator of `from_parquet()` dataframe
+    """
+    # Without the schema being provided `pyarrow` incorrectly infers
+    # type of the asset id column, i.e. `pyarrow` reads assets as
+    # strings instead of integers. See the related discussion at
+    # `https://issues.apache.org/jira/browse/ARROW-6114`.
+    int_type = np.int64
+    pyarrow_int_type = pa.from_numpy_dtype(int_type)
+    schema = [
+        (asset_id_col, pyarrow_int_type),
+        # TODO(Grisha): consider passing year and month column names as params.
+        ("year", pyarrow_int_type),
+        ("month", pyarrow_int_type),
+    ]
+    tile = from_parquet(
+        file_name,
+        columns=columns,
+        filters=filters,
+        schema=schema,
+    )
+    hpandas.dassert_series_type_is(tile[asset_id_col], int_type)
+    yield tile
 
 
 def yield_parquet_tiles_by_year(
@@ -203,6 +300,8 @@ def yield_parquet_tiles_by_year(
     :param start_date: first date to load; day is ignored
     :param end_date: last date to load; day is ignored
     :param cols: if an `int` is supplied, it is cast to a string before reading
+    :param asset_ids: asset ids to load
+    :param asset_id_col: see `_yield_parquet_tile()`
     :return: a generator of `from_parquet()` dataframes
     """
     time_filters = build_year_month_filter(start_date, end_date)
@@ -222,12 +321,9 @@ def yield_parquet_tiles_by_year(
             ]
         else:
             combined_filter = time_filter
-        tile = from_parquet(
-            file_name,
-            columns=columns,
-            filters=combined_filter,
+        yield from _yield_parquet_tile(
+            file_name, columns, combined_filter, asset_id_col
         )
-        yield tile
 
 
 def build_asset_id_filter(
@@ -252,6 +348,9 @@ def yield_parquet_tiles_by_assets(
     Yield Parquet data in tiles batched by asset ids.
 
     :param file_name: as in `from_parquet()`
+    :param asset_ids: asset ids to load
+    :param asset_id_col: see `_yield_parquet_tile()`
+    :param asset_batch_size: the number of asset to load in a single batch
     :param cols: if an `int` is supplied, it is cast to a string before reading
     :return: a generator of `from_parquet()` dataframes
     """
@@ -261,19 +360,13 @@ def yield_parquet_tiles_by_assets(
         asset_ids[i : i + asset_batch_size]
         for i in range(0, len(asset_ids), asset_batch_size)
     ]
+    columns: Optional[List[str]] = None
     if cols:
         columns = [str(col) for col in cols]
-    else:
-        columns = None
     for batch in tqdm(batches):
         _LOG.debug("assets=%s", batch)
         filter_ = build_asset_id_filter(batch, asset_id_col)
-        tile = from_parquet(
-            file_name,
-            columns=columns,
-            filters=filter_,
-        )
-        yield tile
+        yield from _yield_parquet_tile(file_name, columns, filter_, asset_id_col)
 
 
 def build_year_month_filter(
@@ -390,8 +483,8 @@ def collate_parquet_tile_metadata(
 #  if needed, but if we do, then we should continue to handle string ints as
 #  ints as we do here (e.g., there are sorting advantages, among others).
 def _process_walk_triple(
-    triple: tuple, start_depth
-) -> Tuple[Tuple[str], Tuple[int]]:
+    triple: tuple, start_depth: int
+) -> Tuple[Tuple[str, ...], Tuple[int, ...]]:
     """
     Process a triple returned by `os.walk()`
 
@@ -400,8 +493,8 @@ def _process_walk_triple(
         `os.walk(path)`
     :return: tuple(lhs_vals), tuple(rhs_vals)
     """
-    lhs_vals = []
-    rhs_vals = []
+    lhs_vals: List[str] = []
+    rhs_vals: List[int] = []
     # If there are subdirectories, do not process.
     if triple[1]:
         return tuple(lhs_vals), tuple(rhs_vals)
@@ -537,6 +630,11 @@ def get_parquet_filters_from_timestamp_interval(
     elif partition_mode == "by_year_week":
         # TODO(gp): Consider using the same approach above for months also here.
         # Partition by year and week.
+        hdbg.dassert_is_not(
+            end_timestamp,
+            None,
+            "Parquet backend can't determine the boundaries of the data",
+        )
         # Include last week in the interval.
         end_timestamp += pd.DateOffset(weeks=1)
         # Get all weeks in the interval.
@@ -667,6 +765,9 @@ def to_partitioned_parquet(
     filesystem = None
     if aws_profile is not None:
         filesystem = hs3.get_s3fs(aws_profile)
+        # ParquetDataset appends an extra "/", creating an empty-named folder
+        #  when saving on S3.
+        dst_dir = dst_dir.rstrip("/")
     with htimer.TimedScope(logging.DEBUG, "# partition_dataset"):
         # Read.
         table = pa.Table.from_pandas(df)
@@ -674,6 +775,10 @@ def to_partitioned_parquet(
         # TODO(gp): add this logic to hparquet.to_parquet as a possible option.
         _LOG.debug(hprint.to_str("partition_columns dst_dir"))
         hdbg.dassert_is_subset(partition_columns, df.columns)
+        # TODO(gp): We would like to avoid overriding existing tiles. It's not clear
+        #  how to do it. Either setting permissions to read-only before writing.
+        #  Or having a list of files that will be written and ensure that none of
+        #  those files already existing.
         pq.write_to_dataset(
             table,
             dst_dir,
@@ -683,13 +788,12 @@ def to_partitioned_parquet(
         )
 
 
-# TODO(Nikola): Currently indirectly tested in
-#  `im_v2/ccxt/data/extract/test/test_download_historical_data.py`.
 def list_and_merge_pq_files(
     root_dir: str,
     *,
     file_name: str = "data.parquet",
     aws_profile: hs3.AwsProfile = None,
+    drop_duplicates_mode: Optional[str] = None,
 ) -> None:
     """
     Merge all files of the Parquet dataset.
@@ -741,9 +845,34 @@ def list_and_merge_pq_files(
             continue
         # Read all files in target folder.
         data = pq.ParquetDataset(folder_files, filesystem=filesystem).read()
+        data = data.to_pandas()
+        # Drop duplicates on all non-metadata columns.
+        # TODO(gp): hparquet is general and we should pass the columns to remove
+        #  or perform the transform after.
+        if drop_duplicates_mode is None:
+            duplicate_columns = data.columns.to_list()
+            for col_name in ["knowledge_timestamp", "end_download_timestamp"]:
+                if col_name in duplicate_columns:
+                    duplicate_columns.remove(col_name)
+            control_column = None
+        elif drop_duplicates_mode == "bid_ask":
+            # Drop duplicates on timestamp index.
+            duplicate_columns = ["timestamp", "exchange_id"]
+            control_column = None
+        elif drop_duplicates_mode == "ohlcv":
+            # Drop duplicates on timestamp and keep one with largest volume.
+            duplicate_columns = ["timestamp", "exchange_id"]
+            control_column = "volume"
+        else:
+            hdbg.dfatal("Supported drop duplicates modes: ohlcv, bid_ask")
+        data = hdatafr.remove_duplicates(data, duplicate_columns, control_column)
         # Remove all old files and write new, merged one.
         filesystem.rm(folder, recursive=True)
-        pq.write_table(data, folder + "/" + file_name, filesystem=filesystem)
+        pq.write_table(
+            pa.Table.from_pandas(data),
+            folder + "/" + file_name,
+            filesystem=filesystem,
+        )
 
 
 def maybe_cast_to_int(string: str) -> Union[str, int]:

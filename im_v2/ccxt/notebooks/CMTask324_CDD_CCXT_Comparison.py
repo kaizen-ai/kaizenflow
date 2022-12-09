@@ -39,6 +39,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+AM_AWS_PROFILE = "am"
 
 # %% [markdown]
 # # Configs
@@ -54,8 +55,10 @@ def get_cmtask324_config_ccxt() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["target_frequency"] = "T"
@@ -83,8 +86,10 @@ def get_cmtask324_config_cdd() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["target_frequency"] = "T"
@@ -184,11 +189,18 @@ currency_pair_intersection_binance = set(ccxt_binance_universe).intersection(
 
 # %%
 vendor_cdd = config_cdd["data"]["vendor"]
+universe_version = "v3"
+resample_1min = True
 root_dir_cdd = config_cdd["load"]["data_dir"]
 extension_cdd = config["data"]["extension"]
 aws_profile_cdd = config_cdd["load"]["aws_profile"]
 cdd_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
-    vendor_cdd, root_dir_cdd, extension_cdd, aws_profile=aws_profile_cdd
+    vendor_cdd,
+    universe_version,
+    resample_1min,
+    root_dir_cdd,
+    extension_cdd,
+    aws_profile=aws_profile_cdd,
 )
 
 start_ts = None
@@ -208,11 +220,18 @@ display(cdd_binance_df.shape)
 
 # %%
 vendor_ccxt = config_ccxt["data"]["vendor"]
+universe_version = "v3"
+resample_1min = True
 root_dir_ccxt = config_ccxt["load"]["data_dir"]
 extension_ccxt = config["data"]["extension"]
 aws_profile_ccxt = config_ccxt["load"]["aws_profile"]
 ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
-    vendor_ccxt, root_dir_ccxt, extension_ccxt, aws_profile=aws_profile_ccxt
+    vendor_ccxt,
+    universe_version,
+    resample_1min,
+    root_dir_ccxt,
+    extension_ccxt,
+    aws_profile=aws_profile_ccxt,
 )
 
 start_ts = None

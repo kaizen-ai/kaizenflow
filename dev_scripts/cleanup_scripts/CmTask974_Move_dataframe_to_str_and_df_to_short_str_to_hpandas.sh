@@ -16,7 +16,7 @@ if [[ 0 == 1 ]]; then
 
     # Create the branch with the changes.
     TARGET_BRANCH=CmTask972_Merge_dataframe_to_str_and_df_to_short_str_into_hpandas_2
-    #i git_create_branch -b $TARGET_BRANCH
+    #i git_branch_create -b $TARGET_BRANCH
     git checkout -B $TARGET_BRANCH
 
     # Clean up.

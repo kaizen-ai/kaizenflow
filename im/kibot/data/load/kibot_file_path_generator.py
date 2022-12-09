@@ -35,6 +35,13 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
         imcodatyp.AssetClass.SP500: "sp_500_",
     }
 
+    @staticmethod
+    def get_latest_symbols_file() -> str:
+        """
+        Get the latest available file with symbols.
+        """
+        raise NotImplementedError
+
     def generate_file_path(
         self,
         symbol: str,
@@ -74,11 +81,9 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
         return file_path
 
     @staticmethod
-    def get_latest_symbols_file() -> str:
-        """
-        Get the latest available file with symbols.
-        """
-        raise NotImplementedError
+    def _generate_unadjusted_modifier(unadjusted: bool) -> str:
+        adjusted_modifier = "unadjusted_" if unadjusted else ""
+        return adjusted_modifier
 
     def _generate_contract_path_modifier(
         self, contract_type: imcodatyp.ContractType
@@ -126,8 +131,3 @@ class KibotFilePathGenerator(imcdlfpage.FilePathGenerator):
                 unadjusted=cast(bool, unadjusted)
             )
         return modifier
-
-    @staticmethod
-    def _generate_unadjusted_modifier(unadjusted: bool) -> str:
-        adjusted_modifier = "unadjusted_" if unadjusted else ""
-        return adjusted_modifier

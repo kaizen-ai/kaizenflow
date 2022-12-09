@@ -1,7 +1,7 @@
 #!/bin/bash
 clear
 
-file_name="tmp.pytest_log.txt"
+file_name="tmp.pytest_script.txt"
 cmd="pytest $* 2>&1 | tee $file_name"
 echo "> $cmd"
 eval $cmd

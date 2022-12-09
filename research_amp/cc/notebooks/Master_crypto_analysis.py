@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -55,6 +55,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+AM_AWS_PROFILE = "am"
 
 # %% [markdown]
 # # Config
@@ -67,8 +68,10 @@ def get_eda_config() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["close_price_col_name"] = "close"
@@ -92,11 +95,15 @@ print(config)
 
 # %%
 vendor = config["data"]["vendor"]
+universe_version = "v3"
+resample_1min = True
 root_dir = config["load"]["data_dir"]
 extension = config["data"]["extension"]
 aws_profile = config["load"]["aws_profile"]
 ccxt_csv_client = icdcl.CcxtCddCsvParquetByAssetClient(
     vendor,
+    universe_version,
+    resample_1min,
     root_dir,
     extension,
     aws_profile=aws_profile,

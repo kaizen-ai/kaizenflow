@@ -1,7 +1,7 @@
 import logging
 import os
 
-import helpers.lib_tasks as hlib
+import helpers.lib_tasks_utils as hlitauti
 
 # Expose the pytest targets.
 # Extract with:
@@ -29,18 +29,17 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-ECR_BASE_PATH = os.environ["AM_ECR_BASE_PATH"]
+CK_ECR_BASE_PATH = os.environ["CK_ECR_BASE_PATH"]
 
 
 default_params = {
-    "ECR_BASE_PATH": ECR_BASE_PATH,
-    # When testing a change to the build system in a branch you can use a different
-    # image, e.g., `XYZ_tmp` to not interfere with the prod system.
+    "CK_ECR_BASE_PATH": CK_ECR_BASE_PATH,
+    # When testing a change to the build system in a branch you can use a
+    # different image, e.g., `XYZ_tmp` to not interfere with the prod system.
     # "BASE_IMAGE": "opt_tmp",
     "BASE_IMAGE": "opt",
-    "DEV_TOOLS_IMAGE_PROD": f"{ECR_BASE_PATH}/dev_tools:prod",
-    # "USE_ONLY_ONE_DOCKER_COMPOSE": True,
+    "DEV_TOOLS_IMAGE_PROD": f"{CK_ECR_BASE_PATH}/dev_tools:prod",
 }
 
 
-hlib.set_default_params(default_params)
+hlitauti.set_default_params(default_params)

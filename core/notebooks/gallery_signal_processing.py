@@ -6,9 +6,9 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
-#     display_name: Python 3
+#     display_name: Python 3 (ipykernel)
 #     language: python
 #     name: python3
 # ---
@@ -241,7 +241,7 @@ linear_growth = pd.Series(index=price.index, data=range(price.size))
 # %%
 for i in range(1, 6):
     csigproc.compute_smooth_derivative(
-        linear_growth, tau=2 ** i, min_periods=0, scaling=1, order=1
+        linear_growth, tau=2**i, min_periods=0, scaling=1, order=1
     ).plot()
 
 # %% [markdown]
@@ -254,7 +254,7 @@ dprice["rets"] = rets
 # %%
 for i in range(0, 7):
     dprice[i] = csigproc.compute_smooth_derivative(
-        price, tau=2 ** i, min_periods=0, scaling=1, order=1
+        price, tau=2**i, min_periods=0, scaling=1, order=1
     )
 
 # %%

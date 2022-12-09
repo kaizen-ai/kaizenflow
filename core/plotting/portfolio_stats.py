@@ -7,6 +7,7 @@ import core.plotting.portfolio_stats as cplposta
 import logging
 from typing import Optional
 
+import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
@@ -56,6 +57,8 @@ def plot_portfolio_stats(
     pnl.plot(ax=axes[0], title="Bar PnL", ylabel="dollars")
     #
     gmv = df.T.xs("gmv", level=1).T
+    # Zero-GMV "bars" lead to noise in some plots. Remove these.
+    gmv = gmv.replace(0, np.nan)
     # TODO(Paul): Make the unit configurable.
     pnl_rel = pnl.divide(gmv)
     (1e4 * pnl_rel).plot(ax=axes[1], title="Bar PnL", ylabel="bps")

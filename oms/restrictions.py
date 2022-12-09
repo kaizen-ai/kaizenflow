@@ -54,6 +54,12 @@ class Restrictions:
         self._restrictions = restrictions
         return restrictions
 
+    @staticmethod
+    def _check_nonempty_str(string: str) -> str:
+        hdbg.dassert_isinstance(string, str)
+        hdbg.dassert(string, "String must be nonempty.")
+        return string
+
     def _get_trading_restrictions(self) -> pd.DataFrame:
         query = []
         query.append(f"SELECT * FROM {self._table_name}")
@@ -84,9 +90,3 @@ class Restrictions:
                 "Each asset_id should be unique in a restrictions_df",
             )
         return restrictions_df
-
-    @staticmethod
-    def _check_nonempty_str(string: str) -> str:
-        hdbg.dassert_isinstance(string, str)
-        hdbg.dassert(string, "String must be nonempty.")
-        return string

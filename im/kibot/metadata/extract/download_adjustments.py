@@ -112,6 +112,12 @@ class DownloadAdjustmentsCommand(imkibacom.KibotCommand):
             requires_api_login=True,
         )
 
+    @staticmethod
+    def customize_parser(parser: argparse.ArgumentParser) -> None:
+        parser.add_argument(
+            "--serial", action="store_true", help="Download data serially"
+        )
+
     def customize_run(self) -> int:
         symbols = _get_symbols_list()
 
@@ -126,12 +132,6 @@ class DownloadAdjustmentsCommand(imkibacom.KibotCommand):
         )
 
         return 0
-
-    @staticmethod
-    def customize_parser(parser: argparse.ArgumentParser) -> None:
-        parser.add_argument(
-            "--serial", action="store_true", help="Download data serially"
-        )
 
 
 if __name__ == "__main__":

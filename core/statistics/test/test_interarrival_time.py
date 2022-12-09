@@ -34,8 +34,8 @@ class TestGetInterarrivalTime(hunitest.TestCase):
         n = 100
         start = pd.to_datetime("2015-01-01")
         end = pd.to_datetime("2018-01-01")
-        start_u = start.value // 10 ** 9
-        end_u = end.value // 10 ** 9
+        start_u = start.value // 10**9
+        end_u = end.value // 10**9
         np.random.seed(seed=seed)
         dates = pd.to_datetime(np.random.randint(start_u, end_u, n), unit="s")
         sorted_dates = dates.sort_values()

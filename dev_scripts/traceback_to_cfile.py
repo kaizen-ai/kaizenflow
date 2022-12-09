@@ -47,7 +47,7 @@ def _parse() -> argparse.ArgumentParser:
     parser = hparser.add_bool_arg(
         parser,
         "purify_from_client",
-        default=True,
+        default_value=True,
         help_="Make references to files in the current client",
     )
     parser = hparser.add_verbosity_arg(parser)
@@ -65,7 +65,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         cmd = 'find . -type f -name "*.log" | xargs ls -1 -t'
         # > find . -type f -name "*.log" | xargs ls -1 -t
         # ./run.log
-        # ./amp/core/dataflow_model/run_experiment.py.log
+        # ./amp/core/dataflow/backtest/run_config_list.py.log
         # ./experiments/RH1E/result_1/run_notebook.1.log
         # ./experiments/RH1E/result_0/run_notebook.0.log
         dir_name = None

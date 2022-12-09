@@ -5,7 +5,7 @@ import logging
 import pandas as pd
 
 import core.artificial_signal_generators as carsigen
-import core.finance as cofinanc
+import core.finance.ablation as cfinabla
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -19,7 +19,7 @@ class Test_set_non_ath_to_nan1(hunitest.TestCase):
         df = self._get_df()
         start_time = datetime.time(9, 30)
         end_time = datetime.time(16, 0)
-        act = cofinanc.set_non_ath_to_nan(df, start_time, end_time)
+        act = cfinabla.set_non_ath_to_nan(df, start_time, end_time)
         exp = """
                               open   high    low  close        vol
         datetime
@@ -61,7 +61,7 @@ class Test_remove_times_outside_window(hunitest.TestCase):
         df = self._get_df()
         start_time = datetime.time(9, 29)
         end_time = datetime.time(16, 0)
-        actual = cofinanc.remove_times_outside_window(df, start_time, end_time)
+        actual = cfinabla.remove_times_outside_window(df, start_time, end_time)
         expected_txt = """
 datetime,open,high,low,close,vol
 2016-01-05 09:30:00,98.14,98.24,97.79,98.01,751857
@@ -80,7 +80,7 @@ datetime,open,high,low,close,vol
         df = self._get_df()
         start_time = datetime.time(9, 29)
         end_time = datetime.time(16, 0)
-        actual = cofinanc.remove_times_outside_window(
+        actual = cfinabla.remove_times_outside_window(
             df, start_time, end_time, bypass=True
         )
         self.assert_dfs_close(actual, df)
@@ -115,7 +115,7 @@ class Test_set_weekends_to_nan(hunitest.TestCase):
         df = mn_process.generate_sample(
             {"start": "2020-01-01", "periods": 40, "freq": "D"}, seed=1
         )
-        actual = cofinanc.set_weekends_to_nan(df)
+        actual = cfinabla.set_weekends_to_nan(df)
         actual_string = hunitest.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -128,7 +128,7 @@ class Test_set_weekends_to_nan(hunitest.TestCase):
         df = mn_process.generate_sample(
             {"start": "2020-01-05 23:00:00", "periods": 100, "freq": "T"}, seed=1
         )
-        actual = cofinanc.set_weekends_to_nan(df)
+        actual = cfinabla.set_weekends_to_nan(df)
         actual_string = hunitest.convert_df_to_string(actual, index=True)
         self.check_string(actual_string)
 
@@ -136,7 +136,7 @@ class Test_set_weekends_to_nan(hunitest.TestCase):
 class Test_remove_weekends(hunitest.TestCase):
     def test_remove(self) -> None:
         df = self._get_df()
-        actual = cofinanc.remove_weekends(df)
+        actual = cfinabla.remove_weekends(df)
         expected_txt = """
 datetime,close,volume
 2016-01-01,NaN,NaN
@@ -155,7 +155,7 @@ datetime,close,volume
 
     def test_bypass(self) -> None:
         df = self._get_df()
-        actual = cofinanc.remove_weekends(df, bypass=True)
+        actual = cfinabla.remove_weekends(df, bypass=True)
         self.assert_dfs_close(actual, df)
 
     @staticmethod

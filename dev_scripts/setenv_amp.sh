@@ -7,6 +7,9 @@
 PWD=$(pwd)
 AMP=$PWD
 
+# Give permissions to read / write to user and group.
+umask 002
+
 # #############################################################################
 # Virtual env
 # #############################################################################
@@ -18,7 +21,7 @@ if [[ ! -d $VENV_DIR ]]; then
     # The venv in the container is in a different spot. Check that.
     VENV_DIR="/venv/amp.client_venv"
     if [[ ! -d $VENV_DIR ]]; then
-        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'"
+        echo "ERROR: Can't find VENV_DIR='$VENV_DIR'. Create it with client_setup/build.sh"
         return -1
     fi;
 fi;
@@ -56,6 +59,7 @@ export PATH=$AMP/dev_scripts/testing:$PATH
 export PATH=$(echo $PATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
 # Print.
+echo "PATH="
 echo $PATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################
@@ -68,7 +72,8 @@ export PYTHONPATH=$PWD:$PYTHONPATH
 # Remove duplicates.
 export PYTHONPATH=$(echo $PYTHONPATH | perl -e 'print join(":", grep { not $seen{$_}++ } split(/:/, scalar <>))')
 
-# Print.
+# Print on different lines.
+echo "PYTHONPATH="
 echo $PYTHONPATH | perl -e 'print join("\n", grep { not $seen{$_}++ } split(/:/, scalar <>))'
 
 # #############################################################################

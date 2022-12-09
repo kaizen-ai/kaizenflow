@@ -2,7 +2,7 @@ from typing import List
 
 import pandas as pd
 
-import im_v2.common.data.client.test.im_client_test_case as icdctictc
+import im_v2.common.data.client as icdc
 import im_v2.kibot.data.client.kibot_clients_example as imvkdckcex
 
 # #############################################################################
@@ -10,8 +10,7 @@ import im_v2.kibot.data.client.kibot_clients_example as imvkdckcex
 # #############################################################################
 
 
-class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
-
+class TestKibotEquitiesCsvParquetByAssetClient(icdc.ImClientTestCase):
     def test_read_csv_data1(self) -> None:
         full_symbol = "kibot::HD"
         unadjusted = False
@@ -382,8 +381,7 @@ class TestKibotEquitiesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
 # #############################################################################
 
 
-class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
-
+class TestKibotFuturesCsvParquetByAssetClient(icdc.ImClientTestCase):
     def test_read_csv_data1(self) -> None:
         full_symbol = "kibot::ZI"
         contract_type = "continuous"
@@ -466,7 +464,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             contract_type, resample_1min
         )
         #
-        expected_length = 1207
+        expected_length = 1602
         expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::ZI", "kibot::EZ"]
@@ -474,18 +472,18 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[2009-09-28 19:25:00+00:00, 2009-09-29 13:43:00+00:00]
+        index=[2009-09-28 19:25:00+00:00, 2009-09-29 20:18:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(1207, 6)
+        shape=(1602, 6)
                                   full_symbol   open   high    low  close  volume
         timestamp
         2009-09-28 19:25:00+00:00   kibot::ZI  16.23  16.23  16.23  16.23     1.0
         2009-09-28 19:26:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
         2009-09-28 19:27:00+00:00   kibot::ZI    NaN    NaN    NaN    NaN     NaN
         ...
-        2009-09-29 13:41:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 13:42:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
-        2009-09-29 13:43:00+00:00   kibot::ZI  16.206  16.206  16.206  16.206     1.0
+        2009-09-29 20:16:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 20:17:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
+        2009-09-29 20:18:00+00:00   kibot::ZI  16.169  16.169  16.169  16.169     1.0
         """
         # pylint: enable=line-too-long
         self._test_read_data2(
@@ -545,7 +543,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         )
         end_ts = pd.Timestamp("2009-09-29T03:55:00+00:00")
         #
-        expected_length = 2468
+        expected_length = 2477
         expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::W"]}
         # pylint: disable=line-too-long
@@ -553,7 +551,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         # df=
         index=[2009-09-27 19:00:00+00:00, 2009-09-29 03:55:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(2468, 6)
+        shape=(2477, 6)
                                   full_symbol   open   high    low  close  volume
         timestamp
         2009-09-27 19:00:00+00:00    kibot::W  462.0  462.1  452.0  457.0   762.0
@@ -586,20 +584,20 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             contract_type, resample_1min
         )
         #
-        expected_length = 19
+        expected_length = 26
         expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::W"]}
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[2009-09-29 03:38:00+00:00, 2009-09-29 03:55:00+00:00]
+       index=[2009-09-29 03:38:00+00:00, 2009-09-29 03:55:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(19, 6)
+        shape=(26, 6)
                                   full_symbol     open    high     low   close  volume
         timestamp
         2009-09-29 03:38:00+00:00    kibot::W  459.250  459.25  459.25  459.25     1.0
         2009-09-29 03:38:00+00:00   kibot::ZI   16.224  16.224  16.204  16.204     4.0
-        2009-09-29 03:39:00+00:00   kibot::ZI      NaN     NaN     NaN     NaN     NaN
+        2009-09-29 03:39:00+00:00    kibot::W      NaN     NaN     NaN     NaN     NaN
         ...
         2009-09-29 03:53:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
         2009-09-29 03:54:00+00:00   kibot::ZI     NaN     NaN     NaN     NaN     NaN
@@ -757,7 +755,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             contract_type, resample_1min
         )
         #
-        expected_length = 144
+        expected_length = 203
         expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {"full_symbol": ["kibot::ZI", "kibot::W"]}
         # pylint: disable=line-too-long
@@ -765,17 +763,17 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         # df=
         index=[2009-09-27 19:00:00+00:00, 2009-09-29 21:37:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(144, 6)
+        shape=(203, 6)
                                   full_symbol     open     high      low    close  volume
         timestamp
         2009-09-27 19:00:00+00:00    kibot::W  462.000    462.1    452.0    457.0     762
         2009-09-28 19:25:00+00:00   kibot::ZI   16.230  16.23.1  16.23.2  16.23.3       1
         2009-09-28 20:22:00+00:00   kibot::ZI   16.255   16.255   16.255   16.255       1
         ...
-        2009-09-29 13:24:00+00:00   kibot::ZI  16.172  16.172  16.172  16.172       1
-        2009-09-29 13:43:00+00:00   kibot::ZI  16.206  16.206  16.206  16.206       1
+        2009-09-29 15:26:00+00:00   kibot::ZI  16.200    16.2    16.2    16.2       1
+        2009-09-29 20:18:00+00:00   kibot::ZI  16.169  16.169  16.169  16.169       1
         2009-09-29 21:37:00+00:00   kibot::ZI  16.230   16.23   16.23   16.23       1
-                """
+        """
         # pylint: enable=line-too-long
         self._test_read_data7(
             client,
@@ -794,7 +792,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
             contract_type, resample_1min
         )
         #
-        expected_length = 185
+        expected_length = 200
         expected_column_names = _get_expected_column_names()
         expected_column_unique_values = {
             "full_symbol": ["kibot::ZI", "kibot::EZ"]
@@ -802,18 +800,18 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
-        index=[2009-09-28 19:25:00+00:00, 2009-09-29 13:43:00+00:00]
+        index=[2009-09-28 19:25:00+00:00, 2009-09-29 20:18:00+00:00]
         columns=full_symbol,open,high,low,close,volume
-        shape=(185, 6)
+        shape=(200, 6)
                                   full_symbol    open    high     low   close  volume
         timestamp
         2009-09-28 19:25:00+00:00   kibot::ZI  16.230  16.230  16.230  16.230       1
         2009-09-28 20:22:00+00:00   kibot::ZI  16.255  16.255  16.255  16.255       1
         2009-09-28 21:29:00+00:00   kibot::ZI  16.195  16.195  16.195  16.195       1
         ...
-        2009-09-29 13:22:00+00:00   kibot::ZI  16.182  16.182  16.177  16.182       5
-        2009-09-29 13:24:00+00:00   kibot::ZI  16.172  16.172  16.172  16.172       1
-        2009-09-29 13:43:00+00:00   kibot::ZI  16.206  16.206  16.206  16.206       1
+        2009-09-29 15:21:00+00:00   kibot::ZI  16.190  16.190  16.190  16.190       1
+        2009-09-29 15:26:00+00:00   kibot::ZI  16.200  16.200  16.200  16.200       1
+        2009-09-29 20:18:00+00:00   kibot::ZI  16.169  16.169  16.169  16.169       1
         """
         # pylint: enable=line-too-long
         self._test_read_data7(
@@ -848,7 +846,7 @@ class TestKibotFuturesCsvParquetByAssetClient(icdctictc.ImClientTestCase):
         client = imvkdckcex.get_KibotFuturesCsvParquetByAssetClient_example2(
             contract_type, resample_1min
         )
-        expected_end_ts = pd.to_datetime("2009-09-29 13:43:00", utc=True)
+        expected_end_ts = pd.to_datetime("2009-09-29 20:18:00", utc=True)
         self._test_get_end_ts_for_symbol1(client, full_symbol, expected_end_ts)
 
     # ////////////////////////////////////////////////////////////////////////

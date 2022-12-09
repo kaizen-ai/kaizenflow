@@ -9,11 +9,14 @@ import logging
 from typing import Any, Optional, Tuple, Type
 
 import helpers.hdbg as hdbg
+import helpers.hobject as hobject
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): It could be in helpers since it's a basic data structure.
 
-class KeySortedOrderedDict:
+
+class KeySortedOrderedDict(hobject.PrintableMixin):
     """
     Key-value pairs where insertion order respects key order.
     """
@@ -77,4 +80,6 @@ class KeySortedOrderedDict:
         odict = collections.OrderedDict()
         for key in reversed(tmp_odict):
             odict[key] = tmp_odict[key]
+        #
+        hdbg.dassert_isinstance(odict, collections.OrderedDict)
         return odict

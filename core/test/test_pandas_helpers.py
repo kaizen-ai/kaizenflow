@@ -3,6 +3,7 @@ import logging
 
 import numpy as np
 import pandas as pd
+import pytest
 
 import core.pandas_helpers as cpanh
 import helpers.hprint as hprint
@@ -15,7 +16,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestResampleIndex1(hunitest.TestCase):
-
     def test1(self) -> None:
         index = pd.date_range(start="01-04-2018", periods=200, freq="30T")
         df = pd.DataFrame(np.random.rand(len(index), 3), index=index)
@@ -36,7 +36,6 @@ class TestResampleIndex1(hunitest.TestCase):
 
 
 class TestDfRollingApply(hunitest.TestCase):
-
     def test1(self) -> None:
         """
         Test with function returning a pd.Series.
@@ -74,6 +73,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
+    @pytest.mark.slow
     def test2(self) -> None:
         """
         Test with function returning a pd.Series.
@@ -89,6 +89,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
+    @pytest.mark.slow
     def test3(self) -> None:
         """
         Test with function returning a pd.DataFrame.
@@ -107,6 +108,7 @@ class TestDfRollingApply(hunitest.TestCase):
         self.assert_equal(df_act.to_string(), df_exp.to_string())
         self.check_string(df_act.to_string())
 
+    @pytest.mark.slow
     def test4(self) -> None:
         """
         Test with function returning a pd.DataFrame with multiple lines.

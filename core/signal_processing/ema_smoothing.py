@@ -113,7 +113,7 @@ def compute_smooth_derivative(
         differential = gamma * (s1 + s2 + s3)
         if scaling == 0:
             return differential
-        return differential / (tau ** scaling)
+        return differential / (tau**scaling)
 
     signal_diff = signal.copy()
     for _ in range(0, order):
@@ -434,7 +434,7 @@ def compute_rolling_skew(
         signal, tau_z, min_periods, min_depth, max_depth, p_moment
     )
     skew = compute_smooth_moving_average(
-        z_signal ** 3, tau_s, min_periods, min_depth, max_depth
+        z_signal**3, tau_s, min_periods, min_depth, max_depth
     )
     return skew
 
@@ -455,7 +455,7 @@ def compute_rolling_kurtosis(
         signal, tau_z, min_periods, min_depth, max_depth, p_moment
     )
     kurt = compute_smooth_moving_average(
-        z_signal ** 4, tau_s, min_periods, min_depth, max_depth
+        z_signal**4, tau_s, min_periods, min_depth, max_depth
     )
     return kurt
 
@@ -485,7 +485,7 @@ def compute_rolling_annualized_sharpe_ratio(
         signal, tau, min_periods, min_depth, max_depth, p_moment
     )
     # TODO(*): May need to rescale denominator by a constant.
-    se_sr = np.sqrt((1 + (sr ** 2) / 2) / (tau * max_depth))
+    se_sr = np.sqrt((1 + (sr**2) / 2) / (tau * max_depth))
     rescaled_sr = np.sqrt(points_per_year) * sr
     rescaled_se_sr = np.sqrt(points_per_year) * se_sr
     df = pd.DataFrame(index=signal.index)
@@ -632,7 +632,7 @@ def get_dyadic_zscored(
     zscored = {}
     for tau_pow in range(1, pow2_ceil):
         zscored[tau_pow] = compute_rolling_zscore(
-            sig, tau=2 ** tau_pow, demean=demean, **kwargs
+            sig, tau=2**tau_pow, demean=demean, **kwargs
         )
     df = pd.DataFrame.from_dict(zscored)
     return df

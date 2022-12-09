@@ -251,6 +251,7 @@ def _replace(
     :param backup: make a backup of the file before the replacement
     :param mode: `replace_with_perl` or `replace_with_python`
     """
+    hdbg.dassert_ne(old_regex, new_regex)
     _LOG.info(
         "Found %s files:\n%s",
         len(file_names_to_process),
@@ -488,9 +489,11 @@ def _get_files_to_rename(
             else:
                 raise ValueError(f"Unsupported 'replace_in'={replace_in}")
             # Store the new file name.
-            _LOG.debug("File='%s', found=%s", filename, found)
-            file_names_to_process.append(filename)
-            file_map[filename] = new_filename
+            _LOG.debug(hprint.to_str("filename found new_filename"))
+            if filename != new_filename:
+                file_names_to_process.append(filename)
+                hdbg.dassert_ne(filename, new_filename)
+                file_map[filename] = new_filename
     _LOG.info("Found %s files to rename", len(file_names_to_process))
     if file_map:
         _LOG.info("Replacing:\n%s", pprint.pformat(file_map))
@@ -589,19 +592,25 @@ def _parse() -> argparse.ArgumentParser:
         "--only_dirs",
         action="append",
         default=None,
-        help="Directories to process",
+        help="Space-separated list of directories to process",
     )
     parser.add_argument(
         "--only_files",
         action="store",
         default=None,
-        help="Files to process",
+        help="Space-separated list of files to process",
     )
     parser.add_argument(
         "--exclude_files",
         action="store",
         default=None,
-        help="Files to exclude",
+        help="Space-separated list of files to exclude from replacements",
+    )
+    parser.add_argument(
+        "--exclude_dirs",
+        action="store",
+        default=None,
+        help="Space-separated dir to exclude from replacements",
     )
     hparser.add_verbosity_arg(parser)
     return parser
@@ -645,8 +654,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
         _LOG.info("extensions=%s", exts)
         # Find all the files with the correct extension.
         file_names = _get_all_files(dirs, exts)
+        # Use only specific files.
         if args.only_files:
-            # Use only specific files.
             only_files_list = args.only_files.split(" ")
             num_files_before = len(file_names)
             _LOG.info("Using only_files=%s", only_files_list)
@@ -662,6 +671,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 num_files_before,
                 num_files_after,
             )
+        # Exclude files.
         if args.exclude_files:
             exclude_files_list = args.exclude_files.split(" ")
             num_files_before = len(file_names)
@@ -677,8 +687,24 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 num_files_before,
                 num_files_after,
             )
-        _LOG.info("Found %s target files to process", len(file_names))
+        # Exclude dirs.
+        if args.exclude_dirs:
+            exclude_dirs_list = args.exclude_dirs.split(" ")
+            num_files_before = len(file_names)
+            _LOG.info("Excluding dirs=%s", exclude_dirs_list)
+            file_names = [
+                file_name
+                for file_name in file_names
+                if os.path.normpath(os.path.dirname(file_name)) not in exclude_dirs_list
+            ]
+            num_files_after = len(file_names)
+            _LOG.info(
+                "num_files_before=%s num_files_after=%s",
+                num_files_before,
+                num_files_after,
+            )
         # Process the actions.
+        _LOG.info("Found %s target files to process", len(file_names))
         if args.filter_by is None:
             # Filter the files by the string that is going to be replaced.
             filter_by = args.old

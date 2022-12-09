@@ -10,8 +10,8 @@ collecting ... >>ENV<<: is_inside_container=True: code_version=1.0.6, container_
     hash='ca2dbf510'
     # Last commits:
       *   ca2dbf510 Sonya Nikiforova Merge branch 'master' into CmTask695_Unify_pytest_outputs_for_run_fast_slow_tests (   2 hours ago) Mon Feb 14 16:25:29 2022  (HEAD -> CmTask695_Unify_pytest_outputs_for_run_fast_slow_tests, origin/CmTask695_Unify_pytest_outputs_for_run_fast_slow_tests)
-      |\  
-      * | 63a471cca sonniki  CmTask695: Update for reproducibility                             (   2 hours ago) Mon Feb 14 16:15:14 2022           
+      |\
+      * | 63a471cca sonniki  CmTask695: Update for reproducibility                             (   2 hours ago) Mon Feb 14 16:15:14 2022
       | * 0d236ad57 Nikola Jašek CMTask1103: Add tests for HistoricalPqByTileClient (#1176)        (   2 hours ago) Mon Feb 14 16:01:56 2022  (origin/master, origin/HEAD)
 # Machine info
     system=Linux
@@ -66,7 +66,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 666, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: TestHistoricalPqByTileClient1.test_read_data1
 --------------------------------------------------------------------------------
@@ -96,7 +96,7 @@ index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
 columns=full_symbol,close,year,month
 shape=(4320, 4)
                            full_symbol  close  year month
-timestamp                                                
+timestamp
 2021-12-30 00:00:00+00:00   1467591036      0  2021    12
 2021-12-30 00:01:00+00:00   1467591036      1  2021    12
 2021-12-30 00:02:00+00:00   1467591036      2  2021    12
@@ -118,7 +118,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 666, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: TestHistoricalPqByTileClient1.test_read_data2
 --------------------------------------------------------------------------------
@@ -148,7 +148,7 @@ index=[2021-12-30 00:00:00+00:00, 2022-01-01 23:59:00+00:00]
 columns=full_symbol,close,year,month
 shape=(8640, 4)
                            full_symbol  close  year month
-timestamp                                                
+timestamp
 2021-12-30 00:00:00+00:00   1467591036      0  2021    12
 2021-12-30 00:00:00+00:00   1508924190      0  2021    12
 2021-12-30 00:01:00+00:00   1467591036      1  2021    12
@@ -170,7 +170,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 666, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: TestHistoricalPqByTileClient1.test_read_data3
 --------------------------------------------------------------------------------
@@ -200,7 +200,7 @@ index=[2022-01-01 02:00:00+00:00, 2022-01-01 23:59:00+00:00]
 columns=full_symbol,close,year,month
 shape=(2640, 4)
                            full_symbol  close  year month
-timestamp                                                
+timestamp
 2022-01-01 02:00:00+00:00   1467591036   3000  2022     1
 2022-01-01 02:00:00+00:00   1508924190   3000  2022     1
 2022-01-01 02:01:00+00:00   1467591036   3001  2022     1
@@ -222,7 +222,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 666, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: TestHistoricalPqByTileClient1.test_read_data4
 --------------------------------------------------------------------------------
@@ -252,7 +252,7 @@ index=[2021-12-30 00:00:00+00:00, 2022-01-01 02:00:00+00:00]
 columns=full_symbol,close,year,month
 shape=(6002, 4)
                            full_symbol  close  year month
-timestamp                                                
+timestamp
 2021-12-30 00:00:00+00:00   1467591036      0  2021    12
 2021-12-30 00:00:00+00:00   1508924190      0  2021    12
 2021-12-30 00:01:00+00:00   1467591036      1  2021    12
@@ -274,7 +274,7 @@ Traceback (most recent call last):
     diff_files(
   File "/app/helpers/hunit_test.py", line 666, in diff_files
     raise RuntimeError(msg_as_str)
-RuntimeError: 
+RuntimeError:
 --------------------------------------------------------------------------------
 FUZZY ACTUAL vs EXPECTED: TestHistoricalPqByTileClient1.test_read_data5
 --------------------------------------------------------------------------------
@@ -304,7 +304,7 @@ index=[2021-12-31 23:00:00+00:00, 2022-01-01 01:00:00+00:00]
 columns=full_symbol,close,year,month
 shape=(242, 4)
                            full_symbol  close  year month
-timestamp                                                
+timestamp
 2021-12-31 23:00:00+00:00   1467591036   2820  2021    12
 2021-12-31 23:00:00+00:00   1508924190   2820  2021    12
 2021-12-31 23:01:00+00:00   1467591036   2821  2021    12

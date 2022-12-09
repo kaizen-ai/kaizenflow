@@ -9,7 +9,6 @@ from typing import Iterator
 
 import numpy as np
 
-
 # From https://stackoverflow.com/questions/49555991
 @contextlib.contextmanager
 def random_seed_context(seed: int) -> Iterator:

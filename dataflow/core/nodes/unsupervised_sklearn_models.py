@@ -8,7 +8,9 @@ import collections
 import logging
 from typing import Any, Callable, Dict, Optional, Tuple
 
+import numpy as np
 import pandas as pd
+import sklearn.impute as skimput
 
 import core.data_adapters as cdatadap
 import dataflow.core.node as dtfcornode
@@ -229,12 +231,30 @@ class _ResidualizerMixin:
         df = df_in.copy()
         # Determine index where no x_vars are NaN.
         x_vars = df.columns.to_list()
-        non_nan_idx = df[x_vars].dropna().index
-        hdbg.dassert(not non_nan_idx.empty)
+        all_nan_cols_srs = df.isna().all()
+        # If a column has all-NaNs, then impute the values. This behavior makes
+        # the model more robust to universe jitter. If the number of all-NaN
+        # columns is large as a percentage of the columns, performance will
+        # suffer.
+        all_nan_cols = all_nan_cols_srs[all_nan_cols_srs].index.to_list()
+        all_nan_col_threshold = 0.1
+        if len(all_nan_cols) / len(x_vars) > all_nan_col_threshold:
+            _LOG.warning(
+                "Fraction of all-NaN columns exceeds %f." % all_nan_col_threshold
+            )
+        # Drop rows with all NaNs.
+        non_nan_idx = df[x_vars].dropna(how="all").index
+        hdbg.dassert(
+            not non_nan_idx.empty,
+            "There are no non-NaN indices available for training.",
+        )
         # Handle presence of NaNs according to `nan_mode`.
         _handle_nans(self._nan_mode, df.index, non_nan_idx)
         # Prepare x_vars in sklearn format.
         x_fit = cdatadap.transform_to_sklearn(df.loc[non_nan_idx], x_vars)
+        # Impute NaNs cross-sectionally (row-wise).
+        imputer = skimput.SimpleImputer(missing_values=np.nan, strategy="mean")
+        x_fit = np.transpose(imputer.fit_transform(np.transpose(x_fit)))
         if fit:
             # Define and fit model.
             self._model = self._model_func(**self._model_kwargs)

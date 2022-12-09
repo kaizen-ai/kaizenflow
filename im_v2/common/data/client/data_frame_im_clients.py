@@ -10,20 +10,20 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import im_v2.common.data.client as icdc
 import im_v2.common.data.client.base_im_clients as imvcdcbimcl
-import im_v2.common.data.client.full_symbol as imvcdcfusy
+import im_v2.common.universe as ivcu
 
 
 class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
     """
-    `ImClient` that serves data from a passed dataframe indexed with timestamps.
+    `ImClient` that serves data from a passed dataframe indexed with
+    timestamps.
     """
 
     def __init__(
         self,
         df: pd.DataFrame,
-        universe: List[icdc.FullSymbol],
+        universe: List[ivcu.FullSymbol],
         resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
@@ -42,7 +42,7 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         ```
         """
         # Validate that the input universe is a non-empty list.
-        hdbg.dassert_container_type(universe, list, icdc.FullSymbol)
+        hdbg.dassert_container_type(universe, list, ivcu.FullSymbol)
         hdbg.dassert_lte(1, len(universe))
         # Set the input universe before calling the parent class ctor since
         # it is used by `get_universe()` which is necessary for the parent
@@ -50,11 +50,20 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self._universe = sorted(universe)
         # Initialise the parent class.
         vendor = "data_frame"
+        # For this specific client we pass the universe to the ctor, so
+        # the version is not needed, i.e. could be any. Passing here just
+        # to make the parent class happy.
+        universe_version = None
         super().__init__(
-            vendor, resample_1min, full_symbol_col_name=full_symbol_col_name
+            vendor,
+            universe_version,
+            resample_1min,
+            full_symbol_col_name=full_symbol_col_name,
         )
         # Validate and set input dataframe.
-        self._validate_df(df)
+        hpandas.dassert_time_indexed_df(
+            df, allow_empty=False, strictly_increasing=False
+        )
         self._df = df
 
     @staticmethod
@@ -64,35 +73,19 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         """
         raise NotImplementedError
 
-    def get_universe(self) -> List[icdc.FullSymbol]:
+    def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         See description in the parent class.
         """
         return self._universe
 
-    @staticmethod
-    def _validate_df(df: pd.DataFrame) -> None:
-        """
-        Validate that input dataframe has the correct format.
-
-        Note that further sanity checks of the data (e.g., index has timestamps
-        with timezones, index is increasing) are performed when emitting the
-        data by parent's class `_dassert_output_data_is_valid()`.
-        """
-        # Verify that a non-empty dataframe is passed as input.
-        hdbg.dassert_isinstance(df, pd.DataFrame)
-        hdbg.dassert_lt(0, df.shape[0])
-        # Verify that the dataframe has at least 1 column.
-        hdbg.dassert_lte(1, len(df.columns))
-        # Verify that the index is increasing.
-        hpandas.dassert_increasing_index(df)
-
+    # TODO(Dan): Implement usage of `columns` parameter.
     def _read_data_for_multiple_symbols(
         self,
-        full_symbols: List[imvcdcfusy.FullSymbol],
+        full_symbols: List[ivcu.FullSymbol],
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
-        *,
+        columns: Optional[List[str]],
         full_symbol_col_name: str,
         **kwargs: Any,
     ) -> pd.DataFrame:

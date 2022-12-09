@@ -1,4 +1,4 @@
-            ret_0                       close                      volume               
+            ret_0                       close                      volume
               MN0    MN1    MN2    MN3    MN0    MN1    MN2    MN3    MN0  MN1  MN2  MN3
 2000-01-03    NaN    NaN    NaN    NaN  0.912  0.938  0.905  0.935    100  100  100  100
 2000-01-04 -0.091  0.030 -0.028  0.079  0.829  0.966  0.880  1.009    100  100  100  100

@@ -11,7 +11,7 @@ from typing import List, Optional, Union
 
 import pandas as pd
 
-import dataflow.model.forecast_evaluator as dtfmofoeva
+import dataflow.model.forecast_evaluator_from_returns as dtfmfefrre
 import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
@@ -34,7 +34,7 @@ class ForecastMixer:
         self._volatility_col = volatility_col
         hdbg.dassert_isinstance(prediction_cols, list)
         self._predictions_cols = prediction_cols
-        self._forecast_evaluator = dtfmofoeva.ForecastEvaluator(
+        self._forecast_evaluator = dtfmfefrre.ForecastEvaluatorFromReturns(
             returns_col="returns",
             volatility_col="volatility",
             prediction_col="prediction",

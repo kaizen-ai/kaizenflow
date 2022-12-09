@@ -55,8 +55,8 @@ def plot_histograms_and_lagged_scatterplot(
     srs = hdatafr.apply_nan_mode(srs, mode=nan_mode)
     # Divide timeseries to two parts.
     oos_start = oos_start or srs.index.tolist()[len(srs) // 2]
-    srs_first_part = srs[:oos_start]
-    srs_second_part = srs[oos_start:]
+    srs_first_part = srs[:oos_start]  # type: ignore[misc]
+    srs_second_part = srs[oos_start:]  # type: ignore[misc]
     # Plot histograms.
     if axes is None:
         _, axes = cplpluti.get_multiple_plots(3, 2, y_scale=figsize[1] / 2)

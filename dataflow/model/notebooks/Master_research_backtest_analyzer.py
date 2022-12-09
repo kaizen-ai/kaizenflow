@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.3
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -20,13 +20,11 @@
 import datetime
 import logging
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
 import core.finance as cofinanc
 import core.plotting as coplotti
-import core.statistics as costatis
 import dataflow.model as dtfmod
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -48,10 +46,10 @@ hprint.config_notebook()
 
 # %%
 tile_dict = {
-    "dir_name": "/app/build_tile_configs.../tiled_results/",
-    "asset_id_col": "",
+    "dir_name": "/app/build_tile_config_list.../tiled_results/",
+    "asset_id_col": "asset_id",
 }
-tile_config = cconfig.get_config_from_nested_dict(tile_dict)
+tile_config = cconfig.Config.from_dict(tile_dict)
 
 # %% [markdown]
 # ## Report tile stats
@@ -104,27 +102,26 @@ single_tile_df.head(3)
 fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
-    "prediction_col": "prediction",
-    "first_bar_of_day_open": datetime.time(9, 30),
-    "first_bar_of_day_close": datetime.time(9, 45),
-    "last_bar_of_day_close": datetime.time(16, 0),
-    "target_gmv": 1e6,
-    "dollar_neutrality": "gaussian_rank",
-    "quantization": "nearest_lot",
+    "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+    # "bulk_frac_to_remove": 0.0,
+    # "bulk_fill_method": "zero",
+    # "target_gmv": 1e6,
+    # "dollar_neutrality": "gaussian_rank",
+    "quantization": "nearest_share",
+    "burn_in_bars": 3,
+    "style": "longitudinal",
 }
-fep_config = cconfig.get_config_from_nested_dict(fep_dict)
+fep_config = cconfig.Config.from_dict(fep_dict)
 
 # %%
 fep = dtfmod.ForecastEvaluatorFromPrices(
     fep_config["price_col"],
     fep_config["volatility_col"],
     fep_config["prediction_col"],
-    first_bar_of_day_open=fep_config["first_bar_of_day_open"],
-    first_bar_of_day_close=fep_config["first_bar_of_day_close"],
-    last_bar_of_day_close=fep_config["last_bar_of_day_close"],
 )
 
 # %%
+# Create backtest dataframe tile iterator.
 backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     tile_config["dir_name"],
     datetime.date(2011, 1, 1),
@@ -134,14 +131,17 @@ backtest_df_iter = dtfmod.yield_processed_parquet_tiles_by_year(
     asset_ids=None,
 )
 
-# %%
+# Process the dataframes in the interator.
 bar_metrics = []
 for df in backtest_df_iter:
     _, bar_metrics_slice = fep.annotate_forecasts(
         df,
-        target_gmv=fep_config["target_gmv"],
-        dollar_neutrality=fep_config["dollar_neutrality"],
+        # bulk_frac_to_remove=fep_config["bulk_frac_to_remove"],
+        # bulk_fill_method=fep_config["bulk_fill_method"],
+        # target_gmv=fep_config["target_gmv"],
         quantization=fep_config["quantization"],
+        burn_in_bars=fep_config["burn_in_bars"],
+        style=fep_config["style"],
     )
     bar_metrics.append(bar_metrics_slice)
 bar_metrics = pd.concat(bar_metrics)
@@ -197,12 +197,13 @@ overnight_returns = cofinanc.compute_overnight_returns(
 
 # %%
 regression_dict = {
-    "target_col": "vwap.ret_0.vol_adj",
-    "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
+    "target_col": "vwap.ret_0.vol_adj_2_hat",
+    # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
+    "feature_cols": ["vwap.ret_0.vol_adj"],
     "feature_lag": 2,
     "batch_size": 50,
 }
-regression_config = cconfig.get_config_from_nested_dict(regression_dict)
+regression_config = cconfig.Config.from_dict(regression_dict)
 
 # %%
 coefficients, corr = dtfmod.regress(

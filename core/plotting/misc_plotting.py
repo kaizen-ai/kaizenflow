@@ -21,7 +21,6 @@ import statsmodels as statsm
 import statsmodels.api as sm
 import statsmodels.regression.rolling as srroll
 
-import core.explore as coexplor
 import core.plotting.plotting_utils as cplpluti
 import core.signal_processing as csigproc
 import core.statistics as costatis
@@ -333,7 +332,8 @@ def plot_timeseries_per_category(
     """
     if not figsize:
         figsize = FIG_SIZE
-    unique_rows = coexplor.drop_duplicates(df=df, subset=[column])
+    use_index = False
+    unique_rows = hpandas.drop_duplicates(df, use_index, subset=[column])
     if top_n:
         categories = (
             df[category_column].value_counts().iloc[:top_n].index.to_list()

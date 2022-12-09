@@ -7,15 +7,15 @@ class TestGetUniverseFilePath1(imvcountt.TestGetUniverseFilePath1_TestCase):
         A smoke test to test correct file path return when correct version is
         provided.
         """
-        self._test_get_universe_file_path("CCXT", "v1")
-        self._test_get_universe_file_path("CCXT", "v3")
+        self._test_get_universe_file_path("CCXT", "download", "v1")
+        self._test_get_universe_file_path("CCXT", "download","v3")
 
     def test_get_latest_file_version(self) -> None:
         """
         Verify that the max universe version is correctly detected and
         returned.
         """
-        self._test_get_latest_file_version("CCXT")
+        self._test_get_latest_file_version("CCXT", "download")
 
 
 class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
@@ -36,8 +36,7 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         Test that vendor universe is loaded correctly as dict using small
         universe file.
         """
-        self._test_get_vendor_universe_small("CCXT", "gateio", "XRP_USDT")
-        self._test_get_vendor_universe_small("CCXT", "kucoin", "SOL_USDT")
+        self._test_get_vendor_universe_small("CCXT", "kucoin", "ETH_USDT")
 
     def test_get_vendor_universe_as_full_symbol(self) -> None:
         """
@@ -45,5 +44,5 @@ class TestGetUniverse1(imvcountt.TestGetUniverse1_TestCase):
         universal.
         """
         self._test_get_vendor_universe_as_full_symbol(
-            "CCXT", ["gateio::XRP_USDT", "kucoin::SOL_USDT"]
+            "CCXT", ["binance::BTC_USDT", "gateio::XRP_USDT", "kucoin::ETH_USDT"]
         )

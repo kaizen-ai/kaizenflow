@@ -57,6 +57,7 @@ class ResultBundle(abc.ABC):
         :param info: DAG execution info
         :param payload: config with additional information, e.g., meta config
         """
+        hdbg.dassert_isinstance(config, cconfig.Config)
         self._config = config
         self._result_nid = result_nid
         hdbg.dassert_isinstance(method, dtfcornode.Method)
@@ -64,6 +65,11 @@ class ResultBundle(abc.ABC):
         if result_df is not None:
             hdbg.dassert_isinstance(result_df, pd.DataFrame)
         self._result_df = result_df
+        if isinstance(column_to_tags, cconfig.Config):
+            # It should be a dict but when we initialize `ResultBundle` using a config,
+            # e.g., `ResultBundle(**config)` the value is a config because dict-like
+            # values are not allowed.
+            column_to_tags = column_to_tags.to_dict()
         self._column_to_tags = column_to_tags
         self._info = info
         self._payload = payload
@@ -82,177 +88,13 @@ class ResultBundle(abc.ABC):
         """
         return str(self)
 
-    # Accessors.
-
-    @property
-    def config(self) -> cconfig.Config:
-        return self._config
-
-    @property
-    def result_nid(self) -> dtfcornode.NodeId:
-        return self._result_nid
-
-    @property
-    def method(self) -> dtfcornode.Method:
-        return self._method
-
-    @property
-    def result_df(self) -> pd.DataFrame:
-        return self._result_df
-
-    @property
-    def column_to_tags(self) -> Optional[Dict[Any, List[Any]]]:
-        return copy.deepcopy(self._column_to_tags)
-
-    @property
-    def tag_to_columns(self) -> Optional[Dict[Any, List[Any]]]:
-        if self._column_to_tags is not None:
-            # TODO(gp): Cache it or compute it the first time.
-            tag_to_columns: Dict[Any, List[Any]] = {}
-            for column, tags in self._column_to_tags.items():
-                for tag in tags:
-                    tag_to_columns.setdefault(tag, []).append(column)
-            return tag_to_columns
-        return None
-
-    @property
-    def info(self) -> Optional[collections.OrderedDict]:
-        if self._info is not None:
-            return self._info.copy()
-        return None
-
-    @property
-    def payload(self) -> Optional[cconfig.Config]:
-        return self._payload
-
-    def get_tags_for_column(self, column: Any) -> Optional[List[Any]]:
-        return ResultBundle._search_mapping(column, self._column_to_tags)
-
-    def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
-        return ResultBundle._search_mapping(tag, self.tag_to_columns)
-
-    # Setters.
-
-    @result_df.setter  # type: ignore
-    def result_df(self, value: pd.DataFrame) -> None:
-        self._result_df = value
-
-    @payload.setter  # type: ignore
-    def payload(self, value: Optional[cconfig.Config]) -> None:
-        self._payload = value
-
-    # Methods to serialize to / from strings.
-
-    # TODO(gp): Not sure if all the serialization would work also for derived classes,
-    #  e.g., `PredictionResultBundle`.
-
-    def to_config(self, commit_hash: bool = False) -> cconfig.Config:
-        """
-        Represent class state as config.
-
-        :param commit_hash: whether to include current commit hash
-        """
-        serialized_bundle = cconfig.Config()
-        serialized_bundle["config"] = self._config
-        serialized_bundle["result_nid"] = self._result_nid
-        serialized_bundle["method"] = self._method
-        serialized_bundle["result_df"] = self._result_df
-        serialized_bundle["column_to_tags"] = self._column_to_tags
-        info = self._info
-        if info is not None:
-            info = cconfig.get_config_from_nested_dict(info)
-        serialized_bundle["info"] = info
-        serialized_bundle["payload"] = self._payload
-        serialized_bundle["class"] = self.__class__.__name__
-        if commit_hash:
-            serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
-        return serialized_bundle
-
-    @classmethod
-    def from_config(cls, serialized_bundle: cconfig.Config) -> "ResultBundle":
-        """
-        Initialize `ResultBundle` from config.
-        """
-        column_to_tags = serialized_bundle["column_to_tags"]
-        if column_to_tags:
-            column_to_tags = column_to_tags.to_dict()
-        info = serialized_bundle["info"]
-        if info:
-            info = info.to_dict()
-        rb = cls(
-            config=serialized_bundle["config"],
-            result_nid=serialized_bundle["result_nid"],
-            method=serialized_bundle["method"],
-            result_df=serialized_bundle["result_df"],
-            column_to_tags=column_to_tags,
-            info=info,
-            payload=serialized_bundle["payload"],
-        )
-        return rb
-
-    def to_dict(self, commit_hash: bool = False) -> collections.OrderedDict:
-        """
-        Represent class state as an ordered dict.
-        """
-        config = self.to_config(commit_hash=commit_hash)
-        dict_ = config.to_dict()
-        dict_ = cast(collections.OrderedDict, dict_)
-        return dict_
-
-    # Methods to serialize to / from disk.
-
-    def to_pickle(self, file_name: str, use_pq: bool = True) -> List[str]:
-        """
-        Serialize the current `ResultBundle`.
-
-        :param use_pq: save the `result_df` dataframe using Parquet.
-            If False, everything is saved as a single pickle object.
-        :return: list with names of the files saved
-        """
-        # TODO(gp): We should pass file_name without an extension, since the
-        #  extension(s) depend on the format used.
-        hio.create_enclosing_dir(file_name, incremental=True)
-        # Convert to a dict.
-        obj = copy.copy(self)
-        if use_pq:
-            # Split the object in two pieces.
-            result_df = obj.result_df
-            obj.result_df = None  # type: ignore
-            # Save the config as pickle.
-            file_name_rb = hio.change_filename_extension(
-                file_name, "pkl", "v2_0.pkl"
-            )
-            hpickle.to_pickle(obj, file_name_rb, log_level=logging.DEBUG)
-            # Save the `result_df` as parquet.
-            file_name_pq = hio.change_filename_extension(
-                file_name, "pkl", "v2_0.pq"
-            )
-            hparque.to_parquet(result_df, file_name_pq, log_level=logging.DEBUG)
-            file_name_metadata_df = hio.change_filename_extension(
-                file_name, "pkl", "v2_0.metadata_df.pkl"
-            )
-            metadata_df = {"index.freq": result_df.index.freq}
-            hpickle.to_pickle(
-                metadata_df, file_name_metadata_df, log_level=logging.DEBUG
-            )
-            #
-            res = [file_name_rb, file_name_pq, file_name_metadata_df]
-        else:
-            # Save the entire object as pickle.
-            file_name = hio.change_filename_extension(
-                file_name, "pkl", "v1_0.pkl"
-            )
-            hpickle.to_pickle(obj, file_name, log_level=logging.DEBUG)
-            res = [file_name]
-        return res
-
     # TODO(gp): Use classmethod.
     @staticmethod
     def from_dict(result_bundle_dict: collections.OrderedDict) -> "ResultBundle":
         """
         Initialize `ResultBundle` from a nested dict.
         """
-        result_bundle_config = cconfig.get_config_from_nested_dict(
+        result_bundle_config = cconfig.Config.from_dict(
             result_bundle_dict
         )
         result_bundle_class = eval(result_bundle_config["class"])
@@ -333,6 +175,172 @@ class ResultBundle(abc.ABC):
             )
             obj = hpickle.from_pickle(file_name, log_level=logging.DEBUG)
         return obj  # type: ignore
+
+    # Accessors.
+
+    @property
+    def config(self) -> cconfig.Config:
+        return self._config
+
+    @property
+    def result_nid(self) -> dtfcornode.NodeId:
+        return self._result_nid
+
+    @property
+    def method(self) -> dtfcornode.Method:
+        return self._method
+
+    @property
+    def result_df(self) -> pd.DataFrame:
+        return self._result_df
+
+    @property
+    def column_to_tags(self) -> Optional[Dict[Any, List[Any]]]:
+        return copy.deepcopy(self._column_to_tags)
+
+    @property
+    def tag_to_columns(self) -> Optional[Dict[Any, List[Any]]]:
+        if self._column_to_tags is not None:
+            # TODO(gp): Cache it or compute it the first time.
+            tag_to_columns: Dict[Any, List[Any]] = {}
+            for column, tags in self._column_to_tags.items():
+                for tag in tags:
+                    tag_to_columns.setdefault(tag, []).append(column)
+            return tag_to_columns
+        return None
+
+    @property
+    def info(self) -> Optional[collections.OrderedDict]:
+        if self._info is not None:
+            return self._info.copy()
+        return None
+
+    @property
+    def payload(self) -> Optional[cconfig.Config]:
+        return self._payload
+
+    def get_tags_for_column(self, column: Any) -> Optional[List[Any]]:
+        return ResultBundle._search_mapping(column, self._column_to_tags)
+
+    def get_columns_for_tag(self, tag: Any) -> Optional[List[Any]]:
+        return ResultBundle._search_mapping(tag, self.tag_to_columns)
+
+    # Setters.
+
+    @result_df.setter  # type: ignore
+    def result_df(self, value: pd.DataFrame) -> None:
+        self._result_df = value
+
+    @payload.setter  # type: ignore
+    def payload(self, value: Optional[cconfig.Config]) -> None:
+        self._payload = value
+
+    # Methods to serialize to / from strings.
+
+    # TODO(gp): Not sure if all the serialization would work also for derived classes,
+    #  e.g., `PredictionResultBundle`.
+
+    def to_config(self, commit_hash: bool = False) -> cconfig.Config:
+        """
+        Represent class state as config.
+
+        :param commit_hash: whether to include current commit hash
+        """
+        serialized_bundle = {}
+        serialized_bundle["config"] = self._config
+        serialized_bundle["result_nid"] = self._result_nid
+        serialized_bundle["method"] = self._method
+        serialized_bundle["result_df"] = self._result_df
+        serialized_bundle["column_to_tags"] = self._column_to_tags
+        info = self._info
+        serialized_bundle["info"] = info
+        serialized_bundle["payload"] = self._payload
+        serialized_bundle["class"] = self.__class__.__name__
+        if commit_hash:
+            serialized_bundle["commit_hash"] = hgit.get_current_commit_hash()
+        # Convert to a `Config`.
+        serialized_bundle = cconfig.Config.from_dict(serialized_bundle)
+        return serialized_bundle
+
+    @classmethod
+    def from_config(cls, serialized_bundle: cconfig.Config) -> "ResultBundle":
+        """
+        Initialize `ResultBundle` from config.
+        """
+        # In a `Config` dicts are configs but the class accepts `info` and
+        # `column_to_tags` as dicts.
+        column_to_tags = serialized_bundle["column_to_tags"]
+        if column_to_tags:
+            column_to_tags = column_to_tags.to_dict()
+        info = serialized_bundle["info"]
+        if info:
+            info = info.to_dict()
+        rb = cls(
+            config=serialized_bundle["config"],
+            result_nid=serialized_bundle["result_nid"],
+            method=serialized_bundle["method"],
+            result_df=serialized_bundle["result_df"],
+            column_to_tags=column_to_tags,
+            info=info,
+            payload=serialized_bundle["payload"],
+        )
+        return rb
+
+    def to_dict(self, commit_hash: bool = False) -> collections.OrderedDict:
+        """
+        Represent class state as an ordered dict.
+        """
+        config = self.to_config(commit_hash=commit_hash)
+        dict_ = config.to_dict()
+        dict_ = cast(collections.OrderedDict, dict_)
+        return dict_
+
+    # Methods to serialize to / from disk.
+
+    def to_pickle(self, file_name: str, use_pq: bool = True) -> List[str]:
+        """
+        Serialize the current `ResultBundle`.
+
+        :param use_pq: save the `result_df` dataframe using Parquet.
+            If False, everything is saved as a single pickle object.
+        :return: list with names of the files saved
+        """
+        # TODO(gp): We should pass file_name without an extension, since the
+        #  extension(s) depend on the format used.
+        hio.create_enclosing_dir(file_name, incremental=True)
+        # Convert to a dict.
+        obj = copy.copy(self)
+        if use_pq:
+            # Split the object in two pieces.
+            result_df = obj.result_df
+            obj.result_df = None  # type: ignore
+            # Save the config as pickle.
+            file_name_rb = hio.change_filename_extension(
+                file_name, "pkl", "v2_0.pkl"
+            )
+            hpickle.to_pickle(obj, file_name_rb, log_level=logging.DEBUG)
+            # Save the `result_df` as parquet.
+            file_name_pq = hio.change_filename_extension(
+                file_name, "pkl", "v2_0.pq"
+            )
+            hparque.to_parquet(result_df, file_name_pq, log_level=logging.DEBUG)
+            file_name_metadata_df = hio.change_filename_extension(
+                file_name, "pkl", "v2_0.metadata_df.pkl"
+            )
+            metadata_df = {"index.freq": result_df.index.freq}
+            hpickle.to_pickle(
+                metadata_df, file_name_metadata_df, log_level=logging.DEBUG
+            )
+            #
+            res = [file_name_rb, file_name_pq, file_name_metadata_df]
+        else:
+            # Save the entire object as pickle.
+            file_name = hio.change_filename_extension(
+                file_name, "pkl", "v1_0.pkl"
+            )
+            hpickle.to_pickle(obj, file_name, log_level=logging.DEBUG)
+            res = [file_name]
+        return res
 
     @staticmethod
     def _search_mapping(

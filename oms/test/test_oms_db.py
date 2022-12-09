@@ -43,6 +43,10 @@ class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
     Test operations on the submitted orders table.
     """
 
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
         """
@@ -50,7 +54,11 @@ class TestOmsDbSubmittedOrdersTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.SUBMITTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_submitted_orders_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func, create_table_func_kwargs)
+
 
 
 # #############################################################################
@@ -124,6 +132,10 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
     Test operations on the accepted orders table.
     """
 
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     @pytest.mark.slow("8 seconds.")
     def test_create_table1(self) -> None:
         """
@@ -131,16 +143,20 @@ class TestOmsDbAcceptedOrdersTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         create_table_func = oomsdb.create_accepted_orders_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func, create_table_func_kwargs)
 
     @pytest.mark.slow("8 seconds.")
     def test_insert1(self) -> None:
         """
         Test inserting in the table.
         """
+        incremental = True
         # Create the table.
         table_name = oomsdb.create_accepted_orders_table(
-            self.connection, incremental=True
+            self.connection, incremental, oomsdb.ACCEPTED_ORDERS_TABLE_NAME
         )
         # Insert a row.
         row = _get_row1()
@@ -174,11 +190,16 @@ class TestOmsDbTableInteraction1(omtodh.TestOmsDbHelper):
     Test interactions through the DB.
     """
 
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     def wait_for_table_helper(self, coroutines: List[Any]) -> Any:
         """
         Create a clean DB table and run the coroutines.
         """
-        oomsdb.create_accepted_orders_table(self.connection, incremental=False)
+        incremental = False
+        oomsdb.create_accepted_orders_table(self.connection, incremental, oomsdb.ACCEPTED_ORDERS_TABLE_NAME),
         with hasynci.solipsism_context() as event_loop:
             # Run.
             coroutine = hasynci.gather_coroutines_with_wall_clock(
@@ -289,6 +310,10 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
     Test operations on the submitted orders table.
     """
 
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     @pytest.mark.slow("9 seconds.")
     def test_create_table1(self) -> None:
         """
@@ -296,7 +321,11 @@ class TestOmsDbCurrentPositionsTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.CURRENT_POSITIONS_TABLE_NAME
         create_table_func = oomsdb.create_current_positions_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "asset_id_name": "asset_id",
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func, create_table_func_kwargs)
 
 
 # #############################################################################
@@ -307,6 +336,10 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
     Test operations on the restrictions table.
     """
 
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     @pytest.mark.slow("20 seconds.")
     def test_create_table1(self) -> None:
         """
@@ -314,4 +347,9 @@ class TestOmsDbRestrictionsTable1(omtodh.TestOmsDbHelper):
         """
         table_name = oomsdb.RESTRICTIONS_TABLE_NAME
         create_table_func = oomsdb.create_restrictions_table
-        self._test_create_table_helper(table_name, create_table_func)
+        create_table_func_kwargs = {
+            "asset_id_name": "asset_id",
+            "table_name": table_name
+        }
+        self._test_create_table_helper(table_name, create_table_func,
+                                       create_table_func_kwargs)

@@ -29,6 +29,7 @@ import pandas as pd
 import core.explore as coexplor
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im.ib.data.extract.gateway.utils as imidegaut
 import im.kibot as vakibot
@@ -220,7 +221,7 @@ diff = df[target_col + "_" + ds1] - df[target_col + "_" + ds2]
 
 diff.plot()
 
-coexplor.drop_na(pd.DataFrame(diff), drop_infs=True).hist(bins=101)
+hpandas.dropna(pd.DataFrame(diff), drop_infs=True).hist(bins=101)
 
 # %%
 intercept = False

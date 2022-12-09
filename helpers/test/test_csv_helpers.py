@@ -24,7 +24,7 @@ class Test_convert_csv_to_dict(hunitest.TestCase):
 
 class Test_from_typed_csv(hunitest.TestCase):
     """
-    This test is aimed to check the opportunity to load correctly.
+    Check the opportunity to load correctly.
 
     .csv file with dtype param, which exist in .types prefix file. And
     finally it checks that dtypes of loaded dataframe didn't change
@@ -52,8 +52,8 @@ class Test_from_typed_csv(hunitest.TestCase):
 
 class Test_to_typed_csv(hunitest.TestCase):
     """
-    This test is aimed to check whether the function 'to_typed_csv' create file
-    with '.types' prefix or not.
+    Check whether the function 'to_typed_csv' create file with '.types' prefix
+    or not.
     """
 
     def test1(self) -> None:

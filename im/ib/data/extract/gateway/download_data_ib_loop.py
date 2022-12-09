@@ -9,9 +9,7 @@ import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
 import datetime
 import logging
 import os
-from typing import Any, Iterator, List, Optional, Tuple, Union
-
-import helpers.hpandas as hpandas
+from typing import Any, Iterator, List, Optional, Set, Tuple, Union
 
 try:
     import ib_insync
@@ -25,6 +23,7 @@ from tqdm import tqdm
 
 import helpers.hdbg as hdbg
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.ib.data.extract.gateway.utils as imidegaut
 
@@ -35,22 +34,19 @@ _LOG = logging.getLogger(__name__)
 def ib_loop_generator(
     ib: ib_insync.ib.IB,
     contract: ib_insync.Contract,
-    start_ts: datetime,
-    end_ts: datetime,
+    start_ts: datetime.datetime,
+    end_ts: datetime.datetime,
     duration_str: str,
     bar_size_setting: str,
     what_to_show: str,
     use_rth: bool,
     use_progress_bar: bool = False,
     num_retry: Optional[Any] = None,
-) -> Iterator[
-    Union[
-        Iterator,
-        Iterator[
-            Tuple[int, pd.DataFrame, Tuple[datetime.datetime, pd.Timestamp]]
-        ],
-        Iterator[Tuple[int, pd.DataFrame, Tuple[pd.Timestamp, pd.Timestamp]]],
-    ]
+) -> Union[
+    Iterator,
+    Iterator[Tuple[int, pd.DataFrame, Tuple[datetime.datetime, pd.Timestamp]]],
+    Iterator[Tuple[int, pd.DataFrame, Tuple[pd.Timestamp, pd.Timestamp]]],
+    Tuple[int, pd.DataFrame, Tuple[pd.Timestamp, pd.Timestamp]],
 ]:
     """
     Get historical data using the IB style of looping for [start_ts, end_ts).
@@ -86,7 +82,6 @@ def ib_loop_generator(
             num_retry=num_retry,
         )
         if df is None:
-            return
             # TODO(gp): Sometimes IB returns an empty df in a chunk although there
             #  is more data later on. Maybe we can just keep going.
             return
@@ -140,12 +135,12 @@ def save_historical_data_by_intervals_IB_loop(
     bar_size_setting: str,
     what_to_show: str,
     use_rth: bool,
-    file_name: str,
+    file_name: str,  # pylint: disable=unused-argument
     part_files_dir: str,
     incremental: bool,
     use_progress_bar: bool = True,
     num_retry: Optional[Any] = None,
-) -> List[Tuple[pd.Timestamp, pd.Timestamp]]:
+) -> Set[Tuple[pd.Timestamp, pd.Timestamp]]:
     """
     Save historical data into multiple files into `contract.symbol` directory
     near the `file_name`.
@@ -170,7 +165,7 @@ def save_historical_data_by_intervals_IB_loop(
         num_retry=num_retry,
     )
     saved_intervals = set()
-    for i, df_tmp, _ in generator:
+    for _, df_tmp, _ in generator:
         # Split data by static intervals.
         for interval, df_tmp_part in imidegaut.split_data_by_intervals(
             df_tmp, imidegaut.duration_str_to_pd_dateoffset(duration_str)
@@ -226,9 +221,12 @@ def get_historical_data_with_IB_loop(
     use_progress_bar: bool = False,
     return_ts_seq: bool = False,
     num_retry: Optional[Any] = None,
-) -> Tuple[
+) -> Union[
     pd.DataFrame,
-    List[Tuple[Union[datetime.datetime, pd.Timestamp], pd.Timestamp]],
+    Tuple[
+        pd.DataFrame,
+        List[Tuple[Union[datetime.datetime, pd.Timestamp], pd.Timestamp]],
+    ],
 ]:
     """
     Get historical data using the IB style of looping for [start_ts, end_ts).
@@ -240,7 +238,7 @@ def get_historical_data_with_IB_loop(
     """
     start_ts, end_ts = imidegaut.process_start_end_ts(start_ts, end_ts)
     #
-    dfs = []
+    dfs: List[pd.DataFrame] = []
     ts_seq = []
     ib, deallocate_ib = imidegaut.allocate_ib(ib)
     generator = ib_loop_generator(
@@ -257,7 +255,7 @@ def get_historical_data_with_IB_loop(
     )
     # Deallocate.
     imidegaut.deallocate_ib(ib, deallocate_ib)
-    for i, df_tmp, ts_seq_tmp in generator:
+    for _, df_tmp, ts_seq_tmp in generator:
         ts_seq.append(ts_seq_tmp)
         dfs.insert(0, df_tmp)
     #
@@ -268,7 +266,7 @@ def get_historical_data_with_IB_loop(
     return df
 
 
-# TODO: -> _historical_data_to_filename
+# TODO(*): -> _historical_data_to_filename
 def historical_data_to_filename(
     contract: ib_insync.Contract,
     start_ts: pd.Timestamp,
@@ -283,7 +281,10 @@ def historical_data_to_filename(
     symbol = contract.symbol
     bar_size_setting = bar_size_setting.replace(" ", "_")
     duration_str = duration_str.replace(" ", "_")
-    file_name = f"{symbol}.{imidegaut.to_timestamp_str(start_ts)}.{imidegaut.to_timestamp_str(end_ts)}.{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
+    file_name = (
+        f"{symbol}.{imidegaut.to_timestamp_str(start_ts)}.{imidegaut.to_timestamp_str(end_ts)}."
+        f"{duration_str}.{bar_size_setting}.{what_to_show}.{use_rth}.csv"
+    )
     file_name = os.path.join(dst_dir, file_name)
     return file_name
 
@@ -367,7 +368,12 @@ def load_historical_data(file_name: str, verbose: bool = False) -> pd.DataFrame:
     """
     _LOG.debug("file_name=%s", file_name)
     s3fs = hs3.get_s3fs("am")
-    df = pdhelp.read_csv(file_name, s3fs=s3fs, parse_dates=True, index_col=0)
+    # This call was broken during a refactoring and this fix is not
+    # guaranteed to work.
+    try:
+        df = hpandas.read_csv_to_df(file_name, parse_dates=True, index_col=0)
+    except Exception:  # pylint: disable=broad-except
+        df = hpandas.read_csv_to_df(s3fs, parse_dates=True, index_col=0)
     # hdbg.dassert_isinstance(df.index[0], pd.Timestamp)
     if verbose:
         _LOG.info(

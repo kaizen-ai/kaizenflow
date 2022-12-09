@@ -1,10 +1,11 @@
 import logging
 
-import numpy as np
+import pandas as pd
 
 import dataflow.core.dag_builder_example as dtfcdabuex
 import dataflow.core.dag_runner as dtfcodarun
 import dataflow.core.visitors as dtfcorvisi
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -14,24 +15,81 @@ _LOG = logging.getLogger(__name__)
 
 
 class TestRollingFitPredictDagRunner1(hunitest.TestCase):
-    def test1(self) -> None:
-        """
-        Test the DagRunner using `ArmaReturnsBuilder`
-        """
-        dag_builder = dtfcdabuex.ArmaReturnsBuilder()
-        config = dag_builder.get_config_template()
-        dag_builder.get_dag(config)
-        #
-        dag_runner = dtfcodarun.RollingFitPredictDagRunner(
-            config=config,
-            dag_builder=dag_builder,
-            start_timestamp="2010-01-04 09:30",
-            end_timestamp="2010-01-04 15:30",
-            retraining_freq="H",
-            retraining_lookback=4,
+    @staticmethod
+    def get_datetimes(
+        predict_start_timestamp: pd.Timestamp,
+        predict_end_timestamp: pd.Timestamp,
+        retraining_freq: str,
+        retraining_lookback: int,
+    ) -> str:
+        datetimes = (
+            dtfcodarun.RollingFitPredictDagRunner.generate_retraining_datetimes(
+                predict_start_timestamp,
+                predict_end_timestamp,
+                retraining_freq,
+                retraining_lookback,
+            )
         )
-        result_bundles = list(dag_runner.fit_predict())
-        np.testing.assert_equal(len(result_bundles), 2)
+        datetimes_as_str = hpandas.df_to_str(datetimes)
+        return datetimes_as_str
+
+    def test1(self) -> None:
+        predict_start_timestamp = pd.Timestamp("2010-01-04 09:00")
+        predict_end_timestamp = pd.Timestamp("2010-01-06 16:00")
+        retraining_freq = "1D"
+        retraining_lookback = 1
+        actual = self.get_datetimes(
+            predict_start_timestamp,
+            predict_end_timestamp,
+            retraining_freq,
+            retraining_lookback,
+        )
+        expected = r"""
+   fit_start    fit_end predict_start predict_end
+0 2010-01-03 2010-01-03    2010-01-04  2010-01-04
+1 2010-01-04 2010-01-04    2010-01-05  2010-01-05
+2 2010-01-05 2010-01-05    2010-01-06  2010-01-06
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test2(self) -> None:
+        predict_start_timestamp = pd.Timestamp("2010-01-04 09:30")
+        predict_end_timestamp = pd.Timestamp("2010-01-10 16:00")
+        retraining_freq = "1W"
+        retraining_lookback = 3
+        actual = self.get_datetimes(
+            predict_start_timestamp,
+            predict_end_timestamp,
+            retraining_freq,
+            retraining_lookback,
+        )
+        expected = r"""
+   fit_start    fit_end predict_start predict_end
+0 2009-12-13 2010-01-02    2010-01-03  2010-01-09
+1 2009-12-20 2010-01-09    2010-01-10  2010-01-16
+"""
+
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test3(self) -> None:
+        predict_start_timestamp = pd.Timestamp("2010-02-01 09:30")
+        predict_end_timestamp = pd.Timestamp("2010-02-26 16:00")
+        retraining_freq = "1W"
+        retraining_lookback = 4
+        actual = self.get_datetimes(
+            predict_start_timestamp,
+            predict_end_timestamp,
+            retraining_freq,
+            retraining_lookback,
+        )
+        expected = r"""
+   fit_start    fit_end predict_start predict_end
+0 2010-01-03 2010-01-30    2010-01-31  2010-02-06
+1 2010-01-10 2010-02-06    2010-02-07  2010-02-13
+2 2010-01-17 2010-02-13    2010-02-14  2010-02-20
+3 2010-01-24 2010-02-20    2010-02-21  2010-02-27
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
 
 # #############################################################################
@@ -51,8 +109,7 @@ class TestIncrementalDagRunner1(hunitest.TestCase):
         fit_state = dtfcorvisi.get_fit_state(dag)
         #
         dag_runner = dtfcodarun.IncrementalDagRunner(
-            config=config,
-            dag_builder=dag_builder,
+            dag=dag,
             start_timestamp="2010-01-04 15:30",
             end_timestamp="2010-01-04 15:45",
             freq="5T",

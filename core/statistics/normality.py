@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.statistics.log_likelihood as cstll
+import core.statistics.normality as cstanorm
 """
 
 import logging

@@ -7,19 +7,18 @@ import helpers.hsecrets as hsecret
 import json
 from typing import Any, Dict, Optional
 
-import boto3
 from botocore.client import BaseClient
 from botocore.exceptions import ClientError
 
+import helpers.haws as haws
 import helpers.hdbg as hdbg
 
 
-def get_secrets_client(*, aws_profile: str = "ck") -> BaseClient:
+def get_secrets_client(aws_profile: str) -> BaseClient:
     """
     Return client to work with AWS Secrets Manager in the specified region.
     """
-    hdbg.dassert_isinstance(aws_profile, str)
-    session = boto3.session.Session(profile_name=aws_profile)
+    session = haws.get_session(aws_profile)
     client = session.client(service_name="secretsmanager")
     return client
 
@@ -27,16 +26,22 @@ def get_secrets_client(*, aws_profile: str = "ck") -> BaseClient:
 # TODO(Juraj): add support to access secrets for different profiles, not important rn
 def get_secret(secret_name: str) -> Optional[Dict[str, Any]]:
     """
-    Fetch secret values(s) from AWS secrets manager, returns a dictionary of
-    key-value pairs. example: get_secret('binance') returns:
+    Fetch secret values(s) from AWS secrets manager.
 
-    { 'apiKey': '<secret_value>', 'secret': '<secret_value>' }
+    :return a dictionary of key-value pairs. E.g., `get_secret('binance')` returns
+    ```
+    {
+        'apiKey': '<secret_value>',
+        'secret': '<secret_value>'
+    }
+    ```
     """
+    # Check if the secret name format is valid.
+    dassert_valid_secret(secret_name)
     hdbg.dassert_isinstance(secret_name, str)
     # Create a AWS Secrets Manager client.
-    client = get_secrets_client()
-    # Stores value of retrieved secret.
-    secret_val = {}
+    aws_profile = "ck"
+    client = get_secrets_client(aws_profile)
     # See https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_GetSecretValue.html
     # for the full list of exceptions.
     try:
@@ -65,7 +70,8 @@ def store_secret(
     """
     hdbg.dassert_isinstance(secret_name, str)
     # Create a AWS Secrets Manager client.
-    client = get_secrets_client()
+    aws_profile = "ck"
+    client = get_secrets_client(aws_profile)
     # See
     # https://docs.aws.amazon.com/secretsmanager/latest/apireference/API_CreateSecret.html
     # for the full list of exceptions.
@@ -79,7 +85,8 @@ def store_secret(
         # response then the secret was stored successfully.
         return_name = create_secret_value_response["Name"]
         hdbg.dassert_isinstance(return_name, str)
-        return create_secret_value_response["Name"] == secret_name
+        res: bool = create_secret_value_response["Name"] == secret_name
+        return res
     except ClientError as e:
         if e.response["Error"]["Code"] == "ResourceExistsException":
             # Let user know the secret with this name already exists.
@@ -90,3 +97,31 @@ def store_secret(
         raise e
     # If we did not return inside try block then something went wrong.
     return False
+
+
+def dassert_valid_secret(secret_id: str) -> None:
+    """
+    The valid format is `exchange_id.stage.account_type.num`.
+    """
+    values = secret_id.split(".")
+    hdbg.dassert_eq(len(values), 4)
+    hdbg.dassert_in(
+        values[0],
+        [
+            "binance",
+            "bitfinex",
+            "coinbase",
+            "coinbaseprime",
+            "coinbasepro",
+            "ftx",
+            "gateio",
+            "huobi",
+            "kraken",
+            "kucoin",
+            "talos",
+            "test",
+        ],
+    )
+    hdbg.dassert_in(values[1], ["local", "preprod"])
+    hdbg.dassert_in(values[2], ["trading", "sandbox"])
+    hdbg.dassert_is(values[3].isnumeric(), True)

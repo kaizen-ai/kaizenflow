@@ -11,9 +11,14 @@ from typing import Optional
 from invoke import task
 
 import helpers.hgit as hgit
-import helpers.lib_tasks as hlibtask
+import helpers.lib_tasks_docker as hlitadoc
+import helpers.lib_tasks_docker_release as hltadore
+import helpers.lib_tasks_pytest as hlitapyt
+import helpers.lib_tasks_utils as hlitauti
 
 _LOG = logging.getLogger(__name__)
+
+# pylint: disable=protected-access
 
 
 _OPTIMIZER_DIR = os.path.join(hgit.get_amp_abs_path(), "optimizer")
@@ -37,7 +42,7 @@ def opt_docker_build_local_image(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_build_local_image(
+    hltadore.docker_build_local_image(
         ctx,
         version,
         cache=cache,
@@ -58,7 +63,7 @@ def opt_docker_tag_local_image_as_dev(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_tag_local_image_as_dev(
+    hltadore.docker_tag_local_image_as_dev(
         ctx,
         version,
         base_image=base_image,
@@ -77,7 +82,7 @@ def opt_docker_push_dev_image(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_push_dev_image(
+    hltadore.docker_push_dev_image(
         ctx, version, base_image=base_image, container_dir_name=_OPTIMIZER_DIR
     )
 
@@ -94,13 +99,8 @@ def opt_docker_release_dev_image(  # type: ignore
     (ONLY CI/CD) Build, test, and release to ECR the latest `opt:dev` image.
 
     See corresponding invoke target for the main container.
-
-    Phases:
-    1) Build local image
-    2) Mark local as dev image
-    3) Push dev image to the repo
     """
-    hlibtask.docker_release_dev_image(
+    hltadore.docker_release_dev_image(
         ctx,
         version,
         cache=cache,
@@ -125,12 +125,12 @@ def opt_docker_release_dev_image(  # type: ignore
 @task
 def opt_docker_pull(ctx, stage="dev", version=None):  # type: ignore
     """
-    Pull latest dev image corresponding to the current repo from the registry.
+    Pull the latest dev `opt` image from the Docker registry.
     """
-    hlibtask._report_task()
+    hlitauti.report_task()
     #
     base_image = ""
-    hlibtask._docker_pull(ctx, base_image, stage, version)
+    hlitadoc._docker_pull(ctx, base_image, stage, version)
 
 
 @task
@@ -147,7 +147,7 @@ def opt_docker_bash(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_bash(
+    hlitadoc.docker_bash(
         ctx,
         base_image=base_image,
         stage=stage,
@@ -169,11 +169,11 @@ def opt_docker_jupyter(  # type: ignore
     self_test=False,
 ):
     """
-    Run jupyter notebook server in the `opt` container.
+    Run Jupyter notebook server in the `opt` container.
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_jupyter(
+    hlitadoc.docker_jupyter(
         ctx,
         stage=stage,
         version=version,
@@ -200,7 +200,7 @@ def opt_docker_cmd(  # type: ignore
 
     See corresponding invoke target for the main container.
     """
-    hlibtask.docker_cmd(
+    hlitadoc.docker_cmd(
         ctx,
         base_image=base_image,
         stage=stage,
@@ -217,7 +217,8 @@ def opt_docker_cmd(  # type: ignore
 # #############################################################################
 
 
-# TODO(Grisha): Pass a test_list in fast, slow, ... instead of duplicating all the code CmTask #1571.
+# TODO(Grisha): Pass a test_list in fast, slow, ... instead of duplicating all
+#  the code CmTask #1571.
 @task
 def opt_run_fast_tests(
     ctx,
@@ -228,6 +229,7 @@ def opt_run_fast_tests(
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     **kwargs,
 ):
     """
@@ -251,17 +253,18 @@ def opt_run_fast_tests(
     skip_submodules = False
     # False since we cannot call `git_clean` invoke from the `optimizer` dir.
     git_clean = False
-    rc = hlibtask._run_tests(
+    rc = hlitapyt._run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean,
         **kwargs,
     )
@@ -278,6 +281,7 @@ def opt_run_slow_tests(
     coverage=False,
     collect_only=False,
     tee_to_file=False,
+    n_threads="1",
     **kwargs,
 ):
     """
@@ -302,17 +306,18 @@ def opt_run_slow_tests(
     # False since we cannot call `git_clean` invoke
     # from the `optimizer` dir.
     git_clean = False
-    rc = hlibtask._run_tests(
+    rc = hlitapyt._run_tests(
         ctx,
-        stage,
         test_list_name,
-        custom_marker,
+        stage,
         version,
+        custom_marker,
         pytest_opts,
         skip_submodules,
         coverage,
         collect_only,
         tee_to_file,
+        n_threads,
         git_clean,
         **kwargs,
     )
@@ -328,10 +333,9 @@ def _get_opt_docker_up_cmd(
     detach: bool, base_image: str, stage: str, version: Optional[str]
 ) -> str:
     """
-    Get `docker-compose up` command for the optimizer.
+    Get `docker-compose up` command for the optimizer service.
 
     E.g.,
-
     ```
     IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
@@ -341,14 +345,19 @@ def _get_opt_docker_up_cmd(
         -d \
         app
     ```
+
     :param detach: whether to run in detached mode or not
     """
+    service_name = "app"
+    generate_docker_compose_file = True
     extra_env_vars = None
     extra_docker_compose_files = None
-    docker_up_cmd_ = hlibtask._get_docker_base_cmd(
+    docker_up_cmd_ = hlitadoc._get_docker_base_cmd(
         base_image,
         stage,
         version,
+        service_name, 
+        generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
     )
@@ -370,21 +379,24 @@ def _get_opt_docker_up_cmd(
         {service}"""
     )
     #
-    docker_up_cmd = hlibtask._to_multi_line_cmd(docker_up_cmd_)
+    docker_up_cmd = hlitauti._to_multi_line_cmd(docker_up_cmd_)
     return docker_up_cmd  # type: ignore[no-any-return]
 
 
 @task
-def opt_docker_up(ctx, detach=True, base_image="", stage="dev", version=""):  # type: ignore
+def opt_docker_up(  # type: ignore
+    ctx, detach=True, base_image="", stage="dev", version=""
+):
     """
     Start the optimizer as a service.
     """
     # Build `docker-compose up` cmd.
     docker_up_cmd = _get_opt_docker_up_cmd(detach, base_image, stage, version)
     # Run.
-    hlibtask._run(ctx, docker_up_cmd, pty=True)
+    hlitauti.run(ctx, docker_up_cmd, pty=True)
 
 
+# TODO(gp): @all merge this command with the up command passing a `mode` switch.
 def _get_opt_docker_down_cmd(
     base_image: str, stage: str, version: Optional[str]
 ) -> str:
@@ -392,7 +404,6 @@ def _get_opt_docker_down_cmd(
     Get `docker-compose down` command for the optimizer.
 
     E.g.,
-
     ```
     IMAGE=*****.dkr.ecr.us-east-1.amazonaws.com/opt:dev \
         docker-compose \
@@ -401,12 +412,16 @@ def _get_opt_docker_down_cmd(
         down
     ```
     """
+    service_name = "app"
+    generate_docker_compose_file = True
     extra_env_vars = None
     extra_docker_compose_files = None
-    docker_down_cmd_ = hlibtask._get_docker_base_cmd(
+    docker_down_cmd_ = hlitadoc._get_docker_base_cmd(
         base_image,
         stage,
         version,
+        service_name, 
+        generate_docker_compose_file,
         extra_env_vars,
         extra_docker_compose_files,
     )
@@ -415,7 +430,7 @@ def _get_opt_docker_down_cmd(
         r"""
         down"""
     )
-    docker_down_cmd = hlibtask._to_multi_line_cmd(docker_down_cmd_)
+    docker_down_cmd = hlitauti._to_multi_line_cmd(docker_down_cmd_)
     return docker_down_cmd  # type: ignore[no-any-return]
 
 
@@ -427,4 +442,4 @@ def opt_docker_down(ctx, base_image="", stage="dev", version=""):  # type: ignor
     # Build `docker-compose down` cmd.
     docker_down_cmd = _get_opt_docker_down_cmd(base_image, stage, version)
     # Run.
-    hlibtask._run(ctx, docker_down_cmd, pty=True)
+    hlitauti.run(ctx, docker_down_cmd, pty=True)

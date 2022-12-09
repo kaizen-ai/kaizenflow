@@ -10,7 +10,7 @@ import inspect
 import json
 import logging
 import os
-from typing import Any, List, Optional, Union
+from typing import Any, Callable, List, Optional, Union
 
 import jsonpickle  # type: ignore
 import jsonpickle.ext.pandas as jepand  # type: ignore
@@ -26,6 +26,10 @@ jepand.register_handlers()
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Use repr to serialize:
+# >>> a = {"hello": [1, 2, (3, 4)]}
+# >>> repr(a)
+# "{'hello': [1, 2, (3, 4)]}"
 # TODO(gp): Add more types.
 # TODO(gp): -> _to_python_code
 def to_python_code(obj: Any) -> str:
@@ -50,6 +54,13 @@ def to_python_code(obj: Any) -> str:
             output_tmp += to_python_code(el) + ", "
         output_tmp = output_tmp.rstrip(", ") + "]"
         output.append(output_tmp)
+    elif isinstance(obj, tuple):
+        # Tuple ["a", 1] -> '["a", 1]'.
+        output_tmp = "("
+        for el in obj:
+            output_tmp += to_python_code(el) + ", "
+        output_tmp = output_tmp.rstrip(", ") + ")"
+        output.append(output_tmp)
     elif isinstance(obj, dict):
         # Dict {"a": 1} -> '{"a": 1}'.
         output_tmp = "{"
@@ -63,17 +74,17 @@ def to_python_code(obj: Any) -> str:
         # Dataframe with a column "a" and row values 1, 2 ->
         # "pd.DataFrame.from_dict({'a': [1, 2]})".
         vals = obj.to_dict(orient="list")
-        output.append("pd.DataFrame.from_dict(%s)" % vals)
+        output.append(f"pd.DataFrame.from_dict({vals})")
     elif isinstance(obj, pd.Series):
         # Series init as pd.Series([1, 2])
         output.append(
-            'pd.Series(data=%s, index=%s, name="%s", dtype=%s)'
-            % (obj.tolist(), obj.index, obj.name, obj.dtype)
+            f'pd.Series(data={obj.tolist()}, index={obj.index}, name="{obj.name}", '
+            f"dtype={obj.dtype})"
         )
     elif isinstance(obj, cconfig.Config):
         # Config -> python_code -> "cconfig.Config.from_python(python_code)"
         val = obj.to_python()
-        output.append('cconfig.Config.from_python("%s")' % val)
+        output.append(f'cconfig.Config.from_python("{val}")')
     else:
         # Use `jsonpickle` for serialization.
         _LOG.warning(
@@ -83,6 +94,11 @@ def to_python_code(obj: Any) -> str:
         output.append(f"r'{jsonpickle.encode(obj)}'")
     output = "\n".join(output)
     return output
+
+
+# #############################################################################
+# Playback
+# #############################################################################
 
 
 class Playback:
@@ -102,8 +118,11 @@ class Playback:
             function. Can be useful if the function is called a lot of times
             during the execution.
         """
+        _LOG.debug(hprint.to_str("mode to_file max_tests"))
         hdbg.dassert_in(mode, ("check_string", "assert_equal"))
         self.mode = mode
+        # TODO(gp): Factor out in a function but need to discard one more level
+        #  in the stack trace.
         cur_frame = inspect.currentframe()
         self._func_name = cur_frame.f_back.f_code.co_name  # type: ignore
         # We can use kw arguments for all args. Python supports this.
@@ -114,6 +133,7 @@ class Playback:
         expected_arg_count = cur_frame.f_back.f_code.co_argcount  # type: ignore
         if "kwargs" in self._kwargs:
             expected_arg_count += 1
+        _LOG.debug(hprint.to_str("expected_arg_count"))
         # TODO(gp): Is this necessary?
         # hdbg.dassert_eq(
         #    expected_arg_count,
@@ -122,7 +142,7 @@ class Playback:
         #       " a function.",
         # )
         # If the function is a method, store the parent class so we can also
-        # create that in the test
+        # create that in the test.
         if "self" in self._kwargs:
             x = self._kwargs.pop("self")
             self._parent_class = x
@@ -148,6 +168,15 @@ class Playback:
             self._update_code_to_existing()
         # Limit number of tests per tested function.
         self._max_tests = max_tests or float("+inf")
+
+    @staticmethod
+    def test_code(output: str) -> None:
+        # Try to execute in a fake environment.
+        # ```
+        # local_env = {}
+        # _ = exec(output, local_env)
+        # ```
+        _ = exec(output)  # pylint: disable=exec-used
 
     def run(self, func_output: Any) -> str:
         """
@@ -177,14 +206,24 @@ class Playback:
         self._check_code(func_output)
         return self._gen_code()
 
+    # ////////////////////////////////////////////////////////////////////////////
+
     @staticmethod
-    def test_code(output: str) -> None:
-        # Try to execute in a fake environment.
-        # ```
-        # local_env = {}
-        # _ = exec(output, local_env)
-        # ```
-        _ = exec(output)  # pylint: disable=exec-used
+    def _get_test_file_name(file_with_code: str) -> str:
+        """
+        Construct the test file name based on the file with the code to test.
+
+        :param file_with_code: path to file with code to test.
+        :return: path to the file with generated test.
+        """
+        # Get directory and filename of the testing code.
+        dirname_with_code, filename_with_code = os.path.split(file_with_code)
+        dirname_with_test = os.path.join(dirname_with_code, "test")
+        # Construct test file.
+        test_file = os.path.join(
+            dirname_with_test, f"test_by_playback_{filename_with_code}"
+        )
+        return test_file
 
     def _update_code_to_existing(self) -> None:
         """
@@ -228,7 +267,7 @@ class Playback:
             self._append("# Compare actual and expected output.", 2)
             self._append("self.assertEqual(act, exp)", 2)
         else:
-            raise ValueError("Invalid mode='%s'" % self.mode)
+            raise ValueError(f"Invalid mode='{self.mode}'")
 
     def _add_imports(self, additional: Union[None, List[str]] = None) -> None:
         """
@@ -254,10 +293,10 @@ class Playback:
         count = self._get_class_count()
         if count >= self._max_tests:
             # If it was already tested enough times, raise.
-            raise IndexError("%i tests already generated" % self._max_tests)
+            raise IndexError(f"{self._max_tests} tests already generated")
         # Otherwise, continue to create a test code.
         self._append(class_string)
-        self._append("def test%i(self) -> None:" % (count + 1), 1)
+        self._append(f"def test{count + 1}(self) -> None:", 1)
 
     def _get_class_count(self) -> int:
         """
@@ -291,15 +330,13 @@ class Playback:
         self._append("# Call function to test.", 2)
         if self._parent_class is None:
             fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
-            self._append(
-                "act = %s(%s)" % (self._func_name, ", ".join(fnc_call)), 2
-            )
+            self._append(f"act = {self._func_name}({', '.join(fnc_call)})", 2)
         else:
             var_code = to_python_code(self._parent_class)
             # Re-create the parent class.
             self._append(f"cls = {var_code}", 2)
             self._append("cls = jsonpickle.decode(cls)", 2)
-            fnc_call = ["{0}={0}".format(k) for k in self._kwargs.keys()]
+            fnc_call = [f"{k}={k}" for k in self._kwargs.keys()]
             # Call the method as a child of the parent class.
             self._append(f"act = cls.{self._func_name}({', '.join(fnc_call)})", 2)
 
@@ -311,7 +348,7 @@ class Playback:
             self._append("# Define input variables.", 2)
         for key in self._kwargs:
             as_python = to_python_code(self._kwargs[key])
-            self._append("%s = %s" % (key, as_python), 2)
+            self._append(f"{key} = {as_python}", 2)
             # Decode back to an actual Python object, if necessary.
             if not isinstance(
                 self._kwargs[key],
@@ -326,7 +363,7 @@ class Playback:
                     cconfig.Config,
                 ),
             ):
-                self._append("{0} = jsonpickle.decode({0})".format(key), 2)
+                self._append(f"{key} = jsonpickle.decode({key})", 2)
 
     def _gen_code(self) -> str:
         """
@@ -342,32 +379,19 @@ class Playback:
         """
         Add indented line to the code.
         """
-        self._code.append(hprint.indent(string, num_tabs * 4))
+        num_spaces = num_tabs * 4
+        self._code.append(hprint.indent(string, num_spaces=num_spaces))
 
-    @staticmethod
-    def _get_test_file_name(file_with_code: str) -> str:
-        """
-        Construct the test file name based on the file with the code to test.
 
-        :param file_with_code: path to file with code to test.
-        :return: path to the file with generated test.
-        """
-        # Get directory and filename of the testing code.
-        dirname_with_code, filename_with_code = os.path.split(file_with_code)
-        dirname_with_test = os.path.join(dirname_with_code, "test")
-        # Construct test file.
-        test_file = os.path.join(
-            dirname_with_test, "test_by_playback_%s" % filename_with_code
-        )
-        return test_file
+# ################################################################################
 
 
 def json_pretty_print(parsed: Any) -> str:
     """
-    Pretty print a json object.
+    Pretty print a JSON object.
 
-    :param parsed: a json object
-    :return: a prettified json object
+    :param parsed: a JSON object
+    :return: a prettified JSON object
     """
     if isinstance(parsed, str):
         parsed = json.loads(parsed)
@@ -405,18 +429,58 @@ def round_trip_convert(obj1: Any, log_level: int) -> Any:
     return obj2
 
 
-# TODO(gp): Implement decorator like:
-# import helpers.hplayback as hpk
+# ################################################################################
+# Decorator
+# ################################################################################
+
+
+# TODO(gp): This approach doesn't work since we use introspection and so we probably
+#  need to skip one level in the stack trace.
+
+
+# Use the `playback` decorator as:
+# ```
+# import helpers.hplayback as hplayba
 #
-# def playback(func: Callable) -> Callable:
+# @hplayba.playback
+# def target_function(...):
+#   ...
+# ```
+
+
+def playback(func: Callable) -> Callable:
+
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
+        import helpers.hplayback as hplayb
+        playback = hplayb.Playback("assert_equal")
+        res = func(*args, **kwargs)
+        code = playback.run(res)
+        print(code)
+        return res
+
+    return wrapper(func)
+
+
+# Inline the decorator as:
 #
-#     def wrapper(*args: Any, **kwargs: Any) -> Any:
-#         import helpers.hplayback as hplayb
-#         playback = hplayb.Playback("assert_equal")
-#         res = func(*args, **kwargs)
-#         code = playback.run(res)
-#         print(code)
-#         assert 0
-#         return res
+# 1) Rename `target_func` -> `target_func_tmp`
+# ```
+# def target_function_tmp(...):
+#   ...
+# ```
 #
-#     return wrapper(func)
+# 2) Add wrapper:
+# ```
+# def target_function_tmp(...):
+#   ...
+#
+# from typing import Any
+#
+# def target_function(*args: Any, **kwargs: Any) -> Any:
+#     import helpers.hplayback as hplayb
+#     playback = hplayb.Playback("assert_equal")
+#     res = target_func_tmp(*args, **kwargs)
+#     code = playback.run(res)
+#     print(code)
+#     return res
+# ```

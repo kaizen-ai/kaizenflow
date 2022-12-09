@@ -18,9 +18,9 @@ import helpers.htimer as htimer
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
+# Enable extra verbose debugging. Do not commit.
+_TRACE = False
 
-
-_LOG.verb_debug = hprint.install_log_verb_debug(_LOG, verbose=False)
 
 # #############################################################################
 # ReplayedMarketData
@@ -42,8 +42,8 @@ class ReplayedMarketData(mdabmada.MarketData):
         knowledge_datetime_col_name: str,
         delay_in_secs: int,
         # Params from `MarketData`.
-        *args: List[Any],
-        **kwargs: Dict[str, Any],
+        *args: Any,
+        **kwargs: Any,
     ):
         """
         Constructor.
@@ -55,6 +55,8 @@ class ReplayedMarketData(mdabmada.MarketData):
         :param delay_in_secs: how many seconds to wait beyond the timestamp in
             `knowledge_datetime_col_name`
         """
+        _LOG.debug(hprint.to_str("knowledge_datetime_col_name delay_in_secs"))
+        _LOG.debug("df=\n%s", hpandas.df_to_str(df))
         super().__init__(*args, **kwargs)  # type: ignore[arg-type]
         self._df = df
         self._knowledge_datetime_col_name = knowledge_datetime_col_name
@@ -90,12 +92,13 @@ class ReplayedMarketData(mdabmada.MarketData):
         right_close: bool,
         limit: Optional[int],
     ) -> pd.DataFrame:
-        _LOG.verb_debug(
-            hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close "
-                "right_close limit"
+        if _TRACE:
+            _LOG.trace(
+                hprint.to_str(
+                    "start_ts end_ts ts_col_name asset_ids left_close "
+                    "right_close limit"
+                )
             )
-        )
         # TODO(gp): This assertion seems very slow. Move this check in a
         #  centralized place instead of calling it every time, if possible.
         if asset_ids is not None:
@@ -108,7 +111,8 @@ class ReplayedMarketData(mdabmada.MarketData):
             )
         # Filter the data by the current time.
         wall_clock_time = self.get_wall_clock_time()
-        _LOG.verb_debug(hprint.to_str("wall_clock_time"))
+        if _TRACE:
+            _LOG.trace(hprint.to_str("wall_clock_time"))
         df_tmp = creatime.get_data_as_of_datetime(
             self._df,
             self._knowledge_datetime_col_name,
@@ -125,17 +129,20 @@ class ReplayedMarketData(mdabmada.MarketData):
             df_tmp, ts_col_name, start_ts, end_ts, left_close, right_close
         )
         # Handle `asset_ids`
-        _LOG.verb_debug("before df_tmp=\n%s", hpandas.df_to_str(df_tmp))
+        if _TRACE:
+            _LOG.trace("before df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         if asset_ids is not None:
             hdbg.dassert_in(self._asset_id_col, df_tmp.columns)
             mask = df_tmp[self._asset_id_col].isin(set(asset_ids))
             df_tmp = df_tmp[mask]
-        _LOG.verb_debug("after df_tmp=\n%s", hpandas.df_to_str(df_tmp))
+        if _TRACE:
+            _LOG.trace("after df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         # Handle `limit`.
         if limit:
             hdbg.dassert_lte(1, limit)
             df_tmp = df_tmp.head(limit)
-        _LOG.verb_debug("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
+        if _TRACE:
+            _LOG.trace("-> df_tmp=\n%s", hpandas.df_to_str(df_tmp))
         return df_tmp
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
@@ -165,47 +172,107 @@ def save_market_data(
     market_data: mdabmada.MarketData,
     file_name: str,
     timedelta: pd.Timedelta,
-    limit: Optional[int],
+    *,
+    asset_id_col: str = "asset_id",
+    limit: Optional[int] = None,
 ) -> None:
     """
     Save data from a `MarketData` to a CSV file.
+
+    ```
+                                asset_id       full_symbol     open     high     low     close  volume              knowledge_timestamp                  start_ts
+    end_ts
+    2021-12-19 19:00:00-05:00 1467591036 binance::BTC_USDT 46668.65 46677.22 46575.00 46670.34 620.659 2022-07-09 12:07:51.240219+00:00 2021-12-19 18:59:00-05:00
+    2021-12-19 19:01:00-05:00 1467591036 binance::BTC_USDT 46670.34 46670.84 46550.00 46567.11 237.931 2022-06-24 05:47:16.075108+00:00 2021-12-19 19:00:00-05:00
+    2021-12-19 19:02:00-05:00 1467591036 binance::BTC_USDT 46567.12 46590.60 46489.61 46513.85 612.955 2022-06-24 05:47:16.075108+00:00 2021-12-19 19:01:00-05:00
+    ```
+
+    The data is not processed but saved exactly as it is.
     """
-    hdbg.dassert(market_data.is_online())
+    # hdbg.dassert(market_data.is_online())
     with htimer.TimedScope(logging.DEBUG, "market_data.get_data"):
         rt_df = market_data.get_data_for_last_period(timedelta, limit=limit)
+    #
+    _LOG.info("index=%s, %s", rt_df.index.min(), rt_df.index.max())
+    hdbg.dassert_in(asset_id_col, rt_df.columns)
+    asset_ids = rt_df[asset_id_col].unique()
+    _LOG.info("asset_id=%s %s", len(asset_ids), str(asset_ids))
+    #
     _LOG.debug(
         hpandas.df_to_str(
             rt_df, print_dtypes=True, print_shape_info=True, tag="rt_df"
         )
     )
     #
-    _LOG.info("Saving ...")
+    _LOG.info("Saving data in '%s' ...", file_name)
     compression = None
     if file_name.endswith(".gz"):
         compression = "gzip"
     rt_df.to_csv(file_name, compression=compression, index=True)
-    _LOG.info("Saving done")
+    _LOG.info("Saving in '%s' done", file_name)
 
 
 def load_market_data(
     file_name: str,
+    *,
     aws_profile: hs3.AwsProfile = None,
-    **kwargs: Dict[str, Any],
+    column_remap: Optional[Dict[str, str]] = None,
+    timestamp_db_column: Optional[str] = None,
+    datetime_columns: Optional[List[str]] = None,
+    read_csv_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
-    Load some example data from the RT DB.
+    Load some example market data from a CSV file.
+
+    ```
+                   end_datetime    asset_id        full_symbol      open      high       low     close   volume               knowledge_timestamp            start_datetime              timestamp_db
+    index
+    0 2021-12-20 00:00:00+00:00  1467591036  binance::BTC_USDT  46668.65  46677.22  46575.00  46670.34  620.659  2022-07-09 12:07:51.240219+00:00 2021-12-19 23:59:00+00:00 2021-12-20 00:00:00+00:00
+    1 2021-12-20 00:01:00+00:00  1467591036  binance::BTC_USDT  46670.34  46670.84  46550.00  46567.11  237.931  2022-06-24 05:47:16.075108+00:00 2021-12-20 00:00:00+00:00 2021-12-20 00:01:00+00:00
+    2 2021-12-20 00:02:00+00:00  1467591036  binance::BTC_USDT  46567.12  46590.60  46489.61  46513.85  612.955  2022-06-24 05:47:16.075108+00:00 2021-12-20 00:01:00+00:00 2021-12-20 00:02:00+00:00
+    ```
+
+    :param column_remap: mapping for columns to remap
+    :param timestamp_db_column: column name (after remapping) to use as
+        `timestamp_db` if it doesn't exist (e.g., we can use `end_datetime` as
+        `timestamp_db`)
+    :param datetime_columns: names (after remapping) of the columns to convert
+        to datetime
     """
-    kwargs_tmp = {}
+    _LOG.debug(
+        hprint.to_str(
+            "file_name aws_profile column_remap timestamp_db_column "
+            "datetime_columns read_csv_kwargs"
+        )
+    )
+    # Build options for `read_csv_to_df()`.
+    if read_csv_kwargs is None:
+        read_csv_kwargs = {}
+    read_csv_kwargs = read_csv_kwargs.copy()
     if aws_profile:
         s3fs_ = hs3.get_s3fs(aws_profile)
-        kwargs_tmp["s3fs"] = s3fs_
-    kwargs.update(kwargs_tmp)  # type: ignore[arg-type]
-    stream, kwargs = hs3.get_local_or_s3_stream(file_name, **kwargs)
-    df = hpandas.read_csv_to_df(stream, **kwargs)
-    for col_name in ("start_time", "end_time", "timestamp_db"):
-        if col_name in df.columns:
+        read_csv_kwargs["s3fs"] = s3fs_
+    stream, read_csv_kwargs = hs3.get_local_or_s3_stream(
+        file_name, **read_csv_kwargs
+    )
+    df = hpandas.read_csv_to_df(stream, **read_csv_kwargs)
+    # Adjust column names to the processable format.
+    if column_remap:
+        hpandas.dassert_valid_remap(list(df.columns), column_remap)
+        df = df.rename(columns=column_remap)
+    #
+    if timestamp_db_column:
+        hdbg.dassert_not_in("timestamp_db", df.columns)
+        hdbg.dassert_in(timestamp_db_column, df.columns)
+        df["timestamp_db"] = df[timestamp_db_column]
+    # Typically datetime columns are received as strings, while the pipeline
+    # requires datetime type for further computations.
+    if datetime_columns:
+        for col_name in datetime_columns:
+            hdbg.dassert_in(col_name, df.columns)
             df[col_name] = pd.to_datetime(df[col_name], utc=True)
     df.reset_index(inplace=True)
+    #
     _LOG.debug(
         hpandas.df_to_str(df, print_dtypes=True, print_shape_info=True, tag="df")
     )

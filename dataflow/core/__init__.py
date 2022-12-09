@@ -5,7 +5,6 @@ import dataflow.core as dtfcore
 """
 
 from dataflow.core.dag import *  # pylint: disable=unused-import # NOQA
-from dataflow.core.dag_adapter import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_builder import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_builder_example import *  # pylint: disable=unused-import # NOQA
 from dataflow.core.dag_runner import *  # pylint: disable=unused-import # NOQA

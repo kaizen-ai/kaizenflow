@@ -2,7 +2,6 @@ import logging
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.statistics.signed_runs as cstsirun
@@ -273,13 +272,13 @@ class Test_compute_signed_run_lengths(hunitest.TestCase):
         actual = cstsirun.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)
 
-    @pytest.mark.skip("AmpTask2200 Enable after updating Pandas")
     def test4(self) -> None:
         """
         Test a single value.
         """
-        positions = pd.Series([1], index=[pd.Timestamp("2010-01-01")])
-        # Notice the int to float data type change.
+        positions = pd.Series(
+            [1], index=[pd.Timestamp("2010-01-01")], dtype=float
+        )
         expected = pd.Series([1], index=[pd.Timestamp("2010-01-01")], dtype=float)
         actual = cstsirun.compute_signed_run_lengths(positions)
         pd.testing.assert_series_equal(actual, expected)

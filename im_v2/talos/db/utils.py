@@ -27,8 +27,8 @@ def get_talos_ohlcv_create_table_query() -> str:
             ticks NUMERIC,
             currency_pair VARCHAR(255) NOT NULL,
             exchange_id VARCHAR(255) NOT NULL,
-            end_download_timestamp TIMESTAMP,
-            knowledge_timestamp TIMESTAMP
+            end_download_timestamp TIMESTAMP WITH TIME ZONE,
+            knowledge_timestamp TIMESTAMP WITH TIME ZONE
             )
             """
     return query

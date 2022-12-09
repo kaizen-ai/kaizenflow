@@ -6,27 +6,29 @@ import oms.call_optimizer as ocalopti
 
 import logging
 import os
-from typing import List
+from typing import Dict, List, Optional
 
 import invoke
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.finance as cofinanc
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
+import helpers.hpandas as hpandas
 import helpers.hpickle as hpickle
 import helpers.hsystem as hsystem
 
 _LOG = logging.getLogger(__name__)
 
 
-def compute_target_positions_in_cash(
+def compute_target_holdings_and_trades_notional(
     df: pd.DataFrame,
     *,
-    target_gmv: float = 100000,
-    dollar_neutrality: str = "no_constraint",
-    volatility_lower_bound: float = 1e-5,
+    style: str,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Compute target trades from holdings (dollar-valued) and predictions.
@@ -36,93 +38,143 @@ def compute_target_positions_in_cash(
     needs to be told the id associated with cash.
 
     :param df: a dataframe with current positions (in dollars) and predictions
-    :return: a dataframe with target positions and trades
-        (denominated in dollars)
+    :return: a dataframe with target positions and trades (denominated in
+        dollars)
     """
     # Sanity-check the dataframe.
     hdbg.dassert_isinstance(df, pd.DataFrame)
     hdbg.dassert(not df.empty)
     hdbg.dassert_is_subset(
-        ["asset_id", "prediction", "volatility", "position"], df.columns
+        ["asset_id", "prediction", "volatility", "holdings_notional"], df.columns
     )
-    hdbg.dassert_not_in("target_position", df.columns)
-    hdbg.dassert_not_in("target_trade", df.columns)
+    hdbg.dassert_not_in("target_holdings_notional", df.columns)
+    hdbg.dassert_not_in("target_trades_notional", df.columns)
     #
     hdbg.dassert(not df["prediction"].isna().any())
     hdbg.dassert(not df["volatility"].isna().any())
-    hdbg.dassert(not df["position"].isna().any())
+    hdbg.dassert(not df["holdings_notional"].isna().any())
     #
     df = df.set_index("asset_id")
     hdbg.dassert(not df.index.has_duplicates)
-    # In this placeholder, we maintain two invariants (approximately):
-    #   1. Net wealth is conserved from one step to the next.
-    #   2. GMV is conserved from one step to the next.
-    # The second invariant may be restated as conserving gross exposure.
-    predictions = df["prediction"]
-    _LOG.debug("predictions=\n%s", predictions)
-    volatility = df["volatility"]
-    _LOG.debug("volatility=\n%s", volatility)
-    # Set a lower bound on the volatility forecast.
-    volatility = volatility.clip(lower=volatility_lower_bound)
-    # Calculate volatility-weighted target positions. This is not yet scaled
-    #  to target GMV.
-    unscaled_target_positions = predictions.divide(volatility)
-    if dollar_neutrality == "no_constraint":
-        pass
-    elif dollar_neutrality == "demean":
-        hdbg.dassert_lt(
-            1,
-            unscaled_target_positions.count(),
-            "More than one asset required to enforce dollar neutrality.",
+    #
+    predictions = df["prediction"].rename(0).to_frame().T
+    volatility = df["volatility"].rename(0).to_frame().T
+    if style == "cross_sectional":
+        target_holdings_notional = (
+            cofinanc.compute_target_positions_cross_sectionally(
+                predictions,
+                volatility,
+                **kwargs,
+            )
         )
-        net_target_position = unscaled_target_positions.mean()
-        _LOG.debug(
-            "Target net asset value prior to dollar neutrality constaint=%f"
-            % net_target_position
+    elif style == "longitudinal":
+        target_holdings_notional = (
+            cofinanc.compute_target_positions_longitudinally(
+                predictions,
+                volatility,
+                spread=None,
+                **kwargs,
+            )
         )
-        unscaled_target_positions -= net_target_position
-    elif dollar_neutrality == "side_preserving":
-        hdbg.dassert_lt(
-            1,
-            unscaled_target_positions.count(),
-            "More than one asset required to enforce dollar neutrality.",
-        )
-        positive_asset_value = unscaled_target_positions.clip(lower=0).sum()
-        hdbg.dassert_lt(0, positive_asset_value, "No long predictions provided.")
-        negative_asset_value = -1 * unscaled_target_positions.clip(upper=0).sum()
-        hdbg.dassert_lt(0, negative_asset_value, "No short predictions provided.")
-        min_sided_asset_value = min(positive_asset_value, negative_asset_value)
-        positive_scale_factor = min_sided_asset_value / positive_asset_value
-        negative_scale_factor = min_sided_asset_value / negative_asset_value
-        positive_positions = (
-            positive_scale_factor * unscaled_target_positions.clip(lower=0)
-        )
-        negative_positions = (
-            negative_scale_factor * unscaled_target_positions.clip(upper=0)
-        )
-        unscaled_target_positions = positive_positions.add(negative_positions)
     else:
-        raise ValueError(
-            "Unrecognized option `dollar_neutrality`=%s" % dollar_neutrality
-        )
-    unscaled_target_positions_l1 = unscaled_target_positions.abs().sum()
-    _LOG.debug("unscaled_target_positions_l1 =%s", unscaled_target_positions_l1)
-    hdbg.dassert_lte(0, unscaled_target_positions_l1)
-    if unscaled_target_positions_l1 == 0:
-        _LOG.debug("All target positions are zero.")
-        scale_factor = 0
-    else:
-        scale_factor = target_gmv / unscaled_target_positions_l1
-    _LOG.debug("scale_factor=%s", scale_factor)
+        raise ValueError("Unsupported `style`=%s", style)
+    hdbg.dassert_eq(target_holdings_notional.shape[0], 1)
+    target_holdings_notional = pd.Series(
+        target_holdings_notional.values[0],
+        index=target_holdings_notional.columns,
+        name="target_holdings_notional",
+        dtype="float",
+    )
+    _LOG.debug(
+        "`target_holdings_notional`=\n%s",
+        hpandas.df_to_str(
+            target_holdings_notional, print_dtypes=True, print_shape_info=True
+        ),
+    )
     # These positions are expressed in dollars.
-    current_positions = df["position"]
-    net_wealth = current_positions.sum()
-    _LOG.debug("net_wealth=%s", net_wealth)
-    # Drop cash.
-    target_positions = scale_factor * unscaled_target_positions
-    target_trades = target_positions - current_positions
-    df["target_position"] = target_positions
-    df["target_notional_trade"] = target_trades
+    holdings_notional = df["holdings_notional"]
+    _LOG.debug(
+        "`holdings_notional`=\n%s",
+        hpandas.df_to_str(
+            holdings_notional, print_dtypes=True, print_shape_info=True
+        ),
+    )
+    target_trades_notional = target_holdings_notional - holdings_notional
+    df["target_holdings_notional"] = target_holdings_notional
+    df["target_trades_notional"] = target_trades_notional
+    return df
+
+
+def convert_target_holdings_and_trades_to_shares_and_adjust_notional(
+    df: pd.DataFrame,
+    *,
+    quantization: str,
+    asset_id_to_decimals: Optional[Dict[int, int]] = None,
+) -> pd.DataFrame:
+    """
+    Computes target holdings and trades in shares; adjusts target notionals.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert(not df.empty)
+    hdbg.dassert_is_subset(
+        [
+            "price",
+            "holdings_shares",
+            "target_holdings_notional",
+            "target_trades_notional",
+        ],
+        df.columns,
+    )
+    hdbg.dassert_not_in("target_holdings_shares", df.columns)
+    hdbg.dassert_not_in("target_trades_shares", df.columns)
+    #
+    hdbg.dassert(not df.index.has_duplicates)
+    # Convert target trades in notional to shares, without any quantization.
+    target_trades_shares_before_quantization = (
+        df["target_trades_notional"] / df["price"]
+    )
+    target_trades_shares_before_quantization.replace(
+        [-np.inf, np.inf], np.nan, inplace=True
+    )
+    target_trades_shares_before_quantization = (
+        target_trades_shares_before_quantization.fillna(0)
+    )
+    # Compute `target_trades_shares` post-quantization.
+    target_trades_shares = cofinanc.quantize_shares(
+        target_trades_shares_before_quantization,
+        quantization,
+        asset_id_to_decimals,
+    )
+    # hdbg.dassert(np.isfinite(target_trades_shares).all())
+    _LOG.debug(
+        "Post-quantization target_trades_shares adjusted from %s to %s",
+        hpandas.df_to_str(target_trades_shares_before_quantization),
+        hpandas.df_to_str(target_trades_shares),
+    )
+    df["target_trades_shares"] = target_trades_shares
+    # Update `target_trades_notional` post-quantization.
+    target_trades_notional = target_trades_shares * df["price"]
+    _LOG.debug(
+        "Post-quantization target_trades_notional adjusted from %s to %s",
+        hpandas.df_to_str(df["target_trades_notional"]),
+        hpandas.df_to_str(target_trades_notional),
+    )
+    df["target_trades_notional"] = target_trades_notional
+    # Computer `target_holdings_shares` post-quantization.
+    holdings_shares = df["holdings_shares"]
+    target_holdings_shares = holdings_shares + target_trades_shares
+    _LOG.debug(
+        "`target_holdings_shares`=%s", hpandas.df_to_str(target_trades_notional)
+    )
+    df["target_holdings_shares"] = target_holdings_shares
+    # Update `target_holdings_notional` post-quantization.
+    target_holdings_notional = target_holdings_shares * df["price"]
+    _LOG.debug(
+        "Post-quantization target_holdings_notional adjusted from %s to %s",
+        hpandas.df_to_str(df["target_holdings_notional"]),
+        hpandas.df_to_str(target_holdings_notional),
+    )
+    df["target_holdings_notional"] = target_holdings_notional
     return df
 
 
@@ -148,10 +200,10 @@ def run_optimizer(
     # TODO(Grisha): Move this inside the `opt_docker_cmd`.
     # TODO(Grisha): maybe move `docker_login` to the entrypoint?
     # To avoid to call init_logger overwriting the call to it from `main`.
-    import helpers.lib_tasks as hlibtask
+    import helpers.lib_tasks_docker as hlitadoc
 
     ctx = invoke.context.Context()
-    hlibtask.docker_login(ctx)
+    hlitadoc.docker_login(ctx)
     # Serialize the inputs in `tmp_dir`.
     hio.create_dir(tmp_dir, incremental=True)
     input_obj = {"config": config, "df": df}

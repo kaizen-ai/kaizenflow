@@ -7,7 +7,6 @@ import optimizer.soft_constraints as osofcons
 import abc
 import logging
 
-import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -126,6 +125,16 @@ class SpreadCost(SoftConstraint):
 # #############################################################################
 
 
+class TargetGmvUpperBoundSoftConstraint(SoftConstraint):
+    """
+    Impose a cost on going above the target GMV.
+    """
+
+    def _estimate(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
+        _ = target_weight_diffs
+        return cvx.pos(cvx.norm(target_weights, 1) - target_weights.shape[0])
+
+
 class DollarNeutralitySoftConstraint(SoftConstraint):
     """
     Impose a cost on violating dollar neutrality.
@@ -135,6 +144,17 @@ class DollarNeutralitySoftConstraint(SoftConstraint):
         _ = target_weight_diffs
         _ = gmv
         return cvx.abs(sum(target_weights))
+
+
+class RelativeHoldingSoftConstraint(SoftConstraint):
+    """
+    Impose a cost on asset allocation that is uneven with respect to GMV.
+    """
+
+    def _estimate(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
+        _ = target_weight_diffs
+        _ = gmv
+        return cvx.pos(cvx.norm(target_weights, "inf") - 1)
 
 
 class TurnoverSoftConstraint(SoftConstraint):

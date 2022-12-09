@@ -9,8 +9,8 @@ from typing import Any, List
 
 import helpers.hgit as hgit
 import helpers.hsystem as hsystem
-import im_v2.common.data.client.full_symbol as imvcdcfusy
 import im_v2.common.data.client.historical_pq_clients as imvcdchpcl
+import im_v2.common.universe as ivcu
 
 
 def _generate_test_data(
@@ -55,7 +55,7 @@ class MockHistoricalByTileClient(imvcdchpcl.HistoricalPqByTileClient):
 
 def get_MockHistoricalByTileClient_example1(
     self_: Any,
-    full_symbols: List[imvcdcfusy.FullSymbol],
+    full_symbols: List[ivcu.FullSymbol],
     resample_1min: bool,
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
@@ -83,8 +83,15 @@ def get_MockHistoricalByTileClient_example1(
     )
     # Init client for testing.
     vendor = "mock"
+    universe_version = "small"
+    infer_exchange_id = False
     im_client = MockHistoricalByTileClient(
-        vendor, resample_1min, test_data_dir, partition_mode
+        vendor,
+        universe_version,
+        resample_1min,
+        test_data_dir,
+        partition_mode,
+        infer_exchange_id,
     )
     return im_client
 
@@ -92,7 +99,7 @@ def get_MockHistoricalByTileClient_example1(
 # TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example2(
     self_: Any,
-    full_symbols: List[imvcdcfusy.FullSymbol],
+    full_symbols: List[ivcu.FullSymbol],
 ) -> imvcdchpcl.HistoricalPqByTileClient:
     """
     Build mock client example to test Parquet filters building.
@@ -119,9 +126,16 @@ def get_MockHistoricalByTileClient_example2(
     )
     # Init client for testing.
     vendor = "mock"
+    universe_version = "small"
     resample_1min = False
+    infer_exchange_id = False
     im_client = MockHistoricalByTileClient(
-        vendor, resample_1min, test_data_dir, partition_mode
+        vendor,
+        universe_version,
+        resample_1min,
+        test_data_dir,
+        partition_mode,
+        infer_exchange_id,
     )
     return im_client
 
@@ -129,7 +143,7 @@ def get_MockHistoricalByTileClient_example2(
 # TODO(Dan): Generate hourly data in order to speed up tests.
 def get_MockHistoricalByTileClient_example3(
     self_: Any,
-    full_symbols: List[imvcdcfusy.FullSymbol],
+    full_symbols: List[ivcu.FullSymbol],
     start_date: str,
     end_date: str,
     resample_1min: bool,
@@ -157,7 +171,14 @@ def get_MockHistoricalByTileClient_example3(
     )
     # Init client for testing.
     vendor = "mock"
+    universe_version = "small"
+    infer_exchange_id = False
     im_client = MockHistoricalByTileClient(
-        vendor, resample_1min, test_data_dir, partition_mode
+        vendor,
+        universe_version,
+        resample_1min,
+        test_data_dir,
+        partition_mode,
+        infer_exchange_id,
     )
     return im_client

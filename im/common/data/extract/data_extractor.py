@@ -11,7 +11,6 @@ import pandas as pd
 
 import im.common.data.types as imcodatyp
 
-
 # TODO(*): Rename file abstract_data_extractor.py
 class AbstractDataExtractor(abc.ABC):
     """

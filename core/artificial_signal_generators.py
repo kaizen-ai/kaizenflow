@@ -324,6 +324,7 @@ class PriceProcess:
         """
         self._rng = np.random.default_rng(seed=seed)
 
+    # TODO(Paul): drop "log" from the name.
     def generate_log_normal_series(
         self,
         start_datetime: pd.Timestamp,
@@ -487,7 +488,7 @@ class PriceProcess:
         hdbg.dassert_isinstance(end_time, datetime.time)
         # Create index.
         index = pd.date_range(start_datetime, end_datetime, freq=freq)
-        srs = pd.Series(index=index)
+        srs = pd.Series(index=index, dtype="float64")
         srs = srs.between_time(start_time, end_time)
         index = srs.index
         return index

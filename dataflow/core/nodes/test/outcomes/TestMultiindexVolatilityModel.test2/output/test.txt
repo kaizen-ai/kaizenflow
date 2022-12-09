@@ -11,134 +11,144 @@ MN0:
   MN0:
     load_data:
       predict:
-        predict_df_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 1 columns):
-         #   Column  Non-Null Count  Dtype  
-        ---  ------  --------------  -----  
-         0   MN0     40 non-null     float64
-        dtypes: float64(1)
+        predict_df_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 1 columns):
+           #   Column  Non-Null Count  Dtype
+          ---  ------  --------------  -----
+           0   MN0     40 non-null     float64
+          dtypes: float64(1)
     calculate_vol_pth_power:
       predict:
-        df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 2 columns):
-         #   Column     Non-Null Count  Dtype  
-        ---  ------     --------------  -----  
-         0   MN0        40 non-null     float64
-         1   ret_0_vol  40 non-null     float64
-        dtypes: float64(2)
+        df_transformed_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 2 columns):
+           #   Column     Non-Null Count  Dtype
+          ---  ------     --------------  -----
+           0   MN0        40 non-null     float64
+           1   ret_0_vol  40 non-null     float64
+          dtypes: float64(2)
     compute_smooth_moving_average:
       predict:
         tau: 1.7500008363798794
         min_periods: 4
-        df_out_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 4 columns):
-         #   Column           Non-Null Count  Dtype  
-        ---  ------           --------------  -----  
-         0   MN0              40 non-null     float64
-         1   ret_0_vol        40 non-null     float64
-         2   ret_0_vol_2      38 non-null     float64
-         3   ret_0_vol_2_hat  37 non-null     float64
-        dtypes: float64(4)
+        df_out_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 4 columns):
+           #   Column           Non-Null Count  Dtype
+          ---  ------           --------------  -----
+           0   MN0              40 non-null     float64
+           1   ret_0_vol        40 non-null     float64
+           2   ret_0_vol_2      38 non-null     float64
+           3   ret_0_vol_2_hat  37 non-null     float64
+          dtypes: float64(4)
     calculate_vol_pth_root:
       predict:
-        df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 4 columns):
-         #   Column           Non-Null Count  Dtype  
-        ---  ------           --------------  -----  
-         0   MN0              40 non-null     float64
-         1   ret_0_vol        40 non-null     float64
-         2   ret_0_vol_2      38 non-null     float64
-         3   ret_0_vol_2_hat  37 non-null     float64
-        dtypes: float64(4)
+        df_transformed_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 4 columns):
+           #   Column           Non-Null Count  Dtype
+          ---  ------           --------------  -----
+           0   MN0              40 non-null     float64
+           1   ret_0_vol        40 non-null     float64
+           2   ret_0_vol_2      38 non-null     float64
+           3   ret_0_vol_2_hat  37 non-null     float64
+          dtypes: float64(4)
     demodulate_using_vol_pred:
       predict:
-        df_out_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 4 columns):
-         #   Column           Non-Null Count  Dtype  
-        ---  ------           --------------  -----  
-         0   ret_0_vol        40 non-null     float64
-         1   ret_0_vol_2      38 non-null     float64
-         2   ret_0_vol_2_hat  37 non-null     float64
-         3   ret_0_vol_adj    35 non-null     float64
-        dtypes: float64(4)
+        df_out_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 4 columns):
+           #   Column           Non-Null Count  Dtype
+          ---  ------           --------------  -----
+           0   ret_0_vol        40 non-null     float64
+           1   ret_0_vol_2      38 non-null     float64
+           2   ret_0_vol_2_hat  37 non-null     float64
+           3   ret_0_vol_adj    35 non-null     float64
+          dtypes: float64(4)
 MN1:
   MN1:
     load_data:
       predict:
-        predict_df_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 1 columns):
-         #   Column  Non-Null Count  Dtype  
-        ---  ------  --------------  -----  
-         0   MN1     40 non-null     float64
-        dtypes: float64(1)
+        predict_df_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 1 columns):
+           #   Column  Non-Null Count  Dtype
+          ---  ------  --------------  -----
+           0   MN1     40 non-null     float64
+          dtypes: float64(1)
     calculate_vol_pth_power:
       predict:
-        df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 2 columns):
-         #   Column     Non-Null Count  Dtype  
-        ---  ------     --------------  -----  
-         0   MN1        40 non-null     float64
-         1   ret_0_vol  40 non-null     float64
-        dtypes: float64(2)
+        df_transformed_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 2 columns):
+           #   Column     Non-Null Count  Dtype
+          ---  ------     --------------  -----
+           0   MN1        40 non-null     float64
+           1   ret_0_vol  40 non-null     float64
+          dtypes: float64(2)
     compute_smooth_moving_average:
       predict:
         tau: 1.2500027854970344
         min_periods: 3
-        df_out_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 4 columns):
-         #   Column           Non-Null Count  Dtype  
-        ---  ------           --------------  -----  
-         0   MN1              40 non-null     float64
-         1   ret_0_vol        40 non-null     float64
-         2   ret_0_vol_2      38 non-null     float64
-         3   ret_0_vol_2_hat  38 non-null     float64
-        dtypes: float64(4)
+        df_out_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 4 columns):
+           #   Column           Non-Null Count  Dtype
+          ---  ------           --------------  -----
+           0   MN1              40 non-null     float64
+           1   ret_0_vol        40 non-null     float64
+           2   ret_0_vol_2      38 non-null     float64
+           3   ret_0_vol_2_hat  38 non-null     float64
+          dtypes: float64(4)
     calculate_vol_pth_root:
       predict:
-        df_transformed_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 4 columns):
-         #   Column           Non-Null Count  Dtype  
-        ---  ------           --------------  -----  
-         0   MN1              40 non-null     float64
-         1   ret_0_vol        40 non-null     float64
-         2   ret_0_vol_2      38 non-null     float64
-         3   ret_0_vol_2_hat  38 non-null     float64
-        dtypes: float64(4)
+        df_transformed_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 4 columns):
+           #   Column           Non-Null Count  Dtype
+          ---  ------           --------------  -----
+           0   MN1              40 non-null     float64
+           1   ret_0_vol        40 non-null     float64
+           2   ret_0_vol_2      38 non-null     float64
+           3   ret_0_vol_2_hat  38 non-null     float64
+          dtypes: float64(4)
     demodulate_using_vol_pred:
       predict:
-        df_out_info: <class 'pandas.core.frame.DataFrame'>
-        DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
-        Freq: B
-        Data columns (total 4 columns):
-         #   Column           Non-Null Count  Dtype  
-        ---  ------           --------------  -----  
-         0   ret_0_vol        40 non-null     float64
-         1   ret_0_vol_2      38 non-null     float64
-         2   ret_0_vol_2_hat  38 non-null     float64
-         3   ret_0_vol_adj    36 non-null     float64
-        dtypes: float64(4)
+        df_out_info:
+          <class 'pandas.core.frame.DataFrame'>
+          DatetimeIndex: 40 entries, 2000-01-03 to 2000-02-25
+          Freq: B
+          Data columns (total 4 columns):
+           #   Column           Non-Null Count  Dtype
+          ---  ------           --------------  -----
+           0   ret_0_vol        40 non-null     float64
+           1   ret_0_vol_2      38 non-null     float64
+           2   ret_0_vol_2_hat  38 non-null     float64
+           3   ret_0_vol_adj    36 non-null     float64
+          dtypes: float64(4)
 ################################################################################
 df_out
 ################################################################################
-           ret_0_vol       ret_0_vol_2       ret_0_vol_2_hat       ret_0_vol_adj       ret_0       volume     
+           ret_0_vol       ret_0_vol_2       ret_0_vol_2_hat       ret_0_vol_adj       ret_0       volume
                  MN0   MN1         MN0   MN1             MN0   MN1           MN0   MN1   MN0   MN1    MN0  MN1
 2000-01-03      3.11  2.33        3.63  1.97             NaN   NaN           NaN   NaN -3.11  2.33    100  100
 2000-01-04      1.23  2.02        1.76  1.13             NaN   NaN           NaN   NaN -1.23  2.02    100  100

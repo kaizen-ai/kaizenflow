@@ -15,7 +15,7 @@ import pandas as pd
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.model.dataflow_model_utils as dtfmoexuti
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -54,7 +54,7 @@ def compute_stats_for_single_name_artifacts(
     )
     for key, artifact in iterator:
         _LOG.debug(
-            "load_experiment_artifacts: memory_usage=%s",
+            "compute_stats_for_single_name_artifacts: memory_usage=%s",
             hloggin.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
@@ -117,7 +117,7 @@ def aggregate_single_name_models(
     dfs = collections.OrderedDict()
     for key, artifact in iterator:
         _LOG.info(
-            "load_experiment_artifacts: memory_usage=%s",
+            "aggregate_single_name_models: memory_usage=%s",
             hloggin.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].
@@ -167,7 +167,7 @@ def load_result_dfs(
     dfs = collections.OrderedDict()
     for key, artifact in iterator:
         _LOG.info(
-            "load_experiment_artifacts: memory_usage=%s",
+            "load_result_dfs: memory_usage=%s",
             hloggin.get_memory_usage_as_str(None),
         )
         # Extract df and restrict to [start, end].

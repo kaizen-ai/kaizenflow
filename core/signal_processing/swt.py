@@ -4,15 +4,15 @@ Import as:
 import core.signal_processing.swt as csiprswt
 """
 
-
 import logging
-from typing import Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
 import pywt
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
 
@@ -42,7 +42,9 @@ def get_swt(
       daily ~ 10-11
 
     :param sig: input signal
-    :param wavelet: pywt wavelet name, e.g., "db8"
+    :param wavelet: pywt wavelet name, e.g., "db8";
+        see all available names by invoking `pywt.wavelist()`;
+        see all available families by invoking `pywt.families()`.
     :param depth: the number of decomposition steps to perform. Corresponds to
         "level" parameter in `pywt.swt`
     :param timing_mode: supported timing modes are
@@ -63,11 +65,7 @@ def get_swt(
     # Choice of wavelet may significantly impact results.
     wavelet = wavelet or "haar"
     # _LOG.debug("wavelet=`%s`", wavelet)
-    if isinstance(sig, pd.DataFrame):
-        hdbg.dassert_eq(
-            sig.shape[1], 1, "Input dataframe must have a single column."
-        )
-        sig = sig.squeeze()
+    sig = hpandas.as_series(sig)
     if timing_mode is None:
         timing_mode = "knowledge_time"
     # _LOG.debug("timing_mode=`%s`", timing_mode)
@@ -140,8 +138,8 @@ def get_swt(
 
 def get_swt_level(
     sig: Union[pd.DataFrame, pd.Series],
-    wavelet: str,
     level: int,
+    wavelet: Optional[str] = None,
     timing_mode: Optional[str] = None,
     output_mode: Optional[str] = None,
 ) -> pd.Series:
@@ -149,8 +147,8 @@ def get_swt_level(
     Wraps `get_swt` and extracts a single wavelet level.
 
     :param sig: input signal
-    :param wavelet: pywt wavelet name, e.g., "db8"
     :param level: the wavelet level to extract
+    :param wavelet: pywt wavelet name, e.g., "db8"
     :param timing_mode: supported timing modes are
         - "knowledge_time":
             - reindex transform according to knowledge times
@@ -177,6 +175,178 @@ def get_swt_level(
     return swt[level]
 
 
+# #############################################################################
+# Low/high pass filters
+# #############################################################################
+
+
+def compute_swt_low_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: Optional[str] = None,
+    timing_mode: Optional[str] = None,
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Perform a FIR low-pass filtering using the `level` swt smooth.
+    """
+    if isinstance(sig, pd.Series):
+        return _compute_swt_low_pass(
+            sig,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    df = sig.apply(
+        lambda x: _compute_swt_low_pass(
+            x,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    )
+    return df
+
+
+def _compute_swt_low_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: Optional[str] = None,
+    timing_mode: Optional[str] = None,
+) -> pd.Series:
+    sig = hpandas.as_series(sig)
+    signal_name = sig.name
+    low_freq = get_swt_level(sig, level, wavelet, timing_mode, "smooth")
+    low_freq.name = signal_name
+    return low_freq
+
+
+def compute_swt_high_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: Optional[str] = None,
+    timing_mode: Optional[str] = None,
+) -> Union[pd.Series, pd.DataFrame]:
+    """
+    Perform a FIR high-pass filtering by subtracting the `level` swt smooth.
+    """
+    if isinstance(sig, pd.Series):
+        return _compute_swt_high_pass(
+            sig,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    df = sig.apply(
+        lambda x: _compute_swt_high_pass(
+            x,
+            level,
+            wavelet,
+            timing_mode,
+        )
+    )
+    return df
+
+
+def _compute_swt_high_pass(
+    sig: Union[pd.DataFrame, pd.Series],
+    level: int,
+    wavelet: str = "haar",
+    timing_mode: Optional[str] = None,
+) -> pd.Series:
+    sig = hpandas.as_series(sig)
+    signal_name = sig.name
+    low_freq = compute_swt_low_pass(sig, level, wavelet, timing_mode)
+    # Remove the low frequency component.
+    high_freq = sig - low_freq
+    high_freq.name = signal_name
+    return high_freq
+
+
+# #############################################################################
+# Wavelet properties
+# #############################################################################
+
+
+def get_knowledge_time_warmup_lengths(
+    wavelets: List[str],
+    depth: int,
+) -> pd.Series:
+    """
+    Return knowledge-time warm-up lengths required.
+
+    Stratified by wavelet name and level.
+    """
+    hdbg.dassert_container_type(wavelets, list, str)
+    hdbg.dassert_isinstance(depth, int)
+    hdbg.dassert_lt(0, depth)
+    wavelet_warmups = []
+    for wavelet in wavelets:
+        width = len(pywt.Wavelet(wavelet).filter_bank[0])
+        lengths = {}
+        for level in range(1, depth + 1):
+            length = 2 * _get_artifact_length(width, level)
+            lengths[level] = length
+        srs = pd.Series(lengths, name=wavelet)
+        srs.index.name = "level"
+        wavelet_warmups.append(srs)
+    df = pd.concat(wavelet_warmups, axis=1)
+    df.columns.name = "wavelet"
+    return df
+
+
+def summarize_wavelet(wavelet: pywt.Wavelet) -> pd.Series:
+    """
+    Summarize wavelet properties of frequent interest.
+    """
+    hdbg.dassert_isinstance(wavelet, pywt.Wavelet)
+    _LOG.debug("wavelet=%s", wavelet)
+    dict_ = {
+        "family_name": wavelet.family_name,
+        "short_family_name": wavelet.short_family_name,
+        "family_number": wavelet.family_number,
+        "name": wavelet.name,
+        "number": wavelet.number,
+        "orthogonal": wavelet.orthogonal,
+        "biorthogonal": wavelet.biorthogonal,
+        "symmetry": wavelet.symmetry,
+        "vanishing_moments_phi": wavelet.vanishing_moments_phi,
+        "vanishing_moments_psi": wavelet.vanishing_moments_psi,
+        "width": len(wavelet.filter_bank[0]),
+    }
+    srs = pd.Series(dict_)
+    return srs
+
+
+def summarize_discrete_wavelets() -> pd.DataFrame:
+    """
+    Summarize properties of all available discrete wavelets.
+    """
+    wavelist = pywt.wavelist(kind="discrete")
+    _LOG.debug("discrete wavelist=%s", wavelist)
+    wavelet_summaries = []
+    for wavelet_name in wavelist:
+        wavelet = pywt.Wavelet(wavelet_name)
+        wavelet_summary = summarize_wavelet(wavelet)
+        wavelet_summaries.append(wavelet_summary)
+    df = pd.concat(wavelet_summaries, axis=1).T
+    return df
+
+
+def _get_artifact_length(
+    width: int,
+    level: int,
+) -> int:
+    """
+    Get artifact length based on wavelet width and level.
+
+    :width: width (length of support of mother wavelet)
+    :level: wavelet level
+    :return: length of required warm-up period
+    """
+    length = width * 2 ** (level - 1) - width // 2
+    return length
+
+
 def _pad_to_pow_of_2(arr: np.array) -> np.array:
     """
     Minimally extend `arr` with zeros so that len is a power of 2.
@@ -199,7 +369,8 @@ def _set_warmup_region_to_nan(srs: pd.Series, width: int, level: int) -> None:
     :width: width (length of support of mother wavelet)
     :level: wavelet level
     """
-    srs[: width * 2 ** (level - 1) - width // 2] = np.nan
+    warmup_region = _get_artifact_length(width, level)
+    srs[:warmup_region] = np.nan
 
 
 def _reindex_by_knowledge_time(
@@ -212,7 +383,13 @@ def _reindex_by_knowledge_time(
     :width: width (length of support of mother wavelet)
     :level: wavelet level
     """
-    return srs.shift(width * 2 ** (level - 1) - width // 2)
+    warmup_region = _get_artifact_length(width, level)
+    return srs.shift(warmup_region)
+
+
+# #############################################################################
+# Wavelet variance/covariance
+# #############################################################################
 
 
 def compute_swt_var(
@@ -267,6 +444,7 @@ def compute_swt_covar(
             timing_mode=timing_mode,
             output_mode="detail",
         )
+    # Take the level-wise product.
     prod = dfs[col1].multiply(dfs[col2])
     fvi = prod.first_valid_index()
     col1_df = dfs[col1].loc[fvi:]
@@ -277,73 +455,63 @@ def compute_swt_covar(
         col2_df = col2_df.dropna()
     results = []
     covar_name = "swt_covar" if col1 != col2 else "swt_var"
-    results.append(prod.sum(axis=axis, skipna=False).rename(covar_name))
+    covar = prod.sum(axis=axis, skipna=False).rename(covar_name)
+    results.append(covar)
     if col1 != col2:
-        results.append(
+        col1_var = (
             np.square(col1_df)
             .sum(axis=axis, skipna=False)
             .rename(str(col1) + "_swt_var")
         )
-        results.append(
+        results.append(col1_var)
+        col2_var = (
             np.square(col2_df)
             .sum(axis=axis, skipna=False)
             .rename(str(col2) + "_swt_var")
         )
+        results.append(col2_var)
+        corr = covar.divide(np.sqrt(col1_var.multiply(col2_var))).rename(
+            "swt_corr"
+        )
+        results.append(corr)
     return pd.concat(results, axis=1)
-
-
-def compute_swt_sum(
-    sig: Union[pd.DataFrame, pd.Series],
-    wavelet: Optional[str] = None,
-    depth: Optional[int] = None,
-    timing_mode: Optional[str] = None,
-) -> pd.DataFrame:
-    """
-    Get swt coeffcient sums using levels up to `depth`.
-
-    Params as in `get_swt()`.
-    """
-    df = get_swt(
-        sig,
-        wavelet=wavelet,
-        depth=depth,
-        timing_mode=timing_mode,
-        output_mode="detail",
-    )
-    srs = -1 * df.sum(axis=1, skipna=False)
-    srs.name = "swt_sum"
-    return srs.to_frame()
 
 
 # TODO(*): Make this a decorator.
 def compute_fir_zscore(
     signal: Union[pd.DataFrame, pd.Series],
     dyadic_tau: int,
-    variance_dyadic_tau: Optional[int] = None,
-    delay: int = 0,
-    variance_delay: Optional[int] = None,
+    demean: bool = True,
+    variance_delay: int = 0,
     wavelet: Optional[str] = None,
-    variance_wavelet: Optional[str] = None,
 ) -> pd.DataFrame:
+    """
+    Z-score with a FIR filter.
+
+    :param signal: a series of dataframe of series
+    :param dyadic_tau: a larger number means more smoothing and a longer
+        lookback
+    :param demean: demean before variance-adjusting; set to `False` if, e.g.,
+        there are prior reasons to suppose the true mean of `signal` is zero
+    :param variance_delay: amount by which to lag the variance adjustment
+    :param wavelet: wavelet to use in filtering
+    :return: a dataframe (single-column if the input was a series)
+    """
     if isinstance(signal, pd.Series):
         return _compute_fir_zscore(
             signal,
             dyadic_tau,
-            variance_dyadic_tau,
-            delay,
+            demean,
             variance_delay,
             wavelet,
-            variance_wavelet,
         )
     df = signal.apply(
         lambda x: _compute_fir_zscore(
             x,
             dyadic_tau,
-            variance_dyadic_tau,
-            delay,
+            demean,
             variance_delay,
             wavelet,
-            variance_wavelet,
         )
     )
     return df
@@ -352,39 +520,24 @@ def compute_fir_zscore(
 def _compute_fir_zscore(
     signal: Union[pd.DataFrame, pd.Series],
     dyadic_tau: int,
-    variance_dyadic_tau: Optional[int] = None,
-    delay: int = 0,
-    variance_delay: Optional[int] = None,
+    demean: bool = True,
+    variance_delay: int = 0,
     wavelet: Optional[str] = None,
-    variance_wavelet: Optional[str] = None,
 ) -> pd.Series:
     """
     Z-score with a FIR filter.
     """
-    if variance_dyadic_tau is None:
-        variance_dyadic_tau = dyadic_tau
-    if variance_delay is None:
-        variance_delay = delay
-    if variance_wavelet is None:
-        variance_wavelet = wavelet
-    if isinstance(signal, pd.DataFrame):
-        hdbg.dassert_eq(
-            signal.shape[1], 1, "Input dataframe must have a single column."
-        )
-        signal = signal.squeeze()
-    mean = get_swt(
-        signal, wavelet=wavelet, depth=dyadic_tau, output_mode="smooth"
-    )[dyadic_tau].shift(delay)
-    demeaned = signal - mean
-    var = get_swt(
-        demeaned ** 2,
-        wavelet=variance_wavelet,
-        depth=variance_dyadic_tau,
-        output_mode="smooth",
-    )[variance_dyadic_tau].shift(variance_delay)
+    signal = hpandas.as_series(signal)
+    if demean:
+        _LOG.debug("Demeaning signal...")
+        signal = compute_swt_high_pass(signal, dyadic_tau, wavelet)
+    var = compute_swt_low_pass(
+        signal**2,
+        dyadic_tau,
+        wavelet,
+    ).shift(variance_delay)
     # TODO(Paul): Maybe add delay-based rescaling.
-    srs = demeaned / np.sqrt(var)
-    srs.name = signal.name
+    srs = signal / np.sqrt(var)
     srs = srs.replace([-np.inf, np.inf], np.nan)
     return srs
 
@@ -404,10 +557,13 @@ def compute_swt_var_summary(
         sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=0
     )
     hdbg.dassert_in("swt_var", swt_var.columns)
+    # Use the "cross-sectional" var calculation to determine the first index
+    # valid for all levels up to `depth`.
     srs = compute_swt_var(
         sig, wavelet=wavelet, depth=depth, timing_mode=timing_mode, axis=1
     )
     fvi = srs.first_valid_index()
+    # Normalize by the number of non-NaN observations.
     decomp = swt_var / srs.loc[fvi:].count()
     decomp["cum_swt_var"] = decomp["swt_var"].cumsum()
     decomp["perc"] = decomp["swt_var"] / sig.loc[fvi:].var()

@@ -17,7 +17,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data(1)
         # Generate node config.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -43,7 +43,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
 
     def test2(self) -> None:
         data = self._get_data(2)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -73,7 +73,7 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         input.
         """
         data = self._get_data(1)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -96,9 +96,9 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
 
     def test4(self) -> None:
         data = self._get_data(1)
-        data_fit = data.loc[:"2010-01-01 00:29:00"]
-        data_predict = data.loc["2010-01-01 00:30:00":]
-        config = cconfig.get_config_from_nested_dict(
+        data_fit = data.loc[:"2010-01-01 00:29:00"]  # type: ignore[misc]
+        data_predict = data.loc["2010-01-01 00:30:00":]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -123,9 +123,9 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
 
     def test5(self) -> None:
         data = self._get_data(2)
-        data_fit = data.loc[:"2010-01-01 00:29:00"]
-        data_predict = data.loc["2010-01-01 00:30:00":]
-        config = cconfig.get_config_from_nested_dict(
+        data_fit = data.loc[:"2010-01-01 00:29:00"]  # type: ignore[misc]
+        data_predict = data.loc["2010-01-01 00:30:00":]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -153,8 +153,8 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         """
         data = self._get_data(2)
         data["weights"] = range(0, data.shape[0])
-        data_fit = data.loc[:"2010-01-01 00:29:00"]
-        config = cconfig.get_config_from_nested_dict(
+        data_fit = data.loc[:"2010-01-01 00:29:00"]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -179,9 +179,9 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         """
         data = self._get_data(2)
         data["weights"] = range(0, data.shape[0])
-        data_fit = data.loc[:"2010-01-01 00:29:00"]
-        data_predict = data.loc["2010-01-01 00:30:00":]
-        config = cconfig.get_config_from_nested_dict(
+        data_fit = data.loc[:"2010-01-01 00:29:00"]  # type: ignore[misc]
+        data_predict = data.loc["2010-01-01 00:30:00":]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -207,10 +207,10 @@ class TestContinuousSkLearnModel(hunitest.TestCase):
         """
         data = self._get_data(2)
         data["weights"] = range(0, data.shape[0])
-        data["weights"].loc["2010-01-01 00:31:00":] = np.nan
-        data_fit = data.loc[:"2010-01-01 00:29:00"]
-        data_predict = data.loc["2010-01-01 00:30:00":]
-        config = cconfig.get_config_from_nested_dict(
+        data["weights"].loc["2010-01-01 00:31:00":] = np.nan  # type: ignore[misc]
+        data_fit = data.loc[:"2010-01-01 00:29:00"]  # type: ignore[misc]
+        data_predict = data.loc["2010-01-01 00:30:00":]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "x_vars": ["x"],
                 "y_vars": ["y"],
@@ -253,7 +253,7 @@ class TestMultiindexSkLearnModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Generate node config.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_groups": [
                     ("ret_0",),
@@ -282,9 +282,9 @@ class TestMultiindexSkLearnModel(hunitest.TestCase):
 
     def test2(self) -> None:
         data = self._get_data()
-        data_fit = data.loc[:"2000-01-31"]
-        data_predict = data.loc["2000-01-31":]
-        config = cconfig.get_config_from_nested_dict(
+        data_fit = data.loc[:"2000-01-31"]  # type: ignore[misc]
+        data_predict = data.loc["2000-01-31":]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "in_col_groups": [
                     ("ret_0",),
@@ -332,7 +332,7 @@ class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Generate node config.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_groups": [
                     ("ret_0",),
@@ -361,9 +361,9 @@ class TestMultiindexPooledSkLearnModel(hunitest.TestCase):
 
     def test2(self) -> None:
         data = self._get_data()
-        data_fit = data.loc[:"2000-01-31"]
-        data_predict = data.loc["2000-01-31":]
-        config = cconfig.get_config_from_nested_dict(
+        data_fit = data.loc[:"2000-01-31"]  # type: ignore[misc]
+        data_predict = data.loc["2000-01-31":]  # type: ignore[misc]
+        config = cconfig.Config.from_dict(
             {
                 "in_col_groups": [
                     ("ret_0",),

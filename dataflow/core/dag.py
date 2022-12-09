@@ -8,18 +8,21 @@ import itertools
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, Tuple, Union, cast
 
 import networkx as networ
 import pandas as pd
 from tqdm.autonotebook import tqdm
 
 import dataflow.core.node as dtfcornode
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hlist as hlist
 import helpers.hlogging as hloggin
+import helpers.hobject as hobject
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hprint as hprint
 import helpers.htimer as htimer
 import helpers.hwall_clock_time as hwacltim
@@ -30,7 +33,9 @@ _LOG = logging.getLogger(__name__)
 DagOutput = Dict[dtfcornode.NodeId, dtfcornode.NodeOutput]
 
 
-class DAG:
+# TODO(gp): Consider calling it `Dag` given our convention of snake case
+#  abbreviations in the code (but not in comments).
+class DAG(hobject.PrintableMixin):
     """
     Class for creating and executing a DAG of `Node`s.
 
@@ -40,17 +45,12 @@ class DAG:
     - manages node execution and storage of outputs within executed nodes
     """
 
-    # TODO(gp): -> name: str to simplify the interface
     def __init__(
         self,
+        *,
         name: Optional[str] = None,
         mode: Optional[str] = None,
-        *,
-        save_node_interface: str = "",
-        profile_execution: bool = False,
-        dst_dir: Optional[str] = None,
-        #
-        force_freeing_nodes: bool = False,
+        get_wall_clock_time: Optional[hdateti.GetWallClockTime] = None,
     ) -> None:
         """
         Create a DAG.
@@ -61,10 +61,9 @@ class DAG:
             - "strict": asserts
             - "loose": deletes old node (also removes edges) and adds new node. This
               is useful for interactive notebooks and debugging
-        :param save_node_interface, profile_execution, dst_dir: see `set_debug_mode()`
-        :param force_freeing_nodes: force freeing DAG nodes after they are not
-            needed any more
+        :param get_wall_clock_time: the function that returns the wall clock
         """
+        _LOG.debug(hprint.to_str("name mode"))
         self._nx_dag = networ.DiGraph()
         # Store the DAG name.
         if name is not None:
@@ -74,30 +73,22 @@ class DAG:
         mode = mode or "strict"
         hdbg.dassert_in(mode, ["strict", "loose"], "Unsupported mode requested")
         self._mode = mode
-        #
-        self.set_debug_mode(save_node_interface, profile_execution, dst_dir)
-        hdbg.dassert_isinstance(force_freeing_nodes, bool)
-        self.force_freeing_nodes = force_freeing_nodes
-
-    def __str__(self) -> str:
-        """
-        Return a short representation of the DAG for user.
-
-        E.g.,
-
-        ```
-        name=None
-        mode=strict
-        nodes=[('n1', {'stage': <dataflow.core.node.Node object at 0x>})]
-        edges=[]
-        ```
-        """
-        txt = []
-        txt.append(f"name={self._name}")
-        txt.append(f"mode={self._mode}")
-        txt.append("nodes=" + str(self.nx_dag.nodes(data=True)))
-        txt.append("edges=" + str(self.nx_dag.edges(data=True)))
-        return "\n".join(txt)
+        # If no function is passed we use the actual machine wall-clock time.
+        if get_wall_clock_time is None:
+            event_loop = None
+            get_wall_clock_time = lambda: hdateti.get_current_time(
+                tz="ET", event_loop=event_loop
+            )
+        hdbg.dassert_isinstance(get_wall_clock_time, Callable)
+        self._get_wall_clock_time = get_wall_clock_time
+        # Set default debug/logging parameters.
+        self._save_node_io = ""
+        self._profile_execution = False
+        self._dst_dir: Optional[str] = None
+        self.force_free_nodes = False
+        self.set_debug_mode(
+            self._save_node_io, self._profile_execution, self._dst_dir
+        )
 
     def __repr__(self) -> str:
         """
@@ -121,15 +112,23 @@ class DAG:
         ```
         """
         txt = []
-        txt.append(f"name={self._name}")
-        txt.append(f"mode={self._mode}")
-        txt.append("json=")
-        txt.append(hprint.indent(self._to_json(), 2))
-        return "\n".join(txt)
+        # Get the representation for the class.
+        txt.append(super().__repr__())
+        # Add more details.
+        res = []
+        res.append("nodes=" + str(self.nx_dag.nodes(data=True)))
+        res.append("edges=" + str(self.nx_dag.edges(data=True)))
+        res.append("json=\n" + self._to_json())
+        res = "\n".join(res)
+        num_spaces = 2
+        txt.append(hprint.indent(res, num_spaces=num_spaces))
+        # Assemble return value.
+        txt = "\n".join(txt)
+        return txt
 
     def set_debug_mode(
         self,
-        save_node_interface: str,
+        save_node_io: str,
         profile_execution: bool,
         dst_dir: Optional[str],
     ) -> None:
@@ -139,7 +138,7 @@ class DAG:
         Sometimes it's difficult to pass these parameters (e.g., through a
         `DagBuilder`) so we allow to set them after construction.
 
-        :param save_node_interface: store the values at the interface of the nodes
+        :param save_node_io: store the values at the interface of the nodes
             into a directory `dst_dir`. Disclaimer: the amount of data generate can
             be huge
             - ``: save no information
@@ -152,9 +151,11 @@ class DAG:
         :param dst_dir: directory to save node interface and execution profiling info
         """
         hdbg.dassert_in(
-            save_node_interface, ("", "stats", "df_as_csv", "df_as_parquet")
+            save_node_io,
+            ("", "stats", "df_as_csv", "df_as_pq", "df_as_csv_and_pq"),
         )
-        self._save_node_interface = save_node_interface
+        _LOG.debug(hprint.to_str("save_node_io profile_execution dst_dir"))
+        self._save_node_io = save_node_io
         # To process the profiling info in a human consumable form:
         # ```
         # ls -tr -1 tmp.dag_profile/*after* | xargs -n 1 -i sh -c 'echo; echo; echo "# {}"; cat {}'
@@ -163,10 +164,10 @@ class DAG:
         self._dst_dir = dst_dir
         if self._dst_dir:
             hio.create_dir(self._dst_dir, incremental=False)
-        if self._save_node_interface or self._profile_execution:
+        if self._save_node_io or self._profile_execution:
             _LOG.warning(
                 "Setting up debug mode: %s",
-                hprint.to_str("save_node_interface profile_execution dst_dir"),
+                hprint.to_str("save_node_io profile_execution dst_dir"),
             )
             hdbg.dassert_is_not(
                 dst_dir, None, "Need to specify a directory to save the data"
@@ -252,6 +253,7 @@ class DAG:
         """
         Remove node from DAG and clear any connected edges.
         """
+        hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
         hdbg.dassert(self._nx_dag.has_node(nid), "Node `%s` is not in DAG", nid)
         self._nx_dag.remove_node(nid)
 
@@ -287,6 +289,7 @@ class DAG:
             parent_out = hlist.assert_single_element_and_return(
                 self.get_node(parent_nid).output_names
             )
+        hdbg.dassert_isinstance(parent_nid, dtfcornode.NodeId)
         hdbg.dassert_in(parent_out, self.get_node(parent_nid).output_names)
         # Automatically infer input name when the child has only one input.
         # Ensure that child node belongs to DAG (through `get_node` call).
@@ -297,6 +300,7 @@ class DAG:
             child_in = hlist.assert_single_element_and_return(
                 self.get_node(child_nid).input_names
             )
+        hdbg.dassert_isinstance(child_nid, dtfcornode.NodeId)
         hdbg.dassert_in(child_in, self.get_node(child_nid).input_names)
         # Ensure that `child_in` is not already hooked up to an output.
         for nid in self._nx_dag.predecessors(child_nid):
@@ -319,14 +323,31 @@ class DAG:
                 f"Creating edge {parent_nid} -> {child_nid} introduces a cycle!"
             )
 
-    # /////////////////////////////////////////////////////////////////////////////
+    def compose(self, dag: "DAG") -> None:
+        """
+        Add `dag` to self.
 
-    def insert_at_head(
-        self, node_id: dtfcornode.NodeId, node: dtfcornode.Node
-    ) -> None:
-        source_nid = self.get_unique_source()
-        self.add_node(node)
-        self.connect(node_id, source_nid)
+        Node sets of `self` and `dag` must be disjoint. The composition
+        is the union of nodes and edges of `self` and `dag`.
+        """
+        hdbg.dassert_isinstance(dag, DAG)
+        if self.mode == "loose":
+            # The "loose" mode is for idempotent operations in a notebook.
+            # If this is needed, we could implement it by
+            # - ensuring all nodes of `dag` belong to `self`
+            # - removing the intersection of nodes the ancestors of those nodes
+            raise NotImplementedError
+        elif self.mode == "strict":
+            my_nodes = set(self._nx_dag.nodes)
+            their_nodes = set(dag._nx_dag.nodes)
+            hdbg.dassert(not my_nodes.intersection(their_nodes))
+            composition = networ.compose(self._nx_dag, dag._nx_dag)
+            hdbg.dassert(networ.is_directed_acyclic_graph(composition))
+            self._nx_dag = composition
+        else:
+            hdbg.dfatal("Invalid mode='%s'", self.mode)
+
+    # /////////////////////////////////////////////////////////////////////////////
 
     def get_sources(self) -> List[dtfcornode.NodeId]:
         """
@@ -337,6 +358,16 @@ class DAG:
             if not any(True for _ in self._nx_dag.predecessors(nid)):
                 sources.append(nid)
         return sources
+
+    def get_sinks(self) -> List[dtfcornode.NodeId]:
+        """
+        :return: list of nid's of sink nodes
+        """
+        sinks = []
+        for nid in networ.topological_sort(self._nx_dag):
+            if not any(True for _ in self._nx_dag.successors(nid)):
+                sinks.append(nid)
+        return sinks
 
     def get_unique_source(self) -> dtfcornode.NodeId:
         """
@@ -351,16 +382,6 @@ class DAG:
         )
         return sources[0]
 
-    def get_sinks(self) -> List[dtfcornode.NodeId]:
-        """
-        :return: list of nid's of sink nodes
-        """
-        sinks = []
-        for nid in networ.topological_sort(self._nx_dag):
-            if not any(True for _ in self._nx_dag.successors(nid)):
-                sinks.append(nid)
-        return sinks
-
     def get_unique_sink(self) -> dtfcornode.NodeId:
         """
         Return the only sink node, asserting if there is more than one.
@@ -373,6 +394,58 @@ class DAG:
             str(sinks),
         )
         return sinks[0]
+
+    def has_single_source(self) -> bool:
+        sources = self.get_sources()
+        if len(sources) == 1:
+            return True
+        return False
+
+    def insert_at_head(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
+        """
+        Connect a node or single-sink DAG to the head (root) of the DAG.
+
+        Asserts if the DAG has more than one source.
+        """
+        sources = self.get_sources()
+        hdbg.dassert_lte(len(sources), 1)
+        if isinstance(obj, dtfcornode.Node):
+            self.add_node(obj)
+            sink_nid = obj.nid
+        elif isinstance(obj, DAG):
+            sink_nid = obj.get_unique_sink()
+            self.compose(obj)
+        else:
+            raise ValueError("Unsupported type(obj)=%s", type(obj))
+        if sources:
+            source_nid = sources[0]
+            self.connect(sink_nid, source_nid)
+
+    def has_single_sink(self) -> bool:
+        sinks = self.get_sinks()
+        if len(sinks) == 1:
+            return True
+        return False
+
+    def append_to_tail(self, obj: Union[dtfcornode.Node, "DAG"]) -> None:
+        """
+        Connect a node or single-source DAG to the tail (leaf) of the DAG.
+
+        Asserts if the DAG has more thank one sink.
+        """
+        sinks = self.get_sinks()
+        hdbg.dassert_lte(len(sinks), 1)
+        if isinstance(obj, dtfcornode.Node):
+            self.add_node(obj)
+            source_nid = obj.nid
+        elif isinstance(obj, DAG):
+            source_nid = obj.get_unique_source()
+            self.compose(obj)
+        else:
+            raise ValueError("Unsupported type(obj)=%s", type(obj))
+        if sinks:
+            sink_nid = sinks[0]
+            self.connect(sink_nid, source_nid)
 
     # /////////////////////////////////////////////////////////////////////////////
 
@@ -408,6 +481,8 @@ class DAG:
         :return: the mapping from output name to corresponding value (i.e., the
             result of node `nid`'s `get_outputs(method)`
         """
+        hdbg.dassert_isinstance(nid, dtfcornode.NodeId)
+        hdbg.dassert_isinstance(method, dtfcornode.Method)
         ancestors = filter(
             lambda x: x in networ.ancestors(self._nx_dag, nid),
             networ.topological_sort(self._nx_dag),
@@ -448,12 +523,12 @@ class DAG:
         json_node_link_data = json.dumps(node_link_data, indent=4, sort_keys=True)
         return json_node_link_data
 
-    def _write_system_stats_to_dst_dir(
+    def _write_prof_stats_to_dst_dir(
         self,
         topological_id: int,
         nid: dtfcornode.NodeId,
         method: dtfcornode.Method,
-        file_tag: str,
+        output_name: str,
         *,
         extra_txt: str = "",
     ) -> None:
@@ -461,16 +536,27 @@ class DAG:
         Write information about the system (e.g., time and memory) before
         running a node.
 
-        The file has a format like
-        `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
+        The file has a format like:
+        ```
+        {dst_dir}/
+           node_io.stats/
+               {method}.{topological_id}.{nid}.{output_name}.{machine_timestamp}.txt
+        ```
+        E.g.,
+        ```
+            system_log_dir/20220808/dag/
+                node_io.prof/
+                    predict.0.read_data.df_out.20220808_161500.txt
+        ```
 
         :param topological_id, nid, method: information about the node and its method
             to run
-        :param file_tag: the tag to add to the file (e.g., "before_execution",
-            "after_execution")
+        :param output_name: the tag to add to the file (e.g., `df_out`)
         """
         txt = []
-        curr_timestamp = str(hwacltim.get_machine_wall_clock_time())
+        # We use the machine timestamp here since this is information about the
+        # actual run and not the simulation.
+        curr_timestamp = hwacltim.get_machine_wall_clock_time(as_str=True)
         txt.append(f"timestamp={curr_timestamp}")
         memory_as_str = str(hloggin.get_memory_usage_as_str(process=None))
         txt.append("memory=%s" % memory_as_str)
@@ -482,14 +568,22 @@ class DAG:
             "\n%s\n%s",
             hprint.frame(
                 "%s: method '%s' for node topological_id=%s nid='%s'"
-                % (file_tag, method, topological_id, nid)
+                % (output_name, method, topological_id, nid)
             ),
             txt,
         )
         # Save information to file.
-        basename = f"{method}.{topological_id}.{nid}.{file_tag}.txt"
-        file_name = os.path.join(self._dst_dir, basename)
+        # E.g., system_log_dir/20220808/dag/
+        #   node_io.prof/
+        #   predict.0.read_data.df_out.20220808_161500.txt
+        dst_dir = cast(str, self._dst_dir)
+        bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        filename = (
+            f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.txt"
+        )
+        file_name = os.path.join(dst_dir, "node_io.prof", filename)
         hio.to_file(file_name, txt)
+        _LOG.debug("Saved log file '%s'", file_name)
 
     def _write_node_interface_to_dst_dir(
         self,
@@ -504,10 +598,26 @@ class DAG:
         running a node.
 
         The file has a format like:
-        `{dst_dir}/{method}.{topological_id}.{nid}.{file_tag}.txt`
+        ```
+        {dst_dir}/
+           node_io.stats/
+               {method}.{topo_id}.{nid}.{output_name}.{bar_timestamp}.[csv|parquet]
+        ```
+        E.g.,
+        ```
+            system_log_dir/20220808/dag/
+                node_io.data/
+                    predict.0.read_data.df_out.20220808_161500.csv
+        ```
+
+        :param: similar to `_write_prof_stats_to_dst_dir()`
         """
-        basename = f"{method}.{topological_id}.{nid}.{output_name}"
-        file_name = os.path.join(self._dst_dir, basename)
+        dst_dir = cast(str, self._dst_dir)
+        bar_timestamp = hwacltim.get_current_bar_timestamp(as_str=True)
+        wall_clock_time = self._get_wall_clock_time()
+        wall_clock_time_str = wall_clock_time.strftime("%Y%m%d_%H%M%S")
+        basename = f"{method}.{topological_id}.{nid}.{output_name}.{bar_timestamp}.{wall_clock_time_str}"
+        file_name = os.path.join(dst_dir, "node_io.data", basename)
         #
         if isinstance(obj, pd.Series):
             obj = pd.DataFrame(obj)
@@ -523,12 +633,20 @@ class DAG:
             )
             hio.to_file(file_name + ".txt", txt)
             # Save content of the df.
-            if self._save_node_interface == "df_as_csv":
-                df.to_csv(file_name + ".csv")
-            elif self._save_node_interface == "df_as_parquet":
-                import helpers.hparquet as hparque
-
-                hparque.to_parquet(df, file_name + ".parquet")
+            if self._save_node_io == "df_as_csv":
+                csv_file_name = f"{file_name}.csv.gz"
+                df.to_csv(csv_file_name, compression="gzip")
+            elif self._save_node_io == "df_as_pq":
+                parquet_file_name = f"{file_name}.parquet"
+                hparque.to_parquet(df, parquet_file_name)
+            elif self._save_node_io == "df_as_csv_and_pq":
+                csv_file_name = f"{file_name}.csv.gz"
+                df.to_csv(csv_file_name, compression="gzip")
+                parquet_file_name = f"{file_name}.parquet"
+                hparque.to_parquet(df, parquet_file_name)
+            else:
+                raise ValueError(f"Invalid save_node_io='{self._save_node_io}'")
+            _LOG.debug("Saved log dir in '%s'", file_name)
         else:
             _LOG.warning(
                 "Can't save node input / output of type '%s': %s",
@@ -557,7 +675,7 @@ class DAG:
         # Save system info before execution of the node.
         if self._profile_execution:
             file_tag = "before_execution"
-            self._write_system_stats_to_dst_dir(
+            self._write_prof_stats_to_dst_dir(
                 topological_id, nid, method, file_tag
             )
             run_node_dtimer = htimer.dtimer_start(logging.DEBUG, "run_node")
@@ -571,7 +689,7 @@ class DAG:
             for input_name, value in kvs.items():
                 # Retrieve output from store.
                 kwargs[input_name] = pred_node.get_output(method, value)
-                if self.force_freeing_nodes:
+                if self.force_free_nodes:
                     _LOG.warning(
                         "Forcing deallocation of pred_node=%s", pred_node
                     )
@@ -596,7 +714,7 @@ class DAG:
             node._store_output(  # pylint: disable=protected-access
                 method, output_name, value
             )
-            if self._save_node_interface:
+            if self._save_node_io:
                 # Save info for the output of the node.
                 self._write_node_interface_to_dst_dir(
                     topological_id, nid, method, output_name, value
@@ -609,7 +727,7 @@ class DAG:
             txt.append(htimer.dtimer_stop(run_node_dtimer)[0])
             txt.append(htimer.dmemory_stop(run_node_dmemory))
             txt = "\n".join(txt)
-            self._write_system_stats_to_dst_dir(
+            self._write_prof_stats_to_dst_dir(
                 topological_id,
                 nid,
                 method,

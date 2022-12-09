@@ -10,6 +10,7 @@ import logging
 from typing import Any, Dict
 
 import helpers.hasyncio as hasynci
+import helpers.hprint as hprint
 import helpers.hsql as hsql
 
 _LOG = logging.getLogger(__name__)
@@ -26,8 +27,7 @@ SUBMITTED_ORDERS_TABLE_NAME = "submitted_orders"
 def create_submitted_orders_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
-    *,
-    table_name: str = SUBMITTED_ORDERS_TABLE_NAME,
+    table_name: str
 ) -> str:
     """
     Create a table storing the orders submitted to the system.
@@ -38,6 +38,7 @@ def create_submitted_orders_table(
     # - timestamp_db (e.g., 2021-11-12 19:59:23.716732)
     # - order_as_csv
     #     = target order in CSV format
+    _LOG.debug(hprint.to_str("db_connection incremental table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -69,8 +70,7 @@ ACCEPTED_ORDERS_TABLE_NAME = "accepted_orders"
 def create_accepted_orders_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
-    *,
-    table_name: str = ACCEPTED_ORDERS_TABLE_NAME,
+    table_name: str
 ) -> str:
     """
     Create a table for acknowledging that orders have been accepted.
@@ -108,6 +108,7 @@ def create_accepted_orders_table(
     # - cancel_count (e.g., 0)
     # - success (e.g., False)
     # - reason (e.g., There were a total of..)
+    _LOG.debug(hprint.to_str("db_connection incremental table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -149,12 +150,19 @@ CURRENT_POSITIONS_TABLE_NAME = "current_positions"
 def create_current_positions_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
-    *,
-    table_name: str = CURRENT_POSITIONS_TABLE_NAME,
+    asset_id_name: str,
+    table_name: str
 ) -> str:
     """
     Create a table holding the current positions.
+
+    :param db_connection: connection to DB containing order data
+    :param incremental: if True, append to existing table
+    :param asset_id_name: name of the asset id to be used in the DB (e.g., `asset_id`)
+    :param table_name: name of the current positions table
+    :return: name of created table
     """
+    _LOG.debug(hprint.to_str("db_connection incremental asset_id_name table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -195,7 +203,7 @@ def create_current_positions_table(
             id INT,
             tradedate DATE NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
-            asset_id INT,
+            {asset_id_name} INT,
             target_position FLOAT,
             current_position FLOAT,
             open_quantity FLOAT,
@@ -211,6 +219,11 @@ def create_current_positions_table(
     return table_name
 
 
+# #############################################################################
+# Restrictions
+# #############################################################################
+
+
 # This corresponds to the table "restrictions_candidate_view" of an
 # implemented system.
 RESTRICTIONS_TABLE_NAME = "restrictions"
@@ -219,12 +232,19 @@ RESTRICTIONS_TABLE_NAME = "restrictions"
 def create_restrictions_table(
     db_connection: hsql.DbConnection,
     incremental: bool,
-    *,
-    table_name: str = RESTRICTIONS_TABLE_NAME,
+    asset_id_name: str,
+    table_name: str
 ) -> str:
     """
     Create a table holding restrictions.
+
+    :param db_connection: connection to DB containing order data
+    :param incremental: if True, append to existing table
+    :param asset_id_name: name of the asset id to be used in the DB (e.g., `asset_id`)
+    :param table_name: name of the restrictions table
+    :return: name of created table
     """
+    _LOG.debug(hprint.to_str("db_connection incremental asset_id_name table_name"))
     query = []
     if not incremental:
         query.append(f"DROP TABLE IF EXISTS {table_name}")
@@ -236,7 +256,7 @@ def create_restrictions_table(
             id INT,
             tradedate DATE NOT NULL,
             timestamp_db TIMESTAMP NOT NULL,
-            asset_id INT,
+            {asset_id_name} INT,
             is_restricted BOOL,
             is_buy_restricted BOOL,
             is_buy_cover_restricted BOOL,
@@ -251,12 +271,29 @@ def create_restrictions_table(
     return table_name
 
 
+# #############################################################################
+# API
+# #############################################################################
+
+# We can only create / remove tables in a DB controlled by us, so we can hard-wire
+# the table names to the ones we use. When the DB is external, then the caller
+# needs to specify the names of the tables.
+
 def create_oms_tables(
-    db_connection: hsql.DbConnection, incremental: bool
+    db_connection: hsql.DbConnection, incremental: bool, asset_id_name: str
 ) -> None:
-    create_accepted_orders_table(db_connection, incremental)
-    create_submitted_orders_table(db_connection, incremental)
-    create_current_positions_table(db_connection, incremental)
+    create_accepted_orders_table(
+        db_connection, incremental, ACCEPTED_ORDERS_TABLE_NAME
+    )
+    create_submitted_orders_table(
+        db_connection, incremental, SUBMITTED_ORDERS_TABLE_NAME
+    )
+    create_current_positions_table(
+        db_connection, incremental, asset_id_name, CURRENT_POSITIONS_TABLE_NAME
+    )
+    create_restrictions_table(
+        db_connection, incremental, asset_id_name, RESTRICTIONS_TABLE_NAME
+    )
 
 
 def remove_oms_tables(db_connection: hsql.DbConnection) -> None:
@@ -264,10 +301,12 @@ def remove_oms_tables(db_connection: hsql.DbConnection) -> None:
         SUBMITTED_ORDERS_TABLE_NAME,
         ACCEPTED_ORDERS_TABLE_NAME,
         CURRENT_POSITIONS_TABLE_NAME,
+        RESTRICTIONS_TABLE_NAME,
     ]:
         hsql.remove_table(db_connection, table_name)
 
 
+# TODO(gp): This might be part of DatabaseBroker. It is also used in some tests.
 async def wait_for_order_acceptance(
     db_connection: hsql.DbConnection,
     target_value: str,
@@ -277,7 +316,7 @@ async def wait_for_order_acceptance(
     field_name: str = "filename",
 ) -> hasynci.PollOutput:
     """
-    Wait until the desired order is accepted by the system.
+    Wait until the desired order is accepted by the OMS.
 
     The order is accepted when there is a value `target_value` in the column
     `file_name` of the expected table.

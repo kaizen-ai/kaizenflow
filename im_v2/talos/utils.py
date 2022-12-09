@@ -54,8 +54,13 @@ class TalosApiBuilder:
     """
 
     def __init__(self, account: str):
+        """
+        Initialize TalosApiBuilder.
+
+        :param account: acceptable values `trading`, `sandbox`
+        """
         self._account = account
-        self._api_keys = hsecret.get_secret(f"talos_{self._account}")
+        self._api_keys = hsecret.get_secret(f"talos.preprod.{self._account}.1")
         # Talos request endpoint.
         self._endpoint = self.get_endpoint()
 

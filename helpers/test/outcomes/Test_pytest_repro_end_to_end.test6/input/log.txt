@@ -11,7 +11,7 @@ NETWORK_MODE=bridge \
         run \
         --rm \
         app \
-        'pytest -m "not slow and not superslow" . -o timeout_func_only=true --timeout 5 --reruns 2 --only-rerun "Failed: Timeout"' 
+        'pytest -m "not slow and not superslow" . -o timeout_func_only=true --timeout 5 --reruns 2 --only-rerun "Failed: Timeout"'
 [1;37mIMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
 NETWORK_MODE=bridge \
         docker-compose \
@@ -25,8 +25,11 @@ NETWORK_MODE=bridge \
 [33mWARNING[0m: The AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: The AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: Found orphan containers (compose_oms_postgres_1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-Creating compose_app_run ... 
-[1A[2KCreating compose_app_run ... [32mdone[0m[1B##> devops/docker_run/entrypoint.sh
+Creating compose_app_run ...
+
+[1A[2K
+Creating compose_app_run ... [32mdone[0m
+[1B##> devops/docker_run/entrypoint.sh
 UID=0
 GID=0
 # Activate environment
@@ -40,15 +43,16 @@ Testing sudo
 /app
 Setting up Docker
 { "storage-driver": "vfs" }
- * Starting Docker: docker       [80G [74G[ OK ]
+ * Starting Docker: docker       [80G
+[74G[ OK ]
  * Docker is running
 # Check AWS authentication setup
 AWS_DEFAULT_REGION='us-east-1'
       Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                       am           manual    --profile
-access_key     ****************3J32 shared-credentials-file    
-secret_key     ****************QpHW shared-credentials-file    
+access_key     ****************3J32 shared-credentials-file
+secret_key     ****************QpHW shared-credentials-file
     region                us-east-1              env    AWS_DEFAULT_REGION
 CONTAINER_VERSION=''
 BUILD_TAG=''
@@ -67,7 +71,18 @@ plugins: flaky-3.7.0, cov-3.0.0, forked-1.4.0, instafail-0.4.2, rerunfailures-10
 timeout: 5.0s
 timeout method: signal
 timeout func_only: True
-[1mcollecting ... [0m[1mcollecting 0 items                                                             [0m[1mcollecting 0 items                                                             [0m[1mcollecting 67 items                                                            [0m[1mcollecting 70 items                                                            [0m[1mcollecting 230 items                                                           [0m[1mcollecting 548 items                                                           [0m[1mcollecting 622 items                                                           [0m[1mcollecting 801 items                                                           [0m[1mcollecting 1084 items                                                          [0m[1mcollecting 1419 items                                                          [0m[1mcollecting 1775 items                                                          [0m>>ENV<<: is_inside_container=True: code_version=1.0.3, container_version=amp-1.0.3, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
+[1mcollecting ... [0m[1m
+collecting 0 items                                                             [0m[1m
+collecting 0 items                                                             [0m[1m
+collecting 67 items                                                            [0m[1m
+collecting 70 items                                                            [0m[1m
+collecting 230 items                                                           [0m[1m
+collecting 548 items                                                           [0m[1m
+collecting 622 items                                                           [0m[1m
+collecting 801 items                                                           [0m[1m
+collecting 1084 items                                                          [0m[1m
+collecting 1419 items                                                          [0m[1m
+collecting 1775 items                                                          [0m>>ENV<<: is_inside_container=True: code_version=1.0.3, container_version=amp-1.0.3, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
 >>ENV<<: AM_AWS_PROFILE=True AM_ECR_BASE_PATH=True AM_S3_BUCKET=True AM_TELEGRAM_TOKEN=True AWS_ACCESS_KEY_ID=False AWS_DEFAULT_REGION=True AWS_SECRET_ACCESS_KEY=False GH_ACTION_ACCESS_TOKEN=True
 [31m-----------------------------------------------------------------------------
 This code is not in sync with the container:
@@ -81,7 +96,7 @@ You need to:
     hash='29bdaf1'
     # Last commits:
       * 29bdaf1 saggese  Lint                                                              ( 3 minutes ago) Mon Mar 7 20:10:16 2022  (HEAD -> AmpTask2163_Implement_tiled_backtesting_5, origin/AmpTask2163_Implement_tiled_backtesting_5)
-      * c26c937 saggese  Checkpoint                                                        ( 3 minutes ago) Mon Mar 7 20:09:34 2022           
+      * c26c937 saggese  Checkpoint                                                        ( 3 minutes ago) Mon Mar 7 20:09:34 2022
       * 9846b44 saggese  Fix break                                                         (  27 hours ago) Sun Mar 6 17:24:31 2022  (origin/master, origin/HEAD, master)
 # Machine info
     system=Linux
@@ -109,7 +124,8 @@ You need to:
     statsmodels: 0.13.1
 [0m[36mINFO[0m: > cmd='/venv/bin/pytest -m not slow and not superslow . -o timeout_func_only=true --timeout 5 --reruns 2 --only-rerun Failed: Timeout'
 [36mINFO[0m: Saving log to file 'tmp.pytest.log'
-[1mcollected 1874 items / 81 deselected / 1793 selected                           [0m
+[1m
+collected 1874 items / 81 deselected / 1793 selected                           [0m
 
 amp/dataflow/model/test/test_experiment_utils.py::Test_get_configs_from_command_line1::test1 (0.02 s) [32mPASSED[0m[32m [  0%][0m
 amp/core/finance/test/test_prediction_processing.py::TestStackPredictionDf::test1 (0.03 s) [32mPASSED[0m[32m [  0%][0m
@@ -215,7 +231,7 @@ amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_gh_workflow_list [33
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_files (0.15 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_clean (0.00 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_clean2 (0.00 s) [32mPASSED[0m[32m [  5%][0m
-amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_create_branch3 (0.00 s) [32mPASSED[0m[32m [  5%][0m
+amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_create3 (0.00 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_fetch_master (0.00 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_merge_master (0.08 s) [32mPASSED[0m[32m [  5%][0m
 amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_pull (0.00 s) [32mPASSED[0m[32m [  6%][0m
@@ -283,12 +299,12 @@ amp/im_v2/ccxt/data/extract/test/test_exchange_class.py::TestCcxtExchange1::test
 amp/im_v2/ccxt/data/extract/test/test_exchange_class.py::TestCcxtExchange1::test_download_order_book_invalid_input1 [33mSKIPPED[0m[32m [  9%][0m
 amp/im_v2/ccxt/data/extract/test/test_exchange_class.py::TestCcxtExchange1::test_get_exchange_currency_pairs [33mSKIPPED[0m[32m [  9%][0m
 amp/im_v2/ccxt/data/extract/test/test_exchange_class.py::TestCcxtExchange1::test_initialize_class [33mSKIPPED[0m[32m [  9%][0m
-amp/dataflow/model/test/test_experiment_config.py::Test_build_configs_varying_tiled_periods1::test_1tile_1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
-amp/dataflow/model/test/test_experiment_config.py::Test_build_configs_varying_tiled_periods1::test_1tile_2 (0.00 s) [32mPASSED[0m[32m [  9%][0m
-amp/dataflow/model/test/test_experiment_config.py::Test_build_configs_varying_tiled_periods1::test_1tile_3 (0.00 s) [32mPASSED[0m[32m [  9%][0m
-amp/dataflow/model/test/test_experiment_config.py::Test_build_configs_varying_tiled_periods1::test_2tiles_1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
-amp/dataflow/model/test/test_experiment_config.py::Test_build_configs_varying_tiled_periods1::test_2tiles_2 (0.00 s) [32mPASSED[0m[32m [  9%][0m
-amp/dataflow/model/test/test_experiment_config.py::Test_build_configs_varying_tiled_periods1::test_3tiles_1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
+amp/dataflow/model/test/test_backtest_config.py::Test_build_configs_varying_tiled_periods1::test_1tile_1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
+amp/dataflow/model/test/test_backtest_config.py::Test_build_configs_varying_tiled_periods1::test_1tile_2 (0.00 s) [32mPASSED[0m[32m [  9%][0m
+amp/dataflow/model/test/test_backtest_config.py::Test_build_configs_varying_tiled_periods1::test_1tile_3 (0.00 s) [32mPASSED[0m[32m [  9%][0m
+amp/dataflow/model/test/test_backtest_config.py::Test_build_configs_varying_tiled_periods1::test_2tiles_1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
+amp/dataflow/model/test/test_backtest_config.py::Test_build_configs_varying_tiled_periods1::test_2tiles_2 (0.00 s) [32mPASSED[0m[32m [  9%][0m
+amp/dataflow/model/test/test_backtest_config.py::Test_build_configs_varying_tiled_periods1::test_3tiles_1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
 amp/helpers/test/test_hpandas.py::Test_dassert_is_unique1::test_dassert_is_unique1 (0.00 s) [32mPASSED[0m[32m [  9%][0m
 amp/helpers/test/test_hpandas.py::Test_dassert_is_unique1::test_dassert_is_unique2 (0.00 s) [32mPASSED[0m[32m [ 10%][0m
 amp/helpers/test/test_hpandas.py::Test_to_series1::test1 (0.00 s) [32mPASSED[0m[32m          [ 10%][0m
@@ -372,18 +388,18 @@ amp/helpers/test/test_unit_test.py::TestCheckString1::test_check_string_not_equa
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_equal1 (0.02 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_equal2 (0.02 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_equal3 (0.02 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing1 
+amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing1
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/TestCheckDataFrame1.test_check_df_missing1/output/test_df.txt'(0.02 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing2 (0.01 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing3 
+amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_missing3
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/TestCheckDataFrame1.test_check_df_missing3/output/test_df.txt'(0.15 s) ([33mWARNING[0m: Test was updated) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal1 (0.06 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal2 (0.05 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal3 
+amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal3
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/TestCheckDataFrame1.test_check_df_not_equal3/output/test_df.txt'(0.03 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::TestCheckDataFrame1::test_check_df_not_equal4 (0.05 s) [32mPASSED[0m[32m [ 14%][0m
 amp/helpers/test/test_unit_test.py::Test_check_string_debug1::test1 (0.16 s) ([33mWARNING[0m: Test was updated) [32mPASSED[0m[32m [ 15%][0m
-amp/helpers/test/test_unit_test.py::Test_check_string_debug1::test2 
+amp/helpers/test/test_unit_test.py::Test_check_string_debug1::test2
 [33mWARNING[0m: Update golden outcome file '/app/amp/helpers/test/Test_check_string_debug1.test2/output/test_df.txt'(0.15 s) ([33mWARNING[0m: Test was updated) [32mPASSED[0m[32m [ 15%][0m
 amp/helpers/test/test_unit_test.py::Test_unit_test1::test_purify_txt_from_client1 (0.00 s) [32mPASSED[0m[32m [ 15%][0m
 amp/helpers/test/test_unit_test.py::Test_unit_test1::test_purify_txt_from_client2 (0.00 s) [32mPASSED[0m[32m [ 15%][0m
@@ -2094,7 +2110,7 @@ NETWORK_MODE=bridge \
         run \
         --rm \
         app \
-        'pytest -m "slow and not superslow" . -o timeout_func_only=true --timeout 30 --reruns 1 --only-rerun "Failed: Timeout"' 
+        'pytest -m "slow and not superslow" . -o timeout_func_only=true --timeout 30 --reruns 1 --only-rerun "Failed: Timeout"'
 [1;37mIMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
 NETWORK_MODE=bridge \
         docker-compose \
@@ -2108,8 +2124,11 @@ NETWORK_MODE=bridge \
 [33mWARNING[0m: The AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: The AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: Found orphan containers (compose_oms_postgres_1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-Creating compose_app_run ... 
-[1A[2KCreating compose_app_run ... [32mdone[0m[1B##> devops/docker_run/entrypoint.sh
+Creating compose_app_run ...
+
+[1A[2K
+Creating compose_app_run ... [32mdone[0m
+[1B##> devops/docker_run/entrypoint.sh
 UID=0
 GID=0
 # Activate environment
@@ -2123,15 +2142,16 @@ Testing sudo
 /app
 Setting up Docker
 { "storage-driver": "vfs" }
- * Starting Docker: docker       [80G [74G[ OK ]
+ * Starting Docker: docker       [80G
+[74G[ OK ]
  * Docker is running
 # Check AWS authentication setup
 AWS_DEFAULT_REGION='us-east-1'
       Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                       am           manual    --profile
-access_key     ****************3J32 shared-credentials-file    
-secret_key     ****************QpHW shared-credentials-file    
+access_key     ****************3J32 shared-credentials-file
+secret_key     ****************QpHW shared-credentials-file
     region                us-east-1              env    AWS_DEFAULT_REGION
 CONTAINER_VERSION=''
 BUILD_TAG=''
@@ -2150,7 +2170,19 @@ plugins: flaky-3.7.0, cov-3.0.0, forked-1.4.0, instafail-0.4.2, rerunfailures-10
 timeout: 30.0s
 timeout method: signal
 timeout func_only: True
-[1mcollecting ... [0m[1mcollecting 0 items                                                             [0m[1mcollecting 0 items                                                             [0m[1mcollecting 67 items                                                            [0m[1mcollecting 70 items                                                            [0m[1mcollecting 230 items                                                           [0m[1mcollecting 548 items                                                           [0m[1mcollecting 562 items                                                           [0m[1mcollecting 794 items                                                           [0m[1mcollecting 1037 items                                                          [0m[1mcollecting 1375 items                                                          [0m[1mcollecting 1424 items                                                          [0m[1mcollecting 1775 items                                                          [0m>>ENV<<: is_inside_container=True: code_version=1.0.3, container_version=amp-1.0.3, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
+[1mcollecting ... [0m[1m
+collecting 0 items                                                             [0m[1m
+collecting 0 items                                                             [0m[1m
+collecting 67 items                                                            [0m[1m
+collecting 70 items                                                            [0m[1m
+collecting 230 items                                                           [0m[1m
+collecting 548 items                                                           [0m[1m
+collecting 562 items                                                           [0m[1m
+collecting 794 items                                                           [0m[1m
+collecting 1037 items                                                          [0m[1m
+collecting 1375 items                                                          [0m[1m
+collecting 1424 items                                                          [0m[1m
+collecting 1775 items                                                          [0m>>ENV<<: is_inside_container=True: code_version=1.0.3, container_version=amp-1.0.3, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
 >>ENV<<: AM_AWS_PROFILE=True AM_ECR_BASE_PATH=True AM_S3_BUCKET=True AM_TELEGRAM_TOKEN=True AWS_ACCESS_KEY_ID=False AWS_DEFAULT_REGION=True AWS_SECRET_ACCESS_KEY=False GH_ACTION_ACCESS_TOKEN=True
 [31m-----------------------------------------------------------------------------
 This code is not in sync with the container:
@@ -2164,7 +2196,7 @@ You need to:
     hash='29bdaf1'
     # Last commits:
       * 29bdaf1 saggese  Lint                                                              ( 6 minutes ago) Mon Mar 7 20:10:16 2022  (HEAD -> AmpTask2163_Implement_tiled_backtesting_5, origin/AmpTask2163_Implement_tiled_backtesting_5)
-      * c26c937 saggese  Checkpoint                                                        ( 7 minutes ago) Mon Mar 7 20:09:34 2022           
+      * c26c937 saggese  Checkpoint                                                        ( 7 minutes ago) Mon Mar 7 20:09:34 2022
       * 9846b44 saggese  Fix break                                                         (  27 hours ago) Sun Mar 6 17:24:31 2022  (origin/master, origin/HEAD, master)
 # Machine info
     system=Linux
@@ -2192,7 +2224,8 @@ You need to:
     statsmodels: 0.13.1
 [0m[36mINFO[0m: > cmd='/venv/bin/pytest -m slow and not superslow . -o timeout_func_only=true --timeout 30 --reruns 1 --only-rerun Failed: Timeout'
 [36mINFO[0m: Saving log to file 'tmp.pytest.log'
-[1mcollected 1874 items / 1803 deselected / 71 selected                           [0m
+[1m
+collected 1874 items / 1803 deselected / 71 selected                           [0m
 
 amp/helpers/test/test_sql.py::TestSql1::test_copy_rows_with_copy_from1 [33mSKIPPED[0m[32m [  1%][0m
 amp/helpers/test/test_sql.py::TestSql1::test_create_database [33mSKIPPED[0m[32m     [  2%][0m
@@ -2203,8 +2236,8 @@ amp/helpers/test/test_sql.py::TestSql1::test_duplicate_removal2 [33mSKIPPED[0m
 amp/helpers/test/test_sql.py::TestSql1::test_execute_insert_query1 [33mSKIPPED[0m[32m [  9%][0m
 amp/helpers/test/test_sql.py::TestSql1::test_remove_database1 [33mSKIPPED[0m[32m    [ 11%][0m
 amp/helpers/test/test_sql.py::TestSql1::test_remove_database_invalid [33mSKIPPED[0m[32m [ 12%][0m
-amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_create_branch1 (0.84 s) [32mPASSED[0m[32m [ 14%][0m
-amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_create_branch2 (0.47 s) [32mPASSED[0m[32m [ 15%][0m
+amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_create1 (0.84 s) [32mPASSED[0m[32m [ 14%][0m
+amp/helpers/test/test_lib_tasks.py::TestDryRunTasks2::test_git_branch_create2 (0.47 s) [32mPASSED[0m[32m [ 15%][0m
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data1_database_portfolio [33mSKIPPED[0m[32m [ 16%][0m
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data1_database_vs_dataframe_portfolio [33mSKIPPED[0m[32m [ 18%][0m
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data2_database_portfolio [33mSKIPPED[0m[32m [ 19%][0m
@@ -2277,7 +2310,7 @@ Traceback (most recent call last):
     hdbg.dfatal(msg)
   File "/app/amp/helpers/hdbg.py", line 63, in dfatal
     raise assertion_type(ret)
-AssertionError: 
+AssertionError:
 ################################################################################
 The golden outcome doesn't exist: saved the actual output in '/app/dataflow_lime/pipelines/E8/test/Test_TiledBacktest_E8d.test_end_to_end_slow1/output/configs_signature.txt.tmp'
 ################################################################################
@@ -2339,7 +2372,7 @@ NETWORK_MODE=bridge \
         run \
         --rm \
         app \
-        'pytest -m "not slow and superslow" . -o timeout_func_only=true --timeout 3600 --reruns 1 --only-rerun "Failed: Timeout"' 
+        'pytest -m "not slow and superslow" . -o timeout_func_only=true --timeout 3600 --reruns 1 --only-rerun "Failed: Timeout"'
 [1;37mIMAGE=665840871993.dkr.ecr.us-east-1.amazonaws.com/amp:dev \
 NETWORK_MODE=bridge \
         docker-compose \
@@ -2353,8 +2386,11 @@ NETWORK_MODE=bridge \
 [33mWARNING[0m: The AWS_ACCESS_KEY_ID variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: The AWS_SECRET_ACCESS_KEY variable is not set. Defaulting to a blank string.
 [33mWARNING[0m: Found orphan containers (compose_oms_postgres_1) for this project. If you removed or renamed this service in your compose file, you can run this command with the --remove-orphans flag to clean it up.
-Creating compose_app_run ... 
-[1A[2KCreating compose_app_run ... [32mdone[0m[1B##> devops/docker_run/entrypoint.sh
+Creating compose_app_run ...
+
+[1A[2K
+Creating compose_app_run ... [32mdone[0m
+[1B##> devops/docker_run/entrypoint.sh
 UID=0
 GID=0
 # Activate environment
@@ -2368,15 +2404,16 @@ Testing sudo
 /app
 Setting up Docker
 { "storage-driver": "vfs" }
- * Starting Docker: docker       [80G [74G[ OK ]
+ * Starting Docker: docker       [80G
+[74G[ OK ]
  * Docker is running
 # Check AWS authentication setup
 AWS_DEFAULT_REGION='us-east-1'
       Name                    Value             Type    Location
       ----                    -----             ----    --------
    profile                       am           manual    --profile
-access_key     ****************3J32 shared-credentials-file    
-secret_key     ****************QpHW shared-credentials-file    
+access_key     ****************3J32 shared-credentials-file
+secret_key     ****************QpHW shared-credentials-file
     region                us-east-1              env    AWS_DEFAULT_REGION
 CONTAINER_VERSION=''
 BUILD_TAG=''
@@ -2395,7 +2432,18 @@ plugins: flaky-3.7.0, cov-3.0.0, forked-1.4.0, instafail-0.4.2, rerunfailures-10
 timeout: 3600.0s
 timeout method: signal
 timeout func_only: True
-[1mcollecting ... [0m[1mcollecting 0 items                                                             [0m[1mcollecting 0 items                                                             [0m[1mcollecting 67 items                                                            [0m[1mcollecting 70 items                                                            [0m[1mcollecting 230 items                                                           [0m[1mcollecting 548 items                                                           [0m[1mcollecting 641 items                                                           [0m[1mcollecting 801 items                                                           [0m[1mcollecting 1084 items                                                          [0m[1mcollecting 1391 items                                                          [0m[1mcollecting 1671 items                                                          [0m>>ENV<<: is_inside_container=True: code_version=1.0.3, container_version=amp-1.0.3, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
+[1mcollecting ... [0m[1m
+collecting 0 items                                                             [0m[1m
+collecting 0 items                                                             [0m[1m
+collecting 67 items                                                            [0m[1m
+collecting 70 items                                                            [0m[1m
+collecting 230 items                                                           [0m[1m
+collecting 548 items                                                           [0m[1m
+collecting 641 items                                                           [0m[1m
+collecting 801 items                                                           [0m[1m
+collecting 1084 items                                                          [0m[1m
+collecting 1391 items                                                          [0m[1m
+collecting 1671 items                                                          [0m>>ENV<<: is_inside_container=True: code_version=1.0.3, container_version=amp-1.0.3, is_inside_docker=True, is_inside_ci=False, CI_defined=True, CI=''
 >>ENV<<: AM_AWS_PROFILE=True AM_ECR_BASE_PATH=True AM_S3_BUCKET=True AM_TELEGRAM_TOKEN=True AWS_ACCESS_KEY_ID=False AWS_DEFAULT_REGION=True AWS_SECRET_ACCESS_KEY=False GH_ACTION_ACCESS_TOKEN=True
 [31m-----------------------------------------------------------------------------
 This code is not in sync with the container:
@@ -2409,7 +2457,7 @@ You need to:
     hash='29bdaf1'
     # Last commits:
       * 29bdaf1 saggese  Lint                                                              (11 minutes ago) Mon Mar 7 20:10:16 2022  (HEAD -> AmpTask2163_Implement_tiled_backtesting_5, origin/AmpTask2163_Implement_tiled_backtesting_5)
-      * c26c937 saggese  Checkpoint                                                        (12 minutes ago) Mon Mar 7 20:09:34 2022           
+      * c26c937 saggese  Checkpoint                                                        (12 minutes ago) Mon Mar 7 20:09:34 2022
       * 9846b44 saggese  Fix break                                                         (  27 hours ago) Sun Mar 6 17:24:31 2022  (origin/master, origin/HEAD, master)
 # Machine info
     system=Linux
@@ -2437,10 +2485,11 @@ You need to:
     statsmodels: 0.13.1
 [0m[36mINFO[0m: > cmd='/venv/bin/pytest -m not slow and superslow . -o timeout_func_only=true --timeout 3600 --reruns 1 --only-rerun Failed: Timeout'
 [36mINFO[0m: Saving log to file 'tmp.pytest.log'
-[1mcollected 1874 items / 1864 deselected / 10 selected                           [0m
+[1m
+collected 1874 items / 1864 deselected / 10 selected                           [0m
 
 amp/dataflow/system/test/test_example_pipeline1.py::TestExamplePipeline1::test_market_data3_database_vs_dataframe_portfolio [33mSKIPPED[0m[32m [ 10%][0m
-dataflow_lime/system/test/test_E8d_replayed_system_runner.py::Test_E8d_Replayed_SystemRunner::test1 
+dataflow_lime/system/test/test_E8d_replayed_system_runner.py::Test_E8d_Replayed_SystemRunner::test1
 
 
 (462.17 s) [32mPASSED[0m[32m [ 20%][0m

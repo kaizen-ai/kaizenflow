@@ -20,9 +20,7 @@ import os
 from typing import Optional
 
 import core.config as cconfig
-
-# TODO(gp): Remove this dependency!
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hjoblib as hjoblib
@@ -40,6 +38,7 @@ def _run_notebook(
     config: cconfig.Config,
     notebook_file: str,
     publish: bool,
+    allow_notebook_errors: bool,
     #
     incremental: bool,
     num_attempts: int,
@@ -51,16 +50,15 @@ def _run_notebook(
     :param notebook_file: path to file with experiment template
     :param num_attempts: maximum number of times to attempt running the
         notebook
-    :param abort_on_error: if `True`, raise an error
     :param publish: publish notebook if `True`
     :return: if notebook is skipped ("success.txt" file already exists), return
         `None`; otherwise, return `rc`
     """
     _ = incremental
-    dtfmoexuti.setup_experiment_dir(config)
+    dtfbaexuti.setup_experiment_dir(config)
     # Prepare the destination file.
-    idx = config[("meta", "id")]
-    experiment_result_dir = config[("meta", "experiment_result_dir")]
+    idx = config[("backtest_config", "id")]
+    experiment_result_dir = config[("backtest_config", "experiment_result_dir")]
     dst_file = os.path.join(
         experiment_result_dir,
         os.path.basename(notebook_file).replace(".ipynb", ".%s.ipynb" % idx),
@@ -68,19 +66,24 @@ def _run_notebook(
     _LOG.info("dst_file=%s", dst_file)
     dst_file = os.path.abspath(dst_file)
     # Export config function and its `id` to the notebook.
-    config_builder = config[("meta", "config_builder")]
-    dst_dir = config[("meta", "dst_dir")]
+    config_builder = config[("backtest_config", "config_builder")]
+    dst_dir = config[("backtest_config", "dst_dir")]
+    # Note the quotation marks, `config_builder` should be surrounded by single
+    # quotes so that the potential strings in `config_builder` params are
+    # parsed correctly. E.g.,
+    # `export __CONFIG_BUILDER__='amp.oms.reconciliation.build_reconciliation_configs("20221128_101500", "20221128_1210", "scheduled")'`.
     cmd = [
-        f'export __CONFIG_BUILDER__="{config_builder}";',
+        f"export __CONFIG_BUILDER__='{config_builder}';",
         f'export __CONFIG_IDX__="{idx}";',
         f'export __CONFIG_DST_DIR__="{dst_dir}"',
-        f"; jupyter nbconvert {notebook_file}",
-        "--execute",
-        "--to notebook",
-        f"--output {dst_file}",
-        "--ExecutePreprocessor.kernel_name=python",
+        f'; jupyter nbconvert {notebook_file}',
+        '--execute',
+        '--to notebook',
+        f'--output {dst_file}',
+        '--ExecutePreprocessor.kernel_name=python',
         # From https://github.com/ContinuumIO/anaconda-issues/issues/877
-        "--ExecutePreprocessor.timeout=-1",
+        '--ExecutePreprocessor.timeout=-1',
+        f'--ExecutePreprocessor.allow_errors={allow_notebook_errors}'
     ]
     cmd = " ".join(cmd)
     # Prepare the log file.
@@ -120,13 +123,13 @@ def _run_notebook(
             cmd = (
                 "python amp/dev_scripts/notebooks/publish_notebook.py"
                 + f" --file {dst_file}"
-                + f" --subdir {html_subdir_name}"
-                + " --action publish"
+                + f" --publish_notebook_dir {html_subdir_name}"
+                + " --action publish_locally"
             )
             log_file = log_file.replace(".log", ".html.log")
             hsystem.system(cmd, output_file=log_file)
         # Mark as success.
-        dtfmoexuti.mark_config_as_success(experiment_result_dir)
+        dtfbaexuti.mark_config_as_success(experiment_result_dir)
     return rc
 
 
@@ -135,18 +138,19 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     Prepare the workload using the parameters from command line.
     """
     # Get the configs to run.
-    configs = dtfmoexuti.get_configs_from_command_line(args)
+    config_list = dtfbaexuti.get_config_list_from_command_line(args)
     # Get the notebook file.
     notebook_file = os.path.abspath(args.notebook)
     hdbg.dassert_path_exists(notebook_file)
     #
     publish = args.publish_notebook
+    allow_notebook_errors = args.allow_errors
     # Prepare the tasks.
     tasks = []
-    for config in configs:
+    for config in config_list:
         task: hjoblib.Task = (
             # args.
-            (config, notebook_file, publish),
+            (config, notebook_file, publish, allow_notebook_errors),
             # kwargs.
             {},
         )
@@ -166,7 +170,7 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
     # Add common experiment options.
-    parser = dtfmoexuti.add_run_experiment_args(parser, dst_dir_required=True)
+    parser = dtfbaexuti.add_run_experiment_args(parser, dst_dir_required=True)
     # Add notebook options.
     parser.add_argument(
         "--notebook",
@@ -178,6 +182,11 @@ def _parse() -> argparse.ArgumentParser:
         "--publish_notebook",
         action="store_true",
         help="Publish each notebook after it executes",
+    )
+    parser.add_argument(
+        "--allow_errors",
+        action="store_true",
+        help="Ignore execution errors in the notebook",
     )
     parser = hparser.add_verbosity_arg(parser)
     # TODO(gp): For some reason, not even this makes mypy happy.

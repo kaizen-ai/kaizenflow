@@ -29,7 +29,7 @@ class TestSmaModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         _LOG.debug("data=\n%s", str(data))
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -48,7 +48,7 @@ class TestSmaModel(hunitest.TestCase):
         Specify `tau` parameter.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -65,7 +65,7 @@ class TestSmaModel(hunitest.TestCase):
         Specify `col_mode=='merge_all'`.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -82,7 +82,7 @@ class TestSmaModel(hunitest.TestCase):
         Run `predict()` after `fit()`.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
@@ -91,8 +91,8 @@ class TestSmaModel(hunitest.TestCase):
         )
         node = SmaModel("sma", **config.to_dict())
         # Run `fit()`, then `predict()`.
-        node.fit(data.loc["2000-01-01":"2000-02-10"])
-        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # Package results.
         self._check_results(df_out)
 
@@ -101,32 +101,19 @@ class TestSmaModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": ["vol_sq"],
                 "steps_ahead": 2,
                 "nan_mode": "drop",
             }
         )
-        fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        fit_df = data.loc["2000-01-01":"2000-02-10"]  # type: ignore[misc]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, SmaModel
         )
         self.assert_equal(actual, expected)
-
-    def _check_results(
-        self,
-        df: pd.DataFrame,
-    ) -> None:
-        """
-        Convert inputs to a string and check it against golden reference.
-        """
-        decimals = 3
-        actual = hunitest.convert_df_to_string(
-            df.round(decimals), index=True, decimals=decimals
-        )
-        self.check_string(actual)
 
     @staticmethod
     def _get_data() -> pd.DataFrame:
@@ -154,6 +141,19 @@ class TestSmaModel(hunitest.TestCase):
         df = pd.DataFrame(index=date_range, data=vol_sq)
         return df
 
+    def _check_results(
+        self,
+        df: pd.DataFrame,
+    ) -> None:
+        """
+        Convert inputs to a string and check it against golden reference.
+        """
+        decimals = 3
+        actual = hunitest.convert_df_to_string(
+            df.round(decimals), index=True, decimals=decimals
+        )
+        self.check_string(actual)
+
 
 class TestSingleColumnVolatilityModel(hunitest.TestCase):
     def test1(self) -> None:
@@ -162,7 +162,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -183,7 +183,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
@@ -191,8 +191,8 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
             }
         )
         node = SingleColumnVolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc[:"2000-02-10"])
-        df_out = node.predict(data.loc[:"2000-02-23"])["df_out"]
+        node.fit(data.loc[:"2000-02-10"])  # type: ignore[misc]
+        df_out = node.predict(data.loc[:"2000-02-23"])["df_out"]  # type: ignore[misc]
         info = collections.OrderedDict()
         info["fit"] = node.get_info("fit")
         info["predict"] = node.get_info("predict")
@@ -205,15 +205,15 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "col": "ret_0",
                 "steps_ahead": 2,
                 "nan_mode": "leave_unchanged",
             }
         )
-        fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        fit_df = data.loc["2000-01-01":"2000-02-10"]  # type: ignore[misc]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, SingleColumnVolatilityModel
         )
@@ -246,7 +246,7 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.get_config_from_nested_dict(info)))
+        act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(
             hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
@@ -256,13 +256,14 @@ class TestSingleColumnVolatilityModel(hunitest.TestCase):
 
 
 class TestVolatilityModel(hunitest.TestCase):
+    @pytest.mark.skip("See CmTask #2975.")
     def test01(self) -> None:
         """
         Perform a typical `fit()` call.
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -276,12 +277,13 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test02(self) -> None:
         """
         Check that the volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -309,7 +311,7 @@ class TestVolatilityModel(hunitest.TestCase):
         # Load test data.
         data = self._get_data()
         # Specify config and create modeling node.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -317,9 +319,9 @@ class TestVolatilityModel(hunitest.TestCase):
             }
         )
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc["2000-01-01":"2000-02-10"])
+        node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
         # TODO(Paul): Update the `predict()` interval.
-        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        df_out = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # TODO(Paul): Propagate `fit()` and `predict()` info.
         info = node.get_info("fit")
         # Package results.
@@ -331,7 +333,7 @@ class TestVolatilityModel(hunitest.TestCase):
         Check that the `predict()` volatility adjustment can be inverted.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -339,8 +341,8 @@ class TestVolatilityModel(hunitest.TestCase):
             }
         )
         node = VolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc["2000-01-01":"2000-02-10"])
-        vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]
+        node.fit(data.loc["2000-01-01":"2000-02-10"])  # type: ignore[misc]
+        vol_adj_df = node.predict(data.loc["2000-01-20":"2000-02-23"])["df_out"]  # type: ignore[misc]
         # Invert volatility adjustment.
         ret_0_vol_0_hat = vol_adj_df["ret_0_vol_2_hat"].shift(2)
         inverted_rets = (ret_0_vol_0_hat * vol_adj_df["ret_0_vol_adj"]).rename(
@@ -354,12 +356,13 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test05(self) -> None:
         """
         Use "replace_all" column mode.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -375,12 +378,13 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test06(self) -> None:
         """
         Use "replace_selected" column mode.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0"],
                 "steps_ahead": 2,
@@ -396,6 +400,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results1(config, info, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test07(self) -> None:
         """
         Model volatility for multiple columns (independently).
@@ -405,7 +410,7 @@ class TestVolatilityModel(hunitest.TestCase):
         # TODO(Paul): Rename this column.
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config and create modeling node.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -429,7 +434,7 @@ class TestVolatilityModel(hunitest.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -450,7 +455,7 @@ class TestVolatilityModel(hunitest.TestCase):
         data = self._get_data()
         data["ret_0_2"] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config with columns implicit.
-        config1 = cconfig.get_config_from_nested_dict(
+        config1 = cconfig.Config.from_dict(
             {
                 "steps_ahead": 2,
                 "nan_mode": "leave_unchanged",
@@ -459,7 +464,7 @@ class TestVolatilityModel(hunitest.TestCase):
         node1 = VolatilityModel("vol_model", **config1.to_dict())
         df_out1 = node1.fit(data)["df_out"]
         # Specify config with explicit column names.
-        config2 = cconfig.get_config_from_nested_dict(
+        config2 = cconfig.Config.from_dict(
             {
                 "cols": ["ret_0", "ret_0_2"],
                 "steps_ahead": 2,
@@ -482,7 +487,7 @@ class TestVolatilityModel(hunitest.TestCase):
         data = self._get_data()
         data[10] = data.ret_0 + np.random.normal(size=len(data))
         # Specify config.
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "cols": [10],
                 "steps_ahead": 2,
@@ -494,6 +499,7 @@ class TestVolatilityModel(hunitest.TestCase):
         df_out = node.fit(data)["df_out"]
         self.check_string(df_out.to_string())
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test11(self) -> None:
         """
         Learn and store model state.
@@ -510,6 +516,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act = self._package_results2(config, state, df_out)
         self.check_string(act)
 
+    @pytest.mark.skip("See CmTask #2975.")
     def test12(self) -> None:
         """
         Initialize model from saved state.
@@ -558,7 +565,7 @@ class TestVolatilityModel(hunitest.TestCase):
         act.append(hprint.frame("config"))
         act.append(str(config))
         act.append(hprint.frame("info"))
-        act.append(str(cconfig.get_config_from_nested_dict(info)))
+        act.append(str(cconfig.Config.from_dict(info)))
         act.append(hprint.frame("df_out"))
         act.append(hunitest.convert_df_to_string(df_out, index=True))
         act = "\n".join(act)
@@ -603,7 +610,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -623,7 +630,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         """
         # Load test data.
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
@@ -631,7 +638,7 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
             }
         )
         node = MultiindexVolatilityModel("vol_model", **config.to_dict())
-        node.fit(data.loc[:"2000-01-31"])["df_out"]
+        node.fit(data.loc[:"2000-01-31"])["df_out"]  # type: ignore[misc]
         # Package results.
         df_out = node.predict(data)["df_out"]
         info = node.get_info("predict")
@@ -643,19 +650,37 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         Test `get_fit_state()` and `set_fit_state()`.
         """
         data = self._get_data()
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "in_col_group": ("ret_0",),
                 "steps_ahead": 2,
                 "nan_mode": "drop",
             }
         )
-        fit_df = data.loc["2000-01-01":"2000-02-10"]
-        predict_df = data.loc["2000-01-01":"2000-02-23"]
+        fit_df = data.loc["2000-01-01":"2000-02-10"]  # type: ignore[misc]
+        predict_df = data.loc["2000-01-01":"2000-02-23"]  # type: ignore[misc]
         expected, actual = cdnth.test_get_set_state(
             fit_df, predict_df, config, MultiindexVolatilityModel
         )
         self.assert_equal(actual, expected)
+
+    @staticmethod
+    def _package_results1(
+        config: cconfig.Config,
+        info: collections.OrderedDict,
+        df_out: pd.DataFrame,
+    ) -> str:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act.append(hprint.frame("info"))
+        act.append(str(cconfig.Config.from_dict(info)))
+        act.append(hprint.frame("df_out"))
+        act.append(
+            hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
+        )
+        act = "\n".join(act)
+        return act
 
     def _get_data(self) -> pd.DataFrame:
         """
@@ -673,24 +698,6 @@ class TestMultiindexVolatilityModel(hunitest.TestCase):
         data = pd.concat([realization, volume], axis=1, keys=["ret_0", "volume"])
         return data
 
-    @staticmethod
-    def _package_results1(
-        config: cconfig.Config,
-        info: collections.OrderedDict,
-        df_out: pd.DataFrame,
-    ) -> str:
-        act: List[str] = []
-        act.append(hprint.frame("config"))
-        act.append(str(config))
-        act.append(hprint.frame("info"))
-        act.append(str(cconfig.get_config_from_nested_dict(info)))
-        act.append(hprint.frame("df_out"))
-        act.append(
-            hunitest.convert_df_to_string(df_out.round(2), index=True, decimals=2)
-        )
-        act = "\n".join(act)
-        return act
-
 
 class TestVolatilityModulator(hunitest.TestCase):
     def test_modulate1(self) -> None:
@@ -701,7 +708,7 @@ class TestVolatilityModulator(hunitest.TestCase):
             -1
         )
         df_in["ret_1_hat"] = y_hat
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_1_hat"],
                 "volatility_col": "vol_2_hat",
@@ -718,7 +725,7 @@ class TestVolatilityModulator(hunitest.TestCase):
     def test_demodulate1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -735,7 +742,7 @@ class TestVolatilityModulator(hunitest.TestCase):
     def test_col_mode1(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -754,7 +761,7 @@ class TestVolatilityModulator(hunitest.TestCase):
     def test_col_mode2(self) -> None:
         steps_ahead = 2
         df_in = self._get_signal_and_fwd_vol(steps_ahead)
-        config = cconfig.get_config_from_nested_dict(
+        config = cconfig.Config.from_dict(
             {
                 "signal_cols": ["ret_0"],
                 "volatility_col": "vol_2_hat",
@@ -770,17 +777,6 @@ class TestVolatilityModulator(hunitest.TestCase):
         # Check results.
         self._check_results(config, df_in, df_out)
 
-    def _check_results(
-        self, config: cconfig.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
-    ) -> None:
-        act: List[str] = []
-        act.append(hprint.frame("config"))
-        act.append(str(config))
-        act = "\n".join(act)
-        self.check_string(act)
-        self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
-        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)
-
     @staticmethod
     def _get_signal_and_fwd_vol(
         steps_ahead: int,
@@ -795,3 +791,14 @@ class TestVolatilityModulator(hunitest.TestCase):
         return pd.concat(
             [signal.rename("ret_0"), fwd_vol.rename("vol_2_hat")], axis=1
         )
+
+    def _check_results(
+        self, config: cconfig.Config, df_in: pd.DataFrame, df_out: pd.DataFrame
+    ) -> None:
+        act: List[str] = []
+        act.append(hprint.frame("config"))
+        act.append(str(config))
+        act = "\n".join(act)
+        self.check_string(act)
+        self.check_dataframe(df_in, tag="df_in", err_threshold=0.01)
+        self.check_dataframe(df_out, tag="df_out", err_threshold=0.01)

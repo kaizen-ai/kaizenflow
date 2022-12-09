@@ -96,7 +96,7 @@ class DataFrameModeler:
         # Convert info to string.
         if self.info is not None:
             try:
-                info = cconfig.get_config_from_nested_dict(self.info)
+                info = cconfig.Config.from_dict(self.info)
                 info = info.to_python()
             except ValueError:
                 _LOG.warning("Failed to serialize `info`.")

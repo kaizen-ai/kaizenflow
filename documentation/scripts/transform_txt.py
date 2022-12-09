@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
-"""Perform one of several transformations on a txt file.
+"""
+Perform one of several transformations on a txt file.
 
 - The input or output can be filename or stdin (represented by '-')
 - If output file is not specified then we assume that the output file is the
@@ -127,7 +128,9 @@ def format_text(in_file_name, out_file_name, max_lev):
 
 
 def increase_chapter(in_file_name, out_file_name):
-    """Increase the level of chapters by one for text in stdin."""
+    """
+    Increase the level of chapters by one for text in stdin.
+    """
     skip_block = False
     txt = hparser.read_file(in_file_name)
     #

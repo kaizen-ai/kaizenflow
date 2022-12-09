@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Convert a txt file into markdown suitable for pandoc.py
+Convert a txt file into markdown suitable for pandoc.py.
 
 E.g.,
 - convert the text in pandoc / latex format

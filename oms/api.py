@@ -42,7 +42,10 @@ class Contract:
 
     def __repr__(self):
         return "Contract: symbol=%s, sec_type=%s, currency=%s, exchange=%s" % (
-            self.symbol, self.sec_type, self.exchange, self.currency
+            self.symbol,
+            self.sec_type,
+            self.exchange,
+            self.currency,
         )
 
     def __hash__(self):
@@ -89,7 +92,7 @@ class Order:
         action: str,
         total_quantity: float,
         order_type: str,
-        timestamp: Optional[pd.Timestamp] = None
+        timestamp: Optional[pd.Timestamp] = None,
     ):
         """
         Create an order.
@@ -111,8 +114,15 @@ class Order:
         self.timestamp = timestamp
 
     def __repr__(self):
-        return "Order: order_id=%s, action=%s, total_quantity=%s, order_type=%s timestamp=%s" % (
-            self.order_id, self.action, self.total_quantity, self.order_type, self.timestamp
+        return (
+            "Order: order_id=%s, action=%s, total_quantity=%s, order_type=%s timestamp=%s"
+            % (
+                self.order_id,
+                self.action,
+                self.total_quantity,
+                self.order_type,
+                self.timestamp,
+            )
         )
 
 
@@ -121,7 +131,6 @@ class MarketOrder(Order):
 
 
 class LimitOrder(Order):
-
     def __init__(self, limit_price: float):
         self.limit_price = limit_price
 
@@ -147,7 +156,8 @@ class Position:
         ret.append("contract=%s" % self.contract)
         ret.append("position=%s" % self.position)
         ret = "\n".join(ret)
-        ret = "Position:\n" + hprint.indent(ret, 2)
+        num_spaces = 2
+        ret = "Position:\n" + hprint.indent(ret, num_spaces=num_spaces)
         return ret
 
     def __hash__(self):
@@ -190,7 +200,7 @@ class OrderStatus:
         status: str,
         filled: float,
         remaining: float,
-        avg_fill_price: float
+        avg_fill_price: float,
     ) -> None:
         # Pointer to the corresponding Order.
         hdbg.dassert_lte(0, order_id)
@@ -206,8 +216,15 @@ class OrderStatus:
         self.avg_fill_price = avg_fill_price
 
     def __repr__(self):
-        return "OrderStatus: order_id=%s, status=%s, filled=%s, remaining=%s avg_fill_price=%s" % (
-            self.order_id, self.status, self.filled, self.remaining, self.avg_fill_price
+        return (
+            "OrderStatus: order_id=%s, status=%s, filled=%s, remaining=%s avg_fill_price=%s"
+            % (
+                self.order_id,
+                self.status,
+                self.filled,
+                self.remaining,
+                self.avg_fill_price,
+            )
         )
 
 
@@ -224,16 +241,19 @@ class Trade:
         contract: Contract,
         order: Order,
         order_status: OrderStatus,
-        timestamp: Optional[pd.Timestamp] = None
+        timestamp: Optional[pd.Timestamp] = None,
     ) -> None:
         self.contract = contract
         self.order = order
-        hdbg.dassert_lte(order_status.filled, order.total_quantity,
-                        msg="Can't fill more than what was requested")
+        hdbg.dassert_lte(
+            order_status.filled,
+            order.total_quantity,
+            msg="Can't fill more than what was requested",
+        )
         hdbg.dassert_eq(
             order.total_quantity,
             order_status.filled + order_status.remaining,
-            msg="The filled and remaining shares must be the same as the total quantity"
+            msg="The filled and remaining shares must be the same as the total quantity",
         )
         self.order_status = order_status
         self.timestamp = timestamp  # TODO(gp): Implement fills.
@@ -245,7 +265,8 @@ class Trade:
         ret.append("order_status=%s" % self.order_status)
         ret.append("timestamp=%s" % self.timestamp)
         ret = "\n".join(ret)
-        ret = "Trade:\n" + hprint.indent(ret, 2)
+        num_spaces = 2
+        ret = "Trade:\n" + hprint.indent(ret, num_spaces=num_spaces)
         return ret
 
     def to_position(self) -> Position:
@@ -278,6 +299,7 @@ class OMS:
             if objs:
                 ret += "\n" + hprint.indent("\n".join(map(str, objs)), 2)
             return ret
+
         ret = []
         ret.append(_to_string("trades", self._trades))
         ret.append(_to_string("orders", self._orders))
@@ -318,8 +340,9 @@ class OMS:
         remaining = 0.0
         # TODO(gp): Implement this by talking to IM.
         avg_fill_price = 1000.0
-        order_status = OrderStatus(order.order_id, status, filled, remaining,
-                avg_fill_price)
+        order_status = OrderStatus(
+            order.order_id, status, filled, remaining, avg_fill_price
+        )
         trade = Trade(contract, order, order_status, timestamp=timestamp)
         self._trades.append(trade)
         #
@@ -333,7 +356,7 @@ class OMS:
         hdbg.dassert_eq(
             len(set(self._current_positions)),
             len(self._current_positions),
-            msg="All positions should be about different Contracts"
+            msg="All positions should be about different Contracts",
         )
         # Look for the contract corresponding to `trade` among the current positions.
         contract = trade.contract
@@ -343,15 +366,14 @@ class OMS:
             position = Position(contract, trade.order.total_quantity)
         else:
             # Update the current position for `contract`.
-            position = Position.update(
-                current_position,
-                trade.to_position()
-            )
+            position = Position.update(current_position, trade.to_position())
         _LOG.debug("position=%s", position)
         # Update the contract.
         if position is None:
             if contract in self._current_positions:
-                _LOG.debug("Removing %s from %s", contract, self._current_positions)
+                _LOG.debug(
+                    "Removing %s from %s", contract, self._current_positions
+                )
                 del self._current_positions[contract]
         else:
             _LOG.debug("Updating %s to %s", current_position, position)

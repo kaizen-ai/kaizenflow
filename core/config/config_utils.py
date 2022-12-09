@@ -5,8 +5,9 @@ import core.config.config_utils as ccocouti
 """
 
 import collections
+import copy
 import logging
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any, Iterable, List, Optional
 
 import pandas as pd
 
@@ -18,6 +19,93 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# Configs.
+# #############################################################################
+
+
+def validate_configs(configs: List[cconconf.Config]) -> None:
+    """
+    Assert if the list of configs contains duplicates.
+    """
+    hdbg.dassert_container_type(configs, List, cconconf.Config)
+    hdbg.dassert_no_duplicates(
+        list(map(str, configs)), "There are duplicate configs in passed list"
+    )
+
+
+def configs_to_str(configs: List[cconconf.Config]) -> str:
+    """
+    Print a list of configs into a readable string.
+    """
+    txt = []
+    for i, config in enumerate(configs):
+        txt.append("# %s/%s" % (i + 1, len(configs)))
+        txt.append(hprint.indent(str(config)))
+    res = "\n".join(txt)
+    return res
+
+
+# TODO(gp): Add unit tests.
+def sort_config_string(txt: str) -> str:
+    """
+    Sort a string representing a Config in alphabetical order by the first
+    level.
+
+    This function can be used to diff two Configs serialized as strings.
+    """
+    lines = [line.rstrip("\n") for line in txt]
+    # Parse.
+    chunks = {}
+    state = "look_for_start"
+    start_idx = end_idx = None
+    for i, line in enumerate(lines):
+        _LOG.debug(
+            "i=%s state=%s start_idx=%s end_idx=%s line=%s"
+            % (i, state, start_idx, end_idx, line)
+        )
+        if (
+            state == "look_for_start"
+            and line[0] != " "
+            and lines[i + 1][0] != " "
+        ):
+            _LOG.debug("Found single line")
+            # Single line.
+            key = lines[i]
+            val = " "
+            chunks[key] = val
+            _LOG.debug("Single line -> %s %s", key, val)
+        elif state == "look_for_start" and line[0] != " ":
+            _LOG.debug("Found first line")
+            start_idx = i
+            end_idx = None
+            state = "look_for_end"
+        elif state == "look_for_end" and line[0] != " ":
+            _LOG.debug("Found last line")
+            end_idx = i - 1
+            hdbg.dassert_lte(start_idx, end_idx)
+            key = lines[start_idx]
+            _LOG.debug("start_idx=%s end_idx=%s key=%s", start_idx, end_idx, key)
+            val = lines[start_idx + 1 : end_idx + 1]
+            chunks[key] = val
+            _LOG.debug("-> %s %s", key, val)
+            #
+            state = "look_for_start"
+            start_idx = i
+            end_idx = None
+    # Sort.
+    chunks = {k: chunks[k] for k in sorted(chunks.keys())}
+    # Assemble with proper indentation.
+    chunks = "\n".join(
+        [k + hprint.indent("\n".join(chunks[k])) for k in chunks.keys()]
+    )
+    return chunks
+
+
+# #############################################################################
+
+
+# TODO(gp): This could be a method of Config to encapsulate.
 def check_no_dummy_values(config: cconconf.Config) -> bool:
     """
     Assert if there are no `cconconf.DUMMY` values.
@@ -44,62 +132,6 @@ def check_no_dummy_values(config: cconconf.Config) -> bool:
     return True
 
 
-def validate_configs(configs: List[cconconf.Config]) -> None:
-    """
-    Assert if the list of configs contains duplicates.
-    """
-    hdbg.dassert_container_type(configs, List, cconconf.Config)
-    hdbg.dassert_no_duplicates(
-        list(map(str, configs)), "There are duplicate configs in passed list"
-    )
-
-
-def configs_to_str(configs: List[cconconf.Config]) -> str:
-    """
-    Print a list of configs into a readable string.
-    """
-    txt = []
-    for i, config in enumerate(configs):
-        txt.append("# %s/%s" % (i + 1, len(configs)))
-        txt.append(str(config))
-    res = "\n".join(txt)
-    return res
-
-
-# TODO(gp): This should be a private method of the method below.
-def get_config_from_flattened_dict(
-    flattened: Dict[Tuple[str], Any]
-) -> cconconf.Config:
-    """
-    Build a config from the flattened config representation.
-
-    :param flattened: flattened config like result from `config.flatten()`
-    :return: `Config` object initialized from flattened representation
-    """
-    hdbg.dassert_isinstance(flattened, dict)
-    hdbg.dassert(flattened)
-    config = cconconf.Config()
-    for k, v in flattened.items():
-        config[k] = v
-    return config
-
-
-# TODO(gp): This method belongs should be Config.from_dict()
-def get_config_from_nested_dict(nested: Dict[str, Any]) -> cconconf.Config:
-    """
-    Build a `Config` from a nested dict.
-
-    :param nested: nested dict, with certain restrictions:
-      - only leaf nodes may not be a dict
-      - every nonempty dict must only have keys of type `str`
-    """
-    hdbg.dassert_isinstance(nested, dict)
-    hdbg.dassert(nested)
-    iter_ = hdict.get_nested_dict_iterator(nested)
-    flattened = collections.OrderedDict(iter_)
-    return get_config_from_flattened_dict(flattened)
-
-
 # #############################################################################
 
 
@@ -107,11 +139,25 @@ def make_hashable(obj: Any) -> collections.abc.Hashable:
     """
     Coerce `obj` to a hashable type if not already hashable.
     """
-    if isinstance(obj, collections.abc.Hashable):
-        return obj
-    if isinstance(obj, collections.abc.Iterable):
-        return tuple(map(make_hashable, obj))
-    return tuple(obj)
+    ret = None
+    if isinstance(obj, collections.abc.Mapping):
+        # Handle dict-like objects.
+        new_object = copy.deepcopy(obj)
+        for k, v in new_object.items():
+            new_object[k] = make_hashable(v)
+        ret = tuple(new_object.items())
+    elif isinstance(obj, collections.abc.Iterable) and not isinstance(obj, str):
+        # The problem is that `str` is both `Hashable` and `Iterable`, but here
+        # we want to treat it like `Hashable`, i.e. return string as it is.
+        # Same with `Tuple`, but for `Tuple` we want to apply the function
+        # recursively, i.e. make every element `Hashable`.
+        ret = tuple([make_hashable(element) for element in obj])
+    elif isinstance(obj, collections.abc.Hashable):
+        # Return the object as is, since it's already hashable.
+        ret = obj
+    else:
+        ret = tuple(obj)
+    return ret
 
 
 def intersect_configs(configs: Iterable[cconconf.Config]) -> cconconf.Config:
@@ -165,6 +211,15 @@ def subtract_config(
     diff = cconconf.Config()
     for k, v in flat_m.items():
         if (k not in flat_s) or (flat_m[k] != flat_s[k]):
+            # It is not possible to use a dict as a config's value.
+            # It should be converted to a config first.
+            if isinstance(v, dict):
+                if not v:
+                    # Replace empty dict with empty config.
+                    v = cconconf.Config()
+                else:
+                    # Get config from a dict.
+                    v = cconconf.Config.from_dict(v)
             diff[k] = v
     return diff
 
@@ -189,9 +244,10 @@ def diff_configs(configs: Iterable[cconconf.Config]) -> List[cconconf.Config]:
     return config_diffs
 
 
-# # #############################################################################
+# #############################################################################
 
 
+# TODO(gp): Is this private?
 def convert_to_series(config: cconconf.Config) -> pd.Series:
     """
     Convert a config into a flattened series representation.
@@ -217,6 +273,7 @@ def convert_to_series(config: cconconf.Config) -> pd.Series:
     return srs
 
 
+# TODO(gp): Is this private?
 def convert_to_dataframe(configs: Iterable[cconconf.Config]) -> pd.DataFrame:
     """
     Convert multiple configs into flattened dataframe representation.

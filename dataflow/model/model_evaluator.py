@@ -17,8 +17,8 @@ from tqdm.auto import tqdm
 import core.config as cconfig
 import core.signal_processing as csigproc
 import core.statistics as costatis
-import dataflow as cdataf
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.core.result_bundle as dtfcorebun
+import dataflow.model.dataflow_model_utils as dtfmdtfmout
 import dataflow.model.stats_computer as dtfmostcom
 import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
@@ -53,7 +53,7 @@ class ModelEvaluator:
         oos_start: Optional[pd.Timestamp],
     ) -> None:
         """
-        Constructor.
+        Construct object.
 
         The `prediction_col` and `target_col` should be aligned, i.e., the
         prediction at a given index location should be a prediction for the
@@ -98,7 +98,7 @@ class ModelEvaluator:
     @classmethod
     def from_result_bundle_dict(
         cls,
-        result_bundle_dict: Dict[Key, cdataf.ResultBundle],
+        result_bundle_dict: Dict[Key, dtfcorebun.ResultBundle],
         predictions_col: str,
         target_col: str,
         oos_start: Optional[pd.Timestamp],
@@ -176,7 +176,7 @@ class ModelEvaluator:
                 eval_config["model_evaluator_kwargs"]["predictions_col"],
             ]
         }
-        result_bundle_dict = dtfmoexuti.load_experiment_artifacts(**load_config)
+        result_bundle_dict = dtfmdtfmout.load_experiment_artifacts(**load_config)
         # Build the ModelEvaluator.
         evaluator = ModelEvaluator.from_result_bundle_dict(
             result_bundle_dict,
@@ -337,7 +337,7 @@ class ModelEvaluator:
         mode: Optional[str] = None,
     ) -> Dict[Any, pd.DataFrame]:
         """
-        Helper for calculating positions and PnL from returns and predictions.
+        Calculate positions and PnL from returns and predictions.
 
         :param keys: use all available models if `None`
         :param position_method: as in `PositionComputer.compute_positions()`
@@ -572,6 +572,40 @@ class PositionComputer:
             )
         return ret
 
+    @staticmethod
+    def _multiply_kernel(
+        predictions: pd.Series,
+        tau: float,
+        delay: int,
+        z_mute_point: float,
+        z_saturation_point: float,
+    ) -> pd.Series:
+        # z-score.
+        zscored_preds = csigproc.compute_rolling_zscore(
+            predictions, tau=tau, delay=delay
+        )
+        # Multiple by a kernel.
+        bump_function = functools.partial(
+            csigproc.c_infinity_bump_function,
+            a=z_mute_point,
+            b=z_saturation_point,
+        )
+        scale_factors = 1 - zscored_preds.apply(bump_function)
+        adjusted_preds = zscored_preds.multiply(scale_factors)
+        return adjusted_preds
+
+    @staticmethod
+    def _squash(
+        predictions: pd.Series,
+        tau: float,
+        delay: int,
+        scale: float,
+    ) -> pd.Series:
+        zscored_preds = csigproc.compute_rolling_zscore(
+            predictions, tau=tau, delay=delay
+        )
+        return csigproc.squash(zscored_preds, scale=scale)
+
     def _adjust_for_volatility(
         self,
         predictions: pd.Series,
@@ -622,40 +656,6 @@ class PositionComputer:
         else:
             raise ValueError(f"Invalid mode `{mode}`")
         return ret
-
-    @staticmethod
-    def _multiply_kernel(
-        predictions: pd.Series,
-        tau: float,
-        delay: int,
-        z_mute_point: float,
-        z_saturation_point: float,
-    ) -> pd.Series:
-        # z-score.
-        zscored_preds = csigproc.compute_rolling_zscore(
-            predictions, tau=tau, delay=delay
-        )
-        # Multiple by a kernel.
-        bump_function = functools.partial(
-            csigproc.c_infinity_bump_function,
-            a=z_mute_point,
-            b=z_saturation_point,
-        )
-        scale_factors = 1 - zscored_preds.apply(bump_function)
-        adjusted_preds = zscored_preds.multiply(scale_factors)
-        return adjusted_preds
-
-    @staticmethod
-    def _squash(
-        predictions: pd.Series,
-        tau: float,
-        delay: int,
-        scale: float,
-    ) -> pd.Series:
-        zscored_preds = csigproc.compute_rolling_zscore(
-            predictions, tau=tau, delay=delay
-        )
-        return csigproc.squash(zscored_preds, scale=scale)
 
 
 def compute_volatility_normalization_factor(

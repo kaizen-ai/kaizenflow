@@ -10,9 +10,9 @@ Use as:
      --end_timestamp '2022-02-09' \
      --start_timestamp '2022-02-08' \
      --exchange_id 'binance' \
-     --universe 'v01' \
+     --universe 'v1' \
      --aws_profile 'ck' \
-     --s3_path 's3://cryptokaizen-data/daily_staged/'
+     --s3_path 's3://<ck-data>/daily_staged/'
 """
 
 import argparse
@@ -22,7 +22,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.talos.data.extract.exchange_class as imvtdeexcl
+import im_v2.talos.data.extract.extractor as imvtdexex
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +41,6 @@ def _parse() -> argparse.ArgumentParser:
         type=str,
         help="(Optional) API 'stage' to use ('sandbox' or 'prod'), default: 'sandbox'",
     )
-    parser.add_argument("--incremental", action="store_true")
     parser = imvcdeexut.add_exchange_download_args(parser)
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
@@ -51,7 +50,12 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    imvcdeexut.download_historical_data(args, imvtdeexcl.TalosExchange)
+    # Initialize the CCXT Extractor class.
+    exchange = imvtdexex.TalosExtractor(args.api_stage)
+    # Assign extractor-specific variables.
+    args = vars(args)
+    args["unit"] = "ms"
+    imvcdeexut.download_historical_data(args, exchange)
 
 
 if __name__ == "__main__":

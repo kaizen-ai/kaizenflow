@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.statistics as costatis
+import core.statistics.descriptive as cstadesc
 """
 
 import logging

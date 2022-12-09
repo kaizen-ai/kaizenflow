@@ -7,11 +7,16 @@ import dataflow.pipelines.features.pipeline as dtfpifepip
 import datetime
 import logging
 
+import pandas as pd
+
 import core.config as cconfig
 import core.features as cofeatur
 import core.finance as cofinanc
 import core.signal_processing as csigproc
 import dataflow.core as dtfcore
+
+# TODO(gp): This dependency is not legal according to code_organization.md.
+#  It should go into dataflow/system
 import dataflow.system as dtfsys
 
 _LOG = logging.getLogger(__name__)
@@ -21,7 +26,49 @@ _LOG = logging.getLogger(__name__)
 
 
 class FeaturePipeline(dtfcore.DagBuilder):
+    @staticmethod
+    def get_column_name(tag: str) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def get_trading_period(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def get_required_lookback_in_effective_days(
+        self, config: cconfig.Config, mark_key_as_used: bool
+    ) -> str:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def set_weights(
+        self, config: cconfig.Config, weights: pd.Series
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
+    def convert_to_fast_prod_setup(
+        self, config: cconfig.Config
+    ) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
+        raise NotImplementedError
+
     def get_config_template(self) -> cconfig.Config:
+        """
+        See description in the parent class.
+        """
         dict_ = {
             self._get_nid("load_data"): {
                 cconfig.DUMMY: None,
@@ -57,7 +104,7 @@ class FeaturePipeline(dtfcore.DagBuilder):
                 },
             },
         }
-        config = cconfig.get_config_from_nested_dict(dict_)
+        config = cconfig.Config.from_dict(dict_)
         return config
 
     def _get_dag(

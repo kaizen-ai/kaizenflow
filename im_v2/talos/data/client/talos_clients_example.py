@@ -8,6 +8,7 @@ import os
 
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import helpers.hs3 as hs3
 import im_v2.talos.data.client.talos_clients as imvtdctacl
 
 
@@ -37,9 +38,38 @@ def get_TalosHistoricalPqByTileClient_example1(
     """
     Get `TalosHistoricalPqByTileClient` object for the tests.
     """
+    universe_version = "small"
     root_dir = get_test_data_dir()
     partition_mode = "by_year_month"
+    data_snapshot = "latest"
     talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
-        resample_1min, root_dir, partition_mode
+        universe_version,
+        resample_1min,
+        root_dir,
+        partition_mode,
+        data_snapshot,
     )
     return talos_file_client
+
+
+def get_TalosHistoricalPqByTileClient_example2(
+    resample_1min: bool,
+) -> imvtdctacl.TalosHistoricalPqByTileClient:
+    """
+    Get `TalosHistoricalPqByTileClient` object for the tests from S3.
+    """
+    universe_version = "small"
+    aws_profile = "ck"
+    s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
+    root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
+    partition_mode = "by_year_month"
+    data_snapshot = "latest"
+    talos_parquet_client = imvtdctacl.TalosHistoricalPqByTileClient(
+        universe_version,
+        resample_1min,
+        root_dir,
+        partition_mode,
+        data_snapshot,
+        aws_profile="ck",
+    )
+    return talos_parquet_client

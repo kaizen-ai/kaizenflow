@@ -53,7 +53,7 @@ def get_example_model_evaluator():
     n_assets = 8
     data_dict = generate_synthetic_rets_and_preds(n_assets)
     # Build the config.
-    eval_config = cconfig.get_config_from_nested_dict(
+    eval_config = cconfig.Config.from_dict(
         {
             "model_evaluator_kwargs": {
                 "oos_start": "2017-01-01",

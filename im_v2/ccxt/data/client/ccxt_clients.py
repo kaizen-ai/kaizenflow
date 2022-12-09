@@ -7,7 +7,7 @@ import im_v2.ccxt.data.client.ccxt_clients as imvcdccccl
 import abc
 import logging
 import os
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -17,15 +17,10 @@ import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import im_v2.common.data.client as icdc
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.data_snapshot as icdds
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
-
-# Latest historical data snapshot.
-_LATEST_DATA_SNAPSHOT = "20210924"
-# TODO(gp): @all bump up to the new snapshot.
-# _LATEST_DATA_SNAPSHOT = "20220210"
-
 
 # #############################################################################
 # CcxtCddClient
@@ -41,22 +36,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         - E.g., `_apply_olhlcv_transformations()`, `_apply_vendor_normalization()`
     """
 
-    def __init__(self, vendor: str, resample_1min: bool) -> None:
+    def __init__(
+        self, vendor: str, universe_version: str, resample_1min: bool
+    ) -> None:
         """
         Constructor.
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
-
-    def get_universe(self) -> List[icdc.FullSymbol]:
-        """
-        See description in the parent class.
-        """
-        universe = imvcounun.get_vendor_universe(
-            vendor=self._vendor, as_full_symbol=True
-        )
-        return universe  # type: ignore[no-any-return]
 
     @staticmethod
     def _apply_ohlcv_transformations(data: pd.DataFrame) -> pd.DataFrame:
@@ -119,78 +107,33 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
+        # Round up float values in case values in raw data are rounded up incorrectly when
+        # being read from a file.
+        data = data.round(8)
         return data
 
 
 # #############################################################################
-# CcxtCddDbClient
+# CcxtSqlRealTimeImClient
 # #############################################################################
 
 
-# TODO(Grisha): it should descend from `ImClientReadingMultipleSymbols`.
-class CcxtCddDbClient(CcxtCddClient, icdc.ImClientReadingOneSymbol):
-    """
-    `CCXT` client for data stored in an SQL database.
-    """
-
+class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
         self,
-        vendor: str,
         resample_1min: bool,
-        connection: hsql.DbConnection,
+        db_connection: hsql.DbConnection,
+        table_name: str,
     ) -> None:
-        """
-        Load `CCXT` and `CDD` price data from the database.
+        vendor = "ccxt"
+        super().__init__(vendor, resample_1min, db_connection, table_name)
 
-        This code path is typically used for the real-time data.
-
-        :param connection: connection for a SQL database
+    @staticmethod
+    def should_be_online() -> bool:  # pylint: disable=arguments-differ'
         """
-        super().__init__(vendor, resample_1min)
-        self._connection = connection
-
-    def get_metadata(self) -> pd.DataFrame:
+        The real-time system for CCXT should always be online.
         """
-        See description in the parent class.
-        """
-        raise NotImplementedError
-
-    def _read_data_for_one_symbol(
-        self,
-        full_symbol: icdc.FullSymbol,
-        start_ts: Optional[pd.Timestamp],
-        end_ts: Optional[pd.Timestamp],
-        **read_sql_kwargs: Any,
-    ) -> pd.DataFrame:
-        """
-        Same as parent class.
-        """
-        table_name = self._vendor.lower() + "_ohlcv"
-        # Verify that table with specified name exists.
-        hdbg.dassert_in(table_name, hsql.get_table_names(self._connection))
-        # Initialize SQL query.
-        sql_query = "SELECT * FROM %s" % table_name
-        # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
-        # Initialize a list for SQL conditions.
-        sql_conditions = []
-        # Fill SQL conditions list for each provided data parameter.
-        sql_conditions.append(f"exchange_id = '{exchange_id}'")
-        sql_conditions.append(f"currency_pair = '{currency_pair}'")
-        if start_ts:
-            start_ts = hdateti.convert_timestamp_to_unix_epoch(start_ts)
-            sql_conditions.append(f"timestamp >= {start_ts}")
-        if end_ts:
-            end_ts = hdateti.convert_timestamp_to_unix_epoch(end_ts)
-            sql_conditions.append(f"timestamp <= {end_ts}")
-        # Append all the provided SQL conditions to the main SQL query.
-        sql_conditions = " AND ".join(sql_conditions)
-        sql_query = " WHERE ".join([sql_query, sql_conditions])
-        # Execute SQL query.
-        data = pd.read_sql(sql_query, self._connection, **read_sql_kwargs)
-        # Normalize data according to the vendor.
-        data = self._apply_vendor_normalization(data)
-        return data
+        return True
 
 
 # #############################################################################
@@ -215,26 +158,26 @@ class CcxtCddCsvParquetByAssetClient(
     def __init__(
         self,
         vendor: str,
+        universe_version: str,
         resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
         extension: str,
+        data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
-        data_snapshot: Optional[str] = None,
     ) -> None:
         """
         Load `CCXT` data from local or S3 filesystem.
 
         :param vendor: price data provider, i.e. `CCXT` or `CDD`
-        :param root_dir: either a local root path (e.g., "/app/im") or
-            an S3 root path (e.g., "s3://alphamatic-data/data") to `CCXT` data
-        :param extension: file extension, e.g., `.csv`, `.csv.gz` or `.parquet`
-        :param aws_profile: AWS profile name (e.g., "am")
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
+        :param root_dir: either a local root path (e.g., `/app/im`) or
+            an S3 root path (e.g., `s3://<ck-data>/reorg/historical.manual.pq`) to `CCXT` data
+        :param extension: file extension, e.g., `csv.gz` or `parquet`
+        :param aws_profile: AWS profile, e.g., `am`
+        :param data_snapshot: same format used in `get_data_snapshot()`
         """
-        super().__init__(vendor, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -243,10 +186,15 @@ class CcxtCddCsvParquetByAssetClient(
             extension,
         )
         self._extension = extension
-        self._data_snapshot = data_snapshot or _LATEST_DATA_SNAPSHOT
+        data_snapshot = icdds.get_data_snapshot(
+            root_dir, data_snapshot, aws_profile
+        )
+        self._data_snapshot = data_snapshot
         # Set s3fs parameter value if aws profile parameter is specified.
         if aws_profile:
             self._s3fs = hs3.get_s3fs(aws_profile)
+        # TODO(Sonya): Consider moving it to the base class as the `dataset` param.
+        self._dataset = "ohlcv"
 
     def get_metadata(self) -> pd.DataFrame:
         """
@@ -256,7 +204,7 @@ class CcxtCddCsvParquetByAssetClient(
 
     def _read_data_for_one_symbol(
         self,
-        full_symbol: icdc.FullSymbol,
+        full_symbol: ivcu.FullSymbol,
         start_ts: Optional[pd.Timestamp],
         end_ts: Optional[pd.Timestamp],
         **kwargs: Any,
@@ -265,7 +213,7 @@ class CcxtCddCsvParquetByAssetClient(
         See description in the parent class.
         """
         # Split full symbol into exchange and currency pair.
-        exchange_id, currency_pair = icdc.parse_full_symbol(full_symbol)
+        exchange_id, currency_pair = ivcu.parse_full_symbol(full_symbol)
         # Get absolute file path for a file with crypto price data.
         file_path = self._get_file_path(
             self._data_snapshot, exchange_id, currency_pair
@@ -331,10 +279,11 @@ class CcxtCddCsvParquetByAssetClient(
         Get the absolute path to a file with `CCXT` or `CDD` price data.
 
         The file path is constructed in the following way:
-        `<root_dir>/<vendor>/<snapshot>/<exchange_id>/<currency_pair>.<self._extension>`
+        `<root_dir>/<data_snapshot>/<dataset>/<vendor>/<exchange_id>/<currency_pair>.<extension>`.
 
-        :param data_snapshot: snapshot of datetime when data was loaded,
-            e.g. "20210924"
+        E.g., `s3://.../20210924/ohlcv/ccxt/binance/BTC_USDT.csv.gz`.
+
+        :param data_snapshot: same format used in `get_data_snapshot()`
         :param exchange_id: exchange id, e.g. "binance"
         :param currency_pair: currency pair `<currency1>_<currency2>`,
             e.g. "BTC_USDT"
@@ -344,9 +293,53 @@ class CcxtCddCsvParquetByAssetClient(
         file_name = ".".join([currency_pair, self._extension])
         file_path = os.path.join(
             self._root_dir,
-            self._vendor.lower(),
             data_snapshot,
+            self._dataset,
+            self._vendor.lower(),
             exchange_id,
             file_name,
         )
         return file_path
+
+
+# #############################################################################
+# CcxtHistoricalPqByTileClient
+# #############################################################################
+
+
+class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
+    """
+    Read historical data for `CCXT` assets stored as Parquet dataset.
+
+    It can read data from local or S3 filesystem as backend.
+    """
+
+    def __init__(
+        self,
+        universe_version: str,
+        resample_1min: bool,
+        root_dir: str,
+        partition_mode: str,
+        dataset: str,
+        contract_type: str,
+        data_snapshot: str,
+        *,
+        aws_profile: Optional[str] = None,
+    ) -> None:
+        """
+        Constructor.
+
+        See the parent class for parameters description.
+        """
+        vendor = "CCXT"
+        super().__init__(
+            vendor,
+            universe_version,
+            resample_1min,
+            root_dir,
+            partition_mode,
+            dataset,
+            contract_type,
+            data_snapshot,
+            aws_profile=aws_profile,
+        )

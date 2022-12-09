@@ -4,7 +4,6 @@ Import as:
 import im.kibot.data.config as imkidacon
 """
 
-import os
 
 import helpers.hs3 as hs3
 
@@ -12,9 +11,22 @@ ENDPOINT = "http://www.kibot.com/"
 
 API_ENDPOINT = "http://api.kibot.com/"
 
+AM_AWS_PROFILE = "am"
 # TODO(gp): Inline this reference everywhere, if needed.
-S3_BUCKET = hs3.get_bucket()
-S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot"
+try:
+    S3_BUCKET = hs3.get_s3_bucket_path(AM_AWS_PROFILE, add_s3_prefix=False)
+    S3_PREFIX = f"s3://{S3_BUCKET}/data/kibot"
+except AssertionError as e:
+    import helpers.hserver as hserver
+
+    #if hserver.is_dev4() or hserver.is_ig_prod():
+    if hserver.is_ig_prod():
+        # In IG prod we let the outside system control S3 and don't need Kibot,
+        # so we ignore the assertion about S3 bucket being empty.
+        pass
+    else:
+        raise e
+
 
 DATASETS = [
     "adjustments",

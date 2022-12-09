@@ -26,18 +26,26 @@ _LOG = logging.getLogger(__name__)
 def add_bool_arg(
     parser: argparse.ArgumentParser,
     name: str,
-    default: bool = False,
+    *,
+    default_value: bool = False,
     help_: Optional[str] = None,
 ) -> argparse.ArgumentParser:
     """
-    Add options to a parser like `--xyz` and `--no_xyz`.
+    Add options to a parser like `--xyz` and `--no_xyz`, controlled by `args.xyz`.
 
-    E.g., `--incremental` and `--no_incremental`.
+    E.g., `add_bool_arg(parser, "run_diff_script", default_value=True)` adds
+    two options:
+    ```
+      --run_diff_script     Run the diffing script or not
+      --no_run_diff_script
+    ```
+    corresponding to `args.run_diff_script`, where the default behavior is to have
+    that value equal to True unless one specifies `--no_run_diff_script`.
     """
     group = parser.add_mutually_exclusive_group(required=False)
     group.add_argument("--" + name, dest=name, action="store_true", help=help_)
     group.add_argument("--no_" + name, dest=name, action="store_false")
-    parser.set_defaults(**{name: default})
+    parser.set_defaults(**{name: default_value})
     return parser
 
 
@@ -49,7 +57,12 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
         "-v",
         dest="log_level",
         default="INFO",
-        choices=["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
+        # TRACE=5
+        # DEBUG=10
+        # INFO=20
+        # WARNING=30
+        # CRITICAL=50
+        choices=["TRACE", "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"],
         help="Set the logging level",
     )
     return parser
@@ -59,6 +72,8 @@ def add_verbosity_arg(parser: argparse.ArgumentParser) -> argparse.ArgumentParse
 def parse_verbosity_args(
     args: argparse.Namespace, *args_: Any, **kwargs: Any
 ) -> None:
+    #if args.log_level == "VERB_DEBUG":
+    #    args.log_level = 5
     hdbg.init_logger(verbosity=args.log_level, *args_, **kwargs)
 
 
@@ -133,7 +148,7 @@ def parse_dst_dir_arg(args: argparse.Namespace) -> Tuple[str, bool]:
             _LOG.warning("Dir '%s' already exists", dst_dir)
             if not args.no_confirm:
                 hsystem.query_yes_no(
-                    "Do you want to delete the dir '%s'" % dst_dir,
+                    f"Do you want to delete the dir '{dst_dir}'",
                     abort_on_no=True,
                 )
             hio.create_dir(dst_dir, incremental=False)
@@ -169,7 +184,7 @@ def add_action_arg(
         parser.add_argument(
             "--all",
             action="store_true",
-            help="Run all the actions (%s)" % (" ".join(default_actions)),
+            help=f"Run all the actions ({' '.join(default_actions)})",
         )
     return parser
 
@@ -216,7 +231,7 @@ def select_actions(
     # Validate actions.
     for action in set(actions):
         if action not in valid_actions:
-            raise ValueError("Invalid action '%s'" % action)
+            raise ValueError(f"Invalid action '{action}'")
     # Remove actions, if needed.
     if args.skip_action:
         hdbg.dassert_isinstance(args.skip_action, list)
@@ -230,7 +245,7 @@ def select_actions(
 
 def mark_action(action: str, actions: List[str]) -> Tuple[bool, List[str]]:
     to_execute = action in actions
-    _LOG.debug("\n%s", hprint.frame("action=%s" % action))
+    _LOG.debug("\n%s", hprint.frame(f"action={action}"))
     if to_execute:
         actions = [a for a in actions if a != action]
     else:
@@ -288,8 +303,8 @@ def parse_input_output_args(
     if in_file_name != "-":
         if clear_screen:
             os.system("clear")
-        print("in_file_name='%s'" % in_file_name)
-        print("out_file_name='%s'" % out_file_name)
+        print(f"in_file_name='{in_file_name}'")
+        print(f"out_file_name='{out_file_name}'")
     return in_file_name, out_file_name
 
 
@@ -329,16 +344,19 @@ def write_file(txt: List[str], file_name: str) -> None:
 # Command line options for parallel processing.
 # #############################################################################
 
-
+# pylint: disable=line-too-long
 # TODO(gp): These should go in hjoblib.py
 def add_parallel_processing_arg(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
+    Add parallel processing args.
+
     The "incremental idiom" means skipping processing computation that has
     already been performed. E.g., if we need to transform files from one dir to
     another we skip the files already processed (assuming that a file present
-    in the destination dir is an indication that it has already been processed).
+    in the destination dir is an indication that it has already been
+    processed).
 
     The default behavior should always be incremental since "incremental mode"
     is not destructive like the non-incremental, i.e., delete and restart
@@ -404,8 +422,8 @@ def create_incremental_dir(dst_dir: str, args: argparse.Namespace) -> None:
     """
     Create a dir using the "incremental idiom".
 
-    If the dir already exists and the user requested the not incremental, we
-    require `--force` to confirm deleting the dir.
+    If the dir already exists and the user requested the not
+    incremental, we require `--force` to confirm deleting the dir.
     """
     if args.force:
         hdbg.dassert(

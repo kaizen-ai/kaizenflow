@@ -8,6 +8,7 @@ import core.artificial_signal_generators as carsigen
 import core.signal_processing as csigproc
 import core.statistics.requires_statsmodels as cstresta
 import core.statistics.returns_and_volatility as csreanvo
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
 
@@ -73,7 +74,7 @@ class TestMultipleTests(hunitest.TestCase):
     @staticmethod
     def _get_series(seed: int) -> pd.Series:
         date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = hunitest.get_random_df(
+        series = hpandas.get_random_df(
             num_cols=1,
             seed=seed,
             date_range_kwargs=date_range,
@@ -505,6 +506,15 @@ class Test_compute_bet_stats(hunitest.TestCase):
         )
         self._check_results(rets_pos_bet_rets, actual)
 
+    @staticmethod
+    def _get_series(seed: int) -> pd.Series:
+        arma_process = carsigen.ArmaProcess([], [])
+        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
+        series = arma_process.generate_sample(
+            date_range_kwargs=date_range, seed=seed, scale=0.1
+        )
+        return series
+
     def _check_results(
         self, rets_pos_bet_rets: pd.DataFrame, actual: pd.Series
     ) -> None:
@@ -519,12 +529,3 @@ class Test_compute_bet_stats(hunitest.TestCase):
         act.append(hunitest.convert_df_to_string(actual, index=True, decimals=3))
         act = "\n".join(act)
         self.check_string(act, fuzzy_match=True)
-
-    @staticmethod
-    def _get_series(seed: int) -> pd.Series:
-        arma_process = carsigen.ArmaProcess([], [])
-        date_range = {"start": "1/1/2010", "periods": 40, "freq": "M"}
-        series = arma_process.generate_sample(
-            date_range_kwargs=date_range, seed=seed, scale=0.1
-        )
-        return series

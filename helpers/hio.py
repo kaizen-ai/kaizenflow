@@ -11,17 +11,19 @@ import gzip
 import json
 import logging
 import os
+import re
 import shutil
 import time
 import uuid
-from typing import Any, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 
-# Avoid dependency from other `helpers` modules to prevent import cycles.
-# Do not import third party libraries, such as `numpy` and `pandas`.
+# This module can depend only on:
+# - Python standard modules
+# - a few helpers as described in `helpers/dependencies.txt`
 
 
 _LOG = logging.getLogger(__name__)
@@ -43,8 +45,8 @@ def purify_file_name(file_name: str) -> str:
         basename = basename.replace(char, "_")
     #
     dir_name = os.path.dirname(file_name)
-    file_name_out = os.path(dir_name, basename)
-    file_name_out = os.path.normpath(file_name_out)
+    file_name_out = os.path.join(dir_name, basename)
+    file_name_out: str = os.path.normpath(file_name_out)
     return file_name_out
 
 
@@ -159,7 +161,7 @@ def create_soft_link(src: str, dst: str) -> None:
     create_dir(enclosing_dir, incremental=True)
     # Create the link. Note that the link source needs to be an absolute path.
     src = os.path.abspath(src)
-    cmd = "ln -s %s %s" % (src, dst)
+    cmd = f"ln -s {src} {dst}"
     hsystem.system(cmd)
 
 
@@ -223,8 +225,7 @@ def delete_dir(
                 i += 1
                 if i > num_retries:
                     hdbg.dfatal(
-                        "Couldn't delete %s after %s attempts (%s)"
-                        % (dir_, num_retries, str(e))
+                        f"Couldn't delete {dir_} after {num_retries} attempts ({str(e)})"
                     )
                 else:
                     time.sleep(num_secs_retry)
@@ -274,7 +275,7 @@ def create_dir(
             return
         if ask_to_delete:
             hsystem.query_yes_no(
-                "Do you really want to delete dir '%s'?" % dir_name,
+                f"Do you really want to delete dir '{dir_name}'?",
                 abort_on_no=True,
             )
         # The dir exists and we want to create it from scratch (i.e., not
@@ -394,8 +395,8 @@ def _raise_file_decode_error(error: Exception, file_name: str) -> None:
     :param file_name: name of read file that raised the exception
     """
     msg = []
-    msg.append("error=%s" % error)
-    msg.append("file_name='%s'" % file_name)
+    msg.append(f"error={error}")
+    msg.append(f"file_name='{file_name}'")
     msg_as_str = "\n".join(msg)
     _LOG.error(msg_as_str)
     raise RuntimeError(msg_as_str)
@@ -446,14 +447,14 @@ def from_file(
 def get_size_as_str(file_name: str) -> str:
     if os.path.exists(file_name):
         size_in_bytes = os.path.getsize(file_name)
-        if size_in_bytes < (1024 ** 2):
+        if size_in_bytes < (1024**2):
             size_in_kb = size_in_bytes / 1024.0
             res = "%.1f KB" % size_in_kb
-        elif size_in_bytes < (1024 ** 3):
-            size_in_mb = size_in_bytes / (1024.0 ** 2)
+        elif size_in_bytes < (1024**3):
+            size_in_mb = size_in_bytes / (1024.0**2)
             res = "%.1f MB" % size_in_mb
         else:
-            size_in_gb = size_in_bytes / (1024.0 ** 3)
+            size_in_gb = size_in_bytes / (1024.0**3)
             res = "%.1f GB" % size_in_gb
     else:
         res = "nan"
@@ -514,6 +515,48 @@ def create_executable_script(
         print(f"# {msg}:\n> {file_name}")
 
 
+def add_suffix_to_filename(
+    file_name: str,
+    suffix: Union[int, str],
+    *,
+    before_extension: bool = True,
+    with_underscore: bool = True,
+) -> str:
+    """
+    Add a suffix to a file name, with or without changing the extension.
+
+    E.g., {base_name}.{ext} -> {file_name}.{suffix}.{ext}
+
+    :param file_name: file name to modify
+    :param suffix: index to add to the file name
+    :param before_extension: whether to insert the index before the file extension
+    :param with_underscore: whether to separate the index with an underscore
+    :return: modified file name with an index
+    """
+    suffix = str(suffix)
+    if with_underscore:
+        suffix = "_" + suffix
+    _LOG.debug(hprint.to_str("suffix"))
+    #
+    if before_extension:
+        # Add the suffix to the file name before the extension.
+        data = file_name.rsplit(".", 1)
+        if len(data) == 1:
+            # E.g., `system_log_dir` -> `system_log_dir_1`
+            ret = file_name + suffix
+        else:
+            # E.g., `dir/file.txt` -> `dir/file_1.txt`.
+            hdbg.dassert_eq(len(data), 2, "Invalid file_name='%s'", file_name)
+            file_name_no_ext, ext = data
+            ret = file_name_no_ext + suffix + "." + ext
+    else:
+        # Add the suffix after the name of the file.
+        # E.g., `dir/file.txt` -> `dir/file.txt_1`.
+        ret = file_name + suffix
+    _LOG.debug(hprint.to_str("ret"))
+    return ret
+
+
 # #############################################################################
 # JSON
 # #############################################################################
@@ -547,7 +590,7 @@ def serialize_custom_types_for_json_encoder(obj: Any) -> Any:
     elif isinstance(obj, type(pd.NA)):
         result = None
     else:
-        raise TypeError("Can not serialize %s of type %s" % (obj, type(obj)))
+        raise TypeError(f"Can not serialize {obj} of type {type(obj)}")
     return result
 
 
@@ -573,7 +616,7 @@ def to_json(file_name: str, obj: dict) -> None:
         )
 
 
-def from_json(file_name: str) -> dict:
+def from_json(file_name: str) -> Dict:
     """
     Read object from JSON file.
 
@@ -583,8 +626,16 @@ def from_json(file_name: str) -> dict:
     if not file_name.endswith(".json"):
         _LOG.warning("The file '%s' doesn't end in .json", file_name)
     hdbg.dassert_file_exists(file_name)
-    with open(file_name, "r") as f:
-        data: dict = json.loads(f.read())
+    txt = from_file(file_name)
+    # Remove comments.
+    txt_tmp = []
+    for line in txt.split("\n"):
+        if re.match(r"^\s*#", line):
+            continue
+        txt_tmp.append(line)
+    txt_tmp = "\n".join(txt_tmp)
+    _LOG.debug("txt_tmp=\n%s", txt_tmp)
+    data: Dict = json.loads(txt_tmp)
     return data
 
 

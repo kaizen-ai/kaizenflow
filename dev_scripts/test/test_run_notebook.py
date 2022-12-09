@@ -1,7 +1,7 @@
 import itertools
 import logging
 import os
-from typing import Any, Dict, Iterable, List, Tuple, cast
+from typing import Any, Dict, Iterable, List, Tuple
 
 import pytest
 
@@ -13,180 +13,6 @@ import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
-
-
-class TestRunNotebook1(hunitest.TestCase):
-    """
-    Run notebooks without failures.
-    """
-
-    EXPECTED_OUTCOME = r"""# Dir structure
-        $SCRATCH_SPACE
-        $SCRATCH_SPACE/result_0
-        $SCRATCH_SPACE/result_0/config.pkl
-        $SCRATCH_SPACE/result_0/config.txt
-        $SCRATCH_SPACE/result_0/run_notebook.0.log
-        $SCRATCH_SPACE/result_0/simple_notebook.0.ipynb
-        $SCRATCH_SPACE/result_0/success.txt
-        $SCRATCH_SPACE/result_1
-        $SCRATCH_SPACE/result_1/config.pkl
-        $SCRATCH_SPACE/result_1/config.txt
-        $SCRATCH_SPACE/result_1/run_notebook.1.log
-        $SCRATCH_SPACE/result_1/simple_notebook.1.ipynb
-        $SCRATCH_SPACE/result_1/success.txt"""
-
-    @pytest.mark.slow
-    def test_serial1(self) -> None:
-        """
-        Execute:
-        - two notebooks (without any failure)
-        - serially
-        """
-        cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
-            "--num_threads 'serial'",
-        ]
-        #
-        exp_pass = True
-        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
-    @pytest.mark.slow
-    def test_parallel1(self) -> None:
-        """
-        Execute:
-        - two experiments (without any failure)
-        - with 2 threads
-        """
-        cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs1()'",
-            "--num_threads 2",
-        ]
-        exp_pass = True
-        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
-
-# #############################################################################
-
-
-class TestRunNotebook2(hunitest.TestCase):
-    """
-    Run experiments that fail.
-    """
-
-    EXPECTED_OUTCOME = r"""# Dir structure
-        $SCRATCH_SPACE
-        $SCRATCH_SPACE/result_0
-        $SCRATCH_SPACE/result_0/config.pkl
-        $SCRATCH_SPACE/result_0/config.txt
-        $SCRATCH_SPACE/result_0/run_notebook.0.log
-        $SCRATCH_SPACE/result_0/simple_notebook.0.ipynb
-        $SCRATCH_SPACE/result_0/success.txt
-        $SCRATCH_SPACE/result_1
-        $SCRATCH_SPACE/result_1/config.pkl
-        $SCRATCH_SPACE/result_1/config.txt
-        $SCRATCH_SPACE/result_1/run_notebook.1.log
-        $SCRATCH_SPACE/result_1/simple_notebook.1.ipynb
-        $SCRATCH_SPACE/result_1/success.txt
-        $SCRATCH_SPACE/result_2
-        $SCRATCH_SPACE/result_2/config.pkl
-        $SCRATCH_SPACE/result_2/config.txt
-        $SCRATCH_SPACE/result_2/run_notebook.2.log"""
-
-    @pytest.mark.slow
-    def test_serial1(self) -> None:
-        """
-        Execute:
-        - an experiment with 3 notebooks (with one failing)
-        - serially
-        - aborting on error
-        """
-        cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
-            "--num_threads 3",
-        ]
-        #
-        exp_pass = False
-        _LOG.warning("This command is supposed to fail")
-        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
-    @pytest.mark.slow
-    def test_serial2(self) -> None:
-        """
-        Execute:
-        - an experiment with 3 notebooks (with one failing)
-        - serially
-        - skipping on error
-        """
-        cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
-            "--skip_on_error",
-            "--num_threads 3",
-        ]
-        #
-        exp_pass = True
-        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
-    @pytest.mark.slow
-    def test_parallel1(self) -> None:
-        """
-        Execute:
-        - an experiment with 3 notebooks (with one failing)
-        - with 2 threads
-        - aborting on error
-        """
-        cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
-            "--num_threads 2",
-        ]
-        #
-        exp_pass = False
-        _LOG.warning("This command is supposed to fail")
-        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
-    @pytest.mark.slow
-    def test_parallel2(self) -> None:
-        """
-        Execute:
-        - an experiment with 3 notebooks (with one failing)
-        - with 2 threads
-        - skipping on error
-        """
-        cmd_opts = [
-            "--config_builder 'dev_scripts.test.test_run_notebook.build_configs2()'",
-            "--skip_on_error",
-            "--num_threads 2",
-        ]
-        #
-        exp_pass = True
-        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
-
-
-def _get_files() -> Tuple[str, str]:
-    amp_path = hgit.get_amp_abs_path()
-    #
-    exec_file = os.path.join(amp_path, "dev_scripts/notebooks/run_notebook.py")
-    hdbg.dassert_file_exists(exec_file)
-    # This notebook fails/succeeds depending on the return code stored inside
-    # each config.
-    notebook_file = os.path.join(
-        amp_path, "dev_scripts/notebooks/test/simple_notebook.ipynb"
-    )
-    hdbg.dassert_file_exists(notebook_file)
-    return exec_file, notebook_file
-
-
-def _run_notebook_helper(
-    self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
-) -> None:
-    # Build command line.
-    dst_dir = self.get_scratch_space()
-    exec_file, notebook_file = _get_files()
-    cmd = [
-        f"{exec_file}",
-        f"--dst_dir {dst_dir}",
-        f"--notebook {notebook_file}",
-    ]
-    run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
 
 
 # #############################################################################
@@ -258,8 +84,10 @@ def _build_multiple_configs(
     return param_configs
 
 
-def _build_config(values: List[bool]) -> List[cconfig.Config]:
-    config_template = cconfig.Config()
+def _build_config_list(values: List[bool]) -> cconfig.ConfigList:
+    # Create config in `overwrite` mode to allow reassignment of values.
+    update_mode = "overwrite"
+    config_template = cconfig.Config(update_mode=update_mode)
     # TODO(gp): -> fail_param
     config_template["fail"] = None
     configs = _build_multiple_configs(config_template, {("fail",): values})
@@ -267,35 +95,35 @@ def _build_config(values: List[bool]) -> List[cconfig.Config]:
     # each config unique.
     for i, config in enumerate(configs):
         config["id"] = str(i)
-    configs = cast(List[cconfig.Config], configs)
-    return configs
+    config_list = cconfig.ConfigList(configs)
+    return config_list
 
 
-def build_configs1() -> List[cconfig.Config]:
+def build_config_list1() -> cconfig.ConfigList:
     """
     Build 2 configs that won't make the notebook to fail.
     """
     values = [False, False]
-    configs = _build_config(values)
-    return configs
+    config_list = _build_config_list(values)
+    return config_list
 
 
-def build_configs2() -> List[cconfig.Config]:
+def build_config_list2() -> cconfig.ConfigList:
     """
     Build 3 configs with one failing.
     """
     values = [False, False, True]
-    configs = _build_config(values)
-    return configs
+    config_list = _build_config_list(values)
+    return config_list
 
 
-def build_configs3() -> List[cconfig.Config]:
+def build_config_list3() -> cconfig.ConfigList:
     """
     Build 1 config that won't make the notebook to fail.
     """
     values = [False]
-    configs = _build_config(values)
-    return configs
+    config_list = _build_config_list(values)
+    return config_list
 
 
 # #############################################################################
@@ -310,7 +138,7 @@ def _compare_dir_signature(self: Any, dir_name: str, expected: str) -> None:
         dir_name, include_file_content=False, num_lines=None
     )
     # Remove references like:
-    # $GIT_ROOT/core/dataflow_model/test/TestRunExperiment1.test3/tmp.scratch
+    # $GIT_ROOT/core/dataflow/backtest/test/TestRunExperiment1.test3/tmp.scratch
     actual = actual.replace(dir_name, "$SCRATCH_SPACE")
     actual = hunitest.purify_txt_from_client(actual)
     # Remove lines like:
@@ -329,7 +157,7 @@ def run_cmd_line(
     expected_pass: bool,
 ) -> None:
     """
-    Run run_experiment / run_notebook command line and check return code and
+    Run run_config_list / run_notebook command line and check return code and
     output.
     """
     # Assemble the command line.
@@ -340,9 +168,195 @@ def run_cmd_line(
     _LOG.debug(
         "expected_pass=%s abort_on_error=%s", expected_pass, abort_on_error
     )
+    _LOG.debug("cmd=%s", cmd)
     rc = hsystem.system(cmd, abort_on_error=abort_on_error, suppress_output=False)
     if expected_pass:
         self.assertEqual(rc, 0)
     else:
         self.assertNotEqual(rc, 0)
     _compare_dir_signature(self, dst_dir, expected)
+
+
+def _get_files() -> Tuple[str, str]:
+    amp_path = hgit.get_amp_abs_path()
+    #
+    exec_file = os.path.join(amp_path, "dev_scripts/notebooks/run_notebook.py")
+    hdbg.dassert_file_exists(exec_file)
+    # This notebook fails/succeeds depending on the return code stored inside
+    # each config.
+    notebook_file = os.path.join(
+        amp_path, "dev_scripts/notebooks/test/simple_notebook.ipynb"
+    )
+    hdbg.dassert_file_exists(notebook_file)
+    return exec_file, notebook_file
+
+
+def _run_notebook_helper(
+    self: Any, cmd_opts: List[str], exp_pass: bool, exp: str
+) -> None:
+    # Build command line.
+    dst_dir = self.get_scratch_space()
+    exec_file, notebook_file = _get_files()
+    cmd = [
+        f"{exec_file}",
+        f"--dst_dir {dst_dir}",
+        f"--notebook {notebook_file}",
+    ]
+    run_cmd_line(self, cmd, cmd_opts, dst_dir, exp, exp_pass)
+
+
+# #############################################################################
+# TestRunNotebook1
+# #############################################################################
+
+
+@pytest.mark.flaky(reruns=2)
+@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
+class TestRunNotebook1(hunitest.TestCase):
+    """
+    Run notebooks without failures.
+    """
+
+    EXPECTED_OUTCOME = r"""# Dir structure
+        $SCRATCH_SPACE
+        $SCRATCH_SPACE/result_0
+        $SCRATCH_SPACE/result_0/config.pkl
+        $SCRATCH_SPACE/result_0/config.txt
+        $SCRATCH_SPACE/result_0/run_notebook.0.log
+        $SCRATCH_SPACE/result_0/simple_notebook.0.ipynb
+        $SCRATCH_SPACE/result_0/success.txt
+        $SCRATCH_SPACE/result_1
+        $SCRATCH_SPACE/result_1/config.pkl
+        $SCRATCH_SPACE/result_1/config.txt
+        $SCRATCH_SPACE/result_1/run_notebook.1.log
+        $SCRATCH_SPACE/result_1/simple_notebook.1.ipynb
+        $SCRATCH_SPACE/result_1/success.txt"""
+
+    @pytest.mark.slow
+    def test_serial1(self) -> None:
+        """
+        Execute:
+        - two notebooks (without any failure)
+        - serially
+        """
+        cmd_opts = [
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'",
+            "--num_threads 'serial'",
+        ]
+        #
+        exp_pass = True
+        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+
+    @pytest.mark.slow
+    def test_parallel1(self) -> None:
+        """
+        Execute:
+        - two experiments (without any failure)
+        - with 2 threads
+        """
+        cmd_opts = [
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list1()'",
+            "--num_threads 2",
+        ]
+        exp_pass = True
+        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+
+
+# #############################################################################
+# TestRunNotebook2
+# #############################################################################
+
+
+@pytest.mark.flaky(reruns=2)
+@pytest.mark.skip(reason="Fix test run notebooks glitch CmTask #2792.")
+class TestRunNotebook2(hunitest.TestCase):
+    """
+    Run experiments that fail.
+    """
+
+    EXPECTED_OUTCOME = r"""# Dir structure
+        $SCRATCH_SPACE
+        $SCRATCH_SPACE/result_0
+        $SCRATCH_SPACE/result_0/config.pkl
+        $SCRATCH_SPACE/result_0/config.txt
+        $SCRATCH_SPACE/result_0/run_notebook.0.log
+        $SCRATCH_SPACE/result_0/simple_notebook.0.ipynb
+        $SCRATCH_SPACE/result_0/success.txt
+        $SCRATCH_SPACE/result_1
+        $SCRATCH_SPACE/result_1/config.pkl
+        $SCRATCH_SPACE/result_1/config.txt
+        $SCRATCH_SPACE/result_1/run_notebook.1.log
+        $SCRATCH_SPACE/result_1/simple_notebook.1.ipynb
+        $SCRATCH_SPACE/result_1/success.txt
+        $SCRATCH_SPACE/result_2
+        $SCRATCH_SPACE/result_2/config.pkl
+        $SCRATCH_SPACE/result_2/config.txt
+        $SCRATCH_SPACE/result_2/run_notebook.2.log"""
+
+    @pytest.mark.slow
+    def test_serial1(self) -> None:
+        """
+        Execute:
+        - an experiment with 3 notebooks (with one failing)
+        - serially
+        - aborting on error
+        """
+        cmd_opts = [
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
+            "--num_threads 3",
+        ]
+        #
+        exp_pass = False
+        _LOG.warning("This command is supposed to fail")
+        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+
+    @pytest.mark.slow
+    def test_serial2(self) -> None:
+        """
+        Execute:
+        - an experiment with 3 notebooks (with one failing)
+        - serially
+        - skipping on error
+        """
+        cmd_opts = [
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
+            "--skip_on_error",
+            "--num_threads 3",
+        ]
+        #
+        exp_pass = True
+        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+
+    @pytest.mark.slow
+    def test_parallel1(self) -> None:
+        """
+        Execute:
+        - an experiment with 3 notebooks (with one failing)
+        - with 2 threads
+        - aborting on error
+        """
+        cmd_opts = [
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
+            "--num_threads 2",
+        ]
+        #
+        exp_pass = False
+        _LOG.warning("This command is supposed to fail")
+        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)
+
+    @pytest.mark.slow
+    def test_parallel2(self) -> None:
+        """
+        Execute:
+        - an experiment with 3 notebooks (with one failing)
+        - with 2 threads
+        - skipping on error
+        """
+        cmd_opts = [
+            "--config_builder 'dev_scripts.test.test_run_notebook.build_config_list2()'",
+            "--skip_on_error",
+            "--num_threads 2",
+        ]
+        #
+        exp_pass = True
+        _run_notebook_helper(self, cmd_opts, exp_pass, self.EXPECTED_OUTCOME)

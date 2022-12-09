@@ -19,20 +19,6 @@ _LOG = logging.getLogger(__name__)
 
 
 class IbExtractionTest(hunitest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        hdbg.shutup_chatty_modules()
-
-    def setUp(self):
-        super().setUp()
-        self.ib = imidegaut.ib_connect(
-            sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
-        )
-
-    def tearDown(self):
-        self.ib.disconnect()
-        super().tearDown()
-
     @staticmethod
     def get_df_signatures(df: pd.DataFrame) -> Tuple[str, str]:
         """
@@ -63,6 +49,20 @@ class IbExtractionTest(hunitest.TestCase):
         txt.append("df=\n%s" % df.to_csv())
         long_signature = "\n".join(txt)
         return short_signature, long_signature
+
+    @classmethod
+    def setUpClass(cls):
+        hdbg.shutup_chatty_modules()
+
+    def setUp(self):
+        super().setUp()
+        self.ib = imidegaut.ib_connect(
+            sum(bytes(self._get_test_name(), encoding="UTF-8")), is_notebook=False
+        )
+
+    def tearDown(self):
+        self.ib.disconnect()
+        super().tearDown()
 
     def _req_historical_data_helper(self, end_ts, use_rth) -> Tuple[str, str]:
         """

@@ -12,14 +12,14 @@
 \foreach \s in {1,...,\n}
 {
   \node[draw, circle] at ({360/\n * (\s - 1)}:\radius) {$\s$};
-  \draw[->, >=latex] ({360/\n * (\s - 1)+\margin}:\radius) 
+  \draw[->, >=latex] ({360/\n * (\s - 1)+\margin}:\radius)
     arc ({360/\n * (\s - 1)+\margin}:{360/\n * (\s)-\margin}:\radius);
 }
 \end{tikzpicture}
 
 ```
 
-to get 
+to get
 
 \begin{tikzpicture}
 
@@ -30,7 +30,7 @@ to get
 \foreach \s in {1,...,\n}
 {
   \node[draw, circle] at ({360/\n * (\s - 1)}:\radius) {$\s$};
-  \draw[->, >=latex] ({360/\n * (\s - 1)+\margin}:\radius) 
+  \draw[->, >=latex] ({360/\n * (\s - 1)+\margin}:\radius)
     arc ({360/\n * (\s - 1)+\margin}:{360/\n * (\s)-\margin}:\radius);
 }
 \end{tikzpicture}

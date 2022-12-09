@@ -16,7 +16,7 @@ import helpers.hparser as hparser
 
 @hcache.cache(set_verbose_mode=True)
 def _func() -> str:
-    txt = "#" * 1024 ** 2
+    txt = "#" * 1024**2
     return txt
 
 

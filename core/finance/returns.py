@@ -147,6 +147,8 @@ def compute_ret_0(
         # TODO(gp): Use shifts for clarity, e.g.,
         # ret_0 = prices - prices.shift(1)
         ret_0 = prices.diff()
+    elif mode == "symmetric_pct_change":
+        ret_0 = 2 * prices.diff().divide(prices + prices.shift(1))
     else:
         raise ValueError("Invalid mode='%s'" % mode)
     if isinstance(ret_0, pd.Series):

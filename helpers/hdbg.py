@@ -4,15 +4,23 @@ Import as:
 import helpers.hdbg as hdbg
 """
 
-# This module should not depend on anything else than Python standard modules.
-
+import functools
 import logging
 import os
 import pprint
 import sys
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Type, Union
 
+# This module can depend only on:
+# - Python standard modules
+# - `helpers/hserver.py`
+# See `helpers/dependencies.txt` for more details
+
 _LOG = logging.getLogger(__name__)
+
+
+# Enforce that certain warnings are disabled.
+import helpers.hwarnings as hwarnin  # # isort:skip  # noqa: E402,F401,F403 # pylint: disable=unused-import
 
 
 # TODO(gp): Make these generate from MAPPING below.
@@ -88,7 +96,7 @@ def _to_msg(msg: Optional[str], *args: Any) -> str:
     """
     if msg is None:
         # If there is no message, we should have no arguments to format.
-        assert not args, "args=%s" % str(args)
+        assert not args, f"args={str(args)}"
         res = ""
     else:
         try:
@@ -96,7 +104,7 @@ def _to_msg(msg: Optional[str], *args: Any) -> str:
         except TypeError as e:
             # The arguments didn't match the format string: report error and
             # print the result somehow.
-            res = "Caught assertion while formatting message:\n'%s'" % str(e)
+            res = f"Caught assertion while formatting message:\n'{str(e)}'"
             _LOG.warning(res)
             res += "\n" + msg + " " + " ".join(map(str, args))
         # res = "(" + res + ") "
@@ -147,7 +155,7 @@ def dassert(
             msg, str
         ), f"You passed '{msg}' or type '{type(msg)}' instead of str"
     if not cond:
-        txt = "cond=%s" % cond
+        txt = f"cond={cond}"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -160,7 +168,26 @@ def dassert_eq(
 ) -> None:
     cond = val1 == val2
     if not cond:
-        txt = "'%s'\n==\n'%s'" % (val1, val2)
+        txt = f"'{val1}'\n==\n'{val2}'"
+        _dfatal(txt, msg, *args, only_warning=only_warning)
+
+
+def dassert_approx_eq(
+    val1: Any,
+    val2: Any,
+    rtol: float = 1e-05,
+    atol: float = 1e-08,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    import numpy as np
+
+    cond = np.allclose(
+        np.array([val1]), np.array([val2]), rtol=rtol, atol=atol, equal_nan=True
+    )
+    if not cond:
+        txt = f"'{val1}'\n==\n'{val2}' rtol={rtol}, atol={atol}"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -173,7 +200,7 @@ def dassert_ne(
 ) -> None:
     cond = val1 != val2
     if not cond:
-        txt = "'%s'\n!=\n'%s'" % (val1, val2)
+        txt = f"'{val1}'\n!=\n'{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -186,11 +213,13 @@ def dassert_imply(
 ) -> None:
     cond = not val1 or val2
     if not cond:
-        txt = "'%s' implies '%s'" % (val1, val2)
+        txt = f"'{val1}' implies '{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Comparison related.
+# #############################################################################
 
 
 def dassert_lt(
@@ -202,7 +231,7 @@ def dassert_lt(
 ) -> None:
     cond = val1 < val2
     if not cond:
-        txt = "%s < %s" % (val1, val2)
+        txt = f"{val1} < {val2}"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -215,7 +244,7 @@ def dassert_lte(
 ) -> None:
     cond = val1 <= val2
     if not cond:
-        txt = "%s <= %s" % (val1, val2)
+        txt = f"{val1} <= {val2}"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -267,7 +296,9 @@ def dassert_is_proportion(
     )
 
 
+# #############################################################################
 # Membership.
+# #############################################################################
 
 
 def dassert_in(
@@ -279,7 +310,7 @@ def dassert_in(
 ) -> None:
     cond = value in valid_values
     if not cond:
-        txt = "'%s' in '%s'" % (value, valid_values)
+        txt = f"'{value}' in '{valid_values}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -292,11 +323,13 @@ def dassert_not_in(
 ) -> None:
     cond = value not in valid_values
     if not cond:
-        txt = "'%s' not in '%s'" % (value, valid_values)
+        txt = f"'{value}' not in '{valid_values}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Type related.
+# #############################################################################
 
 
 def dassert_is(
@@ -308,7 +341,7 @@ def dassert_is(
 ) -> None:
     cond = val1 is val2
     if not cond:
-        txt = "'%s' is '%s'" % (val1, val2)
+        txt = f"'{val1}' is '{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -321,7 +354,7 @@ def dassert_is_not(
 ) -> None:
     cond = val1 is not val2
     if not cond:
-        txt = "'%s' is not '%s'" % (val1, val2)
+        txt = f"'{val1}' is not '{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -335,7 +368,7 @@ def dassert_type_is(
     # pylint: disable=unidiomatic-typecheck
     cond = type(val1) is val2
     if not cond:
-        txt = "Type of '%s' is '%s' instead of '%s'" % (val1, type(val1), val2)
+        txt = f"Type of '{val1}' is '{type(val1)}' instead of '{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -350,7 +383,7 @@ def dassert_type_in(
     # pylint: disable=unidiomatic-typecheck
     cond = type(val1) in val2
     if not cond:
-        txt = "Type of '%s' is '%s' not in '%s'" % (val1, type(val1), val2)
+        txt = f"Type of '{val1}' is '{type(val1)}' not in '{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -363,11 +396,7 @@ def dassert_isinstance(
 ) -> None:
     cond = isinstance(val1, val2)  # type: ignore[arg-type]
     if not cond:
-        txt = "Instance of '%s' is '%s' instead of '%s'" % (
-            val1,
-            type(val1),
-            val2,
-        )
+        txt = f"Instance of '{val1}' is '{type(val1)}' instead of '{val2}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -383,11 +412,31 @@ def dassert_issubclass(
     """
     cond = issubclass(val1.__class__, val2)  # type: ignore[arg-type]
     if not cond:
-        txt = "Instance '%s' of class '%s' is not a subclass of '%s'" % (
-            str(val1),
-            val1.__class__.__name__,
-            val2,
+        txt = (
+            f"Instance '{str(val1)}' of class '{val1.__class__.__name__}' is "
+            f"not a subclass of '{val2}'"
         )
+        _dfatal(txt, msg, *args, only_warning=only_warning)
+
+
+def dassert_is_integer(
+    val: Union[int, float],
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    """
+    Assert that val represents an integer number, independently of the type.
+    """
+    if isinstance(val, int):
+        pass
+    elif isinstance(val, float):
+        cond = val == int(val)
+        if not cond:
+            txt = f"Invalid val='{val}' of type '{type(val)}'"
+            _dfatal(txt, msg, *args, only_warning=only_warning)
+    else:
+        txt = f"Invalid val='{val}' of type '{type(val)}'"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -402,14 +451,13 @@ def dassert_callable(
     """
     cond = callable(func)
     if not cond:
-        txt = "Obj '%s' of type '%s' is not callable" % (
-            str(func),
-            str(type(func)),
-        )
+        txt = f"Obj '{str(func)}' of type '{str(type(func))}' is not callable"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Set related.
+# #############################################################################
 
 
 # TODO(gp): A more general solution is to have a function that traverses an obj
@@ -426,18 +474,21 @@ def _set_to_str(set_: Set[Any], thr: Optional[int] = 20) -> str:
         ...
     act = str(cm.exception)
     exp = r
-    """
-    """
     self.assert_equal(act, exp, fuzzy_match=True)
     ```
     """
-    list_ = sorted(list(set_))
-    # If sets have less than `thr` elements print them as well, otherwise
-    # print the beginning / end.
-    if thr is not None and len(list_) > thr:
-        txt = "%s [%s, ... %s]" % (len(list_), min(list_), max(list_))
-    else:
-        txt = str(list_)
+    try:
+        list_ = sorted(list(set_))
+        # If sets have less than `thr` elements print them as well, otherwise
+        # print the beginning / end.
+        if thr is not None and len(list_) > thr:
+            txt = f"{len(list_)} [{min(list_)}, ... {max(list_)}]"
+        else:
+            txt = str(list_)
+    except TypeError:
+        # Sometimes the set has elements of different types and we can't easily
+        # sort them. In these cases we just skip the sorting.
+        txt = str(list(set_))
     return txt
 
 
@@ -510,7 +561,9 @@ def dassert_not_intersection(
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # Array related.
+# #############################################################################
 
 
 def dassert_no_duplicates(
@@ -562,8 +615,8 @@ def dassert_eq_all(
     if not cond:
         # mask = val1 != val2
         txt = []
-        txt.append("val1=%s\n%s" % (len(val1), val1))
-        txt.append("val2=%s\n%s" % (len(val2), val2))
+        txt.append(f"val1={len(val1)}\n{val1}")
+        txt.append(f"val2={len(val2)}\n{val2}")
         # txt += "\ndiff=%s" % mask.sum()
         # txt += "\n%s" % val1[mask]
         # txt += "\n%s" % val2[mask]
@@ -608,11 +661,10 @@ def dassert_array_has_same_type_element(
     if obj1_first_type != obj2_first_type:
         txt = []
         num_elems = 5
-        txt.append("obj1=\n%s" % obj1[:num_elems])
-        txt.append("obj2=\n%s" % obj2[:num_elems])
+        txt.append(f"obj1=\n{obj1[:num_elems]}")
+        txt.append(f"obj2=\n{obj2[:num_elems]}")
         txt.append(
-            "type(obj1)='%s' is different from "
-            "type(obj2)='%s'" % (obj1_first_type, obj2_first_type)
+            f"type(obj1)='{obj1_first_type}' is different from type(obj2)='{obj2_first_type}'"
         )
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
@@ -634,7 +686,7 @@ def dassert_container_type(
     # Add information about the obj.
     if not msg:
         msg = ""
-    msg = msg.rstrip("\n") + "\nobj='%s'" % str(obj)
+    msg = msg.rstrip("\n") + f"\nobj='{str(obj)}'"
     # Check container.
     if container_type is not None:
         dassert_isinstance(
@@ -661,7 +713,9 @@ def dassert_list_of_strings(
         dassert_isinstance(elem, str, msg, *args, only_warning=only_warning)
 
 
+# #############################################################################
 # File related.
+# #############################################################################
 
 
 def dassert_path_exists(
@@ -673,7 +727,7 @@ def dassert_path_exists(
     dassert_isinstance(path, str)
     path = os.path.abspath(path)
     if not os.path.exists(path):
-        txt = "Path '%s' doesn't exist!" % path
+        txt = f"Path '{path}' doesn't exist!"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -686,7 +740,7 @@ def dassert_path_not_exists(
     dassert_isinstance(path, str)
     path = os.path.abspath(path)
     if os.path.exists(path):
-        txt = "Path '%s' already exist!" % path
+        txt = f"Path '{path}' already exist!"
         _dfatal(txt, msg, *args, only_warning=only_warning)
 
 
@@ -763,6 +817,51 @@ def dassert_file_extension(
     )
 
 
+def dassert_related_params(
+    params: Dict[str, Any],
+    mode: str,
+    msg: Optional[str] = None,
+    *args: Any,
+    only_warning: bool = False,
+) -> None:
+    """
+    Check whether `params` have a certain relationship.
+
+    :params params: dictionary of parameter name, value
+    :params mode:
+        - `all_or_none_non_null`: either all params are null (i.e., `bool` evaluate
+          to false) or are non-null
+        - `all_or_none_non_None`: either all params are None or all params are not
+          None. This is useful when passing set of params that are optional
+    """
+    # TODO(gp): Allow iterable?
+    dassert_isinstance(params, dict, msg, *args, only_warning=only_warning)
+    if mode == "all_or_none_non_null":
+        # Find out if at least one value is set.
+        is_non_null = map(bool, params.values())
+        one_is_non_null = functools.reduce(lambda x, y: x or y, is_non_null)
+        for k, v in params.items():
+            if bool(v) != one_is_non_null:
+                txt = (
+                    "All or none parameter should be non-null:\n%s=%s\nparams=%s\n"
+                    % (k, v, pprint.pformat(params))
+                )
+                _dfatal(txt, msg, *args, only_warning=only_warning)
+    elif mode == "all_or_none_non_None":
+        # Find out if at least one value is not None.
+        is_non_None = map(lambda x: x is not None, params.values())
+        one_is_non_None = functools.reduce(lambda x, y: x or y, is_non_None)
+        for k, v in params.items():
+            if (v is not None) != one_is_non_None:
+                txt = (
+                    "All or none parameter should be non-None:\n%s=%s\nparams=%s\n"
+                    % (k, v, pprint.pformat(params))
+                )
+                _dfatal(txt, msg, *args, only_warning=only_warning)
+    else:
+        raise ValueError(f"Invalid mode='{mode}'")
+
+
 # #############################################################################
 # Logger.
 # #############################################################################
@@ -829,12 +928,14 @@ def init_logger(
     # Exit to avoid to replicate the same output multiple times.
     if not in_pytest and root_logger.handlers:
         print(WARNING + ": Logger already initialized: skipping")
-        import traceback
+        if False:
+            # Print info about the caller.
+            import traceback
 
-        traceback.print_stack()
+            traceback.print_stack()
         return
     #
-    print(INFO + ": > cmd='%s'" % get_command_line())
+    print(INFO + f": > cmd='{get_command_line()}'")
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(verbosity)
     # Set the formatter.
@@ -860,7 +961,7 @@ def init_logger(
             if module is None:
                 filename = "none"
             else:
-                filename = module.__file__  # type: ignore
+                filename = module.__file__
         else:
             filename = "unknown_module"
         log_filename = os.path.realpath(filename) + ".log"
@@ -872,13 +973,16 @@ def init_logger(
             os.mkdir(log_dirname)
         # Delete the file since we don't want to append.
         if os.path.exists(log_filename):
-            os.unlink(log_filename)
+            try:
+                os.unlink(log_filename)
+            except FileNotFoundError as e:
+                print(e)
         # Tee to file.
         file_handler = logging.FileHandler(log_filename)
         root_logger.addHandler(file_handler)
         file_handler.setFormatter(formatter)
         #
-        print(INFO + ": Saving log to file '%s'" % log_filename)
+        print(INFO + f": Saving log to file '{log_filename}'")
     #
     _LOG.debug("Effective logging level=%s", _LOG.getEffectiveLevel())
     # Shut up chatty modules.
@@ -903,9 +1007,7 @@ def set_logger_verbosity(
         assert 0, "ERROR: Logger not initialized"
     logger.setLevel(verbosity)
     eff_level = logger.getEffectiveLevel()
-    print(
-        "effective level= %s (%s)" % (eff_level, logging.getLevelName(eff_level))
-    )
+    print(f"effective level= {eff_level} ({logging.getLevelName(eff_level)})")
     dassert_eq(logger.getEffectiveLevel(), verbosity)
 
 

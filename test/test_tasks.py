@@ -1,27 +1,46 @@
 import logging
 import os
-from typing import Dict
+from typing import Any, Dict
 
 import pytest
 
+import helpers.hprint as hprint
 import helpers.hsystem as hsystem
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
 
 
-def _get_default_params() -> Dict[str, str]:
+def _get_default_params_mock() -> Dict[str, str]:
     """
     Get fake params pointing to a different image so we can test the code
     without affecting the official images.
     """
     ecr_base_path = os.environ["AM_ECR_BASE_PATH"]
     default_params = {
-        "ECR_BASE_PATH": ecr_base_path,
+        "AM_ECR_BASE_PATH": ecr_base_path,
         "BASE_IMAGE": "amp_test",
         "DEV_TOOLS_IMAGE_PROD": f"{ecr_base_path}/dev_tools:prod",
     }
     return default_params
+
+
+def _get_invoke_cmd_params(self_: Any) -> str:
+    """
+    Return the parameters passed to pytest controlling the stage / version to
+    use for commands using a specific stage / version (e.g., `invoke bash`).
+
+    E.g., `--image_stage`, `--image_version`
+    """
+    image_stage = self_._config.getoption("--image_stage")
+    image_version = self_._config.getoption("--image_version")
+    _LOG.debug(hprint.to_str("image_stage image_version"))
+    cmd_params = []
+    cmd_params.append(f"--stage {image_stage}")
+    if image_version:
+        cmd_params.append(f"--version {image_version}")
+    cmd_params = " ".join(cmd_params)
+    return cmd_params
 
 
 class TestExecuteTasks1(hunitest.QaTestCase):
@@ -30,7 +49,7 @@ class TestExecuteTasks1(hunitest.QaTestCase):
     """
 
     @pytest.fixture(autouse=True)
-    def inject_config(self, request):
+    def inject_config(self, request: Any) -> None:
         self._config = request.config
 
     def test_list(self) -> None:
@@ -57,22 +76,20 @@ class TestExecuteTasks1(hunitest.QaTestCase):
         cmd = "invoke docker_login"
         hsystem.system(cmd)
 
+    # invoke cmd-like commands.
+
     def test_docker_cmd1(self) -> None:
-        cmd = 'invoke docker_cmd --cmd="ls"'
+        invoke_target = "docker_cmd"
+        invoke_params = _get_invoke_cmd_params(self)
+        invoke_params += ' --cmd="ls"'
+        cmd = f"invoke {invoke_target} {invoke_params}"
         hsystem.system(cmd)
 
     def test_docker_jupyter1(self) -> None:
-        cmd = "invoke docker_jupyter --self-test --no-auto-assign-port"
-        hsystem.system(cmd)
-
-    def test_docker_bash(self) -> None:
-        image_version = self._config.getoption("--image_version")
-        image_stage = self._config.getoption("--image_stage")
-        exit_command = "<(echo 'exit\n')"
-        cmd = f"invoke docker_bash"
-        if image_version:
-            cmd = f"{cmd} --version {image_version}"
-        cmd = f"{cmd} --stage {image_stage} < {exit_command}"
+        invoke_target = "docker_jupyter"
+        invoke_params = _get_invoke_cmd_params(self)
+        invoke_params += " --self-test --no-auto-assign-port"
+        cmd = f"invoke {invoke_target} {invoke_params}"
         hsystem.system(cmd)
 
 
@@ -92,17 +109,19 @@ class TestExecuteTasks2(hunitest.QaTestCase):
 
     # Images workflows.
 
+    @pytest.mark.superslow("Around 5 mins")
     def test_docker_build_local_image(self) -> None:
-        params = _get_default_params()
-        base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
+        params = _get_default_params_mock()
+        base_image = params["AM_ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         # Version must be bigger than any version in `changelog.txt`.
         cmd = f"invoke docker_build_local_image --version 999.0.0 --cache --base-image={base_image}"
         hsystem.system(cmd)
 
     @pytest.mark.skip("No prod image for amp yet")
+    @pytest.mark.slow("Around 5 mins")
     def test_docker_build_prod_image(self) -> None:
-        params = _get_default_params()
-        base_image = params["ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
+        params = _get_default_params_mock()
+        base_image = params["AM_ECR_BASE_PATH"] + "/" + params["BASE_IMAGE"]
         # Version must be bigger than any version in `changelog.txt`.
         cmd = f"invoke docker_build_prod_image --version 999.0.0 --cache --base-image={base_image}"
         hsystem.system(cmd)
@@ -140,7 +159,6 @@ class TestExecuteTasks2(hunitest.QaTestCase):
     # Linter.
 
     def test_lint1(self) -> None:
-        # Get the pointer to amp.
         file_name = '$(find . -name "dbg.py" -type f)'
         cmd = f"invoke lint --files='{file_name}' --phases='black'"
         hsystem.system(cmd)

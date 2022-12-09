@@ -6,7 +6,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.7
+#       jupytext_version: 1.13.8
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -34,7 +34,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
-import im_v2.common.universe.universe as imvcounun
+import im_v2.common.universe as ivcu
 import research_amp.cc.statistics as ramccsta
 
 # %%
@@ -46,6 +46,7 @@ _LOG.info("%s", henv.get_system_signature()[0])
 
 hprint.config_notebook()
 
+AM_AWS_PROFILE = "am"
 
 # %% [markdown]
 # # Config
@@ -58,8 +59,10 @@ def get_config() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "am"
-    config["load"]["data_dir"] = os.path.join(hs3.get_path(), "data")
+    config["load"]["aws_profile"] = AM_AWS_PROFILE
+    config["load"]["data_dir"] = os.path.join(
+        hs3.get_s3_bucket_path(AM_AWS_PROFILE), "data"
+    )
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["universe_version"] = "v03"
@@ -76,8 +79,10 @@ print(config)
 # # Get price data for a given universe
 
 # %%
-vendor_universe = imvcounun.get_vendor_universe(
-    config["data"]["vendor"], version=config["data"]["universe_version"], as_full_symbol=True
+vendor_universe = ivcu.get_vendor_universe(
+    config["data"]["vendor"],
+    version=config["data"]["universe_version"],
+    as_full_symbol=True,
 )
 vendor_universe
 

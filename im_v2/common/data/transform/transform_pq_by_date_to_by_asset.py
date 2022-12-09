@@ -40,8 +40,8 @@ dst_dir/
 
 # To process Parquet data for LimeTask317:
 > im_v2/common/data/transform/transform_pq_by_date_to_by_asset.py \
-    --src_dir 's3://cryptokaizen-data/unit_test/parquet/' \
-    --dst_dir 's3://cryptokaizen-data/unit_test/parquet/test_out/' \
+    --src_dir 's3://<ck-data>/unit_test/parquet/' \
+    --dst_dir 's3://<ck-data>/unit_test/parquet/test_out/' \
     --no_incremental --force \
     --num_threads serial \
     --prepare_tasks_func_name lime317_prepare_tasks \
@@ -424,8 +424,8 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--aws_profile",
         action="store",
+        required=True,
         type=str,
-        default=None,
         help="The AWS profile to use for `.aws/credentials` or for env vars",
     )
     parser = hparser.add_parallel_processing_arg(parser)

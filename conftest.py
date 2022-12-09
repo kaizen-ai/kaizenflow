@@ -60,7 +60,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
         parser.addoption(
             "--dbg",
             action="store_true",
-            help="Set the logging level to DEBUG",
+            help="Set the logging level to TRACE",
         )
         parser.addoption(
             "--image_version",
@@ -82,7 +82,6 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             print(henv.get_system_signature()[0])
         except:
             print(f"\n{_WARNING}: Can't print system_signature")
-            pass
         if config.getoption("--update_outcomes"):
             print(f"\n{_WARNING}: Updating test outcomes")
             hut.set_update_tests(True)
@@ -97,7 +96,7 @@ if not hasattr(hut, "_CONFTEST_ALREADY_PARSED"):
             if config.getoption("--dbg_verbosity", None):
                 level = config.getoption("--dbg_verbosity")
             elif config.getoption("--dbg", None):
-                level = logging.DEBUG
+                level = logging.TRACE
             else:
                 raise ValueError("Can't get here")
             print(f"\n{_WARNING}: Setting verbosity level to %s" % level)

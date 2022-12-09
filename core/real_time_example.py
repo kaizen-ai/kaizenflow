@@ -74,29 +74,33 @@ def get_replayed_time(
 
 # TODO(gp): Make `event_loop` mandatory.
 def get_replayed_time_execute_rt_loop_kwargs(
-    sleep_interval_in_secs: float,
+    bar_duration_in_secs: int,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop] = None,
 ) -> htypes.Kwargs:
     """
-    Return kwargs for a call to `execute_rt_loop` using replayed time.
+    Return kwargs for a call to `execute_with_real_time_loop()` using replayed time.
+
+    Same params as `execute_with_real_time_loop()`
+
+    :param bar_duration_in_secs: the loop wakes up every `bar_duration_in_secs`
+        true or simulated seconds
     """
     # TODO(gp): Replace all these with `get_replayed_wall_clock_time()`.
     rt = get_replayed_time(event_loop=event_loop)
     get_wall_clock_time = rt.get_wall_clock_time
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
-        # TODO(gp): -> timeout everywhere
-        "time_out_in_secs": 3.0 * sleep_interval_in_secs,
+        "bar_duration_in_secs": bar_duration_in_secs,
+        "rt_timeout_in_secs_or_time": 3 * bar_duration_in_secs,
     }
     return execute_rt_loop_kwargs
 
 
-# TODO(gp): move time_out_in_secs to defaults, then kill the example.
+# TODO(gp): move rt_timeout_in_secs_or_time to defaults, then kill the example.
 # TODO(gp): Add "_example" to the end of the name.
 def get_real_time_execute_rt_loop_kwargs(
-    sleep_interval_in_secs: float,
+    bar_duration_in_secs: int,
     *,
     event_loop: Optional[asyncio.AbstractEventLoop],
 ) -> htypes.Kwargs:
@@ -108,9 +112,9 @@ def get_real_time_execute_rt_loop_kwargs(
     )
     execute_rt_loop_kwargs = {
         "get_wall_clock_time": get_wall_clock_time,
-        "sleep_interval_in_secs": sleep_interval_in_secs,
+        "bar_duration_in_secs": bar_duration_in_secs,
         # TODO(gp): This is the number of seconds the real time loop runs for.
         #  Change the name to something more intuitive.
-        "time_out_in_secs": 3.0 * sleep_interval_in_secs,
+        "rt_timeout_in_secs_or_time": 3 * bar_duration_in_secs,
     }
     return execute_rt_loop_kwargs

@@ -41,6 +41,28 @@ class RegressionAnalyzer:
         self._df_cols = self._feature_cols + [self._target_col]
         self._feature_lag = feature_lag
 
+    @staticmethod
+    def compute_moments(df: pd.DataFrame, stats: List[str]) -> pd.DataFrame:
+        """
+        Compute moments by feature for a given statistic.
+
+        Dataframe columns are statistics (e.g., "beta"). Rows are
+        multiindex, with level 0 equal to the name and level 1 equal to
+        the feature.
+        """
+        all_moments = {}
+        for stat in stats:
+            moments = []
+            for feature in df.index.unique(level=1):
+                val = costatis.compute_moments(
+                    df[stat].xs(feature, level=1)
+                ).rename(feature)
+                moments.append(val)
+            moments = pd.concat(moments, axis=1)
+            all_moments[stat] = moments
+        out_df = pd.concat(all_moments).transpose()
+        return out_df
+
     def compute_regression_coefficients(
         self,
         df: pd.DataFrame,
@@ -140,28 +162,6 @@ class RegressionAnalyzer:
         srs2 = split2[statistic].xs(feature, level=1).rename("split2")
         paired_df = pd.concat([srs1, srs2], join="inner", axis=1)
         sns.pairplot(paired_df)
-
-    @staticmethod
-    def compute_moments(df: pd.DataFrame, stats: List[str]) -> pd.DataFrame:
-        """
-        Compute moments by feature for a given statistic.
-
-        Dataframe columns are statistics (e.g., "beta"). Rows are
-        multiindex, with level 0 equal to the name and level 1 equal to
-        the feature.
-        """
-        all_moments = {}
-        for stat in stats:
-            moments = []
-            for feature in df.index.unique(level=1):
-                val = costatis.compute_moments(
-                    df[stat].xs(feature, level=1)
-                ).rename(feature)
-                moments.append(val)
-            moments = pd.concat(moments, axis=1)
-            all_moments[stat] = moments
-        out_df = pd.concat(all_moments).transpose()
-        return out_df
 
     def _validate_data_df(self, df):
         hdbg.dassert_isinstance(df, pd.DataFrame)

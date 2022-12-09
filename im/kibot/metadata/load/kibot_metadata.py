@@ -20,7 +20,7 @@ import helpers.hio as hio
 import helpers.hpandas as hpandas
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
 import im.kibot.metadata.load.expiry_contract_mapper as imkmlecoma
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 import im.kibot.metadata.types as imkimetyp
@@ -93,7 +93,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             metadata = self.tickbidask_metadata.copy()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         return metadata
 
     def get_futures(self, contract_type: str = "1min") -> List[str]:
@@ -170,7 +170,7 @@ class KibotMetadata:
         elif contract_type == "tick-bid-ask":
             one_min_contract_metadata = cls.read_tickbidask_contract_metadata()
         else:
-            raise ValueError("Invalid `contract_type`='%s'" % contract_type)
+            raise ValueError(f"Invalid `contract_type`='{contract_type}'")
         continuous_contract_metadata = cls.read_continuous_contract_metadata()
         # Extract month, year, expiries and SymbolBase from the Symbol col.
         (
@@ -410,7 +410,7 @@ class KibotTradingActivityContractLifetimeComputer(ContractLifetimeComputer):
         self.end_timedelta_days = end_timedelta_days
 
     def compute_lifetime(self, contract_name: str) -> imkimetyp.ContractLifetime:
-        df = imkdlksdlo.KibotS3DataLoader().read_data(
+        df = ikdlksdlo.KibotS3DataLoader().read_data(
             "Kibot",
             contract_name,
             imcodatyp.AssetClass.Futures,

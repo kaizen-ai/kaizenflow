@@ -7,19 +7,28 @@ import dataflow.universe as dtfuniver
 """
 import logging
 import os
-from typing import List, Optional
+from typing import List, Optional, Union
 
 import pandas as pd
 
-import dataflow.model as dtfmod
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hgit as hgit
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(Grisha): "Move universe-related functions to `im_v2`" CmTask #1724.
+
+
 # TODO(gp): Move it to a better place.
-Amid = str
+Amid = Union[int, str]
+
+
+# #############################################################################
+# S&P 500
+# #############################################################################
 
 
 def get_sp500() -> pd.DataFrame:
@@ -54,6 +63,8 @@ def get_sp500_sample(n: int, seed: int) -> List[str]:
     return df["ticker"].to_list()
 
 
+# #############################################################################
+# Kibot
 # #############################################################################
 
 
@@ -221,15 +232,106 @@ def _get_kibot_universe_v3(n: Optional[int]) -> List[Amid]:
     return amids
 
 
+# #############################################################################
+# Mock1
+# #############################################################################
+
+
+def _get_mock1_universe_v1(n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for Mock1 DAG.
+    """
+    vendor = "mock1"
+    mode = "trade"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, mode, version="v1", as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
+# CryptoChassis
+# #############################################################################
+
+
+def _get_crypto_chassis_universe(version: str, n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for `CryptoChassis`.
+    """
+    vendor = "crypto_chassis"
+    mode = "trade"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, mode, version=version, as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
+# CCXT
+# #############################################################################
+
+
+def _get_ccxt_universe(version: str, n: Optional[int]) -> List[Amid]:
+    """
+    Create universe for `CCXT`.
+    """
+    vendor = "CCXT"
+    mode = "trade"
+    full_symbols = ivcu.get_vendor_universe(
+        vendor, mode, version=version, as_full_symbol=True
+    )
+    full_symbols = _get_top_n(full_symbols, n)
+    return full_symbols
+
+
+# #############################################################################
+# General
+# #############################################################################
+
+
 def get_universe(universe_str: str) -> List[Amid]:
     # E.g., universe_str == "v1_0-top100"
-    universe_version, top_n = dtfmod.parse_universe_str(universe_str)
+    universe_version, top_n = cconfig.parse_universe_str(universe_str)
     if universe_version == "kibot_v1":
         ret = _get_kibot_universe_v1(top_n)
     elif universe_version == "kibot_v2":
         ret = _get_kibot_universe_v2(top_n)
     elif universe_version == "kibot_v3":
         ret = _get_kibot_universe_v3(top_n)
+    elif universe_version == "mock1_v1":
+        ret = _get_mock1_universe_v1(top_n)
+    elif universe_version == "ccxt_v3":
+        version = "v3"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v4":
+        version = "v4"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v6":
+        version = "v6"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7":
+        version = "v7"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7_1":
+        version = "v7.1"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "ccxt_v7_3":
+        version = "v7.3"
+        ret = _get_ccxt_universe(version, top_n)
+    elif universe_version == "crypto_chassis_v1":
+        version = "v1"
+        ret = _get_crypto_chassis_universe(version, top_n)
+    elif universe_version == "crypto_chassis_v2":
+        version = "v2"
+        ret = _get_crypto_chassis_universe(version, top_n)
+    elif universe_version == "crypto_chassis_v3":
+        version = "v3"
+        ret = _get_crypto_chassis_universe(version, top_n)
+    elif universe_version == "crypto_chassis_v4":
+        version = "v4"
+        ret = _get_crypto_chassis_universe(version, top_n)
     else:
         raise ValueError(f"Invalid universe_str='{universe_str}'")
     return ret
@@ -240,7 +342,7 @@ def get_universe(universe_str: str) -> List[Amid]:
 
 # def set_amid(
 #    config: cconfig.Config,
-#    amid_key: cconfig.Config.Key,
+#    amid_key: cconfig.CompoundKey,
 #    amid: Amid,
 #    assume_dummy: bool = True,
 # ) -> cconfig.Config:
@@ -261,7 +363,7 @@ def get_universe(universe_str: str) -> List[Amid]:
 #
 #
 # def build_universe_variants(
-#    config: cconfig.Config, amid_key: cconfig.Config.Key, universe_str: str
+#    config: cconfig.Config, amid_key: cconfig.CompoundKey, universe_str: str
 # ) -> cconfig.Config:
 #    """
 #    Add instrument to model.

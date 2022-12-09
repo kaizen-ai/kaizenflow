@@ -1,4 +1,4 @@
-# Test created for helpers.test.test_playback.get_result_ae.
+# Test created for helpers.test.test_playback.get_result_assert_equal.
 
 import helpers.hunit_test as hunitest
 import jsonpickle
@@ -6,13 +6,13 @@ import pandas as pd
 import core.config as cconfi
 
 
-class TestGetResultAe(hunitest.TestCase):
+class TestGetResultAssertEqual(hunitest.TestCase):
     def test1(self) -> None:
         # Define input variables.
         a = 3
         b = 2
         # Call function to test.
-        act = get_result_ae(a=a, b=b)
+        act = get_result_assert_equal(a=a, b=b)
         # Define expected output.
         exp = 5
         # Compare actual and expected output.

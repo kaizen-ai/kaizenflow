@@ -39,7 +39,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     #
     _LOG.warning("\n%s", hprint.frame("This is a dry run!"))
     git_root = hgit.get_client_root(super_module=False)
-    cmd = fr'''cd {git_root} && find . -type f -name "*" -not -path "*/\.git/*"'''
+    cmd = rf'''cd {git_root} && find . -type f -name "*" -not -path "*/\.git/*"'''
     _, file_list = hsystem.system_to_string(cmd)
     file_list = file_list.split("\n")
     #

@@ -1,11 +1,14 @@
 import logging
-from typing import Any, Callable, Tuple
+from typing import Any, Callable, Tuple, Union
 
 import pandas as pd
 
 import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import helpers.hunit_test as hunitest
+import helpers.hwall_clock_time as hwacltim
 import market_data.market_data_example as mdmadaex
 import market_data.replayed_market_data as mdremada
 
@@ -15,7 +18,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Factor out this test in a ReplayedMarketData_TestCase
 def _check_get_data(
     self_: Any,
-    initial_replayed_delay: int,
+    replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp],
     func: Callable,
     expected_df_as_str: str,
 ) -> mdremada.ReplayedMarketData:
@@ -33,9 +36,8 @@ def _check_get_data(
             event_loop,
             start_datetime,
             end_datetime,
-            initial_replayed_delay,
-            asset_ids
-            # TODO(gp): initial_replayed_delay -> initial_delay_in_mins (or in secs).
+            replayed_delay_in_mins_or_timestamp,
+            asset_ids,
         )
         # Execute function under test.
         actual_df = func(market_data)
@@ -81,7 +83,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         - Get the last 5 mins of data
         - The returned data should be in [9:30, 9:35]
         """
-        initial_replayed_delay = 5
+        replayed_delay_in_mins_or_timestamp = 5
         #
         timedelta = pd.Timedelta("5T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -100,7 +102,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 09:35:00-05:00      1000    1000.311925  2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
@@ -115,7 +117,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         - Get the last 1 min of data
         - The returned data should be at 9:35
         """
-        initial_replayed_delay = 5
+        replayed_delay_in_mins_or_timestamp = 5
         #
         timedelta = pd.Timedelta("1T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -130,7 +132,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
@@ -145,7 +147,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         - Get the last 10 mins of data
         - The returned data should be in [9:40, 9:50]
         """
-        initial_replayed_delay = 20
+        replayed_delay_in_mins_or_timestamp = 20
         #
         timedelta = pd.Timedelta("10T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -166,7 +168,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 09:50:00-05:00      1000  999.154046 2000-01-01 09:49:00-05:00 2000-01-01 09:50:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:50:00-05:00")
@@ -181,7 +183,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         - Get data for the last day
         - The returned data should be in [9:30, 10:00]
         """
-        initial_replayed_delay = 30
+        replayed_delay_in_mins_or_timestamp = 30
         #
         timedelta = pd.Timedelta("1D")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -202,7 +204,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 10:00:00-05:00      1000  998.157918 2000-01-01 09:59:00-05:00 2000-01-01 10:00:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 10:00:00-05:00")
@@ -217,7 +219,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         - Get all data using 365 days for specified period
         - The returned data should be in [9:30, 10:00]
         """
-        initial_replayed_delay = 30
+        replayed_delay_in_mins_or_timestamp = 30
         #
         timedelta = pd.Timedelta("365T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -238,7 +240,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 10:00:00-05:00      1000  998.157918 2000-01-01 09:59:00-05:00 2000-01-01 10:00:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 10:00:00-05:00")
@@ -254,7 +256,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         The replayed time starts at the same time of the data to represent the
         first minute of trading.
         """
-        initial_replayed_delay = 0
+        replayed_delay_in_mins_or_timestamp = 0
         #
         timedelta = pd.Timedelta("5T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -265,7 +267,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         Columns: [asset_id, last_price, start_datetime, timestamp_db]
         Index: []"""
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = None
@@ -279,7 +281,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         The replayed time starts one minute after the data to represent the
         first minute of trading.
         """
-        initial_replayed_delay = 1
+        replayed_delay_in_mins_or_timestamp = 1
         timedelta = pd.Timedelta("5T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
         # pylint: disable=line-too-long
@@ -293,7 +295,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 09:31:00-05:00      1000   999.87454 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:31:00-0500")
@@ -307,7 +309,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         The replayed time starts 3 minutes after the opening of the trading
         day.
         """
-        initial_replayed_delay = 3
+        replayed_delay_in_mins_or_timestamp = 3
         #
         timedelta = pd.Timedelta("5T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -325,7 +327,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 09:33:00-05:00      1000    1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:33:00-05:00")
@@ -339,7 +341,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         The replayed time starts 6 minutes after the opening of the trading
         day.
         """
-        initial_replayed_delay = 6
+        replayed_delay_in_mins_or_timestamp = 6
         #
         timedelta = pd.Timedelta("5T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -358,7 +360,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 09:36:00-05:00      1000    999.967920   2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 09:36:00-05:00")
@@ -372,7 +374,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         The replayed time starts 63 minutes after the opening of the trading
         day.
         """
-        initial_replayed_delay = 63
+        replayed_delay_in_mins_or_timestamp = 63
         #
         timedelta = pd.Timedelta("5T")
         func = lambda market_data: market_data.get_data_for_last_period(timedelta)
@@ -388,7 +390,7 @@ class TestReplayedMarketData1(hunitest.TestCase):
         2000-01-01 10:30:00-05:00      1000   998.050046  2000-01-01 10:29:00-05:00 2000-01-01 10:30:00-05:00"""
         # pylint: enable=line-too-long
         market_data = _check_get_data(
-            self, initial_replayed_delay, func, expected_df_as_str
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
         )
         #
         expected_last_end_time = pd.Timestamp("2000-01-01 10:30:00-0500")
@@ -409,11 +411,11 @@ class TestReplayedMarketData2(hunitest.TestCase):
         - Start replaying time 5 minutes after the beginning of the day, i.e., the
           current time is 9:35.
         - Ask data for [9:30, 9:45]
-        - The returned data is [9:30, 9:35].
+        - The returned data is [9:30, 9:35]
         """
         # Start replaying time 5 minutes after the beginning of the day, so the
         # current time is 9:35.
-        initial_replayed_delay = 5
+        replayed_delay_in_mins_or_timestamp = 5
         # Ask data for 9:30 to 9:45.
         start_ts = pd.Timestamp("2000-01-01 09:30:00-05:00")
         end_ts = pd.Timestamp("2000-01-01 09:45:00-05:00")
@@ -436,15 +438,17 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:34:00-05:00      1000    1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
         2000-01-01 09:35:00-05:00      1000    1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, initial_replayed_delay, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_for_interval2(self) -> None:
         """
         - Current time is 9:45
         - Ask data in [9:35, 9:40]
-        - The returned data is [9:30, 9:40].
+        - The returned data is [9:30, 9:40]
         """
-        initial_replayed_delay = 15
+        replayed_delay_in_mins_or_timestamp = 15
         start_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
         end_ts = pd.Timestamp("2000-01-01 09:40:00-05:00")
         ts_col_name = "start_datetime"
@@ -466,7 +470,40 @@ class TestReplayedMarketData2(hunitest.TestCase):
         2000-01-01 09:39:00-05:00      1000   999.993295  2000-01-01 09:38:00-05:00 2000-01-01 09:39:00-05:00
         2000-01-01 09:40:00-05:00      1000   1000.201367 2000-01-01 09:39:00-05:00 2000-01-01 09:40:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, initial_replayed_delay, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
+
+    def test_get_data_for_interval3(self) -> None:
+        """
+        - Current time is 9:35
+        - Ask data in [9:00, 9:40)
+        - The returned data is [9:30, 9:40)
+        """
+        replayed_delay_in_mins_or_timestamp = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        start_ts = pd.Timestamp("2000-01-01 09:30:00-05:00")
+        end_ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
+        ts_col_name = "start_datetime"
+        asset_ids = None
+        func = lambda market_data: market_data.get_data_for_interval(
+            start_ts, end_ts, ts_col_name, asset_ids
+        )
+        # pylint: disable=line-too-long
+        expected_df_as_str = r"""
+        # df=
+        index=[2000-01-01 09:31:00-05:00, 2000-01-01 09:35:00-05:00]
+        columns=asset_id,last_price,start_datetime,timestamp_db
+        shape=(5, 4)
+                           asset_id   last_price            start_datetime              timestamp_db
+        end_datetime
+        2000-01-01 09:31:00-05:00      1000   999.874540 2000-01-01 09:30:00-05:00 2000-01-01 09:31:00-05:00
+        2000-01-01 09:32:00-05:00      1000  1000.325254 2000-01-01 09:31:00-05:00 2000-01-01 09:32:00-05:00
+        2000-01-01 09:33:00-05:00      1000  1000.557248 2000-01-01 09:32:00-05:00 2000-01-01 09:33:00-05:00
+        2000-01-01 09:34:00-05:00      1000  1000.655907 2000-01-01 09:33:00-05:00 2000-01-01 09:34:00-05:00
+        2000-01-01 09:35:00-05:00      1000  1000.311925 2000-01-01 09:34:00-05:00 2000-01-01 09:35:00-05:00
+        """
+        # pylint: enable=line-too-long
+        _check_get_data(self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str)
 
     def test_get_data_at_timestamp1(self) -> None:
         """
@@ -474,7 +511,7 @@ class TestReplayedMarketData2(hunitest.TestCase):
         - Ask data for 9:35
         - The returned data is for 9:35
         """
-        initial_replayed_delay = 15
+        replayed_delay_in_mins_or_timestamp = 15
         ts = pd.Timestamp("2000-01-01 09:35:00-05:00")
         ts_col_name = "start_datetime"
         asset_ids = None
@@ -491,7 +528,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         end_datetime
         2000-01-01 09:36:00-05:00      1000   999.96792  2000-01-01 09:35:00-05:00 2000-01-01 09:36:00-05:00"""
         # pylint: enable=line-too-long
-        _check_get_data(self, initial_replayed_delay, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
     def test_get_data_at_timestamp2(self) -> None:
         """
@@ -499,7 +538,7 @@ class TestReplayedMarketData2(hunitest.TestCase):
         - Ask data for 9:50
         - The return data is empty
         """
-        initial_replayed_delay = 15
+        replayed_delay_in_mins_or_timestamp = 15
         ts = pd.Timestamp("2000-01-01 09:50:00-05:00")
         ts_col_name = "start_datetime"
         asset_ids = None
@@ -513,7 +552,9 @@ class TestReplayedMarketData2(hunitest.TestCase):
         Columns: [asset_id, last_price, start_datetime, timestamp_db]
         Index: []"""
         # pylint: enable=line-too-long
-        _check_get_data(self, initial_replayed_delay, func, expected_df_as_str)
+        _check_get_data(
+            self, replayed_delay_in_mins_or_timestamp, func, expected_df_as_str
+        )
 
 
 # #############################################################################
@@ -530,13 +571,13 @@ class TestReplayedMarketData3(hunitest.TestCase):
             start_datetime = pd.Timestamp("2000-01-01 09:30:00-05:00")
             end_datetime = pd.Timestamp("2000-01-01 10:30:00-05:00")
             asset_ids = [1000]
-            initial_replayed_delay = 5
+            replayed_delay_in_mins_or_timestamp = 5
             delay_in_secs = 0
             (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example2(
                 event_loop,
                 start_datetime,
                 end_datetime,
-                initial_replayed_delay,
+                replayed_delay_in_mins_or_timestamp,
                 asset_ids,
                 delay_in_secs=delay_in_secs,
             )
@@ -552,8 +593,10 @@ class TestReplayedMarketData3(hunitest.TestCase):
         """
         Wait for the market to open.
         """
-        initial_replayed_delay = -2
-        start_time, end_time, num_iter = self._run(initial_replayed_delay)
+        replayed_delay_in_mins_or_timestamp = -2
+        start_time, end_time, num_iter = self._run(
+            replayed_delay_in_mins_or_timestamp
+        )
         # Check.
         expected_start_time = pd.Timestamp("2000-01-01 09:28:00-05:00")
         self.assertEqual(start_time, expected_start_time)
@@ -568,8 +611,10 @@ class TestReplayedMarketData3(hunitest.TestCase):
         """
         The market is already opened.
         """
-        initial_replayed_delay = 5
-        start_time, end_time, num_iter = self._run(initial_replayed_delay)
+        replayed_delay_in_mins_or_timestamp = 5
+        start_time, end_time, num_iter = self._run(
+            replayed_delay_in_mins_or_timestamp
+        )
         # Check.
         expected_start_time = pd.Timestamp("2000-01-01 09:35:00-05:00")
         self.assertEqual(start_time, expected_start_time)
@@ -584,12 +629,12 @@ class TestReplayedMarketData3(hunitest.TestCase):
         """
         The market is closed, so we expect a timeout.
         """
-        initial_replayed_delay = 63
+        replayed_delay_in_mins_or_timestamp = 63
         with self.assertRaises(TimeoutError):
-            self._run(initial_replayed_delay)
+            self._run(replayed_delay_in_mins_or_timestamp)
 
     def _run(
-        self, initial_replayed_delay: int
+        self, replayed_delay_in_mins_or_timestamp: Union[int, pd.Timestamp]
     ) -> Tuple[pd.Timestamp, pd.Timestamp, int]:
         """
         - Build a ReplayedMarketData
@@ -607,12 +652,17 @@ class TestReplayedMarketData3(hunitest.TestCase):
                 event_loop,
                 start_datetime,
                 end_datetime,
-                initial_replayed_delay,
+                replayed_delay_in_mins_or_timestamp,
                 asset_ids,
                 delay_in_secs=delay_in_secs,
                 sleep_in_secs=sleep_in_secs,
                 time_out_in_secs=time_out_in_secs,
             )
+            # Set the `current_bar_timestamp` that is needed inside
+            # `wait_for_latest_data()`.
+            current_timestamp = market_data.get_wall_clock_time()
+            bar_duration_in_secs = 60 * 5
+            hdateti.set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),
@@ -654,7 +704,8 @@ class TestReplayedMarketData4(hunitest.TestCase):
             # Build a ReplayedMarketData.
             (market_data, _,) = mdmadaex.get_ReplayedTimeMarketData_example4(
                 event_loop,
-                initial_replayed_delay=1,
+                # Replay data starting at `2000-01-03 09:32:00-05:00`.
+                replayed_delay_in_mins_or_timestamp=1,
                 start_datetime=pd.Timestamp(
                     "2000-01-03 09:31:00-05:00", tz="America/New_York"
                 ),
@@ -663,6 +714,11 @@ class TestReplayedMarketData4(hunitest.TestCase):
                 ),
                 asset_ids=[101, 202, 303],
             )
+            # Set the `current_bar_timestamp` that is needed inside
+            # `wait_for_latest_data()`.
+            current_timestamp = market_data.get_wall_clock_time()
+            bar_duration_in_secs = 60
+            hdateti.set_current_bar_timestamp(current_timestamp, bar_duration_in_secs)
             # Run the method.
             start_time, end_time, num_iter = hasynci.run(
                 market_data.wait_for_latest_data(),

@@ -24,7 +24,7 @@
 # class Test_pandoc1(hunitest.TestCase):
 #    def _helper(self, in_file: str, action: str) -> str:
 #        exec_path = hgit.find_file_in_git_tree("pandoc.py")
-#        hdbg.dassert_exists(exec_path)
+#        hdbg.dassert_path_exists(exec_path)
 #        #
 #        tmp_dir = self.get_scratch_space()
 #        out_file = os.path.join(tmp_dir, "output.pdf")
@@ -96,9 +96,9 @@
 #    the output as string.
 #    """
 #    exec_path = hgit.find_file_in_git_tree("convert_txt_to_pandoc.py")
-#    hdbg.dassert_exists(exec_path)
+#    hdbg.dassert_path_exists(exec_path)
 #    #
-#    hdbg.dassert_exists(in_file)
+#    hdbg.dassert_path_exists(in_file)
 #    #
 #    cmd = []
 #    cmd.append(exec_path)

@@ -175,9 +175,9 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
             "TestRename.test_rename1",
         ]
         for path in outcomes_paths:
-            outcomes = os.path.join(toy_test, "test/outcomes", path)
-            os.makedirs(outcomes)
-            hio.to_file(f"{outcomes}/test.txt", "Test files.")
+            outcomes_dir = os.path.join(toy_test, "test/outcomes", path)
+            hio.create_dir(outcomes_dir, incremental=False)
+            hio.to_file(f"{outcomes_dir}/test.txt", "Test files.")
         cmd = f"git add {toy_test}/"
         hsystem.system(cmd, abort_on_error=False, suppress_output=False)
 
@@ -185,7 +185,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Rename outcome directory.
         """
-        toy_test = "toyCmTask1279"
+        toy_test = "toyCmTask1279." + self._testMethodName
         # Create outcomes directory.
         test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.
@@ -221,7 +221,7 @@ class TestPytestRenameOutcomes(hunitest.TestCase):
         """
         Rename outcome directory.
         """
-        toy_test = "toyCmTask1279"
+        toy_test = "toyCmTask1279." + self._testMethodName
         # Create outcomes directory.
         test_path = os.path.join(toy_test, "test")
         # Create the toy outcomes.

@@ -10,6 +10,11 @@ import helpers.hunit_test as hunitest
 _LOG = logging.getLogger(__name__)
 
 
+# #############################################################################
+# _TestDataflowHelper
+# #############################################################################
+
+
 class _TestDataflowHelper(hunitest.TestCase):
     def _check(self, dag: dtfcordag.DAG) -> None:
         """
@@ -30,6 +35,11 @@ class _TestDataflowHelper(hunitest.TestCase):
         file_name = os.path.join(dir_name, "graph.png")
         dtfcorvisu.draw_to_file(dag, file_name)
         _LOG.debug("Saved plot to %s", file_name)
+
+
+# #############################################################################
+# Test_dataflow_core_DAG1
+# #############################################################################
 
 
 class Test_dataflow_core_DAG1(_TestDataflowHelper):
@@ -104,6 +114,11 @@ class Test_dataflow_core_DAG1(_TestDataflowHelper):
         dag.connect("n2", "n3")
         dag.add_node(n1)
         self._check(dag)
+
+
+# #############################################################################
+# Test_dataflow_core_DAG2
+# #############################################################################
 
 
 class Test_dataflow_core_DAG2(_TestDataflowHelper):
@@ -280,6 +295,11 @@ class Test_dataflow_core_DAG2(_TestDataflowHelper):
         return dag
 
 
+# #############################################################################
+# Test_dataflow_core_DAG3
+# #############################################################################
+
+
 class Test_dataflow_core_DAG3(_TestDataflowHelper):
     def test_sources_sinks1(self) -> None:
         """
@@ -331,3 +351,179 @@ class Test_dataflow_core_DAG3(_TestDataflowHelper):
         sinks = dag.get_sinks()
         sinks.sort()
         self.assertListEqual(sinks, ["snk1", "snk2"])
+
+
+# #############################################################################
+# Test_dataflow_core_DAG4
+# #############################################################################
+
+
+class Test_dataflow_core_DAG4(_TestDataflowHelper):
+    def test_insert_at_head1(self) -> None:
+        """
+        Insert a node at head on an empty DAG.
+        """
+        # Create an empty DAG.
+        dag = dtfcordag.DAG()
+        # Insert a new node at head.
+        n1 = dtfcornode.Node("n1")
+        dag.insert_at_head(n1)
+        self._check(dag)
+
+    def test_insert_at_head2(self) -> None:
+        """
+        Insert a node at head on a nonempty DAG.
+        """
+        # Create a single-node DAG.
+        dag = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1", inputs=["in1"])
+        dag.add_node(n1)
+        # Insert a new node at head.
+        n2 = dtfcornode.Node("n2", outputs=["out1"])
+        dag.insert_at_head(n2)
+        self._check(dag)
+
+    def test_insert_at_head3(self) -> None:
+        """
+        Insert a node at head on a multinode DAG.
+        """
+        # Create a multinode DAG.
+        dag = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfcornode.Node("n2", inputs=["in1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        # Insert a new node at head.
+        n3 = dtfcornode.Node("n3", outputs=["out1"])
+        dag.insert_at_head(n3)
+        self._check(dag)
+
+    def test_insert_at_head4(self) -> None:
+        """
+        Insert a DAG at head on a multinode DAG.
+        """
+        # Create a multinode DAG.
+        dag1 = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1", inputs=["in1"], outputs=["out1"])
+        dag1.add_node(n1)
+        n2 = dtfcornode.Node("n2", inputs=["in1"])
+        dag1.add_node(n2)
+        dag1.connect("n1", "n2")
+        # Create a second multinode DAG.
+        dag2 = dtfcordag.DAG()
+        n3 = dtfcornode.Node("n3", outputs=["out1"])
+        dag2.add_node(n3)
+        n4 = dtfcornode.Node("n4", inputs=["in1"], outputs=["out1"])
+        dag2.add_node(n4)
+        dag2.connect("n3", "n4")
+        # Insert `dag2` at head of `dag1`.
+        dag1.insert_at_head(dag2)
+        self._check(dag1)
+
+    def test_append_to_tail1(self) -> None:
+        """
+        Append a node to tail on an empty DAG.
+        """
+        # Create an empty DAG.
+        dag = dtfcordag.DAG()
+        # Append a new node to tail.
+        n1 = dtfcornode.Node("n1")
+        dag.append_to_tail(n1)
+        self._check(dag)
+
+    def test_append_to_tail2(self) -> None:
+        """
+        Append a node to tail on a nonempty DAG.
+        """
+        # Create a single-node DAG.
+        dag = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        # Append a new node to tail.
+        n2 = dtfcornode.Node("n2", inputs=["in1"])
+        dag.append_to_tail(n2)
+        self._check(dag)
+
+    def test_append_to_tail3(self) -> None:
+        """
+        Append a node to tail on a multinode DAG.
+        """
+        # Create a multinode DAG.
+        dag = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1", outputs=["out1"])
+        dag.add_node(n1)
+        n2 = dtfcornode.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag.add_node(n2)
+        dag.connect("n1", "n2")
+        # Append a new node to tail.
+        n3 = dtfcornode.Node("n3", inputs=["in1"])
+        dag.append_to_tail(n3)
+        self._check(dag)
+
+    def test_append_to_tail4(self) -> None:
+        """
+        Append a DAG to tail on a multinode DAG.
+        """
+        # Create a multinode DAG.
+        dag1 = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1", outputs=["out1"])
+        dag1.add_node(n1)
+        n2 = dtfcornode.Node("n2", inputs=["in1"], outputs=["out1"])
+        dag1.add_node(n2)
+        dag1.connect("n1", "n2")
+        # Create a second multinode DAG.
+        dag2 = dtfcordag.DAG()
+        n3 = dtfcornode.Node("n3", inputs=["in1"], outputs=["out1"])
+        dag2.add_node(n3)
+        n4 = dtfcornode.Node("n4", inputs=["in1"])
+        dag2.add_node(n4)
+        dag2.connect("n3", "n4")
+        # Append `dag2` to tail of `dag1`.
+        dag1.append_to_tail(dag2)
+        self._check(dag1)
+
+
+# #############################################################################
+# Test_dataflow_core_DAG5
+# #############################################################################
+
+
+class Test_dataflow_core_DAG5(_TestDataflowHelper):
+    def test_compose_empty_with_empty(self) -> None:
+        dag1 = dtfcordag.DAG()
+        dag2 = dtfcordag.DAG()
+        dag1.compose(dag2)
+        self._check(dag1)
+
+    def test_compose_empty_with_nonempty(self) -> None:
+        dag1 = dtfcordag.DAG()
+        #
+        dag2 = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1")
+        dag2.add_node(n1)
+        #
+        dag1.compose(dag2)
+        self._check(dag1)
+
+    def test_compose_nonempty_with_empty(self) -> None:
+        dag1 = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1")
+        dag1.add_node(n1)
+        #
+        dag2 = dtfcordag.DAG()
+        #
+        dag1.compose(dag2)
+        self._check(dag1)
+
+    def test_compose_nonempty_with_nonempty(self) -> None:
+        dag1 = dtfcordag.DAG()
+        n1 = dtfcornode.Node("n1")
+        dag1.add_node(n1)
+        #
+        dag2 = dtfcordag.DAG()
+        n2 = dtfcornode.Node("n2")
+        dag2.add_node(n2)
+        #
+        dag1.compose(dag2)
+        self._check(dag1)

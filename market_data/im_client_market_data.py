@@ -5,14 +5,16 @@ import market_data.im_client_market_data as mdimcmada
 """
 
 import logging
-from typing import Any, List, Optional
+from typing import Any, List, Optional, cast
 
 import numpy as np
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
+import im_v2.common.universe as ivcu
 import market_data.abstract_market_data as mdabmada
 
 _LOG = logging.getLogger(__name__)
@@ -27,7 +29,7 @@ class ImClientMarketData(mdabmada.MarketData):
         self, *args: Any, im_client: icdc.ImClient, **kwargs: Any
     ) -> None:
         """
-        Constructor.
+        Build object.
         """
         super().__init__(*args, **kwargs)
         hdbg.dassert_isinstance(im_client, icdc.ImClient)
@@ -39,7 +41,7 @@ class ImClientMarketData(mdabmada.MarketData):
         asset_ids: List[int],
     ) -> pd.Series:
         """
-        This method overrides parent method in `MarketData`.
+        Override parent method in `MarketData`.
 
         In contrast with specific `MarketData` backends,
         `ImClientMarketData` uses the end of interval for date
@@ -85,6 +87,11 @@ class ImClientMarketData(mdabmada.MarketData):
         """
         See the parent class.
         """
+        _LOG.debug(
+            hprint.to_str(
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
+            )
+        )
         if not left_close:
             if start_ts is not None:
                 # Add one millisecond to not include the left boundary.
@@ -102,24 +109,45 @@ class ImClientMarketData(mdabmada.MarketData):
                 asset_ids
             )
         # Load the data using `im_client`.
-        icdc.dassert_valid_full_symbols(full_symbols)
-        market_data = self._im_client.read_data(
-            full_symbols,
-            start_ts,
-            end_ts,
-        )
-        # Add `asset_id` column.
-        _LOG.debug("asset_id_col=%s", self._asset_id_col)
+        ivcu.dassert_valid_full_symbols(full_symbols)
+        #
         # TODO(gp): im_client should always return the name of the column storing
         #  the asset_id as "full_symbol" instead we access the class to see what
         #  is the name of that column.
         full_symbol_col_name = self._im_client._get_full_symbol_col_name(None)
+        if self._columns is not None:
+            # Exclude columns specific of `MarketData` when querying `ImClient`.
+            columns_to_exclude_in_im = [
+                self._asset_id_col,
+                self._start_time_col_name,
+                self._end_time_col_name,
+            ]
+            query_columns = [
+                col
+                for col in self._columns
+                if col not in columns_to_exclude_in_im
+            ]
+            if full_symbol_col_name not in query_columns:
+                # Add full symbol column to the query if its name wasn't passed
+                # since it is necessary for asset id column generation.
+                query_columns.insert(0, full_symbol_col_name)
+        else:
+            query_columns = cast(List[str], self._columns)
+        # Read data.
+        market_data = self._im_client.read_data(
+            full_symbols,
+            start_ts,
+            end_ts,
+            query_columns,
+            self._filter_data_mode,
+        )
+        # Add `asset_id` column.
+        _LOG.debug("asset_id_col=%s", self._asset_id_col)
         _LOG.debug("full_symbol_col_name=%s", full_symbol_col_name)
         _LOG.debug("market_data.columns=%s", sorted(list(market_data.columns)))
         hdbg.dassert_in(full_symbol_col_name, market_data.columns)
-
         transformed_asset_ids = self._im_client.get_asset_ids_from_full_symbols(
-            market_data[full_symbol_col_name]
+            market_data[full_symbol_col_name].tolist()
         )
         if self._asset_id_col in market_data.columns:
             _LOG.debug(
@@ -132,11 +160,11 @@ class ImClientMarketData(mdabmada.MarketData):
                 self._asset_id_col,
                 transformed_asset_ids,
             )
+        if self._columns is not None:
+            # Drop full symbol column if it was not in the sepcified columns.
+            if full_symbol_col_name not in self._columns:
+                market_data = market_data.drop(full_symbol_col_name, axis=1)
         hdbg.dassert_in(self._asset_id_col, market_data.columns)
-        if self._columns:
-            # Select only specified columns.
-            hdbg.dassert_is_subset(self._columns, market_data.columns)
-            market_data = market_data[self._columns]
         if limit:
             # Keep only top N records.
             hdbg.dassert_lte(1, limit)
@@ -180,18 +208,42 @@ class ImClientMarketData(mdabmada.MarketData):
         return df
 
     def _get_last_end_time(self) -> Optional[pd.Timestamp]:
-        # We need to find the last timestamp before the current time. We use
-        # `7D` but could also use all the data since we don't call the DB.
+        # We need to find the last timestamp before the current time. If don't have data
+        # for an asset for the past hour it does not make any sense to compute further.
         # TODO(gp): SELECT MAX(start_time) instead of getting all the data
         #  and then find the max and use `start_time`
-        timedelta = pd.Timedelta("7D")
+        timedelta = pd.Timedelta("1H")
         df = self.get_data_for_last_period(timedelta)
         _LOG.debug(
             hpandas.df_to_str(df, print_shape_info=True, tag="after get_data")
         )
         if df.empty:
+            wall_clock_time = self.get_wall_clock_time()
+            _LOG.warning("No data found near wall_clock_time=%s", self.wall_clock_time)
             ret = None
         else:
-            ret = df.index.max()
+            # The latest timestamp is min timestamp across max timestamps
+            # across all assets. In other words, data is ready when data is
+            # ready for every asset.
+            # E.g., we have 3 assets and their data timestamps are the following:
+            # asset1: 15:58, 15:59, 16:00
+            # asset2: 15:58, 15:59
+            # asset3: 15:58, 15:59, 16:00, 16:01
+            # We are looking for end timestamp that is present for all the assets.
+            # In this case, it is 15:59 because at 16:00 the data is available
+            # only for `asset1` and `asset3`.
+            df_max_ts_per_asset = (
+                df.reset_index()
+                .groupby(by=[self._asset_id_col])
+                .max()[self._end_time_col_name]
+            )
+            _LOG.debug(
+                hpandas.df_to_str(
+                    df_max_ts_per_asset,
+                    print_shape_info=True,
+                    tag="latest timestamp per asset",
+                )
+            )
+            ret = df_max_ts_per_asset.min()
         _LOG.debug("-> ret=%s", ret)
         return ret

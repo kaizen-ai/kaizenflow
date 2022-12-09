@@ -63,6 +63,17 @@ class Test_process_outliers1(hunitest.TestCase):
             upper_quantile=upper_quantile,
         )
 
+    @staticmethod
+    def _get_data1() -> pd.Series:
+        np.random.seed(100)
+        n = 100000
+        data = np.random.normal(loc=0.0, scale=1.0, size=n)
+        return pd.Series(data)
+
+    @staticmethod
+    def _get_data2() -> pd.Series:
+        return pd.Series(range(1, 10))
+
     def _helper(
         self,
         srs: pd.Series,
@@ -89,17 +100,6 @@ class Test_process_outliers1(hunitest.TestCase):
         txt.append("# srs_out")
         txt.append(str(srs_out.head(num_df_rows)))
         self.check_string("\n".join(txt))
-
-    @staticmethod
-    def _get_data1() -> pd.Series:
-        np.random.seed(100)
-        n = 100000
-        data = np.random.normal(loc=0.0, scale=1.0, size=n)
-        return pd.Series(data)
-
-    @staticmethod
-    def _get_data2() -> pd.Series:
-        return pd.Series(range(1, 10))
 
 
 class TestProcessNonfinite1(hunitest.TestCase):

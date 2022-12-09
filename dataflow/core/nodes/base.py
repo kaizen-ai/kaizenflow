@@ -347,17 +347,6 @@ class YConnector(FitPredictNode):
         self._set_info("predict", info)
         return {"df_out": df_out}
 
-    def _apply_connector_func(
-        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
-    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
-        self._df_in1_col_names = df_in1.columns.tolist()
-        self._df_in2_col_names = df_in2.columns.tolist()
-        # TODO(Paul): Add meaningful info.
-        df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
-        info = collections.OrderedDict()
-        info["df_merged_info"] = dtfcorutil.get_df_info_as_string(df_out)
-        return df_out, info
-
     @staticmethod
     def _get_col_names(col_names: Optional[List[str]]) -> List[str]:
         hdbg.dassert_is_not(
@@ -368,6 +357,17 @@ class YConnector(FitPredictNode):
         )
         col_names = cast(List[str], col_names)
         return col_names
+
+    def _apply_connector_func(
+        self, df_in1: pd.DataFrame, df_in2: pd.DataFrame
+    ) -> Tuple[pd.DataFrame, Dict[str, Any]]:
+        self._df_in1_col_names = df_in1.columns.tolist()
+        self._df_in2_col_names = df_in2.columns.tolist()
+        # TODO(Paul): Add meaningful info.
+        df_out = self._connector_func(df_in1, df_in2, **self._connector_kwargs)
+        info = collections.OrderedDict()
+        info["df_merged_info"] = dtfcorutil.get_df_info_as_string(df_out)
+        return df_out, info
 
 
 class ColModeMixin:
@@ -511,6 +511,7 @@ class GroupedColDfToDfColProcessor:
         # Sanity check each column group tuple.
         for col_group in col_groups:
             hdbg.dassert_isinstance(col_group, tuple)
+            hdbg.dassert_in(col_group, df.columns)
             hdbg.dassert_eq(
                 len(col_group),
                 df.columns.nlevels - 1,
@@ -527,6 +528,7 @@ class GroupedColDfToDfColProcessor:
         _LOG.debug("keys=%s", keys)
         # Ensure all groups have the same keys.
         for col_group in col_groups:
+            hdbg.dassert_in(col_group, df_out.columns)
             col_group_keys = df_out[col_group].columns.to_list()
             hdbg.dassert_set_eq(keys, col_group_keys)
         # Swap levels in `df` so that keys are top level.
@@ -596,9 +598,9 @@ class CrossSectionalDfToDfColProcessor:
         0 1 2 3
         ```
     2.  If we perform residualization on `df` as given above instead of
-        principcal component projection, then column names are preserved
+        principal component projection, then column names are preserved
         after the residualization, and we may apply `postprocess()` with
-        `col_group = "residual"` to obtian
+        `col_group = "residual"` to obtain
         ```
         residual
         MN0 MN1 MN2 MN3

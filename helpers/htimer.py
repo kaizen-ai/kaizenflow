@@ -146,7 +146,7 @@ def dtimer_stop(memento: _TimerMemento) -> Tuple[str, float]:
     log_level, message, timer = memento
     timer.stop()
     elapsed_time = round(timer.get_elapsed(), 3)
-    msg = "%s done (%.3f s)" % (message, elapsed_time)
+    msg = f"{message} done (%.3f s)" % elapsed_time
     _LOG.log(log_level, msg)
     return msg, elapsed_time
 
@@ -194,7 +194,7 @@ class TimedScope:
             _ = msg
 
     def get_result(self) -> str:
-        msg = "%s done (%.3f s)" % (self._message, self.elapsed_time)
+        msg: str = f"{self._message} done (%.3f s)" % self.elapsed_time
         return msg
 
 
@@ -205,7 +205,7 @@ class TimedScope:
 
 def timed(f: Callable) -> Callable:
     """
-    Decorator adding a timer around the invocation of a function.
+    Add a timer around the invocation of a function.
     """
 
     def wrapper(*args: Any, **kwargs: Any) -> Any:
@@ -252,13 +252,11 @@ def dmemory_stop(memento: _MemoryMemento, *, mode: str = "all") -> str:
     verbose = False
     start_mem = hloggin.memory_to_str(start_memory_usage, verbose=verbose)
     end_mem = hloggin.memory_to_str(end_memory_usage, verbose=verbose)
-    diff_mem = tuple(
-        [x - y for x, y in zip(end_memory_usage, start_memory_usage)]
-    )
+    diff_mem = tuple(x - y for x, y in zip(end_memory_usage, start_memory_usage))
     diff_mem = hloggin.memory_to_str(diff_mem, verbose=verbose)
     # Package the output.
     msg = []
-    msg.append("%s done:" % message)
+    msg.append(f"{message} done:")
     if mode == "all":
         msg.append(f"start=({start_mem})")
         msg.append(f"end=({end_mem})")
@@ -266,7 +264,7 @@ def dmemory_stop(memento: _MemoryMemento, *, mode: str = "all") -> str:
     elif mode == "only_diff":
         msg.append(f"diff=({diff_mem})")
     else:
-        raise ValueError("Invalid mode='%s'" % mode)
+        raise ValueError(f"Invalid mode='{mode}'")
     msg = " ".join(msg)
     _LOG.log(log_level, msg)
     return msg

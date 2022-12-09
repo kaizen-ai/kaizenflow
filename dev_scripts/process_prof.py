@@ -88,14 +88,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         if dir_name == "":
             dir_name = "."
         graph_file = os.path.abspath(dir_name + "/output." + args.ext)
-        dot_cmd = "gprof2dot -f pstats %s | dot -T%s -o %s" % (
-            prof_file,
-            args.ext,
-            graph_file,
+        dot_cmd = (
+            f"gprof2dot -f pstats {prof_file} | dot -T{args.ext} -o {graph_file}"
         )
         hsystem.system(dot_cmd)
         _LOG.info("Output profile graph: %s", graph_file)
-        hdbg.dassert(os.path.exists(graph_file), msg="Can't find %s" % graph_file)
+        hdbg.dassert(os.path.exists(graph_file), msg=f"Can't find {graph_file}")
         # > eog output.png
     elif args.action == "custom_code":
         # Custom code for profiling.
@@ -131,7 +129,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             for func in funcs:
                 p.print_callers(func)
     else:
-        raise ValueError("Invalid action='%s'" % action)
+        raise ValueError(f"Invalid action='{args.action}'")
 
 
 if __name__ == "__main__":

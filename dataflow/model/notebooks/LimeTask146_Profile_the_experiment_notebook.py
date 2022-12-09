@@ -31,7 +31,7 @@ import dataflow_model.model_evaluator as cdtfmomoev
 import dataflow_model.model_plotter as cdtfmomopl
 
 import core.config as cconfig
-import dataflow.model.experiment_utils as dtfmoexuti
+import dataflow.model.dataflow_utils as dtfbaexuti
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 
@@ -59,7 +59,7 @@ if config is None:
     # selected_idxs = None
     selected_idxs = range(3)
 
-    eval_config = cconfig.get_config_from_nested_dict(
+    eval_config = cconfig.Config.from_dict(
         {
             "load_experiment_kwargs": {
                 "src_dir": exp_dir,
@@ -96,7 +96,7 @@ load_config["load_rb_kwargs"] = {
         eval_config["model_evaluator_kwargs"]["predictions_col"],
     ]
 }
-result_bundle_dict = dtfmoexuti.load_experiment_artifacts(**load_config)
+result_bundle_dict = dtfbaexuti.load_experiment_artifacts(**load_config)
 
 # Build the ModelEvaluator.
 evaluator = cdtfmomoev.ModelEvaluator.from_result_bundle_dict(

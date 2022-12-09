@@ -12,7 +12,7 @@ import collections
 import functools
 import logging
 import operator
-from typing import Any, Dict, Optional, Tuple, Union, cast
+from typing import Any, Dict, List, Optional, Tuple, Union, cast
 
 import numpy as np
 import pandas as pd
@@ -153,7 +153,7 @@ def _combine_masks(
     elif mode == "or":
         combined_mask = masks.any(axis=1)
     else:
-        raise ValueError("Invalid `mode`='%s'" % mode)
+        raise ValueError(f"Invalid `mode`='{mode}'")
     if combined_mask.sum() == 0:
         _LOG.warning("No data remaining after filtering.")
     info["nrows_remaining"] = combined_mask.sum()
@@ -270,3 +270,26 @@ def compute_count_per_year(data: Union[pd.Series, pd.DataFrame]) -> float:
     count_per_year = data.count() / span_in_years
     count_per_year = cast(float, count_per_year)
     return count_per_year
+
+
+def remove_duplicates(
+    data: pd.DataFrame,
+    duplicate_columns: Optional[List[str]],
+    control_column: Optional[str],
+) -> pd.DataFrame:
+    """
+    Remove duplicates from DataFrame.
+
+    :param data: DataFrame to process
+    :param duplicate_columns: subset of column names, None for all
+    :param control_column: column max value of which determines the kept row
+    :return: DataFrame with removed duplicates
+    """
+    # Fix maximum value of control column at the bottom.
+    if control_column:
+        data = data.sort_values(by=control_column)
+    duplicate_columns = duplicate_columns or data.columns
+    data = data.drop_duplicates(subset=duplicate_columns)
+    # Sort by index to return to original view.
+    data = data.sort_index()
+    return data

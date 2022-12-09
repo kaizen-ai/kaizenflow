@@ -27,7 +27,7 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import im.common.data.types as imcodatyp
-import im.kibot.data.load.kibot_s3_data_loader as ikdlksdlo
+import im.kibot.data.load.kibot_s3_data_loader as imkdlksdlo
 import im.kibot.metadata.load.s3_backend as imkmls3ba
 
 # %%
@@ -224,7 +224,7 @@ len(stocks_symbols)
 # # Example for data loading
 
 # %%
-kibot_loader = ikdlksdlo.KibotS3DataLoader()
+kibot_loader = imkdlksdlo.KibotS3DataLoader()
 
 # %% [markdown]
 # ## Futures

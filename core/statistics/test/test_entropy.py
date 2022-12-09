@@ -37,16 +37,16 @@ class Test_compute_hill_number(hunitest.TestCase):
         np.testing.assert_allclose(actual_1, actual_2)
 
     def test_exponentially_distributed1(self) -> None:
-        data = pd.Series([2 ** j for j in range(10, 0, -1)])
+        data = pd.Series([2**j for j in range(10, 0, -1)])
         actual = cstaentr.compute_hill_number(data, 1)
         np.testing.assert_allclose(actual, 3.969109, atol=1e-5)
 
     def test_exponentially_distributed2(self) -> None:
-        data = pd.Series([2 ** j for j in range(10, 0, -1)])
+        data = pd.Series([2**j for j in range(10, 0, -1)])
         actual = cstaentr.compute_hill_number(data, 2)
         np.testing.assert_allclose(actual, 2.994146, atol=1e-5)
 
     def test_exponentially_distributed3(self) -> None:
-        data = pd.Series([2 ** j for j in range(10, 0, -1)])
+        data = pd.Series([2**j for j in range(10, 0, -1)])
         actual = cstaentr.compute_hill_number(data, np.inf)
         np.testing.assert_allclose(actual, 1.998047, atol=1e-5)

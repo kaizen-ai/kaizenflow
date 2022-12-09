@@ -17,13 +17,13 @@ source devops/docker_run/setenv.sh
 #umask 000
 
 # Enable dind unless the user specifies otherwise (needed for prod image).
-if [ -z "$ENABLE_DIND" ]; then
-    ENABLE_DIND=1
-    echo "ENABLE_DIND=$ENABLE_DIND"
+if [ -z "$AM_ENABLE_DIND" ]; then
+    AM_ENABLE_DIND=1
+    echo "AM_ENABLE_DIND=$AM_ENABLE_DIND"
 fi;
 
-if [[ $ENABLE_DIND == 1 ]]; then
-    echo "# Setting up Docker-in-docker"
+if [[ $AM_ENABLE_DIND == 1 ]]; then
+    echo "# Set up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
     fi;
@@ -33,7 +33,7 @@ if [[ $ENABLE_DIND == 1 ]]; then
     # Start Docker Engine.
     sudo /etc/init.d/docker start
     sudo /etc/init.d/docker status
-    # Wait for Docker Engine to be started, otherwise `docker.sock` file is 
+    # Wait for Docker Engine to be started, otherwise `docker.sock` file is
     # not created so fast. This is needed to change `docker.sock` permissions.
     DOCKER_SOCK_FILE=/var/run/docker.sock
     COUNTER=0
@@ -63,39 +63,52 @@ if [[ $ENABLE_DIND == 1 ]]; then
     done
 fi;
 
-
 # Mount other file systems.
 # mount -a || true
 # sudo change perms to /mnt/tmpfs
+
+# Check git.
+VAL=$(git --version)
+echo "git --version: $VAL"
+# TODO(gp): Check https://github.com/alphamatic/amp/issues/2200#issuecomment-1101756708
+git config --global --add safe.directory /app
+if [[ -d /app/amp ]]; then
+    git config --global --add safe.directory /app/amp
+fi;
+if [[ -d /src/amp ]]; then
+    git config --global --add safe.directory /src/amp
+fi;
+git config --global --add safe.directory /src
+git rev-parse --show-toplevel
 
 # Check set-up.
 ./devops/docker_run/test_setup.sh
 
 # AWS.
 echo "# Check AWS authentication setup"
-if [[ $AWS_ACCESS_KEY_ID == "" ]]; then
-    unset AWS_ACCESS_KEY_ID
+if [[ $AM_AWS_ACCESS_KEY_ID == "" ]]; then
+    unset AM_AWS_ACCESS_KEY_ID
 else
-    echo "AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'"
+    echo "AM_AWS_ACCESS_KEY_ID='$AM_AWS_ACCESS_KEY_ID'"
 fi;
 
-if [[ $AWS_SECRET_ACCESS_KEY == "" ]]; then
-    unset AWS_SECRET_ACCESS_KEY
+if [[ $AM_AWS_SECRET_ACCESS_KEY == "" ]]; then
+    unset AM_AWS_SECRET_ACCESS_KEY
 else
-    echo "AWS_SECRET_ACCESS_KEY='***'"
+    echo "AM_AWS_SECRET_ACCESS_KEY='***'"
 fi;
 
-if [[ $AWS_DEFAULT_REGION == "" ]]; then
-    unset AWS_DEFAULT_REGION
+if [[ $AM_AWS_DEFAULT_REGION == "" ]]; then
+    unset AM_AWS_DEFAULT_REGION
 else
-    echo "AWS_DEFAULT_REGION='$AWS_DEFAULT_REGION'"
+    echo "AM_AWS_DEFAULT_REGION='$AM_AWS_DEFAULT_REGION'"
 fi;
 aws configure --profile am list || true
 
 echo "AM_CONTAINER_VERSION='$AM_CONTAINER_VERSION'"
 
 # Test the installed packages.
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "docker -v: "$(docker -v)
     echo "docker-compose -v: "$(docker-compose -v)
 fi;
@@ -103,14 +116,14 @@ VAL=$(which python)
 echo "which python: $VAL"
 VAL=$(python -V)
 echo "python -V: $VAL"
-VAL=$(python -c "import pandas; print(pandas.__version__)")
-echo "pandas: $VAL"
 VAL=$(python -c "import helpers; print(helpers)")
 echo "helpers: $VAL"
 
 echo "PATH=$PATH"
 echo "PYTHONPATH=$PYTHONPATH"
 echo "entrypoint.sh: '$@'"
+
+invoke print_env
 
 # TODO(gp): eval seems to be more general, but it creates a new executable.
 eval "$@"

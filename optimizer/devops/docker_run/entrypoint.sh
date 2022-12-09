@@ -17,12 +17,12 @@ source devops/docker_run/setenv.sh
 #umask 000
 
 # Enable dind unless the user specifies otherwise (needed for prod image).
-if [ -z "$ENABLE_DIND" ]; then
-    ENABLE_DIND=0
-    echo "ENABLE_DIND=$ENABLE_DIND"
+if [ -z "$AM_ENABLE_DIND" ]; then
+    AM_ENABLE_DIND=0
+    echo "AM_ENABLE_DIND=$AM_ENABLE_DIND"
 fi;
 
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "Setting up Docker-in-docker"
     if [[ ! -d /etc/docker ]]; then
         sudo mkdir /etc/docker
@@ -45,29 +45,29 @@ fi;
 
 # AWS.
 echo "# Check AWS authentication setup"
-if [[ $AWS_ACCESS_KEY_ID == "" ]]; then
-    unset AWS_ACCESS_KEY_ID
+if [[ $AM_AWS_ACCESS_KEY_ID == "" ]]; then
+    unset AM_AWS_ACCESS_KEY_ID
 else
-    echo "AWS_ACCESS_KEY_ID='$AWS_ACCESS_KEY_ID'"
+    echo "AM_AWS_ACCESS_KEY_ID='$AM_AWS_ACCESS_KEY_ID'"
 fi;
 
-if [[ $AWS_SECRET_ACCESS_KEY == "" ]]; then
-    unset AWS_SECRET_ACCESS_KEY
+if [[ $AM_AWS_SECRET_ACCESS_KEY == "" ]]; then
+    unset AM_AWS_SECRET_ACCESS_KEY
 else
-    echo "AWS_SECRET_ACCESS_KEY='***'"
+    echo "AM_AWS_SECRET_ACCESS_KEY='***'"
 fi;
 
-if [[ $AWS_DEFAULT_REGION == "" ]]; then
-    unset AWS_DEFAULT_REGION
+if [[ $AM_AWS_DEFAULT_REGION == "" ]]; then
+    unset AM_AWS_DEFAULT_REGION
 else
-    echo "AWS_DEFAULT_REGION='$AWS_DEFAULT_REGION'"
+    echo "AM_AWS_DEFAULT_REGION='$AM_AWS_DEFAULT_REGION'"
 fi;
 aws configure --profile am list || true
 
 echo "OPT_CONTAINER_VERSION='$OPT_CONTAINER_VERSION'"
 
 # Test the installed packages.
-if [[ $ENABLE_DIND == 1 ]]; then
+if [[ $AM_ENABLE_DIND == 1 ]]; then
     echo "docker -v: "$(docker -v)
     echo "docker-compose -v: "$(docker-compose -v)
 fi;

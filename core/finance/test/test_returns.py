@@ -4,7 +4,7 @@ import logging
 import numpy as np
 import pandas as pd
 
-import core.finance as cofinanc
+import core.finance.returns as cfinretu
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
@@ -28,7 +28,7 @@ class TestComputeOvernightReturns(hunitest.TestCase):
             .T
         )
         data = data.convert_dtypes()
-        actual = cofinanc.compute_overnight_returns(
+        actual = cfinretu.compute_overnight_returns(
             data,
             "asset_id",
         )
@@ -45,8 +45,8 @@ datetime
 class Test_compute_prices_from_rets(hunitest.TestCase):
     def test1(self) -> None:
         sample = self._get_sample()
-        sample["rets"] = cofinanc.compute_ret_0(sample.price, mode="pct_change")
-        sample["price_pred"] = cofinanc.compute_prices_from_rets(
+        sample["rets"] = cfinretu.compute_ret_0(sample.price, mode="pct_change")
+        sample["price_pred"] = cfinretu.compute_prices_from_rets(
             sample.price, sample.rets, "pct_change"
         )
         sample = sample.dropna()
@@ -54,8 +54,8 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
 
     def test2(self) -> None:
         sample = self._get_sample()
-        sample["rets"] = cofinanc.compute_ret_0(sample.price, mode="log_rets")
-        sample["price_pred"] = cofinanc.compute_prices_from_rets(
+        sample["rets"] = cfinretu.compute_ret_0(sample.price, mode="log_rets")
+        sample["price_pred"] = cfinretu.compute_prices_from_rets(
             sample.price, sample.rets, "log_rets"
         )
         sample = sample.dropna()
@@ -63,8 +63,8 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
 
     def test3(self) -> None:
         sample = self._get_sample()
-        sample["rets"] = cofinanc.compute_ret_0(sample.price, mode="diff")
-        sample["price_pred"] = cofinanc.compute_prices_from_rets(
+        sample["rets"] = cfinretu.compute_ret_0(sample.price, mode="diff")
+        sample["price_pred"] = cfinretu.compute_prices_from_rets(
             sample.price, sample.rets, "diff"
         )
         sample = sample.dropna()
@@ -76,7 +76,7 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
         """
         sample = pd.DataFrame({"price": [1, 2, 3], "fwd_ret": [1, 0.5, np.nan]})
         sample["ret_0"] = sample.fwd_ret.shift(1)
-        sample["price_pred"] = cofinanc.compute_prices_from_rets(
+        sample["price_pred"] = cfinretu.compute_prices_from_rets(
             sample.price, sample.ret_0, "pct_change"
         ).shift(1)
         sample = sample.dropna()
@@ -88,9 +88,9 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
         """
         np.random.seed(0)
         sample = self._get_sample()
-        sample["ret_0"] = cofinanc.compute_ret_0(sample.price, mode="log_rets")
+        sample["ret_0"] = cfinretu.compute_ret_0(sample.price, mode="log_rets")
         sample["ret_1"] = sample["ret_0"].shift(-1)
-        sample["price_pred"] = cofinanc.compute_prices_from_rets(
+        sample["price_pred"] = cfinretu.compute_prices_from_rets(
             sample.price, sample.ret_1.shift(1), "log_rets"
         )
         output_txt = hunitest.convert_df_to_string(sample, index=True)
@@ -102,7 +102,7 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
         """
         np.random.seed(1)
         sample = self._get_sample()
-        sample["ret_1"] = cofinanc.compute_ret_0(
+        sample["ret_1"] = cfinretu.compute_ret_0(
             sample.price, mode="log_rets"
         ).shift(-1)
         future_price_expected = sample.iloc[-1, 0]
@@ -111,7 +111,7 @@ class Test_compute_prices_from_rets(hunitest.TestCase):
         rets = sample["ret_1"]
         rets.index = rets.index.shift(1)
         # Make future prediction for the dropped price.
-        future_price_actual = cofinanc.compute_prices_from_rets(
+        future_price_actual = cfinretu.compute_prices_from_rets(
             sample.price, rets, "log_rets"
         )[-1]
         np.testing.assert_almost_equal(future_price_expected, future_price_actual)

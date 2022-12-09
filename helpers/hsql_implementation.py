@@ -18,6 +18,7 @@ import psycopg2.extras as extras
 import psycopg2.sql as psql
 
 import helpers.hasyncio as hasynci
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hintrospection as hintros
 import helpers.hpandas as hpandas
@@ -104,20 +105,26 @@ def get_connection_info_from_env_file(env_file_path: str) -> DbConnectionInfo:
     """
     Get connection parameters from environment file.
 
-    :param env_file_path: path to an environment file that contains db connection parameters
+    :param env_file_path: path to an environment file that contains db connection
+        parameters
     """
     import dotenv
 
     db_config = dotenv.dotenv_values(env_file_path)
+    params = {
+        "host": db_config["POSTGRES_HOST"],
+        "dbname": db_config["POSTGRES_DB"],
+        "user": db_config["POSTGRES_USER"],
+        "password": db_config["POSTGRES_PASSWORD"],
+    }
+    key = "POSTGRES_PORT"
+    if key in db_config:
+        params["port"] = int(db_config[key])
+    else:
+        params["port"] = 5432
     # The parameters' names are fixed and cannot be changed, see
     # `https:://hub.docker.com/_/postgres`.
-    connection_parameters = DbConnectionInfo(
-        host=db_config["POSTGRES_HOST"],
-        dbname=db_config["POSTGRES_DB"],
-        port=int(db_config["POSTGRES_PORT"]),
-        user=db_config["POSTGRES_USER"],
-        password=db_config["POSTGRES_PASSWORD"],
-    )
+    connection_parameters = DbConnectionInfo(**params)
     return connection_parameters
 
 
@@ -226,11 +233,7 @@ def get_indexes(connection: DbConnection) -> pd.DataFrame:
     tables = get_table_names(connection)
     cursor = connection.cursor()
     for table in tables:
-        query = (
-            """SELECT * FROM pg_indexes WHERE tablename = '{table}' """.format(
-                table=table
-            )
-        )
+        query = f"""SELECT * FROM pg_indexes WHERE tablename = '{table}' """
         cursor.execute(query)
         z = cursor.fetchall()
         res.append(pd.DataFrame(z))
@@ -398,7 +401,7 @@ def head_table(
     Report the head of the table as str.
     """
     txt = []
-    query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+    query = f"SELECT * FROM {table} LIMIT {limit} "
     df = execute_query_to_df(connection, query)
     # pd.options.display.max_columns = 1000
     # pd.options.display.width = 130
@@ -446,13 +449,13 @@ def find_tables_common_columns(
     df = []
     for i, table in enumerate(tables):
         table = tables[i]
-        query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+        query = f"SELECT * FROM {table} LIMIT {limit} "
         df1 = execute_query_to_df(connection, query, verbose=False)
         if df1 is None:
             continue
         for j in range(i + 1, len(tables)):
             table = tables[j]
-            query = "SELECT * FROM %s LIMIT %s " % (table, limit)
+            query = f"SELECT * FROM {table} LIMIT {limit} "
             df2 = execute_query_to_df(connection, query, verbose=False)
             if df2 is None:
                 continue
@@ -467,10 +470,8 @@ def find_tables_common_columns(
                     )
                 )
             else:
-                print(("'%s' vs '%s'" % (tables[i], tables[j])))
-                print(
-                    ("    (%s): %s" % (len(common_cols), " ".join(common_cols)))
-                )
+                print(f"'{tables[i]}' vs '{tables[j]}'")
+                print(f"    ({len(common_cols)}): {' '.join(common_cols)}")
     obj = None
     if as_df:
         obj = pd.DataFrame(
@@ -529,14 +530,14 @@ def execute_query_to_df(
     """
     if False:
         # Ask the user before executing a query.
-        print("query=\n%s", query)
+        print(f"query=\n{query}")
         import helpers.hsystem as hsystem
 
         hsystem.query_yes_no("Ok to execute?")
     if limit is not None:
-        query += " LIMIT %s" % limit
+        query += f" LIMIT {limit}"
     if offset is not None:
-        query += " OFFSET %s" % offset
+        query += f" OFFSET {offset}"
     if profile:
         query = "EXPLAIN ANALYZE " + query
     if verbose:
@@ -635,6 +636,36 @@ def create_insert_query(df: pd.DataFrame, table_name: str) -> str:
     return query
 
 
+# TODO(gp): -> table_name, df
+def create_insert_on_conflict_do_nothing_query(
+    df: pd.DataFrame, table_name: str, unique_columns: List[str]
+) -> str:
+    """
+    Create an INSERT query to insert data into a DB. If a unique constraint is
+    violated for a provided set of columns, duplicates are not inserted.
+
+    :param df: data to insert into DB
+    :param table_name: name of the table for insertion
+    :param unique_columns: set of columns which should be unique record-wise.
+    :return: sql query, e.g.,
+        ```
+        INSERT INTO ccxt_bid_ask(timestamp,bid_size,bid_price,ask_size,
+        ask_price,exchange_id,currency_pair) VALUES %s
+        ON CONFLICT (timestamp, exchange_id, currency_pair) DO NOTHING;
+        ```
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    # Check that the constraint is actually applied to columns
+    # of the DataFrame.
+    hdbg.dassert_is_subset(unique_columns, list(df.columns))
+    columns = ",".join(list(df.columns))
+    unique_columns_str = ",".join(unique_columns)
+    query = f"INSERT INTO {table_name}({columns}) VALUES %s ON CONFLICT ({unique_columns_str}) \
+            DO NOTHING"
+    _LOG.debug("query=%s", query)
+    return query
+
+
 # TODO(gp): -> connection, table_name, obj
 def execute_insert_query(
     connection: DbConnection, obj: Union[pd.DataFrame, pd.Series], table_name: str
@@ -663,13 +694,56 @@ def execute_insert_query(
     connection.commit()
 
 
+# TODO(gp): -> connection, table_name, obj
+def execute_insert_on_conflict_do_nothing_query(
+    connection: DbConnection,
+    obj: Union[pd.DataFrame, pd.Series],
+    table_name: str,
+    unique_columns: List[str],
+) -> None:
+    """
+    Insert a DB as multiple rows into the database. If a a UNIQUE constraint is
+    violated for a provided set of columns, duplicates are not inserted.
+
+    :param connection: connection to the DB
+    :param obj: data to insert
+    :param table_name: name of the table for insertion
+    :param unique_columns: set of columns which should be unique record-wise.
+       If unique_columns is an empty list, a regular DB insert is executed
+       without the UNIQUE constraint.
+    """
+    if isinstance(obj, pd.Series):
+        df = obj.to_frame().T
+    else:
+        df = obj
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_in(table_name, get_table_names(connection))
+    _LOG.debug("df=\n%s", hpandas.df_to_str(df, use_tabulate=False))
+    # Transform dataframe into list of tuples.
+    values = [tuple(v) for v in df.to_numpy()]
+    # Generate a query for multiple rows.
+    if not unique_columns:
+        # If unique_columns is an empty list, currently used when saving
+        # bid/ask RT data, to experiment with using no uniqueness constraints.
+        query = create_insert_query(df, table_name)
+    else:
+        query = create_insert_on_conflict_do_nothing_query(
+            df, table_name, unique_columns
+        )
+    # Execute query for each provided row.
+    cur = connection.cursor()
+    extras.execute_values(cur, query, values)
+    connection.commit()
+
+
 def execute_query(connection: DbConnection, query: str) -> None:
     """
-    Used for generic simple operations.
+    Use for generic simple operations.
 
     :param connection: connection to the DB
     :param query: generic query that can be: insert, update, delete, etc.
     """
+    _LOG.debug(hprint.to_str("query"))
     with connection.cursor() as cursor:
         cursor.execute(query)
         if not connection.autocommit:
@@ -745,7 +819,7 @@ def is_row_with_value_present(
     show_db_state: bool = True,
 ) -> hasynci.PollOutput:
     """
-    A polling function that checks if a row with `field_name` == `target_value`
+    Check with a polling function if a row with `field_name` == `target_value`
     is present in the table `table_name` of the DB.
 
     E.g., this can be used with polling to wait for the target value
@@ -773,7 +847,8 @@ def is_row_with_value_present(
 
 # TODO(gp): Add unit test.
 async def wait_for_change_in_number_of_rows(
-    connection: DbConnection,
+    get_wall_clock_time: hdateti.GetWallClockTime,
+    db_connection: DbConnection,
     table_name: str,
     poll_kwargs: Dict[str, Any],
     *,
@@ -782,13 +857,17 @@ async def wait_for_change_in_number_of_rows(
     """
     Wait until the number of rows in a table changes.
 
-    :param poll_kwargs: a dictionary with the kwargs for `poll()`.
+    :param get_wall_clock_time: a function to get current time
+    :param db_connection: connection to the target DB
+    :param table_name: name of the table to poll
+    :param poll_kwargs: a dictionary with the kwargs for `poll()`
+    :param tag: name of the caller function
     :return: number of new rows found
     """
-    num_rows = get_num_rows(connection, table_name)
+    num_rows = get_num_rows(db_connection, table_name)
 
     def _is_number_of_rows_changed() -> hasynci.PollOutput:
-        new_num_rows = get_num_rows(connection, table_name)
+        new_num_rows = get_num_rows(db_connection, table_name)
         _LOG.debug("new_num_rows=%s num_rows=%s", new_num_rows, num_rows)
         success = new_num_rows != num_rows
         diff_num_rows = new_num_rows - num_rows
@@ -798,6 +877,8 @@ async def wait_for_change_in_number_of_rows(
     if tag is None:
         # Use name of the caller function.
         tag = hintros.get_function_name(count=0)
+    if poll_kwargs is None:
+        poll_kwargs = hasynci.get_poll_kwargs(get_wall_clock_time)
     num_iters, diff_num_rows = await hasynci.poll(
         _is_number_of_rows_changed,
         tag=tag,

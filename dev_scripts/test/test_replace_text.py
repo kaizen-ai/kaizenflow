@@ -20,9 +20,9 @@ class Test_get_files_to_rename(hunitest.TestCase):
         expected_file_map: List[Tuple[str, str]],
     ) -> None:
         """
-        Run the filter on the file names and check the outcome.
+        Run `_get_files_to_rename()` on the file names and check the outcome.
 
-        See param descriptions in `dscretex._get_files_to_rename`.
+        See param descriptions in `dscretex._get_files_to_rename()`.
 
         :param expected_file_names: file names expected to remain after filtering
         :param expected_file_map: the expected mapping for renaming the filtered files
@@ -49,11 +49,9 @@ class Test_get_files_to_rename(hunitest.TestCase):
         filter_by = r"/Test\..+"
         filter_on = "dirname"
         expected_file_names = [
-            "dir/Test.subdir/test.py",
             "dir/Test.subdir/test2.py",
         ]
         expected_file_map = [
-            ("dir/Test.subdir/test.py", "dir/Test.subdir/test.py"),
             ("dir/Test.subdir/test2.py", "dir/Test.subdir/testNUM.py"),
         ]
         self.helper(

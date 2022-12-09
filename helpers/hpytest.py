@@ -19,7 +19,7 @@ _LOG = logging.getLogger(__name__)
 def _pytest_show_artifacts(dir_name: str, tag: Optional[str] = None) -> List[str]:
     hdbg.dassert_ne(dir_name, "")
     hdbg.dassert_dir_exists(dir_name)
-    cd_cmd = "cd %s && " % dir_name
+    cd_cmd = f"cd {dir_name} && "
     # There might be no pytest artifacts.
     abort_on_error = False
     file_names: List[str] = []
@@ -73,7 +73,7 @@ def pytest_clean(dir_name: str, preview: bool = False) -> None:
                 elif os.path.isfile(f):
                     os.remove(f)
                 else:
-                    raise ValueError("Can't delete %s" % f)
+                    raise ValueError(f"Can't delete {f}")
             else:
                 _LOG.debug("rm %s", f)
     # Show after cleaning.

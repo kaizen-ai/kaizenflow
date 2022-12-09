@@ -1,7 +1,7 @@
 """
 Import as:
 
-import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
+import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwil
 """
 
 import logging

@@ -1,0 +1,152 @@
+{
+    "6051632686": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "8717633868": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "2540896331": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 30
+    },
+    "1528092593": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 20
+    },
+    "8968126878": {
+        "min_amount": 0.01,
+        "min_cost": 10.0,
+        "amount_precision": 2,
+        "max_leverage": 75
+    },
+    "1467591036": {
+        "min_amount": 0.001,
+        "min_cost": 10.0,
+        "amount_precision": 3,
+        "max_leverage": 125
+    },
+    "2476706208": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1,
+        "max_leverage": 21
+    },
+    "5115052901": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 25
+    },
+    "3065029174": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "1891737434": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1,
+        "max_leverage": 75
+    },
+    "3401245610": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1,
+        "max_leverage": 25
+    },
+    "1464553467": {
+        "min_amount": 0.001,
+        "min_cost": 10.0,
+        "amount_precision": 3,
+        "max_leverage": 100
+    },
+    "1966583502": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 25
+    },
+    "1030828978": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "2601760471": {
+        "min_amount": 0.01,
+        "min_cost": 10.0,
+        "amount_precision": 2,
+        "max_leverage": 75
+    },
+    "2683705052": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "9872743573": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "2484635488": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 25
+    },
+    "2099673105": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "4516629366": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 50
+    },
+    "2237530510": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 12
+    },
+    "2425308589": {
+        "min_amount": 1.0,
+        "min_cost": 10.0,
+        "amount_precision": 0,
+        "max_leverage": 25
+    },
+    "1776791608": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1,
+        "max_leverage": 25
+    },
+    "2384892553": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1,
+        "max_leverage": 50
+    },
+    "5118394986": {
+        "min_amount": 0.1,
+        "min_cost": 10.0,
+        "amount_precision": 1,
+        "max_leverage": 75
+    }
+}

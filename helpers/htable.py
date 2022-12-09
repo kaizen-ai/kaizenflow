@@ -51,7 +51,7 @@ class Table:
         lengths = [max(map(len, col)) for col in zip(*table_as_str)]
         _LOG.debug(hprint.to_str("lengths"))
         # Compute format for the columns.
-        fmt = " ".join("{{:{}}} |".format(x) for x in lengths)
+        fmt = " ".join(f"{{:{x}}} |" for x in lengths)
         _LOG.debug(hprint.to_str("fmt"))
         # Add the row separating the column names.
         row_sep = ["-" * length for length in lengths]
@@ -68,9 +68,9 @@ class Table:
 
     def __repr__(self) -> str:
         res = ""
-        res += "cols=%s" % str(self._column_names)
+        res += f"cols={str(self._column_names)}"
         res += "\ntable=\n%s" % "\n".join(map(str, self._table))
-        res += "\nsize=%s" % str(self.size())
+        res += "\n" + f"size={str(self.size())}"
         return res
 
     @classmethod
@@ -79,9 +79,7 @@ class Table:
         Build a table from a list of columns and the body of a CSV file.
         """
         hdbg.dassert_isinstance(txt, str)
-        table = [
-            line for line in csv.reader(txt.split("\n"), delimiter=delimiter)
-        ]
+        table = list(csv.reader(txt.split("\n"), delimiter=delimiter))
         return cls(table, cols)
 
     def size(self) -> Tuple[int, int]:

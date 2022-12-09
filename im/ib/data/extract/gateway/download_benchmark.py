@@ -19,7 +19,7 @@ import helpers.hio as hio
 import helpers.hparser as hparser
 import helpers.htimer as htimer
 import im.ib.data.extract.gateway.download_data_ib_loop as imidegddil
-import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwIl
+import im.ib.data.extract.gateway.save_historical_data_with_IB_loop as imidegshdwil
 import im.ib.data.extract.gateway.unrolling_download_data_ib_loop as imideguddil
 import im.ib.data.extract.gateway.utils as imidegaut
 
@@ -115,7 +115,7 @@ def _run_save_historical_data_with_IB_loop() -> None:
         dict(file_name=file_name, ib=imidegaut.ib_connect(400, is_notebook=False))
     )
     timer = htimer.Timer()
-    df = imidegshdwIl.save_historical_data_with_IB_loop(**args)
+    df = imidegshdwil.save_historical_data_with_IB_loop(**args)
     args["ib"].disconnect()
     _LOG.info(
         "Finished. Time: %s seconds. Dataframe: %s",

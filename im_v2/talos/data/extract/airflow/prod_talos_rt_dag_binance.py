@@ -1,3 +1,9 @@
+"""
+Import as:
+
+import im_v2.talos.data.extract.airflow.prod_talos_rt_dag_binance as imvtdeaptrdb
+"""
+
 import datetime
 
 import airflow
@@ -65,7 +71,7 @@ downloading_task = ECSOperator(
                 "command": bash_command,
                 "environment": [
                     {
-                        "name": "ENABLE_DIND",
+                        "name": "AM_ENABLE_DIND",
                         "value": "0",
                     },
                 ],

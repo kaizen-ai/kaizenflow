@@ -1,7 +1,7 @@
 """
 Import as:
 
-import core.bayesian as cobayesi
+import core.statistics.requires_pymc3 as cstrepym
 """
 
 import logging
@@ -93,10 +93,10 @@ def best(y1, y2, prior_tau: float = 1e-6, time_scaling: int = 1, **kwargs: Any):
         nu = pm.Exponential("nu_minus_2", 1 / 29.0, testval=4.0) + 2.0
         # Response distributions
         resp_group1 = pm.StudentT(
-            "group1", nu=nu, mu=group1_mean, lam=group1_std ** -2, observed=y1
+            "group1", nu=nu, mu=group1_mean, lam=group1_std**-2, observed=y1
         )
         resp_group2 = pm.StudentT(
-            "group2", nu=nu, mu=group2_mean, lam=group2_std ** -2, observed=y2
+            "group2", nu=nu, mu=group2_mean, lam=group2_std**-2, observed=y2
         )
         # T-test-like quantities
         diff_of_means = pm.Deterministic(
@@ -106,7 +106,7 @@ def best(y1, y2, prior_tau: float = 1e-6, time_scaling: int = 1, **kwargs: Any):
         pm.Deterministic(
             "effect size",
             diff_of_means
-            / pm.math.sqrt(0.5 * (group1_std ** 2 + group2_std ** 2)),
+            / pm.math.sqrt(0.5 * (group1_std**2 + group2_std**2)),
         )
         # Vol in sampling units, unless adjusted.
         group1_vol = pm.Deterministic(
@@ -166,7 +166,7 @@ def fit_laplace(
         vol = pm.Deterministic(
             VOL,
             np.sqrt(time_scaling)
-            * returns.distribution.variance ** 0.5,  # pylint: disable=no-member
+            * returns.distribution.variance**0.5,  # pylint: disable=no-member
         )
         pm.Deterministic(
             SR, time_scaling * returns.distribution.mean / vol
@@ -208,7 +208,7 @@ def fit_normal(
         vol = pm.Deterministic(
             VOL,
             np.sqrt(time_scaling)
-            * returns.distribution.variance ** 0.5,  # pylint: disable=no-member
+            * returns.distribution.variance**0.5,  # pylint: disable=no-member
         )
         pm.Deterministic(
             SR, time_scaling * returns.distribution.mean / vol
@@ -248,7 +248,7 @@ def fit_t(data, prior_tau: float = 1e-6, time_scaling: int = 1, **kwargs: Any):
         vol = pm.Deterministic(
             VOL,
             np.sqrt(time_scaling)
-            * returns.distribution.variance ** 0.5,  # pylint: disable=no-member
+            * returns.distribution.variance**0.5,  # pylint: disable=no-member
         )
         pm.Deterministic(
             SR, time_scaling * returns.distribution.mean / vol
@@ -309,7 +309,7 @@ def fit_one_way_normal(
         vol = pm.Deterministic(
             "volatility",
             np.sqrt(time_scaling)
-            * groups.distribution.variance ** 0.5,  # pylint: disable=no-member
+            * groups.distribution.variance**0.5,  # pylint: disable=no-member
         )
         pm.Deterministic(
             "sharpe", time_scaling * groups.distribution.mean / vol

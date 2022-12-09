@@ -5,6 +5,8 @@ import helpers.hunit_test as hunitest
 """
 
 import abc
+import collections
+import datetime
 import inspect
 import logging
 import os
@@ -22,10 +24,11 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hintrospection as hintros
 import helpers.hio as hio
-import helpers.hpandas as hpandas
 import helpers.hprint as hprint
+import helpers.hserver as hserver
 import helpers.hsystem as hsystem
 import helpers.htimer as htimer
+import helpers.hwall_clock_time as hwacltim
 
 # We use strings as type hints (e.g., 'pd.DataFrame') since we are not sure
 # we have the corresponding libraries installed.
@@ -193,18 +196,6 @@ def convert_df_to_string(
     return output_str
 
 
-# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
-#  depend on pandas.
-def subset_df(df: "pd.DataFrame", nrows: int, seed: int = 42) -> "pd.DataFrame":
-    hdbg.dassert_lte(1, nrows)
-    hdbg.dassert_lte(nrows, df.shape[0])
-    idx = list(range(df.shape[0]))
-    random.seed(seed)
-    random.shuffle(idx)
-    idx = sorted(idx[nrows:])
-    return df.iloc[idx]
-
-
 # TODO(gp): Is this dataflow Info? If so it should go somewhere else.
 def convert_info_to_string(info: Mapping) -> str:
     """
@@ -232,89 +223,13 @@ def convert_info_to_string(info: Mapping) -> str:
     return output_str
 
 
-# TODO(gp): @all Move this to helpers/hpandas.py since unit_test.py should not
-#  depend on pandas.
-def convert_df_to_json_string(
-    df: "pd.DataFrame",
-    n_head: Optional[int] = 10,
-    n_tail: Optional[int] = 10,
-    columns_order: Optional[List[str]] = None,
-) -> str:
-    """
-    Convert dataframe to pretty-printed JSON string.
-
-    To select all rows of the dataframe, pass `n_head` as None.
-
-    :param df: dataframe to convert
-    :param n_head: number of printed top rows
-    :param n_tail: number of printed bottom rows
-    :param columns_order: order for the KG columns sort
-    :return: dataframe converted to JSON string
-    """
-    # Append shape of the initial dataframe.
-    shape = "original shape=%s" % (df.shape,)
-    # Reorder columns.
-    if columns_order is not None:
-        hdbg.dassert_set_eq(columns_order, df.cols)
-        df = df[columns_order]
-    # Select head.
-    if n_head is not None:
-        head_df = df.head(n_head)
-    else:
-        # If no n_head provided, append entire dataframe.
-        head_df = df
-    # Transform head to json.
-    head_json = head_df.to_json(
-        orient="index",
-        force_ascii=False,
-        indent=4,
-        default_handler=str,
-        date_format="iso",
-        date_unit="s",
-    )
-    if n_tail is not None:
-        # Transform tail to json.
-        tail = df.tail(n_tail)
-        tail_json = tail.to_json(
-            orient="index",
-            force_ascii=False,
-            indent=4,
-            default_handler=str,
-            date_format="iso",
-            date_unit="s",
-        )
-    else:
-        # If no tail specified, append an empty string.
-        tail_json = ""
-    # Join shape and dataframe to single string.
-    output_str = "\n".join([shape, "Head:", head_json, "Tail:", tail_json])
-    return output_str
-
-
 # TODO(gp): This seems the python3.9 version of `to_str`. Remove if possible.
 def to_string(var: str) -> str:
     return """f"%s={%s}""" % (var, var)
 
 
-# TODO(gp): @all Maybe we should move it to hpandas.py so we can limit the
-#  dependencies from pandas.
-def get_random_df(
-    num_cols: int,
-    seed: Optional[int] = None,
-    date_range_kwargs: Optional[Dict[str, Any]] = None,
-) -> "pd.DataFrame":
-    """
-    Compute df with random data with `num_cols` columns and index obtained by
-    calling `pd.date_range(**kwargs)`.
-    """
-    if seed:
-        np.random.seed(seed)
-    dt = pd.date_range(**date_range_kwargs)
-    df = pd.DataFrame(np.random.rand(len(dt), num_cols), index=dt)
-    return df
-
-
-def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
+# TODO(gp): @all move to hpandas
+def compare_df(df1: "pd.DataFrame", df2: "pd.DataFrame") -> None:
     """
     Compare two dfs including their metadata.
     """
@@ -322,12 +237,12 @@ def compare_df(df1: pd.DataFrame, df2: pd.DataFrame) -> None:
         print(df1.compare(df2))
         raise ValueError("Dfs are different")
 
-    def _compute_df_signature(df: pd.DataFrame) -> str:
+    def _compute_df_signature(df: "pd.DataFrame") -> str:
         txt = []
-        txt.append("df1=\n%s" % str(df))
-        txt.append("df1.dtypes=\n%s" % str(df.dtypes))
+        txt.append(f"df1=\n{str(df)}")
+        txt.append(f"df1.dtypes=\n{str(df.dtypes)}")
         if hasattr(df.index, "freq"):
-            txt.append("df1.index.freq=\n%s" % str(df.index.freq))
+            txt.append(f"df1.index.freq=\n{str(df.index.freq)}")
         return "\n".join(txt)
 
     full_test_name = "dummy"
@@ -425,7 +340,10 @@ def get_dir_signature(
     hdbg.dassert_path_exists(dir_name)
     cmd = f'find {dir_name} -name "*"'
     remove_files_non_present = False
-    file_names = hsystem.system_to_files(cmd, dir_name, remove_files_non_present)
+    dir_name_tmp = None
+    file_names = hsystem.system_to_files(
+        cmd, dir_name_tmp, remove_files_non_present
+    )
     file_names = sorted(file_names)
     # Save the directory / file structure.
     txt.append("# Dir structure")
@@ -436,8 +354,8 @@ def get_dir_signature(
         # Remove the directories.
         file_names = hsystem.remove_dirs(file_names)
         # Scan the files.
-        txt.append("len(file_names)=%s" % len(file_names))
-        txt.append("file_names=%s" % ", ".join(map(_remove_dir_name, file_names)))
+        txt.append(f"len(file_names)={len(file_names)}")
+        txt.append(f"file_names={', '.join(map(_remove_dir_name, file_names))}")
         for file_name in file_names:
             _LOG.debug("file_name=%s", file_name)
             txt.append("# " + _remove_dir_name(file_name))
@@ -447,7 +365,7 @@ def get_dir_signature(
             # txt.append("num_chars=%s" % len(txt_tmp))
             txt_tmp = txt_tmp.split("\n")
             # Filter lines, if needed.
-            txt.append("num_lines=%s" % len(txt_tmp))
+            txt.append(f"num_lines={len(txt_tmp)}")
             if num_lines is not None:
                 hdbg.dassert_lte(1, num_lines)
                 txt_tmp = txt_tmp[:num_lines]
@@ -459,7 +377,7 @@ def get_dir_signature(
     return txt
 
 
-# TODO(gp): Use the copy in helpers/print.py.
+# TODO(gp): @all Use the copy in helpers/print.py.
 def filter_text(regex: str, txt: str) -> str:
     """
     Remove lines in `txt` that match the regex `regex`.
@@ -509,7 +427,16 @@ def purify_from_environment(txt: str) -> str:
     txt = txt.replace(pwd, "$PWD")
     # Replace the user name with `$USER_NAME`.
     user_name = hsystem.get_user_name()
-    txt = txt.replace(user_name, "$USER_NAME")
+    txt_out = []
+    for line in txt.splitlines():
+        if "take_square_root" in line:
+            # Skip replacing the user since it can be `root` interfering with
+            # the replacement.
+            txt_out.append(line)
+            continue
+        line = line.replace(user_name, "$USER_NAME")
+        txt_out.append(line)
+    txt = "\n".join(txt_out)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -552,9 +479,9 @@ def purify_app_references(txt: str) -> str:
     """
     Remove references to `/app`.
     """
-    txt = re.sub("/app/", "", txt, flags=re.MULTILINE)
-    txt = re.sub("app\.helpers", "helpers", txt, flags=re.MULTILINE)
-    txt = re.sub("app\.amp\.helpers", "amp.helpers", txt, flags=re.MULTILINE)
+    txt = re.sub(r"/app/", "", txt, flags=re.MULTILINE)
+    txt = re.sub(r"app\.helpers", "helpers", txt, flags=re.MULTILINE)
+    txt = re.sub(r"app\.amp\.helpers", "amp.helpers", txt, flags=re.MULTILINE)
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
@@ -572,34 +499,81 @@ def purify_file_names(file_names: List[str]) -> List[str]:
 
 
 def purify_from_env_vars(txt: str) -> str:
-    for env_var in ["AM_ECR_BASE_PATH", "AM_S3_BUCKET", "AM_TELEGRAM_TOKEN"]:
+    # TODO(gp): Diff between amp and cmamp.
+    for env_var in [
+        "AM_ECR_BASE_PATH",
+        "AM_AWS_S3_BUCKET",
+        "AM_TELEGRAM_TOKEN",
+        "CK_AWS_S3_BUCKET",
+        "CK_ECR_BASE_PATH",
+    ]:
         if env_var in os.environ:
             val = os.environ[env_var]
-            hdbg.dassert_ne(val, "", "Env var '%s' can't be empty", env_var)
-            txt = txt.replace(val, f"${env_var}")
+            if val == "":
+                _LOG.debug("Env var '%s' is empty", env_var)
+            else:
+                txt = txt.replace(val, f"${env_var}")
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
     return txt
 
 
-# TODO(gp): -> purify_object_references
-def purify_object_reference(txt: str) -> str:
+def purify_object_representation(txt: str) -> str:
     """
     Remove references like `at 0x7f43493442e0`.
     """
-    txt = re.sub(r"at 0x\S{12}", "at 0x", txt, flags=re.MULTILINE)
+    txt = re.sub(r"at 0x[0-9A-Fa-f]+", "at 0x", txt, flags=re.MULTILINE)
+    txt = re.sub(r" id='\d+'>", " id='xxx'>", txt, flags=re.MULTILINE)
+    txt = re.sub(r"port=\d+", "port=xxx", txt, flags=re.MULTILINE)
+    txt = re.sub(r"host=\S+ ", "host=xxx ", txt, flags=re.MULTILINE)
+    # wall_clock_time=Timestamp('2022-08-04 09:25:04.830746-0400'
+    txt = re.sub(
+        r"wall_clock_time=Timestamp\('.*?',",
+        r"wall_clock_time=Timestamp('xxx',",
+        txt,
+        flags=re.MULTILINE,
+    )
     _LOG.debug("After %s: txt='\n%s'", hintros.get_function_name(), txt)
+    return txt
+
+
+def purify_today_date(txt: str) -> str:
+    """
+    Remove today's date like `20220810`.
+    """
+    today_date = datetime.date.today()
+    today_date_as_str = today_date.strftime("%Y%m%d")
+    # Replace predict.3.compress_tails.df_out.20220627_094500.YYYYMMDD_171106.csv.gz.
+    txt = re.sub(
+        today_date_as_str + "_\d{6}", "YYYYMMDD_HHMMSS", txt, flags=re.MULTILINE
+    )
+    txt = re.sub(today_date_as_str, "YYYYMMDD", txt, flags=re.MULTILINE)
+    return txt
+
+
+# TODO(gp): -> purify_trailing_white_spaces
+def purify_white_spaces(txt: str) -> str:
+    """
+    Remove trailing white spaces.
+    """
+    txt_new = []
+    for line in txt.split("\n"):
+        line = line.rstrip()
+        txt_new.append(line)
+    txt = "\n".join(txt_new)
     return txt
 
 
 def purify_txt_from_client(txt: str) -> str:
     """
-    Remove from a string all the information specific of a git client.
+    Remove from a string all the information of a specific run.
     """
     txt = purify_from_environment(txt)
     txt = purify_app_references(txt)
     txt = purify_amp_references(txt)
     txt = purify_from_env_vars(txt)
-    txt = purify_object_reference(txt)
+    txt = purify_object_representation(txt)
+    txt = purify_today_date(txt)
+    txt = purify_white_spaces(txt)
     return txt
 
 
@@ -631,22 +605,28 @@ def diff_files(
         msg.append("\n" + hprint.frame(tag, char1="-"))
     # Diff to screen.
     _, res = hsystem.system_to_string(
-        "echo; sdiff --expand-tabs -l -w 150 %s %s" % (file_name1, file_name2),
+        f"echo; sdiff --expand-tabs -l -w 150 {file_name1} {file_name2}",
         abort_on_error=False,
         log_level=logging.DEBUG,
     )
     msg.append(res)
     # Save a script to diff.
     diff_script = os.path.join(dst_dir, "tmp_diff.sh")
-    vimdiff_cmd = "vimdiff %s %s" % (file_name1, file_name2)
+    vimdiff_cmd = f"""#!/bin/bash
+if [[ $1 == "wrap" ]]; then
+    cmd='vimdiff -c "windo set wrap"'
+else
+    cmd='vimdiff'
+fi;
+cmd="$cmd {file_name1} {file_name2}"
+eval $cmd
+"""
     # TODO(gp): Use hio.create_executable_script().
     hio.to_file(diff_script, vimdiff_cmd)
     cmd = "chmod +x " + diff_script
     hsystem.system(cmd)
     # Report how to diff.
     msg.append("Diff with:")
-    msg.append("> " + vimdiff_cmd)
-    msg.append("or running:")
     msg.append("> " + diff_script)
     msg_as_str = "\n".join(msg)
     # Append also error_msg to the current message.
@@ -657,7 +637,7 @@ def diff_files(
         log_msg_as_str = (
             msg_as_str
             + "\n"
-            + hprint.frame("Traceback", "-")
+            + hprint.frame("Traceback", char1="-")
             + "\n"
             + "".join(traceback.format_stack())
         )
@@ -682,10 +662,10 @@ def diff_strings(
     """
     _LOG.debug(hprint.to_str("tag abort_on_exit dst_dir"))
     # Save the actual and expected strings to files.
-    file_name1 = "%s/tmp.string1.txt" % dst_dir
+    file_name1 = f"{dst_dir}/tmp.string1.txt"
     hio.to_file(file_name1, string1)
     #
-    file_name2 = "%s/tmp.string2.txt" % dst_dir
+    file_name2 = f"{dst_dir}/tmp.string2.txt"
     hio.to_file(file_name2, string2)
     # Compare with diff_files.
     if tag is None:
@@ -775,7 +755,7 @@ def set_pd_default_values() -> None:
     for key, new_val in default_pd_values.items():
         if isinstance(new_val, dict):
             continue
-        full_key = "%s.%s" % (section, key)
+        full_key = f"{section}.{key}"
         old_val = pd.get_option(full_key)
         if old_val != new_val:
             _LOG.debug(
@@ -791,29 +771,29 @@ def set_pd_default_values() -> None:
 # #############################################################################
 
 
-# TODO(gp): -> txt: str
-def _remove_spaces(obj: Any) -> str:
+def _remove_spaces(txt: str) -> str:
     """
-    Remove spaces to implement fuzzy matching.
+    Remove leading / trailing spaces and empty lines.
+
+    This is used to implement fuzzy matching.
     """
-    string = str(obj)
-    string = string.replace("\\n", "\n").replace("\\t", "\t")
+    txt = txt.replace("\\n", "\n").replace("\\t", "\t")
     # Convert multiple empty spaces (but not newlines) into a single one.
-    string = re.sub(r"[^\S\n]+", " ", string)
+    txt = re.sub(r"[^\S\n]+", " ", txt)
     # Remove insignificant crap.
     lines = []
-    for line in string.split("\n"):
+    for line in txt.split("\n"):
         # Remove leading and trailing spaces.
         line = re.sub(r"^\s+", "", line)
         line = re.sub(r"\s+$", "", line)
         # Skip empty lines.
         if line != "":
             lines.append(line)
-    string = "\n".join(lines)
-    return string
+    txt = "\n".join(lines)
+    return txt
 
 
-def _remove_lines(txt: str) -> str:
+def _remove_banner_lines(txt: str) -> str:
     """
     Remove lines of separating characters long at least 20 characters.
     """
@@ -822,26 +802,56 @@ def _remove_lines(txt: str) -> str:
         if re.match(r"^\s*[\#\-><=]{20,}\s*$", line):
             continue
         txt_tmp.append(line)
-    return "\n".join(txt_tmp)
+    txt = "\n".join(txt_tmp)
+    return txt
 
 
 def _fuzzy_clean(txt: str) -> str:
     """
     Remove irrelevant artifacts to make string comparison less strict.
     """
+    hdbg.dassert_isinstance(txt, str)
+    # Ignore spaces.
     txt = _remove_spaces(txt)
-    txt = _remove_lines(txt)
+    # Ignore separation lines.
+    txt = _remove_banner_lines(txt)
     return txt
 
 
-# TODO(gp): Use the one in hprint. Is it even needed?
-def _to_pretty_string(obj: str) -> str:
-    if isinstance(obj, dict):
-        ret = pprint.pformat(obj)
-    else:
-        ret = str(obj)
-    ret = ret.rstrip("\n")
-    return ret
+def _ignore_line_breaks(txt: str) -> str:
+    # Ignore line breaks.
+    txt = txt.replace("\n", " ")
+    return txt
+
+
+def _sort_lines(txt: str) -> str:
+    """
+    Sort the lines in alphabetical order.
+
+    This is used when we want to perform a comparison of equality but
+    without order. Of course there are false negatives, since the
+    relative order of lines might matter.
+    """
+    lines = txt.split("\n")
+    lines.sort()
+    lines = "\n".join(lines)
+    return lines
+
+
+def _save_diff(
+    actual: str,
+    expected: str,
+    tag: str,
+    test_dir: str,
+) -> None:
+    if tag != "":
+        tag += "."
+    # Save expected strings to dir.
+    for dst_dir in (".", test_dir):
+        act_file_name = f"{dst_dir}/tmp.{tag}actual.txt"
+        hio.to_file(act_file_name, actual)
+        exp_file_name = f"{dst_dir}/tmp.{tag}expected.txt"
+        hio.to_file(exp_file_name, expected)
 
 
 def assert_equal(
@@ -850,81 +860,127 @@ def assert_equal(
     full_test_name: str,
     test_dir: str,
     *,
+    check_string: bool = False,
     dedent: bool = False,
     purify_text: bool = False,
+    purify_expected_text: bool = False,
     fuzzy_match: bool = False,
+    ignore_line_breaks: bool = False,
+    sort: bool = False,
     abort_on_error: bool = True,
     dst_dir: str = ".",
     error_msg: str = "",
 ) -> bool:
     """
-    Same interface as in `TestCase.assert_equal()`.
+    See interface in `TestCase.assert_equal()`.
 
     :param full_test_name: e.g., `TestRunNotebook1.test2`
+    :param check_string: if it was invoked by `check_string()` or directly
     """
     _LOG.debug(
         hprint.to_str(
-            "full_test_name test_dir fuzzy_match abort_on_error dst_dir"
+            "full_test_name test_dir "
+            "dedent purify_text fuzzy_match ignore_line_breaks "
+            "abort_on_error dst_dir"
         )
     )
+    # Store a mapping tag after each transformation (e.g., original, sort, ...) to
+    # (actual, expected).
+    values: Dict[str, str] = collections.OrderedDict()
+
+    def _append(tag: str, actual: str, expected: str) -> None:
+        _LOG.debug("tag=%s\n  act='\n%s'\n  exp='\n%s'", actual, expected)
+        hdbg.dassert_not_in(tag, values)
+        values[tag] = (actual, expected)
+
     #
     _LOG.debug("Before any transformation:")
-    _LOG.debug("act='\n%s'", actual)
-    _LOG.debug("exp='\n%s'", expected)
-    # Remove `\n` at the end of the strings.
-    actual = actual.rstrip("\n")
-    expected = expected.rstrip("\n")
-    # Dedent expected, if needed.
+    tag = "original"
+    _append(tag, actual, expected)
+    # 1) Remove white spaces.
+    actual = purify_white_spaces(actual)
+    expected = purify_white_spaces(expected)
+    tag = "purify_white_spaces"
+    _append(tag, actual, expected)
+    # Dedent only expected since we often align it to make it look more readable
+    # in the Python code, if needed.
     if dedent:
-        _LOG.debug("# Dedent expected")
         expected = hprint.dedent(expected)
-        _LOG.debug("exp='\n%s'", expected)
-    # Purify actual text, if needed.
+        tag = "dedent"
+        _append(tag, actual, expected)
+    # Purify text, if needed.
     if purify_text:
-        _LOG.debug("# Purify actual")
         actual = purify_txt_from_client(actual)
-        _LOG.debug("act='\n%s'", actual)
+        if purify_expected_text:
+            expected = purify_txt_from_client(expected)
+        tag = "purify"
+        _append(tag, actual, expected)
+    # Ensure that there is a single `\n` at the end of the strings.
+    actual = actual.rstrip("\n") + "\n"
+    expected = expected.rstrip("\n") + "\n"
+    # Sort the lines.
+    if sort:
+        actual = _sort_lines(actual)
+        expected = _sort_lines(expected)
+        tag = "sort"
+        _append(tag, actual, expected)
     # Fuzzy match, if needed.
-    actual_orig = actual
-    expected_orig = expected
     if fuzzy_match:
-        _LOG.debug("# Use fuzzy match")
         actual = _fuzzy_clean(actual)
         expected = _fuzzy_clean(expected)
+        tag = "fuzzy_clean"
+        _append(tag, actual, expected)
+    # Ignore line breaks, if needed.
+    if ignore_line_breaks:
+        actual = _ignore_line_breaks(actual)
+        expected = _ignore_line_breaks(expected)
+        tag = "ignore_line_breaks"
+        _append(tag, actual, expected)
     # Check.
-    _LOG.debug("The values being compared are:")
-    _LOG.debug("act='\n%s'", actual)
-    _LOG.debug("exp='\n%s'", expected)
+    tag = "final"
+    _append(tag, actual, expected)
+    #
     is_equal = expected == actual
-    if not is_equal:
-        _LOG.error(
-            "%s",
-            "\n"
-            + hprint.frame(
-                "Test '%s' failed" % full_test_name, char1="=", num_chars=80
-            ),
-        )
-        # Print the correct output, like:
-        #   exp = r'""""
+    _LOG.debug(hprint.to_str("is_equal"))
+    if is_equal:
+        return is_equal
+    _LOG.error(
+        "%s",
+        "\n"
+        + hprint.frame(
+            f"Test '{full_test_name}' failed", char1="=", num_chars=80
+        ),
+    )
+    if not check_string:
+        # If this is a `self.assert_equal()` and not a `self.check_string()`,
+        # then print the correct output, like:
+        #   exp = r'"""
         #   2021-02-17 09:30:00-05:00
         #   2021-02-17 10:00:00-05:00
         #   2021-02-17 11:00:00-05:00
         #   """
         txt = []
-        txt.append(
-            hprint.frame(f"EXPECTED VARIABLE: {full_test_name}", char1="-")
-        )
-        # We always return the variable exactly as this should be, even if we could
-        # make it look better through indentation in case of fuzzy match.
+        txt.append(hprint.frame(f"ACTUAL VARIABLE: {full_test_name}", char1="-"))
+        # TODO(gp): Switch to expected or expected_result.
+        exp_var = "exp = r"
+        # We always return the variable exactly as this should be, even if we
+        # could make it look better through indentation in case of fuzzy match.
+        actual_orig = values["original"][0]
         if actual_orig.startswith('"'):
-            # TODO(gp): Switch to expected or expected_result.
-            # txt.append(f"expected = r'''{actual_orig}'''")
-            exp_var = f"exp = r'''{actual_orig}'''"
+            sep = "'''"
         else:
-            # txt.append(f"expected = r'''{actual_orig}'''")
-            exp_var = f'exp = r"""{actual_orig}"""'
+            sep = '"""'
+        exp_var += sep
+        if fuzzy_match:
+            # We can print in a more readable way since spaces don't matter.
+            exp_var += "\n"
+        exp_var += actual_orig
+        if fuzzy_match:
+            # We can print in a more readable way since spaces don't matter.
+            exp_var += "\n"
+        exp_var += sep
         # Save the expected variable to files.
-        exp_var_file_name = "%s/tmp.exp_var.txt" % test_dir
+        exp_var_file_name = f"{test_dir}/tmp.exp_var.txt"
         hio.to_file(exp_var_file_name, exp_var)
         #
         exp_var_file_name = "tmp.exp_var.txt"
@@ -934,36 +990,33 @@ def assert_equal(
         txt.append(exp_var)
         txt = "\n".join(txt)
         error_msg += txt
-        # Select what to save.
-        compare_orig = False
-        if compare_orig:
-            tag = "ORIGINAL ACTUAL vs EXPECTED"
-            actual = actual_orig
-            expected = expected_orig
-        else:
-            if fuzzy_match:
-                tag = "FUZZY ACTUAL vs EXPECTED"
-            else:
-                tag = "ACTUAL vs EXPECTED"
-        tag += f": {full_test_name}"
-        # Save the actual and expected strings to files.
-        act_file_name = "%s/tmp.actual.txt" % test_dir
-        hio.to_file(act_file_name, actual)
-        #
-        exp_file_name = "%s/tmp.expected.txt" % test_dir
-        hio.to_file(exp_file_name, expected)
-        #
-        _LOG.debug("Actual:\n'%s'", actual)
-        _LOG.debug("Expected:\n'%s'", expected)
-        diff_files(
-            act_file_name,
-            exp_file_name,
-            tag=tag,
-            abort_on_exit=abort_on_error,
-            dst_dir=dst_dir,
-            error_msg=error_msg,
-        )
-    _LOG.debug("-> is_equal=%s", is_equal)
+    # Save all the values after the transformations.
+    debug = False
+    if debug:
+        for idx, key in enumerate(values.keys()):
+            actual_tmp, expected_tmp = values[key]
+            tag = "%s.%s" % (idx, key)
+            _save_diff(actual_tmp, expected_tmp, tag, test_dir)
+    else:
+        key = "final"
+        actual_tmp, expected_tmp = values[key]
+        _save_diff(actual_tmp, expected_tmp, key, test_dir)
+    # Compare the last values.
+    act_file_name = f"{test_dir}/tmp.final.actual.txt"
+    exp_file_name = f"{test_dir}/tmp.final.expected.txt"
+    if fuzzy_match:
+        msg = "FUZZY ACTUAL vs FUZZY EXPECTED"
+    else:
+        msg = "ACTUAL vs EXPECTED"
+    msg += f": {full_test_name}"
+    diff_files(
+        act_file_name,
+        exp_file_name,
+        tag=msg,
+        abort_on_exit=abort_on_error,
+        dst_dir=dst_dir,
+        error_msg=error_msg,
+    )
     return is_equal
 
 
@@ -985,7 +1038,7 @@ class TestCase(unittest.TestCase):
         Execute before any test method.
         """
         # Print banner to signal the start of a new test.
-        func_name = "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        func_name = f"{self.__class__.__name__}.{self._testMethodName}"
         _LOG.info("\n%s", hprint.frame(func_name))
         # Set the random seed.
         random_seed = 20000101
@@ -1015,6 +1068,8 @@ class TestCase(unittest.TestCase):
         if _HAS_PANDAS:
             self._old_pd_options = get_pd_default_values()
             set_pd_default_values()
+        # Reset the timestamp of the current bar.
+        hwacltim.reset_current_bar_timestamp()
         # Start the timer to measure the execution time of the test.
         self._timer = htimer.Timer()
 
@@ -1182,9 +1237,33 @@ class TestCase(unittest.TestCase):
         # Assemble everything in a single path.
         import helpers.hs3 as hs3
 
-        s3_bucket = hs3.get_path()
+        aws_profile = "am"
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
         scratch_dir = f"{s3_bucket}/tmp/cache.unit_test/{dir_name}.{test_path}"
         return scratch_dir
+
+    def get_s3_input_dir(
+        self,
+        aws_profile: str,
+        *,
+        test_class_name: Optional[str] = None,
+        test_method_name: Optional[str] = None,
+    ) -> str:
+        # Make the path unique for the test.
+        use_only_test_class = True
+        use_absolute_path = False
+        test_path = self._get_current_path(
+            use_only_test_class,
+            test_class_name,
+            test_method_name,
+            use_absolute_path,
+        )
+        # Assemble everything in a single path.
+        import helpers.hs3 as hs3
+
+        s3_bucket = hs3.get_s3_bucket_path(aws_profile)
+        input_dir = os.path.join(s3_bucket, "unit_test", test_path, "input")
+        return input_dir
 
     # ///////////////////////////////////////////////////////////////////////
 
@@ -1195,7 +1274,10 @@ class TestCase(unittest.TestCase):
         *,
         dedent: bool = False,
         purify_text: bool = False,
+        purify_expected_text: bool = False,
         fuzzy_match: bool = False,
+        ignore_line_breaks: bool = False,
+        sort: bool = False,
         abort_on_error: bool = True,
         dst_dir: str = ".",
     ) -> bool:
@@ -1235,9 +1317,13 @@ class TestCase(unittest.TestCase):
             expected,
             test_name,
             dir_name,
+            check_string=False,
             dedent=dedent,
             purify_text=purify_text,
+            purify_expected_text=purify_expected_text,
             fuzzy_match=fuzzy_match,
+            ignore_line_breaks=ignore_line_breaks,
+            sort=sort,
             abort_on_error=abort_on_error,
             dst_dir=dst_dir,
         )
@@ -1245,9 +1331,9 @@ class TestCase(unittest.TestCase):
 
     def assert_dfs_close(
         self,
-        actual: pd.DataFrame,
-        expected: pd.DataFrame,
-        **kwargs,
+        actual: "pd.DataFrame",
+        expected: "pd.DataFrame",
+        **kwargs: Any,
     ) -> None:
         """
         Assert dfs have same indexes and columns and that all values are close.
@@ -1258,6 +1344,14 @@ class TestCase(unittest.TestCase):
         """
         self.assertEqual(actual.index.to_list(), expected.index.to_list())
         self.assertEqual(actual.columns.to_list(), expected.columns.to_list())
+        # Often the output of a failing assertion is difficult to parse
+        # so we resort to our special `assert_equal()`.
+        if not np.allclose(actual, expected, **kwargs):
+            import helpers.hpandas as hpandas
+
+            self.assert_equal(
+                hpandas.df_to_str(actual), hpandas.df_to_str(expected)
+            )
         np.testing.assert_allclose(actual, expected, **kwargs)
 
     # TODO(gp): There is a lot of similarity between `check_string()` and
@@ -1270,6 +1364,8 @@ class TestCase(unittest.TestCase):
         dedent: bool = False,
         purify_text: bool = False,
         fuzzy_match: bool = False,
+        ignore_line_breaks: bool = False,
+        sort: bool = False,
         use_gzip: bool = False,
         tag: str = "test",
         abort_on_error: bool = True,
@@ -1280,20 +1376,27 @@ class TestCase(unittest.TestCase):
         contained in the file. If `--update_outcomes` is used, updates the
         golden reference file with the actual outcome.
 
-        :param fuzzy_match: ignore differences in spaces and end of lines (see
-          `_to_single_line_cmd`)
-        :param purify_text: remove some artifacts (e.g., user names,
-            directories, reference to Git client)
-        :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
-            the golden outcome is missing)
         :param dedent: call `dedent` on the expected string to align it to the
             beginning of the row
+        :param purify_text: remove some artifacts (e.g., user names,
+            directories, reference to Git client)
+        :param fuzzy_match: ignore differences in spaces
+        :param ignore_line_breaks: ignore difference due to line breaks
+        :param sort: sort the text and then compare it. In other terms we check
+            whether the lines are the same although in different order
+        :param action_on_missing_golden: what to do (e.g., "assert" or "update" when
+            the golden outcome is missing)
         :return: outcome_updated, file_exists, is_equal
-        :raises: `RuntimeError` if there is a mismatch. If `about_on_error` is False
+        :raises: `RuntimeError` if there is a mismatch. If `abort_on_error` is False
             (which should be used only for unit testing) return the result but do not
             assert
         """
-        _LOG.debug(hprint.to_str("fuzzy_match purify_text abort_on_error dedent"))
+        _LOG.debug(
+            hprint.to_str(
+                "dedent purify_text fuzzy_match ignore_line_breaks sort "
+                "tag abort_on_error"
+            )
+        )
         hdbg.dassert_in(type(actual), (bytes, str), "actual='%s'", actual)
         #
         dir_name, file_name = self._get_golden_outcome_file_name(tag)
@@ -1338,10 +1441,13 @@ class TestCase(unittest.TestCase):
                     expected,
                     test_name,
                     dir_name,
+                    check_string=True,
                     dedent=dedent,
                     # We have handled the purification of the output earlier.
                     purify_text=False,
                     fuzzy_match=fuzzy_match,
+                    ignore_line_breaks=ignore_line_breaks,
+                    sort=sort,
                     abort_on_error=abort_on_error,
                 )
             else:
@@ -1429,9 +1535,11 @@ class TestCase(unittest.TestCase):
                         str(expected),
                         test_name,
                         dir_name,
+                        check_string=True,
                         dedent=dedent,
                         purify_text=False,
                         fuzzy_match=False,
+                        ignore_line_breaks=False,
                         abort_on_error=abort_on_error,
                         error_msg=self._error_msg,
                     )
@@ -1462,12 +1570,13 @@ class TestCase(unittest.TestCase):
                         + f"'{action_on_missing_golden}'"
                     )
         self._test_was_updated = outcome_updated
+        # TODO(gp): Print the file with the updated test.
         _LOG.debug(hprint.to_str("outcome_updated file_exists is_equal"))
         return outcome_updated, file_exists, is_equal
 
     def check_df_output(
         self,
-        actual_df: pd.DataFrame,
+        actual_df: "pd.DataFrame",
         expected_length: Optional[int],
         expected_column_names: Optional[List[str]],
         expected_column_unique_values: Optional[Dict[str, List[Any]]],
@@ -1487,6 +1596,9 @@ class TestCase(unittest.TestCase):
         :param expected_signature: expected outcome dataframe as string
             - If `__CHECK_STRING__` use the value in `self.check_string()`
         """
+        # TODO(Grisha): get rid of `hpandas` dependency.
+        import helpers.hpandas as hpandas
+
         hdbg.dassert_isinstance(actual_df, pd.DataFrame)
         if expected_length:
             # Verify that the output length is correct.
@@ -1531,7 +1643,7 @@ class TestCase(unittest.TestCase):
 
     def check_srs_output(
         self,
-        actual_srs: pd.Series,
+        actual_srs: "pd.Series",
         expected_length: Optional[int],
         expected_unique_values: Optional[List[Any]],
         expected_signature: str,
@@ -1592,9 +1704,9 @@ class TestCase(unittest.TestCase):
                 # TODO(gp): This needs to be generalized to `lm`. We should `cd`
                 # in the dir of the repo that includes the file.
                 file_name_in_amp = os.path.relpath(file_name_tmp, "amp")
-                cmd = "cd amp; git add -u %s" % file_name_in_amp
+                cmd = f"cd amp; git add -u {file_name_in_amp}"
             else:
-                cmd = "git add -u %s" % file_name_tmp
+                cmd = f"git add -u {file_name_tmp}"
             rc = hsystem.system(cmd, abort_on_error=False)
             if rc:
                 pytest_warning(
@@ -1640,10 +1752,7 @@ class TestCase(unittest.TestCase):
         ret = True
         # Compare columns.
         if actual.columns.tolist() != expected.columns.tolist():
-            msg = "Columns are different:\n%s\n%s" % (
-                str(actual.columns),
-                str(expected.columns),
-            )
+            msg = f"Columns are different:\n{str(actual.columns)}\n{str(expected.columns)}"
             self._to_error(msg)
             ret = False
         # Compare the values.
@@ -1660,22 +1769,22 @@ class TestCase(unittest.TestCase):
             if actual.shape == expected.shape:
                 close_mask = np.isclose(actual, expected, equal_nan=True)
                 #
-                msg = "actual=\n%s" % actual
+                msg = f"actual=\n{actual}"
                 self._to_error(msg)
                 #
-                msg = "expected=\n%s" % expected
+                msg = f"expected=\n{expected}"
                 self._to_error(msg)
                 #
                 actual_masked = np.where(close_mask, np.nan, actual)
-                msg = "actual_masked=\n%s" % actual_masked
+                msg = f"actual_masked=\n{actual_masked}"
                 self._to_error(msg)
                 #
                 expected_masked = np.where(close_mask, np.nan, expected)
-                msg = "expected_masked=\n%s" % expected_masked
+                msg = f"expected_masked=\n{expected_masked}"
                 self._to_error(msg)
                 #
                 err = np.abs((actual_masked - expected_masked) / expected_masked)
-                msg = "err=\n%s" % err
+                msg = f"err=\n{err}"
                 self._to_error(msg)
                 max_err = np.nanmax(np.nanmax(err))
                 msg = "max_err=%.3f" % max_err
@@ -1683,8 +1792,7 @@ class TestCase(unittest.TestCase):
             else:
                 msg = (
                     "Shapes are different:\n"
-                    "actual.shape=%s\n"
-                    "expected.shape=%s" % (str(actual.shape), str(expected.shape))
+                    f"actual.shape={str(actual.shape)}\nexpected.shape={str(expected.shape)}"
                 )
                 self._to_error(msg)
             ret = False
@@ -1716,7 +1824,7 @@ class TestCase(unittest.TestCase):
         """
         Return the full test name as `class.method`.
         """
-        return "%s.%s" % (self.__class__.__name__, self._testMethodName)
+        return f"{self.__class__.__name__}.{self._testMethodName}"
 
     def _get_current_path(
         self,
@@ -1726,8 +1834,12 @@ class TestCase(unittest.TestCase):
         use_absolute_path: bool,
     ) -> str:
         """
-        Return the name of the directory containing the input / output data
-        (e.g., ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare)
+        Return the name of the directory containing the input / output data.
+
+        E.g.,
+        ```
+        ./core/dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare
+        ```
 
         The parameters have the same meaning as in `get_input_dir()`.
         """
@@ -1740,10 +1852,7 @@ class TestCase(unittest.TestCase):
             # Use both class and test method.
             if test_method_name is None:
                 test_method_name = self._testMethodName
-            dir_name = "%s.%s" % (
-                test_class_name,
-                test_method_name,
-            )
+            dir_name = f"{test_class_name}.{test_method_name}"
         if use_absolute_path:
             # E.g., `.../dataflow/test/outcomes/TestContinuousSarimaxModel.test_compare`.
             dir_name = os.path.join(self._base_dir_name, "outcomes", dir_name)
@@ -1762,12 +1871,13 @@ class TestCase(unittest.TestCase):
 
 @pytest.mark.qa
 @pytest.mark.skipif(
-    hsystem.is_inside_docker(), reason="Test needs to be run outside Docker"
+    hserver.is_inside_docker(), reason="Test needs to be run outside Docker"
 )
 class QaTestCase(TestCase, abc.ABC):
     """
-    This unit test is used for QA to test functionalities (e.g., invoke tasks)
-    that run the dev / prod container.
+    Use for QA to test functionalities (e.g., invoke tasks) that run the dev /
+    prod container.
     """
 
-    pass
+    # TODO(Grisha): Linter should not remove `pass` statement from an empty class
+    # DevToolsTask #476.

@@ -1,4 +1,5 @@
 import logging
+import pprint
 
 import pandas as pd
 import psycopg2.errors as perrors
@@ -18,6 +19,11 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(gp): helpers can't depend from im.
 class TestSql1(imvcddbut.TestImDbHelper):
+
+    @classmethod
+    def get_id(cls) -> int:
+        return hash(cls.__name__) % 10000
+
     @pytest.mark.slow("10 seconds.")
     def test_db_connection_to_tuple(self) -> None:
         """
@@ -25,13 +31,18 @@ class TestSql1(imvcddbut.TestImDbHelper):
         """
         actual_details = hsql.db_connection_to_tuple(self.connection)
         expected = {
-            "host": "localhost",
+            #"host": "localhost",
             "dbname": "im_postgres_db_local",
-            "port": 5432,
             "user": "aljsdalsd",
             "password": "alsdkqoen",
         }
-        self.assertEqual(actual_details._asdict(), expected)
+        # Drop the `port` key since it is assigned a dynamic value.
+        actual_details_dict = actual_details._asdict()
+        del actual_details_dict["host"]
+        del actual_details_dict["port"]
+        #
+        self.assert_equal(pprint.pformat(actual_details_dict),
+                pprint.pformat(expected))
 
     @pytest.mark.slow("17 seconds.")
     def test_create_database(self) -> None:
@@ -148,18 +159,6 @@ class TestSql1(imvcddbut.TestImDbHelper):
         # Delete the table.
         hsql.remove_table(self.connection, "test_table")
 
-    def _create_test_table(self) -> None:
-        """
-        Create a test table.
-        """
-        query = """CREATE TABLE IF NOT EXISTS test_table(
-                    id SERIAL PRIMARY KEY,
-                    column_1 NUMERIC,
-                    column_2 VARCHAR(255)
-                    )
-                    """
-        self.connection.cursor().execute(query)
-
     @staticmethod
     def _get_test_data() -> pd.DataFrame:
         """
@@ -233,3 +232,15 @@ class TestSql1(imvcddbut.TestImDbHelper):
             ],
         )
         return test_data
+
+    def _create_test_table(self) -> None:
+        """
+        Create a test table.
+        """
+        query = """CREATE TABLE IF NOT EXISTS test_table(
+                    id SERIAL PRIMARY KEY,
+                    column_1 NUMERIC,
+                    column_2 VARCHAR(255)
+                    )
+                    """
+        self.connection.cursor().execute(query)

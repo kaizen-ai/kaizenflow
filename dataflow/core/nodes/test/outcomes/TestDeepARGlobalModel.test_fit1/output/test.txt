@@ -2,8 +2,11 @@
 config
 ################################################################################
 nid: deepar
-trainer_kwargs: {'epochs': 1}
-estimator_kwargs: {'freq': 'T', 'use_feat_dynamic_real': False}
+trainer_kwargs:
+  epochs: 1
+estimator_kwargs:
+  freq: T
+  use_feat_dynamic_real: False
 x_vars: ['EVENT_SENTIMENT_SCORE']
 y_vars: ['zret_0']
 ################################################################################

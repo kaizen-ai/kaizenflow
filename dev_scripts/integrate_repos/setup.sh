@@ -10,4 +10,4 @@ ls $CMAMP_DIR
 # Create branches
 DATE=20211210
 export BRANCH_NAME=AmpTask1786_Integrate_${DATE}
-i git_create_branch -b $BRANCH_NAME
+i git_branch_create -b $BRANCH_NAME

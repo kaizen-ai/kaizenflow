@@ -71,13 +71,20 @@ class Order:
         hdbg.dassert_lte(0, asset_id)
         self.asset_id = asset_id
         self.type_ = type_
+        hdbg.dassert_lte(
+            creation_timestamp,
+            start_timestamp,
+            msg="An order should not start in the past",
+        )
         hdbg.dassert_lt(start_timestamp, end_timestamp)
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
+        # TODO(gp): Check for finite.
         self.curr_num_shares = float(curr_num_shares)
+        # TODO(gp): Check for finite.
         hdbg.dassert_ne(diff_num_shares, 0)
         self.diff_num_shares = float(diff_num_shares)
-        #
+        # Extract the timestamp.
         hdbg.dassert_eq(creation_timestamp.tz, start_timestamp.tz)
         hdbg.dassert_eq(creation_timestamp.tz, end_timestamp.tz)
         self.tz = creation_timestamp.tz
@@ -89,6 +96,9 @@ class Order:
         for k, v in dict_.items():
             txt.append(f"{k}={v}")
         return " ".join(txt)
+
+    def __repr__(self) -> str:
+        return self.__str__()
 
     @classmethod
     def from_string(cls, txt: str) -> "Order":

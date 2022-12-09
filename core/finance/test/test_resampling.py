@@ -464,13 +464,13 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
                               vwap   twap
         datetime
         2016-01-04 09:30:00    NaN    NaN
-        2016-01-04 09:31:00    NaN    NaN
+        2016-01-04 09:31:00    NaN  94.98
         2016-01-04 09:32:00  95.33  95.33
         2016-01-04 09:33:00  95.03  95.03
         2016-01-04 09:34:00  94.89  94.89
         2016-01-04 09:35:00  94.97  94.97
         2016-01-04 09:36:00    NaN    NaN
-        2016-01-04 09:37:00    NaN    NaN
+        2016-01-04 09:37:00    NaN  95.48
         2016-01-04 09:38:00  95.95  95.95
         2016-01-04 09:39:00  96.07  96.07
         2016-01-04 09:40:00    NaN    NaN
@@ -498,13 +498,13 @@ class Test_compute_twap_vwap1(hunitest.TestCase):
         act = self._compute_actual_output(df_out)
         exp = r"""
         df_out
-                                  vwap     twap
+                                  vwap       twap
         datetime
-        2016-01-04 09:30:00        NaN      NaN
-        2016-01-04 09:35:00  95.069539  95.0550
-        2016-01-04 09:40:00  96.008590  96.0100
-        2016-01-04 09:45:00        NaN      NaN
-        2016-01-04 09:50:00  95.563357  95.5625
+        2016-01-04 09:30:00        NaN        NaN
+        2016-01-04 09:35:00  95.069539  95.040000
+        2016-01-04 09:40:00  96.008590  95.833333
+        2016-01-04 09:45:00        NaN        NaN
+        2016-01-04 09:50:00  95.563357  95.562500
         """
         self.assert_equal(act, exp, fuzzy_match=True)
 
@@ -657,6 +657,19 @@ datetime,close,vol
 
 
 class TestResamplePortfolioBarMetrics1(hunitest.TestCase):
+    @staticmethod
+    def get_data(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        *,
+        bar_duration: str = "5T",
+        seed: int = 10,
+    ) -> pd.DataFrame:
+        df = cfidaexa.get_portfolio_bar_metrics_dataframe(
+            start_datetime, end_datetime, bar_duration=bar_duration, seed=seed
+        )
+        return df
+
     def test_resampling_invariance(self) -> None:
         """
         Preserve data when resampling at the same frequency.
@@ -732,19 +745,6 @@ class TestResamplePortfolioBarMetrics1(hunitest.TestCase):
 2022-01-03 00:00:00-05:00 -167.88        650519      256.55  1000000.0  11.12
 2022-01-04 00:00:00-05:00 -271.28        650884       -8.48  1000000.0 -14.92"""
         self.assert_equal(actual, expected, fuzzy_match=True)
-
-    @staticmethod
-    def get_data(
-        start_datetime: pd.Timestamp,
-        end_datetime: pd.Timestamp,
-        *,
-        bar_duration: str = "5T",
-        seed: int = 10,
-    ) -> pd.DataFrame:
-        df = cfidaexa.get_portfolio_bar_metrics_dataframe(
-            start_datetime, end_datetime, bar_duration=bar_duration, seed=seed
-        )
-        return df
 
 
 class Test_resample_srs(hunitest.TestCase):
