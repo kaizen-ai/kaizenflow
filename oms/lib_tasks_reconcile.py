@@ -178,7 +178,7 @@ def reconcile_create_dirs(
 @task
 def reconcile_dump_market_data(
     ctx,
-    dag_builder_name=None,
+    dag_builder_name,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
@@ -257,7 +257,7 @@ def reconcile_dump_market_data(
 @task
 def reconcile_run_sim(
     ctx,
-    dag_builder_name=None,
+    dag_builder_name,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
@@ -578,7 +578,7 @@ def reconcile_dump_tca_data(
 @task
 def reconcile_run_all(
     ctx,
-    dag_builder_name=None,
+    dag_builder_name,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
@@ -636,7 +636,7 @@ def reconcile_run_all(
     #
     reconcile_dump_market_data(
         ctx,
-        dag_builder_name=dag_builder_name,
+        dag_builder_name,
         start_timestamp_as_str=start_timestamp_as_str,
         end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
@@ -644,7 +644,7 @@ def reconcile_run_all(
     )
     reconcile_run_sim(
         ctx,
-        dag_builder_name=dag_builder_name,
+        dag_builder_name,
         start_timestamp_as_str=start_timestamp_as_str,
         end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
