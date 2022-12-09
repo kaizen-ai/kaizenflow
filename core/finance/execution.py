@@ -16,6 +16,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> private
 def generate_limit_order_price(
     df: pd.DataFrame,
     bid_col: str,
@@ -28,9 +29,11 @@ def generate_limit_order_price(
     ffill_limit: int,
 ) -> pd.DataFrame:
     """
-    Generate limit order prices from subsampled reference prices and an offset.
+    Generate limit order prices from sub-sampled reference prices and an offset.
 
-    :param df: datatime-indexed dataframe with a reference price column
+    E.g., place order 5% from the bid or ask level, repricing every 2 minutes.
+
+    :param df: datetime-indexed dataframe with a reference price column
     :param bid_col: name of column with last bid price for bar
     :param ask_col: like `bid_col` but for ask
     :param buy_reference_price_col: name of df column with reference prices
@@ -46,7 +49,7 @@ def generate_limit_order_price(
     :param ffill_limit: number of ffill bars to propagate limit orders, e.g.,
         if we use one-minute bars, take `subsample_freq="15T"`, and let
         `ffill_limit=4`, then the execution window will be 1 + 4 = 5 minutes.
-    :return: a series of limit order prices
+    :return: a dataframe of limit order prices named `{buy,sell}_limit_order_price`
     """
     hpandas.dassert_time_indexed_df(
         df, allow_empty=True, strictly_increasing=True
@@ -57,7 +60,7 @@ def generate_limit_order_price(
         buy_reference_price_col,
         sell_reference_price_col,
     ]
-    hdbg.dassert_is_subset(list(set(required_cols)), df.columns)
+    hdbg.dassert_is_subset(required_cols, df.columns)
     hdbg.dassert_isinstance(buy_spread_frac_offset, float)
     hdbg.dassert_isinstance(sell_spread_frac_offset, float)
     hdbg.dassert_isinstance(subsample_freq, str)
@@ -72,8 +75,8 @@ def generate_limit_order_price(
     ).last()
     quoted_spread = df[ask_col] - df[bid_col]
     # Apply a dollar offset to the subsampled prices.
-    buy_subsampled = buy_subsampled + buy_spread_frac_offset * quoted_spread
-    sell_subsampled = sell_subsampled + sell_spread_frac_offset * quoted_spread
+    buy_subsampled += buy_spread_frac_offset * quoted_spread
+    sell_subsampled += sell_spread_frac_offset * quoted_spread
     # TODO(Paul): Add an option to round to a different tick size.
     buy_subsampled = buy_subsampled.round(2).rename("buy_limit_order_price")
     sell_subsampled = sell_subsampled.round(2).rename("sell_limit_order_price")
@@ -85,6 +88,7 @@ def generate_limit_order_price(
     return subsampled
 
 
+# TODO(gp): -> private
 def estimate_limit_order_execution(
     df: pd.DataFrame,
     bid_col: str,
@@ -101,8 +105,8 @@ def estimate_limit_order_execution(
     :param buy_limit_price_col: name of column with limit order price; NaN
         represents no order.
     :param sell_limit_price_col: like `buy_limit_price_col` but for selling
-    :return: dataframe with two bool columns, "limit_buy_executed" and
-        "limit_sell_executed"
+    :return: dataframe with two bool columns, `limit_buy_executed` and
+        `limit_sell_executed`
     """
     hpandas.dassert_time_indexed_df(
         df, allow_empty=True, strictly_increasing=True
@@ -126,6 +130,7 @@ def estimate_limit_order_execution(
     return limit_executed
 
 
+# TODO(gp): -> private
 def generate_limit_orders_and_estimate_execution(
     df: pd.DataFrame,
     bid_col: str,

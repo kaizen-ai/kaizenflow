@@ -15,6 +15,7 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> _dassert_is_validf_df
 def _is_valid_df(df: pd.DataFrame):
     hpandas.dassert_time_indexed_df(
         df,

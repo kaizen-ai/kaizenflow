@@ -15,6 +15,19 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> _dassert_valid_...
+def _is_valid_start_end_time_pair(
+    start_time: datetime.time,
+    end_time: datetime.time,
+) -> None:
+    """
+    Check if start_time <= end_time otherwise asserts.
+    """
+    hdbg.dassert_isinstance(start_time, datetime.time)
+    hdbg.dassert_isinstance(end_time, datetime.time)
+    hdbg.dassert_lte(start_time, end_time)
+
+
 def accumulate_returns_and_volatility(
     df: pd.DataFrame,
     returns_col: str,
@@ -23,7 +36,7 @@ def accumulate_returns_and_volatility(
     end_time: datetime.time,
 ) -> pd.DataFrame:
     """
-    Accumulate intraday returns and volatility over a window.
+    Accumulate intraday returns and volatility over a window [a, b).
 
     :param df: datetime indexed dataframe with log rets and volatility
     :param returns_col: name of returns column
@@ -44,7 +57,7 @@ def accumulate_returns_and_volatility(
     # Trim to returns and volatility columns.
     df = df[[returns_col, volatility_col]]
     # TODO(Paul): Maybe import ablation for this operation, but check
-    # endpoint boundaries.
+    #  endpoint boundaries.
     # Remove times outside of accumulation window.
     times = df.index.time
     to_remove_mask = (times <= start_time) | (end_time < times)
@@ -103,11 +116,3 @@ def reverse_accumulate_returns(
     #
     return pd.concat(results)
 
-
-def _is_valid_start_end_time_pair(
-    start_time: datetime.time,
-    end_time: datetime.time,
-) -> None:
-    hdbg.dassert_isinstance(start_time, datetime.time)
-    hdbg.dassert_isinstance(end_time, datetime.time)
-    hdbg.dassert_lte(start_time, end_time)

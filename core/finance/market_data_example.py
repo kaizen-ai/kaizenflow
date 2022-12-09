@@ -25,47 +25,6 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(Paul): Consider factoring out this wrapper pattern.
-def generate_random_ohlcv_bars(
-    start_datetime: pd.Timestamp,
-    end_datetime: pd.Timestamp,
-    asset_ids: List[int],
-    *,
-    bar_duration: str = "1T",
-    bar_volatility_in_bps: int = 10,
-    bar_expected_count: int = 1000,
-    last_price: float = 1000,
-    start_time: datetime.time = datetime.time(9, 31),
-    end_time: datetime.time = datetime.time(16, 00),
-    seed: int = 10,
-) -> pd.DataFrame:
-    """
-    Wrap `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
-
-    :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
-        concatenated along the index, sorted by timestamp then by asset it
-    """
-    asset_dfs = []
-    for asset_id in asset_ids:
-        df = generate_random_ohlcv_bars_for_asset(
-            start_datetime,
-            end_datetime,
-            asset_id,
-            bar_duration=bar_duration,
-            bar_volatility_in_bps=bar_volatility_in_bps,
-            bar_expected_count=bar_expected_count,
-            last_price=last_price,
-            start_time=start_time,
-            end_time=end_time,
-            seed=seed,
-        )
-        asset_dfs.append(df)
-        seed += 1
-    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
-    df.reset_index(drop=True, inplace=True)
-    return df
-
-
 def generate_random_ohlcv_bars_for_asset(
     start_datetime: pd.Timestamp,
     end_datetime: pd.Timestamp,
@@ -144,6 +103,47 @@ def generate_random_ohlcv_bars_for_asset(
     )
     df["asset_id"] = asset_id
     return df.reset_index(drop=True)
+
+
+# TODO(Paul): Consider factoring out this wrapper pattern.
+def generate_random_ohlcv_bars(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_ids: List[int],
+        *,
+        bar_duration: str = "1T",
+        bar_volatility_in_bps: int = 10,
+        bar_expected_count: int = 1000,
+        last_price: float = 1000,
+        start_time: datetime.time = datetime.time(9, 31),
+        end_time: datetime.time = datetime.time(16, 00),
+        seed: int = 10,
+) -> pd.DataFrame:
+    """
+    Wrap `generate_random_ohlcv_bars_for_asset()` for multiple instruments.
+
+    :return: dataframe as in `generate_random_ohlcv_bars_for_asset()`,
+        concatenated along the index, sorted by timestamp then by asset it
+    """
+    asset_dfs = []
+    for asset_id in asset_ids:
+        df = generate_random_ohlcv_bars_for_asset(
+            start_datetime,
+            end_datetime,
+            asset_id,
+            bar_duration=bar_duration,
+            bar_volatility_in_bps=bar_volatility_in_bps,
+            bar_expected_count=bar_expected_count,
+            last_price=last_price,
+            start_time=start_time,
+            end_time=end_time,
+            seed=seed,
+        )
+        asset_dfs.append(df)
+        seed += 1
+    df = pd.concat(asset_dfs, axis=0).sort_values(["end_datetime", "asset_id"])
+    df.reset_index(drop=True, inplace=True)
+    return df
 
 
 def generate_random_top_of_book_bars(
