@@ -16,7 +16,6 @@ import pyarrow as pa
 import pyarrow.dataset as ds
 import pyarrow.fs as pafs
 import pyarrow.parquet as pq
-from pyarrow.parquet import ParquetFile
 from tqdm.autonotebook import tqdm
 
 import helpers.hdataframe as hdatafr
@@ -105,10 +104,14 @@ def from_parquet(
             last_pq_file = hs3.get_latest_pq_in_s3_dir(file_name, aws_profile)
             file = s3_filesystem.open(last_pq_file, "rb")
             # Load the data.
-            parquet_file = ParquetFile(file)
+            parquet_file = pq.ParquetFile(file)
             # Get the head of the data.
             first_ten_rows = next(parquet_file.iter_batches(batch_size=n_rows))
             df = pa.Table.from_batches([first_ten_rows]).to_pandas()
+            if columns:
+                # Note: `schema.names` also includes and index.
+                hdbg.dassert_is_subset(columns, parquet_file.schema.names)
+                df = df[columns]
         else:
             if schema is not None:
                 # Pass partition columns types explicitly.
