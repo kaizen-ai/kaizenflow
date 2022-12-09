@@ -22,7 +22,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
         Test Python script call, check return value and amount of downloads.
         """
         amp_dir = hgit.get_amp_abs_path()
-        cmd = "im_v2/talos/data/extract/download_realtime_for_one_exchange_periodically.py"
+        cmd = "im_v2/talos/data/extract/download_exchange_data_to_db_periodically.py"
         cmd = os.path.join(amp_dir, cmd)
         hdbg.dassert_file_exists(cmd)
         #

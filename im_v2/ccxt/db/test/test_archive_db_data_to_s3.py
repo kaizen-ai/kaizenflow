@@ -35,9 +35,9 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
         super().setUp()
 
-    @umock.patch.object(imvcdaddts, "_get_db_connection")
+    @umock.patch.object(imvcdaddts.imvcddbut.DbConnectionManager, "get_connection")
     def test_full_archival_flow(
-        self, mock_get_db_connection: umock.MagicMock
+        self, mock_get_connection: umock.MagicMock
     ) -> None:
         """
         Simple test that the data are fetched from the DB successfully and
@@ -65,7 +65,7 @@ class TestArchiveDbDataToS3(imvcddbut.TestImDbHelper, hmoto.S3Mock_TestCase):
         # Assert correction DB insertion.
         self.assertEqual(3, hsql.get_num_rows(self.connection, "ccxt_ohlcv"))
         # Tests use special connection params, so we mock the module function.
-        mock_get_db_connection.return_value = self.connection
+        mock_get_connection.return_value = self.connection
         # Create s3fs object to pass to from_parquet.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
         expected_path = (

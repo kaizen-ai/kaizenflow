@@ -35,6 +35,7 @@ def get_DataFramePortfolio_example1(
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
     Contain:
@@ -47,6 +48,7 @@ def get_DataFramePortfolio_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
+        column_remap=column_remap,
     )
     # Build a DataFramePortfolio.
     mark_to_market_col = mark_to_market_col
@@ -103,6 +105,7 @@ def get_DataFramePortfolio_example2(
 def get_DataFramePortfolio_example3(
     *,
     market_data: Optional[mdata.MarketData] = None,
+    column_remap: Dict[str, str] = None,
     asset_ids: Optional[List[int]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
@@ -112,7 +115,14 @@ def get_DataFramePortfolio_example3(
     - a `DataFrameBroker` for prod (i.e., a broker that executes the orders immediately)
     """
     # Build a DataFrameBroker.
-    broker = occxbrok.get_DataFrameCcxtBroker_instance1(market_data)
+    strategy_id = "Cx"
+    stage = "preprod"
+    broker = occxbrok.get_DataFrameCcxtBroker_instance1(
+        strategy_id,
+        market_data,
+        stage,
+        column_remap=column_remap,
+    )
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.
     initial_cash = 700

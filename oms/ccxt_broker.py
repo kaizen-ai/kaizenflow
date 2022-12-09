@@ -805,9 +805,9 @@ class CcxtBroker(ombroker.Broker):
 
 
 def get_CcxtBroker_prod_instance1(
+    strategy_id: str,
     market_data: mdata.MarketData,
     universe_version: str,
-    strategy_id: str,
     secret_identifier: omssec.SecretIdentifier,
 ) -> CcxtBroker:
     """
@@ -851,14 +851,17 @@ class DataFrameCcxtBroker(ombroker.DataFrameBroker):
 
 
 def get_DataFrameCcxtBroker_instance1(
+    strategy_id: str,
     market_data: pd.DataFrame,
+    stage: str,
+    *,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> ombroker.DataFrameBroker:
     market_info = load_market_data_info()
-    stage = "preprod"
-    strategy_id = "C1b"
     broker = DataFrameCcxtBroker(
         strategy_id,
         market_data,
+        column_remap=column_remap,
         stage=stage,
         market_info=market_info,
     )
