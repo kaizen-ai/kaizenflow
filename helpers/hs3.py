@@ -396,6 +396,27 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     return s3_bucket
 
 
+def get_latest_pq_in_s3_dir(s3_path: str, aws_profile: str) -> str:
+    """
+    Get the latest parquet file in the specified directory.
+
+    :param s3_path: the path to s3 directory, e.g.
+      `cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec/binance`
+    :param aws_profile: AWS profile to use
+    :return: the path to the latest parquet file in the directory,
+      e.g. `cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec/binance/
+       currency_pair=ETH_USDT/year=2022/month=12/data.parquet`
+    """
+    hdbg.dassert_type_is(aws_profile, str)
+    s3fs_ = get_s3fs(aws_profile)
+    pq_files = s3fs_.glob(f"{s3_path}/**.parquet", detail=True)
+    # Sort the files by the date they were modified for the last time.
+    sorted_files = sorted(pq_files.items(), key=lambda t: t[1]["LastModified"], reverse=True)
+    # Get the path to the latest file.
+    latest_file_path = sorted_files[0][0]
+    return latest_file_path
+
+
 # #############################################################################
 # Parser.
 # #############################################################################
