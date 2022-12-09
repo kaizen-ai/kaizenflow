@@ -819,8 +819,6 @@ def get_CcxtBroker_prod_instance1(
     contract_type = "futures"
     portfolio_id = "ccxt_portfolio_1"
     broker = CcxtBroker(
-        strategy_id,
-        market_data,
         exchange_id,
         universe_version,
         stage,
@@ -828,6 +826,8 @@ def get_CcxtBroker_prod_instance1(
         portfolio_id,
         contract_type,
         secret_identifier,
+        strategy_id=strategy_id,
+        market_data=market_data,
     )
     return broker
 
