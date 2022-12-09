@@ -59,15 +59,17 @@ def generate_aws_config():
     credentials_file_path = "~/.aws/credentials"
     if os.path.exists(config_file_path) or os.path.exists(credentials_file_path):
         return
-    # Create files using the env vars as in `get_aws_credentials`
-    # Get credentials values to fill "~/.aws/credentials" file.
-    config_file_path.split("/")[-1]
+    # Get config values to fill "~/.aws/credentials" file.
+    config_file_name = config_file_path.split("/")[-1]
+    config_vars = ["region"]
     # Here will be a call of a function to create txt for config.
+    # It's going to be mostly the same as `_get_credentials_txt`
+    # so need to share the common code or unify "_get_credentials_txt".
     #
     # Get credentials values to fill "~/.aws/credentials" file.
     credentials_file_name = credentials_file_path.split("/")[-1]
     credentials_config = hs3._get_aws_config(credentials_file_name)
-    _get_credentials_txt(credentials_config)
+    txt = _get_credentials_txt(credentials_config)
     # Here will be a creation of two files.
 
 
