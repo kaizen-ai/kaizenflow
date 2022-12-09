@@ -117,3 +117,5 @@ signature = "bulk.airflow.downloaded_1sec.parquet.bid_ask.spot.v3.crypto_chassis
 reader = imvcdcimrdc.RawDataReader(signature)
 data = reader.read_data()
 _LOG.log(log_level, hpandas.df_to_str(data, log_level=log_level))
+
+# %%
