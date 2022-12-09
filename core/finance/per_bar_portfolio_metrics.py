@@ -19,6 +19,7 @@ def compute_bar_metrics(
     notional_positions: pd.DataFrame,
     notional_flows: pd.DataFrame,
     pnl: pd.DataFrame,
+    *,
     spread: Optional[pd.DataFrame] = None,
     compute_extended_stats: bool = False,
 ) -> pd.DataFrame:
@@ -34,7 +35,7 @@ def compute_bar_metrics(
 
     Optional stats include binary position-based versions of a subset of
     core stats:
-    - gpc (gross position count: total number of positions on in a bar)
+    - gpc (gross position count: total number of positions in a bar)
     - npc (net position count: net long/short position count in a bar)
     - wnl (winners and losers: net winning positions in a bar)
 
@@ -59,7 +60,7 @@ def compute_bar_metrics(
             spread, allow_empty=True, strictly_increasing=True
         )
         hpandas.dassert_axes_equal(spread, pnl)
-    # Compute "core" stats.
+    # - Compute "core" stats.
     # Gross market value (gross exposure).
     gmv = notional_positions.abs().sum(axis=1, min_count=1)
     # Net market value (net asset value or net exposure).
@@ -81,6 +82,7 @@ def compute_bar_metrics(
             "nmv": nmv,
         }
     )
+    # - Compute "extended" stats.
     if compute_extended_stats:
         # Gross position count.
         gpc = np.sign(notional_positions).abs().sum(axis=1, min_count=1)
