@@ -853,8 +853,9 @@ class DataFrameCcxtBroker(ombroker.DataFrameBroker):
 def get_DataFrameCcxtBroker_instance1(
     strategy_id: str,
     market_data: pd.DataFrame,
-    column_remap: Dict[str, str],
     stage: str,
+    *,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> ombroker.DataFrameBroker:
     market_info = load_market_data_info()
     broker = DataFrameCcxtBroker(

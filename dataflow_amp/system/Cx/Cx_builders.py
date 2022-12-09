@@ -342,13 +342,13 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
 
 
 # TODO(gp): We should dump the state of the portfolio and load it back.
-# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
+# TODO(gp): Probably all prod system needs to have run_mode and trade_date and
 #  so we can generalize the class to be not E8 specific.
 def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     """
     Build Portfolio instance for production.
     """
-    use_simulation = system.config.get_and_mark_as_used("use_simulation")
+    run_mode = system.config.get_and_mark_as_used("run_mode")
     cf_config_strategy = system.config.get_and_mark_as_used(
         ("cf_config", "strategy")
     )
@@ -378,7 +378,7 @@ def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
         ("portfolio_config", "column_remap")
     )
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
-        use_simulation,
+        run_mode,
         cf_config_strategy,
         market_data,
         column_remap,

@@ -36,10 +36,10 @@ class CcxtPortfolio(omportfo.DataFramePortfolio):
 
 
 def get_CcxtPortfolio_prod_instance1(
-    use_simulation: bool,
+    run_mode: str,
     strategy_id: str,
     market_data: mdata.MarketData,
-    column_remap: Dict[str, str],
+    column_remap: Optional[Dict[str, str]],
     universe_version: str,
     secret_identifier: omssec.SecretIdentifier,
     pricing_method: str,
@@ -48,7 +48,7 @@ def get_CcxtPortfolio_prod_instance1(
     """
     Initialize the `CcxtPortfolio` with cash using `CcxtBroker`.
 
-    :param use_simulation: see `_Cx_ProdSystem`
+    :param run_mode: see `_Cx_ProdSystem`
     :param strategy_id: see `Broker`
     :param market_data: see `Broker`
     :param universe_version: see `CcxtBroker`
@@ -57,24 +57,26 @@ def get_CcxtPortfolio_prod_instance1(
     :param asset_ids: see `Portfolio.from_cash()`
     """
     # We prefer to configure code statically (e.g., without switches) but in this
-    # case the prod Porfolio vs its simulat-able version are so close (and we want to
-    # keep them close) that we use a switch.
-    if not use_simulation:
+    # case the prod Porfolio vs its paper-trading version are so close
+    # (and we want to keep them close) that we use a switch.
+    if run_mode == "prod":
         # Build `CcxtBroker` that is connected to the real exchange.
         broker = occxbrok.get_CcxtBroker_prod_instance1(
             strategy_id, market_data, universe_version, secret_identifier
         )
-    else:
-        _LOG.warning("Running the system with the simulated Broker")
-        # Use the `SimulatedCcxtBroker`, i.e. no interaction with
+    elif run_mode == "paper_trading":
+        _LOG.warning("Running the system with the `DataFrameCcxtBroker`")
+        # Use the `DataFrameCcxtBroker`, i.e. no interaction with
         # the real exchange.
         stage = secret_identifier.stage
-        broker = occxbrok.get_SimulatedCcxtBroker_instance1(
+        broker = occxbrok.get_DataFrameCcxtBroker_instance1(
             strategy_id,
             market_data,
-            column_remap,
             stage,
+            column_remap=column_remap,
         )
+    else:
+        raise ValueError(f"Invalid run_mode='{run_mode}'")
     # Build CcxtPortfolio.
     mark_to_market_col = "close"
     initial_cash = 700

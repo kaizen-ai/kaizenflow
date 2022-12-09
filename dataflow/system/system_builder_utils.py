@@ -491,13 +491,16 @@ def get_DataFramePortfolio_from_System(
         for simulation
     """
     market_data = system.market_data
+    column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
     asset_ids = system.config.get_and_mark_as_used(
         ("market_data_config", "asset_ids")
     )
     if is_prod:
         # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
-            market_data=market_data, asset_ids=asset_ids
+            market_data=market_data, column_remap=column_remap, asset_ids=asset_ids
         )
     else:
         # Set event loop object for `DataFrameBroker` used in simulation.
@@ -515,12 +518,8 @@ def get_DataFramePortfolio_from_System(
             mark_to_market_col=mark_to_market_col,
             pricing_method=pricing_method,
             asset_ids=asset_ids,
+            column_remap=column_remap,
         )
-    # TODO(gp): We should pass the column_remap to the Portfolio builder,
-    # instead of injecting it after the fact.
-    portfolio.broker._column_remap = system.config.get_and_mark_as_used(
-        ("portfolio_config", "column_remap")
-    )
     return portfolio
 
 

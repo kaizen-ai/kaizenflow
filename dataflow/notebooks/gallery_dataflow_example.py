@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -44,11 +44,12 @@ _LOG = logging.getLogger(__name__)
 
 hprint.config_notebook()
 
-
 # %% [markdown]
 # # Config
 
 # %%
+import helpers.hs3 as hs3
+
 def get_gallery_dataflow_example_config() -> cconconf.Config:
     """
     Get config, that specifies params for getting raw data.
@@ -58,14 +59,14 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     config.add_subconfig("load")
     config["load"]["aws_profile"] = "ck"
     s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
-    s3_path = os.path.join(s3_bucket_path, "historical")
+    s3_path = os.path.join(s3_bucket_path)
     config["load"]["data_dir"] = os.path.join(
-        s3_path, "historical"
+        s3_path, "reorg", "historical.manual.pq"
     )
     config["load"]["data_snapshot"] = "latest"
     config["load"]["partition_mode"] = "by_year_month"
     config["load"]["dataset"] = "ohlcv"
-    config["load"]["contract_type"] = "spot"
+    config["load"]["contract_type"] = "futures"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["start_date"] = pd.Timestamp("2021-09-01", tz="UTC")
@@ -112,9 +113,10 @@ historical_client = icdcl.CcxtHistoricalPqByTileClient(
 full_symbols = ["binance::ADA_USDT", "binance::AVAX_USDT"]
 start_date = config["data"]["start_date"]
 end_date = config["data"]["end_date"]
-
+columns = None
+filter_data_mode = None
 # Load the data.
-data_hist = historical_client.read_data(full_symbols, start_date, end_date)
+data_hist = historical_client.read_data(full_symbols, start_date, end_date, columns, filter_data_mode)
 display(data_hist.shape)
 display(data_hist.head(3))
 

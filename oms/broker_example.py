@@ -5,7 +5,7 @@ import oms.broker_example as obroexam
 """
 
 import asyncio
-from typing import Optional
+from typing import Dict, Optional
 
 import helpers.hsql as hsql
 import market_data as mdata
@@ -18,6 +18,7 @@ def get_DataFrameBroker_example1(
     *,
     market_data: Optional[mdata.MarketData] = None,
     timestamp_col: str = "end_datetime",
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> ombroker.DataFrameBroker:
     """
     Build a `DataFrameBroker` using a `MarketData`, unless specified.
@@ -32,7 +33,11 @@ def get_DataFrameBroker_example1(
     strategy_id = "SAU1"
     account = "candidate"
     broker = ombroker.DataFrameBroker(
-        strategy_id, market_data, account=account, timestamp_col=timestamp_col
+        strategy_id,
+        market_data,
+        account=account,
+        timestamp_col=timestamp_col,
+        column_remap=column_remap,
     )
     return broker
 
