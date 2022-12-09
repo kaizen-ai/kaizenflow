@@ -46,10 +46,12 @@ def process_bid_ask(
     #
     if df.columns.nlevels == 1:
         # Single level column.
-        hdbg.dassert(not (df[bid_col] > df[ask_col]).any())
+        if (df[bid_col] >= df[ask_col]).any().any():
+            _LOG.warning("Some bid values are above ask values.")
     elif df.columns.nlevels == 2:
         # Multiindex df.
-        hdbg.dassert(not (df[bid_col] >= df[ask_col]).any().any())
+        if (df[bid_col] >= df[ask_col]).any().any():
+            _LOG.warning("Some bid values are above ask values.")
     else:
         raise ValueError("DataFrame type not supported:\n%s", df.head(3))
     supported_cols = [
