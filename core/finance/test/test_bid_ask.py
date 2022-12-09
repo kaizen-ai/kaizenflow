@@ -173,7 +173,7 @@ datetime,mid_value
         """
         Verify that the bid/ask feature functions work with multiindex.
         """
-        requested_cols = ["mid", "mid_value"]
+        requested_cols = None
         bid_col = "bid"
         ask_col = "ask"
         bid_volume_col = "bid_volume"
@@ -187,13 +187,14 @@ datetime,mid_value
             ask_volume_col,
             requested_cols=requested_cols,
         )
-        actual = actual.sort_index(axis=1)
-        expected = """                  mid                 mid_value
-           3303714233  8968126878    3303714233     8968126878
-2022-11-02   0.385073  319.837513  2.013201e+06  542315.407201
-2022-11-03   0.385128  319.891286  2.152799e+06  634970.410301
+        expected = r"""               ask_value                    bid_value                centered_order_book_imbalance            geometric_mid             log_order_book_imbalance            log_relative_spread                   mid                 mid_value                order_book_imbalance            quoted_spread            relative_spread            weighted_mid
+              3303714233     8968126878    3303714233     8968126878                    3303714233 8968126878    3303714233  8968126878               3303714233 8968126878          3303714233 8968126878 3303714233  8968126878    3303714233     8968126878           3303714233 8968126878    3303714233 8968126878      3303714233 8968126878   3303714233  8968126878
+2022-11-02  2.203589e+06  629831.626203  1.822814e+06  454799.188200                     -0.094458  -0.161245      0.385073  319.837510                -0.189481  -0.325329            0.000225   0.000268   0.385073  319.837513  2.013201e+06  542315.407201             0.452771   0.419378      0.000087   0.085686        0.000225   0.000268     0.385069  319.830605
+2022-11-03  1.769897e+06  856610.415704  2.535700e+06  413330.404898                      0.177949  -0.349053      0.385128  319.891286                 0.359727  -0.728730            0.000179   0.000005   0.385128  319.891286  2.152799e+06  634970.410301             0.588974   0.325473      0.000069   0.001742        0.000179   0.000005     0.385134  319.890982
 """
-        self.assert_equal(str(actual), expected)
+        actual = actual.sort_index(axis=1)
+        actual = hpandas.df_to_str(actual)
+        self.assert_equal(actual, expected)
 
     @staticmethod
     def _get_df(*, multiindex: bool = False) -> pd.DataFrame:
