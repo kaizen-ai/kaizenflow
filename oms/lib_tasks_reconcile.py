@@ -178,6 +178,7 @@ def reconcile_create_dirs(
 @task
 def reconcile_dump_market_data(
     ctx,
+    dag_builder_name,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
@@ -220,6 +221,7 @@ def reconcile_dump_market_data(
         # TODO(Grisha): @Dan Copy logs to the specified folder.
         # TODO(Grisha): @Dan Remove unnecessary opts.
         opts = [
+            f"--dag_builder_name {dag_builder_name}",
             "--action dump_data",
             f"--start_timestamp_as_str {start_timestamp_as_str}",
             f"--end_timestamp_as_str {end_timestamp_as_str}",
@@ -227,7 +229,7 @@ def reconcile_dump_market_data(
         ]
         opts = " ".join(opts)
         opts += " -v DEBUG 2>&1 | tee reconcile_dump_market_data_log.txt; exit ${PIPESTATUS[0]}"
-        script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+        script_name = "dataflow_orange/system/Cx/Cx_reconcile.py"
         cmd = f"{script_name} {opts}"
         _system(cmd)
     hdbg.dassert_file_exists(market_data_file)
@@ -255,6 +257,7 @@ def reconcile_dump_market_data(
 @task
 def reconcile_run_sim(
     ctx,
+    dag_builder_name,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
@@ -282,6 +285,7 @@ def reconcile_run_sim(
         _system(rm_cmd)
     # Run simulation.
     opts = [
+        f"--dag_builder_name {dag_builder_name}",
         "--action run_simulation",
         f"--start_timestamp_as_str {start_timestamp_as_str}",
         f"--end_timestamp_as_str {end_timestamp_as_str}",
@@ -291,7 +295,7 @@ def reconcile_run_sim(
     opts += (
         " -v DEBUG 2>&1 | tee reconcile_run_sim_log.txt; exit ${PIPESTATUS[0]}"
     )
-    script_name = "dataflow_orange/system/C1/C1b_reconcile.py"
+    script_name = "dataflow_orange/system/Cx/Cx_reconcile.py"
     cmd = f"{script_name} {opts}"
     _system(cmd)
     # Check that the required dirs were created.
@@ -574,6 +578,7 @@ def reconcile_dump_tca_data(
 @task
 def reconcile_run_all(
     ctx,
+    dag_builder_name,
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
@@ -588,6 +593,7 @@ def reconcile_run_all(
     """
     Run all phases of prod vs simulation reconciliation.
 
+    :param dag_builder_name: Name of the DAG builder, e.g. "C1b"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
     :param end_timestamp_as_str: string representation of timestamp
@@ -630,6 +636,7 @@ def reconcile_run_all(
     #
     reconcile_dump_market_data(
         ctx,
+        dag_builder_name,
         start_timestamp_as_str=start_timestamp_as_str,
         end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
@@ -637,6 +644,7 @@ def reconcile_run_all(
     )
     reconcile_run_sim(
         ctx,
+        dag_builder_name,
         start_timestamp_as_str=start_timestamp_as_str,
         end_timestamp_as_str=end_timestamp_as_str,
         dst_dir=dst_dir,
