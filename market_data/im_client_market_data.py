@@ -83,15 +83,18 @@ class ImClientMarketData(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         """
         See the parent class.
         """
         _LOG.debug(
             hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit ignore_delay"
             )
         )
+        # This is used only in ReplayedMarketData.
+        _ = ignore_delay
         if not left_close:
             if start_ts is not None:
                 # Add one millisecond to not include the left boundary.
