@@ -624,6 +624,9 @@ def get_MarketData_df2() -> Tuple[pd.DataFrame, int]:
     feature = feature_pattern * 4
     data["feature1"] = feature
     rt_timeout_in_secs_or_time = 35 * 60
+    #import helpers.hpandas as hpandas
+    #print(hpandas.df_to_str(data, num_rows=None))
+    #assert 0
     return data, rt_timeout_in_secs_or_time
 
 

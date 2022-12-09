@@ -848,19 +848,21 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor_vs_DataFrame
         # Only the system with DatabasePortfolio but not a DataFramePortfolio
         # has the OrderProcessor so we don't print it.
         add_order_processor_signature = False
-        actual = self._test_dataframe_portfolio_helper(
-            system_with_dataframe_portfolio,
-            add_system_config=add_system_config,
-            add_run_signature=add_run_signature,
-        )
-        # Make sure there is something in the actual outcome.
-        hdbg.dassert_lte(10, len(actual.split("\n")))
+        if True:
+            actual = self._test_dataframe_portfolio_helper(
+                system_with_dataframe_portfolio,
+                add_system_config=add_system_config,
+                add_run_signature=add_run_signature,
+            )
+            # Make sure there is something in the actual outcome.
+            hdbg.dassert_lte(10, len(actual.split("\n")))
         expected = self._test_database_portfolio_helper(
             system_with_database_portfolio,
             add_system_config=add_system_config,
             add_run_signature=add_run_signature,
             add_order_processor_signature=add_order_processor_signature
         )
+        #return
         #
         hdbg.dassert_lte(10, len(expected.split("\n")))
         # Remove `DataFrame*` and `Database*` to avoid mismatches from the fact

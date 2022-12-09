@@ -74,7 +74,7 @@ dag_builder_class: Mock1_DagBuilder
 system_class: Mock1_Time_ForecastSystem_with_DataFramePortfolio
 market_data_config:
   asset_id_col_name: asset_id
-  delay_in_secs: 5
+  delay_in_secs: 0
   replayed_delay_in_mins_or_timestamp: 2000-01-01 09:35:00-05:00
   asset_ids: [101]
   data:
@@ -160,7 +160,7 @@ process_forecasts_node_dict:
     trading_end_time: 15:55:00
     share_quantization: no_quantization
 event_loop_object: <_EventLoop running=False closed=False debug=False>
-market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=5 <int>)
+market_object: ReplayedMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[101] <list>, _start_time_col_name=start_datetime <str>, _end_time_col_name=end_datetime <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _df=pd.df((40, 7) <pandas.core.frame.DataFrame>, _knowledge_datetime_col_name=timestamp_db <str>, _delay_in_secs=0 <int>)
 object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data
   portfolio_object: dataflow_amp.system.mock1.mock1_forecast_system._get_portfolio
@@ -215,4 +215,4 @@ dag_runner_object:
       2000-01-01 10:09:00-05:00 2000-01-01 10:08:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:09:00-05:00  102.0       101     100       1.0
       2000-01-01 10:10:00-05:00 2000-01-01 10:09:00-05:00 2000-01-01 10:10:00-05:00 2000-01-01 10:10:00-05:00  102.0       101     100       1.0
     _knowledge_datetime_col_name='timestamp_db' <str>
-    _delay_in_secs='5' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)
+    _delay_in_secs='0' <int>>, 'bar_duration_in_secs': 300, 'rt_timeout_in_secs_or_time': 2100} <dict>, _dst_dir=None <NoneType>, _fit_at_beginning=False <bool>, _wake_up_timestamp=None <NoneType>, _bar_duration_in_secs=300 <int>, _set_current_bar_timestamp=True <bool>, _events=[] <list>)

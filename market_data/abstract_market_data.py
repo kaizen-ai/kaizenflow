@@ -317,8 +317,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             )
         # Remap result columns to the required names.
         df = self._remap_columns(df)
-        if _TRACE:
-            _LOG.trace("-> df=\n%s", hpandas.df_to_str(df))
+        if True or _TRACE:
+            _LOG.trace("-> here df=\n%s", hpandas.df_to_str(df, num_rows=None))
         hdbg.dassert_isinstance(df, pd.DataFrame)
         return df
 
@@ -490,8 +490,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._dassert_valid_asset_ids(asset_ids)
         last_end_time = self.get_last_end_time()
         _LOG.debug("last_end_time=%s", last_end_time)
-        # Align on a bar. E.g., `last_end_time` is 09:16 and we ask
-        # for data in (09:10, 09:15], not (09:11, 09:16].
+        # Align on a bar. E.g., `last_end_time` is 09:16 and we ask for data in
+        # (09:10, 09:15], not (09:11, 09:16].
         mode = "floor"
         bar_duration_in_secs = pd.Timedelta(bar_duration_as_pd_str).seconds
         last_end_time = hdateti.find_bar_timestamp(

@@ -193,6 +193,7 @@ def _get_price_per_share(
             end_timestamp, timestamp_col_name, asset_ids
         )
     elif timing == "twap":
+        _LOG.debug(hprint.to_str("start_timestamp end_timestamp"))
         prices_df = market_data.get_twap_price(
             start_timestamp,
             end_timestamp,
@@ -202,7 +203,7 @@ def _get_price_per_share(
         )
     else:
         raise ValueError(f"Invalid timing='{timing}'")
-    if _TRACE:
+    if True or _TRACE:
         _LOG.trace("prices_df=\n%s", hpandas.df_to_str(prices_df, precision=2))
     # prices_df looks like:
     # ```
@@ -276,6 +277,7 @@ def _get_execution_prices(
             column,
             timing,
         )
+        _LOG.trace("prices=\n%s", hpandas.df_to_str(prices, precision=2))
     elif price_type.startswith("partial_spread"):
         perc = float(price_type.split("_")[2])
         hdbg.dassert_lte(0, perc)
@@ -321,7 +323,7 @@ def _get_execution_prices(
     _LOG.debug(hprint.to_str("order_type start_timestamp end_timestamp"))
     #
     hdbg.dassert_isinstance(prices, pd.Series)
-    if _TRACE:
+    if False or _TRACE:
         _LOG.trace("prices=\n%s", hpandas.df_to_str(prices, precision=2))
     return prices
 
