@@ -218,6 +218,7 @@ def reconcile_data_run_notebook(
     db_table,
     aws_profile,
     s3_path,
+    base_dst_dir,
     s3_dataset_signature,
     bid_ask_accuracy=None,
 ):  # type: ignore
