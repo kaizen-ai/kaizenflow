@@ -259,7 +259,7 @@ class HistoricalPqByTileClient(
 # HistoricalPqByCurrencyPairTileClient
 # #############################################################################
 
-
+# TODO(Juraj): This might even be deprecated.
 class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
     """
     Read historical data for vendor specific assets stored as Parquet dataset.
