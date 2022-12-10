@@ -79,6 +79,25 @@ class RawDataReader:
         head = hsql.execute_query_to_df(connection, query_head)
         return head
 
+    # TODO(Juraj): this is make-do solution, it needs consolidation with the rest of the code
+    #  + adding docstrings.
+    def load_parquet(
+        self, s3_base_path: str, start_ts: pd.Timestamp, end_ts: pd.Timestamp
+    ) -> pd.DataFrame:
+        """
+        Load parquet data in a specified time frame.
+        """
+        s3_path = dsdascut.build_s3_dataset_path_from_args(
+            s3_base_path, self.args
+        )
+        timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
+            "by_year_month", start_ts, end_ts
+        )
+        data = hparque.from_parquet(
+            s3_path, filters=timestamp_filters, aws_profile="ck"
+        )
+        return data
+
     def _get_db_table_name(self) -> str:
         """
         Build the name of DB table according to the signature arguments.
@@ -124,19 +143,3 @@ class RawDataReader:
             f'{s3_path_base}/{data_type}/{vendor}/{self.args["exchange_id"]}'
         )
         return s3_dir_path
-    
-    # TODO(Juraj): this is make-do solution, it needs consolidation with the rest of the code
-    #  + adding docstrings.
-    def load_parquet(self, s3_base_path: str, start_ts: pd.Timestamp, end_ts: pd.Timestamp) -> pd.DataFrame:
-        """
-        Load parquet data in a specified time frame.
-        """
-        s3_path = dsdascut.build_s3_dataset_path_from_args(s3_base_path, self.args)
-        timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
-            "by_year_month", start_ts, end_ts
-        )
-        data = hparque.from_parquet(
-            s3_path, filters=timestamp_filters, aws_profile="ck"
-        )
-        return data
-

@@ -21,24 +21,19 @@ import im_v2.common.data.extract.data_qa as imvcodedq
 import abc
 import argparse
 import logging
-import os
 from typing import Any, List
 
 import pandas as pd
-import psycopg2
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
-import helpers.hparquet as hparque
 import helpers.hparser as hparser
 import helpers.hs3 as hs3
-import helpers.hsql as hsql
 import im_v2.ccxt.data.client as icdcl
 import im_v2.common.data.client.im_raw_data_client as imvcdcimrdc
-import im_v2.common.universe.full_symbol as imvcufusy
-import im_v2.common.db.db_utils as imvcddbut
-import im_v2.im_lib_tasks as imvimlita
 import im_v2.common.data.transform.transform_utils as imvcdttrut
+import im_v2.common.db.db_utils as imvcddbut
+import im_v2.common.universe.full_symbol as imvcufusy
 
 _LOG = logging.getLogger(__name__)
 
@@ -193,13 +188,16 @@ def _parse() -> argparse.ArgumentParser:
     parser = hs3.add_s3_args(parser)
     return parser  # type: ignore[no-any-return]
 
+
 # TODO(Juraj): This is a temporary adjustment to enable usage of surrentum protocol
 #  based principals. The solution will be rewritten into a class composition
 #  of validators and checks
 class RealTimeHistoricalReconciler:
     def __init__(self, args) -> None:
         # Set DB connection.
-        db_connection = imvcddbut.DbConnectionManager.get_connection(args.db_stage)
+        db_connection = imvcddbut.DbConnectionManager.get_connection(
+            args.db_stage
+        )
         # Initialize CCXT client.
         self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
             False, db_connection, args.db_table
@@ -232,7 +230,6 @@ class RealTimeHistoricalReconciler:
         # Get daily data.
         self.daily_data = self._get_daily_data()
 
-
     def run(self) -> None:
         """
         Compare real time and daily data.
@@ -244,8 +241,8 @@ class RealTimeHistoricalReconciler:
             self._compare_bid_ask(self.ccxt_rt, self.daily_data)
         return
 
-    #@staticmethod
-    #def _build_s3_path(
+    # @staticmethod
+    # def _build_s3_path(
     #    s3_path: str,
     #    data_type: str,
     #    contract_type: str,
@@ -253,7 +250,7 @@ class RealTimeHistoricalReconciler:
     #    s3_vendor: str,
     #    resample_1min: bool,
     #    resample_1sec: bool,
-    #) -> str:
+    # ) -> str:
     #    """
     #    Build the s3 path, e.g. s3://cryptokaizen-
     #    data.preprod/reorg/daily_staged.airflow.pq/ohlcv-
@@ -323,8 +320,8 @@ class RealTimeHistoricalReconciler:
     #    #
     #    return df
 
-    #@staticmethod
-    #def _resample_to_1sec(data: pd.DataFrame) -> pd.DataFrame:
+    # @staticmethod
+    # def _resample_to_1sec(data: pd.DataFrame) -> pd.DataFrame:
     #    """
     #    Resample the data to 1 second.
 
@@ -368,7 +365,7 @@ class RealTimeHistoricalReconciler:
         _LOG.info("Filter duplicates in real time data")
         ccxt_rt = self._preprocess_data(ccxt_rt)
 
-        #if self.resample_1sec:
+        # if self.resample_1sec:
         #    ccxt_rt = self._resample_to_1sec(ccxt_rt)
         # Reindex the data.
         ccxt_rt_reindex = ccxt_rt.set_index(["timestamp", "full_symbol"])
@@ -379,7 +376,9 @@ class RealTimeHistoricalReconciler:
         Load and process daily data.
         """
         data_reader = imvcdcimrdc.RawDataReader(self.s3_dataset_signature)
-        daily_data = data_reader.load_parquet(self.s3_path, self.start_ts, self.end_ts)
+        daily_data = data_reader.load_parquet(
+            self.s3_path, self.start_ts, self.end_ts
+        )
         if "timestamp" in daily_data.columns:
             # Sometimes the data contains `timestamp` column which is not needed
             # since there is always a timestamp in the index.
@@ -649,7 +648,7 @@ class RealTimeHistoricalReconciler:
             "EOS_USDT",
             "ETH_USDT",
             "SOL_USDT",
-            "XRP_USDT"
+            "XRP_USDT",
         ]
         if "ccxt" in self.s3_dataset_signature:
             universe = ccxt_universe
