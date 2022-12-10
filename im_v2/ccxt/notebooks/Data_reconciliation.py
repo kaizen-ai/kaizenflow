@@ -31,7 +31,7 @@ import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hio as hio
 import core.config as cconfig
-import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
+import im_v2.common.data.extract.data_qa as imvcodedq
 
 # %% [markdown]
 # ### Logging
@@ -74,7 +74,7 @@ config
 # %%
 # The class was originally intended to be used via a cmdline script
 args = argparse.Namespace(**config)
-reconciler = imvcdecrah.RealTimeHistoricalReconciler(args)
+reconciler = imvcodedq.RealTimeHistoricalReconciler(args)
 
 # %%
 # CCXT Realtime data
