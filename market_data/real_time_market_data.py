@@ -93,7 +93,10 @@ class RealTimeMarketData(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
+        # This is used only in ReplayedMarketData.
+        _ = ignore_delay
         sort_time = True
         query = self._get_sql_query(
             self._columns,

@@ -258,6 +258,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         left_close: bool = True,
         right_close: bool = False,
         limit: Optional[int] = None,
+        ignore_delay: bool = False,
     ) -> pd.DataFrame:
         """
         Return price data for an interval with `start_ts` and `end_ts`
@@ -275,7 +276,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         """
         _LOG.debug(
             hprint.to_str(
-                "start_ts end_ts ts_col_name asset_ids left_close right_close limit"
+                "start_ts end_ts ts_col_name asset_ids left_close right_close limit ignore_delay"
             )
         )
         # Resolve the asset ids.
@@ -295,6 +296,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             left_close,
             right_close,
             limit,
+            ignore_delay,
         )
         _LOG.debug("get_data_for_interval() columns '%s'", df.columns)
         # If the assets were specified, check that the returned data doesn't contain
@@ -386,6 +388,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         ts_col_name: str,
         asset_ids: List[int],
         column: str,
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         """
         Compute TWAP of the column `column` in (ts_start, ts_end].
@@ -423,6 +426,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             left_close=left_close,
             right_close=right_close,
             limit=None,
+            ignore_delay=ignore_delay,
         )
         # We don't need to remap columns since `get_data_for_interval()` has already
         # done it.
@@ -537,6 +541,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self,
         col_name: str,
         asset_ids: List[int],
+        *,
+        ignore_delay: bool = False
     ) -> pd.DataFrame:
         """
         Get last price for `asset_ids` using column `col_name` (e.g., "close").
@@ -555,6 +561,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
             start_time,
             self._start_time_col_name,
             asset_ids,
+            ignore_delay=ignore_delay,
         )
         # TODO(gp): Print if there are nans.
         return df
@@ -717,6 +724,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         """
         Return data in the interval start_ts, end_ts for certain assets.

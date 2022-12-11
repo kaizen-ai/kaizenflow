@@ -193,12 +193,15 @@ def _get_price_per_share(
             end_timestamp, timestamp_col_name, asset_ids
         )
     elif timing == "twap":
+        # CmTask3369.
+        ignore_delay = True
         prices_df = market_data.get_twap_price(
             start_timestamp,
             end_timestamp,
             timestamp_col_name,
             asset_ids,
             column,
+            ignore_delay,
         )
     else:
         raise ValueError(f"Invalid timing='{timing}'")
