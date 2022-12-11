@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Download historical data from Binance and save it as CSV locally.
+Download historical data from Binance and save it as gzipped CSV locally.
 
 Use as:
 # Download OHLCV data for binance:
@@ -125,6 +125,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
 
     output = pd.DataFrame()
+    print(start_timestamp_as_unix)
+    print(end_timestamp_as_unix)
     for symbol in tqdm.tqdm(UNIVERSE["binance"]):
         for start_time, end_time in _split_period_to_days(
             start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
@@ -143,7 +145,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 [
                     {
                         "symbol": symbol,
-                        "open_time": pd.Timestamp(row[0]),
+                        "open_time": hdateti.convert_unix_epoch_to_timestamp(row[0]),
                         "open": row[1],
                         "high": row[2],
                         "low": row[3],
@@ -155,7 +157,8 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             output = pd.concat(objs=[output, data], ignore_index=True)
             time.sleep(THROTTLE_DELAY_IN_SECS)
-    output.to_csv(args.output_file, index=False)
+    output.to_csv(f"{args.output_file}", index=False)
+    # output.to_csv(f"{args.output_file}.gz", index=False, compression='gzip')
 
 
 def add_download_args(
