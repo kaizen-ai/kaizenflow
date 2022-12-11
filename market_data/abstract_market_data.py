@@ -507,12 +507,14 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         #
         offset = pd.Timedelta(bar_duration_as_pd_str)
         start_time = last_end_time - offset
+        ignore_delay = False
         twap_df = self.get_twap_price(
             start_time,
             last_end_time,
             ts_col_name,
             asset_ids,
             column,
+            ignore_delay
         )
         return twap_df
 
