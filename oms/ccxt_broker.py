@@ -690,13 +690,6 @@ class CcxtBroker(ombroker.Broker):
                         e,
                     )
                     break
-                if self._check_binance_code_error(e, -4003) or self._check_binance_code_error(e, -4164):
-                    _LOG.warning(
-                        "The order is below the minimum. \
-                        The Exception was:\n%s\nContinuing...",
-                        e,
-                    )
-                    break
                 else:
                     raise e
         return submitted_order
