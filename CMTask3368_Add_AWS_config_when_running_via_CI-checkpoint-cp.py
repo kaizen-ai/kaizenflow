@@ -13,46 +13,23 @@
 # ---
 
 # %%
+import configparser
 import os
+from typing import List
 
 import helpers.hio as hio
 import helpers.hs3 as hs3
 
-# %%
-l = ["[am]", "a", "b", "c", "[ck]", "d", "e", "f"]
-for i in range(4, 9, 4):
-    if i == 4:
-        am = "\n".join(l[:i+1])
-        print(am)
-    else:
-        ck = "\n".join(l[i:])
-        print(ck)
-
 
 # %%
-creds = []
-for profile in aws_profiles:
-    tmp = {profile: []}
-    for k, v in zip(envs[profile].keys(), envs[profile].values()):
-        creds.append("=".join([k, v]))
-txt = "\n".join(creds)
-print(txt)
-
-
-# %%
-def _get_credentials_txt(config) -> str:
-    credentials_vars = [
-        "aws_access_key_id",
-        "aws_secret_access_key",
-        "aws_s3_bucket",
-    ]
+def _get_credentials_txt(config: configparser.RawConfigParser, secret_keys: List) -> str:
     aws_profiles = ["am", "ck"]
     envs = {}
     for profile in aws_profiles:
         tmp = {
             profile: {},
         }
-        for var in credentials_vars:
+        for var in secret_keys:
             v = config.get(profile, var)
             tmp[profile].update({var: v})
         envs.update(tmp)
@@ -67,7 +44,6 @@ def _get_credentials_txt(config) -> str:
 
 
 def _get_config_txt(config):
-    config_vars = ["region"]
     aws_profiles = ["am", "ck"]
     envs = {}
     for profile in aws_profiles:
@@ -96,13 +72,19 @@ def generate_aws_config() -> None:
     # Get config values to fill "~/.aws/config" file.
     config_file_name = config_file_path.split("/")[-1]
     aws_config = hs3._get_aws_config(config_file_name)
-    txt = _get_config_txt(aws_config)
+    config_keys = ["region"]
+    txt = _get_config_txt(aws_config, config_keys)
     # Create config file.
     hio.to_file(config_file_path, txt)
     # Get credentials values to fill "~/.aws/credentials" file.
     credentials_file_name = credentials_file_path.split("/")[-1]
+    credentials_keys = [
+        "aws_access_key_id",
+        "aws_secret_access_key",
+        "aws_s3_bucket",
+    ]
     credentials_aws_config = hs3._get_aws_config(credentials_file_name)
-    txt = _get_credentials_txt(credentials_aws_config)    
+    txt = _get_credentials_txt(credentials_aws_config, credentials_keys)    
     # Create credentials file.
     hio.to_file(credentials_file_path, txt)
 
