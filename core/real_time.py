@@ -174,6 +174,7 @@ def generate_synthetic_data(
     return df
 
 
+# TODO(gp): datetime_ -> as_of_timestamp
 def get_data_as_of_datetime(
     df: pd.DataFrame,
     knowledge_datetime_col_name: Optional[str],
