@@ -20,12 +20,13 @@ from typing import List
 import helpers.hio as hio
 import helpers.hs3 as hs3
 
-
 # %%
-def _generate_config_txt(config: configparser.RawConfigParser, secret_keys: List) -> str:
+def _generate_config_txt(
+    config: configparser.RawConfigParser, secret_keys: List
+) -> str:
     """
     Create text for AWS config files.
-    
+
     :param config: a parser that gets the AWS config file content
     :param secret_keys: the AWS credential keys that need to insert into a file
     :return: AWS crendials are formatted for ".aws/config" or ".aws/credentials"
@@ -64,7 +65,7 @@ def generate_aws_config() -> None:
     """
     config_file_path = ".aws/config"
     credentials_file_path = ".aws/credentials"
-    # If file exists 
+    # If file exists
     if os.path.exists(config_file_path):
         return
     else:
@@ -86,7 +87,7 @@ def generate_aws_config() -> None:
             "aws_s3_bucket",
         ]
         credentials = hs3._get_aws_config(file_name)
-        txt = _generate_config_txt(credentials, secret_keys)    
+        txt = _generate_config_txt(credentials, secret_keys)
         # Create credentials file.
         hio.to_file(credentials_file_path, txt)
 
