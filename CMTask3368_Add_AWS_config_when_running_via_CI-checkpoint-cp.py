@@ -24,30 +24,33 @@ import helpers.hs3 as hs3
 # %%
 def _generate_config_txt(config: configparser.RawConfigParser, secret_keys: List) -> str:
     """
+    Create text for AWS config files.
     
+    :param config: parser that gets config file content
+    :param secret_keys: 
     """
+    # ".aws/config" and ".aws/credentials" have different headers
+    # for AWS profiles, so we check which secret keys contain ".aws/config"
+    # key, then set the one is needed.
     if "region" in secret_keys:
         aws_profiles = ["profile am", "profile ck"]
     else:
         aws_profiles = ["am", "ck"]
+    # Get all values for each secret key from the config. Sort them
+    # by AWS profile.
     envs = {}
     for profile in aws_profiles:
-        tmp = {
-            profile: {},
-        }
-        for var in secret_keys:
-            v = config.get(profile, var)
-            tmp[profile].update({var: v})
-        envs.update(tmp)
-    creds = []
-    for profile in aws_profiles:
-        for k, v in zip(envs[profile].keys(), envs[profile].values()):
-            creds.append("=".join([k, v]))
-    idx = (len(creds) // 2)
-    am_creds = "\n".join(creds[:idx])
+        tmp = []
+        for key in secret_keys:
+            value = config.get(profile, key)
+            secret = "=".join([key, value])
+            tmp.append(secret)
+        envs.update({profile: tmp})
+    # Create text to insert into the config file.
+    am_creds = "\n".join(envs[aws_profiles[0]])
     am_creds = f"[{aws_profiles[0]}]\n" + am_creds
     #
-    ck_creds = "\n".join(creds[idx:])
+    ck_creds = "\n".join(envs[aws_profiles[1]])
     ck_creds = f"[{aws_profiles[1]}]\n" + ck_creds
     txt = "\n\n".join([am_creds, ck_creds])
     return txt
@@ -90,3 +93,4 @@ def generate_aws_config() -> None:
 generate_aws_config()
 
 # %%
+# !cat .aws/config
