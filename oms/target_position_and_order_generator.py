@@ -14,6 +14,7 @@ from tqdm.autonotebook import tqdm
 
 import core.config as cconfig
 import core.key_sorted_ordered_dict as cksoordi
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hdict as hdict
 import helpers.hio as hio
@@ -83,11 +84,8 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Save order config.
         self._order_dict = order_dict
         _ = hdict.typed_get(order_dict, "order_type", expected_type=str)
-        _ = hdict.typed_get(
+        self._order_duration_in_mins = hdict.typed_get(
             order_dict, "order_duration_in_mins", expected_type=int
-        )
-        self._offset_min = pd.DateOffset(
-            minutes=order_dict["order_duration_in_mins"]
         )
         # Save optimizer config.
         _ = hdict.typed_get(optimizer_dict, "backend", expected_type=str)
@@ -616,12 +614,24 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # Enter position between now and the next `order_duration_in_mins` minutes.
         # Create a config for `Order`.
         timestamp_start = wall_clock_timestamp
-        timestamp_end = wall_clock_timestamp + self._offset_min
+        timestamp_end = timestamp_start + pd.DateOffset(
+            minutes=self._order_duration_in_mins
+        )
+        # Align on a bar.
+        mode = "floor"
+        bar_duration_in_secs = hdateti.convert_minutes_to_seconds(
+            self._order_duration_in_mins
+        )
+        timestamp_end_aligned = hdateti.find_bar_timestamp(
+            timestamp_end,
+            bar_duration_in_secs,
+            mode=mode,
+        )
         order_dict = {
             "type_": self._order_dict["order_type"],
             "creation_timestamp": wall_clock_timestamp,
             "start_timestamp": timestamp_start,
-            "end_timestamp": timestamp_end,
+            "end_timestamp": timestamp_end_aligned,
         }
         orders = self._generate_orders(
             target_positions[["holdings_shares", "target_trades_shares"]],
