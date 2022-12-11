@@ -15,6 +15,7 @@
 # %%
 import os
 
+import helpers.hio as hio
 import helpers.hs3 as hs3
 
 # %%
@@ -87,7 +88,7 @@ def _get_config_txt(config):
     return txt
     
     
-def generate_aws_config():
+def generate_aws_config() -> None:
     config_file_path = "~/.aws/config"
     credentials_file_path = "~/.aws/credentials"
     if os.path.exists(config_file_path) or os.path.exists(credentials_file_path):
@@ -96,11 +97,14 @@ def generate_aws_config():
     config_file_name = config_file_path.split("/")[-1]
     aws_config = hs3._get_aws_config(config_file_name)
     txt = _get_config_txt(aws_config)
+    # Create config file.
+    hio.to_file(config_file_path, txt)
     # Get credentials values to fill "~/.aws/credentials" file.
     credentials_file_name = credentials_file_path.split("/")[-1]
     credentials_aws_config = hs3._get_aws_config(credentials_file_name)
-    txt = _get_credentials_txt(credentials_aws_config)
-    # Here will be a creation of two files.
+    txt = _get_credentials_txt(credentials_aws_config)    
+    # Create credentials file.
+    hio.to_file(credentials_file_path, txt)
 
 
 # %%
