@@ -26,8 +26,10 @@ def _generate_config_txt(config: configparser.RawConfigParser, secret_keys: List
     """
     Create text for AWS config files.
     
-    :param config: parser that gets config file content
-    :param secret_keys: 
+    :param config: a parser that gets the AWS config file content
+    :param secret_keys: the AWS credential keys that need to insert into a file
+    :return: AWS crendials are formatted for ".aws/config" or ".aws/credentials"
+        files
     """
     # ".aws/config" and ".aws/credentials" have different headers
     # for AWS profiles, so we check which secret keys contain ".aws/config"
@@ -58,7 +60,7 @@ def _generate_config_txt(config: configparser.RawConfigParser, secret_keys: List
 
 def generate_aws_config() -> None:
     """
-    
+    Generate AWS config files with credentials.
     """
     config_file_path = ".aws/config"
     credentials_file_path = ".aws/credentials"
