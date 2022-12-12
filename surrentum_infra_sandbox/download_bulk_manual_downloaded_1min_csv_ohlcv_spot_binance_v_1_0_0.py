@@ -123,10 +123,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         end_timestamp_as_unix,
         msg="End timestamp should be greater then start timestamp.",
     )
-
     output = pd.DataFrame()
-    print(start_timestamp_as_unix)
-    print(end_timestamp_as_unix)
     for symbol in tqdm.tqdm(UNIVERSE["binance"]):
         for start_time, end_time in _split_period_to_days(
             start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
