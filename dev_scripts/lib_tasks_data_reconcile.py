@@ -223,7 +223,7 @@ def reconcile_data_run_notebook(
     bid_ask_accuracy=None,
 ):  # type: ignore
     """
-    Run data reconciliation notebook and store in in a stored location.
+    Run data reconciliation notebook and store it in a specified location.
 
     See `im_v2.ccxt.data.extract.compare_realtime_and_historical` for
     reconcilation params description.
