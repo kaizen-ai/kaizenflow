@@ -13,12 +13,9 @@
 # ---
 
 # %%
-import configparser
 import os
-from typing import List
 
 import helpers.hio as hio
-import helpers.hs3 as hs3
 
 # %%
 # Set missing env vars to show how generated file looks like.
@@ -40,9 +37,9 @@ def generate_aws_config() -> None:
         # Get credentials values to fill "~/.aws/credentials" file.
         aws_profiles = ["AM", "CK"]
         secret_keys = [
-                "_AWS_ACCESS_KEY_ID",
-                "_AWS_SECRET_ACCESS_KEY",
-                "_AWS_S3_BUCKET",
+            "_AWS_ACCESS_KEY_ID",
+            "_AWS_SECRET_ACCESS_KEY",
+            "_AWS_S3_BUCKET",
         ]
         # Get all values for each env var. Sort them
         # by AWS profile.
