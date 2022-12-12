@@ -90,6 +90,7 @@ class RawDataReader:
         s3_path = dsdascut.build_s3_dataset_path_from_args(
             s3_base_path, self.args
         )
+        _LOG.info(f"Loading from: {s3_path}")
         timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
             "by_year_month", start_ts, end_ts
         )
