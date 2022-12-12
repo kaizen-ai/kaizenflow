@@ -241,7 +241,7 @@ def reconcile_data_run_notebook(
         "end_timestamp": end_timestamp,
         "db_table": db_table,
         "aws_profile": aws_profile,
-        "s3_dataset_signature": s3_vendor,
+        "s3_dataset_signature": s3_dataset_signature,
         "s3_path": s3_path,
         "bid_ask_accuracy": bid_ask_accuracy,
     }
