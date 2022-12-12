@@ -205,6 +205,11 @@ class RealTimeHistoricalReconciler:
         self.aws_profile = args.aws_profile
         self.s3_dataset_signature = args.s3_dataset_signature
         self.s3_path = args.s3_path
+        if "bid_ask" in self.s3_dataset_signature:
+            # Check that bid_ask_accuracy param
+            #  is set to a valid percentage.
+            hdbg.dassert_lgt(0, args.bid_ask_accuracy, 100, True, True)
+            self.bid_ask_accuracy = args.bid_ask_accuracy
         # Process time period.
         self.start_ts = pd.Timestamp(args.start_timestamp)
         self.end_ts = pd.Timestamp(args.end_timestamp)
@@ -379,6 +384,7 @@ class RealTimeHistoricalReconciler:
         daily_data = data_reader.load_parquet(
             self.s3_path, self.start_ts, self.end_ts
         )
+        _LOG.info("Daily data shape: " + str(daily_data.shape))
         if "timestamp" in daily_data.columns:
             # Sometimes the data contains `timestamp` column which is not needed
             # since there is always a timestamp in the index.
@@ -386,6 +392,7 @@ class RealTimeHistoricalReconciler:
         daily_data = daily_data.reset_index()
         daily_data = daily_data.loc[daily_data["timestamp"] >= self.start_ts]
         daily_data = daily_data.loc[daily_data["timestamp"] <= self.end_ts]
+        _LOG.info("Daily data shape: " + str(daily_data.shape))
         # Build full symbol column.
         daily_data["full_symbol"] = imvcufusy.build_full_symbol(
             daily_data["exchange_id"], daily_data["currency_pair"]
@@ -640,15 +647,15 @@ class RealTimeHistoricalReconciler:
         # CC daily universe.
         # TODO(Juraj): replace this hardcoded temporary solution.
         cc_universe = [
-            "ADA_USDT",
-            "BNB_USDT",
-            "BTC_USDT",
-            "DOGE_USDT",
-            "DOT_USDT",
-            "EOS_USDT",
-            "ETH_USDT",
-            "SOL_USDT",
-            "XRP_USDT",
+            "binance::ADA_USDT",
+            "binance::BNB_USDT",
+            "binance::BTC_USDT",
+            "binance::DOGE_USDT",
+            "binance::DOT_USDT",
+            "binance::EOS_USDT",
+            "binance::ETH_USDT",
+            "binance::SOL_USDT",
+            "binance::XRP_USDT",
         ]
         if "ccxt" in self.s3_dataset_signature:
             universe = ccxt_universe
