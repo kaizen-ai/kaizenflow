@@ -95,5 +95,100 @@ def generate_aws_config() -> None:
 # %%
 generate_aws_config()
 
+
 # %%
 # !cat .aws/config
+
+# %%
+def _generate_config_txt2() -> str:
+    """
+    Create text for AWS config files.
+
+    :param config: a parser that gets the AWS config file content
+    :param secret_keys: the AWS credential keys that need to insert into a file
+    :return: AWS crendials are formatted for ".aws/config" or ".aws/credentials"
+        files
+    """
+    # ".aws/config" and ".aws/credentials" have different headers
+    # for AWS profiles, so we check which secret keys contain ".aws/config"
+    # key, then set the one is needed.
+    aws_profiles = ["CK"]
+    secret_keys = [
+            "_AWS_ACCESS_KEY_ID",
+            "_AWS_SECRET_ACCESS_KEY",
+            "_AWS_S3_BUCKET",
+    ]
+    # Get all values for each secret key from the config. Sort them
+    # by AWS profile.
+    envs = {}
+    for profile in aws_profiles:
+        tmp = []
+        for key in secret_keys:
+            key = f"{profile}{key}"
+            value = os.environ[key]
+            secret = "=".join([key, value])
+            tmp.append(secret)
+        envs.update({profile: tmp})
+    # Create text to insert into the config file.
+#     am_creds = "\n".join(envs[aws_profiles[0]])
+#     am_creds = f"[{aws_profiles[0]}]\n" + am_creds
+    #
+    ck_creds = "\n".join(envs[aws_profiles[0]])
+    ck_creds = f"[{aws_profiles[0]}]\n" + ck_creds
+#     txt = "\n\n".join([am_creds, ck_creds])
+    return ck_creds
+
+
+def generate_aws_config2() -> None:
+    """
+    Generate AWS config files with credentials.
+    """
+    config_file_path = ".aws/config"
+    credentials_file_path = ".aws/credentials"
+    # If file exists
+#     if os.path.exists(config_file_path):
+#         return
+#     else:
+#         # Get config values to fill "~/.aws/config" file.
+#         file_name = config_file_path.split("/")[-1]
+#         credentials = hs3._get_aws_config(file_name)
+#         secret_keys = ["region"]
+#         txt = _generate_config_txt2(credentials, secret_keys)
+#         # Create config file.
+#         hio.to_file(config_file_path, txt)
+    if os.path.exists(credentials_file_path):
+        return
+    else:
+        # Get credentials values to fill "~/.aws/credentials" file.
+#         file_name = credentials_file_path.split("/")[-1]
+        
+#         credentials = hs3._get_aws_config(file_name)
+        txt = _generate_config_txt2()
+        # Create credentials file.
+        hio.to_file(credentials_file_path, txt)
+
+
+# %%
+
+# %%
+generate_aws_config2()
+
+# %%
+os.environ["AM_AWS_ACCESS_KEY_ID"]
+
+# %%
+profile_prefix = "CK"
+result = {}
+key_to_env_var = {
+    "aws_access_key_id": f"{profile_prefix}_AWS_ACCESS_KEY_ID",
+    "aws_secret_access_key": f"{profile_prefix}_AWS_SECRET_ACCESS_KEY",
+    "aws_region": f"{profile_prefix}_AWS_DEFAULT_REGION",
+}
+# If all the AWS credentials are passed through env vars, they override the
+# config file.
+env_var_override = False
+set_env_vars = [
+    (env_var in os.environ and os.environ[env_var] != "")
+    for env_var in sorted(key_to_env_var.values())
+]
+set_env_vars
