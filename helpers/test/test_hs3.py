@@ -6,7 +6,6 @@ import pytest
 import helpers.henv as henv
 import helpers.hio as hio
 import helpers.hmoto as hmoto
-import helpers.hprint as hprint
 import helpers.hs3 as hs3
 import helpers.hunit_test as hunitest
 
@@ -280,8 +279,9 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         # Generate AWS files with mock AWS profiles.
         self._scratch_dir = self.get_scratch_space()
         aws_profiles = ["mock", "test"]
-        hs3.generate_aws_files(home_dir=self._scratch_dir, aws_profiles=aws_profiles)
-
+        hs3.generate_aws_files(
+            home_dir=self._scratch_dir, aws_profiles=aws_profiles
+        )
 
     def tearDown(self) -> None:
         del os.environ["MOCK_AWS_ACCESS_KEY_ID"]
@@ -318,7 +318,7 @@ class TestGenerateAwsFiles(hunitest.TestCase):
 
     def test2(self) -> None:
         file_name = "config"
-        expected =  """
+        expected = """
         [profile mock]
         region=mock_default_region
 
