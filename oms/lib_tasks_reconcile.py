@@ -18,12 +18,12 @@ Invokes in the file are runnable from a Docker container only.
 
 E.g., to run for certain date from a Docker container:
 ```
-> invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"
+> invoke reconcile_run_all --dag-builder-name "C1b" --start-timestamp-as-str "20221017_063500" --end-timestamp-as-str "20221017_073500"
 ```
 
 to run outside a Docker container:
 ```
-> invoke docker_cmd --cmd 'invoke run_reconcile_run_all --start-timestamp-as-str "20221017_063500"'
+> invoke docker_cmd --cmd 'invoke reconcile_run_all --dag-builder-name "C1b" --start-timestamp-as-str "20221017_063500" --end-timestamp-as-str "20221017_073500"'
 ```
 
 Import as:
@@ -377,7 +377,7 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
-        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation"
+        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation/{dag_builder_name}"
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
     target_dir = _resolve_target_dir(
@@ -467,7 +467,7 @@ def reconcile_run_notebook(
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = (
         f"amp.oms.reconciliation.build_reconciliation_configs"
-        + f'("{start_timestamp_as_str}", "{end_timestamp_as_str}", "{mode}")'
+        + f'("{dag_builder_name}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{mode}")'
     )
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
@@ -622,7 +622,7 @@ def reconcile_run_all(
     """
     Run all phases of prod vs simulation reconciliation.
 
-    :param dag_builder_name: Name of the DAG builder, e.g. "C1b"
+    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run
     :param end_timestamp_as_str: string representation of timestamp
