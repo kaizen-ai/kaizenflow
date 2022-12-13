@@ -280,26 +280,26 @@ class TestGenerateAwsFiles(hunitest.TestCase):
 
     def helper(self, expected: str) -> None:
         # Generate AWS files with mock AWS profiles.
-        home_dir = self.get_scratch_space()
+        scratch_dir = self.get_scratch_space()
         aws_profiles = ["mock", "test"]
-        hs3.generate_aws_files(home_dir=home_dir, aws_profiles=aws_profiles)
-        # Read files from the home dir to check that they are generated correctly.
-        target_dir = os.path.join(home_dir, ".aws")
+        hs3.generate_aws_files(home_dir=scratch_dir, aws_profiles=aws_profiles)
+        # Check that files in the scratch dir are generated correctly.
+        target_dir = os.path.join(scratch_dir, ".aws")
         pattern = "*"
         only_files = True
         use_relative_paths = False
         files = hio.listdir(target_dir, pattern, only_files, use_relative_paths)
-        read_files = []
+        outcome = []
         for file in files:
             with open(file, "r") as f:
-                read_files.append(f.read())
+                outcome.append(f.read())
         # Check.
         num_chars = 40
         credentials_frame = hprint.frame(".aws/credentials", num_chars=num_chars)
         config_frame = hprint.frame(".aws/config", num_chars=num_chars)
-        read_files.insert(0, credentials_frame)
-        read_files.insert(2, config_frame)
-        actual = f"\n\n".join(read_files)
+        outcome.insert(0, credentials_frame)
+        outcome.insert(2, config_frame)
+        actual = f"\n\n".join(outcome)
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test1(self) -> None:
