@@ -51,12 +51,10 @@ def _dassert_all_env_vars_set(key_to_env_var: Dict[str, str]) -> None:
         hdbg.dassert_ne(v, "")
 
 
-def _get_aws_file_text(
-    key_to_env_var: Dict[str, str]
-) -> List[str]:
+def _get_aws_file_text(key_to_env_var: Dict[str, str]) -> List[str]:
     """
     Generate text from env vars for AWS files.
-    
+
     E.g.:
     ```
     aws_access_key_id=***
