@@ -1,4 +1,4 @@
-import os.path
+import os
 from typing import Tuple
 
 import pytest
@@ -6,6 +6,7 @@ import pytest
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hs3 as hs3
+import helpers.hunit_test as hunitest
 
 
 @pytest.mark.skipif(
@@ -260,3 +261,15 @@ class TestDu1(hmoto.S3Mock_TestCase):
         size = hs3.du(bucket_s3_path, human_format=True, aws_profile=moto_s3fs)
         expected_size = r"2.9 KB"
         self.assert_equal(size, expected_size)
+
+
+class TestGenerateAwsFiles(hunitest.TestCase):
+    def setUp(self) -> None:
+        super().setUp()
+        os.environ["MOCK_AWS_ACCESS_KEY"] = "mock_value"
+        os.environ["TEST_AWS_ACCESS_KEY"] = "test_value"
+
+    def test1(self) -> None:
+        home_dir = self.get_scratch_space()
+        hs3.generate_aws_files(home_dir=home_dir)
+        
