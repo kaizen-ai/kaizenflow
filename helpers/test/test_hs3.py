@@ -302,6 +302,9 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test1(self) -> None:
+        """
+        Check that AWS credentials file is generated correctly.
+        """
         file_name = "credentials"
         expected = r"""
         [mock]
@@ -317,6 +320,9 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         self.helper(file_name, expected)
 
     def test2(self) -> None:
+        """
+        Check that AWS config file is generated correctly.
+        """
         file_name = "config"
         expected = """
         [profile mock]

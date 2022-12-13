@@ -475,7 +475,7 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
 
 def _dassert_all_env_vars_set(key_to_env_var: Dict[str, str]) -> None:
     """
-    Assert if variable is not set to the env and equal to an empty string.
+    Check that the required AWS env vars are set and are not empty strings.
     """
     for v in key_to_env_var.values():
         hdbg.dassert_in(v, os.environ)
@@ -493,7 +493,8 @@ def _get_aws_file_text(key_to_env_var: Dict[str, str]) -> List[str]:
     aws_s3_bucket=***
     ```
 
-    :param key_to_env_var: variables to get from the env
+    :param key_to_env_var: aws settings names to the corresponding env var names
+        mapping
     :return: AWS file text
     """
     txt = []
@@ -511,7 +512,7 @@ def _get_aws_config_text(aws_profile: str) -> str:
     profile_prefix = aws_profile.upper()
     region_env_var = f"{profile_prefix}_AWS_DEFAULT_REGION"
     key_to_env_var = {"region": region_env_var}
-    # Check that env var is set.
+    # Check that env vars are set.
     _dassert_all_env_vars_set(key_to_env_var)
     text = _get_aws_file_text(key_to_env_var)
     text.insert(0, f"[profile {aws_profile}]")
@@ -530,7 +531,7 @@ def _get_aws_credentials_text(aws_profile: str) -> str:
         "aws_secret_access_key": f"{profile_prefix}_AWS_SECRET_ACCESS_KEY",
         "aws_s3_bucket": f"{profile_prefix}_AWS_S3_BUCKET",
     }
-    # Check that env var is set.
+    # Check that env vars are set.
     _dassert_all_env_vars_set(key_to_env_var)
     text = _get_aws_file_text(key_to_env_var)
     text.insert(0, f"[{aws_profile}]")
@@ -543,11 +544,11 @@ def generate_aws_files(
     aws_profiles: Optional[List[str]] = None,
 ) -> None:
     """
-    Generate AWS files with credentials.
+    Generate AWS configuration files.
     """
     config_file_name = os.path.join(home_dir, ".aws", "config")
     credentials_file_name = os.path.join(home_dir, ".aws", "credentials")
-    if os.path.exists(credentials_file_name) or os.path.exists(config_file_name):
+    if os.path.exists(credentials_file_name) and os.path.exists(config_file_name):
         # Ensure that both files exist.
         _LOG.info(
             "Both files exist: %s and %s; exiting",
@@ -555,11 +556,11 @@ def generate_aws_files(
             config_file_name,
         )
         return
-    # Get text with credentials for both files.
     if aws_profiles is None:
         aws_profiles = ["am", "ck"]
     config_file_text = []
     credentials_file_text = []
+    # Get text with settings for both files.
     for profile in aws_profiles:
         current_config_text = _get_aws_config_text(profile)
         config_file_text.append(current_config_text)
