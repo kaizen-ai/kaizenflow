@@ -55,9 +55,17 @@ def _get_aws_file_text(
     key_to_env_var: Dict[str, str]
 ) -> List[str]:
     """
-    Generate text from env vars for AWS config files.
+    Generate text from env vars for AWS files.
+    
+    E.g.:
+    ```
+    aws_access_key_id=***
+    aws_secret_access_key=***
+    aws_s3_bucket=***
+    ```
 
     :param key_to_env_var: variables to get from the env
+    :return: AWS file text
     """
     txt = []
     for k, v in key_to_env_var.items():
@@ -106,7 +114,7 @@ def generate_aws_files(
     aws_profiles: Optional[List[str]] = None,
 ) -> None:
     """
-    Generate AWS config files with credentials.
+    Generate AWS files with credentials.
     """
     config_file_name = f"{home_dir}/.aws/config"
     credentials_file_name = f"{home_dir}/.aws/credentials"
