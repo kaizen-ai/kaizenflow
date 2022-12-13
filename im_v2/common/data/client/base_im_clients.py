@@ -213,7 +213,6 @@ class ImClient(abc.ABC):
             # Transform bid ask data with multiple order book levels.
             timestamp_col = self._timestamp_col_name
             df = cfibiask.handle_orderbook_levels(df, timestamp_col)
-            _LOG.info(df.head())
         #
         hdbg.dassert_in(full_symbol_col_name, df.columns)
         loaded_full_symbols = df[full_symbol_col_name].unique().tolist()

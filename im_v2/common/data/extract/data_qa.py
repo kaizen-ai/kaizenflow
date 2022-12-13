@@ -384,7 +384,6 @@ class RealTimeHistoricalReconciler:
         daily_data = data_reader.load_parquet(
             self.s3_path, self.start_ts, self.end_ts
         )
-        _LOG.info("Daily data shape: " + str(daily_data.shape))
         if "timestamp" in daily_data.columns:
             # Sometimes the data contains `timestamp` column which is not needed
             # since there is always a timestamp in the index.
@@ -392,7 +391,6 @@ class RealTimeHistoricalReconciler:
         daily_data = daily_data.reset_index()
         daily_data = daily_data.loc[daily_data["timestamp"] >= self.start_ts]
         daily_data = daily_data.loc[daily_data["timestamp"] <= self.end_ts]
-        _LOG.info("Daily data shape: " + str(daily_data.shape))
         # Build full symbol column.
         daily_data["full_symbol"] = imvcufusy.build_full_symbol(
             daily_data["exchange_id"], daily_data["currency_pair"]
