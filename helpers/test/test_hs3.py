@@ -281,7 +281,7 @@ class TestGenerateAwsFiles(hunitest.TestCase):
     def helper(self, expected: str) -> None:
         # Generate AWS files with mock AWS profiles.
         home_dir = self.get_scratch_space()
-        aws_profiles=["mock", "test"]
+        aws_profiles = ["mock", "test"]
         hs3.generate_aws_files(home_dir=home_dir, aws_profiles=aws_profiles)
         # Read files from the home dir to check that they are generated correctly.
         target_dir = os.path.join(home_dir, ".aws")
