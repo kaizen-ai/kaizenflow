@@ -51,11 +51,12 @@ hprint.config_notebook()
 config = cconfig.get_config_from_env()
 if not config:
     # Specify the config directly when running the notebook manually.
+    dag_builder_name = "C1b"
     start_timestamp_as_str = None
     end_timestamp_as_str = None
     mode = None
     config_list = oms.build_reconciliation_configs(
-        start_timestamp_as_str, end_timestamp_as_str, mode
+        dag_builder_name, start_timestamp_as_str, end_timestamp_as_str, mode
     )
     config = config_list[0]
 print(config)
