@@ -277,58 +277,11 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         os.environ["TEST_AWS_SECRET_ACCESS_KEY"] = "test_secret_access_key"
         os.environ["TEST_AWS_S3_BUCKET"] = "test_s3_bucket"
         os.environ["TEST_AWS_DEFAULT_REGION"] = "test_default_region"
-
-    def helper(self, expected: str) -> None:
         # Generate AWS files with mock AWS profiles.
-        scratch_dir = self.get_scratch_space()
+        self._scratch_dir = self.get_scratch_space()
         aws_profiles = ["mock", "test"]
-        hs3.generate_aws_files(home_dir=scratch_dir, aws_profiles=aws_profiles)
-        # Check that files in the scratch dir are generated correctly.
-        target_dir = os.path.join(scratch_dir, ".aws")
-        pattern = "*"
-        only_files = True
-        use_relative_paths = False
-        files = hio.listdir(target_dir, pattern, only_files, use_relative_paths)
-        outcome = []
-        for file in files:
-            with open(file, "r") as f:
-                outcome.append(f.read())
-        # Check.
-        num_chars = 40
-        credentials_frame = hprint.frame(".aws/credentials", num_chars=num_chars)
-        config_frame = hprint.frame(".aws/config", num_chars=num_chars)
-        outcome.insert(0, credentials_frame)
-        outcome.insert(2, config_frame)
-        actual = f"\n\n".join(outcome)
-        self.assert_equal(actual, expected, fuzzy_match=True)
+        hs3.generate_aws_files(home_dir=self._scratch_dir, aws_profiles=aws_profiles)
 
-    def test1(self) -> None:
-        expected = r"""
-        ########################################
-        .aws/credentials
-        ########################################
-
-        [mock]
-        aws_access_key_id=mock_access_key
-        aws_secret_access_key=mock_secret_access_key
-        aws_s3_bucket=mock_s3_bucket
-
-        [test]
-        aws_access_key_id=test_access_key
-        aws_secret_access_key=test_secret_access_key
-        aws_s3_bucket=test_s3_bucket
-
-        ########################################
-        .aws/config
-        ########################################
-
-        [profile mock]
-        region=mock_default_region
-
-        [profile test]
-        region=test_default_region
-        """
-        self.helper(expected)
 
     def tearDown(self) -> None:
         del os.environ["MOCK_AWS_ACCESS_KEY_ID"]
@@ -341,3 +294,35 @@ class TestGenerateAwsFiles(hunitest.TestCase):
         del os.environ["TEST_AWS_S3_BUCKET"]
         del os.environ["TEST_AWS_DEFAULT_REGION"]
         super().tearDown()
+
+    def helper(self, file_name: str, expected: str) -> None:
+        # Check.
+        target_dir = os.path.join(self._scratch_dir, ".aws")
+        actual = hio.from_file(os.path.join(target_dir, file_name))
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test1(self) -> None:
+        file_name = "credentials"
+        expected = r"""
+        [mock]
+        aws_access_key_id=mock_access_key
+        aws_secret_access_key=mock_secret_access_key
+        aws_s3_bucket=mock_s3_bucket
+
+        [test]
+        aws_access_key_id=test_access_key
+        aws_secret_access_key=test_secret_access_key
+        aws_s3_bucket=test_s3_bucket
+        """
+        self.helper(file_name, expected)
+
+    def test2(self) -> None:
+        file_name = "config"
+        expected =  """
+        [profile mock]
+        region=mock_default_region
+
+        [profile test]
+        region=test_default_region
+        """
+        self.helper(file_name, expected)
