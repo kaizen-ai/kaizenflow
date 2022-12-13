@@ -545,12 +545,10 @@ def generate_aws_files(
     """
     Generate AWS files with credentials.
     """
-    config_file_name = f"{home_dir}/.aws/config"
-    credentials_file_name = f"{home_dir}/.aws/credentials"
+    config_file_name = os.path.join(home_dir, ".aws", "config")
+    credentials_file_name = os.path.join(home_dir, ".aws", "credentials")
     if os.path.exists(credentials_file_name) or os.path.exists(config_file_name):
         # Ensure that both files exist.
-        hdbg.dassert_file_exists(credentials_file_name)
-        hdbg.dassert_file_exists(config_file_name)
         _LOG.info(
             "Both files exist: %s and %s; exiting",
             credentials_file_name,
