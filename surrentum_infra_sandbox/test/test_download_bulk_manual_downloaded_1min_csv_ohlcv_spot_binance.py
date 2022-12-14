@@ -55,17 +55,9 @@ class TestDownloadHistoricalOHLCV(hunitest.TestCase):
         }
         self.assertDictEqual(actual, expected)
 
-    @umock.patch("pandas.DataFrame.to_csv")
-    def test_main(
-        self,
-        dumb_to_csv: umock.Mock,
-    ) -> None:
-        mock_requests = umock.MagicMock()
-        mock_request = umock.MagicMock()
-        mock_response = umock.MagicMock()
-        mock_response.return_value = 200
-        mock_requests.request = mock_request
-        sisdbmohlcv.requests = mock_requests
+    @umock.patch.object(sisdbmohlcv.pd.DataFrame, "to_csv")
+    @umock.patch("surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0.THROTTLE_DELAY_IN_SECS", 0.0)
+    def test_main(self, mock_to_csv) -> None:
         # Prepare inputs.
         mock_argument_parser = umock.create_autospec(
             argparse.ArgumentParser, spec_set=True
@@ -78,4 +70,17 @@ class TestDownloadHistoricalOHLCV(hunitest.TestCase):
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
-        sisdbmohlcv._main(mock_argument_parser)
+        mock_response = umock.MagicMock()
+        mock_response.status_code = 200
+        mock_response.json = umock.MagicMock(return_value = _fake_binance_response())
+        with umock.patch.object(
+            sisdbmohlcv.requests,
+             "request",
+              return_value=mock_response
+        ) as mock_request:
+            sisdbmohlcv._main(mock_argument_parser)
+            mock_request.assert_called()
+        mock_to_csv.assert_called_with(
+            f"{kwargs['output_file']}.gz",
+            index=False, compression='gzip'
+        )
