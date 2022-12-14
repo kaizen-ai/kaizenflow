@@ -4,6 +4,8 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 
+from typing import Optional
+
 import pandas as pd
 
 import helpers.hdbg as hdbg
@@ -14,7 +16,7 @@ def convert_to_metrics_format(
     y_column_name: str,
     y_hat_column_name: str,
     *,
-    asset_id_column_name: str = "asset_id"
+    asset_id_column_name: str = "asset_id",
 ) -> pd.DataFrame:
     """
     Transform a predict_df (i.e. output of DataFlow pipeline) into a
@@ -62,3 +64,33 @@ def convert_to_metrics_format(
     metrics_df.index.names = [metrics_df.index.names[0], asset_id_column_name]
     hdbg.dassert_eq(2, len(metrics_df.index.levels))
     return metrics_df
+
+
+def annotate_metrics_df(
+    metrics_df: pd.DataFrame,
+    tag_mode: str,
+    *,
+    tag_col: Optional[str] = None,
+) -> pd.DataFrame:
+    """
+    Compute a tag (stored in `tag_col`) for each row of a `metrics_df` based on
+    the requested `tag_mode`.
+
+    The `tag_mode` is used to split the `metrics_df` in different chunks to compute metrics.
+
+    :param tag_mode: symbolic name representing which criteria needs to be used to generate the tag
+    :param tag_col: if None the standard name based on the `tag_mode` is used
+    :return: `metrics_df` with a new column, e.g., if `tag_mode="hour"` a new column
+        representing the number of hours is added
+    """
+    metrics_df_copy = metrics_df.copy()
+    if tag_col is None:
+        tag_col = tag_mode
+    hdbg.dassert_not_in(tag_col, metrics_df.columns)
+    if tag_mode == "hour":
+        metrics_df_copy[tag_col] = metrics_df_copy.index.get_level_values(
+            "end_ts"
+        ).hour
+    else:
+        raise ValueError(f"Invalid tag_mode={tag_mode}")
+    return metrics_df_copy
