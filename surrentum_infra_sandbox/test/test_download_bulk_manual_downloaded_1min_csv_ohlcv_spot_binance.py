@@ -13,24 +13,36 @@ f = faker.Faker()
 
 def _fake_binance_response() -> List[list]:
     """
-    Dumb list of the same fake records as a binance response
+    list of the random fake records as a binance response
 
     :return: Fake list of binance response
     """
     return [
         [
-            f.pyint(min_value=1499040000000, max_value=1499644799999),   ## Open time
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## Open
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## High
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## Low
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## Close
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Volume
-            f.pyint(min_value=1499040000000, max_value=1499644799999),   ## Close time
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Quote asset volume
-            f.pyfloat(min_value=1, max_value=500),                       ## Number of trades
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Taker buy base asset volume
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Taker buy quote asset volume
-            "17928899.62484339"                                          ## Ignore
+            ## Open time
+            f.pyint(min_value=1499040000000, max_value=1499644799999),   
+            ## Open
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            ## High
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            ## Low
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            ## Close
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            ## Volume
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            ## Close time
+            f.pyint(min_value=1499040000000, max_value=1499644799999),   
+            ## Quote asset volume
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            ## Number of trades
+            f.pyfloat(min_value=1, max_value=500),                       
+            ## Taker buy base asset volume
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            ## Taker buy quote asset volume
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            ## Ignore
+            "17928899.62484339"                                          
         ]
         for line in range(100)
     ]
@@ -58,7 +70,7 @@ class TestDownloadHistoricalOHLCV(hunitest.TestCase):
         self.assertDictEqual(actual, expected)
 
     @umock.patch.object(sisdbmohlcv.pd.DataFrame, "to_csv")
-    @umock.patch("surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0.THROTTLE_DELAY_IN_SECS", 0.0)
+    @umock.patch("surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0._THROTTLE_DELAY_IN_SECS", 0.0)
     def test_main(self, mock_to_csv) -> None:
         # Prepare inputs.
         mock_argument_parser = umock.create_autospec(

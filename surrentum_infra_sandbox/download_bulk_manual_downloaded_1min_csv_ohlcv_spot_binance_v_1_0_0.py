@@ -23,10 +23,10 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-BASE_URL = "https://api.binance.com/api/v3/klines"
-DEFAULT_INTERVAL = "1m"
-MAX_LINES = 1000
-UNIVERSE = {
+_BASE_URL = "https://api.binance.com/api/v3/klines"
+_DEFAULT_INTERVAL = "1m"
+_MAX_LINES = 1000
+_UNIVERSE = {
     "binance": [
         "ETH_USDT",
         "BTC_USDT",
@@ -57,29 +57,30 @@ UNIVERSE = {
         "CTK_USDT",
     ]
 }
-OHLCV_HEADERS = ["symbol", "open_time", "open", "high", "low", "close", "volume"]
-THROTTLE_DELAY_IN_SECS = 0.5
+_OHLCV_HEADERS = ["symbol", "open_time", "open", "high", "low", "close", "volume"]
+_THROTTLE_DELAY_IN_SECS = 0.5
 
 
 def _build_url(
     start_time: int,
     end_time: int,
     symbol: str,
-    interval: str = DEFAULT_INTERVAL,
+    *,
+    interval: str = _DEFAULT_INTERVAL,
     limit: int = 500,
 ) -> str:
     """
-    Build up url with the placeholders from the args.
+    Build up URL with the placeholders from the args.
     """
     return (
-        f"{BASE_URL}?startTime={start_time}&endTime={end_time}"
+        f"{_BASE_URL}?startTime={start_time}&endTime={end_time}"
         f"&symbol={symbol}&interval={interval}&limit={limit}"
     )
 
 
 def _process_symbol(symbol: str) -> str:
     """
-    Dumb helper that transform symbol from universe to Binance format.
+    Transform symbol from universe to Binance format.
     """
     return symbol.replace("_", "")
 
@@ -96,11 +97,11 @@ def _split_period_to_days(
             So if we trying to get 1m interval, then we need to chop a period to
             chunks which Binance allow to get
 
-    :param start_time: Timestamp for the start time
-    :param end_time: Timestamp for the end time
-    :return: Generator for loop
+    :param start_time: timestamp for the start time
+    :param end_time: timestamp for the end time
+    :return: generator for loop
     """
-    step = 1000 * 60 * MAX_LINES
+    step = 1000 * 60 * _MAX_LINES
     for i in range(start_time, end_time, step):
         yield i, min(i + step, end_time)
 
@@ -124,7 +125,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         msg="End timestamp should be greater then start timestamp.",
     )
     output = pd.DataFrame()
-    for symbol in tqdm.tqdm(UNIVERSE["binance"]):
+    for symbol in tqdm.tqdm(_UNIVERSE["binance"]):
         for start_time, end_time in _split_period_to_days(
             start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
         ):
@@ -132,7 +133,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 start_time=start_time,
                 end_time=end_time,
                 symbol=_process_symbol(symbol),
-                limit=MAX_LINES,
+                limit=_MAX_LINES,
             )
             response = requests.request(
                 method="GET", url=url, headers=headers, data={}
@@ -155,7 +156,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 ]
             )
             output = pd.concat(objs=[output, data], ignore_index=True)
-            time.sleep(THROTTLE_DELAY_IN_SECS)
+            time.sleep(_THROTTLE_DELAY_IN_SECS)
     output.to_csv(f"{args.output_file}.gz", index=False, compression="gzip")
 
 
