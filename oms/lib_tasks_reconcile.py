@@ -395,7 +395,7 @@ def reconcile_copy_prod_data(
     _LOG.info("Copying prod results to '%s'", prod_results_target_dir)
     # Copy prod run results to the target dir.
     if hs3.is_s3_path(system_log_dir):
-        cmd = f"aws s3 cp {system_log_dir} {prod_results_target_dir} --recursive"
+        cmd = f"aws s3 cp {system_log_dir} {prod_results_target_dir} --recursive --profile {aws_profile}"
     else:
         cmd = f"cp -vr {system_log_dir} {prod_results_target_dir}"
     _system(cmd)
