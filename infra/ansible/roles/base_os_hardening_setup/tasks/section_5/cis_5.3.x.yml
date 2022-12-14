@@ -363,11 +363,11 @@
       - ssh
       - pam
 
-- name: "AUTOMATED | 5.3.20 | PATCH | Ensure SSH AllowTcpForwarding is disabled"
+- name: "AUTOMATED | 5.3.20 | PATCH | Ensure SSH AllowTcpForwarding is enabled"
   lineinfile:
       path: /etc/ssh/sshd_config
       regexp: '^AllowTcpForwarding|^#AllowTcpForwarding'
-      line: 'AllowTcpForwarding no'
+      line: 'AllowTcpForwarding yes'
   notify: restart sshd
   when:
       - ubtu20cis_rule_5_3_20
