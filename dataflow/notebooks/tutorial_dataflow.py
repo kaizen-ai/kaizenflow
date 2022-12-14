@@ -198,9 +198,13 @@ df_approach_1.head(3)
 # %% [markdown]
 # # Approach 2 - Use pandas Multi-index
 
+# %%
+# Drop non numerical columns to apply computations.
+data_hist_num = data_hist.drop(columns=["full_symbol", "knowledge_timestamp", "start_ts"])
+
 # %% run_control={"marked": false}
 # Convert historical data to multiindex format.
-converted_data = dtfsysonod._convert_to_multiindex(data_hist, "asset_id")
+converted_data = dtfsysonod._convert_to_multiindex(data_hist_num, "asset_id")
 converted_data.head(3)
 
 # %%
@@ -218,7 +222,7 @@ rets_approach_2.head(3)
 
 # %% run_control={"marked": false}
 # To go back to a flat index representation.
-rets_approach_2.columns = ["_".join(col) for col in rets_approach_2.columns]
+rets_approach_2.columns = ["".join(str(col)) for col in rets_approach_2.columns]
 rets_approach_2.head(3)
 
 # %% [markdown]
