@@ -113,6 +113,18 @@ market_data = mdmadaex.get_HistoricalImClientMarketData_example1(
 )
 
 
+# %% [markdown] run_control={"marked": true}
+# ## Get data
+
+# %%
+start_ts = config["data"]["start_date"] 
+end_ts = config["data"]["end_date"]
+ts_col_name = "timestamp"
+
+data_hist = market_data.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids)
+display(data_hist.shape)
+display(data_hist.head(3))
+
 # %% [markdown]
 # # Task description
 
