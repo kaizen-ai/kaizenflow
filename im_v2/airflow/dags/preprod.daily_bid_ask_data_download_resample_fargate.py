@@ -1,5 +1,5 @@
-# This is a utility DAG to conduct QA on real time data download
-# DAG task downloads data for last N minutes in one batch
+# This is a utility DAG to conduct QA on real time data download DAG task
+# downloads data for last N minutes in one batch.
 
 import datetime
 import airflow
@@ -13,13 +13,13 @@ import os
 _FILENAME = os.path.basename(__file__)
 
 # This variable will be propagated throughout DAG definition as a prefix to
-# names of Airflow configuration variables, allow to switch from test to preprod/prod
-# in one line (in best case scenario).
+# names of Airflow configuration variables, allow to switch from test to preprod
+# / prod in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
 assert _STAGE in ["prod", "preprod", "test"]
 
-# Used for seperations of deployment environments
-# ignored when executing on prod/preprod.
+# Used for separations of deployment environments.
+# Ignored when executing on prod / preprod.
 _USERNAME = ""
 
 # Deployment type, if the task should be run via fargate (serverless execution)
@@ -39,8 +39,8 @@ _SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
-# i.e. cmamp-test-juraj since we try to follow the convention of container having
-# the same name as task-definition if applicable
+# i.e. cmamp-test-juraj since we try to follow the convention of container
+# having the same name as task-definition if applicable.
 # Set to the name your task definition is suffixed with i.e. cmamp-test-juraj,
 _CONTAINER_SUFFIX = f"-{_STAGE}" if _STAGE in ["preprod", "test"] else ""
 _CONTAINER_SUFFIX += f"-{_USERNAME}" if _STAGE == "test" else ""

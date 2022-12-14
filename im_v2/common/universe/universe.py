@@ -21,7 +21,7 @@ def _get_universe_file_path(
     Get universe file path based on version.
 
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
-    :param mode: download or trade universe
+    :param mode: `download` or `trade` universe
     :param version: universe version (e.g. "v01"). If None it uses
       the latest version available
     :return: file path to the universe file corresponding to the specified version
