@@ -41,6 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def build_reconciliation_configs(
+    dag_builder_name: str,
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
     mode: Optional[str],
@@ -51,6 +52,7 @@ def build_reconciliation_configs(
     Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
+    :param dag_builder_name: name of the DAG builder, e.g. "C1b"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run, e.g. "20221010_060500"
     :param end_timestamp_as_str: string representation of timestamp
@@ -84,17 +86,23 @@ def build_reconciliation_configs(
         # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
         prod_dir = os.path.join(
             root_dir,
+            dag_builder_name,
             run_date,
             "prod",
             prod_subdir,
+        )
+        sim_dir = os.path.join(
+            root_dir,
+            dag_builder_name,
+            run_date,
+            "simulation",
+            "system_log_dir",
         )
         system_log_path_dict = {
             "prod": prod_dir,
             # For crypto we do not have a `candidate`.
             # "cand": prod_dir,
-            "sim": os.path.join(
-                root_dir, run_date, "simulation", "system_log_dir"
-            ),
+            "sim": sim_dir,
         }
         #
         fep_init_dict = {
