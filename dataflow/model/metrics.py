@@ -99,7 +99,10 @@ def annotate_metrics_df(
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.columns)
     if tag_mode == "hour":
-        metrics_df_copy[tag_col] = metrics_df_copy.index.get_level_values(0).hour
+        # Check if index of the given index is a datetime type.
+        idx = metrics_df_copy.index.get_level_values(0)
+        hpandas.dassert_index_is_datetime(idx)
+        metrics_df_copy[tag_col] = idx.hour
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df_copy=\n%s", hpandas.df_to_str(metrics_df_copy))
