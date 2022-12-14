@@ -605,6 +605,11 @@ def dropna(
     num_rows_before = df.shape[0]
     if drop_infs:
         df = df.replace([np.inf, -np.inf], np.nan)
+        num_rows_after = df.shape[0]
+        pct_removed = hprint.perc(
+            num_rows_before - num_rows_after, num_rows_before
+        )
+        _LOG.info("removed rows with infs: %s", pct_removed)
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]

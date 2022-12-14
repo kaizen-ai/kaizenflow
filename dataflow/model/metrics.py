@@ -3,12 +3,15 @@ Import as:
 
 import dataflow.model.metrics as dtfmodmetr
 """
-
+import logging
 from typing import Optional
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hpandas as hpandas
+
+_LOG = logging.getLogger(__name__)
 
 
 def convert_to_metrics_format(
@@ -54,15 +57,20 @@ def convert_to_metrics_format(
     ```
     """
     hdbg.dassert_eq(2, len(predict_df.columns.levels))
+    _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
     # Drop NaNs.
     metrics_df = predict_df.stack()
-    condition = (metrics_df[y_column_name].isna()) | (
-        metrics_df[y_hat_column_name].isna()
-    )
-    metrics_df = metrics_df[condition]
+    drop_kwargs = {
+        "drop_infs": True,
+        "report_stats": True,
+        "subset": [y_column_name, y_hat_column_name],
+    }
+    metrics_df = predict_df.stack()
+    metrics_df = hpandas.dropna(metrics_df, **drop_kwargs)
     #
     metrics_df.index.names = [metrics_df.index.names[0], asset_id_column_name]
     hdbg.dassert_eq(2, len(metrics_df.index.levels))
+    _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
     return metrics_df
 
 
@@ -83,14 +91,16 @@ def annotate_metrics_df(
     :return: `metrics_df` with a new column, e.g., if `tag_mode="hour"` a new column
         representing the number of hours is added
     """
+    _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
+    # Create a copy in order not to modify the input.
     metrics_df_copy = metrics_df.copy()
+    # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.columns)
     if tag_mode == "hour":
-        metrics_df_copy[tag_col] = metrics_df_copy.index.get_level_values(
-            "end_ts"
-        ).hour
+        metrics_df_copy[tag_col] = metrics_df_copy.index.get_level_values(0).hour
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
+    _LOG.debug("metrics_df_copy=\n%s", hpandas.df_to_str(metrics_df_copy))
     return metrics_df_copy
