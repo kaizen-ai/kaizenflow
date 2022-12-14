@@ -15,6 +15,7 @@ import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hsql as hsql
 import helpers.hsql_implementation as hsqlimpl
+import helpers.hdatetime as hdateti
 import im_v2.common.db.db_utils as imvcddbut
 
 _LOG = logging.getLogger(__name__)
@@ -78,6 +79,7 @@ class RawDataReader:
         )
         head = hsql.execute_query_to_df(connection, query_head)
         return head
+    
 
     # TODO(Juraj): this is make-do solution, it needs consolidation with the rest of the code
     #  + adding docstrings.
@@ -87,15 +89,20 @@ class RawDataReader:
         """
         Load parquet data in a specified time frame.
         """
+        # TODO(Juraj): epoch unit is to second, which only works
+        #  for crypto_chassis data.
+        start_ts = hdateti.convert_timestamp_to_unix_epoch(
+            start_ts, unit="s"
+        )
+        end_ts = hdateti.convert_timestamp_to_unix_epoch(
+            end_ts, unit="s"
+        )
         s3_path = dsdascut.build_s3_dataset_path_from_args(
             s3_base_path, self.args
         )
-        _LOG.info(f"Loading from: {s3_path}")
-        timestamp_filters = hparque.get_parquet_filters_from_timestamp_interval(
-            "by_year_month", start_ts, end_ts
-        )
+        filters = [("timestamp", ">=", start_ts), ("timestamp", "<=", end_ts)]
         data = hparque.from_parquet(
-            s3_path, filters=timestamp_filters, aws_profile="ck"
+            s3_path, filters=filters, aws_profile="ck"
         )
         return data
 
