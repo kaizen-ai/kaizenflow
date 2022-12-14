@@ -46,10 +46,12 @@ def process_bid_ask(
     #
     if df.columns.nlevels == 1:
         # Single level column.
-        hdbg.dassert(not (df[bid_col] >= df[ask_col]).any())
+        if (df[bid_col] >= df[ask_col]).any().any():
+            _LOG.warning("Some bid values are above ask values.")
     elif df.columns.nlevels == 2:
         # Multiindex df.
-        hdbg.dassert(not (df[bid_col] >= df[ask_col]).any().any())
+        if (df[bid_col] >= df[ask_col]).any().any():
+            _LOG.warning("Some bid values are above ask values.")
     else:
         raise ValueError("DataFrame type not supported:\n%s", df.head(3))
     supported_cols = [
@@ -96,18 +98,16 @@ def process_bid_ask(
             srs = (df[bid_col] + df[ask_col]) / 2
         if tag == "geometric_mid":
             # sqrt(bid * ask).
-            srs = np.sqrt(df[bid_col] * df[ask_col]).rename("geometric_mid")
+            srs = np.sqrt(df[bid_col] * df[ask_col])
         if tag == "quoted_spread":
             # bid - ask.
-            srs = (df[ask_col] - df[bid_col]).rename("quoted_spread")
+            srs = (df[ask_col] - df[bid_col])
         if tag == "relative_spread":
             # 2 * (ask - bid) / (ask + bid).
             srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
         if tag == "log_relative_spread":
             # log(ask) - log(bid).
-            srs = (np.log(df[ask_col]) - np.log(df[bid_col])).rename(
-                "log_relative_spread"
-            )
+            srs = (np.log(df[ask_col]) - np.log(df[bid_col]))
         if tag == "weighted_mid":
             # bid * ask_volume + ask * bid_volume.
             srs = (
@@ -127,10 +127,10 @@ def process_bid_ask(
             srs = np.log(df[bid_volume_col]) - np.log(df[ask_volume_col])
         if tag == "bid_value":
             # bid * bid_volume.
-            srs = (df[bid_col] * df[bid_volume_col]).rename("bid_value")
+            srs = (df[bid_col] * df[bid_volume_col])
         if tag == "ask_value":
             # ask * ask_volume.
-            srs = (df[ask_col] * df[ask_volume_col]).rename("ask_value")
+            srs = (df[ask_col] * df[ask_volume_col])
         if tag == "mid_value":
             # (bid * bid_volume + ask * ask_volume) / 2.
             srs = (
