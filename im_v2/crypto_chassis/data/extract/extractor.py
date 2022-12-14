@@ -246,10 +246,10 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         # Return data only in the originally specified interval
         #  to avoid confusion.
         start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(
-                start_timestamp, unit="s"
+            start_timestamp, unit="s"
         )
         end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(
-                end_timestamp, unit="s"
+            end_timestamp, unit="s"
         )
         _LOG.info("DataFrame shape before timestamp filter: " + str(df.shape))
         df = df[df["timestamp"] >= start_ts_unix]
@@ -266,7 +266,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         *,
         interval: Optional[str] = "1m",
         include_realtime: bool = False,
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.

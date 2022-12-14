@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
 
 
-#TODO(Juraj): add argument to pass custom callable to get current time.
+# TODO(Juraj): add argument to pass custom callable to get current time.
 def add_knowledge_timestamp_col(df: pd.DataFrame, tz: str) -> pd.DataFrame:
     """
     Add 'knowledge_timestamp' column to a DataFrame and set the value to a
@@ -377,7 +377,9 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     exchange_id = df_raw["exchange_id"].unique()[0]
     # Remove duplicates, keep the latest record.
     df_raw = df_raw.sort_values("knowledge_timestamp", ascending=False)
-    df_raw = df_raw.drop_duplicates(["timestamp", "exchange_id", "currency_pair", "level"])
+    df_raw = df_raw.drop_duplicates(
+        ["timestamp", "exchange_id", "currency_pair", "level"]
+    )
     # Convert timestamp to pd.Timestamp and set as index before sending for resampling.
     df_raw["timestamp"] = df_raw["timestamp"].map(
         hdateti.convert_unix_epoch_to_timestamp
