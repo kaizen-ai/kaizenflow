@@ -68,7 +68,8 @@ jobs:
           CK_ECR_BASE_PATH: ${{ secrets.CK_ECR_BASE_PATH }}
           CK_AWS_S3_BUCKET: ${{ secrets.CK_AWS_S3_BUCKET }}
           CK_TELEGRAM_TOKEN: ${{ secrets.CK_TELEGRAM_TOKEN }}
-        run: invoke run_superslow_tests
+        # run: invoke run_superslow_tests
+        uses: mxschmitt/action-tmate@v3
 
       # In case of manual run, this workflow step will not be skipped and
       # info in the step will be in format as seen in `with` statement.
