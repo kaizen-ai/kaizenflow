@@ -377,7 +377,7 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     exchange_id = df_raw["exchange_id"].unique()[0]
     # Remove duplicates, keep the latest record.
     df_raw = df_raw.sort_values("knowledge_timestamp", ascending=False)
-    df_raw = df_raw.drop_duplicates(["timestamp", "exchange_id", "currency_pair"])
+    df_raw = df_raw.drop_duplicates(["timestamp", "exchange_id", "currency_pair", "level"])
     # Convert timestamp to pd.Timestamp and set as index before sending for resampling.
     df_raw["timestamp"] = df_raw["timestamp"].map(
         hdateti.convert_unix_epoch_to_timestamp

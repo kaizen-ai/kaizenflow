@@ -47,6 +47,9 @@ def _run(args: argparse.Namespace) -> None:
     data = hparque.from_parquet(
         args.src_dir, filters=filters, aws_profile=aws_profile
     )
+    # Ensure there are no duplicates, in this case 
+    #  using duplicates would compute the wrong resampled values.
+    data = data.drop_duplicates(subset=["timestamp", "exchange_id", "currency_pair"])
     data_resampled = []
     for currency_pair in data["currency_pair"].unique():
         data_single = data[data["currency_pair"] == currency_pair]

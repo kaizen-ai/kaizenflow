@@ -238,7 +238,24 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         if bid_ask.empty:
             _LOG.warning("No data found for given query parameters.")
             return pd.DataFrame()
-        return self._transform_raw_bid_ask_data(bid_ask)
+        df = self._transform_raw_bid_ask_data(bid_ask)
+        # Drop duplicates as a safety net in case the data is faulty.
+        df = df.drop_duplicates()
+        # The API does not respect the specified timestamps
+        #  precisely.
+        # Return data only in the originally specified interval
+        #  to avoid confusion.
+        start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(
+                start_timestamp, unit="s"
+        )
+        end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(
+                end_timestamp, unit="s"
+        )
+        _LOG.info("DataFrame shape before timestamp filter: " + str(df.shape))
+        df = df[df["timestamp"] >= start_ts_unix]
+        df = df[df["timestamp"] <= end_ts_unix]
+        _LOG.info("DataFrame shape after timestamp filter: " + str(df.shape))
+        return df
 
     def _download_ohlcv(
         self,
