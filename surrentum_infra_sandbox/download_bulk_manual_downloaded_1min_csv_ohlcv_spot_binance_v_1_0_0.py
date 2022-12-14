@@ -142,7 +142,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 [
                     {
                         "symbol": symbol,
-                        "open_time": hdateti.convert_unix_epoch_to_timestamp(row[0]),
+                        "open_time": hdateti.convert_unix_epoch_to_timestamp(
+                            row[0]
+                        ),
                         "open": row[1],
                         "high": row[2],
                         "low": row[3],
@@ -154,7 +156,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
             )
             output = pd.concat(objs=[output, data], ignore_index=True)
             time.sleep(THROTTLE_DELAY_IN_SECS)
-    output.to_csv(f"{args.output_file}.gz", index=False, compression='gzip')
+    output.to_csv(f"{args.output_file}.gz", index=False, compression="gzip")
 
 
 def add_download_args(

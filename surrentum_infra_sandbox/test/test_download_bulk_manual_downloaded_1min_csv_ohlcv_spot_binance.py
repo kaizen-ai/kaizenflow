@@ -2,12 +2,14 @@ import argparse
 from typing import List
 import unittest.mock as umock
 
+import faker
 import pytest
 
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
 import surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0 as sisdbmohlcv
 
+f = faker.Faker()
 
 def _fake_binance_response() -> List[list]:
     """
@@ -17,18 +19,18 @@ def _fake_binance_response() -> List[list]:
     """
     return [
         [
-            1499040000000,      ## Open time
-            "0.01634790",       ## Open
-            "0.80000000",       ## High
-            "0.01575800",       ## Low
-            "0.01577100",       ## Close
-            "148976.11427815",  ## Volume
-            1499644799999,      ## Close time
-            "2434.19055334",    ## Quote asset volume
-            308,                ## Number of trades
-            "1756.87402397",    ## Taker buy base asset volume
-            "28.46694368",      ## Taker buy quote asset volume
-            "17928899.62484339" ## Ignore
+            f.pyint(min_value=1499040000000, max_value=1499644799999),   ## Open time
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## Open
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## High
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## Low
+            f.pyfloat(min_value=0.00001, max_value=0.9),                 ## Close
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Volume
+            f.pyint(min_value=1499040000000, max_value=1499644799999),   ## Close time
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Quote asset volume
+            f.pyfloat(min_value=1, max_value=500),                       ## Number of trades
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Taker buy base asset volume
+            f.pyfloat(min_value=1.00001, max_value=10000.0),             ## Taker buy quote asset volume
+            "17928899.62484339"                                          ## Ignore
         ]
         for line in range(100)
     ]
