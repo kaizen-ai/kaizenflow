@@ -31,12 +31,12 @@ import core.finance as cofinanc
 import core.finance.resampling as cfinresa
 import core.finance.returns as cfinretu
 import dataflow.core as dtfcore
-import dataflow.system.source_nodes as dtfsysonod
+import dataflow.system as dtfsys
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-import im_v2.ccxt.data.client.ccxt_clients_example as imvcdcccex
-import market_data.market_data_example as mdmadaex
+import im_v2.ccxt.data.client as icdcl
+import market_data as mdata
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -87,7 +87,7 @@ contract_type = config["load"]["contract_type"]
 dataset = config["load"]["dataset"]
 data_snapshot = config["load"]["data_snapshot"]
 
-client = imvcdcccex.get_CcxtHistoricalPqByTileClient_example1(
+client = icdcl.ccxt_clients_example.get_CcxtHistoricalPqByTileClient_example1(
     universe_version, resample_1min, dataset, contract_type, data_snapshot
 )
 
@@ -103,12 +103,12 @@ asset_ids = client.get_asset_ids_from_full_symbols(full_symbols)
 # %% [markdown]
 # ## Get market data loader
 
-# %%
+# %% run_control={"marked": true}
 columns = None
 columns_remap = None
 
 wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
-market_data = mdmadaex.get_HistoricalImClientMarketData_example1(
+market_data = mdata.market_data_example.get_HistoricalImClientMarketData_example1(
     client, asset_ids, columns, columns_remap, wall_clock_time=wall_clock_time
 )
 
@@ -122,8 +122,8 @@ end_ts = config["data"]["end_date"]
 ts_col_name = "timestamp"
 
 data_hist = market_data.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids)
-display(data_hist.shape)
-display(data_hist.head(3))
+print(data_hist.shape)
+data_hist.head(3)
 
 # %% [markdown]
 # # Task description
@@ -204,7 +204,7 @@ data_hist_num = data_hist.drop(columns=["full_symbol", "knowledge_timestamp", "s
 
 # %% run_control={"marked": false}
 # Convert historical data to multiindex format.
-converted_data = dtfsysonod._convert_to_multiindex(data_hist_num, "asset_id")
+converted_data = dtfsys.source_nodes._convert_to_multiindex(data_hist_num, "asset_id")
 converted_data.head(3)
 
 # %%
@@ -266,7 +266,7 @@ node_resampling_config = {
     "join_output_with_input": False,
 }
 # Put the data in the DataFlow format (which is multi-index).
-converted_data = dtfsysonod._convert_to_multiindex(data_hist, "asset_id")
+converted_data = dtfsys.source_nodes._convert_to_multiindex(data_hist, "asset_id")
 # Create the node.
 nid = "resample"
 node = dtfcore.GroupedColDfToDfTransformer(
