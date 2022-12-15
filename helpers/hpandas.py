@@ -605,11 +605,6 @@ def dropna(
     num_rows_before = df.shape[0]
     if drop_infs:
         df = df.replace([np.inf, -np.inf], np.nan)
-        num_rows_after = df.shape[0]
-        pct_removed = hprint.perc(
-            num_rows_before - num_rows_after, num_rows_before
-        )
-        _LOG.info("removed rows with infs: %s", pct_removed)
     df = df.dropna(*args, **kwargs)
     if report_stats:
         num_rows_after = df.shape[0]
@@ -1615,7 +1610,7 @@ def compare_dfs(
             # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
-            zero_vs_zero_mask =  df1_mask & df2_mask
+            zero_vs_zero_mask = df1_mask & df2_mask
             df_diff[zero_vs_zero_mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")
