@@ -34,6 +34,7 @@ import logging
 
 import pandas as pd
 
+import core.finance as cofinanc
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.universe as dtfuniver
@@ -141,9 +142,9 @@ dtfcore.draw(dag)
 # ## Read data
 
 # %%
-read_data_df = _run_dag_node(dag)
-read_data_df.shape
-read_data_df.head(3)
+df = _run_dag_node(dag)
+df.shape
+df.head(3)
 
 # %% [markdown]
 # ## Sanity check
@@ -157,15 +158,15 @@ read_data_df.head(3)
 
 # %%
 # Check for missing data.
-read_data_df.isna().sum()
+df.isna().sum()
 
 # %%
 # Check for zeroes.
-(read_data_df == 0).astype(int).sum(axis=1).sum()
+(df == 0).astype(int).sum(axis=1).sum()
 
-# %% run_control={"marked": true}
+# %% run_control={"marked": false}
 # Check bid price !< ask price.
-(read_data_df["bid_price"] >= read_data_df["ask_price"]).any().any()
+(df["bid_price"] >= df["ask_price"]).any().any()
 
 # %% [markdown]
 # ### Commentary
@@ -173,4 +174,66 @@ read_data_df.isna().sum()
 # %% [markdown]
 # Since no NaNs or zeroes were found with a simple general check, there is no need for an in-depth look.
 
+# %% [markdown]
+# ## Augment data with new features
+
 # %%
+# Append `mid` data.
+# # (bid + ask) / 2.
+bid_col = "bid_price"
+ask_col = "ask_price"
+bid_volume_col = "bid_size"
+ask_volume_col = "ask_size"
+requested_cols = ["mid"]
+join_output_with_input = True
+df = cofinanc.process_bid_ask(
+    df,
+    bid_col,
+    ask_col,
+    bid_volume_col,
+    ask_volume_col,
+    requested_cols=requested_cols,
+    join_output_with_input=join_output_with_input,
+)
+df.head(3)
+
+# %% run_control={"marked": false}
+# Add limit prices based on passivity of 0.01.
+mid_price = df["mid"]
+passivity_factor = 0.01
+
+limit_buy_price = df["mid"].resample("1T").mean().shift(1) * (
+    1 - passivity_factor
+)
+limit_sell_price = df["mid"].resample("1T").mean().shift(1) * (
+    1 + passivity_factor
+)
+df[("limit_buy_price", 3303714233)] = limit_buy_price
+df[("limit_sell_price", 3303714233)] = limit_sell_price
+
+# %% run_control={"marked": true}
+# Count is_buy / is_sell.
+df[("is_buy", 3303714233)] = (
+    df[("bid_price", 3303714233)] <= df[("limit_buy_price", 3303714233)].ffill()
+)
+df[("is_sell", 3303714233)] = (
+    df[("ask_price", 3303714233)] >= df[("limit_sell_price", 3303714233)].ffill()
+)
+
+# %%
+# Display as percentages.
+
+display("Successful_buys:",df.drop_duplicates(
+    subset=[("bid_price", 3303714233), ("is_buy", 3303714233)], keep="first"
+)["is_buy"].value_counts(normalize=True))
+
+# %%
+display("Succesful sells:", df.drop_duplicates(
+    subset=[("ask_price", 3303714233), ("is_sell", 3303714233)], keep="first"
+)["is_sell"].value_counts(normalize=True))
+
+# %% [markdown]
+# ### Commentary
+
+# %% [markdown]
+# The quick look into the rate of successful trades indicated that for the given asset (`ADA/USDT`) and the date the successful "buy" order can be met for 16% of the time and a "sell" order is not met at all.
