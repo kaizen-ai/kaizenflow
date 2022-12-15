@@ -144,3 +144,33 @@ dtfcore.draw(dag)
 read_data_df = _run_dag_node(dag)
 read_data_df.shape
 read_data_df.head(3)
+
+# %% [markdown]
+# ## Sanity check
+
+# %% [markdown]
+# A quick sanity-check for the following:
+# - What percentage of 1 sec bars are missing?
+# - How often is bid_size = 0, ask_size = 0, volume=0?
+# - How often is bid !< ask?
+#
+
+# %%
+# Check for missing data.
+read_data_df.isna().sum()
+
+# %%
+# Check for zeroes.
+(read_data_df == 0).astype(int).sum(axis=1).sum()
+
+# %% run_control={"marked": true}
+# Check bid price !< ask price.
+(read_data_df["bid_price"] >= read_data_df["ask_price"]).any().any()
+
+# %% [markdown]
+# ### Commentary
+
+# %% [markdown]
+# Since no NaNs or zeroes were found with a simple general check, there is no need for an in-depth look.
+
+# %%
