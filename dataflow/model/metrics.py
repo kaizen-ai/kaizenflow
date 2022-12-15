@@ -160,7 +160,8 @@ def apply_metrics(
         - as columns the names of the applied metrics
     """
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
-    hdbg.dassert_in(tag_col, metrics_df.columns)
+    if tag_col is not None:
+        hdbg.dassert_in(tag_col, metrics_df.columns)
     #
     y = metrics_df[config["y_column_name"]]
     y_hat = metrics_df[config["y_hat_column_name"]]
@@ -168,13 +169,16 @@ def apply_metrics(
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
-            # TODO(Grisha): compute CIs using `compute_hit_rate()`.
             metrics_df[metric_mode] = compute_hit(y, y_hat)
-            srs = metrics_df.groupby(tag_col)[metric_mode].apply(
-                lambda data: cstats.calculate_hit_rate(
-                    data, alpha=config["stats_kwargs"]["alpha"]
+            if tag_col is None:
+                total_hit_rate = metrics_df[metric_mode].mean()
+                srs = pd.Series(total_hit_rate, name=metric_mode)
+            else:
+                srs = metrics_df.groupby(tag_col)[metric_mode].apply(
+                    lambda data: cstats.calculate_hit_rate(
+                        data, alpha=config["stats_kwargs"]["alpha"]
+                    )
                 )
-            )
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         df_tmp = srs.to_frame()
