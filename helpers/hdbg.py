@@ -970,7 +970,7 @@ def init_logger(
         # Create dir if it doesn't exist.
         log_dirname = os.path.dirname(log_filename)
         if log_dirname != "" and not os.path.exists(log_dirname):
-            os.mkdir(log_dirname)
+            os.makedirs(log_dirname)
         # Delete the file since we don't want to append.
         if os.path.exists(log_filename):
             try:
