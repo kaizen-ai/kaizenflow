@@ -130,9 +130,10 @@ def compute_hit(
 
 def apply_metrics(
     metrics_df: pd.DataFrame,
-    tag_col: str,
     metric_modes: List[str],
     config: cconfig.Config,
+    *,
+    tag_col: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
