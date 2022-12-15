@@ -1610,7 +1610,7 @@ def compare_dfs(
             # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
-            zero_vs_zero_mask = df1_mask & df2_mask
+            zero_vs_zero_mask =  df1_mask & df2_mask
             df_diff[zero_vs_zero_mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")

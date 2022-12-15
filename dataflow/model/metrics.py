@@ -4,12 +4,10 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 import logging
-from typing import List, Optional
+from typing import Optional
 
 import pandas as pd
 
-import core.config as cconfig
-import core.statistics as cstats
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -86,9 +84,11 @@ def annotate_metrics_df(
     Compute a tag (stored in `tag_col`) for each row of a `metrics_df` based on
     the requested `tag_mode`.
 
-    The `tag_mode` is used to split the `metrics_df` in different chunks to compute metrics.
+    The `tag_mode` is used to split the `metrics_df` in different chunks to
+    compute metrics.
 
-    :param tag_mode: symbolic name representing which criteria needs to be used to generate the tag
+    :param tag_mode: symbolic name representing which criteria needs to be used
+        to generate the tag
     :param tag_col: if None the standard name based on the `tag_mode` is used
     :return: `metrics_df` with a new column, e.g., if `tag_mode="hour"` a new column
         representing the number of hours is added
@@ -101,7 +101,7 @@ def annotate_metrics_df(
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.columns)
     if tag_mode == "hour":
-        # Check if index of the given level is a datetime type.
+        # Check if index of the given index is a datetime type.
         idx = metrics_df_copy.index.get_level_values(0)
         hpandas.dassert_index_is_datetime(idx)
         metrics_df_copy[tag_col] = idx.hour
@@ -109,76 +109,3 @@ def annotate_metrics_df(
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df_copy=\n%s", hpandas.df_to_str(metrics_df_copy))
     return metrics_df_copy
-
-
-def compute_hit(
-    y: pd.Series,
-    y_hat: pd.Series,
-) -> pd.Series:
-    """
-    Compute hit.
-
-    Hit is True when prediction's sign matches target variable's sign,
-    otherwise it is False.
-
-    :param y: target variable
-    :param y_hat: predicted value of y
-    :return: hit for each pair of (y, y_hat)
-    """
-    hit = (y * y_hat) >= 0
-    return hit
-
-
-def apply_metrics(
-    metrics_df: pd.DataFrame,
-    tag_col: str,
-    metric_modes: List[str],
-    config: cconfig.Config,
-) -> pd.DataFrame:
-    """
-    Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
-    to `metric_modes`.
-
-    E.g., using tag_col = "asset_id" and metric_mode=["pnl", "hit_rate"] the
-    output is like:
-    ```
-                hit_rate
-    asset_id
-    1030828978  0.327243
-    1182743717  0.330533
-    1464553467  0.328712
-    1467591036  0.331297
-    ...
-    ```
-
-    :param metrics_df: metrics_df annotated with tag
-    :param tag_col: the column to be used to split the metrics_df
-    :param metric_modes: a list of strings representing the metrics to compute
-        (e.g., hit rate, pnl)
-    :param config: config that controls metrics parameters
-    :return: the result is a df that has:
-        - as index the values of the tags
-        - as columns the names of the applied metrics
-    """
-    metrics_df_copy = metrics_df.copy()
-    hdbg.dassert_in(tag_col, metrics_df.columns)
-    #
-    y = metrics_df_copy[config["y_column_name"]]
-    y_hat = metrics_df_copy[config["y_hat_column_name"]]
-    #
-    out_dfs = []
-    for metric_mode in metric_modes:
-        if metric_mode == "hit_rate":
-            # TODO(Grisha): compute CIs using `compute_hit_rate()`.
-            metrics_df_copy[metric_mode] = compute_hit(y, y_hat)
-            srs = metrics_df_copy.groupby(tag_col)[metric_mode].apply(
-                lambda data: cstats.calculate_hit_rate(
-                    data, alpha=config["stats_kwargs"]["alpha"]
-                )
-            )
-        else:
-            raise ValueError(f"Invalid metric_mode={metric_mode}")
-        df_tmp = srs.to_frame()
-        out_dfs.append(df_tmp)
-    out_df = pd.concat(out_dfs)
-    return out_df
