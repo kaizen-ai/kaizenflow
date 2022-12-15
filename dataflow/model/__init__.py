@@ -8,6 +8,7 @@ from dataflow.model.correlation import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.forecast_evaluator_from_prices import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.forecast_evaluator_from_returns import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.forecast_mixer import *  # pylint: disable=unused-import # NOQA
+from dataflow.model.metrics import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.parquet_tile_analyzer import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.regression_analyzer import *  # pylint: disable=unused-import # NOQA
 from dataflow.model.stats_computer import *  # pylint: disable=unused-import # NOQA
