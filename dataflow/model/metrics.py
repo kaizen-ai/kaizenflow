@@ -6,10 +6,10 @@ import dataflow.model.metrics as dtfmodmetr
 import logging
 from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
-import core.statistics as cstats
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
