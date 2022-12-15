@@ -177,7 +177,7 @@ def apply_metrics(
             # TODO(Grisha): add CIs and re-use `calculate_hit_rate()`.
             srs = metrics_df.groupby(tag_col)[metric_mode].agg(np.mean)
         elif metric_mode == "pnl":
-            metrics_df[metric_mode] = y * y_hat
+            srs = y * y_hat
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         df_tmp = srs.to_frame()
