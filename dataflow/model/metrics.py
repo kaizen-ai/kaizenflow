@@ -59,7 +59,6 @@ def convert_to_metrics_format(
     hdbg.dassert_eq(2, len(predict_df.columns.levels))
     _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
     # Drop NaNs.
-    metrics_df = predict_df.stack()
     drop_kwargs = {
         "drop_infs": True,
         "report_stats": True,
@@ -93,19 +92,17 @@ def annotate_metrics_df(
     :return: `metrics_df` with a new column, e.g., if `tag_mode="hour"` a new column
         representing the number of hours is added
     """
-    _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
-    # Create a copy in order not to modify the input.
-    metrics_df_copy = metrics_df.copy()
+    _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.columns)
     if tag_mode == "hour":
         # Check if index of the given index is a datetime type.
-        idx = metrics_df_copy.index.get_level_values(0)
+        idx = metrics_df.index.get_level_values(0)
         hpandas.dassert_index_is_datetime(idx)
-        metrics_df_copy[tag_col] = idx.hour
+        metrics_df[tag_col] = idx.hour
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
-    _LOG.debug("metrics_df_copy=\n%s", hpandas.df_to_str(metrics_df_copy))
-    return metrics_df_copy
+    _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
+    return metrics_df
