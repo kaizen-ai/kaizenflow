@@ -967,7 +967,7 @@ def init_logger(
         log_filename = os.path.realpath(filename) + ".log"
     # Handle teeing to a file.
     if log_filename:
-        # Create dir if it doesn't exist.
+        # Create a dir (and all its missing parent dirs) if it doesn't exist.
         log_dirname = os.path.dirname(log_filename)
         if log_dirname != "" and not os.path.exists(log_dirname):
             os.makedirs(log_dirname)
