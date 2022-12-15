@@ -2,14 +2,11 @@ import argparse
 from typing import List
 import unittest.mock as umock
 
-import faker
 import pytest
 
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
 import surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0 as sisdbmohlcv
-
-f = faker.Faker()
 
 def _fake_binance_response() -> List[list]:
     """
@@ -20,27 +17,27 @@ def _fake_binance_response() -> List[list]:
     return [
         [
             ## Open time
-            f.pyint(min_value=1499040000000, max_value=1499644799999),   
+            1499040000000,   
             ## Open
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            "0.01634790",                 
             ## High
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            "0.80000000",                 
             ## Low
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            "0.01575800",                 
             ## Close
-            f.pyfloat(min_value=0.00001, max_value=0.9),                 
+            "0.01577100",                 
             ## Volume
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            "148976.11427815",             
             ## Close time
-            f.pyint(min_value=1499040000000, max_value=1499644799999),   
+            1499644799999,   
             ## Quote asset volume
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            "2434.19055334",             
             ## Number of trades
-            f.pyfloat(min_value=1, max_value=500),                       
+            308,                       
             ## Taker buy base asset volume
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            "1756.87402397",             
             ## Taker buy quote asset volume
-            f.pyfloat(min_value=1.00001, max_value=10000.0),             
+            "28.46694368",             
             ## Ignore
             "17928899.62484339"                                          
         ]
