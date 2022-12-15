@@ -117,8 +117,8 @@ def compute_hit(
     """
     Compute hit.
 
-    Hit is True when prediction's sign matches target variable's sign,
-    otherwise it is False.
+    Hit is `True` when prediction's sign matches target variable's sign,
+    otherwise it is `False`.
 
     :param y: target variable
     :param y_hat: predicted value of y
@@ -138,7 +138,7 @@ def apply_metrics(
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
     to `metric_modes`.
 
-    E.g., using tag_col = "asset_id" and metric_mode=["pnl", "hit_rate"] the
+    E.g., `using tag_col = "asset_id"` and `metric_mode=["pnl", "hit_rate"]` the
     output is like:
     ```
                 hit_rate
@@ -159,18 +159,18 @@ def apply_metrics(
         - as index the values of the tags
         - as columns the names of the applied metrics
     """
-    metrics_df_copy = metrics_df.copy()
+    _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     hdbg.dassert_in(tag_col, metrics_df.columns)
     #
-    y = metrics_df_copy[config["y_column_name"]]
-    y_hat = metrics_df_copy[config["y_hat_column_name"]]
+    y = metrics_df[config["y_column_name"]]
+    y_hat = metrics_df[config["y_hat_column_name"]]
     #
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
             # TODO(Grisha): compute CIs using `compute_hit_rate()`.
-            metrics_df_copy[metric_mode] = compute_hit(y, y_hat)
-            srs = metrics_df_copy.groupby(tag_col)[metric_mode].apply(
+            metrics_df[metric_mode] = compute_hit(y, y_hat)
+            srs = metrics_df.groupby(tag_col)[metric_mode].apply(
                 lambda data: cstats.calculate_hit_rate(
                     data, alpha=config["stats_kwargs"]["alpha"]
                 )
@@ -180,4 +180,5 @@ def apply_metrics(
         df_tmp = srs.to_frame()
         out_dfs.append(df_tmp)
     out_df = pd.concat(out_dfs)
+    _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(out_df))
     return out_df
