@@ -124,6 +124,11 @@ def compute_hit(
     :param y_hat: predicted value of y
     :return: hit for each pair of (y, y_hat)
     """
+    hdbg.dassert_isinstance(y, pd.Series)
+    hdbg.dassert_lte(0, y.shape[0])
+    hdbg.dassert_isinstance(y_hat, pd.Series)
+    hdbg.dassert_lte(0, y_hat.shape[0])
+    #
     hit = (y * y_hat) >= 0
     return hit
 
@@ -141,12 +146,12 @@ def apply_metrics(
     E.g., `using tag_col = "asset_id"` and `metric_mode=["pnl", "hit_rate"]` the
     output is like:
     ```
-                hit_rate
+                hit_rate   pnl
     asset_id
-    1030828978  0.327243
-    1182743717  0.330533
-    1464553467  0.328712
-    1467591036  0.331297
+    1030828978  0.327243   0.085995
+    1182743717  0.330533   0.045795
+    1464553467  0.328712   0.095809
+    1467591036  0.331297   0.059772
     ...
     ```
 
@@ -169,15 +174,14 @@ def apply_metrics(
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
             metrics_df[metric_mode] = compute_hit(y, y_hat)
-            srs = metrics_df.groupby(tag_col)[metric_mode].apply(
-                lambda data: cstats.calculate_hit_rate(
-                    data, alpha=config["stats_kwargs"]["alpha"]
-                )
-            )
+            # TODO(Grisha): add CIs and re-use `calculate_hit_rate()`.
+            srs = metrics_df.groupby(tag_col)[metric_mode].agg(np.mean)
+        elif metric_mode == "pnl":
+            metrics_df[metric_mode] = y * y_hat
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         df_tmp = srs.to_frame()
         out_dfs.append(df_tmp)
     out_df = pd.concat(out_dfs)
-    _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(out_df))
+    _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
