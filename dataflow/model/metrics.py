@@ -6,6 +6,7 @@ import dataflow.model.metrics as dtfmodmetr
 import logging
 from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -116,10 +117,10 @@ def compute_hit(
 ) -> pd.Series:
     """
     Compute hit.
-    
-    Hit is True when prediction's sign matches target variable's sign, 
+
+    Hit is True when prediction's sign matches target variable's sign,
     otherwise it is False.
-    
+
     :param y: target variable
     :param y_hat: predicted value of y
     :return: hit for each pair of (y, y_hat)
@@ -129,14 +130,15 @@ def compute_hit(
 
 
 def apply_metrics(
-    metrics_df: pd.DataFrame, 
-    tag_col: str, 
-    metric_modes: List[str], 
+    metrics_df: pd.DataFrame,
+    tag_col: str,
+    metric_modes: List[str],
     config: cconfig.Config,
 ) -> pd.DataFrame:
     """
-    Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding to `metric_modes`.
-    
+    Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
+    to `metric_modes`.
+
     E.g., using tag_mode = "asset_id" and metric_mode=["pnl", "hit_rate"] the output is like:
     # TODO(Grisha): add snippet.
     ```
