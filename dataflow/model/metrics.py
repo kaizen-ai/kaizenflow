@@ -6,10 +6,10 @@ import dataflow.model.metrics as dtfmodmetr
 import logging
 from typing import List, Optional
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.statistics as cstats
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -171,7 +171,11 @@ def apply_metrics(
         if metric_mode == "hit_rate":
             # TODO(Grisha): compute CIs using `compute_hit_rate()`.
             metrics_df_copy[metric_mode] = compute_hit(y, y_hat)
-            srs = metrics_df_copy.groupby(tag_col)[metric_mode].agg(np.mean)
+            srs = metrics_df_copy.groupby(tag_col)[metric_mode].apply(
+                lambda data: cstats.calculate_hit_rate(
+                    data, alpha=config["stats_kwargs"]["alpha"]
+                )
+            )
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         df_tmp = srs.to_frame()
