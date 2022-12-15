@@ -139,16 +139,17 @@ def apply_metrics(
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
     to `metric_modes`.
 
-    E.g., using tag_mode = "asset_id" and metric_mode=["pnl", "hit_rate"] the output is like:
+    E.g., using tag_col = "asset_id" and metric_mode=["pnl", "hit_rate"] the
+    output is like:
     # TODO(Grisha): add snippet.
     ```
     ```
 
     :param metrics_df: metrics_df annotated with tag
     :param tag_col: the column to be used to split the metrics_df
-    :param metric_modes: a list of strings representing the metrics to compute (e.g., hit rate, pnl)
+    :param metric_modes: a list of strings representing the metrics to compute
+        (e.g., hit rate, pnl)
     :param config: config that controls metrics parameters
-
     :return: the result is a df that has:
         - as index the values of the tags
         - as columns the names of the applied metrics
