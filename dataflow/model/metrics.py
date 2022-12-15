@@ -130,10 +130,9 @@ def compute_hit(
 
 def apply_metrics(
     metrics_df: pd.DataFrame,
+    tag_col: str,
     metric_modes: List[str],
     config: cconfig.Config,
-    *,
-    tag_col: Optional[str] = None,
 ) -> pd.DataFrame:
     """
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
@@ -161,8 +160,7 @@ def apply_metrics(
         - as columns the names of the applied metrics
     """
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
-    if tag_col is not None:
-        hdbg.dassert_in(tag_col, metrics_df.columns)
+    hdbg.dassert_in(tag_col, metrics_df.columns)
     #
     y = metrics_df[config["y_column_name"]]
     y_hat = metrics_df[config["y_hat_column_name"]]
@@ -171,15 +169,11 @@ def apply_metrics(
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
             metrics_df[metric_mode] = compute_hit(y, y_hat)
-            if tag_col is None:
-                total_hit_rate = metrics_df[metric_mode].mean()
-                srs = pd.Series(total_hit_rate, name=metric_mode)
-            else:
-                srs = metrics_df.groupby(tag_col)[metric_mode].apply(
-                    lambda data: cstats.calculate_hit_rate(
-                        data, alpha=config["stats_kwargs"]["alpha"]
-                    )
+            srs = metrics_df.groupby(tag_col)[metric_mode].apply(
+                lambda data: cstats.calculate_hit_rate(
+                    data, alpha=config["stats_kwargs"]["alpha"]
                 )
+            )
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         df_tmp = srs.to_frame()
