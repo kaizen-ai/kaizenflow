@@ -125,9 +125,9 @@ def compute_hit(
     :return: hit for each pair of (y, y_hat)
     """
     hdbg.dassert_isinstance(y, pd.Series)
-    hdbg.dassert_lte(0, y.shape[0])
+    hdbg.dassert_lt(0, y.shape[0])
     hdbg.dassert_isinstance(y_hat, pd.Series)
-    hdbg.dassert_lte(0, y_hat.shape[0])
+    hdbg.dassert_lt(0, y_hat.shape[0])
     #
     hit = (y * y_hat) >= 0
     return hit
