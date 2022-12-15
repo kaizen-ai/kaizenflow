@@ -96,7 +96,6 @@ def process_s3_data_in_chunks(
       "s3://cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask-futures/crypto_chassis/binance"
     :param step: the number of months to load for one chunk of data
     """
-    overall_rows = 0
     start_ts = pd.Timestamp(start_ts, tz="UTC")
     end_ts = pd.Timestamp(end_ts, tz="UTC")
     # Separate time period to months.
@@ -121,10 +120,8 @@ def process_s3_data_in_chunks(
             )
         # Load the data of the time period.
         daily_data = load_parquet_by_period(start, end, s3_path)
-        overall_rows += len(daily_data)
         _LOG.info("Head:")
         hpandas._display(logging.INFO, daily_data.head(2))
         _LOG.info("Tail:")
         hpandas._display(logging.INFO, daily_data.tail(2))
-    print(f"{overall_rows} rows overall")
     return

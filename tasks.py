@@ -103,6 +103,7 @@ from helpers.lib_tasks import (  # isort: skip # noqa: F401  # pylint: disable=u
 try:
     from oms.lib_tasks_binance import (  # isort: skip # noqa: F401  # pylint: disable=unused-import
         binance_get_open_positions,
+        binance_flatten_account,
     )
 except ImportError as e:
     pass

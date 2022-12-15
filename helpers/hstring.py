@@ -4,10 +4,12 @@ Import as:
 import helpers.hstring as hstring
 """
 import logging
+import os
 import re
 import tempfile
-from typing import List, Optional, cast
+from typing import List, Optional, Tuple, cast
 
+import helpers.hdbg as hdbg
 import helpers.hio as hio
 import helpers.hsystem as hsystem
 
@@ -89,3 +91,28 @@ def get_docstring_line_indices(lines: List[str]) -> List[int]:
             # Store the index if the quotes have been opened but not closed yet.
             docstring_line_indices.append(i)
     return docstring_line_indices
+
+
+def extract_version_from_file_name(file_name: str) -> Tuple[int, int]:
+    """
+    Extract version number from filename_vXX.json file. e.g.
+    'universe_v3.1.json' -> (3, 1) 'universe_v1.json' -> (1, 0)
+    'dataset_schema_v3.json' -> (3, 0)
+
+    Currently only JSON file extension is supported.
+
+    :param file_name: file to extract version part from
+    :return: file version tuple in format (major, minor)
+    """
+    basename = os.path.basename(file_name).rstrip(".json")
+    m = re.search(r"v(\d+(\.\d+)?)$", basename)
+    hdbg.dassert(
+        m,
+        "Can't parse file '%s', correct format is e.g. 'universe_v03.json'.",
+        basename,
+    )
+    # Groups return tuple.
+    version = m.groups(1)[0].split(".")  # type: ignore[arg-type, union-attr]
+    major, minor = int(version[0]), 0 if len(version) == 1 else int(version[1])
+
+    return major, minor

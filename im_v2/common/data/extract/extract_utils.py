@@ -16,18 +16,16 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List, Optional
 
 import pandas as pd
-import psycopg2
 
+import data_schema.dataset_schema_utils as dsdascut
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
-import helpers.hsql as hsql
 import im_v2.common.data.extract.extractor as ivcdexex
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.common.db.db_utils as imvcddbut
 import im_v2.common.universe as ivcu
-import im_v2.im_lib_tasks as imvimlita
 from helpers.hthreading import timeout
 
 _LOG = logging.getLogger(__name__)
@@ -56,6 +54,34 @@ def _add_common_download_args(
     Add command line arguments common to all downloaders.
     """
     parser.add_argument(
+        "--download_mode",
+        action="store",
+        required=True,
+        type=str,
+        help="What type of download is this (e.g., 'periodic_daily')",
+    )
+    parser.add_argument(
+        "--downloading_entity",
+        action="store",
+        required=True,
+        type=str,
+        help="Who is the executor (e.g. airflow, manual)",
+    )
+    parser.add_argument(
+        "--action_tag",
+        action="store",
+        required=True,
+        type=str,
+        help="Capture the nature of the task and data (e.g. downloaded_1min)",
+    )
+    parser.add_argument(
+        "--vendor",
+        action="store",
+        required=True,
+        type=str,
+        help="Vendor to use for downloading (e.g., 'ccxt')",
+    )
+    parser.add_argument(
         "--exchange_id",
         action="store",
         required=True,
@@ -80,8 +106,7 @@ def _add_common_download_args(
     parser.add_argument(
         "--contract_type",
         action="store",
-        required=False,
-        default="spot",
+        required=True,
         type=str,
         help="Type of contract, spot or futures",
     )
@@ -92,6 +117,13 @@ def _add_common_download_args(
         type=int,
         help="Specifies depth of order book to \
             download (applies when data_type=bid_ask).",
+    )
+    parser.add_argument(
+        "--data_format",
+        action="store",
+        required=True,
+        type=str,
+        help="Format of the data (e.g. csv, parquet, postgres)",
     )
     return parser
 
@@ -116,15 +148,6 @@ def add_exchange_download_args(
         required=False,
         type=str,
         help="End of the downloaded period",
-    )
-    parser.add_argument(
-        "--file_format",
-        action="store",
-        required=False,
-        default="parquet",
-        type=str,
-        choices=["csv", "parquet"],
-        help="File format to save files on disk",
     )
     parser.add_argument(
         "--incremental",
@@ -176,6 +199,8 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
+# TODO(Juraj): separate into individual
+# schemas for each data type.
 DATASET_SCHEMA = {
     "ask_price": "float64",
     "ask_size": "float64",
@@ -200,9 +225,7 @@ DATASET_SCHEMA = {
 }
 
 
-# TODO(Juraj): Refactor the method, divide into submethods
-# by data type.
-def download_realtime_for_one_exchange(
+def download_exchange_data_to_db(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
     """
@@ -218,22 +241,7 @@ def download_realtime_for_one_exchange(
     )
     currency_pairs = universe[args["exchange_id"]]
     # Connect to database.
-    env_file = imvimlita.get_db_env_path(args["db_stage"])
-    try:
-        # Connect with the parameters from the env file.
-        connection_params = hsql.get_connection_info_from_env_file(env_file)
-        db_connection = hsql.get_connection(*connection_params)
-    except psycopg2.OperationalError:
-        # Connect with the dynamic parameters (usually during tests).
-        actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
-        connection_params = hsql.DbConnectionInfo(
-            host=actual_details["host"],
-            dbname=actual_details["dbname"],
-            port=int(actual_details["port"]),
-            user=actual_details["user"],
-            password=actual_details["password"],
-        )
-        db_connection = hsql.get_connection(*connection_params)
+    db_connection = imvcddbut.DbConnectionManager.get_connection(args["db_stage"])
     # Load DB table to save data to.
     db_table = args["db_table"]
     data_type = args["data_type"]
@@ -249,12 +257,6 @@ def download_realtime_for_one_exchange(
         end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
             end_timestamp
         )
-    elif data_type == "bid_ask":
-        # Make sure depth is set for bid/ask data.
-        hdbg.dassert_lt(0, bid_ask_depth)
-        # When downloading bid / ask data, CCXT returns the last data
-        # ignoring the requested timestamp, so we set them to None.
-        start_timestamp, end_timestamp = None, None
     else:
         raise ValueError(
             "Downloading for %s data_type is not implemented.", data_type
@@ -285,35 +287,18 @@ def download_realtime_for_one_exchange(
         imvcddbut.save_data_to_db(
             data, data_type, db_connection, db_table, str(start_timestamp.tz)
         )
-        # Save data to S3 bucket.
-        if args["s3_path"]:
-            # Connect to S3 filesystem.
-            fs = hs3.get_s3fs(args["aws_profile"])
-            # Get file name.
-            file_name = (
-                currency_pair
-                + "_"
-                + hdateti.get_current_timestamp_as_string("UTC")
-                + ".csv"
-            )
-            path_to_file = os.path.join(
-                args["s3_path"], args["exchange_id"], file_name
-            )
-            # Save data to S3 filesystem.
-            with fs.open(path_to_file, "w") as f:
-                data.to_csv(f, index=False)
 
 
 @timeout(TIMEOUT_SEC)
-def _download_realtime_for_one_exchange_with_timeout(
+def _download_exchange_data_to_db_with_timeout(
     args: Dict[str, Any],
     exchange_class: ivcdexex.Extractor,
     start_timestamp: datetime,
     end_timestamp: datetime,
 ) -> None:
     """
-    Wrapper for download_realtime_for_one_exchange. Download data for given
-    time range, raise Interrupt in case if timeout occured.
+    Wrapper for download_exchange_data_to_db. Download data for given time
+    range, raise Interrupt in case if timeout occured.
 
     :param args: arguments passed on script run
     :param start_timestamp: beginning of the downloaded period
@@ -328,7 +313,7 @@ def _download_realtime_for_one_exchange_with_timeout(
         start_timestamp,
         end_timestamp,
     )
-    download_realtime_for_one_exchange(args, exchange_class)
+    download_exchange_data_to_db(args, exchange_class)
 
 
 # TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
@@ -355,12 +340,7 @@ async def _download_websocket_realtime_for_one_exchange_periodically(
     )
     exchange_id = args["exchange_id"]
     currency_pairs = universe[exchange_id]
-    # DB related arguments.
-    # TODO(Juraj): create a common function to creation connection
-    # and pass earlier in the call stack.
-    env_file = imvimlita.get_db_env_path(args["db_stage"])
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    db_connection = hsql.get_connection(*connection_params)
+    db_connection = imvcddbut.DbConnectionManager.get_connection(args["db_stage"])
     db_table = args["db_table"]
     for currency_pair in currency_pairs:
         await exchange.subscribe_to_websocket_data(
@@ -471,7 +451,7 @@ def _download_rest_realtime_for_one_exchange_periodically(
         start_timestamp = start_timestamp.floor("min")
         end_timestamp = pd.to_datetime(datetime.now(tz)).floor("min")
         try:
-            _download_realtime_for_one_exchange_with_timeout(
+            _download_exchange_data_to_db_with_timeout(
                 args, exchange, start_timestamp, end_timestamp
             )
             # Reset failures counter.
@@ -598,7 +578,7 @@ def save_csv(
 
 def save_parquet(
     data: pd.DataFrame,
-    path_to_exchange: str,
+    path_to_dataset: str,
     unit: str,
     aws_profile: Optional[str],
     data_type: str,
@@ -626,19 +606,20 @@ def save_parquet(
     hparque.to_partitioned_parquet(
         data,
         ["currency_pair"] + partition_cols,
-        path_to_exchange,
+        path_to_dataset,
         partition_filename=None,
         aws_profile=aws_profile,
     )
     # Merge all new parquet into a single `data.parquet`.
     if mode == "list_and_merge":
         hparque.list_and_merge_pq_files(
-            path_to_exchange,
+            path_to_dataset,
             aws_profile=aws_profile,
             drop_duplicates_mode=data_type,
         )
 
 
+# TODO(Juraj): rename based on surrentum protocol conventions.
 def download_historical_data(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:
@@ -650,12 +631,19 @@ def download_historical_data(
      e.g. "CcxtExtractor" or "TalosExtractor"
     """
     # Convert Namespace object with processing arguments to dict format.
-    path_to_exchange = os.path.join(args["s3_path"], args["exchange_id"])
+    # TODO(Juraj): refactor cmd line arguments to accept `asset_type`
+    #  instead of `contract_type` once a decision is made.
+    args["asset_type"] = args["contract_type"]
+    # TODO(Juraj): Handle dataset version #CmTask3348.
+    args["version"] = "v1_0_0"
+    path_to_dataset = dsdascut.build_s3_dataset_path_from_args(
+        args["s3_path"], args
+    )
     # Verify that data exists for incremental mode to work.
     if args["incremental"]:
-        hs3.dassert_path_exists(path_to_exchange, args["aws_profile"])
+        hs3.dassert_path_exists(path_to_dataset, args["aws_profile"])
     elif not args["incremental"]:
-        hs3.dassert_path_not_exists(path_to_exchange, args["aws_profile"])
+        hs3.dassert_path_not_exists(path_to_dataset, args["aws_profile"])
     # Load currency pairs.
     mode = "download"
     universe = ivcu.get_vendor_universe(
@@ -684,29 +672,28 @@ def download_historical_data(
         # Assign pair and exchange columns.
         data["currency_pair"] = currency_pair
         data["exchange_id"] = args["exchange_id"]
-        # Get current time of download.
-        knowledge_timestamp = hdateti.get_current_time("UTC")
-        data["knowledge_timestamp"] = knowledge_timestamp
+        data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
         # Save data to S3 filesystem.
-        if args["file_format"] == "parquet":
+        _LOG.info("Saving the dataset into %s", path_to_dataset)
+        if args["data_format"] == "parquet":
             save_parquet(
                 data,
-                path_to_exchange,
+                path_to_dataset,
                 args["unit"],
                 args["aws_profile"],
                 args["data_type"],
                 mode="append",
             )
-        elif args["file_format"] == "csv":
+        elif args["data_format"] == "csv":
             save_csv(
                 data,
-                path_to_exchange,
+                path_to_dataset,
                 currency_pair,
                 args["incremental"],
                 args["aws_profile"],
             )
         else:
-            hdbg.dfatal(f"Unsupported `{args['file_format']}` format!")
+            hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
 def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
@@ -766,9 +753,7 @@ def resample_rt_bid_ask_data_periodically(
     tz = start_ts.tz
     hdbg.dassert_lt(datetime.now(tz), start_ts, "start_ts is in the past")
     hdbg.dassert_lt(start_ts, end_ts, "end_ts is less than start_time")
-    env_file = imvimlita.get_db_env_path(db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    db_connection = hsql.get_connection(*connection_params)
+    db_connection = imvcddbut.DbConnectionManager.get_connection(db_stage)
     tz = start_ts.tz
     start_delay = (start_ts - datetime.now(tz)).total_seconds()
     _LOG.info("Syncing with the start time, waiting for %s seconds", start_delay)

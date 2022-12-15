@@ -71,7 +71,7 @@ def get_ccxt_create_bid_ask_raw_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask_raw(
-            id SERIAL PRIMARY KEY,
+            id BIGSERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             bid_size NUMERIC,
             bid_price NUMERIC,
@@ -93,7 +93,7 @@ def get_ccxt_create_bid_ask_futures_raw_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS ccxt_bid_ask_futures_raw(
-            id SERIAL PRIMARY KEY,
+            id BIGSERIAL PRIMARY KEY,
             timestamp BIGINT NOT NULL,
             bid_size NUMERIC,
             bid_price NUMERIC,

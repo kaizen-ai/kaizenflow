@@ -8,10 +8,10 @@ import logging
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import market_data as mdata
 import oms.ccxt_broker as occxbrok
+import oms.hsecrets.secret_identifier as ohsseide
 import oms.order as omorder
 
 _LOG = logging.getLogger(__name__)
@@ -34,12 +34,6 @@ def flatten_ccxt_account(
     :param dry_run: whether to avoid actual execution
     :param deadline_in_secs: deadline for order to be executed, 60 by default
     """
-    # Verify that the broker is in test mode.
-    hdbg.dassert_in(
-        broker._mode,
-        ["test", "debug_test1"],
-        msg="Account flattening is supported only for test accounts.",
-    )
     # Fetch all open positions.
     open_positions = broker.get_open_positions()
     if open_positions:
@@ -85,27 +79,38 @@ def flatten_ccxt_account(
 
 
 def get_CcxtBroker_example1(
-    market_data: mdata.MarketData, exchange_id: str, contract_type: str
+    market_data: mdata.MarketData,
+    exchange_id: str,
+    contract_type: str,
+    stage: str,
+    secret_id: int,
 ) -> occxbrok.CcxtBroker:
     """
-    Set up an example broker in testnet for debugging.
+    See `CcxtBroker` ctor for parameters description.
 
     :param exchange_id: name of exchange, e.g. "binance"
     :param contract_type: e.g. "futures"
+    :param stage: e.g. "preprod"
+    :param secret_id: e.g., 1
     :return: initialized CCXT broker
     """
     # Set default broker values.
-    universe = "v5"
-    mode = "debug_test1"
-    portfolio_id = "ccxt_portfolio_id"
-    strategy_id = "SAU1"
+    universe = "v7.1"
+    portfolio_id = "ccxt_portfolio_1"
+    strategy_id = "C1b"
+    account_type = "trading"
+    secret_identifier = ohsseide.SecretIdentifier(
+        exchange_id, stage, account_type, secret_id
+    )
     # Initialize the broker.
     broker = occxbrok.CcxtBroker(
         exchange_id,
         universe,
-        mode,
+        stage,
+        account_type,
         portfolio_id,
         contract_type,
+        secret_identifier,
         market_data=market_data,
         strategy_id=strategy_id,
     )
