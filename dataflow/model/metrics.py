@@ -141,8 +141,14 @@ def apply_metrics(
 
     E.g., using tag_col = "asset_id" and metric_mode=["pnl", "hit_rate"] the
     output is like:
-    # TODO(Grisha): add snippet.
     ```
+                hit_rate
+    asset_id
+    1030828978  0.327243
+    1182743717  0.330533
+    1464553467  0.328712
+    1467591036  0.331297
+    ...
     ```
 
     :param metrics_df: metrics_df annotated with tag
