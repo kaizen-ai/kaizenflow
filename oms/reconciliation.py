@@ -282,12 +282,12 @@ def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
 # /////////////////////////////////////////////////////////////////////////////
 
 
-def get_date_subdir(start_timestamp_as_str: str, mode: str):
+def get_date_subdir(start_timestamp_as_str: str, mode: str) -> str:
     """
-    Get date subdir depend on run mode.
+    Get date subdir depending on run mode.
 
-    - uses run date as a dir name for the scheduled mode, e.g., "20220828"
-    - adds run mode to a dir name for the manual mode, e.g., "20220828.manual"
+    - use run date as a dir name for the scheduled mode, e.g., "20220828"
+    - add run mode to a dir name for the manual mode, e.g., "20220828.manual"
 
     See `lib_tasks_reconcile.reconcile_run_all()` for params description.
     """
