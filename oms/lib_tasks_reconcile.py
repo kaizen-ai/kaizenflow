@@ -552,6 +552,7 @@ def reconcile_dump_tca_data(
     dag_builder_name,
     start_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     incremental=False,
     prevent_overwriting=True,
 ):  # type: ignore
