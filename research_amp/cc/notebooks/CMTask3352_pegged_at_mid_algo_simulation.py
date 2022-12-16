@@ -34,16 +34,17 @@ import logging
 
 import pandas as pd
 
+import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import helpers.henv as henv
+import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
-import core.config as cconfig
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -74,13 +75,13 @@ dict_ = {
     },
     "universe": {
         "full_symbols": ["binance::ADA_USDT"],
-    }
+    },
 }
 config = cconfig.Config.from_dict(dict_)
 
 # %%
 # Set up the parameters for initialization of the IM Client.
-#  Note: these parameters are defined separately since they are 
+#  Note: these parameters are defined separately since they are
 universe_version = "v3"
 resample_1min = False
 contract_type = "futures"
@@ -103,10 +104,12 @@ intervals = [
 # %%
 # Verify that provided symbols are present in the client.
 universe_full_symbols = dtfuniver.get_universe("crypto_chassis_v3-all")
-config_full_symbols = config.get_and_mark_as_used(("universe","full_symbols"))
+config_full_symbols = config.get_and_mark_as_used(("universe", "full_symbols"))
 hdbg.dassert_is_subset(config_full_symbols, universe_full_symbols)
 # Convert to asset ids.
-config["universe"]["asset_ids"] = client.get_asset_ids_from_full_symbols(config_full_symbols)
+config["universe"]["asset_ids"] = client.get_asset_ids_from_full_symbols(
+    config_full_symbols
+)
 asset_ids = config.get_and_mark_as_used(("universe", "asset_ids"))
 
 # %%
@@ -189,35 +192,46 @@ df2.head()
 
 # %%
 # Check for missing data.
-df1.isna().sum()
+df2.isna().sum()
 
 # %%
 # Check for zeroes.
-(df1 == 0).astype(int).sum(axis=1).sum()
+(df2 == 0).astype(int).sum(axis=1).sum()
 
 # %% run_control={"marked": false}
 # Check bid price !< ask price.
-(df1["bid_price"] >= df1["ask_price"]).any().any()
-
-# %%
-df1.head()
-
-# %%
+(df2["bid_price"] >= df2["ask_price"]).any().any()
 
 # %%
 df2.head()
 
 # %%
-2 / 0
+# Check the gaps inside the time series.
+index_as_series = df2.index.to_series()
+freq = "S"
+gaps_in_seconds = hpandas.find_gaps_in_time_series(
+    index_as_series, start_ts, end_ts, freq
+)
+gaps_in_seconds = gaps_in_seconds.to_series()
 
 # %%
-# TODO(gp): There are some missing data, e.g., 19:00:02. Let's compute some quick stats.
+gaps_percent = len(gaps_in_seconds) / (len(df2) + len(gaps_in_seconds)) * 100
+average_gap = gaps_in_seconds.diff().mean()
+print(
+    f"Overall {len(gaps_in_seconds)} gaps were found, \
+for {gaps_percent}%% of all seconds in the given period, for an average frequency of {average_gap}"
+)
+
+# %%
+# Display gaps distribution by hour.
+gaps_in_seconds.groupby(gaps_in_seconds.dt.hour).count().plot(kind="bar")
 
 # %% [markdown]
 # ### Commentary
 
 # %% [markdown]
-# Since no NaNs or zeroes were found with a simple general check, there is no need for an in-depth look.
+# - No NaNs or zeroes were found with a simple general check, there is no need for an in-depth look.
+# - 575 gaps were found, that mostly concentrate between 0am and 5am.
 
 # %% [markdown]
 # ## Augment data with new features
@@ -280,14 +294,18 @@ df_limit_price = pd.DataFrame()
 # df_limit_price["limit_sell_price"] = df["mid"].resample("1T").mean().shift(1) * (
 #     1 + passivity_factor
 # )
-    
+
 # TODO(gp): This should be tuned as function of the rolling std dev.
 abs_spread = 0.0001
 # We are trading at the top of the book.
 # TODO(gp): Crossing the spread means setting limit_buy_price = ... + abs_spread (and vice versa for sell).
-df_limit_price["limit_buy_price"] = df3["mid"].resample("1T").mean().shift(1) - abs_spread
-df_limit_price["limit_sell_price"] = df3["mid"].resample("1T").mean().shift(1) + abs_spread
-    
+df_limit_price["limit_buy_price"] = (
+    df3["mid"].resample("1T").mean().shift(1) - abs_spread
+)
+df_limit_price["limit_sell_price"] = (
+    df3["mid"].resample("1T").mean().shift(1) + abs_spread
+)
+
 df4 = df3.merge(df_limit_price, right_index=True, left_index=True, how="outer")
 df4["limit_buy_price"] = df4["limit_buy_price"].ffill()
 df4["limit_sell_price"] = df4["limit_sell_price"].ffill()
@@ -295,12 +313,8 @@ print(df4.shape)
 
 # %%
 # Count is_buy / is_sell.
-df4["is_buy"] = (
-    df4["ask_price"] <= df4["limit_buy_price"]
-)
-df4["is_sell"] = (
-    df4["bid_price"] >= df4["limit_sell_price"]
-)
+df4["is_buy"] = df4["ask_price"] <= df4["limit_buy_price"]
+df4["is_sell"] = df4["bid_price"] >= df4["limit_sell_price"]
 
 # %%
 # TODO(gp): Not sure this is working as expected. I don't see the seconds.
@@ -330,7 +344,9 @@ spread_in_bps.plot()
 # %%
 # TODO(gp): Create a function:
 # plot_limit_orders(df, start_timestamp: Optional[pd.timestamp] = None, end_timestamp:Optional[pd.Timestamp] = None)
-df4[["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]].head(1000).plot()
+df4[
+    ["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]
+].head(1000).plot()
 
 (df4[["is_buy", "is_sell"]] * 1.0).head(1000).plot()
 
@@ -348,30 +364,26 @@ df4["exec_buy_price"] = df4["is_buy"] * df4["ask_price"]
 mask = ~df4["is_buy"]
 df4["exec_buy_price"][mask] = np.nan
 
-#df4["exec_price"].plot()
-#df4["exec_price"].mean()
+# df4["exec_price"].plot()
+# df4["exec_price"].mean()
 
 # TODO(gp): Not sure this does what we want. We want to average only the values that are not nan.
-#df4["exec_buy_price"].resample("5T").mean()
+# df4["exec_buy_price"].resample("5T").mean()
 
 df4["exec_sell_price"] = df4["is_sell"] * df4["bid_price"]
 
 mask = ~df4["is_sell"]
 df4["exec_sell_price"][mask] = np.nan
 
-#df4["exec_price"].plot()
-#df4["exec_price"].mean()
+# df4["exec_price"].plot()
+# df4["exec_price"].mean()
 
 # %%
 # Display as percentages.
 # if report_stats:
 print("buy percentage at repricing freq: ", df4["is_buy"].sum() / df4.shape[0])
 print(df4["is_sell"].sum() / df4.shape[0])
-
-import helpers.hprint as hprint
-
-import numpy as np
-
+#
 print(hprint.perc(df4["exec_buy_price"].isnull().sum(), df4.shape[0]))
 print(hprint.perc(df4["exec_sell_price"].isnull().sum(), df4.shape[0]))
 
@@ -389,30 +401,34 @@ df5["exec_buy_price"] = df4["exec_buy_price"].resample("5T").mean()
 df5["exec_is_buy"] = df5["exec_buy_num"] > 0
 print(hprint.perc(df5["exec_is_buy"].sum(), df5["exec_is_buy"].shape[0]))
 
-# Estimate the executed volume. 
-df5["exec_buy_volume"] = (df4["ask_size"] * df4["ask_price"] * df4["is_buy"]).resample("5T").sum()
+# Estimate the executed volume.
+df5["exec_buy_volume"] = (
+    (df4["ask_size"] * df4["ask_price"] * df4["is_buy"]).resample("5T").sum()
+)
 print("million USD per 5T=", df5["exec_buy_volume"].mean() / 1e6)
 # Estimate price as average of executed price.
-#exec_buy_price = (close * exec_is_buy).groupby("5T").sum() / exec_buy_num
+# exec_buy_price = (close * exec_is_buy).groupby("5T").sum() / exec_buy_num
 
 # Same for sell.
-#exec_sell_volume = (is_sell * bid_size).group("5T").sum()
-#exec_sell_price = (close * exec_is_sell).groupby("5T").sum() / exec_sell_num
+# exec_sell_volume = (is_sell * bid_size).group("5T").sum()
+# exec_sell_price = (close * exec_is_sell).groupby("5T").sum() / exec_sell_num
 
 df5["exec_sell_num"] = df4["is_sell"].resample("5T").sum()
 df5["exec_sell_price"] = df4["exec_sell_price"].resample("5T").mean()
 df5["exec_is_sell"] = df5["exec_sell_num"] > 0
 print(hprint.perc(df5["exec_is_sell"].sum(), df5["exec_is_sell"].shape[0]))
 
-# Estimate the executed volume. 
-df5["exec_sell_volume"] = (df4["bid_size"] * df4["bid_price"] * df4["is_sell"]).resample("5T").sum()
+# Estimate the executed volume.
+df5["exec_sell_volume"] = (
+    (df4["bid_size"] * df4["bid_price"] * df4["is_sell"]).resample("5T").sum()
+)
 print("million USD per 5T=", df5["exec_sell_volume"].mean() / 1e6)
 
 # %% [markdown]
-# ## Compare to benchmark price. 
+# ## Compare to benchmark price.
 
 # %%
-# TODO(gp): @danya 
+# TODO(gp): @danya
 # def compute_benchmark_stats(...)
 
 # %%
@@ -424,9 +440,11 @@ df5[["twap_mid_price", "exec_sell_price", "exec_buy_price"]].head(1000).plot()
 # %%
 slippage = df5[["twap_mid_price", "exec_sell_price", "exec_buy_price"]]
 
-slippage["sell_slippage_bps"] = (df5["exec_sell_price"] - df5["twap_mid_price"]) / df5["twap_mid_price"] * 1e4
+slippage["sell_slippage_bps"] = (
+    (df5["exec_sell_price"] - df5["twap_mid_price"]) / df5["twap_mid_price"] * 1e4
+)
 
-#slippage = df["twap_mid_price"] / 
+# slippage = df["twap_mid_price"] /
 
 slippage["sell_slippage_bps"].hist(bins=21)
 
