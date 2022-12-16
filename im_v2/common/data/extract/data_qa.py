@@ -43,6 +43,14 @@ _LOG = logging.getLogger(__name__)
 
 
 class QaCheck(abc.ABC):
+    """
+    Represent a single QA check executed on one or more dataframes.
+
+    E.g.,
+
+    - check that OHLCV data is in the right format (e.g., timestamps are not missing, L < O, L < H, V != 0)
+    - check that two data dataframes from different providers are compatible (e.g., the error is less than 1%)
+    """
     def __init__(self) -> None:
         self._status: str = "Check has not been executed."
 
