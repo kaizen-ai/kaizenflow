@@ -606,7 +606,7 @@ class RealTimeHistoricalReconciler:
                     price_col_base = price_col.rstrip("_relative_diff_pct")
                     message = (
                         f"Difference between {price_col_base} in real time and daily "
-                        f"data for `{index}` coin is more than {threshold}%."
+                        f"data for `{index}` coin is {abs(row[price_col])}% (> {threshold}% threshold)."
                     )
                     error_message.append(message)
         # Show stats for differences for sizes.
@@ -628,7 +628,7 @@ class RealTimeHistoricalReconciler:
                     size_col_base = size_col.rstrip("_relative_diff_pct")
                     message = (
                         f"Difference between {size_col_base} in real time and daily "
-                        f"data for `{index}` coin is more than {threshold}%."
+                        f"data for `{index}` coin in {abs(row[price_col])}% (> {threshold}% threshold)."
                     )
                     error_message.append(message)
         if error_message:
