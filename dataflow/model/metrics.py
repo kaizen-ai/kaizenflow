@@ -104,6 +104,8 @@ def annotate_metrics_df(
         idx = metrics_df.index.get_level_values(0)
         hpandas.dassert_index_is_datetime(idx)
         metrics_df[tag_col] = idx.hour
+    elif tag_mode == "all":
+        metrics_df[tag_col] = tag_mode
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
