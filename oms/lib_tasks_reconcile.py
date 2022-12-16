@@ -713,13 +713,14 @@ def reconcile_run_all(
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
-    reconcile_dump_tca_data(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        dst_dir=dst_dir,
-        prevent_overwriting=prevent_overwriting,
-    )
+    # Temporary commented out due to failing on this stage.
+    # reconcile_dump_tca_data(
+    # ctx,
+    # dag_builder_name,
+    # start_timestamp_as_str=start_timestamp_as_str,
+    # dst_dir=dst_dir,
+    # prevent_overwriting=prevent_overwriting,
+    # )
     #
     if run_notebook:
         reconcile_run_notebook(
