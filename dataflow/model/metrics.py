@@ -8,8 +8,11 @@ from typing import List, Optional
 
 import numpy as np
 import pandas as pd
+import scipy.stats as st
+
 
 import core.config as cconfig
+import core.finance.tradability as cfintrad
 import core.statistics.requires_statsmodels as cstresta
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -128,6 +131,30 @@ def annotate_metrics_df(
 # #############################################################################
 
 
+# TODO(Grisha): seems more general than `metrics.py`.
+# TODO(Grisha): maybe return CIs?
+def bootstrap(
+    srs: pd.Series, func: Callable, n_resamples: int = 100
+) -> pd.Series:
+    """
+    Bootstrap computations on specified number of data resamples.
+
+    :param srs: input data to resample
+    :param func: function accepting a series and returning a single scalar value
+    :param n_resamples: number of resamples to create
+    :return: series of values computed `n_resamples` times using `func`
+    """
+    res_list = []
+    i = 0
+    while i <= n_resamples:
+        resampled_data = srs.sample(frac=1, replace=True)
+        res = func(resampled_data)
+        i += 1
+        res_list.append(res)
+    out_srs = pd.Series(res_list)
+    return out_srs
+
+
 def compute_hit(
     y: pd.Series,
     y_hat: pd.Series,
@@ -178,6 +205,55 @@ def compute_hit_rate_with_bounds(
     hdbg.dassert_in(hit_column_name, df.columns)
     hit_rate_with_bounds = cstresta.calculate_hit_rate(df[hit_column_name], **calculate_hit_rate_kwargs)
     return hit_rate_with_bounds
+
+
+def compute_pnl_with_bounds(
+    df: pd.DataFrame,
+    *,
+    bar_pnl_column_name = "bar_pnl",
+    y_column_name: str = "y",
+    y_hat_column_name: str = "y_hat",
+    n_resamples: int = 100,
+    alpha: float = 0.05,
+) -> pd.Series:
+    """
+    Compute PnL statistics: point estimate, lower bound, upper_bound.
+
+    To compute confidence intervals bootstrapping is used.
+
+    :param df: metrics_df
+    :param bar_pnl_column_name: bar_pnl column name
+    :param y_column_name: target variable's column name
+    :param y_hat_column_name: prediction's column name
+    :param n_resamples: see `bootstrap()`
+    :param alpha: confidence level
+    :return: pnl rate: point estimate, lower bound, upper bound
+    """
+    if bar_pnl_column_name not in df.columns:
+        # Compute bar_pnl if missing.
+        df[bar_pnl_column_name] = cfintrad.compute_bar_pnl(df, y_column_name, y_hat_column_name)
+    # 1) Compute point estimate.
+    point_estimate = cfintrad.compute_pnl(df, y_column_name, y_hat_column_name)
+    # 2) Compute CIs.
+    func = lambda df, y_column_name, y_hat_column_name: cfintrad.compute_pnl(
+        df, y_column_name, y_hat_column_name
+    )
+    # Compute multiple PnLs on many resamples to compute onfidence intervals.
+    pnl_srs = pd.Series(
+        bootstrap(df[bar_pnl_column_name], func, n_resamples), name="pnl",
+    )
+    # Compute confidence intervals.
+    conf_ints = pnl_srs.apply(
+        lambda pnl: st.t.interval(
+            1 - alpha,
+            pnl.size - 1,
+            np.mean(pnl),
+            st.sem(pnl),
+        )
+    )
+    # 3) Combine.
+    out_srs = pd.Series([point_estimate, conf_ints.tolist()])
+    return out_srs
 
 
 def apply_metrics(

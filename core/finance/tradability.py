@@ -90,6 +90,7 @@ def get_predictions(
     return pred
 
 
+# TODO(Grisha): dup of `calculate_hit_rate()`?
 def calculate_confidence_interval(
     hit_series: pd.Series, alpha: float, method: str
 ) -> None:
@@ -133,8 +134,17 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
     return df
 
 
-def compute_pnl(df: pd.DataFrame, rets_col: str) -> float:
-    return (df["predictions"] * df[rets_col]).sum()
+def compute_bar_pnl(df: pd.DataFrame, rets_col: str, prediction_col: str) -> pd.Series:
+    hdbg.dassert_in(rets_col, df.columns)
+    hdbg.dassert_in(prediction_col, df.columns)
+    bar_pnl = (df[prediction_col] * df[rets_col])
+    return bar_pnl
+
+
+# TODO(Grisha): maybe pass 2 pd.Series?
+def compute_pnl(df: pd.DataFrame, rets_col: str, prediction_col: str) -> float:
+    bar_pnl = compute_bar_pnl(df, rets_col, prediction_col)
+    return bar_pnl.sum()
 
 
 def simulate_pnls_for_set_of_hit_rates(
