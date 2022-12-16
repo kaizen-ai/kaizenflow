@@ -81,7 +81,6 @@ config = cconfig.Config.from_dict(dict_)
 
 # %%
 # Set up the parameters for initialization of the IM Client.
-#  Note: these parameters are defined separately since they are
 universe_version = "v3"
 resample_1min = False
 contract_type = "futures"
@@ -166,19 +165,19 @@ dtfcore.draw(dag)
 # ## Read data
 
 # %%
-df1 = _run_dag_node(dag)
-df1.shape
-df1.head(5)
+df_original = _run_dag_node(dag)
+df_original.shape
+df_original.head(5)
 
 # %%
 # Drop multiindex in single-asset dataframes for human readability.
 if len(asset_ids) < 2:
-    df2 = df1.droplevel(1, axis=1)
+    df_flat = df_original.droplevel(1, axis=1)
 else:
-    df2 = df1.copy()
+    df_flat = df_original.copy()
 
 # %%
-df2.head()
+df_flat.head()
 
 # %% [markdown]
 # ## Sanity check
@@ -192,22 +191,22 @@ df2.head()
 
 # %%
 # Check for missing data.
-df2.isna().sum()
+df_flat.isna().sum()
 
 # %%
 # Check for zeroes.
-(df2 == 0).astype(int).sum(axis=1).sum()
+(df_flat == 0).astype(int).sum(axis=1).sum()
 
 # %% run_control={"marked": false}
 # Check bid price !< ask price.
-(df2["bid_price"] >= df2["ask_price"]).any().any()
+(df_flat["bid_price"] >= df_flat["ask_price"]).any().any()
 
 # %%
-df2.head()
+df_flat.head()
 
 # %%
 # Check the gaps inside the time series.
-index_as_series = df2.index.to_series()
+index_as_series = df_flat.index.to_series()
 freq = "S"
 gaps_in_seconds = hpandas.find_gaps_in_time_series(
     index_as_series, start_ts, end_ts, freq
@@ -215,7 +214,7 @@ gaps_in_seconds = hpandas.find_gaps_in_time_series(
 gaps_in_seconds = gaps_in_seconds.to_series()
 
 # %%
-gaps_percent = len(gaps_in_seconds) / (len(df2) + len(gaps_in_seconds)) * 100
+gaps_percent = len(gaps_in_seconds) / (len(df_flat) + len(gaps_in_seconds)) * 100
 average_gap = gaps_in_seconds.diff().mean()
 print(
     f"Overall {len(gaps_in_seconds)} gaps were found, \
@@ -245,8 +244,8 @@ bid_volume_col = "bid_size"
 ask_volume_col = "ask_size"
 requested_cols = ["mid"]
 join_output_with_input = True
-df2 = cofinanc.process_bid_ask(
-    df1,
+df_mid = cofinanc.process_bid_ask(
+    df_flat,
     bid_col,
     ask_col,
     bid_volume_col,
@@ -254,67 +253,99 @@ df2 = cofinanc.process_bid_ask(
     requested_cols=requested_cols,
     join_output_with_input=join_output_with_input,
 )
-df2.head(10)
+df_mid.head(10)
 
 # %%
-# TODO(gp): Let's assign dfs to different vars so that each cell is idempotent.
-print(df2.shape)
-print(df2.index.min())
-print(df2.index.max())
+print(df_mid.shape)
+print(df_mid.index.min())
+print(df_mid.index.max())
 
 # %%
-asset_id = 3303714233
+df_features = df_mid.copy()
 
 # %%
-df2.droplevel(1, axis=1)
-
-# %%
-df3 = df2.swaplevel(axis=1)
-df3.head()
-
-# %%
-df3["ask_value"] = df3["ask_price"] * df3["ask_size"]
-df3["bid_value"] = df3["bid_price"] * df3["bid_size"]
+df_features["ask_value"] = df_features["ask_price"] * df_features["ask_size"]
+df_features["bid_value"] = df_features["bid_price"] * df_features["bid_size"]
 
 # This is really high. 100m USD per hour on top of the book.
-df3[["bid_value", "ask_value"]].resample("1H").sum().plot()
+df_features[["bid_value", "ask_value"]].resample("1H").sum().plot()
 
-# %% run_control={"marked": false}
-# TODO(gp): @danya this is add_limit_order_prices()
-
-print(df3.shape)
-# Add limit prices based on passivity of 0.01.
-mid_price = df3["mid"]
-passivity_factor = 0.01
-
-df_limit_price = pd.DataFrame()
-# df_limit_price["limit_buy_price"] = df["mid"].resample("1T").mean().shift(1) * (
-#     1 - passivity_factor
-# )
-# df_limit_price["limit_sell_price"] = df["mid"].resample("1T").mean().shift(1) * (
-#     1 + passivity_factor
-# )
-
-# TODO(gp): This should be tuned as function of the rolling std dev.
-abs_spread = 0.0001
-# We are trading at the top of the book.
-# TODO(gp): Crossing the spread means setting limit_buy_price = ... + abs_spread (and vice versa for sell).
-df_limit_price["limit_buy_price"] = (
-    df3["mid"].resample("1T").mean().shift(1) - abs_spread
-)
-df_limit_price["limit_sell_price"] = (
-    df3["mid"].resample("1T").mean().shift(1) + abs_spread
-)
-
-df4 = df3.merge(df_limit_price, right_index=True, left_index=True, how="outer")
-df4["limit_buy_price"] = df4["limit_buy_price"].ffill()
-df4["limit_sell_price"] = df4["limit_sell_price"].ffill()
-print(df4.shape)
 
 # %%
-# Count is_buy / is_sell.
-df4["is_buy"] = df4["ask_price"] <= df4["limit_buy_price"]
-df4["is_sell"] = df4["bid_price"] >= df4["limit_sell_price"]
+def add_limit_order_prices(df: pd.DataFrame, mid_col_name: str, *, resample_freq = "1T", passivity_factor = None, abs_spread = None):
+
+    limit_buy_col = "limit_buy_price"
+    limit_sell_col = "limit_sell_price"
+    limit_buy_srs = df[mid_col_name]
+    limit_buy_srs = limit_buy_srs.rename(limit_buy_col)
+    limit_sell_srs = df[mid_col_name]
+    limit_sell_srs = limit_sell_srs.rename(limit_buy_col)
+    #
+    if resample_freq:
+        limit_buy_srs = limit_buy_srs.resample(resample_freq)
+        limit_sell_srs = limit_sell_srs.resample(resample_freq)
+    #
+    limit_buy_srs = limit_buy_srs.mean().shift(1)
+    limit_sell_srs = limit_sell_srs.mean().shift(1)
+    #
+    if abs_spread is not None and passivity_factor is None:
+        limit_buy_srs = limit_buy_srs - abs_spread
+        limit_sell_srs = limit_sell_srs + abs_spread
+    elif passivity_factor is not None and abs_spread is None:
+        limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
+        limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
+    df_limit_price = pd.DataFrame()
+    df_limit_price[limit_buy_col] = limit_buy_srs
+    df_limit_price[limit_sell_col] = limit_sell_srs
+    df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
+    #
+    df[limit_buy_col] = df[limit_buy_col].ffill()
+    df[limit_sell_col] = df[limit_sell_col].ffill()
+    return df
+
+
+# %% run_control={"marked": false}
+df_limit_order_prices = add_limit_order_prices(df_features,
+                                              "mid",
+                                              abs_spread = 0.0001)
+
+# %%
+df_limit_order_prices.head()
+
+# %%
+print(df_features.shape)
+
+
+
+
+
+# %%
+print(df_limit_order_prices.shape)
+
+
+
+
+# %% run_control={"marked": true}
+diff = df_limit_order_prices.index.difference(df_features.index)
+
+
+
+# %%
+df_limit_order_prices.loc[diff]
+
+
+
+
+# %%
+df_flat.loc[pd.Timestamp("2022-12-13 22:25:59-05:00"): pd.Timestamp("2022-12-13 22:27:00-05:00")]
+
+# %% [markdown]
+# #### Commentary
+
+# %% [markdown]
+# As we have seen during the sanity check above, missing data can congregate around certain time points.
+#
+# For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to due to resampling.
 
 # %%
 # TODO(gp): Not sure this is working as expected. I don't see the seconds.
@@ -323,6 +354,15 @@ df4["is_sell"] = df4["bid_price"] >= df4["limit_sell_price"]
 
 # Let's always check the output of the df to make sure things are sane.
 df4
+
+
+
+
+
+# %% [markdown]
+# #### Rechecking whether any rows disappeared
+
+# %%
 
 # %%
 # TODO(gp): @Danya
