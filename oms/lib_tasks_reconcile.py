@@ -58,7 +58,10 @@ def _system(cmd: str) -> int:
 
 
 def _allow_update(
-    start_timestamp_as_str: str, dst_dir: str, dag_builder_name: str
+    start_timestamp_as_str: str,
+    dst_dir: str,
+    dag_builder_name: str,
+    mode: Optional[str],
 ) -> None:
     """
     Allow to overwrite reconcilation outcomes in the date-specific target dir.
@@ -70,7 +73,7 @@ def _allow_update(
     """
     # Get date-specific target dir.
     dst_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     hdbg.dassert_path_exists(dst_dir)
     # Allow overwritting.
@@ -96,7 +99,10 @@ def _prevent_overwriting(path: str) -> None:
 
 
 def _resolve_target_dir(
-    start_timestamp_as_str: str, dst_dir: Optional[str], dag_builder_name: str
+    start_timestamp_as_str: str,
+    dst_dir: Optional[str],
+    dag_builder_name: str,
+    mode: Optional[str],
 ) -> str:
     """
     Return the target dir name to store reconcilation results.
@@ -113,9 +119,10 @@ def _resolve_target_dir(
     :return: a target dir to store reconcilation results
     """
     hdbg.dassert_isinstance(start_timestamp_as_str, str)
-    run_date = omreconc.get_run_date(start_timestamp_as_str)
+    mode = omreconc.resolve_run_mode(mode)
+    date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
-    target_dir = os.path.join(dst_dir, dag_builder_name, run_date)
+    target_dir = os.path.join(dst_dir, dag_builder_name, date_subdir)
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
 
@@ -140,6 +147,7 @@ def reconcile_create_dirs(
     dag_builder_name,
     start_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     abort_if_exists=True,
 ):  # type: ignore
     """
@@ -162,7 +170,7 @@ def reconcile_create_dirs(
     """
     _ = ctx
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     # Create a dir for reconcilation results.
     hio.create_dir(target_dir, incremental=True, abort_if_exists=abort_if_exists)
@@ -192,6 +200,7 @@ def reconcile_dump_market_data(
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     incremental=False,
     interactive=False,
     prevent_overwriting=True,
@@ -222,8 +231,10 @@ def reconcile_dump_market_data(
     start_timestamp_as_str, end_timestamp_as_str = omreconc.resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
+    mode = omreconc.resolve_run_mode(mode)
+    date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     market_data_file = "test_data.csv.gz"
     # TODO(Grisha): @Dan Reconsider clause logic (compare with `reconcile_run_notebook`).
@@ -235,6 +246,7 @@ def reconcile_dump_market_data(
         opts = [
             f"--dag_builder_name {dag_builder_name}",
             "--action dump_data",
+            f"--date_subdir {date_subdir}",
             f"--start_timestamp_as_str {start_timestamp_as_str}",
             f"--end_timestamp_as_str {end_timestamp_as_str}",
             f"--dst_dir {dst_dir}",
@@ -273,6 +285,7 @@ def reconcile_run_sim(
     start_timestamp_as_str=None,
     end_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
 ):  # type: ignore
     """
     Run the simulation given an interval [start_timestamp, end_timestamp].
@@ -287,6 +300,8 @@ def reconcile_run_sim(
         start_timestamp_as_str, end_timestamp_as_str
     )
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
+    mode = omreconc.resolve_run_mode(mode)
+    date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
@@ -299,6 +314,7 @@ def reconcile_run_sim(
     opts = [
         f"--dag_builder_name {dag_builder_name}",
         "--action run_simulation",
+        f"--date_subdir {date_subdir}",
         f"--start_timestamp_as_str {start_timestamp_as_str}",
         f"--end_timestamp_as_str {end_timestamp_as_str}",
         f"--dst_dir {dst_dir}",
@@ -322,6 +338,7 @@ def reconcile_copy_sim_data(
     dag_builder_name,
     start_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     prevent_overwriting=True,
 ):  # type: ignore
     """
@@ -331,7 +348,7 @@ def reconcile_copy_sim_data(
     """
     _ = ctx
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     sim_target_dir = os.path.join(target_dir, "simulation")
     # Make sure that the destination dir exists before copying.
@@ -377,11 +394,19 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
-        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation/{dag_builder_name}"
+        date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
+        prod_data_source_dir = os.path.join(
+            "/shared_data",
+            "ecs",
+            stage,
+            "system_reconciliation",
+            dag_builder_name,
+            date_subdir,
+        )
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     # Set source log dir.
     system_log_subdir = omreconc.get_prod_system_log_dir(
@@ -489,7 +514,7 @@ def reconcile_run_notebook(
     # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
@@ -502,7 +527,7 @@ def reconcile_run_notebook(
 
 
 @task
-def reconcile_ls(ctx, dag_builder_name, start_timestamp_as_str=None, dst_dir=None):  # type: ignore
+def reconcile_ls(ctx, dag_builder_name, start_timestamp_as_str=None, dst_dir=None, mode=None):  # type: ignore
     """
     Run `ls` on the dir containing the reconciliation data.
 
@@ -510,7 +535,7 @@ def reconcile_ls(ctx, dag_builder_name, start_timestamp_as_str=None, dst_dir=Non
     """
     _ = ctx
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     _LOG.info(hprint.to_str("target_dir"))
     hdbg.dassert_dir_exists(target_dir)
@@ -527,6 +552,7 @@ def reconcile_dump_tca_data(
     dag_builder_name,
     start_timestamp_as_str=None,
     dst_dir=None,
+    mode=None,
     incremental=False,
     prevent_overwriting=True,
 ):  # type: ignore
@@ -542,7 +568,7 @@ def reconcile_dump_tca_data(
     )
     _ = ctx
     target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
+        start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
     run_date = omreconc.get_run_date(start_timestamp_as_str)
     run_date = datetime.datetime.strptime(run_date, "%Y%m%d")
@@ -687,13 +713,14 @@ def reconcile_run_all(
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
-    reconcile_dump_tca_data(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        dst_dir=dst_dir,
-        prevent_overwriting=prevent_overwriting,
-    )
+    # Temporary commented out due to failing on this stage.
+    # reconcile_dump_tca_data(
+    # ctx,
+    # dag_builder_name,
+    # start_timestamp_as_str=start_timestamp_as_str,
+    # dst_dir=dst_dir,
+    # prevent_overwriting=prevent_overwriting,
+    # )
     #
     if run_notebook:
         reconcile_run_notebook(
@@ -710,4 +737,4 @@ def reconcile_run_all(
         dst_dir=dst_dir,
     )
     if allow_update:
-        _allow_update(start_timestamp_as_str, dst_dir, dag_builder_name)
+        _allow_update(start_timestamp_as_str, dst_dir, dag_builder_name, mode)
