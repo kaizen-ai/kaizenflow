@@ -5,7 +5,7 @@ import pytest
 
 import helpers.henv as henv
 import helpers.hunit_test as hunitest
-import im_v2.ccxt.data.extract.download_historical_data as imvcdedhda
+import im_v2.common.data.extract.download_bulk as imvcdedobu
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 
 
@@ -20,19 +20,29 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
 
         Mostly for coverage and to detect argument changes.
         """
-        parser = imvcdedhda._parse()
+        parser = imvcdedobu._parse()
         cmd = []
+        cmd.extend(["--download_mode", "periodic_daily"])
+        cmd.extend(["--downloading_entity", "manual"])
+        cmd.extend(["--action_tag", "downloaded_1min"])
         cmd.extend(["--data_type", "ohlcv"])
+        cmd.extend(["--vendor", "crypto_chassis"])
         cmd.extend(["--start_timestamp", "2022-02-08"])
         cmd.extend(["--end_timestamp", "2022-02-09"])
         cmd.extend(["--exchange_id", "binance"])
+        cmd.extend(["--contract_type", "spot"])
         cmd.extend(["--universe", "v3"])
         cmd.extend(["--aws_profile", "ck"])
-        cmd.extend(["--s3_path", "s3://cryptokaizen-data/realtime/"])
+        cmd.extend(["--s3_path", "s3://cryptokaizen-data-test/"])
+        cmd.extend(["--data_format", "parquet"])
         args = parser.parse_args(cmd)
         actual = vars(args)
         expected = {
+            "download_mode": "periodic_daily",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_1min",
             "data_type": "ohlcv",
+            "vendor": "crypto_chassis",
             "start_timestamp": "2022-02-08",
             "end_timestamp": "2022-02-09",
             "exchange_id": "binance",
@@ -40,23 +50,24 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             "universe": "v3",
             "incremental": False,
             "aws_profile": "ck",
-            "s3_path": "s3://cryptokaizen-data/realtime/",
+            "s3_path": "s3://cryptokaizen-data-test/",
             "log_level": "INFO",
-            "file_format": "parquet",
+            "data_format": "parquet",
             "bid_ask_depth": None,
         }
         self.assertDictEqual(actual, expected)
 
     @umock.patch.object(
-        imvcdedhda.ivcdexex, "CcxtExtractor", autospec=True, spec_set=True
+        imvcdedobu.imvccdexex,
+        "CryptoChassisExtractor",
+        autospec=True,
+        spec_set=True,
     )
-    @umock.patch.object(
-        imvcdeexut, "download_historical_data", autospec=True, spec_set=True
-    )
+    @umock.patch.object(imvcdeexut, "download_historical_data")
     def test_main(
         self,
-        download_historical_mock: umock.MagicMock,
-        ccxt_extractor_mock: umock.MagicMock,
+        mock_download_historical: umock.MagicMock,
+        chassis_extractor_mock: umock.MagicMock,
     ) -> None:
         """
         Smoke test to directly run `_main` function for coverage increase.
@@ -66,13 +77,17 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
             argparse.ArgumentParser, spec_set=True
         )
         kwargs = {
+            "download_mode": "bulk",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_1min",
             "data_type": "ohlcv",
+            "vendor": "crypto_chassis",
             "start_timestamp": "2021-12-31 23:00:00",
             "end_timestamp": "2022-01-01 01:00:00",
-            "universe": "v3",
+            "universe": "v1",
             "exchange_id": "binance",
             "contract_type": "spot",
-            "file_format": "parquet",
+            "data_format": "parquet",
             "incremental": False,
             "log_level": "INFO",
             "s3_path": "s3://mock_bucket",
@@ -81,15 +96,17 @@ class TestDownloadHistoricalData1(hunitest.TestCase):
         namespace = argparse.Namespace(**kwargs)
         mock_argument_parser.parse_args.return_value = namespace
         # Run.
-        imvcdedhda._main(mock_argument_parser)
-        # Check args.
-        self.assertEqual(len(download_historical_mock.call_args), 2)
-        actual_args = download_historical_mock.call_args.args
-        self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "ms"}})
-        # Verify that `CcxtExtractor` instance is passed.
-        self.assertEqual(actual_args[1]._extract_mock_name(), "CcxtExtractor()")
-        # Verify that `CcxtExtractor` instance creation is properly called.
-        self.assertEqual(ccxt_extractor_mock.call_count, 1)
-        actual_args = tuple(ccxt_extractor_mock.call_args)
-        expected_args = (("binance", "spot"), {})
+        imvcdedobu._main(mock_argument_parser)
+        # Check call.
+        self.assertEqual(len(mock_download_historical.call_args), 2)
+        actual_args = mock_download_historical.call_args.args
+        self.assertDictEqual(actual_args[0], {**kwargs, **{"unit": "s"}})
+        # Verify that `CryptoChassisExtractor` instance is passed.
+        self.assertEqual(
+            actual_args[1]._extract_mock_name(), "CryptoChassisExtractor()"
+        )
+        # Verify that `CryptoChassisExtractor` instance creation is properly called.
+        self.assertEqual(chassis_extractor_mock.call_count, 1)
+        actual_args = tuple(chassis_extractor_mock.call_args)
+        expected_args = (("spot",), {})
         self.assertEqual(actual_args, expected_args)

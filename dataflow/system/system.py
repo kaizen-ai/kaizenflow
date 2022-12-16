@@ -450,7 +450,7 @@ class Time_ForecastSystem(_Time_ForecastSystem_Mixin, ForecastSystem, abc.ABC):
 # - Time_ForecastSystem, NonTime_ForecastSystem
 # - MarketData
 # - DataFramePortfolio, DatabasePortfolio
-# - SimulatedBroker, DatabaseBroker
+# - DataFrameBroker, DatabaseBroker
 
 #  Time vs Non-time system
 #
@@ -472,7 +472,7 @@ class Time_ForecastSystem(_Time_ForecastSystem_Mixin, ForecastSystem, abc.ABC):
 # A `Portfolio` always needs to be fed data in a timed fashion (i.e., clock-by-clock)
 #
 # A `DataFramePortfolio`
-# - requires a `SimulatedBroker`
+# - requires a `DataFrameBroker`
 # - can't work with an `OrderProcessor`
 # - only works with time
 #
@@ -489,7 +489,7 @@ class Time_ForecastSystem(_Time_ForecastSystem_Mixin, ForecastSystem, abc.ABC):
 #   PnL with `ForecastEvaluatorFromPrices`
 # - run without Time (forecast DAG is vectorized), save DAG output, and apply
 #   outputs to a Portfolio using a timed loop
-# - run with Time and `DataFramePortfolio` + `SimulatedBroker` (forecast DAG and
+# - run with Time and `DataFramePortfolio` + `DataFrameBroker` (forecast DAG and
 #   Portfolio are run clock-by-clock)
 # - run with Time with `DatabasePortfolio` + `DatabaseBroker` + `OrderProcessor`
 #   (see the trades going through, the fills coming back, all with a certain timing)
@@ -502,7 +502,7 @@ class ForecastSystem_with_DataFramePortfolio(_ForecastSystem_with_Portfolio):
     Same as `_ForecastSystem_with_Portfolio` but with a `DataFramePortfolio`
 
     - The portfolio is used to store the holdings according to the orders
-    - Use a `SimulatedBroker` to fill the orders
+    - Use a `DataFrameBroker` to fill the orders
 
     This System is used to simulate a forecast system in terms of orders and
     holdings in a portfolio.
@@ -531,7 +531,7 @@ class Time_ForecastSystem_with_DataFramePortfolio(
     - a real-time `MarketData`
     - a Forecast DAG
     - a `DataFramePortfolio`
-    - a `SimulatedBroker`
+    - a `DataFrameBroker`
     - a `RealTimeDagRunner`
     """
 
@@ -563,7 +563,7 @@ class Time_ForecastSystem_with_DatabasePortfolio_and_OrderProcessor(
     A system with a `DatabaseBroker` and `OrderProcessor` cannot have a
     `DataFramePortfolio` because a df cannot be updated by an external coroutine such
     as the `OrderProcessor`.
-    In practice we use a `DataFramePortfolio` and a `SimulatedBroker` only to
+    In practice we use a `DataFramePortfolio` and a `DataFrameBroker` only to
     simulate faster by skipping the interaction with the market through the DB
     interfaces of an OMS system.
     """

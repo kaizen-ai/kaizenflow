@@ -17,14 +17,14 @@ import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
 
 
-class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
+class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
     # Regular mock for capturing logs.
     log_patch = umock.patch.object(imvcdeexut, "_LOG")
     # Mock call to function that is calling external provider.
     realtime_download_patch = umock.patch.object(
         imvcdeexut,
-        "_download_realtime_for_one_exchange_with_timeout",
-        spec=imvcdeexut._download_realtime_for_one_exchange_with_timeout,
+        "_download_exchange_data_to_db_with_timeout",
+        spec=imvcdeexut._download_exchange_data_to_db_with_timeout,
     )
     # Mock current time calls.
     timedelta_patch = umock.patch.object(
@@ -323,7 +323,7 @@ class TestDownloadRealtimeForOneExchangePeriodically1(hunitest.TestCase):
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
 )
-class TestDownloadRealtimeForOneExchange1(
+class TestDownloadExchangeDataToDb1(
     hmoto.S3Mock_TestCase, imvcddbut.TestImDbHelper
 ):
     @classmethod
@@ -342,7 +342,7 @@ class TestDownloadRealtimeForOneExchange1(
         ccxt_ohlcv_drop_query = "DROP TABLE IF EXISTS ccxt_ohlcv;"
         hsql.execute_query(self.connection, ccxt_ohlcv_drop_query)
 
-    def call_download_realtime_for_one_exchange(self, use_s3: bool) -> None:
+    def call_download_exchange_data_to_db(self, use_s3: bool) -> None:
         """
         Test directly function call for coverage increase.
         """
@@ -374,7 +374,7 @@ class TestDownloadRealtimeForOneExchange1(
                 }
             )
         # Run.
-        imvcdeexut.download_realtime_for_one_exchange(kwargs, extractor)
+        imvcdeexut.download_exchange_data_to_db(kwargs, extractor)
         # Get saved data in db.
         select_all_query = "SELECT * FROM ccxt_ohlcv;"
         actual_df = hsql.execute_query_to_df(self.connection, select_all_query)
@@ -393,7 +393,9 @@ class TestDownloadRealtimeForOneExchange1(
             8   9  1636539060000    242.5400    242.5400    242.3500    242.3500  4.506200e+02      SOL_USDT     binance 2021-11-10 10:12:00+00:00 2021-11-10 10:12:00+00:00"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
+    @pytest.mark.skip(
+        "Cannot be run from the US due to 451 error API error. Run manually."
+    )
     @pytest.mark.slow
     @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcddbut.hdateti, "get_current_time")
@@ -413,14 +415,14 @@ class TestDownloadRealtimeForOneExchange1(
         mock_get_current_timestamp_as_string.return_value = "20211110-101200"
         # Run.
         use_s3 = False
-        self.call_download_realtime_for_one_exchange(use_s3)
+        self.call_download_exchange_data_to_db(use_s3)
         # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
         self.assertEqual(mock_get_current_timestamp_as_string.call_count, 0)
         self.assertEqual(mock_get_current_timestamp_as_string.call_args, None)
 
-    @pytest.mark.skip(reason="CMTask2089")
+    @pytest.mark.skip(reason="CMTask2089 and CmTask3359")
     @umock.patch.object(imvcdexex.hdateti, "get_current_timestamp_as_string")
     @umock.patch.object(imvcdeexut.hdateti, "get_current_time")
     def test_function_call2(
@@ -439,7 +441,7 @@ class TestDownloadRealtimeForOneExchange1(
         mock_get_current_timestamp_as_string.return_value = "20211110-000001"
         # Run.
         use_s3 = True
-        self.call_download_realtime_for_one_exchange(use_s3)
+        self.call_download_exchange_data_to_db(use_s3)
         # Check mock state.
         self.assertEqual(mock_get_current_time.call_count, 18)
         self.assertEqual(mock_get_current_time.call_args.args, ("UTC",))
@@ -496,7 +498,7 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "aws_profile": self.mock_aws_profile,
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
-            "file_format": "parquet",
+            "data_format": "parquet",
             "unit": "ms",
         }
         exchange = imvcdexex.CcxtExtractor(
@@ -580,8 +582,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
             "binance/currency_pair=SOL_USDT/year=2022/month=1",
         ]
         self.assertListEqual(parquet_path_list, expected_list)
-    
-    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
+
+    @pytest.mark.skip(
+        "Cannot be run from the US due to 451 error API error. Run manually."
+    )
     def test_function_call2(self) -> None:
         """
         Verify error on non incremental run.
@@ -595,8 +599,10 @@ class TestDownloadHistoricalData1(hmoto.S3Mock_TestCase):
         self.assertIn(
             "S3 path 's3://mock_bucket/binance' already exist!", str(fail.value)
         )
-        
-    @pytest.mark.skip("Cannot be run from the US due to 451 error API error. Run manually.")
+
+    @pytest.mark.skip(
+        "Cannot be run from the US due to 451 error API error. Run manually."
+    )
     def test_function_call3(self) -> None:
         """
         Verify error on incremental run.
