@@ -120,10 +120,8 @@ def _resolve_target_dir(
     """
     hdbg.dassert_isinstance(start_timestamp_as_str, str)
     mode = omreconc.resolve_run_mode(mode)
-    date_subdir = omreconc.get_run_date(start_timestamp_as_str)
+    date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
-    if mode == "manual":
-        date_subdir = ".".join([date_subdir, mode])
     target_dir = os.path.join(dst_dir, dag_builder_name, date_subdir)
     _LOG.info(hprint.to_str("target_dir"))
     return target_dir
@@ -234,9 +232,7 @@ def reconcile_dump_market_data(
         start_timestamp_as_str, end_timestamp_as_str
     )
     mode = omreconc.resolve_run_mode(mode)
-    date_subdir = omreconc.get_run_date(start_timestamp_as_str)
-    if mode == "manual":
-        date_subdir = ".".join([date_subdir, mode])
+    date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
     target_dir = _resolve_target_dir(
         start_timestamp_as_str, dst_dir, dag_builder_name, mode
     )
@@ -305,9 +301,7 @@ def reconcile_run_sim(
     )
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
     mode = omreconc.resolve_run_mode(mode)
-    date_subdir = omreconc.get_run_date(start_timestamp_as_str)
-    if mode == "manual":
-        date_subdir = ".".join([date_subdir, mode])
+    date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
     local_results_dir = "system_log_dir"
     if os.path.exists(local_results_dir):
         rm_cmd = f"rm -rf {local_results_dir}"
@@ -400,9 +394,7 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
-        date_subdir = omreconc.get_run_date(start_timestamp_as_str)
-        if mode == "manual":
-            date_subdir = ".".join([date_subdir, mode])
+        date_subdir = omreconc.get_date_subdir(start_timestamp_as_str, mode)
         prod_data_source_dir = os.path.join(
             "/shared_data",
             "ecs",
@@ -560,7 +552,6 @@ def reconcile_dump_tca_data(
     dag_builder_name,
     start_timestamp_as_str=None,
     dst_dir=None,
-    mode=None,
     incremental=False,
     prevent_overwriting=True,
 ):  # type: ignore

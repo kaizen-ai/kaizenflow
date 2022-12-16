@@ -63,7 +63,7 @@ def build_reconciliation_configs(
     start_timestamp_as_str, end_timestamp_as_str = resolve_timestamps(
         start_timestamp_as_str, end_timestamp_as_str
     )
-    date_subdir = get_run_date(start_timestamp_as_str)
+    run_date = get_run_date(start_timestamp_as_str)
     _LOG.info("Using run_date=%s", run_date)
     #
     asset_key = "AM_ASSET_CLASS"
@@ -83,8 +83,7 @@ def build_reconciliation_configs(
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        if mode == "manual":
-            date_subdir = ".".join([date_subdir, mode])
+        date_subdir = get_date_subdir(start_timestamp_as_str, mode)
         # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
         prod_dir = os.path.join(
             root_dir,
@@ -155,7 +154,7 @@ def build_reconciliation_configs(
     # Build the config.
     config_dict = {
         "meta": {
-            "date_str": date_subdir,
+            "date_str": run_date,
             "asset_class": asset_class,
             "run_tca": run_tca,
             "bar_duration": bar_duration,
@@ -281,6 +280,25 @@ def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
 
 
 # /////////////////////////////////////////////////////////////////////////////
+
+
+def get_date_subdir(start_timestamp_as_str: str, mode: str):
+    """
+    Get date subdir depend on run mode.
+
+    - uses run date as a dir name for the scheduled mode, e.g., "20220828"
+    - adds run mode to a dir name for the manual mode, e.g., "20220828.manual"
+
+    See `lib_tasks_reconcile.reconcile_run_all()` for params description.
+    """
+    hdbg.dassert_isinstance(start_timestamp_as_str, str)
+    hdbg.dassert_isinstance(mode, str)
+    date_subdir = get_run_date(start_timestamp_as_str)
+    mode = resolve_run_mode(mode)
+    if mode == "manual":
+        date_subdir = ".".join([date_subdir, mode])
+    _LOG.info(hprint.to_str("date_subdir"))
+    return date_subdir
 
 
 # TODO(Grisha): I would pass also a `root_dir` and check if
