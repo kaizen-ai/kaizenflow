@@ -19,6 +19,10 @@ export CK_AWS_S3_BUCKET="cryptokaizen-data"
 # Print the AM env vars.
 printenv | egrep "AM_|AWS_" | sort
 
+# Set up custom path to the alembic.ini file
+#  https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
+export ALEMBIC_CONFIG="alembic/alembic.ini"
+
 # TODO(gp): Factor out the common code in `amp/dev_scripts/configure_env_amp.sh`
 # and execute it from here. For now keep the code in sync manually.
 alias i="invoke"
