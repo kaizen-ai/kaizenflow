@@ -297,19 +297,19 @@ class Test_fill_orders1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestSimulatedBroker1
+# TestDataFrameBroker1
 # #############################################################################
 
 
-class TestSimulatedBroker1(hunitest.TestCase):
+class TestDataFrameBroker1(hunitest.TestCase):
     async def get_broker_coroutine(
         self, event_loop: asyncio.AbstractEventLoop
     ) -> None:
         """
-        Submit orders to a SimulatedBroker.
+        Submit orders to a DataFrameBroker.
         """
-        # Build a SimulatedBroker.
-        broker = obroexam.get_SimulatedBroker_example1(event_loop)
+        # Build a DataFrameBroker.
+        broker = obroexam.get_DataFrameBroker_example1(event_loop)
         # Submit an order.
         order = oordexam.get_order_example2()
         orders = [order]
@@ -329,7 +329,7 @@ class TestSimulatedBroker1(hunitest.TestCase):
 
 
 # #############################################################################
-# TestSimulatedBroker2
+# TestDataFrameBroker2
 # #############################################################################
 
 
@@ -354,7 +354,7 @@ async def _get_broker_coroutine(
     return fills
 
 
-class TestSimulatedBroker2(hunitest.TestCase):
+class TestDataFrameBroker2(hunitest.TestCase):
     def helper(self, order: omorder.Order, expected_fills: str) -> None:
         with hasynci.solipsism_context() as event_loop:
             # Build a coroutine with the Broker.
@@ -371,7 +371,7 @@ class TestSimulatedBroker2(hunitest.TestCase):
                 end_datetime,
                 asset_ids,
             )
-            broker = obroexam.get_SimulatedBroker_example1(
+            broker = obroexam.get_DataFrameBroker_example1(
                 event_loop, market_data=market_data
             )
             broker_coroutine = _get_broker_coroutine(broker, order)

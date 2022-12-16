@@ -90,7 +90,7 @@ market_data_config:
 research_pnl:
   price_col: vwap
   volatility_col: vwap.ret_0.vol
-  prediction_col: vwap.ret_0.vol_adj
+  prediction_col: feature1
 market_object: ImClientMarketData at 0x=(_asset_id_col=asset_id <str>, _asset_ids=[3303714233, 1467591036] <list>, _start_time_col_name=start_ts <str>, _end_time_col_name=end_ts <str>, _columns=None <NoneType>, _sleep_in_secs=1.0 <float>, _timezone=America/New_York <str>, _column_remap=None <NoneType>, _filter_data_mode=assert <str>, _max_iterations=120 <int>, _im_client=<im_v2.common.data.client.data_frame_im_clients.DataFrameImClient object> <im_v2.common.data.client.data_frame_im_clients.DataFrameImClient>)
 object.builder_function:
   market_object: dataflow_amp.system.mock1.mock1_forecast_system._get_market_data

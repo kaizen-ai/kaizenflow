@@ -296,7 +296,14 @@ def _get_last_timestamp(
     client: icdc.ImClient, asset_ids: Optional[List[int]]
 ) -> pd.Timestamp:
     """
-    Get the latest timestamp + 1 minute for the provided asset ids.
+    Get the min latest timestamp + 1 minute for the provided asset ids.
+
+    We pick the minimum across max timestamps to guarantee that there is data
+    for all assets. That is useful when we compute `last_end_time` where we check
+    data for the interval `[wall_clock_time - epsilon, wall_clock_time]`. E.g.,
+    max timestamp for asset1 is "2022-07-11" and for asset2 it is "2022-07-10".
+    If we pick the maximum across assets (i.e. "2022-07-11") we won't be able
+    to get data for asset2 in the interval `["2022-07-11" - 1 hour, "2022-07-11"]`.
     """
     # To receive the latest timestamp from `ImClient` one should pass a full
     # symbol, because `ImClient` operates with full symbols.
@@ -305,7 +312,7 @@ def _get_last_timestamp(
     for full_symbol in full_symbols:
         last_timestamp = client.get_end_ts_for_symbol(full_symbol)
         last_timestamps.append(last_timestamp)
-    last_timestamp = max(last_timestamps) + pd.Timedelta(minutes=1)
+    last_timestamp = min(last_timestamps) + pd.Timedelta(minutes=1)
     return last_timestamp
 
 

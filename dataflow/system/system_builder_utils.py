@@ -157,8 +157,12 @@ def apply_history_lookback(
     if days is None:
         dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
         dag_config = system.config.get_and_mark_as_used("dag_config")
+        mark_key_as_used = True
         days = (
-            dag_builder._get_required_lookback_in_effective_days(dag_config) * 2
+            dag_builder.get_required_lookback_in_effective_days(
+                dag_config, mark_key_as_used
+            )
+            * 2
         )
     market_data_history_lookback = pd.Timedelta(days=days)
     system.config[
@@ -487,16 +491,19 @@ def get_DataFramePortfolio_from_System(
         for simulation
     """
     market_data = system.market_data
+    column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
     asset_ids = system.config.get_and_mark_as_used(
         ("market_data_config", "asset_ids")
     )
     if is_prod:
         # Initialize `Portfolio` with parameters that are set in the example.
         portfolio = oms.get_DataFramePortfolio_example3(
-            market_data=market_data, asset_ids=asset_ids
+            market_data=market_data, column_remap=column_remap, asset_ids=asset_ids
         )
     else:
-        # Set event loop object for `SimulatedBroker` used in simulation.
+        # Set event loop object for `DataFrameBroker` used in simulation.
         event_loop = system.config.get_and_mark_as_used("event_loop_object")
         # Initialize `Portfolio` with parameters from the system config.
         mark_to_market_col = system.config.get_and_mark_as_used(
@@ -511,12 +518,8 @@ def get_DataFramePortfolio_from_System(
             mark_to_market_col=mark_to_market_col,
             pricing_method=pricing_method,
             asset_ids=asset_ids,
+            column_remap=column_remap,
         )
-    # TODO(gp): We should pass the column_remap to the Portfolio builder,
-    # instead of injecting it after the fact.
-    portfolio.broker._column_remap = system.config.get_and_mark_as_used(
-        ("portfolio_config", "column_remap")
-    )
     return portfolio
 
 
@@ -664,7 +667,10 @@ def _get_trading_period_str_and_bar_duration_in_secs(
     dag_config = system.config["dag_config"]
     dag_builder = system.config["dag_builder_object"]
     #
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
     hdbg.dassert_in(trading_period_str, ["1T", "2T", "5T", "15T"])
     #
     bar_duration_in_secs = pd.Timedelta(trading_period_str).seconds
@@ -684,7 +690,9 @@ def apply_DagRunner_config_for_crypto(
         trading_period_str,
         bar_duration_in_secs,
     ) = _get_trading_period_str_and_bar_duration_in_secs(system)
-    wake_up_timestamp = None
+    wake_up_timestamp = system.config.get_and_mark_as_used(
+        ("dag_runner_config", "wake_up_timestamp"), default_value=None
+    )
     rt_timeout_in_secs_or_time = None
     #
     system = _apply_DagRunner_config(

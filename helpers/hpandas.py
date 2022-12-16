@@ -52,6 +52,15 @@ def to_series(df: pd.DataFrame) -> pd.Series:
     return srs
 
 
+def as_series(data: Union[pd.DataFrame, pd.Series]) -> pd.Series:
+    """
+    Convert a single-column dataframe to a series or no-op if already a series.
+    """
+    if isinstance(data, pd.Series):
+        return data
+    return to_series(data)
+
+
 def dassert_is_days(
     timedelta: pd.Timedelta, *, min_num_days: Optional[int] = None
 ) -> None:
@@ -409,6 +418,36 @@ def find_gaps_in_dataframes(
     return first_missing_data, second_missing_data
 
 
+def find_gaps_in_time_series(
+    time_series: pd.Series,
+    start_timestamp: pd.Timestamp,
+    end_timestamp: pd.Timestamp,
+    freq: str,
+) -> pd.Series:
+    """
+    Find missing points on a time interval specified by [start_timestamp,
+    end_timestamp], where point distribution is determined by <step>.
+
+    If the passed time series is of a unix epoch format. It is
+    automatically tranformed to pd.Timestamp.
+
+    :param time_series: time series to find gaps in
+    :param start_timestamp: start of the time interval to check
+    :param end_timestamp: end of the time interval to check
+    :param freq: distance between two data points on the interval.
+      Aliases correspond to pandas.date_range's freq parameter,
+      i.e. "S" -> second, "T" -> minute.
+    :return: pd.Series representing missing points in the source time series.
+    """
+    _time_series = time_series
+    if str(time_series.dtype) in ["int32", "int64"]:
+        _time_series = _time_series.map(hdateti.convert_unix_epoch_to_timestamp)
+    correct_time_series = pd.date_range(
+        start=start_timestamp, end=end_timestamp, freq=freq
+    )
+    return correct_time_series.difference(_time_series)
+
+
 def check_and_filter_matching_columns(
     df: pd.DataFrame, required_columns: List[str], filter_data_mode: str
 ) -> pd.DataFrame:
@@ -548,9 +587,9 @@ def drop_duplicates(
 
 def dropna(
     df: pd.DataFrame,
+    *args: Any,
     drop_infs: bool = False,
     report_stats: bool = False,
-    *args: Any,
     **kwargs: Any,
 ) -> pd.DataFrame:
     """
@@ -844,6 +883,43 @@ def merge_dfs(
     #
     res_df = df1.merge(df2, **pd_merge_kwargs)
     return res_df
+
+
+# TODO(gp): Is this (ironically) a duplicate of drop_duplicates?
+def drop_duplicated(
+    df: pd.DataFrame, *, subset: Optional[List[str]] = None
+) -> pd.DataFrame:
+    """
+    Implement `df.duplicated` but considering also the index and ignoring nans.
+    """
+    _LOG.debug("before df=\n%s", df_to_str(df))
+    # Move the index to the df.
+    old_index_name = df.index.name
+    new_index_name = "_index.tmp"
+    hdbg.dassert_not_in(new_index_name, df.columns)
+    df.index.name = new_index_name
+    df.reset_index(drop=False, inplace=True)
+    # Remove duplicates by ignoring nans.
+    if subset is not None:
+        hdbg.dassert_isinstance(subset, list)
+        subset = [new_index_name] + subset
+    duplicated = df.fillna(0.0).duplicated(subset=subset, keep="first")
+    # Report the result of the operation.
+    if duplicated.sum() > 0:
+        num_rows_before = df.shape[0]
+        _LOG.debug("Removing duplicates df=\n%s", df_to_str(df.loc[duplicated]))
+        df = df.loc[~duplicated]
+        num_rows_after = df.shape[0]
+        _LOG.warning(
+            "Removed repeated rows num_rows=%s",
+            hprint.perc(num_rows_before - num_rows_after, num_rows_before),
+        )
+    _LOG.debug("after removing duplicates df=\n%s", df_to_str(df))
+    # Set the index back.
+    df.set_index(new_index_name, inplace=True)
+    df.index.name = old_index_name
+    _LOG.debug("after df=\n%s", df_to_str(df))
+    return df
 
 
 # #############################################################################
@@ -1494,7 +1570,7 @@ def compare_dfs(
         - do not assert if `None`
         - works when `diff_mode` is "pct_change"
     :param close_to_zero_threshold: round numbers below the threshold to 0
-    :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0 
+    :param zero_vs_zero_is_zero: replace the diff with 0 when comparing 0 to 0
         if True, otherwise keep the actual result
     :param remove_inf: replace +-inf with `np.nan`
     :param log_level: logging level
@@ -1534,7 +1610,7 @@ def compare_dfs(
             # When comparing 0 to 0 set the diff (which is NaN by default) to 0.
             df1_mask = df1 == 0
             df2_mask = df2 == 0
-            zero_vs_zero_mask =  df1_mask & df2_mask
+            zero_vs_zero_mask = df1_mask & df2_mask
             df_diff[zero_vs_zero_mask] = 0
     else:
         raise ValueError(f"diff_mode={diff_mode}")

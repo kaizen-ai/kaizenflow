@@ -21,7 +21,6 @@
 import logging
 import os
 
-import matplotlib.pyplot as plt
 import pandas as pd
 
 import core.config as cconfig
@@ -47,10 +46,19 @@ hprint.config_notebook()
 # # Build the reconciliation config
 
 # %%
-date_str = None
-prod_subdir = None
-config_list = oms.build_reconciliation_configs(date_str, prod_subdir)
-config = config_list[0]
+# Get config from env when running the notebook via the `run_notebook.py` script, e.g.,
+# in the system reconciliation flow.
+config = cconfig.get_config_from_env()
+if not config:
+    # Specify the config directly when running the notebook manually.
+    dag_builder_name = "C1b"
+    start_timestamp_as_str = None
+    end_timestamp_as_str = None
+    mode = None
+    config_list = oms.build_reconciliation_configs(
+        dag_builder_name, start_timestamp_as_str, end_timestamp_as_str, mode
+    )
+    config = config_list[0]
 print(config)
 
 # %% [markdown]
@@ -75,7 +83,9 @@ dag_path_dict
 # %%
 # TODO(gp): Load the TCA data for crypto.
 if config["meta"]["run_tca"]:
-    tca_csv = os.path.join(root_dir, date_str, "tca/sau1_tca.csv")
+    tca_csv = os.path.join(
+        root_dir, config["meta"]["date_str"], "tca/sau1_tca.csv"
+    )
     hdbg.dassert_file_exists(tca_csv)
 
 # %% [markdown]
@@ -137,13 +147,11 @@ dag_df_sim = dag_df_dict["sim"][dag_node_names[-1]][dag_node_timestamps[-1][0]]
 hpandas.df_to_str(dag_df_prod, num_rows=5, log_level=logging.INFO)
 
 # %%
-compare_dfs_kwargs ={
+compare_dfs_kwargs = {
     "diff_mode": "pct_change",
     "assert_diff_threshold": None,
 }
-dag_diff_df = oms.compute_dag_outputs_diff(
-    dag_df_dict, compare_dfs_kwargs
-)
+dag_diff_df = oms.compute_dag_outputs_diff(dag_df_dict, compare_dfs_kwargs)
 
 # %%
 max_diff = dag_diff_df.abs().max().max()
@@ -170,10 +178,20 @@ if False:
     )
 
 # %% [markdown]
+# ## Check DAG io self-consistency 
+
+# %%
+# Check that all the DAG output dataframes are equal at intersecting time intervals.
+node_dfs = dag_df_dict["prod"][dag_node_names[-1]]
+oms.check_dag_output_self_consistency(node_dfs)
+
+# %% [markdown]
 # ## Compute DAG delay
 
 # %%
-delay_in_secs = oms.compute_dag_delay_in_seconds(dag_node_timestamps, display_plot=False)
+delay_in_secs = oms.compute_dag_delay_in_seconds(
+    dag_node_timestamps, display_plot=False
+)
 
 # %% [markdown]
 # # Portfolio
@@ -341,7 +359,7 @@ prod_target_position_df = oms.load_target_positions(
     start_timestamp,
     end_timestamp,
     config["meta"]["bar_duration"],
-    normalize_bar_times=True
+    normalize_bar_times=True,
 )
 hpandas.df_to_str(prod_target_position_df, num_rows=5, log_level=logging.INFO)
 if False:
@@ -351,7 +369,7 @@ if False:
         start_timestamp,
         end_timestamp,
         config["meta"]["bar_duration"],
-        normalize_bar_times=True
+        normalize_bar_times=True,
     )
 
 # %% [markdown]
@@ -380,7 +398,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -401,7 +419,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -422,7 +440,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
 )
 # Remove the sign and NaNs.
 diff_df = diff_df.abs()
@@ -443,7 +461,7 @@ res_df = research_portfolio_df[column]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
@@ -464,7 +482,7 @@ res_df = research_portfolio_df["holdings_shares"]
 diff_df = hpandas.compare_dfs(
     prod_df,
     res_df,
-    diff_mode= "pct_change",
+    diff_mode="pct_change",
     assert_diff_threshold=None,
 )
 # Remove the sign and NaNs.
@@ -475,7 +493,7 @@ if False:
     hpandas.heatmap_df(diff_df.round(2))
 
 # %% [markdown]
-# # Orders 
+# # Orders
 
 # %% [markdown]
 # ## Load orders (prod & sim)
@@ -523,7 +541,7 @@ stacked[stacked["is_benchmark_profitable"] < 0]["slippage_in_bps"].hist(bins=31)
 # %%
 notional_costs = oms.compute_notional_costs(
     portfolio_dfs["prod"],
-    prod_target_position_df, 
+    prod_target_position_df,
 )
 hpandas.df_to_str(notional_costs, num_rows=5, log_level=logging.INFO)
 
@@ -532,7 +550,7 @@ cost_df = oms.apply_costs_to_baseline(
     portfolio_stats_dfs["research"],
     portfolio_stats_dfs["prod"],
     portfolio_dfs["prod"],
-    prod_target_position_df, 
+    prod_target_position_df,
 )
 hpandas.df_to_str(cost_df, num_rows=5, log_level=logging.INFO)
 

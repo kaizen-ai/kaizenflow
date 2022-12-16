@@ -85,7 +85,7 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    report_memory_usage = False
+    report_memory_usage = True
     # report_memory_usage = True
     hdbg.init_logger(
         verbosity=args.log_level, report_memory_usage=report_memory_usage

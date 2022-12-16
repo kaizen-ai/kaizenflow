@@ -379,7 +379,8 @@ class Playback:
         """
         Add indented line to the code.
         """
-        self._code.append(hprint.indent(string, num_tabs * 4))
+        num_spaces = num_tabs * 4
+        self._code.append(hprint.indent(string, num_spaces=num_spaces))
 
 
 # ################################################################################

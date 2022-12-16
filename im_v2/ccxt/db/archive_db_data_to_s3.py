@@ -90,17 +90,6 @@ def _assert_archival_mode(
         hs3.dassert_path_not_exists(s3_path, aws_profile=_AWS_PROFILE)
 
 
-def _get_db_connection(db_stage: str) -> hsql.DbConnection:
-    """
-    Get connection to the database.
-
-    Assumes the use of env file.
-    """
-    env_file = imvimlita.get_db_env_path(db_stage)
-    connection_params = hsql.get_connection_info_from_env_file(env_file)
-    return hsql.get_connection(*connection_params)
-
-
 # TODO(Juraj): Create a mechanism to check data continuity.
 # def _fetch_latest_row_from_s3(
 #     s3_path: str, timestamp: pd.Timestamp
@@ -157,7 +146,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     s3_path = os.path.join(s3_path, db_stage, db_table, table_timestamp_column)
     min_age_timestamp = pd.Timestamp(args.timestamp, tz="UTC")
     # Get database connection.
-    db_conn = _get_db_connection(db_stage)
+    db_conn = imvcddbut.DbConnectionManager.get_connection(db_stage)
     # Perform argument assertions.
     _assert_db_args(db_conn, db_table, table_timestamp_column)
     _assert_archival_mode(
@@ -173,7 +162,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
         )
     else:
         _LOG.info(f"Fetched {db_data.shape[0]} rows from '{db_table}'.")
-    
+
     # Fetch latest S3 row upon incremental archival.
     if incremental:
         # TODO(Juraj): CmTask#3087 think about a HW resource friendly solution to this.
@@ -206,13 +195,13 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
                 min_age_timestamp, db_conn, db_table, table_timestamp_column
             )
         _LOG.info("Data archival finished successfully.")
-        
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
     _LOG.info(args)
     _archive_db_data_to_s3(args)
-        
+
 def _parse() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description=__doc__,

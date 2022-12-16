@@ -47,6 +47,11 @@ def _run(args: argparse.Namespace) -> None:
     data = hparque.from_parquet(
         args.src_dir, filters=filters, aws_profile=aws_profile
     )
+    # Ensure there are no duplicates, in this case
+    #  using duplicates would compute the wrong resampled values.
+    data = data.drop_duplicates(
+        subset=["timestamp", "exchange_id", "currency_pair"]
+    )
     data_resampled = []
     for currency_pair in data["currency_pair"].unique():
         data_single = data[data["currency_pair"] == currency_pair]
@@ -58,7 +63,9 @@ def _run(args: argparse.Namespace) -> None:
                 args.end_timestamp,
             )
             continue
-        data_resampled_single = imvcdttrut.resample_bid_ask_data(data_single)
+        data_resampled_single = imvcdttrut.resample_multilevel_bid_ask_data(
+            data_single
+        )
         data_resampled_single["currency_pair"] = currency_pair
         data_resampled.append(data_resampled_single)
     # Transform the dataset to make save_parquet applicable.
@@ -66,6 +73,7 @@ def _run(args: argparse.Namespace) -> None:
     data_resampled["timestamp"] = data_resampled["timestamp"].apply(
         lambda x: hdateti.convert_timestamp_to_unix_epoch(x, epoch_unit)
     )
+    data_resampled = imvcdttrut.add_knowledge_timestamp_col(data_resampled, "UTC")
     _LOG.info(
         hpandas.df_to_str(
             data_resampled, print_shape_info=True, tag="Resampled data"

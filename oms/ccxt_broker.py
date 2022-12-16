@@ -106,7 +106,7 @@ class CcxtBroker(ombroker.Broker):
             symbol: asset
             for asset, symbol in self._asset_id_to_symbol_mapping.items()
         }
-        # Set minimal order limits.
+        # Set minimal order limits and maximum leverage.
         self.market_info = self._get_market_info()
         # Used to determine timestamp since when to fetch orders.
         self.last_order_execution_ts: Optional[pd.Timestamp] = None
@@ -469,6 +469,8 @@ class CcxtBroker(ombroker.Broker):
             curr_num_shares,
             diff_num_shares,
         )
+        _LOG.debug("After CCXT to OMS transform:")
+        _LOG.debug("oms_order=%s", str(oms_order))
         return oms_order
 
     def _get_market_info(self) -> Dict[int, Any]:
@@ -478,6 +480,7 @@ class CcxtBroker(ombroker.Broker):
         Currently the following data is saved:
         - minimal order limits (notional and quantity)
         - asset quantity precision (for rounding of orders)
+        - maximum allowed leverage for tier 0
 
         The numbers are determined by loading the market metadata from CCXT.
 
@@ -568,8 +571,13 @@ class CcxtBroker(ombroker.Broker):
         'type': 'future'}
         """
         minimal_order_limits: Dict[int, Any] = {}
+        symbols = list(self._symbol_to_asset_id_mapping.keys())
         # Load market information from CCXT.
         exchange_markets = self._exchange.load_markets()
+        # Download leverage information.
+        # See more more about the output format:
+        # https://docs.ccxt.com/en/latest/manual.html#leverage-tiers-structure.
+        leverage_info = self._exchange.fetchLeverageTiers(symbols)
         for asset_id, symbol in self._asset_id_to_symbol_mapping.items():
             minimal_order_limits[asset_id] = {}
             currency_market = exchange_markets[symbol]
@@ -585,6 +593,19 @@ class CcxtBroker(ombroker.Broker):
             # Set the rounding precision for amount of the asset.
             amount_precision = currency_market["precision"]["amount"]
             minimal_order_limits[asset_id]["amount_precision"] = amount_precision
+            #
+            # For now it is assumed that all positions belong to the lowest tier.
+            tier_0_leverage_info = leverage_info[symbol][0]
+            max_leverage_float = tier_0_leverage_info["maxLeverage"]
+            try:
+                # Convert max leverage to int, raw value is a float.
+                max_leverage = int(max_leverage_float)
+            except ValueError as e:
+                _LOG.warning(
+                    "Max leverage=%s should be of int type", max_leverage_float
+                )
+                raise e
+            minimal_order_limits[asset_id]["max_leverage"] = max_leverage
         return minimal_order_limits
 
     def _assert_order_methods_presence(self) -> None:
@@ -618,15 +639,27 @@ class CcxtBroker(ombroker.Broker):
         submitted_order: Optional[omorder.Order] = None
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
-        _LOG.debug("Submitting order=%s", str(order))
+        position_size = abs(order.diff_num_shares)
+        # Get max leverage for a given order.
+        max_leverage = self.market_info[order.asset_id]["max_leverage"]
         # TODO(Juraj): separate the retry logic from the code that does the work.
         for _ in range(self.max_order_submit_retries):
             try:
+                # Make sure that leverage is within the acceptable range
+                # before submitting the order.
+                _LOG.debug(
+                    "Max leverage for symbol=%s and position size=%s is set to %s",
+                    symbol,
+                    position_size,
+                    max_leverage,
+                )
+                self._exchange.setLeverage(max_leverage, symbol)
+                _LOG.debug("Submitting order=%s", str(order))
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
                     type="market",
                     side=side,
-                    amount=abs(order.diff_num_shares),
+                    amount=position_size,
                     # id = order.order_id,
                     # id=order.order_id,
                     # TODO(Juraj): maybe it is possible to somehow abstract this to a general behavior
@@ -772,9 +805,9 @@ class CcxtBroker(ombroker.Broker):
 
 
 def get_CcxtBroker_prod_instance1(
+    strategy_id: str,
     market_data: mdata.MarketData,
     universe_version: str,
-    strategy_id: str,
     secret_identifier: omssec.SecretIdentifier,
 ) -> CcxtBroker:
     """
@@ -800,11 +833,11 @@ def get_CcxtBroker_prod_instance1(
 
 
 # #############################################################################
-# SimulatedCcxtBroker
+# DataFrameCcxtBroker
 # #############################################################################
 
 
-class SimulatedCcxtBroker(ombroker.SimulatedBroker):
+class DataFrameCcxtBroker(ombroker.DataFrameBroker):
     def __init__(
         self,
         *args: Any,
@@ -817,15 +850,18 @@ class SimulatedCcxtBroker(ombroker.SimulatedBroker):
         self.market_info = market_info
 
 
-def get_SimulatedCcxtBroker_instance1(
+def get_DataFrameCcxtBroker_instance1(
+    strategy_id: str,
     market_data: pd.DataFrame,
-) -> ombroker.SimulatedBroker:
+    stage: str,
+    *,
+    column_remap: Optional[Dict[str, str]] = None,
+) -> ombroker.DataFrameBroker:
     market_info = load_market_data_info()
-    stage = "preprod"
-    strategy_id = "C1b"
-    broker = SimulatedCcxtBroker(
+    broker = DataFrameCcxtBroker(
         strategy_id,
         market_data,
+        column_remap=column_remap,
         stage=stage,
         market_info=market_info,
     )

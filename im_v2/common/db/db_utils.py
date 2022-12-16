@@ -23,6 +23,7 @@ import helpers.hsql_test as hsqltest
 import im.ib.sql_writer as imibsqwri
 import im.kibot.sql_writer as imkisqwri
 import im_v2.ccxt.db.utils as imvccdbut
+import im_v2.common.data.transform.transform_utils as imvcdttrut
 import im_v2.im_lib_tasks as imvimlita
 
 _LOG = logging.getLogger(__name__)
@@ -39,6 +40,58 @@ OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
     "close",
     "volume",
 ]
+
+
+# #############################################################################
+# DbConnectionManager
+# #############################################################################
+
+
+class DbConnectionManager:
+    """
+    Create and store DB connection.
+    
+    Provide a singleton-like functionality in order to avoid overhead of many
+    shortlived DB connection.
+    For simplicity the class only supports setting up a DB connection to
+    a particular stage.
+    """
+
+    connection = None
+    db_stage = None
+
+    @classmethod
+    def get_connection(cls, db_stage: str):
+        if cls.db_stage is not None and cls.db_stage != db_stage:
+            raise ValueError(
+                f"The connection has already been established to a different stage"
+            )
+        if cls.connection is None:
+            env_file = imvimlita.get_db_env_path(db_stage)
+            try:
+                # Connect with the parameters from the env file.
+                #  Usually for test and dev stage.
+                connection_params = hsql.get_connection_info_from_env_file(
+                    env_file
+                )
+                cls.connection = hsql.get_connection(*connection_params)
+            except psycopg2.OperationalError:
+                # TODO(Juraj): check if needed and either re-introduce
+                #  or deprecate.
+                # Connect with the dynamic parameters (usually during tests).
+                # actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
+                # connection_params = hsql.DbConnectionInfo(
+                #    host=actual_details["host"],
+                #    dbname=actual_details["dbname"],
+                #    port=int(actual_details["port"]),
+                #    user=actual_details["user"],
+                #    password=actual_details["password"],
+                # )
+                # db_connection = hsql.get_connection(*connection_params)
+                # TODO(Juraj): use this for prod connection injected as env
+                #  vars into containers #CmTask3080.
+                cls.connection = hsql.get_connection_from_env_vars()
+        return cls.connection
 
 
 def add_db_args(
@@ -200,18 +253,15 @@ def fetch_last_minute_bid_ask_rt_db_data(
     db_connection: hsql.DbConnection, src_table: str, time_zone: str
 ) -> pd.Timestamp:
     """
-    Fetch last minute of bid/ask RT data.
+    Fetch last full minute of bid/ask RT data.
+
+    E.g. when the script is called at 9:05:05AM, The functions
+    return data where timestamp is in interval [9:04:00, 9:05).
 
     This is a convenience wrapper function to make the most likely use
     case easier to execute.
     """
-    # One second is substracted to allow better match with CryptoChassis.
-    #  CryptoChassis uses labels aligned with the end of the minute, using
-    #  this trick we will only get 1 data point per currency after resampling
-    #  to 1-min, which should match CryptoChassis well.
-    end_ts = hdateti.get_current_time(time_zone).floor("min") - timedelta(
-        seconds=1
-    )
+    end_ts = hdateti.get_current_time(time_zone).floor("min")
     start_ts = end_ts - timedelta(minutes=1)
     return fetch_bid_ask_rt_db_data(db_connection, src_table, start_ts, end_ts)
 
@@ -223,10 +273,8 @@ def fetch_bid_ask_rt_db_data(
     end_ts: pd.Timestamp,
 ) -> pd.Timestamp:
     """
-    Fetch bid/ask data (only top of the book) for specified interval.
+    Fetch bid/ask data for specified interval.
 
-    TODO(Juraj): Long term we would to follow the preferred conventions
-     using (a, b].
     Data interval is applied as: [start_ts, end_ts).
 
     :param db_connection: a database connection object
@@ -316,7 +364,7 @@ def save_data_to_db(
     if data.empty:
         _LOG.warning("The DataFame is empty, nothing to insert.")
         return
-    data["knowledge_timestamp"] = hdateti.get_current_time(time_zone)
+    data = imvcdttrut.add_knowledge_timestamp_col(data, "UTC")
     if data_type == "ohlcv":
         unique_columns = OHLCV_UNIQUE_COLUMNS
     elif data_type == "bid_ask":

@@ -35,18 +35,20 @@ def get_DataFramePortfolio_example1(
     pricing_method: str = "last",
     timestamp_col: str = "end_datetime",
     asset_ids: Optional[List[int]] = None,
+    column_remap: Optional[Dict[str, str]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
     Contain:
     - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
-    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
+    - a `DataFrameBroker` (i.e., a broker that executes the orders immediately)
     """
-    # Build a SimulatedBroker.
-    broker = obroexam.get_SimulatedBroker_example1(
+    # Build a DataFrameBroker.
+    broker = obroexam.get_DataFrameBroker_example1(
         event_loop,
         market_data=market_data,
         timestamp_col=timestamp_col,
+        column_remap=column_remap,
     )
     # Build a DataFramePortfolio.
     mark_to_market_col = mark_to_market_col
@@ -77,12 +79,12 @@ def get_DataFramePortfolio_example2(
     Contain:
     - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
-    - a `SimulatedBroker` (i.e., a broker that executes the orders immediately)
+    - a `DataFrameBroker` (i.e., a broker that executes the orders immediately)
 
     exposing all the parameters for creating these objects.
     """
-    # Build SimulatedBroker.
-    broker = ombroker.SimulatedBroker(
+    # Build DataFrameBroker.
+    broker = ombroker.DataFrameBroker(
         strategy_id,
         market_data,
         account=account,
@@ -103,16 +105,24 @@ def get_DataFramePortfolio_example2(
 def get_DataFramePortfolio_example3(
     *,
     market_data: Optional[mdata.MarketData] = None,
+    column_remap: Dict[str, str] = None,
     asset_ids: Optional[List[int]] = None,
 ) -> omportfo.DataFramePortfolio:
     """
     Contain:
     - a `DataFramePortfolio` (i.e., a portfolio backed by a dataframe to keep
       track of the state)
-    - a `SimulatedBroker` for prod (i.e., a broker that executes the orders immediately)
+    - a `DataFrameBroker` for prod (i.e., a broker that executes the orders immediately)
     """
-    # Build a SimulatedBroker.
-    broker = occxbrok.get_SimulatedCcxtBroker_instance1(market_data)
+    # Build a DataFrameBroker.
+    strategy_id = "Cx"
+    stage = "preprod"
+    broker = occxbrok.get_DataFrameCcxtBroker_instance1(
+        strategy_id,
+        market_data,
+        stage,
+        column_remap=column_remap,
+    )
     # TODO(Grisha): @Dan Pass parameters via config.
     # Build a DataFramePortfolio.
     initial_cash = 700

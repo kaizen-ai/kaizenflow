@@ -7,6 +7,7 @@ import pytest
 
 import core.artificial_signal_generators as carsigen
 import core.signal_processing.swt as csiprswt
+import core.statistics.random_samples as cstrasam
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
@@ -122,6 +123,121 @@ class Test_get_swt(hunitest.TestCase):
         return series
 
 
+# #############################################################################
+# Low/high pass filters
+# #############################################################################
+
+
+class Test_compute_swt_low_pass(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test low-pass filtering.
+        """
+        steps = 10
+        seed = 0
+        increments = cstrasam.get_iid_standard_gaussian_samples(steps, seed)
+        random_walk = cstrasam.convert_increments_to_random_walk(increments)
+        actual = csiprswt.compute_swt_low_pass(random_walk, level=2)
+        actual = hpandas.df_to_str(actual, num_rows=None)
+        expected = r"""
+    n_samples=10_seed=0
+0                   NaN
+1                   NaN
+2                   NaN
+3                   NaN
+4                   NaN
+5                   NaN
+6              0.535287
+7              0.843994
+8              1.363245
+9              1.840481
+10             1.910962
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class Test_compute_swt_high_pass(hunitest.TestCase):
+    def test1(self) -> None:
+        """
+        Test high-pass filtering.
+        """
+        steps = 10
+        seed = 0
+        increments = cstrasam.get_iid_standard_gaussian_samples(steps, seed)
+        random_walk = cstrasam.convert_increments_to_random_walk(increments)
+        actual = csiprswt.compute_swt_high_pass(random_walk, level=2)
+        actual = hpandas.df_to_str(actual, num_rows=None)
+        expected = r"""
+    n_samples=10_seed=0
+0                   NaN
+1                   NaN
+2                   NaN
+3                   NaN
+4                   NaN
+5                   NaN
+6              0.029587
+7              1.024880
+8              1.452710
+9              0.271739
+10            -1.064163
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+# #############################################################################
+# Wavelet properties
+# #############################################################################
+
+
+class Test_get_knowledge_time_warmup_lengths(hunitest.TestCase):
+    def helper(self, wavelets, depth, expected) -> None:
+        lengths = csiprswt.get_knowledge_time_warmup_lengths(wavelets, depth)
+        actual = hpandas.df_to_str(
+            lengths,
+            num_rows=None,
+        )
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test1(self) -> None:
+        wavelets = [
+            "bior1.3",
+            "coif1",
+            "db2",
+            "dmey",
+            "haar",
+            "rbio1.3",
+            "sym3",
+        ]
+        depth = 10
+        expected = r"""
+wavelet  bior1.3  coif1   db2   dmey  haar  rbio1.3  sym3
+level
+1              6      6     4     62     2        6     6
+2             18     18    12    186     6       18    18
+3             42     42    28    434    14       42    42
+4             90     90    60    930    30       90    90
+5            186    186   124   1922    62      186   186
+6            378    378   252   3906   126      378   378
+7            762    762   508   7874   254      762   762
+8           1530   1530  1020  15810   510     1530  1530
+9           3066   3066  2044  31682  1022     3066  3066
+10          6138   6138  4092  63426  2046     6138  6138
+"""
+        self.helper(wavelets, depth, expected)
+
+
+class Test_summarize_discrete_wavelets(hunitest.TestCase):
+    def test1(self) -> None:
+        df = csiprswt.summarize_discrete_wavelets()
+        actual = hpandas.df_to_str(df, num_rows=None)
+        self.check_string(actual)
+
+
+# #############################################################################
+# Wavelet variance/covariance
+# #############################################################################
+
+
 def get_daily_gaussian(seed: int) -> pd.Series:
     process = carsigen.ArmaProcess([], [])
     realization = process.generate_sample(
@@ -179,45 +295,39 @@ class Test_compute_swt_var_summary(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class Test_get_knowledge_time_warmup_lengths(hunitest.TestCase):
-    def helper(self, wavelets, depth, expected) -> None:
-        lengths = csiprswt.get_knowledge_time_warmup_lengths(wavelets, depth)
-        actual = hpandas.df_to_str(
-            lengths,
-            num_rows=None,
-        )
-        self.assert_equal(actual, expected, fuzzy_match=True)
-
-    def test1(self) -> None:
-        wavelets = [
-            "bior1.3",
-            "coif1",
-            "db2",
-            "dmey",
-            "haar",
-            "rbio1.3",
-            "sym3",
-        ]
-        depth = 10
+class Test_compute_fir_zscore(hunitest.TestCase):
+    def test_default_zscoring(self) -> None:
+        """
+        Apply FIR z-scoring to a random walk.
+        """
+        steps = 20
+        seed = 0
+        increments = cstrasam.get_iid_standard_gaussian_samples(steps, seed)
+        random_walk = cstrasam.convert_increments_to_random_walk(increments)
+        actual = csiprswt.compute_fir_zscore(random_walk, dyadic_tau=2)
+        actual = hpandas.df_to_str(actual, num_rows=None)
         expected = r"""
-wavelet  bior1.3  coif1   db2   dmey  haar  rbio1.3  sym3
-level
-1              6      6     4     62     2        6     6
-2             18     18    12    186     6       18    18
-3             42     42    28    434    14       42    42
-4             90     90    60    930    30       90    90
-5            186    186   124   1922    62      186   186
-6            378    378   252   3906   126      378   378
-7            762    762   508   7874   254      762   762
-8           1530   1530  1020  15810   510     1530  1530
-9           3066   3066  2044  31682  1022     3066  3066
-10          6138   6138  4092  63426  2046     6138  6138
+    n_samples=20_seed=0
+0                   NaN
+1                   NaN
+2                   NaN
+3                   NaN
+4                   NaN
+5                   NaN
+6                   NaN
+7                   NaN
+8                   NaN
+9              0.302144
+10            -1.018463
+11            -1.147699
+12            -0.668392
+13            -1.457491
+14            -0.977855
+15            -1.130861
+16            -0.799927
+17            -0.817433
+18            -0.574802
+19             0.016313
+20             1.152972
 """
-        self.helper(wavelets, depth, expected)
-
-
-class Test_summarize_discrete_wavelets(hunitest.TestCase):
-    def test1(self) -> None:
-        df = csiprswt.summarize_discrete_wavelets()
-        actual = hpandas.df_to_str(df, num_rows=None)
-        self.check_string(actual)
+        self.assert_equal(actual, expected, fuzzy_match=True)

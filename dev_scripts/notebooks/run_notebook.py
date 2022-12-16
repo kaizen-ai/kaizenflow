@@ -20,7 +20,6 @@ import os
 from typing import Optional
 
 import core.config as cconfig
-
 import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
@@ -39,6 +38,7 @@ def _run_notebook(
     config: cconfig.Config,
     notebook_file: str,
     publish: bool,
+    allow_notebook_errors: bool,
     #
     incremental: bool,
     num_attempts: int,
@@ -68,17 +68,22 @@ def _run_notebook(
     # Export config function and its `id` to the notebook.
     config_builder = config[("backtest_config", "config_builder")]
     dst_dir = config[("backtest_config", "dst_dir")]
+    # Note the quotation marks, `config_builder` should be surrounded by single
+    # quotes so that the potential strings in `config_builder` params are
+    # parsed correctly. E.g.,
+    # `export __CONFIG_BUILDER__='amp.oms.reconciliation.build_reconciliation_configs("20221128_101500", "20221128_1210", "scheduled")'`.
     cmd = [
-        f'export __CONFIG_BUILDER__="{config_builder}";',
+        f"export __CONFIG_BUILDER__='{config_builder}';",
         f'export __CONFIG_IDX__="{idx}";',
         f'export __CONFIG_DST_DIR__="{dst_dir}"',
-        f"; jupyter nbconvert {notebook_file}",
-        "--execute",
-        "--to notebook",
-        f"--output {dst_file}",
-        "--ExecutePreprocessor.kernel_name=python",
+        f'; jupyter nbconvert {notebook_file}',
+        '--execute',
+        '--to notebook',
+        f'--output {dst_file}',
+        '--ExecutePreprocessor.kernel_name=python',
         # From https://github.com/ContinuumIO/anaconda-issues/issues/877
-        "--ExecutePreprocessor.timeout=-1",
+        '--ExecutePreprocessor.timeout=-1',
+        f'--ExecutePreprocessor.allow_errors={allow_notebook_errors}'
     ]
     cmd = " ".join(cmd)
     # Prepare the log file.
@@ -139,12 +144,13 @@ def _get_workload(args: argparse.Namespace) -> hjoblib.Workload:
     hdbg.dassert_path_exists(notebook_file)
     #
     publish = args.publish_notebook
+    allow_notebook_errors = args.allow_errors
     # Prepare the tasks.
     tasks = []
     for config in config_list:
         task: hjoblib.Task = (
             # args.
-            (config, notebook_file, publish),
+            (config, notebook_file, publish, allow_notebook_errors),
             # kwargs.
             {},
         )
@@ -176,6 +182,11 @@ def _parse() -> argparse.ArgumentParser:
         "--publish_notebook",
         action="store_true",
         help="Publish each notebook after it executes",
+    )
+    parser.add_argument(
+        "--allow_errors",
+        action="store_true",
+        help="Ignore execution errors in the notebook",
     )
     parser = hparser.add_verbosity_arg(parser)
     # TODO(gp): For some reason, not even this makes mypy happy.

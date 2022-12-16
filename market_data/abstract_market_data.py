@@ -149,6 +149,8 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         self._sleep_in_secs = sleep_in_secs
         #
         self._timezone = timezone
+        if column_remap is not None:
+            hdbg.dassert_isinstance(column_remap, dict)
         self._column_remap = column_remap
         #
         self._filter_data_mode = filter_data_mode
@@ -462,8 +464,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
     # want the freshest data other times we want exactly one interval).
     def get_last_twap_price(
         self,
-        # TODO(gp): -> bar_duration_as_pd_str
-        bar_duration: str,
+        bar_duration_as_pd_str: str,
         ts_col_name: str,
         asset_ids: List[int],
         column: str,
@@ -492,7 +493,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         # Align on a bar. E.g., `last_end_time` is 09:16 and we ask
         # for data in (09:10, 09:15], not (09:11, 09:16].
         mode = "floor"
-        bar_duration_in_secs = 5 * 60
+        bar_duration_in_secs = pd.Timedelta(bar_duration_as_pd_str).seconds
         last_end_time = hdateti.find_bar_timestamp(
             last_end_time,
             bar_duration_in_secs,
@@ -500,7 +501,7 @@ class MarketData(abc.ABC, hobject.PrintableMixin):
         )
         _LOG.debug("last_end_time=%s", last_end_time)
         #
-        offset = pd.Timedelta(bar_duration)
+        offset = pd.Timedelta(bar_duration_as_pd_str)
         start_time = last_end_time - offset
         twap_df = self.get_twap_price(
             start_time,

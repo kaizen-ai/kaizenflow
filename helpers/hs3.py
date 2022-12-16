@@ -396,6 +396,29 @@ def get_s3_bucket_path(aws_profile: str, add_s3_prefix: bool = True) -> str:
     return s3_bucket
 
 
+def get_latest_pq_in_s3_dir(s3_path: str, aws_profile: str) -> str:
+    """
+    Get the latest parquet file in the specified directory.
+
+    :param s3_path: the path to s3 directory, e.g.
+      `cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec/binance`
+    :param aws_profile: AWS profile to use
+    :return: the path to the latest parquet file in the directory,
+      e.g. `cryptokaizen-data/reorg/daily_staged.airflow.pq/bid_ask/crypto_chassis.downloaded_1sec/binance/
+       currency_pair=ETH_USDT/year=2022/month=12/data.parquet`
+    """
+    hdbg.dassert_type_is(aws_profile, str)
+    s3fs_ = get_s3fs(aws_profile)
+    pq_files = s3fs_.glob(f"{s3_path}/**.parquet", detail=True)
+    # Sort the files by the date they were modified for the last time.
+    sorted_files = sorted(
+        pq_files.items(), key=lambda t: t[1]["LastModified"], reverse=True
+    )
+    # Get the path to the latest file.
+    latest_file_path = sorted_files[0][0]
+    return latest_file_path
+
+
 # #############################################################################
 # Parser.
 # #############################################################################
@@ -448,6 +471,109 @@ def _get_aws_config(file_name: str) -> configparser.RawConfigParser:
     config.read(file_name)
     _LOG.debug("config.sections=%s", config.sections())
     return config
+
+
+def _dassert_all_env_vars_set(key_to_env_var: Dict[str, str]) -> None:
+    """
+    Check that the required AWS env vars are set and are not empty strings.
+    """
+    for v in key_to_env_var.values():
+        hdbg.dassert_in(v, os.environ)
+        hdbg.dassert_ne(v, "")
+
+
+def _get_aws_file_text(key_to_env_var: Dict[str, str]) -> List[str]:
+    """
+    Generate text from env vars for AWS files.
+
+    E.g.:
+    ```
+    aws_access_key_id=***
+    aws_secret_access_key=***
+    aws_s3_bucket=***
+    ```
+
+    :param key_to_env_var: aws settings names to the corresponding env var names
+        mapping
+    :return: AWS file text
+    """
+    txt = []
+    for k, v in key_to_env_var.items():
+        line = f"{k}={os.environ[v]}"
+        txt.append(line)
+    return txt
+
+
+def _get_aws_config_text(aws_profile: str) -> str:
+    """
+    Generate text for the AWS config file, i.e. ".aws/config".
+    """
+    # Set which env vars we need to get.
+    profile_prefix = aws_profile.upper()
+    region_env_var = f"{profile_prefix}_AWS_DEFAULT_REGION"
+    key_to_env_var = {"region": region_env_var}
+    # Check that env vars are set.
+    _dassert_all_env_vars_set(key_to_env_var)
+    text = _get_aws_file_text(key_to_env_var)
+    text.insert(0, f"[profile {aws_profile}]")
+    text = "\n".join(text)
+    return text
+
+
+def _get_aws_credentials_text(aws_profile: str) -> str:
+    """
+    Generate text for the AWS credentials file, i.e. ".aws/credentials".
+    """
+    # Set which env vars we need to get.
+    profile_prefix = aws_profile.upper()
+    key_to_env_var = {
+        "aws_access_key_id": f"{profile_prefix}_AWS_ACCESS_KEY_ID",
+        "aws_secret_access_key": f"{profile_prefix}_AWS_SECRET_ACCESS_KEY",
+        "aws_s3_bucket": f"{profile_prefix}_AWS_S3_BUCKET",
+    }
+    # Check that env vars are set.
+    _dassert_all_env_vars_set(key_to_env_var)
+    text = _get_aws_file_text(key_to_env_var)
+    text.insert(0, f"[{aws_profile}]")
+    text = "\n".join(text)
+    return text
+
+
+def generate_aws_files(
+    home_dir: str = "~",
+    aws_profiles: Optional[List[str]] = None,
+) -> None:
+    """
+    Generate AWS configuration files.
+    """
+    config_file_name = os.path.join(home_dir, ".aws", "config")
+    credentials_file_name = os.path.join(home_dir, ".aws", "credentials")
+    if os.path.exists(credentials_file_name) and os.path.exists(config_file_name):
+        # Ensure that both files exist.
+        _LOG.info(
+            "Both files exist: %s and %s; exiting",
+            credentials_file_name,
+            config_file_name,
+        )
+        return
+    if aws_profiles is None:
+        aws_profiles = ["am", "ck"]
+    config_file_text = []
+    credentials_file_text = []
+    # Get text with settings for both files.
+    for profile in aws_profiles:
+        current_config_text = _get_aws_config_text(profile)
+        config_file_text.append(current_config_text)
+        current_credentials_text = _get_aws_credentials_text(profile)
+        credentials_file_text.append(current_credentials_text)
+    # Create both files.
+    config_file_text = "\n\n".join(config_file_text)
+    hio.to_file(config_file_name, config_file_text)
+    _LOG.debug("Saved AWS config to %s", config_file_name)
+    #
+    credentials_file_text = "\n\n".join(credentials_file_text)
+    hio.to_file(credentials_file_name, credentials_file_text)
+    _LOG.debug("Saved AWS credentials to %s", credentials_file_name)
 
 
 # #############################################################################

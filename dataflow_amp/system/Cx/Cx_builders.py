@@ -156,8 +156,6 @@ def get_ProcessForecastsNode_dict_instance1(
     """
     Build the `ProcessForecastsNode` dictionary for simulation.
     """
-    prediction_col = "vwap.ret_0.vol_adj_2_hat"
-    volatility_col = "vwap.ret_0.vol"
     spread_col = None
     style = "cross_sectional"
     # For prod we use smaller GMV so that we can trade at low capacity while
@@ -176,6 +174,9 @@ def get_ProcessForecastsNode_dict_instance1(
         }
         # TODO(Grisha): @Dan CmTask2849 "Pass an actual `system_log_dir` for simulation".
         root_log_dir = None
+    dag_builder = system.config["dag_builder_object"]
+    volatility_col = dag_builder.get_column_name("volatility")
+    prediction_col = dag_builder.get_column_name("prediction")
     process_forecasts_node_dict = dtfsys.get_ProcessForecastsNode_dict_example1(
         system.portfolio,
         prediction_col,
@@ -280,7 +281,10 @@ def _get_Cx_dag_prod_instance1(
     #
     system = dtfsys.apply_DagRunner_config_for_crypto(system)
     # Build Portfolio.
-    trading_period_str = dag_builder.get_trading_period(dag_config)
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
     # TODO(gp): Add a param to get_trading_period to return the int.
     order_duration_in_mins = int(trading_period_str.replace("T", ""))
     system.config[
@@ -337,61 +341,52 @@ def get_Cx_dag_prod_instance1(system: dtfsys.System) -> dtfcore.DAG:
 # #############################################################################
 
 
+# TODO(gp): We should dump the state of the portfolio and load it back.
+# TODO(gp): Probably all prod system needs to have run_mode and trade_date and
+#  so we can generalize the class to be not E8 specific.
 def get_Cx_portfolio_prod_instance1(system: dtfsys.System) -> oms.Portfolio:
     """
     Build Portfolio instance for production.
     """
-    market_data = system.market_data
-    dag_builder = system.config["dag_builder_object"]
-    dag_config = system.config["dag_config"]
-    trading_period_str = dag_builder.get_trading_period(dag_config)
-    _LOG.debug(hprint.to_str("trading_period_str"))
-    pricing_method = "twap." + trading_period_str
+    run_mode = system.config.get_and_mark_as_used("run_mode")
     cf_config_strategy = system.config.get_and_mark_as_used(
         ("cf_config", "strategy")
     )
-    market_data_universe_version = system.config.get_and_mark_as_used(
+    market_data = system.market_data
+    universe_version = system.config.get_and_mark_as_used(
         ("market_data_config", "universe_version")
-    )
-    market_data_asset_ids = system.config.get_and_mark_as_used(
-        ("market_data_config", "asset_ids")
     )
     secret_identifier_config = system.config.get_and_mark_as_used(
         "secret_identifier_config"
     )
+    #
+    dag_builder = system.config["dag_builder_object"]
+    dag_config = system.config["dag_config"]
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
+    _LOG.debug(hprint.to_str("trading_period_str"))
+    pricing_method = "twap." + trading_period_str
+    #
+    asset_ids = system.config.get_and_mark_as_used(
+        ("market_data_config", "asset_ids")
+    )
+    #
+    system = dtfsys.apply_Portfolio_config(system)
+    column_remap = system.config.get_and_mark_as_used(
+        ("portfolio_config", "column_remap")
+    )
     portfolio = oms.get_CcxtPortfolio_prod_instance1(
+        run_mode,
         cf_config_strategy,
         market_data,
-        market_data_universe_version,
-        market_data_asset_ids,
-        pricing_method,
+        column_remap,
+        universe_version,
         secret_identifier_config,
+        pricing_method,
+        asset_ids,
     )
-    return portfolio
-
-
-# TODO(gp): We should dump the state of the portfolio and load it back.
-# TODO(gp): Probably all prod system needs to have use_simulation and trade_date and
-#  so we can generalize the class to be not E8 specific.
-def get_Cx_portfolio(
-    system: dtfsys.System,
-) -> oms.Portfolio:
-    # We prefer to configure code statically (e.g., without switches) but in this
-    # case the prod system vs its simulat-able version are so close (and we want to
-    # keep them close) that we use a switch.
-    if not system.use_simulation:
-        # Prod.
-        portfolio = get_Cx_portfolio_prod_instance1(system)
-    else:
-        # Simulation.
-        # TODO(gp): This needs to be fixed before reconciliation.
-        # _LOG.warning("Configuring for simulation")
-        # portfolio = oms.get_DatabasePortfolio_example3(
-        #     system.config["db_connection_object"],
-        #     system.config["event_loop_object"],
-        #     system.market_data,
-        # )
-        pass
     return portfolio
 
 
@@ -433,14 +428,17 @@ def apply_Cx_DagRunner_config(
     return system
 
 
-# TODO(Grisha): @Dan pass values as params.
 def apply_research_pnl_config(system: dtfsys.System) -> dtfsys.System:
     """
     Extend system config with parameters for research PNL computations.
     """
-    system.config["research_pnl", "price_col"] = "vwap"
-    system.config["research_pnl", "volatility_col"] = "vwap.ret_0.vol"
-    system.config["research_pnl", "prediction_col"] = "vwap.ret_0.vol_adj_2_hat"
+    dag_builder = system.config["dag_builder_object"]
+    price_col = dag_builder.get_column_name("price")
+    volatility_col = dag_builder.get_column_name("volatility")
+    prediction_col = dag_builder.get_column_name("prediction")
+    system.config["research_pnl", "price_col"] = price_col
+    system.config["research_pnl", "volatility_col"] = volatility_col
+    system.config["research_pnl", "prediction_col"] = prediction_col
     return system
 
 
