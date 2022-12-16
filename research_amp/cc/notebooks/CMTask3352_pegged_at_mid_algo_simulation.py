@@ -24,7 +24,7 @@
 # - Aggregate to 5T and check the success of trades in historical data
 #
 # ```
-# dataset_signature={periodic}.{airflow}.{downloaded_EOD}.{parquet}.{bid_ask}.{futures}.{v3}.{cryptochassis}.{binance}.{v1_0_0]}
+# dataset_signature=periodic.airflow.downloaded_EOD.parquet.bid_ask.futures.v3.cryptochassis.binance.v1_0_0
 # ```
 
 # %%
@@ -43,6 +43,7 @@ import helpers.henv as henv
 import helpers.hprint as hprint
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
+import core.config as cconfig
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -62,7 +63,24 @@ hprint.config_notebook()
 # - For 1 asset and 1 day
 # - Using DataFlow `read_data` node
 
+# %% [markdown]
+# ## Initialize a config for `read_data` node
+
 # %%
+dict_ = {
+    "load_data": {
+        "start_ts": pd.Timestamp("2022-12-14 00:00:00+00:00"),
+        "end_ts": pd.Timestamp("2022-12-15 00:00:00+00:00"),
+    },
+    "universe": {
+        "full_symbols": ["binance::ADA_USDT"],
+    }
+}
+config = cconfig.Config.from_dict(dict_)
+
+# %%
+# Set up the parameters for initialization of the IM Client.
+#  Note: these parameters are defined separately since they are 
 universe_version = "v3"
 resample_1min = False
 contract_type = "futures"
@@ -72,9 +90,9 @@ client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(
 )
 
 # %%
-# Set the time boundaries.
-start_ts = pd.Timestamp("2022-12-14 00:00:00+00:00")
-end_ts = pd.Timestamp("2022-12-15 00:00:00+00:00")
+start_ts = config.get_and_mark_as_used(("load_data", "start_ts"))
+end_ts = config.get_and_mark_as_used(("load_data", "end_ts"))
+
 intervals = [
     (
         start_ts,
@@ -83,17 +101,19 @@ intervals = [
 ]
 
 # %%
-universe_str = "crypto_chassis_v3-top1"
-full_symbols = dtfuniver.get_universe(universe_str)
-asset_ids = client.get_asset_ids_from_full_symbols(full_symbols)
+# Verify that provided symbols are present in the client.
+universe_full_symbols = dtfuniver.get_universe("crypto_chassis_v3-all")
+config_full_symbols = config.get_and_mark_as_used(("universe","full_symbols"))
+hdbg.dassert_is_subset(config_full_symbols, universe_full_symbols)
+# Convert to asset ids.
+config["universe"]["asset_ids"] = client.get_asset_ids_from_full_symbols(config_full_symbols)
+asset_ids = config.get_and_mark_as_used(("universe", "asset_ids"))
 
 # %%
+# Initialize market data.
 columns = None
 columns_remap = None
 wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
-market_data = mdata.get_HistoricalImClientMarketData_example1(
-    client, asset_ids, columns, columns_remap, wall_clock_time=wall_clock_time
-)
 stage = "read_data"
 ts_col_name = "end_ts"
 multiindex_output = True
@@ -145,7 +165,17 @@ dtfcore.draw(dag)
 # %%
 df1 = _run_dag_node(dag)
 df1.shape
-df1.head(3)
+df1.head(5)
+
+# %%
+# Drop multiindex in single-asset dataframes for human readability.
+if len(asset_ids) < 2:
+    df2 = df1.droplevel(1, axis=1)
+else:
+    df2 = df1.copy()
+
+# %%
+df2.head()
 
 # %% [markdown]
 # ## Sanity check
@@ -171,6 +201,14 @@ df1.isna().sum()
 
 # %%
 df1.head()
+
+# %%
+
+# %%
+df2.head()
+
+# %%
+2 / 0
 
 # %%
 # TODO(gp): There are some missing data, e.g., 19:00:02. Let's compute some quick stats.
@@ -214,7 +252,10 @@ print(df2.index.max())
 asset_id = 3303714233
 
 # %%
-df3 = df2.swaplevel(axis=1)[asset_id]
+df2.droplevel(1, axis=1)
+
+# %%
+df3 = df2.swaplevel(axis=1)
 df3.head()
 
 # %%
