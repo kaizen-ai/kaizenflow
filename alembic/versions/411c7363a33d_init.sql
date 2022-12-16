@@ -61,7 +61,7 @@ SET default_table_access_method = heap;
 --
 
 CREATE TABLE public.ccxt_bid_ask_futures_raw (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     "timestamp" bigint NOT NULL,
     bid_size numeric,
     bid_price numeric,
@@ -74,13 +74,18 @@ CREATE TABLE public.ccxt_bid_ask_futures_raw (
     knowledge_timestamp timestamp with time zone
 );
 
+--
+-- Name: ccxt_bid_ask_futures_raw_timestamp_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX IF NOT EXISTS ccxt_bid_ask_futures_raw_timestamp_index ON public.ccxt_bid_ask_futures_raw(timestamp);
 
 --
 -- Name: ccxt_bid_ask_futures_raw_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.ccxt_bid_ask_futures_raw_id_seq
-    AS integer
+    AS bigint
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
@@ -139,7 +144,7 @@ ALTER SEQUENCE public.ccxt_bid_ask_futures_resampled_1min_id_seq OWNED BY public
 --
 
 CREATE TABLE public.ccxt_bid_ask_raw (
-    id integer NOT NULL,
+    id bigint NOT NULL,
     "timestamp" bigint NOT NULL,
     bid_size numeric,
     bid_price numeric,
@@ -152,13 +157,19 @@ CREATE TABLE public.ccxt_bid_ask_raw (
     knowledge_timestamp timestamp with time zone
 );
 
+--
+-- Name: ccxt_bid_ask_raw_timestamp_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX IF NOT EXISTS ccxt_bid_ask_raw_timestamp_index ON public.ccxt_bid_ask_raw(timestamp);
+
 
 --
 -- Name: ccxt_bid_ask_raw_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE public.ccxt_bid_ask_raw_id_seq
-    AS integer
+    AS bigint
     START WITH 1
     INCREMENT BY 1
     NO MINVALUE
