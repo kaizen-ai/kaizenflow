@@ -225,6 +225,8 @@ df3["bid_value"] = df3["bid_price"] * df3["bid_size"]
 df3[["bid_value", "ask_value"]].resample("1H").sum().plot()
 
 # %% run_control={"marked": false}
+# TODO(gp): @danya this is add_limit_order_prices()
+
 print(df3.shape)
 # Add limit prices based on passivity of 0.01.
 mid_price = df3["mid"]
@@ -251,12 +253,25 @@ df4["limit_sell_price"] = df4["limit_sell_price"].ffill()
 print(df4.shape)
 
 # %%
+# Count is_buy / is_sell.
+df4["is_buy"] = (
+    df4["ask_price"] <= df4["limit_buy_price"]
+)
+df4["is_sell"] = (
+    df4["bid_price"] >= df4["limit_sell_price"]
+)
+
+# %%
 # TODO(gp): Not sure this is working as expected. I don't see the seconds.
 # Assigning df columns with a df series with different time index might subsample.
 # I would do a outmerge merge and then ffill.
 
 # Let's always check the output of the df to make sure things are sane.
 df4
+
+# %%
+# TODO(gp): @Danya
+# def perform_spread_analysys(...)
 
 # %%
 spread = df4["ask_price"] - df4["bid_price"]
@@ -272,44 +287,21 @@ spread.plot()
 spread_in_bps.plot()
 
 # %%
-#df4[["mid", "ask_price", "bid_price"]].head(200).plot()
-#df4[["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]].head(10000).plot()
+# TODO(gp): Create a function:
+# plot_limit_orders(df, start_timestamp: Optional[pd.timestamp] = None, end_timestamp:Optional[pd.Timestamp] = None)
 df4[["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]].head(1000).plot()
 
-# %% run_control={"marked": true}
-# Count is_buy / is_sell.
-df4["is_buy"] = (
-    df4["ask_price"] <= df4["limit_buy_price"]
-)
-df4["is_sell"] = (
-    df4["bid_price"] >= df4["limit_sell_price"]
-)
-
 (df4[["is_buy", "is_sell"]] * 1.0).head(1000).plot()
+
+# %% [markdown]
+# ## Resample to T_reprice
 
 # %%
 print(df4.shape)
 
 # %%
-# Display as percentages.
+# TODO(gp): @danya compute_repricing_df(df, report_stats):
 
-# display("Successful_buys:",df.drop_duplicates(
-#     subset=["bid_price", "is_buy", 3303714233)], keep="first"
-# )["is_buy"].value_counts(normalize=True))
-
-print(df4["is_buy"].sum() / df4.shape[0])
-print(df4["is_sell"].sum() / df4.shape[0])
-
-# %%
-import helpers.hprint as hprint
-
-# %%
-import numpy as np
-
-# %%
-mask.sum() / mask.shape[0]
-
-# %%
 # TODO(gp): ask_price -> buy_limit?
 df4["exec_buy_price"] = df4["is_buy"] * df4["ask_price"]
 mask = ~df4["is_buy"]
@@ -317,7 +309,6 @@ df4["exec_buy_price"][mask] = np.nan
 
 #df4["exec_price"].plot()
 #df4["exec_price"].mean()
-print(hprint.perc(df4["exec_buy_price"].isnull().sum(), df4.shape[0]))
 
 # TODO(gp): Not sure this does what we want. We want to average only the values that are not nan.
 #df4["exec_buy_price"].resample("5T").mean()
@@ -329,9 +320,27 @@ df4["exec_sell_price"][mask] = np.nan
 
 #df4["exec_price"].plot()
 #df4["exec_price"].mean()
-print(hprint.perc(df4["exec_sell_price"].isnull().sum(), df4.shape[0]))
 
 # %%
+# Display as percentages.
+# if report_stats:
+print("buy percentage at repricing freq: ", df4["is_buy"].sum() / df4.shape[0])
+print(df4["is_sell"].sum() / df4.shape[0])
+
+import helpers.hprint as hprint
+
+import numpy as np
+
+print(hprint.perc(df4["exec_buy_price"].isnull().sum(), df4.shape[0]))
+print(hprint.perc(df4["exec_sell_price"].isnull().sum(), df4.shape[0]))
+
+# %% [markdown]
+# ## Resample to T_exec
+
+# %%
+# TODO(gp): @danya ->
+# def compute_execution_df(df, t_exec: str, report_stats)
+
 df5 = pd.DataFrame()
 # Count how many executions there were in an interval.
 df5["exec_buy_num"] = df4["is_buy"].resample("5T").sum()
@@ -357,6 +366,13 @@ print(hprint.perc(df5["exec_is_sell"].sum(), df5["exec_is_sell"].shape[0]))
 # Estimate the executed volume. 
 df5["exec_sell_volume"] = (df4["bid_size"] * df4["bid_price"] * df4["is_sell"]).resample("5T").sum()
 print("million USD per 5T=", df5["exec_sell_volume"].mean() / 1e6)
+
+# %% [markdown]
+# ## Compare to benchmark price. 
+
+# %%
+# TODO(gp): @danya 
+# def compute_benchmark_stats(...)
 
 # %%
 # This is the benchmark.
