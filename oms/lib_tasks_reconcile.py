@@ -377,7 +377,16 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(stage, ("local", "test", "preprod", "prod"))
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
-        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation/{dag_builder_name}"
+        date_subdir = omreconc.get_run_date(start_timestamp_as_str)
+        if mode == "manual":
+            date_subdir = ".".join([date_subdir, mode])
+        prod_data_source_dir = os.path.join(
+            "/shared_data",
+            "ecs",
+            stage,
+            "system_reconciliation",
+            dag_builder_name,
+        )
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
     target_dir = _resolve_target_dir(
