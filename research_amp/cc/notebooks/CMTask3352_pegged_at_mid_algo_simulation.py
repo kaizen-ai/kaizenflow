@@ -124,6 +124,7 @@ dag = dtfcore.DAG(mode="strict")
 dtfcore.draw(dag)
 
 # %%
+# TODO(gp): @danya, see if we have also close or trade.
 stage = "read_data"
 ts_col_name = "end_ts"
 multiindex_output = True
@@ -240,6 +241,7 @@ df_limit_price = pd.DataFrame()
 # TODO(gp): This should be tuned as function of the rolling std dev.
 abs_spread = 0.0001
 # We are trading at the top of the book.
+# TODO(gp): Crossing the spread means setting limit_buy_price = ... + abs_spread (and vice versa for sell).
 df_limit_price["limit_buy_price"] = df3["mid"].resample("1T").mean().shift(1) - abs_spread
 df_limit_price["limit_sell_price"] = df3["mid"].resample("1T").mean().shift(1) + abs_spread
     
@@ -308,8 +310,8 @@ import numpy as np
 mask.sum() / mask.shape[0]
 
 # %%
+# TODO(gp): ask_price -> buy_limit?
 df4["exec_buy_price"] = df4["is_buy"] * df4["ask_price"]
-
 mask = ~df4["is_buy"]
 df4["exec_buy_price"][mask] = np.nan
 
@@ -357,6 +359,7 @@ df5["exec_sell_volume"] = (df4["bid_size"] * df4["bid_price"] * df4["is_sell"]).
 print("million USD per 5T=", df5["exec_sell_volume"].mean() / 1e6)
 
 # %%
+# This is the benchmark.
 df5["twap_mid_price"] = df4["mid"].resample("5T").mean()
 
 df5[["twap_mid_price", "exec_sell_price", "exec_buy_price"]].head(1000).plot()
@@ -368,7 +371,10 @@ slippage["sell_slippage_bps"] = (df5["exec_sell_price"] - df5["twap_mid_price"])
 
 #slippage = df["twap_mid_price"] / 
 
-slippage["sell_slippage_bps"].hist(bins=)
+slippage["sell_slippage_bps"].hist(bins=21)
+
+print("sell_slippage_bps.mean=", slippage["sell_slippage_bps"].mean())
+print("sell_slippage_bps.median=", slippage["sell_slippage_bps"].median())
 
 # %%
 df5.head()
