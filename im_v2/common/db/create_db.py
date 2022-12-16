@@ -2,6 +2,8 @@
 """
 Script to create IM (Instrument Master) database using the given connection.
 
+# Note: assumes existing database setup, for example using 
+#  `invoke im_docker_up -s local` 
 # Create a DB named 'test_db' using environment variables:
 > im_v2/common/db/create_db.py --db_name 'test_db'
 
