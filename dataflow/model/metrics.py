@@ -138,6 +138,8 @@ def apply_metrics(
     tag_col: str,
     metric_modes: List[str],
     config: cconfig.Config,
+    *,
+    tag_mode: Optional[str] = "all",
 ) -> pd.DataFrame:
     """
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
@@ -160,6 +162,8 @@ def apply_metrics(
     :param metric_modes: a list of strings representing the metrics to compute
         (e.g., hit rate, pnl)
     :param config: config that controls metrics parameters
+    :param tag_mode: replace rows of `tag_col` with "all" to allow to compute
+        overall metrics (e.g., total hit rate)
     :return: the result is a df that has:
         - as index the values of the tags
         - as columns the names of the applied metrics
@@ -171,6 +175,8 @@ def apply_metrics(
     y_hat = metrics_df[config["y_hat_column_name"]]
     #
     out_dfs = []
+    if tag_mode == "all":
+        metrics_df[tag_col] = tag_mode
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
             metrics_df[metric_mode] = compute_hit(y, y_hat)
