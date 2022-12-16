@@ -14,6 +14,7 @@ import scipy.stats as st
 import core.config as cconfig
 import core.finance.tradability as cfintrad
 import core.statistics.requires_statsmodels as cstresta
+import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -227,17 +228,20 @@ def compute_pnl_with_bounds(
     :param y_hat_column_name: prediction's column name
     :param n_resamples: see `bootstrap()`
     :param alpha: confidence level
-    :return: pnl rate: point estimate, lower bound, upper bound
+    :return: PnL: point estimate, lower bound, upper bound
     """
     if bar_pnl_column_name not in df.columns:
         # Compute bar_pnl if missing.
         df[bar_pnl_column_name] = cfintrad.compute_bar_pnl(df, y_column_name, y_hat_column_name)
+    hdbg.dassert_in(bar_pnl_column_name, df.columns)
     # 1) Compute point estimate.
     point_estimate = cfintrad.compute_pnl(df, y_column_name, y_hat_column_name)
     # 2) Compute CIs.
-    func = lambda df, y_column_name, y_hat_column_name: cfintrad.compute_pnl(
+    func = lambda df: cfintrad.compute_pnl(
         df, y_column_name, y_hat_column_name
     )
+    # TODO(Grisha): we can factor out in `compute_conf_ints_using_bootstrapping()`
+    # but not sure it's worth it.
     # Compute multiple PnLs on many resamples to compute onfidence intervals.
     pnl_srs = pd.Series(
         bootstrap(df[bar_pnl_column_name], func, n_resamples), name="pnl",
@@ -249,6 +253,60 @@ def compute_pnl_with_bounds(
             pnl.size - 1,
             np.mean(pnl),
             st.sem(pnl),
+        )
+    )
+    # 3) Combine.
+    out_srs = pd.Series([point_estimate, conf_ints.tolist()])
+    return out_srs
+
+
+# TODO(Grisha): move to `core.statistics.sharpe_ratio`.
+def compute_sharpe_ratio_with_bounds(
+    df: pd.DataFrame,
+    *,
+    bar_pnl_column_name = "bar_pnl",
+    y_column_name: str = "y",
+    y_hat_column_name: str = "y_hat",
+    time_scaling: int = 1,
+    n_resamples: int = 100,
+    alpha: float = 0.05,
+) -> pd.Series:
+    """
+    Compute Sharpe ratio statistics: point estimate, lower bound, upper_bound.
+
+    To compute confidence intervals bootstrapping is used.
+
+    :param df: metrics_df
+    :param bar_pnl_column_name: bar_pnl column name
+    :param y_column_name: target variable's column name
+    :param y_hat_column_name: prediction's column name
+    :param time_scaling: see `compute_sharpe_ratio()`
+    :param n_resamples: see `bootstrap()`
+    :param alpha: confidence level
+    :return: Sharpe ratio: point estimate, lower bound, upper bound
+    """
+    if bar_pnl_column_name not in df.columns:
+        # Compute bar_pnl if missing.
+        df[bar_pnl_column_name] = cfintrad.compute_bar_pnl(df, y_column_name, y_hat_column_name)
+    # 1) Compute point estimate.
+    point_estimate = cstshrat.compute_sharpe_ratio(df[bar_pnl_column_name], time_scaling=time_scaling)
+    # 2) Compute CIs.
+    func = lambda pnl: cstshrat.compute_sharpe_ratio(
+        pnl, time_scaling
+    )
+    # TODO(Grisha): we can factor out in `compute_conf_ints_using_bootstrapping()`
+    # but not sure it's worth it.
+    # Compute multiple SRs on many resamples to compute onfidence intervals.
+    sr_srs = pd.Series(
+        bootstrap(df[bar_pnl_column_name], func, n_resamples), name="sharpe_ratio",
+    )
+    # Compute confidence intervals.
+    conf_ints = sr_srs.apply(
+        lambda sr: st.t.interval(
+            1 - alpha,
+            sr.size - 1,
+            np.mean(sr),
+            st.sem(sr),
         )
     )
     # 3) Combine.
