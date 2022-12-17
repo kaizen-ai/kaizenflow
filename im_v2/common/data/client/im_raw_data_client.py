@@ -89,13 +89,13 @@ class RawDataReader:
         """
         Load parquet data in a specified time frame.
         """
-        # TODO(Juraj): epoch unit is to second, which only works
-        #  for crypto_chassis data.
+        # Set correct epoch_unit based on data_type
+        epoch_unit = "s" if self.args["vendor"] == "crypto_chassis" else "ms"
         start_ts = hdateti.convert_timestamp_to_unix_epoch(
-            start_ts, unit="s"
+            start_ts, unit=epoch_unit
         )
         end_ts = hdateti.convert_timestamp_to_unix_epoch(
-            end_ts, unit="s"
+            end_ts, unit=epoch_unit
         )
         s3_path = dsdascut.build_s3_dataset_path_from_args(
             s3_base_path, self.args
