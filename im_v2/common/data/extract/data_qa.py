@@ -636,7 +636,7 @@ class RealTimeHistoricalReconciler:
                     size_col_base = size_col.rstrip("_relative_diff_pct")
                     message = (
                         f"Difference between {size_col_base} in real time and daily "
-                        f"data for `{index}` coin in {abs(row[price_col])}% (> {threshold}% threshold)."
+                        f"data for `{index}` coin in {abs(row[size_col])}% (> {threshold}% threshold)."
                     )
                     error_message.append(message)
         if error_message:
