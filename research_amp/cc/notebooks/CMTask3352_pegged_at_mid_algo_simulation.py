@@ -272,8 +272,15 @@ df_features[["bid_value", "ask_value"]].resample("1H").sum().plot()
 
 
 # %%
-def add_limit_order_prices(df: pd.DataFrame, mid_col_name: str, *, resample_freq = "1T", passivity_factor = None, abs_spread = None):
-
+def add_limit_order_prices(
+    df: pd.DataFrame,
+    mid_col_name: str,
+    *,
+    resample_freq="1T",
+    passivity_factor=None,
+    abs_spread=None,
+):
+    print(f"df initial={df.shape}")
     limit_buy_col = "limit_buy_price"
     limit_sell_col = "limit_sell_price"
     limit_buy_srs = df[mid_col_name]
@@ -297,7 +304,9 @@ def add_limit_order_prices(df: pd.DataFrame, mid_col_name: str, *, resample_freq
     df_limit_price = pd.DataFrame()
     df_limit_price[limit_buy_col] = limit_buy_srs
     df_limit_price[limit_sell_col] = limit_sell_srs
+    print(f"df_limit_price after resampling and shift={df_limit_price.shape}")
     df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
+    print(f"df after merge={df.shape}")
     #
     df[limit_buy_col] = df[limit_buy_col].ffill()
     df[limit_sell_col] = df[limit_sell_col].ffill()
@@ -305,9 +314,9 @@ def add_limit_order_prices(df: pd.DataFrame, mid_col_name: str, *, resample_freq
 
 
 # %% run_control={"marked": false}
-df_limit_order_prices = add_limit_order_prices(df_features,
-                                              "mid",
-                                              abs_spread = 0.0001)
+df_limit_order_prices = add_limit_order_prices(
+    df_features, "mid", abs_spread=0.0001
+)
 
 # %%
 df_limit_order_prices.head()
@@ -316,28 +325,24 @@ df_limit_order_prices.head()
 print(df_features.shape)
 
 
-
-
-
 # %%
 print(df_limit_order_prices.shape)
-
-
 
 
 # %% run_control={"marked": true}
 diff = df_limit_order_prices.index.difference(df_features.index)
 
 
-
 # %%
 df_limit_order_prices.loc[diff]
 
 
-
-
 # %%
-df_flat.loc[pd.Timestamp("2022-12-13 22:25:59-05:00"): pd.Timestamp("2022-12-13 22:27:00-05:00")]
+df_flat.loc[
+    pd.Timestamp("2022-12-13 22:25:59-05:00") : pd.Timestamp(
+        "2022-12-13 22:27:00-05:00"
+    )
+]
 
 # %% [markdown]
 # #### Commentary
@@ -354,9 +359,6 @@ df_flat.loc[pd.Timestamp("2022-12-13 22:25:59-05:00"): pd.Timestamp("2022-12-13 
 
 # Let's always check the output of the df to make sure things are sane.
 df4
-
-
-
 
 
 # %% [markdown]
