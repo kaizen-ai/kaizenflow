@@ -47,6 +47,7 @@ services:
       - '8090:8080'
     volumes:
       - ./airflow_data/dags:/opt/airflow/dags
+      - ../..:/opt/airflow/cmamp
       - ./airflow_data/plugins:/opt/airflow/plugins
       - ./airflow_data/log_volume:/opt/airflow/log
       - ../..:/cmamp
@@ -66,6 +67,7 @@ services:
       - postgres
     volumes:
       - ./airflow_data/dags:/opt/airflow/dags
+      - ../..:/opt/airflow/cmamp
       - ./airflow_data/plugins:/opt/airflow/plugins
       - ./airflow_data/log_volume:/opt/airflow/log
       - ../..:/cmamp
