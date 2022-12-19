@@ -379,7 +379,14 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
         run_date = omreconc.get_run_date(start_timestamp_as_str)
-        prod_data_source_dir = os.path.join("/shared_data", "ecs", stage, "system_reconciliation", dag_builder_name, run_date)
+        prod_data_source_dir = os.path.join(
+            "/shared_data",
+            "ecs",
+            stage,
+            "system_reconciliation",
+            dag_builder_name,
+            run_date,
+        )
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
     target_dir = _resolve_target_dir(
@@ -696,7 +703,7 @@ def reconcile_run_all(
     #    start_timestamp_as_str=start_timestamp_as_str,
     #    dst_dir=dst_dir,
     #    prevent_overwriting=prevent_overwriting,
-    )
+    # )
     #
     if run_notebook:
         reconcile_run_notebook(
