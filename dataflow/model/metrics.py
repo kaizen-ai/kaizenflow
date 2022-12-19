@@ -109,6 +109,9 @@ def annotate_metrics_df(
     elif tag_mode == "asset_id":
         asset_ids = metrics_df.index.get_level_values(1)
         metrics_df[tag_col] = asset_ids
+    elif tag_mode == "magnitude_quantile_rank":
+        magnitude_quantile_rank = pd.qcut(metrics_df["vwap.ret_0.vol_adj"], 10, labels=False)
+        metrics_df[tag_col] = magnitude_quantile_rank
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
