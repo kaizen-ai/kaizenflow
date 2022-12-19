@@ -352,45 +352,45 @@ df_flat.loc[
 #
 # For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to due to resampling.
 
-# %%
-# TODO(gp): Not sure this is working as expected. I don't see the seconds.
-# Assigning df columns with a df series with different time index might subsample.
-# I would do a outmerge merge and then ffill.
-
-# Let's always check the output of the df to make sure things are sane.
-df4
-
-
 # %% [markdown]
 # #### Rechecking whether any rows disappeared
-
-# %%
 
 # %%
 # TODO(gp): @Danya
 # def perform_spread_analysys(...)
 
 # %%
-spread = df4["ask_price"] - df4["bid_price"]
-spread_in_bps = spread / df4["mid"] * 1e4
+import matplotlib.pyplot as plt
+
+
+def perform_spread_analysis(
+    df, ask_price_col_name: str, bid_price_col_name: str, mid_price_col_name: str
+) -> None:
+    spread = df[ask_price_col_name] - df[bid_price_col_name]
+    spread_in_bps = spread / df[mid_price_col_name] * 1e4
+    spread_hist = spread.hist(bins=101)
+    spread_plot = spread.plot()
+    spread_in_bps_plot = spread_in_bps.plot()
+    plt.show(spread_hist)
+    plt.show(spread_plot)
+    plt.show(spread_in_bps_plot)
+
 
 # %%
-spread.hist(bins=101)
+perform_spread_analysis(df_limit_order_prices, "ask_price", "bid_price", "mid")
+
 
 # %%
-spread.plot()
+def plot_limit_orders(
+    df,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+) -> None:
+    df[
+        ["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]
+    ].head(1000).plot()
+    (df[["is_buy", "is_sell"]] * 1.0).head(1000).plot()
 
-# %%
-spread_in_bps.plot()
-
-# %%
-# TODO(gp): Create a function:
-# plot_limit_orders(df, start_timestamp: Optional[pd.timestamp] = None, end_timestamp:Optional[pd.Timestamp] = None)
-df4[
-    ["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]
-].head(1000).plot()
-
-(df4[["is_buy", "is_sell"]] * 1.0).head(1000).plot()
 
 # %% [markdown]
 # ## Resample to T_reprice
