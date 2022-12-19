@@ -104,18 +104,30 @@ def build_reconciliation_configs(
             # "cand": prod_dir,
             "sim": sim_dir,
         }
-        #
+        # TODO(Grisha): somehow we should get column names
+        # from the `DagBuilder` object.
+        if dag_builder_name == "C1b":
+            price_col = "twap"
+            prediction_col = "vwap.ret_0.vol_adj_2_hat"
+            volatility_col = "vwap.ret_0.vol"
+        elif dag_builder_name == "C3a":
+            price_col = "twap"
+            prediction_col = "feature"
+            volatility_col = "garman_klass_vol"
+        else:
+            raise ValueError(f"Unsupported dag_builder_name={dag_builder_name}")
         fep_init_dict = {
-            "price_col": "twap",
-            "prediction_col": "vwap.ret_0.vol_adj_2_hat",
-            "volatility_col": "vwap.ret_0.vol",
+            "price_col": price_col,
+            "prediction_col": prediction_col,
+            "volatility_col": volatility_col,
         }
         quantization = "asset_specific"
         market_info = occxbrok.load_market_data_info()
         asset_id_to_share_decimals = occxbrok.subset_market_info(
             market_info, "amount_precision"
         )
-        gmv = 700.0
+        #gmv = 700.0
+        gmv = 3000.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
         run_tca = True

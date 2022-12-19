@@ -654,48 +654,48 @@ def reconcile_run_all(
         hserver.is_inside_docker(), "This is runnable only inside Docker."
     )
     #
-    reconcile_create_dirs(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        dst_dir=dst_dir,
-    )
-    #
-    reconcile_copy_prod_data(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        end_timestamp_as_str=end_timestamp_as_str,
-        dst_dir=dst_dir,
-        prod_data_source_dir=prod_data_source_dir,
-        stage=stage,
-        mode=mode,
-        prevent_overwriting=prevent_overwriting,
-        aws_profile=aws_profile,
-    )
-    #
-    reconcile_dump_market_data(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        end_timestamp_as_str=end_timestamp_as_str,
-        dst_dir=dst_dir,
-        prevent_overwriting=prevent_overwriting,
-    )
-    reconcile_run_sim(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        end_timestamp_as_str=end_timestamp_as_str,
-        dst_dir=dst_dir,
-    )
-    reconcile_copy_sim_data(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        dst_dir=dst_dir,
-        prevent_overwriting=prevent_overwriting,
-    )
+    # reconcile_create_dirs(
+    #     ctx,
+    #     dag_builder_name,
+    #     start_timestamp_as_str=start_timestamp_as_str,
+    #     dst_dir=dst_dir,
+    # )
+    # #
+    # reconcile_copy_prod_data(
+    #     ctx,
+    #     dag_builder_name,
+    #     start_timestamp_as_str=start_timestamp_as_str,
+    #     end_timestamp_as_str=end_timestamp_as_str,
+    #     dst_dir=dst_dir,
+    #     prod_data_source_dir=prod_data_source_dir,
+    #     stage=stage,
+    #     mode=mode,
+    #     prevent_overwriting=prevent_overwriting,
+    #     aws_profile=aws_profile,
+    # )
+    # #
+    # reconcile_dump_market_data(
+    #     ctx,
+    #     dag_builder_name,
+    #     start_timestamp_as_str=start_timestamp_as_str,
+    #     end_timestamp_as_str=end_timestamp_as_str,
+    #     dst_dir=dst_dir,
+    #     prevent_overwriting=prevent_overwriting,
+    # )
+    # reconcile_run_sim(
+    #     ctx,
+    #     dag_builder_name,
+    #     start_timestamp_as_str=start_timestamp_as_str,
+    #     end_timestamp_as_str=end_timestamp_as_str,
+    #     dst_dir=dst_dir,
+    # )
+    # reconcile_copy_sim_data(
+    #     ctx,
+    #     dag_builder_name,
+    #     start_timestamp_as_str=start_timestamp_as_str,
+    #     dst_dir=dst_dir,
+    #     prevent_overwriting=prevent_overwriting,
+    # )
     # TODO(Grisha): do we need TCA?
     # reconcile_dump_tca_data(
     #    ctx,
@@ -714,11 +714,11 @@ def reconcile_run_all(
             dst_dir=dst_dir,
             prevent_overwriting=prevent_overwriting,
         )
-    reconcile_ls(
-        ctx,
-        dag_builder_name,
-        start_timestamp_as_str=start_timestamp_as_str,
-        dst_dir=dst_dir,
-    )
-    if allow_update:
-        _allow_update(start_timestamp_as_str, dst_dir, dag_builder_name)
+    # reconcile_ls(
+    #     ctx,
+    #     dag_builder_name,
+    #     start_timestamp_as_str=start_timestamp_as_str,
+    #     dst_dir=dst_dir,
+    # )
+    # if allow_update:
+    #     _allow_update(start_timestamp_as_str, dst_dir, dag_builder_name)
