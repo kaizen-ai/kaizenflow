@@ -102,8 +102,8 @@ def _resolve_target_dir(
     Return the target dir name to store reconcilation results.
 
     If a dir name is not specified by a user then use prod reconcilation
-    dir on the shared disk with the corresponding dag_builder_name and
-    run date subdirs.
+    dir on the shared disk with the corresponding `dag_builder_name` and run date
+    subdirs.
 
     E.g., "/shared_data/prod_reconciliation/C1b/20221101".
 
@@ -379,8 +379,14 @@ def reconcile_copy_prod_data(
     hdbg.dassert_in(mode, ("scheduled", "manual"))
     if prod_data_source_dir is None:
         run_date = omreconc.get_run_date(start_timestamp_as_str)
-        # TODO(Grisha): use `os.path.join` instead of string concationation.
-        prod_data_source_dir = f"/shared_data/ecs/{stage}/system_reconciliation/{dag_builder_name}/{run_date}"
+        prod_data_source_dir = os.path.join(
+            "/shared_data",
+            "ecs",
+            stage,
+            "system_reconciliation",
+            dag_builder_name,
+            run_date,
+        )
     hs3.dassert_path_exists(prod_data_source_dir, aws_profile)
     _ = ctx
     target_dir = _resolve_target_dir(
@@ -690,13 +696,13 @@ def reconcile_run_all(
         dst_dir=dst_dir,
         prevent_overwriting=prevent_overwriting,
     )
-    # TODO(Grisha): do we need TSA?
+    # TODO(Grisha): do we need TCA?
     # reconcile_dump_tca_data(
-    #     ctx,
-    #     dag_builder_name,
-    #     start_timestamp_as_str=start_timestamp_as_str,
-    #     dst_dir=dst_dir,
-    #     prevent_overwriting=prevent_overwriting,
+    #    ctx,
+    #    dag_builder_name,
+    #    start_timestamp_as_str=start_timestamp_as_str,
+    #    dst_dir=dst_dir,
+    #    prevent_overwriting=prevent_overwriting,
     # )
     #
     if run_notebook:
