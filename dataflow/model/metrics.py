@@ -112,7 +112,9 @@ def annotate_metrics_df(
     elif tag_mode == "magnitude_quantile_rank":
         idx_name = metrics_df.index.names[1]
         qcut_func = lambda x: pd.qcut(x, 10, labels=False)
-        magnitude_quantile_rank = metrics_df.groupby(idx_name)["vwap.ret_0.vol_adj"].transform(qcut_func)
+        magnitude_quantile_rank = metrics_df.groupby(idx_name)[
+            "vwap.ret_0.vol_adj"
+        ].transform(qcut_func)
         metrics_df[tag_col] = magnitude_quantile_rank
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
