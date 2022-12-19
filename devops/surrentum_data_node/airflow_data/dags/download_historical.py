@@ -10,6 +10,7 @@ from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.bash import BashOperator
 from airflow.models import Variable
 
+
 default_args = {
     'owner': 'airflow',
     'depends_on_past': False,
@@ -36,10 +37,10 @@ with DAG(
         "cd /opt/airflow/cmamp && "
         "surrentum_infra_sandbox/"
         "download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0.py"
-        "  "
-        "--output_file test1.csv "
-        "--start_timestamp '2022-10-20 10:00:00-04:00' "
-        "--end_timestamp '2022-10-20 10:05:00-04:00' "
+        "  " 
+        "--output_file {{ data_interval_end.timestamp() }}.csv "
+        "--start_timestamp {{ data_interval_start }} "
+        "--end_timestamp {{ data_interval_end }}  "
     )
     downloading_task = BashOperator(
         task_id='download_ohlcv_5_minutes',
