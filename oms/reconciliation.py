@@ -83,19 +83,18 @@ def build_reconciliation_configs(
         bar_duration = "5T"
         #
         root_dir = "/shared_data/prod_reconciliation"
-        date_subdir = get_date_subdir(start_timestamp_as_str, mode)
         # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
         prod_dir = os.path.join(
             root_dir,
             dag_builder_name,
-            date_subdir,
+            run_date,
             "prod",
             prod_subdir,
         )
         sim_dir = os.path.join(
             root_dir,
             dag_builder_name,
-            date_subdir,
+            run_date,
             "simulation",
             "system_log_dir",
         )
@@ -280,25 +279,6 @@ def timestamp_as_str_to_timestamp(timestamp_as_str: str) -> pd.Timestamp:
 
 
 # /////////////////////////////////////////////////////////////////////////////
-
-
-def get_date_subdir(start_timestamp_as_str: str, mode: str) -> str:
-    """
-    Get date subdir depending on run mode.
-
-    - use run date as a dir name for the scheduled mode, e.g., "20220828"
-    - add run mode to a dir name for the manual mode, e.g., "20220828.manual"
-
-    See `lib_tasks_reconcile.reconcile_run_all()` for params description.
-    """
-    hdbg.dassert_isinstance(start_timestamp_as_str, str)
-    hdbg.dassert_isinstance(mode, str)
-    date_subdir = get_run_date(start_timestamp_as_str)
-    mode = resolve_run_mode(mode)
-    if mode == "manual":
-        date_subdir = ".".join([date_subdir, mode])
-    _LOG.info(hprint.to_str("date_subdir"))
-    return date_subdir
 
 
 # TODO(Grisha): I would pass also a `root_dir` and check if
