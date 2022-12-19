@@ -106,6 +106,9 @@ def annotate_metrics_df(
         metrics_df[tag_col] = idx.hour
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
+    elif tag_mode == "asset_id":
+        asset_ids = metrics_df.index.get_level_values(1)
+        metrics_df[tag_col] = asset_ids
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
