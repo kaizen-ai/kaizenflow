@@ -1,3 +1,8 @@
+# cmamp-1.4.1
+- 2022-12-19
+- Changes from #3165
+- Changes from #3341
+
 # cmamp-1.4.0
 - 2022-11-15
 - Fix Jupytext issue
