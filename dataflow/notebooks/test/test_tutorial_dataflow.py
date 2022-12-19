@@ -1,12 +1,14 @@
 import logging
 
 import pytest
+
 import core.config as cconfig
-import helpers.hunit_test as hunitest
-import helpers.hsystem as hsystem
 import dataflow.notebooks.tutorial_dataflow as dntd
+import helpers.hsystem as hsystem
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
+
 
 class TestRunTutorialDataflowNotebook(hunitest.TestCase):
     @pytest.mark.slow
@@ -14,12 +16,17 @@ class TestRunTutorialDataflowNotebook(hunitest.TestCase):
         """
         Test if the notebook run end-to-end with no errors.
         """
-        cmd = """run_notebook.py \
-            --notebook dataflow/notebooks/tutorial_dataflow.ipynb \
-            --config_builder "dataflow.notebooks.test.test_tutorial_dataflow.build_config_list()" \
-            --dst_dir dataflow/notebooks/test/test_results \
+        notebook_path = "dataflow/notebooks/tutorial_dataflow.ipynb"
+        config_func_path = "dataflow.notebooks.test.test_tutorial_dataflow.build_config_list()"
+        dst_dir = "dataflow/notebooks/test/test_results"
+        # Build the command with parameters.
+        cmd = f"""run_notebook.py \
+            --notebook {notebook_path} \
+            --config_builder "{config_func_path}" \
+            --dst_dir {dst_dir} \
             --num_threads 2
         """
+        # Run the notebook.
         hsystem.system(cmd)
 
 
@@ -32,5 +39,3 @@ def build_config_list() -> cconfig.ConfigList:
     configs = [config]
     config_list = cconfig.ConfigList(configs)
     return config_list
-
-
