@@ -110,7 +110,9 @@ def annotate_metrics_df(
         asset_ids = metrics_df.index.get_level_values(1)
         metrics_df[tag_col] = asset_ids
     elif tag_mode == "magnitude_quantile_rank":
+        # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
+        # TODO(Nina): Pass target column name and number of quantiles via config.
         qcut_func = lambda x: pd.qcut(x, 10, labels=False)
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             "vwap.ret_0.vol_adj"
