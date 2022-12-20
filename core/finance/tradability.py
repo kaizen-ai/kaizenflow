@@ -10,7 +10,6 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
-import statsmodels
 from numpy.typing import ArrayLike
 
 import helpers.hdbg as hdbg
@@ -88,28 +87,6 @@ def get_predictions(
     # Change the index for easy attachment to initial DataFrame.
     pred.index = df.index
     return pred
-
-
-def calculate_confidence_interval(
-    hit_series: pd.Series, alpha: float, method: str
-) -> None:
-    """
-    :param hit_series: boolean series with hit values
-    :param alpha: significance level
-    :param method: "normal", "agresti_coull", "beta", "wilson", "binom_test"
-    """
-    point_estimate = hit_series.mean()
-    hit_lower, hit_upper = statsmodels.stats.proportion.proportion_confint(
-        count=hit_series.sum(),
-        nobs=hit_series.count(),
-        alpha=alpha,
-        method=method,
-    )
-    result_values_pct = [100 * point_estimate, 100 * hit_lower, 100 * hit_upper]
-    conf_alpha = (1 - alpha / 2) * 100
-    print(f"hit_rate: {result_values_pct[0]}")
-    print(f"hit_rate_lower_CI_({conf_alpha}%): {result_values_pct[1]}")
-    print(f"hit_rate_upper_CI_({conf_alpha}%): {result_values_pct[2]}")
 
 
 def get_predictions_and_hits(df, ret_col, hit_rate, seed):

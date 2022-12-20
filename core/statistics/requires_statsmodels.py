@@ -266,6 +266,8 @@ def apply_ljung_box_test(
 # #############################################################################
 
 
+# TODO(Grisha): can we use `scipy.stats.binomtest.proportion_ci` instead?
+# to get rid of `statsmodels` dependency?
 def calculate_hit_rate(
     srs: pd.Series,
     alpha: Optional[float] = None,

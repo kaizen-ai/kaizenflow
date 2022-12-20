@@ -4,16 +4,21 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 import logging
-from typing import List, Optional
+from typing import Any, List, Optional
 
-import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.statistics.requires_statsmodels as cstresta
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# Data preprocessing
+# #############################################################################
 
 
 def convert_to_metrics_format(
@@ -75,6 +80,11 @@ def convert_to_metrics_format(
     return metrics_df
 
 
+# #############################################################################
+# Tags
+# #############################################################################
+
+
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
     tag_mode: str,
@@ -112,6 +122,11 @@ def annotate_metrics_df(
     return metrics_df
 
 
+# #############################################################################
+# Metrics
+# #############################################################################
+
+
 def compute_hit(
     y: pd.Series,
     y_hat: pd.Series,
@@ -119,8 +134,8 @@ def compute_hit(
     """
     Compute hit.
 
-    Hit is `True` when prediction's sign matches target variable's sign,
-    otherwise it is `False`.
+    Hit is 1 when prediction's sign matches target variable's sign,
+    otherwise it is -1.
 
     :param y: target variable
     :param y_hat: predicted value of y
@@ -131,8 +146,42 @@ def compute_hit(
     hdbg.dassert_isinstance(y_hat, pd.Series)
     hdbg.dassert_lt(0, y_hat.shape[0])
     #
-    hit = (y * y_hat) >= 0
+    hit = ((y * y_hat) >= 0).astype(int)
+    hit[hit == 0] = -1
     return hit
+
+
+def compute_hit_rate_with_bounds(
+    df: pd.DataFrame,
+    *,
+    hit_column_name: str = "hit",
+    # TODO(Grisha): maybe we agree that in `metrics_df` target variable's and prediction's
+    # column names are `y` and `y_hat` by default? The config specifies the mapping between
+    # column names in predict_df to column names in metrics_df.
+    y_column_name: str = "y",
+    y_hat_column_name: str = "y_hat",
+    **calculate_hit_rate_kwargs: Any,
+) -> pd.Series:
+    """
+    Compute hit rate statistics: point estimate, lower bound, upper bound.
+
+    :param df: metrics_df
+    :param hit_column_name: hit column name
+    :param y_column_name: target variable's column name
+    :param y_hat_column_name: prediction's column name
+    :param calculate_hit_rate_kwargs: kwargs for `calculate_hit_rate()`
+    :return: hit rate: point estimate, lower bound, upper bound
+    """
+    if hit_column_name not in df.columns:
+        # Compute hit if missing.
+        df[hit_column_name] = compute_hit(
+            df[y_column_name], df[y_hat_column_name]
+        )
+    hdbg.dassert_in(hit_column_name, df.columns)
+    hit_rate_with_bounds = cstresta.calculate_hit_rate(
+        df[hit_column_name], **calculate_hit_rate_kwargs
+    )
+    return hit_rate_with_bounds
 
 
 def apply_metrics(
@@ -176,12 +225,16 @@ def apply_metrics(
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
             metrics_df[metric_mode] = compute_hit(y, y_hat)
-            # TODO(Grisha): add CIs and re-use `calculate_hit_rate()`.
-            srs = metrics_df.groupby(tag_col)[metric_mode].agg(np.mean)
+            srs = compute_hit_rate_with_bounds(
+                metrics_df,
+                hit_column_name=metric_mode,
+                y_column_name=y,
+                y_hat_column_name=y_hat,
+            )
+            df_tmp = srs.to_frame()
+            out_dfs.append(df_tmp)
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
-        df_tmp = srs.to_frame()
-        out_dfs.append(df_tmp)
     out_df = pd.concat(out_dfs)
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
