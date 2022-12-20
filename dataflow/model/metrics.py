@@ -145,7 +145,7 @@ def compute_hit(
     hdbg.dassert_lt(0, y.shape[0])
     hdbg.dassert_isinstance(y_hat, pd.Series)
     hdbg.dassert_lt(0, y_hat.shape[0])
-    #
+    # Compute hit and convert boolean values to 1 and -1.
     hit = ((y * y_hat) >= 0).astype(int)
     hit[hit == 0] = -1
     return hit
