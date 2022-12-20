@@ -31,7 +31,7 @@ import helpers.henv as henv
 import helpers.hprint as hprint
 import helpers.hio as hio
 import core.config as cconfig
-import im_v2.ccxt.data.extract.compare_realtime_and_historical as imvcdecrah
+import im_v2.common.data.extract.data_qa as imvcodedq
 
 # %% [markdown]
 # ### Logging
@@ -57,15 +57,15 @@ config = cconfig.Config.from_env_var(env_var_name)
 # %%
 # Transform resample_mode to parameter supported
 #  by the reconciler
-config["resample_1sec"] = config["resample_mode"] == "resample_1sec"
-config["resample_1min"] = config["resample_mode"] == "resample_1min"
+# config["resample_1sec"] = config["resample_mode"] == "resample_1sec"
+# config["resample_1min"] = config["resample_mode"] == "resample_1min"
 
 # %%
 config = config.to_dict()
 # bid_ask_accuracy needs to be cast to int if its defined
 config["bid_ask_accuracy"] = int(config["bid_ask_accuracy"]) if config["bid_ask_accuracy"] else None
 # bid_ask_depth needs to be cast to int if its defined
-config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
+# config["bid_ask_depth"] = int(config["bid_ask_depth"]) if config["bid_ask_depth"] else None
 config
 
 # %% [markdown]
@@ -74,7 +74,7 @@ config
 # %%
 # The class was originally intended to be used via a cmdline script
 args = argparse.Namespace(**config)
-reconciler = imvcdecrah.RealTimeHistoricalReconciler(args)
+reconciler = imvcodedq.RealTimeHistoricalReconciler(args)
 
 # %%
 # CCXT Realtime data

@@ -1,4 +1,5 @@
-# This DAG is used to download realtime data to the database.
+# This DAG is used to download realtime data to the IM database
+#  via REST API.
 
 
 import airflow
@@ -12,7 +13,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to
+# This variable will be propagated throughout DAG definition as a prefix to 
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -29,27 +30,29 @@ assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
-_PROVIDERS = ["ccxt"]
+_VENDORS = ["ccxt"]
 _UNIVERSES = {"ccxt": "v7"}
 #_CONTRACTS = ["spot", "futures"]
-_CONTRACTS = ["spot", "futures"]
+_CONTRACTS = ["futures"]
 #_DATA_TYPES = ["ohlcv", "bid_ask"]
 _DATA_TYPES = ["ohlcv"]
-# How many levels deep in to order book
-# to downlaod per iteration per symbol
-_BID_ASK_DEPTH = 10
 # How often should a downloader within a single container run.
-# TODO{Juraj): change to seconds after # CmTask2817.
-# (In minutes)
-_DOWNLOAD_INTERVAL = {"ohlcv": 1, "bid_ask": 1}
+_DOWNLOAD_INTERVAL = {"ohlcv": 1}
 # Specify how long should the DAG be running for (in minutes).
 _RUN_FOR = 60
 # Specify how much in advance should the DAG be scheduled (in minutes).
-# We leave a couple minutes to account for delay in container setup
+# We leave a couple minutes to account for delay in container setup 
 # such that the download can start at a precise point in time.
 _DAG_STANDBY = 6
+# These values are changed dynamically based on DAG purpose and nature
+#  of the downloaded data
+_DOWNLOAD_MODE = "periodic_1min"
+_ACTION_TAG = "downloaded_1min"
+_DATA_FORMAT = "postgres"
+# The value is implicit since this is an Airflow DAG.
+_DOWNLOADING_ENTITY = "airflow"
 _DAG_DESCRIPTION = f"Realtime {_DATA_TYPES} data download, contracts:" \
-                + f"{_CONTRACTS}, using {_PROVIDERS} from {_EXCHANGES}."
+                + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
 # Specify when/how often to execute the DAG.
 _SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
 
@@ -68,11 +71,11 @@ _TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize
+# in log groups, stream prefixes and container names to minimize 
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but
+# Subnets and security group is not needed for EC2 deployment but 
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -89,23 +92,27 @@ default_args = {
 
 # Create a command, leave values to be parametrized.
 bash_command = [
-    "/app/amp/im_v2/{}/data/extract/download_realtime_for_one_exchange_periodically.py",
+    "/app/amp/im_v2/{}/data/extract/download_exchange_data_to_db_periodically.py",
     "--exchange_id '{}'",
     "--universe '{}'",
     "--db_table '{}'",
     "--data_type '{}'",
     "--contract_type '{}'",
-    "--db_stage 'dev'",
     "--interval_min '{}'",
+    "--vendor {}",
+    "--db_stage 'dev'",
     # This argument gets ignored for OHLCV data type.
-    f"--bid_ask_depth '{_BID_ASK_DEPTH}'",
     "--aws_profile 'ck'",
     # At this point we set up a logic for real time execution
     # Start date is postponed by _DAG_STANDBY minutes and a short
     # few seconds delay to ensure the bars from the nearest minute are finished.
-    "--start_time '{{ data_interval_end + macros.timedelta(minutes=var.value.rt_data_download_standby_min | int, seconds=10) }}'",
-    "--stop_time '{{ data_interval_end + macros.timedelta(minutes=(var.value.rt_data_download_run_for_min | int) + var.value.rt_data_download_standby_min | int) }}'",
+    "--start_time '{{ macros.datetime.now().replace(second=0, microsecond=0) + macros.timedelta(minutes=var.value.rt_data_download_standby_min | int, seconds=10) }}'",
+    "--stop_time '{{ macros.datetime.now().replace(second=0, microsecond=0) + macros.timedelta(minutes=(var.value.rt_data_download_run_for_min | int) + var.value.rt_data_download_standby_min | int) }}'",
     "--method 'rest'",
+    f"--download_mode '{_DOWNLOAD_MODE}'",
+    f"--downloading_entity '{_DOWNLOADING_ENTITY}'",
+    f"--action_tag '{_ACTION_TAG}'",
+    f"--data_format '{_DATA_FORMAT}'",
 ]
 
 # Create a DAG.
@@ -123,9 +130,9 @@ start_task = DummyOperator(task_id="start", dag=dag)
 end_task = DummyOperator(task_id="end", dag=dag)
 
 
-for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
+for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
 
-    table_name = f"{provider}_{data_type}"
+    table_name = f"{vendor}_{data_type}"
     #TODO(Juraj): CmTask2804.
     if contract == "futures":
         table_name += "_futures"
@@ -133,13 +140,14 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
 
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(bash_command)
-    curr_bash_command[0] = curr_bash_command[0].format(provider)
+    curr_bash_command[0] = curr_bash_command[0].format(vendor)
     curr_bash_command[1] = curr_bash_command[1].format(exchange)
-    curr_bash_command[2] = curr_bash_command[2].format(_UNIVERSES[provider])
+    curr_bash_command[2] = curr_bash_command[2].format(_UNIVERSES[vendor])
     curr_bash_command[3] = curr_bash_command[3].format(table_name)
     curr_bash_command[4] = curr_bash_command[4].format(data_type)
     curr_bash_command[5] = curr_bash_command[5].format(contract)
-    curr_bash_command[7] = curr_bash_command[7].format(_DOWNLOAD_INTERVAL[data_type])
+    curr_bash_command[6] = curr_bash_command[6].format(_DOWNLOAD_INTERVAL[data_type])
+    curr_bash_command[7] = curr_bash_command[7].format(vendor)
 
     kwargs = {}
     kwargs["network_configuration"] = {
@@ -150,7 +158,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
     }
 
     downloading_task = ECSOperator(
-        task_id=f"rt_download_{provider}_{exchange}_{data_type}_{contract}",
+        task_id=f"download.{vendor}.{exchange}.{data_type}.{contract}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
