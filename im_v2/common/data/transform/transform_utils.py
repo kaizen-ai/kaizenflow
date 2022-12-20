@@ -265,13 +265,13 @@ def calculate_vwap(
 
 # TODO(Juraj): CmTask #3235 remove dependency on having exchange column
 #  it adds unnecessary complexity.
-def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
+def resample_bid_ask_dat_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
     Resample bid/ask data to 1 minute interval for single symbol.
 
     The method expects data in the following format:
-              exchange,id bid_size,bid_price,ask_size,ask_price
-    timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25
+            bid_size, bid_price, ask_size, ask_price
+    timestamp 2022-11-16T00:00:01+00:00 5450, 13.50, 5200, 13.25
 
     The method expects data coming from a single exchange.
 
@@ -281,6 +281,21 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
     """
     # Set resample arguments according to our data invariant [a, b) and
     #  set label to 'b';
+    desired_data_format = pd.DataFrame(
+        {
+            "bid_price": pd.Series(dtype=float),
+            "bid_size": pd.Series(dtype=float),
+            "ask_price": pd.Series(dtype=float),
+            "ask_size": pd.Series(dtype=float),
+        }
+    )
+    try:
+        hdbg.dassert(
+            all(desired_data_format.dtypes == data.dtypes),
+            msg="Input format is wrong"
+        )
+    except ValueError:
+        _LOG.error("Input format is wrong")
     resample_kwargs = {
         "rule": "T",
         "closed": "left",
@@ -299,7 +314,8 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
             data[["bid_size", "ask_size"]]
             .groupby(
                 pd.Grouper(
-                    freq=resample_kwargs["rule"], label=resample_kwargs["label"]
+                    freq=resample_kwargs["rule"],
+                    label=resample_kwargs["label"]
                 )
             )
             .mean()
@@ -310,7 +326,6 @@ def resample_bid_ask_data(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFram
         {
             "bid_size": "sum",
             "ask_size": "sum",
-            "exchange_id": "last",
         }
     )
     df.insert(0, "bid_price", bid_ask_price_df["bid_size"])
@@ -325,8 +340,8 @@ def resample_multilevel_bid_ask_data(
     Resample multilevel bid/ask data to 1 minute interval for single symbol.
 
     The method expects data in the following format:
-              exchange,id bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
-    timestamp 2022-11-16T00:00:01+00:00, binance, 5450, 13.50, 5200, 13.25...
+            exchange_id, bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
+    timestamp 2022-11-16T00:00:01+00:00 binance, 5450, 13.50, 5200, 13.25...
 
     The method assumes 10 levels of order book and a data coming
     from single exchange.
@@ -338,20 +353,17 @@ def resample_multilevel_bid_ask_data(
     all_levels_resampled = []
     for i in range(1, 11):
         bid_ask_cols_level = map(lambda x: f"{x}_l{i}", BID_ASK_COLS)
-        one_level_resampling_cols = list(bid_ask_cols_level) + ["exchange_id"]
+        one_level_resampling_cols = list(bid_ask_cols_level)
         data_one_level = data[one_level_resampling_cols]
         # Canonize column name for resampling function.
-        data_one_level.columns = BID_ASK_COLS + ["exchange_id"]
-        data_one_level = resample_bid_ask_data(data_one_level, mode)
+        data_one_level.columns = BID_ASK_COLS
+        data_one_level = resample_bid_ask_dat_to_1min(data_one_level, mode)
         # Uncanonize the column levels back.
         data_one_level.columns = one_level_resampling_cols
-        # Temporarily remove exchange_id column to avoid duplicate
-        #  column error when applying pd.concat().
-        data_one_level = data_one_level.drop(["exchange_id"], axis=1)
         all_levels_resampled.append(data_one_level)
     # Drop duplicate columns because a vetical concatenation follows.
     data_resampled = pd.concat(all_levels_resampled, axis=1)
-    # Insert exchange_id column back as it was removed inside loop.
+    # Insert exchange_id column
     data_resampled["exchange_id"] = data["exchange_id"].iloc[0]
     return data_resampled
 
@@ -401,11 +413,8 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
             # Set resample arguments according to our data invariant [a, b).
             .resample(rule="S", closed="left", label="left").mean()
         )
-        # Add the exchange_id column back for compatibility with the
-        # 1 min resampling function.
-        df_part["exchange_id"] = exchange_id
         # Resample to 1 min.
-        df_part = resample_bid_ask_data(df_part)
+        df_part = resample_bid_ask_dat_to_1min(df_part)
         # Add the removed columns back.
         df_part["currency_pair"] = currency_pair
         df_part["level"] = level
