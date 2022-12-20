@@ -33,7 +33,7 @@ class DataDownloader(abc.ABC):
     """
 
     @abc.abstractmethod
-    def download_data(
+    def download(
         self, *, start_timestamp=None, end_timestamp=None, **kwargs: Any
     ) -> RawData:
         """

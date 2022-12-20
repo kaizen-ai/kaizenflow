@@ -41,7 +41,7 @@ class OHLCVBinanceAPIDownloader(sinsadow.DataDownloader):
         ]
     }
 
-    def download_data(
+    def download(
         self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
     ) -> sinsadow.RawData:
         # Convert timestamps.
@@ -172,7 +172,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
     downloader = OHLCVBinanceAPIDownloader()
-    raw_data = downloader.download_data(start_timestamp, end_timestamp)
+    raw_data = downloader.download(start_timestamp, end_timestamp)
     saver = CSVDataFrameSaver(args.output_file)
     saver.save_data(raw_data)
 
