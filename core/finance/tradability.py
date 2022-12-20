@@ -10,6 +10,7 @@ from typing import Dict
 
 import numpy as np
 import pandas as pd
+import statsmodels
 from numpy.typing import ArrayLike
 
 import helpers.hdbg as hdbg
