@@ -16,7 +16,6 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
-
 def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
     """
     Check if the given df is a metrics_df.
@@ -33,7 +32,7 @@ def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
     hdbg.dassert_isinstance(df.columns, pd.Index)
     # We need to check both levels since timestamps of different assets have
     # an intersection, that means the 1st level is not unique among all assets.
-    # However, it's unique for every asset separately. 
+    # However, it's unique for every asset separately.
     hpandas.dassert_strictly_increasing_index(df.index)
     # Check that the 1st level index is valid.
     dt_idx = df.index.get_level_values(0)
