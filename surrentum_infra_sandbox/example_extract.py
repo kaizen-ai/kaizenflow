@@ -81,14 +81,13 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                     [
                         {
                             "symbol": symbol,
-                            "open_time": hdateti.convert_unix_epoch_to_timestamp(
-                                row[0]
-                            ),
                             "open": row[1],
                             "high": row[2],
                             "low": row[3],
                             "close": row[4],
                             "volume": row[5],
+                            # close_time from the raw response.
+                            "timestamp": row[6]
                         }
                         for row in response.json()
                     ]
@@ -213,6 +212,7 @@ def add_download_args(
 
 
 def _parse() -> argparse.ArgumentParser:
+    hdbg.init_logger(use_exec_path=True)
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
