@@ -370,9 +370,12 @@ def perform_spread_analysis(
     spread_hist = spread.hist(bins=101)
     spread_plot = spread.plot()
     spread_in_bps_plot = spread_in_bps.plot()
-    plt.show(spread_hist)
-    plt.show(spread_plot)
-    plt.show(spread_in_bps_plot)
+    # TODO(Danya): Display as subplots.
+#     plt.show(spread_hist)
+#     plt.show(spread_plot)
+#     plt.show(spread_in_bps_plot)
+#     display(spread_hist)
+#     display()
 
 
 # %%
@@ -385,6 +388,7 @@ def plot_limit_orders(
     start_timestamp: Optional[pd.Timestamp] = None,
     end_timestamp: Optional[pd.Timestamp] = None,
 ) -> None:
+    # TODO(Danya): Display as subplots.
     df[
         ["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]
     ].head(1000).plot()
