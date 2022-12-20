@@ -33,6 +33,7 @@
 import logging
 
 import pandas as pd
+import numpy as np
 
 import core.config as cconfig
 import core.finance as cofinanc
@@ -45,6 +46,7 @@ import helpers.hpandas as hpandas
 import helpers.hprint as hprint
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
+from typing import Optional
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -301,6 +303,7 @@ def add_limit_order_prices(
     elif passivity_factor is not None and abs_spread is None:
         limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
         limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
+    #
     df_limit_price = pd.DataFrame()
     df_limit_price[limit_buy_col] = limit_buy_srs
     df_limit_price[limit_sell_col] = limit_sell_srs
@@ -310,6 +313,9 @@ def add_limit_order_prices(
     #
     df[limit_buy_col] = df[limit_buy_col].ffill()
     df[limit_sell_col] = df[limit_sell_col].ffill()
+    #
+    df["is_buy"] = df["ask_price"] <= df[limit_buy_col]
+    df["is_sell"] = df["bid_price"] >= df[limit_sell_col]
     return df
 
 
@@ -350,14 +356,7 @@ df_flat.loc[
 # %% [markdown]
 # As we have seen during the sanity check above, missing data can congregate around certain time points.
 #
-# For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to due to resampling.
-
-# %% [markdown]
-# #### Rechecking whether any rows disappeared
-
-# %%
-# TODO(gp): @Danya
-# def perform_spread_analysys(...)
+# For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to resampling.
 
 # %%
 import matplotlib.pyplot as plt
@@ -395,95 +394,99 @@ def plot_limit_orders(
 # %% [markdown]
 # ## Resample to T_reprice
 
-# %%
-print(df4.shape)
+# %% run_control={"marked": true}
+def compute_repricing_df(df, report_stats: bool):
+    hdbg.dassert_is_subset(["is_buy", "is_sell", "ask_price", "bid_price"], df.columns)
+    # TODO(gp): ask_price -> buy_limit?
+    df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
+    mask = ~df["is_buy"]
+    df["exec_buy_price"][mask] = np.nan
+    #
+    df["exec_sell_price"] = df["is_sell"] * df["bid_price"]
+    mask = ~df["is_sell"]
+    df["exec_sell_price"][mask] = np.nan
+    #
+    if report_stats:
+        print("buy percentage at repricing freq: ", df["is_buy"].sum() / df.shape[0])
+        print(df["is_sell"].sum() / df.shape[0])
+        #
+        print(hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]))
+        print(hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]))
+    return df
+
 
 # %%
-# TODO(gp): @danya compute_repricing_df(df, report_stats):
-
-# TODO(gp): ask_price -> buy_limit?
-df4["exec_buy_price"] = df4["is_buy"] * df4["ask_price"]
-mask = ~df4["is_buy"]
-df4["exec_buy_price"][mask] = np.nan
-
-# df4["exec_price"].plot()
-# df4["exec_price"].mean()
-
-# TODO(gp): Not sure this does what we want. We want to average only the values that are not nan.
-# df4["exec_buy_price"].resample("5T").mean()
-
-df4["exec_sell_price"] = df4["is_sell"] * df4["bid_price"]
-
-mask = ~df4["is_sell"]
-df4["exec_sell_price"][mask] = np.nan
-
-# df4["exec_price"].plot()
-# df4["exec_price"].mean()
+reprice_df = compute_repricing_df(df_limit_order_prices, report_stats=True)
 
 # %%
-# Display as percentages.
-# if report_stats:
-print("buy percentage at repricing freq: ", df4["is_buy"].sum() / df4.shape[0])
-print(df4["is_sell"].sum() / df4.shape[0])
-#
-print(hprint.perc(df4["exec_buy_price"].isnull().sum(), df4.shape[0]))
-print(hprint.perc(df4["exec_sell_price"].isnull().sum(), df4.shape[0]))
+reprice_df.shape
+
+# %%
+reprice_df.head(5)
+
 
 # %% [markdown]
 # ## Resample to T_exec
 
 # %%
-# TODO(gp): @danya ->
-# def compute_execution_df(df, t_exec: str, report_stats)
+def compute_execution_df(df, report_stats: bool):
+    """
+    Compute the number and volume of buy/sell executions.
+    """
+    exec_df = pd.DataFrame()
+    # Count how many "buy" executions there were in an interval.
+    exec_df["exec_buy_num"] = df["is_buy"].resample("5T").sum()
+    exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
+    exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
+    if report_stats:
+        print(hprint.perc(exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]))
+    # Estimate the executed volume.
+    exec_df["exec_buy_volume"] = (
+        (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
+    )
+    if report_stats:
+        print("million USD per 5T=", exec_df["exec_buy_volume"].mean() / 1e6)
+    # # Count how many "sell" executions there were in an interval. 
+    exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
+    exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
+    exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
+    if report_stats:
+        print(hprint.perc(exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]))
 
-df5 = pd.DataFrame()
-# Count how many executions there were in an interval.
-df5["exec_buy_num"] = df4["is_buy"].resample("5T").sum()
-df5["exec_buy_price"] = df4["exec_buy_price"].resample("5T").mean()
-df5["exec_is_buy"] = df5["exec_buy_num"] > 0
-print(hprint.perc(df5["exec_is_buy"].sum(), df5["exec_is_buy"].shape[0]))
+    # Estimate the executed volume.
+    exec_df["exec_sell_volume"] = (
+        (df["bid_size"] * df["bid_price"] * df["is_sell"]).resample("5T").sum()
+    )
+    if report_stats:
+        print("million USD per 5T=", exec_df["exec_sell_volume"].mean() / 1e6)
+    #
+    exec_df["mid"] = df["mid"]
+    return exec_df
 
-# Estimate the executed volume.
-df5["exec_buy_volume"] = (
-    (df4["ask_size"] * df4["ask_price"] * df4["is_buy"]).resample("5T").sum()
-)
-print("million USD per 5T=", df5["exec_buy_volume"].mean() / 1e6)
-# Estimate price as average of executed price.
-# exec_buy_price = (close * exec_is_buy).groupby("5T").sum() / exec_buy_num
 
-# Same for sell.
-# exec_sell_volume = (is_sell * bid_size).group("5T").sum()
-# exec_sell_price = (close * exec_is_sell).groupby("5T").sum() / exec_sell_num
+# %%
+exec_df = compute_execution_df(reprice_df, report_stats=True)
+exec_df.head(5)
 
-df5["exec_sell_num"] = df4["is_sell"].resample("5T").sum()
-df5["exec_sell_price"] = df4["exec_sell_price"].resample("5T").mean()
-df5["exec_is_sell"] = df5["exec_sell_num"] > 0
-print(hprint.perc(df5["exec_is_sell"].sum(), df5["exec_is_sell"].shape[0]))
-
-# Estimate the executed volume.
-df5["exec_sell_volume"] = (
-    (df4["bid_size"] * df4["bid_price"] * df4["is_sell"]).resample("5T").sum()
-)
-print("million USD per 5T=", df5["exec_sell_volume"].mean() / 1e6)
 
 # %% [markdown]
 # ## Compare to benchmark price.
 
-# %%
-# TODO(gp): @danya
-# def compute_benchmark_stats(...)
+# %% run_control={"marked": true}
+def compute_benchmark_stats(df):
+    df["twap_mid_price"] = df["mid"].resample("5T").mean()
+    df[["twap_mid_price", "exec_sell_price", "exec_buy_price"]].head(1000).plot()
+    return df
+
 
 # %%
-# This is the benchmark.
-df5["twap_mid_price"] = df4["mid"].resample("5T").mean()
-
-df5[["twap_mid_price", "exec_sell_price", "exec_buy_price"]].head(1000).plot()
+benchmark_df = compute_benchmark_stats(exec_df)
 
 # %%
-slippage = df5[["twap_mid_price", "exec_sell_price", "exec_buy_price"]]
+slippage = exec_df[["twap_mid_price", "exec_sell_price", "exec_buy_price"]]
 
 slippage["sell_slippage_bps"] = (
-    (df5["exec_sell_price"] - df5["twap_mid_price"]) / df5["twap_mid_price"] * 1e4
+    (exec_df["exec_sell_price"] - exec_df["twap_mid_price"]) / exec_df["twap_mid_price"] * 1e4
 )
 
 # slippage = df["twap_mid_price"] /
