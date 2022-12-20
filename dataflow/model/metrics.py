@@ -25,7 +25,7 @@ def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
        - is indexed by the timestamp of the end of intervals and asset ids
     """
     # Check that df is not empty.
-    hdbg.dassert_lt(1, df.shape[0])
+    hdbg.dassert_lt(0, df.shape[0])
     # Check for number of index levels.
     idx_length = len(df.index.levels)
     hdbg.dassert_eq(idx_length, 2)
