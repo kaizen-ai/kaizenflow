@@ -28,7 +28,7 @@ import surrentum_infra_sandbox.save as sinsasav
 _LOG = logging.getLogger(__name__)
 
 
-class OHLCVBinanceAPIDownloader(sinsadow.DataDownloader):
+class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     """
     Class for downloading OHLCV data using REST API provided by binance.
     """
@@ -155,7 +155,7 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         """
         self.output_file = output_file
 
-    def save_data(self, data: sinsadow.RawData, **kwargs: Any) -> None:
+    def save(self, data: sinsadow.RawData, **kwargs: Any) -> None:
         """
         Save RawData storing a DataFrame to CSV.
 
@@ -171,10 +171,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Convert timestamps.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = OHLCVBinanceAPIDownloader()
+    downloader = OhlcvBinanceRestApiDownloader()
     raw_data = downloader.download(start_timestamp, end_timestamp)
     saver = CSVDataFrameSaver(args.output_file)
-    saver.save_data(raw_data)
+    saver.save(raw_data)
 
 
 def add_download_args(
