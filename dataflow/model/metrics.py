@@ -4,7 +4,7 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 import logging
-from typing import Any, List, Optional
+from typing import List, Optional
 
 import pandas as pd
 
@@ -85,6 +85,7 @@ def convert_to_metrics_format(
 # #############################################################################
 
 
+# TODO(Grisha): @Dan Don't we want to pass a list of tag modes instead of just 1?
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
     tag_mode: str,
@@ -105,15 +106,17 @@ def annotate_metrics_df(
         representing the number of hours is added
     """
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    # Reset asset ids index to a column to ease the processing.
+    metrics_df = metrics_df.reset_index(1)
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.columns)
     if tag_mode == "hour":
-        # Check if index of the given level is a datetime type.
-        idx = metrics_df.index.get_level_values(0)
-        hpandas.dassert_index_is_datetime(idx)
-        metrics_df[tag_col] = idx.hour
+        # Check if index is a datetime type.
+        idx_datetime = metrics_df.index
+        hpandas.dassert_index_is_datetime(idx_datetime)
+        metrics_df[tag_col] = idx_datetime.hour
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     else:
@@ -136,6 +139,7 @@ def compute_hit(
 
     Hit is 1 when prediction's sign matches target variable's sign,
     otherwise it is -1.
+    The function returns -1 and 1 for compatibility with `calculate_hit_rate()`.
 
     :param y: target variable
     :param y_hat: predicted value of y
@@ -151,39 +155,6 @@ def compute_hit(
     return hit
 
 
-def compute_hit_rate_with_bounds(
-    df: pd.DataFrame,
-    *,
-    hit_column_name: str = "hit",
-    # TODO(Grisha): maybe we agree that in `metrics_df` target variable's and prediction's
-    # column names are `y` and `y_hat` by default? The config specifies the mapping between
-    # column names in predict_df to column names in metrics_df.
-    y_column_name: str = "y",
-    y_hat_column_name: str = "y_hat",
-    **calculate_hit_rate_kwargs: Any,
-) -> pd.Series:
-    """
-    Compute hit rate statistics: point estimate, lower bound, upper bound.
-
-    :param df: metrics_df
-    :param hit_column_name: hit column name
-    :param y_column_name: target variable's column name
-    :param y_hat_column_name: prediction's column name
-    :param calculate_hit_rate_kwargs: kwargs for `calculate_hit_rate()`
-    :return: hit rate: point estimate, lower bound, upper bound
-    """
-    if hit_column_name not in df.columns:
-        # Compute hit if missing.
-        df[hit_column_name] = compute_hit(
-            df[y_column_name], df[y_hat_column_name]
-        )
-    hdbg.dassert_in(hit_column_name, df.columns)
-    hit_rate_with_bounds = cstresta.calculate_hit_rate(
-        df[hit_column_name], **calculate_hit_rate_kwargs
-    )
-    return hit_rate_with_bounds
-
-
 def apply_metrics(
     metrics_df: pd.DataFrame,
     tag_col: str,
@@ -194,7 +165,7 @@ def apply_metrics(
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
     to `metric_modes`.
 
-    E.g., `using tag_col = "asset_id"` and `metric_mode=["pnl", "hit_rate"]` the
+    E.g., `using tag_col = "asset_id"` and `metric_modes=["pnl", "hit_rate"]` the
     output is like:
     ```
                 hit_rate   pnl
@@ -224,12 +195,17 @@ def apply_metrics(
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
-            metrics_df[metric_mode] = compute_hit(y, y_hat)
-            srs = compute_hit_rate_with_bounds(
-                metrics_df,
-                hit_column_name=metric_mode,
-                y_column_name=y,
-                y_hat_column_name=y_hat,
+            # Column name is the same as the metric mode.
+            hit_col_name = metric_mode
+            if hit_col_name not in metrics_df.columns:
+                # Compute hit.
+                metrics_df[hit_col_name] = compute_hit(y, y_hat)
+            # Compute hit rate per tag column.
+            group_df = metrics_df.groupby(tag_col)
+            srs = group_df[hit_col_name].apply(
+                lambda x: cstresta.calculate_hit_rate(
+                    x, **config["calculate_hit_rate_kwargs"]
+                )
             )
             df_tmp = srs.to_frame()
             out_dfs.append(df_tmp)
