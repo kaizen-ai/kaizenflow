@@ -106,17 +106,20 @@ def annotate_metrics_df(
         representing the number of hours is added
     """
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
-    # Reset asset ids index to a column to ease the processing.
-    metrics_df = metrics_df.reset_index(1)
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.columns)
+    # TODO(Dan) "asset_id" cannot be both index and column so think of a better approach.
+    # Reset asset ids index to a column to ease the processing.
+    metrics_df = metrics_df.reset_index(1)
     if tag_mode == "hour":
         # Check if index is a datetime type.
         idx_datetime = metrics_df.index
         hpandas.dassert_index_is_datetime(idx_datetime)
         metrics_df[tag_col] = idx_datetime.hour
+    elif tag_mode == "asset_id":
+        pass
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     else:
