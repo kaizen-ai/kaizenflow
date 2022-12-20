@@ -6,6 +6,7 @@ import dataflow.model.metrics as dtfmodmetr
 import logging
 from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -227,7 +228,8 @@ def apply_metrics(
         - as index the values of the tags
         - as columns the names of the applied metrics
     """
-    _dassert_is_metrics_df(metrics_df)
+    # TODO(Dan): Uncomment when annotation approach is agreed.
+    # _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
