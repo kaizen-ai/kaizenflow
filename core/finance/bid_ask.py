@@ -174,6 +174,7 @@ def handle_orderbook_levels(
     """
     _LOG.debug(hprint.to_str("timestamp_col bid_prefix ask_prefix"))
     hdbg.dassert_in(timestamp_col, df.reset_index().columns)
+    df = df.reset_index()
     # Specify bid-ask and non-bid-ask columns.
     bid_ask_cols = [
         col
@@ -183,13 +184,13 @@ def handle_orderbook_levels(
     # Index of pivoted data shouldn't also contain `level` (used as columns) and `id` (creates duplicates).
     non_bid_ask_cols = [
         col
-        for col in df.reset_index().columns
+        for col in df.columns
         if col not in bid_ask_cols + ["level", "id"]
     ]
     # TODO(Max): Create an assertion that all values for levels are identical,
     # so we are merging the rows without duplicates (i.e., "knowledge_timestamp" and "end_download_timestamp").
     # Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
-    pivoted_data = df.reset_index().pivot(
+    pivoted_data = df.pivot(
         index=non_bid_ask_cols,
         columns=["level"],
         values=bid_ask_cols,
@@ -197,6 +198,6 @@ def handle_orderbook_levels(
     # Rename the columns to a desired {value}_{level} format.
     pivoted_data.columns = pivoted_data.columns.map("{0[0]}_l{0[1]}".format)
     # Fix indices.
-    df = pivoted_data.reset_index(non_bid_ask_cols)
+    df = pivoted_data.reset_index()
     df = df.set_index(timestamp_col)
     return df
