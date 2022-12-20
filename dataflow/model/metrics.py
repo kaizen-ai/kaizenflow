@@ -21,8 +21,8 @@ def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
     Check if the given df is a metrics_df.
 
     A metrics_df:
-       - has a multi-index
-       - is indexed by the timestamp of the end of intervals and asset ids
+       - is indexed by the pair (end timestamp, asset id)
+       - has all the features as columns
     """
     # Check that df is not empty.
     hdbg.dassert_lt(0, df.shape[0])
@@ -98,7 +98,7 @@ def convert_to_metrics_format(
     metrics_df = hpandas.dropna(metrics_df, **drop_kwargs)
     #
     metrics_df.index.names = [metrics_df.index.names[0], asset_id_column_name]
-    hdbg.dassert_eq(2, len(metrics_df.index.levels))
+    _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
     return metrics_df
 
@@ -204,7 +204,7 @@ def apply_metrics(
     """
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
-    hdbg.dassert_in(tag_col, metrics_df.columns)
+    hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
     y = metrics_df[config["y_column_name"]]
     y_hat = metrics_df[config["y_hat_column_name"]]
