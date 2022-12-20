@@ -263,8 +263,6 @@ def calculate_vwap(
     return calculated_price
 
 
-# TODO(Juraj): CmTask #3235 remove dependency on having exchange column
-#  it adds unnecessary complexity.
 def resample_bid_ask_dat_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
     Resample bid/ask data to 1 minute interval for single symbol.
