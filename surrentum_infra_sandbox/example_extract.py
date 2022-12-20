@@ -2,18 +2,19 @@
 """
 Example implementation of abstract classes for ETL and QA pipeline.
 
-Download historical data from Binance and save it as CSV locally.
+Download OHLCV data from Binance and save it as CSV locally.
 
 Use as:
 # Download OHLCV data for binance:
 > example_extract.py \
     --start_timestamp '2022-10-20 10:00:00+00:00' \
     --end_timestamp '2022-10-21 15:30:00+00:00' \
-    --output_file test1.csv
+    --target_dir '.'
 """
 import argparse
 import logging
 import time
+import os
 from typing import Any, Generator, Tuple
 
 import pandas as pd
@@ -147,13 +148,13 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
     location.
     """
 
-    def __init__(self, output_file: str) -> None:
+    def __init__(self, target_dir: str) -> None:
         """
         Constructor.
 
-        :param output_file: path to save data to.
+        :param target_dir: path to save data to.
         """
-        self.output_file = output_file
+        self.target_dir = target_dir
 
     def save(self, data: sinsadow.RawData, **kwargs: Any) -> None:
         """
@@ -163,7 +164,11 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         """
         if not isinstance(data.get_data(), pd.DataFrame):
             raise ValueError("Only DataFrame is supported.")
-        data.get_data().to_csv(self.output_file, index=False)
+        # TODO(Juraj): rewrite using dataset_schema_utils.
+        signature = "bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0"
+        signature += ".csv"
+        target_path = os.path.join(self.target_dir, signature)
+        data.get_data().to_csv(target_path, index=False)
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
@@ -173,7 +178,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     end_timestamp = pd.Timestamp(args.end_timestamp)
     downloader = OhlcvBinanceRestApiDownloader()
     raw_data = downloader.download(start_timestamp, end_timestamp)
-    saver = CSVDataFrameSaver(args.output_file)
+    saver = CSVDataFrameSaver(args.target_dir)
     saver.save(raw_data)
 
 
@@ -188,21 +193,21 @@ def add_download_args(
         required=True,
         action="store",
         type=str,
-        help="Beginning of the downloaded period - example 2022-02-09 10:00:00-04:00",
+        help="Beginning of the loaded period, e.g. 2022-02-09 10:00:00+00:00",
     )
     parser.add_argument(
         "--end_timestamp",
         action="store",
         required=True,
         type=str,
-        help="End of the downloaded period - example 2022-02-10 10:00:00-04:00",
+        help="End of the loaded period, e.g. 2022-02-10 10:00:00+00:00",
     )
     parser.add_argument(
-        "--output_file",
+        "--target_dir",
         action="store",
         required=True,
         type=str,
-        help="Absolute path to the output file",
+        help="Absolute path to the target directory to store data to",
     )
     return parser
 

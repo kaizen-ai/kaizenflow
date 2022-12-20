@@ -38,6 +38,9 @@ class DataDownloader(abc.ABC):
     ) -> RawData:
         """
         Download data from a desired source.
+        
+        The invariant for downloading in a specified time interval is:
+        [start_timestamp, end_timestamp) -> start_timestamp included, end_timestamp excluded.
 
         :param start_timestamp: start of the download period (context differs based on data type).
         If None, start with the earliest possible data.
