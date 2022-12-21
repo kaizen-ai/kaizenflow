@@ -16,6 +16,34 @@ import helpers.hpandas as hpandas
 _LOG = logging.getLogger(__name__)
 
 
+def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
+    """
+    Check if the given df is a metrics_df.
+
+    A metrics_df:
+       - is indexed by the pair (end timestamp, asset id)
+       - has all the features as columns
+    """
+    # Check that df is not empty.
+    hdbg.dassert_lt(0, df.shape[0])
+    # Check for number of index levels.
+    idx_length = len(df.index.levels)
+    hdbg.dassert_eq(idx_length, 2)
+    hdbg.dassert_isinstance(df.columns, pd.Index)
+    # We need to check both levels since timestamps of different assets have
+    # an intersection, that means the 1st level is not unique among all assets.
+    # However, it's unique for every asset separately.
+    hpandas.dassert_strictly_increasing_index(df.index)
+    # Check that the 1st level index is valid.
+    dt_idx = df.index.get_level_values(0)
+    hpandas.dassert_index_is_datetime(dt_idx)
+    hdbg.dassert_eq(dt_idx.name, "end_ts")
+    # Check that the 2nd level index is valid.
+    asset_id_idx = df.index.get_level_values(1)
+    hpandas.dassert_series_type_is(pd.Series(asset_id_idx), np.int64)
+    hdbg.dassert_eq(asset_id_idx.name, "asset_id")
+
+
 def convert_to_metrics_format(
     predict_df: pd.DataFrame,
     y_column_name: str,
@@ -70,7 +98,7 @@ def convert_to_metrics_format(
     metrics_df = hpandas.dropna(metrics_df, **drop_kwargs)
     #
     metrics_df.index.names = [metrics_df.index.names[0], asset_id_column_name]
-    hdbg.dassert_eq(2, len(metrics_df.index.levels))
+    _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(metrics_df))
     return metrics_df
 
@@ -94,18 +122,26 @@ def annotate_metrics_df(
     :return: `metrics_df` with a new column, e.g., if `tag_mode="hour"` a new column
         representing the number of hours is added
     """
+    _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
-    hdbg.dassert_not_in(tag_col, metrics_df.columns)
+    hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "hour":
-        # Check if index of the given level is a datetime type.
         idx = metrics_df.index.get_level_values(0)
-        hpandas.dassert_index_is_datetime(idx)
         metrics_df[tag_col] = idx.hour
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
+    elif tag_mode == "magnitude_quantile_rank":
+        # Get the asset id index name to group data by.
+        idx_name = metrics_df.index.names[1]
+        # TODO(Nina): Pass target column name and number of quantiles via config.
+        qcut_func = lambda x: pd.qcut(x, 10, labels=False)
+        magnitude_quantile_rank = metrics_df.groupby(idx_name)[
+            "vwap.ret_0.vol_adj"
+        ].transform(qcut_func)
+        metrics_df[tag_col] = magnitude_quantile_rank
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
@@ -166,8 +202,9 @@ def apply_metrics(
         - as index the values of the tags
         - as columns the names of the applied metrics
     """
+    _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
-    hdbg.dassert_in(tag_col, metrics_df.columns)
+    hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
     y = metrics_df[config["y_column_name"]]
     y_hat = metrics_df[config["y_hat_column_name"]]
