@@ -10,10 +10,16 @@ import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.statistics.requires_statsmodels as cstresta
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
 _LOG = logging.getLogger(__name__)
+
+
+# #############################################################################
+# Data preprocessing
+# #############################################################################
 
 
 def _dassert_is_metrics_df(df: pd.DataFrame) -> None:
@@ -103,6 +109,12 @@ def convert_to_metrics_format(
     return metrics_df
 
 
+# #############################################################################
+# Tags
+# #############################################################################
+
+
+# TODO(Grisha): @Dan Pass a list of tag modes instead of just 1.
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
     tag_mode: str,
@@ -129,8 +141,8 @@ def annotate_metrics_df(
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "hour":
-        idx = metrics_df.index.get_level_values(0)
-        metrics_df[tag_col] = idx.hour
+        idx_datetime = metrics_df.index.get_level_values(0)
+        metrics_df[tag_col] = idx_datetime.hour
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     elif tag_mode == "magnitude_quantile_rank":
@@ -148,6 +160,11 @@ def annotate_metrics_df(
     return metrics_df
 
 
+# #############################################################################
+# Metrics
+# #############################################################################
+
+
 def compute_hit(
     y: pd.Series,
     y_hat: pd.Series,
@@ -155,8 +172,9 @@ def compute_hit(
     """
     Compute hit.
 
-    Hit is `True` when prediction's sign matches target variable's sign,
-    otherwise it is `False`.
+    Hit is 1 when prediction's sign matches target variable's sign,
+    otherwise it is -1.
+    The function returns -1 and 1 for compatibility with `calculate_hit_rate()`.
 
     :param y: target variable
     :param y_hat: predicted value of y
@@ -166,8 +184,9 @@ def compute_hit(
     hdbg.dassert_lt(0, y.shape[0])
     hdbg.dassert_isinstance(y_hat, pd.Series)
     hdbg.dassert_lt(0, y_hat.shape[0])
-    #
-    hit = (y * y_hat) >= 0
+    # Compute hit and convert boolean values to 1 and -1.
+    hit = ((y * y_hat) >= 0).astype(int)
+    hit[hit == 0] = -1
     return hit
 
 
@@ -181,7 +200,7 @@ def apply_metrics(
     Given a metric_dfs tagged with `tag_col`, compute the metrics corresponding
     to `metric_modes`.
 
-    E.g., `using tag_col = "asset_id"` and `metric_mode=["pnl", "hit_rate"]` the
+    E.g., `using tag_col = "asset_id"` and `metric_modes=["pnl", "hit_rate"]` the
     output is like:
     ```
                 hit_rate   pnl
@@ -212,13 +231,25 @@ def apply_metrics(
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
-            metrics_df[metric_mode] = compute_hit(y, y_hat)
-            # TODO(Grisha): add CIs and re-use `calculate_hit_rate()`.
-            srs = metrics_df.groupby(tag_col)[metric_mode].agg(np.mean)
+            # Column name is the same as the metric mode.
+            hit_col_name = metric_mode
+            if hit_col_name not in metrics_df.columns:
+                # Compute hit.
+                metrics_df[hit_col_name] = compute_hit(y, y_hat)
+            # Compute hit rate per tag column.
+            group_df = metrics_df.groupby(tag_col)
+            srs = group_df[hit_col_name].apply(
+                lambda x: cstresta.calculate_hit_rate(
+                    x, **config["calculate_hit_rate_kwargs"]
+                )
+            )
+            df_tmp = srs.to_frame()
+            out_dfs.append(df_tmp)
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
-        df_tmp = srs.to_frame()
-        out_dfs.append(df_tmp)
     out_df = pd.concat(out_dfs)
+    # Set output to the desired format.
+    out_df = out_df.unstack(level=1)
+    out_df.columns = out_df.columns.droplevel(0)
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
