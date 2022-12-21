@@ -258,11 +258,13 @@ def apply_metrics(
                 )
             # Compute bar PnL per tag column.
             group_df = metrics_df.groupby(tag_col)
-            df_tmp = group_df.apply(
-                lambda x: cfintrad.compute_pnl(
+            srs = group_df.apply(
+                lambda x: cfintrad.compute_total_pnl(
                     x, y_column_name, y_hat_column_name
                 )
             )
+            srs.name = "bar_pnl_point_est_(%)"
+            df_tmp = srs.to_frame()
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
         out_dfs.append(df_tmp)
