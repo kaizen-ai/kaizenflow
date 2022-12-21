@@ -257,7 +257,7 @@ DATASET_SCHEMA = {
         "size": "float64",
         "timestamp": "int64",
         "year": "int32",
-    }
+    },
 }
 
 

@@ -4,6 +4,7 @@ Import as:
 import data_schema.dataset_schema_utils as dsdascut
 """
 
+import copy
 import logging
 import os
 from typing import Any, Dict, Optional
@@ -12,7 +13,6 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hstring as hstring
-import copy
 
 # TODO(Juraj): At high level this module essentially performs the same thing as
 #  im_v2/common/universe/universe.py -> try to extract the common logic
@@ -196,6 +196,7 @@ def _build_dataset_signature_from_args(
         )
     return token_separator_char.join(dataset_signature)
 
+
 def _parse_dataset_signature_to_args(
     signature: str, dataset_schema: Dict[str, Any]
 ) -> Dict[str, str]:
@@ -205,7 +206,7 @@ def _parse_dataset_signature_to_args(
     :param signature: dataset signature to parse,
         e.g. `bulk.airflow.resampled_1min.parquet.bid_ask.spot.v3.crypto_chassis.binance.v1_0_0`
     :param dataset_schema: dataset schema to parse against
-    :return: signature arguments mapping, e.g. 
+    :return: signature arguments mapping, e.g.
         {
             "download_mode": "bulk",
             "downloading_entity": "airflow",
@@ -219,15 +220,12 @@ def _parse_dataset_signature_to_args(
             "version": "v1_0_0"
         }
     """
-    hdbg.dassert_eq(
-        validate_dataset_signature(signature, dataset_schema), True
-    )
+    hdbg.dassert_eq(validate_dataset_signature(signature, dataset_schema), True)
     token_separator = dataset_schema["token_separator_character"]
     keys = dataset_schema["dataset_signature"].split(token_separator)
     values = signature.split(token_separator)
     args = {keys[i]: values[i] for i in range(len(keys))}
     return args
-
 
 
 def build_s3_dataset_path_from_args(

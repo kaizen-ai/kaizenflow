@@ -380,7 +380,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         currency_pair: str,
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
-        **kwargs: Any
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
@@ -426,8 +426,8 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         # If there is no `urls` key or there is one but the value is an empty list.
         if not data_json.get("urls"):
             _LOG.info(
-                f"Unable to retrieve data for {currency_pair} " +
-                f"and start_timestamp={start_timestamp}"
+                f"Unable to retrieve data for {currency_pair} "
+                + f"and start_timestamp={start_timestamp}"
             )
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
