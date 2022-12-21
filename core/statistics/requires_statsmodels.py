@@ -297,8 +297,8 @@ def calculate_hit_rate(
     conf_alpha = (1 - alpha / 2) * 100
     result_index = [
         prefix + "hit_rate[%]",
-        prefix + f"hit_rate.{conf_alpha:.2f}%CI_lower_bound_[%]",
-        prefix + f"hit_rate.{conf_alpha:.2f}%CI_upper_bound_[%]",
+        prefix + f"hit_rate.{conf_alpha:.2f}%CI_lower_bound[%]",
+        prefix + f"hit_rate.{conf_alpha:.2f}%CI_upper_bound[%]",
     ]
     # Set all the values whose absolute values are closer to zero than
     #    the absolute value of the threshold equal to NaN.
