@@ -61,16 +61,27 @@ hprint.config_notebook()
 # ## Initialize MarketData for `read_data` node
 
 # %%
-config = ramccalg.get_algotrading_config()
+# Load the default config.
+config = ramccalg.get_default_config()
 
 # %%
-market_data = ramccalg.get_algotrading_market_data(config)
-
+# Load the historical IM client.
+client = ramccalg.get_bid_ask_ImClient(config)
+# Load the asset ids of the given universe.
+asset_ids = ramccalg.get_universe(config)
+# Set up MarketData for
+market_data = ramccalg.get_market_data(config)
 
 # %% [markdown]
 # ## Initialize DAG
 
 # %%
+start_ts = config.get_and_mark_as_used(("market_data_config", "start_ts"))
+end_ts = config.get_and_mark_as_used(("market_data_config", "end_ts"))
+
+intervals = [(start_ts, end_ts)]
+
+
 def _run_dag_node(dag):
     dag_runner = dtfcore.FitPredictDagRunner(dag)
     dag_runner.set_fit_intervals(intervals)
@@ -85,7 +96,6 @@ dag = dtfcore.DAG(mode="strict")
 dtfcore.draw(dag)
 
 # %%
-# TODO(gp): @danya, see if we have also close or trade.
 stage = "read_data"
 ts_col_name = "end_ts"
 multiindex_output = True
@@ -352,12 +362,19 @@ def compute_repricing_df(df, report_stats: bool):
     #
     if report_stats:
         print(
-            "buy percentage at repricing freq: ", df["is_buy"].sum() / df.shape[0]
+            "buy percentage at repricing freq: ",
+            hprint.perc(df["is_buy"].sum(), df.shape[0]),
         )
         print(df["is_sell"].sum() / df.shape[0])
         #
-        print(hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]))
-        print(hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]))
+        print(
+            "exec_buy_price [%]=",
+            hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
+        )
+        print(
+            "exec_sell_price [%]=",
+            hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
+        )
     return df
 
 
@@ -402,9 +419,10 @@ def compute_execution_df(df, report_stats: bool):
     exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
     if report_stats:
         print(
+            "exec_is_sell [%]=",
             hprint.perc(
                 exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
-            )
+            ),
         )
 
     # Estimate the executed volume.
@@ -451,9 +469,6 @@ slippage["sell_slippage_bps"].hist(bins=21)
 
 print("sell_slippage_bps.mean=", slippage["sell_slippage_bps"].mean())
 print("sell_slippage_bps.median=", slippage["sell_slippage_bps"].median())
-
-# %%
-df5.head()
 
 # %% [markdown]
 # ### Commentary
