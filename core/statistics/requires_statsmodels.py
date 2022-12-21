@@ -295,6 +295,7 @@ def calculate_hit_rate(
     prefix = prefix or ""
     # Process series.
     conf_alpha = (1 - alpha / 2) * 100
+    # TODO(Grisha): @Dan Update index format.
     result_index = [
         prefix + "hit_rate_point_est_(%)",
         prefix + f"hit_rate_{conf_alpha:.2f}%CI_lower_bound_(%)",
