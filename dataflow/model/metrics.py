@@ -275,14 +275,13 @@ def apply_metrics(
                 metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
-            # TODO(Grisha): @Dan select correct time scaling value.
-            time_scaling = 1
+            time_scaling = config["time_scaling"]
             # Compute Sharpe ratio per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[bar_pnl_col_name].apply(
                 lambda x: cstshrat.compute_sharpe_ratio(x, time_scaling)
             )
-            srs.name = "sharpe_ratio"
+            srs.name = "SR"
             df_tmp = srs.to_frame()
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
