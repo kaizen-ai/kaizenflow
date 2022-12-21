@@ -69,13 +69,12 @@ def get_oos_start_split(
     return [(ins, oos)]
 
 
-
 def get_train_test_splits(
     idx: pd.Index, mode: str, *args: Any
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
-    Split a timestamp index into multiple train and test sets according
-    to various criteria.
+    Split a timestamp index into multiple train and test sets according to
+    various criteria.
 
     The output is a list of pairs (train, test) splits that has at least
     one split possible.
