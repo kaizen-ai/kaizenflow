@@ -16,6 +16,7 @@ import sklearn.model_selection
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -108,9 +109,9 @@ def get_train_test_splits(
         - "rolling": see `get_rolling_splits()`
     :return: train/test splits
     """
-    hdbg.dassert_isinstance(idx, pd.Index)
     hpandas.dassert_strictly_increasing_index(idx)
     hdbg.dassert_isinstance(mode, str)
+    _LOG.debug(hprint.to_str("mode args"))
     if mode == "ins":
         splits = [(idx, idx)]
     elif mode == "oos":
