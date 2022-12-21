@@ -24,8 +24,8 @@ class TestResampleBidAskData(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         df = self.get_test_data()
-        self._actual_vwap_df = imvcdttrut.resample_bid_ask_dat_to_1min(df)
-        self._actual_twap_df = imvcdttrut.resample_bid_ask_dat_to_1min(df, mode="TWAP")
+        self._actual_vwap_df = imvcdttrut.resample_bid_ask_data_to_1min(df)
+        self._actual_twap_df = imvcdttrut.resample_bid_ask_data_to_1min(df, mode="TWAP")
 
     def test_resample_bid_ask_data1(self) -> None:
         """

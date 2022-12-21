@@ -263,7 +263,7 @@ def calculate_vwap(
     return calculated_price
 
 
-def resample_bid_ask_dat_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
+def resample_bid_ask_data_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
     """
     Resample bid/ask data to 1 minute interval for single symbol.
 
@@ -355,7 +355,7 @@ def resample_multilevel_bid_ask_data(
         data_one_level = data[one_level_resampling_cols]
         # Canonize column name for resampling function.
         data_one_level.columns = BID_ASK_COLS
-        data_one_level = resample_bid_ask_dat_to_1min(data_one_level, mode)
+        data_one_level = resample_bid_ask_data_to_1min(data_one_level, mode)
         # Uncanonize the column levels back.
         data_one_level.columns = one_level_resampling_cols
         all_levels_resampled.append(data_one_level)
@@ -412,7 +412,7 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
             .resample(rule="S", closed="left", label="left").mean()
         )
         # Resample to 1 min.
-        df_part = resample_bid_ask_dat_to_1min(df_part)
+        df_part = resample_bid_ask_data_to_1min(df_part)
         # Add the removed columns back.
         df_part["currency_pair"] = currency_pair
         df_part["level"] = level
