@@ -411,6 +411,7 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
             .resample(rule="S", closed="left", label="left").mean()
         )
         # Resample to 1 min.
+        # TODO(Juraj, Vlad): add a unit test
         df_part = resample_bid_ask_data_to_1min(df_part)
         # Add the removed columns back.
         df_part["currency_pair"] = currency_pair
