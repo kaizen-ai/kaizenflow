@@ -52,9 +52,9 @@ long_bets_frac                              0.5
 mean_num_bets_per_year                      1.8
 mean_bet_length                           6.667
 bet_length_units                          Month
-bet_hit_rate_point_est_(%)               83.333
-bet_hit_rate_97.50%CI_lower_bound_(%)    44.194
-bet_hit_rate_97.50%CI_upper_bound_(%)    98.138
+bet_hit_rate[%]                          83.333
+bet_hit_rate.97.50%CI_lower_bound_[%]    44.194
+bet_hit_rate.97.50%CI_upper_bound_[%]    98.138
 mean_return_winning_bets                  0.017
 mean_return_losing_bets                  -0.001
 mean_return_long_bet                        0.0
