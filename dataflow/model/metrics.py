@@ -114,7 +114,7 @@ def convert_to_metrics_format(
 # #############################################################################
 
 
-# TODO(Grisha): @Dan Don't we want to pass a list of tag modes instead of just 1?
+# TODO(Grisha): @Dan Pass a list of tag modes instead of just 1.
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
     tag_mode: str,
@@ -139,17 +139,12 @@ def annotate_metrics_df(
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
-    hdbg.dassert_not_in(tag_col, metrics_df.columns)
-    # TODO(Dan) "asset_id" cannot be both index and column so think of a better approach.
-    # Reset asset ids index to a column to ease the processing.
-    metrics_df = metrics_df.reset_index(1)
+    hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "hour":
-        # Check if index is a datetime type.
-        idx_datetime = metrics_df.index
+        # Check if the first index level is a datetime type.
+        idx_datetime = metrics_df.index.get_level_values(0)
         hpandas.dassert_index_is_datetime(idx_datetime)
         metrics_df[tag_col] = idx_datetime.hour
-    elif tag_mode == "asset_id":
-        pass
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     elif tag_mode == "magnitude_quantile_rank":
@@ -228,8 +223,7 @@ def apply_metrics(
         - as index the values of the tags
         - as columns the names of the applied metrics
     """
-    # TODO(Dan): Uncomment when annotation approach is agreed.
-    # _dassert_is_metrics_df(metrics_df)
+    _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
