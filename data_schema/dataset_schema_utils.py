@@ -12,6 +12,7 @@ import helpers.hdbg as hdbg
 import helpers.hgit as hgit
 import helpers.hio as hio
 import helpers.hstring as hstring
+import copy
 
 # TODO(Juraj): At high level this module essentially performs the same thing as
 #  im_v2/common/universe/universe.py -> try to extract the common logic
@@ -242,10 +243,15 @@ def build_s3_dataset_path_from_args(
     :param args: arguments to build the dataset signature from
     :param version: version of the dataset schema to use, if None, latest version
     """
+    _args = copy.deepcopy(args)
     s3_path = s3_base_path
     schema = get_dataset_schema(version=version)
     s3_path = os.path.join(s3_path, schema["version"])
-    dataset_signature = _build_dataset_signature_from_args(args, schema)
+    # TODO(Juraj): If this preprocessing operations start to pile up,
+    #  divide into separate function.
+    if _args.get("universe"):
+        _args["universe"] = _args["universe"].replace(".", "_")
+    dataset_signature = _build_dataset_signature_from_args(_args, schema)
     if not validate_dataset_signature(dataset_signature, schema):
         raise ValueError(
             f"Invalid argument values for schema version: {schema['version']}"
