@@ -134,8 +134,34 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
     return df
 
 
-def compute_pnl(df: pd.DataFrame, rets_col: str) -> float:
-    return (df["predictions"] * df[rets_col]).sum()
+def compute_bar_pnl(
+    df: pd.DataFrame, rets_col: str, prediction_col: str
+) -> pd.Series:
+    """
+    Compute bar PnL.
+
+    :param df: desired sample with calculated returns
+    :param rets_col: name of the column with returns
+    :param prediction_col: name of the column with predictions
+    :return: bar PnL
+    """
+    hdbg.dassert_in(rets_col, df.columns)
+    hdbg.dassert_in(prediction_col, df.columns)
+    bar_pnl = df[prediction_col] * df[rets_col]
+    return bar_pnl
+
+
+# TODO(Grisha): maybe pass 2 pd.Series?
+def compute_pnl(df: pd.DataFrame, rets_col: str, prediction_col: str) -> float:
+    """
+    Compute cumulative bar PnL.
+    """
+    bar_pnl = compute_bar_pnl(df, rets_col, prediction_col)
+    # TODO(Grisha): @Dan Is it correct that we sum up percentiles here?
+    pnl = bar_pnl.sum()
+    result_index = ["bar_pnl_point_est_(%)"]
+    result = pd.Series(data=[pnl], index=result_index, name="bar_pnl")
+    return result
 
 
 def simulate_pnls_for_set_of_hit_rates(
