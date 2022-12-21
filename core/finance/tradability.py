@@ -90,6 +90,7 @@ def get_predictions(
     return pred
 
 
+# TODO(Grisha): dup of `calculate_hit_rate()`?
 def calculate_confidence_interval(
     hit_series: pd.Series, alpha: float, method: str
 ) -> None:
