@@ -207,7 +207,8 @@ resample_1min = config.get_and_mark_as_used(("data", "resample_1sec_to_1min"))
 if resample_1min:
     # TODO(Danya): Function as-is has VWAP and TWAP modes and removes the `full_symbol` column.
     ccxt_df = imvcdttrut.resample_bid_ask_data_to_1min(ccxt_df, mode="VWAP")
-    cc_df = imvcdttrut.resample_bid_ask_data_to_1min(ccxt_df, mode="VWAP")
+    #Fixed during #CmTask3225
+    cc_df = imvcdttrut.resample_bid_ask_data_to_1min(cc_df, mode="VWAP")
 # %% [markdown]
 # # Analysis
 

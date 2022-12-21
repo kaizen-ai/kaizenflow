@@ -237,7 +237,7 @@ def transform_raw_websocket_data(
         df = _transform_bid_ask_websocket_dataframe(df)
     else:
         raise ValueError(
-            "Transformation of data type: %s is not supported", data_type
+            f"Transformation of data type: {data_type} is not supported"
         )
     df = df.drop_duplicates()
     df["exchange_id"] = exchange_id
@@ -263,7 +263,9 @@ def calculate_vwap(
     return calculated_price
 
 
-def resample_bid_ask_data_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.DataFrame:
+def resample_bid_ask_data_to_1min(
+    data: pd.DataFrame, mode: str = "VWAP"
+) -> pd.DataFrame:
     """
     Resample bid/ask data to 1 minute interval for single symbol.
 
@@ -290,7 +292,7 @@ def resample_bid_ask_data_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.
     try:
         hdbg.dassert(
             all(desired_data_format.dtypes == data.dtypes),
-            msg="Input format is wrong"
+            msg="Input format is wrong",
         )
     except ValueError:
         _LOG.error("Input format is wrong")
@@ -312,8 +314,7 @@ def resample_bid_ask_data_to_1min(data: pd.DataFrame, mode: str = "VWAP") -> pd.
             data[["bid_size", "ask_size"]]
             .groupby(
                 pd.Grouper(
-                    freq=resample_kwargs["rule"],
-                    label=resample_kwargs["label"]
+                    freq=resample_kwargs["rule"], label=resample_kwargs["label"]
                 )
             )
             .mean()
@@ -351,13 +352,12 @@ def resample_multilevel_bid_ask_data(
     all_levels_resampled = []
     for i in range(1, 11):
         bid_ask_cols_level = map(lambda x: f"{x}_l{i}", BID_ASK_COLS)
-        one_level_resampling_cols = list(bid_ask_cols_level)
-        data_one_level = data[one_level_resampling_cols]
+        data_one_level = data[list(bid_ask_cols_level)]
         # Canonize column name for resampling function.
         data_one_level.columns = BID_ASK_COLS
         data_one_level = resample_bid_ask_data_to_1min(data_one_level, mode)
         # Uncanonize the column levels back.
-        data_one_level.columns = one_level_resampling_cols
+        data_one_level.columns = list(bid_ask_cols_level)
         all_levels_resampled.append(data_one_level)
     # Drop duplicate columns because a vetical concatenation follows.
     data_resampled = pd.concat(all_levels_resampled, axis=1)
@@ -384,7 +384,6 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         1,
         "Only data from single exchange are supported",
     )
-    exchange_id = df_raw["exchange_id"].unique()[0]
     # Remove duplicates, keep the latest record.
     df_raw = df_raw.sort_values("knowledge_timestamp", ascending=False)
     df_raw = df_raw.drop_duplicates(
