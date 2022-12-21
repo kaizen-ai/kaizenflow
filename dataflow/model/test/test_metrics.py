@@ -52,7 +52,7 @@ class TestConvertToMetricsFormat(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
 
-class TestAnnotateMetricsDf(hunitest.TestCase):
+class TestAnnotatedMetricsDf(hunitest.TestCase):
     def helper(self, tag_mode: str, expected: str) -> None:
         metrics_df = _get_metrics_df()
         annotated_df = dtfmodmetr.annotate_metrics_df(metrics_df, tag_mode)
@@ -60,6 +60,9 @@ class TestAnnotateMetricsDf(hunitest.TestCase):
         self.assert_equal(actual, expected, fuzzy_match=True)
 
     def test1(self) -> None:
+        """
+        `tag_mode = "hour"`
+        """
         tag_mode = "hour"
         expected = r"""
                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat  hour
@@ -76,6 +79,9 @@ class TestAnnotateMetricsDf(hunitest.TestCase):
         self.helper(tag_mode, expected)
 
     def test2(self) -> None:
+        """
+        `tag_mode = "all"`
+        """
         tag_mode = "all"
         expected = r"""
                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat   all
@@ -92,6 +98,9 @@ class TestAnnotateMetricsDf(hunitest.TestCase):
         self.helper(tag_mode, expected)
 
     def test3(self) -> None:
+        """
+        `tag_mode = "magnitude_quantile_rank"`
+        """
         tag_mode = "magnitude_quantile_rank"
         expected = r"""
                                              vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat  magnitude_quantile_rank
