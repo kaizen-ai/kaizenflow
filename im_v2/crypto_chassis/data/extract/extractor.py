@@ -380,6 +380,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         currency_pair: str,
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
+        **kwargs: Any
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
@@ -390,7 +391,10 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
 
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param start_timestamp: timestamp of start
+        :param start_timestamp: timestamp of start. The API ignores the times section
+         of the argument and instead return the day's worth of data (in UTC):
+         e.g. start_timestamp=2022-12-11T00:10:01+00:00 returns data in interval
+         [2022-12-11T00:00:00+00:00, 2022-12-11T23:59:59+00:00]
         :return: trade data
         """
         # Verify that date parameters are of correct format.
