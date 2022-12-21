@@ -27,7 +27,9 @@ def _get_metrics_df() -> pd.DataFrame:
     df = _get_data()
     y_column_name = "vwap.ret_0.vol_adj"
     y_hat_column_name = "vwap.ret_0.vol_adj_2_hat"
-    metrics_df = dtfmodmetr.convert_to_metrics_format(df, y_column_name, y_hat_column_name)
+    metrics_df = dtfmodmetr.convert_to_metrics_format(
+        df, y_column_name, y_hat_column_name
+    )
     return metrics_df
 
 
@@ -37,14 +39,14 @@ class TestConvertToMetricsFormat(hunitest.TestCase):
         actual = hpandas.df_to_str(metrics_df)
         expected = r"""
                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat
-        end_ts                    asset_id                                              
-        2022-08-28 00:50:00-04:00 101                    0.199                      0.22   
-                                  102                    0.133                      0.98    
-                                  103                    0.000                      0.38    
+        end_ts                    asset_id
+        2022-08-28 00:50:00-04:00 101                    0.199                      0.22
+                                  102                    0.133                      0.98
+                                  103                    0.000                      0.38
         ...
-        end_ts                    asset_id                                                   
-        2022-08-28 01:05:00-04:00 101                    0.300                     0.112    
-                                  102                    0.113                     0.320    
+        end_ts                    asset_id
+        2022-08-28 01:05:00-04:00 101                    0.300                     0.112
+                                  102                    0.113                     0.320
                                   103                    0.222                     0.922
         """
         self.assert_equal(actual, expected, fuzzy_match=True)
@@ -61,12 +63,12 @@ class TestAnnotateMetricsDf(hunitest.TestCase):
         tag_mode = "hour"
         expected = r"""
                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat  hour
-        end_ts                    asset_id                                                    
+        end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22    0
                                   102                    0.133                      0.98    0
                                   103                    0.000                      0.38    0
         ...
-        end_ts                    asset_id                                                   
+        end_ts                    asset_id
         2022-08-28 01:05:00-04:00 101                    0.300                     0.112    1
                                   102                    0.113                     0.320    1
                                   103                    0.222                     0.922    1
@@ -77,12 +79,12 @@ class TestAnnotateMetricsDf(hunitest.TestCase):
         tag_mode = "all"
         expected = r"""
                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat   all
-        end_ts                    asset_id                                                    
+        end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22  all
                                   102                    0.133                      0.98  all
                                   103                    0.000                      0.38  all
         ...
-        end_ts                    asset_id                                                   
+        end_ts                    asset_id
         2022-08-28 01:05:00-04:00 101                    0.300                     0.112  all
                                   102                    0.113                     0.320  all
                                   103                    0.222                     0.922  all
@@ -93,12 +95,12 @@ class TestAnnotateMetricsDf(hunitest.TestCase):
         tag_mode = "magnitude_quantile_rank"
         expected = r"""
                                              vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat  magnitude_quantile_rank
-        end_ts                    asset_id                                                                       
+        end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22                        6
                                   102                    0.133                      0.98                        3
                                   103                    0.000                      0.38                        0
         ...
-        end_ts                    asset_id                                                                       
+        end_ts                    asset_id
         2022-08-28 01:05:00-04:00 101                    0.300                     0.112                        9
                                   102                    0.113                     0.320                        0
                                   103                    0.222                     0.922                        3
