@@ -141,9 +141,7 @@ def annotate_metrics_df(
         tag_col = tag_mode
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "hour":
-        # Check if the first index level is a datetime type.
         idx_datetime = metrics_df.index.get_level_values(0)
-        hpandas.dassert_index_is_datetime(idx_datetime)
         metrics_df[tag_col] = idx_datetime.hour
     elif tag_mode == "all":
         metrics_df[tag_col] = tag_mode
@@ -250,5 +248,8 @@ def apply_metrics(
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
     out_df = pd.concat(out_dfs)
+    # Set output to the desired format.
+    out_df = out_df.unstack(level=1)
+    out_df.columns = out_df.columns.droplevel(0)
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
