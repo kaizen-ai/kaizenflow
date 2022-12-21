@@ -280,9 +280,7 @@ def apply_metrics(
             # Compute Sharpe ratio per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[bar_pnl_col_name].apply(
-                lambda x: cstshrat.compute_sharpe_ratio(
-                    x, time_scaling
-                )
+                lambda x: cstshrat.compute_sharpe_ratio(x, time_scaling)
             )
             srs.name = "sharpe_ratio"
             df_tmp = srs.to_frame()
