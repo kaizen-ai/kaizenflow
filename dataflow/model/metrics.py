@@ -12,6 +12,7 @@ import pandas as pd
 import core.config as cconfig
 import core.finance.tradability as cfintrad
 import core.statistics.requires_statsmodels as cstresta
+import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -228,13 +229,16 @@ def apply_metrics(
     #
     y_column_name = config["y_column_name"]
     y_hat_column_name = config["y_hat_column_name"]
+    hit_col_name = config["hit_col_name"]
+    bar_pnl_col_name = config["bar_pnl_col_name"]
+    sr_col_name = config["sharpe_ratio_col_name"]
+    #
     y = metrics_df[y_column_name]
     y_hat = metrics_df[y_hat_column_name]
     #
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
-            hit_col_name = config["hit_col_name"]
             if hit_col_name not in metrics_df.columns:
                 # Compute hit.
                 metrics_df[hit_col_name] = compute_hit(y, y_hat)
@@ -250,7 +254,6 @@ def apply_metrics(
             df_tmp = df_tmp.unstack(level=1)
             df_tmp.columns = df_tmp.columns.droplevel(0)
         elif metric_mode == "pnl":
-            bar_pnl_col_name = config["bar_pnl_col_name"]
             if bar_pnl_col_name not in metrics_df.columns:
                 # Compute bar PnL.
                 metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
@@ -263,7 +266,25 @@ def apply_metrics(
                     x, y_column_name, y_hat_column_name
                 )
             )
-            srs.name = "total_pnl[%]"
+            srs.name = "total_pnl"
+            df_tmp = srs.to_frame()
+        elif metric_mode == "sharpe_ratio":
+            # We need computed PnL to compute Sharpe ratio.
+            if bar_pnl_col_name not in metrics_df.columns:
+                # Compute bar PnL.
+                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                    metrics_df, y_column_name, y_hat_column_name
+                )
+            # TODO(Grisha): @Dan select correct time scaling value.
+            time_scaling = 1
+            # Compute Sharpe ratio per tag column.
+            group_df = metrics_df.groupby(tag_col)
+            srs = group_df[bar_pnl_col_name].apply(
+                lambda x: cstshrat.compute_sharpe_ratio(
+                    x, time_scaling
+                )
+            )
+            srs.name = "sharpe_ratio"
             df_tmp = srs.to_frame()
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
