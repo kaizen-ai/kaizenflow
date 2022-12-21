@@ -63,7 +63,7 @@ spectral     forecastability                                      0.006354
 portfolio    annualized_mean_return                               0.870355
              annualized_volatility                                     0.1
              max_drawdown                                         0.019595
-             hit_rate[%]                                         69.808429
-             hit_rate.97.50%CI_lower_bound[%]                    68.025947
-             hit_rate.97.50%CI_upper_bound[%]                    71.547007
+             hit_rate_point_est_(%)                              69.808429
+             hit_rate_97.50%CI_lower_bound_(%)                   68.025947
+             hit_rate_97.50%CI_upper_bound_(%)                   71.547007
 correlation  prediction_corr_implied_by_pnl                       0.639684

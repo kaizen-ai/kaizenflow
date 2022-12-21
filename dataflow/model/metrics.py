@@ -263,7 +263,7 @@ def apply_metrics(
                     x, y_column_name, y_hat_column_name
                 )
             )
-            srs.name = "bar_pnl[%]"
+            srs.name = "total_pnl[%]"
             df_tmp = srs.to_frame()
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
