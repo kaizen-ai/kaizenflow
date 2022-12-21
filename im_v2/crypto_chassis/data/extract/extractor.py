@@ -423,7 +423,12 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         r = requests.get(query_url)
         # Retrieve raw data.
         data_json = r.json()
-        if data_json.get("urls") is None:
+        # If there is no `urls` key or there is one but the value is an empty list.
+        if not data_json.get("urls"):
+            _LOG.info(
+                f"Unable to retrieve data for {currency_pair} " +
+                f"and start_timestamp={start_timestamp}"
+            )
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
         df_csv = data_json["urls"][0]["url"]
