@@ -157,7 +157,9 @@ def compute_bar_pnl(
 
 
 # TODO(Grisha): maybe pass 2 pd.Series?
-def compute_total_pnl(df: pd.DataFrame, rets_col: str, prediction_col: str) -> float:
+def compute_total_pnl(
+    df: pd.DataFrame, rets_col: str, prediction_col: str
+) -> float:
     """
     Compute PnL.
     """
