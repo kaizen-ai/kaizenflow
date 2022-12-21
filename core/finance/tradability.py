@@ -5,6 +5,7 @@ import core.finance.tradability as cfintrad
 """
 
 
+import logging
 import random
 from typing import Dict
 
@@ -15,6 +16,8 @@ from numpy.typing import ArrayLike
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+
+_LOG = logging.getLogger(__name__)
 
 
 def process_df(df: pd.DataFrame, freq_mins: int) -> pd.DataFrame:
@@ -146,6 +149,7 @@ def compute_bar_pnl(
     :return: bar PnL
     """
     hdbg.dassert_in(rets_col, df.columns)
+    _LOG.debug("rets_col=%s, prediction_col=%s", rets_col, prediction_col)
     hdbg.dassert_in(prediction_col, df.columns)
     bar_pnl = df[prediction_col] * df[rets_col]
     bar_pnl.name = "bar_pnl"
@@ -163,7 +167,11 @@ def compute_total_pnl(df: pd.DataFrame, rets_col: str, prediction_col: str) -> f
 
 
 def simulate_pnls_for_set_of_hit_rates(
-    df: pd.DataFrame, rets_col: str, hit_rates: ArrayLike, n_experiment: int
+    df: pd.DataFrame,
+    rets_col: str,
+    prediction_col: str,
+    hit_rates: ArrayLike,
+    n_experiment: int,
 ) -> Dict[float, float]:
     """
     For the set of various pre-defined `hit_rates` values iterate several
@@ -188,7 +196,7 @@ def simulate_pnls_for_set_of_hit_rates(
             # The actual `hit_rate`.
             hit_rate = df_tmp["hit"].mean()
             # The actual `PnL`.
-            pnl = compute_total_pnl(df_tmp, rets_col)
+            pnl = compute_total_pnl(df_tmp, rets_col, prediction_col)
             # Attach corresponding `hit_rate` and `PnL` to the dictionary.
             results[hit_rate] = pnl
             # Reassign seed value.
