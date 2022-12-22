@@ -23,7 +23,6 @@
 
 # %%
 import logging
-import os
 
 import pandas as pd
 
@@ -33,9 +32,11 @@ import core.finance.resampling as cfinresa
 import core.finance.returns as cfinretu
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
+import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
 import im_v2.ccxt.data.client as icdcl
+import market_data as mdata
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -44,12 +45,11 @@ _LOG = logging.getLogger(__name__)
 
 hprint.config_notebook()
 
+
 # %% [markdown]
 # # Config
 
 # %%
-import helpers.hs3 as hs3
-
 def get_gallery_dataflow_example_config() -> cconconf.Config:
     """
     Get config, that specifies params for getting raw data.
@@ -57,20 +57,15 @@ def get_gallery_dataflow_example_config() -> cconconf.Config:
     config = cconconf.Config()
     # Load parameters.
     config.add_subconfig("load")
-    config["load"]["aws_profile"] = "ck"
-    s3_bucket_path = hs3.get_s3_bucket_path(config["load"]["aws_profile"])
-    s3_path = os.path.join(s3_bucket_path)
-    config["load"]["data_dir"] = os.path.join(
-        s3_path, "reorg", "historical.manual.pq"
-    )
     config["load"]["data_snapshot"] = "latest"
-    config["load"]["partition_mode"] = "by_year_month"
     config["load"]["dataset"] = "ohlcv"
     config["load"]["contract_type"] = "futures"
+    config["load"]["universe_version"] = "v7"
     # Data parameters.
     config.add_subconfig("data")
     config["data"]["start_date"] = pd.Timestamp("2021-09-01", tz="UTC")
     config["data"]["end_date"] = pd.Timestamp("2021-09-15", tz="UTC")
+    config["data"]["resample_1min"] = False
     config["data"]["resampling_rule"] = "5T"
     return config
 
@@ -82,43 +77,53 @@ print(config)
 # %% [markdown]
 # # Load historical data
 
-# %%
-# Specify params.
-universe_version = "v3"
-resample_1min = True
-root_dir = config["load"]["data_dir"]
-partition_mode = config["load"]["partition_mode"]
-dataset = config["load"]["dataset"]
-contract_type = config["load"]["contract_type"]
-data_snapshot = config["load"]["data_snapshot"]
-aws_profile = config["load"]["aws_profile"]
+# %% [markdown]
+# ## Get IM client
 
-# Initiate the client.
-historical_client = icdcl.CcxtHistoricalPqByTileClient(
-    universe_version,
-    resample_1min,
-    root_dir,
-    partition_mode,
-    dataset,
-    contract_type,
-    data_snapshot,
-    aws_profile=aws_profile,
+# %%
+universe_version = config["load"]["universe_version"]
+resample_1min = config["data"]["resample_1min"]
+contract_type = config["load"]["contract_type"]
+dataset = config["load"]["dataset"]
+data_snapshot = config["load"]["data_snapshot"]
+
+client = icdcl.ccxt_clients_example.get_CcxtHistoricalPqByTileClient_example1(
+    universe_version, resample_1min, dataset, contract_type, data_snapshot
 )
 
+
 # %% [markdown]
-# ### Data Loader
+# ## Get universe
 
 # %%
-# Specify time period.
-full_symbols = ["binance::ADA_USDT", "binance::AVAX_USDT"]
-start_date = config["data"]["start_date"]
-end_date = config["data"]["end_date"]
+# Set the universe.
+universe_str = "ccxt_v7-all"
+full_symbols = dtfuniver.get_universe(universe_str)
+asset_ids = client.get_asset_ids_from_full_symbols(full_symbols)
+# %% [markdown]
+# ## Get market data loader
+
+# %% run_control={"marked": true}
 columns = None
-filter_data_mode = None
-# Load the data.
-data_hist = historical_client.read_data(full_symbols, start_date, end_date, columns, filter_data_mode)
-display(data_hist.shape)
-display(data_hist.head(3))
+columns_remap = None
+
+wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
+market_data = mdata.market_data_example.get_HistoricalImClientMarketData_example1(
+    client, asset_ids, columns, columns_remap, wall_clock_time=wall_clock_time
+)
+
+
+# %% [markdown] run_control={"marked": true}
+# ## Get data
+
+# %%
+start_ts = config["data"]["start_date"] 
+end_ts = config["data"]["end_date"]
+ts_col_name = "timestamp"
+
+data_hist = market_data.get_data_for_interval(start_ts, end_ts, ts_col_name, asset_ids)
+print(data_hist.shape)
+data_hist.head(3)
 
 # %% [markdown]
 # # Task description
@@ -193,9 +198,13 @@ df_approach_1.head(3)
 # %% [markdown]
 # # Approach 2 - Use pandas Multi-index
 
+# %%
+# Drop non numerical columns to apply computations.
+data_hist_num = data_hist.drop(columns=["full_symbol", "knowledge_timestamp", "start_ts"])
+
 # %% run_control={"marked": false}
 # Convert historical data to multiindex format.
-converted_data = dtfsys._convert_to_multiindex(data_hist, "full_symbol")
+converted_data = dtfsys.source_nodes._convert_to_multiindex(data_hist_num, "asset_id")
 converted_data.head(3)
 
 # %%
@@ -213,7 +222,7 @@ rets_approach_2.head(3)
 
 # %% run_control={"marked": false}
 # To go back to a flat index representation.
-rets_approach_2.columns = ["_".join(col) for col in rets_approach_2.columns]
+rets_approach_2.columns = ["".join(str(col)) for col in rets_approach_2.columns]
 rets_approach_2.head(3)
 
 # %% [markdown]
@@ -257,7 +266,7 @@ node_resampling_config = {
     "join_output_with_input": False,
 }
 # Put the data in the DataFlow format (which is multi-index).
-converted_data = dtfsys._convert_to_multiindex(data_hist, "full_symbol")
+converted_data = dtfsys.source_nodes._convert_to_multiindex(data_hist, "asset_id")
 # Create the node.
 nid = "resample"
 node = dtfcore.GroupedColDfToDfTransformer(
@@ -301,3 +310,5 @@ rets = node.fit(vwap_twap_approach_3)
 # Save the result.
 vwap_twap_rets_approach_3 = rets["df_out"]
 vwap_twap_rets_approach_3.head(3)
+
+# %%

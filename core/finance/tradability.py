@@ -5,6 +5,7 @@ import core.finance.tradability as cfintrad
 """
 
 
+import logging
 import random
 from typing import Dict
 
@@ -15,6 +16,8 @@ from numpy.typing import ArrayLike
 
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+
+_LOG = logging.getLogger(__name__)
 
 
 def process_df(df: pd.DataFrame, freq_mins: int) -> pd.DataFrame:
@@ -90,6 +93,7 @@ def get_predictions(
     return pred
 
 
+# TODO(Grisha): dup of `calculate_hit_rate()`?
 def calculate_confidence_interval(
     hit_series: pd.Series, alpha: float, method: str
 ) -> None:
@@ -133,12 +137,43 @@ def get_predictions_and_hits(df, ret_col, hit_rate, seed):
     return df
 
 
-def compute_pnl(df: pd.DataFrame, rets_col: str) -> float:
-    return (df["predictions"] * df[rets_col]).sum()
+def compute_bar_pnl(
+    df: pd.DataFrame, rets_col: str, prediction_col: str
+) -> pd.Series:
+    """
+    Compute PnL (profits and losses) for each bar.
+
+    :param df: dataframe containing returns and predictions (aligned)
+    :param rets_col: name of the column with returns
+    :param prediction_col: name of the column with predictions
+    :return: bar PnL
+    """
+    hdbg.dassert_in(rets_col, df.columns)
+    _LOG.debug("rets_col=%s, prediction_col=%s", rets_col, prediction_col)
+    hdbg.dassert_in(prediction_col, df.columns)
+    bar_pnl = df[prediction_col] * df[rets_col]
+    bar_pnl.name = "bar_pnl"
+    return bar_pnl
+
+
+# TODO(Grisha): maybe pass 2 pd.Series?
+def compute_total_pnl(
+    df: pd.DataFrame, rets_col: str, prediction_col: str
+) -> float:
+    """
+    Compute PnL.
+    """
+    bar_pnl = compute_bar_pnl(df, rets_col, prediction_col)
+    pnl = bar_pnl.sum()
+    return pnl
 
 
 def simulate_pnls_for_set_of_hit_rates(
-    df: pd.DataFrame, rets_col: str, hit_rates: ArrayLike, n_experiment: int
+    df: pd.DataFrame,
+    rets_col: str,
+    prediction_col: str,
+    hit_rates: ArrayLike,
+    n_experiment: int,
 ) -> Dict[float, float]:
     """
     For the set of various pre-defined `hit_rates` values iterate several
@@ -163,7 +198,7 @@ def simulate_pnls_for_set_of_hit_rates(
             # The actual `hit_rate`.
             hit_rate = df_tmp["hit"].mean()
             # The actual `PnL`.
-            pnl = compute_pnl(df_tmp, rets_col)
+            pnl = compute_total_pnl(df_tmp, rets_col, prediction_col)
             # Attach corresponding `hit_rate` and `PnL` to the dictionary.
             results[hit_rate] = pnl
             # Reassign seed value.
