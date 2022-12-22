@@ -14,7 +14,6 @@ class TestResampleBidAskData(hunitest.TestCase):
             "bid_size": [60.2, 32.21, 45.5, 5.9, 67.7, 89.8],
             "ask_price": [384.7, 387.8, 387.5, 382.2, 384.9, 386.5],
             "ask_size": [160.2, 80.21, 18.5, 14.9, 32.7, 97.8],
-            "exchange_id": ["ftx"] * 6,
             "year": [2020] * 6,
             "month": [10] * 6,
         }
@@ -25,16 +24,16 @@ class TestResampleBidAskData(hunitest.TestCase):
     def setUp(self) -> None:
         super().setUp()
         df = self.get_test_data()
-        self._actual_vwap_df = imvcdttrut.resample_bid_ask_data(df)
-        self._actual_twap_df = imvcdttrut.resample_bid_ask_data(df, mode="TWAP")
+        self._actual_vwap_df = imvcdttrut.resample_bid_ask_data_to_1min(df)
+        self._actual_twap_df = imvcdttrut.resample_bid_ask_data_to_1min(df, mode="TWAP")
 
     def test_resample_bid_ask_data1(self) -> None:
         """
         `mode = VWAP`
         """
-        expected_signature = r"""  bid_price  bid_size   ask_price  ask_size exchange_id
-        2020-01-10 00:01:00+00:00  388.041932    137.91  385.860446    258.91         ftx
-        2020-01-10 00:02:00+00:00  386.243237    163.40  385.699519    145.40         ftx
+        expected_signature = r"""  bid_price  bid_size   ask_price  ask_size
+        2020-01-10 00:01:00+00:00  388.041932    137.91  385.860446    258.91
+        2020-01-10 00:02:00+00:00  386.243237    163.40  385.699519    145.40
         """
         actual = hpandas.df_to_str(self._actual_vwap_df)
         self.assert_equal(actual, expected_signature, fuzzy_match=True)
@@ -115,9 +114,9 @@ class TestResampleBidAskData(hunitest.TestCase):
         """
         `mode = TWAP`
         """
-        expected_signature = r"""   bid_price  bid_size  ask_price  ask_size exchange_id
-        2020-01-10 00:01:00+00:00  45.970000    137.91  86.303333    258.91         ftx
-        2020-01-10 00:02:00+00:00  54.466667    163.40  48.466667    145.40         ftx
+        expected_signature = r"""   bid_price  bid_size  ask_price  ask_size
+        2020-01-10 00:01:00+00:00  45.970000    137.91  86.303333    258.91
+        2020-01-10 00:02:00+00:00  54.466667    163.40  48.466667    145.40
         """
         actual = hpandas.df_to_str(self._actual_twap_df)
         self.assert_equal(actual, expected_signature, fuzzy_match=True)
