@@ -236,10 +236,10 @@ def apply_metrics(
     # we still can group by it.
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
-    y_column_name = config["y_column_name"]
-    y_hat_column_name = config["y_hat_column_name"]
-    hit_col_name = config["hit_col_name"]
-    bar_pnl_col_name = config["bar_pnl_col_name"]
+    y_column_name = config["column_names"]["y"]
+    y_hat_column_name = config["column_names"]["y_hat"]
+    hit_col_name = config["column_names"]["hit"]
+    bar_pnl_col_name = config["column_names"]["bar_pnl"]
     #
     y = metrics_df[y_column_name]
     y_hat = metrics_df[y_hat_column_name]
@@ -254,7 +254,7 @@ def apply_metrics(
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[hit_col_name].apply(
                 lambda x: cstresta.calculate_hit_rate(
-                    x, **config["calculate_hit_rate_kwargs"]
+                    x, **config["metrics"]["calculate_hit_rate_kwargs"]
                 )
             )
             df_tmp = srs.to_frame()
@@ -284,7 +284,7 @@ def apply_metrics(
                 metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
-            time_scaling = config["time_scaling"]
+            time_scaling = config["metrics"]["time_scaling"]
             # Compute Sharpe ratio per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[bar_pnl_col_name].apply(
