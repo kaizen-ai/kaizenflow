@@ -21,12 +21,6 @@ class QaCheck(abc.ABC):
     def __init__(self) -> None:
         self._status: str = "Check has not been executed."
 
-    def __str__(self) -> str:
-        """
-        Return a description of a check.
-        """
-        return f"{self.__class__}: {self._status}"
-
     @abc.abstractmethod
     def check(self, datasets: List, *args: Any) -> bool:
         """
@@ -40,7 +34,10 @@ class QaCheck(abc.ABC):
         ...
 
     def get_status(self) -> str:
-        return self._status
+        """
+        Return a formatted status message.
+        """
+        return f"{self.__class__.__name__}: {self._status}"
 
 
 class DatasetValidator(abc.ABC):

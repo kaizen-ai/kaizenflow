@@ -13,8 +13,8 @@ Use as:
 """
 import argparse
 import logging
-import time
 import os
+import time
 from typing import Any, Generator, Tuple
 
 import pandas as pd
@@ -59,7 +59,7 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
             end_timestamp_as_unix,
             msg="End timestamp should be greater then start timestamp.",
         )
-        output = pd.DataFrame()
+        dfs = []
         for symbol in tqdm.tqdm(self._UNIVERSE["binance"]):
             for start_time, end_time in self._split_period_to_days(
                 start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
@@ -80,22 +80,27 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                 data = pd.DataFrame(
                     [
                         {
-                            "symbol": symbol,
+                            "currency_pair": symbol,
                             "open": row[1],
                             "high": row[2],
                             "low": row[3],
                             "close": row[4],
                             "volume": row[5],
                             # close_time from the raw response.
-                            "timestamp": row[6]
+                            # The value is in ms, we add one milisecond.
+                            #  based on the surrentum protocol data interval
+                            #  specification, where interval [a, b) is labeled
+                            #  with timestamp 'b'.
+                            "timestamp": int(row[6]) + 1,
                         }
                         for row in response.json()
                     ]
                 )
-                output = pd.concat(objs=[output, data], ignore_index=True)
+                dfs.append(data)
                 # Delay for throttling in seconds.
                 time.sleep(0.5)
-            return sinsadow.RawData(output)
+
+        return sinsadow.RawData(pd.concat(dfs, ignore_index=True))
 
     def _build_url(
         self,
@@ -164,7 +169,9 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         if not isinstance(data.get_data(), pd.DataFrame):
             raise ValueError("Only DataFrame is supported.")
         # TODO(Juraj): rewrite using dataset_schema_utils.
-        signature = "bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0"
+        signature = (
+            "bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0"
+        )
         signature += ".csv"
         target_path = os.path.join(self.target_dir, signature)
         data.get_data().to_csv(target_path, index=False)
