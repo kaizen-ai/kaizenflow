@@ -1,3 +1,5 @@
+import logging
+
 import pandas as pd
 
 import dataflow.model.metrics as dtfmodmetr
@@ -5,7 +7,9 @@ import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 
-def _get_data() -> pd.DataFrame:
+_LOG = logging.getLogger(__name__)
+
+def _get_result_data() -> pd.DataFrame:
     data = {
         ("vwap.ret_0.vol_adj", 101): [0.199, 0.12, 0.13, 0.3],
         ("vwap.ret_0.vol_adj", 102): [0.133, 0.2, 0.333, 0.113],
@@ -20,16 +24,18 @@ def _get_data() -> pd.DataFrame:
     df = pd.DataFrame(data, index=idx)
     df.columns.set_names("asset_id", level=1)
     df.index.name = "end_ts"
+    _LOG.debug("result_df=\n%s", hpandas.df_to_str(df))
     return df
 
 
 def _get_metrics_df() -> pd.DataFrame:
-    df = _get_data()
+    df = _get_result_data()
     y_column_name = "vwap.ret_0.vol_adj"
     y_hat_column_name = "vwap.ret_0.vol_adj_2_hat"
     metrics_df = dtfmodmetr.convert_to_metrics_format(
         df, y_column_name, y_hat_column_name
     )
+    _LOG.debug("metrics_df=\n%s", hpandas.df_to_str(df))
     return metrics_df
 
 
@@ -53,6 +59,10 @@ class TestConvertToMetricsFormat(hunitest.TestCase):
 
 
 class TestAnnotatedMetricsDf(hunitest.TestCase):
+    """
+    Check that metrics df is annotated correctly given a tag_mode.
+    """
+
     def helper(self, tag_mode: str, expected: str) -> None:
         metrics_df = _get_metrics_df()
         annotated_df = dtfmodmetr.annotate_metrics_df(metrics_df, tag_mode)
