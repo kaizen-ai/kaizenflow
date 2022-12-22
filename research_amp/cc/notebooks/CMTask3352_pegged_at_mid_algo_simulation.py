@@ -31,22 +31,19 @@
 # %load_ext autoreload
 # %autoreload 2
 import logging
+from typing import Optional
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 
-import core.config as cconfig
 import core.finance as cofinanc
 import dataflow.core as dtfcore
 import dataflow.system as dtfsys
-import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
-import im_v2.crypto_chassis.data.client as iccdc
-import market_data as mdata
-from typing import Optional
+import research_amp.cc.algotrading as ramccalg
 
 # %%
 hdbg.init_logger(verbosity=logging.INFO)
@@ -61,79 +58,30 @@ hprint.config_notebook()
 # # Load CryptoChassis data.
 
 # %% [markdown]
-# - Latest universe (v3)
-# - Resampled to 1sec
-# - For 1 asset and 1 day
-# - Using DataFlow `read_data` node
-
-# %% [markdown]
-# ## Initialize a config for `read_data` node
+# ## Initialize MarketData for `read_data` node
 
 # %%
-dict_ = {
-    "load_data": {
-        "start_ts": pd.Timestamp("2022-12-14 00:00:00+00:00"),
-        "end_ts": pd.Timestamp("2022-12-15 00:00:00+00:00"),
-    },
-    "universe": {
-        "full_symbols": ["binance::ADA_USDT"],
-    },
-}
-config = cconfig.Config.from_dict(dict_)
+# Load the default config.
+config = ramccalg.get_default_config()
 
 # %%
-# Set up the parameters for initialization of the IM Client.
-universe_version = "v3"
-resample_1min = False
-contract_type = "futures"
-tag = "downloaded_1sec"
-client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example2(
-    universe_version, resample_1min, contract_type, tag
-)
-
-# %%
-start_ts = config.get_and_mark_as_used(("load_data", "start_ts"))
-end_ts = config.get_and_mark_as_used(("load_data", "end_ts"))
-
-intervals = [
-    (
-        start_ts,
-        end_ts,
-    ),
-]
-
-# %%
-# Verify that provided symbols are present in the client.
-universe_full_symbols = dtfuniver.get_universe("crypto_chassis_v3-all")
-config_full_symbols = config.get_and_mark_as_used(("universe", "full_symbols"))
-hdbg.dassert_is_subset(config_full_symbols, universe_full_symbols)
-# Convert to asset ids.
-config["universe"]["asset_ids"] = client.get_asset_ids_from_full_symbols(
-    config_full_symbols
-)
-asset_ids = config.get_and_mark_as_used(("universe", "asset_ids"))
-
-# %%
-# Initialize market data.
-columns = None
-columns_remap = None
-wall_clock_time = pd.Timestamp("2100-01-01T00:00:00+00:00")
-stage = "read_data"
-ts_col_name = "end_ts"
-multiindex_output = True
-col_names_to_remove = []
-market_data = mdata.get_HistoricalImClientMarketData_example1(
-    client,
-    asset_ids,
-    columns,
-    columns_remap,
-)
-
+# Load the historical IM client.
+client = ramccalg.get_bid_ask_ImClient(config)
+# Load the asset ids of the given universe.
+asset_ids = ramccalg.get_universe(config)
+# Set up MarketData for
+market_data = ramccalg.get_market_data(config)
 
 # %% [markdown]
 # ## Initialize DAG
 
 # %%
+start_ts = config.get_and_mark_as_used(("market_data_config", "start_ts"))
+end_ts = config.get_and_mark_as_used(("market_data_config", "end_ts"))
+
+intervals = [(start_ts, end_ts)]
+
+
 def _run_dag_node(dag):
     dag_runner = dtfcore.FitPredictDagRunner(dag)
     dag_runner.set_fit_intervals(intervals)
@@ -148,7 +96,6 @@ dag = dtfcore.DAG(mode="strict")
 dtfcore.draw(dag)
 
 # %%
-# TODO(gp): @danya, see if we have also close or trade.
 stage = "read_data"
 ts_col_name = "end_ts"
 multiindex_output = True
@@ -359,7 +306,6 @@ df_flat.loc[
 # For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to resampling.
 
 # %%
-import matplotlib.pyplot as plt
 
 
 def perform_spread_analysis(
@@ -368,9 +314,11 @@ def perform_spread_analysis(
     spread = df[ask_price_col_name] - df[bid_price_col_name]
     spread_in_bps = spread / df[mid_price_col_name] * 1e4
     spread_hist = spread.hist(bins=101)
-    spread_plot = spread.plot()
-    spread_in_bps_plot = spread_in_bps.plot()
+    spread.plot()
+    spread_in_bps.plot()
     # TODO(Danya): Display as subplots.
+
+
 #     plt.show(spread_hist)
 #     plt.show(spread_plot)
 #     plt.show(spread_in_bps_plot)
@@ -400,7 +348,9 @@ def plot_limit_orders(
 
 # %% run_control={"marked": true}
 def compute_repricing_df(df, report_stats: bool):
-    hdbg.dassert_is_subset(["is_buy", "is_sell", "ask_price", "bid_price"], df.columns)
+    hdbg.dassert_is_subset(
+        ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
+    )
     # TODO(gp): ask_price -> buy_limit?
     df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
     mask = ~df["is_buy"]
@@ -411,11 +361,20 @@ def compute_repricing_df(df, report_stats: bool):
     df["exec_sell_price"][mask] = np.nan
     #
     if report_stats:
-        print("buy percentage at repricing freq: ", df["is_buy"].sum() / df.shape[0])
+        print(
+            "buy percentage at repricing freq: ",
+            hprint.perc(df["is_buy"].sum(), df.shape[0]),
+        )
         print(df["is_sell"].sum() / df.shape[0])
         #
-        print(hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]))
-        print(hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]))
+        print(
+            "exec_buy_price [%]=",
+            hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
+        )
+        print(
+            "exec_sell_price [%]=",
+            hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
+        )
     return df
 
 
@@ -443,19 +402,28 @@ def compute_execution_df(df, report_stats: bool):
     exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
     exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
     if report_stats:
-        print(hprint.perc(exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]))
+        print(
+            hprint.perc(
+                exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]
+            )
+        )
     # Estimate the executed volume.
     exec_df["exec_buy_volume"] = (
         (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
     )
     if report_stats:
         print("million USD per 5T=", exec_df["exec_buy_volume"].mean() / 1e6)
-    # # Count how many "sell" executions there were in an interval. 
+    # # Count how many "sell" executions there were in an interval.
     exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
     exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
     exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
     if report_stats:
-        print(hprint.perc(exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]))
+        print(
+            "exec_is_sell [%]=",
+            hprint.perc(
+                exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
+            ),
+        )
 
     # Estimate the executed volume.
     exec_df["exec_sell_volume"] = (
@@ -490,7 +458,9 @@ benchmark_df = compute_benchmark_stats(exec_df)
 slippage = exec_df[["twap_mid_price", "exec_sell_price", "exec_buy_price"]]
 
 slippage["sell_slippage_bps"] = (
-    (exec_df["exec_sell_price"] - exec_df["twap_mid_price"]) / exec_df["twap_mid_price"] * 1e4
+    (exec_df["exec_sell_price"] - exec_df["twap_mid_price"])
+    / exec_df["twap_mid_price"]
+    * 1e4
 )
 
 # slippage = df["twap_mid_price"] /
@@ -499,9 +469,6 @@ slippage["sell_slippage_bps"].hist(bins=21)
 
 print("sell_slippage_bps.mean=", slippage["sell_slippage_bps"].mean())
 print("sell_slippage_bps.median=", slippage["sell_slippage_bps"].median())
-
-# %%
-df5.head()
 
 # %% [markdown]
 # ### Commentary
