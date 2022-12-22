@@ -576,7 +576,7 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 
     The broker contains all the logic to handle fills:
     - in the set-up with `DataFramePortfolio`, the broker (specifically the
-      `SimulatedBroker`) executes the orders in terms of price and fills.
+      `DataFrameBroker`) executes the orders in terms of price and fills.
     - in the set-up with `DatabasePortfolio` and `OrderProcessor`, the broker
       (specifically the `DatabaseBroker`) passes information to the `OrderProcessor`
       about the timing of the fills
@@ -833,12 +833,11 @@ class Broker(abc.ABC, hobject.PrintableMixin):
 
 
 # #############################################################################
-# SimulatedBroker
+# DataFrameBroker
 # #############################################################################
 
 
-# TODO(gp): @all -> DataFrameBroker since it's only used with DataFramePortfolio
-class SimulatedBroker(Broker):
+class DataFrameBroker(Broker):
     """
     Represent a broker to which we place orders and receive back fills:
 
@@ -849,14 +848,6 @@ class SimulatedBroker(Broker):
     There is no interaction with an OMS (e.g., no need to waiting for acceptance
     acceptance and execution).
     """
-
-    # TODO(gp): Not sure this is needed.
-    def __init__(
-        self,
-        *args: Any,
-        **kwargs: Any,
-    ) -> None:
-        super().__init__(*args, **kwargs)
 
     def get_fills(self) -> List[Fill]:
         return self._get_fills_helper()

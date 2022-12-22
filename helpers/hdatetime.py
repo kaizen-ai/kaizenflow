@@ -392,6 +392,22 @@ def convert_seconds_to_minutes(num_secs: int) -> int:
     return num_mins
 
 
+def convert_minutes_to_seconds(num_minutes: int) -> int:
+    """
+    Convert minutes to seconds.
+
+    E.g., 5 (minutes) -> 300 (seconds).
+
+    :param num_minutes: the number of minutes to convert
+    :return: the number of seconds
+    """
+    hdbg.dassert_isinstance(num_minutes, int)
+    hdbg.dassert_lt(0, num_minutes)
+    num_seconds = num_minutes * 60
+    _LOG.debug(hprint.to_str("num_minutes num_seconds"))
+    return num_seconds
+
+
 # TODO(gp): bar_duration_in_secs -> bar_{length,period}_in_secs
 def find_bar_timestamp(
     current_timestamp: pd.Timestamp,
