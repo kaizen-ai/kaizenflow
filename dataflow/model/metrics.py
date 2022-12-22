@@ -94,6 +94,7 @@ def convert_to_metrics_format(
     ...
     ```
     """
+    # TODO(Grisha): add `_dassert_is_result_df()`.
     hdbg.dassert_eq(2, len(predict_df.columns.levels))
     _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
     # Drop NaNs.
@@ -141,6 +142,8 @@ def annotate_metrics_df(
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
+    # Check both index and columns as we cannot add a tag
+    # that is an index already, e.g., `asset_id`.
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "hour":
         idx_datetime = metrics_df.index.get_level_values(0)
@@ -167,6 +170,10 @@ def annotate_metrics_df(
 # #############################################################################
 
 
+# TODO(Grisha): double check the return type, i.e. 1 and -1,
+# it seems working well with `calculate_hit_rate()` but is
+# counter-intuitive. 
+# TODO(Grisha): move to `core/finance.py`.
 def compute_hit(
     y: pd.Series,
     y_hat: pd.Series,
@@ -225,13 +232,14 @@ def apply_metrics(
     """
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    # Check both index and columns, e.g., `asset_id` is an index but
+    # we still can group by it.
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
     y_column_name = config["y_column_name"]
     y_hat_column_name = config["y_hat_column_name"]
     hit_col_name = config["hit_col_name"]
     bar_pnl_col_name = config["bar_pnl_col_name"]
-    sr_col_name = config["sharpe_ratio_col_name"]
     #
     y = metrics_df[y_column_name]
     y_hat = metrics_df[y_hat_column_name]
@@ -266,6 +274,7 @@ def apply_metrics(
                     x, y_column_name, y_hat_column_name
                 )
             )
+            # TODO(Grisha): ideally we should pass it via config too, same below.
             srs.name = "total_pnl"
             df_tmp = srs.to_frame()
         elif metric_mode == "sharpe_ratio":
