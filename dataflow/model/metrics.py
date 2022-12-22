@@ -10,6 +10,7 @@ import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.tradability as cfintrad
 import core.statistics.requires_statsmodels as cstresta
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
@@ -225,14 +226,15 @@ def apply_metrics(
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
-    y = metrics_df[config["y_column_name"]]
-    y_hat = metrics_df[config["y_hat_column_name"]]
+    y_column_name = config["y_column_name"]
+    y_hat_column_name = config["y_hat_column_name"]
+    y = metrics_df[y_column_name]
+    y_hat = metrics_df[y_hat_column_name]
     #
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
-            # Column name is the same as the metric mode.
-            hit_col_name = metric_mode
+            hit_col_name = config["hit_col_name"]
             if hit_col_name not in metrics_df.columns:
                 # Compute hit.
                 metrics_df[hit_col_name] = compute_hit(y, y_hat)
@@ -244,12 +246,28 @@ def apply_metrics(
                 )
             )
             df_tmp = srs.to_frame()
-            out_dfs.append(df_tmp)
+            # Set output to the desired format.
+            df_tmp = df_tmp.unstack(level=1)
+            df_tmp.columns = df_tmp.columns.droplevel(0)
+        elif metric_mode == "pnl":
+            bar_pnl_col_name = config["bar_pnl_col_name"]
+            if bar_pnl_col_name not in metrics_df.columns:
+                # Compute bar PnL.
+                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                    metrics_df, y_column_name, y_hat_column_name
+                )
+            # Compute bar PnL per tag column.
+            group_df = metrics_df.groupby(tag_col)
+            srs = group_df.apply(
+                lambda x: cfintrad.compute_total_pnl(
+                    x, y_column_name, y_hat_column_name
+                )
+            )
+            srs.name = "total_pnl[%]"
+            df_tmp = srs.to_frame()
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
-    out_df = pd.concat(out_dfs)
-    # Set output to the desired format.
-    out_df = out_df.unstack(level=1)
-    out_df.columns = out_df.columns.droplevel(0)
+        out_dfs.append(df_tmp)
+    out_df = pd.concat(out_dfs, axis=1)
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
