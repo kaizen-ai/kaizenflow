@@ -172,7 +172,7 @@ def annotate_metrics_df(
 
 # TODO(Grisha): double check the return type, i.e. 1 and -1,
 # it seems working well with `calculate_hit_rate()` but is
-# counter-intuitive. 
+# counter-intuitive.
 # TODO(Grisha): move to `core/finance.py`.
 def compute_hit(
     y: pd.Series,

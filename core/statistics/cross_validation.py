@@ -158,8 +158,10 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
 
 
 def get_train_test_splits(
-    idx: pd.Index, mode: str, *args: Any
-# TODO(Grisha): should we do `pd.DatetimeIndex`?
+    idx: pd.Index,
+    mode: str,
+    *args: Any
+    # TODO(Grisha): should we do `pd.DatetimeIndex`?
 ) -> List[Tuple[pd.Index, pd.Index]]:
     """
     Split a timestamp index into multiple train and test sets according to
