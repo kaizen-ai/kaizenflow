@@ -70,59 +70,6 @@ def get_oos_start_split(
     return [(ins, oos)]
 
 
-def get_train_test_splits(
-    idx: pd.Index, mode: str, *args: Any
-) -> List[Tuple[pd.Index, pd.Index]]:
-    """
-    Split a timestamp index into multiple train and test sets according to
-    various criteria.
-
-    The output is a list of pairs (train, test) splits that has at least
-    one split possible.
-
-    E.g.,
-    If an index looks like `[2022-08-31 20:00:00, ..., 2022-10-30 20:00:00]`,
-    and mode = "rolling", n_splits = 2 the output is:
-    ```
-    [
-        # Split 1.
-        (
-            # Train set.
-            [2022-08-31 20:00:00, ..., 2022-09-20 20:00:00],
-            # Test set.
-            [2022-09-20 20:05:00, ..., 2022-10-10 20:05:00]
-        ),
-        # Split 2.
-        (
-            # Train set.
-            [2022-09-20 20:05:00, ..., 2022-10-10 20:05:00],
-            # Test set.
-            [2022-10-10 20:10:00, ..., 2022-10-30 20:00:00]
-        )
-    ]
-    ```
-
-    :param idx: index to partition
-    :param mode: a mode that defines how to split the index
-        - "ins": in-sample, i.e. train set = test set
-        - "oos": see `get_oos_start_split()`
-        - "rolling": see `get_rolling_splits()`
-    :return: train/test splits
-    """
-    hpandas.dassert_strictly_increasing_index(idx)
-    hdbg.dassert_isinstance(mode, str)
-    _LOG.debug(hprint.to_str("mode args"))
-    if mode == "ins":
-        splits = [(idx, idx)]
-    elif mode == "oos":
-        splits = get_oos_start_split(idx, *args)
-    elif mode == "rolling":
-        splits = get_rolling_splits(idx, *args)
-    else:
-        raise ValueError(f"Invalid mode={mode}")
-    return splits
-
-
 # TODO(Paul): Support train/test/validation or more.
 def get_train_test_pct_split(
     idx: pd.Index, train_pct: float
@@ -208,3 +155,59 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
         )
         txt += "\n"
     return txt
+
+
+def get_train_test_splits(
+    idx: pd.Index,
+    mode: str,
+    *args: Any
+    # TODO(Grisha): should we do `pd.DatetimeIndex`?
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Split a timestamp index into multiple train and test sets according to
+    various criteria.
+
+    The output is a list of pairs (train, test) splits that has at least
+    one split possible.
+
+    E.g.,
+    If an index looks like `[2022-08-31 20:00:00, ..., 2022-10-30 20:00:00]`,
+    and mode = "rolling", n_splits = 2 the output is:
+    ```
+    [
+        # Split 1.
+        (
+            # Train set.
+            [2022-08-31 20:00:00, ..., 2022-09-20 20:00:00],
+            # Test set.
+            [2022-09-20 20:05:00, ..., 2022-10-10 20:05:00]
+        ),
+        # Split 2.
+        (
+            # Train set.
+            [2022-09-20 20:05:00, ..., 2022-10-10 20:05:00],
+            # Test set.
+            [2022-10-10 20:10:00, ..., 2022-10-30 20:00:00]
+        )
+    ]
+    ```
+
+    :param idx: index to partition
+    :param mode: a mode that defines how to split the index
+        - "ins": in-sample, i.e. train set = test set
+        - "oos": see `get_oos_start_split()`
+        - "rolling": see `get_rolling_splits()`
+    :return: train/test splits
+    """
+    hpandas.dassert_strictly_increasing_index(idx)
+    hdbg.dassert_isinstance(mode, str)
+    _LOG.debug(hprint.to_str("mode args"))
+    if mode == "ins":
+        splits = [(idx, idx)]
+    elif mode == "oos":
+        splits = get_oos_start_split(idx, *args)
+    elif mode == "rolling":
+        splits = get_rolling_splits(idx, *args)
+    else:
+        raise ValueError(f"Invalid mode={mode}")
+    return splits
