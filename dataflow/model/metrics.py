@@ -10,7 +10,9 @@ import numpy as np
 import pandas as pd
 
 import core.config as cconfig
+import core.finance.tradability as cfintrad
 import core.statistics.requires_statsmodels as cstresta
+import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -92,6 +94,7 @@ def convert_to_metrics_format(
     ...
     ```
     """
+    # TODO(Grisha): add `_dassert_is_result_df()`.
     hdbg.dassert_eq(2, len(predict_df.columns.levels))
     _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
     # Drop NaNs.
@@ -139,6 +142,8 @@ def annotate_metrics_df(
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
+    # Check both index and columns as we cannot add a tag
+    # that is an index already, e.g., `asset_id`.
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "hour":
         idx_datetime = metrics_df.index.get_level_values(0)
@@ -165,6 +170,10 @@ def annotate_metrics_df(
 # #############################################################################
 
 
+# TODO(Grisha): double check the return type, i.e. 1 and -1,
+# it seems working well with `calculate_hit_rate()` but is
+# counter-intuitive.
+# TODO(Grisha): move to `core/finance.py`.
 def compute_hit(
     y: pd.Series,
     y_hat: pd.Series,
@@ -223,16 +232,21 @@ def apply_metrics(
     """
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    # Check both index and columns, e.g., `asset_id` is an index but
+    # we still can group by it.
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
-    y = metrics_df[config["y_column_name"]]
-    y_hat = metrics_df[config["y_hat_column_name"]]
+    y_column_name = config["column_names"]["y"]
+    y_hat_column_name = config["column_names"]["y_hat"]
+    hit_col_name = config["column_names"]["hit"]
+    bar_pnl_col_name = config["column_names"]["bar_pnl"]
+    #
+    y = metrics_df[y_column_name]
+    y_hat = metrics_df[y_hat_column_name]
     #
     out_dfs = []
     for metric_mode in metric_modes:
         if metric_mode == "hit_rate":
-            # Column name is the same as the metric mode.
-            hit_col_name = metric_mode
             if hit_col_name not in metrics_df.columns:
                 # Compute hit.
                 metrics_df[hit_col_name] = compute_hit(y, y_hat)
@@ -240,16 +254,47 @@ def apply_metrics(
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[hit_col_name].apply(
                 lambda x: cstresta.calculate_hit_rate(
-                    x, **config["calculate_hit_rate_kwargs"]
+                    x, **config["metrics"]["calculate_hit_rate_kwargs"]
                 )
             )
             df_tmp = srs.to_frame()
-            out_dfs.append(df_tmp)
+            # Set output to the desired format.
+            df_tmp = df_tmp.unstack(level=1)
+            df_tmp.columns = df_tmp.columns.droplevel(0)
+        elif metric_mode == "pnl":
+            if bar_pnl_col_name not in metrics_df.columns:
+                # Compute bar PnL.
+                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                    metrics_df, y_column_name, y_hat_column_name
+                )
+            # Compute bar PnL per tag column.
+            group_df = metrics_df.groupby(tag_col)
+            srs = group_df.apply(
+                lambda x: cfintrad.compute_total_pnl(
+                    x, y_column_name, y_hat_column_name
+                )
+            )
+            # TODO(Grisha): ideally we should pass it via config too, same below.
+            srs.name = "total_pnl"
+            df_tmp = srs.to_frame()
+        elif metric_mode == "sharpe_ratio":
+            # We need computed PnL to compute Sharpe ratio.
+            if bar_pnl_col_name not in metrics_df.columns:
+                # Compute bar PnL.
+                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                    metrics_df, y_column_name, y_hat_column_name
+                )
+            time_scaling = config["metrics"]["time_scaling"]
+            # Compute Sharpe ratio per tag column.
+            group_df = metrics_df.groupby(tag_col)
+            srs = group_df[bar_pnl_col_name].apply(
+                lambda x: cstshrat.compute_sharpe_ratio(x, time_scaling)
+            )
+            srs.name = "SR"
+            df_tmp = srs.to_frame()
         else:
             raise ValueError(f"Invalid metric_mode={metric_mode}")
-    out_df = pd.concat(out_dfs)
-    # Set output to the desired format.
-    out_df = out_df.unstack(level=1)
-    out_df.columns = out_df.columns.droplevel(0)
+        out_dfs.append(df_tmp)
+    out_df = pd.concat(out_dfs, axis=1)
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
