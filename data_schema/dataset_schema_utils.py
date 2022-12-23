@@ -245,8 +245,8 @@ def build_s3_dataset_path_from_args(
     s3_path = s3_base_path
     schema = get_dataset_schema(version=version)
     s3_path = os.path.join(s3_path, schema["version"])
-    # TODO(Juraj): If this preprocessing operations start to pile up,
-    #  divide into separate function.
+    # TODO(Juraj): If preprocessing operations pile up, 
+    #  divide them into separate functions.
     if _args.get("universe"):
         _args["universe"] = _args["universe"].replace(".", "_")
     dataset_signature = _build_dataset_signature_from_args(_args, schema)
