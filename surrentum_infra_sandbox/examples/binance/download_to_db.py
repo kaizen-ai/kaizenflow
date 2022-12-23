@@ -7,9 +7,9 @@ Download OHLCV data from Binance and save it as CSV locally.
 Use as:
 # Download OHLCV data for binance:
 > download_to_db.py \
-    --start_timestamp '2022-10-20 10:00:00+00:00' \
+    --start_timestamp '2022-10-21 10:00:00+00:00' \
     --end_timestamp '2022-10-21 15:30:00+00:00' \
-    --target_dir '.'
+    --target_table 'binance_ohlcv_spot_downloaded_1min'
 """
 import argparse
 import logging
