@@ -893,7 +893,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Create Dataframe.
         test_df = pd.DataFrame(data=test_data)
         # Function should not change the schema of the dataframe.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(test_df, actual_df)
 
@@ -918,7 +918,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Fix the type of the `close` column to `float64`.
         expected_df["close"] = expected_df["close"].astype("float64")
         # Function should fix the type of `close` column to `int`.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
@@ -944,7 +944,7 @@ class TestVerifySchema(hunitest.TestCase):
         expected_df["year"] = expected_df["year"].astype("int32")
         expected_df["month"] = expected_df["month"].astype("int32")
         # Function should fix the type of the columns to `int32`.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
@@ -969,7 +969,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Fix the type of `close` column to `int32`.
         expected_df["close"] = expected_df["close"].astype("float64")
         # Function should fix the type of the column to `float64`.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
@@ -993,7 +993,7 @@ class TestVerifySchema(hunitest.TestCase):
         test_df = pd.DataFrame(data=test_data)
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
-            imvcdeexut.verify_schema(test_df)
+            imvcdeexut.verify_schema(test_df, "ohlcv")
         actual = str(cm.exception)
         expected = """
             Invalid dtype of `close` column: expected type `float64`, found `object`
