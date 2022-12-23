@@ -78,7 +78,6 @@ market_data = ramccalg.get_market_data(config)
 # %%
 start_ts = config.get_and_mark_as_used(("market_data_config", "start_ts"))
 end_ts = config.get_and_mark_as_used(("market_data_config", "end_ts"))
-
 intervals = [(start_ts, end_ts)]
 
 
@@ -219,57 +218,12 @@ df_features["bid_value"] = df_features["bid_price"] * df_features["bid_size"]
 # This is really high. 100m USD per hour on top of the book.
 df_features[["bid_value", "ask_value"]].resample("1H").sum().plot()
 
-
-# %%
-def add_limit_order_prices(
-    df: pd.DataFrame,
-    mid_col_name: str,
-    *,
-    resample_freq="1T",
-    passivity_factor=None,
-    abs_spread=None,
-):
-    print(f"df initial={df.shape}")
-    limit_buy_col = "limit_buy_price"
-    limit_sell_col = "limit_sell_price"
-    limit_buy_srs = df[mid_col_name]
-    limit_buy_srs = limit_buy_srs.rename(limit_buy_col)
-    limit_sell_srs = df[mid_col_name]
-    limit_sell_srs = limit_sell_srs.rename(limit_buy_col)
-    #
-    if resample_freq:
-        limit_buy_srs = limit_buy_srs.resample(resample_freq)
-        limit_sell_srs = limit_sell_srs.resample(resample_freq)
-    #
-    limit_buy_srs = limit_buy_srs.mean().shift(1)
-    limit_sell_srs = limit_sell_srs.mean().shift(1)
-    #
-    if abs_spread is not None and passivity_factor is None:
-        limit_buy_srs = limit_buy_srs - abs_spread
-        limit_sell_srs = limit_sell_srs + abs_spread
-    elif passivity_factor is not None and abs_spread is None:
-        limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
-        limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
-    #
-    df_limit_price = pd.DataFrame()
-    df_limit_price[limit_buy_col] = limit_buy_srs
-    df_limit_price[limit_sell_col] = limit_sell_srs
-    print(f"df_limit_price after resampling and shift={df_limit_price.shape}")
-    df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
-    print(f"df after merge={df.shape}")
-    #
-    df[limit_buy_col] = df[limit_buy_col].ffill()
-    df[limit_sell_col] = df[limit_sell_col].ffill()
-    #
-    df["is_buy"] = df["ask_price"] <= df[limit_buy_col]
-    df["is_sell"] = df["bid_price"] >= df[limit_sell_col]
-    return df
-
-
 # %% run_control={"marked": false}
-df_limit_order_prices = add_limit_order_prices(
-    df_features, "mid", abs_spread=0.0001
-)
+mid_col_name = "mid"
+debug_mode = True
+resample_freq = "1T"
+abs_spread = 0.0001
+df_limit_order_prices = ramccalg.add_limit_order_prices(df_features, mid_col_name, debug_mode, abs_spread=abs_spread)
 
 # %%
 df_limit_order_prices.head()
@@ -304,6 +258,9 @@ df_flat.loc[
 # As we have seen during the sanity check above, missing data can congregate around certain time points.
 #
 # For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to resampling.
+
+# %%
+2/0
 
 # %%
 

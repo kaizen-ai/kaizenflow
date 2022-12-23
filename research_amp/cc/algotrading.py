@@ -12,10 +12,11 @@ import pandas as pd
 import core.config as cconfig
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import helpers.hlogging as hloggin
+import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
-import helpers.hlogging as hloggin
 
 _LOG = logging.getLogger(__name__)
 
@@ -136,15 +137,25 @@ def add_limit_order_prices(
     mid_col_name: str,
     debug_mode: bool,
     *,
-    resample_freq: Optional[str]="1T",
-    passivity_factor: Optional[float]=None,
-    abs_spread: Optional[float]=None,
+    resample_freq: Optional[str] = "1T",
+    passivity_factor: Optional[float] = None,
+    abs_spread: Optional[float] = None,
 ) -> pd.DataFrame:
+    """
+    Calculate limit order prices for buy/sell.
+
+    :param df: bid/ask DataFrame
+    :param mid_col_name: name of column containing bid/ask mid price
+    :param debug_mode: whether to show DataFrame info
+    :param resample_freq: resampling frequency, e.g. '1T', '5T'
+    :param passivity_factor:
+    """
+    hdbg.dassert_in(mid_col_name, df.columns.to_list())
+    hdbg.dassert_is_subset(["ask_price", "bid_price"], df.columns.to_list())
     # Verify that DataFrame is in the correct format.
-    
     original_log_level = _LOG.getEffectiveLevel()
     if debug_mode:
-        hloggin.set_level(_LOG,"DEBUG")
+        hloggin.set_level(_LOG, "DEBUG")
     _LOG.debug(f"df initial={df.shape}")
     # Select mid price columns to transform.
     limit_buy_col = "limit_buy_price"
@@ -165,16 +176,21 @@ def add_limit_order_prices(
         limit_buy_srs = limit_buy_srs - abs_spread
         limit_sell_srs = limit_sell_srs + abs_spread
     elif passivity_factor is not None and abs_spread is None:
+        hdbg.dassert_lgt(0, passivity_factor, 1)
         limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
         limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
     else:
-        raise ValueError("Either `passivity_factor` or `abs_spread` should be provided.")
+        raise ValueError(
+            "Either `passivity_factor` or `abs_spread` should be provided."
+        )
     # Merge original dataframe with limit prices.
     #
     df_limit_price = pd.DataFrame()
     df_limit_price[limit_buy_col] = limit_buy_srs
     df_limit_price[limit_sell_col] = limit_sell_srs
-    _LOG.debug(f"df_limit_price after resampling and shift={df_limit_price.shape}")
+    _LOG.debug(
+        f"df_limit_price after resampling and shift={df_limit_price.shape}"
+    )
     df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
     _LOG.debug(f"df after merge={df.shape}")
     # Forward fill gaps if limit prices were resampled.
@@ -187,4 +203,35 @@ def add_limit_order_prices(
     df["is_sell"] = df["bid_price"] >= df[limit_sell_col]
     # Turn the logging level back on.
     hloggin.set_level(_LOG, original_log_level)
+    return df
+
+
+def compute_repricing_df(df, report_stats: bool):
+    hdbg.dassert_is_subset(
+        ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
+    )
+    # TODO(gp): ask_price -> buy_limit?
+    df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
+    mask = ~df["is_buy"]
+    df["exec_buy_price"][mask] = np.nan
+    #
+    df["exec_sell_price"] = df["is_sell"] * df["bid_price"]
+    mask = ~df["is_sell"]
+    df["exec_sell_price"][mask] = np.nan
+    #
+    if report_stats:
+        print(
+            "buy percentage at repricing freq: ",
+            hprint.perc(df["is_buy"].sum(), df.shape[0]),
+        )
+        print(df["is_sell"].sum() / df.shape[0])
+        #
+        print(
+            "exec_buy_price [%]=",
+            hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
+        )
+        print(
+            "exec_sell_price [%]=",
+            hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
+        )
     return df
