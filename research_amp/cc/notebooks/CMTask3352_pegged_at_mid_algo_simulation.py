@@ -33,7 +33,6 @@
 import logging
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
@@ -223,7 +222,9 @@ mid_col_name = "mid"
 debug_mode = True
 resample_freq = "1T"
 abs_spread = 0.0001
-df_limit_order_prices = ramccalg.add_limit_order_prices(df_features, mid_col_name, debug_mode, abs_spread=abs_spread)
+df_limit_order_prices = ramccalg.add_limit_order_prices(
+    df_features, mid_col_name, debug_mode, abs_spread=abs_spread
+)
 
 # %%
 df_limit_order_prices.head()
@@ -251,6 +252,7 @@ df_flat.loc[
     )
 ]
 
+
 # %% [markdown]
 # #### Commentary
 
@@ -260,11 +262,6 @@ df_flat.loc[
 # For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to resampling.
 
 # %%
-2/0
-
-# %%
-
-
 def perform_spread_analysis(
     df, ask_price_col_name: str, bid_price_col_name: str, mid_price_col_name: str
 ) -> None:
@@ -303,40 +300,9 @@ def plot_limit_orders(
 # %% [markdown]
 # ## Resample to T_reprice
 
-# %% run_control={"marked": true}
-def compute_repricing_df(df, report_stats: bool):
-    hdbg.dassert_is_subset(
-        ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
-    )
-    # TODO(gp): ask_price -> buy_limit?
-    df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
-    mask = ~df["is_buy"]
-    df["exec_buy_price"][mask] = np.nan
-    #
-    df["exec_sell_price"] = df["is_sell"] * df["bid_price"]
-    mask = ~df["is_sell"]
-    df["exec_sell_price"][mask] = np.nan
-    #
-    if report_stats:
-        print(
-            "buy percentage at repricing freq: ",
-            hprint.perc(df["is_buy"].sum(), df.shape[0]),
-        )
-        print(df["is_sell"].sum() / df.shape[0])
-        #
-        print(
-            "exec_buy_price [%]=",
-            hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
-        )
-        print(
-            "exec_sell_price [%]=",
-            hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
-        )
-    return df
-
-
 # %%
-reprice_df = compute_repricing_df(df_limit_order_prices, report_stats=True)
+report_stats = True
+reprice_df = ramccalg.compute_repricing_df(df_limit_order_prices, report_stats)
 
 # %%
 reprice_df.shape

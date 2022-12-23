@@ -7,6 +7,7 @@ import research_amp.cc.algotrading as ramccalg
 import logging
 from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
@@ -17,7 +18,6 @@ import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
-import numpy as np
 
 _LOG = logging.getLogger(__name__)
 
@@ -181,8 +181,9 @@ def add_limit_order_prices(
     if abs_spread is not None and passivity_factor is None:
         limit_buy_srs = limit_buy_srs - abs_spread
         limit_sell_srs = limit_sell_srs + abs_spread
+    #
     elif passivity_factor is not None and abs_spread is None:
-        hdbg.dassert_lgt(0, passivity_factor, 1)
+        hdbg.dassert_lgt(0, passivity_factor, 1, True, True)
         limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
         limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
     else:
@@ -216,33 +217,85 @@ def compute_repricing_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
     """
     Compute the execution prices.
 
-    :param df: DataFrame containing the 
+    :param df: DataFrame containing bid/ask data
+    :param report_stats: print DaraFrame stats
+    :return: DataFrame with buy/sell execution prices
     """
     hdbg.dassert_is_subset(
         ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
     )
-    
+    # Calculate buy execution price.
+    # is_buy * ask_price.
     df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
     mask = ~df["is_buy"]
     df["exec_buy_price"][mask] = np.nan
-    #
+    # Calculate sell execution price.
+    # is_sell * bid_price.
     df["exec_sell_price"] = df["is_sell"] * df["bid_price"]
     mask = ~df["is_sell"]
     df["exec_sell_price"][mask] = np.nan
-    #
+    # Display stats.
     if report_stats:
+        # Report buy/sell percentages.
         print(
             "buy percentage at repricing freq: ",
             hprint.perc(df["is_buy"].sum(), df.shape[0]),
         )
-        print(df["is_sell"].sum() / df.shape[0])
-        #
         print(
-            "exec_buy_price [%]=",
+            "sell percentage at repricing freq: ",
+            hprint.perc(df["is_sell"].sum(), df.shape[0]),
+        )
+        # Display zero execution prices as a percentage.
+        print(
+            "0 exec_buy_price [%]=",
             hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
         )
         print(
-            "exec_sell_price [%]=",
+            "0 exec_sell_price [%]=",
             hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
         )
     return df
+
+
+def compute_execution_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
+    """
+    Compute the number and volume of buy/sell executions.
+    """
+    exec_df = pd.DataFrame()
+    # Count how many "buy" executions there were in an interval.
+    exec_df["exec_buy_num"] = df["is_buy"].resample("5T").sum()
+    exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
+    exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
+    if report_stats:
+        print(
+            hprint.perc(
+                exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]
+            )
+        )
+    # Estimate the executed volume.
+    exec_df["exec_buy_volume"] = (
+        (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
+    )
+    if report_stats:
+        print("million USD per 5T=", exec_df["exec_buy_volume"].mean() / 1e6)
+    # # Count how many "sell" executions there were in an interval.
+    exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
+    exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
+    exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
+    if report_stats:
+        print(
+            "exec_is_sell [%]=",
+            hprint.perc(
+                exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
+            ),
+        )
+
+    # Estimate the executed volume.
+    exec_df["exec_sell_volume"] = (
+        (df["bid_size"] * df["bid_price"] * df["is_sell"]).resample("5T").sum()
+    )
+    if report_stats:
+        print("million USD per 5T=", exec_df["exec_sell_volume"].mean() / 1e6)
+    #
+    exec_df["mid"] = df["mid"]
+    return exec_df
