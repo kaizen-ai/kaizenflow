@@ -17,6 +17,7 @@ import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
+import numpy as np
 
 _LOG = logging.getLogger(__name__)
 
@@ -144,11 +145,16 @@ def add_limit_order_prices(
     """
     Calculate limit order prices for buy/sell.
 
+    The limit order can be calculated via passivity factor or absolute spread,
+    but not both.
+
     :param df: bid/ask DataFrame
     :param mid_col_name: name of column containing bid/ask mid price
     :param debug_mode: whether to show DataFrame info
     :param resample_freq: resampling frequency, e.g. '1T', '5T'
-    :param passivity_factor:
+    :param passivity_factor: mid price factor for limit, value between 0 and 1
+    :param abs_spread: value to add to a spread
+    :return: original DataFrame with added limit price columns
     """
     hdbg.dassert_in(mid_col_name, df.columns.to_list())
     hdbg.dassert_is_subset(["ask_price", "bid_price"], df.columns.to_list())
@@ -206,11 +212,16 @@ def add_limit_order_prices(
     return df
 
 
-def compute_repricing_df(df, report_stats: bool):
+def compute_repricing_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
+    """
+    Compute the execution prices.
+
+    :param df: DataFrame containing the 
+    """
     hdbg.dassert_is_subset(
         ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
     )
-    # TODO(gp): ask_price -> buy_limit?
+    
     df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
     mask = ~df["is_buy"]
     df["exec_buy_price"][mask] = np.nan
