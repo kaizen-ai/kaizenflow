@@ -4,6 +4,7 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 import pytest
+import pytz
 
 import helpers.henv as henv
 import helpers.hmoto as hmoto
@@ -15,6 +16,7 @@ import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 
 
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
@@ -475,6 +477,100 @@ class TestDownloadExchangeDataToDb1(
             "binance/SOL_USDT_20211110-000001.csv",
         ]
         self.assertListEqual(csv_path_list, expected)
+
+
+@pytest.mark.slow
+class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
+    def setUp(self) -> None:
+        self.start_date = datetime(2022, 1, 1, tzinfo=pytz.utc)
+        self.end_time = self.start_date + timedelta(seconds=10)
+        return super().setUp()
+
+    def call_download_historical_data(self, incremental: bool) -> None:
+        """
+        Test directly function call for coverage increase.
+        """
+        # Prepare inputs.
+        args = {
+            "start_timestamp": self.start_date.strftime("%y-%m-%d %H:%M:%S"),
+            "end_timestamp": self.end_date.strftime("%y-%m-%d %H:%M:%S"),
+            "exchange_id": "binance",
+            "data_type": "ohlcv",
+            "contract_type": "futures",
+            "universe": "v3",
+            "incremental": incremental,
+            "aws_profile": self.mock_aws_profile,
+            "s3_path": f"s3://{self.bucket_name}/",
+            "log_level": "INFO",
+            "data_format": "parquet",
+            "unit": "ms",
+        }
+        exchange = imvccdexex.CryptoChassisExtractor(
+            args["contract_type"]
+        )
+        imvcdeexut.download_historical_data(args, exchange)
+
+    def test_integrated(self):
+        def crypto_chassis_mock_data(
+            line_numbers: int = 10,
+            start_date: datetime = datetime(2022, 1, 1, tzinfo=pytz.utc)
+        ) -> pd.DataFrame:
+            """
+            Mock data generator for the crypto chassis extractor
+
+            :param line_numbers: how many rows need
+            :param start_date: start datetime for the data
+            :return: mock dataframe with data
+            """
+            data = []
+            for line_number in range(line_numbers):
+                current_datetime = start_date + timedelta(seconds=line_number)
+                data += [
+                    {
+                        "timestamp": current_datetime,
+                        "timestamp.1": int(current_datetime.timestamp()),
+                        "bid_price_l1": 0.3480 + ((line_number + 1) / 10000),
+                        "bid_size_l1": 49676.8,
+                        "bid_price_l2": 0.3480 + (line_number + 1/ 10000),
+                        "bid_size_l2": 49676.8,
+                        "ask_price_l1": 0.3483 + ((line_number)/ 10000),
+                        "ask_size_l1": 49676.8,
+                        "ask_price_l2": 0.3483 + ((line_number + 1) / 10000),
+                        "ask_size_l2": 49676.8,
+                    }
+                ]
+            return pd.DataFrame(data)      
+        # Prepare inputs.
+        args = {
+            "start_timestamp": "2021-12-31 23:00:00",
+            "end_timestamp": "2022-01-01 01:00:00",
+            "exchange_id": "binance",
+            "data_type": "bid_ask",
+            "contract_type": "futures",
+            "universe": "v3",
+            "incremental": True,
+            "aws_profile": self.mock_aws_profile,
+            "s3_path": f"s3://{self.bucket_name}/",
+            "log_level": "INFO",
+            "data_format": "parquet",
+            "unit": "ms",
+        }
+        extractor = imvccdexex.CryptoChassisExtractor(
+            args["contract_type"]
+        )
+        with umock.patch.object(
+            imvccdexex.CryptoChassisExtractor, "download_data"
+        ) as download_data:
+            download_data.return_value = crypto_chassis_mock_data()
+            data = extractor.download_data(args, extractor)
+            print(data)
+            
+       
+        
+
+
+
+
 
 
 @pytest.mark.skipif(
