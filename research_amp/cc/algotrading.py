@@ -4,6 +4,7 @@ Import as:
 import research_amp.cc.algotrading as ramccalg
 """
 
+import logging
 from typing import List, Optional
 
 import pandas as pd
@@ -14,6 +15,10 @@ import helpers.hdbg as hdbg
 import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
+import helpers.hlogging as hloggin
+
+_LOG = logging.getLogger(__name__)
+
 
 # #############################################################################
 # Notebook Config examples
@@ -119,3 +124,67 @@ def get_market_data(config: cconfig.Config) -> mdata.MarketData:
         wall_clock_time=wall_clock_time,
     )
     return market_data
+
+
+# #############################################################################
+# Data Augmentation utilities
+# #############################################################################
+
+
+def add_limit_order_prices(
+    df: pd.DataFrame,
+    mid_col_name: str,
+    debug_mode: bool,
+    *,
+    resample_freq: Optional[str]="1T",
+    passivity_factor: Optional[float]=None,
+    abs_spread: Optional[float]=None,
+) -> pd.DataFrame:
+    # Verify that DataFrame is in the correct format.
+    
+    original_log_level = _LOG.getEffectiveLevel()
+    if debug_mode:
+        hloggin.set_level(_LOG,"DEBUG")
+    _LOG.debug(f"df initial={df.shape}")
+    # Select mid price columns to transform.
+    limit_buy_col = "limit_buy_price"
+    limit_sell_col = "limit_sell_price"
+    limit_buy_srs = df[mid_col_name]
+    limit_buy_srs = limit_buy_srs.rename(limit_buy_col)
+    limit_sell_srs = df[mid_col_name]
+    limit_sell_srs = limit_sell_srs.rename(limit_buy_col)
+    # Resample if necessary.
+    if resample_freq:
+        limit_buy_srs = limit_buy_srs.resample(resample_freq)
+        limit_sell_srs = limit_sell_srs.resample(resample_freq)
+    # Get mid price avg and shift by 1 period.
+    limit_buy_srs = limit_buy_srs.mean().shift(1)
+    limit_sell_srs = limit_sell_srs.mean().shift(1)
+    # Apply passivity factor or absolute spread.
+    if abs_spread is not None and passivity_factor is None:
+        limit_buy_srs = limit_buy_srs - abs_spread
+        limit_sell_srs = limit_sell_srs + abs_spread
+    elif passivity_factor is not None and abs_spread is None:
+        limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
+        limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
+    else:
+        raise ValueError("Either `passivity_factor` or `abs_spread` should be provided.")
+    # Merge original dataframe with limit prices.
+    #
+    df_limit_price = pd.DataFrame()
+    df_limit_price[limit_buy_col] = limit_buy_srs
+    df_limit_price[limit_sell_col] = limit_sell_srs
+    _LOG.debug(f"df_limit_price after resampling and shift={df_limit_price.shape}")
+    df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
+    _LOG.debug(f"df after merge={df.shape}")
+    # Forward fill gaps if limit prices were resampled.
+    #  Note: we expect the original data to be 1 second, and e.g. 1min limit
+    #  price is applied to each second of that period.
+    df[limit_buy_col] = df[limit_buy_col].ffill()
+    df[limit_sell_col] = df[limit_sell_col].ffill()
+    # Set whether the price has hit the limit.
+    df["is_buy"] = df["ask_price"] <= df[limit_buy_col]
+    df["is_sell"] = df["bid_price"] >= df[limit_sell_col]
+    # Turn the logging level back on.
+    hloggin.set_level(_LOG, original_log_level)
+    return df
