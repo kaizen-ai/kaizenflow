@@ -38,9 +38,9 @@ kw_list = ["Bitcoin"]
 # # Historical interest
 
 # %% [markdown]
-#  `Cat` is the search category which can be choosen at https://github.com/pat310/google-trends-api/wiki/Google-Trends-Categories Category 0 means no category filter.
+#  `Cat` is the search category which can be found at https://github.com/pat310/google-trends-api/wiki/Google-Trends-Categories. Category 0 means no category filter.
 #  
-#  `Geo` is  search country abbreviation, e.g. 'US' or 'US-AL' for Alabama state. Defaults to 'World'.
+#  `Geo` is  search country abbreviation which follows the ISO-3166 country code naming scheme, e.g. 'US' or 'US-AL' for Alabama state. Defaults to 'World'.
 #  
 #  `Gprop` describes what Google property to filter to. Can be `images`, `news`, `youtube` or `froogle`.
 
@@ -115,7 +115,7 @@ hist_int_new.plot(subplots=True, figsize=(20, 12))
 hist_int_new.tail()
 
 # %% [markdown]
-# At the time of the research it's 15:56 UTC, so it looks like the data is delivered once an hour.
+# It looks like the data is delivered once an hour.
 
 # %% [markdown]
 # # Related queries
@@ -140,5 +140,3 @@ related_t["Bitcoin"]["top"]
 
 # %%
 related_t["Bitcoin"]["rising"]
-
-# %%
