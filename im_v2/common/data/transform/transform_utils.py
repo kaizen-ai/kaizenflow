@@ -384,6 +384,8 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
         1,
         "Only data from single exchange are supported",
     )
+    # Store exchange_id column, it is removed during resampling.
+    exchange_id = df_raw["exchange_id"].unique()[0]
     # Remove duplicates, keep the latest record.
     df_raw = df_raw.sort_values("knowledge_timestamp", ascending=False)
     df_raw = df_raw.drop_duplicates(
@@ -426,6 +428,8 @@ def transform_and_resample_bid_ask_rt_data(df_raw: pd.DataFrame) -> pd.DataFrame
     # This data is only reloaded from our DB so end_download_timestamp is None.
     df_resampled["end_download_timestamp"] = None
     # Round column values for readability.
+    # Add exchange column back, as it was removed during resampling.
+    df_resampled["exchange_id"] = exchange_id
     round_cols_dict = {
         col: 6 for col in ["bid_size", "bid_price", "ask_size", "ask_price"]
     }
