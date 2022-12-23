@@ -380,6 +380,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         currency_pair: str,
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
@@ -390,7 +391,10 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
 
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param start_timestamp: timestamp of start
+        :param start_timestamp: timestamp of start. The API ignores the times section
+         of the argument and instead return the day's worth of data (in UTC):
+         e.g. start_timestamp=2022-12-11T00:10:01+00:00 returns data in interval
+         [2022-12-11T00:00:00+00:00, 2022-12-11T23:59:59+00:00]
         :return: trade data
         """
         # Verify that date parameters are of correct format.
@@ -419,7 +423,12 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         r = requests.get(query_url)
         # Retrieve raw data.
         data_json = r.json()
-        if data_json.get("urls") is None:
+        # If there is no `urls` key or there is one but the value is an empty list.
+        if not data_json.get("urls"):
+            _LOG.info(
+                f"Unable to retrieve data for {currency_pair} "
+                + f"and start_timestamp={start_timestamp}"
+            )
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
         df_csv = data_json["urls"][0]["url"]
