@@ -1,4 +1,7 @@
 """
+Example implementation of abstract classes for extract part of the
+ETL and QA pipeline.
+
 Import as:
 
 import surrentum_infra_sandbox.examples.binance.download as sisebido

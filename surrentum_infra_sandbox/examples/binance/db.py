@@ -1,4 +1,7 @@
 """
+Example implementation of abstract classes for the load part of the
+ETL and QA pipeline.
+
 Import as:
 
 import surrentum_infra_sandbox.examples.binance.db as sisebidb
@@ -12,6 +15,8 @@ import psycopg2 as psycop
 import psycopg2.extras as extras
 import surrentum_infra_sandbox.download as sinsadow
 import surrentum_infra_sandbox.save as sinsasav
+import surrentum_infra_sandbox.client as sinsacli
+import helpers.hdatetime as hdateti
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
@@ -139,3 +144,57 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor.execute(query)
         query = get_ohlcv_spot_resampled_5min_create_table_query()
         cursor.execute(query)
+        
+class PostgresClient(sinsacli.DataClient):
+    """
+    Class for loading postgreSQL data.
+    """
+
+    def __init__(self, db_connection) -> None:
+        """
+        Constructor.
+
+        :param db_conn: path to save data to.
+        """
+        self.db_conn = db_connection
+
+    def load(
+        self,
+        dataset_signature: str,
+        start_timestamp=None,
+        end_timestamp=None,
+        **kwargs: Any,
+    ) -> Any:
+        """
+        Load CSV data specified by a unique signature from a desired source
+        directory for a specified time period.
+
+        The method assumes data having a 'timestamp' column.
+
+        :param dataset_signature: signature of the dataset to load (in the context of this client
+        its the name of the table to load from)
+        :param start_timestamp: beginning of the time period to load (context differs based
+         on data type). If None, start with the earliest saved data.
+        :param end_timestamp: end of the time period to load (context differs based
+         on data type). If None, download up to the latest saved data.
+        :return: loaded data
+        """
+        select_query = f"SELECT * FROM {dataset_signature}"
+        if start_timestamp:
+            hdateti.dassert_has_tz(start_timestamp)
+            start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
+                start_timestamp
+            )
+            select_query += F" WHERE timestamp >= {start_timestamp_as_unix}"
+        if end_timestamp:
+            hdateti.dassert_has_tz(end_timestamp)
+            end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
+                end_timestamp
+            )
+            if start_timestamp:
+                select_query += " AND "
+            else:
+                select_query += " WHERE "
+            select_query += F" timestamp < {end_timestamp_as_unix}"
+        data = pd.read_sql_query(select_query, self.db_conn)
+        return data
