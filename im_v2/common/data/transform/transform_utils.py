@@ -351,17 +351,14 @@ def resample_multilevel_bid_ask_data(
     :return DataFrame resampled to 1 minute.
     """
     all_levels_resampled = []
-    for i in range(1, NUMBER_LEVELS_OF_ORDER_BOOK + 1):
-        bid_ask_cols_levels = [
-            f"{name}_l{i}"
-            for name in BID_ASK_COLS
-        ]
-        data_one_level = data[bid_ask_cols_levels]
+    for i in range(1, 11):
+        bid_ask_cols_level = list(map(lambda x: f"{x}_l{i}", BID_ASK_COLS))
+        data_one_level = data[bid_ask_cols_level]
         # Canonize column name for resampling function.
         data_one_level.columns = BID_ASK_COLS
         data_one_level = resample_bid_ask_data_to_1min(data_one_level, mode)
         # Uncanonize the column levels back.
-        data_one_level.columns = bid_ask_cols_levels
+        data_one_level.columns = bid_ask_cols_level
         all_levels_resampled.append(data_one_level)
     # Drop duplicate columns because a vetical concatenation follows.
     data_resampled = pd.concat(all_levels_resampled, axis=1)
