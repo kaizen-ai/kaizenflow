@@ -1,5 +1,9 @@
 """
 Example DAG to download OHLCV data.
+
+Import as:
+
+import devops.surrentum_data_node.airflow_data.dags.download_periodic_1min_postgres_ohlcv as dsdnadddp1po
 """
 
 import datetime

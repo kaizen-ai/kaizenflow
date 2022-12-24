@@ -1,6 +1,6 @@
 """
-Example implementation of abstract classes for the load part of the
-ETL and QA pipeline.
+Example implementation of abstract classes for the load part of the ETL and QA
+pipeline.
 
 Import as:
 
@@ -10,13 +10,13 @@ import surrentum_infra_sandbox.examples.binance.db as sisebidb
 from typing import Any
 
 import pandas as pd
-
 import psycopg2 as psycop
 import psycopg2.extras as extras
+
+import helpers.hdatetime as hdateti
+import surrentum_infra_sandbox.client as sinsacli
 import surrentum_infra_sandbox.download as sinsadow
 import surrentum_infra_sandbox.save as sinsasav
-import surrentum_infra_sandbox.client as sinsacli
-import helpers.hdatetime as hdateti
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
@@ -116,7 +116,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor = self.db_conn.cursor()
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
-        
+
     def _create_insert_query(self, df: pd.DataFrame, db_table: str) -> str:
         """
         Create an INSERT query to insert data into a DB.
@@ -127,7 +127,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
                 ```
                 INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
                 ```
-        """             
+        """
         columns = ",".join(list(df.columns))
         query = f"INSERT INTO {db_table}({columns}) VALUES %s"
         return query
@@ -144,7 +144,8 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         cursor.execute(query)
         query = get_ohlcv_spot_resampled_5min_create_table_query()
         cursor.execute(query)
-        
+
+
 class PostgresClient(sinsacli.DataClient):
     """
     Class for loading postgreSQL data.
@@ -185,7 +186,7 @@ class PostgresClient(sinsacli.DataClient):
             start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
                 start_timestamp
             )
-            select_query += F" WHERE timestamp >= {start_timestamp_as_unix}"
+            select_query += f" WHERE timestamp >= {start_timestamp_as_unix}"
         if end_timestamp:
             hdateti.dassert_has_tz(end_timestamp)
             end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
@@ -195,6 +196,6 @@ class PostgresClient(sinsacli.DataClient):
                 select_query += " AND "
             else:
                 select_query += " WHERE "
-            select_query += F" timestamp < {end_timestamp_as_unix}"
+            select_query += f" timestamp < {end_timestamp_as_unix}"
         data = pd.read_sql_query(select_query, self.db_conn)
         return data

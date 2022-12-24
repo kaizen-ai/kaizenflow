@@ -1,5 +1,6 @@
 """
-Example DAG to load data from PostgreSQL, validate and transform them and save back to the DB.
+Example DAG to load data from PostgreSQL, validate and transform them and save
+back to the DB.
 """
 
 import datetime
@@ -8,7 +9,9 @@ import airflow
 from airflow.operators.bash import BashOperator
 
 _DAG_ID = "validate_and_resample_periodic_1min_postgresdata_ohlcv"
-_DAG_DESCRIPTION = "Resample binance OHLCV data every 5 minutes and save back to postgres"
+_DAG_DESCRIPTION = (
+    "Resample binance OHLCV data every 5 minutes and save back to postgres"
+)
 # Specify when/how often to execute the DAG.
 _SCHEDULE = "*/5 * * * *"
 

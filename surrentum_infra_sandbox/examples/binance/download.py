@@ -1,6 +1,6 @@
 """
-Example implementation of abstract classes for extract part of the
-ETL and QA pipeline.
+Example implementation of abstract classes for extract part of the ETL and QA
+pipeline.
 
 Import as:
 

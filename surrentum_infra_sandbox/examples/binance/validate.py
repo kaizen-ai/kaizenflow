@@ -1,6 +1,6 @@
 """
-Example implementation of abstract classes for QA part of the
-ETL and QA pipeline.
+Example implementation of abstract classes for QA part of the ETL and QA
+pipeline.
 
 Import as:
 
@@ -12,9 +12,10 @@ from typing import Any, List
 
 import pandas as pd
 
+import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import surrentum_infra_sandbox.validate as sinsaval
-import helpers.hdatetime as hdateti
+
 
 def find_gaps_in_time_series(
     time_series: pd.Series,

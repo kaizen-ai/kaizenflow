@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 """
-Load and validate data within a specified time period from a a PostgreSQL table,
-resample and load back to the DB.
+Load and validate data within a specified time period from a a PostgreSQL
+table, resample and load back to the DB.
 
 Use as:
 # Load OHLCV data for binance:
@@ -13,17 +13,15 @@ Use as:
 """
 import argparse
 import logging
-import os
 from datetime import timedelta
-from typing import Any
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.examples.binance.validate as sisebiva
-import surrentum_infra_sandbox.examples.binance.db as sisebidb
 import surrentum_infra_sandbox.download as sinsadow
+import surrentum_infra_sandbox.examples.binance.db as sisebidb
+import surrentum_infra_sandbox.examples.binance.validate as sisebiva
 
 _LOG = logging.getLogger(__name__)
 
@@ -31,36 +29,44 @@ _LOG = logging.getLogger(__name__)
 # Example script setup
 # #############################################################################
 
+
 def _resample_data_to_5min(data: pd.DataFrame) -> pd.DataFrame:
     """
     Resample 1 minute OHLCV data to 5 minutes.
-    
+
     :param data: DataFrame to resample
     """
     resample_func_dict = {
-        "open": "first", 
+        "open": "first",
         "high": "max",
         "low": "min",
         "close": "last",
-        "volume": "sum"
+        "volume": "sum",
     }
     # Convert unix epoch column to timestamp to enable pandas resampling.
-    data["timestamp"] = data["timestamp"].apply(hdateti.convert_unix_epoch_to_timestamp)
+    data["timestamp"] = data["timestamp"].apply(
+        hdateti.convert_unix_epoch_to_timestamp
+    )
     data = data.set_index("timestamp", drop=True)
     resampled_dfs = []
     for currency_pair in data["currency_pair"].unique():
         data_single_curr = data[data["currency_pair"] == currency_pair]
-        resampled_data = data_single_curr.resample("5T", closed="left", label="right").agg(resample_func_dict)
+        resampled_data = data_single_curr.resample(
+            "5T", closed="left", label="right"
+        ).agg(resample_func_dict)
         resampled_data = resampled_data.reset_index()
         # Add currency_pair column back, as it was removed during resampling process.
         resampled_data["currency_pair"] = currency_pair
         resampled_dfs.append(resampled_data)
     resampled_data = pd.concat(resampled_dfs, axis=0)
     # Convert timestamp column back to unix epoch.
-    resampled_data["timestamp"] = resampled_data["timestamp"].apply(hdateti.convert_timestamp_to_unix_epoch)
+    resampled_data["timestamp"] = resampled_data["timestamp"].apply(
+        hdateti.convert_timestamp_to_unix_epoch
+    )
     # This data is not downloaded so end_download_timestamp is None.
     resampled_data["end_download_timestamp"] = None
     return resampled_data
+
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
