@@ -189,7 +189,7 @@ bid_col = "bid_price"
 ask_col = "ask_price"
 bid_volume_col = "bid_size"
 ask_volume_col = "ask_size"
-requested_cols = ["mid"]
+requested_cols = ["mid", "ask_value", "bid_value"]
 join_output_with_input = True
 df_mid = cofinanc.process_bid_ask(
     df_flat,
@@ -211,9 +211,6 @@ print(df_mid.index.max())
 df_features = df_mid.copy()
 
 # %%
-df_features["ask_value"] = df_features["ask_price"] * df_features["ask_size"]
-df_features["bid_value"] = df_features["bid_price"] * df_features["bid_size"]
-
 # This is really high. 100m USD per hour on top of the book.
 df_features[["bid_value", "ask_value"]].resample("1H").sum().plot()
 
@@ -228,6 +225,9 @@ df_limit_order_prices = ramccalg.add_limit_order_prices(
 
 # %%
 df_limit_order_prices.head()
+
+# %% [markdown]
+# ### Check missing data indices
 
 # %%
 print(df_features.shape)
@@ -310,57 +310,11 @@ reprice_df.shape
 # %%
 reprice_df.head(5)
 
-
 # %% [markdown]
 # ## Resample to T_exec
 
 # %%
-def compute_execution_df(df, report_stats: bool):
-    """
-    Compute the number and volume of buy/sell executions.
-    """
-    exec_df = pd.DataFrame()
-    # Count how many "buy" executions there were in an interval.
-    exec_df["exec_buy_num"] = df["is_buy"].resample("5T").sum()
-    exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
-    exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
-    if report_stats:
-        print(
-            hprint.perc(
-                exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]
-            )
-        )
-    # Estimate the executed volume.
-    exec_df["exec_buy_volume"] = (
-        (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
-    )
-    if report_stats:
-        print("million USD per 5T=", exec_df["exec_buy_volume"].mean() / 1e6)
-    # # Count how many "sell" executions there were in an interval.
-    exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
-    exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
-    exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
-    if report_stats:
-        print(
-            "exec_is_sell [%]=",
-            hprint.perc(
-                exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
-            ),
-        )
-
-    # Estimate the executed volume.
-    exec_df["exec_sell_volume"] = (
-        (df["bid_size"] * df["bid_price"] * df["is_sell"]).resample("5T").sum()
-    )
-    if report_stats:
-        print("million USD per 5T=", exec_df["exec_sell_volume"].mean() / 1e6)
-    #
-    exec_df["mid"] = df["mid"]
-    return exec_df
-
-
-# %%
-exec_df = compute_execution_df(reprice_df, report_stats=True)
+exec_df = ramccalg.compute_execution_df(reprice_df, report_stats=True)
 exec_df.head(5)
 
 

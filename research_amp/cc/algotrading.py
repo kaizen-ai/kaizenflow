@@ -237,65 +237,89 @@ def compute_repricing_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
     # Display stats.
     if report_stats:
         # Report buy/sell percentages.
-        print(
-            "buy percentage at repricing freq: ",
+        _LOG.info(
+            "buy percentage at repricing freq: %s",
             hprint.perc(df["is_buy"].sum(), df.shape[0]),
         )
-        print(
-            "sell percentage at repricing freq: ",
+        _LOG.info(
+            "sell percentage at repricing freq: %s",
             hprint.perc(df["is_sell"].sum(), df.shape[0]),
         )
         # Display zero execution prices as a percentage.
-        print(
-            "0 exec_buy_price [%]=",
+        _LOG.info(
+            "exec_buy_price=0 %=%s",
             hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
         )
-        print(
-            "0 exec_sell_price [%]=",
+        _LOG.info(
+            "exec_sell_price=0 %=%s",
             hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
         )
     return df
 
 
-def compute_execution_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
+def compute_execution_df(
+    df: pd.DataFrame, report_stats: bool, *, join_output_with_input: bool = False
+) -> pd.DataFrame:
     """
     Compute the number and volume of buy/sell executions.
+
+    :param df: DataFrame with bid/ask columns
+    :param report_stats: print stats on the calculated values
+    :param join_output_with_input: merge the values with input DataFrame
+    :return: DataFrame with execution stats
     """
+    hdbg.dassert_is_subset(
+        ["is_buy", "is_sell", "ask_size", "ask_price", "mid"],
+        df.columns.to_list(),
+    )
     exec_df = pd.DataFrame()
+    #
     # Count how many "buy" executions there were in an interval.
     exec_df["exec_buy_num"] = df["is_buy"].resample("5T").sum()
     exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
     exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
     if report_stats:
-        print(
+        _LOG.info(
+            "exec_is_buy=%s",
             hprint.perc(
-                exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]
+                exec_df["exec_is_buy"].sum(),
+                exec_df["exec_is_buy"].shape[0],
             )
         )
-    # Estimate the executed volume.
+    # Estimate the executed "buy" volume.
     exec_df["exec_buy_volume"] = (
         (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
     )
     if report_stats:
-        print("million USD per 5T=", exec_df["exec_buy_volume"].mean() / 1e6)
-    # # Count how many "sell" executions there were in an interval.
+        _LOG.info(
+            "million USD per 5T=%s", exec_df["exec_buy_volume"].mean() / 1e6
+        )
+    #
+    # Count how many "sell" executions there were in an interval.
     exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
     exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
     exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
     if report_stats:
-        print(
-            "exec_is_sell [%]=",
+        _LOG.info(
+            "exec_is_sell=%s",
             hprint.perc(
                 exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
             ),
         )
-
-    # Estimate the executed volume.
+    # Estimate the executed "sell" volume.
     exec_df["exec_sell_volume"] = (
         (df["bid_size"] * df["bid_price"] * df["is_sell"]).resample("5T").sum()
     )
     if report_stats:
-        print("million USD per 5T=", exec_df["exec_sell_volume"].mean() / 1e6)
+        _LOG.info(
+            "million USD per 5T=%s", exec_df["exec_sell_volume"].mean() / 1e6
+        )
     #
-    exec_df["mid"] = df["mid"]
+    # Join original DF with execution price, if required.
+    if join_output_with_input:
+        exec_df = exec_df.merge(
+            df, right_index=True, left_index=True, how="outer"
+        )
+    else:
+        exec_df["mid"] = df["mid"]
     return exec_df
