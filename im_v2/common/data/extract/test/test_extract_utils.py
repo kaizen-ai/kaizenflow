@@ -6,12 +6,14 @@ import pandas as pd
 import pytest
 import pytz
 
+import helpers.hdatetime as hdateti
+import helpers.hunit_test as hunitest
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
-import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
@@ -483,7 +485,7 @@ class TestDownloadExchangeDataToDb1(
 class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
         self.start_date = datetime(2022, 1, 1, tzinfo=pytz.utc)
-        self.end_time = self.start_date + timedelta(seconds=10)
+        self.end_date = self.start_date + timedelta(seconds=10)
         return super().setUp()
 
     def call_download_historical_data(self, incremental: bool) -> None:
@@ -494,6 +496,10 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         args = {
             "start_timestamp": self.start_date.strftime("%y-%m-%d %H:%M:%S"),
             "end_timestamp": self.end_date.strftime("%y-%m-%d %H:%M:%S"),
+            "download_mode": "periodic_daily",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_1sec",
+            "vendor": "crypto_chassis",
             "exchange_id": "binance",
             "data_type": "ohlcv",
             "contract_type": "futures",
@@ -527,8 +533,7 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
                 current_datetime = start_date + timedelta(seconds=line_number)
                 data += [
                     {
-                        "timestamp": current_datetime,
-                        "timestamp.1": int(current_datetime.timestamp()),
+                        "timestamp": int(current_datetime.timestamp()*1000),
                         "bid_price_l1": 0.3480 + ((line_number + 1) / 10000),
                         "bid_size_l1": 49676.8,
                         "bid_price_l2": 0.3480 + (line_number + 1/ 10000),
@@ -558,17 +563,69 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         extractor = imvccdexex.CryptoChassisExtractor(
             args["contract_type"]
         )
+        # Create path for incremental mode.
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        with s3fs_.open(
+            "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
+            "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0/"
+            "dummy.txt", "w"
+        ) as f:
+            f.write("test")
         with umock.patch.object(
             imvccdexex.CryptoChassisExtractor, "download_data"
         ) as download_data:
             download_data.return_value = crypto_chassis_mock_data()
-            data = extractor.download_data(args, extractor)
-            print(data)
-            
-       
-        
-
-
+            self.call_download_historical_data(incremental=True)
+        path = (
+            "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
+            "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0"
+        )
+        parquet_path_list = hs3.listdir(
+            dir_name=path,
+            pattern="*.parquet",
+            only_files=True,
+            use_relative_paths=True,
+            aws_profile=self.mock_aws_profile,
+        )
+        parquet_path_list.sort()
+        parquet_path_list = [
+            # Remove uuid names.
+            "/".join(path.split("/")[:-1])
+            for path in parquet_path_list
+        ]
+        expected_list = [
+            "currency_pair=ADA_USDT/year=2022/month=1",
+            "currency_pair=BNB_USDT/year=2022/month=1",
+            "currency_pair=BTC_USDT/year=2022/month=1",
+            "currency_pair=DOGE_USDT/year=2022/month=1",
+            "currency_pair=DOT_USDT/year=2022/month=1",
+            "currency_pair=EOS_USDT/year=2022/month=1",
+            "currency_pair=ETH_USDT/year=2022/month=1",
+            "currency_pair=SOL_USDT/year=2022/month=1",
+            "currency_pair=XRP_USDT/year=2022/month=1"
+        ]
+        self.assertListEqual(parquet_path_list, expected_list)
+        pq_path = hs3.get_latest_pq_in_s3_dir(
+            s3_path=path,
+            aws_profile=self.mock_aws_profile,
+        )
+        pq_path = f"s3://{pq_path}" 
+        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+        actual = hparque.from_parquet(
+            file_name=pq_path,
+            aws_profile=s3fs_
+        )
+        print(actual)
+        expected = crypto_chassis_mock_data()
+        expected['timestamp_old'] = expected['timestamp']
+        expected['timestamp'] = expected['timestamp'].apply(
+            hdateti.convert_unix_epoch_to_timestamp)
+        expected = expected.set_index(['timestamp'])
+        expected = expected.rename(columns={"timestamp_old": "timestamp"})
+        actual = actual.drop(['exchange_id', 'knowledge_timestamp'], axis=1)
+        actual = actual.reindex(sorted(actual.columns), axis=1)
+        expected = expected.reindex(sorted(expected.columns), axis=1)
+        hunitest.compare_df(actual, expected)
 
 
 
