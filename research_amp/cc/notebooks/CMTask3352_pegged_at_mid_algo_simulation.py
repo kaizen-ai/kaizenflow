@@ -33,7 +33,6 @@
 import logging
 from typing import Optional
 
-import numpy as np
 import pandas as pd
 
 import core.finance as cofinanc
@@ -78,7 +77,6 @@ market_data = ramccalg.get_market_data(config)
 # %%
 start_ts = config.get_and_mark_as_used(("market_data_config", "start_ts"))
 end_ts = config.get_and_mark_as_used(("market_data_config", "end_ts"))
-
 intervals = [(start_ts, end_ts)]
 
 
@@ -191,7 +189,7 @@ bid_col = "bid_price"
 ask_col = "ask_price"
 bid_volume_col = "bid_size"
 ask_volume_col = "ask_size"
-requested_cols = ["mid"]
+requested_cols = ["mid", "ask_value", "bid_value"]
 join_output_with_input = True
 df_mid = cofinanc.process_bid_ask(
     df_flat,
@@ -213,66 +211,23 @@ print(df_mid.index.max())
 df_features = df_mid.copy()
 
 # %%
-df_features["ask_value"] = df_features["ask_price"] * df_features["ask_size"]
-df_features["bid_value"] = df_features["bid_price"] * df_features["bid_size"]
-
 # This is really high. 100m USD per hour on top of the book.
 df_features[["bid_value", "ask_value"]].resample("1H").sum().plot()
 
-
-# %%
-def add_limit_order_prices(
-    df: pd.DataFrame,
-    mid_col_name: str,
-    *,
-    resample_freq="1T",
-    passivity_factor=None,
-    abs_spread=None,
-):
-    print(f"df initial={df.shape}")
-    limit_buy_col = "limit_buy_price"
-    limit_sell_col = "limit_sell_price"
-    limit_buy_srs = df[mid_col_name]
-    limit_buy_srs = limit_buy_srs.rename(limit_buy_col)
-    limit_sell_srs = df[mid_col_name]
-    limit_sell_srs = limit_sell_srs.rename(limit_buy_col)
-    #
-    if resample_freq:
-        limit_buy_srs = limit_buy_srs.resample(resample_freq)
-        limit_sell_srs = limit_sell_srs.resample(resample_freq)
-    #
-    limit_buy_srs = limit_buy_srs.mean().shift(1)
-    limit_sell_srs = limit_sell_srs.mean().shift(1)
-    #
-    if abs_spread is not None and passivity_factor is None:
-        limit_buy_srs = limit_buy_srs - abs_spread
-        limit_sell_srs = limit_sell_srs + abs_spread
-    elif passivity_factor is not None and abs_spread is None:
-        limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
-        limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
-    #
-    df_limit_price = pd.DataFrame()
-    df_limit_price[limit_buy_col] = limit_buy_srs
-    df_limit_price[limit_sell_col] = limit_sell_srs
-    print(f"df_limit_price after resampling and shift={df_limit_price.shape}")
-    df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
-    print(f"df after merge={df.shape}")
-    #
-    df[limit_buy_col] = df[limit_buy_col].ffill()
-    df[limit_sell_col] = df[limit_sell_col].ffill()
-    #
-    df["is_buy"] = df["ask_price"] <= df[limit_buy_col]
-    df["is_sell"] = df["bid_price"] >= df[limit_sell_col]
-    return df
-
-
 # %% run_control={"marked": false}
-df_limit_order_prices = add_limit_order_prices(
-    df_features, "mid", abs_spread=0.0001
+mid_col_name = "mid"
+debug_mode = True
+resample_freq = "1T"
+abs_spread = 0.0001
+df_limit_order_prices = ramccalg.add_limit_order_prices(
+    df_features, mid_col_name, debug_mode, abs_spread=abs_spread
 )
 
 # %%
 df_limit_order_prices.head()
+
+# %% [markdown]
+# ### Check missing data indices
 
 # %%
 print(df_features.shape)
@@ -297,6 +252,7 @@ df_flat.loc[
     )
 ]
 
+
 # %% [markdown]
 # #### Commentary
 
@@ -306,8 +262,6 @@ df_flat.loc[
 # For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to resampling.
 
 # %%
-
-
 def perform_spread_analysis(
     df, ask_price_col_name: str, bid_price_col_name: str, mid_price_col_name: str
 ) -> None:
@@ -346,40 +300,9 @@ def plot_limit_orders(
 # %% [markdown]
 # ## Resample to T_reprice
 
-# %% run_control={"marked": true}
-def compute_repricing_df(df, report_stats: bool):
-    hdbg.dassert_is_subset(
-        ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
-    )
-    # TODO(gp): ask_price -> buy_limit?
-    df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
-    mask = ~df["is_buy"]
-    df["exec_buy_price"][mask] = np.nan
-    #
-    df["exec_sell_price"] = df["is_sell"] * df["bid_price"]
-    mask = ~df["is_sell"]
-    df["exec_sell_price"][mask] = np.nan
-    #
-    if report_stats:
-        print(
-            "buy percentage at repricing freq: ",
-            hprint.perc(df["is_buy"].sum(), df.shape[0]),
-        )
-        print(df["is_sell"].sum() / df.shape[0])
-        #
-        print(
-            "exec_buy_price [%]=",
-            hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
-        )
-        print(
-            "exec_sell_price [%]=",
-            hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
-        )
-    return df
-
-
 # %%
-reprice_df = compute_repricing_df(df_limit_order_prices, report_stats=True)
+report_stats = True
+reprice_df = ramccalg.compute_repricing_df(df_limit_order_prices, report_stats)
 
 # %%
 reprice_df.shape
@@ -387,57 +310,11 @@ reprice_df.shape
 # %%
 reprice_df.head(5)
 
-
 # %% [markdown]
 # ## Resample to T_exec
 
 # %%
-def compute_execution_df(df, report_stats: bool):
-    """
-    Compute the number and volume of buy/sell executions.
-    """
-    exec_df = pd.DataFrame()
-    # Count how many "buy" executions there were in an interval.
-    exec_df["exec_buy_num"] = df["is_buy"].resample("5T").sum()
-    exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
-    exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
-    if report_stats:
-        print(
-            hprint.perc(
-                exec_df["exec_is_buy"].sum(), exec_df["exec_is_buy"].shape[0]
-            )
-        )
-    # Estimate the executed volume.
-    exec_df["exec_buy_volume"] = (
-        (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
-    )
-    if report_stats:
-        print("million USD per 5T=", exec_df["exec_buy_volume"].mean() / 1e6)
-    # # Count how many "sell" executions there were in an interval.
-    exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
-    exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
-    exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
-    if report_stats:
-        print(
-            "exec_is_sell [%]=",
-            hprint.perc(
-                exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
-            ),
-        )
-
-    # Estimate the executed volume.
-    exec_df["exec_sell_volume"] = (
-        (df["bid_size"] * df["bid_price"] * df["is_sell"]).resample("5T").sum()
-    )
-    if report_stats:
-        print("million USD per 5T=", exec_df["exec_sell_volume"].mean() / 1e6)
-    #
-    exec_df["mid"] = df["mid"]
-    return exec_df
-
-
-# %%
-exec_df = compute_execution_df(reprice_df, report_stats=True)
+exec_df = ramccalg.compute_execution_df(reprice_df, report_stats=True)
 exec_df.head(5)
 
 
