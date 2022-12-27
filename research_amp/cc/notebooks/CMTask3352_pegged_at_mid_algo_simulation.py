@@ -222,9 +222,6 @@ df_limit_order_prices = ramccalg.add_limit_order_prices(
     df_features, mid_col_name, debug_mode, abs_spread=abs_spread
 )
 
-# %%
-df_limit_order_prices.head()
-
 # %% [markdown]
 # ### Check missing data indices
 
