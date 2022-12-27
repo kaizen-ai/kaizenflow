@@ -31,7 +31,6 @@
 # %load_ext autoreload
 # %autoreload 2
 import logging
-from typing import Optional
 
 import pandas as pd
 
@@ -252,7 +251,6 @@ df_flat.loc[
     )
 ]
 
-
 # %% [markdown]
 # #### Commentary
 
@@ -262,40 +260,12 @@ df_flat.loc[
 # For the 4 missing minutes were minutes where the initial second was missing, and then added in the function due to resampling.
 
 # %%
-def perform_spread_analysis(
-    df, ask_price_col_name: str, bid_price_col_name: str, mid_price_col_name: str
-) -> None:
-    spread = df[ask_price_col_name] - df[bid_price_col_name]
-    spread_in_bps = spread / df[mid_price_col_name] * 1e4
-    spread_hist = spread.hist(bins=101)
-    spread.plot()
-    spread_in_bps.plot()
-    # TODO(Danya): Display as subplots.
-
-
-#     plt.show(spread_hist)
-#     plt.show(spread_plot)
-#     plt.show(spread_in_bps_plot)
-#     display(spread_hist)
-#     display()
-
+ramccalg.perform_spread_analysis(
+    df_limit_order_prices, "ask_price", "bid_price", "mid"
+)
 
 # %%
-perform_spread_analysis(df_limit_order_prices, "ask_price", "bid_price", "mid")
-
-
-# %%
-def plot_limit_orders(
-    df,
-    start_timestamp: Optional[pd.Timestamp] = None,
-    end_timestamp: Optional[pd.Timestamp] = None,
-) -> None:
-    # TODO(Danya): Display as subplots.
-    df[
-        ["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]
-    ].head(1000).plot()
-    (df[["is_buy", "is_sell"]] * 1.0).head(1000).plot()
-
+ramccalg.plot_limit_orders(df_limit_order_prices)
 
 # %% [markdown]
 # ## Resample to T_reprice
