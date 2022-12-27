@@ -4,16 +4,23 @@ Import as:
 import research_amp.cc.algotrading as ramccalg
 """
 
+import logging
 from typing import List, Optional
 
+import numpy as np
 import pandas as pd
 
 import core.config as cconfig
 import dataflow.universe as dtfuniver
 import helpers.hdbg as hdbg
+import helpers.hlogging as hloggin
+import helpers.hprint as hprint
 import im_v2.common.data.client as icdc
 import im_v2.crypto_chassis.data.client as iccdc
 import market_data as mdata
+
+_LOG = logging.getLogger(__name__)
+
 
 # #############################################################################
 # Notebook Config examples
@@ -119,3 +126,200 @@ def get_market_data(config: cconfig.Config) -> mdata.MarketData:
         wall_clock_time=wall_clock_time,
     )
     return market_data
+
+
+# #############################################################################
+# Data Augmentation utilities
+# #############################################################################
+
+
+def add_limit_order_prices(
+    df: pd.DataFrame,
+    mid_col_name: str,
+    debug_mode: bool,
+    *,
+    resample_freq: Optional[str] = "1T",
+    passivity_factor: Optional[float] = None,
+    abs_spread: Optional[float] = None,
+) -> pd.DataFrame:
+    """
+    Calculate limit order prices for buy/sell.
+
+    The limit order can be calculated via passivity factor or absolute spread,
+    but not both.
+
+    :param df: bid/ask DataFrame
+    :param mid_col_name: name of column containing bid/ask mid price
+    :param debug_mode: whether to show DataFrame info
+    :param resample_freq: resampling frequency, e.g. '1T', '5T'
+    :param passivity_factor: mid price factor for limit, value between 0 and 1
+    :param abs_spread: value to add to a spread
+    :return: original DataFrame with added limit price columns
+    """
+    hdbg.dassert_in(mid_col_name, df.columns.to_list())
+    hdbg.dassert_is_subset(["ask_price", "bid_price"], df.columns.to_list())
+    # Verify that DataFrame is in the correct format.
+    original_log_level = _LOG.getEffectiveLevel()
+    if debug_mode:
+        hloggin.set_level(_LOG, "DEBUG")
+    _LOG.debug(f"df initial={df.shape}")
+    # Select mid price columns to transform.
+    limit_buy_col = "limit_buy_price"
+    limit_sell_col = "limit_sell_price"
+    limit_buy_srs = df[mid_col_name]
+    limit_buy_srs = limit_buy_srs.rename(limit_buy_col)
+    limit_sell_srs = df[mid_col_name]
+    limit_sell_srs = limit_sell_srs.rename(limit_buy_col)
+    # Resample if necessary.
+    if resample_freq:
+        limit_buy_srs = limit_buy_srs.resample(resample_freq)
+        limit_sell_srs = limit_sell_srs.resample(resample_freq)
+    # Get mid price avg and shift by 1 period.
+    limit_buy_srs = limit_buy_srs.mean().shift(1)
+    limit_sell_srs = limit_sell_srs.mean().shift(1)
+    # Apply passivity factor or absolute spread.
+    if abs_spread is not None and passivity_factor is None:
+        limit_buy_srs = limit_buy_srs - abs_spread
+        limit_sell_srs = limit_sell_srs + abs_spread
+    #
+    elif passivity_factor is not None and abs_spread is None:
+        hdbg.dassert_lgt(0, passivity_factor, 1, True, True)
+        limit_buy_srs = limit_buy_srs * (1 - passivity_factor)
+        limit_sell_srs = limit_sell_srs * (1 - passivity_factor)
+    else:
+        raise ValueError(
+            "Either `passivity_factor` or `abs_spread` should be provided."
+        )
+    # Merge original dataframe with limit prices.
+    #
+    df_limit_price = pd.DataFrame()
+    df_limit_price[limit_buy_col] = limit_buy_srs
+    df_limit_price[limit_sell_col] = limit_sell_srs
+    _LOG.debug(
+        f"df_limit_price after resampling and shift={df_limit_price.shape}"
+    )
+    df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
+    _LOG.debug(f"df after merge={df.shape}")
+    # Forward fill gaps if limit prices were resampled.
+    #  Note: we expect the original data to be 1 second, and e.g. 1min limit
+    #  price is applied to each second of that period.
+    df[limit_buy_col] = df[limit_buy_col].ffill()
+    df[limit_sell_col] = df[limit_sell_col].ffill()
+    # Set whether the price has hit the limit.
+    df["is_buy"] = df["ask_price"] <= df[limit_buy_col]
+    df["is_sell"] = df["bid_price"] >= df[limit_sell_col]
+    # Turn the logging level back on.
+    hloggin.set_level(_LOG, original_log_level)
+    return df
+
+
+def compute_repricing_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
+    """
+    Compute the execution prices.
+
+    :param df: DataFrame containing bid/ask data
+    :param report_stats: print DaraFrame stats
+    :return: DataFrame with buy/sell execution prices
+    """
+    hdbg.dassert_is_subset(
+        ["is_buy", "is_sell", "ask_price", "bid_price"], df.columns
+    )
+    # Calculate buy execution price.
+    # is_buy * ask_price.
+    df["exec_buy_price"] = df["is_buy"] * df["ask_price"]
+    mask = ~df["is_buy"]
+    df["exec_buy_price"][mask] = np.nan
+    # Calculate sell execution price.
+    # is_sell * bid_price.
+    df["exec_sell_price"] = df["is_sell"] * df["bid_price"]
+    mask = ~df["is_sell"]
+    df["exec_sell_price"][mask] = np.nan
+    # Display stats.
+    if report_stats:
+        # Report buy/sell percentages.
+        _LOG.info(
+            "buy percentage at repricing freq: %s",
+            hprint.perc(df["is_buy"].sum(), df.shape[0]),
+        )
+        _LOG.info(
+            "sell percentage at repricing freq: %s",
+            hprint.perc(df["is_sell"].sum(), df.shape[0]),
+        )
+        # Display zero execution prices as a percentage.
+        _LOG.info(
+            "exec_buy_price=0 %=%s",
+            hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
+        )
+        _LOG.info(
+            "exec_sell_price=0 %=%s",
+            hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
+        )
+    return df
+
+
+def compute_execution_df(
+    df: pd.DataFrame, report_stats: bool, *, join_output_with_input: bool = False
+) -> pd.DataFrame:
+    """
+    Compute the number and volume of buy/sell executions.
+
+    :param df: DataFrame with bid/ask columns
+    :param report_stats: print stats on the calculated values
+    :param join_output_with_input: merge the values with input DataFrame
+    :return: DataFrame with execution stats
+    """
+    hdbg.dassert_is_subset(
+        ["is_buy", "is_sell", "ask_size", "ask_price", "mid"],
+        df.columns.to_list(),
+    )
+    exec_df = pd.DataFrame()
+    #
+    # Count how many "buy" executions there were in an interval.
+    exec_df["exec_buy_num"] = df["is_buy"].resample("5T").sum()
+    exec_df["exec_buy_price"] = df["exec_buy_price"].resample("5T").mean()
+    exec_df["exec_is_buy"] = exec_df["exec_buy_num"] > 0
+    if report_stats:
+        _LOG.info(
+            "exec_is_buy=%s",
+            hprint.perc(
+                exec_df["exec_is_buy"].sum(),
+                exec_df["exec_is_buy"].shape[0],
+            )
+        )
+    # Estimate the executed "buy" volume.
+    exec_df["exec_buy_volume"] = (
+        (df["ask_size"] * df["ask_price"] * df["is_buy"]).resample("5T").sum()
+    )
+    if report_stats:
+        _LOG.info(
+            "million USD per 5T=%s", exec_df["exec_buy_volume"].mean() / 1e6
+        )
+    #
+    # Count how many "sell" executions there were in an interval.
+    exec_df["exec_sell_num"] = df["is_sell"].resample("5T").sum()
+    exec_df["exec_sell_price"] = df["exec_sell_price"].resample("5T").mean()
+    exec_df["exec_is_sell"] = exec_df["exec_sell_num"] > 0
+    if report_stats:
+        _LOG.info(
+            "exec_is_sell=%s",
+            hprint.perc(
+                exec_df["exec_is_sell"].sum(), exec_df["exec_is_sell"].shape[0]
+            ),
+        )
+    # Estimate the executed "sell" volume.
+    exec_df["exec_sell_volume"] = (
+        (df["bid_size"] * df["bid_price"] * df["is_sell"]).resample("5T").sum()
+    )
+    if report_stats:
+        _LOG.info(
+            "million USD per 5T=%s", exec_df["exec_sell_volume"].mean() / 1e6
+        )
+    #
+    # Join original DF with execution price, if required.
+    if join_output_with_input:
+        exec_df = exec_df.merge(
+            df, right_index=True, left_index=True, how="outer"
+        )
+    else:
+        exec_df["mid"] = df["mid"]
+    return exec_df
