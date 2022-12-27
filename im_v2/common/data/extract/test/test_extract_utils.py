@@ -1,3 +1,4 @@
+import argparse
 import unittest.mock as umock
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
@@ -17,8 +18,11 @@ import helpers.hsql as hsql
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
+import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdba
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.common.universe as ivcu
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
+
 
 
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
@@ -485,7 +489,14 @@ class TestDownloadExchangeDataToDb1(
 class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
         self.start_date = datetime(2022, 1, 1, tzinfo=pytz.utc)
-        self.end_date = self.start_date + timedelta(seconds=10)
+        self.end_date = self.start_date + timedelta(minutes=30)
+        self.path = (
+            "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
+            "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0"
+        )
+        universe = ivcu.get_vendor_universe(
+            'crypto_chassis', 'download', version="v3")
+        self.currency_pairs = universe["binance"]
         return super().setUp()
 
     def call_download_historical_data(self, incremental: bool) -> None:
@@ -517,34 +528,83 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         imvcdeexut.download_historical_data(args, exchange)
 
     def test_integrated(self):
+        def crypto_chassis_mock_data_all(line_numbers: int) -> pd.DataFrame:
+            """
+            Generate fixture crypto chassis data for all currency pairs
+
+            :param line_numbers: how many rows need
+            :return: mock dataframe with data
+            """
+            return pd.concat([
+                crypto_chassis_mock_data(line_numbers, currency_pair)
+                for currency_pair in self.currency_pairs
+            ])
+
         def crypto_chassis_mock_data(
-            line_numbers: int = 10,
+            line_numbers: int,
+            currency_pair: str,
             start_date: datetime = datetime(2022, 1, 1, tzinfo=pytz.utc)
         ) -> pd.DataFrame:
             """
             Mock data generator for the crypto chassis extractor
 
             :param line_numbers: how many rows need
+            :param currency_pair: what currency pair to use in the data
             :param start_date: start datetime for the data
             :return: mock dataframe with data
             """
             data = []
-            for line_number in range(line_numbers):
-                current_datetime = start_date + timedelta(seconds=line_number)
-                data += [
-                    {
-                        "timestamp": int(current_datetime.timestamp()*1000),
-                        "bid_price_l1": 0.3480 + ((line_number + 1) / 10000),
-                        "bid_size_l1": 49676.8,
-                        "bid_price_l2": 0.3480 + (line_number + 1/ 10000),
-                        "bid_size_l2": 49676.8,
-                        "ask_price_l1": 0.3483 + ((line_number)/ 10000),
-                        "ask_size_l1": 49676.8,
-                        "ask_price_l2": 0.3483 + ((line_number + 1) / 10000),
-                        "ask_size_l2": 49676.8,
-                    }
-                ]
+            for line_number in range(1, line_numbers+1):
+                current_datetime = start_date + timedelta(seconds=line_number-1)
+                current_data = {}
+                for level in range(1, 11):
+                    current_data[f"bid_price_l{level}"] = round(0.3480 + (level / 10000), ndigits=4)
+                    current_data[f"bid_size_l{level}"] = 49676.8
+                    current_data[f"ask_price_l{level}"] = round(0.3480 + (level+1 / 10000), ndigits=4)
+                    current_data[f"ask_size_l{level}"] = 49676.8
+                    current_data["timestamp"] = int(current_datetime.timestamp()*1000)
+                    current_data["currency_pair"] = currency_pair
+                    current_data["exchange_id"] = "binance"
+                    current_data["year"] = current_datetime.year
+                    current_data["month"] = current_datetime.month
+                data += [current_data]
             return pd.DataFrame(data)      
+        def resampled_mock_data(
+            minutes: int = 30,
+            start_date: datetime = datetime(2022, 1, 1, tzinfo=pytz.utc)
+        ) -> pd.DataFrame:
+            """
+            Mock data generator for the resampled data
+
+            :param minutes: how many minutes need
+            :param start_date: start datetime for the data
+            :return: mock dataframe with data
+            """
+            data = []
+            for currency_pair in self.currency_pairs:
+                for minute_number in range(1, minutes+1):
+                    current_datetime = start_date + timedelta(minutes=minute_number)
+                    current_data = {}
+                    for level in range(1, 11):
+                        # TLDR for the round here: 
+                        # https://docs.oracle.com/cd/E19957-01/806-3568/ncg_goldberg.html
+                        current_data[f"bid_price_l{level}"] = round(0.3480 + (level / 10000), ndigits=4)
+                        current_data[f"bid_size_l{level}"] = 49676.8*60
+                        current_data[f"ask_price_l{level}"] = round(0.3480 + (level+1 / 10000), ndigits=4)
+                        current_data[f"ask_size_l{level}"] = 49676.8*60
+                        current_data["timestamp"] = int(current_datetime.timestamp())
+                        current_data["currency_pair"] = currency_pair
+                        current_data["exchange_id"] = "binance"
+                        current_data["year"] = current_datetime.year
+                        current_data["month"] = current_datetime.month                        
+                    data += [current_data]
+            return pd.DataFrame(data)      
+        ###-------------------------------------------------------###
+        #               First part:                                 #
+        # - run the downloader and mock it's request to the binance #
+        # - downloader save the fixture to the fake AWS S3          #
+        # - get data from S3 and compare with expected result       #
+        ###-------------------------------------------------------###
         # Prepare inputs.
         args = {
             "start_timestamp": "2021-12-31 23:00:00",
@@ -565,23 +625,26 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         )
         # Create path for incremental mode.
         s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
-        with s3fs_.open(
-            "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
-            "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0/"
-            "dummy.txt", "w"
-        ) as f:
+        with s3fs_.open(f"{self.path}/dummy.txt", "w") as f:
             f.write("test")
+        def mock_download_data(*args, **kwargs):
+            """
+            A bit hacky function to replace download_data.
+            Needs to accept currency_pair as args param.
+            """
+            return crypto_chassis_mock_data(
+                line_numbers=60*30, currency_pair=args[2]
+            )
+        # Let the downloader to put our fixture to the fake S3.
         with umock.patch.object(
-            imvccdexex.CryptoChassisExtractor, "download_data"
-        ) as download_data:
-            download_data.return_value = crypto_chassis_mock_data()
+            imvccdexex.CryptoChassisExtractor,
+             "download_data",
+            new=mock_download_data
+        ):
             self.call_download_historical_data(incremental=True)
-        path = (
-            "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
-            "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0"
-        )
+        # Make sure a list of folder is expected.
         parquet_path_list = hs3.listdir(
-            dir_name=path,
+            dir_name=self.path,
             pattern="*.parquet",
             only_files=True,
             use_relative_paths=True,
@@ -590,8 +653,8 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         parquet_path_list.sort()
         parquet_path_list = [
             # Remove uuid names.
-            "/".join(path.split("/")[:-1])
-            for path in parquet_path_list
+            "/".join(pq_path.split("/")[:-1])
+            for pq_path in parquet_path_list
         ]
         expected_list = [
             "currency_pair=ADA_USDT/year=2022/month=1",
@@ -605,29 +668,64 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             "currency_pair=XRP_USDT/year=2022/month=1"
         ]
         self.assertListEqual(parquet_path_list, expected_list)
-        pq_path = hs3.get_latest_pq_in_s3_dir(
-            s3_path=path,
-            aws_profile=self.mock_aws_profile,
-        )
-        pq_path = f"s3://{pq_path}" 
-        s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
-        actual = hparque.from_parquet(
-            file_name=pq_path,
+        # Delete the dummy file in order to allow to read a parquet.
+        s3fs_.rm(f"{self.path}/dummy.txt")
+        actual_df = hparque.from_parquet(
+            file_name=self.path,
             aws_profile=s3fs_
         )
-        print(actual)
-        expected = crypto_chassis_mock_data()
-        expected['timestamp_old'] = expected['timestamp']
-        expected['timestamp'] = expected['timestamp'].apply(
+        # Some data cleanup and polish.
+        expected_df = crypto_chassis_mock_data_all(line_numbers=60*30)
+        expected_df['timestamp_old'] = expected_df['timestamp']
+        expected_df['timestamp'] = expected_df['timestamp'].apply(
             hdateti.convert_unix_epoch_to_timestamp)
-        expected = expected.set_index(['timestamp'])
-        expected = expected.rename(columns={"timestamp_old": "timestamp"})
-        actual = actual.drop(['exchange_id', 'knowledge_timestamp'], axis=1)
-        actual = actual.reindex(sorted(actual.columns), axis=1)
-        expected = expected.reindex(sorted(expected.columns), axis=1)
-        hunitest.compare_df(actual, expected)
-
-
+        expected_df = expected_df.set_index(['timestamp'])
+        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})        
+        actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
+        actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
+        expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
+        expected_df[["currency_pair", "month", "year"]] = expected_df[
+            ["currency_pair", "month", "year"]].astype("category")
+        hunitest.compare_df(actual_df, expected_df)
+        del actual_df
+        del expected_df
+        ###-------------------------------------------------------###
+        #           Second part:                                    #
+        # - run the resampler                                       #
+        # - resampler save the data to the fake AWS S3              #
+        # - get data from S3 and compare with expected result       #
+        ###-------------------------------------------------------###
+        dst_dir = self.path + "/dst"
+        run_args = {
+            "start_timestamp": "2021-12-31 23:00:00",
+            "end_timestamp": "2022-01-01 01:00:00",
+            "src_dir": self.path,
+            "dst_dir": dst_dir
+        }
+        namespace = argparse.Namespace(**run_args)
+        # No need to mock, due we already use mocked data in the resampler.
+        imvcdtrdba._run(namespace, aws_profile=s3fs_)
+        expected_df = resampled_mock_data()
+        actual_df = hparque.from_parquet(dst_dir, aws_profile=s3fs_)
+        # Some data cleanup and polish.
+        actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
+        # Another point where decimal numbers goes crazy, see TLDR above.
+        column_names_to_round = []
+        for level in range(1, 11):
+            column_names_to_round += [f"bid_price_l{level}"]
+            column_names_to_round += [f"ask_price_l{level}"]
+        actual_df[column_names_to_round] = actual_df[
+            column_names_to_round].apply(round, ndigits=4)
+        expected_df['timestamp_old'] = expected_df['timestamp']
+        expected_df['timestamp'] = expected_df['timestamp'].apply(
+            pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
+        expected_df = expected_df.set_index(['timestamp'])
+        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})
+        actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
+        expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
+        expected_df[["currency_pair", "month", "year"]] = expected_df[
+            ["currency_pair", "month", "year"]].astype("category")  
+        hunitest.compare_df(actual_df, expected_df)      
 
 
 @pytest.mark.skipif(

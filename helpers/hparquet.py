@@ -122,8 +122,10 @@ def from_parquet(
                 file_name,
                 filesystem=filesystem,
                 filters=filters,
-                partitioning=partitioning,
-                use_legacy_dataset=False,
+                partitioning='hive',
+                # partitioning=partitioning,
+                use_legacy_dataset=True,
+                # use_legacy_dataset=False,
             )
             if columns:
                 # Note: `schema.names` also includes and index.
