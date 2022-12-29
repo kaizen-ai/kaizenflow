@@ -520,7 +520,7 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
             "data_format": "parquet",
-            "unit": "ms",
+            "unit": "s",
         }
         exchange = imvccdexex.CryptoChassisExtractor(
             args["contract_type"]
@@ -562,7 +562,7 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
                     current_data[f"bid_size_l{level}"] = 49676.8
                     current_data[f"ask_price_l{level}"] = round(0.3480 + (level+1 / 10000), ndigits=4)
                     current_data[f"ask_size_l{level}"] = 49676.8
-                    current_data["timestamp"] = int(current_datetime.timestamp()*1000)
+                    current_data["timestamp"] = int(current_datetime.timestamp())
                     current_data["currency_pair"] = currency_pair
                     current_data["exchange_id"] = "binance"
                     current_data["year"] = current_datetime.year
@@ -678,14 +678,14 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         expected_df = crypto_chassis_mock_data_all(line_numbers=60*30)
         expected_df['timestamp_old'] = expected_df['timestamp']
         expected_df['timestamp'] = expected_df['timestamp'].apply(
-            hdateti.convert_unix_epoch_to_timestamp)
+            pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
         expected_df = expected_df.set_index(['timestamp'])
         expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})        
         actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
         actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
+        actual_df[["timestamp", "month", "year"]] = actual_df[
+            ["timestamp", "month", "year"]].astype("int64")
         expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
-        expected_df[["currency_pair", "month", "year"]] = expected_df[
-            ["currency_pair", "month", "year"]].astype("category")
         hunitest.compare_df(actual_df, expected_df)
         del actual_df
         del expected_df
@@ -716,6 +716,8 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             column_names_to_round += [f"ask_price_l{level}"]
         actual_df[column_names_to_round] = actual_df[
             column_names_to_round].apply(round, ndigits=4)
+        actual_df[["month", "year"]] = actual_df[
+            ["month", "year"]].astype("int64")              
         expected_df['timestamp_old'] = expected_df['timestamp']
         expected_df['timestamp'] = expected_df['timestamp'].apply(
             pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
@@ -723,8 +725,6 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})
         actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
         expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
-        expected_df[["currency_pair", "month", "year"]] = expected_df[
-            ["currency_pair", "month", "year"]].astype("category")  
         hunitest.compare_df(actual_df, expected_df)      
 
 
