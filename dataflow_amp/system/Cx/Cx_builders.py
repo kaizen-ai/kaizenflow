@@ -247,9 +247,16 @@ def get_Cx_RealTimeDag_example2(
     """
     hdbg.dassert_isinstance(system, dtfsys.System)
     system = dtfsys.apply_history_lookback(system)
+    dag_builder = system.config.get_and_mark_as_used("dag_builder_object")
+    dag_config = system.config.get_and_mark_as_used("dag_config")
     dag = dtfsys.add_real_time_data_source(system)
     # Configure a `ProcessForecastNode`.
-    order_duration_in_mins = 5
+    mark_key_as_used = True
+    trading_period_str = dag_builder.get_trading_period(
+        dag_config, mark_key_as_used
+    )
+    # TODO(gp): Add a param to get_trading_period to return the int.
+    order_duration_in_mins = int(trading_period_str.replace("T", ""))
     process_forecasts_node_dict = get_ProcessForecastsNode_dict_instance1(
         system, order_duration_in_mins, is_prod
     )
