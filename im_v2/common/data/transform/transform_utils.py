@@ -20,6 +20,7 @@ import helpers.htimer as htimer
 _LOG = logging.getLogger(__name__)
 
 BID_ASK_COLS = ["bid_price", "bid_size", "ask_price", "ask_size"]
+NUMBER_LEVELS_OF_ORDER_BOOK = 10
 
 
 # TODO(Juraj): add argument to pass custom callable to get current time.
@@ -342,15 +343,15 @@ def resample_multilevel_bid_ask_data(
             exchange_id, bid_size_l1,bid_price_l1,ask_size_l1,ask_price_l1...
     timestamp 2022-11-16T00:00:01+00:00 binance, 5450, 13.50, 5200, 13.25...
 
-    The method assumes 10 levels of order book and a data coming
-    from single exchange.
+    The method assumes NUMBER_LEVELS_OF_ORDER_BOOK levels of order book
+    and a data coming from single exchange.
 
     :param mode: designate strategy to use, i.e. volume-weighted average
         (VWAP) or time-weighted average price (TWAP)
     :return DataFrame resampled to 1 minute.
     """
     all_levels_resampled = []
-    for i in range(1, 11):
+    for i in range(1, NUMBER_LEVELS_OF_ORDER_BOOK + 1):
         bid_ask_cols_levels = [
             f"{name}_l{i}"
             for name in BID_ASK_COLS

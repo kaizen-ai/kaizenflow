@@ -28,6 +28,22 @@ universe = ivcu.get_vendor_universe(
     'crypto_chassis', 'download', version="v3")
 CURRENCY_PAIRS = universe["binance"]
 
+def get_simple_crypto_chassis_mock_data() -> pd.DataFrame:
+    return pd.DataFrame([
+        {
+            "timestamp": 1640995200 + line_number,
+            "bid_price_l1": 0.3481,
+            "bid_size_l1": 49676.8,
+            "bid_price_l2": 0.3482,
+            "bid_size_l2": 49676.8,
+            "ask_price_l1": 0.3484,
+            "ask_size_l1": 49676.8,
+            "ask_price_l2": 0.3485,
+            "ask_size_l2": 49676.8,
+            "currency_pair": "ADA_USDT"
+        }
+        for line_number in range(4)
+    ])
 
 def get_crypto_chassis_mock_data_all(number_of_rows: int) -> pd.DataFrame:
     """
@@ -603,7 +619,8 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         )
         imvcdeexut.download_historical_data(args, exchange)
 
-    def test_integrated(self):
+    @umock.patch.object(imvcdeexut.ivcu, "get_vendor_universe")
+    def test_integrated(self, mock_get_vendor_universe):
         ###---------------------------------------------------------###
         #               First part:                                   #
         # - run the downloader and mock its request to crypto_chassis #
@@ -637,15 +654,16 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             A bit hacky function to replace download_data.
             Needs to accept currency_pair as args param.
             """
-            return get_crypto_chassis_mock_data(
-                number_of_rows=60*30, currency_pair=args[2]
-            )
+            return get_simple_crypto_chassis_mock_data()
         # Let the downloader to put our fixture to the fake S3.
         with umock.patch.object(
             imvccdexex.CryptoChassisExtractor,
              "download_data",
             new=mock_download_data
         ):
+            mock_universe = umock.MagicMock()
+            mock_universe.__getitem__.return_value = ["ADA_USDT"]
+            mock_get_vendor_universe.return_value = mock_universe
             self.call_download_historical_data()
         # Make sure a list of folder is expected.
         parquet_path_list = hs3.listdir(
@@ -661,17 +679,7 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             "/".join(pq_path.split("/")[:-1])
             for pq_path in parquet_path_list
         ]
-        expected_list = [
-            "currency_pair=ADA_USDT/year=2022/month=1",
-            "currency_pair=BNB_USDT/year=2022/month=1",
-            "currency_pair=BTC_USDT/year=2022/month=1",
-            "currency_pair=DOGE_USDT/year=2022/month=1",
-            "currency_pair=DOT_USDT/year=2022/month=1",
-            "currency_pair=EOS_USDT/year=2022/month=1",
-            "currency_pair=ETH_USDT/year=2022/month=1",
-            "currency_pair=SOL_USDT/year=2022/month=1",
-            "currency_pair=XRP_USDT/year=2022/month=1"
-        ]
+        expected_list = ['currency_pair=ADA_USDT/year=2022/month=1']
         self.assertListEqual(parquet_path_list, expected_list)
         # Delete the dummy file in order to allow to read a parquet.
         s3fs_.rm(f"{self.path}/dummy.txt")
@@ -680,16 +688,19 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             aws_profile=s3fs_
         )
         # Some data cleanup and polish.
-        expected_df = get_crypto_chassis_mock_data_all(number_of_rows=60*30)
+        expected_df = get_simple_crypto_chassis_mock_data()
         expected_df['timestamp_old'] = expected_df['timestamp']
         expected_df['timestamp'] = expected_df['timestamp'].apply(
             pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
         expected_df = expected_df.set_index(['timestamp'])
-        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})        
+        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})  
+        expected_df["month"] = 1
+        expected_df["year"] = 2022
+        expected_df["exchange_id"] = "binance"
         actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
-        actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
         actual_df[["timestamp", "month", "year"]] = actual_df[
             ["timestamp", "month", "year"]].astype("int64")
+        actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
         expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
         hunitest.compare_df(actual_df, expected_df)
         del actual_df
@@ -709,7 +720,8 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         }
         namespace = argparse.Namespace(**run_args)
         # No need to mock, due we already use mocked data in the resampler.
-        imvcdtrdba._run(namespace, aws_profile=s3fs_)
+        with umock.patch("im_v2.common.data.transform.transform_utils.NUMBER_LEVELS_OF_ORDER_BOOK", 2): 
+            imvcdtrdba._run(namespace, aws_profile=s3fs_)
         expected_df = get_resampled_mock_data()
         actual_df = hparque.from_parquet(dst_dir, aws_profile=s3fs_)
         # Some data cleanup and polish.
