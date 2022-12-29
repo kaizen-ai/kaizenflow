@@ -13,6 +13,9 @@ _LOG = logging.getLogger(__name__)
 class TestAlgotrading1(hunitest.TestCase):
     @staticmethod
     def get_test_dataframe() -> pd.DataFrame:
+        """
+        Create a DataFrame with columns required for algotrading transforms.
+        """
         df = pd.DataFrame.from_dict(
             {
                 pd.Timestamp("2022-12-13 19:00:00-0500", tz="America/New_York"): {
@@ -91,13 +94,16 @@ class TestAlgotrading1(hunitest.TestCase):
         Verify that limit order prices are calculated correctly.
         """
         df = self.get_test_dataframe()
+        # Drop irrelevant columns.
         df = df.drop(["limit_buy_price", "limit_sell_price"], axis=1)
+        #.
         mid_col_name = "mid"
         debug_mode = False
         abs_spread = 0.001
         out_df = ramccalg.add_limit_order_prices(
             df, mid_col_name, debug_mode, abs_spread=abs_spread
         )
+        # Check result.
         actual = hpandas.df_to_str(out_df)
         self.check_string(actual)
 
@@ -106,6 +112,7 @@ class TestAlgotrading1(hunitest.TestCase):
         Verify that execution prices are calculated correctly.
         """
         df = self.get_test_dataframe()
+        # Drop irrelevant columns.
         df = df.drop(["exec_buy_price", "exec_sell_price"], axis=1)
         report_stats = False
         out_df = ramccalg.compute_repricing_df(df, report_stats)
