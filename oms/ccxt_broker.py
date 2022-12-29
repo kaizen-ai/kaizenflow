@@ -421,7 +421,7 @@ class CcxtBroker(ombroker.Broker):
         ```
         """
         asset_id = ccxt_order["asset_id"]
-        type_ = "market"
+        type_ = ccxt_order["type"]
         # Select creation and start date.
         creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
             ccxt_order["timestamp"]
@@ -627,15 +627,18 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_single_order(
-        self, order: omorder.Order
+        self, order: omorder.Order, *,order_type: str = "market"
     ) -> Optional[omorder.Order]:
         """
         Submit a single order.
 
         :param order: order to be submitted
+        :param type: 'market' or 'limit'
 
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
+        # Verify that the order type is provided correctly.
+        hdbg.dassert_in(order_type, ["market", "limit"])
         submitted_order: Optional[omorder.Order] = None
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
@@ -657,7 +660,7 @@ class CcxtBroker(ombroker.Broker):
                 _LOG.debug("Submitting order=%s", str(order))
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
-                    type="market",
+                    type=order_type,
                     side=side,
                     amount=position_size,
                     # id = order.order_id,
@@ -693,6 +696,10 @@ class CcxtBroker(ombroker.Broker):
                 else:
                     raise e
         return submitted_order
+    
+    def create_twap_orders():
+        
+        return None
 
     async def _submit_orders(
         self,
