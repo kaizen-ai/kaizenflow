@@ -13,6 +13,7 @@ import core.config as cconfig
 import core.finance.tradability as cfintrad
 import core.statistics.requires_statsmodels as cstresta
 import core.statistics.sharpe_ratio as cstshrat
+import helpers.hdataframe as hdatafr
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 
@@ -237,7 +238,7 @@ def apply_metrics(
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
     y_column_name = config["column_names"]["y"]
-    y_hat_column_name = config["column_names"]["y_hat"]
+    y_hat_column_name = config["column_names"]["prediction"]
     hit_col_name = config["column_names"]["hit"]
     bar_pnl_col_name = config["column_names"]["bar_pnl"]
     #
@@ -284,7 +285,12 @@ def apply_metrics(
                 metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
-            time_scaling = config["metrics"]["time_scaling"]
+            # Get time scaling value from the timestamp index.
+            timestamp_index = metrics_df.index.levels[0]
+            index_freq = pd.infer_freq(timestamp_index)
+            time_scaling = hdatafr.compute_points_per_year_for_given_freq(
+                index_freq
+            )
             # Compute Sharpe ratio per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df[bar_pnl_col_name].apply(
