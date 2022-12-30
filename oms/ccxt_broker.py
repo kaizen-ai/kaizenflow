@@ -195,7 +195,8 @@ class CcxtBroker(ombroker.Broker):
 
         Selects all possible positions and filters out those
         with a non-zero amount.
-        Example of an output:
+
+        Example of a response from the exchange:
 
         [{'info': {'symbol': 'BTCUSDT',
             'positionAmt': '-0.200',
@@ -234,22 +235,28 @@ class CcxtBroker(ombroker.Broker):
             'hedged': False,
             'percentage': -33.17}]
 
+        Example of an output:
+            {
+                "BTC/USDT": 0.001,
+                "ETH/USDT": 10
+            }
+
         :return: open positions at the exchange.
         """
-        hdbg.dassert(
-            self._contract_type == "futures",
-            "Open positions can be fetched only for futures contracts.",
-        )
+        hdbg.dassert_eq(self._contract_type, "futures")
         # Fetch all open positions.
+        # See example of an output in the docstring.
         positions = self._exchange.fetchPositions()
-        _LOG.debug("fetched_positions=%s", positions)
-        open_positions: Dict[str, float]
+        _LOG.debug(hprint.to_str("positions"))
+        # Map from symbol to the amount currently owned if different than zero,
+        #  e.g. {'BTC/USDT': 0.01}
+        open_positions: Dict[str, float] = {}
         for position in positions:
-            _LOG.debug("fetched_position=%s", position)
+            _LOG.debug(hprint.to_str("position"))
             # Get the quantity of assets on short/long positions.
             position_amount = float(position["info"]["positionAmt"])
             position_symbol = position["symbol"]
-            _LOG.debug("After rounding: fetched_position=%s", position)
+            _LOG.debug(hprint.to_str("position_amount position_symbol"))
             if position_amount != 0:
                 open_positions[position_symbol] = position
         return open_positions
@@ -352,7 +359,7 @@ class CcxtBroker(ombroker.Broker):
 
     async def create_twap_orders(
         self,
-        currency_pair: omorder.Order,
+        currency_pair: str,
         volume: int,
         side: str,
         execution_start: pd.Timestamp,
@@ -363,26 +370,35 @@ class CcxtBroker(ombroker.Broker):
         Execute a large order using the TWAP strategy.
         """
         asset_id = self._symbol_to_asset_id_mapping(currency_pair)
-        # TODO(Danya): Do we construct an order from params (current implementation)
-        #  or do we get a full oms.Order object that we break up later?
-        # Convert execution frequency to Timedelta.
-        execution_freq = pd.Timedelta(execution_freq)
         # Get wait time between executions in seconds.
-        wait_time = execution_freq.total_seconds()
+        execution_freq = pd.Timedelta(execution_freq)
+        wait_time_in_secs = execution_freq.total_seconds()
         # Get a number of orders to be executed in a TWAP.
         #  Note: 1 period is substracted to calculate price.
         num_orders = int((execution_start - execution_end) / execution_freq) - 1
+        hdbg.dassert_lte(1, num_orders)
         # Get volume of a single order based on number of orders.
         single_order_volume = volume / num_orders
+        hdbg.dassert_lt(0, single_order_volume)
         if side == "sell":
             single_order_volume = -single_order_volume
+        else:
+            hdbg.dassert_eq(side, "buy")
         # Round to the allowable asset precision.
         single_order_volume = self.market_info[asset_id]["amount_precision"]
         # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
-        now = pd.Timestamp.now()
-        start_in = (execution_start - now).total_seconds
-        if start_in > 1:
-            await asyncio.sleep(start_in)
+        current_timestamp = pd.Timestamp.now()
+        hdbg.dassert_lte(current_timestamp, execution_start)
+        wait_in_secs_before_start = (
+            execution_start - current_timestamp
+        ).total_seconds()
+        if wait_in_secs_before_start > 1:
+            _LOG.info(
+                "Waiting for %s seconds until %s",
+                wait_in_secs_before_start,
+                execution_start,
+            )
+            await asyncio.sleep(wait_in_secs_before_start)
         #
         order_receipts: List[str] = []
         loop = asyncio.get_running_loop()
@@ -415,7 +431,7 @@ class CcxtBroker(ombroker.Broker):
             # Break if the time is up.
             if loop.time() + 1.0 >= end_time:
                 break
-            await asyncio.sleep(wait_time)
+            await asyncio.sleep(wait_time_in_secs)
         return order_receipts
 
     @staticmethod
