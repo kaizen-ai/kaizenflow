@@ -28,10 +28,12 @@ universe = ivcu.get_vendor_universe(
     'crypto_chassis', 'download', version="v3")
 CURRENCY_PAIRS = universe["binance"]
 
-def get_simple_crypto_chassis_mock_data() -> pd.DataFrame:
+def get_simple_crypto_chassis_mock_data(
+    start_timestamp: int, number_of_seconds
+) -> pd.DataFrame:
     return pd.DataFrame([
         {
-            "timestamp": 1640995200 + line_number,
+            "timestamp": start_timestamp + line_number,
             "bid_price_l1": 0.3481,
             "bid_size_l1": 49676.8,
             "bid_price_l2": 0.3482,
@@ -42,7 +44,7 @@ def get_simple_crypto_chassis_mock_data() -> pd.DataFrame:
             "ask_size_l2": 49676.8,
             "currency_pair": "ADA_USDT"
         }
-        for line_number in range(4)
+        for line_number in range(number_of_seconds)
     ])
 
 def get_crypto_chassis_mock_data_all(number_of_rows: int) -> pd.DataFrame:
@@ -583,8 +585,8 @@ class TestDownloadExchangeDataToDb1(
 @pytest.mark.slow("Takes around 8 secs")
 class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
-        self.start_date = datetime(2022, 1, 1, tzinfo=pytz.utc)
-        self.end_date = self.start_date + timedelta(minutes=30)
+        self.start_date = datetime(2022, 1, 1)
+        self.end_date = self.start_date + timedelta(seconds=4)
         self.path = (
             "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
             "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0"
@@ -629,8 +631,8 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         ###---------------------------------------------------------###
         # Prepare inputs.
         args = {
-            "start_timestamp": "2021-12-31 23:00:00",
-            "end_timestamp": "2022-01-01 01:00:00",
+            "start_timestamp": "2021-01-01 00:00:00",
+            "end_timestamp": "2022-01-01 00:00:04",
             "exchange_id": "binance",
             "data_type": "bid_ask",
             "contract_type": "futures",
@@ -654,7 +656,10 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             A bit hacky function to replace download_data.
             Needs to accept currency_pair as args param.
             """
-            return get_simple_crypto_chassis_mock_data()
+            return get_simple_crypto_chassis_mock_data(
+                start_timestamp=int(self.start_date.timestamp()),
+                number_of_seconds=4
+            )
         # Let the downloader to put our fixture to the fake S3.
         with umock.patch.object(
             imvccdexex.CryptoChassisExtractor,
@@ -688,7 +693,10 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             aws_profile=s3fs_
         )
         # Some data cleanup and polish.
-        expected_df = get_simple_crypto_chassis_mock_data()
+        expected_df = get_simple_crypto_chassis_mock_data(
+            start_timestamp=int(self.start_date.timestamp()),
+            number_of_seconds=4
+        )
         expected_df['timestamp_old'] = expected_df['timestamp']
         expected_df['timestamp'] = expected_df['timestamp'].apply(
             pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
@@ -713,36 +721,25 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         ###-------------------------------------------------------###
         dst_dir = self.path + "/dst"
         run_args = {
-            "start_timestamp": "2021-12-31 23:00:00",
-            "end_timestamp": "2022-01-01 01:00:00",
+            "start_timestamp": "2022-01-01 00:00:00",
+            "end_timestamp": "2022-01-01 00:04:00",
             "src_dir": self.path,
             "dst_dir": dst_dir
         }
         namespace = argparse.Namespace(**run_args)
-        # No need to mock, due we already use mocked data in the resampler.
-        with umock.patch("im_v2.common.data.transform.transform_utils.NUMBER_LEVELS_OF_ORDER_BOOK", 2): 
+        with umock.patch(
+            "im_v2.common.data.transform.transform_utils"
+            ".NUMBER_LEVELS_OF_ORDER_BOOK", 2
+        ):
             imvcdtrdba._run(namespace, aws_profile=s3fs_)
-        expected_df = get_resampled_mock_data()
         actual_df = hparque.from_parquet(dst_dir, aws_profile=s3fs_)
-        # Some data cleanup and polish.
+        # Need to exclude knowledge_timestamp that can't predict precisely.
         actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
-        # Another point where decimal numbers goes crazy, see TLDR above.
-        column_names_to_round = []
-        for level in range(1, 11):
-            column_names_to_round += [f"bid_price_l{level}"]
-            column_names_to_round += [f"ask_price_l{level}"]
-        actual_df[column_names_to_round] = actual_df[
-            column_names_to_round].apply(round, ndigits=4)
-        actual_df[["month", "year"]] = actual_df[
-            ["month", "year"]].astype("int64")              
-        expected_df['timestamp_old'] = expected_df['timestamp']
-        expected_df['timestamp'] = expected_df['timestamp'].apply(
-            pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
-        expected_df = expected_df.set_index(['timestamp'])
-        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})
-        actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
-        expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
-        hunitest.compare_df(actual_df, expected_df)      
+        actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
+        expected = r"""                            timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1  bid_price_l2  bid_size_l2  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
+timestamp                                                                                                                                                                               
+2022-01-01 00:01:00+00:00  1640995260        0.3481     198707.2        0.3484     198707.2        0.3482     198707.2        0.3485     198707.2     binance      ADA_USDT  2022      1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)     
 
 
 @pytest.mark.skipif(
