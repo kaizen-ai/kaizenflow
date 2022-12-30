@@ -666,7 +666,7 @@ timestamp
 2022-01-01 00:01:00+00:00  1640995260        0.3481     198707.2        0.3484     198707.2        0.3482     198707.2        0.3485     198707.2     binance      ADA_USDT  2022      1"""
         self.assert_equal(actual, expected, fuzzy_match=True)     
 
-    def test_integrated(self, mock_get_vendor_universe):
+    def test_integrated(self):
         self.check_download_historical_data()
         self.check_resampler()
 
