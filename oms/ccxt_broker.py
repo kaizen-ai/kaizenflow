@@ -6,12 +6,12 @@ Import as:
 import oms.ccxt_broker as occxbrok
 """
 
+import asyncio
 import logging
 import os
 import re
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
-import asyncio
 
 import ccxt
 import pandas as pd
@@ -189,7 +189,7 @@ class CcxtBroker(ombroker.Broker):
         total_balance = balance["total"]
         return total_balance
 
-    def get_open_positions(self) -> List[Dict[Any, Any]]:
+    def get_open_positions(self) -> List[Dict[str, float]]:
         """
         Select all open futures positions.
 
@@ -243,14 +243,15 @@ class CcxtBroker(ombroker.Broker):
         # Fetch all open positions.
         positions = self._exchange.fetchPositions()
         _LOG.debug("fetched_positions=%s", positions)
-        open_positions = []
+        open_positions: Dict[str, float]
         for position in positions:
             _LOG.debug("fetched_position=%s", position)
             # Get the quantity of assets on short/long positions.
             position_amount = float(position["info"]["positionAmt"])
+            position_symbol = position["symbol"]
             _LOG.debug("After rounding: fetched_position=%s", position)
             if position_amount != 0:
-                open_positions.append(position)
+                open_positions[position_symbol] = position
         return open_positions
 
     def get_fills_for_time_period(
@@ -343,14 +344,25 @@ class CcxtBroker(ombroker.Broker):
             fills.extend(symbol_fills_with_asset_ids)
         return fills
 
+    def cancel_open_orders(self, currency_pair: str) -> None:
+        """
+        Cancel all open orders for the given currency pair.
+        """
+        self._exchange.cancelAllOrders(currency_pair)
+
     async def create_twap_orders(
+        self,
         currency_pair: omorder.Order,
         volume: int,
         side: str,
         execution_start: pd.Timestamp,
         execution_end: pd.Timestamp,
         execution_freq: str,
-    ):
+    ) -> List[str]:
+        """
+        Execute a large order using the TWAP strategy.
+        """
+        asset_id = self._symbol_to_asset_id_mapping(currency_pair)
         # TODO(Danya): Do we construct an order from params (current implementation)
         #  or do we get a full oms.Order object that we break up later?
         # Convert execution frequency to Timedelta.
@@ -362,19 +374,49 @@ class CcxtBroker(ombroker.Broker):
         num_orders = int((execution_start - execution_end) / execution_freq) - 1
         # Get volume of a single order based on number of orders.
         single_order_volume = volume / num_orders
+        if side == "sell":
+            single_order_volume = -single_order_volume
+        # Round to the allowable asset precision.
+        single_order_volume = self.market_info[asset_id]["amount_precision"]
         # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
         now = pd.Timestamp.now()
         start_in = (execution_start - now).total_seconds
         if start_in > 1:
             await asyncio.sleep(start_in)
+        #
+        order_receipts: List[str] = []
         loop = asyncio.get_running_loop()
         end_time = (execution_end - execution_start).total_seconds()
         while True:
+            # TODO(Danya): Update to support orders for multiple symbols.
             iteration_num = 0
             if iteration_num > 0:
-                pass
-            
-        return None
+                self.cancel_open_orders(currency_pair)
+                curr_num_shares = self.get_open_positions()[currency_pair]
+            else:
+                curr_num_shares = 0
+            #
+            creation_timestamp = pd.Timestamp.now()
+            type_ = "limit"
+            start_timestamp = creation_timestamp
+            end_timestamp = creation_timestamp + execution_freq
+            order = omorder.Order(
+                creation_timestamp,
+                asset_id,
+                type_,
+                start_timestamp,
+                end_timestamp,
+                curr_num_shares,
+                single_order_volume,
+            )
+            receipt, _ = self._submit_orders([order])
+            order_receipts.append(receipt)
+            iteration_num += 1
+            # Break if the time is up.
+            if loop.time() + 1.0 >= end_time:
+                break
+            await asyncio.sleep(wait_time)
+        return order_receipts
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
