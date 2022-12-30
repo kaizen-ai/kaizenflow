@@ -363,7 +363,17 @@ class CcxtBroker(ombroker.Broker):
         # Get volume of a single order based on number of orders.
         single_order_volume = volume / num_orders
         # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
-        
+        now = pd.Timestamp.now()
+        start_in = (execution_start - now).total_seconds
+        if start_in > 1:
+            await asyncio.sleep(start_in)
+        loop = asyncio.get_running_loop()
+        end_time = (execution_end - execution_start).total_seconds()
+        while True:
+            iteration_num = 0
+            if iteration_num > 0:
+                pass
+            
         return None
 
     @staticmethod
