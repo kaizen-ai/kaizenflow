@@ -76,6 +76,8 @@ class CcxtBroker(ombroker.Broker):
         :param contract_type: "spot" or "futures"
         :param secret_identifier: a SecretIdentifier holding a full name of secret to look for in
          AWS SecretsManager
+        :param *args: `ombroker.Broker` positional arguments
+        :param **kwargs: `ombroker.Broker` keyword arguments
         """
         super().__init__(*args, **kwargs)
         self.max_order_submit_retries = _MAX_ORDER_SUBMIT_RETRIES
@@ -339,6 +341,26 @@ class CcxtBroker(ombroker.Broker):
                 _LOG.debug("after transformation: symbol_fill=%s", item)
             fills.extend(symbol_fills_with_asset_ids)
         return fills
+
+    async def create_twap_orders(
+        currency_pair: omorder.Order,
+        volume: int,
+        execution_start: pd.Timestamp,
+        execution_end: pd.Timestamp,
+        execution_freq: str,
+    ):
+        # Convert execution frequency to Timedelta.
+        execution_freq = pd.Timedelta(execution_freq)
+        # Get wait time between executions in seconds.
+        wait_time = execution_freq.total_seconds()
+        # Get a number of orders to be executed in a TWAP.
+        #  Note: 1 period is substracted to calculate price.
+        num_orders = int((execution_start - execution_end) / execution_freq) - 1
+        # Get volume of a single order based on number of orders.
+        single_order_volume = volume / num_orders
+        # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
+        now = pd.Timestamp.now()
+        return None
 
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
@@ -627,7 +649,7 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_single_order(
-        self, order: omorder.Order, *,order_type: str = "market"
+        self, order: omorder.Order, *, order_type: str = "market"
     ) -> Optional[omorder.Order]:
         """
         Submit a single order.
@@ -696,10 +718,6 @@ class CcxtBroker(ombroker.Broker):
                 else:
                     raise e
         return submitted_order
-    
-    def create_twap_orders():
-        
-        return None
 
     async def _submit_orders(
         self,
