@@ -259,6 +259,7 @@ class CcxtBroker(ombroker.Broker):
             _LOG.debug(hprint.to_str("position_amount position_symbol"))
             if position_amount != 0:
                 open_positions[position_symbol] = position
+        _LOG.debug(hprint.to_str("open_positions"))
         return open_positions
 
     def get_fills_for_time_period(
@@ -368,6 +369,20 @@ class CcxtBroker(ombroker.Broker):
     ) -> List[str]:
         """
         Execute a large order using the TWAP strategy.
+
+        A single buy/sell order is broken up into smaller orders which are
+        submitted between `execution_start` and `execution_end` at the provided
+        `execution_freq`, e.g. '1T' for 1 min.
+        If a limit order is not filled in the provided timestamp, the order
+        is cancelled.
+
+        :param currency_pair: symbol in binance format, e.g. 'BTC/USDT'
+        :param volume: amount of asset to be traded, e.g. 0.5
+        :param side: 'buy' or 'sell'
+        :param execution_start: when to start order execution
+        :param execution_end: when to end order execution
+        :param execution_freq: frequency of order placement, e.g. '1T'
+        :return: exchange receipts for individual orders
         """
         asset_id = self._symbol_to_asset_id_mapping(currency_pair)
         # Get wait time between executions in seconds.
@@ -377,15 +392,18 @@ class CcxtBroker(ombroker.Broker):
         #  Note: 1 period is substracted to calculate price.
         num_orders = int((execution_start - execution_end) / execution_freq) - 1
         hdbg.dassert_lte(1, num_orders)
+        _LOG.debug(hprint.to_str("num_orders"))
         # Get volume of a single order based on number of orders.
         single_order_volume = volume / num_orders
         hdbg.dassert_lt(0, single_order_volume)
+        _LOG.debug(hprint.to_str("single_order_volume"))
         if side == "sell":
             single_order_volume = -single_order_volume
         else:
             hdbg.dassert_eq(side, "buy")
         # Round to the allowable asset precision.
         single_order_volume = self.market_info[asset_id]["amount_precision"]
+        _LOG.debug("After rounding: %s", hprint.to_str("single_order_volume"))
         # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
         current_timestamp = pd.Timestamp.now()
         hdbg.dassert_lte(current_timestamp, execution_start)
@@ -425,6 +443,7 @@ class CcxtBroker(ombroker.Broker):
                 curr_num_shares,
                 single_order_volume,
             )
+            _LOG.debug(hprint.to_str(order))
             receipt, _ = self._submit_orders([order])
             order_receipts.append(receipt)
             iteration_num += 1
