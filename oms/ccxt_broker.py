@@ -11,6 +11,7 @@ import os
 import re
 import time
 from typing import Any, Dict, List, Optional, Tuple, Union
+import asyncio
 
 import ccxt
 import pandas as pd
@@ -345,10 +346,13 @@ class CcxtBroker(ombroker.Broker):
     async def create_twap_orders(
         currency_pair: omorder.Order,
         volume: int,
+        side: str,
         execution_start: pd.Timestamp,
         execution_end: pd.Timestamp,
         execution_freq: str,
     ):
+        # TODO(Danya): Do we construct an order from params (current implementation)
+        #  or do we get a full oms.Order object that we break up later?
         # Convert execution frequency to Timedelta.
         execution_freq = pd.Timedelta(execution_freq)
         # Get wait time between executions in seconds.
@@ -359,7 +363,7 @@ class CcxtBroker(ombroker.Broker):
         # Get volume of a single order based on number of orders.
         single_order_volume = volume / num_orders
         # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
-        now = pd.Timestamp.now()
+        
         return None
 
     @staticmethod
