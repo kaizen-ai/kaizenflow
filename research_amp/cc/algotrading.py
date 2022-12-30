@@ -7,6 +7,7 @@ import research_amp.cc.algotrading as ramccalg
 import logging
 from typing import List, Optional
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
@@ -162,7 +163,7 @@ def add_limit_order_prices(
     original_log_level = _LOG.getEffectiveLevel()
     if debug_mode:
         hloggin.set_level(_LOG, "DEBUG")
-    _LOG.debug(f"df initial={df.shape}")
+    _LOG.debug("df initial=%s", df.shape)
     # Select mid price columns to transform.
     limit_buy_col = "limit_buy_price"
     limit_sell_col = "limit_sell_price"
@@ -196,10 +197,10 @@ def add_limit_order_prices(
     df_limit_price[limit_buy_col] = limit_buy_srs
     df_limit_price[limit_sell_col] = limit_sell_srs
     _LOG.debug(
-        f"df_limit_price after resampling and shift={df_limit_price.shape}"
+        "df_limit_price after resampling and shift=%s", "df_limit_price.shape"
     )
     df = df.merge(df_limit_price, right_index=True, left_index=True, how="outer")
-    _LOG.debug(f"df after merge={df.shape}")
+    _LOG.debug("df after merge=%s", df.shape)
     # Forward fill gaps if limit prices were resampled.
     #  Note: we expect the original data to be 1 second, and e.g. 1min limit
     #  price is applied to each second of that period.
@@ -247,11 +248,11 @@ def compute_repricing_df(df: pd.DataFrame, report_stats: bool) -> pd.DataFrame:
         )
         # Display zero execution prices as a percentage.
         _LOG.info(
-            "exec_buy_price=0 %=%s",
+            "exec_buy_price=0 =%s",
             hprint.perc(df["exec_buy_price"].isnull().sum(), df.shape[0]),
         )
         _LOG.info(
-            "exec_sell_price=0 %=%s",
+            "exec_sell_price=0 =%s",
             hprint.perc(df["exec_sell_price"].isnull().sum(), df.shape[0]),
         )
     return df
@@ -284,7 +285,7 @@ def compute_execution_df(
             hprint.perc(
                 exec_df["exec_is_buy"].sum(),
                 exec_df["exec_is_buy"].shape[0],
-            )
+            ),
         )
     # Estimate the executed "buy" volume.
     exec_df["exec_buy_volume"] = (
@@ -323,3 +324,85 @@ def compute_execution_df(
     else:
         exec_df["mid"] = df["mid"]
     return exec_df
+
+
+def perform_spread_analysis(
+    df: pd.DataFrame,
+    ask_price_col_name: str,
+    bid_price_col_name: str,
+    mid_price_col_name: str,
+) -> None:
+    """
+    Plot and display spread values.
+
+    The values are displayed as absolute and in BPS.
+    """
+    # Get spread based on ask and bid prices.
+    spread = df[ask_price_col_name] - df[bid_price_col_name]
+    spread_in_bps = spread / df[mid_price_col_name] * 1e4
+    #
+    # Initialize subplots.
+    _, axs = plt.subplots(3, figsize=(15, 15))
+    # Plot spread BPS histogram.
+    axs[0].hist(spread_in_bps, bins=101)
+    axs[0].set_title("Spread in BPS histogram")
+    # Plot absolute spread values.
+    axs[1].plot(spread)
+    axs[1].set_title("Absolute spread")
+    # Plot BPS spread values.
+    axs[2].plot(spread_in_bps)
+    axs[2].set_title("Spread in BPS")
+
+
+def plot_limit_orders(
+    df: pd.DataFrame,
+    *,
+    start_timestamp: Optional[pd.Timestamp] = None,
+    end_timestamp: Optional[pd.Timestamp] = None,
+) -> None:
+    """
+    Plot limit orders data.
+
+    The given timestamp range is plotted. If no timestamps displayed,
+    the first 1000 data points are plotted.
+
+    :param df: DataFrame containing limit orders data
+    """
+    hdbg.dassert_is_subset(
+        [
+            "mid",
+            "ask_price",
+            "bid_price",
+            "limit_buy_price",
+            "limit_sell_price",
+            "is_buy",
+            "is_sell",
+        ],
+        df.columns.to_list(),
+    )
+    #
+    # Select relevant columnsю
+    price_data = df[
+        ["mid", "ask_price", "bid_price", "limit_buy_price", "limit_sell_price"]
+    ]
+    is_trade_data = df[["is_buy", "is_sell"]]
+    #
+    # Select a subset of the data based on a timestamp.
+    if all([start_timestamp, end_timestamp]):
+        price_data = price_data.loc[start_timestamp:end_timestamp]
+        is_trade_data = is_trade_data.loc[start_timestamp:end_timestamp]
+    # Select top 1000 rows.
+    elif not any([start_timestamp, end_timestamp]):
+        price_data = price_data.head(1000)
+        is_trade_data = is_trade_data.head(1000)
+    else:
+        raise ValueError(
+            "Either both start and end timestamp should be provided, or none."
+        )
+    #
+    # Plot limit price data.
+    _, axs = plt.subplots(2, figsize=(15, 15))
+    axs[0].plot(price_data)
+    axs[0].set_title("Price data")
+    axs[1].plot(is_trade_data)
+    axs[1].set_title("is_trade data")
