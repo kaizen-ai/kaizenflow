@@ -14,6 +14,7 @@ import praw
 import surrentum_infra_sandbox.download as sinsadow
 
 _LOG = logging.getLogger(__name__)
+NUMBERS_POST_TO_FETCH = 100
 REDDIT_USER_AGENT = "ck_extractor"
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
 REDDIT_SECRET = os.environ["REDDIT_SECRET"]
@@ -50,6 +51,20 @@ class RedditDownloader(sinsadow.DataDownloader):
         )
 
     @staticmethod
+    def get_the_top_most_comment_body(post: praw.models.Submission) -> str:
+        """
+        Get the top most comment body from a praw post.
+
+        :param post: Post for searching
+        :return: Body of the top most comment
+        """
+        try:
+            body = post.comments[0].body
+        except IndexError:
+            body = ""
+        return body
+
+    @staticmethod
     def get_symbols_from_content(
             content: str,
             symbols: Tuple[str] = SYMBOLS
@@ -78,21 +93,21 @@ class RedditDownloader(sinsadow.DataDownloader):
         :param end_timestamp:
         :return: downloaded data in raw format
         """
-
         output = []
         for subreddit in SUBREDDITS:
-            hot_posts = self.reddit_client.subreddit(subreddit).hot(limit=10)
+            hot_posts = self.reddit_client.subreddit(
+                subreddit).hot(limit=NUMBERS_POST_TO_FETCH)
             for post in hot_posts:
                 output += [
                     RedditPostFeatures(
                         created=datetime.datetime.fromtimestamp(post.created_utc),
                         symbols=self.get_symbols_from_content(post.selftext),
-                        post_length=0,
+                        post_length=len(post.selftext),
                         title=post.title,
                         content=post.selftext,
                         number_of_upvotes=post.ups,
                         number_of_comments=post.num_comments,
-                        top_comment=""
+                        top_comment=self.get_the_top_most_comment_body(post)
                     )
                 ]
         return sinsadow.RawData(output)
