@@ -120,6 +120,8 @@ def get_CcxtHistoricalPqByTileClient_example1(
     dataset: str,
     contract_type: str,
     data_snapshot: str,
+    *args,
+    **kwargs,
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the prod model reading CCXT
