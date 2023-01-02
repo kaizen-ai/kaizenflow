@@ -24,13 +24,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v4"
-        resample_1min = False
         dataset = "ohlcv"
         contract_type = "futures"
         data_snapshot = "20220620"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -85,13 +83,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v4"
-        resample_1min = False
         dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -147,13 +143,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize client.
         universe_version = None
-        resample_1min = False
         dataset = "ohlcv"
         contract_type = "futures"
         data_snapshot = ""
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,

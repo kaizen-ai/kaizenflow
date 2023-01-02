@@ -65,10 +65,10 @@ class ImClient(abc.ABC):
         self,
         vendor: str,
         universe_version: Optional[str],
-        resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
         timestamp_col_name: str = "timestamp",
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.

@@ -117,8 +117,6 @@ def get_CcxtParquetByAssetClient_example1(
 def get_CcxtHistoricalPqByTileClient_example1(
     # TODO(Grisha): make it optional since it is not needed for real-time data.
     universe_version: str,
-    # TODO(Grisha): always use `resample_1min = False`.
-    resample_1min: bool,
     dataset: str,
     contract_type: str,
     data_snapshot: str,
@@ -139,6 +137,7 @@ def get_CcxtHistoricalPqByTileClient_example1(
         root_dir = os.path.join(
             s3_bucket_path, "reorg", "historical.manual.pq"
         )
+    resample_1min = False
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
