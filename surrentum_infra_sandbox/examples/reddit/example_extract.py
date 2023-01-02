@@ -7,6 +7,7 @@ import dataclasses
 import datetime
 import logging
 import os
+import pandas as pd
 from typing import List, Tuple
 
 import praw
@@ -19,12 +20,7 @@ REDDIT_USER_AGENT = "ck_extractor"
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
 REDDIT_SECRET = os.environ["REDDIT_SECRET"]
 SUBREDDITS = ["Cryptocurrency", "CryptoMarkets"]
-SYMBOLS = (
-    "BTC", "ETH", "USDT", "USDC", "BNB", "XRP", "BUSD", "DOGE", "ADA", "MATIC",
-    "DAI", "WTRX", "TRX", "DOT", "LTC", "SHIB", "STETH", "UNI7", "SOL", "AVAX",
-    "LEO", "HEX", "WBTC", "LINK", "ATOM", "XMR", "TON11419", "ETC",
-    "BCH", "XLM"
-)
+SYMBOLS = ("BTC", "ETH", "USDT", "USDC", "BNB")
 
 
 @dataclasses.dataclass
@@ -86,8 +82,8 @@ class RedditDownloader(sinsadow.DataDownloader):
     def download(
         self,
         *,
-        start_timestamp: datetime.datetime = None,
-        end_timestamp: datetime.datetime = None
+        start_timestamp: pd.Timestamp = None,
+        end_timestamp: pd.Timestamp = None
     ) -> sinsadow.RawData:
         """
         Download posts in the hot category in the predefined subreddits
@@ -97,8 +93,8 @@ class RedditDownloader(sinsadow.DataDownloader):
         :return: downloaded data in raw format
         """
         output = []
-        start_timestamp = start_timestamp or datetime.datetime.min
-        end_timestamp = end_timestamp or datetime.datetime.max
+        start_timestamp = start_timestamp or pd.Timestamp.min
+        end_timestamp = end_timestamp or pd.Timestamp.max
         for subreddit in SUBREDDITS:
             # TODO(*): This iterator is pretty slow: ~30s for the two subreddits
             #   and 10 posts for every subreddit. Have to be speed up for
@@ -106,8 +102,7 @@ class RedditDownloader(sinsadow.DataDownloader):
             hot_posts = self.reddit_client.subreddit(
                 subreddit).hot(limit=NUMBERS_POST_TO_FETCH)
             for post in hot_posts:
-                post_timestamp = datetime.datetime.fromtimestamp(
-                    post.created_utc)
+                post_timestamp = pd.Timestamp(post.created_utc, unit="s")
                 if not start_timestamp <= post_timestamp <= end_timestamp:
                     continue
                 output += [
