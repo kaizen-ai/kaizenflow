@@ -77,9 +77,9 @@ class RedditDownloader(sinsadow.DataDownloader):
         :return: Founded symbols
         """
         output = []
-        lowercased_content = content.lower()
+        lowercase_content = content.lower()
         for symbol in symbols:
-            if symbol.lower() in lowercased_content:
+            if symbol.lower() in lowercase_content:
                 output += [symbol]
         return output
 
