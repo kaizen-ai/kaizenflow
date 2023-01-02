@@ -648,7 +648,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # the parent class so they go before the parent's init.
         self._table_name = table_name
         self._db_connection = db_connection
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min=resample_1min)
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:

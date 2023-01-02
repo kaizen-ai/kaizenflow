@@ -42,7 +42,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
         """
         Constructor.
         """
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min=resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 

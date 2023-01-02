@@ -71,8 +71,8 @@ class HistoricalPqByTileClient(
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             full_symbol_col_name=full_symbol_col_name,
+            resample_1min=resample_1min,
         )
         hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
@@ -464,8 +464,8 @@ class HistoricalPqByDateClient(
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             full_symbol_col_name=full_symbol_col_name,
+            resample_1min=resample_1min,
         )
         self._read_func = read_func
 
