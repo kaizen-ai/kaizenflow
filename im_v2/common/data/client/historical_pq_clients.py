@@ -46,13 +46,13 @@ class HistoricalPqByTileClient(
         # The version is not strictly needed for this class, but it is used by
         # the child classes, e.g., by `CcxtHistoricalPqByTileClient`.
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         infer_exchange_id: bool,
         *,
         aws_profile: Optional[str] = None,
         full_symbol_col_name: Optional[str] = None,
+        resample_1min: bool = False,
     ):
         """
         Constructor.
@@ -455,10 +455,10 @@ class HistoricalPqByDateClient(
     def __init__(
         self,
         vendor: str,
-        resample_1min: bool,
         read_func,
         *,
         full_symbol_col_name: Optional[str] = None,
+        resample_1min: bool = False,
     ):
         universe_version = None
         super().__init__(

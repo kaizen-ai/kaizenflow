@@ -61,6 +61,8 @@ class ImClient(abc.ABC):
     ```
     """
 
+    # TODO(Grisha): use `*args` and `**kwargs` in the child classes to specify the
+    # base class's params.
     def __init__(
         self,
         vendor: str,
@@ -626,8 +628,6 @@ class RealTimeImClient(ImClient):
     """
 
 
-# TODO(gp): @all cleanup resample_1min should go last and probably have a default
-#  value of False.
 class SqlRealTimeImClient(RealTimeImClient):
     """
     Read data from a table of an SQL DB.
@@ -636,9 +636,10 @@ class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
         vendor: str,
-        resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        *,
+        resample_1min: bool = False,
     ) -> None:
         _LOG.debug(hprint.to_str("db_connection table_name"))
         # Real-time implementation has a different mechanism for getting universe.

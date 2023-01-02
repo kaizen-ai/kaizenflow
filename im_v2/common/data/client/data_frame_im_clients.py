@@ -24,9 +24,9 @@ class DataFrameImClient(imvcdcbimcl.ImClientReadingMultipleSymbols):
         self,
         df: pd.DataFrame,
         universe: List[ivcu.FullSymbol],
-        resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
