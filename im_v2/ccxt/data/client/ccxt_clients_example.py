@@ -120,8 +120,8 @@ def get_CcxtHistoricalPqByTileClient_example1(
     dataset: str,
     contract_type: str,
     data_snapshot: str,
-    *args,
-    **kwargs,
+    *,
+    resample_1min: bool = False
 ) -> imvcdccccl.CcxtHistoricalPqByTileClient:
     """
     Get `CcxtHistoricalPqByTileClient` object for the prod model reading CCXT
@@ -139,7 +139,6 @@ def get_CcxtHistoricalPqByTileClient_example1(
         root_dir = os.path.join(
             s3_bucket_path, "reorg", "historical.manual.pq"
         )
-    resample_1min = False
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
