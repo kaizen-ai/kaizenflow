@@ -14,7 +14,7 @@ import praw
 import surrentum_infra_sandbox.download as sinsadow
 
 _LOG = logging.getLogger(__name__)
-NUMBERS_POST_TO_FETCH = 100
+NUMBERS_POST_TO_FETCH = 5
 REDDIT_USER_AGENT = "ck_extractor"
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
 REDDIT_SECRET = os.environ["REDDIT_SECRET"]
@@ -84,23 +84,35 @@ class RedditDownloader(sinsadow.DataDownloader):
         return output
 
     def download(
-        self, *, start_timestamp=None, end_timestamp=None
+        self,
+        *,
+        start_timestamp: datetime.datetime = None,
+        end_timestamp: datetime.datetime = None
     ) -> sinsadow.RawData:
         """
         Download posts in the hot category in the predefined subreddits
 
-        :param start_timestamp:
-        :param end_timestamp:
+        :param start_timestamp: start datetime for searching
+        :param end_timestamp: end datetime for searching
         :return: downloaded data in raw format
         """
         output = []
+        start_timestamp = start_timestamp or datetime.datetime.min
+        end_timestamp = end_timestamp or datetime.datetime.max
         for subreddit in SUBREDDITS:
+            # TODO(*): This iterator is pretty slow: ~30s for the two subreddits
+            #   and 10 posts for every subreddit. Have to be speed up for
+            #   production usage.
             hot_posts = self.reddit_client.subreddit(
                 subreddit).hot(limit=NUMBERS_POST_TO_FETCH)
             for post in hot_posts:
+                post_timestamp = datetime.datetime.fromtimestamp(
+                    post.created_utc)
+                if not start_timestamp <= post_timestamp <= end_timestamp:
+                    continue
                 output += [
                     RedditPostFeatures(
-                        created=datetime.datetime.fromtimestamp(post.created_utc),
+                        created=post_timestamp,
                         symbols=self.get_symbols_from_content(post.selftext),
                         post_length=len(post.selftext),
                         title=post.title,
