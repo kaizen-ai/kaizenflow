@@ -17,9 +17,8 @@ class DataClient(abc.ABC):
     def load(
         self,
         dataset_signature: str,
-        # TODO(gp): -> pd.Timestamp?
-        start_timestamp=None,
-        end_timestamp=None,
+        start_timestamp: Optional[pd.Timestamp] =None,
+        end_timestamp: Optional[pd.Timestamp] =None,
         **kwargs: Any
     ) -> Any:
         """

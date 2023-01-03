@@ -28,6 +28,8 @@ import surrentum_infra_sandbox.validate as sinsaval
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): example_load_and_validate.py -> load_and_validate.py
+
 # #############################################################################
 # CsvClient
 # #############################################################################
@@ -49,27 +51,22 @@ class CsvClient(sinsacli.DataClient):
     def load(
         self,
         dataset_signature: str,
-        start_timestamp=None,
-        end_timestamp=None,
+        start_timestamp: Optional[pd.Timestamp] =None,
+        end_timestamp: Optional[pd.Timestamp] =None,
         **kwargs: Any,
-    ) -> Any:
+    ) -> pd.DataFrame:
         """
         Load CSV data specified by a unique signature from a desired source
         directory for a specified time period.
 
+        TODO(gp): where is the dependency.
         The method assumes data having a 'timestamp' column.
-
-        :param dataset_signature: signature of the dataset to load
-        :param start_timestamp: beginning of the time period to load (context differs based
-         on data type). If None, start with the earliest saved data.
-        :param end_timestamp: end of the time period to load (context differs based
-         on data type). If None, download up to the latest saved data.
-        :return: loaded data
         """
         # TODO(Juraj): rewrite using dataset_schema_utils.
         dataset_signature += ".csv"
         source_path = os.path.join(self.source_dir, dataset_signature)
         data = pd.read_csv(source_path)
+        # Filter by [start_timestamp, end_timestamp).
         if start_timestamp:
             hdateti.dassert_has_tz(start_timestamp)
             start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
@@ -86,7 +83,7 @@ class CsvClient(sinsacli.DataClient):
 
 
 # #############################################################################
-# Example QA checks and validator implementation
+# QA checks and Validator.
 # #############################################################################
 
 
@@ -109,9 +106,9 @@ class GapsInTimestampCheck(sinsaval.QaCheck):
         *,
         freq: str = "T",
     ) -> None:
-        self.freq = freq
         self.start_timestamp = start_timestamp
         self.end_timestamp = end_timestamp
+        self.freq = freq
 
     def check(self, datasets: List[pd.DataFrame], *args: Any) -> bool:
         """
@@ -119,7 +116,7 @@ class GapsInTimestampCheck(sinsaval.QaCheck):
         """
         hdbg.dassert_eq(len(datasets), 1)
         data = datasets[0]
-        # We check for gaps in the timestamp for each symbol individually.
+        # Check for gaps in the timestamp for each symbol individually.
         df_gaps = []
         for symbol in data["currency_pair"].unique():
             data_current = data[data["currency_pair"] == symbol]
@@ -131,7 +128,6 @@ class GapsInTimestampCheck(sinsaval.QaCheck):
             )
             if not df_gaps_current.empty:
                 df_gaps.append((symbol, df_gaps_current))
-
         self._status = (
             f"FAILED: Dataset has timestamp gaps: \n {df_gaps}"
             if df_gaps != []
@@ -140,8 +136,10 @@ class GapsInTimestampCheck(sinsaval.QaCheck):
         return df_gaps == []
 
 
+# TODO(gp): No need to pass the logger.
 class SingleDatasetValidator(sinsaval.DatasetValidator):
-    def run_all_checks(self, datasets: List, logger: logging.Logger) -> None:
+    def run_all_checks(self, datasets: List[pd.DataFrame],
+                       logger: logging.Logger) -> None:
         error_msgs: List[str] = []
         hdbg.dassert_eq(len(datasets), 1)
         _LOG.info("Running all QA checks:")
@@ -156,31 +154,11 @@ class SingleDatasetValidator(sinsaval.DatasetValidator):
 
 
 # #############################################################################
-# Example script setup
+# Script.
 # #############################################################################
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(use_exec_path=True)
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    csv_client = CsvClient(args.source_dir)
-    data = csv_client.load(args.dataset_signature, start_timestamp, end_timestamp)
-    empty_dataset_check = EmptyDatasetCheck()
-    # Conforming to the (a, b] interval convention, remove 1 minute
-    #  from the end_timestamp.
-    gaps_in_timestamp_check = GapsInTimestampCheck(
-        start_timestamp, end_timestamp - timedelta(minutes=1)
-    )
-    dataset_validator = SingleDatasetValidator(
-        [empty_dataset_check, gaps_in_timestamp_check]
-    )
-    dataset_validator.run_all_checks([data], _LOG)
-
-
-def add_download_args(
+def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -222,8 +200,29 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser = add_download_args(parser)
+    parser = _add_download_args(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(use_exec_path=True)
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    # Load data.
+    csv_client = CsvClient(args.source_dir)
+    data = csv_client.load(args.dataset_signature, start_timestamp, end_timestamp)
+    # Validate data.
+    # To conform with the (a, b] interval convention, remove 1 minute from the
+    # end_timestamp.
+    gaps_in_timestamp_check = GapsInTimestampCheck(
+        start_timestamp, end_timestamp - timedelta(minutes=1)
+    )
+    dataset_validator = SingleDatasetValidator(
+        [empty_dataset_check, gaps_in_timestamp_check]
+    )
+    dataset_validator.run_all_checks([data], _LOG)
 
 
 if __name__ == "__main__":

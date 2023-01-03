@@ -5,7 +5,9 @@ import surrentum_infra_sandbox.download as sinsadow
 """
 
 import abc
-from typing import Any
+from typing import Any, Optional
+
+import pandas as pd
 
 
 # TODO(gp): Not sure it's worth to have a wrapper here.
@@ -31,9 +33,11 @@ class DataDownloader(abc.ABC):
 
     @abc.abstractmethod
     def download(
-        self, *,
-        # TODO(gp): -> pd.Timestamp
-        start_timestamp=None, end_timestamp=None, **kwargs: Any
+        self,
+        *,
+        start_timestamp: Optional[pd.Timestamp]=None,
+        end_timestamp: Optional[pd.Timestamp]=None,
+        **kwargs: Any
     ) -> RawData:
         """
         Download data from a desired source.

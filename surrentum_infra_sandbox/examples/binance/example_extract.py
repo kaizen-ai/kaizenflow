@@ -27,7 +27,10 @@ import surrentum_infra_sandbox.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): example_extract.py -> extract.py
 
+
+# TODO(gp): -> OhlcvRestApiDownloader
 class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     """
     Class for downloading OHLCV data using REST API provided by Binance.
@@ -87,7 +90,7 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                             "volume": row[5],
                             # close_time from the raw response.
                             # The value is in ms, we add one millisecond.
-                            # based on the surrentum protocol data interval
+                            # based on the Surrentum protocol data interval
                             # specification, where interval [a, b) is labeled
                             # with timestamp 'b'.
                             "timestamp": int(row[6]) + 1,
