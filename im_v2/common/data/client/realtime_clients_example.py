@@ -268,5 +268,5 @@ def get_mock_realtime_client(
         data = _create_mock2_sql_data()
         hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
-    im_client = MockSqlRealTimeImClient(resample_1min, connection, table_name)
+    im_client = MockSqlRealTimeImClient(connection, table_name, resample_1min=resample_1min)
     return im_client
