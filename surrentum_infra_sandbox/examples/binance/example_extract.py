@@ -4,7 +4,6 @@ Example implementation of abstract classes for ETL and QA pipeline.
 
 Download OHLCV data from Binance and save it as CSV locally.
 
-Use as:
 # Download OHLCV data for binance:
 > example_extract.py \
     --start_timestamp '2022-10-20 10:00:00+00:00' \
@@ -31,7 +30,7 @@ _LOG = logging.getLogger(__name__)
 
 class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     """
-    Class for downloading OHLCV data using REST API provided by binance.
+    Class for downloading OHLCV data using REST API provided by Binance.
     """
 
     _MAX_LINES = 1000
@@ -87,10 +86,10 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                             "close": row[4],
                             "volume": row[5],
                             # close_time from the raw response.
-                            # The value is in ms, we add one milisecond.
-                            #  based on the surrentum protocol data interval
-                            #  specification, where interval [a, b) is labeled
-                            #  with timestamp 'b'.
+                            # The value is in ms, we add one millisecond.
+                            # based on the surrentum protocol data interval
+                            # specification, where interval [a, b) is labeled
+                            # with timestamp 'b'.
                             "timestamp": int(row[6]) + 1,
                         }
                         for row in response.json()
@@ -99,7 +98,6 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                 dfs.append(data)
                 # Delay for throttling in seconds.
                 time.sleep(0.5)
-
         return sinsadow.RawData(pd.concat(dfs, ignore_index=True))
 
     def _build_url(
@@ -164,7 +162,7 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         """
         Save RawData storing a DataFrame to CSV.
 
-        :param data: data to persists into CSV.
+        :param data: data to persists into CSV
         """
         if not isinstance(data.get_data(), pd.DataFrame):
             raise ValueError("Only DataFrame is supported.")

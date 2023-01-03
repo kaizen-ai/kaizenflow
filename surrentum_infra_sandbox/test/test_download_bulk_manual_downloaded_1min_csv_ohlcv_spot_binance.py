@@ -8,43 +8,42 @@ import helpers.henv as henv
 import helpers.hunit_test as hunitest
 import surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0 as sisdbmohlcv
 
-def _fake_binance_response() -> List[list]:
+def _fake_binance_response() -> List[List[Any]]:
     """
-    list of the random fake records as a binance response
-
-    :return: Fake list of binance response
+    Build fake records as a Binance response.
     """
     return [
         [
-            ## Open time
+            # Open time.
             1499040000000,   
-            ## Open
+            # Open.
             "0.01634790",                 
-            ## High
+            # High.
             "0.80000000",                 
-            ## Low
+            # Low.
             "0.01575800",                 
-            ## Close
-            "0.01577100",                 
-            ## Volume
+            # Close.
+            "0.01577100",
+            # Volume.
             "148976.11427815",             
-            ## Close time
+            # Close time.
             1499644799999,   
-            ## Quote asset volume
-            "2434.19055334",             
-            ## Number of trades
+            # Quote asset volume.
+            "2434.19055334",
+            # Number of trades.
             308,                       
-            ## Taker buy base asset volume
+            # Taker buy base asset volume.
             "1756.87402397",             
-            ## Taker buy quote asset volume
+            # Taker buy quote asset volume.
             "28.46694368",             
-            ## Ignore
+            # Ignore.
             "17928899.62484339"                                          
         ]
-        for line in range(100)
+        for _ in range(100)
     ]
 
 
+# TODO(gp): OHLCV -> Ohlcv
 class TestDownloadHistoricalOHLCV(hunitest.TestCase):
     def test_parser(self) -> None:
         """

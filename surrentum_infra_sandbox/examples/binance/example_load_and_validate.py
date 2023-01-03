@@ -4,7 +4,6 @@ Example implementation of abstract classes for ETL and QA pipeline.
 
 Load and validate data within a specified time period from a CSV file.
 
-Use as:
 # Load OHLCV data for binance:
 > example_load_and_validate.py \
     --start_timestamp '2022-10-20 12:00:00+00:00' \
@@ -28,14 +27,15 @@ import surrentum_infra_sandbox.validate as sinsaval
 
 _LOG = logging.getLogger(__name__)
 
+
 # #############################################################################
-# Example client implementation
+# CsvClient
 # #############################################################################
 
 
 class CsvClient(sinsacli.DataClient):
     """
-    Class for loading CSV data located in local filesystem into main memory.
+    Class for loading CSV data from local filesystem into main memory.
     """
 
     def __init__(self, source_dir: str) -> None:
