@@ -3,16 +3,20 @@ Example implementation of abstract classes for ETL and QA pipeline.
 
 Download Reddit data
 """
+import abc
 import dataclasses
 import datetime
 import logging
 import os
-import pandas as pd
 from typing import List, Tuple
 
+import pandas as pd
 import praw
+import pymongo
 
 import surrentum_infra_sandbox.download as sinsadow
+import surrentum_infra_sandbox.save as sinsasav
+
 
 _LOG = logging.getLogger(__name__)
 NUMBERS_POST_TO_FETCH = 5
@@ -21,6 +25,42 @@ REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
 REDDIT_SECRET = os.environ["REDDIT_SECRET"]
 SUBREDDITS = ["Cryptocurrency", "CryptoMarkets"]
 SYMBOLS = ("BTC", "ETH", "USDT", "USDC", "BNB")
+
+
+class BaseMongoSaver(sinsasav.DataSaver):
+    """
+    Abstract class for saving data to MongoDB
+    """
+
+    def __init__(
+            self,
+            mongo_client: pymongo.MongoClient,
+            db_name: str
+    ):
+        self.mongo_client = mongo_client
+        self.db_name = db_name
+
+    @abc.abstractmethod
+    def save(self, data: sinsadow.RawData) -> None:
+        """
+        Save data to a MongoDB.
+
+        :param data: data to persist
+        """
+        ...
+
+
+class RedditMongoSaver(BaseMongoSaver):
+    """
+    Simple saver class to store data from the Reddit to MongoDB
+    """
+    def __init__(self, *args, collection_name: str, **kwargs):
+        self.collection_name = collection_name
+        super().__init__(*args, **kwargs)
+
+    def save(self, data: sinsadow.RawData) -> None:
+        db = self.mongo_client
+        db[self.db_name][self.collection_name].insert_many(data.get_data())
 
 
 @dataclasses.dataclass
@@ -33,6 +73,9 @@ class RedditPostFeatures:
     number_of_upvotes: int
     number_of_comments: int
     top_comment: str
+
+    def dict(self):
+        return {k: str(v) for k, v in dataclasses.asdict(self).items()}
 
 
 class RedditDownloader(sinsadow.DataDownloader):
@@ -115,11 +158,18 @@ class RedditDownloader(sinsadow.DataDownloader):
                         number_of_upvotes=post.ups,
                         number_of_comments=post.num_comments,
                         top_comment=self.get_the_top_most_comment_body(post)
-                    )
+                    ).dict()
                 ]
         return sinsadow.RawData(output)
 
 
 if __name__ == '__main__':
     downloader = RedditDownloader()
-    downloader.download()
+    raw_data = downloader.download()
+    mongo_saver = RedditMongoSaver(
+        mongo_client=pymongo.MongoClient(
+            "mongodb://reddit:reddit@127.0.0.1:27017"),
+        db_name="reddit",
+        collection_name="posts"
+    )
+    mongo_saver.save(raw_data)

@@ -22,6 +22,18 @@ services:
   #  ports:
   #    - 6379:6379
 
+  mongo:
+    image: mongo
+    container_name: mongo_cont
+    environment:
+      - MONGO_INITDB_DATABASE=reddit
+      - MONGO_INITDB_ROOT_USERNAME=reddit
+      - MONGO_INITDB_ROOT_PASSWORD=reddit
+    ports:
+      - '27017:27017'
+    volumes:
+      - ./mongo_data:/data/db
+
   airflow:
     build: .
     image: resdev-airflow:latest
@@ -40,7 +52,7 @@ services:
       - ./airflow_data/log_volume:/opt/airflow/log
       - ../..:/cmamp
     extra_hosts:
-      - "host.docker.internal:host-gateway" 
+      - "host.docker.internal:host-gateway"
 
   airflow-scheduler:
     build: .
@@ -62,7 +74,7 @@ services:
     environment:
        - CK_IN_PROD_CMAMP_CONTAINER=True
     extra_hosts:
-      - "host.docker.internal:host-gateway"  
+      - "host.docker.internal:host-gateway"
 
   #airflow-worker1:
   #  build: .
