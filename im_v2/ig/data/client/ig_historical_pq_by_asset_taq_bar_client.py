@@ -37,12 +37,10 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
     ):
         # TODO(gp): Not sure how to set this.
         universe_version = None
-        resample_1min = False
         infer_exchange_id = False
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir_name,
             partition_mode,
             infer_exchange_id=infer_exchange_id,

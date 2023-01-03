@@ -295,11 +295,11 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             infer_exchange_id,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )
         hdbg.dassert_in(
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
