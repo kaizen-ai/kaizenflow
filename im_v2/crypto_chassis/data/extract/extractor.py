@@ -238,7 +238,24 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         if bid_ask.empty:
             _LOG.warning("No data found for given query parameters.")
             return pd.DataFrame()
-        return self._transform_raw_bid_ask_data(bid_ask)
+        df = self._transform_raw_bid_ask_data(bid_ask)
+        # Drop duplicates as a safety net in case the data is faulty.
+        df = df.drop_duplicates()
+        # The API does not respect the specified timestamps
+        #  precisely.
+        # Return data only in the originally specified interval
+        #  to avoid confusion.
+        start_ts_unix = hdateti.convert_timestamp_to_unix_epoch(
+            start_timestamp, unit="s"
+        )
+        end_ts_unix = hdateti.convert_timestamp_to_unix_epoch(
+            end_timestamp, unit="s"
+        )
+        _LOG.info("DataFrame shape before timestamp filter: " + str(df.shape))
+        df = df[df["timestamp"] >= start_ts_unix]
+        df = df[df["timestamp"] <= end_ts_unix]
+        _LOG.info("DataFrame shape after timestamp filter: " + str(df.shape))
+        return df
 
     def _download_ohlcv(
         self,
@@ -249,7 +266,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         *,
         interval: Optional[str] = "1m",
         include_realtime: bool = False,
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
         """
         Download snapshot of ohlcv.
@@ -363,6 +380,7 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         currency_pair: str,
         *,
         start_timestamp: Optional[pd.Timestamp] = None,
+        **kwargs: Any,
     ) -> pd.DataFrame:
         """
         Download snapshot of trade data.
@@ -373,7 +391,10 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
 
         :param exchange_id: the name of exchange, e.g. `binance`, `coinbase`
         :param currency_pair: the pair of currency to download, e.g. `btc-usd`
-        :param start_timestamp: timestamp of start
+        :param start_timestamp: timestamp of start. The API ignores the times section
+         of the argument and instead return the day's worth of data (in UTC):
+         e.g. start_timestamp=2022-12-11T00:10:01+00:00 returns data in interval
+         [2022-12-11T00:00:00+00:00, 2022-12-11T23:59:59+00:00]
         :return: trade data
         """
         # Verify that date parameters are of correct format.
@@ -402,7 +423,12 @@ class CryptoChassisExtractor(ivcdexex.Extractor):
         r = requests.get(query_url)
         # Retrieve raw data.
         data_json = r.json()
-        if data_json.get("urls") is None:
+        # If there is no `urls` key or there is one but the value is an empty list.
+        if not data_json.get("urls"):
+            _LOG.info(
+                f"Unable to retrieve data for {currency_pair} "
+                + f"and start_timestamp={start_timestamp}"
+            )
             # Return empty dataframe if there is no results.
             return pd.DataFrame()
         df_csv = data_json["urls"][0]["url"]

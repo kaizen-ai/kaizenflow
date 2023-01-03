@@ -206,6 +206,7 @@ class ImClient(abc.ABC):
             full_symbol_col_name=full_symbol_col_name,
             **kwargs,
         )
+        self.juraj_test = df
         _LOG.debug("After read_data: df=\n%s", hpandas.df_to_str(df, num_rows=3))
         # Check that we got what we asked for.
         # hpandas.dassert_increasing_index(df)
@@ -740,7 +741,13 @@ class SqlRealTimeImClient(RealTimeImClient):
             hdateti.convert_unix_epoch_to_timestamp
         )
         # Remove duplicates in data.
-        data = self._filter_duplicates(data, full_symbol_col_name)
+        # TODO(Juraj): this is temporary solution, for bid/ask
+        #  we need to load more than 1 level meaning the _filter_duplicates 
+        #  method does not work as expected.
+        if "bid_ask" not in self._table_name:
+            data = self._filter_duplicates(data, full_symbol_col_name)
+        else:
+            data = data.set_index(self._timestamp_col_name)
         # TODO(Dan): Move column filtering to the SQL query.
         if columns is None:
             columns = data.columns

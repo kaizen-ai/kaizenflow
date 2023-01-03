@@ -1,3 +1,7 @@
+v3.1
+- 2022-12-21
+- Expanded to get all available trades data
+
 v3
 - 2022-10-19
 - Expanded to get the best intersection with CCXT universe `v7`
