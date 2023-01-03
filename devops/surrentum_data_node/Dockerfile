@@ -23,7 +23,8 @@ RUN pip3 install \
     ipython-sql \
     psycopg2 \
     jupyter-contrib-core \
-    jupyter-contrib-nbextensions
+    jupyter-contrib-nbextensions \
+    tqdm
 
 # Part of the original DockerFile
 RUN pip install \
