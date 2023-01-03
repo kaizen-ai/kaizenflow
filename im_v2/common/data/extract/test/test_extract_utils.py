@@ -7,22 +7,20 @@ import pandas as pd
 import pytest
 import pytz
 
-import helpers.hdatetime as hdateti
-import helpers.hunit_test as hunitest
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
+import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
-import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdba
+import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.db.db_utils as imvcddbut
-import im_v2.common.universe as ivcu
 import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
- 
+
 
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
     # Regular mock for capturing logs.
@@ -485,23 +483,26 @@ class TestDownloadExchangeDataToDb1(
 
 
 def get_simple_crypto_chassis_mock_data(
-    start_timestamp: int, number_of_seconds
+    start_timestamp: int, number_of_seconds: int
 ) -> pd.DataFrame:
-    return pd.DataFrame([
-        {
-            "timestamp": start_timestamp + line_number,
-            "bid_price_l1": 0.3481,
-            "bid_size_l1": 49676.8,
-            "bid_price_l2": 0.3482,
-            "bid_size_l2": 49676.8,
-            "ask_price_l1": 0.3484,
-            "ask_size_l1": 49676.8,
-            "ask_price_l2": 0.3485,
-            "ask_size_l2": 49676.8,
-            "currency_pair": "ADA_USDT"
-        }
-        for line_number in range(number_of_seconds)
-    ]) 
+    return pd.DataFrame(
+        [
+            {
+                "timestamp": start_timestamp + sec,
+                "bid_price_l1": 0.3481,
+                "bid_size_l1": 49676.8,
+                "bid_price_l2": 0.3482,
+                "bid_size_l2": 49676.8,
+                "ask_price_l1": 0.3484,
+                "ask_size_l1": 49676.8,
+                "ask_price_l2": 0.3485,
+                "ask_size_l2": 49676.8,
+                "currency_pair": "ADA_USDT",
+            }
+            for sec in range(number_of_seconds)
+        ]
+    )
+
 
 @pytest.mark.slow("Takes around 6 secs")
 class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
@@ -512,13 +513,12 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
             "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0"
         )
-        result = super().setUp()
+        super().setUp()
         self.s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
-        return result
 
     def call_download_historical_data(self) -> None:
         """
-        Wrapper method to call download_historical_data with the arguments.
+        Call download_historical_data with the predefined arguments.
         """
         # Prepare inputs.
         args = {
@@ -532,61 +532,40 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "data_type": "ohlcv",
             "contract_type": "futures",
             "universe": "v3",
-            "incremental": True,
+            "incremental": False,
             "aws_profile": self.mock_aws_profile,
             "s3_path": f"s3://{self.bucket_name}/",
             "log_level": "INFO",
             "data_format": "parquet",
             "unit": "s",
         }
-        exchange = imvccdexex.CryptoChassisExtractor(
-            args["contract_type"]
-        )
+        exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
         imvcdeexut.download_historical_data(args, exchange)
 
     @umock.patch.object(imvcdeexut.ivcu, "get_vendor_universe")
     def check_download_historical_data(self, mock_get_vendor_universe):
         """
-        First part:                                   
+        First part:
+
         - run the downloader and mock its request to crypto_chassis
-        - downloader save the fixture to the fake AWS S3       
+        - downloader save the fixture to the fake AWS S3
         - get data from S3 and compare with expected result
         """
-        # Prepare inputs.
-        args = {
-            "start_timestamp": "2021-01-01 00:00:00",
-            "end_timestamp": "2022-01-01 00:00:04",
-            "exchange_id": "binance",
-            "data_type": "bid_ask",
-            "contract_type": "futures",
-            "universe": "v3",
-            "incremental": True,
-            "aws_profile": self.mock_aws_profile,
-            "s3_path": f"s3://{self.bucket_name}/",
-            "log_level": "INFO",
-            "data_format": "parquet",
-            "unit": "ms",
-        }
-        extractor = imvccdexex.CryptoChassisExtractor(
-            args["contract_type"]
-        )
-        # Create path for incremental mode.
-        with self.s3fs_.open(f"{self.path}/dummy.txt", "w") as f:
-            f.write("test")
-        def mock_download_data(*args, **kwargs):
+
+        def mock_download_data(*args, **kwargs) -> pd.DataFrame:
             """
-            A bit hacky function to replace download_data.
-            Needs to accept currency_pair as args param.
+            Mock download_data to return predefined results.
             """
             return get_simple_crypto_chassis_mock_data(
                 start_timestamp=int(self.start_date.timestamp()),
-                number_of_seconds=4
+                number_of_seconds=4,
             )
+
         # Let the downloader to put our fixture to the fake S3.
         with umock.patch.object(
             imvccdexex.CryptoChassisExtractor,
-             "download_data",
-            new=mock_download_data
+            "download_data",
+            new=mock_download_data,
         ):
             mock_universe = umock.MagicMock()
             mock_universe.__getitem__.return_value = ["ADA_USDT"]
@@ -606,39 +585,38 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "/".join(pq_path.split("/")[:-1])
             for pq_path in parquet_path_list
         ]
-        expected_list = ['currency_pair=ADA_USDT/year=2022/month=1']
+        expected_list = ["currency_pair=ADA_USDT/year=2022/month=1"]
         self.assertListEqual(parquet_path_list, expected_list)
-        # Delete the dummy file in order to allow to read a parquet.
-        self.s3fs_.rm(f"{self.path}/dummy.txt")
         actual_df = hparque.from_parquet(
-            file_name=self.path,
-            aws_profile=self.s3fs_
+            file_name=self.path, aws_profile=self.s3fs_
         )
         # Some data cleanup and polish.
         expected_df = get_simple_crypto_chassis_mock_data(
-            start_timestamp=int(self.start_date.timestamp()),
-            number_of_seconds=4
+            start_timestamp=int(self.start_date.timestamp()), number_of_seconds=4
         )
-        expected_df['timestamp_old'] = expected_df['timestamp']
-        expected_df['timestamp'] = expected_df['timestamp'].apply(
-            pd.Timestamp, unit="s", tz=pytz.timezone("UTC"))
-        expected_df = expected_df.set_index(['timestamp'])
-        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})  
+        expected_df["timestamp_old"] = expected_df["timestamp"]
+        expected_df["timestamp"] = expected_df["timestamp"].apply(
+            pd.Timestamp, unit="s", tz=pytz.timezone("UTC")
+        )
+        expected_df = expected_df.set_index(["timestamp"])
+        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})
         expected_df["month"] = 1
         expected_df["year"] = 2022
         expected_df["exchange_id"] = "binance"
-        actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
+        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         actual_df[["timestamp", "month", "year"]] = actual_df[
-            ["timestamp", "month", "year"]].astype("int64")
+            ["timestamp", "month", "year"]
+        ].astype("int64")
         actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
         expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
         hunitest.compare_df(actual_df, expected_df)
         del actual_df
         del expected_df
-    
-    def check_resampler(self):
+
+    def check_resampler(self) -> None:
         """
         Second part:
+
         - run the resampler
         - resampler save the data to the fake AWS S3
         - get data from S3 and compare with expected result
@@ -648,29 +626,30 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
             "start_timestamp": "2022-01-01 00:00:00",
             "end_timestamp": "2022-01-01 00:04:00",
             "src_dir": self.path,
-            "dst_dir": dst_dir
+            "dst_dir": dst_dir,
         }
         namespace = argparse.Namespace(**run_args)
         with umock.patch(
             "im_v2.common.data.transform.transform_utils"
-            ".NUMBER_LEVELS_OF_ORDER_BOOK", 2
+            ".NUMBER_LEVELS_OF_ORDER_BOOK",
+            2,
         ):
-            imvcdtrdba._run(namespace, aws_profile=self.s3fs_)
+            imvcdtrdbad._run(namespace, aws_profile=self.s3fs_)
         actual_df = hparque.from_parquet(dst_dir, aws_profile=self.s3fs_)
         # Need to exclude knowledge_timestamp that can't predict precisely.
-        actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
+        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
         expected = r"""timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1  bid_price_l2  bid_size_l2  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
-timestamp                                                                                                                                                                               
+timestamp
 2022-01-01 00:01:00+00:00  1640995260        0.3481     198707.2        0.3484     198707.2        0.3482     198707.2        0.3485     198707.2     binance      ADA_USDT  2022      1"""
-        self.assert_equal(actual, expected, fuzzy_match=True)     
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
-    def test_download_and_resample_bid_ask_data(self):
+    def test_download_and_resample_bid_ask_data(self) -> None:
         """
         check_download_historical_data:
         - run the downloader and mock its request to crypto_chassis
-        - downloader save the fixture to the fake AWS S3       
-        - get data from S3 and compare with expected result        
+        - downloader save the fixture to the fake AWS S3
+        - get data from S3 and compare with expected result
 
         check_resampler:
         - run the resampler
