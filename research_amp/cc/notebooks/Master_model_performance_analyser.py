@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -77,7 +77,7 @@ def get_notebook_config() -> cconconf.Config:
         },
         "data": {
             "dir_name": "/shared_data/model/historical/experiment.E1a.crypto_chassis_v2-all.5T.2018_2022/tiled_results/",
-            "columns": "volume vwap vwap.ret_0 vwap.ret_0.vol_adj vwap.ret_0.vol_adj.c vwap.ret_0.vol_adj_2 vwap.ret_0.vol_adj_2_hat".split(),
+            "columns": "volume vwap vwap.ret_0 vwap.ret_0.vol_adj vwap.ret_0.vol_adj.c vwap.ret_0.vol_adj_2 vwap.ret_0.vol_adj.lead2.hat".split(),
             "start_date": datetime.date(2018, 1, 1),
             "end_date": datetime.date(2022, 5, 1),
         },
@@ -86,7 +86,7 @@ def get_notebook_config() -> cconconf.Config:
             "timestamp": "end_ts",
             "volume": "volume",
             "y": "vwap.ret_0.vol_adj_2",
-            "y_hat": "vwap.ret_0.vol_adj_2_hat",
+            "y_hat": "vwap.ret_0.vol_adj.lead2.hat",
             "hit": "hit",
             "trade_pnl": "trade_pnl",
         },

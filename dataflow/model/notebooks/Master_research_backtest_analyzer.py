@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -102,7 +102,7 @@ single_tile_df.head(3)
 fep_dict = {
     "price_col": "vwap",
     "volatility_col": "vwap.ret_0.vol",
-    "prediction_col": "vwap.ret_0.vol_adj_2_hat",
+    "prediction_col": "vwap.ret_0.vol_adj.lead2.hat",
     # "bulk_frac_to_remove": 0.0,
     # "bulk_fill_method": "zero",
     # "target_gmv": 1e6,
@@ -197,7 +197,7 @@ overnight_returns = cofinanc.compute_overnight_returns(
 
 # %%
 regression_dict = {
-    "target_col": "vwap.ret_0.vol_adj_2_hat",
+    "target_col": "vwap.ret_0.vol_adj.lead2.hat",
     # "feature_cols": [1, 2, 3, 4, 5, 6, "prediction"],
     "feature_cols": ["vwap.ret_0.vol_adj"],
     "feature_lag": 2,
