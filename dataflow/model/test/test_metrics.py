@@ -14,9 +14,9 @@ def _get_result_data() -> pd.DataFrame:
         ("vwap.ret_0.vol_adj", 101): [0.199, 0.12, 0.13, 0.3],
         ("vwap.ret_0.vol_adj", 102): [0.133, 0.2, 0.333, 0.113],
         ("vwap.ret_0.vol_adj", 103): [0, 0.23, 0.31, 0.222],
-        ("vwap.ret_0.vol_adj_2_hat", 101): [0.22, 0.232, 0.221, 0.112],
-        ("vwap.ret_0.vol_adj_2_hat", 102): [0.98, 0.293, 0.223, 0.32],
-        ("vwap.ret_0.vol_adj_2_hat", 103): [0.38, 0.283, 0.821, 0.922],
+        ("vwap.ret_0.vol_adj.lead2.hat", 101): [0.22, 0.232, 0.221, 0.112],
+        ("vwap.ret_0.vol_adj.lead2.hat", 102): [0.98, 0.293, 0.223, 0.32],
+        ("vwap.ret_0.vol_adj.lead2.hat", 103): [0.38, 0.283, 0.821, 0.922],
     }
     start_ts = pd.Timestamp("2022-08-28 00:50:00-04:00")
     end_ts = pd.Timestamp("2022-08-28 01:05:00-04:00")
@@ -31,7 +31,7 @@ def _get_result_data() -> pd.DataFrame:
 def _get_metrics_df() -> pd.DataFrame:
     df = _get_result_data()
     y_column_name = "vwap.ret_0.vol_adj"
-    y_hat_column_name = "vwap.ret_0.vol_adj_2_hat"
+    y_hat_column_name = "vwap.ret_0.vol_adj.lead2.hat"
     metrics_df = dtfmodmetr.convert_to_metrics_format(
         df, y_column_name, y_hat_column_name
     )
@@ -44,7 +44,7 @@ class TestConvertToMetricsFormat(hunitest.TestCase):
         metrics_df = _get_metrics_df()
         actual = hpandas.df_to_str(metrics_df)
         expected = r"""
-                                            vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat
+                                            vwap.ret_0.vol_adj  vwap.ret_0.vol_adj.lead2.hat
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22
                                   102                    0.133                      0.98
@@ -75,7 +75,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "hour"
         expected = r"""
-                                            vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat  hour
+                                            vwap.ret_0.vol_adj  vwap.ret_0.vol_adj.lead2.hat  hour
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22    0
                                   102                    0.133                      0.98    0
@@ -94,7 +94,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "all"
         expected = r"""
-                                            vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat   all
+                                            vwap.ret_0.vol_adj  vwap.ret_0.vol_adj.lead2.hat   all
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22  all
                                   102                    0.133                      0.98  all
@@ -113,7 +113,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
         """
         tag_mode = "magnitude_quantile_rank"
         expected = r"""
-                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj_2_hat  magnitude_quantile_rank
+                                             vwap.ret_0.vol_adj  vwap.ret_0.vol_adj.lead2.hat  magnitude_quantile_rank
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22                        6
                                   102                    0.133                      0.98                        3
