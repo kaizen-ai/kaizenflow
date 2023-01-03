@@ -162,13 +162,13 @@ class CcxtCddCsvParquetByAssetClient(
         self,
         vendor: str,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
         extension: str,
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Load `CCXT` data from local or S3 filesystem.
@@ -180,7 +180,7 @@ class CcxtCddCsvParquetByAssetClient(
         :param aws_profile: AWS profile, e.g., `am`
         :param data_snapshot: same format used in `get_data_snapshot()`
         """
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min=resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(

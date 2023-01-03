@@ -49,10 +49,10 @@ def get_CcxtCsvClient_example1(
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
         vendor,
         universe_version,
-        resample_1min,
         root_dir,
         extension,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return ccxt_file_client
 
@@ -72,10 +72,10 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
         vendor,
         universe_version,
-        resample_1min,
         root_dir,
         extension,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return ccxt_file_client
 
@@ -101,10 +101,10 @@ def get_CcxtParquetByAssetClient_example1(
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
         vendor,
         universe_version,
-        resample_1min,
         root_dir,
         extension,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return ccxt_client
 
