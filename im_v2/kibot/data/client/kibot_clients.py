@@ -132,13 +132,13 @@ class KibotEquitiesCsvParquetByAssetClient(
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         extension: str,
         asset_class: str,
         unadjusted: Optional[bool],
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -323,12 +323,12 @@ class KibotFuturesCsvParquetByAssetClient(
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         extension: str,
         contract_type: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
