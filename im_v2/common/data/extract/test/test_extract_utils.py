@@ -590,29 +590,17 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         actual_df = hparque.from_parquet(
             file_name=self.path, aws_profile=self.s3fs_
         )
-        # Some data cleanup and polish.
-        expected_df = get_simple_crypto_chassis_mock_data(
-            start_timestamp=int(self.start_date.timestamp()), number_of_seconds=4
-        )
-        expected_df["timestamp_old"] = expected_df["timestamp"]
-        expected_df["timestamp"] = expected_df["timestamp"].apply(
-            pd.Timestamp, unit="s", tz=pytz.timezone("UTC")
-        )
-        expected_df = expected_df.set_index(["timestamp"])
-        expected_df = expected_df.rename(columns={"timestamp_old": "timestamp"})
-        expected_df["month"] = 1
-        expected_df["year"] = 2022
-        expected_df["exchange_id"] = "binance"
         actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
-        actual_df[["timestamp", "month", "year"]] = actual_df[
-            ["timestamp", "month", "year"]
-        ].astype("int64")
-        actual_df = actual_df.reindex(sorted(actual_df.columns), axis=1)
-        expected_df = expected_df.reindex(sorted(expected_df.columns), axis=1)
-        hunitest.compare_df(actual_df, expected_df)
-        del actual_df
-        del expected_df
+        actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
+        expected = r"""timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
+            timestamp                                                                                                                                                                               
+            2022-01-01 00:00:00+00:00  1640995200        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
+            2022-01-01 00:00:01+00:00  1640995201        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
+            2022-01-01 00:00:02+00:00  1640995202        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
+            2022-01-01 00:00:03+00:00  1640995203        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
+        
     def check_resampler(self) -> None:
         """
         Second part:
