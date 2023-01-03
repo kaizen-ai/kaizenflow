@@ -503,8 +503,8 @@ def get_simple_crypto_chassis_mock_data(
         for line_number in range(number_of_seconds)
     ]) 
 
-@pytest.mark.slow("Takes around 8 secs")
-class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
+@pytest.mark.slow("Takes around 6 secs")
+class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
     def setUp(self) -> None:
         self.start_date = datetime(2022, 1, 1)
         self.end_date = self.start_date + timedelta(seconds=4)
@@ -571,7 +571,6 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
             args["contract_type"]
         )
         # Create path for incremental mode.
-        
         with self.s3fs_.open(f"{self.path}/dummy.txt", "w") as f:
             f.write("test")
         def mock_download_data(*args, **kwargs):
@@ -661,12 +660,23 @@ class TestDownloadHistoricalDataIntegrated(hmoto.S3Mock_TestCase):
         # Need to exclude knowledge_timestamp that can't predict precisely.
         actual_df = actual_df.drop(['knowledge_timestamp'], axis=1)
         actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
-        expected = r"""                            timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1  bid_price_l2  bid_size_l2  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
+        expected = r"""timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1  bid_price_l2  bid_size_l2  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
 timestamp                                                                                                                                                                               
 2022-01-01 00:01:00+00:00  1640995260        0.3481     198707.2        0.3484     198707.2        0.3482     198707.2        0.3485     198707.2     binance      ADA_USDT  2022      1"""
         self.assert_equal(actual, expected, fuzzy_match=True)     
 
-    def test_integrated(self):
+    def test_download_and_resample_bid_ask_data(self):
+        """
+        check_download_historical_data:
+        - run the downloader and mock its request to crypto_chassis
+        - downloader save the fixture to the fake AWS S3       
+        - get data from S3 and compare with expected result        
+
+        check_resampler:
+        - run the resampler
+        - resampler save the data to the fake AWS S3
+        - get data from S3 and compare with expected result
+        """
         self.check_download_historical_data()
         self.check_resampler()
 
