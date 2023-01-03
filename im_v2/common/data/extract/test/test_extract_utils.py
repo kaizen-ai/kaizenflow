@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 
 import pandas as pd
 import pytest
-import pytz
 
 import helpers.henv as henv
 import helpers.hmoto as hmoto
@@ -593,14 +592,13 @@ class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
         actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
         actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
         expected = r"""timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
-            timestamp                                                                                                                                                                               
+            timestamp
             2022-01-01 00:00:00+00:00  1640995200        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
             2022-01-01 00:00:01+00:00  1640995201        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
             2022-01-01 00:00:02+00:00  1640995202        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
             2022-01-01 00:00:03+00:00  1640995203        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1"""
         self.assert_equal(actual, expected, fuzzy_match=True)
 
-        
     def check_resampler(self) -> None:
         """
         Second part:
@@ -634,15 +632,8 @@ timestamp
 
     def test_download_and_resample_bid_ask_data(self) -> None:
         """
-        check_download_historical_data:
-        - run the downloader and mock its request to crypto_chassis
-        - downloader save the fixture to the fake AWS S3
-        - get data from S3 and compare with expected result
-
-        check_resampler:
-        - run the resampler
-        - resampler save the data to the fake AWS S3
-        - get data from S3 and compare with expected result
+        Download mocked AWS S3 data, check the output, resample and check the
+        output.
         """
         self.check_download_historical_data()
         self.check_resampler()
