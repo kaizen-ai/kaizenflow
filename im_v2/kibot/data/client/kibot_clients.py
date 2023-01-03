@@ -151,7 +151,7 @@ class KibotEquitiesCsvParquetByAssetClient(
             required for all asset classes except for "forex"
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__(universe_version, resample_1min)
+        super().__init__(universe_version, resample_1min=resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -339,7 +339,7 @@ class KibotFuturesCsvParquetByAssetClient(
         :param contract_type: futures contract type (e.g., "continuous", "expiry")
         :param aws_profile: AWS profile name (e.g., `am`)
         """
-        super().__init__(universe_version, resample_1min)
+        super().__init__(universe_version, resample_1min=resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(

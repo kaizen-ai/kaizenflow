@@ -230,13 +230,14 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
     def __init__(
         self,
-        resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        *,
+        resample_1min: bool = False,
     ):
         vendor = "mock"
         super().__init__(
-            vendor, resample_1min, db_connection, table_name
+            vendor, db_connection, table_name, resample_1min=resample_1min,
         )
 
     @staticmethod
