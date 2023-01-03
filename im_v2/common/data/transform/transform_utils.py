@@ -351,7 +351,7 @@ def resample_multilevel_bid_ask_data(
     :return DataFrame resampled to 1 minute.
     """
     all_levels_resampled = []
-    for i in range(1, 11):
+    for i in range(1, NUMBER_LEVELS_OF_ORDER_BOOK + 1):
         bid_ask_cols_level = list(map(lambda x: f"{x}_l{i}", BID_ASK_COLS))
         data_one_level = data[bid_ask_cols_level]
         # Canonize column name for resampling function.
