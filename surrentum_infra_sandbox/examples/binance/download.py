@@ -54,8 +54,10 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
             end_timestamp_as_unix,
             msg="End timestamp should be greater then start timestamp.",
         )
+        # Download data once symbol at a time.
         dfs = []
         for symbol in tqdm.tqdm(self._UNIVERSE["binance"]):
+            # Download one chunk of data.
             for start_time, end_time in self._split_period_to_days(
                 start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
             ):
@@ -82,10 +84,9 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                             "close": row[4],
                             "volume": row[5],
                             # close_time from the raw response.
-                            # The value is in ms, we add one millisecond.
-                            # based on the Surrentum protocol data interval
-                            # specification, where interval [a, b) is labeled
-                            # with timestamp 'b'.
+                            # The value is in ms, we add one millisecond. based on
+                            # the Surrentum protocol data interval specification,
+                            # where interval [a, b) is labeled with timestamp 'b'.
                             "timestamp": int(row[6]) + 1,
                             "end_download_timestamp": hdateti.get_current_time(
                                 "UTC"
@@ -131,8 +132,8 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
         """
         Split period into chunks of the days.
 
-        The reason is that Binance API don't allow to get more than 1500 rows at once.
-        So if to get 1m interval, we need to chop a period into chunks that
+        The reason is that Binance API don't allow to get more than 1500 rows at
+        once. So to get 1m interval, we need to split a period into chunks that
         Binance allow us to get.
 
         :param start_time: timestamp for the start time
