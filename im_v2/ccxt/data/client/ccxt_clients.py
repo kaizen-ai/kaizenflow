@@ -37,7 +37,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
 
     def __init__(
-        self, vendor: str, universe_version: str, resample_1min: bool
+        self, vendor: str, universe_version: str, *, resample_1min: bool = False
     ) -> None:
         """
         Constructor.
@@ -127,7 +127,9 @@ class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         resample_1min: bool = False,
     ) -> None:
         vendor = "ccxt"
-        super().__init__(vendor, db_connection, table_name, resample_1min=resample_1min)
+        super().__init__(
+            vendor, db_connection, table_name, resample_1min=resample_1min
+        )
 
     @staticmethod
     def should_be_online() -> bool:  # pylint: disable=arguments-differ'

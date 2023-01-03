@@ -49,12 +49,12 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
