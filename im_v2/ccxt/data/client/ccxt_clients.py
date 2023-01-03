@@ -320,7 +320,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         dataset: str,
@@ -328,6 +327,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -338,11 +338,11 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             dataset,
             contract_type,
             data_snapshot,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )

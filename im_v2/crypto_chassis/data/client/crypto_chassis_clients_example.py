@@ -12,7 +12,6 @@ import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
 def get_CryptoChassisHistoricalPqByTileClient_example1(
     universe_version: str,
-    resample_1min,
     dataset: str,
     contract_type: str,
     data_snapshot: str,
