@@ -2,6 +2,8 @@
 Import as:
 
 import core.finance.ablation as cfinabla
+
+Functions removing data from data frames.
 """
 import datetime
 import logging
@@ -21,8 +23,7 @@ def remove_dates_with_no_data(
     df: pd.DataFrame, report_stats: bool
 ) -> pd.DataFrame:
     """
-    Given a df indexed with timestamps, scan the data by date and filter out
-    all the data when it's all nans.
+    Given a df indexed with timestamps, filter out data with all nans.
 
     :param report_stats: if True report information about the performed
         operation
@@ -68,10 +69,11 @@ def remove_dates_with_no_data(
     return df_out
 
 
-# TODO(gp): Active trading hours and days are specific of different futures.
+# TODO(gp): Active trading hours and days are specific of different assets.
 #  Consider explicitly passing this information instead of using defaults.
 def set_non_ath_to_nan(
     data: Union[pd.Series, pd.DataFrame],
+    *,
     start_time: Optional[datetime.time] = None,
     end_time: Optional[datetime.time] = None,
 ) -> pd.DataFrame:
@@ -116,6 +118,7 @@ def remove_times_outside_window(
     df: pd.DataFrame,
     start_time: datetime.time,
     end_time: datetime.time,
+    *,
     bypass: bool = False,
 ) -> pd.DataFrame:
     """
@@ -147,7 +150,7 @@ def set_weekends_to_nan(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def remove_weekends(df: pd.DataFrame, bypass: bool = False) -> pd.DataFrame:
+def remove_weekends(df: pd.DataFrame, *, bypass: bool = False) -> pd.DataFrame:
     """
     Remove weekends from `df`.
     """

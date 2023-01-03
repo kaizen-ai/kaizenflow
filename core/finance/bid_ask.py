@@ -81,8 +81,6 @@ def process_bid_ask(
     requested_cols = set(requested_cols)
     #
     results: Dict[str, Union[pd.Series, pd.DataFrame]] = {}
-    #
-    # A helper function to add the feature Series to all results.
     def _append_feature_srs(
         tag: str, srs: Union[pd.Series, pd.DataFrame]
     ) -> None:
@@ -105,7 +103,7 @@ def process_bid_ask(
             # bid - ask.
             srs = (df[ask_col] - df[bid_col])
         if tag == "relative_spread":
-            # 2*(ask - bid) / (ask + bid).
+            # 2 * (ask - bid) / (ask + bid).
             srs = 2 * (df[ask_col] - df[bid_col]) / (df[ask_col] + df[bid_col])
         if tag == "log_relative_spread":
             # log(ask) - log(bid).
@@ -150,6 +148,7 @@ def process_bid_ask(
     return out_df
 
 
+# TODO(gp): -> ...order_book...
 def handle_orderbook_levels(
     df: pd.DataFrame,
     timestamp_col: str,
@@ -158,19 +157,22 @@ def handle_orderbook_levels(
     ask_prefix: str = "ask_",
 ) -> pd.DataFrame:
     """
-    Transform bid-ask data with multiple levels from a long form to a wide
-    form.
+    Transform data with multiple bid-ask levels from a long form to a wide form.
 
-                                        knowledge_timestamp    level  bid_price
-        timestamp
-        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        1       2.31
-        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        2       3.22
-        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        3       2.33
-
+    E.g.,
+    ```
+                                    knowledge_timestamp    level  bid_price
+    timestamp
+    2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        1       2.31
+    2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        2       3.22
+    2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00        3       2.33
+    ```
     to:
-                                        knowledge_timestamp  bid_price_l1  bid_price_l2  bid_price_3
-        timestamp
-        2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33
+    ```
+                                    knowledge_timestamp  bid_price_l1  bid_price_l2  bid_price_3
+    timestamp
+    2022-09-08 21:01:00+00:00 2022-09-08 21:01:15+00:00         2.31         3.22         2.33
+    ```
     """
     _LOG.debug(hprint.to_str("timestamp_col bid_prefix ask_prefix"))
     hdbg.dassert_in(timestamp_col, df.reset_index().columns)
@@ -191,6 +193,9 @@ def handle_orderbook_levels(
     # so we are merging the rows without duplicates (i.e., "knowledge_timestamp" and "end_download_timestamp").
     # Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
     pivoted_data = df.pivot(
+    #  so we are merging the rows without duplicates (i.e., "knowledge_timestamp" and "end_download_timestamp").
+    #  Merge `level` into bid-ask values (e.g., bid_price_1, bid_price_2, etc.).
+    pivoted_data = df.reset_index().pivot(
         index=non_bid_ask_cols,
         columns=["level"],
         values=bid_ask_cols,

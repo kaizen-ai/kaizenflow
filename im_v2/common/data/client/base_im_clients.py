@@ -27,15 +27,14 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Consider splitting in one file per class. Not sure about the trade-off
 #  between file proliferation and more organization.
 
-# TODO(gp): The output of ImClient should be in the form of `start_timestamp`,
-#  `end_timestamp`, and `knowledge_timestamp` since these depend on the specific
-#  data source. @Grisha let's do this, but let's schedule a clean up later and
-#  not right now
+# TODO(gp): @Grisha the output of ImClient should be in the form of
+#  `start_timestamp`, `end_timestamp`, and `knowledge_timestamp` since these
+#  depend on the specific data source.
 
 
 class ImClient(abc.ABC):
     """
-    Retrieve market data for different vendors and backends.
+    Retrieve data for different vendors and backends.
 
     The data in output of a class derived from `ImClient` is normalized so that:
     - the index:
@@ -44,12 +43,13 @@ class ImClient(abc.ABC):
       - is called `timestamp`
       - is a tz-aware timestamp in UTC
     - the data:
-      - is resampled on a 1 minute grid and filled with NaN values
-      - is sorted by index and `full_symbol`
-      - is guaranteed to have no duplicates
-      - belongs to intervals like [a, b]
       - has a `full_symbol` column with a string representing the canonical name
         of the instrument
+      - is sorted by index and `full_symbol`
+      - is guaranteed to have no duplicates
+      - belongs to intervals like [a, b)
+      - is resampled on a 1 minute grid and filled with NaN values (if
+        resample_1min=True)
 
     E.g.,
     ```
@@ -73,12 +73,13 @@ class ImClient(abc.ABC):
         """
         Constructor.
 
-        :param vendor: price data provider
+        :param vendor: data provider
         :param universe_version: version of universe file
         :param resample_1min: whether to resample data to 1 minute or not
         :param full_symbol_col_name: the name of the column storing the symbol
             name. It can be overridden by other methods
         :param timestamp_col_name: the name of the column storing timestamp
+            # TODO(gp): what is the difference with the knowledge time?
         """
         _LOG.debug(
             hprint.to_str(
@@ -106,7 +107,6 @@ class ImClient(abc.ABC):
             self._build_asset_id_to_full_symbol_mapping()
         )
 
-    # TODO(gp): Why static?
     @staticmethod
     @abc.abstractmethod
     def get_metadata() -> pd.DataFrame:
@@ -131,11 +131,15 @@ class ImClient(abc.ABC):
         ]
         return numerical_asset_id
 
+    # TODO(gp): Each derived class should call the proper function instead of
+    #  delegating to the same function but using vendor to distinguish, since this
+    #  couples the code. Replace if-then-else approach with polymorphism.
     def get_universe(self) -> List[ivcu.FullSymbol]:
         """
         Return the entire universe of valid full symbols.
         """
-        # We use only `trade` universe for `ImClient`.
+        # For now, we use the `trade` universe for `ImClient` instead of the
+        # entire downloadable universe.
         universe_mode = "trade"
         universe = ivcu.get_vendor_universe(
             self._vendor,
@@ -157,14 +161,14 @@ class ImClient(abc.ABC):
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
-        Read data in `[start_ts, end_ts]` for `ivcu.FullSymbol` symbols.
+        Read data in `[start_ts, end_ts)` for `ivcu.FullSymbol` symbols.
 
         :param full_symbols: list of full symbols, e.g.
             `['binance::BTC_USDT', 'kucoin::ETH_USDT']`
         :param start_ts: the earliest date timestamp to load data for
             - `None` means start from the beginning of the available data
         :param end_ts: the latest date timestamp to load data for
-            - `None` means end at the end of the available data
+            - `None` means return data until the end of the available data
         :param columns: columns to return, skipping reading columns that are not requested
             - `None` means return all available columns
         :param filter_data_mode: control class behavior with respect to extra
@@ -738,7 +742,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         # Remove duplicates in data.
         # TODO(Juraj): this is temporary solution, for bid/ask
-        #  we need to load more than 1 level meaning the _filter_duplicates 
+        #  we need to load more than 1 level meaning the _filter_duplicates
         #  method does not work as expected.
         if "bid_ask" not in self._table_name:
             data = self._filter_duplicates(data, full_symbol_col_name)

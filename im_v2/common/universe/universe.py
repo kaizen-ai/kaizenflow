@@ -21,7 +21,7 @@ def _get_universe_file_path(
     Get universe file path based on version.
 
     :param vendor: vendor to load data for (e.g., CCXT, Talos)
-    :param mode: download or trade universe
+    :param mode: `download` or `trade` universe
     :param version: universe version (e.g. "v01"). If None it uses
       the latest version available
     :return: file path to the universe file corresponding to the specified version
@@ -35,7 +35,7 @@ def _get_universe_file_path(
     hdbg.dassert_dir_exists(vendor_dir)
     if version is None:
         # Find all universe files.
-        vendor_universe_pattern = os.path.join(vendor_dir, f"universe_v*.json")
+        vendor_universe_pattern = os.path.join(vendor_dir, "universe_v*.json")
         universe_files = list(glob.glob(vendor_universe_pattern))
         hdbg.dassert_ne(len(universe_files), 0)
         file_path = max(

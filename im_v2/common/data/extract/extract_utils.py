@@ -268,7 +268,7 @@ def download_exchange_data_to_db(
     Encapsulate common logic for downloading exchange data.
 
     :param args: arguments passed on script run
-    :param exchange_class: which exchange is used in script run
+    :param exchange: which exchange is used in script run
     """
     # Load currency pairs.
     mode = "download"
@@ -334,7 +334,7 @@ def _download_exchange_data_to_db_with_timeout(
 ) -> None:
     """
     Wrapper for download_exchange_data_to_db. Download data for given time
-    range, raise Interrupt in case if timeout occured.
+    range, raise Interrupt in case if timeout occurred.
 
     :param args: arguments passed on script run
     :param start_timestamp: beginning of the downloaded period
@@ -354,7 +354,7 @@ def _download_exchange_data_to_db_with_timeout(
 
 # TODO(Juraj): refactor names to get rid of "_for_one_exchange" part of the
 #  functions' names since it spreads across the codebase. Docstring and the
-# method signature should sufficiently explain what the function does.
+#  method signature should sufficiently explain what the function does.
 async def _download_websocket_realtime_for_one_exchange_periodically(
     args: Dict[str, Any], exchange: ivcdexex.Extractor
 ) -> None:

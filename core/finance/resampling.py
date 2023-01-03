@@ -26,10 +26,10 @@ _LOG = logging.getLogger(__name__)
 
 def compute_vwap(
     df: pd.DataFrame,
-    *,
     rule: str,
     price_col: str,
     volume_col: str,
+    *,
     offset: Optional[str] = None,
 ) -> pd.Series:
     """
@@ -72,6 +72,7 @@ def _resample_with_aggregate_function(
     cols: List[str],
     agg_func: str,
     agg_func_kwargs: htypes.Kwargs,
+    *,
     resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """
@@ -93,6 +94,7 @@ def resample_bars(
     rule: str,
     resampling_groups: List[Tuple[Dict[str, str], str, htypes.Kwargs]],
     vwap_groups: List[Tuple[str, str, str]],
+    *,
     resample_kwargs: Optional[Dict[str, Any]] = None,
 ) -> pd.DataFrame:
     """

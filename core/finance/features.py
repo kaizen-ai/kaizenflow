@@ -18,12 +18,14 @@ def compute_midrange(
     df: pd.DataFrame,
     high_col: str,
     low_col: str,
+    *,
     apply_log: bool = False,
 ) -> pd.DataFrame:
     """
-    Return midrange price.
+    Return midrange price, i.e., the price in the middle of [high, low] bar
+    price.
 
-    :param df: dataframe of high, low, and volume values
+    :param df: dataframe of high and low values
     :param high_col: name of high-value col
     :param low_col: name of low-value col
     :param apply_log: apply `log()` to data prior to calculation iff True
@@ -81,6 +83,7 @@ def compute_stochastic(
     high_col: str,
     low_col: str,
     close_col: str,
+    *,
     apply_log: bool = False,
 ) -> pd.DataFrame:
     """
@@ -113,6 +116,7 @@ def compute_stochastic(
 
 def normalize_bar(
     df: pd.DataFrame,
+    *,
     open_col: str = "open",
     high_col: str = "high",
     low_col: str = "low",

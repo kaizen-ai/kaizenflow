@@ -12,8 +12,8 @@ import surrentum_infra_sandbox.download as sinsadow
 
 class DataSaver(abc.ABC):
     """
-    Abstract class for saving data to a persistent storage such as
-    PostgreSQL/S3 etc.
+    Abstract class for saving data to a persistent storage such as PostgreSQL /
+    S3.
     """
 
     @abc.abstractmethod
