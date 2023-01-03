@@ -1,6 +1,5 @@
 """
-Example implementation of abstract classes for QA part of the ETL and QA
-pipeline.
+QA pipeline for Binance.
 
 Import as:
 
@@ -34,7 +33,7 @@ def find_gaps_in_time_series(
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
     :param freq: distance between two data points on the interval. Aliases
-        correspond to pandas.date_range's freq parameter, e.g., "S" for second,
+        correspond to `pandas.date_range` freq parameter, e.g., "S" for second,
         "T" for minute.
     :return: pd.Series representing missing points in the source time series
     """

@@ -13,7 +13,7 @@ import argparse
 import logging
 import os
 from datetime import timedelta
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
@@ -48,8 +48,8 @@ class CsvClient(sinsacli.DataClient):
     def load(
         self,
         dataset_signature: str,
-        start_timestamp: Optional[pd.Timestamp] =None,
-        end_timestamp: Optional[pd.Timestamp] =None,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
     ) -> pd.DataFrame:
         """
@@ -84,7 +84,7 @@ class CsvClient(sinsacli.DataClient):
 # #############################################################################
 
 
-def add_download_args(
+def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -150,7 +150,6 @@ def _main(parser: argparse.ArgumentParser) -> None:
         [empty_dataset_check, gaps_in_timestamp_check]
     )
     dataset_validator.run_all_checks([data], _LOG)
-
 
 
 if __name__ == "__main__":

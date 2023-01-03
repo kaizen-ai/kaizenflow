@@ -16,7 +16,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # TODO(gp): -> _dassert_is_validf_df
-def _is_valid_df(df: pd.DataFrame):
+def _is_valid_df(df: pd.DataFrame) -> None:
     hpandas.dassert_time_indexed_df(
         df,
         allow_empty=False,
@@ -31,7 +31,7 @@ def _is_valid_df(df: pd.DataFrame):
 
 def infer_active_bars(df: pd.DataFrame) -> pd.DatetimeIndex:
     """
-    Applies the heuristic that all-NaN bars are "inactive".
+    Apply the heuristic that all-NaN bars are "inactive".
 
     This heuristic can be used to prune weekends, holidays, short trading
     days, and non-active trading hours.

@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 #  a single derived class.
 class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
-    Contain common code for all the `CCXT` and `CDD` clients
+    Contain common code for all the `CCXT` and `CDD` clients.
 
     E.g.,
     - getting `CCXT` and `CDD` universe
@@ -111,8 +111,7 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
             data["timestamp"], container_type=None, elem_type=int
         )
         # Transform Unix epoch into UTC timestamp.
-        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms",
-            utc=True)
+        data["timestamp"] = pd.to_datetime(data["timestamp"], unit="ms", utc=True)
         # Set timestamp as index.
         data = data.set_index("timestamp")
         # Round up float values in case values in raw data are rounded up

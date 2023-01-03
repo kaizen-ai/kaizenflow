@@ -115,4 +115,3 @@ def reverse_accumulate_returns(
         results.append(result)
     #
     return pd.concat(results)
-

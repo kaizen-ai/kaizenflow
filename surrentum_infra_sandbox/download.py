@@ -44,13 +44,13 @@ class DataDownloader(abc.ABC):
     def download(
         self,
         *,
-        start_timestamp: Optional[pd.Timestamp]=None,
-        end_timestamp: Optional[pd.Timestamp]=None,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any
     ) -> RawData:
         """
         Download data from a desired source.
-        
+
         The invariant for downloading in a specified time interval is
         [start_timestamp, end_timestamp), i.e., start_timestamp is included,
         end_timestamp is excluded.

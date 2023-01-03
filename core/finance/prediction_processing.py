@@ -5,7 +5,7 @@ import core.finance.prediction_processing as cfiprpro
 """
 import datetime
 import logging
-from typing import Optional, Union
+from typing import List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -39,9 +39,7 @@ def compute_bar_start_timestamps(
 
 # TODO(Paul): Add unit tests.
 def compute_epoch(
-    data: Union[pd.Series, pd.DataFrame],
-    *,
-    unit: Optional[str] = None
+    data: Union[pd.Series, pd.DataFrame], *, unit: Optional[str] = None
 ) -> Union[pd.Series, pd.DataFrame]:
     """
     Convert datetime index times to minutes, seconds, or nanoseconds.

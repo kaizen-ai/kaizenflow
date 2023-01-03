@@ -5,7 +5,9 @@ import surrentum_infra_sandbox.client as sinsacli
 """
 
 import abc
-from typing import Any
+from typing import Any, Optional
+
+import pandas as pd
 
 
 class DataClient(abc.ABC):
@@ -17,8 +19,8 @@ class DataClient(abc.ABC):
     def load(
         self,
         dataset_signature: str,
-        start_timestamp: Optional[pd.Timestamp] =None,
-        end_timestamp: Optional[pd.Timestamp] =None,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any
     ) -> Any:
         """

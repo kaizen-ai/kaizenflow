@@ -29,7 +29,8 @@ def generate_limit_order_price(
     ffill_limit: int,
 ) -> pd.DataFrame:
     """
-    Generate limit order prices from sub-sampled reference prices and an offset.
+    Generate limit order prices from sub-sampled reference prices and an
+    offset.
 
     E.g., place order 5% from the bid or ask level, repricing every 2 minutes.
 

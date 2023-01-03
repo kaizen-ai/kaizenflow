@@ -32,6 +32,7 @@ _OHLCV_HEADERS = ["symbol", "open_time", "open", "high", "low", "close", "volume
 
 # TODO(gp): start_time -> start_timestamp_as_unix_epoch
 
+
 def _build_url(
     start_time: int,
     end_time: int,
@@ -133,7 +134,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         msg="End timestamp should be greater then start timestamp.",
     )
     output = pd.DataFrame()
-    _UNIVERSE={
+    _UNIVERSE = {
         "binance": [
             "ETH_USDT",
             "BTC_USDT",
@@ -167,7 +168,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _THROTTLE_DELAY_IN_SECS = 0.5
     for symbol in tqdm.tqdm(_UNIVERSE["binance"]):
         for start_time, end_time in _split_period_to_days(
-                start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
+            start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
         ):
             url = _build_url(
                 start_time=start_time,
@@ -175,7 +176,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
                 symbol=_process_symbol(symbol),
                 limit=_MAX_LINES,
             )
-            headers={"Content-Type": "application/json"}
+            headers = {"Content-Type": "application/json"}
             response = requests.request(
                 method="GET", url=url, headers=headers, data={}
             )

@@ -11,18 +11,14 @@ Use as:
 import argparse
 import logging
 import os
-import time
-from typing import Any, Generator, Tuple
+from typing import Any
 
 import pandas as pd
-import requests
-import tqdm
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
 import surrentum_infra_sandbox.download as sinsadow
-import surrentum_infra_sandbox.save as sinsasav
 import surrentum_infra_sandbox.examples.binance.download as sisebido
+import surrentum_infra_sandbox.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 
@@ -58,9 +54,9 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         signature += ".csv"
         target_path = os.path.join(self.target_dir, signature)
         data.get_data().to_csv(target_path, index=False)
-        
-        
-# ################################################################################
+
+
+# #############################################################################
 
 
 def _add_download_args(

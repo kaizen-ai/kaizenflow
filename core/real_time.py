@@ -200,7 +200,9 @@ def get_data_as_of_datetime(
     returned.
     """
     _LOG.debug(
-        hprint.to_str("knowledge_datetime_col_name datetime_ delay_in_secs allow_future_peeking")
+        hprint.to_str(
+            "knowledge_datetime_col_name datetime_ delay_in_secs allow_future_peeking"
+        )
     )
     if _TRACE:
         _LOG.trace(

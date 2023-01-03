@@ -22,7 +22,8 @@ def compute_midrange(
     apply_log: bool = False,
 ) -> pd.DataFrame:
     """
-    Return midrange price, i.e., the price in the middle of [high, low] bar price.
+    Return midrange price, i.e., the price in the middle of [high, low] bar
+    price.
 
     :param df: dataframe of high and low values
     :param high_col: name of high-value col

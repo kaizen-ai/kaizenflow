@@ -173,7 +173,6 @@ def generate_random_top_of_book_bars(
     1  2000-01-01 09:31:00-05:00    1000.120981  1000.117331     955       102
     2  2000-01-01 09:32:00-05:00     997.401239   997.399872    1045       101
     ```
-
     """
     asset_dfs = []
     for asset_id in asset_ids:
@@ -233,7 +232,6 @@ def generate_random_top_of_book_bars_for_asset(
     1  2000-01-01 09:32:00-05:00     998.120981  998.117331     955       101
     2  2000-01-01 09:33:00-05:00     997.401239  997.399872    1045       101
     ```
-
     """
     price_process = carsigen.PriceProcess(seed)
     bid = (

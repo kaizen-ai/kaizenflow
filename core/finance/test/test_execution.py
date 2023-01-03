@@ -167,7 +167,7 @@ end_datetime
 
 
 class Test_generate_limit_orders_and_estimate_execution1(hunitest.TestCase):
-    def test1(self):
+    def test1(self) -> None:
         data = get_data()
         bid_col = "bid"
         ask_col = "ask"

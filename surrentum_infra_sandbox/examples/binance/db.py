@@ -6,7 +6,7 @@ Import as:
 import surrentum_infra_sandbox.examples.binance.db as sisebidb
 """
 
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import psycopg2 as psycop
@@ -63,12 +63,12 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
     return query
 
 
-def get_db_connection():
+def get_db_connection() -> Any:
     """
     Retrieve connection based on hardcoded values.
 
-    The parameters must match the parameters set up in the Surrentum data node
-    docker-compose.
+    The parameters must match the parameters set up in the Surrentum
+    data node docker-compose.
     """
     connection = psycop.connect(
         host="host.docker.internal",
@@ -91,7 +91,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
     Save Pandas DataFrame to a PostgreSQL using a provided DB connection.
     """
 
-    def __init__(self, db_connection) -> None:
+    def __init__(self, db_connection: str) -> None:
         """
         Constructor.
 
@@ -144,8 +144,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         """
         Create DB data tables to store data.
 
-        Note that typically table creation would not be handled in the same
-        place as downloading the data, but as an example this suffices.
+        Note that typically table creation would not be handled in the
+        same place as downloading the data, but as an example this
+        suffices.
         """
         cursor = self.db_conn.cursor()
         #
@@ -166,7 +167,7 @@ class PostgresClient(sinsacli.DataClient):
     Load PostgreSQL data.
     """
 
-    def __init__(self, db_connection) -> None:
+    def __init__(self, db_connection: str) -> None:
         """
         Constructor.
 
@@ -177,8 +178,8 @@ class PostgresClient(sinsacli.DataClient):
     def load(
         self,
         dataset_signature: str,
-        start_timestamp: Optional[pd.Timestamp]=None,
-        end_timestamp: Optional[pd.Timestamp]=None,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
     ) -> Any:
         """
