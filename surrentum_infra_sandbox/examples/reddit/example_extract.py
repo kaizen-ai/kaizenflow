@@ -65,6 +65,7 @@ class RedditMongoSaver(BaseMongoSaver):
 
 @dataclasses.dataclass
 class RedditPostFeatures:
+    subreddit: str
     created: datetime.datetime
     symbols: List[str]
     post_length: int
@@ -125,8 +126,8 @@ class RedditDownloader(sinsadow.DataDownloader):
     def download(
         self,
         *,
-        start_timestamp: pd.Timestamp = None,
-        end_timestamp: pd.Timestamp = None
+        start_timestamp: pd.Timestamp = pd.Timestamp.min,
+        end_timestamp: pd.Timestamp = pd.Timestamp.max
     ) -> sinsadow.RawData:
         """
         Download posts in the hot category in the predefined subreddits
@@ -136,8 +137,6 @@ class RedditDownloader(sinsadow.DataDownloader):
         :return: downloaded data in raw format
         """
         output = []
-        start_timestamp = start_timestamp or pd.Timestamp.min
-        end_timestamp = end_timestamp or pd.Timestamp.max
         for subreddit in SUBREDDITS:
             # TODO(*): This iterator is pretty slow: ~30s for the two subreddits
             #   and 10 posts for every subreddit. Have to be speed up for
@@ -150,6 +149,7 @@ class RedditDownloader(sinsadow.DataDownloader):
                     continue
                 output += [
                     RedditPostFeatures(
+                        subreddit=subreddit,
                         created=post_timestamp,
                         symbols=self.get_symbols_from_content(post.selftext),
                         post_length=len(post.selftext),
