@@ -392,13 +392,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v3"
-        resample_1min = True
         dataset = "bid_ask"
         contract_type = "spot"
         data_snapshot = "20220530"
         im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,

@@ -38,6 +38,7 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
         # TODO(gp): Not sure how to set this.
         universe_version = None
         infer_exchange_id = False
+        resample_1min = False
         super().__init__(
             vendor,
             universe_version,
@@ -46,6 +47,7 @@ class IgHistoricalPqByTileTaqBarClient(imvcdcli.HistoricalPqByTileClient):
             infer_exchange_id=infer_exchange_id,
             aws_profile=aws_profile,
             full_symbol_col_name=full_symbol_col_name,
+            resample_1min=resample_1min
         )
 
     # For IG `asset_id` and `full_symbol` have the same values but with different
