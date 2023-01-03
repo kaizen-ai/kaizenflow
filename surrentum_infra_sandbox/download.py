@@ -9,6 +9,10 @@ from typing import Any, Optional
 
 import pandas as pd
 
+# #############################################################################
+# RawData
+# #############################################################################
+
 
 # TODO(gp): Not sure it's worth to have a wrapper here.
 class RawData:
@@ -24,6 +28,11 @@ class RawData:
         Download data from a desired source.
         """
         return self.data
+
+
+# #############################################################################
+# DataDownloader
+# #############################################################################
 
 
 class DataDownloader(abc.ABC):

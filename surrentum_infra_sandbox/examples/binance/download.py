@@ -1,6 +1,5 @@
 """
-Example implementation of abstract classes for extract part of the ETL and QA
-pipeline.
+Extract part of the ETL and QA pipeline.
 
 Import as:
 
@@ -24,7 +23,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): example_extract.py -> extract.py
 
 
-# TODO(gp): -> OhlcvRestApiDownloader
+# TODO(gp): -> OhlcvRestApiDownloader since Binance is already in the path.
 class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     """
     Class for downloading OHLCV data using REST API provided by Binance.
@@ -41,7 +40,7 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     def download(
         self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
     ) -> sinsadow.RawData:
-        # Convert timestamps.
+        # Convert and check timestamps.
         hdateti.dassert_has_tz(start_timestamp)
         start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
             start_timestamp
@@ -101,8 +100,9 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                 time.sleep(0.5)
         return sinsadow.RawData(pd.concat(dfs, ignore_index=True))
 
+    # TODO(gp): @juraj start_time -> {start,end}_timestamp_as_unix_epoch
+    @staticmethod
     def _build_url(
-        self,
         start_time: int,
         end_time: int,
         symbol: str,
@@ -118,7 +118,8 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
             f"&symbol={symbol}&interval={interval}&limit={limit}"
         )
 
-    def _process_symbol(self, symbol: str) -> str:
+    @staticmethod
+    def _process_symbol(symbol: str) -> str:
         """
         Transform symbol from universe to Binance format.
         """
@@ -128,13 +129,11 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
         self, start_time: int, end_time: int
     ) -> Generator[Tuple[int, int], None, None]:
         """
-        Chop period to chunks of the days.
+        Split period into chunks of the days.
 
-        TLDR:
-            The reason is:
-                Binance API don't allow to get more then 1500 rows at once.
-                So if we trying to get 1m interval, then we need to chop a period to
-                chunks which Binance allow to get
+        The reason is that Binance API don't allow to get more than 1500 rows at once.
+        So if to get 1m interval, we need to chop a period into chunks that
+        Binance allow us to get.
 
         :param start_time: timestamp for the start time
         :param end_time: timestamp for the end time

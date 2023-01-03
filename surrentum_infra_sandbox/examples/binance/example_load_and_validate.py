@@ -84,26 +84,6 @@ class CsvClient(sinsacli.DataClient):
 # #############################################################################
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(use_exec_path=True)
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    csv_client = CsvClient(args.source_dir)
-    data = csv_client.load(args.dataset_signature, start_timestamp, end_timestamp)
-    empty_dataset_check = sisebiva.EmptyDatasetCheck()
-    # Conforming to the (a, b] interval convention, remove 1 minute
-    #  from the end_timestamp.
-    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
-        start_timestamp, end_timestamp - timedelta(minutes=1)
-    )
-    dataset_validator = sisebiva.SingleDatasetValidator(
-        [empty_dataset_check, gaps_in_timestamp_check]
-    )
-    dataset_validator.run_all_checks([data], _LOG)
-
-
 def add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -160,15 +140,17 @@ def _main(parser: argparse.ArgumentParser) -> None:
     csv_client = CsvClient(args.source_dir)
     data = csv_client.load(args.dataset_signature, start_timestamp, end_timestamp)
     # Validate data.
-    # To conform with the (a, b] interval convention, remove 1 minute from the
+    empty_dataset_check = sisebiva.EmptyDatasetCheck()
+    # Conforming to the (a, b] interval convention, remove 1 minute from the
     # end_timestamp.
-    gaps_in_timestamp_check = GapsInTimestampCheck(
+    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
         start_timestamp, end_timestamp - timedelta(minutes=1)
     )
-    dataset_validator = SingleDatasetValidator(
+    dataset_validator = sisebiva.SingleDatasetValidator(
         [empty_dataset_check, gaps_in_timestamp_check]
     )
     dataset_validator.run_all_checks([data], _LOG)
+
 
 
 if __name__ == "__main__":
