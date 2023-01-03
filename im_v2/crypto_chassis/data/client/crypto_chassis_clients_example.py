@@ -12,7 +12,7 @@ import im_v2.crypto_chassis.data.client.crypto_chassis_clients as imvccdcccc
 
 def get_CryptoChassisHistoricalPqByTileClient_example1(
     universe_version: str,
-    resample_1min: bool,
+    resample_1min,
     dataset: str,
     contract_type: str,
     data_snapshot: str,
@@ -25,16 +25,17 @@ def get_CryptoChassisHistoricalPqByTileClient_example1(
     s3_bucket_path = hs3.get_s3_bucket_path(aws_profile)
     root_dir = os.path.join(s3_bucket_path, "reorg", "historical.manual.pq")
     partition_mode = "by_year_month"
+    resample_1min = False
     crypto_chassis_parquet_client = (
         imvccdcccc.CryptoChassisHistoricalPqByTileClient(
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             dataset,
             contract_type,
             data_snapshot,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )
     )
     return crypto_chassis_parquet_client
@@ -59,7 +60,6 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
     crypto_chassis_parquet_client = (
         imvccdcccc.CryptoChassisHistoricalPqByTileClient(
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             dataset,
@@ -67,6 +67,7 @@ def get_CryptoChassisHistoricalPqByTileClient_example2(
             data_snapshot,
             tag=tag,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )
     )
     return crypto_chassis_parquet_client

@@ -271,7 +271,6 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         self,
         vendor: str,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
@@ -281,6 +280,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         *,
         tag: str = "",
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
