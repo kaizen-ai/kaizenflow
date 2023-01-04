@@ -38,6 +38,7 @@ services:
       - ./airflow_data/dags:/opt/airflow/dags
       - ./airflow_data/plugins:/opt/airflow/plugins
       - ./airflow_data/log_volume:/opt/airflow/log
+      - ../..:/cmamp
     extra_hosts:
       - "host.docker.internal:host-gateway" 
 
@@ -47,6 +48,7 @@ services:
     container_name: airflow_scheduler_cont
     env_file:
       - .env
+    user: "${UID}:0"
     restart: always
     command: scheduler
     depends_on:
@@ -55,6 +57,10 @@ services:
       - ./airflow_data/dags:/opt/airflow/dags
       - ./airflow_data/plugins:/opt/airflow/plugins
       - ./airflow_data/log_volume:/opt/airflow/log
+      - ../..:/cmamp
+    # TODO(Juraj): this is a qucick hack to get through hserver._dassert_setup_consistency
+    environment:
+       - CK_IN_PROD_CMAMP_CONTAINER=True
     extra_hosts:
       - "host.docker.internal:host-gateway"  
 
