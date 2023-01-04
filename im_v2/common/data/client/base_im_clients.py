@@ -739,7 +739,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         )
         # Remove duplicates in data.
         # TODO(Juraj): this is temporary solution, for bid/ask
-        #  we need to load more than 1 level meaning the _filter_duplicates 
+        #  we need to load more than 1 level meaning the _filter_duplicates
         #  method does not work as expected.
         if "bid_ask" not in self._table_name:
             data = self._filter_duplicates(data, full_symbol_col_name)

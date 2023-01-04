@@ -18,7 +18,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 #_STAGE = _FILENAME.split(".")[0]
@@ -59,7 +59,7 @@ _RECONCILIATION_JOBS = [
         "db_table_base_name": "ccxt_bid_ask_futures_resampled_1min",
         "s3_dataset_signature":  "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0",
         "add_invoke_params": ["--bid-ask-accuracy {{ var.value.bid_ask_qa_acc_thresh }}"]
-    }   
+    }
 ]
 # Shared location to store the reconciliaiton notebook into
 _QA_NB_DST_DIR = os.path.join("{{ var.value.efs_mount }}", _STAGE, "data_qa")
@@ -78,11 +78,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -129,7 +129,7 @@ for job in _RECONCILIATION_JOBS:
 
     db_table = job["db_table_base_name"]
     db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-    
+
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash cmd list so we can reformat params on each iteration.
     curr_invoke_cmd = copy.deepcopy(invoke_cmd)
@@ -137,7 +137,7 @@ for job in _RECONCILIATION_JOBS:
     curr_invoke_cmd[5] = curr_invoke_cmd[5].format(job["s3_dataset_signature"])
     for param in job["add_invoke_params"]:
         curr_invoke_cmd.append(param)
-    
+
     # We first execute the notebook which finishes successfully regardless of the success of
     #  the reconciliation (unless the notebook execution itself fails, in which case we get
     #  notified). Afterwards a script is executed, return code of the command will inform
@@ -149,7 +149,7 @@ for job in _RECONCILIATION_JOBS:
             "subnets": ecs_subnets,
         },
     }
-    
+
     comparing_task = ECSOperator(
         task_id=f"data_qa.{db_table}",
         dag=dag,
@@ -172,5 +172,5 @@ for job in _RECONCILIATION_JOBS:
         execution_timeout=datetime.timedelta(minutes=15),
         **kwargs
     )
-    
+
     start_comparison >> comparing_task >> end_comparison

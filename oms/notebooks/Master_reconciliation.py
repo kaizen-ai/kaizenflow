@@ -178,7 +178,7 @@ if False:
     )
 
 # %% [markdown]
-# ## Check DAG io self-consistency 
+# ## Check DAG io self-consistency
 
 # %%
 # Check that all the DAG output dataframes are equal at intersecting time intervals.

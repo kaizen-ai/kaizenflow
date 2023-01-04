@@ -59,8 +59,8 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         signature += ".csv"
         target_path = os.path.join(self.target_dir, signature)
         data.get_data().to_csv(target_path, index=False)
-        
-        
+
+
 # ################################################################################
 
 
