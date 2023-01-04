@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+# TODO(gp): Remove since it's redundant after porting the unit tests.
+
 """
 Download historical data from Binance and save it as gzipped CSV locally.
 
@@ -23,42 +26,11 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
-_BASE_URL = "https://api.binance.com/api/v3/klines"
-_DEFAULT_INTERVAL = "1m"
 _MAX_LINES = 1000
-_UNIVERSE = {
-    "binance": [
-        "ETH_USDT",
-        "BTC_USDT",
-        "SAND_USDT",
-        "ETH_BUSD",
-        "BTC_BUSD",
-        "STORJ_USDT",
-        "GMT_USDT",
-        "AVAX_USDT",
-        "BNB_USDT",
-        "APE_USDT",
-        "MATIC_USDT",
-        "DYDX_USDT",
-        "DOT_USDT",
-        "UNFI_USDT",
-        "LINK_USDT",
-        "XRP_USDT",
-        "CRV_USDT",
-        "RUNE_USDT",
-        "BAKE_USDT",
-        "NEAR_USDT",
-        "FTM_USDT",
-        "WAVES_USDT",
-        "AXS_USDT",
-        "OGN_USDT",
-        "DOGE_USDT",
-        "SOL_USDT",
-        "CTK_USDT",
-    ]
-}
 _OHLCV_HEADERS = ["symbol", "open_time", "open", "high", "low", "close", "volume"]
-_THROTTLE_DELAY_IN_SECS = 0.5
+
+
+# TODO(gp): start_time -> start_timestamp_as_unix_epoch
 
 
 def _build_url(
@@ -66,12 +38,13 @@ def _build_url(
     end_time: int,
     symbol: str,
     *,
-    interval: str = _DEFAULT_INTERVAL,
+    interval: str = "1m",
     limit: int = 500,
 ) -> str:
     """
     Build up URL with the placeholders from the args.
     """
+    _BASE_URL = "https://api.binance.com/api/v3/klines"
     return (
         f"{_BASE_URL}?startTime={start_time}&endTime={end_time}"
         f"&symbol={symbol}&interval={interval}&limit={limit}"
@@ -89,16 +62,14 @@ def _split_period_to_days(
     start_time: int, end_time: int
 ) -> Generator[Tuple[int, int], None, None]:
     """
-    Chop period to chunks of the days.
+    Split period into chunks of the days.
 
-    TLDR:
-        The reason is:
-            Binance API don't allow to get more then 1500 rows at once.
-            So if we trying to get 1m interval, then we need to chop a period to
-            chunks which Binance allow to get
+    The reason is that Binance API don't allow to get more than 1500 rows at once.
+    So if to get 1m interval, we need to chop a period into chunks that
+    Binance allow us to get.
 
-    :param start_time: timestamp for the start time
-    :param end_time: timestamp for the end time
+    :param start_time: timestamp as Unix epoch for the start time
+    :param end_time: timestamp as Unix epoch for the end time
     :return: generator for loop
     """
     step = 1000 * 60 * _MAX_LINES
@@ -106,61 +77,7 @@ def _split_period_to_days(
         yield i, min(i + step, end_time)
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    # hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
-    headers = {"Content-Type": "application/json"}
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    hdateti.dassert_has_tz(start_timestamp)
-    start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
-        start_timestamp
-    )
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    hdateti.dassert_has_tz(end_timestamp)
-    end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
-    hdbg.dassert_lt(
-        start_timestamp_as_unix,
-        end_timestamp_as_unix,
-        msg="End timestamp should be greater then start timestamp.",
-    )
-    output = pd.DataFrame()
-    for symbol in tqdm.tqdm(_UNIVERSE["binance"]):
-        for start_time, end_time in _split_period_to_days(
-            start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
-        ):
-            url = _build_url(
-                start_time=start_time,
-                end_time=end_time,
-                symbol=_process_symbol(symbol),
-                limit=_MAX_LINES,
-            )
-            response = requests.request(
-                method="GET", url=url, headers=headers, data={}
-            )
-            hdbg.dassert_eq(response.status_code, 200)
-            data = pd.DataFrame(
-                [
-                    {
-                        "symbol": symbol,
-                        "open_time": hdateti.convert_unix_epoch_to_timestamp(
-                            row[0]
-                        ),
-                        "open": row[1],
-                        "high": row[2],
-                        "low": row[3],
-                        "close": row[4],
-                        "volume": row[5],
-                    }
-                    for row in response.json()
-                ]
-            )
-            output = pd.concat(objs=[output, data], ignore_index=True)
-            time.sleep(_THROTTLE_DELAY_IN_SECS)
-    output.to_csv(f"{args.output_file}.gz", index=False, compression="gzip")
-
-
-def add_download_args(
+def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -195,8 +112,98 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser = add_download_args(parser)
+    parser = _add_download_args(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    # hdbg.init_logger(verbosity=args.log_level, use_exec_path=True)
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    hdateti.dassert_has_tz(start_timestamp)
+    start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
+        start_timestamp
+    )
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    hdateti.dassert_has_tz(end_timestamp)
+    end_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(end_timestamp)
+    hdbg.dassert_lt(
+        start_timestamp_as_unix,
+        end_timestamp_as_unix,
+        msg="End timestamp should be greater then start timestamp.",
+    )
+    output = pd.DataFrame()
+    _UNIVERSE = {
+        "binance": [
+            "ETH_USDT",
+            "BTC_USDT",
+            "SAND_USDT",
+            "ETH_BUSD",
+            "BTC_BUSD",
+            "STORJ_USDT",
+            "GMT_USDT",
+            "AVAX_USDT",
+            "BNB_USDT",
+            "APE_USDT",
+            "MATIC_USDT",
+            "DYDX_USDT",
+            "DOT_USDT",
+            "UNFI_USDT",
+            "LINK_USDT",
+            "XRP_USDT",
+            "CRV_USDT",
+            "RUNE_USDT",
+            "BAKE_USDT",
+            "NEAR_USDT",
+            "FTM_USDT",
+            "WAVES_USDT",
+            "AXS_USDT",
+            "OGN_USDT",
+            "DOGE_USDT",
+            "SOL_USDT",
+            "CTK_USDT",
+        ]
+    }
+    _THROTTLE_DELAY_IN_SECS = 0.5
+    for symbol in tqdm.tqdm(_UNIVERSE["binance"]):
+        for start_time, end_time in _split_period_to_days(
+            start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
+        ):
+            url = _build_url(
+                start_time=start_time,
+                end_time=end_time,
+                symbol=_process_symbol(symbol),
+                limit=_MAX_LINES,
+            )
+            headers = {"Content-Type": "application/json"}
+            response = requests.request(
+                method="GET", url=url, headers=headers, data={}
+            )
+            hdbg.dassert_eq(response.status_code, 200)
+            # Create a DataFrame with the results.
+            data = pd.DataFrame(
+                [
+                    {
+                        "symbol": symbol,
+                        "open_time": hdateti.convert_unix_epoch_to_timestamp(
+                            row[0]
+                        ),
+                        "open": row[1],
+                        "high": row[2],
+                        "low": row[3],
+                        "close": row[4],
+                        "volume": row[5],
+                    }
+                    for row in response.json()
+                ]
+            )
+            output = pd.concat(objs=[output, data], ignore_index=True)
+            time.sleep(_THROTTLE_DELAY_IN_SECS)
+    # Save results.
+    # TODO(gp): The user should add the gz and we could have a check that the
+    #  suffix is ".csv.gz"
+    output.to_csv(f"{args.output_file}.gz", index=False, compression="gzip")
 
 
 if __name__ == "__main__":
