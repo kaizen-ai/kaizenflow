@@ -3,7 +3,7 @@ QA pipeline for Binance.
 
 Import as:
 
-import surrentum_infra_sandbox.examples.binance.validate as sisebiva
+import sorrentum_sandbox.examples.binance.validate as sisebiva
 """
 
 import logging
@@ -13,7 +13,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.validate as sinsaval
+import sorrentum_sandbox.validate as sinsaval
 
 
 def find_gaps_in_time_series(

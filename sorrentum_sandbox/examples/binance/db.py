@@ -3,7 +3,7 @@ Implementation of load part of the ETL and QA pipeline.
 
 Import as:
 
-import surrentum_infra_sandbox.examples.binance.db as sisebidb
+import sorrentum_sandbox.examples.binance.db as sisebidb
 """
 
 from typing import Any, Optional
@@ -13,9 +13,9 @@ import psycopg2 as psycop
 import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
-import surrentum_infra_sandbox.client as sinsacli
-import surrentum_infra_sandbox.download as sinsadow
-import surrentum_infra_sandbox.save as sinsasav
+import sorrentum_sandbox.client as sinsacli
+import sorrentum_sandbox.download as sinsadow
+import sorrentum_sandbox.save as sinsasav
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:

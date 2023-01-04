@@ -4,7 +4,7 @@ import pytest
 from typing import Any, List
 
 import helpers.hunit_test as hunitest
-import surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0 as sisdbmd1cosbv100
+import sorrentum_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0 as sisdbmd1cosbv100
 
 
 def _fake_binance_response() -> List[List[Any]]:
@@ -69,7 +69,7 @@ class TestDownloadHistoricalOHLCV(hunitest.TestCase):
 
     @umock.patch.object(sisdbmd1cosbv100.pd.DataFrame, "to_csv")
     @umock.patch(
-        "surrentum_infra_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0._THROTTLE_DELAY_IN_SECS",
+        "sorrentum_sandbox.download_bulk_manual_downloaded_1min_csv_ohlcv_spot_binance_v_1_0_0._THROTTLE_DELAY_IN_SECS",
         0.0,
     )
     def test_main(self, mock_to_csv) -> None:

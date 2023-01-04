@@ -41,7 +41,7 @@ bash_command = [
     # Sleep 5 seconds to ensure the bar is finished
     "sleep 5",
     "&&",
-    "/cmamp/surrentum_infra_sandbox/examples/binance/download_to_db.py",
+    "/cmamp/sorrentum_sandbox/examples/binance/download_to_db.py",
     "--target_table 'binance_ohlcv_spot_downloaded_1min'",
     "--start_timestamp {{ data_interval_start }} ",
     "--end_timestamp {{ data_interval_end }}",

@@ -1,7 +1,7 @@
 """
 Import as:
 
-import surrentum_infra_sandbox.validate as sinsaval
+import sorrentum_sandbox.validate as sinsaval
 """
 
 import abc
