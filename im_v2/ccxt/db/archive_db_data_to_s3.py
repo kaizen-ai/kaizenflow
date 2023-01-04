@@ -180,7 +180,7 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
                 s3_path,
                 unit="ms",
                 aws_profile=_AWS_PROFILE,
-                # TODO(Juraj): temporary solution, right now only bid_ask data 
+                # TODO(Juraj): temporary solution, right now only bid_ask data
                 # are archived.
                 data_type="bid_ask",
                 # The `id` column is most likely not needed once the data is in S3.

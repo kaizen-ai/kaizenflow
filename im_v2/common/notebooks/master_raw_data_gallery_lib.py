@@ -61,7 +61,7 @@ def load_parquet_by_period(
     """
     Read raw historical data from the S3 by time period.
 
-    Suitable for small data, to process larger parquets in chunks 
+    Suitable for small data, to process larger parquets in chunks
       use `process_s3_data_in_chunks`.
 
     Bypasses the IM Client to avoid any on-the-fly transformations.
@@ -87,7 +87,7 @@ def process_s3_data_in_chunks(
     start_ts: str, end_ts: str, s3_path: str, step: int
 ) -> None:
     """
-    Process wide period of S3 historical data by smaller parts, 
+    Process wide period of S3 historical data by smaller parts,
       display head and tail of each part.
 
     :param start_ts: the start date of the time filter

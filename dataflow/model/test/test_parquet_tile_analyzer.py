@@ -43,7 +43,7 @@ class TestParquetTileAnalyzer(hunitest.TestCase):
         actual = hpandas.df_to_str(metadata, num_rows=None, precision=3)
         expected = r"""
                     file_size
-asset_id year month          
+asset_id year month
 100      2022 1        8.9 KB
               2        8.0 KB
 200      2022 1        8.9 KB
