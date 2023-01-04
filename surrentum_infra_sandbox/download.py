@@ -5,9 +5,16 @@ import surrentum_infra_sandbox.download as sinsadow
 """
 
 import abc
-from typing import Any
+from typing import Any, Optional
+
+import pandas as pd
+
+# #############################################################################
+# RawData
+# #############################################################################
 
 
+# TODO(gp): Not sure it's worth to have a wrapper here.
 class RawData:
     """
     Wrapper class for downloaded data to support uniform interface.
@@ -19,12 +26,13 @@ class RawData:
     def get_data(self) -> Any:
         """
         Download data from a desired source.
-
-        :param start_timestamp: start of the download period (context differs based on data type)
-        :param end_timestamp: end of the download period (context differs based on data type)
-        :return
         """
         return self.data
+
+
+# #############################################################################
+# DataDownloader
+# #############################################################################
 
 
 class DataDownloader(abc.ABC):
@@ -34,18 +42,25 @@ class DataDownloader(abc.ABC):
 
     @abc.abstractmethod
     def download(
-        self, *, start_timestamp=None, end_timestamp=None, **kwargs: Any
+        self,
+        *,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
+        **kwargs: Any
     ) -> RawData:
         """
         Download data from a desired source.
 
-        The invariant for downloading in a specified time interval is:
-        [start_timestamp, end_timestamp) -> start_timestamp included, end_timestamp excluded.
+        The invariant for downloading in a specified time interval is
+        [start_timestamp, end_timestamp), i.e., start_timestamp is included,
+        end_timestamp is excluded.
 
-        :param start_timestamp: start of the download period (context differs based on data type).
-        If None, start with the earliest possible data.
-        :param end_timestamp: end of the download period (context differs based on data type)
-        If None, download up to the latest possible data.
+        The context differs based on data type.
+
+        :param start_timestamp: start of the download period. If `None`, start
+            with the earliest possible data.
+        :param end_timestamp: end of the download period. If `None`, download
+            up to the latest possible data.
         :return: raw downloaded dataset
         """
         ...
