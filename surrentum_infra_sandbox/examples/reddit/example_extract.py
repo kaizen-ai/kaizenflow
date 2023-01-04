@@ -2,13 +2,17 @@
 Example implementation of abstract classes for ETL and QA pipeline.
 
 Download Reddit data
+
+Import as:
+
+import surrentum_infra_sandbox.examples.reddit.example_extract as siserexex
 """
 import abc
 import dataclasses
 import datetime
 import logging
 import os
-from typing import List, Tuple
+from typing import Any, List, Tuple
 
 import pandas as pd
 import praw
@@ -16,7 +20,6 @@ import pymongo
 
 import surrentum_infra_sandbox.download as sinsadow
 import surrentum_infra_sandbox.save as sinsasav
-
 
 _LOG = logging.getLogger(__name__)
 NUMBERS_POST_TO_FETCH = 5
@@ -29,14 +32,10 @@ SYMBOLS = ("BTC", "ETH", "USDT", "USDC", "BNB")
 
 class BaseMongoSaver(sinsasav.DataSaver):
     """
-    Abstract class for saving data to MongoDB
+    Abstract class for saving data to MongoDB.
     """
 
-    def __init__(
-            self,
-            mongo_client: pymongo.MongoClient,
-            db_name: str
-    ):
+    def __init__(self, mongo_client: pymongo.MongoClient, db_name: str):
         self.mongo_client = mongo_client
         self.db_name = db_name
 
@@ -47,13 +46,13 @@ class BaseMongoSaver(sinsasav.DataSaver):
 
         :param data: data to persist
         """
-        ...
 
 
 class RedditMongoSaver(BaseMongoSaver):
     """
-    Simple saver class to store data from the Reddit to MongoDB
+    Simple saver class to store data from the Reddit to MongoDB.
     """
+
     def __init__(self, *args, collection_name: str, **kwargs):
         self.collection_name = collection_name
         super().__init__(*args, **kwargs)
@@ -75,23 +74,24 @@ class RedditPostFeatures:
     number_of_comments: int
     top_comment: str
 
-    def dict(self):
+    def dict(self) -> dict:
         return {k: str(v) for k, v in dataclasses.asdict(self).items()}
 
 
 class RedditDownloader(sinsadow.DataDownloader):
     """
-    Class for downloading reddit data using praw lib
+    Class for downloading reddit data using praw lib.
     """
+
     def __init__(self):
         self.reddit_client = praw.Reddit(
             client_id=REDDIT_CLIENT_ID,
             client_secret=REDDIT_SECRET,
-            user_agent=REDDIT_SECRET
+            user_agent=REDDIT_SECRET,
         )
 
     @staticmethod
-    def get_the_top_most_comment_body(post: praw.models.Submission) -> str:
+    def get_the_top_most_comment_body(post: praw.models.Submission) -> Any:
         """
         Get the top most comment body from a praw post.
 
@@ -106,8 +106,7 @@ class RedditDownloader(sinsadow.DataDownloader):
 
     @staticmethod
     def get_symbols_from_content(
-            content: str,
-            symbols: Tuple[str] = SYMBOLS
+        content: str, symbols: Tuple[str, ...] = SYMBOLS
     ) -> List[str]:
         """
         Search in content and return founded symbols.
@@ -130,7 +129,7 @@ class RedditDownloader(sinsadow.DataDownloader):
         end_timestamp: pd.Timestamp = pd.Timestamp.max
     ) -> sinsadow.RawData:
         """
-        Download posts in the hot category in the predefined subreddits
+        Download posts in the hot category in the predefined subreddits.
 
         :param start_timestamp: start datetime for searching
         :param end_timestamp: end datetime for searching
@@ -141,8 +140,9 @@ class RedditDownloader(sinsadow.DataDownloader):
             # TODO(*): This iterator is pretty slow: ~30s for the two subreddits
             #   and 10 posts for every subreddit. Have to be speed up for
             #   production usage.
-            hot_posts = self.reddit_client.subreddit(
-                subreddit).hot(limit=NUMBERS_POST_TO_FETCH)
+            hot_posts = self.reddit_client.subreddit(subreddit).hot(
+                limit=NUMBERS_POST_TO_FETCH
+            )
             for post in hot_posts:
                 post_timestamp = pd.Timestamp(post.created_utc, unit="s")
                 if not start_timestamp <= post_timestamp <= end_timestamp:
@@ -157,19 +157,20 @@ class RedditDownloader(sinsadow.DataDownloader):
                         content=post.selftext,
                         number_of_upvotes=post.ups,
                         number_of_comments=post.num_comments,
-                        top_comment=self.get_the_top_most_comment_body(post)
+                        top_comment=self.get_the_top_most_comment_body(post),
                     ).dict()
                 ]
         return sinsadow.RawData(output)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     downloader = RedditDownloader()
     raw_data = downloader.download()
     mongo_saver = RedditMongoSaver(
         mongo_client=pymongo.MongoClient(
-            "mongodb://reddit:reddit@127.0.0.1:27017"),
+            "mongodb://reddit:reddit@127.0.0.1:27017"
+        ),
         db_name="reddit",
-        collection_name="posts"
+        collection_name="posts",
     )
     mongo_saver.save(raw_data)
