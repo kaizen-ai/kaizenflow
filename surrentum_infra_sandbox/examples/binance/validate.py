@@ -1,6 +1,5 @@
 """
-Example implementation of abstract classes for QA part of the ETL and QA
-pipeline.
+QA pipeline for Binance.
 
 Import as:
 
@@ -24,19 +23,19 @@ def find_gaps_in_time_series(
     freq: str,
 ) -> pd.Series:
     """
-    Find missing points on a time interval specified by [start_timestamp,
-    end_timestamp], where point distribution is determined by <step>.
+    Find missing points on a time interval specified by [`start_timestamp`,
+    `end_timestamp`], where point distribution is determined by `freq`.
 
-    If the passed time series is of a unix epoch format. It is
-    automatically tranformed to pd.Timestamp.
+    If the index of `time_series` is of a unix epoch format, it is automatically
+    transformed to pd.Timestamp.
 
     :param time_series: time series to find gaps in
     :param start_timestamp: start of the time interval to check
     :param end_timestamp: end of the time interval to check
-    :param freq: distance between two data points on the interval.
-      Aliases correspond to pandas.date_range's freq parameter,
-      i.e. "S" -> second, "T" -> minute.
-    :return: pd.Series representing missing points in the source time series.
+    :param freq: distance between two data points on the interval. Aliases
+        correspond to `pandas.date_range` freq parameter, e.g., "S" for second,
+        "T" for minute.
+    :return: pd.Series representing missing points in the source time series
     """
     _time_series = time_series
     if str(time_series.dtype) in ["int32", "int64"]:
