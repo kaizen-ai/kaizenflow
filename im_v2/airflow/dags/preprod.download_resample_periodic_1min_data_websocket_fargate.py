@@ -15,7 +15,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -43,7 +43,7 @@ _BID_ASK_DEPTH = "{{ var.value.websocket_download_bid_ask_depth }}"
 # Specify how long should the DAG be running for (in minutes).
 _RUN_FOR = 60
 # Specify how much in advance should the DAG be scheduled (in minutes).
-# We leave a couple minutes to account for delay in container setup 
+# We leave a couple minutes to account for delay in container setup
 # such that the download can start at a precise point in time.
 _DAG_STANDBY = 6
 # These values are changed dynamically based on DAG purpose and nature
@@ -73,11 +73,11 @@ _TABLE_SUFFIX = f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet3")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -158,7 +158,7 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
     curr_download_command[4] = curr_download_command[4].format(data_type)
     curr_download_command[5] = curr_download_command[5].format(contract)
     curr_download_command[6] = curr_download_command[6].format(vendor)
-    
+
     downloading_task = ECSOperator(
         task_id=f"{_DOWNLOAD_MODE}.download.{vendor}.{exchange}.{data_type}.{contract}",
         dag=dag,
@@ -182,11 +182,11 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
     )
     # Define the sequence of execution of task.
     start_task >> downloading_task >> end_task
-    
+
 # Create a command, leave values to be parametrized.
 resample_command = [
     "/app/amp/im_v2/common/data/transform/resample_rt_bid_ask_data_periodically.py",
-    "--db_stage 'dev'", 
+    "--db_stage 'dev'",
     "--src_table '{}'",
     "--dst_table '{}'",
     # At this point we set up a logic for real time execution
@@ -194,7 +194,7 @@ resample_command = [
     # few seconds delay to ensure the data from the last minute is finished.
     "--start_ts '{{ macros.datetime.now(dag.timezone).replace(second=0, microsecond=0) + macros.timedelta(minutes=var.value.rt_data_download_standby_min | int, seconds=5) }}'",
     "--end_ts '{{ macros.datetime.now(dag.timezone).replace(second=0, microsecond=0) + macros.timedelta(minutes=(var.value.rt_data_download_run_for_min | int) + var.value.rt_data_download_standby_min | int) }}'",
-]    
+]
 
 for vendor, exchange, contract in product(_VENDORS, _EXCHANGES, _CONTRACTS):
     table_name = f"{vendor}_bid_ask"
@@ -212,8 +212,8 @@ for vendor, exchange, contract in product(_VENDORS, _EXCHANGES, _CONTRACTS):
     curr_resample_command[2] = curr_resample_command[2].format(table_name_raw)
     curr_resample_command[3] = curr_resample_command[3].format(table_name_resampled)
     # Define the sequence of execution of task.
-    
-    
+
+
     resampling_task = ECSOperator(
         task_id=f"{_DOWNLOAD_MODE}.resample.{vendor}.{exchange}.bid_ask.{contract}",
         dag=dag,

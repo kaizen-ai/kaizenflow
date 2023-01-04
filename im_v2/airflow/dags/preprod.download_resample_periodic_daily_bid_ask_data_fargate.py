@@ -12,7 +12,7 @@ import os
 
 _FILENAME = os.path.basename(__file__)
 
-# This variable will be propagated throughout DAG definition as a prefix to 
+# This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
 _STAGE = _FILENAME.split(".")[0]
@@ -28,7 +28,7 @@ _LAUNCH_TYPE = "fargate"
 assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
-_EXCHANGES = ["binance"] 
+_EXCHANGES = ["binance"]
 _VENDORS = ["crypto_chassis"]
 _UNIVERSES = { "crypto_chassis": "v3"}
 #_CONTRACTS = ["spot", "futures"]
@@ -58,11 +58,11 @@ _CONTAINER_NAME = f"cmamp{_CONTAINER_SUFFIX}"
 
 ecs_cluster = Variable.get(f'{_STAGE}_ecs_cluster')
 # The naming convention is set such that this value is then reused
-# in log groups, stream prefixes and container names to minimize 
+# in log groups, stream prefixes and container names to minimize
 # convolution and maximize simplicity.
 ecs_task_definition = _CONTAINER_NAME
 
-# Subnets and security group is not needed for EC2 deployment but 
+# Subnets and security group is not needed for EC2 deployment but
 # we keep the configuration header unified for convenience/reusability.
 ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet3")]
 ecs_security_group = [Variable.get("ecs_security_group")]
@@ -101,7 +101,7 @@ download_command = [
      "--vendor '{}'",
      "--contract_type '{}'",
      "--aws_profile 'ck'",
-     # The command needs to be executed manually first because --incremental 
+     # The command needs to be executed manually first because --incremental
      # assumes appending to existing folder.
      "--incremental",
      f"--bid_ask_depth {_BID_ASK_DEPTH}",
@@ -132,8 +132,8 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
     curr_bash_command[4] = curr_bash_command[4].format(_UNIVERSES[vendor])
     curr_bash_command[5] = curr_bash_command[5].format(data_type)
     curr_bash_command[6] = curr_bash_command[6].format(vendor)
-    curr_bash_command[7] = curr_bash_command[7].format(contract)  
-    
+    curr_bash_command[7] = curr_bash_command[7].format(contract)
+
     kwargs = {}
     kwargs["network_configuration"] = {
         "awsvpcConfiguration": {
@@ -141,7 +141,7 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
             "subnets": ecs_subnets,
         },
     }
-    
+
     downloading_task = ECSOperator(
         task_id=f"{_DOWNLOAD_MODE}.download.{vendor}.{exchange}.{data_type}.{contract}",
         dag=dag,
@@ -202,7 +202,7 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
             _DATASET_VERSION
         )
     )
-    
+
     resampling_task = ECSOperator(
         task_id=f"resample.{vendor}.{exchange}.{data_type}.{contract}",
         dag=dag,
@@ -225,5 +225,5 @@ for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONT
         execution_timeout=datetime.timedelta(minutes=30),
         **kwargs
     )
-    
+
     start_task >> downloading_task >> resampling_task >> end_download
