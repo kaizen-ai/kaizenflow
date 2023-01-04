@@ -16,10 +16,10 @@
 # # Description
 
 # %% [markdown]
-#  This notebook researches the abilities of GitHub API. 
+#  This notebook researches the abilities of GitHub API.
 #  https://docs.github.com/en/rest?apiVersion=2022-11-28
-#  
-# Obviously, the actual list of github API endpoints is much longer than presented in this notebook. 
+#
+# Obviously, the actual list of github API endpoints is much longer than presented in this notebook.
 # The data from the endpoints presented here are assumed to have the biggest predictive power.
 #
 # Endpoints used in this notebook (using `bitcoin` repo as an example):

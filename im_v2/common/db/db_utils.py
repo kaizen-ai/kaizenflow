@@ -50,7 +50,7 @@ OHLCV_UNIQUE_COLUMNS = BASE_UNIQUE_COLUMNS + [
 class DbConnectionManager:
     """
     Create and store DB connection.
-    
+
     Provide a singleton-like functionality in order to avoid overhead of many
     shortlived DB connection.
     For simplicity the class only supports setting up a DB connection to

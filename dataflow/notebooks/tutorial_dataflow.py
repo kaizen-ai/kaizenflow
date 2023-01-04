@@ -117,7 +117,7 @@ market_data = mdata.market_data_example.get_HistoricalImClientMarketData_example
 # ## Get data
 
 # %%
-start_ts = config["data"]["start_date"] 
+start_ts = config["data"]["start_date"]
 end_ts = config["data"]["end_date"]
 ts_col_name = "timestamp"
 

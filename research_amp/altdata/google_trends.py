@@ -39,9 +39,9 @@ kw_list = ["Bitcoin"]
 
 # %% [markdown]
 #  `Cat` is the search category which can be found at https://github.com/pat310/google-trends-api/wiki/Google-Trends-Categories. Category 0 means no category filter.
-#  
+#
 #  `Geo` is  search country abbreviation which follows the ISO-3166 country code naming scheme, e.g. 'US' or 'US-AL' for Alabama state. Defaults to 'World'.
-#  
+#
 #  `Gprop` describes what Google property to filter to. Can be `images`, `news`, `youtube` or `froogle`.
 
 # %% [markdown]
@@ -49,17 +49,17 @@ kw_list = ["Bitcoin"]
 
 # %%
 hist_int_old=pytrends.get_historical_interest(kw_list,
-                                          year_start=2005, 
-                                          month_start=1, 
-                                          day_start=1, 
-                                          hour_start=0, 
-                                          year_end=2010, 
-                                          month_end=12, 
-                                          day_end=20, 
-                                          hour_end=20, 
-                                          cat=0, 
-                                          geo='', 
-                                          gprop='', 
+                                          year_start=2005,
+                                          month_start=1,
+                                          day_start=1,
+                                          hour_start=0,
+                                          year_end=2010,
+                                          month_end=12,
+                                          day_end=20,
+                                          hour_end=20,
+                                          cat=0,
+                                          geo='',
+                                          gprop='',
                                           sleep=0)
 
 # %% [markdown]
@@ -90,17 +90,17 @@ hist_int_old[hist_int_old["Bitcoin"]!=0]
 
 # %%
 hist_int_new=pytrends.get_historical_interest(kw_list,
-                                          year_start=2022, 
-                                          month_start=1, 
-                                          day_start=1, 
-                                          hour_start=0, 
-                                          year_end=2022, 
-                                          month_end=12, 
-                                          day_end=22, 
-                                          hour_end=23, 
-                                          cat=0, 
-                                          geo='', 
-                                          gprop='', 
+                                          year_start=2022,
+                                          month_start=1,
+                                          day_start=1,
+                                          hour_start=0,
+                                          year_end=2022,
+                                          month_end=12,
+                                          day_end=22,
+                                          hour_end=23,
+                                          cat=0,
+                                          geo='',
+                                          gprop='',
                                           sleep=0)
 
 # %%
