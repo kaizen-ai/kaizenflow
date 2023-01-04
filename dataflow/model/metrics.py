@@ -281,8 +281,8 @@ def apply_metrics(
     # we still can group by it.
     hdbg.dassert_in(tag_col, metrics_df.reset_index().columns)
     #
-    y_column_name = config["column_names"]["y"]
-    y_hat_column_name = config["column_names"]["y_hat"]
+    y_column_name = config["column_names"]["target_variable"]
+    y_hat_column_name = config["column_names"]["prediction"]
     hit_col_name = config["column_names"]["hit"]
     bar_pnl_col_name = config["column_names"]["bar_pnl"]
     #
