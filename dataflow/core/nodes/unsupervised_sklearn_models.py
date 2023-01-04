@@ -200,12 +200,14 @@ class MultiindexUnsupervisedSkLearnModel(
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool
     ) -> Tuple[Dict[str, pd.DataFrame], collections.OrderedDict]:
-        df = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
-            df_in, self._in_col_group
+        dfs = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, [self._in_col_group],
         )
+        df = dfs[self._in_col_group]
         df_out, info = self._fit_predict_unsupervised_sklearn_model(df, fit=fit)
+        out_dfs = {self._out_col_group: df_out}
         df_out = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(
-            df_out, self._out_col_group
+            out_dfs,
         )
         df_out = dtfcorutil.merge_dataframes(df_in, df_out)
         info["df_out_info"] = dtfcorutil.get_df_info_as_string(df_out)
@@ -324,12 +326,14 @@ class Residualizer(dtfconobas.FitPredictNode, _ResidualizerMixin):
     def _fit_predict_helper(
         self, df_in: pd.DataFrame, fit: bool = False
     ) -> Tuple[pd.DataFrame, collections.OrderedDict]:
-        df = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
-            df_in, self._in_col_group
+        dfs = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
+            df_in, [self._in_col_group]
         )
+        df = dfs[self._in_col_group]
         df_out, info = self._fit_predict_residualizer(df, fit=fit)
+        out_dfs = {self._out_col_group: df_out}
         df_out = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(
-            df_out, self._out_col_group
+            out_dfs,
         )
         df_out = dtfcorutil.merge_dataframes(df_in, df_out)
         info["df_out_info"] = dtfcorutil.get_df_info_as_string(df_out)

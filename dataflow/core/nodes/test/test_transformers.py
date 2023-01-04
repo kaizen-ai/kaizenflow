@@ -9,6 +9,7 @@ import core.artificial_signal_generators as carsigen
 import core.config as cconfig
 import dataflow.core.nodes.test.helpers as cdnth
 import dataflow.core.nodes.transformers as dtfconotra
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
@@ -301,8 +302,8 @@ class TestCrossSectionalDfToDfTransformer1(hunitest.TestCase):
 
         config = cconfig.Config.from_dict(
             {
-                "in_col_group": ("ret",),
-                "out_col_group": ("ret.demeaned",),
+                "in_col_groups": [("ret",)],
+                "out_col_groups": [("ret.demeaned",)],
                 "transformer_func": demean,
             },
         )
@@ -324,6 +325,34 @@ class TestCrossSectionalDfToDfTransformer1(hunitest.TestCase):
             header=[0, 1],
         )
         self.assert_dfs_close(actual, expected)
+
+    def test_rank(self) -> None:
+        data = self._get_data()
+        config = cconfig.Config.from_dict(
+            {
+                "in_col_groups": [
+                    ("ret",),
+                    ("vol",),
+                ],
+                "out_col_groups": [
+                    ("ret.ranked",),
+                    ("vol.ranked",),
+                ],
+                "transformer_func": lambda x: x.rank(axis=1),
+            },
+        )
+        node = dtfconotra.CrossSectionalDfToDfTransformer(
+            "adj", **config.to_dict()
+        )
+        actual = node.fit(data)["df_out"]
+        actual = hpandas.df_to_str(actual, num_rows=None)
+        expected = """
+                          ret.ranked      vol.ranked        ret         vol
+datetime                   MN0  MN1        MN0  MN1   MN0   MN1   MN0   MN1
+2016-01-04 09:30:00        2.0  1.0        1.5  1.5  0.50 -0.50  1.25  1.25
+2016-01-04 09:31:00        1.5  1.5        1.5  1.5  0.25  0.25  1.00  1.00
+2016-01-04 09:32:00        1.0  2.0        1.5  1.5 -1.00  1.00  1.25  1.25"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
 
     def _get_data(self) -> pd.DataFrame:
         txt = """

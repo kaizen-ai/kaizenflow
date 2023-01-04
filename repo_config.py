@@ -81,11 +81,6 @@ def get_docker_base_image_name() -> str:
 #   - A different user and group is used inside the container
 
 
-# Uncomment to run sibling containers on macOS Catalina.
-# _MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Catalina"
-_MACOS_VERSION_WITH_SIBLING_CONTAINERS = "Monterey"
-
-
 def _raise_invalid_host() -> None:
     host_os_name = os.uname()[0]
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME", None)
@@ -115,7 +110,7 @@ def enable_privileged_mode() -> bool:
         elif hserver.is_mac(version="Catalina"):
             # Docker for macOS Catalina supports dind.
             ret = True
-        elif hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
+        elif hserver.is_mac(version="Monterey") or hserver.is_mac(version="Ventura"):
             # Docker for macOS Monterey doesn't seem to support dind.
             ret = False
         else:
@@ -160,7 +155,7 @@ def has_dind_support() -> bool:
         return False
     # TODO(gp): Not sure this is really needed since we do this check
     #  after enable_privileged_mode controls if we have dind or not.
-    if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
+    if hserver.is_mac(version="Monterey") or hserver.is_mac(version="Ventura"):
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
     #  processes try to run this code they interfere. A solution is to run `ip

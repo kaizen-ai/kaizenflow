@@ -80,7 +80,9 @@ class VolatilityRiskModel(SoftConstraint):
     def _estimate(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
         _ = target_weight_diffs
         _ = gmv
-        expr = cvx.sum_squares(target_weights.T @ self._volatility.values)
+        expr = cvx.quad_form(
+            target_weights, cvx.diag(self._volatility.values**2)
+        )
         return expr
 
 
@@ -98,6 +100,31 @@ class CovarianceRiskModel(SoftConstraint):
         _ = target_weight_diffs
         _ = gmv
         expr = cvx.quad_form(target_weights, self._risk.values)
+        return expr
+
+
+class ConstantCorrelationRiskModel(SoftConstraint):
+    """
+    Use per-asset volatility but assume constant correlation.
+    """
+
+    def __init__(
+        self, correlation: float, volatility: pd.Series, gamma: float = 1.0
+    ) -> None:
+        self._correlation = correlation
+        self._volatility = volatility
+        super().__init__(gamma)
+
+    def _estimate(self, target_weights, target_weight_diffs, gmv) -> opbase.EXPR:
+        _ = target_weight_diffs
+        _ = gmv
+        expr1 = (1 - self._correlation) * cvx.sum_squares(
+            cvx.multiply(target_weights, self._volatility.values)
+        )
+        expr2 = self._correlation * cvx.power(
+            target_weights @ self._volatility.values, 2
+        )
+        expr = expr1 + expr2
         return expr
 
 

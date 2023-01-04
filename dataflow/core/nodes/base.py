@@ -582,7 +582,7 @@ class CrossSectionalDfToDfColProcessor:
         ret_0           close
         MN0 MN1 MN2 MN3 MN0 MN1 MN2 MN3
         ```
-        Then we invoke `preprocess()` with `col_group = "ret_0"`.
+        Then we invoke `preprocess()` with `col_groups = [("ret_0",)]`.
         The principal component projection operates on a dataframe with columns
         ```
         MN0 MN1 MN2 MN3
@@ -591,16 +591,15 @@ class CrossSectionalDfToDfColProcessor:
         ```
         0 1 2 3
         ```
-        We apply `postprocess()` to this dataframe with `col_group = "pca'`
-        to obtain
+        We apply `postprocess()` to this dataframe with
+        `col_groups = [("pca",)]` to obtain
         ```
         pca
         0 1 2 3
         ```
     2.  If we perform residualization on `df` as given above instead of
         principal component projection, then column names are preserved
-        after the residualization, and we may apply `postprocess()` with
-        `col_group = "residual"` to obtain
+        after the residualization, and we may apply `postprocess()` to obtain.
         ```
         residual
         MN0 MN1 MN2 MN3
@@ -610,43 +609,49 @@ class CrossSectionalDfToDfColProcessor:
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
-        col_group: Tuple[dtfcorutil.NodeColumn],
-    ) -> pd.DataFrame:
+        col_groups: List[Tuple[dtfcorutil.NodeColumn]],
+    ) -> Dict[dtfcorutil.NodeColumn, pd.DataFrame]:
         """
         As in `preprocess_multiindex_cols()`.
         """
-        return preprocess_multiindex_cols(df, col_group)
+        hdbg.dassert_isinstance(col_groups, list)
+        hdbg.dassert_lt(
+            0, len(col_groups), msg="Tuple `col_group` must be nonempty."
+        )
+        hdbg.dassert_no_duplicates(col_groups)
+        # This is an implementation requirement that we may be able to relax.
+        hdbg.dassert_lte(1, len(col_groups))
+        # Extract dataframe by col_group.
+        dfs = {}
+        for col_group in col_groups:
+            local_df = preprocess_multiindex_cols(df, col_group)
+            dfs[col_group] = local_df
+        return dfs
 
     @staticmethod
     def postprocess(
-        df: pd.DataFrame,
-        col_group: Tuple[dtfcorutil.NodeColumn],
+        dfs: Dict[dtfcorutil.NodeColumn, pd.DataFrame],
     ) -> pd.DataFrame:
         """
         Create a multi-indexed column dataframe from a single-indexed one.
 
-        :param df: a single-level column dataframe
-        :param col_group: a tuple of indices to insert
-        :return: a multi-indexed column dataframe. If `df` has columns
-            `MN0 MN1 MN2 MN3` and `col_group = "pca"`, then the output
-            dataframe has columns
-            ```
-            pca
-            MN0 MN1 MN2 MN3
-            ```
+        :param dfs: a dictionary of single-level column dataframe
+        :return: a multi-indexed column dataframe, with columns prefixes given
+            by `dfs.keys()`.
         """
-        # Perform sanity checks on dataframe.
-        hdbg.dassert_isinstance(df, pd.DataFrame)
-        hdbg.dassert_no_duplicates(df.columns)
-        hdbg.dassert_eq(
-            1,
-            df.columns.nlevels,
-        )
+        hdbg.dassert_isinstance(dfs, dict)
+        # Ensure that the dictionary is not empty.
+        hdbg.dassert(dfs)
+        for root, df in dfs.items():
+            # Perform sanity checks on dataframe.
+            hdbg.dassert_isinstance(df, pd.DataFrame)
+            hdbg.dassert_no_duplicates(df.columns)
+            hdbg.dassert_eq(
+                1,
+                df.columns.nlevels,
+            )
         #
-        hdbg.dassert_isinstance(col_group, tuple)
-        #
-        if col_group:
-            df = pd.concat([df], axis=1, keys=[col_group])
+        df = pd.concat(dfs.values(), axis=1, keys=dfs.keys())
         return df
 
 
@@ -686,6 +691,12 @@ class SeriesToDfColProcessor:
         ```
     """
 
+    def __init__(self) -> None:
+        _LOG.warning(
+            "Constructing `SeriesToDfColProcessor`. Consider"
+            "using `GroupedColDfToDfProcessor` instead."
+        )
+
     @staticmethod
     def preprocess(
         df: pd.DataFrame,
@@ -716,6 +727,12 @@ class SeriesToSeriesColProcessor:
           processing)
         - rolling features (e.g., moments, centered moments)
     """
+
+    def __init__(self) -> None:
+        _LOG.warning(
+            "Constructing `SeriesToSeriesColProcessor`. Consider"
+            "using `GroupedColDfToDfProcessor` instead."
+        )
 
     @staticmethod
     def preprocess(
@@ -843,7 +860,7 @@ def _postprocess_dataframe_dict(
             1,
             df.columns.nlevels,
         )
-    # Make emtpy dfs NaN dfs.
+    # Make empty dfs NaN dfs.
     for symbol in empty_dfs:
         _LOG.warning("Imputing NaNs for symbol=`%s`", symbol)
         dfs[symbol] = pd.DataFrame(index=idx, columns=cols)

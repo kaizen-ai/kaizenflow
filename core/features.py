@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import pandas as pd
+import scipy as sp
 
 import core.signal_processing as csigproc
 import core.statistics as costatis
@@ -270,6 +271,7 @@ def cross_feature_pair(
         "difference",
         "compressed_difference",
         "normalized_difference",
+        "normalized_difference_to_gaussian",
         "difference_of_logs",
         "compressed_difference_of_logs",
         #
@@ -321,6 +323,17 @@ def cross_feature_pair(
         if (product < 0).any():
             _log_opposite_sign_warning(feature1_col, feature2_col, name)
         cross = ((ftr1 - ftr2) / (np.abs(ftr1) + np.abs(ftr2))).rename(name)
+        crosses.append(cross)
+    #
+    name = "normalized_difference_to_gaussian"
+    if name in requested_cols:
+        hdbg.dassert(not (ftr1 < 0).any())
+        hdbg.dassert(not (ftr2 < 0).any())
+        frac = ftr1 / (ftr1 + ftr2)
+        vals = sp.stats.norm.ppf(frac)
+        cross = pd.Series(vals, df.index, name=name).clip(
+            lower=-compression_scale, upper=compression_scale
+        )
         crosses.append(cross)
     #
     name = "difference_of_logs"
@@ -717,7 +730,10 @@ def combine_cols_instance1(
     la = (-2 * col_0 - 2 * col_1 + const2 * col_2).rename("la")
     const3 = 2.094395102
     const4 = 2.624934991
-    ti = (-const3 * col_0 + const3 * col_1 + const4 * col_2.abs()).rename("ti")
+    const5 = 1.247775930
+    ti = (
+        -const3 * col_0 + const3 * col_1 + const4 * col_2.abs() + const5
+    ).rename("ti")
     out_df = pd.concat([do, la, ti], axis=1)
     return out_df
 

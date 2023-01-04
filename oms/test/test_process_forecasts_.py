@@ -45,9 +45,8 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         )
         return portfolio
 
-    # TODO(gp): @all -> get_process_forecasts_dict
     @staticmethod
-    def get_process_forecasts_config() -> Dict[str, Any]:
+    def get_process_forecasts_dict() -> Dict[str, Any]:
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
@@ -110,7 +109,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
         # Build a Portfolio.
         portfolio = self.get_portfolio(event_loop, asset_ids)
         # Get process forecasts config.
-        config = self.get_process_forecasts_config()
+        dict_ = self.get_process_forecasts_dict()
         spread_df = None
         restrictions_df = None
         # Run.
@@ -118,7 +117,7 @@ class TestSimulatedProcessForecasts1(hunitest.TestCase):
             predictions,
             volatility,
             portfolio,
-            config,
+            dict_,
             spread_df=spread_df,
             restrictions_df=restrictions_df,
         )
@@ -197,9 +196,8 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         )
         return portfolio
 
-    # TODO(gp): -> get_process_forecasts_dict
     @staticmethod
-    def get_process_forecasts_config() -> Dict[str, Any]:
+    def get_process_forecasts_dict() -> Dict[str, Any]:
         dict_ = {
             "order_config": {
                 "order_type": "price@twap",
@@ -260,7 +258,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
         portfolio = self.get_portfolio(
             event_loop, start_datetime, end_datetime, asset_ids
         )
-        config = self.get_process_forecasts_config()
+        dict_ = self.get_process_forecasts_dict()
         spread_df = None
         restrictions_df = None
         # Run.
@@ -268,7 +266,7 @@ class TestSimulatedProcessForecasts2(hunitest.TestCase):
             predictions,
             volatility,
             portfolio,
-            config,
+            dict_,
             spread_df=spread_df,
             restrictions_df=restrictions_df,
         )
@@ -310,9 +308,8 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         )
         return portfolio
 
-    # TODO(gp): -> get_process_forecasts_dict
     @staticmethod
-    def get_process_forecasts_config() -> cconfig.Config:
+    def get_process_forecasts_dict() -> cconfig.Config:
         # TODO(gp): Factor this out.
         dict_ = {
             "order_config": {
@@ -375,7 +372,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
         # Build a Portfolio.
         portfolio = self.get_portfolio(event_loop, asset_ids)
         # Get process forecasts config.
-        config = self.get_process_forecasts_config()
+        dict_ = self.get_process_forecasts_dict()
         spread_df = None
         restrictions_df = None
         # Run.
@@ -383,7 +380,7 @@ class TestSimulatedProcessForecasts3(hunitest.TestCase):
             predictions,
             volatility,
             portfolio,
-            config,
+            dict_,
             spread_df=spread_df,
             restrictions_df=restrictions_df,
         )
