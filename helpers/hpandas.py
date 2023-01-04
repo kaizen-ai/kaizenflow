@@ -1635,6 +1635,30 @@ def compare_dfs(
 # #############################################################################
 
 
+# TODO(Grisha): should be a more elegant way to add a column.
+def add_multiindex_col(
+    df: pd.DataFrame, multiindex_col: pd.DataFrame, col_name: str
+) -> pd.DataFrame:
+    """
+    Add column to a multiindex DataFrame.
+
+    Note: each column in a multiindex DataFrame is a DataFrame itself.
+
+    :param df: multiindex df
+    :param multiindex_col: column (i.e. singleindex df) of a multiindex df
+    :param col_name: name of a new column
+    :return: a multiindex DataFrame with a new column
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_eq(2, len(df.columns.levels))
+    hdbg.dassert_isinstance(multiindex_col, pd.DataFrame)
+    hdbg.dassert_isinstance(col_name, str)
+    hdbg.dassert_not_in(col_name, df.columns)
+    for col in multiindex_col.columns:
+        df[col_name, col] = multiindex_col[col]
+    return df
+
+
 def list_to_str(
     vals: List[Any],
     *,
