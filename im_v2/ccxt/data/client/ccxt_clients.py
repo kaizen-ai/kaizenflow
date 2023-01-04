@@ -37,12 +37,12 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
     """
 
     def __init__(
-        self, vendor: str, universe_version: str, resample_1min: bool
+        self, vendor: str, universe_version: str, *, resample_1min: bool = False
     ) -> None:
         """
         Constructor.
         """
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min=resample_1min)
         _vendors = ["CCXT", "CDD"]
         hdbg.dassert_in(self._vendor, _vendors)
 
@@ -121,12 +121,15 @@ class CcxtCddClient(icdc.ImClient, abc.ABC):
 class CcxtSqlRealTimeImClient(icdc.SqlRealTimeImClient):
     def __init__(
         self,
-        resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        *,
+        resample_1min: bool = False,
     ) -> None:
         vendor = "ccxt"
-        super().__init__(vendor, resample_1min, db_connection, table_name)
+        super().__init__(
+            vendor, db_connection, table_name, resample_1min=resample_1min
+        )
 
     @staticmethod
     def should_be_online() -> bool:  # pylint: disable=arguments-differ'
@@ -159,13 +162,13 @@ class CcxtCddCsvParquetByAssetClient(
         self,
         vendor: str,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         # TODO(gp): -> file_extension
         extension: str,
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Load `CCXT` data from local or S3 filesystem.
@@ -177,7 +180,7 @@ class CcxtCddCsvParquetByAssetClient(
         :param aws_profile: AWS profile, e.g., `am`
         :param data_snapshot: same format used in `get_data_snapshot()`
         """
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min=resample_1min)
         self._root_dir = root_dir
         # Verify that extension does not start with "." and set parameter.
         hdbg.dassert(
@@ -317,7 +320,6 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         dataset: str,
@@ -325,6 +327,7 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -335,11 +338,11 @@ class CcxtHistoricalPqByTileClient(icdc.HistoricalPqByCurrencyPairTileClient):
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             dataset,
             contract_type,
             data_snapshot,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )

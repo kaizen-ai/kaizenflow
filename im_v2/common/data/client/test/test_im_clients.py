@@ -24,13 +24,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v4"
-        resample_1min = False
         dataset = "ohlcv"
         contract_type = "futures"
         data_snapshot = "20220620"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -85,13 +83,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v4"
-        resample_1min = False
         dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -147,13 +143,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize client.
         universe_version = None
-        resample_1min = False
         dataset = "ohlcv"
         contract_type = "futures"
         data_snapshot = ""
         im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -209,13 +203,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v3"
-        resample_1min = True
         dataset = "ohlcv"
         contract_type = "futures"
         data_snapshot = "20220620"
         im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -275,13 +267,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v3"
-        resample_1min = True
         dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
         im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -339,13 +329,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v3"
-        resample_1min = True
         dataset = "bid_ask"
         contract_type = "futures"
         data_snapshot = "20220620"
         im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -398,13 +386,11 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         """
         # Initialize the client.
         universe_version = "v3"
-        resample_1min = True
         dataset = "bid_ask"
         contract_type = "spot"
         data_snapshot = "20220530"
         im_client = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
             universe_version,
-            resample_1min,
             dataset,
             contract_type,
             data_snapshot,
@@ -413,7 +399,7 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         full_symbols = ["binance::BTC_USDT", "binance::ADA_USDT"]
         start_ts = pd.Timestamp("2022-05-01 13:00:00+00:00")
         end_ts = pd.Timestamp("2022-05-01 13:05:00+00:00")
-        expected_length = 12
+        expected_length = 565
         expected_column_unique_values = {
             "full_symbol": ["binance::BTC_USDT", "binance::ADA_USDT"]
         }
@@ -428,14 +414,14 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         expected_signature = r"""# df=
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
         columns=full_symbol,bid_price,bid_size,ask_price,ask_size,knowledge_timestamp
-        shape=(12, 6)
-                                         full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
+        shape=(565, 6)
+                                 full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
         timestamp
         2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731  22296.50000      0.7732  404.60000 2022-05-24 15:04:20.110341+00:00
         2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900      4.10126  37970.0000    0.16837 2022-05-24 15:58:40.729661+00:00
-        2022-05-01 13:01:00+00:00  binance::ADA_USDT      0.7740  11602.90000      0.7741  455.40000 2022-05-24 15:04:20.110341+00:00
+        2022-05-01 13:00:01+00:00  binance::ADA_USDT      0.7731  21677.10000      0.7732  355.20000 2022-05-24 15:04:20.110341+00:00
         ...
-        2022-05-01 13:04:00+00:00  binance::BTC_USDT  37951.8000   5.38906  37951.8100      2.46727 2022-05-24 15:58:40.729661+00:00
+        2022-05-01 13:04:59+00:00  binance::BTC_USDT  37939.3600   5.60396  37939.3700      4.36219 2022-05-24 15:58:40.729661+00:00
         2022-05-01 13:05:00+00:00  binance::ADA_USDT      0.7726  51.70000      0.7727  20467.60000 2022-05-24 15:04:20.110341+00:00
         2022-05-01 13:05:00+00:00  binance::BTC_USDT  37939.3600   5.72901  37939.3700      4.35547 2022-05-24 15:58:40.729661+00:00
         """
