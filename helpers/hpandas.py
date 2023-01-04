@@ -1420,6 +1420,13 @@ def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
     return df.iloc[idx]
 
 
+def remap_srs(srs: pd.Series, map_: Dict[Any, Any], **kwargs: Any) -> pd.Series:
+    hdbg.dassert_isinstance(srs, pd.Series)
+    hdbg.dassert_lte(0, srs.shape[0])
+    new_srs = srs.map(map_, **kwargs)
+    return new_srs
+
+
 def get_random_df(
     num_cols: int,
     seed: Optional[int] = None,
