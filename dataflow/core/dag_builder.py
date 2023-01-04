@@ -79,7 +79,7 @@ class DagBuilder(abc.ABC):
         Return the name of the column corresponding to `tag`.
         """
 
-    def get_column_names_dict(self, column_names: List[str]) -> Dict[str]:
+    def get_column_names_dict(self, column_names: List[str]) -> Dict[str, str]:
         """
         Build a dictionary by a column tag as a key and a column name as a
         value.
