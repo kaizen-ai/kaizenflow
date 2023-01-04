@@ -13,8 +13,10 @@
 # ---
 
 # %% [markdown]
-# Review the Coin Market Cap API endpoints availiable on `basic` plan:
+# Review of the Coin Market Cap API endpoints availiable on `basic` plan:
 #
+# * v1/cryptocurrency/categories
+# * v1/cryptocurrency/category
 # * v1/cryptocurrency/map
 # * v2/cryptocurrency/info
 # * v1/cryptocurrency/listings/latest
@@ -68,6 +70,32 @@ def get_data(session: Session, url: str, params: Dict[str, str]):
 # # Cryptocurrency API access
 
 # %% [markdown]
+# **/categories**
+
+# %% [markdown]
+# Returns information about all coin categories available on CoinMarketCap. Includes a paginated list of cryptocurrency quotes and metadata from each category.
+
+# %%
+url = os.path.join(api_url, "v1/cryptocurrency/categories")
+parameters = {"start": "1", "limit": "5000", "symbol": "ETH,BTC"}
+
+data = get_data(session, url, parameters)
+data
+
+# %% [markdown]
+# **/category**
+
+# %% [markdown]
+# Returns information about a single coin category available on CoinMarketCap. Includes a paginated list of the cryptocurrency quotes and metadata for the category.
+
+# %%
+url = os.path.join(api_url, "v1/cryptocurrency/category")
+parameters = {"id": "qisclrimb", "start": "1", "limit": "100"}
+
+data = get_data(session, url, parameters)
+data
+
+# %% [markdown]
 # **/map**
 
 # %% [markdown]
@@ -81,7 +109,7 @@ data = get_data(session, url, parameters)
 data
 
 # %% [markdown]
-# It looks like `name`, `symbol` and `slug` values are decrypted, I'll figure out what it is.
+# It looks like `name`, `symbol`, `slug` and other string typed values are encrypted, I'll figure out what it is.
 
 # %% [markdown]
 # **/info**
