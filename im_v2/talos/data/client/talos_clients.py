@@ -49,12 +49,12 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         data_snapshot: str,
         *,
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -68,11 +68,11 @@ class TalosHistoricalPqByTileClient(icdc.HistoricalPqByTileClient):
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             infer_exchange_id,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )
         self._data_snapshot = data_snapshot
         # TODO(Sonya): Consider moving it to the base class as the `dataset` param.
@@ -197,7 +197,7 @@ class TalosSqlRealTimeImClient(icdc.SqlRealTimeImClient):
         This mode is required when loading data to use inside a model.
         """
         vendor = "talos"
-        super().__init__(vendor, resample_1min, db_connection, table_name)
+        super().__init__(vendor, db_connection, table_name, resample_1min=resample_1min)
         self._mode = mode
 
     @staticmethod

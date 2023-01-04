@@ -19,12 +19,11 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
         `tag = ""`
         """
         universe_version = "v2"
-        resample_1min = True
         dataset = "bid_ask"
         contract_type = "futures"
         data_snapshot = "20220620"
         client = imvccdcccce.get_CryptoChassisHistoricalPqByTileClient_example1(
-            universe_version, resample_1min, dataset, contract_type, data_snapshot
+            universe_version, dataset, contract_type, data_snapshot
         )
         full_symbols = ["binance::BTC_USDT", "binance::DOGE_USDT"]
         start_ts = pd.Timestamp("2022-05-15 13:00:00+00:00")
@@ -66,12 +65,11 @@ class TestCryptoChassisHistoricalPqByTileClient1(icdc.ImClientTestCase):
         `contract_type = spot`
         """
         universe_version = "v2"
-        resample_1min = True
         dataset = "ohlcv"
         contract_type = "spot"
         data_snapshot = "20220530"
         client = imvccdcccce.get_CryptoChassisHistoricalPqByTileClient_example1(
-            universe_version, resample_1min, dataset, contract_type, data_snapshot
+            universe_version, dataset, contract_type, data_snapshot
         )
         full_symbols = ["binance::BTC_USDT", "binance::DOGE_USDT"]
         start_ts = pd.Timestamp("2022-05-15 13:00:00+00:00")

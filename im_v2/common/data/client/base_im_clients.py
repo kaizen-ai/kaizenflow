@@ -61,14 +61,16 @@ class ImClient(abc.ABC):
     ```
     """
 
+    # TODO(Grisha): use `*args` and `**kwargs` in the child classes to specify the
+    # base class's params.
     def __init__(
         self,
         vendor: str,
         universe_version: Optional[str],
-        resample_1min: bool,
         *,
         full_symbol_col_name: Optional[str] = None,
         timestamp_col_name: str = "timestamp",
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -626,8 +628,6 @@ class RealTimeImClient(ImClient):
     """
 
 
-# TODO(gp): @all cleanup resample_1min should go last and probably have a default
-#  value of False.
 class SqlRealTimeImClient(RealTimeImClient):
     """
     Read data from a table of an SQL DB.
@@ -636,9 +636,10 @@ class SqlRealTimeImClient(RealTimeImClient):
     def __init__(
         self,
         vendor: str,
-        resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        *,
+        resample_1min: bool = False,
     ) -> None:
         _LOG.debug(hprint.to_str("db_connection table_name"))
         # Real-time implementation has a different mechanism for getting universe.
@@ -648,7 +649,7 @@ class SqlRealTimeImClient(RealTimeImClient):
         # the parent class so they go before the parent's init.
         self._table_name = table_name
         self._db_connection = db_connection
-        super().__init__(vendor, universe_version, resample_1min)
+        super().__init__(vendor, universe_version, resample_1min=resample_1min)
 
     @staticmethod
     def get_metadata() -> pd.DataFrame:
