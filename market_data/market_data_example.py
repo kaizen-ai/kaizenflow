@@ -519,7 +519,6 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     *,
     universe_version2: Optional[str] = None,
     data_snapshot2: Optional[str] = None,
-    resample_1min: bool = False,
     wall_clock_time: Optional[pd.Timestamp] = None,
     filter_data_mode: str = "assert",
 ) -> mdstmada.HorizontalStitchedMarketData:
@@ -550,7 +549,6 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     dataset1 = "ohlcv"
     im_client1 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
         universe_version1,
-        resample_1min,
         dataset1,
         contract_type,
         data_snapshot1,
@@ -559,7 +557,6 @@ def get_CryptoChassis_BidAskOhlcvMarketData_example1(
     dataset2 = "bid_ask"
     im_client2 = iccdc.get_CryptoChassisHistoricalPqByTileClient_example1(
         universe_version2,
-        resample_1min,
         dataset2,
         contract_type,
         data_snapshot2,
