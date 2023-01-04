@@ -1422,10 +1422,17 @@ def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
 
 
 def remap_obj(
-    obj: Union[pd.Series, pd.Index], 
-    map_: Dict[Any, Any], 
+    obj: Union[pd.Series, pd.Index],
+    map_: Dict[Any, Any],
     **kwargs: Any,
 ) -> pd.Series:
+    """
+    Substitute each value of an object with another value from a dictionary.
+
+    :param obj: an object to substitute value in
+    :param map_: values to substitute with
+    :return: remapped pandas series
+    """
     hdbg.dassert_lte(0, obj.shape[0])
     # Check that every element of the object is in the mapping.
     hdbg.dassert_is_subset(obj, map_.keys())
