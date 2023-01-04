@@ -43,10 +43,10 @@ def get_TalosHistoricalPqByTileClient_example1(
     data_snapshot = "latest"
     talos_file_client = imvtdctacl.TalosHistoricalPqByTileClient(
         universe_version,
-        resample_1min,
         root_dir,
         partition_mode,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return talos_file_client
 
@@ -65,10 +65,10 @@ def get_TalosHistoricalPqByTileClient_example2(
     data_snapshot = "latest"
     talos_parquet_client = imvtdctacl.TalosHistoricalPqByTileClient(
         universe_version,
-        resample_1min,
         root_dir,
         partition_mode,
         data_snapshot,
         aws_profile="ck",
+        resample_1min=resample_1min,
     )
     return talos_parquet_client
