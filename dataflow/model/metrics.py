@@ -148,7 +148,7 @@ def annotate_metrics_df(
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
     if tag_mode == "all":
         metrics_df[tag_col] = tag_mode
-    if tag_mode == "full_symbol":
+    elif tag_mode == "full_symbol":
         # TODO(Grisha): extract params from backtest config.
         vendor = "CCXT"
         universe_mode = "trade"
@@ -160,14 +160,14 @@ def annotate_metrics_df(
             ivcu.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
         asset_ids = metrics_df.index.get_level_values(1)
-        metrics_df[tag_col] = hpandas.remap_srs(asset_ids, asset_id_to_full_symbol_mapping)
+        metrics_df[tag_col] = hpandas.remap_obj(asset_ids, asset_id_to_full_symbol_mapping)
     elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
         # TODO(Nina): Pass target column name and number of quantiles via config.
         qcut_func = lambda x: pd.qcut(x, 10, labels=False)
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
-            "vwap.ret_0.vol_adj"
+            "vwap.ret_0.vol_adj.lead2"
         ].transform(qcut_func)
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "prediction_magnitude_quantile_rank":
