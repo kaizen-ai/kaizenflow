@@ -334,11 +334,27 @@ airflow tasks list tutorial --tree
 
 - In this example, we utilize Binance REST API, available free of charge. We build a small ETL pipeline used to download and transform OHLCV market data for selected cryptocurrencies
 
-#### Project Structure
+#### First steps
 
-- The example code can be found in `sorrentum_sandbox/examples/binance`
+1. The example code can be found in `sorrentum_sandbox/examples/binance`
+2. To get to know what type of data we are working with in this example you can run
+```
+> sorrentum_sandbox/examples/binance/download_to_csv.py \
+    --start_timestamp '2022-10-20 10:00:00+00:00' \
+    --end_timestamp '2022-10-21 15:30:00+00:00' \
+    --target_dir 'binance_data'
+```
+  - The script downloads ~1 day worth of OHLCV (or candlestick) into a csv
+3. To familiarize yourself with the concepts of data quality assurance/validation you can proceed with the example script `example_load_and_validate.py` which runs a trivial data QA operations (i.e. checkign the dataset is not empty)
+```
+> example_load_and_validate.py \
+    --start_timestamp '2022-10-20 12:00:00+00:00' \
+    --end_timestamp '2022-10-21 12:00:00+00:00' \
+    --source_dir 'binance_data' \
+    --dataset_signature 'bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0'
+```
 
-#### Quickstart
+#### Quickstart using Airflow
 
 1. Bring up the services via docker-compose as described above
 2. Visit localhost:8090/home
@@ -346,3 +362,4 @@ airflow tasks list tutorial --tree
 4. There are two Airflow DAGs preloaded for this example
 - `download_periodic_1min_postgres_ohlcv` - by default scheduled to run every minute and download last minute worth of OHLCV data using `sorrentum_sandbox/examples/binance/download_to_db.py`
 - `download_periodic_1min_postgres_ohlcv` - by default scheduled to run every 5 minutes, load data from a postgres table, resample and save back
+5. TODO(Juraj): rather then explaining how to switch on a DAG in every example we can just add a separate section above.
