@@ -14,6 +14,7 @@ from typing import Any, Iterable, List, Tuple, Union
 import pandas as pd
 import sklearn.model_selection
 
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -216,7 +217,12 @@ def get_train_test_splits(
 def build_index_from_backtest_config(backtest_config: str) -> pd.Index:
     """
     Build a `DatetimeIndex` given a backtest config.
+
+    :param backtest_config: backtest_config, e.g.,`ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :return: pandas index with the start, end, freq specified by a backtest
+        config
     """
+    _LOG.debug(hprint.to_str("backtest_config"))
     _, trading_period_str, time_interval_str = cconfig.parse_backtest_config(
         backtest_config
     )
@@ -224,6 +230,5 @@ def build_index_from_backtest_config(backtest_config: str) -> pd.Index:
     # Convert both timestamps to ET.
     start_timestamp = start_timestamp.tz_convert("America/New_York")
     end_timestamp = end_timestamp.tz_convert("America/New_York")
-    _LOG.debug("start ts: %s, end ts:, %s", start_timestamp, end_timestamp)
     idx = pd.date_range(start_timestamp, end_timestamp, freq=trading_period_str)
     return idx

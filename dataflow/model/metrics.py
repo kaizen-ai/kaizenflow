@@ -10,7 +10,7 @@ import numpy as np
 import pandas as pd
 
 import core.config as cconfig
-import core.finance.tradability as cfintrad
+import core.finance as cofinanc
 import core.statistics.requires_statsmodels as cstresta
 import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
@@ -114,7 +114,7 @@ def convert_to_metrics_format(
 
 # TODO(Grisha): specific of C3a, ideally we should add target variable
 # in `DagBuilder` so that `predict_df` contains everythings we need.
-def add_y_column(
+def add_target_var(
     predict_df: pd.DataFrame, config: cconfig.Config
 ) -> pd.DataFrame:
     """
@@ -125,9 +125,9 @@ def add_y_column(
     :return: predict_df with target variable
     """
     hdbg.dassert_isinstance(predict_df, pd.DataFrame)
-    _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
+    _LOG.debug("predict_df in=\n%s", hpandas.df_to_str(predict_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
-    _LOG.debug("config=\n%s", hpandas.df_to_str(config))
+    _LOG.debug("config=\n%s", config)
     # Compute returns.
     rets = cofinanc.compute_ret_0(
         predict_df[config["column_names"]["price"]], mode="log_rets"
@@ -135,7 +135,6 @@ def add_y_column(
     predict_df = hpandas.add_multiindex_col(
         predict_df, rets, col_name=config["column_names"]["returns"]
     )
-    _LOG.debug("After adding rets: predict_df=\n%s", hpandas.df_to_str(predict_df))
     # Adjust returns by volatility.
     rets_vol_adj = predict_df[config["column_names"]["returns"]] / predict_df[
         config["column_names"]["volatility"]
@@ -145,7 +144,6 @@ def add_y_column(
         rets_vol_adj,
         col_name=config["column_names"]["vol_adj_returns"],
     )
-    _LOG.debug("After adding rets_vol_adj: predict_df=\n%s", hpandas.df_to_str(predict_df))
     # Shift 2 steps ahead.
     rets_vol_adj_lead2 = predict_df[
         config["column_names"]["vol_adj_returns"]
@@ -153,7 +151,7 @@ def add_y_column(
     predict_df = hpandas.add_multiindex_col(
         predict_df, rets_vol_adj_lead2, col_name=config["column_names"]["y"]
     )
-    _LOG.debug("After adding rets_vol_adj_lead2: predict_df=\n%s", hpandas.df_to_str(predict_df))
+    _LOG.debug("predict_df out=\n%s", hpandas.df_to_str(predict_df))
     return predict_df
 
 
@@ -309,13 +307,13 @@ def apply_metrics(
         elif metric_mode == "pnl":
             if bar_pnl_col_name not in metrics_df.columns:
                 # Compute bar PnL.
-                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                metrics_df[bar_pnl_col_name] = cofinanc.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
             # Compute bar PnL per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df.apply(
-                lambda x: cfintrad.compute_total_pnl(
+                lambda x: cofinanc.compute_total_pnl(
                     x, y_column_name, y_hat_column_name
                 )
             )
@@ -326,7 +324,7 @@ def apply_metrics(
             # We need computed PnL to compute Sharpe ratio.
             if bar_pnl_col_name not in metrics_df.columns:
                 # Compute bar PnL.
-                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                metrics_df[bar_pnl_col_name] = cofinanc.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
             time_scaling = config["metrics"]["time_scaling"]
