@@ -351,6 +351,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
         # to calling an optimizer.
         # TODO(Paul): Align with ForecastEvaluator and update callers.
         backend = self._optimizer_dict["backend"]
+        _LOG.debug("backend=%s", backend)
         if backend == "cc_pomo":
             market_info = self._portfolio.broker.market_info
             asset_ids_to_decimals = occxbrok.subset_market_info(
@@ -390,7 +391,11 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
                 assets_and_predictions,
                 restrictions=self._restrictions,
             )
-            df = spo.optimize()
+            df = spo.optimize(
+                quantization=self._share_quantization,
+                asset_id_to_share_decimals=asset_ids_to_decimals,
+                liquidate_holdings=liquidate_holdings,
+            )
             _LOG.debug("df=\n%s", hpandas.df_to_str(df))
             df = df.merge(
                 assets_and_predictions.set_index("asset_id")[

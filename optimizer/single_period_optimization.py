@@ -5,11 +5,12 @@ import optimizer.single_period_optimization as osipeopt
 """
 
 import logging
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
+import core.finance as cofinanc
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import optimizer.base as opbase
@@ -33,12 +34,13 @@ _LOG = logging.getLogger(__name__)
 def optimize(
     config_dict: dict,
     df: pd.DataFrame,
+    **kwargs,
 ) -> pd.DataFrame:
     """
     Wrapper around `SinglePeriodOptimizer`.
     """
     spo = SinglePeriodOptimizer(config_dict, df)
-    output_df = spo.optimize()
+    output_df = spo.optimize(**kwargs)
     return output_df
 
 
@@ -76,6 +78,7 @@ class SinglePeriodOptimizer:
         self._relative_holding_max_frac_of_gmv = config_dict[
             "relative_holding_max_frac_of_gmv"
         ]
+        self._config_dict = config_dict
         SinglePeriodOptimizer._validate_df(df)
         self._df = df
         #
@@ -109,12 +112,75 @@ class SinglePeriodOptimizer:
             self._solver = None
         self._verbose = config_dict.get("verbose", False)
 
-    def optimize(self) -> pd.DataFrame:
+    def optimize(
+        self,
+        *,
+        quantization: str = "no_quantization",
+        asset_id_to_share_decimals: Optional[Dict[int, int]] = None,
+        liquidate_holdings: bool = False,
+    ) -> pd.DataFrame:
         """
         Get target notional positions.
         """
-        target_weights, target_weight_diffs = self._optimize_weights()
-        result_df = self._process_results(target_weights, target_weight_diffs)
+        if liquidate_holdings:
+            _LOG.debug("Liquidating holdings...")
+            target_weights = pd.Series(
+                0, index=self._asset_ids, name="target_weights"
+            )
+        else:
+            # Compute optimal weights.
+            target_weights, target_weight_diffs = self._optimize_weights()
+            target_weights = pd.Series(
+                data=target_weights.value,
+                index=self._asset_ids,
+                name="target_weights",
+            )
+            target_weight_diffs = pd.Series(
+                data=target_weight_diffs.value,
+                index=self._asset_ids,
+                name="target_weight_diffs",
+            )
+            _LOG.debug(
+                "target_weight_diffs=\n%s", hpandas.df_to_str(target_weight_diffs)
+            )
+            _ = target_weight_diffs
+        _LOG.debug("target_weights=\n%s", hpandas.df_to_str(target_weights))
+        # Convert target weights to target notional holdings.
+        rescaling = self._target_gmv / self._n_assets
+        _LOG.debug("rescaling factor=%f", rescaling)
+        target_holdings_notional = (rescaling * target_weights).rename(
+            "target_holdings_notional"
+        )
+        input_df = self._df.set_index("asset_id")
+        target_holdings_shares = (
+            target_holdings_notional / input_df["price"]
+        ).rename("target_holdings_shares")
+        # Quantize holdings (e.g., nearest share).
+        target_holdings_shares = cofinanc.quantize_shares(
+            target_holdings_shares, quantization, asset_id_to_share_decimals
+        )
+        # Recompute `target_holdings_notional` from shares and price.
+        target_holdings_notional = (
+            target_holdings_shares * input_df["price"]
+        ).rename("target_holdings_notional")
+        # Compute target trades.
+        target_trades_shares = (
+            target_holdings_shares - input_df["holdings_shares"]
+        ).rename("target_trades_shares")
+        target_trades_notional = (
+            target_trades_shares * input_df["price"]
+        ).rename("target_trades_notional")
+        targets_df = pd.concat(
+            [
+                target_holdings_shares,
+                target_holdings_notional,
+                target_trades_shares,
+                target_trades_notional,
+            ],
+            axis=1,
+        )
+        #
+        result_df = pd.concat([input_df, targets_df], axis=1)
         return result_df
 
     def compute_stats(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -156,9 +222,8 @@ class SinglePeriodOptimizer:
         # Ensure that the dataframe has a range-index.
         hdbg.dassert_isinstance(df.index, pd.RangeIndex)
         # Do not allow NaNs.
-        # TODO(Paul): We may need to relax this later
         for col in expected_cols:
-            hdbg.dassert(not df[col].isna().any())
+            hdbg.dassert(not df[col].isna().any(), "Found NaNs in col=%s", col)
 
     @staticmethod
     def _is_df_with_asset_id_col(df: pd.DataFrame) -> None:
@@ -244,6 +309,18 @@ class SinglePeriodOptimizer:
             volatility, self._volatility_penalty
         )
         soft_constraints.append(diagonal_risk)
+        # Maybe add constant correlation risk constraint.
+        if "constant_correlation" in self._config_dict:
+            constant_correlation = self._config_dict["constant_correlation"]
+            constant_correlation_penalty = self._config_dict[
+                "constant_correlation_penalty"
+            ]
+            constant_correlation_risk = osofcons.ConstantCorrelationRiskModel(
+                constant_correlation,
+                volatility,
+                constant_correlation_penalty,
+            )
+            soft_constraints.append(constant_correlation_risk)
         # Add GMV contraint.
         target_gmv_constraint = osofcons.TargetGmvUpperBoundSoftConstraint(
             self._target_gmv_upper_bound_penalty

@@ -415,7 +415,7 @@ class TestHistoricalPqByTileClients1(icdc.ImClientTestCase):
         index=[2022-05-01 13:00:00+00:00, 2022-05-01 13:05:00+00:00]
         columns=full_symbol,bid_price,bid_size,ask_price,ask_size,knowledge_timestamp
         shape=(565, 6)
-                                 full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
+                                         full_symbol   bid_price     bid_size   ask_price   ask_size              knowledge_timestamp
         timestamp
         2022-05-01 13:00:00+00:00  binance::ADA_USDT      0.7731  22296.50000      0.7732  404.60000 2022-05-24 15:04:20.110341+00:00
         2022-05-01 13:00:00+00:00  binance::BTC_USDT  37969.9900      4.10126  37970.0000    0.16837 2022-05-24 15:58:40.729661+00:00

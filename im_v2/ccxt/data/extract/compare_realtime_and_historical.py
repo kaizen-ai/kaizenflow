@@ -395,8 +395,7 @@ class RealTimeHistoricalReconciler:
         """
         Load and process real time data.
         """
-        # Load real time data from the datab
-        # ase.
+        # Load real time data from the database.
         ccxt_rt = self.ccxt_rt_im_client.read_data(
             self.universe, self.start_ts, self.end_ts, None, "assert"
         )
