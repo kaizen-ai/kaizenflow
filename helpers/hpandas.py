@@ -351,6 +351,9 @@ def add_multiindex_col(
     :param col_name: name of a new column
     :return: a multiindex DataFrame with a new column
     """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_isinstance(multiindex_col, pd.DataFrame)
+    hdbg.dassert_isinstance(col_name, str)
     for col in multiindex_col.columns:
         df[col_name, col] = multiindex_col[col]
     return df
