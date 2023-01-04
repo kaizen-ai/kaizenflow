@@ -28,10 +28,10 @@ class DataClient(abc.ABC):
         [start_timestamp, end_timestamp) -> start_timestamp included, end_timestamp excluded.
 
         :param dataset_signature: signature of the dataset to load
-        :param start_timestamp: beginning of the time period to load 
+        :param start_timestamp: beginning of the time period to load
          (context differs based on data type).
         If None, start with the earliest saved data.
-        :param end_timestamp: end of the time period to load 
+        :param end_timestamp: end of the time period to load
         (context differs based on data type)
         If None, download up to the latest saved data.
         :return: loaded data

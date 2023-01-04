@@ -38,7 +38,7 @@ class DataDownloader(abc.ABC):
     ) -> RawData:
         """
         Download data from a desired source.
-        
+
         The invariant for downloading in a specified time interval is:
         [start_timestamp, end_timestamp) -> start_timestamp included, end_timestamp excluded.
 
