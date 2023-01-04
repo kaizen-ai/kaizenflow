@@ -153,9 +153,28 @@ airflow tasks list tutorial --tree
   possible
 - To remove this limitation we can add the rest of the infrastructure needed to
   enable parallelization (e.g., celery and redis)
+- TODO(Juraj): it might be sufficient to change to `LocalExecutor` which also allows parallelization
 
 # Dev notes
 - To rebuild after trying out some changes in dockerfile/compose file
 ```
 > docker-compose up --build --force-recreate
 ```
+
+## Data Pipeline Examples
+
+- The following examples demonstrate small standalone data pipelines
+- The code can be found under `sorrentum_sandbox/examples`  
+- Each example implements concrete classes from interfaces specified in `sorrentum_sandbox`, upon which a command line script is built.
+- The actual execution of scripts is orchestrated by Apache Airflow
+
+### Binance
+
+- In this example, we utilize Binance REST API, available free of charge. We build a small ETL pipeline used to download and transform OHLCV market data for selected cryptocurrencies
+
+#### Quickstart
+
+1. Bring up the services via docker-compose as described above
+
+#### Project Structure
+
