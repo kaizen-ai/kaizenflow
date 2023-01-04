@@ -149,7 +149,9 @@ def add_target_var(
         config["column_names"]["vol_adj_returns"]
     ].shift(2)
     predict_df = hpandas.add_multiindex_col(
-        predict_df, rets_vol_adj_lead2, col_name=config["column_names"]["y"]
+        predict_df,
+        rets_vol_adj_lead2,
+        col_name=config["column_names"]["target_variable"],
     )
     _LOG.debug("predict_df out=\n%s", hpandas.df_to_str(predict_df))
     return predict_df
