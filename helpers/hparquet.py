@@ -133,7 +133,6 @@ def from_parquet(
             # See https://arrow.apache.org/docs/python/parquet.html#reading-and-writing-single-files.
             table = dataset.read_pandas(columns=columns)
             df = table.to_pandas()
-
     # Report stats about the df.
     _LOG.debug("df.shape=%s", str(df.shape))
     mem = df.memory_usage().sum()
