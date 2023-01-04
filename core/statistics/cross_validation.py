@@ -211,3 +211,19 @@ def get_train_test_splits(
     else:
         raise ValueError(f"Invalid mode={mode}")
     return splits
+
+
+def build_index_from_backtest_config(backtest_config: str) -> pd.Index:
+    """
+    Build a `DatetimeIndex` given a backtest config.
+    """
+    _, trading_period_str, time_interval_str = cconfig.parse_backtest_config(
+        backtest_config
+    )
+    start_timestamp, end_timestamp = cconfig.get_period(time_interval_str)
+    # Convert both timestamps to ET.
+    start_timestamp = start_timestamp.tz_convert("America/New_York")
+    end_timestamp = end_timestamp.tz_convert("America/New_York")
+    _LOG.debug("start ts: %s, end ts:, %s", start_timestamp, end_timestamp)
+    idx = pd.date_range(start_timestamp, end_timestamp, freq=trading_period_str)
+    return idx

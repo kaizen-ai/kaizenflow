@@ -112,6 +112,51 @@ def convert_to_metrics_format(
     return metrics_df
 
 
+# TODO(Grisha): specific of C3a, ideally we should add target variable
+# in `DagBuilder` so that `predict_df` contains everythings we need.
+def add_y_column(
+    predict_df: pd.DataFrame, config: cconfig.Config
+) -> pd.DataFrame:
+    """
+    Add target variable to a predict_df.
+
+    :param predict_df: DAG output
+    :param config: config that controls column names
+    :return: predict_df with target variable
+    """
+    hdbg.dassert_isinstance(predict_df, pd.DataFrame)
+    _LOG.debug("predict_df=\n%s", hpandas.df_to_str(predict_df))
+    hdbg.dassert_isinstance(config, cconfig.Config)
+    _LOG.debug("config=\n%s", hpandas.df_to_str(config))
+    # Compute returns.
+    rets = cofinanc.compute_ret_0(
+        predict_df[config["column_names"]["price"]], mode="log_rets"
+    )
+    predict_df = hpandas.add_multiindex_col(
+        predict_df, rets, col_name=config["column_names"]["returns"]
+    )
+    _LOG.debug("After adding rets: predict_df=\n%s", hpandas.df_to_str(predict_df))
+    # Adjust returns by volatility.
+    rets_vol_adj = predict_df[config["column_names"]["returns"]] / predict_df[
+        config["column_names"]["volatility"]
+    ].shift(2)
+    predict_df = hpandas.add_multiindex_col(
+        predict_df,
+        rets_vol_adj,
+        col_name=config["column_names"]["vol_adj_returns"],
+    )
+    _LOG.debug("After adding rets_vol_adj: predict_df=\n%s", hpandas.df_to_str(predict_df))
+    # Shift 2 steps ahead.
+    rets_vol_adj_lead2 = predict_df[
+        config["column_names"]["vol_adj_returns"]
+    ].shift(2)
+    predict_df = hpandas.add_multiindex_col(
+        predict_df, rets_vol_adj_lead2, col_name=config["column_names"]["y"]
+    )
+    _LOG.debug("After adding rets_vol_adj_lead2: predict_df=\n%s", hpandas.df_to_str(predict_df))
+    return predict_df
+
+
 # #############################################################################
 # Tags
 # #############################################################################
