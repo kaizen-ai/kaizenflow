@@ -107,7 +107,7 @@ def build_reconciliation_configs(
         #
         fep_init_dict = {
             "price_col": "twap",
-            "prediction_col": "vwap.ret_0.vol_adj.lead2.hat",
+            "prediction_col": "vwap.ret_0.vol_adj.lag_-2.hat",
             "volatility_col": "vwap.ret_0.vol",
         }
         quantization = "asset_specific"
