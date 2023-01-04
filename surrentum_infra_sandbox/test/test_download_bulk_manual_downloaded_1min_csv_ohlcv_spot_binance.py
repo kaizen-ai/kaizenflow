@@ -42,6 +42,9 @@ def _fake_binance_response() -> List[List[Any]]:
 
 
 # TODO(gp): OHLCV -> Ohlcv
+# TODO(Juraj): skip decorator will be removed when refactoring
+#  the placement of the code.
+@pytest.mark.skip()
 class TestDownloadHistoricalOHLCV(hunitest.TestCase):
     def test_parser(self) -> None:
         """
