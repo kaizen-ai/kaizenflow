@@ -142,7 +142,6 @@ def annotate_metrics_df(
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
-    _LOG.debug("config=\n%s", config)
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
@@ -152,10 +151,11 @@ def annotate_metrics_df(
     if tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     elif tag_mode == "full_symbol":
-        # TODO(Grisha): extract params from backtest config.
-        vendor = "CCXT"
+        backtest_config = config["backtest_config"]
+        universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
+        vendor, universe_version = universe_str.split("_", 1)
+        universe_version = universe_version.replace("_", ".")
         universe_mode = "trade"
-        universe_version = "v7"
         full_symbol_universe = ivcu.get_vendor_universe(
             vendor, universe_mode, version=universe_version, as_full_symbol=True
         )
