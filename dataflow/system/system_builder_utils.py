@@ -693,6 +693,10 @@ def apply_DagRunner_config_for_crypto(
     wake_up_timestamp = system.config.get_and_mark_as_used(
         ("dag_runner_config", "wake_up_timestamp"), default_value=None
     )
+    # TODO(Grisha): consider moving the logic to AirFlow; we want to
+    # start the prod system a bit earlier than the 1st bar begins to
+    # account for possible delays.
+    wake_up_timestamp = wake_up_timestamp - pd.Timedelta(minutes=1)
     rt_timeout_in_secs_or_time = None
     #
     system = _apply_DagRunner_config(
