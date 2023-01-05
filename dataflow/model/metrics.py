@@ -164,7 +164,6 @@ def add_target_var(
 
 
 def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
-    # TODO(Grisha): consider returning vendor name, universe version and top_n.
     """
     Extract vendor name and universe version from universe version as string.
      
@@ -172,6 +171,8 @@ def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
     :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
     """
     vendor, universe_version = universe_version_str.split("_", 1)
+    # TODO(Grisha): this is specific of ccxt, we should either convert all vendors
+    # to uppercase or convert everything to lowercase.
     vendor = vendor.upper()
     universe_version = universe_version.replace("_", ".")
     return vendor, universe_version
