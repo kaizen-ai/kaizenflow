@@ -429,7 +429,7 @@ def cv_apply_metrics(
         metrics_df = convert_to_metrics_format(
             result_df, y_column_name, y_hat_column_name
         )
-        metrics_df = annotate_metrics_df(metrics_df, tag_mode)
+        metrics_df = annotate_metrics_df(metrics_df, tag_mode, config)
         # TODO(Grisha): pass a separate parameter.
         tag_col = tag_mode
         out_df = apply_metrics(metrics_df, tag_col, metric_modes, config)
