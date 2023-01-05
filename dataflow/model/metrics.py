@@ -4,17 +4,18 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
 
 import core.config as cconfig
-import core.finance.tradability as cfintrad
+import core.finance as cofinanc
 import core.statistics.requires_statsmodels as cstresta
 import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -112,15 +113,76 @@ def convert_to_metrics_format(
     return metrics_df
 
 
+# TODO(Grisha): specific of C3a, ideally we should add target variable
+# in `DagBuilder` so that `predict_df` contains everythings we need.
+def add_target_var(
+    predict_df: pd.DataFrame, config: cconfig.Config
+) -> pd.DataFrame:
+    """
+    Add target variable to a predict_df.
+
+    :param predict_df: DAG output
+    :param config: config that controls column names
+    :return: predict_df with target variable
+    """
+    hdbg.dassert_isinstance(predict_df, pd.DataFrame)
+    _LOG.debug("predict_df in=\n%s", hpandas.df_to_str(predict_df))
+    hdbg.dassert_isinstance(config, cconfig.Config)
+    _LOG.debug("config=\n%s", config)
+    # Compute returns.
+    rets = cofinanc.compute_ret_0(
+        predict_df[config["column_names"]["price"]], mode="log_rets"
+    )
+    predict_df = hpandas.add_multiindex_col(
+        predict_df, rets, col_name=config["column_names"]["returns"]
+    )
+    # Adjust returns by volatility.
+    rets_vol_adj = predict_df[config["column_names"]["returns"]] / predict_df[
+        config["column_names"]["volatility"]
+    ].shift(2)
+    predict_df = hpandas.add_multiindex_col(
+        predict_df,
+        rets_vol_adj,
+        col_name=config["column_names"]["vol_adj_returns"],
+    )
+    # Shift 2 steps ahead.
+    rets_vol_adj_lead2 = predict_df[
+        config["column_names"]["vol_adj_returns"]
+    ].shift(2)
+    predict_df = hpandas.add_multiindex_col(
+        predict_df,
+        rets_vol_adj_lead2,
+        col_name=config["column_names"]["target_variable"],
+    )
+    _LOG.debug("predict_df out=\n%s", hpandas.df_to_str(predict_df))
+    return predict_df
+
+
 # #############################################################################
 # Tags
 # #############################################################################
+
+
+def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
+    """
+    Extract vendor name and universe version from universe version as string.
+
+    :param universe_version_str: universe version as str, e.g., `ccxt_v7_1`
+    :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
+    """
+    vendor, universe_version = universe_version_str.split("_", 1)
+    # TODO(Grisha): this is specific of ccxt, we should either convert all vendors
+    # to uppercase or convert everything to lowercase.
+    vendor = vendor.upper()
+    universe_version = universe_version.replace("_", ".")
+    return vendor, universe_version
 
 
 # TODO(Grisha): @Dan Pass a list of tag modes instead of just 1.
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
     tag_mode: str,
+    config: cconfig.Config,
     *,
     tag_col: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -139,26 +201,56 @@ def annotate_metrics_df(
     """
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    hdbg.dassert_isinstance(config, cconfig.Config)
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
     # Check both index and columns as we cannot add a tag
     # that is an index already, e.g., `asset_id`.
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
-    if tag_mode == "hour":
-        idx_datetime = metrics_df.index.get_level_values(0)
-        metrics_df[tag_col] = idx_datetime.hour
-    elif tag_mode == "all":
+    if tag_mode == "all":
         metrics_df[tag_col] = tag_mode
-    elif tag_mode == "magnitude_quantile_rank":
+    elif tag_mode == "full_symbol":
+        backtest_config = config["backtest_config"]
+        universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
+        universe_version_str, _ = cconfig.parse_universe_str(universe_str)
+        vendor, universe_version = _parse_universe_version_str(
+            universe_version_str
+        )
+        universe_mode = "trade"
+        full_symbol_universe = ivcu.get_vendor_universe(
+            vendor, universe_mode, version=universe_version, as_full_symbol=True
+        )
+        asset_id_to_full_symbol_mapping = (
+            ivcu.build_numerical_to_string_id_mapping(full_symbol_universe)
+        )
+        asset_ids = metrics_df.index.get_level_values(1)
+        metrics_df[tag_col] = hpandas.remap_obj(
+            asset_ids, asset_id_to_full_symbol_mapping
+        )
+    elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
-        # TODO(Nina): Pass target column name and number of quantiles via config.
-        qcut_func = lambda x: pd.qcut(x, 10, labels=False)
+        n_quantiles = config["metrics"]["n_quantiles"]
+        qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
+        target_var = config["column_names"]["target_variable"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
-            "vwap.ret_0.vol_adj"
+            target_var
         ].transform(qcut_func)
         metrics_df[tag_col] = magnitude_quantile_rank
+    elif tag_mode == "prediction_magnitude_quantile_rank":
+        # Get the asset id index name to group data by.
+        idx_name = metrics_df.index.names[1]
+        n_quantiles = config["metrics"]["n_quantiles"]
+        qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
+        prediction_var = config["column_names"]["prediction"]
+        magnitude_quantile_rank = metrics_df.groupby(idx_name)[
+            prediction_var
+        ].transform(qcut_func)
+        metrics_df[tag_col] = magnitude_quantile_rank
+    elif tag_mode == "hour":
+        idx_datetime = metrics_df.index.get_level_values(0)
+        metrics_df[tag_col] = idx_datetime.hour
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
@@ -264,13 +356,13 @@ def apply_metrics(
         elif metric_mode == "pnl":
             if bar_pnl_col_name not in metrics_df.columns:
                 # Compute bar PnL.
-                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                metrics_df[bar_pnl_col_name] = cofinanc.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
             # Compute bar PnL per tag column.
             group_df = metrics_df.groupby(tag_col)
             srs = group_df.apply(
-                lambda x: cfintrad.compute_total_pnl(
+                lambda x: cofinanc.compute_total_pnl(
                     x, y_column_name, y_hat_column_name
                 )
             )
@@ -281,7 +373,7 @@ def apply_metrics(
             # We need computed PnL to compute Sharpe ratio.
             if bar_pnl_col_name not in metrics_df.columns:
                 # Compute bar PnL.
-                metrics_df[bar_pnl_col_name] = cfintrad.compute_bar_pnl(
+                metrics_df[bar_pnl_col_name] = cofinanc.compute_bar_pnl(
                     metrics_df, y_column_name, y_hat_column_name
                 )
             time_scaling = config["metrics"]["time_scaling"]

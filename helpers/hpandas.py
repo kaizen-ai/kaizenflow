@@ -3,6 +3,7 @@ Import as:
 
 import helpers.hpandas as hpandas
 """
+
 import logging
 import random
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -1420,6 +1421,28 @@ def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
     return df.iloc[idx]
 
 
+def remap_obj(
+    obj: Union[pd.Series, pd.Index],
+    map_: Dict[Any, Any],
+    **kwargs: Any,
+) -> pd.Series:
+    """
+    Substitute each value of an object with another value from a dictionary.
+
+    :param obj: an object to substitute value in
+    :param map_: values to substitute with
+    :return: remapped pandas series
+    """
+    hdbg.dassert_lte(0, obj.shape[0])
+    # TODO(Grisha): consider extending for other mapping types supported by
+    #  `pd.Series.map`.
+    hdbg.dassert_isinstance(map_, dict)
+    # Check that every element of the object is in the mapping.
+    hdbg.dassert_is_subset(obj, map_.keys())
+    new_srs = obj.map(map_, **kwargs)
+    return new_srs
+
+
 def get_random_df(
     num_cols: int,
     seed: Optional[int] = None,
@@ -1633,6 +1656,30 @@ def compare_dfs(
 # #############################################################################
 # Multi-index dfs
 # #############################################################################
+
+
+# TODO(Grisha): should be a more elegant way to add a column.
+def add_multiindex_col(
+    df: pd.DataFrame, multiindex_col: pd.DataFrame, col_name: str
+) -> pd.DataFrame:
+    """
+    Add column to a multiindex DataFrame.
+
+    Note: each column in a multiindex DataFrame is a DataFrame itself.
+
+    :param df: multiindex df
+    :param multiindex_col: column (i.e. singleindex df) of a multiindex df
+    :param col_name: name of a new column
+    :return: a multiindex DataFrame with a new column
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    hdbg.dassert_eq(2, len(df.columns.levels))
+    hdbg.dassert_isinstance(multiindex_col, pd.DataFrame)
+    hdbg.dassert_isinstance(col_name, str)
+    hdbg.dassert_not_in(col_name, df.columns)
+    for col in multiindex_col.columns:
+        df[col_name, col] = multiindex_col[col]
+    return df
 
 
 def list_to_str(

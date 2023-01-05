@@ -24,6 +24,7 @@ _LOG.setLevel(logging.INFO)
 # #############################################################################
 
 
+# TODO(Grisha): consider returning vendor name, universe version and top_n.
 def parse_universe_str(universe_str: str) -> Tuple[str, Optional[int]]:
     """
     Parse a string representing an universe.
