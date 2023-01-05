@@ -159,7 +159,7 @@ def has_dind_support() -> bool:
         return False
     # TODO(gp): Not sure this is really needed since we do this check
     #  after enable_privileged_mode controls if we have dind or not.
-    if _is_mac_version_with_sibling_containers:
+    if _is_mac_version_with_sibling_containers():
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
     #  processes try to run this code they interfere. A solution is to run `ip
