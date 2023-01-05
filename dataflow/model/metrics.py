@@ -171,7 +171,7 @@ def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
     :param universe_version_str: universe version as str, e.g., `ccxt_v7_1`
     :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
     """
-    vendor, universe_version = universe_str.split("_", 1)
+    vendor, universe_version = universe_version_str.split("_", 1)
     vendor = vendor.upper()
     universe_version = universe_version.replace("_", ".")
     return vendor, universe_version
