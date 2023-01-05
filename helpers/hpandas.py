@@ -3,6 +3,7 @@ Import as:
 
 import helpers.hpandas as hpandas
 """
+
 import logging
 import random
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -1418,6 +1419,28 @@ def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
     random.shuffle(idx)
     idx = sorted(idx[nrows:])
     return df.iloc[idx]
+
+
+def remap_obj(
+    obj: Union[pd.Series, pd.Index],
+    map_: Dict[Any, Any],
+    **kwargs: Any,
+) -> pd.Series:
+    """
+    Substitute each value of an object with another value from a dictionary.
+
+    :param obj: an object to substitute value in
+    :param map_: values to substitute with
+    :return: remapped pandas series
+    """
+    hdbg.dassert_lte(0, obj.shape[0])
+    # TODO(Grisha): consider extending for other mapping types supported by
+    #  `pd.Series.map`.
+    hdbg.dassert_isinstance(map_, dict)
+    # Check that every element of the object is in the mapping.
+    hdbg.dassert_is_subset(obj, map_.keys())
+    new_srs = obj.map(map_, **kwargs)
+    return new_srs
 
 
 def get_random_df(
