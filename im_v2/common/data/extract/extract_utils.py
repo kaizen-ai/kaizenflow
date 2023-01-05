@@ -199,29 +199,65 @@ def add_periodical_download_args(
 TIMEOUT_SEC = 60
 
 # Define the validation schema of the data.
-# TODO(Juraj): separate into individual
-# schemas for each data type.
 DATASET_SCHEMA = {
-    "ask_price": "float64",
-    "ask_size": "float64",
-    "bid_price": "float64",
-    "bid_size": "float64",
-    "close": "float64",
-    "currency_pair": "object",
-    "end_download_timestamp": "datetime64[ns, UTC]",
-    "exchange_id": "object",
-    "high": "float64",
-    "knowledge_timestamp": "datetime64[ns, UTC]",
-    "level": "int32",
-    "low": "float64",
-    "month": "int32",
-    "number_of_trades": "int32",
-    "open": "float64",
-    "timestamp": "int64",
-    "twap": "float64",
-    "volume": "float64",
-    "vwap": "float64",
-    "year": "int32",
+    # TODO(Juraj): bid_ask and ohlcv contain each other's columns as well,
+    #  needs cleanup:
+    "bid_ask": {
+        "ask_price": "float64",
+        "ask_size": "float64",
+        "bid_price": "float64",
+        "bid_size": "float64",
+        "close": "float64",
+        "currency_pair": "object",
+        "end_download_timestamp": "datetime64[ns, UTC]",
+        "exchange_id": "object",
+        "high": "float64",
+        "knowledge_timestamp": "datetime64[ns, UTC]",
+        "level": "int32",
+        "low": "float64",
+        "month": "int32",
+        "number_of_trades": "int32",
+        "open": "float64",
+        "timestamp": "int64",
+        "twap": "float64",
+        "volume": "float64",
+        "vwap": "float64",
+        "year": "int32",
+    },
+    "ohlcv": {
+        "ask_price": "float64",
+        "ask_size": "float64",
+        "bid_price": "float64",
+        "bid_size": "float64",
+        "close": "float64",
+        "currency_pair": "object",
+        "end_download_timestamp": "datetime64[ns, UTC]",
+        "exchange_id": "object",
+        "high": "float64",
+        "knowledge_timestamp": "datetime64[ns, UTC]",
+        "level": "int32",
+        "low": "float64",
+        "month": "int32",
+        "number_of_trades": "int32",
+        "open": "float64",
+        "timestamp": "int64",
+        "twap": "float64",
+        "volume": "float64",
+        "vwap": "float64",
+        "year": "int32",
+    },
+    "trades": {
+        "currency_pair": "object",
+        "end_download_timestamp": "datetime64[ns, UTC]",
+        "exchange_id": "object",
+        "is_buyer_maker": "int32",
+        "knowledge_timestamp": "datetime64[ns, UTC]",
+        "month": "int32",
+        "price": "float64",
+        "size": "float64",
+        "timestamp": "int64",
+        "year": "int32",
+    },
 }
 
 
@@ -600,7 +636,7 @@ def save_parquet(
     for column in drop_columns:
         data = data.drop(column, axis=1, errors="ignore")
     # Verify the schema of Dataframe.
-    data = verify_schema(data)
+    data = verify_schema(data, data_type)
     # Save filename as `uuid`, e.g.
     #  "16132792-79c2-4e96-a2a2-ac40a5fac9c7".
     hparque.to_partitioned_parquet(
@@ -696,11 +732,12 @@ def download_historical_data(
             hdbg.dfatal(f"Unsupported `{args['data_format']}` format!")
 
 
-def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
+def verify_schema(data: pd.DataFrame, data_type: str) -> pd.DataFrame:
     """
     Validate the columns types in the extracted data.
 
     :param data: the dataframe to verify
+    :param data_type: type of the data in the `data` argument.
     """
     error_msg = []
     if data.isnull().values.any():
@@ -711,7 +748,7 @@ def verify_schema(data: pd.DataFrame) -> pd.DataFrame:
         #  For simplicity we store only base names in the schema
         #  table.
         column_re = re.sub("_l\d+$", "", column)
-        expected_type = DATASET_SCHEMA[column_re]
+        expected_type = DATASET_SCHEMA[data_type][column_re]
         if (
             expected_type in ["float64", "int32", "int64"]
             and pd.to_numeric(data[column], errors="coerce").notnull().all()

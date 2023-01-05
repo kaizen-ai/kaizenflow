@@ -9,6 +9,10 @@
   vi Dockerfile
   vi .env
   ```
+- Export environment variables to set up proper access to volumes
+ ```
+ > export UID=$(id -u)
+ ```
 
 - Build the Airflow container and bring up the service
   ```
@@ -155,3 +159,7 @@ airflow tasks list tutorial --tree
 ```
 > docker-compose up --build --force-recreate
 ```
+
+## Data Pipeline Examples
+
+### Binance

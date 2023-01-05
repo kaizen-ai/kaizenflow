@@ -205,17 +205,10 @@ display(cc_df.head(10))
 # Perform VWAP resampling if required by config.
 resample_1min = config.get_and_mark_as_used(("data", "resample_1sec_to_1min"))
 if resample_1min:
-    # Add column for the resampling function.
-    ccxt_df["exchange_id"] = "binance"
     # TODO(Danya): Function as-is has VWAP and TWAP modes and removes the `full_symbol` column.
-    ccxt_df = imvcdttrut.resample_bid_ask_data(ccxt_df, mode="VWAP")
-    # Add column for the resampling function.
-    cc_df["exchange_id"] = "binance"
-    cc_df = imvcdttrut.resample_bid_ask_data(ccxt_df, mode="VWAP")
-    #
-    ccxt_df = ccxt_df.drop("exchange_id", axis=1)
-    cc_df = cc_df.drop("exchange_id", axis=1)
-
+    ccxt_df = imvcdttrut.resample_bid_ask_data_to_1min(ccxt_df, mode="VWAP")
+    #Fixed during #CmTask3225
+    cc_df = imvcdttrut.resample_bid_ask_data_to_1min(cc_df, mode="VWAP")
 # %% [markdown]
 # # Analysis
 

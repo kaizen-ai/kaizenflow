@@ -48,9 +48,9 @@ class IgHistoricalPqByDateTaqBarClient(imvcdcli.HistoricalPqByDateClient):
         read_func = imvidchiba.get_bar_data_for_date_interval
         super().__init__(
             vendor,
-            resample_1min,
             read_func,
             full_symbol_col_name=full_symbol_col_name,
+            resample_1min=resample_1min,
         )
 
     @staticmethod

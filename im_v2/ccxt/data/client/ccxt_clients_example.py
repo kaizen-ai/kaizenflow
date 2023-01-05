@@ -49,10 +49,10 @@ def get_CcxtCsvClient_example1(
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
         vendor,
         universe_version,
-        resample_1min,
         root_dir,
         extension,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return ccxt_file_client
 
@@ -72,10 +72,10 @@ def get_CcxtCsvClient_example2() -> imvcdccccl.CcxtCddCsvParquetByAssetClient:
     ccxt_file_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
         vendor,
         universe_version,
-        resample_1min,
         root_dir,
         extension,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return ccxt_file_client
 
@@ -101,10 +101,10 @@ def get_CcxtParquetByAssetClient_example1(
     ccxt_client = imvcdccccl.CcxtCddCsvParquetByAssetClient(
         vendor,
         universe_version,
-        resample_1min,
         root_dir,
         extension,
         data_snapshot,
+        resample_1min=resample_1min,
     )
     return ccxt_client
 
@@ -117,8 +117,6 @@ def get_CcxtParquetByAssetClient_example1(
 def get_CcxtHistoricalPqByTileClient_example1(
     # TODO(Grisha): make it optional since it is not needed for real-time data.
     universe_version: str,
-    # TODO(Grisha): always use `resample_1min = False`.
-    resample_1min: bool,
     dataset: str,
     contract_type: str,
     data_snapshot: str,
@@ -139,16 +137,17 @@ def get_CcxtHistoricalPqByTileClient_example1(
         root_dir = os.path.join(
             s3_bucket_path, "reorg", "historical.manual.pq"
         )
+    resample_1min = False
     partition_mode = "by_year_month"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
-        resample_1min,
         root_dir,
         partition_mode,
         dataset,
         contract_type,
         data_snapshot,
         aws_profile=aws_profile,
+        resample_1min=resample_1min,
     )
     return ccxt_parquet_client
 
@@ -176,12 +175,12 @@ def get_CcxtHistoricalPqByTileClient_example2(
     data_snapshot = "20220705"
     ccxt_parquet_client = imvcdccccl.CcxtHistoricalPqByTileClient(
         universe_version,
-        resample_1min,
         root_dir,
         partition_mode,
         dataset,
         contract_type,
         data_snapshot,
         aws_profile=aws_profile,
+        resample_1min=resample_1min,
     )
     return ccxt_parquet_client

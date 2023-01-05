@@ -6,6 +6,7 @@ Import as:
 import oms.ccxt_broker as occxbrok
 """
 
+import asyncio
 import logging
 import os
 import re
@@ -76,6 +77,8 @@ class CcxtBroker(ombroker.Broker):
         :param contract_type: "spot" or "futures"
         :param secret_identifier: a SecretIdentifier holding a full name of secret to look for in
          AWS SecretsManager
+        :param *args: `ombroker.Broker` positional arguments
+        :param **kwargs: `ombroker.Broker` keyword arguments
         """
         super().__init__(*args, **kwargs)
         self.max_order_submit_retries = _MAX_ORDER_SUBMIT_RETRIES
@@ -186,13 +189,14 @@ class CcxtBroker(ombroker.Broker):
         total_balance = balance["total"]
         return total_balance
 
-    def get_open_positions(self) -> List[Dict[Any, Any]]:
+    def get_open_positions(self) -> List[Dict[str, float]]:
         """
         Select all open futures positions.
 
         Selects all possible positions and filters out those
         with a non-zero amount.
-        Example of an output:
+
+        Example of a response from the exchange:
 
         [{'info': {'symbol': 'BTCUSDT',
             'positionAmt': '-0.200',
@@ -231,23 +235,31 @@ class CcxtBroker(ombroker.Broker):
             'hedged': False,
             'percentage': -33.17}]
 
+        Example of an output:
+            {
+                "BTC/USDT": 0.001,
+                "ETH/USDT": 10
+            }
+
         :return: open positions at the exchange.
         """
-        hdbg.dassert(
-            self._contract_type == "futures",
-            "Open positions can be fetched only for futures contracts.",
-        )
+        hdbg.dassert_eq(self._contract_type, "futures")
         # Fetch all open positions.
+        # See example of an output in the docstring.
         positions = self._exchange.fetchPositions()
-        _LOG.debug("fetched_positions=%s", positions)
-        open_positions = []
+        _LOG.debug(hprint.to_str("positions"))
+        # Map from symbol to the amount currently owned if different than zero,
+        #  e.g. {'BTC/USDT': 0.01}
+        open_positions: Dict[str, float] = {}
         for position in positions:
-            _LOG.debug("fetched_position=%s", position)
+            _LOG.debug(hprint.to_str("position"))
             # Get the quantity of assets on short/long positions.
             position_amount = float(position["info"]["positionAmt"])
-            _LOG.debug("After rounding: fetched_position=%s", position)
+            position_symbol = position["symbol"]
+            _LOG.debug(hprint.to_str("position_amount position_symbol"))
             if position_amount != 0:
-                open_positions.append(position)
+                open_positions[position_symbol] = position
+        _LOG.debug(hprint.to_str("open_positions"))
         return open_positions
 
     def get_fills_for_time_period(
@@ -340,6 +352,107 @@ class CcxtBroker(ombroker.Broker):
             fills.extend(symbol_fills_with_asset_ids)
         return fills
 
+    def cancel_open_orders(self, currency_pair: str) -> None:
+        """
+        Cancel all open orders for the given currency pair.
+        """
+        self._exchange.cancelAllOrders(currency_pair)
+
+    async def create_twap_orders(
+        self,
+        currency_pair: str,
+        volume: int,
+        side: str,
+        execution_start: pd.Timestamp,
+        execution_end: pd.Timestamp,
+        execution_freq: str,
+    ) -> List[str]:
+        """
+        Execute a large order using the TWAP strategy.
+
+        A single buy/sell order is broken up into smaller orders which are
+        submitted between `execution_start` and `execution_end` at the provided
+        `execution_freq`, e.g. '1T' for 1 min.
+        If a limit order is not filled in the provided timestamp, the order
+        is cancelled.
+
+        :param currency_pair: symbol in binance format, e.g. 'BTC/USDT'
+        :param volume: amount of asset to be traded, e.g. 0.5
+        :param side: 'buy' or 'sell'
+        :param execution_start: when to start order execution
+        :param execution_end: when to end order execution
+        :param execution_freq: frequency of order placement, e.g. '1T'
+        :return: exchange receipts for individual orders
+        """
+        asset_id = self._symbol_to_asset_id_mapping(currency_pair)
+        # Get wait time between executions in seconds.
+        execution_freq = pd.Timedelta(execution_freq)
+        wait_time_in_secs = execution_freq.total_seconds()
+        # Get a number of orders to be executed in a TWAP.
+        #  Note: 1 period is substracted to calculate price.
+        num_orders = int((execution_start - execution_end) / execution_freq) - 1
+        hdbg.dassert_lte(1, num_orders)
+        _LOG.debug(hprint.to_str("num_orders"))
+        # Get volume of a single order based on number of orders.
+        single_order_volume = volume / num_orders
+        hdbg.dassert_lt(0, single_order_volume)
+        _LOG.debug(hprint.to_str("single_order_volume"))
+        if side == "sell":
+            single_order_volume = -single_order_volume
+        else:
+            hdbg.dassert_eq(side, "buy")
+        # Round to the allowable asset precision.
+        single_order_volume = self.market_info[asset_id]["amount_precision"]
+        _LOG.debug("After rounding: %s", hprint.to_str("single_order_volume"))
+        # TODO(Danya): Replace with MarketData.get_wall_clock_timestamp.
+        current_timestamp = pd.Timestamp.now()
+        hdbg.dassert_lte(current_timestamp, execution_start)
+        wait_in_secs_before_start = (
+            execution_start - current_timestamp
+        ).total_seconds()
+        if wait_in_secs_before_start > 1:
+            _LOG.info(
+                "Waiting for %s seconds until %s",
+                wait_in_secs_before_start,
+                execution_start,
+            )
+            await asyncio.sleep(wait_in_secs_before_start)
+        #
+        order_receipts: List[str] = []
+        loop = asyncio.get_running_loop()
+        end_time = (execution_end - execution_start).total_seconds()
+        while True:
+            # TODO(Danya): Update to support orders for multiple symbols.
+            iteration_num = 0
+            if iteration_num > 0:
+                self.cancel_open_orders(currency_pair)
+                curr_num_shares = self.get_open_positions()[currency_pair]
+            else:
+                curr_num_shares = 0
+            #
+            creation_timestamp = pd.Timestamp.now()
+            type_ = "limit"
+            start_timestamp = creation_timestamp
+            end_timestamp = creation_timestamp + execution_freq
+            order = omorder.Order(
+                creation_timestamp,
+                asset_id,
+                type_,
+                start_timestamp,
+                end_timestamp,
+                curr_num_shares,
+                single_order_volume,
+            )
+            _LOG.debug(hprint.to_str(order))
+            receipt, _ = self._submit_orders([order])
+            order_receipts.append(receipt)
+            iteration_num += 1
+            # Break if the time is up.
+            if loop.time() + 1.0 >= end_time:
+                break
+            await asyncio.sleep(wait_time_in_secs)
+        return order_receipts
+
     @staticmethod
     def _convert_currency_pair_to_ccxt_format(currency_pair: str) -> str:
         """
@@ -421,7 +534,7 @@ class CcxtBroker(ombroker.Broker):
         ```
         """
         asset_id = ccxt_order["asset_id"]
-        type_ = "market"
+        type_ = ccxt_order["type"]
         # Select creation and start date.
         creation_timestamp = hdateti.convert_unix_epoch_to_timestamp(
             ccxt_order["timestamp"]
@@ -627,15 +740,18 @@ class CcxtBroker(ombroker.Broker):
             )
 
     async def _submit_single_order(
-        self, order: omorder.Order
+        self, order: omorder.Order, *, order_type: str = "market"
     ) -> Optional[omorder.Order]:
         """
         Submit a single order.
 
         :param order: order to be submitted
+        :param type: 'market' or 'limit'
 
         :return: order with ccxt ID appended if the submission was successful, None otherwise.
         """
+        # Verify that the order type is provided correctly.
+        hdbg.dassert_in(order_type, ["market", "limit"])
         submitted_order: Optional[omorder.Order] = None
         symbol = self._asset_id_to_symbol_mapping[order.asset_id]
         side = "buy" if order.diff_num_shares > 0 else "sell"
@@ -657,7 +773,7 @@ class CcxtBroker(ombroker.Broker):
                 _LOG.debug("Submitting order=%s", str(order))
                 order_resp = self._exchange.createOrder(
                     symbol=symbol,
-                    type="market",
+                    type=order_type,
                     side=side,
                     amount=position_size,
                     # id = order.order_id,

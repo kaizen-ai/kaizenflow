@@ -7,9 +7,9 @@
         "downloading_entity": ["airflow", "manual"],
         "action_tag": ["downloaded_1sec", "resampled_1min", "downloaded_1min"],
         "data_format": ["parquet", "csv", "postgres"],
-        "data_type": ["ohlcv", "bid_ask"],
+        "data_type": ["ohlcv", "bid_ask", "trades"],
         "asset_type": ["futures", "spot"],
-        "universe": ["v7", "v3", "v7_1", "v7_3"],
+        "universe": ["v7", "v3", "v3_1", "v7_1", "v7_3"],
         "vendor": ["ccxt", "crypto_chassis"],
         "exchange_id": ["binance"],
         "version": ["v1_0_0"]

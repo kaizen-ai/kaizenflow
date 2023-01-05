@@ -332,10 +332,10 @@ class TestHistoricalPqByTileClient1(icdc.ImClientTestCase):
         im_client = imvcdchpce.MockHistoricalByTileClient(
             vendor,
             universe_version,
-            resample_1min,
             test_dir,
             partition_mode,
             infer_exachange_id,
+            resample_1min=resample_1min,
         )
         # Compare the expected values.
         expected_length = 2

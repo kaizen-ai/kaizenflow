@@ -79,6 +79,25 @@ class DagBuilder(abc.ABC):
         Return the name of the column corresponding to `tag`.
         """
 
+    def get_column_names_dict(self, column_names: List[str]) -> Dict[str, str]:
+        """
+        Build a dictionary by a column tag as a key and a column name as a
+        value.
+
+        E.g.:
+        {
+            "price": "vwap",
+            "prediction": "feature",
+            ...
+        }
+        """
+        hdbg.dassert_isinstance(column_names, list)
+        hdbg.dassert_lte(1, len(column_names))
+        column_names_dict = {}
+        for name in column_names:
+            column_names_dict[name] = self.get_column_name(name)
+        return column_names_dict
+
     def to_string(self) -> str:
         """
         Return a string with a (verbose) representation of the DagBuilder.

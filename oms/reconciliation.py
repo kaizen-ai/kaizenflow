@@ -105,7 +105,7 @@ def build_reconciliation_configs(
         # from the `DagBuilder` object.
         if dag_builder_name == "C1b":
             price_col = "twap"
-            prediction_col = "vwap.ret_0.vol_adj_2_hat"
+            prediction_col = "vwap.ret_0.vol_adj.lag_-2.hat"
             volatility_col = "vwap.ret_0.vol"
         elif dag_builder_name == "C3a":
             price_col = "twap"

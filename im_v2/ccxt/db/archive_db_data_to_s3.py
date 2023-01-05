@@ -175,14 +175,14 @@ def _archive_db_data_to_s3(args: argparse.Namespace) -> None:
     else:
         if not db_data.empty:
             # Archive the data
-            # Argument data_type is only used to specify duplicate removal mode in
-            #  hparquet.list_and_merge_pq_files, 'None' is needed here.
             imvcdeexut.save_parquet(
                 db_data,
                 s3_path,
                 unit="ms",
                 aws_profile=_AWS_PROFILE,
-                data_type=None,
+                # TODO(Juraj): temporary solution, right now only bid_ask data
+                # are archived.
+                data_type="bid_ask",
                 # The `id` column is most likely not needed once the data is in S3.
                 drop_columns=["id"],
                 mode="append",

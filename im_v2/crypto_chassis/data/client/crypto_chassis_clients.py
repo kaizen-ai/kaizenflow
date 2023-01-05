@@ -29,7 +29,6 @@ class CryptoChassisHistoricalPqByTileClient(
     def __init__(
         self,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         dataset: str,
@@ -38,6 +37,7 @@ class CryptoChassisHistoricalPqByTileClient(
         *,
         tag: str = "",
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -48,7 +48,6 @@ class CryptoChassisHistoricalPqByTileClient(
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             dataset,
@@ -56,4 +55,5 @@ class CryptoChassisHistoricalPqByTileClient(
             data_snapshot,
             tag=tag,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )

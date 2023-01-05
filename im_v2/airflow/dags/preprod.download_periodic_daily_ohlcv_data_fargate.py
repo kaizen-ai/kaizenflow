@@ -28,15 +28,21 @@ assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 _EXCHANGES = ["binance"]
-_PROVIDERS = ["crypto_chassis", "ccxt"]
+_VENDORS = ["crypto_chassis", "ccxt"]
 _UNIVERSES = { "crypto_chassis": "v3", "ccxt" : "v7"}
 _CONTRACTS = ["spot", "futures"]
 _DATA_TYPES = ["ohlcv"]
+# These values are changed dynamically based on DAG purpose and nature
+#  of the downloaded data
+_DOWNLOAD_MODE = "periodic_daily"
+_ACTION_TAG = "downloaded_1min"
+_DATA_FORMAT = "parquet"
+# The value is implicit since this is an Airflow DAG.
+_DOWNLOADING_ENTITY = "airflow"
 _DAG_DESCRIPTION = f"Daily {_DATA_TYPES} data download, contracts:" \
-                + f"{_CONTRACTS}, using {_PROVIDERS} from {_EXCHANGES}."
+                + f"{_CONTRACTS}, using {_VENDORS} from {_EXCHANGES}."
 # Specify when/how often to execute the DAG.
 _SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
-
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
 # i.e. cmamp-test-juraj since we try to follow the convention of container having
@@ -58,14 +64,10 @@ ecs_subnets = [Variable.get("ecs_subnet1"), Variable.get("ecs_subnet2")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
 ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
-s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_daily_staged_ohlcv_data_folder')}"
-
+s3_bucket_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}"
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 1,
-    # CryptoChassis might throw
-    # too many request error, wait a couple min to retry.
-    "retry_delay": datetime.timedelta(minutes=5),
+    "retries": 0,
     "email": [Variable.get(f'{_STAGE}_notification_email')],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
@@ -79,45 +81,43 @@ dag = airflow.DAG(
     max_active_runs=1,
     default_args=default_args,
     schedule_interval=_SCHEDULE,
-    catchup=False,
-    start_date=datetime.datetime(2022, 7, 1, 0, 0, 0),
+    catchup=True,
+    start_date=datetime.datetime(2022, 12, 4, 0, 0, 0),
 )
 
 download_command = [
-    "/app/amp/im_v2/{}/data/extract/download_historical_data.py",
-     "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) }}'",
+    "/app/amp/im_v2/common/data/extract/download_bulk.py",
+     "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(minutes=1) }}'",
      "--start_timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
+     "--vendor '{}'",
      "--exchange_id '{}'",
      "--universe '{}'",
-     "--aws_profile 'ck'",
      "--data_type '{}'",
-     "--file_format 'parquet'",
+     "--contract_type '{}'",
+     "--aws_profile 'ck'",
      # The command needs to be executed manually first because --incremental
      # assumes appending to existing folder.
      "--incremental",
-     "--contract_type '{}'",
-     "--s3_path '{}{}/{}'"
+     f"--s3_path '{s3_bucket_path}'",
+     f"--download_mode '{_DOWNLOAD_MODE}'",
+     f"--downloading_entity '{_DOWNLOADING_ENTITY}'",
+     f"--action_tag '{_ACTION_TAG}'",
+     f"--data_format '{_DATA_FORMAT}'",
 ]
 
 start_task = DummyOperator(task_id='start_dag', dag=dag)
 end_download = DummyOperator(task_id='end_dag', dag=dag)
 
-for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
+for vendor, exchange, contract, data_type in product(_VENDORS, _EXCHANGES, _CONTRACTS, _DATA_TYPES):
 
     #TODO(Juraj): Make this code more readable.
     # Do a deepcopy of the bash command list so we can reformat params on each iteration.
     curr_bash_command = copy.deepcopy(download_command)
-    curr_bash_command[0] = curr_bash_command[0].format(provider)
-    curr_bash_command[3] = curr_bash_command[3].format(exchange)
-    curr_bash_command[4] = curr_bash_command[4].format(_UNIVERSES[provider])
+    curr_bash_command[3] = curr_bash_command[3].format(vendor)
+    curr_bash_command[4] = curr_bash_command[4].format(exchange)
+    curr_bash_command[5] = curr_bash_command[5].format(_UNIVERSES[vendor])
     curr_bash_command[6] = curr_bash_command[6].format(data_type)
-    curr_bash_command[-2] = curr_bash_command[-2].format(contract)
-    curr_bash_command[-1] = curr_bash_command[-1].format(
-        s3_daily_staged_data_path,
-        # For futures we need to suffix the folder.
-        "-futures" if contract == "futures" else "",
-        provider
-    )
+    curr_bash_command[7] = curr_bash_command[7].format(contract)
 
     kwargs = {}
     kwargs["network_configuration"] = {
@@ -128,7 +128,7 @@ for provider, exchange, contract, data_type in product(_PROVIDERS, _EXCHANGES, _
     }
 
     downloading_task = ECSOperator(
-        task_id=f"download_{provider}_{exchange}_{contract}",
+        task_id=f"download.{_DOWNLOAD_MODE}.{vendor}.{exchange}.{contract}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,

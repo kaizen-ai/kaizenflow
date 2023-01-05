@@ -46,13 +46,13 @@ class HistoricalPqByTileClient(
         # The version is not strictly needed for this class, but it is used by
         # the child classes, e.g., by `CcxtHistoricalPqByTileClient`.
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         infer_exchange_id: bool,
         *,
         aws_profile: Optional[str] = None,
         full_symbol_col_name: Optional[str] = None,
+        resample_1min: bool = False,
     ):
         """
         Constructor.
@@ -71,8 +71,8 @@ class HistoricalPqByTileClient(
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             full_symbol_col_name=full_symbol_col_name,
+            resample_1min=resample_1min,
         )
         hdbg.dassert_isinstance(root_dir, str)
         self._root_dir = root_dir
@@ -271,7 +271,6 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         self,
         vendor: str,
         universe_version: str,
-        resample_1min: bool,
         root_dir: str,
         partition_mode: str,
         # TODO(Sonya): Consider moving the `dataset` param to the base class.
@@ -281,6 +280,7 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         *,
         tag: str = "",
         aws_profile: Optional[str] = None,
+        resample_1min: bool = False,
     ) -> None:
         """
         Constructor.
@@ -295,11 +295,11 @@ class HistoricalPqByCurrencyPairTileClient(HistoricalPqByTileClient):
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             root_dir,
             partition_mode,
             infer_exchange_id,
             aws_profile=aws_profile,
+            resample_1min=resample_1min,
         )
         hdbg.dassert_in(
             dataset, ["bid_ask", "ohlcv"], f"Invalid dataset type='{dataset}'"
@@ -455,17 +455,17 @@ class HistoricalPqByDateClient(
     def __init__(
         self,
         vendor: str,
-        resample_1min: bool,
         read_func,
         *,
         full_symbol_col_name: Optional[str] = None,
+        resample_1min: bool = False,
     ):
         universe_version = None
         super().__init__(
             vendor,
             universe_version,
-            resample_1min,
             full_symbol_col_name=full_symbol_col_name,
+            resample_1min=resample_1min,
         )
         self._read_func = read_func
 

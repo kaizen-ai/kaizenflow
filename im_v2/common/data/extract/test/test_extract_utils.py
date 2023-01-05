@@ -1,3 +1,4 @@
+import argparse
 import unittest.mock as umock
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional
@@ -8,13 +9,16 @@ import pytest
 import helpers.henv as henv
 import helpers.hmoto as hmoto
 import helpers.hpandas as hpandas
+import helpers.hparquet as hparque
 import helpers.hs3 as hs3
 import helpers.hsql as hsql
 import helpers.hunit_test as hunitest
 import im_v2.ccxt.data.extract.extractor as imvcdexex
 import im_v2.ccxt.db.utils as imvccdbut
 import im_v2.common.data.extract.extract_utils as imvcdeexut
+import im_v2.common.data.transform.resample_daily_bid_ask_data as imvcdtrdbad
 import im_v2.common.db.db_utils as imvcddbut
+import im_v2.crypto_chassis.data.extract.extractor as imvccdexex
 
 
 class TestDownloadExchangeDataToDbPeriodically1(hunitest.TestCase):
@@ -477,6 +481,164 @@ class TestDownloadExchangeDataToDb1(
         self.assertListEqual(csv_path_list, expected)
 
 
+def get_simple_crypto_chassis_mock_data(
+    start_timestamp: int, number_of_seconds: int
+) -> pd.DataFrame:
+    return pd.DataFrame(
+        [
+            {
+                "timestamp": start_timestamp + sec,
+                "bid_price_l1": 0.3481,
+                "bid_size_l1": 49676.8,
+                "bid_price_l2": 0.3482,
+                "bid_size_l2": 49676.8,
+                "ask_price_l1": 0.3484,
+                "ask_size_l1": 49676.8,
+                "ask_price_l2": 0.3485,
+                "ask_size_l2": 49676.8,
+                "currency_pair": "ADA_USDT",
+            }
+            for sec in range(number_of_seconds)
+        ]
+    )
+
+
+@pytest.mark.slow("Takes around 6 secs")
+class TestDownloadResampleBidAskData(hmoto.S3Mock_TestCase):
+    def setUp(self) -> None:
+        self.start_date = datetime(2022, 1, 1)
+        self.end_date = self.start_date + timedelta(seconds=4)
+        self.path = (
+            "s3://mock_bucket/v3/periodic_daily/manual/downloaded_1sec/"
+            "parquet/ohlcv/futures/v3/crypto_chassis/binance/v1_0_0"
+        )
+        super().setUp()
+        self.s3fs_ = hs3.get_s3fs(self.mock_aws_profile)
+
+    def call_download_historical_data(self) -> None:
+        """
+        Call download_historical_data with the predefined arguments.
+        """
+        # Prepare inputs.
+        args = {
+            "start_timestamp": self.start_date.strftime("%y-%m-%d %H:%M:%S"),
+            "end_timestamp": self.end_date.strftime("%y-%m-%d %H:%M:%S"),
+            "download_mode": "periodic_daily",
+            "downloading_entity": "manual",
+            "action_tag": "downloaded_1sec",
+            "vendor": "crypto_chassis",
+            "exchange_id": "binance",
+            "data_type": "ohlcv",
+            "contract_type": "futures",
+            "universe": "v3",
+            "incremental": False,
+            "aws_profile": self.mock_aws_profile,
+            "s3_path": f"s3://{self.bucket_name}/",
+            "log_level": "INFO",
+            "data_format": "parquet",
+            "unit": "s",
+        }
+        exchange = imvccdexex.CryptoChassisExtractor(args["contract_type"])
+        imvcdeexut.download_historical_data(args, exchange)
+
+    @umock.patch.object(imvcdeexut.ivcu, "get_vendor_universe")
+    def check_download_historical_data(self, mock_get_vendor_universe):
+        """
+        First part:
+
+        - run the downloader and mock its request to crypto_chassis
+        - downloader save the fixture to the fake AWS S3
+        - get data from S3 and compare with expected result
+        """
+
+        def mock_download_data(*args, **kwargs) -> pd.DataFrame:
+            """
+            Mock download_data to return predefined results.
+            """
+            return get_simple_crypto_chassis_mock_data(
+                start_timestamp=int(self.start_date.timestamp()),
+                number_of_seconds=4,
+            )
+
+        # Let the downloader to put our fixture to the fake S3.
+        with umock.patch.object(
+            imvccdexex.CryptoChassisExtractor,
+            "download_data",
+            new=mock_download_data,
+        ):
+            mock_universe = umock.MagicMock()
+            mock_universe.__getitem__.return_value = ["ADA_USDT"]
+            mock_get_vendor_universe.return_value = mock_universe
+            self.call_download_historical_data()
+        # Make sure a list of folder is expected.
+        parquet_path_list = hs3.listdir(
+            dir_name=self.path,
+            pattern="*.parquet",
+            only_files=True,
+            use_relative_paths=True,
+            aws_profile=self.mock_aws_profile,
+        )
+        parquet_path_list.sort()
+        parquet_path_list = [
+            # Remove uuid names.
+            "/".join(pq_path.split("/")[:-1])
+            for pq_path in parquet_path_list
+        ]
+        expected_list = ["currency_pair=ADA_USDT/year=2022/month=1"]
+        self.assertListEqual(parquet_path_list, expected_list)
+        actual_df = hparque.from_parquet(
+            file_name=self.path, aws_profile=self.s3fs_
+        )
+        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
+        actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
+        expected = r"""timestamp  bid_price_l1  bid_size_l1  bid_price_l2  bid_size_l2  ask_price_l1  ask_size_l1  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
+            timestamp
+            2022-01-01 00:00:00+00:00  1640995200        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
+            2022-01-01 00:00:01+00:00  1640995201        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
+            2022-01-01 00:00:02+00:00  1640995202        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1
+            2022-01-01 00:00:03+00:00  1640995203        0.3481      49676.8        0.3482      49676.8        0.3484      49676.8        0.3485      49676.8     binance      ADA_USDT  2022      1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def check_resampler(self) -> None:
+        """
+        Second part:
+
+        - run the resampler
+        - resampler save the data to the fake AWS S3
+        - get data from S3 and compare with expected result
+        """
+        dst_dir = self.path + "/dst"
+        run_args = {
+            "start_timestamp": "2022-01-01 00:00:00",
+            "end_timestamp": "2022-01-01 00:04:00",
+            "src_dir": self.path,
+            "dst_dir": dst_dir,
+        }
+        namespace = argparse.Namespace(**run_args)
+        with umock.patch(
+            "im_v2.common.data.transform.transform_utils"
+            ".NUMBER_LEVELS_OF_ORDER_BOOK",
+            2,
+        ):
+            imvcdtrdbad._run(namespace, aws_profile=self.s3fs_)
+        actual_df = hparque.from_parquet(dst_dir, aws_profile=self.s3fs_)
+        # Need to exclude knowledge_timestamp that can't predict precisely.
+        actual_df = actual_df.drop(["knowledge_timestamp"], axis=1)
+        actual = hpandas.df_to_str(actual_df, num_rows=5000, max_colwidth=15000)
+        expected = r"""timestamp  bid_price_l1  bid_size_l1  ask_price_l1  ask_size_l1  bid_price_l2  bid_size_l2  ask_price_l2  ask_size_l2 exchange_id currency_pair  year  month
+timestamp
+2022-01-01 00:01:00+00:00  1640995260        0.3481     198707.2        0.3484     198707.2        0.3482     198707.2        0.3485     198707.2     binance      ADA_USDT  2022      1"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+    def test_download_and_resample_bid_ask_data(self) -> None:
+        """
+        Download mocked AWS S3 data, check the output, resample and check the
+        output.
+        """
+        self.check_download_historical_data()
+        self.check_resampler()
+
+
 @pytest.mark.skipif(
     not henv.execute_repo_config_code("is_CK_S3_available()"),
     reason="Run only if CK S3 is available",
@@ -699,7 +861,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Create Dataframe.
         test_df = pd.DataFrame(data=test_data)
         # Function should not change the schema of the dataframe.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(test_df, actual_df)
 
@@ -724,7 +886,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Fix the type of the `close` column to `float64`.
         expected_df["close"] = expected_df["close"].astype("float64")
         # Function should fix the type of `close` column to `int`.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
@@ -750,7 +912,7 @@ class TestVerifySchema(hunitest.TestCase):
         expected_df["year"] = expected_df["year"].astype("int32")
         expected_df["month"] = expected_df["month"].astype("int32")
         # Function should fix the type of the columns to `int32`.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
@@ -775,7 +937,7 @@ class TestVerifySchema(hunitest.TestCase):
         # Fix the type of `close` column to `int32`.
         expected_df["close"] = expected_df["close"].astype("float64")
         # Function should fix the type of the column to `float64`.
-        actual_df = imvcdeexut.verify_schema(test_df)
+        actual_df = imvcdeexut.verify_schema(test_df, "ohlcv")
         # Check the result.
         hunitest.compare_df(expected_df, actual_df)
 
@@ -799,7 +961,7 @@ class TestVerifySchema(hunitest.TestCase):
         test_df = pd.DataFrame(data=test_data)
         # Make sure function raises an error.
         with self.assertRaises(AssertionError) as cm:
-            imvcdeexut.verify_schema(test_df)
+            imvcdeexut.verify_schema(test_df, "ohlcv")
         actual = str(cm.exception)
         expected = """
             Invalid dtype of `close` column: expected type `float64`, found `object`

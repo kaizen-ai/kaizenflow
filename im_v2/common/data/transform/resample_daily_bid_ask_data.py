@@ -24,14 +24,14 @@ import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hparquet as hparque
 import helpers.hparser as hparser
+import helpers.hs3 as hs3
 import im_v2.common.data.extract.extract_utils as imvcdeexut
 import im_v2.common.data.transform.transform_utils as imvcdttrut
 
 _LOG = logging.getLogger(__name__)
 
 
-def _run(args: argparse.Namespace) -> None:
-    aws_profile = "ck"
+def _run(args: argparse.Namespace, aws_profile: hs3.AwsProfile = "ck") -> None:
     epoch_unit = "s"
     # Convert dates to unix timestamps.
     start = hdateti.convert_timestamp_to_unix_epoch(

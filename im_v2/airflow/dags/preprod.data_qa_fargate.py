@@ -21,6 +21,7 @@ _FILENAME = os.path.basename(__file__)
 # This variable will be propagated throughout DAG definition as a prefix to
 # names of Airflow configuration variables, allow to switch from test to preprod/prod
 # in one line (in best case scenario).
+#_STAGE = _FILENAME.split(".")[0]
 _STAGE = _FILENAME.split(".")[0]
 assert _STAGE in ["prod", "preprod", "test"]
 
@@ -35,31 +36,36 @@ assert _LAUNCH_TYPE in ["ec2", "fargate"]
 
 _DAG_ID = _FILENAME.rsplit(".", 1)[0]
 # List of dicts to specify parameters for each reconciliation jobs.
+# "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0"
 _RECONCILIATION_JOBS = [
     {
         "data_type": "ohlcv",
         "contract_type": "futures",
         "db_table_base_name": "ccxt_ohlcv_futures",
-        "s3_vendor": "ccxt",
-        "add_params": []
+        "s3_dataset_signature": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.futures.v7.ccxt.binance.v1_0_0",
+        "add_invoke_params": []
     },
-    {
-        "data_type": "ohlcv",
-        "contract_type": "spot",
-        "db_table_base_name": "ccxt_ohlcv",
-        "s3_vendor": "ccxt",
-        "add_params": []
-    },
+    # Spot real time downloaded has been paused at the moment.
+    #{
+    #    "data_type": "ohlcv",
+    #    "contract_type": "spot",
+    #    "db_table_base_name": "ccxt_ohlcv",
+    #    "s3_dataset_signature": "periodic_daily.airflow.downloaded_1min.parquet.ohlcv.spot.v7.ccxt.binance.v1_0_0",
+    #    "add_invoke_params": []
+    #},
     {
         "data_type": "bid_ask",
         "contract_type": "futures",
         "db_table_base_name": "ccxt_bid_ask_futures_resampled_1min",
-        "s3_vendor": "crypto_chassis",
-        "add_params": ["--resample_1min"]
-    },
+        "s3_dataset_signature":  "periodic_daily.airflow.resampled_1min.parquet.bid_ask.futures.v3.crypto_chassis.binance.v1_0_0",
+        "add_invoke_params": ["--bid-ask-accuracy {{ var.value.bid_ask_qa_acc_thresh }}"]
+    }
 ]
-_DAG_DESCRIPTION = "Daily data reconciliation"
-_SCHEDULE = Variable.get(f"{_DAG_ID}_schedule")
+# Shared location to store the reconciliaiton notebook into
+_QA_NB_DST_DIR = os.path.join("{{ var.value.efs_mount }}", _STAGE, "data_qa")
+_DAG_DESCRIPTION = "Daily data QA. Run QA notebook and publish results" \
+                    + " to a shared EFS."
+_SCHEDULE = Variable.get(f'{_DAG_ID}_schedule')
 
 # Used for container overrides inside DAG task definition.
 # If this is a test DAG don't forget to add your username to container suffix.
@@ -82,12 +88,11 @@ ecs_subnets = [Variable.get("ecs_subnet1")]
 ecs_security_group = [Variable.get("ecs_security_group")]
 ecs_awslogs_group = f"/ecs/{ecs_task_definition}"
 ecs_awslogs_stream_prefix = f"ecs/{ecs_task_definition}"
-s3_daily_staged_data_path = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}/{Variable.get('s3_daily_staged_data_folder')}"
+s3_bucket = f"s3://{Variable.get(f'{_STAGE}_s3_data_bucket')}"
 
 # Pass default parameters for the DAG.
 default_args = {
-    "retries": 1,
-    "retry_delay": datetime.timedelta(minutes=5),
+    "retries": 0,
     "email": [Variable.get(f'{_STAGE}_notification_email')],
     "email_on_failure": True if _STAGE in ["prod", "preprod"] else False,
     "email_on_retry": False,
@@ -101,22 +106,20 @@ dag = airflow.DAG(
     max_active_runs=1,
     default_args=default_args,
     schedule_interval=_SCHEDULE,
-    catchup=False,
-    start_date=datetime.datetime(2022, 7, 1, 0, 0, 0),
+    catchup=True,
+    start_date=datetime.datetime(2022, 12, 17, 0, 0, 0),
 )
-s3_daily_staged_data_path = s3_daily_staged_data_path.rstrip("/")
-compare_command = [
-    "/app/amp/im_v2/ccxt/data/extract/compare_realtime_and_historical.py",
-    "--end_timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(minutes=1) }}'",
-    "--start_timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
-    "--aws_profile 'ck'",
-    "--exchange_id 'binance'",
-    "--db_stage 'dev'",
-    "--db_table '{}'",
-    "--data_type '{}'",
-    "--contract_type '{}'",
-    "--s3_vendor '{}'",
-    f"--s3_path '{s3_daily_staged_data_path}'"
+
+invoke_cmd = [
+    "invoke reconcile_data_run_notebook",
+    "--db-stage 'dev'",
+    "--start-timestamp '{{ data_interval_start.replace(hour=0, minute=0, second=0) }}'",
+    "--end-timestamp '{{ data_interval_end.replace(hour=0, minute=0, second=0) - macros.timedelta(minutes=1) }}'",
+    "--db-table '{}'",
+    "--s3-dataset-signature '{}'",
+    "--aws-profile 'ck'",
+    f"--s3-path '{s3_bucket}'",
+    f"--base-dst-dir '{_QA_NB_DST_DIR}'",
 ]
 
 start_comparison = DummyOperator(task_id='start_comparison', dag=dag)
@@ -126,23 +129,19 @@ for job in _RECONCILIATION_JOBS:
 
     db_table = job["db_table_base_name"]
     db_table += f"_{_STAGE}" if _STAGE in ["test", "preprod"] else ""
-    data_type, contract_type, s3_vendor = (
-        job["data_type"],
-        job["contract_type"],
-        job["s3_vendor"]
-    )
 
     #TODO(Juraj): Make this code more readable.
-    # Do a deepcopy of the bash command list so we can reformat params on each iteration.
-    curr_bash_command = copy.deepcopy(compare_command)
-    curr_bash_command[6] = curr_bash_command[6].format(db_table)
-    curr_bash_command[7] = curr_bash_command[7].format(data_type)
-    curr_bash_command[8] = curr_bash_command[8].format(contract_type)
-    curr_bash_command[9] = curr_bash_command[9].format(s3_vendor)
+    # Do a deepcopy of the bash cmd list so we can reformat params on each iteration.
+    curr_invoke_cmd = copy.deepcopy(invoke_cmd)
+    curr_invoke_cmd[4] = curr_invoke_cmd[4].format(db_table)
+    curr_invoke_cmd[5] = curr_invoke_cmd[5].format(job["s3_dataset_signature"])
+    for param in job["add_invoke_params"]:
+        curr_invoke_cmd.append(param)
 
-    for param in job["add_params"]:
-        curr_bash_command.append(param)
-
+    # We first execute the notebook which finishes successfully regardless of the success of
+    #  the reconciliation (unless the notebook execution itself fails, in which case we get
+    #  notified). Afterwards a script is executed, return code of the command will inform
+    #  Airflow which can send a notification upon failure.
     kwargs = {}
     kwargs["network_configuration"] = {
         "awsvpcConfiguration": {
@@ -152,7 +151,7 @@ for job in _RECONCILIATION_JOBS:
     }
 
     comparing_task = ECSOperator(
-        task_id=f"compare_ccxt_rt_{data_type}_{contract_type}_with_{s3_vendor}_daily",
+        task_id=f"data_qa.{db_table}",
         dag=dag,
         aws_conn_id=None,
         cluster=ecs_cluster,
@@ -162,7 +161,7 @@ for job in _RECONCILIATION_JOBS:
             "containerOverrides": [
                 {
                     "name": _CONTAINER_NAME,
-                    "command": curr_bash_command,
+                    "command": curr_invoke_cmd,
                 }
             ],
             "cpu": "512",

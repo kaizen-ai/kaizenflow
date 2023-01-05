@@ -209,7 +209,7 @@ class RealTimeHistoricalReconciler:
         db_connection = self.get_db_connection(args)
         # Initialize CCXT client.
         self.ccxt_rt_im_client = icdcl.CcxtSqlRealTimeImClient(
-            args.resample_1min, db_connection, args.db_table
+            db_connection, args.db_table, resample_1min=args.resample_1min
         )
         self.aws_profile = args.aws_profile
         self.s3_path = self._build_s3_path(

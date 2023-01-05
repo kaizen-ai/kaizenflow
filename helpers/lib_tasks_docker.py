@@ -1236,6 +1236,12 @@ def _docker_cmd(
 
     :param kwargs: kwargs for `ctx.run`
     """
+    if hserver.is_inside_ci():
+        import helpers.hs3 as hs3
+
+        # Generate files with the AWS settings that are missing when running
+        # inside CI.
+        hs3.generate_aws_files()
     _LOG.info("Pulling the latest version of Docker")
     docker_pull(ctx)
     _LOG.debug("cmd=%s", docker_cmd_)

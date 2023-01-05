@@ -14,8 +14,10 @@ from typing import Any, Iterable, List, Tuple, Union
 import pandas as pd
 import sklearn.model_selection
 
+import core.config as cconfig
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -154,3 +156,79 @@ def convert_splits_to_string(splits: collections.OrderedDict) -> str:
         )
         txt += "\n"
     return txt
+
+
+def get_train_test_splits(
+    idx: pd.Index,
+    mode: str,
+    *args: Any
+    # TODO(Grisha): should we do `pd.DatetimeIndex`?
+) -> List[Tuple[pd.Index, pd.Index]]:
+    """
+    Split a timestamp index into multiple train and test sets according to
+    various criteria.
+
+    The output is a list of pairs (train, test) splits that has at least
+    one split possible.
+
+    E.g.,
+    If an index looks like `[2022-08-31 20:00:00, ..., 2022-10-30 20:00:00]`,
+    and mode = "rolling", n_splits = 2 the output is:
+    ```
+    [
+        # Split 1.
+        (
+            # Train set.
+            [2022-08-31 20:00:00, ..., 2022-09-20 20:00:00],
+            # Test set.
+            [2022-09-20 20:05:00, ..., 2022-10-10 20:05:00]
+        ),
+        # Split 2.
+        (
+            # Train set.
+            [2022-09-20 20:05:00, ..., 2022-10-10 20:05:00],
+            # Test set.
+            [2022-10-10 20:10:00, ..., 2022-10-30 20:00:00]
+        )
+    ]
+    ```
+
+    :param idx: index to partition
+    :param mode: a mode that defines how to split the index
+        - "ins": in-sample, i.e. train set = test set
+        - "oos": see `get_oos_start_split()`
+        - "rolling": see `get_rolling_splits()`
+    :return: train/test splits
+    """
+    hpandas.dassert_strictly_increasing_index(idx)
+    hdbg.dassert_isinstance(mode, str)
+    _LOG.debug(hprint.to_str("mode args"))
+    if mode == "ins":
+        splits = [(idx, idx)]
+    elif mode == "oos":
+        splits = get_oos_start_split(idx, *args)
+    elif mode == "rolling":
+        splits = get_rolling_splits(idx, *args)
+    else:
+        raise ValueError(f"Invalid mode={mode}")
+    return splits
+
+
+def build_index_from_backtest_config(backtest_config: str) -> pd.Index:
+    """
+    Build a `DatetimeIndex` given a backtest config.
+
+    :param backtest_config: backtest_config, e.g.,`ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :return: pandas index with the start, end, freq specified by a backtest
+        config
+    """
+    _LOG.debug(hprint.to_str("backtest_config"))
+    _, trading_period_str, time_interval_str = cconfig.parse_backtest_config(
+        backtest_config
+    )
+    start_timestamp, end_timestamp = cconfig.get_period(time_interval_str)
+    # Convert both timestamps to ET.
+    start_timestamp = start_timestamp.tz_convert("America/New_York")
+    end_timestamp = end_timestamp.tz_convert("America/New_York")
+    idx = pd.date_range(start_timestamp, end_timestamp, freq=trading_period_str)
+    return idx

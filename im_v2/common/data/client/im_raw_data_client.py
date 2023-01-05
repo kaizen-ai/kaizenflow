@@ -79,7 +79,7 @@ class RawDataReader:
         )
         head = hsql.execute_query_to_df(connection, query_head)
         return head
-    
+
 
     # TODO(Juraj): this is make-do solution, it needs consolidation with the rest of the code
     #  + adding docstrings.

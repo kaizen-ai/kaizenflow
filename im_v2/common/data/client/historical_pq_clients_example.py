@@ -88,10 +88,10 @@ def get_MockHistoricalByTileClient_example1(
     im_client = MockHistoricalByTileClient(
         vendor,
         universe_version,
-        resample_1min,
         test_data_dir,
         partition_mode,
         infer_exchange_id,
+        resample_1min=resample_1min,
     )
     return im_client
 
@@ -132,10 +132,10 @@ def get_MockHistoricalByTileClient_example2(
     im_client = MockHistoricalByTileClient(
         vendor,
         universe_version,
-        resample_1min,
         test_data_dir,
         partition_mode,
         infer_exchange_id,
+        resample_1min=resample_1min,
     )
     return im_client
 
@@ -176,9 +176,9 @@ def get_MockHistoricalByTileClient_example3(
     im_client = MockHistoricalByTileClient(
         vendor,
         universe_version,
-        resample_1min,
         test_data_dir,
         partition_mode,
         infer_exchange_id,
+        resample_1min=resample_1min,
     )
     return im_client

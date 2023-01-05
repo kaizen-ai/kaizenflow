@@ -413,6 +413,7 @@ class TestCcxtBroker1(hunitest.TestCase):
                     "price": 19749.8,
                     "filled": 0.004,
                     "status": "closed",
+                    "type": "market",
                 }
             ]
             # Run.

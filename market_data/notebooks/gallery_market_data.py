@@ -5,7 +5,7 @@
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.13.8
+#       jupytext_version: 1.14.1
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -48,13 +48,11 @@ import im_v2.crypto_chassis.data.client as iccdc
 
 # Initialize the client.
 universe_version = "v4"
-resample_1min = False
 dataset = "ohlcv"
 contract_type = "futures"
 data_snapshot = "20220620"
 im_client = icdcl.get_CcxtHistoricalPqByTileClient_example1(
     universe_version,
-    resample_1min,
     dataset,
     contract_type,
     data_snapshot,

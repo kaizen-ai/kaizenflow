@@ -82,7 +82,7 @@ dag = airflow.DAG(
     default_args=default_args,
     schedule_interval=_SCHEDULE,
     catchup=True,
-    start_date=datetime.datetime(2022, 11, 3, 12, 0, 0),
+    start_date=datetime.datetime(2022, 12, 17, 21, 0, 0),
 )
 
 archival_command = [
@@ -133,12 +133,12 @@ for db_table in _DB_TABLES:
                     "command": curr_bash_command,
                 }
             ],
-            "cpu": "1024",
-            "memory": "4096"
+            "cpu": "2048",
+            "memory": "10240"
         },
         awslogs_group=ecs_awslogs_group,
         awslogs_stream_prefix=ecs_awslogs_stream_prefix,
-        execution_timeout=datetime.timedelta(minutes=20),
+        execution_timeout=datetime.timedelta(minutes=30),
         **kwargs
     )
 

@@ -230,13 +230,14 @@ class MockSqlRealTimeImClient(icdc.SqlRealTimeImClient):
 
     def __init__(
         self,
-        resample_1min: bool,
         db_connection: hsql.DbConnection,
         table_name: str,
+        *,
+        resample_1min: bool = False,
     ):
         vendor = "mock"
         super().__init__(
-            vendor, resample_1min, db_connection, table_name
+            vendor, db_connection, table_name, resample_1min=resample_1min,
         )
 
     @staticmethod
@@ -267,5 +268,5 @@ def get_mock_realtime_client(
         data = _create_mock2_sql_data()
         hsql.copy_rows_with_copy_from(connection, data, table_name)
     # Initialize a client connected to the local DB.
-    im_client = MockSqlRealTimeImClient(resample_1min, connection, table_name)
+    im_client = MockSqlRealTimeImClient(connection, table_name, resample_1min=resample_1min)
     return im_client
