@@ -347,22 +347,27 @@ def apply_metrics(
 
 
 # TODO(Grisha): the problem is that the function computes for a single `tag_mode`.
-def cv_apply_metrics(result_dfs: List[pd.DataFrame], tag_mode: str, metric_modes: List[str], config: cconfig.Config) -> pd.DataFrame:
+def cv_apply_metrics(
+    result_dfs: List[pd.DataFrame],
+    tag_mode: str,
+    metric_modes: List[str],
+    config: cconfig.Config,
+) -> pd.DataFrame:
     """
     Apply metrics for multiple test set estimates.
-    
+
     The flow is:
        - Add target variable
        - Convert to metrics format
        - Annotate with a tag
        - Compute metrics
        - Average the results across multiple cross validation splits
-    
+
     :param result_dfs: dfs with prediction for different cross validation splits
     :param tag_mode: see `annotate_metrics_df()`
     :param metric_modes: see `apply_metrics()`
     :param config: config that control the metrics parameters
-    :return: 
+    :return:
     """
     hdbg.dassert_isinstance(result_dfs, list)
     hdbg.dassert_isinstance(metric_modes, list)
@@ -374,13 +379,13 @@ def cv_apply_metrics(result_dfs: List[pd.DataFrame], tag_mode: str, metric_modes
         result_df = add_target_var(result_df, config)
         y_column_name = config["column_names"]["target_variable"]
         y_hat_column_name = config["column_names"]["prediction"]
-        metrics_df = dtfmod.convert_to_metrics_format(
+        metrics_df = convert_to_metrics_format(
             result_df, y_column_name, y_hat_column_name
         )
-        metrics_df = dtfmod.annotate_metrics_df(metrics_df, tag_mode)
+        metrics_df = annotate_metrics_df(metrics_df, tag_mode)
         # TODO(Grisha): pass a separate parameter.
         tag_col = tag_mode
-        out_df = dtfmod.apply_metrics(metrics_df, tag_col, metric_modes, config)
+        out_df = apply_metrics(metrics_df, tag_col, metric_modes, config)
         out_dfs.append(out_df)
     out_df = pd.concat(out_dfs)
     # TODO(Grisha): consider passing mean as a function to the interface so that
