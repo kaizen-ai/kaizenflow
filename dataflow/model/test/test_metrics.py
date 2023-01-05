@@ -83,7 +83,7 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
                 "prediction": "vwap.ret_0.vol_adj.lag_-2.hat",
             },
             "metrics": {
-                "quantile_number": 10,
+                "n_quantiles": 10,
             },
         }
         config = cconfig.Config().from_dict(config)
