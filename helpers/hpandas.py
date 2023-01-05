@@ -3,6 +3,7 @@ Import as:
 
 import helpers.hpandas as hpandas
 """
+
 import logging
 import random
 from typing import Any, Dict, List, Optional, Tuple, Union
@@ -1418,6 +1419,18 @@ def subset_df(df: pd.DataFrame, nrows: int, seed: int = 42) -> pd.DataFrame:
     random.shuffle(idx)
     idx = sorted(idx[nrows:])
     return df.iloc[idx]
+
+
+def remap_obj(
+    obj: Union[pd.Series, pd.Index], 
+    map_: Dict[Any, Any], 
+    **kwargs: Any,
+) -> pd.Series:
+    hdbg.dassert_lte(0, obj.shape[0])
+    # Check that every element of the object is in the mapping.
+    hdbg.dassert_is_subset(obj, map_.keys())
+    new_srs = obj.map(map_, **kwargs)
+    return new_srs
 
 
 def get_random_df(
