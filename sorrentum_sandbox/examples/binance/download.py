@@ -3,7 +3,7 @@ Extract part of the ETL and QA pipeline.
 
 Import as:
 
-import surrentum_infra_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.examples.binance.download as sisebido
 """
 
 import logging
@@ -16,7 +16,7 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.download as sinsadow
+import sorrentum_sandbox.download as sinsadow
 
 _LOG = logging.getLogger(__name__)
 

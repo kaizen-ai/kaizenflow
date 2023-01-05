@@ -14,8 +14,8 @@ import logging
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.examples.binance.db as sisebidb
-import surrentum_infra_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.examples.binance.db as sisebidb
+import sorrentum_sandbox.examples.binance.download as sisebido
 
 _LOG = logging.getLogger(__name__)
 

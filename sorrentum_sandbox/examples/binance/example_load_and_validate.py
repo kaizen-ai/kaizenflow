@@ -19,8 +19,8 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.client as sinsacli
-import surrentum_infra_sandbox.examples.binance.validate as sisebiva
+import sorrentum_sandbox.client as sinsacli
+import sorrentum_sandbox.examples.binance.validate as sisebiva
 
 _LOG = logging.getLogger(__name__)
 
