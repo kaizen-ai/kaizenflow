@@ -159,7 +159,7 @@ def has_dind_support() -> bool:
         return False
     # TODO(gp): Not sure this is really needed since we do this check
     #  after enable_privileged_mode controls if we have dind or not.
-    if hserver.is_mac(version="Monterey") or hserver.is_mac(version="Ventura"):
+    if _is_mac_version_with_sibling_containers:
         return False
     # TODO(gp): This part is not multi-process friendly. When multiple
     #  processes try to run this code they interfere. A solution is to run `ip
@@ -222,7 +222,7 @@ def use_docker_sibling_containers() -> bool:
     Using sibling containers requires that all Docker containers in the
     same network so that they can communicate with each other.
     """
-    val = hserver.is_dev4() or hserver._is_mac_version_with_sibling_containers()
+    val = hserver.is_dev4() or _is_mac_version_with_sibling_containers()
     return val
 
 
