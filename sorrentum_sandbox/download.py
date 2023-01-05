@@ -5,10 +5,9 @@ import sorrentum_sandbox.download as sinsadow
 """
 
 import abc
-from typing import Any, Optional
+from typing import Any
 
 import pandas as pd
-
 # #############################################################################
 # RawData
 # #############################################################################

@@ -26,9 +26,8 @@ services:
     image: mongo
     container_name: mongo_cont
     environment:
-      - MONGO_INITDB_DATABASE=reddit
-      - MONGO_INITDB_ROOT_USERNAME=reddit
-      - MONGO_INITDB_ROOT_PASSWORD=reddit
+      - MONGO_INITDB_ROOT_USERNAME=mongo
+      - MONGO_INITDB_ROOT_PASSWORD=mongo
     ports:
       - '27017:27017'
     volumes:
@@ -45,7 +44,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - 8090:8080
+      - '8090:8080'
     volumes:
       - ./airflow_data/dags:/opt/airflow/dags
       - ./airflow_data/plugins:/opt/airflow/plugins

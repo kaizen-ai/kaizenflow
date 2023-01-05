@@ -12,7 +12,7 @@ import dataclasses
 import datetime
 import logging
 import os
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Optional
 
 import pandas as pd
 import praw
@@ -104,7 +104,7 @@ class RedditDownloader(sinsadow.DataDownloader):
     @staticmethod
     def get_symbols_from_content(
         content: str,
-        symbols: Tuple[str, ...] = ("BTC", "ETH", "USDT", "USDC", "BNB")
+        symbols: Optional[Tuple[str, ...]] = None
     ) -> List[str]:
         """
         Search in content and return founded symbols.
@@ -113,6 +113,8 @@ class RedditDownloader(sinsadow.DataDownloader):
         :param symbols: predefined list of symbols
         :return: founded symbols
         """
+        if symbols is None:
+            symbols = ("BTC", "ETH", "USDT", "USDC", "BNB")
         output = []
         lowercase_content = content.lower()
         for symbol in symbols:
@@ -123,10 +125,10 @@ class RedditDownloader(sinsadow.DataDownloader):
     def download(
         self,
         *,
-        start_timestamp: pd.Timestamp = pd.Timestamp.min,
-        end_timestamp: pd.Timestamp = pd.Timestamp.max,
+        start_timestamp: Optional[pd.Timestamp] = pd.Timestamp.min,
+        end_timestamp: Optional[pd.Timestamp] = pd.Timestamp.max,
         numbers_post_to_fetch: int = 5,
-        subreddits: Tuple[str, ...] = ("Cryptocurrency", "CryptoMarkets")
+        subreddits: Optional[Tuple[str, ...]] = None
     ) -> sinsadow.RawData:
         """
         Download posts in the hot category in the predefined subreddits.
@@ -137,11 +139,13 @@ class RedditDownloader(sinsadow.DataDownloader):
         :param subreddits: tuple of subreddits to fetch
         :return: downloaded data in raw format
         """
+        if subreddits is None:
+            subreddits = ("Cryptocurrency", "CryptoMarkets")
         output = []
         for subreddit in subreddits:
-            # TODO(*): This iterator is pretty slow: ~30s for the two subreddits
-            #   and 10 posts for every subreddit. Have to be speed up for
-            #   production usage.
+            # TODO(Vlad): This iterator is pretty slow: ~30s for the two
+            #  subreddits and 10 posts for every subreddit.
+            #  Have to be speed up for production usage.
             hot_posts = self.reddit_client.subreddit(subreddit).hot(
                 limit=numbers_post_to_fetch
             )
@@ -176,7 +180,7 @@ if __name__ == "__main__":
     # Save into MongoDB.
     mongo_saver = RedditMongoSaver(
         mongo_client=pymongo.MongoClient(
-            "mongodb://reddit:reddit@127.0.0.1:27017"
+            "mongodb://mongo:mongo@127.0.0.1:27017"
         ),
         db_name="reddit",
         collection_name="posts",
