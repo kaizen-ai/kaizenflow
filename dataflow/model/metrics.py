@@ -163,7 +163,7 @@ def add_target_var(
 # #############################################################################
 
 
-def _parse_universe_str(backtest_config: str) -> Tuple[str, str]:
+def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
     # TODO(Grisha): consider returning vendor name, universe version and top_n.
     """
     Extract vendor name and universe version from universe version as string.
