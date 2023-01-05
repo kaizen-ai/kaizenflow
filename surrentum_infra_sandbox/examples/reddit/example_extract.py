@@ -1,13 +1,17 @@
+#!/usr/bin/env python
 """
 Example implementation of abstract classes for ETL and QA pipeline.
 
 Download Reddit data
 
-Import as:
-
-import surrentum_infra_sandbox.examples.reddit.example_extract as siserexex
+Use as:
+# Download Reddit data:
+> example_extract.py \
+    --start_timestamp '2022-10-20 10:00:00+00:00' \
+    --end_timestamp '2022-10-21 15:30:00+00:00'
 """
 import abc
+import argparse
 import dataclasses
 import datetime
 import logging
@@ -18,12 +22,14 @@ import pandas as pd
 import praw
 import pymongo
 
+import helpers.hdbg as hdbg
 import surrentum_infra_sandbox.download as sinsadow
 import surrentum_infra_sandbox.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
 REDDIT_SECRET = os.environ["REDDIT_SECRET"]
+MONGO_HOST = os.environ["MONGO_HOST"]
 
 
 class BaseMongoSaver(sinsasav.DataSaver):
@@ -51,7 +57,7 @@ class RedditMongoSaver(BaseMongoSaver):
 
     def __init__(self, *args, collection_name: str, **kwargs):
         self.collection_name = collection_name
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, db_name="reddit", **kwargs)
 
     def save(self, data: sinsadow.RawData) -> None:
         db = self.mongo_client
@@ -150,7 +156,11 @@ class RedditDownloader(sinsadow.DataDownloader):
                 limit=numbers_post_to_fetch
             )
             for post in hot_posts:
-                post_timestamp = pd.Timestamp(post.created_utc, unit="s")
+                post_timestamp = pd.Timestamp(
+                    post.created_utc,
+                    unit="s",
+                    tzinfo=datetime.timezone.utc
+                )
                 if not start_timestamp <= post_timestamp <= end_timestamp:
                     continue
                 if post.num_comments > 0:
@@ -173,16 +183,66 @@ class RedditDownloader(sinsadow.DataDownloader):
         return sinsadow.RawData(output)
 
 
-if __name__ == "__main__":
-    # Download.
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
     downloader = RedditDownloader()
-    raw_data = downloader.download()
-    # Save into MongoDB.
-    mongo_saver = RedditMongoSaver(
-        mongo_client=pymongo.MongoClient(
-            "mongodb://mongo:mongo@127.0.0.1:27017"
-        ),
-        db_name="reddit",
-        collection_name="posts",
+    raw_data = downloader.download(
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp)
+    if len(raw_data.get_data()) > 0:
+        mongo_saver = RedditMongoSaver(
+            mongo_client=pymongo.MongoClient(
+                host=MONGO_HOST,
+                port=27017,
+                username="mongo",
+                password="mongo"
+            ),
+            collection_name="posts"
+        )
+        mongo_saver.save(raw_data)
+    else:
+        _LOG.info(
+            "Empty output for datetime range: %s -  %s",
+            args.start_timestamp,
+            args.end_timestamp
+        )
+
+
+def add_download_args(
+    parser: argparse.ArgumentParser,
+) -> argparse.ArgumentParser:
+    """
+    Add the command line options for exchange download.
+    """
+    parser.add_argument(
+        "--start_timestamp",
+        required=True,
+        action="store",
+        type=str,
+        help="Beginning of the loaded period, e.g. 2022-02-09 10:00:00+00:00",
     )
-    mongo_saver.save(raw_data)
+    parser.add_argument(
+        "--end_timestamp",
+        action="store",
+        required=True,
+        type=str,
+        help="End of the loaded period, e.g. 2022-02-10 10:00:00+00:00",
+    )
+    return parser
+
+
+def _parse() -> argparse.ArgumentParser:
+    hdbg.init_logger(use_exec_path=True)
+    parser = argparse.ArgumentParser(
+        description=__doc__,
+        formatter_class=argparse.RawTextHelpFormatter,
+    )
+    parser = add_download_args(parser)
+    return parser
+
+
+if __name__ == "__main__":
+    _main(_parse())
