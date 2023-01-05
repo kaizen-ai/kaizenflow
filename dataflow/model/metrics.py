@@ -4,7 +4,7 @@ Import as:
 import dataflow.model.metrics as dtfmodmetr
 """
 import logging
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 import pandas as pd
@@ -15,6 +15,7 @@ import core.statistics.requires_statsmodels as cstresta
 import core.statistics.sharpe_ratio as cstshrat
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
+import im_v2.common.universe as ivcu
 
 _LOG = logging.getLogger(__name__)
 
@@ -162,10 +163,26 @@ def add_target_var(
 # #############################################################################
 
 
+def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
+    """
+    Extract vendor name and universe version from universe version as string.
+
+    :param universe_version_str: universe version as str, e.g., `ccxt_v7_1`
+    :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
+    """
+    vendor, universe_version = universe_version_str.split("_", 1)
+    # TODO(Grisha): this is specific of ccxt, we should either convert all vendors
+    # to uppercase or convert everything to lowercase.
+    vendor = vendor.upper()
+    universe_version = universe_version.replace("_", ".")
+    return vendor, universe_version
+
+
 # TODO(Grisha): @Dan Pass a list of tag modes instead of just 1.
 def annotate_metrics_df(
     metrics_df: pd.DataFrame,
     tag_mode: str,
+    config: cconfig.Config,
     *,
     tag_col: Optional[str] = None,
 ) -> pd.DataFrame:
@@ -184,26 +201,56 @@ def annotate_metrics_df(
     """
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    hdbg.dassert_isinstance(config, cconfig.Config)
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
         tag_col = tag_mode
     # Check both index and columns as we cannot add a tag
     # that is an index already, e.g., `asset_id`.
     hdbg.dassert_not_in(tag_col, metrics_df.reset_index().columns)
-    if tag_mode == "hour":
-        idx_datetime = metrics_df.index.get_level_values(0)
-        metrics_df[tag_col] = idx_datetime.hour
-    elif tag_mode == "all":
+    if tag_mode == "all":
         metrics_df[tag_col] = tag_mode
-    elif tag_mode == "magnitude_quantile_rank":
+    elif tag_mode == "full_symbol":
+        backtest_config = config["backtest_config"]
+        universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
+        universe_version_str, _ = cconfig.parse_universe_str(universe_str)
+        vendor, universe_version = _parse_universe_version_str(
+            universe_version_str
+        )
+        universe_mode = "trade"
+        full_symbol_universe = ivcu.get_vendor_universe(
+            vendor, universe_mode, version=universe_version, as_full_symbol=True
+        )
+        asset_id_to_full_symbol_mapping = (
+            ivcu.build_numerical_to_string_id_mapping(full_symbol_universe)
+        )
+        asset_ids = metrics_df.index.get_level_values(1)
+        metrics_df[tag_col] = hpandas.remap_obj(
+            asset_ids, asset_id_to_full_symbol_mapping
+        )
+    elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
-        # TODO(Nina): Pass target column name and number of quantiles via config.
-        qcut_func = lambda x: pd.qcut(x, 10, labels=False)
+        n_quantiles = config["metrics"]["n_quantiles"]
+        qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
+        target_var = config["column_names"]["target_variable"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
-            "vwap.ret_0.vol_adj"
+            target_var
         ].transform(qcut_func)
         metrics_df[tag_col] = magnitude_quantile_rank
+    elif tag_mode == "prediction_magnitude_quantile_rank":
+        # Get the asset id index name to group data by.
+        idx_name = metrics_df.index.names[1]
+        n_quantiles = config["metrics"]["n_quantiles"]
+        qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
+        prediction_var = config["column_names"]["prediction"]
+        magnitude_quantile_rank = metrics_df.groupby(idx_name)[
+            prediction_var
+        ].transform(qcut_func)
+        metrics_df[tag_col] = magnitude_quantile_rank
+    elif tag_mode == "hour":
+        idx_datetime = metrics_df.index.get_level_values(0)
+        metrics_df[tag_col] = idx_datetime.hour
     else:
         raise ValueError(f"Invalid tag_mode={tag_mode}")
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(metrics_df))
