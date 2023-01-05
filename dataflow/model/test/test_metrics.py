@@ -122,11 +122,11 @@ class TestAnnotatedMetricsDf(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        `tag_mode = "magnitude_quantile_rank"`
+        `tag_mode = "target_var_magnitude_quantile_rank"`
         """
-        tag_mode = "magnitude_quantile_rank"
+        tag_mode = "target_var_magnitude_quantile_rank"
         expected = r"""
-                                             vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat  magnitude_quantile_rank
+                                             vwap.ret_0.vol_adj.lag_-2  vwap.ret_0.vol_adj.lag_-2.hat  target_var_magnitude_quantile_rank
         end_ts                    asset_id
         2022-08-28 00:50:00-04:00 101                    0.199                      0.22                        6
                                   102                    0.133                      0.98                        3
