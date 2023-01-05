@@ -1,11 +1,8 @@
 #!/usr/bin/env python
 """
-Example implementation of abstract classes for ETL and QA pipeline.
-
-Download OHLCV data from Binance and save it as CSV locally.
+Download OHLCV data from Binance and save it into the DB.
 
 Use as:
-# Download OHLCV data for binance:
 > download_to_db.py \
     --start_timestamp '2022-10-21 10:00:00+00:00' \
     --end_timestamp '2022-10-21 15:30:00+00:00' \
@@ -17,25 +14,13 @@ import logging
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.examples.binance.db as sisebidb
-import surrentum_infra_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.examples.binance.db as sisebidb
+import sorrentum_sandbox.examples.binance.download as sisebido
 
 _LOG = logging.getLogger(__name__)
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.OhlcvBinanceRestApiDownloader()
-    raw_data = downloader.download(start_timestamp, end_timestamp)
-    db_conn = sisebidb.get_db_connection()
-    saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    saver.save(raw_data, args.target_table)
-
-
-def add_download_args(
+def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -60,7 +45,7 @@ def add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Name of the db table to save data to",
+        help="Name of the db table to save data into",
     )
     return parser
 
@@ -71,8 +56,21 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser = add_download_args(parser)
+    parser = _add_download_args(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    # Load data.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    downloader = sisebido.OhlcvBinanceRestApiDownloader()
+    raw_data = downloader.download(start_timestamp, end_timestamp)
+    # Save data to DB.
+    db_conn = sisebidb.get_db_connection()
+    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    saver.save(raw_data, args.target_table)
 
 
 if __name__ == "__main__":

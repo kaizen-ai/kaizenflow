@@ -1,35 +1,29 @@
 #!/usr/bin/env python
 """
-Example implementation of abstract classes for ETL and QA pipeline.
-
 Download OHLCV data from Binance and save it as CSV locally.
 
 Use as:
-# Download OHLCV data for binance:
 > download_to_csv.py \
     --start_timestamp '2022-10-20 10:00:00+00:00' \
     --end_timestamp '2022-10-21 15:30:00+00:00' \
-    --target_dir '.'
+    --target_dir 'binance_data'
 """
 import argparse
 import logging
 import os
-import time
-from typing import Any, Generator, Tuple
+from typing import Any
 
 import pandas as pd
-import requests
-import tqdm
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.download as sinsadow
-import surrentum_infra_sandbox.save as sinsasav
-import surrentum_infra_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.download as sinsadow
+import sorrentum_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): -> CsvData...
 class CSVDataFrameSaver(sinsasav.DataSaver):
     """
     Class for saving pandas DataFrame as CSV to a local filesystem at desired
@@ -48,8 +42,9 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         """
         Save RawData storing a DataFrame to CSV.
 
-        :param data: data to persists into CSV.
+        :param data: data to persists into CSV
         """
+        # TODO(gp): -> hdbg.dassert_isinstance
         if not isinstance(data.get_data(), pd.DataFrame):
             raise ValueError("Only DataFrame is supported.")
         # TODO(Juraj): rewrite using dataset_schema_utils.
@@ -61,21 +56,10 @@ class CSVDataFrameSaver(sinsasav.DataSaver):
         data.get_data().to_csv(target_path, index=False)
 
 
-# ################################################################################
+# #############################################################################
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.OhlcvBinanceRestApiDownloader()
-    raw_data = downloader.download(start_timestamp, end_timestamp)
-    saver = CSVDataFrameSaver(args.target_dir)
-    saver.save(raw_data)
-
-
-def add_download_args(
+def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -100,7 +84,7 @@ def add_download_args(
         action="store",
         required=True,
         type=str,
-        help="Absolute path to the target directory to store data to",
+        help="Path to the target directory to store CSV data into",
     )
     return parser
 
@@ -111,8 +95,20 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser = add_download_args(parser)
+    parser = _add_download_args(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    # Download data.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    downloader = sisebido.OhlcvBinanceRestApiDownloader()
+    raw_data = downloader.download(start_timestamp, end_timestamp)
+    # Save data as CSV.
+    saver = CSVDataFrameSaver(args.target_dir)
+    saver.save(raw_data)
 
 
 if __name__ == "__main__":

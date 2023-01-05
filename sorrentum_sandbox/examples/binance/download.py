@@ -1,10 +1,9 @@
 """
-Example implementation of abstract classes for extract part of the ETL and QA
-pipeline.
+Extract part of the ETL and QA pipeline.
 
 Import as:
 
-import surrentum_infra_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.examples.binance.download as sisebido
 """
 
 import logging
@@ -17,14 +16,17 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.download as sinsadow
+import sorrentum_sandbox.download as sinsadow
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): example_extract.py -> extract.py
 
+
+# TODO(gp): -> OhlcvRestApiDownloader since Binance is already in the path.
 class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     """
-    Class for downloading OHLCV data using REST API provided by binance.
+    Class for downloading OHLCV data using REST API provided by Binance.
     """
 
     _MAX_LINES = 1000
@@ -38,7 +40,7 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
     def download(
         self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
     ) -> sinsadow.RawData:
-        # Convert timestamps.
+        # Convert and check timestamps.
         hdateti.dassert_has_tz(start_timestamp)
         start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
             start_timestamp
@@ -52,8 +54,10 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
             end_timestamp_as_unix,
             msg="End timestamp should be greater then start timestamp.",
         )
+        # Download data once symbol at a time.
         dfs = []
         for symbol in tqdm.tqdm(self._UNIVERSE["binance"]):
+            # Download one chunk of data.
             for start_time, end_time in self._split_period_to_days(
                 start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
             ):
@@ -80,10 +84,9 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                             "close": row[4],
                             "volume": row[5],
                             # close_time from the raw response.
-                            # The value is in ms, we add one milisecond.
-                            #  based on the surrentum protocol data interval
-                            #  specification, where interval [a, b) is labeled
-                            #  with timestamp 'b'.
+                            # The value is in ms, we add one millisecond. based on
+                            # the Surrentum protocol data interval specification,
+                            # where interval [a, b) is labeled with timestamp 'b'.
                             "timestamp": int(row[6]) + 1,
                             "end_download_timestamp": hdateti.get_current_time(
                                 "UTC"
@@ -96,11 +99,11 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                 dfs.append(data)
                 # Delay for throttling in seconds.
                 time.sleep(0.5)
-
         return sinsadow.RawData(pd.concat(dfs, ignore_index=True))
 
+    # TODO(gp): @juraj start_time -> {start,end}_timestamp_as_unix_epoch
+    @staticmethod
     def _build_url(
-        self,
         start_time: int,
         end_time: int,
         symbol: str,
@@ -116,7 +119,8 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
             f"&symbol={symbol}&interval={interval}&limit={limit}"
         )
 
-    def _process_symbol(self, symbol: str) -> str:
+    @staticmethod
+    def _process_symbol(symbol: str) -> str:
         """
         Transform symbol from universe to Binance format.
         """
@@ -126,13 +130,11 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
         self, start_time: int, end_time: int
     ) -> Generator[Tuple[int, int], None, None]:
         """
-        Chop period to chunks of the days.
+        Split period into chunks of the days.
 
-        TLDR:
-            The reason is:
-                Binance API don't allow to get more then 1500 rows at once.
-                So if we trying to get 1m interval, then we need to chop a period to
-                chunks which Binance allow to get
+        The reason is that Binance API don't allow to get more than 1500 rows at
+        once. So to get 1m interval, we need to split a period into chunks that
+        Binance allow us to get.
 
         :param start_time: timestamp for the start time
         :param end_time: timestamp for the end time

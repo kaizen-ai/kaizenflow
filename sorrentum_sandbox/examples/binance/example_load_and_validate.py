@@ -2,7 +2,6 @@
 """
 Load and validate data within a specified time period from a CSV file.
 
-Use as:
 # Load OHLCV data for binance:
 > example_load_and_validate.py \
     --start_timestamp '2022-10-20 12:00:00+00:00' \
@@ -14,25 +13,28 @@ import argparse
 import logging
 import os
 from datetime import timedelta
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.client as sinsacli
-import surrentum_infra_sandbox.examples.binance.validate as sisebiva
+import sorrentum_sandbox.client as sinsacli
+import sorrentum_sandbox.examples.binance.validate as sisebiva
 
 _LOG = logging.getLogger(__name__)
 
+
+# TODO(gp): example_load_and_validate.py -> load_and_validate.py
+
 # #############################################################################
-# Example client implementation
+# CsvClient
 # #############################################################################
 
 
 class CsvClient(sinsacli.DataClient):
     """
-    Class for loading CSV data located in local filesystem into main memory.
+    Class for loading CSV data from local filesystem into main memory.
     """
 
     def __init__(self, source_dir: str) -> None:
@@ -46,27 +48,22 @@ class CsvClient(sinsacli.DataClient):
     def load(
         self,
         dataset_signature: str,
-        start_timestamp=None,
-        end_timestamp=None,
+        start_timestamp: Optional[pd.Timestamp] = None,
+        end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
-    ) -> Any:
+    ) -> pd.DataFrame:
         """
         Load CSV data specified by a unique signature from a desired source
         directory for a specified time period.
 
+        TODO(gp): where is the dependency.
         The method assumes data having a 'timestamp' column.
-
-        :param dataset_signature: signature of the dataset to load
-        :param start_timestamp: beginning of the time period to load (context differs based
-         on data type). If None, start with the earliest saved data.
-        :param end_timestamp: end of the time period to load (context differs based
-         on data type). If None, download up to the latest saved data.
-        :return: loaded data
         """
         # TODO(Juraj): rewrite using dataset_schema_utils.
         dataset_signature += ".csv"
         source_path = os.path.join(self.source_dir, dataset_signature)
         data = pd.read_csv(source_path)
+        # Filter by [start_timestamp, end_timestamp).
         if start_timestamp:
             hdateti.dassert_has_tz(start_timestamp)
             start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
@@ -83,31 +80,11 @@ class CsvClient(sinsacli.DataClient):
 
 
 # #############################################################################
-# Example script setup
+# Script.
 # #############################################################################
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(use_exec_path=True)
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    csv_client = CsvClient(args.source_dir)
-    data = csv_client.load(args.dataset_signature, start_timestamp, end_timestamp)
-    empty_dataset_check = sisebiva.EmptyDatasetCheck()
-    # Conforming to the (a, b] interval convention, remove 1 minute
-    #  from the end_timestamp.
-    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
-        start_timestamp, end_timestamp - timedelta(minutes=1)
-    )
-    dataset_validator = sisebiva.SingleDatasetValidator(
-        [empty_dataset_check, gaps_in_timestamp_check]
-    )
-    dataset_validator.run_all_checks([data], _LOG)
-
-
-def add_download_args(
+def _add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -149,8 +126,30 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser = add_download_args(parser)
+    parser = _add_download_args(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(use_exec_path=True)
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    # Load data.
+    csv_client = CsvClient(args.source_dir)
+    data = csv_client.load(args.dataset_signature, start_timestamp, end_timestamp)
+    # Validate data.
+    empty_dataset_check = sisebiva.EmptyDatasetCheck()
+    # Conforming to the (a, b] interval convention, remove 1 minute from the
+    # end_timestamp.
+    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
+        start_timestamp, end_timestamp - timedelta(minutes=1)
+    )
+    dataset_validator = sisebiva.SingleDatasetValidator(
+        [empty_dataset_check, gaps_in_timestamp_check]
+    )
+    dataset_validator.run_all_checks([data], _LOG)
 
 
 if __name__ == "__main__":
