@@ -166,7 +166,7 @@ def add_target_var(
 def _parse_universe_version_str(universe_version_str: str) -> Tuple[str, str]:
     """
     Extract vendor name and universe version from universe version as string.
-     
+
     :param universe_version_str: universe version as str, e.g., `ccxt_v7_1`
     :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
     """
@@ -214,7 +214,9 @@ def annotate_metrics_df(
         backtest_config = config["backtest_config"]
         universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
         universe_version_str, _ = cconfig.parse_universe_str(universe_str)
-        vendor, universe_version = _parse_universe_version_str(universe_version_str)
+        vendor, universe_version = _parse_universe_version_str(
+            universe_version_str
+        )
         universe_mode = "trade"
         full_symbol_universe = ivcu.get_vendor_universe(
             vendor, universe_mode, version=universe_version, as_full_symbol=True
