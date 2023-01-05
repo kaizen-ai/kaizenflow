@@ -1,13 +1,13 @@
 """
 Import as:
 
-import surrentum_infra_sandbox.save as sinsasav
+import sorrentum_sandbox.save as sinsasav
 """
 
 import abc
 from typing import Any
 
-import surrentum_infra_sandbox.download as sinsadow
+import sorrentum_sandbox.download as sinsadow
 
 
 class DataSaver(abc.ABC):

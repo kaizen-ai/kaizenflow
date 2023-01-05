@@ -16,9 +16,9 @@ from typing import Any
 import pandas as pd
 
 import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.download as sinsadow
-import surrentum_infra_sandbox.examples.binance.download as sisebido
-import surrentum_infra_sandbox.save as sinsasav
+import sorrentum_sandbox.download as sinsadow
+import sorrentum_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
 

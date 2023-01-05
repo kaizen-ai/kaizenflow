@@ -1,7 +1,7 @@
 """
 Import as:
 
-import surrentum_infra_sandbox.client as sinsacli
+import sorrentum_sandbox.client as sinsacli
 """
 
 import abc

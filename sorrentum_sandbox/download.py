@@ -1,7 +1,7 @@
 """
 Import as:
 
-import surrentum_infra_sandbox.download as sinsadow
+import sorrentum_sandbox.download as sinsadow
 """
 
 import abc
