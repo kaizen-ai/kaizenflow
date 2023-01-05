@@ -113,6 +113,7 @@ def _resolve_target_dir(
     :param dst_dir: a root dir for prod system reconciliation
     :return: a target dir to store reconcilation results
     """
+    _LOG.info(hprint.to_str("start_timestamp_as_str dst_dir dag_builder_name"))
     hdbg.dassert_isinstance(start_timestamp_as_str, str)
     run_date = omreconc.get_run_date(start_timestamp_as_str)
     dst_dir = dst_dir or _PROD_RECONCILIATION_DIR
@@ -473,10 +474,14 @@ def reconcile_run_notebook(
     cmd_txt.append(f"export AM_RECONCILIATION_DATE={run_date}")
     cmd_txt.append(f"export AM_ASSET_CLASS={asset_class}")
     # Add the command to run the notebook.
+    target_dir = _resolve_target_dir(
+        start_timestamp_as_str, dst_dir, dag_builder_name
+    )
+    hdbg.dassert_dir_exists(target_dir)
     notebook_path = "amp/oms/notebooks/Master_reconciliation.ipynb"
     config_builder = (
         f"amp.oms.reconciliation.build_reconciliation_configs"
-        + f'("{dag_builder_name}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{mode}")'
+        + f'("{target_dir}", "{dag_builder_name}", "{start_timestamp_as_str}", "{end_timestamp_as_str}", "{mode}")'
     )
     opts = "--num_threads 'serial' --publish_notebook -v DEBUG 2>&1 | tee log.txt; exit ${PIPESTATUS[0]}"
     cmd_run_txt = [
@@ -497,10 +502,6 @@ def reconcile_run_notebook(
     _system(script_name)
     # Copy the published notebook to the specified folder.
     hdbg.dassert_dir_exists(results_dir)
-    target_dir = _resolve_target_dir(
-        start_timestamp_as_str, dst_dir, dag_builder_name
-    )
-    hdbg.dassert_dir_exists(target_dir)
     _LOG.info("Copying results from '%s' to '%s'", results_dir, target_dir)
     cmd = f"cp -vr {results_dir} {target_dir}"
     _system(cmd)
@@ -712,6 +713,7 @@ def reconcile_run_all(
             start_timestamp_as_str=start_timestamp_as_str,
             end_timestamp_as_str=end_timestamp_as_str,
             dst_dir=dst_dir,
+            mode=mode,
             prevent_overwriting=prevent_overwriting,
         )
     reconcile_ls(

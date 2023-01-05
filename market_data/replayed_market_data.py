@@ -91,14 +91,19 @@ class ReplayedMarketData(mdabmada.MarketData):
         left_close: bool,
         right_close: bool,
         limit: Optional[int],
+        ignore_delay: bool,
     ) -> pd.DataFrame:
         if _TRACE:
             _LOG.trace(
                 hprint.to_str(
                     "start_ts end_ts ts_col_name asset_ids left_close "
-                    "right_close limit"
+                    "right_close limit ignore_delay"
                 )
             )
+        if ignore_delay:
+            delay_in_secs = 0
+        else:
+            delay_in_secs = self._delay_in_secs
         # TODO(gp): This assertion seems very slow. Move this check in a
         #  centralized place instead of calling it every time, if possible.
         if asset_ids is not None:
@@ -117,7 +122,7 @@ class ReplayedMarketData(mdabmada.MarketData):
             self._df,
             self._knowledge_datetime_col_name,
             wall_clock_time,
-            delay_in_secs=self._delay_in_secs,
+            delay_in_secs=delay_in_secs,
         )
         # Handle `columns`.
         if self._columns is not None:

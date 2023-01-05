@@ -41,6 +41,7 @@ _LOG = logging.getLogger(__name__)
 
 
 def build_reconciliation_configs(
+    target_dir: str,
     dag_builder_name: str,
     start_timestamp_as_str: str,
     end_timestamp_as_str: str,
@@ -52,6 +53,8 @@ def build_reconciliation_configs(
     Note: the function returns list of configs because the function is used
     as a config builder function for the run notebook script.
 
+    :param target_dir: dir to store the reconciliation results in, e.g.,
+        "/shared_data/prod_reconciliation/C3a/20221120"
     :param dag_builder_name: name of the DAG builder, e.g. "C1b"
     :param start_timestamp_as_str: string representation of timestamp
         at which to start reconcile run, e.g. "20221010_060500"
@@ -81,20 +84,14 @@ def build_reconciliation_configs(
         run_tca = False
         #
         bar_duration = "5T"
-        #
-        root_dir = "/shared_data/prod_reconciliation"
         # TODO(Grisha): this is not DRY, unify with `lib_tasks_reconcile.py`.
         prod_dir = os.path.join(
-            root_dir,
-            dag_builder_name,
-            run_date,
+            target_dir,
             "prod",
             prod_subdir,
         )
         sim_dir = os.path.join(
-            root_dir,
-            dag_builder_name,
-            run_date,
+            target_dir,
             "simulation",
             "system_log_dir",
         )
@@ -104,18 +101,30 @@ def build_reconciliation_configs(
             # "cand": prod_dir,
             "sim": sim_dir,
         }
-        #
+        # TODO(Grisha): somehow we should get column names
+        # from the `DagBuilder` object.
+        if dag_builder_name == "C1b":
+            price_col = "twap"
+            prediction_col = "vwap.ret_0.vol_adj.lag_-2.hat"
+            volatility_col = "vwap.ret_0.vol"
+        elif dag_builder_name == "C3a":
+            price_col = "twap"
+            prediction_col = "feature"
+            volatility_col = "garman_klass_vol"
+        else:
+            raise ValueError(f"Unsupported dag_builder_name={dag_builder_name}")
         fep_init_dict = {
-            "price_col": "twap",
-            "prediction_col": "vwap.ret_0.vol_adj.lag_-2.hat",
-            "volatility_col": "vwap.ret_0.vol",
+            "price_col": price_col,
+            "prediction_col": prediction_col,
+            "volatility_col": volatility_col,
         }
         quantization = "asset_specific"
         market_info = occxbrok.load_market_data_info()
         asset_id_to_share_decimals = occxbrok.subset_market_info(
             market_info, "amount_precision"
         )
-        gmv = 700.0
+        #gmv = 700.0
+        gmv = 3000.0
         liquidate_at_end_of_day = False
     elif asset_class == "equities":
         run_tca = True
