@@ -222,7 +222,7 @@ def use_docker_sibling_containers() -> bool:
     Using sibling containers requires that all Docker containers in the
     same network so that they can communicate with each other.
     """
-    val = hserver.is_dev4() or hserver.is_mac(
+    val = hserver.is_dev4() or hserver._is_mac_version_with_sibling_containers()
     return val
 
 
