@@ -1434,6 +1434,9 @@ def remap_obj(
     :return: remapped pandas series
     """
     hdbg.dassert_lte(0, obj.shape[0])
+    # TODO(Grisha): consider extending for other mapping types supported by
+    #  `pd.Series.map`.
+    hdbg.dassert_isinstance(map_, dict)
     # Check that every element of the object is in the mapping.
     hdbg.dassert_is_subset(obj, map_.keys())
     new_srs = obj.map(map_, **kwargs)

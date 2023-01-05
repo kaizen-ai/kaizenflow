@@ -164,15 +164,15 @@ def add_target_var(
 
 
 def _parse_universe_str(backtest_config: str) -> Tuple[str, str]:
+    # TODO(Grisha): consider returning vendor name, universe version and top_n.
     """
-    Get vendor name and universe version from backtest config, e.g.,
-    `ccxt_v7_1-all.5T.2022-09-01_2022-11-30`
+    Extract vendor name and universe version from universe version as string.
+     
+    :param universe_version_str: universe version as str, e.g., `ccxt_v7_1`
+    :return: vendor name and universe version, e.g., `("ccxt", "v7.1")`
     """
-    universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
     vendor, universe_version = universe_str.split("_", 1)
     vendor = vendor.upper()
-    # Remove top-n from universe version, i.e., "all".
-    universe_version, _ = universe_version.split("-", 1)
     universe_version = universe_version.replace("_", ".")
     return vendor, universe_version
 
@@ -211,7 +211,9 @@ def annotate_metrics_df(
         metrics_df[tag_col] = tag_mode
     elif tag_mode == "full_symbol":
         backtest_config = config["backtest_config"]
-        vendor, universe_version = _parse_universe_str(backtest_config)
+        universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
+        universe_version_str, _ = cconfig.parse_universe_str(universe_str)
+        vendor, universe_version = _parse_universe_version_str(universe_version_str)
         universe_mode = "trade"
         full_symbol_universe = ivcu.get_vendor_universe(
             vendor, universe_mode, version=universe_version, as_full_symbol=True
@@ -226,8 +228,8 @@ def annotate_metrics_df(
     elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
-        quantile_number = config["metrics"]["quantile_number"]
-        qcut_func = lambda x: pd.qcut(x, quantile_number, labels=False)
+        n_quantiles = config["metrics"]["n_quantiles"]
+        qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
         target_var = config["column_names"]["target_variable"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             target_var
@@ -236,8 +238,8 @@ def annotate_metrics_df(
     elif tag_mode == "prediction_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
-        quantile_number = config["metrics"]["quantile_number"]
-        qcut_func = lambda x: pd.qcut(x, quantile_number, labels=False)
+        n_quantiles = config["metrics"]["n_quantiles"]
+        qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
         prediction_var = config["column_names"]["prediction"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             prediction_var
