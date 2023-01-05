@@ -423,6 +423,7 @@ def cv_apply_metrics(
         # Add target variable.
         # TODO(Grisha): this is a hack for C3a, ideally we should
         # get target variable from the DAG.
+        result_df = result_df.copy()
         result_df = add_target_var(result_df, config)
         y_column_name = config["column_names"]["target_variable"]
         y_hat_column_name = config["column_names"]["prediction"]
