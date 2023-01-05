@@ -140,6 +140,10 @@ def has_docker_sudo() -> bool:
     return ret
 
 
+def _is_mac_version_with_sibling_containers() -> bool:
+    return hserver.is_mac(version="Monterey") or hserver.is_mac(version="Ventura")
+
+
 # TODO(gp): -> has_docker_privileged_mode
 @functools.lru_cache()
 def has_dind_support() -> bool:
@@ -219,8 +223,6 @@ def use_docker_sibling_containers() -> bool:
     same network so that they can communicate with each other.
     """
     val = hserver.is_dev4() or hserver.is_mac(
-        version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS
-    )
     return val
 
 
@@ -268,7 +270,7 @@ def use_docker_db_container_name_to_connect() -> bool:
     Connect to containers running DBs just using the container name, instead of
     using port and localhost / hostname.
     """
-    if hserver.is_mac(version=_MACOS_VERSION_WITH_SIBLING_CONTAINERS):
+    if _is_mac_version_with_sibling_containers():
         # New Macs don't seem to see containers unless we connect with them
         # directly with their name.
         ret = True

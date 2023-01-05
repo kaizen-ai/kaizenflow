@@ -360,7 +360,7 @@ class TargetPositionAndOrderGenerator(hobject.PrintableMixin):
             _LOG.debug("asset_ids_to_decimals=%s", asset_ids_to_decimals)
         else:
             asset_ids_to_decimals = None
-        if backend == "pomo" or "cc_pomo":
+        if backend == "pomo" or backend == "cc_pomo":
             style = self._optimizer_dict["params"]["style"]
             kwargs = self._optimizer_dict["params"]["kwargs"]
             df = ocalopti.compute_target_holdings_and_trades_notional(
