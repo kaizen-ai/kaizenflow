@@ -16,11 +16,14 @@ export AM_AWS_S3_BUCKET="alphamatic-data"
 export CK_ECR_BASE_PATH="623860924167.dkr.ecr.eu-north-1.amazonaws.com"
 export CK_AWS_S3_BUCKET="cryptokaizen-data"
 
+export DEV1="172.30.2.136"
+export DEV2="172.30.2.128"
+
 # Print the AM env vars.
 printenv | egrep "AM_|AWS_" | sort
 
-# Set up custom path to the alembic.ini file
-#  https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
+# Set up custom path to the alembic.ini file.
+# See https://alembic.sqlalchemy.org/en/latest/tutorial.html#editing-the-ini-file
 export ALEMBIC_CONFIG="alembic/alembic.ini"
 
 # TODO(gp): Factor out the common code in `amp/dev_scripts/configure_env_amp.sh`

@@ -2,8 +2,11 @@ import logging
 from typing import List
 
 import pandas as pd
+import pytest
 
+import core.finance.ablation as cfinabla
 import core.finance_data_example as cfidaexa
+import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 import optimizer.forecast_evaluator_with_optimizer as ofevwiop
 
@@ -262,5 +265,71 @@ class TestForecastEvaluatorWithOptimizer1(hunitest.TestCase):
 2022-01-03 09:50:00-05:00  -50.06     119765.59       65.46  99756.45 -19943.69
 2022-01-03 09:55:00-05:00  -28.22      79792.93   -79792.93  99764.83 -99764.83
 2022-01-03 10:00:00-05:00  105.71          0.00        0.00  99659.12 -99659.12
+"""
+        self.assert_equal(actual, expected, fuzzy_match=True)
+
+
+class TestForecastEvaluatorWithOptimizer2(hunitest.TestCase):
+    @staticmethod
+    def get_data(
+        start_datetime: pd.Timestamp,
+        end_datetime: pd.Timestamp,
+        asset_ids: List[int],
+        *,
+        bar_duration: str = "30T",
+    ) -> pd.DataFrame:
+        df = cfidaexa.get_forecast_price_based_dataframe(
+            start_datetime,
+            end_datetime,
+            asset_ids,
+            bar_duration=bar_duration,
+        )
+        df = cfinabla.set_non_ath_to_nan(df)
+        return df
+
+    @staticmethod
+    def get_config_dict() -> dict:
+        dict_ = {
+            "dollar_neutrality_penalty": 0.01,
+            "volatility_penalty": 0.01,
+            "relative_holding_penalty": 0.0,
+            "relative_holding_max_frac_of_gmv": 0.8,
+            "target_gmv": 1e5,
+            "target_gmv_upper_bound_penalty": 0.0,
+            "target_gmv_hard_upper_bound_multiple": 1.00,
+            "turnover_penalty": 0.001,
+            "solver": "ECOS",
+        }
+        return dict_
+
+    @pytest.mark.slow("Under 10 seconds.")
+    def test_multiday(self) -> None:
+        data = self.get_data(
+            pd.Timestamp("2022-01-03 09:30:00", tz="America/New_York"),
+            pd.Timestamp("2022-01-05 16:00:00", tz="America/New_York"),
+            asset_ids=[101, 201, 301],
+        )
+        config_dict = self.get_config_dict()
+        forecast_evaluator = ofevwiop.ForecastEvaluatorWithOptimizer(
+            price_col="price",
+            volatility_col="volatility",
+            prediction_col="prediction",
+            optimizer_config_dict=config_dict,
+        )
+        _, stats_df = forecast_evaluator.annotate_forecasts(
+            data,
+            quantization="nearest_share",
+        )
+        precision = 2
+        actual = hpandas.df_to_str(stats_df.round(precision), precision=precision)
+        expected = r"""
+                             pnl  gross_volume  net_volume       gmv     nmv
+2022-01-03 10:30:00-05:00   0.00          0.00        0.00      0.00    0.00
+2022-01-03 11:00:00-05:00   0.00      99851.21      111.89  99851.21  111.89
+2022-01-03 11:30:00-05:00  12.65          0.00        0.00  99890.50  124.54
+...
+2022-01-05 15:00:00-05:00  53.47          0.00        0.00  100273.35 -157.17
+2022-01-05 15:30:00-05:00  58.67          0.00        0.00  100185.16  -98.50
+2022-01-05 16:00:00-05:00 -36.85     100269.89      135.35       0.00    0.00
 """
         self.assert_equal(actual, expected, fuzzy_match=True)

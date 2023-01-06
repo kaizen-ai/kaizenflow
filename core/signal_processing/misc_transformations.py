@@ -16,7 +16,9 @@ _LOG = logging.getLogger(__name__)
 
 
 def compress_tails(
-    signal: Union[pd.DataFrame, pd.Series], scale: float = 1
+    signal: Union[pd.DataFrame, pd.Series],
+    scale: float = 1,
+    rescale: float = 1,
 ) -> Union[pd.DataFrame, pd.Series]:
     """
     Apply compression to data.
@@ -25,9 +27,14 @@ def compress_tails(
     :param scale: Divide data by scale and multiply compressed output by scale.
         Rescaling approximately preserves behavior in a neighborhood of the
         origin where the compression function is approximately linear.
+    :param rescale: multiplier to apply prior to scaling and compression. This
+        rescaling is not undone after the compression.
     :return: compressed data
     """
     hdbg.dassert_lt(0, scale)
+    hdbg.dassert_lt(0, rescale)
+    if rescale != 1:
+        signal = rescale * signal
     return scale * np.tanh(signal / scale)
 
 

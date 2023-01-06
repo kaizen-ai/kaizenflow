@@ -382,8 +382,8 @@ class CrossSectionalDfToDfTransformer(dtfconobas.Transformer):
     def __init__(
         self,
         nid: dtfcornode.NodeId,
-        in_col_group: Tuple[dtfcorutil.NodeColumn],
-        out_col_group: Tuple[dtfcorutil.NodeColumn],
+        in_col_groups: List[Tuple[dtfcorutil.NodeColumn]],
+        out_col_groups: List[Tuple[dtfcorutil.NodeColumn]],
         transformer_func: Callable[..., Union[pd.Series, pd.DataFrame]],
         transformer_kwargs: Optional[Dict[str, Any]] = None,
         col_mapping: Optional[
@@ -400,10 +400,19 @@ class CrossSectionalDfToDfTransformer(dtfconobas.Transformer):
         """
         super().__init__(nid)
         # TODO(Paul): Add more checks here.
-        hdbg.dassert_isinstance(in_col_group, tuple)
-        hdbg.dassert_isinstance(out_col_group, tuple)
-        self._in_col_group = in_col_group
-        self._out_col_group = out_col_group
+        hdbg.dassert_isinstance(in_col_groups, list)
+        hdbg.dassert_isinstance(out_col_groups, list)
+        hdbg.dassert_eq(len(in_col_groups), len(out_col_groups))
+        for idx in range(0, len(in_col_groups)):
+            hdbg.dassert_isinstance(in_col_groups[idx], tuple)
+            hdbg.dassert_isinstance(out_col_groups[idx], tuple)
+            hdbg.dassert_eq(len(in_col_groups[idx]), len(out_col_groups[idx]))
+        self._in_col_groups = in_col_groups
+        self._out_col_groups = out_col_groups
+        col_group_mapping = {}
+        for idx in range(0, len(in_col_groups)):
+            col_group_mapping[in_col_groups[idx]] = out_col_groups[idx]
+        self._col_grouping_mapping = col_group_mapping
         self._transformer_func = transformer_func
         self._transformer_kwargs = transformer_kwargs or {}
         self._col_mapping = col_mapping or {}
@@ -421,29 +430,39 @@ class CrossSectionalDfToDfTransformer(dtfconobas.Transformer):
         if self._join_output_with_input:
             df_in = df.copy()
         #
-        in_df = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
-            df, self._in_col_group
+        in_dfs = dtfconobas.CrossSectionalDfToDfColProcessor.preprocess(
+            df, self._in_col_groups
         )
         #
         info = collections.OrderedDict()  # type: ignore
         info["func_info"] = collections.OrderedDict()
-        #
-        df_out, func_info = _apply_func_to_data(
-            in_df,
-            self._transformer_func,
-            self._transformer_kwargs,
-            self._drop_nans,
-            self._reindex_like_input,
-            self._permitted_exceptions,
-        )
-        hdbg.dassert_isinstance(df_out, pd.DataFrame)
+        func_info = info["func_info"]
+        out_dfs = {}
+        for key in in_dfs.keys():
+            _LOG.debug("Applying cross-sectional function for key=%s", key)
+            out_key = self._col_grouping_mapping[key]
+            _LOG.debug("Output key is out_key=%s", out_key)
+            df_out, key_info = _apply_func_to_data(
+                in_dfs[key],
+                self._transformer_func,
+                self._transformer_kwargs,
+                self._drop_nans,
+                self._reindex_like_input,
+                self._permitted_exceptions,
+            )
+            if df_out is None:
+                _LOG.warning(
+                    "No output for key=%s, imputing empty dataframe", key
+                )
+                df_out = pd.DataFrame()
+            hdbg.dassert_isinstance(df_out, pd.DataFrame)
+            if key_info is not None:
+                func_info[key] = key_info
+            if self._col_mapping:
+                df_out = df_out.rename(columns=self._col_mapping)
+            out_dfs[out_key] = df_out
         info["func_info"] = func_info
-        if self._col_mapping:
-            df_out = df_out.rename(columns=self._col_mapping)
-        #
-        df = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(
-            df_out, self._out_col_group
-        )
+        df = dtfconobas.CrossSectionalDfToDfColProcessor.postprocess(out_dfs)
         if self._join_output_with_input:
             df = dtfcorutil.merge_dataframes(df_in, df)
         info["df_transformed_info"] = dtfcorutil.get_df_info_as_string(df)
