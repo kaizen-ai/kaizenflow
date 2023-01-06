@@ -152,7 +152,7 @@ class RedditDownloader(sinsadow.DataDownloader):
             # TODO(Vlad): This iterator is pretty slow: ~30s for the two
             #  subreddits and 10 posts for every subreddit.
             #  Have to be speed up for production usage.
-            hot_posts = self.reddit_client.subreddit(subreddit).hot(
+            hot_posts = self.reddit_client.subreddit(subreddit).new(
                 limit=numbers_post_to_fetch
             )
             for post in hot_posts:
