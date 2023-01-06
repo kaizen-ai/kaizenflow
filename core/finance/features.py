@@ -141,3 +141,46 @@ def normalize_bar(
         },
     )
     return normalized_hlc
+
+
+def compute_two_bar_diffs_and_sums(
+    df: pd.DataFrame,
+    open_col: str = "open",
+    high_col: str = "high",
+    low_col: str = "low",
+    close_col: str = "close",
+    volume_col: str = "volume",
+) -> pd.DataFrame:
+    """
+    Generate diffs and sums of OHLCV data.
+    """
+    hdbg.dassert_isinstance(df, pd.DataFrame)
+    cols = [open_col, high_col, low_col, close_col, volume_col]
+    hdbg.dassert_container_type(cols, container_type=list, elem_type=str)
+    hdbg.dassert_is_subset(cols, df.columns)
+    hdbg.dassert_lte(0.0, df[volume_col].min())
+    #
+    diffs = (
+        df[cols]
+        .diff()
+        .rename(
+            columns={
+                open_col: "delta_open",
+                high_col: "delta_high",
+                low_col: "delta_low",
+                close_col: "delta_close",
+                volume_col: "delta_volume",
+            },
+        )
+    )
+    sums = (df[cols] + df[cols].shift(1)).rename(
+        columns={
+            open_col: "sigma_open",
+            high_col: "sigma_high",
+            low_col: "sigma_low",
+            close_col: "sigma_close",
+            volume_col: "sigma_volume",
+        },
+    )
+    diffs_and_sums = pd.concat([diffs, sums], axis=1)
+    return diffs_and_sums

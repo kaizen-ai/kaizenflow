@@ -98,7 +98,11 @@ def is_mac(*, version: Optional[str] = None) -> bool:
     :param version: check whether we are running on a certain macOS version (e.g.,
         `Catalina`, `Monterey`)
     """
+    _LOG.debug("version=%s", version)
     host_os_name = os.uname()[0]
+    _LOG.debug(
+        "os.uname()=%s", str(os.uname())
+    )
     am_host_os_name = os.environ.get("AM_HOST_OS_NAME", None)
     _LOG.debug(
         "host_os_name=%s am_host_os_name=%s", host_os_name, am_host_os_name
@@ -125,6 +129,11 @@ def is_mac(*, version: Optional[str] = None) -> bool:
         # Tue Apr 26 21:08:37 PDT 2022;
         #   root:xnu-8020.121.3~4/RELEASE_ARM64_T6000 arm64```
         macos_tag = "21."
+    elif version == "Ventura":
+        # Darwin alpha.local 21.5.0 Darwin Kernel Version 21.5.0:
+        # Tue Apr 26 21:08:37 PDT 2022;
+        #   root:xnu-8020.121.3~4/RELEASE_ARM64_T6000 arm64```
+        macos_tag = "22."
     else:
         raise ValueError(f"Invalid version='{version}'")
     _LOG.debug("macos_tag=%s", macos_tag)
@@ -278,6 +287,7 @@ def config_func_to_str() -> str:
         "is_inside_docker()",
         "is_mac(version='Catalina')",
         "is_mac(version='Monterey')",
+        "is_mac(version='Ventura')",
     ]
     for func_name in sorted(function_names):
         try:

@@ -231,20 +231,13 @@ class ForecastEvaluatorWithOptimizer:
             executed_trades_notional_dict[timestamp] = executed_trades_notional
             # Compute notional value of target holdings.
             liquidate_holdings = liquidate_at_end_of_day and next_timestamp_is_eod
-            target_holdings_notional = self._optimize_target_holdings_notional(
-                dag_slice, holdings_shares, holdings_notional, liquidate_holdings
-            )
-            # The raw optimizer output is notional-only. Now we convert back
-            # to shares, quantize the shares, and then recompute the notional
-            # post-quantization.
-            (
-                target_holdings_shares,
-                target_holdings_notional,
-            ) = self._compute_target_holdings(
+            targets_df = self._optimize(
                 dag_slice,
-                target_holdings_notional,
+                holdings_shares,
+                holdings_notional,
                 quantization,
                 asset_id_to_share_decimals,
+                liquidate_holdings,
             )
             # If the time step is not the last one, set the next-period
             # share holdings and executed trades in shares (assuming orders
@@ -261,11 +254,11 @@ class ForecastEvaluatorWithOptimizer:
                         0, asset_ids, name="executed_trades_shares"
                     )
                 else:
-                    holdings_shares_dict[
-                        next_timestamp
-                    ] = target_holdings_shares.rename("holdings_shares")
+                    holdings_shares_dict[next_timestamp] = targets_df[
+                        "target_holdings_shares"
+                    ].rename("holdings_shares")
                     executed_trades_shares_dict[next_timestamp] = (
-                        target_holdings_shares - holdings_shares
+                        targets_df["target_trades_shares"]
                     ).rename("executed_trades_shares")
         # Create the portfolio dataframe.
         holdings_shares = pd.DataFrame(holdings_shares_dict).T
@@ -349,12 +342,14 @@ class ForecastEvaluatorWithOptimizer:
         )
         return executed_trades_notional
 
-    def _optimize_target_holdings_notional(
+    def _optimize(
         self,
         df_slice: pd.DataFrame,
         holdings_shares: pd.Series,
         holdings_notional: pd.Series,
-        liquidate_holdings: bool,
+        quantization,
+        asset_id_to_share_decimals,
+        liquidate_holdings,
     ) -> pd.Series:
         # Prepare data for the optimizer.
         holdings_df = pd.concat([holdings_shares, holdings_notional], axis=1)
@@ -362,42 +357,15 @@ class ForecastEvaluatorWithOptimizer:
         input_df = targets_input_df.reset_index()
         input_df = input_df.rename(columns={"index": "asset_id"})
         _LOG.debug("input_df cols=%s", input_df.columns)
-        if liquidate_holdings:
-            target_holdings_notional = pd.Series(
-                0, df_slice.index.values, name="target_holdings_notional"
-            )
-        else:
-            # Optimize.
-            targets_output_df = osipeopt.optimize(
-                self._optimizer_config_dict, input_df
-            )
-            target_holdings_notional = targets_output_df[
-                "target_holdings_notional"
-            ]
-        return target_holdings_notional
-
-    def _compute_target_holdings(
-        self,
-        df_slice: pd.DataFrame,
-        target_holdings_notional: pd.Series,
-        quantization: str,
-        asset_id_to_share_decimals: Optional[Dict[int, int]],
-    ) -> Tuple[pd.Series, pd.Series]:
-        price = df_slice["price"]
-        target_holdings_shares = (target_holdings_notional / price).rename(
-            "target_holdings_shares"
+        # Optimize.
+        output_df = osipeopt.optimize(
+            self._optimizer_config_dict,
+            input_df,
+            quantization=quantization,
+            asset_id_to_share_decimals=asset_id_to_share_decimals,
+            liquidate_holdings=liquidate_holdings,
         )
-        # Quantize the shares.
-        target_holdings_shares = cofinanc.quantize_shares(
-            target_holdings_shares,
-            quantization,
-            asset_id_to_share_decimals,
-        )
-        # Recompute notional from quantized shares.
-        target_holdings_notional = (target_holdings_shares * price).rename(
-            "target_holdings_notional"
-        )
-        return target_holdings_shares, target_holdings_notional
+        return output_df
 
     def _validate_df(self, df: pd.DataFrame) -> None:
         hpandas.dassert_time_indexed_df(

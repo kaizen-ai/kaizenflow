@@ -134,6 +134,21 @@ datetime,normalized_difference
         expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
         self.assert_dfs_close(actual, expected, rtol=1e-6, atol=1e-6)
 
+    def test_normalized_difference_to_gaussian2(self) -> None:
+        df = self._get_df()
+        actual = cofeatur.cross_feature_pair(
+            df, "x3", "x4", ["normalized_difference_to_gaussian"]
+        )
+        txt = """
+datetime,normalized_difference_to_gaussian
+2016-01-04 12:00:00,-1.186831
+2016-01-04 12:01:00,NaN
+2016-01-04 12:02:00,-0.069685
+2016-01-04 12:03:00,0.170185
+"""
+        expected = pd.read_csv(io.StringIO(txt), index_col=0, parse_dates=True)
+        self.assert_dfs_close(actual, expected, rtol=1e-6, atol=1e-6)
+
     def test_difference_of_logs(self) -> None:
         df = self._get_df()
         actual = cofeatur.cross_feature_pair(
@@ -603,15 +618,15 @@ class Test_combine_cols_instance1(_TestHelper):
         actual = hpandas.df_to_str(actual, num_rows=None)
         expected = r"""
           do        la        ti
-1   1.261131  3.464507  5.029443
-2  -1.143294 -6.275000  3.892820
-3   0.171854  1.094035 -0.459702
-4  -1.969558  6.227982 -0.893713
-5   0.991382 -6.415660  3.061300
-6   0.608196 -3.660017  2.027379
-7  -1.398199 -2.762529  5.745361
-8   0.493964 -3.225074  1.012373
-9  -0.141902 -3.213586  2.096536
-10  1.544598  7.901230  6.946704
+1   1.261131  3.464507  6.277219
+2  -1.143294 -6.275000  5.140596
+3   0.171854  1.094035  0.788074
+4  -1.969558  6.227982  0.354063
+5   0.991382 -6.415660  4.309076
+6   0.608196 -3.660017  3.275155
+7  -1.398199 -2.762529  6.993136
+8   0.493964 -3.225074  2.260149
+9  -0.141902 -3.213586  3.344312
+10  1.544598  7.901230  8.194480
 """
         self.assert_equal(actual, expected, fuzzy_match=True)
