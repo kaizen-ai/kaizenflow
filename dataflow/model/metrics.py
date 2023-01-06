@@ -114,53 +114,53 @@ def convert_to_metrics_format(
 
 
 # TODO(Grisha): specific of C3a, ideally we should add target variable
-# in `DagBuilder` so that `predict_df` contains everythings we need.
+# in `DagBuilder` so that `result_df` contains everythings we need.
 def add_target_var(
-    predict_df: pd.DataFrame, config: cconfig.Config, *, inplace: bool = False
+    result_df: pd.DataFrame, config: cconfig.Config, *, inplace: bool = False
 ) -> pd.DataFrame:
     """
-    Add target variable to a predict_df.
+    Add target variable to a result_df.
 
     :param predict_df: DAG output
     :param config: config that controls column names
     :param inplace: allow to change the original df if set to `True`, otherwise,
         make a copy
-    :return: predict_df with target variable
+    :return: result_df with target variable
     """
-    hdbg.dassert_isinstance(predict_df, pd.DataFrame)
-    _LOG.debug("predict_df in=\n%s", hpandas.df_to_str(predict_df))
+    hdbg.dassert_isinstance(rersult_df, pd.DataFrame)
+    _LOG.debug("result_df in=\n%s", hpandas.df_to_str(result_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
     _LOG.debug("config=\n%s", config)
-    # Make a df copy in order not to modify the original one.
     if not inplace:
-        predict_df = predict_df.copy()
+        # Make a df copy in order not to modify the original one.
+        result_df = result_df.copy()
     # Compute returns.
     rets = cofinanc.compute_ret_0(
-        predict_df[config["column_names"]["price"]], mode="log_rets"
+        result_df[config["column_names"]["price"]], mode="log_rets"
     )
-    predict_df = hpandas.add_multiindex_col(
-        predict_df, rets, col_name=config["column_names"]["returns"]
+    result_df = hpandas.add_multiindex_col(
+        result_df, rets, col_name=config["column_names"]["returns"]
     )
     # Adjust returns by volatility.
-    rets_vol_adj = predict_df[config["column_names"]["returns"]] / predict_df[
+    rets_vol_adj = result_df[config["column_names"]["returns"]] / result_df[
         config["column_names"]["volatility"]
     ].shift(2)
-    predict_df = hpandas.add_multiindex_col(
-        predict_df,
+    result_df = hpandas.add_multiindex_col(
+        result_df,
         rets_vol_adj,
         col_name=config["column_names"]["vol_adj_returns"],
     )
     # Shift 2 steps ahead.
-    rets_vol_adj_lead2 = predict_df[
+    rets_vol_adj_lead2 = result_df[
         config["column_names"]["vol_adj_returns"]
     ].shift(2)
-    predict_df = hpandas.add_multiindex_col(
-        predict_df,
+    result_df = hpandas.add_multiindex_col(
+        result_df,
         rets_vol_adj_lead2,
         col_name=config["column_names"]["target_variable"],
     )
-    _LOG.debug("predict_df out=\n%s", hpandas.df_to_str(predict_df))
-    return predict_df
+    _LOG.debug("result_df out=\n%s", hpandas.df_to_str(result_df))
+    return result_df
 
 
 # #############################################################################
@@ -236,25 +236,29 @@ def annotate_metrics_df(
         )
     elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
-        # TODO(grisha): Consider factoring out these chunks of code so that
-        # `annotate_metrics_df()` contains the switch and the common logic.
         idx_name = metrics_df.index.names[1]
+        # Get a variable to calculate rank for.
+        target_var = config["column_names"]["target_variable"]
+        # Calculate magnitude quantile rank for each data point.
         n_quantiles = config["metrics"]["n_quantiles"]
         qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
-        target_var = config["column_names"]["target_variable"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             target_var
         ].transform(qcut_func)
+        #
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "prediction_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
+        # Get a variable to calculate rank for.
+        prediction_var = config["column_names"]["prediction"]
+        # Calculate magnitude quantile rank for each data point.
         n_quantiles = config["metrics"]["n_quantiles"]
         qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
-        prediction_var = config["column_names"]["prediction"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             prediction_var
         ].transform(qcut_func)
+        #
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "hour":
         idx_datetime = metrics_df.index.get_level_values(0)
@@ -427,8 +431,10 @@ def cross_val_apply_metrics(
     :return: an average value of computed metrics across multiple cross validation
         splits
     """
-    hdbg.dassert_isinstance(result_dfs, list)
-    hdbg.dassert_isinstance(metric_modes, list)
+    hdbg.dassert_container_type(
+        result_dfs, container_type=list, elem_type=pd.DataFrame
+    )
+    hdbg.dassert_container_type(metric_modes, container_type=list, elem_type=str)
     out_dfs = []
     for result_df in result_dfs:
         # Add the target variable.
