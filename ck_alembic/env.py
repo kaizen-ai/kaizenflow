@@ -8,7 +8,7 @@ import logging
 
 import sqlalchemy
 
-import helpers.hsql as hsql
+import im_v2.common.db.db_utils as imvcddbut
 from alembic import context
 
 # this is the Alembic Config object, which provides
@@ -75,7 +75,7 @@ def run_migrations_online() -> None:
     """
     # In order to reuse our API we need to pass this as callable
     #  into sqlalchemy.
-    conn_creator = lambda _: hsql.get_connection_from_env_file(stage)
+    conn_creator = lambda _: imvcddbut.DbConnectionManager.get_connection(stage)
     connectable = sqlalchemy.create_engine(
         "postgresql+psycopg2://", creator=conn_creator
     )
