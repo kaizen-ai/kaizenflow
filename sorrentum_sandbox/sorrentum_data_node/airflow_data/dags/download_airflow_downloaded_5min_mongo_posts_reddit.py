@@ -41,7 +41,7 @@ bash_command = [
     # Sleep 5 seconds to ensure the post is submitted
     "sleep 5",
     "&&",
-    "/cmamp/surrentum_infra_sandbox/examples/reddit/example_extract.py",
+    "/cmamp/sorrentum_sandbox/examples/reddit/download_to_db.py",
     "--start_timestamp {{ data_interval_start }}",
     "--end_timestamp {{ data_interval_end }}",
 ]

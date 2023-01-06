@@ -1,71 +1,28 @@
-#!/usr/bin/env python
 """
-Example implementation of abstract classes for ETL and QA pipeline.
+Extract part of the ETL and QA pipeline.
 
-Download Reddit data
+Import as:
 
-Use as:
-# Download Reddit data:
-> example_extract.py \
-    --start_timestamp '2022-10-20 10:00:00+00:00' \
-    --end_timestamp '2022-10-21 15:30:00+00:00'
+import sorrentum_sandbox.examples.reddit.download as srseredo
 """
-import abc
-import argparse
 import dataclasses
 import datetime
 import logging
 import os
-from typing import Any, List, Tuple, Optional
+from typing import List, Optional, Tuple, Any
 
 import pandas as pd
 import praw
-import pymongo
 
-import helpers.hdbg as hdbg
-import surrentum_infra_sandbox.download as sinsadow
-import surrentum_infra_sandbox.save as sinsasav
+import sorrentum_sandbox.download as sinsadow
 
 _LOG = logging.getLogger(__name__)
 REDDIT_CLIENT_ID = os.environ["REDDIT_CLIENT_ID"]
 REDDIT_SECRET = os.environ["REDDIT_SECRET"]
-MONGO_HOST = os.environ["MONGO_HOST"]
-
-
-class BaseMongoSaver(sinsasav.DataSaver):
-    """
-    Abstract class for saving data to MongoDB.
-    """
-
-    def __init__(self, mongo_client: pymongo.MongoClient, db_name: str):
-        self.mongo_client = mongo_client
-        self.db_name = db_name
-
-    @abc.abstractmethod
-    def save(self, data: sinsadow.RawData) -> None:
-        """
-        Save data to a MongoDB.
-
-        :param data: data to persist
-        """
-
-
-class RedditMongoSaver(BaseMongoSaver):
-    """
-    Store data from the Reddit to MongoDB.
-    """
-
-    def __init__(self, *args, collection_name: str, **kwargs):
-        self.collection_name = collection_name
-        super().__init__(*args, db_name="reddit", **kwargs)
-
-    def save(self, data: sinsadow.RawData) -> None:
-        db = self.mongo_client
-        db[self.db_name][self.collection_name].insert_many(data.get_data())
 
 
 @dataclasses.dataclass
-class RedditPostFeatures:
+class PostFeatures:
     subreddit: str
     created: datetime.datetime
     symbols: List[str]
@@ -80,7 +37,7 @@ class RedditPostFeatures:
         return {k: str(v) for k, v in dataclasses.asdict(self).items()}
 
 
-class RedditDownloader(sinsadow.DataDownloader):
+class PostsDownloader(sinsadow.DataDownloader):
     """
     Download reddit data using praw lib.
     """
@@ -103,7 +60,9 @@ class RedditDownloader(sinsadow.DataDownloader):
         try:
             body = post.comments[0].body
         except IndexError:
-            _LOG.warn("Error fetching top comment for the post: %s", post.title)
+            _LOG.warning(
+                "Error fetching top comment for the post: %s", post.title
+            )
             body = ""
         return body
 
@@ -168,7 +127,7 @@ class RedditDownloader(sinsadow.DataDownloader):
                 else:
                     top_comment = ""
                 output += [
-                    RedditPostFeatures(
+                    PostFeatures(
                         subreddit=subreddit,
                         created=post_timestamp,
                         symbols=self.get_symbols_from_content(post.selftext),
@@ -181,68 +140,3 @@ class RedditDownloader(sinsadow.DataDownloader):
                     ).dict()
                 ]
         return sinsadow.RawData(output)
-
-
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = RedditDownloader()
-    raw_data = downloader.download(
-        start_timestamp=start_timestamp,
-        end_timestamp=end_timestamp)
-    if len(raw_data.get_data()) > 0:
-        mongo_saver = RedditMongoSaver(
-            mongo_client=pymongo.MongoClient(
-                host=MONGO_HOST,
-                port=27017,
-                username="mongo",
-                password="mongo"
-            ),
-            collection_name="posts"
-        )
-        mongo_saver.save(raw_data)
-    else:
-        _LOG.info(
-            "Empty output for datetime range: %s -  %s",
-            args.start_timestamp,
-            args.end_timestamp
-        )
-
-
-def add_download_args(
-    parser: argparse.ArgumentParser,
-) -> argparse.ArgumentParser:
-    """
-    Add the command line options for exchange download.
-    """
-    parser.add_argument(
-        "--start_timestamp",
-        required=True,
-        action="store",
-        type=str,
-        help="Beginning of the loaded period, e.g. 2022-02-09 10:00:00+00:00",
-    )
-    parser.add_argument(
-        "--end_timestamp",
-        action="store",
-        required=True,
-        type=str,
-        help="End of the loaded period, e.g. 2022-02-10 10:00:00+00:00",
-    )
-    return parser
-
-
-def _parse() -> argparse.ArgumentParser:
-    hdbg.init_logger(use_exec_path=True)
-    parser = argparse.ArgumentParser(
-        description=__doc__,
-        formatter_class=argparse.RawTextHelpFormatter,
-    )
-    parser = add_download_args(parser)
-    return parser
-
-
-if __name__ == "__main__":
-    _main(_parse())
