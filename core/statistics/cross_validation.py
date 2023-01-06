@@ -15,6 +15,7 @@ import pandas as pd
 import sklearn.model_selection
 
 import core.config as cconfig
+import dataflow.core as dtfcore
 import helpers.hdbg as hdbg
 import helpers.hpandas as hpandas
 import helpers.hprint as hprint
@@ -232,3 +233,41 @@ def build_index_from_backtest_config(backtest_config: str) -> pd.Index:
     end_timestamp = end_timestamp.tz_convert("America/New_York")
     idx = pd.date_range(start_timestamp, end_timestamp, freq=trading_period_str)
     return idx
+
+
+# TODO(Grisha): maybe pass a DAG?
+def cross_val_predict(
+    dag_runner: dtfcore.FitPredictDagRunner,
+    backtest_config: str,
+    train_test_splits_mode: str,
+    *train_test_splits_args: Any,
+) -> List[pd.DataFrame]:
+    """
+    Generate result_df from cross-validation of the model.
+
+    Note: since multiple test sets is assumed, multiple result_dfs are returned.
+
+    :param backtest_config: backtest config, e.g., `ccxt_v7-all.5T.2022-09-01_2022-11-30`
+    :param train_test_splits_mode: correspond to the inputs to `get_train_test_splits()`
+    :param train_test_splits_args: correspond to the inputs to `get_train_test_splits()`
+    :return: list of result_dfs with estimates for each cross validation split
+    """
+    hdbg.dassert_isinstance(dag_runner, dtfcore.FitPredictDagRunner)
+    idx = build_index_from_backtest_config(backtest_config)
+    train_test_splits = get_train_test_splits(
+        idx, train_test_splits_mode, *train_test_splits_args
+    )
+    result_dfs = []
+    for split in train_test_splits:
+        # 1) Split.
+        idx_train, idx_test = split
+        # 2) Fit.
+        dag_runner.set_fit_intervals([(idx_train[0], idx_train[-1])])
+        # TODO(gp): Store also the fit_df.
+        _ = dag_runner.fit()
+        # 3) Predict.
+        dag_runner.set_predict_intervals([(idx_test[0], idx_test[-1])])
+        predict_result_bundle = dag_runner.predict()
+        result_df = predict_result_bundle.result_df
+        result_dfs.append(result_df)
+    return result_dfs

@@ -51,46 +51,47 @@ class DbConnectionManager:
     """
     Create and store DB connection.
 
-    Provide a singleton-like functionality in order to avoid overhead of many
-    shortlived DB connection.
-    For simplicity the class only supports setting up a DB connection to
-    a particular stage.
+    Provide a singleton-like functionality in order to avoid overhead of
+    many shortlived DB connection. For simplicity the class only
+    supports setting up a DB connection to exactly one stage.
     """
 
     connection = None
     db_stage = None
 
     @classmethod
-    def get_connection(cls, db_stage: str):
+    def get_connection(cls, db_stage: str) -> hsql.DbConnection:
+        """
+        Get a database connection. If the connection exists, return the object,
+        otherwise create it.
+
+        :param stage: DB stage to create connection to. The stage is only considered
+         if environment variables for connection are not passed, otherwise it is only
+         stored as an information.
+        :return: DbConnection
+        """
         if cls.db_stage is not None and cls.db_stage != db_stage:
             raise ValueError(
                 f"The connection has already been established to a different stage"
             )
         if cls.connection is None:
-            env_file = imvimlita.get_db_env_path(db_stage)
             try:
+                # Connect with the parameters from the env var.
+                #  Usually when credentials are injected into a container.
+                #
+                cls.connection = hsql.get_connection_from_env_vars()
+            except KeyError:
+                # If there are no OS env vars, try to fetch credentials from env file.
+                env_file = imvimlita.get_db_env_path(db_stage)
                 # Connect with the parameters from the env file.
                 #  Usually for test and dev stage.
                 connection_params = hsql.get_connection_info_from_env_file(
                     env_file
                 )
                 cls.connection = hsql.get_connection(*connection_params)
-            except psycopg2.OperationalError:
-                # TODO(Juraj): check if needed and either re-introduce
-                #  or deprecate.
-                # Connect with the dynamic parameters (usually during tests).
-                # actual_details = hsql.db_connection_to_tuple(args["connection"])._asdict()
-                # connection_params = hsql.DbConnectionInfo(
-                #    host=actual_details["host"],
-                #    dbname=actual_details["dbname"],
-                #    port=int(actual_details["port"]),
-                #    user=actual_details["user"],
-                #    password=actual_details["password"],
-                # )
-                # db_connection = hsql.get_connection(*connection_params)
-                # TODO(Juraj): use this for prod connection injected as env
-                #  vars into containers #CmTask3080.
-                cls.connection = hsql.get_connection_from_env_vars()
+            _LOG.info(
+                f"Created {cls.db_stage} DB connection: \n {cls.connection}"
+            )
         return cls.connection
 
 
