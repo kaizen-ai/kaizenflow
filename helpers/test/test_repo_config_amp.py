@@ -220,6 +220,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
               is_inside_docker()='True'
               is_mac(version='Catalina')='False'
               is_mac(version='Monterey')='False'
+              is_mac(version='Ventura')='False'
         # Env vars:
           AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
@@ -266,6 +267,7 @@ class TestRepoConfig_Amp_signature1(hunitest.TestCase):
               is_inside_docker()='True'
               is_mac(version='Catalina')='False'
               is_mac(version='Monterey')='False'
+              is_mac(version='Ventura')='False'
         # Env vars:
           AM_ECR_BASE_PATH='$AM_ECR_BASE_PATH'
           AM_ENABLE_DIND='1'
