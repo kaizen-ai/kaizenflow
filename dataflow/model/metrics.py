@@ -116,19 +116,24 @@ def convert_to_metrics_format(
 # TODO(Grisha): specific of C3a, ideally we should add target variable
 # in `DagBuilder` so that `predict_df` contains everythings we need.
 def add_target_var(
-    predict_df: pd.DataFrame, config: cconfig.Config
+    predict_df: pd.DataFrame, config: cconfig.Config, *, inplace: bool = False
 ) -> pd.DataFrame:
     """
     Add target variable to a predict_df.
 
     :param predict_df: DAG output
     :param config: config that controls column names
+    :param inplace: allow to change the original df if set to `True`, otherwise,
+        make a copy
     :return: predict_df with target variable
     """
     hdbg.dassert_isinstance(predict_df, pd.DataFrame)
     _LOG.debug("predict_df in=\n%s", hpandas.df_to_str(predict_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
     _LOG.debug("config=\n%s", config)
+    # Make a df copy in order not to modify the original one.
+    if not inplace:
+        predict_df = predict_df.copy()
     # Compute returns.
     rets = cofinanc.compute_ret_0(
         predict_df[config["column_names"]["price"]], mode="log_rets"
@@ -427,7 +432,6 @@ def cross_val_apply_metrics(
         # Add the target variable.
         # TODO(Grisha): this is a hack for C3a, ideally we should
         # get target variable from the DAG.
-        result_df = result_df.copy()
         result_df = add_target_var(result_df, config)
         # Convert to metrics format.
         y_column_name = config["column_names"]["target_variable"]
