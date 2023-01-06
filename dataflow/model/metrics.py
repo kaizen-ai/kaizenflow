@@ -217,6 +217,7 @@ def annotate_metrics_df(
     if tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     elif tag_mode == "full_symbol":
+        # Get a vendor universe.
         backtest_config = config["backtest_config"]
         universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
         universe_version_str, _ = cconfig.parse_universe_str(universe_str)
@@ -227,9 +228,11 @@ def annotate_metrics_df(
         full_symbol_universe = ivcu.get_vendor_universe(
             vendor, universe_mode, version=universe_version, as_full_symbol=True
         )
+        # Build map asset_id to full symbol.
         asset_id_to_full_symbol_mapping = (
             ivcu.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
+        # Add a tag with full symbol mapping.
         asset_ids = metrics_df.index.get_level_values(1)
         metrics_df[tag_col] = hpandas.remap_obj(
             asset_ids, asset_id_to_full_symbol_mapping
@@ -245,7 +248,7 @@ def annotate_metrics_df(
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             target_var
         ].transform(qcut_func)
-        #
+        # Add a tag with the rank.
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "prediction_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
@@ -258,7 +261,7 @@ def annotate_metrics_df(
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             prediction_var
         ].transform(qcut_func)
-        #
+        # Add a tag with the rank.
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "hour":
         idx_datetime = metrics_df.index.get_level_values(0)
