@@ -394,7 +394,7 @@ def apply_metrics(
 
 
 # TODO(Grisha): the problem is that the function computes for a single `tag_mode`.
-def cv_apply_metrics(
+def cross_val_apply_metrics(
     result_dfs: List[pd.DataFrame],
     tag_mode: str,
     metric_modes: List[str],
@@ -403,41 +403,50 @@ def cv_apply_metrics(
     """
     Apply metrics for multiple test set estimates.
 
-    The flow is:
-       - Add target variable
-       - Convert to metrics format
-       - Annotate with a tag
-       - Compute metrics
-       - Average the results across multiple cross validation splits
+    Return an average value of computed metrics across multiple cross validation
+    splits.
+
+    E.g.:
+    ```
+    hit_rate_point_est_(%)    hit_rate_97.50%CI_lower_bound_(%) hit_rate_97.50%CI_upper_bound_(%)    total_pnl    SR
+    all
+    all    51.241884        51.124107              51.35965                13904.318774    3.879794
+    ```
 
     :param result_dfs: dfs with prediction for different cross validation splits
     :param tag_mode: see `annotate_metrics_df()`
     :param metric_modes: see `apply_metrics()`
     :param config: config that control the metrics parameters
-    :return:
+    :return: an average value of computed metrics across multiple cross validation
+        splits
     """
     hdbg.dassert_isinstance(result_dfs, list)
     hdbg.dassert_isinstance(metric_modes, list)
     out_dfs = []
     for result_df in result_dfs:
-        # Add target variable.
+        # Add the target variable.
         # TODO(Grisha): this is a hack for C3a, ideally we should
         # get target variable from the DAG.
         result_df = result_df.copy()
         result_df = add_target_var(result_df, config)
+        # Convert to metrics format.
         y_column_name = config["column_names"]["target_variable"]
         y_hat_column_name = config["column_names"]["prediction"]
         metrics_df = convert_to_metrics_format(
             result_df, y_column_name, y_hat_column_name
         )
+        # Annotate with a tag.
         metrics_df = annotate_metrics_df(metrics_df, tag_mode, config)
-        # TODO(Grisha): pass a separate parameter.
+        # Compute metrcis.
+        # TODO(Grisha): pass as a separate parameter.
         tag_col = tag_mode
         out_df = apply_metrics(metrics_df, tag_col, metric_modes, config)
         out_dfs.append(out_df)
     out_df = pd.concat(out_dfs)
+    # Average the results.
     # TODO(Grisha): consider passing mean as a function to the interface so that
     # it is possible to use other stats functions, e.g., median.
+    # TODO(gp): return the res_df and then let another function do the operation.
     res_df = out_df.groupby(level=0).mean()
-    _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(res_df))
+    _LOG.debug("res_df out=\n%s", hpandas.df_to_str(res_df))
     return res_df

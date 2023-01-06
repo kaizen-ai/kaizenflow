@@ -236,38 +236,57 @@ def build_index_from_backtest_config(backtest_config: str) -> pd.Index:
 
 
 # TODO(Grisha): maybe pass a DAG?
-def cv_predict(
-    dag_runner: dtfcore.DagRunner,
+def cross_val_predict(
+    dag_runner: dtfcore.FitPredictDagRunner,
     backtest_config: str,
-    cv_mode: str,
-    *cv_args: Any,
+    train_test_splits_mode: str,
+    *train_test_splits_args: Any,
 ) -> List[pd.DataFrame]:
     """
-    Generate cross validated estimates.
+    Generate predict_df from cross-validation of the model.
 
-    Note: since multiple test sets is assumed, multiple dfs are returned.
+    A predict_df:
+       - is indexed by the timestamp of the end of intervals
+       - has multi-index column
+       - the innermost column corresponds to assets (encoded as ints)
+       - the outermost corresponding to "feature" (which can be inputs, outputs,
+           and internal nodes)
+
+    E.g.,
+    ```
+                              close                            ... close.ret_0
+                              1030828978 1182743717 1464553467 ... 1030828978 1182743717 1464553467
+    end_ts
+    2022-08-31 20:00:00-04:00  NaN        NaN        NaN       ...  NaN        NaN        NaN
+    2022-08-31 20:05:00-04:00  NaN        NaN        NaN       ...  NaN        NaN        NaN
+    ...
+    ```
+
+    Note: since multiple test sets is assumed, multiple predict dfs are returned.
 
     The flow is:
        - Split an index into train / test sets
        - Fit on a train set
        - Predict on a test set
-       - Collect prediction for each train / test split
+       - Collect prediction for cross validation split
 
     :param backtest_config: backtest config, e.g., `ccxt_v7-all.5T.2022-09-01_2022-11-30`
-    :param cv_mode: see `get_train_test_splits()`
-    :param cv_args: see `get_train_test_splits()`
-    :return: list of dfs with estimates for each cross validation split
+    :param train_test_splits_mode: correspond to the inputs to `get_train_test_splits()`
+    :param train_test_splits_args: correspond to the inputs to `get_train_test_splits()`
+    :return: list of predict dfs with estimates for each cross validation split
     """
-    hdbg.dassert_isinstance(dag_runner, dtfcore.DagRunner)
-    hdbg.dassert_isinstance(cv_mode, str)
+    hdbg.dassert_isinstance(dag_runner, dtfcore.FitPredictDagRunner)
     idx = build_index_from_backtest_config(backtest_config)
-    train_test_splits = get_train_test_splits(idx, cv_mode, *cv_args)
+    train_test_splits = get_train_test_splits(
+        idx, train_test_splits_mode, *train_test_splits_args
+    )
     predict_dfs = []
     for split in train_test_splits:
         # 1) Split.
         idx_train, idx_test = split
         # 2) Fit.
         dag_runner.set_fit_intervals([(idx_train[0], idx_train[-1])])
+        # TODO(gp): Store also the fit_df.
         _ = dag_runner.fit()
         # 3) Predict.
         dag_runner.set_predict_intervals([(idx_test[0], idx_test[-1])])
