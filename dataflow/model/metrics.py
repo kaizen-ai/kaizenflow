@@ -127,7 +127,7 @@ def add_target_var(
         make a copy
     :return: result_df with target variable
     """
-    hdbg.dassert_isinstance(rersult_df, pd.DataFrame)
+    hdbg.dassert_isinstance(result_df, pd.DataFrame)
     _LOG.debug("result_df in=\n%s", hpandas.df_to_str(result_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
     _LOG.debug("config=\n%s", config)
