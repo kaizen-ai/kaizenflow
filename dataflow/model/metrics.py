@@ -236,6 +236,8 @@ def annotate_metrics_df(
         )
     elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
+        # TODO(grisha): Consider factoring out these chunks of code so that
+        # `annotate_metrics_df()` contains the switch and the common logic.
         idx_name = metrics_df.index.names[1]
         n_quantiles = config["metrics"]["n_quantiles"]
         qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
