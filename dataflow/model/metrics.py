@@ -114,48 +114,53 @@ def convert_to_metrics_format(
 
 
 # TODO(Grisha): specific of C3a, ideally we should add target variable
-# in `DagBuilder` so that `predict_df` contains everythings we need.
+# in `DagBuilder` so that `result_df` contains everythings we need.
 def add_target_var(
-    predict_df: pd.DataFrame, config: cconfig.Config
+    result_df: pd.DataFrame, config: cconfig.Config, *, inplace: bool = False
 ) -> pd.DataFrame:
     """
-    Add target variable to a predict_df.
+    Add target variable to a result_df.
 
     :param predict_df: DAG output
     :param config: config that controls column names
-    :return: predict_df with target variable
+    :param inplace: allow to change the original df if set to `True`, otherwise,
+        make a copy
+    :return: result_df with target variable
     """
-    hdbg.dassert_isinstance(predict_df, pd.DataFrame)
-    _LOG.debug("predict_df in=\n%s", hpandas.df_to_str(predict_df))
+    hdbg.dassert_isinstance(result_df, pd.DataFrame)
+    _LOG.debug("result_df in=\n%s", hpandas.df_to_str(result_df))
     hdbg.dassert_isinstance(config, cconfig.Config)
     _LOG.debug("config=\n%s", config)
+    if not inplace:
+        # Make a df copy in order not to modify the original one.
+        result_df = result_df.copy()
     # Compute returns.
     rets = cofinanc.compute_ret_0(
-        predict_df[config["column_names"]["price"]], mode="log_rets"
+        result_df[config["column_names"]["price"]], mode="log_rets"
     )
-    predict_df = hpandas.add_multiindex_col(
-        predict_df, rets, col_name=config["column_names"]["returns"]
+    result_df = hpandas.add_multiindex_col(
+        result_df, rets, col_name=config["column_names"]["returns"]
     )
     # Adjust returns by volatility.
-    rets_vol_adj = predict_df[config["column_names"]["returns"]] / predict_df[
+    rets_vol_adj = result_df[config["column_names"]["returns"]] / result_df[
         config["column_names"]["volatility"]
     ].shift(2)
-    predict_df = hpandas.add_multiindex_col(
-        predict_df,
+    result_df = hpandas.add_multiindex_col(
+        result_df,
         rets_vol_adj,
         col_name=config["column_names"]["vol_adj_returns"],
     )
     # Shift 2 steps ahead.
-    rets_vol_adj_lead2 = predict_df[
+    rets_vol_adj_lead2 = result_df[
         config["column_names"]["vol_adj_returns"]
     ].shift(2)
-    predict_df = hpandas.add_multiindex_col(
-        predict_df,
+    result_df = hpandas.add_multiindex_col(
+        result_df,
         rets_vol_adj_lead2,
         col_name=config["column_names"]["target_variable"],
     )
-    _LOG.debug("predict_df out=\n%s", hpandas.df_to_str(predict_df))
-    return predict_df
+    _LOG.debug("result_df out=\n%s", hpandas.df_to_str(result_df))
+    return result_df
 
 
 # #############################################################################
@@ -201,6 +206,7 @@ def annotate_metrics_df(
     """
     _dassert_is_metrics_df(metrics_df)
     _LOG.debug("metrics_df in=\n%s", hpandas.df_to_str(metrics_df))
+    hdbg.dassert_isinstance(tag_mode, str)
     hdbg.dassert_isinstance(config, cconfig.Config)
     # Use the standard name based on `tag_mode`.
     if tag_col is None:
@@ -211,6 +217,7 @@ def annotate_metrics_df(
     if tag_mode == "all":
         metrics_df[tag_col] = tag_mode
     elif tag_mode == "full_symbol":
+        # Get a vendor universe.
         backtest_config = config["backtest_config"]
         universe_str, _, _ = cconfig.parse_backtest_config(backtest_config)
         universe_version_str, _ = cconfig.parse_universe_str(universe_str)
@@ -221,9 +228,11 @@ def annotate_metrics_df(
         full_symbol_universe = ivcu.get_vendor_universe(
             vendor, universe_mode, version=universe_version, as_full_symbol=True
         )
+        # Build map asset_id to full symbol.
         asset_id_to_full_symbol_mapping = (
             ivcu.build_numerical_to_string_id_mapping(full_symbol_universe)
         )
+        # Add a tag with full symbol mapping.
         asset_ids = metrics_df.index.get_level_values(1)
         metrics_df[tag_col] = hpandas.remap_obj(
             asset_ids, asset_id_to_full_symbol_mapping
@@ -231,22 +240,28 @@ def annotate_metrics_df(
     elif tag_mode == "target_var_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
+        # Get a variable to calculate rank for.
+        target_var = config["column_names"]["target_variable"]
+        # Calculate magnitude quantile rank for each data point.
         n_quantiles = config["metrics"]["n_quantiles"]
         qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
-        target_var = config["column_names"]["target_variable"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             target_var
         ].transform(qcut_func)
+        # Add a tag with the rank.
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "prediction_magnitude_quantile_rank":
         # Get the asset id index name to group data by.
         idx_name = metrics_df.index.names[1]
+        # Get a variable to calculate rank for.
+        prediction_var = config["column_names"]["prediction"]
+        # Calculate magnitude quantile rank for each data point.
         n_quantiles = config["metrics"]["n_quantiles"]
         qcut_func = lambda x: pd.qcut(x, n_quantiles, labels=False)
-        prediction_var = config["column_names"]["prediction"]
         magnitude_quantile_rank = metrics_df.groupby(idx_name)[
             prediction_var
         ].transform(qcut_func)
+        # Add a tag with the rank.
         metrics_df[tag_col] = magnitude_quantile_rank
     elif tag_mode == "hour":
         idx_datetime = metrics_df.index.get_level_values(0)
@@ -390,3 +405,63 @@ def apply_metrics(
     out_df = pd.concat(out_dfs, axis=1)
     _LOG.debug("metrics_df out=\n%s", hpandas.df_to_str(out_df))
     return out_df
+
+
+# TODO(Grisha): the problem is that the function computes for a single `tag_mode`.
+def cross_val_apply_metrics(
+    result_dfs: List[pd.DataFrame],
+    tag_mode: str,
+    metric_modes: List[str],
+    config: cconfig.Config,
+) -> pd.DataFrame:
+    """
+    Apply metrics for multiple test set estimates.
+
+    Return an average value of computed metrics across multiple cross validation
+    splits.
+
+    E.g.:
+    ```
+    hit_rate_point_est_(%)    hit_rate_97.50%CI_lower_bound_(%) hit_rate_97.50%CI_upper_bound_(%)    total_pnl    SR
+    all
+    all    51.241884        51.124107              51.35965                13904.318774    3.879794
+    ```
+
+    :param result_dfs: dfs with prediction for different cross validation splits
+    :param tag_mode: see `annotate_metrics_df()`
+    :param metric_modes: see `apply_metrics()`
+    :param config: config that control the metrics parameters
+    :return: an average value of computed metrics across multiple cross validation
+        splits
+    """
+    hdbg.dassert_container_type(
+        result_dfs, container_type=list, elem_type=pd.DataFrame
+    )
+    hdbg.dassert_container_type(metric_modes, container_type=list, elem_type=str)
+    out_dfs = []
+    for result_df in result_dfs:
+        # Add the target variable.
+        # TODO(Grisha): this is a hack for C3a, ideally we should
+        # get target variable from the DAG.
+        result_df = add_target_var(result_df, config)
+        # Convert to metrics format.
+        y_column_name = config["column_names"]["target_variable"]
+        y_hat_column_name = config["column_names"]["prediction"]
+        metrics_df = convert_to_metrics_format(
+            result_df, y_column_name, y_hat_column_name
+        )
+        # Annotate with a tag.
+        metrics_df = annotate_metrics_df(metrics_df, tag_mode, config)
+        # Compute metrcis.
+        # TODO(Grisha): pass as a separate parameter.
+        tag_col = tag_mode
+        out_df = apply_metrics(metrics_df, tag_col, metric_modes, config)
+        out_dfs.append(out_df)
+    out_df = pd.concat(out_dfs)
+    # Average the results.
+    # TODO(Grisha): consider passing mean as a function to the interface so that
+    # it is possible to use other stats functions, e.g., median.
+    # TODO(gp): return the res_df and then let another function do the operation.
+    res_df = out_df.groupby(level=0).mean()
+    _LOG.debug("res_df out=\n%s", hpandas.df_to_str(res_df))
+    return res_df
