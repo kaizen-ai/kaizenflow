@@ -17,7 +17,7 @@ class DataSaver(abc.ABC):
     """
 
     @abc.abstractmethod
-    def save(self, data: sinsadow.RawData, *args: Any, **kwargs: Any) -> None:
+    def save(self, data: sinsadow.RawData) -> None:
         """
         Save data to a persistent storage.
 
