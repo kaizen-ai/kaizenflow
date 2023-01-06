@@ -1433,7 +1433,7 @@ def remap_obj(
     :param map_: values to substitute with
     :return: remapped pandas series
     """
-    hdbg.dassert_lte(0, obj.shape[0])
+    hdbg.dassert_lte(1, obj.shape[0])
     # TODO(Grisha): consider extending for other mapping types supported by
     #  `pd.Series.map`.
     hdbg.dassert_isinstance(map_, dict)
