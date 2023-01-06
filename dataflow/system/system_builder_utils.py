@@ -446,20 +446,20 @@ def apply_ProcessForecastsNode_config_for_equities(
 
 
 def apply_ProcessForecastsNode_config_for_crypto(
-    system: dtfsyssyst.System, is_prod: bool
+    system: dtfsyssyst.System, share_quantization: str
 ) -> dtfsyssyst.System:
     """
     Set the trading hours for crypto.
 
     For crypto we do not filter since crypto market is open 24/7.
     """
-    if is_prod:
-        share_quantization = "asset_specific"
-    else:
-        # For simplicity in the non-prod system we do not use quantization so that
-        # we do not need to pass `asset_ids_to_decimals` (that we receive from
-        # broker) around.
-        share_quantization = "no_quantization"
+    # if is_prod:
+    #     share_quantization = "asset_specific"
+    # else:
+    #     # For simplicity in the non-prod system we do not use quantization so that
+    #     # we do not need to pass `asset_ids_to_decimals` (that we receive from
+    #     # broker) around.
+    #     share_quantization = "no_quantization"
     dict_ = {
         "ath_start_time": None,
         "trading_start_time": None,

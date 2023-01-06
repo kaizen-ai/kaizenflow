@@ -122,6 +122,7 @@ def get_ProcessForecastsNode_dict_example1(
     order_duration_in_mins: int,
     style: str,
     compute_target_positions_kwargs: Dict[str, Any],
+    optimizer_backend: str,
     root_log_dir: Optional[str],
 ) -> Dict[str, Any]:
     """
@@ -146,7 +147,7 @@ def get_ProcessForecastsNode_dict_example1(
             "order_duration_in_mins": order_duration_in_mins,
         },
         "optimizer_config": {
-            "backend": "pomo",
+            "backend": optimizer_backend,
             "params": {
                 "style": style,
                 "kwargs": compute_target_positions_kwargs,
