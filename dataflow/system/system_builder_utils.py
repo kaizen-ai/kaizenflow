@@ -446,20 +446,20 @@ def apply_ProcessForecastsNode_config_for_equities(
 
 
 def apply_ProcessForecastsNode_config_for_crypto(
-    system: dtfsyssyst.System, is_prod: bool
+    system: dtfsyssyst.System, share_quantization: str
 ) -> dtfsyssyst.System:
     """
     Set the trading hours for crypto.
 
     For crypto we do not filter since crypto market is open 24/7.
     """
-    if is_prod:
-        share_quantization = "asset_specific"
-    else:
-        # For simplicity in the non-prod system we do not use quantization so that
-        # we do not need to pass `asset_ids_to_decimals` (that we receive from
-        # broker) around.
-        share_quantization = "no_quantization"
+    # if is_prod:
+    #     share_quantization = "asset_specific"
+    # else:
+    #     # For simplicity in the non-prod system we do not use quantization so that
+    #     # we do not need to pass `asset_ids_to_decimals` (that we receive from
+    #     # broker) around.
+    #     share_quantization = "no_quantization"
     dict_ = {
         "ath_start_time": None,
         "trading_start_time": None,
@@ -481,7 +481,7 @@ def apply_ProcessForecastsNode_config_for_crypto(
 
 
 def get_DataFramePortfolio_from_System(
-    system: dtfsyssyst.System, is_prod: bool
+    system: dtfsyssyst.System
 ) -> oms.Portfolio:
     """
     Build a `DataFramePortfolio` from a system config.
@@ -497,29 +497,23 @@ def get_DataFramePortfolio_from_System(
     asset_ids = system.config.get_and_mark_as_used(
         ("market_data_config", "asset_ids")
     )
-    if is_prod:
-        # Initialize `Portfolio` with parameters that are set in the example.
-        portfolio = oms.get_DataFramePortfolio_example3(
-            market_data=market_data, column_remap=column_remap, asset_ids=asset_ids
-        )
-    else:
-        # Set event loop object for `DataFrameBroker` used in simulation.
-        event_loop = system.config.get_and_mark_as_used("event_loop_object")
-        # Initialize `Portfolio` with parameters from the system config.
-        mark_to_market_col = system.config.get_and_mark_as_used(
-            ("portfolio_config", "mark_to_market_col")
-        )
-        pricing_method = system.config.get_and_mark_as_used(
-            ("portfolio_config", "pricing_method")
-        )
-        portfolio = oms.get_DataFramePortfolio_example1(
-            event_loop,
-            market_data=market_data,
-            mark_to_market_col=mark_to_market_col,
-            pricing_method=pricing_method,
-            asset_ids=asset_ids,
-            column_remap=column_remap,
-        )
+    # Set event loop object for `DataFrameBroker` used in simulation.
+    event_loop = system.config.get_and_mark_as_used("event_loop_object")
+    # Initialize `Portfolio` with parameters from the system config.
+    mark_to_market_col = system.config.get_and_mark_as_used(
+        ("portfolio_config", "mark_to_market_col")
+    )
+    pricing_method = system.config.get_and_mark_as_used(
+        ("portfolio_config", "pricing_method")
+    )
+    portfolio = oms.get_DataFramePortfolio_example1(
+        event_loop,
+        market_data=market_data,
+        mark_to_market_col=mark_to_market_col,
+        pricing_method=pricing_method,
+        asset_ids=asset_ids,
+        column_remap=column_remap,
+    )
     return portfolio
 
 
