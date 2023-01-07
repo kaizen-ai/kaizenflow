@@ -24,7 +24,11 @@ RUN pip3 install \
     psycopg2 \
     jupyter-contrib-core \
     jupyter-contrib-nbextensions \
-    tqdm
+    tqdm \
+    praw \
+    pymongo \
+    s3fs \
+    seaborn
 
 # Part of the original DockerFile
 RUN pip install \
