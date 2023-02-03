@@ -13,16 +13,16 @@ import psycopg2 as psycop
 import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
-import sorrentum_sandbox.client as sinsacli
-import sorrentum_sandbox.download as sinsadow
-import sorrentum_sandbox.save as sinsasav
+import helpers.hdbg as hdbg
+import sorrentum_sandbox.common.client as sinsacli
+import sorrentum_sandbox.common.download as sinsadow
+import sorrentum_sandbox.common.save as sinsasav
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
     """
     Get SQL query to create Binance OHLCV table.
     """
-    # TODO(gp): Why not UNIQUE(timestamp, currency_pair)?
     query = """
     CREATE TABLE IF NOT EXISTS binance_ohlcv_spot_downloaded_1min(
             id SERIAL PRIMARY KEY,
@@ -35,7 +35,7 @@ def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
             currency_pair VARCHAR(255) NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE default CURRENT_TIMESTAMP,
-            UNIQUE(timestamp, currency_pair, open, high, low, close, volume)
+            UNIQUE(timestamp, currency_pair)
             )
             """
     return query
@@ -57,7 +57,7 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
             currency_pair VARCHAR(255) NOT NULL,
             end_download_timestamp TIMESTAMP WITH TIME ZONE,
             knowledge_timestamp TIMESTAMP WITH TIME ZONE default CURRENT_TIMESTAMP,
-            UNIQUE(timestamp, currency_pair, open, high, low, close, volume)
+            UNIQUE(timestamp, currency_pair)
             )
             """
     return query
@@ -67,7 +67,7 @@ def get_db_connection() -> Any:
     """
     Retrieve connection based on hardcoded values.
 
-    The parameters must match the parameters set up in the Surrentum
+    The parameters must match the parameters set up in the Sorrentum
     data node docker-compose.
     """
     connection = psycop.connect(
@@ -95,7 +95,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         """
         Constructor.
 
-        :param db_conn: DB connection (e.g., TODO(Juraj))
+        :param db_conn: DB connection
         """
         self.db_conn = db_connection
         self._create_tables()
@@ -109,9 +109,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param data: data to persists into DB
         :param db_table: table to save data to
         """
-        # TODO(gp): @juraj -> hdbg.dassert_isinstance()
-        if not isinstance(data.get_data(), pd.DataFrame):
-            raise ValueError("Only DataFrame is supported.")
+        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
         # Transform dataframe into list of tuples.
         df = data.get_data()
         values = [tuple(v) for v in df.to_numpy()]
@@ -122,8 +120,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
 
-    # TODO(gp): @juraj let's pass columns directly at this point so we can do the
-    # join only once.
+
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
         """
@@ -144,9 +141,8 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         """
         Create DB data tables to store data.
 
-        Note that typically table creation would not be handled in the
-        same place as downloading the data, but as an example this
-        suffices.
+        Note that typically table creation would not be handled in the same place
+        as downloading the data, but as an example this suffices.
         """
         cursor = self.db_conn.cursor()
         #
@@ -171,13 +167,14 @@ class PostgresClient(sinsacli.DataClient):
         """
         Constructor.
 
-        :param db_conn: DB connection (e.g., )
+        :param db_conn: DB connection
         """
         self.db_conn = db_connection
 
     def load(
         self,
         dataset_signature: str,
+        *,
         start_timestamp: Optional[pd.Timestamp] = None,
         end_timestamp: Optional[pd.Timestamp] = None,
         **kwargs: Any,
@@ -186,7 +183,7 @@ class PostgresClient(sinsacli.DataClient):
         Load CSV data specified by a unique signature from a desired source
         directory for a specified time period.
 
-        The method assumes data having a 'timestamp' column.
+        The method assumes data having a `timestamp` column.
         """
         select_query = f"SELECT * FROM {dataset_signature}"
         # Filter data.

@@ -14,6 +14,7 @@ import logging
 import pandas as pd
 
 import helpers.hdbg as hdbg
+import helpers.hparser as hparser
 import sorrentum_sandbox.examples.binance.db as sisebidb
 import sorrentum_sandbox.examples.binance.download as sisebido
 
@@ -47,6 +48,14 @@ def _add_download_args(
         type=str,
         help="Name of the db table to save data into",
     )
+    parser.add_argument(
+        "--use_global_api",
+        action="store_true",
+        required=False,
+        default=False,
+        help="Domain switcher between binance.com when using --use_global_api"
+             " and binance.us by default"
+    )
     return parser
 
 
@@ -57,6 +66,7 @@ def _parse() -> argparse.ArgumentParser:
         formatter_class=argparse.RawTextHelpFormatter,
     )
     parser = _add_download_args(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser
 
 
@@ -65,7 +75,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.OhlcvBinanceRestApiDownloader()
+    downloader = sisebido.OhlcvRestApiDownloader(args.use_global_api)
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()

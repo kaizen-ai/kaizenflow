@@ -2,40 +2,45 @@
 version: '3'
 
 services:
+  # Postgres
+ 
   postgres:
+    # Use prebuilt image.
     image: postgres:14.0
     container_name: postgres_cont
     environment:
+      # Pass env vars to control credentials.
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+      # We reuse the Airflow DB also for client data.
+      # TODO(gp): Ideally we should separate infra from application.
       - POSTGRES_DB=airflow
       - POSTGRES_PORT=5432
     volumes:
-    - airflow-database-data:/var/lib/postgresql/data/
+      # Map volume backing the DB to a local dir.
+      - airflow-database-data:/var/lib/postgresql/data/
     ports:
-      - 5532:5432
-
-  #redis:
-  #  image: redis:latest
-  #  container_name: redis_cont
-  #  restart: always
-  #  ports:
-  #    - 6379:6379
+      # Access PostgreSQL from outside the container on port 5532.
+      - "5532:5432"
+        
+  # Mongo.
 
   mongo:
+    # Use prebuilt image.
     image: mongo
     container_name: mongo_cont
     environment:
       - MONGO_INITDB_ROOT_USERNAME=mongo
       - MONGO_INITDB_ROOT_PASSWORD=mongo
     ports:
-      - '27017:27017'
+      - "27017:27017"
     volumes:
       - ./mongo_data:/data/db
 
+  # Airflow.
+
   airflow:
-    build: .
-    image: resdev-airflow:latest
+    image: sorrentum/sorrentum:latest
     container_name: airflow_cont
     env_file:
       - .env
@@ -44,7 +49,8 @@ services:
     depends_on:
       - postgres
     ports:
-      - '8090:8080'
+      - "8090:8080"
+    user: "${AIRFLOW_UID}:0"
     volumes:
       - ./airflow_data/dags:/opt/airflow/dags
       - ./airflow_data/plugins:/opt/airflow/plugins
@@ -54,12 +60,13 @@ services:
       - "host.docker.internal:host-gateway"
 
   airflow-scheduler:
-    build: .
-    image: resdev-airflow:latest
+    # Let's force to use a pre-built image.
+    # build: .
+    image: sorrentum/sorrentum:latest
     container_name: airflow_scheduler_cont
     env_file:
       - .env
-    user: "${UID}:0"
+    user: "${AIRFLOW_UID}:0"
     restart: always
     command: scheduler
     depends_on:
@@ -69,11 +76,19 @@ services:
       - ./airflow_data/plugins:/opt/airflow/plugins
       - ./airflow_data/log_volume:/opt/airflow/log
       - ../..:/cmamp
-    # TODO(Juraj): this is a qucick hack to get through hserver._dassert_setup_consistency
     environment:
-       - CK_IN_PROD_CMAMP_CONTAINER=True
+      # TODO(Juraj): this is a quick hack to get through
+      # `hserver._dassert_setup_consistency()`.
+      - CK_IN_PROD_CMAMP_CONTAINER=True
     extra_hosts:
       - "host.docker.internal:host-gateway"
+
+  #redis:
+  #  image: redis:latest
+  #  container_name: redis_cont
+  #  restart: always
+  #  ports:
+  #    - "6379:6379"
 
   #airflow-worker1:
   #  build: .
@@ -135,7 +150,7 @@ services:
   #  restart: always
   #  command: celery flower
   #  ports:
-  #    - 5555:5555
+  #    - "5555:5555"
 
 volumes:
   airflow-database-data:
