@@ -1,32 +1,34 @@
 """
 Import as:
 
-import sorrentum_sandbox.download as sinsadow
+import sorrentum_sandbox.common.download as sinsadow
 """
 
 import abc
 from typing import Any, Optional
 
 import pandas as pd
+
+
 # #############################################################################
 # RawData
 # #############################################################################
 
 
-# TODO(gp): Not sure it's worth to have a wrapper here.
+# TODO(gp): P1, Not sure it's worth to have a wrapper here.
 class RawData:
     """
-    Wrapper class for downloaded data to support uniform interface.
+    Wrapper class for downloaded data to support a uniform interface.
     """
 
     def __init__(self, data: Any) -> None:
-        self.data = data
+        self._data = data
 
     def get_data(self) -> Any:
         """
-        Download data from a desired source.
+        Retrieve the data from the object.
         """
-        return self.data
+        return self._data
 
 
 # #############################################################################
@@ -36,7 +38,7 @@ class RawData:
 
 class DataDownloader(abc.ABC):
     """
-    Abstract class for downloading raw data from a third party.
+    Download raw data from a third party source.
     """
 
     @abc.abstractmethod
@@ -50,16 +52,7 @@ class DataDownloader(abc.ABC):
         """
         Download data from a desired source.
 
-        The invariant for downloading in a specified time interval is
-        [start_timestamp, end_timestamp), i.e., start_timestamp is included,
-        end_timestamp is excluded.
-
-        The context differs based on data type.
-
-        :param start_timestamp: start of the download period. If `None`, start
-            with the earliest possible data.
-        :param end_timestamp: end of the download period. If `None`, download
-            up to the latest possible data.
+        :param: same parameters as `DataClient.load()`
         :return: raw downloaded dataset
         """
         ...

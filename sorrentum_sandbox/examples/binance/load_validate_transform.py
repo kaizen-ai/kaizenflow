@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 """
-Load and validate data within a specified time period from a a PostgreSQL
-table, resample and load back to the DB.
+Load and validate data within a specified time period from a PostgreSQL table,
+resample, and load back the result into PostgreSQL.
 
-Use as:
-# Load OHLCV data for binance:
-> example_load_and_validate.py \
+# Load, validate and transform OHLCV data for binance:
+> load_validate_transform.py \
     --start_timestamp '2022-10-20 12:00:00+00:00' \
     --end_timestamp '2022-10-21 12:00:00+00:00' \
     --source_table 'binance_ohlcv_spot_downloaded_1min' \
@@ -19,14 +18,17 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.download as sinsadow
+import helpers.hparser as hparser
+import sorrentum_sandbox.common.download as sinsadow
+import sorrentum_sandbox.common.validate as sinsaval
 import sorrentum_sandbox.examples.binance.db as sisebidb
 import sorrentum_sandbox.examples.binance.validate as sisebiva
 
 _LOG = logging.getLogger(__name__)
 
+
 # #############################################################################
-# Example script setup
+# Data processing.
 # #############################################################################
 
 
@@ -55,7 +57,8 @@ def _resample_data_to_5min(data: pd.DataFrame) -> pd.DataFrame:
             "5T", closed="left", label="right"
         ).agg(resample_func_dict)
         resampled_data = resampled_data.reset_index()
-        # Add currency_pair column back, as it was removed during resampling process.
+        # Add currency_pair column back, as it was removed during resampling
+        # process.
         resampled_data["currency_pair"] = currency_pair
         resampled_dfs.append(resampled_data)
     resampled_data = pd.concat(resampled_dfs, axis=0)
@@ -68,39 +71,12 @@ def _resample_data_to_5min(data: pd.DataFrame) -> pd.DataFrame:
     return resampled_data
 
 
-def _main(parser: argparse.ArgumentParser) -> None:
-    args = parser.parse_args()
-    hdbg.init_logger(use_exec_path=True)
-    # Convert timestamps.
-    start_timestamp = pd.Timestamp(args.start_timestamp)
-    end_timestamp = pd.Timestamp(args.end_timestamp)
-    db_conn = sisebidb.get_db_connection()
-    # Load data.
-    db_client = sisebidb.PostgresClient(db_conn)
-    data = db_client.load(args.source_table, start_timestamp, end_timestamp)
-    _LOG.info(f"Loaded data: \n {data.head()}")
-    empty_dataset_check = sisebiva.EmptyDatasetCheck()
-    # Conforming to the (a, b] interval convention, remove 1 minute
-    #  from the end_timestamp.
-    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
-        start_timestamp, end_timestamp - timedelta(minutes=1)
-    )
-    dataset_validator = sisebiva.SingleDatasetValidator(
-        [empty_dataset_check, gaps_in_timestamp_check]
-    )
-    # Validate by running all QA checks, if one of them fails,
-    #  the rest of the code is not executed as it could
-    #  produce faulty results.
-    dataset_validator.run_all_checks([data], _LOG)
-    # Transform data.
-    resampled_data = _resample_data_to_5min(data)
-    # Save back to db.
-    _LOG.info(f"Transformed data: \n {resampled_data.head()}")
-    db_saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    db_saver.save(sinsadow.RawData(resampled_data), args.target_table)
+# #############################################################################
+# Script.
+# #############################################################################
 
 
-def add_download_args(
+def _add_load_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     """
@@ -142,8 +118,45 @@ def _parse() -> argparse.ArgumentParser:
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
     )
-    parser = add_download_args(parser)
+    parser = _add_load_args(parser)
+    parser = hparser.add_verbosity_arg(parser)
     return parser
+
+
+def _main(parser: argparse.ArgumentParser) -> None:
+    args = parser.parse_args()
+    hdbg.init_logger(use_exec_path=True)
+    # Convert timestamps.
+    start_timestamp = pd.Timestamp(args.start_timestamp)
+    end_timestamp = pd.Timestamp(args.end_timestamp)
+    # 1) Load data.
+    db_conn = sisebidb.get_db_connection()
+    db_client = sisebidb.PostgresClient(db_conn)
+    data = db_client.load(
+        args.source_table,
+        start_timestamp=start_timestamp,
+        end_timestamp=end_timestamp,
+    )
+    _LOG.info(f"Loaded data: \n {data.head()}")
+    # 2) QA
+    empty_dataset_check = sisebiva.EmptyDatasetCheck()
+    # Conforming to the (a, b] interval convention, remove 1 minute from the
+    # end_timestamp.
+    gaps_in_timestamp_check = sisebiva.GapsInTimestampCheck(
+        start_timestamp, end_timestamp - timedelta(minutes=1)
+    )
+    dataset_validator = sinsaval.SingleDatasetValidator(
+        [empty_dataset_check, gaps_in_timestamp_check]
+    )
+    # Validate by running all QA checks, if one of them fails, the rest of the
+    # code is not executed as it could produce faulty results.
+    dataset_validator.run_all_checks([data])
+    # 3) Transform data.
+    resampled_data = _resample_data_to_5min(data)
+    # 4) Save back to DB.
+    _LOG.info(f"Transformed data: \n {resampled_data.head()}")
+    db_saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    db_saver.save(sinsadow.RawData(resampled_data), args.target_table)
 
 
 if __name__ == "__main__":

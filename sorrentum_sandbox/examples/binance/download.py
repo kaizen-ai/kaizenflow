@@ -3,7 +3,7 @@ Extract part of the ETL and QA pipeline.
 
 Import as:
 
-import sorrentum_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.examples.binance.download as ssexbido
 """
 
 import logging
@@ -16,15 +16,17 @@ import tqdm
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.download as sinsadow
+import sorrentum_sandbox.common.download as ssandown
 
 _LOG = logging.getLogger(__name__)
 
-# TODO(gp): example_extract.py -> extract.py
+
+# #############################################################################
+# OhlcvRestApiDownloader
+# #############################################################################
 
 
-# TODO(gp): -> OhlcvRestApiDownloader since Binance is already in the path.
-class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
+class OhlcvRestApiDownloader(ssandown.DataDownloader):
     """
     Class for downloading OHLCV data using REST API provided by Binance.
     """
@@ -37,9 +39,18 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
         ]
     }
 
+    def __init__(self, use_binance_dot_com: bool = False) -> None:
+        """
+        Construct Binance downloader class instance.
+
+        :param use_binance_dot_com: select the domain to use when downloading,
+            e.g., "binance.com" or "binance.us"
+        """
+        self.use_binance_dot_com = use_binance_dot_com
+
     def download(
         self, start_timestamp: pd.Timestamp, end_timestamp: pd.Timestamp
-    ) -> sinsadow.RawData:
+    ) -> ssandown.RawData:
         # Convert and check timestamps.
         hdateti.dassert_has_tz(start_timestamp)
         start_timestamp_as_unix = hdateti.convert_timestamp_to_unix_epoch(
@@ -62,8 +73,8 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                 start_time=start_timestamp_as_unix, end_time=end_timestamp_as_unix
             ):
                 url = self._build_url(
-                    start_time=start_time,
-                    end_time=end_time,
+                    start_time,
+                    end_time,
                     symbol=self._process_symbol(symbol),
                     limit=self._MAX_LINES,
                 )
@@ -84,8 +95,8 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                             "close": row[4],
                             "volume": row[5],
                             # close_time from the raw response.
-                            # The value is in ms, we add one millisecond. based on
-                            # the Surrentum protocol data interval specification,
+                            # The value is in ms, we add one millisecond, based on
+                            # the Sorrentum protocol data interval specification,
                             # where interval [a, b) is labeled with timestamp 'b'.
                             "timestamp": int(row[6]) + 1,
                             "end_download_timestamp": hdateti.get_current_time(
@@ -99,25 +110,12 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
                 dfs.append(data)
                 # Delay for throttling in seconds.
                 time.sleep(0.5)
-        return sinsadow.RawData(pd.concat(dfs, ignore_index=True))
-
-    # TODO(gp): @juraj start_time -> {start,end}_timestamp_as_unix_epoch
-    @staticmethod
-    def _build_url(
-        start_time: int,
-        end_time: int,
-        symbol: str,
-        *,
-        interval: str = "1m",
-        limit: int = 500,
-    ) -> str:
-        """
-        Build up URL with the placeholders from the args.
-        """
-        return (
-            f"https://api.binance.com/api/v3/klines?startTime={start_time}&endTime={end_time}"
-            f"&symbol={symbol}&interval={interval}&limit={limit}"
-        )
+        df = pd.concat(dfs, ignore_index=True)
+        # It can happen that the API sends back data after the specified
+        #  end_timestamp, so we need to filter out.
+        df = df[df["timestamp"] <= end_timestamp_as_unix]
+        _LOG.info(f"Downloaded data: \n\t {df.head()}")
+        return ssandown.RawData(df)
 
     @staticmethod
     def _process_symbol(symbol: str) -> str:
@@ -126,15 +124,34 @@ class OhlcvBinanceRestApiDownloader(sinsadow.DataDownloader):
         """
         return symbol.replace("_", "")
 
+    def _build_url(
+        self,
+        start_timestamp_as_unix_epoch: int,
+        end_timestamp_as_unix_epoch: int,
+        symbol: str,
+        *,
+        interval: str = "1m",
+        limit: int = 500,
+    ) -> str:
+        """
+        Build up URL with the placeholders from the args.
+        """
+        domain = "binance.com" if self.use_binance_dot_com else "binance.us"
+        return (
+            f"https://api.{domain}/api/v3/klines"
+            f"?startTime={start_timestamp_as_unix_epoch}&endTime={end_timestamp_as_unix_epoch}"
+            f"&symbol={symbol}&interval={interval}&limit={limit}"
+        )
+
     def _split_period_to_days(
         self, start_time: int, end_time: int
     ) -> Generator[Tuple[int, int], None, None]:
         """
         Split period into chunks of the days.
 
-        The reason is that Binance API don't allow to get more than 1500 rows at
-        once. So to get 1m interval, we need to split a period into chunks that
-        Binance allow us to get.
+        The reason is that Binance API doesn't allow to get more than 1500 rows at
+        once. So to get 1 minute interval, we need to split a period into chunks
+        that Binance allow us to get.
 
         :param start_time: timestamp for the start time
         :param end_time: timestamp for the end time

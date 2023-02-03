@@ -13,7 +13,7 @@ import pandas as pd
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.validate as sinsaval
+import sorrentum_sandbox.common.validate as sinsaval
 
 
 def find_gaps_in_time_series(
@@ -47,10 +47,11 @@ def find_gaps_in_time_series(
 
 
 class EmptyDatasetCheck(sinsaval.QaCheck):
+    """
+    Assert that a DataFrame is not empty.
+    """
+
     def check(self, dataframes: List[pd.DataFrame], *args: Any) -> bool:
-        """
-        Assert a DataFrame is not empty.
-        """
         hdbg.dassert_eq(len(dataframes), 1)
         is_empty = dataframes[0].empty
         self._status = "FAILED: Dataset is empty" if is_empty else "PASSED"
@@ -58,6 +59,10 @@ class EmptyDatasetCheck(sinsaval.QaCheck):
 
 
 class GapsInTimestampCheck(sinsaval.QaCheck):
+    """
+    Assert that a DataFrame does not have gaps in its timestamp column.
+    """
+
     def __init__(
         self,
         start_timestamp: pd.Timestamp,
@@ -70,9 +75,6 @@ class GapsInTimestampCheck(sinsaval.QaCheck):
         self.end_timestamp = end_timestamp
 
     def check(self, datasets: List[pd.DataFrame], *args: Any) -> bool:
-        """
-        Assert a DataFrame does not have gaps in its timestamp column.
-        """
         hdbg.dassert_eq(len(datasets), 1)
         data = datasets[0]
         # We check for gaps in the timestamp for each symbol individually.
@@ -94,18 +96,3 @@ class GapsInTimestampCheck(sinsaval.QaCheck):
             else "PASSED"
         )
         return df_gaps == []
-
-
-class SingleDatasetValidator(sinsaval.DatasetValidator):
-    def run_all_checks(self, datasets: List, logger: logging.Logger) -> None:
-        error_msgs: List[str] = []
-        hdbg.dassert_eq(len(datasets), 1)
-        logger.info("Running all QA checks:")
-        for qa_check in self.qa_checks:
-            if qa_check.check(datasets):
-                logger.info(qa_check.get_status())
-            else:
-                error_msgs.append(qa_check.get_status())
-        if error_msgs:
-            error_msg = "\n".join(error_msgs)
-            hdbg.dfatal(error_msg)
