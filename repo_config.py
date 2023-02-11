@@ -40,12 +40,12 @@ def get_repo_map() -> Dict[str, str]:
     """
     Return a mapping of short repo name -> long repo name.
     """
-    repo_map: Dict[str, str] = {"cm": "cryptokaizen/cmamp"}
+    repo_map: Dict[str, str] = {"cm": "sorrentum/sorrentum"}
     return repo_map
 
 
 def get_extra_amp_repo_sym_name() -> str:
-    return "cryptokaizen/cmamp"
+    return "sorrentum/sorrentum"
 
 
 # TODO(gp): -> get_gihub_host_name
