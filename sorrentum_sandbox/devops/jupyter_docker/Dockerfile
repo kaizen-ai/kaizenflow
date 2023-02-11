@@ -26,7 +26,7 @@ RUN pip3 install \
     ipython \
     jupyter \
     jupyter-contrib-core \
-    jupyter-contrib-nbextensions
+    jupyter-contrib-nbextensions \
     matplotlib \
     pandas \
     seaborn \
