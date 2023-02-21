@@ -1,5 +1,5 @@
 set -o vi
-jupyter nbextension enable vim_binding/vim_binding
+#jupyter nbextension enable vim_binding/vim_binding
 cd /data
 export PYTHONPATH=$PYTHONPATH:/data
 echo "PYTHONPATH=$PYTHONPATH"

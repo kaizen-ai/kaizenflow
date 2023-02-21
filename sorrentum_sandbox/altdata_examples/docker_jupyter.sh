@@ -14,4 +14,4 @@ docker run --rm -ti \
     -p 8888:8888 \
     -v $GIT_ROOT:/data \
     $FULL_IMAGE_NAME \
-    /bin/bash -c "source /data/sorrentum_sandbox/altdata_examples_docker/set_env.sh; bash"
+    /bin/bash -c "source /data/sorrentum_sandbox/altdata_examples/set_env.sh; /data/sorrentum_sandbox/altdata_examples/run_jupyter.sh"

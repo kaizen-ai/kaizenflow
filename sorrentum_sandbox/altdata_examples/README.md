@@ -14,7 +14,7 @@
 
 - To start Jupyter do:
   ```
-  > cd $GIT_ROOT/sorrentum_sandbox/devops/jupyter_docker
+  > cd $GIT_ROOT/sorrentum_sandbox/altdata_examples
   > docker_jupyter.sh
   ++ git rev-parse --show-toplevel
   + GIT_ROOT=/Users/saggese/src/sorrentum1
