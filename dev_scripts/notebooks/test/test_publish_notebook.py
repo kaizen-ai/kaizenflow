@@ -15,14 +15,14 @@ class Test_publish_notebook1(hunitest.TestCase):
         """
         amp_dir = hgit.get_amp_abs_path()
         file_name = os.path.join(
-            amp_dir, "core/dataflow_model/notebooks/Master_pipeline_runner.ipynb"
+            amp_dir, "dataflow/model/notebooks/Master_pipeline_runner.ipynb"
         )
         cmd = []
         cmd.append("publish_notebook.py")
-        cmd.append("--action publish_locally")
+        cmd.append("--action publish")
         cmd.append(f"--file {file_name}")
         dst_dir = self.get_scratch_space()
-        cmd.append(f"--publish_notebook_dir {dst_dir}")
+        cmd.append(f"--target_dir {dst_dir}")
         cmd = " ".join(cmd)
         hsystem.system(cmd)
 

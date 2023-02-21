@@ -19,10 +19,13 @@ import logging
 import os
 from typing import Optional
 
+import nbformat
+
 import core.config as cconfig
 import dataflow.backtest.dataflow_backtest_utils as dtfbaexuti
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hgit as hgit
 import helpers.hjoblib as hjoblib
 import helpers.hparser as hparser
 import helpers.hsystem as hsystem
@@ -33,7 +36,7 @@ _LOG = logging.getLogger(__name__)
 # #############################################################################
 
 
-# TODO(gp): Reuse hjupyter.run_notebook if possible
+# TODO(Grisha): Consider adding `allow_notebook_errors` switch.
 def _run_notebook(
     config: cconfig.Config,
     notebook_file: str,
@@ -50,7 +53,10 @@ def _run_notebook(
     :param notebook_file: path to file with experiment template
     :param num_attempts: maximum number of times to attempt running the
         notebook
-    :param publish: publish notebook if `True`
+    :param publish: publish the notebook if `True`
+    :param allow_notebook_errors: if `True`, the notebook is executed until
+        the end, regardless of any error encountered during the execution;
+        otherwise, raise an error if any cell in a notebook fails
     :return: if notebook is skipped ("success.txt" file already exists), return
         `None`; otherwise, return `rc`
     """
@@ -83,7 +89,7 @@ def _run_notebook(
         '--ExecutePreprocessor.kernel_name=python',
         # From https://github.com/ContinuumIO/anaconda-issues/issues/877
         '--ExecutePreprocessor.timeout=-1',
-        f'--ExecutePreprocessor.allow_errors={allow_notebook_errors}'
+        f'--ExecutePreprocessor.allow_errors={allow_notebook_errors}',
     ]
     cmd = " ".join(cmd)
     # Prepare the log file.
@@ -107,29 +113,41 @@ def _run_notebook(
         if rc == 0:
             _LOG.info("Running notebook was successful")
             break
-    if rc != 0:
-        # The notebook run wasn't successful.
+    if publish:
+        # TODO(Grisha): Consider adding a switch to publish regardless of errors, e.g.,
+        # `publish_even_if_fails`.
+        # Convert to HTML and publish a notebook.
+        if rc != 0:
+            # The goal is to publish a notebook regardless of errors. However,
+            # the execution fails there is no `ipynb` file to publish. So a file is
+            # read and written back just to be able to publish it.
+            with open(notebook_file) as f:
+                nb = nbformat.read(f, as_version=4)
+            with open(dst_file, mode='w', encoding='utf-8') as f:
+                nbformat.write(nb, f)
+        _LOG.info("Publishing notebook %d", idx)
+        html_subdir_name = os.path.join(
+            os.path.basename(dst_dir), experiment_result_dir
+        )
+        # TODO(gp): Look for the script.
+        amp_dir = hgit.get_amp_abs_path()
+        script_path = os.path.join(
+            amp_dir, "dev_scripts/notebooks", "publish_notebook.py"
+        )
+        cmd = (
+            f"python {script_path}"
+            + f" --file {dst_file}"
+            + f" --target_dir {html_subdir_name}"
+            + " --action publish"
+        )
+        log_file = log_file.replace(".log", ".html.log")
+        hsystem.system(cmd, output_file=log_file)
+    if rc == 0:
+        dtfbaexuti.mark_config_as_success(experiment_result_dir)
+    else:
         msg = f"Execution failed for experiment {idx}"
         _LOG.error(msg)
         raise RuntimeError(msg)
-    else:
-        # Convert to HTML and publish.
-        if publish:
-            _LOG.info("Publishing notebook %d", idx)
-            html_subdir_name = os.path.join(
-                os.path.basename(dst_dir), experiment_result_dir
-            )
-            # TODO(gp): Look for the script.
-            cmd = (
-                "python amp/dev_scripts/notebooks/publish_notebook.py"
-                + f" --file {dst_file}"
-                + f" --publish_notebook_dir {html_subdir_name}"
-                + " --action publish_locally"
-            )
-            log_file = log_file.replace(".log", ".html.log")
-            hsystem.system(cmd, output_file=log_file)
-        # Mark as success.
-        dtfbaexuti.mark_config_as_success(experiment_result_dir)
     return rc
 
 
@@ -186,7 +204,7 @@ def _parse() -> argparse.ArgumentParser:
     parser.add_argument(
         "--allow_errors",
         action="store_true",
-        help="Ignore execution errors in the notebook",
+        help="Run the notebook until the end, regardless of any error in it",
     )
     parser = hparser.add_verbosity_arg(parser)
     # TODO(gp): For some reason, not even this makes mypy happy.
