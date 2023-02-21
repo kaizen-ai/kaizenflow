@@ -211,7 +211,7 @@ pandocfilters=1.4.2=py_1
 pango=1.40.14=he7ab937_1005
 parquet-cpp=1.5.1=2
 parso=0.7.0=pyh9f0ad1d_0
-pathspec=***REMOVED***
+pathspec=0.8.0=pyh9f0ad1d_0
 patsy=0.5.1=py_0
 pcre=8.44=he1b5a44_0
 perl=5.26.2=h516909a_1006
@@ -221,7 +221,7 @@ pillow=7.2.0=py37h718be6c_1
 pip=20.1.1=py_1
 pixman=0.38.0=h516909a_1003
 pluggy=0.13.1=py37hc8dfbb8_2
-prometheus_client=***REMOVED***
+prometheus_client=0.8.0=pyh9f0ad1d_0
 prompt-toolkit=3.0.5=py_1
 prompt_toolkit=3.0.5=1
 protobuf=3.12.3=py37h3340039_0
