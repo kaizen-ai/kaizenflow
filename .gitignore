@@ -4,3 +4,4 @@
 __pycache__
 .dockerignore
 .env
+.vscode/launch.json
