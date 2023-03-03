@@ -1,15 +1,15 @@
 from dataclasses import dataclass
 from datetime import datetime, date
-from enum import StrEnum
+from enum import Enum
 from typing import List
 
-class DataType(StrEnum):
+class DataType(str, Enum):
     INTRADAY = "intraday"
     DAILY = "daily"
     WEEKLY = "weekly"
     MONTHLY = "monthly"
 
-class TimeInterval(StrEnum):
+class TimeInterval(str, Enum):
     ONE = "1min"
     FIVE = "5min"
     FIFTHTEEN = "15min"

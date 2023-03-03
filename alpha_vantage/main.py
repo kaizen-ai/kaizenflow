@@ -6,6 +6,6 @@ from models.time_series import TimeInterval, DataType
 Apple = Ticker("AAPL", get_name=True)
 
 # Then request the data you want using the DataType ENUM. Time Interval is only used for intraday.
-Apple.get_data(data_type=DataType.INTRADAY, time_interval=TimeInterval.THIRTY)
+Apple.get_data(data_type=DataType.INTRADAY, time_interval=TimeInterval.HOUR)
 
 print(Apple)

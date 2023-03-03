@@ -44,8 +44,8 @@ class Ticker:
         Parameters:
         data_type: DataType - Data type requested (eg. DataType.DAILY)
         """
-        fn = AlphaVantage.get_method(data_type)
-        self.time_series_data = fn(self.ticker, interval=time_interval)
+        fn = AlphaVantage.get_method(data_type.value)
+        self.time_series_data = fn(self.ticker, interval=time_interval.value)
         self.update()
 
     def update(self):
