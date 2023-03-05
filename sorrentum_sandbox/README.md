@@ -237,19 +237,19 @@
   ```
 
 - This will start a Jupyter server in the container listening on port 8888
-    - You will access it from the host (as discussed above, the Docker start command
-      maps the 8888 port on the container to the 8888 port on the host)
-    - To do that start the browser and point it to: http://127.0.0.1:8888
-
-- Go with your local browser to `localhost:8888`
+    - You will access it from the host
+    - As discussed above, the Docker start command maps the 8888 port on the
+      container to the 8888 port on the host
+    - To do that start the browser and point it to `localhost:8888` or
+      `http://127.0.0.1:8888`
 
 - Navigate to `/data` to see the directories mounted on Docker
 
-- Read and execute the notebook
+- Now you can execute notebooks
 
 ## Running bash
 
-- Run container
+- You can run bash in the container Sorrentum
   ```
   > docker_bash.sh
   ```
