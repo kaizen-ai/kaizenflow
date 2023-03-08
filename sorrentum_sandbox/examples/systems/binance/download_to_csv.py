@@ -19,7 +19,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hio as hio
 import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.examples.binance.download as sisebido
+import sorrentum_sandbox.examples.systems.binance.download as sisebido
 import sorrentum_sandbox.common.save as sinsasav
 
 _LOG = logging.getLogger(__name__)

@@ -3,7 +3,7 @@ Implementation of load part of the ETL and QA pipeline.
 
 Import as:
 
-import sorrentum_sandbox.examples.binance.db as sisebidb
+import sorrentum_sandbox.examples.systems.binance.db as sisebidb
 """
 
 from typing import Any, Optional
@@ -22,6 +22,8 @@ import sorrentum_sandbox.common.save as sinsasav
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
     """
     Get SQL query to create Binance OHLCV table.
+
+    This table contains the data as it is downloaded.
     """
     query = """
     CREATE TABLE IF NOT EXISTS binance_ohlcv_spot_downloaded_1min(
@@ -44,6 +46,8 @@ def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:
 def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
     """
     Get SQL query to create Binance OHLCV resampled model table.
+
+    This table contains the data after a resampling stage.
     """
     query = """
     CREATE TABLE IF NOT EXISTS binance_ohlcv_spot_resampled_5min(
@@ -65,7 +69,7 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
 
 def get_db_connection() -> Any:
     """
-    Retrieve connection based on hardcoded values.
+    Retrieve connection to the Postgres DB inside the Sorrentum data node.
 
     The parameters must match the parameters set up in the Sorrentum
     data node docker-compose.

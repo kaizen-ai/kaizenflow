@@ -3,7 +3,7 @@ Extract part of the ETL and QA pipeline.
 
 Import as:
 
-import sorrentum_sandbox.examples.binance.download as ssexbido
+import sorrentum_sandbox.examples.systems.binance.download as ssexbido
 """
 
 import logging

@@ -1,13 +1,13 @@
-# Sorrentum data nodes sandbox
+# Sorrentum Sandbox
 
 - This dir `sorrentum_sandbox` contains examples for Sorrentum data nodes
   - The code can be run on a local machine with `Docker`, without the need of
-    any production infrastructure
-  - It allows to experiment and prototype Sorrentum nodes
+    any cloud production infrastructure
+  - It allows to experiment with and prototype Sorrentum nodes
 
 - The current structure of the `sorrentum_sandbox` directory is as follows:
   ```
-  > cd $GIT_REPO/sorrentum_sandbox && ../dev_scripts/tree.sh
+  > cd $GIT_ROOT/sorrentum_sandbox && $GIT_ROOT/dev_scripts/tree.sh
 
   ./
   |-- common/
@@ -169,7 +169,7 @@
 - `docker_common/`: common code for Docker tasks
 
 - `devops/`: contains the Dockerized Sorrentum data node
-  - it contains the Airflow task scheduler andits DAGs
+  - it contains the Airflow task scheduler and its DAGs
   - it can run any Sorrentum data nodes, like the ones in `examples/systems`
 
 - `examples/`:
@@ -194,6 +194,9 @@
 
 ## Running Jupyter
 
+- We have built a `sorrentum_jupyter` container that allows to run Jupyter with
+  all the needed dependencies
+
 - To start Jupyter do:
   ```
   > cd $GIT_ROOT/sorrentum_sandbox/examples
@@ -211,16 +214,7 @@
   latest: Pulling from sorrentum/jupyter
   677076032cca: Already exists
   4c9de205ab0e: Pull complete
-  a892cf7a32e9: Pull complete
-  9a40f96cecbd: Pull complete
-  750a9e837af3: Pull complete
-  531de5edc8b0: Pull complete
-  4f71d2b85657: Pull complete
-  3acb30401c68: Pull complete
-  8ce104f4b2d4: Pull complete
-  17ee1092dc19: Pull complete
-  cd7fbd9424d1: Pull complete
-  1e8ffcadb90b: Pull complete
+  ...
   7d1edc5584d3: Pull complete
   ac0e0cb28d27: Pull complete
   Digest: sha256:3be2a9bcbae4919d532d891d76ddb57cd8a13d0a8dd518cbdd5e7ed6ab3fa30a
@@ -237,11 +231,10 @@
   ```
 
 - This will start a Jupyter server in the container listening on port 8888
-    - You will access it from the host
     - As discussed above, the Docker start command maps the 8888 port on the
       container to the 8888 port on the host
-    - To do that start the browser and point it to `localhost:8888` or
-      `http://127.0.0.1:8888`
+    - You can access it from the host, by pointing your browser to
+      `localhost:8888` or `http://127.0.0.1:8888`
 
 - Navigate to `/data` to see the directories mounted on Docker
 
@@ -249,18 +242,21 @@
 
 ## Running bash
 
-- You can run bash in the container Sorrentum
+- You can run bash in the Sorrentum Jupyter container with:
   ```
   > docker_bash.sh
   ```
 
-# Sorrentum Data Nodes examples
+# Sorrentum system examples
 
-- The following examples under `sorrentum_sandbox/examples` demonstrate small
-  standalone Sorrentum data nodes
+- The following examples under `sorrentum_sandbox/examples/systems` demonstrate
+  small standalone Sorrentum data nodes
 - Each example implements concrete classes from the interfaces specified in
-  `sorrentum_sandbox/`, upon which command line scripts are built
-- The actual execution of scripts is then orchestrated by Apache Airflow
+  `sorrentum_sandbox/common`, upon which command line scripts are built
+- Initially, we want to run the systems directly
+  - The actual execution of scripts can be orchestrated by Apache Airflow
+- The code relies on the Sorretum Airflow container described in the session
+  below
 
 ## Binance
 
@@ -269,8 +265,8 @@
   for selected cryptocurrencies
 
   ```
-  > tree --dirsfirst -n -F --charset unicode examples/binance
-  examples/binance/
+  > (cd $GIT_ROOT/sorrentum_sandbox/examples/systems/binance && $GIT_ROOT/dev_scripts/tree.sh)
+  ./
   |-- test/
   |   `-- test_download_to_csv.py
   |-- __init__.py
@@ -281,19 +277,17 @@
   |-- load_and_validate.py*
   |-- load_validate_transform.py*
   `-- validate.py
-
-  1 directory, 9 files
   ```
 
-### Running outside Airflow
+### Running in standalone mode
 
-- The example code can be found in `sorrentum_sandbox/examples/binance`
+- The example code can be found in `sorrentum_sandbox/examples/systems/binance`
 
 - There are various files:
-  - `db.py`: contains the interface to load / save Binance data to Postgres (Load
-    stage)
-  - `download.py`: implement the logic to download the data from Binance (Extract
-    stage)
+  - `db.py`: contains the interface to load / save Binance raw data to Postgres
+    - i.e., "Load stage" of an ETL pipeline
+  - `download.py`: implement the logic to download the data from Binance
+    - i.e., "Extract stage"
   - `download_to_csv.py`: implement Extract stage to CSV
   - `download_to_db.py`: implement Extract stage to PostgreSQL
   - `load_and_validate.py`: implement a pipeline loading data into a
@@ -306,12 +300,9 @@
 
 - To get to know what type of data we are working with in this example you can run:
   ```
-  > docker_exec.sh
-  docker> cd /cmamp/sorrentum_sandbox/examples/binance
-  docker> ./download_to_csv.py \
-      --start_timestamp '2022-10-20 10:00:00+00:00' \
-      --end_timestamp '2022-10-21 15:30:00+00:00' \
-      --target_dir 'binance_data'
+  > docker_bash.sh
+  docker> cd /cmamp/sorrentum_sandbox/examples/systems/binance
+  docker> ./download_to_csv.py --start_timestamp '2022-10-20 10:00:00+00:00' --end_timestamp '2022-10-21 15:30:00+00:00' --target_dir 'binance_data'
   INFO: > cmd='/cmamp/sorrentum_sandbox/examples/binance/download_to_csv.py --start_timestamp 2022-10-20 10:00:00+00:00 --end_timestamp 2022-10-21 15:30:00+00:00 --target_dir binance_data' report_memory_usage=False report_cpu_usage=False
   INFO: Saving log to file '/cmamp/sorrentum_sandbox/examples/binance/download_to_csv.py.log'
   06:45:25 - INFO  download.py download:120                               Downloaded data:
@@ -322,6 +313,7 @@
   3      ETH_USDT  1297.28000000  1297.28000000  1297.28000000  1297.28000000  0.00000000  1666260240000 2023-01-23 11:45:22.729246+00:00
   4      ETH_USDT  1297.28000000  1297.28000000  1297.28000000  1297.28000000  0.00000000  1666260300000 2023-01-23 11:45:22.729261+00:00
   ```
+
 - The script downloads around 1 day worth of OHLCV bars (aka candlestick) into a
   CSV file
   ```
@@ -524,7 +516,7 @@ REDDIT_SECRET=some_secret
     - scheduled to run every 5 minutes
     - load data from a MongoDB collection, compute feature, and save back to the database using `examples/reddit/load_validate_transform.py`
 
-# Sorrentum Docker Container
+# Sorrentum system container
 
 ## High-level description
 
@@ -539,39 +531,48 @@ REDDIT_SECRET=some_secret
   > vi docker-compose.yml Dockerfile .env
   ```
 
-- The system needs three Docker images
-  - `postgres` and `mongo` are prebuilt and downloaded directly from DockerHub
-  - `sorrentum/sorrentum` image can be either built locally or downloaded from
+- The system needs three Docker images:
+  - `postgres`: prebuilt image for PostgreSQL, downloaded directly from
     DockerHub
+  - `mongo`: prebuilt image for Mongo, downloaded directly from DockerHub
+  - `sorrentum/sorrentum`: the image can be either built locally or downloaded
+    from DockerHub
+    - It is used to run Airflow and the Sorrentum application
+    - The container containing the application is `airflow_cont`
 
-- The container containing the application is `airflow_cont`
+  // Generated with:
+  // cd ~/src/sorrentum1/sorrentum_sandbox/devops
+  // docker run --rm -it --name dcv -v $(pwd):/input pmsipilot/docker-compose-viz render -m image docker-compose.yml --no-volumes --force
+  ![image](https://user-images.githubusercontent.com/33238329/223691802-0f0ec9ce-9854-48a7-9a30-1a8d452f77ce.png)
   
-- To configure your environment run
-  ```
-  > source $GIT_ROOT/sorrentum_sandbox/devops/setenv.sh
-  ```
-
 ## Scripts
 
-- There are several scripts that allow to connect to Airflow container:
-  - `docker_clean.sh`: remove the Sorrentum app container
-  - `docker_clean_all.sh`: kills all the containers needed for the Sorrentum node
-  - `docker_cmd.sh`: execute one command inside the Sorrentum app container
-  - `docker_bash.sh`: start a Sorrentum app container
-  - `docker_build.sh`: build the image of the Sorrentum app container
-  - `docker_exec.sh`: start another shell in an already running Sorrentum app
-    container
-  - `docker_push.sh`: push to DockerHub the image of the Sorrentum app container
-
-- Remember that commands prepended with
+- Remember that commands prepended with:
   - `>` are run outside the Sorrentum app container in a terminal of your local
     computer
   - `docker>` are run inside the Sorrentum app container after running
     `docker_bash.sh` or `docker_exec.sh`
 
+- To configure the environment run:
+  ```
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
+  > source $GIT_ROOT/sorrentum_sandbox/devops/setenv.sh
+  ```
+
+- There are several scripts that allow to connect to Airflow container:
+  - `docker_prune.sh`: remove all the Sorrentum images
+  - `docker_prune_all.sh`: remove all the images needed for the Sorrentum node
+  - `docker_pull.sh`: pull image of the Sorrentum app container
+  - `docker_bash.sh`: start a Sorrentum app container
+  - `docker_exec.sh`: start another shell in an already running Sorrentum app
+    container
+  - `docker_cmd.sh`: execute one command inside the Sorrentum app container
+  - `docker_build.sh`: build the image of the Sorrentum app container
+  - `docker_push.sh`: push to DockerHub the image of the Sorrentum app container
+
 - E.g., you can check the Airflow version with:
   ```
-  > docker_exec.sh
+  > docker_bash.sh
   docker> airflow version
   2.2.2
   ```
@@ -579,11 +580,11 @@ REDDIT_SECRET=some_secret
 ## Sorrentum app container
 
 - The Sorrentum app container image is already pre-built and should be
-  automatically cloned from DockerHub `sorrentum/sorrentum`
+  automatically downloaded from DockerHub `sorrentum/sorrentum`
  
 - You can also build manually the Sorrentum container using Docker
   ```
-  > cd devops
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
   > docker_build.sh
   ```
 - Building the container takes a few minutes
@@ -599,24 +600,27 @@ REDDIT_SECRET=some_secret
   ```
   it's fine
 
-- Note that Docker-Compose automates also the building phases of the entire
+- Note that Docker-compose automates also the building phases of the entire
   system
   ```
-  > cd devops
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
   > docker-compose build
   ```
   
 ## Bring up Sorrentum data node
 
-- The best approach is to run Airflow server in one terminal window and other
-  tools in other windows (e.g., using tmux) after running `docker_exec.sh`, so 
-  one can see the Airflow logs at the same time as running other commands
+- The best approach is to see the Airflow logs at the same time as running other
+  commands:
+  - Run Airflow server in one terminal window
+  - Run other tools in other windows (e.g., using tmux) using `docker_exec.sh`,
 
 - After the containers are ready, you can bring up the service with:
   ```
-  > cd devops
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
   > docker-compose up
   ```
+
+- Starting the system can take some time
 
 - Note that there can be some errors / warnings, but things are good as long 
   as you see Airflow starting like below:
@@ -646,7 +650,7 @@ REDDIT_SECRET=some_secret
 ## Check the Airflow status
 
 - Check that the Airflow service is up by going with your browser to
-  `localhost:8090`
+  `localhost:8091`
   - You should see the Airflow login
   - You can't log in since you don't have username / password yet
 
@@ -675,12 +679,12 @@ REDDIT_SECRET=some_secret
   Airflow
 - Take a look at the script that configures Airflow
   ```
-  > cd devops
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
   > vi ./init_airflow_setup.sh
   ```
 - In a different terminal window outside the Docker container, run:
   ```
-  > cd devops
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
   > ./init_airflow_setup.sh
   ...
   [2023-01-22 01:07:31,578] {manager.py:214} INFO - Added user airflow
@@ -757,7 +761,7 @@ REDDIT_SECRET=some_secret
 
 - The code of the tutorial is at
   ```
-  > vi $GIT_REPO/sorrentum_sandbox/devops/airflow_data/dags/airflow_tutorial.py
+  > vi $GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags/airflow_tutorial.py
   ```
 
 - In Airflow web-server navigate to http://localhost:8090/tree?dag_id=tutorial
@@ -852,3 +856,4 @@ REDDIT_SECRET=some_secret
 - On the web-server you can see that all the DAG executions completed
   successfully
   ![image](https://user-images.githubusercontent.com/89211724/214028156-8bc0acac-7559-46aa-9ce5-2825957aa190.png)
+
