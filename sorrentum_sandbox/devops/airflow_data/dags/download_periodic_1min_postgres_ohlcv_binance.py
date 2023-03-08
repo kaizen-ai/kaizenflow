@@ -2,7 +2,6 @@
 DAG to download OHLCV data from Binance.
 """
 
-
 import datetime
 
 import airflow
