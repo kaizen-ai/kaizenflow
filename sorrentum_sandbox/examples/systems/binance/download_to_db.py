@@ -1,61 +1,24 @@
 #!/usr/bin/env python
 """
-Download OHLCV data from Binance and save it as CSV locally.
+Download OHLCV data from Binance and save it into the DB.
 
 Use as:
-> download_to_csv.py \
-    --start_timestamp '2022-10-20 10:00:00+00:00' \
+> download_to_db.py \
+    --start_timestamp '2022-10-21 10:00:00+00:00' \
     --end_timestamp '2022-10-21 15:30:00+00:00' \
-    --target_dir 'binance_data'
+    --target_table 'binance_ohlcv_spot_downloaded_1min'
 """
 import argparse
 import logging
-import os
-from typing import Any
 
 import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import helpers.hio as hio
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.examples.binance.download as sisebido
-import sorrentum_sandbox.common.save as sinsasav
+import sorrentum_sandbox.examples.systems.binance.db as sisebidb
+import sorrentum_sandbox.examples.systems.binance.download as sisebido
 
 _LOG = logging.getLogger(__name__)
-
-
-class CsvDataFrameSaver(sinsasav.DataSaver):
-    """
-    Class for saving pandas DataFrame as CSV to a local filesystem at desired
-    location.
-    """
-
-    def __init__(self, target_dir: str) -> None:
-        """
-        Constructor.
-
-        :param target_dir: path to save data to.
-        """
-        self.target_dir = target_dir
-
-    def save(self, data: sinsadow.RawData, **kwargs: Any) -> None:
-        """
-        Save RawData storing a DataFrame to CSV.
-
-        :param data: data to persists into CSV
-        """
-        hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
-        signature = (
-            "bulk.manual.download_1min.csv.ohlcv.spot.v7.binance.binance.v1_0_0"
-        )
-        signature += ".csv"
-        hio.create_dir(self.target_dir, incremental=True)
-        target_path = os.path.join(self.target_dir, signature)
-        data.get_data().to_csv(target_path, index=False)
-
-
-# #############################################################################
 
 
 def _add_download_args(
@@ -79,11 +42,11 @@ def _add_download_args(
         help="End of the loaded period, e.g. 2022-02-10 10:00:00+00:00",
     )
     parser.add_argument(
-        "--target_dir",
+        "--target_table",
         action="store",
         required=True,
         type=str,
-        help="Path to the target directory to store CSV data into",
+        help="Name of the db table to save data into",
     )
     parser.add_argument(
         "--use_global_api",
@@ -97,6 +60,7 @@ def _add_download_args(
 
 
 def _parse() -> argparse.ArgumentParser:
+    hdbg.init_logger(use_exec_path=True)
     parser = argparse.ArgumentParser(
         description=__doc__,
         formatter_class=argparse.RawTextHelpFormatter,
@@ -108,19 +72,15 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
-    hdbg.init_logger(
-        verbosity=args.log_level,
-        use_exec_path=True,
-        # report_memory_usage=True
-    )
-    # Download data.
+    # Load data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
     downloader = sisebido.OhlcvRestApiDownloader(args.use_global_api)
     raw_data = downloader.download(start_timestamp, end_timestamp)
-    # Save data as CSV.
-    saver = CsvDataFrameSaver(args.target_dir)
-    saver.save(raw_data)
+    # Save data to DB.
+    db_conn = sisebidb.get_db_connection()
+    saver = sisebidb.PostgresDataFrameSaver(db_conn)
+    saver.save(raw_data, args.target_table)
 
 
 if __name__ == "__main__":

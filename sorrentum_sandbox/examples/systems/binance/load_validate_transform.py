@@ -21,8 +21,8 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import sorrentum_sandbox.common.download as sinsadow
 import sorrentum_sandbox.common.validate as sinsaval
-import sorrentum_sandbox.examples.binance.db as sisebidb
-import sorrentum_sandbox.examples.binance.validate as sisebiva
+import sorrentum_sandbox.examples.systems.binance.db as sisebidb
+import sorrentum_sandbox.examples.systems.binance.validate as sisebiva
 
 _LOG = logging.getLogger(__name__)
 

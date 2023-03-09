@@ -49,7 +49,7 @@ services:
     depends_on:
       - postgres
     ports:
-      - "8090:8080"
+      - "8091:8080"
     user: "${AIRFLOW_UID}:0"
     volumes:
       - ./airflow_data/dags:/opt/airflow/dags

@@ -40,7 +40,7 @@ bash_command = [
     # Sleep 20 seconds all 1-min data have been loaded into DB.
     "sleep 20",
     "&&",
-    "/cmamp/sorrentum_sandbox/examples/binance/load_validate_transform.py",
+    "/cmamp/sorrentum_sandbox/examples/systems/binance/load_validate_transform.py",
     "--source_table 'binance_ohlcv_spot_downloaded_1min'",
     "--target_table 'binance_ohlcv_spot_resampled_5min'",
     "--start_timestamp {{ data_interval_start }} ",
