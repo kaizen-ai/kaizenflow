@@ -247,7 +247,9 @@
   > docker_bash.sh
   ```
 
-// /////////////////////////////////////////////////////////////////////////////////////////////
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
 
 # Sorrentum system container
 
@@ -255,7 +257,8 @@
 
 - The Docker container contains several services:
   - Airflow
-  - Databases (e.g., Postgres, MongoDB)
+  - Postgres
+  - MongoDB
 
 - Inspect the Dockerfile and the compose file to understand what's happening
   behind the scenes
@@ -273,9 +276,11 @@
     - It is used to run Airflow and the Sorrentum application
     - The container containing the application is `airflow_cont`
 
+  <!--
   // Generated with:
   // cd ~/src/sorrentum1/sorrentum_sandbox/devops
   // docker run --rm -it --name dcv -v $(pwd):/input pmsipilot/docker-compose-viz render -m image docker-compose.yml --no-volumes --force
+  -->
   ![image](https://user-images.githubusercontent.com/33238329/223691802-0f0ec9ce-9854-48a7-9a30-1a8d452f77ce.png)
   
 ## Scripts
@@ -378,7 +383,7 @@
 - The Airflow service provided in the container uses `LocalExecutor` which is 
   suitable for test / dev environments
   - For more robust deployments it is possible to add more components to the
-    docker-compose (e.g., celery and redis)
+    docker-compose (e.g., `Celery` and `Redis`)
 
 ## Check the Airflow status
 
@@ -408,7 +413,7 @@
   local     sorrentum_data_node_airflow-log-volume
   ```
 
-- When starting the Airflow containers for the first time you need to initialize
+- When starting the Airflow container for the first time you need to initialize
   Airflow
 - Take a look at the script that configures Airflow
   ```
@@ -425,7 +430,7 @@
   ```
 
 - Now if you go to the browser to `localhost:8091` on your local machine you can
-  log in with the default login credentials are `airflow`:`airflow`
+  log in with the default login credentials `airflow`:`airflow`
 - Upon successful login you should see the Airflow UI
   ![image](https://user-images.githubusercontent.com/49269742/215845132-6ca56974-495d-4ca2-9656-32000033f341.png)
 - To enable a DAG and start executing it based on provided interval, flip the
@@ -444,7 +449,7 @@
   Container postgres_cont              Removed
   Network sorrentum_data_node_default  Removed
   ```
-- You can see in the Airflow window that the service has stopper
+- You can see in the Airflow window that the service has stopped
 
 - You can verify the state of Docker containers directly with:
   ```
@@ -513,11 +518,11 @@
   docker> airflow dags list
   dag_id                                                        | filepath                                                         | owner   | paused
   ==============================================================+==================================================================+=========+=======
-  download_periodic_5min_mongo_posts_reddit           | download_periodic_5min_mongo_posts_reddit.py           | airflow | True
-  download_periodic_1min_postgres_ohlcv_binance                         | download_periodic_1min_postgres_ohlcv_binance.py                         | airflow | True
+  download_periodic_5min_mongo_posts_reddit                     | download_periodic_5min_mongo_posts_reddit.py                     | airflow | True
+  download_periodic_1min_postgres_ohlcv_binance                 | download_periodic_1min_postgres_ohlcv_binance.py                 | airflow | True
   tutorial                                                      | airflow_tutorial.py                                              | airflow | False
   validate_and_extract_features_periodic_5min_mongo_posts_reddit | validate_and_extract_features_periodic_5min_mongo_posts_reddit.py | airflow | True
-  validate_and_resample_periodic_1min_postgres_ohlcv_binance            | validate_and_resample_periodic_1min_postgres_ohlcv_binance.py            | airflow | True
+  validate_and_resample_periodic_1min_postgres_ohlcv_binance    | validate_and_resample_periodic_1min_postgres_ohlcv_binance.py    | airflow | True
 
 - Print the list of tasks in the "tutorial" DAG
   ```
@@ -590,7 +595,9 @@
   successfully
   ![image](https://user-images.githubusercontent.com/89211724/214028156-8bc0acac-7559-46aa-9ce5-2825957aa190.png)
 
-// /////////////////////////////////////////////////////////////////////////////////////////////
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
 
 # Sorrentum system examples
 
@@ -738,7 +745,9 @@
   docker> psql -U postgres -p 5532 -d airflow -h host.docker.internal -c 'SELECT * FROM binance_ohlcv_spot_resampled_5min LIMIT 5'
   ```
 
-// /////////////////////////////////////////////////////////////////////////////////////////////
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
+<!--  ///////////////////////////////////////////////////////////////////////////////////////////// -->
 
 ## Reddit
 
@@ -765,48 +774,52 @@
 
 - The example code can be found in `sorrentum_sandbox/examples/reddit`
 - There are various files:
-  - `db.py`: contains the interface to load / save Reddit posts data to MongoDB (Load/Extract stage)
+  - `db.py`: contains the interface to load / save Reddit posts data to MongoDB
+    (Load/Extract stage)
   - `download.py`: implement the logic to download raw data from Reddit (Extract
     stage)
   - `download_to_db.py`: implement extract stage to MongoDB
-  - `load_validate_transform.py`: implement a pipeline loading data
-    into DB, validating data, processing raw data (computing features), and saving transformed data back to DB
+  - `load_validate_transform.py`: implement a pipeline loading data into DB,
+    validating data, processing raw data (computing features), and saving
+    transformed data back to DB
   - `validate.py`: implement simple QA pipeline
   - `transform.py`: implement simple feature computation utilities from raw data 
 
 ### Download data
 
-- Make sure to specify Reddit API credentials in `$GIT_ROOT/sorrentum_sandbox/devops/.env` in the section labeled as `Reddit` before running the scripts
-```
-# Reddit.
-REDDIT_CLIENT_ID=some_client_id
-REDDIT_SECRET=some_secret
-```
+- Make sure to specify Reddit API credentials in
+  `$GIT_ROOT/sorrentum_sandbox/devops/.env` in the section labeled as `Reddit`
+  before running the scripts
+  ```
+  # Reddit.
+  REDDIT_CLIENT_ID=some_client_id
+  REDDIT_SECRET=some_secret
+  ```
 - To explore the data structure run (assumes having mongo container up and running):
-   ```bash
-   > cd /cmamp/sorrentum_sandbox/examples/reddit/
-   docker> ./download_to_db.py \
-       --start_timestamp '2022-10-20 10:00:00+00:00' \
-       --end_timestamp '2022-10-21 15:30:00+00:00'
-   ```
-    - *Note: since the script is setup to download new posts, it's optimal to specify as recent timestamps as possible*
-- connect to a MongoDB and query some documents from the `posts`
-  collection
   ```bash
-   docker> python
-    >>> import sorrentum_sandbox.examples.reddit.db as ssexredb
-    >>> import pymongo; import pandas as pd
-    >>> mongodb_client = pymongo.MongoClient(
-    ...     host=ssexredb.MONGO_HOST, port=27017, username="mongo", password="mongo"
-    ... )
-    >>> reddit_mongo_client = ssexredb.MongoClient(mongodb_client, "reddit")
-    >>> data = reddit_mongo_client.load(
-    ...     dataset_signature="posts",
-    ... )
-    >>> data
-    >>> <<output truncated for readability, example below>>
-   ```
-  - An example database entry (truncated for readability):
+  > cd /cmamp/sorrentum_sandbox/examples/reddit/
+  docker> ./download_to_db.py \
+      --start_timestamp '2022-10-20 10:00:00+00:00' \
+      --end_timestamp '2022-10-21 15:30:00+00:00'
+  ```
+- Since the script is setup to download new posts, it's optimal to specify as
+  recent timestamps as possible
+- Connect to a MongoDB and query some documents from the `posts` collection
+  ```bash
+  docker> python
+  >>> import sorrentum_sandbox.examples.reddit.db as ssexredb
+  >>> import pymongo; import pandas as pd
+  >>> mongodb_client = pymongo.MongoClient(
+  ...     host=ssexredb.MONGO_HOST, port=27017, username="mongo", password="mongo"
+  ... )
+  >>> reddit_mongo_client = ssexredb.MongoClient(mongodb_client, "reddit")
+  >>> data = reddit_mongo_client.load(
+  ...     dataset_signature="posts",
+  ... )
+  >>> data
+  >>> <<output truncated for readability, example below>>
+  ```
+- An example database entry (truncated for readability) is below:
   ```json
     {
       "_id": {"$oid": "63bd466b85a76c62bb578e49"},
@@ -832,7 +845,7 @@ REDDIT_SECRET=some_secret
 
 ### Load, QA and Transform
 
-- Second step is extracting features. Run as: 
+- The Second step is extracting features. Run as: 
   ```
   > cd /cmamp/sorrentum_sandbox/examples/reddit/
   docker> ./load_validate_transform.py \
@@ -840,7 +853,7 @@ REDDIT_SECRET=some_secret
       --end_timestamp '2022-10-21 15:30:00+00:00'
   ```
 - In MongoDB it can be found in the `processed_posts` collection
-  - To query the DB use the same code as above, in the **download data** section, specifying `processed_posts` in the `dataset_signature` argument
+- To query the DB use the same code as above, in the **download data** section, specifying `processed_posts` in the `dataset_signature` argument
 
 - Example:
   ```json
@@ -857,9 +870,9 @@ REDDIT_SECRET=some_secret
 ## Running inside Airflow
 
 - Bring up the services via docker-compose as described above
-   - Make sure to specify Reddit API credentials in
-     `$GIT_ROOT/sorrentum_sandbox/devops/.env` in the section labeled as `Reddit`
-     before running the setup
+- Make sure to specify Reddit API credentials in
+  `$GIT_ROOT/sorrentum_sandbox/devops/.env` in the section labeled as `Reddit`
+  before running the setup
   ```
   # Reddit.
   REDDIT_CLIENT_ID=some_client_id
@@ -869,12 +882,12 @@ REDDIT_SECRET=some_secret
 - Sign in using the default credentials airflow:airflow
 - There are two Airflow DAGs preloaded for this example stored in the dir
   `$GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags`
-  - download_periodic_5min_mongo_posts_reddit:
+  - `download_periodic_5min_mongo_posts_reddit`:
     - scheduled to run every 5 minutes
     - download new posts submitted in the last 5 minutes from chosen subreddits
       (in this example `r/Cryptocurrency` and `r/CryptoMarkets`) using
       `examples/reddit/download_to_db.py`
-  - validate_and_extract_features_periodic_5min_mongo_posts_reddit
+  - `validate_and_extract_features_periodic_5min_mongo_posts_reddit`
     - scheduled to run every 5 minutes
     - load data from a MongoDB collection, compute feature, and save back to the
       database using `examples/reddit/load_validate_transform.py`
