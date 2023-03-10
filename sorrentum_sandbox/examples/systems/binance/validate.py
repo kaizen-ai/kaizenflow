@@ -3,7 +3,7 @@ QA pipeline for Binance.
 
 Import as:
 
-import sorrentum_sandbox.examples.binance.validate as sisebiva
+import sorrentum_sandbox.examples.systems.binance.validate as sisebiva
 """
 
 import logging
