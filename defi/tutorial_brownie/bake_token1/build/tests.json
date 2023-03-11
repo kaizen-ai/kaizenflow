@@ -1,8 +1,0 @@
-{
-  "contracts": {
-    "SafeMath": "3b4158955f564edb18bd7a8ffdb49859c904f0b7",
-    "Token": "98ae4b61ce463a902c6dd82e2bd5202138a80b03"
-  },
-  "tests": {},
-  "tx": {}
-}
