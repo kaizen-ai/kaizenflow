@@ -1,0 +1,5 @@
+22:34:26 - [36mINFO [0m download.py downloader:45                              22:34:26 - [36mINFO [0m download.py downloader:45                              Downloaded data: 
+	                 roundId       price           startedAt           updatedAt       answeredInRound       pair  decimals
+0  55340232221128670505  2046080222 2023-03-15 01:34:35 2023-03-15 01:34:35  55340232221128670505  ETC / USD         8
+1  55340232221128670504  2025638387 2023-03-15 00:57:35 2023-03-15 00:57:35  55340232221128670504  ETC / USD         8
+2  55340232221128670503  2003152687 2023-03-15 00:38:35 2023-03-15 00:38:35  55340232221128670503  ETC / USD         8
