@@ -3,13 +3,9 @@
 Download data from Chainlink and save it as CSV locally.
 
 Use as:
-> download_to_csv.py \
-    --num_of_data 10
-    --target_dir 'chainlink_data'
+> download_to_csv.py --pair ETH/USD --num_of_data 10 --target_dir 'chainlink_data'
 
-> download_to_csv.py \
-    --roundid 55340232221128670494
-    --target_dir 'chainlink_data'
+> download_to_csv.py --pair ETH/USD --roundid 55340232221128670494 --target_dir 'chainlink_data'
 """
 import argparse
 import logging
