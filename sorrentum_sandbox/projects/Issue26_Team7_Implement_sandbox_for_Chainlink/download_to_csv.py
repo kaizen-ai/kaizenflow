@@ -61,18 +61,25 @@ def _add_download_args(
     Add the command line options for exchange download.
     """
     parser.add_argument(
+        "--pair",
+        action="store",
+        required=True,
+        type=str,
+        help="Currency pair to download",
+)
+    parser.add_argument(
         "--num_of_data",
         action="store",
         required=False,
         type=int,
-        help="Number_of_data_to_download",
+        help="Number of data to download",
 )
     parser.add_argument(
         "--roundid",
         action="store",
         required=False,
         type=str,
-        help="Roundid of the transaction data",
+        help="Roundid for the last stored transaction data",
     )
     parser.add_argument(
         "--target_dir",
@@ -103,9 +110,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     # Download data.
     if(args.roundid is None):
-        raw_data = sisebido.downloader(num_of_data = args.num_of_data)
+        raw_data = sisebido.downloader(pair = args.pair, num_of_data = args.num_of_data)
     elif(args.num_of_data is None):
-        raw_data = sisebido.downloader(roundid = args.roundid)
+        raw_data = sisebido.downloader(pair = args.pair, roundid = args.roundid)
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(raw_data)

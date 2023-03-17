@@ -19,7 +19,7 @@ import sorrentum_sandbox.common.save as sinsasav
 
 def get_chainlink_create_history_table_query() -> str:
     """
-    Get SQL query to create chainlink history table.
+    Get SQL query to create chainlink_history table.
     """
     query = """
     CREATE TABLE IF NOT EXISTS chainlink_history(
@@ -37,7 +37,7 @@ def get_chainlink_create_history_table_query() -> str:
 
 def get_chainlink_create_real_time_table_query() -> str:
     """
-    Get SQL query to create chainlink real-time table.
+    Get SQL query to create chainlink_real_time table.
     """
     query = """
     CREATE TABLE IF NOT EXISTS chainlink_real_time(
@@ -120,7 +120,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         :param table_name: name of the table for insertion
         :return: SQL query, e.g.,
             ```
-            INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
+            INSERT INTO chain_link(roundId,price,startedAt,updatedAt,answeredInRound,pair,decimals) VALUES %s
             ```
         """
         columns = ",".join(list(df.columns))
@@ -173,20 +173,20 @@ class PostgresClient(sinsacli.DataClient):
         Load CSV data specified by a unique signature from a desired source
         directory for a specified time period.
 
-        The method assumes data having a `timestamp` column.
+        The method assumes data having a `startedAt` column.
         """
         select_query = f"SELECT * FROM {dataset_signature}"
         # Filter data.
         if start_timestamp:
             hdateti.dassert_has_tz(start_timestamp)
-            select_query += f" WHERE timestamp >= {start_timestamp}"
+            select_query += f" WHERE startedAt >= {start_timestamp}"
         if end_timestamp:
             hdateti.dassert_has_tz(end_timestamp)
             if start_timestamp:
                 select_query += " AND "
             else:
                 select_query += " WHERE "
-            select_query += f" timestamp < {end_timestamp}"
+            select_query += f" startedAt < {end_timestamp}"
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
