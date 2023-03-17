@@ -124,7 +124,6 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         extras.execute_values(cursor, query, values)
         self.db_conn.commit()
 
-
     @staticmethod
     def _create_insert_query(df: pd.DataFrame, db_table: str) -> str:
         """
