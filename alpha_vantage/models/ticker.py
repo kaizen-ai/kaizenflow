@@ -1,14 +1,16 @@
 from typing import List
-from api import AlphaVantage
+from api.alpha_vantage import AlphaVantage
 from models.time_series import TimeSeriesData, TimeInterval, DataType
+
 
 class Ticker:
     def __init__(
-                self,
-                ticker: str,
-                get_name: bool = False,
-                time_series_data: List[TimeSeriesData] = None
-                ) -> None:
+        self,
+        ticker: str,
+        get_name: bool = False,
+        time_series_data: List[TimeSeriesData] = None,
+        **kwargs
+    ) -> None:
         self.ticker = ticker
 
         self.name = ticker
@@ -16,7 +18,7 @@ class Ticker:
             self.name = AlphaVantage.get_name_for(ticker)
 
         self.time_series_data = time_series_data
-        
+
         self.last_updated = None
         self.last_open = None
         self.last_close = None
@@ -27,7 +29,7 @@ class Ticker:
             self.last_updated = last.date
             self.last_open = last.open
             self.last_close = last.close
-    
+
     def __repr__(self) -> str:
         return f"""
         Name: {self.name} | {self.ticker}
@@ -36,7 +38,7 @@ class Ticker:
         Last Close: {self.last_close}
         Datapoints: {len(self.time_series_data) if self.time_series_data else "No Data"}
         """
-    
+
     def get_data(self, data_type: DataType, time_interval: TimeInterval = None):
         """
         Requests and loads the specified data type using Alpha Vantage.
@@ -56,3 +58,11 @@ class Ticker:
             self.last_updated = last.date
             self.last_open = last.open
             self.last_close = last.close
+
+    def to_json(self) -> dict:
+        """Converts object to JSON as long as it has time_series_data"""
+        if self.time_series_data:
+            json = self.__dict__
+            json['time_series_data'] = [
+                timeseries_data.__dict__ for timeseries_data in self.time_series_data]
+            return json

@@ -52,11 +52,12 @@ class AlphaVantage:
 
         if data.get("Note"):
             return print("Out of API calls, try again later.")
-        
-        if data["bestMatches"][0]["1. symbol"] == ticker:
-            return data["bestMatches"][0]["2. name"]
-        
-        raise LookupError("No matching companies for that ticker.")
+
+        if data['bestMatches']:
+            if data["bestMatches"][0]["1. symbol"] == ticker:
+                return data["bestMatches"][0]["2. name"]
+
+        return f"{ticker}?"
 
     @classmethod
     def get_intraday_for(cls, ticker: str, interval: TimeInterval = TimeInterval.FIVE) -> List[TimeSeriesData]:
@@ -97,7 +98,7 @@ class AlphaVantage:
         Returns:
         List[TimeSeriesData]
         """
-        
+
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED&symbol={ticker}&outputsize=full&apikey={cls.API_KEY}"
         request = requests.get(url)
         data = request.json()
