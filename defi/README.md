@@ -35,6 +35,16 @@
   > devops/docker_exec.sh
   ```
 
+## Install dependencies
+
+- To complete the set-up you need to install node libraries to each project
+- Open a new window and start a new bash in the running container
+  ```
+  > devops/docker_exec.sh
+  docker> cd data/
+  docker> devops/install_node_modules.sh
+  ```
+
 ## Start Ganache
 
 - Open a new window and start a new bash in the running container
