@@ -14,14 +14,14 @@ services:
       - POSTGRES_PASSWORD=postgres
       # We reuse the Airflow DB also for client data.
       # TODO(gp): Ideally we should separate infra from application.
-      - POSTGRES_DB=airflow
+      - POSTGRES_DB=DB
       - POSTGRES_PORT=5432
     volumes:
       # Map volume backing the DB to a local dir.
       - airflow-database-data:/var/lib/postgresql/data/
     ports:
       # Access PostgreSQL from outside the container on port 5532.
-      - "5532:5432"
+      - "8888:5432"
         
   # Mongo.
 

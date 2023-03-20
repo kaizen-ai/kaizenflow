@@ -1,0 +1,31 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    command: python app.py
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+    environment:
+      DATABASE_URL: postgres://postgres:example@postgres:5432/db
+
+  postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: example
+      POSTGRES_DB: db
+    volumes:
+      - postgress-data:/var/lib/postgresql/data
+    container_name: Data605_Project
+    ports:
+      - "8001:5432"
+
+networks:
+  project-net:
+
+volumes:
+  postgress-data:
