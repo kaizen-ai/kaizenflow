@@ -3,6 +3,7 @@ requests==2.28.2
 ipython==8.11.0
 tornado==6.1
 pymongo==4.3.3
+python-dotenv
 jupyter-client
 jupyter
 jupyter-contrib-core

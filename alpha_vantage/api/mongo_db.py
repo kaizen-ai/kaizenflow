@@ -1,10 +1,13 @@
 import os
 from typing import List
 
+from dotenv import load_dotenv
 from models.ticker import Ticker
 from models.time_series import TimeSeriesData
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
+
+load_dotenv()
 
 
 class Mongo:

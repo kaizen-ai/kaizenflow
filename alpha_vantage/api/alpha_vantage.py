@@ -2,8 +2,10 @@ import os
 from typing import List
 
 import requests
+from dotenv import load_dotenv
 from models.time_series import DataType, TimeInterval, TimeSeriesData
 
+load_dotenv()
 
 class AlphaVantage:
     API_KEY = os.environ.get("ALPHA_VANTAGE")
