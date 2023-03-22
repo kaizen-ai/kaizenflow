@@ -6,9 +6,9 @@ import psycopg2.extras as extras
 
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import sorrentum_sandbox.common.client as sinsacli
-import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.common.save as sinsasav
+import common.client as sinsacli
+import common.download as sinsadow
+import common.save as sinsasav
 
 
 def get_ohlcv_spot_downloaded_1min_create_table_query() -> str:

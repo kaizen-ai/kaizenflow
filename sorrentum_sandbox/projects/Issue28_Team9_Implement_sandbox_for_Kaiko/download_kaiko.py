@@ -4,7 +4,6 @@ from typing import Generator, Tuple
 
 import pandas as pd
 import requests
-import tqdm
 import kaiko as ka
 
 import helpers.hdatetime as hdateti
@@ -29,7 +28,7 @@ class KaikoDownloader(ssandown.DataDownloader):
         self, start_timestamp: str, end_timestamp: str, interval
     ) -> ssandown.RawData:
         dfs = []
-        for symbol in tqdm.tqdm(self._UNIVERSE["kaiko"]):
+        for symbol in self._UNIVERSE["kaiko"]:
 
             data = ka.download(
             tickers = symbol,
