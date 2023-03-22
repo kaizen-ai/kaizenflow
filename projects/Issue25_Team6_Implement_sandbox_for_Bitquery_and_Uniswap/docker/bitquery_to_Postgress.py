@@ -59,6 +59,8 @@ def run_bitquery_query(start_time: str,  limit: int) -> pd.DataFrame:
     }
   }
   """
+  # This query gets us information on Ethereum from the 3 available Uniswap exchanges,
+  # including the columns we will need in our future database
 
   # API endpoint and header
   endpoint = "https://graphql.bitquery.io/"
@@ -137,7 +139,7 @@ tran_wallet_info = df[["transaction_hash","transaction_to_address","transaction_
 tran_market_info = df[["transaction_hash","baseAmount","quoteAmount","quotePrice","maximum_price","minimum_price","open_price","close_price"]]
 tran_metadata = df[["transaction_hash","trades","transaction_gas"]]
 
-# Implement a flow to save the historical data from the source in a DB (SQL or Mongo depending on which is most appropriate) using a set of “tables”
+# Implement a flow to save the historical data from the source in a DB using a set of “tables”
 # Explain the rationale for the choice of the DB
 
 # Postgress schema
