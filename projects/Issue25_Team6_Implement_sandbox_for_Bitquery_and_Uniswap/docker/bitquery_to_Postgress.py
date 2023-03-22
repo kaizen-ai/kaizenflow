@@ -131,6 +131,12 @@ print(df.head())
 
 ##### TODO 2 ##
 
+# Split dataframe into table schema format for postgress
+tran_token_info = df[["transaction_hash","baseCurrency_symbol","baseCurrency_address","quoteCurrency_symbol","quoteCurrency_address"]]
+tran_wallet_info = df[["transaction_hash","transaction_to_address","transaction_txFrom_address"]]
+tran_market_info = df[["transaction_hash","baseAmount","quoteAmount","quotePrice","maximum_price","minimum_price","open_price","close_price"]]
+tran_metadata = df[["transaction_hash","trades","transaction_gas"]]
+
 # Implement a flow to save the historical data from the source in a DB (SQL or Mongo depending on which is most appropriate) using a set of “tables”
 # Explain the rationale for the choice of the DB
 
