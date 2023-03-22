@@ -57,6 +57,7 @@ class OhlcvRestApiDownloader(ssandown.DataDownloader):
 
         hdbg.dassert_eq(response.status_code, 200)
         data=pd.json_normalize(response.json())
+        #Convert data into dataframe
         timestamp=list()
         value=list()
         for i in data['values'].iloc[0]:
