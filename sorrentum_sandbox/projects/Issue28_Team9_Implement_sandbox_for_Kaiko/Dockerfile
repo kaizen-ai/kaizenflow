@@ -1,2 +1,2 @@
-FROM python3
+FROM python
 RUN pip3 install kaiko
