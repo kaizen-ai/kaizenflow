@@ -1,6 +1,8 @@
 from typing import List
 from api.alpha_vantage import AlphaVantage
 from models.time_series import TimeSeriesData, TimeInterval, DataType
+import pandas as pd
+import numpy as np
 
 
 class Ticker:
@@ -66,3 +68,12 @@ class Ticker:
             json['time_series_data'] = [
                 timeseries_data.__dict__ for timeseries_data in self.time_series_data]
             return json
+    
+    def to_CSV(self, target_directory, data_type: DataType, time_interval: TimeInterval = None):
+        """ Stores requested historical data in CSV format, if available """
+        self.get_data(data_type,time_interval)
+        df = pd.DataFrame(columns = ['Date','Open','Close','High','Low','Volume'])
+        for i in self.time_series_data:
+            df2 = pd.DataFrame({'Date':i.date,'Open':i.open,'Close':i.close,'High':i.high,'Low':i.low,'Volume':i.volume},index=[0])
+            df = pd.concat([df,df2],ignore_index=True)
+        df.to_csv(target_directory)
