@@ -55,12 +55,122 @@ def get_yfinance_spot_downloaded_5min_create_table_query() -> str:
     return query
 
 
+def get_yfinance_spot_downloaded_2min_create_table_query() -> str:
+    """
+    Get SQL query to create yahoo yfinance table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_2min(
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            adj_close NUMERIC,
+            volume NUMERIC,
+            timestamp TIMESTAMP WITH TIME ZONE,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchangeTimezoneName VARCHAR(255) NOT NULL,
+            timezone VARCHAR(255) NOT NULL
+            )
+            """
+    return query
+
+
+
+def get_yfinance_spot_downloaded_15min_create_table_query() -> str:
+    """
+    Get SQL query to create yahoo yfinance table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_15min(
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            adj_close NUMERIC,
+            volume NUMERIC,
+            timestamp TIMESTAMP WITH TIME ZONE,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchangeTimezoneName VARCHAR(255) NOT NULL,
+            timezone VARCHAR(255) NOT NULL
+            )
+            """
+    return query
+
+
+def get_yfinance_spot_downloaded_30min_create_table_query() -> str:
+    """
+    Get SQL query to create yahoo yfinance table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_30min(
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            adj_close NUMERIC,
+            volume NUMERIC,
+            timestamp TIMESTAMP WITH TIME ZONE,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchangeTimezoneName VARCHAR(255) NOT NULL,
+            timezone VARCHAR(255) NOT NULL
+            )
+            """
+    return query
+
+
+def get_yfinance_spot_downloaded_1hr_create_table_query() -> str:
+    """
+    Get SQL query to create yahoo yfinance table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_1hr(
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            adj_close NUMERIC,
+            volume NUMERIC,
+            timestamp TIMESTAMP WITH TIME ZONE,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchangeTimezoneName VARCHAR(255) NOT NULL,
+            timezone VARCHAR(255) NOT NULL
+            )
+            """
+    return query
+
+def get_yfinance_spot_downloaded_1d_create_table_query() -> str:
+    """
+    Get SQL query to create yahoo yfinance table.
+    """
+    query = """
+    CREATE TABLE IF NOT EXISTS yahoo_yfinance_spot_downloaded_1d(
+            open NUMERIC,
+            high NUMERIC,
+            low NUMERIC,
+            close NUMERIC,
+            adj_close NUMERIC,
+            volume NUMERIC,
+            timestamp TIMESTAMP WITH TIME ZONE,
+            currency_pair VARCHAR(255) NOT NULL,
+            exchangeTimezoneName VARCHAR(255) NOT NULL,
+            timezone VARCHAR(255) NOT NULL
+            )
+            """
+    return query
+
+
+
+
+
+
+
+
 def get_db_connection() -> Any:
     """
     Retrieve connection based on hardcoded values.
 
-    The parameters must match the parameters set up in the Sorrentum
-    data node docker-compose.
+    The parameters must match the parameters used for setting up Postgres container
     """
     connection = psycop.connect(
         host="host.docker.internal",
@@ -120,10 +230,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
 
         :param df: data to insert into DB
         :param table_name: name of the table for insertion
-        :return: SQL query, e.g.,
-            ```
-            INSERT INTO ccxt_ohlcv(timestamp,open,high,low,close) VALUES %s
-            ```
+        :return: SQL query, e.g.
         """
         
         columns = ",".join(list(df.columns))
@@ -145,6 +252,20 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         query = get_yfinance_spot_downloaded_5min_create_table_query()
         cursor.execute(query)
 
+        query = get_yfinance_spot_downloaded_2min_create_table_query()
+        cursor.execute(query)
+
+        query = get_yfinance_spot_downloaded_15min_create_table_query()
+        cursor.execute(query)
+
+        query = get_yfinance_spot_downloaded_30min_create_table_query()
+        cursor.execute(query)
+
+        query = get_yfinance_spot_downloaded_1hr_create_table_query()
+        cursor.execute(query)
+
+        query = get_yfinance_spot_downloaded_1d_create_table_query()
+        cursor.execute(query)
 
 # #############################################################################
 # PostgresClient
