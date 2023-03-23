@@ -6,7 +6,7 @@ import numpy as np
 app = Flask(__name__)
 
 # TODO(Dan): Replace with a company API. Now a dummy is used.
-API_KEY = "bef8f874d2ad2e08d1e0eb91bad9c53399b8ca55016ba01101f4eeb855abf70f"
+_API_KEY = "bef8f874d2ad2e08d1e0eb91bad9c53399b8ca55016ba01101f4eeb855abf70f"
 
 
 def _get_price_volume_data():
@@ -20,7 +20,7 @@ def _get_price_volume_data():
     time_interval = request.json["time_interval"]
     # Query the CryptoCompare API for price data within the specified time range.
     response = requests.get(
-        f"https://min-api.cryptocompare.com/data/v2/histohour?fsym={symbol}&tsym=USD&limit=2000&aggregate=1&toTs={end_time}&api_key={API_KEY}"
+        f"https://min-api.cryptocompare.com/data/v2/histohour?fsym={symbol}&tsym=USD&limit=2000&aggregate=1&toTs={end_time}&api_key={_API_KEY}"
     )
     price_data = json.loads(response.text)["Data"]["Data"]
     # Get price and volume data.
