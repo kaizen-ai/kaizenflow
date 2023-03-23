@@ -1,0 +1,416 @@
+\documentclass[11pt, reqno]{amsart}
+\newtheorem{theorem}{Theorem}
+\usepackage{amsfonts, amssymb, amscd, amsrefs}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{slashed}
+\usepackage{fullpage}
+
+\newtheorem{thm}{Theorem}
+\newtheorem{algorithm}[thm]{Algorithm}
+\newtheorem{definition}[thm]{Definition}
+\newtheorem{example}[thm]{Example}
+\newtheorem{problem}[thm]{Problem}
+
+\newcommand{\bidbtc}{\mathrm{bid}_\mathrm{BTC}}
+\newcommand{\askbtc}{\mathrm{ask}_\mathrm{BTC}}
+\newcommand{\bideth}{\mathrm{bid}_\mathrm{ETH}}
+\newcommand{\asketh}{\mathrm{ask}_\mathrm{ETH}}
+
+\newcommand{\bidbase}{\mathrm{bid}_\mathrm{quote\;token}}
+\newcommand{\askbase}{\mathrm{ask}_\mathrm{quote\;token}}
+\newcommand{\bidquote}{\mathrm{bid}_\mathrm{base\;token}}
+\newcommand{\askquote}{\mathrm{ask}_\mathrm{base\;token}}
+\newcommand{\BTC}{\mathrm{BTC}}
+\newcommand{\ETH}{\mathrm{ETH}}
+\newcommand{\DAI}{\mathrm{DAI}}
+\newcommand{\USDC}{\mathrm{USDC}}
+\newcommand{\USDT}{\mathrm{USDT}}
+\newcommand{\midpoint}{\mathrm{midpoint}}
+
+\title{DaoCross and DaoSwap}
+
+\author{GP Saggese, Paul Smith}
+
+\begin{document}
+
+\date{\today}
+
+\maketitle
+
+\tableofcontents
+
+
+\section{Introduction}
+
+DaoCross and DaoSwap constitute a decentralized protocol that facilitates
+on-chain ERC20 token exchange. DaoSwap provides a mechanism for efficient
+relative price discovery, and DaoCross enables parties to engage in
+zero market impact transactions with price improvement.
+
+DaoSwap is a smart contract for performing decentralized Walrasian-style
+auctions at regular time intervals. The auction performs price discovery by
+matching supply and demand (\cite{Wa}).
+
+DaoCross is a decentralized liquidity pool that crosses buy and sell orders
+with respect to an external reference price, i.e., a price oracle. This allows
+traders to interact directly with each other and share price improvement with
+respect to exchanges (by trading at bid-ask midpoint). Additionally, order
+intentions are not publicly disclosed prior to a cross, which enables block or
+other high-volume traders to execute quickly with minimal market impact.
+
+DaoSwap and DaoCross differ in how the token exchange rate is determined, but
+both share several common advantages:
+\begin{enumerate}
+    \item Low Cost:
+        they are a DeFi primitive that allows trading tokens peer-to-peer
+        without incurring spread costs
+    \item Capital Efficiency:
+        participants provide liquidity only when
+        they wish to trade, and only in the amount they wish to trade
+    \item No Impermanent Loss:
+        liquidity providers are not exposed to the risk of impermanent loss
+        (a form of unrealized loss that becomes realized upon withdrawing
+        liquidity), unlike the case with other decentralized exchange protocols
+        based on automated market makers
+    \item No Intermediary Custody:
+        exchanged tokens always remain under the control of their respective
+        owners
+    \item No Rent Extraction from High-Frequency Traders:
+        speed alone does not confer an advantage to traders, as the discrete
+        timing prevents predatory tactics such as front-running, limit order
+        scalping, and spoofing, which are known issues seen with continuous
+        limit order books
+    \item Ease-of-use: the interaction between buyers and sellers occurs
+        through smart contracts, with a website front-end available
+\end{enumerate}
+
+\section{Matching liquidity}
+
+Suppose there are two parties, Alice an ETH holder and Bob a BTC holder, who
+wish to swap tokens at a competitive rate. Suppose also that there are many
+additional ETH and BTC holders who may be interested in participating in a
+swap. How should the liquidity be pooled? At first glance, it appears that
+there should be a single pool of liquidity. The wrinkle manifests in determining
+how to express a desire to trade. A simple expression of a desire to trade is
+a limit order representing a commitment to trade up to $q$ in quantity of
+a token at a token exchange rate up to $p$. But what if some parties express
+quantity in terms ETH and and some in terms of BTC, and some parties express
+limit prices in terms of ETH per BTC, while others express limit prices in
+terms of BTC per ETH? Under these conditions, setting a single clearing price
+and determining fill prioritization rules raises several questions without
+obvious answers.
+
+\subsection{Breaking the symmetry}
+
+To simplify, we follow the practice of FX (foreign exchange) futures markets,
+which break the symmetry by specifying two non-interchangeable roles:
+\begin{enumerate}
+    \item a \emph{base} currency (for quantity)
+    \item a \emph{quote} currency (for price)
+\end{enumerate}
+The roles are expressed by writing \emph{base currency/quote currency}, e.g.,
+``EUR/USD".
+
+A limit order then consists of a quantity expressed in the units of the base
+currency and a price expressed in terms of the quote currency (per unit or
+suitable multiple of base currency). See, for example, \cite{Cme23} (e.g.,
+footnotes on page 25), for usage of this terminology. See \cite{CmeFx} for how
+this works in practice for Euro FX contracts, where contract units are
+denominated in Euros and price is quoted in U.S. dollars and cents per Euro
+increment.
+
+By breaking the symmetry, one may run a standard limit order book, hold a
+classical Walrasian-style auction, and handle size quantization effects by
+using one of a variety of priority rules based on quantity, price, and time.
+
+See \cite{BeLaLiVa22} for discussion around these variations and their effects
+on market quality outcomes.
+
+On the other hand, liquidity for a pair of currencies may be split across two
+separate contracts, necessarily with two separate limit order books. Using our
+example, this would mean treating BTC/ETH and ETH/BTC as separate token pairs,
+even though the underlying parties and sources of liquidity are the same.
+
+\subsection{Basket case}
+
+It seems plausible that by retaining the symmetry in the two-token case and
+instead treating a pair of tokens as a single source of liquidity, one may
+contrive a more efficient exchange mechanism.
+
+This minor expansion, however, suggests widening even further the universe of
+eligible swaps. For example, if there are three tokens available for exchange,
+one could contemplate many-for-one, one-for-many, or many-for-many token swaps,
+all to be carried out in an atomic fashion, and perhaps with complex
+constraints. A toy case along these lines one may consider is as follows:
+\begin{problem}[Triangular liquidity]
+Suppose there are the following three parties:
+\begin{itemize}
+    \item Party A, who holds $\BTC$ and wants $\ETH$
+    \item Party B, who holds $\ETH$ and wants $\DAI$
+    \item Party C, who holds $\DAI$ and wants $\BTC$
+\end{itemize}
+How should an auction be structured to ``best" facilitate exchange?
+\end{problem}
+While there may be other use cases and even demand for such auctions,
+unfortunately, the problem in general is NP-complete (e.g., \cite{XiStWh05}),
+which is a significant limiting factor in terms of feasibility and
+auction expense.
+
+\section{Protocol Introduction}
+
+In the previous section, we discussed the notions of base currency and
+quote currency from foreign exchange. Here we extend them to tokens.
+
+\begin{definition}[Base/quote tokens]
+A token (ordered) pair consists of a \emph{base token} and a
+\emph{quote token}. The shorthand notation for expressing the pair is
+\emph{base token/quote token} (e.g., ``$\BTC/\ETH$"), and as such indicates the
+respective roles of the tokens.
+
+By convention, \emph{quantity} to exchange is expressed in terms of the base
+token, and \emph{price} is a token exchange rate expressed in terms of the
+quote token per unit of base token (or multiple thereof).
+\end{definition}
+
+By way of example, in the pair BTC/ETH, BTC is the base token and ETH is the
+quote token. Interest to trade is expressed in terms of orders with BTC as
+base token and ETH as quote token:
+\begin{itemize}
+    \item Quantity $q$ is in terms of the base token (buy/sell a certain
+        amount of BTC)
+    \item Limit price is in terms of the quote token (buy/sell BTC with a
+        limit price of $p$ BTC per ETH)
+    \item A ``buy" order represents a commitment to purchase the base token
+        (``BTC") and pay with the quote token (``ETH")
+    \item A ``sell" order represents a commitment to sell the base token
+        (``BTC") and receive the quote token (``ETH").
+\end{itemize}
+
+A party who places a ``buy" order must have the quote token (``BTC") in custody,
+i.e., in its wallet. A party who places a ``sell" order must have the base
+token (``ETH") in custody.
+
+\subsection{Order attributes}
+
+A DaoCross or DaoSwap order must have the following attributes:
+\begin{enumerate}
+    \item Base token
+    \item Quote token
+    \item Action (buy/sell)
+    \item Quantity
+    \item Limit price
+    \item Timestamp
+    \item Deposit address
+\end{enumerate}
+We have discussed attributes 1-5 in some detail.
+
+The 6th attribute
+(timestamp) is used to determine eligibility in a swap or cross and can play a
+role in order fill priority.
+
+The 7th attribute (deposit address) enables one to
+use multiple wallets to facilitate account management. For example, a miner
+may have a supply of BTC collected and held in one wallet which it would like
+to systematically diversify into ETH and perhaps other tokens. In specifying
+a deposit address, it may use a separate wallet to collect incoming ETH.
+
+\subsection{DaoCross reference price}
+
+DaoCross relies on a \emph{price oracle} for determining the effective
+token exchange rate in a cross. The price oracle may come from a lit
+exchange, centralized or decentralized, or even on-chain automated market
+makers such as Uniswap (\cite[\S 2.2]{AdZiRo20}).
+
+The case of using an automated market maker as a price oracle is relatively
+straightforward, provided there is an automated market maker trading the
+target currency pair with sufficient liquidity.
+
+To use an exchange as a price reference, we must consider some additional
+steps. First, exchanges typically use a dollar stablecoin (e.g., USDC, USDT) as
+the quote currency and all other currencies as base currencies. Our example
+of BTC/ETH would be considered a cross pair in the world of traditional
+finance. Because most cross pairs are not traded directly on exchanges, we
+must derive a clearing price from pairs involving stablecoins.
+
+\begin{example}[Lit exchange bid-ask midpoint reference price]
+Let $\bidbtc, \askbtc$ be stablecoin-denominated top-of-book bid-ask prices
+for $\BTC$ (e.g., expressed in $\USDC$), and $\bideth, \asketh$ be the analogous
+prices for $\ETH$. Then, a commitment to buy one $\BTC$ and pay $\ETH$ would
+clear at a midpoint price of
+\[
+    \BTC/\ETH_{\midpoint} = \frac{\bidbtc + \askbtc}{\bideth + \asketh}
+\]
+expressed in BTC per ETH. Note that if the dollar price of BTH is significantly
+more than the dollar price of ETH, then this price implies paying many
+multiples of ETH for BTC (as is the case at the time of this writing).
+\end{example}
+
+In general, DaoCross may use the following reference price for a base/quote
+token pair, where the bids and asks come from a lit exchange and are expressed
+in terms of stablecoin prices:
+\begin{equation}
+    \frac{\bidbase + \askbase}{\bidquote + \askquote}
+\end{equation}
+
+When using either an on-chain price oracle or an exchange as a price oracle,
+it is possible to perform a time or volume weighted average of prices so as
+to avoid extreme price variations and to mitigate the risk and effects of any
+market manipulation attemps.
+
+\subsection{Order crossing}
+
+At regular time intervals, order submissions are cut off and reference prices
+are determined. An element of randomness is used to determine order cutoff
+times and reference price cutoff times in order to
+mitigate manipulative behaviors.
+
+An order is eligible for matching if its timestamp is within the cutoff window
+and if the external reference price does not exceed its limit price.
+
+Except on occasions where eligible buy/sell volume is perfectly matched, not
+all orders can be fully crossed. There are also discretization effects to
+consider arising from discrete order sizes and a discrete price grid
+\cite{BoBoDoGo18}[\S 3.2.1].
+See \cite{BeLaLiVa22} for a discussion of the trade-offs surrounding
+different prioritization rule choices. See \cite{MsAts} for the
+prioritization rules used by one of Morgan Stanley's equity liquidity pools.
+
+\subsubsection{Priority rules}
+DaoCross prioritizes fills according to:
+\begin{itemize}
+    \item Volume (higher volume comes first in priority)
+    \item Price (higher limit price breaks volume ties)
+    \item Timestamp (earlier timestamp breaks ties in volume and price)
+\end{itemize}
+If, in the unlikely scenario that all three of these parameters perfectly
+agree, a certain priority is not guaranteed.
+
+\subsubsection{Matching algorithm}
+The mechanism for matching eligible buy and sell orders consists of two
+priority queues, one for eligible buy orders and one for eligible sell orders.
+Priority is determined according to the volume/price/timestamp priority rules
+introduced above. Top-of-queue orders are compared, and the lesser of the two
+volumes is fully filled. Once an order is fully filled at the established
+reference price. One an order is fully filled, it is removed from the priority
+queue. The procedure continues until one of the two priority queues is empty.
+
+\subsubsection{Computational complexity}
+
+Let $n$ denote the sum (or max) of the number of eligible buy and sell orders.
+Priority queue construction occurs in $O(n)$ time, order removal costs
+$O(n \log n)$, and order remove occurs $O(n)$ times. So, the computational
+time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
+
+\subsubsection{DaoSwap variant}
+The mechanics for DaoSwap are similar to those above, with the primary
+difference being that an auction is used to determine a single clearing price.
+Variations in prioritization rules also possible.
+
+\section{Example}
+
+\bibliography{Daobib}
+\bibliographystyle{amsplain}
+
+\begin{thebibliography}{10}
+
+\bib{Ad18}{article}{
+    author={Adams, Hayden},
+    title={Uniswap Whitepaper},
+    date={2018},
+}
+
+\bib{AdZiRo20}{article}{
+    author={Adams, Hayden},
+    author={Zinsmeister, Noah},
+    author={Robinson, Dan},
+    title={Uniswap v2 Core},
+    date={March 2020},
+    eprint={https://uniswap.org/whitepaper.pdf},
+}
+
+\bib{AdZiSaKeRo21}{article}{
+    author={Adams, Hayden},
+    author={Zinsmeister, Noah},
+    author={Salem, Moody},
+    author={Keefer, River},
+    author={Robinson, Dan},
+    title={Uniswap v3 Core},
+    date={March 2021},
+    eprint={https://uniswap.org/whitepaper-v3.pdf},
+}
+
+\bib{BeLaLiVa22}{article}{
+    author={Bernales, Alejandro},
+    author={Ladley, Daniel},
+    author={Litos, Evangelos},
+    author={Valenzuela, Marcela},
+    title={Alternative Execution Priority Rules in Dark Pools},
+    date={July 22, 2022},
+    eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4169352},
+}
+
+\bib{BoBoDoGo18}{article}{
+    author={Bouchaud, Jean-Philippe},
+    author={Bonart, Julius},
+    author={Donier, Jonathan},
+    author={Gould, Martin},
+    title={Trades, Quotes and Prices},
+    date={2018},
+}
+
+\bib{Cme23}{article}{
+    author={CME Group},
+    title={2023 FX Product Guide},
+    edition={22nd},
+    eprint={https://www.cmegroup.com/trading/fx/files/fx-product-guide-2023-us.pdf},
+}
+
+\bib{CmeFx}{article}{
+    author={CME Group},
+    title={Euro FX Futures - Contract Specs},
+    eprint={https://www.cmegroup.com/markets/fx/g10/euro-fx.contractSpecs.html},
+}
+
+\bib{Ha03}{article}{
+    author={Hanson, Robin},
+    title={Combinatorial Information Market Design},
+    journal={Information Systems Frontiers},
+    date={2003},
+    volume={5},
+    pages={107-119},
+    eprint={https://doi.org/10.1023/A:1022058209073},
+}
+
+\bib{Ms}{article}{
+    author={Morgan Stanley},
+    title={Morgan Stanley Dark Pools},
+    eprint={https://www.morganstanley.com/disclosures/morgan-stanley-dark-pools},
+}
+
+\bib{MsAts}{article}{
+    author={Morgan Stanley},
+    title={MS Pool ATS-N Filings},
+    eprint={https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filenum=013-00117&owner=exclude&count=40}
+}
+
+\bib{Wa}{article}{
+    title={Walrasian auction},
+    eprint={https://en.wikipedia.org/wiki/Walrasian_auction},
+}
+
+\bib{XiStWh05}{article}{
+    author={Xia, Mu},
+    author={Stallaert, Jan},
+    author={Whinston, Andrew B.},
+    title={Solving the combinatorial double auction problem},
+    journal={Journal of Operation Research},
+    date={2005},
+    pages={239-251},
+    volume={164},
+    eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981?via\%3Dihub},
+}
+
+\end{thebibliography}
+
+\end{document}
