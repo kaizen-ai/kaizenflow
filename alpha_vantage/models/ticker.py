@@ -2,8 +2,6 @@ from typing import List
 from api.alpha_vantage import AlphaVantage
 from models.time_series import TimeSeriesData, TimeInterval, DataType
 import pandas as pd
-import numpy as np
-
 
 class Ticker:
     def __init__(
@@ -15,16 +13,15 @@ class Ticker:
     ) -> None:
         self.ticker = ticker
 
-        self.name = ticker
+        self.name = kwargs.get('name', ticker)
         if get_name:
             self.name = AlphaVantage.get_name_for(ticker)
-
-        self.time_series_data = time_series_data
 
         self.last_updated = None
         self.last_open = None
         self.last_close = None
 
+        self.time_series_data = time_series_data
         if self.time_series_data:
             last = self.time_series_data[0]
 
@@ -41,7 +38,7 @@ class Ticker:
         Datapoints: {len(self.time_series_data) if self.time_series_data else "No Data"}
         """
 
-    def get_data(self, data_type: DataType, time_interval: TimeInterval = None):
+    def get_data(self, data_type: DataType, time_interval: TimeInterval = TimeInterval.HOUR):
         """
         Requests and loads the specified data type using Alpha Vantage.
 
@@ -64,16 +61,18 @@ class Ticker:
     def to_json(self) -> dict:
         """Converts object to JSON as long as it has time_series_data"""
         if self.time_series_data:
-            json = self.__dict__
-            json['time_series_data'] = [
-                timeseries_data.__dict__ for timeseries_data in self.time_series_data]
-            return json
+            return  {
+                "ticker": self.ticker,
+                "name": self.name,
+                "last_updated": self.last_updated,
+                "last_open": self.last_open,
+                "last_close": self.last_close,
+                "time_series_data": [point.to_json() for point in self.time_series_data]
+            }
     
-    def to_CSV(self, target_directory, data_type: DataType, time_interval: TimeInterval = None):
-        """ Stores requested historical data in CSV format, if available """
-        self.get_data(data_type,time_interval)
-        df = pd.DataFrame(columns = ['Date','Open','Close','High','Low','Volume'])
-        for i in self.time_series_data:
-            df2 = pd.DataFrame({'Date':i.date,'Open':i.open,'Close':i.close,'High':i.high,'Low':i.low,'Volume':i.volume},index=[0])
-            df = pd.concat([df,df2],ignore_index=True)
-        df.to_csv(target_directory)
+    def to_CSV(self):
+        """Stores data in CSV format locally"""
+        json = self.to_json()
+        if json:
+            df = pd.DataFrame(json['time_series_data'])
+            df.to_csv(f'./{self.ticker.lower()}.csv')

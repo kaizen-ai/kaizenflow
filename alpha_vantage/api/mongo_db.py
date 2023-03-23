@@ -55,11 +55,43 @@ class Mongo:
         Parameters:
         data: Ticker - Class that needs to be saved.
         """
+        if not data.time_series_data:
+            return
+        
         json = data.to_json()
-        if json:
-            time_series = json['time_series_data']
-            del json['time_series_data']
-            cls.collection.find_one_and_update(
-                {"_id": data.ticker}, {"$set": json}, upsert=True)
-            cls.collection.find_one_and_update(
-                {"_id": data.ticker}, {'$push': {'time_series_data': {'$each': time_series}}}, upsert=True)
+        new_data = json['time_series_data']
+
+        # Checking for duplicate data
+        current = cls.get_ticker(data.ticker)
+        if current:
+            new_data = [point.to_json() for point in data.time_series_data if point not in current.time_series_data]
+            if current.name != current.ticker:
+                json['name'] = current.name
+
+        json.pop('time_series_data', None)
+
+        cls.collection.find_one_and_update(
+            {"_id": data.ticker},
+            {'$push': 
+                {'time_series_data': {'$each': new_data}}
+            },
+            upsert=True
+        )
+
+        cls.collection.find_one_and_update(
+            {"_id": data.ticker},
+            {"$set": json},
+            upsert=True
+        )
+
+    @classmethod
+    def delete_ticker(cls, ticker: str):
+        """Deletes all data related to a specific ticker"""
+        cls.collection.delete_one({"_id": ticker})
+
+    @classmethod
+    def purge_database(cls):
+        """Deletes everything in the database"""
+        data = cls.download()
+        for ticker in data:
+            cls.delete_ticker(ticker.ticker)

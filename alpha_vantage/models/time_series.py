@@ -26,8 +26,19 @@ class TimeSeriesData:
     low: float
     volume: int
 
+    def to_json(self):
+        return {
+            "type": self.type.value,
+            "date": self.date,
+            "open": self.open,
+            "close": self.close,
+            "high": self.high,
+            "low": self.low,
+            "volume": self.volume
+        }
+
     @classmethod
-    def load_json(cls, data_type: DataType, data: dict):
+    def load_json(cls, data_type: DataType, data: dict) -> list:
         """
         Transforms Alpha Vantage JSON request response into list of TimeSeriesData objects
 
