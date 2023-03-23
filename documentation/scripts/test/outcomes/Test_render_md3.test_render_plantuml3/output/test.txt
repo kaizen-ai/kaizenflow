@@ -1,5 +1,0 @@
-A
-```bash
-Alice --> Bob
-```
-B

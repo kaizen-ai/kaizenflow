@@ -1,6 +1,0 @@
-# Use vi keybindings.
-set -o vi
-
-bind '"\e[A"':history-search-backward
-bind '"\e[B"':history-search-forward
-bind Space:magic-space

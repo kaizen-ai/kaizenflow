@@ -1,3 +1,0 @@
-                             arma(0,0)
-sharpe_ratio                  0.931479
-sharpe_ratio_standard_error   2.588480

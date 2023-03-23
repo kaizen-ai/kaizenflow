@@ -1,7 +1,0 @@
-small
-- 2022-03-18
-- Same as "small" download universe
-
-v1
-- 2022-03-17
-- Initial version same as v1 download universe
