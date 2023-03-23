@@ -68,7 +68,10 @@ def get_vwap():
     prices, volumes = _get_price_volume_data()
     vwap = np.sum(prices * volumes) / np.sum(volumes)
     vwap = jsonify(
-        {"jobRunID": request.json["jobRunID"], "data": {"result": str(vwap)}},
+        {
+            "jobRunID": request.json["jobRunID"],
+            "data": {"result": str(vwap)},
+        }
     )
     return vwap
 
