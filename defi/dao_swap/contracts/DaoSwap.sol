@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.4;
 
+import "./PriceOracle.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "../node_modules/@openzeppelin/contracts/security/PullPayment.sol";
@@ -9,7 +10,8 @@ import "../node_modules/@openzeppelin/contracts/security/PullPayment.sol";
 /// @title Swap contract that allows trading large blocks of coins peer-to-peer.
 contract DaoSwap is Ownable, PullPayment {
     string public contractName;
-    address public priceOracle;
+    // From https://docs.chain.link/data-feeds/price-feeds/addresses.
+    PriceOracle public priceOracle;
     // 1 -> TWAP, 2 -> VWAP, 3 -> close.
     uint8 public priceMode;
     // 1 -> proportional,
@@ -89,7 +91,7 @@ contract DaoSwap is Ownable, PullPayment {
         swapPeriodInSecs = _swapPeriodInSecs;
         swapRandomizationInSecs = _swapRandomizationInSecs;
         feesAsPct = _feesAsPct;
-        priceOracle = _priceOracle;
+        priceOracle = new PriceOracle(_priceOracle);
         priceMode = _priceMode;
         swapMode = _swapMode;
         token = IERC20(_token);
@@ -295,28 +297,31 @@ contract DaoSwap is Ownable, PullPayment {
     }
 
     /// @notice Get token price from the Oracle.
-    function getOraclePrice() internal pure returns (uint256) {
-        // harcoded for now, one token costs 533300000000000 WEI which is 0.0005333 ETH
-        return 533300000000000;
+    function getOraclePrice() public view returns (uint256) {
+        int256 price = priceOracle.getLatestPrice();
+        // or it can be less then zero?
+        require(price > 0, "Price should be more than zero.");
+        uint256 uintPrice = uint(price);
+        return uintPrice;
     }
 
 
     /// @notice Get token price with TWAP algorithm.
-    function getTwapPrice() internal pure returns (uint256)  {
+    function getTwapPrice() public pure returns (uint256)  {
         //TWAP = (TP1+ TP2… + TPn) / n
         // harcoded for now, one token costs 533300000000000 WEI which is 0.0005333 ETH
         return 533300000000000;
     }
 
     /// @notice Get token price with VWAP algorithm.
-    function getVwapPrice() internal pure returns (uint256)  {
+    function getVwapPrice() public pure returns (uint256)  {
         //VWAP = (V1 x P1 + V2 x P2… + Vn x Pn) / TotalVolume
         // harcoded for now, one token costs 533300000000000 WEI which is 0.0005333 ETH
         return 533300000000000;
     }
 
     function eraseOrders() public onlyOwner {
-        // Remove old orders.
+        // Remove orders from the previous.
         delete orders;
         // Create new orders array.
         Order[] storage orders;
