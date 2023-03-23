@@ -20,10 +20,12 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . /app
 
 # Set the environment variable for the database connection URL
-ENV DATABASE_URL=postgresql://postgres:postgres@db/DB
+ENV DATABASE_URL=postgresql://postgres:postgres@db/db
 
-# Expose port 8000 for the Flask web application
+# Expose ports
 EXPOSE 8000
+EXPOSE 8001
+EXPOSE 5432
 
 # Run the Flask app and connect to PostgreSQL
 CMD ["python", "app.py"]

@@ -4,3 +4,5 @@ pandas
 requests
 typing
 redis
+sqlalchemy
+datetime

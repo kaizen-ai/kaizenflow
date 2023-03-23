@@ -9,20 +9,20 @@ services:
     depends_on:
       - postgres
     environment:
-      DATABASE_URL: postgres://postgres:example@postgres:5432/db
+      DATABASE_URL: postgres://user:password@postgres:5432/db
 
   postgres:
     image: postgres
     restart: always
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: example
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
       POSTGRES_DB: db
     volumes:
       - postgress-data:/var/lib/postgresql/data
     container_name: Data605_Project
     ports:
-      - "8001:5432"
+      - "5432:5432"
 
 networks:
   project-net:
