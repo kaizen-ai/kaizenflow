@@ -1,5 +1,5 @@
 import pytest
-from brownie import chain, reverts
+import brownie
 
 
 @pytest.fixture(scope="module")
@@ -35,7 +35,7 @@ def test_addParticipant_requireAmount(time_lock, accounts):
         release_TimeStamp,
         {"from": accounts[0], "gas_price": "60 gwei"},
     )
-    with reverts():
+    with brownie.reverts():
         time_lock.addParticipant(
             participant,
             amount,
@@ -61,7 +61,7 @@ def test_addParticipant(time_lock, accounts):
 
 
 def test_addAmount_requireAmount(time_lock, accounts):
-    with reverts():
+    with brownie.reverts():
         time_lock.addAmount(
             accounts[1], 1000, {"from": accounts[0], "gas_price": "60 gwei"}
         )
@@ -89,7 +89,7 @@ def test_addAmount(time_lock, accounts):
 
 
 def test_getReleaseTimestamp(time_lock, accounts):
-    with reverts():
+    with brownie.reverts():
         time_lock.getReleaseTimestamp(accounts[1], {"from": accounts[1]})
 
 
@@ -104,7 +104,7 @@ def test_releaseTokens_releaseTimestamp(time_lock, accounts, mock_token):
         {"from": accounts[0], "gas_price": "60 gwei"},
     )
 
-    with reverts():
+    with brownie.reverts():
         time_lock.releaseTokens({"from": accounts[1], "gas_price": "60 gwei"})
 
 
@@ -118,7 +118,7 @@ def test_releaseTokens(time_lock, accounts, mock_token):
         release_TimeStamp,
         {"from": accounts[0], "gas_price": "60 gwei"},
     )
-    chain.sleep(release_TimeStamp - chain.time() + 1)
+    brownie.chain.sleep(release_TimeStamp - brownie.chain.time() + 1)
     mock_token.transfer(
         time_lock.address, amount, {"from": accounts[1], "gas_price": "60 gwei"}
     )
@@ -127,7 +127,7 @@ def test_releaseTokens(time_lock, accounts, mock_token):
 
 
 def test_withDrawTokens_ownerCheck(time_lock, accounts):
-    with reverts():
+    with brownie.reverts():
         time_lock.withdrawTokens(5, {"from": accounts[2], "gas_price": "60 gwei"})
 
 
