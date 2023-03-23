@@ -33,7 +33,6 @@ We can see all our required code is now present in this container under /code/ f
  
  
 Step5:  Now we run the code to generate a sample csv file using the download_to_csv_yahoo.py file present . Command used:
- 
 python3 download_to_csv_yahoo.py --start_timestamp "2023-03-19" --end_timestamp "2023-03-20" --target_dir '/code/' --interval '1m'
  
 
