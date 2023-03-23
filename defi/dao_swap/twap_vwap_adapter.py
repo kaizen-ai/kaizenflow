@@ -1,7 +1,14 @@
-from flask import Flask, request, jsonify
-import requests
+"""
+Import as:
+
+import defi.dao_swap.twap_vwap_adapter as ddstvwad
+"""
+
 import json
+
 import numpy as np
+import requests
+from flask import Flask, jsonify, request
 
 app = Flask(__name__)
 
@@ -17,15 +24,23 @@ def _get_price_volume_data():
     symbol = request.json["symbol"]
     start_time = request.json["start_time"]
     end_time = request.json["end_time"]
-    time_interval = request.json["time_interval"]
+    request.json["time_interval"]
     # Query the CryptoCompare API for price data within the specified time range.
     response = requests.get(
         f"https://min-api.cryptocompare.com/data/v2/histohour?fsym={symbol}&tsym=USD&limit=2000&aggregate=1&toTs={end_time}&api_key={_API_KEY}"
     )
     price_data = json.loads(response.text)["Data"]["Data"]
     # Get price and volume data.
-    prices = [float(entry["close"]) for entry in price_data if entry["time"] >= start_time]
-    volumes = [float(entry["volumefrom"]) for entry in price_data if entry["time"] >= start_time]
+    prices = [
+        float(entry["close"])
+        for entry in price_data
+        if entry["time"] >= start_time
+    ]
+    volumes = [
+        float(entry["volumefrom"])
+        for entry in price_data
+        if entry["time"] >= start_time
+    ]
     return prices, volumes
 
 
@@ -53,10 +68,7 @@ def get_vwap():
     prices, volumes = _get_price_volume_data()
     vwap = np.sum(prices * volumes) / np.sum(volumes)
     vwap = jsonify(
-        {
-            "jobRunID": request.json["jobRunID"],
-            "data": {"result": str(vwap)}
-        }
+        {"jobRunID": request.json["jobRunID"], "data": {"result": str(vwap)}},
     )
     return vwap
 
