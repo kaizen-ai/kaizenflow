@@ -14,7 +14,7 @@ from flask import Flask, jsonify, request
 app = Flask(__name__)
 
 
-def _get_price_volume_data() -> Tuple[List[int], List[int]]:
+def _get_price_volume_data() -> Tuple[List[int], List[float]]:
     """
     Query price and volume data from the CoinGecko API.
     """
