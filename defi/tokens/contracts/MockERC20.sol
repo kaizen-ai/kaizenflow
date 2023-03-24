@@ -8,12 +8,12 @@ import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 /// @author Samarth
 /// @notice Mock Contract for testing TokenTimeLock contract using brownie scripts
 contract MockERC20 is ERC20, Ownable {
-    uint256 public max_supply;
+    uint256 public maxSupply;
 
-    constructor(string memory name, string memory symbol, uint256 initialSupply, uint256 maxSupply) ERC20(name, symbol) {
-        max_supply = maxSupply * 10**decimals();
+    constructor(string memory name, string memory symbol, uint256 initialSupply, uint256 _maxSupply) ERC20(name, symbol) {
+        maxSupply = _maxSupply * 10**decimals();
         initialSupply = initialSupply * 10**decimals();
-        require(initialSupply <= MAXIMUM_SUPPLY, "Premint amount is more than maximum supply");
+        require(initialSupply <= maxSupply, "Premint amount is more than maximum supply");
         _mint(msg.sender, initialSupply);
     }
 }
