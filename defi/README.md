@@ -20,6 +20,7 @@
   attached to it to run servers (e.g., Ganache, Jupyter, bash)
 - We suggest to use `tmux` to keep all the terminals in a single window
   and make it easy to control via keyboard
+- Note that you have to run docker commands exactly from the `/defi` subdir
   ```
   > cd $GIT_ROOT/defi
   > devops/docker_bash.sh
@@ -62,4 +63,6 @@
   > devops/docker_exec.sh
   docker> /data/devops/run_jupyter.sh
   ```
-- Go to `localhost:8888` on your laptop to make sure Jupyter is running
+- Go a link that corresponds to your server to make sure Jupyter is running:
+    - `dev1`: http://172.30.2.136:8889/tree?
+    - `dev2`: http://172.30.2.128:8889/tree?
