@@ -18,6 +18,7 @@ contract DaoSwap is Ownable, PullPayment {
     uint8 public swapRandomizationInSecs;
     uint256 public feesAsPct;
     IERC20 token;
+    Stages public stage = Stages.OpenToNewOrders;
 
     // TODO(gp): @toma consider representing the orders as (token1, quantity, token2). In this way
     // We can represent buying 3 wBTC and paying in ETH as (wBTC, 3, ETH), selling 3 wBTC
@@ -39,6 +40,23 @@ contract DaoSwap is Ownable, PullPayment {
         uint256 amount;
         // Max price for buy / min price for sell.
         uint256 limitPrice;
+    }
+
+
+    // @notice Stages used to control creation of new sell/buy orders when onSwapTime() function is working
+    // OpenToNewOrders: onSwapTime() is not running, we can add new sell/buy order to orders queue
+    // Processing: onSwapTime() is processing queue of orders, we shell not create new sell/buy orders
+    enum Stages {
+        OpenToNewOrders,
+        Processing
+    }
+
+    modifier atStage(Stages _stage) {
+        require (
+            stage == _stage,
+            "Please wait onSwapTime() to finish!"
+        );
+        _;
     }
 
     //address[] currentSwapParticipants;
@@ -101,7 +119,7 @@ contract DaoSwap is Ownable, PullPayment {
     /// @param _depositAddress: the address to send the tokens after the order is completed
     function buyOrder(uint256 _amount, 
                 uint256 _limitPrice,
-                address _depositAddress) external payable {
+                address _depositAddress) external payable atStage(Stages.OpenToNewOrders) {
         require(msg.value > 0, "Send ETH to get tokens");
         Order memory order = Order(
             true,
@@ -125,7 +143,7 @@ contract DaoSwap is Ownable, PullPayment {
     /// @param _depositAddress: the address to send the ETH after the order is completed
     function sellOrder(uint256 _amount, 
                 uint256 _limitPrice,
-                address _depositAddress) external payable {
+                address _depositAddress) external payable atStage(Stages.OpenToNewOrders){
         // NOTE: User needs to approve the smart contract to spend their tokens.
         uint256 allowance = token.allowance(msg.sender, address(this));
         require(allowance >= _amount, "Check the token allowance");
@@ -150,6 +168,8 @@ contract DaoSwap is Ownable, PullPayment {
     /// @notice Execute the swap.
     function onSwapTime() public onlyOwner {
         uint256 price;
+        // Change the stage to processing to block new orders
+        stage = Stages.Processing;
         if (priceMode == 1) {
             price = getTwapPrice();
         } else if (priceMode == 2)  {
@@ -165,6 +185,8 @@ contract DaoSwap is Ownable, PullPayment {
             executeProportional(totBuyAmount, totSellAmount, 3, price);
         }
         eraseOrders();
+        // When finish processing previous orders, change the stage back to OpenToNewOrders to accept new sell/buy orders 
+        stage = Stages.OpenToNewOrders;
     }
 
     ///
