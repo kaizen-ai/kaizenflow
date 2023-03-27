@@ -4,7 +4,7 @@ import brownie
 @pytest.fixture(scope="module")
 def time_lock(mock_token, TokenTimelock, accounts):
     """
-    Deploy the TokenTimeLock Contract
+    Deploy the TokenTimeLock Contract.
     """
     return TokenTimelock.deploy(
         mock_token.address, {"from": accounts[0], "gas_price": "60 gwei"}
@@ -13,7 +13,7 @@ def time_lock(mock_token, TokenTimelock, accounts):
 @pytest.fixture(scope="module")
 def mock_token(MockERC20, accounts):
     """
-    Deploy the MockERC20 contract
+    Deploy the MockERC20 contract.
     """
     return MockERC20.deploy(
         "Mock Token",
@@ -26,14 +26,14 @@ def mock_token(MockERC20, accounts):
 @pytest.fixture(autouse=True)
 def shared_setup(fn_isolation):
     """
-    Creates the isolation environment
+    Creates the isolation environment.
     """
     pass
 
 
 def test_addParticipant_requireAmount(time_lock, accounts):
     """
-    Check whether the participant amount equals to 0 before being added
+    Check whether the participant amount equals to 0 before being added.
     """
     participant = accounts[2]
     amount = 10000
@@ -54,7 +54,7 @@ def test_addParticipant_requireAmount(time_lock, accounts):
 
 def test_addParticipant(time_lock, accounts):
     """
-    Checks whether the participant has been added
+    Checks whether the participant has been added.
     """
     participant = accounts[2]
     amount = 10000
@@ -72,7 +72,7 @@ def test_addParticipant(time_lock, accounts):
 
 def test_addAmount_requireAmount(time_lock, accounts):
     """
-    Checks participants amount != 0
+    Checks participants amount != 0.
     """
     with brownie.reverts():
         time_lock.addAmount(
@@ -81,7 +81,7 @@ def test_addAmount_requireAmount(time_lock, accounts):
 
 def test_addAmount(time_lock, accounts):
     """
-    Checks the flow of addAmount function
+    Checks the flow of addAmount function.
     """
     participant = accounts[2]
     amount = 10000
@@ -104,14 +104,14 @@ def test_addAmount(time_lock, accounts):
 
 def test_getReleaseTimestamp(time_lock, accounts):
     """
-    Checks the flow of getReleaseTimestamp function
+    Checks the flow of getReleaseTimestamp function.
     """
     with brownie.reverts():
         time_lock.getReleaseTimestamp(accounts[1], {"from": accounts[1]})
 
 def test_releaseTokens_releaseTimestamp(time_lock, accounts, mock_token):
     """
-    Checks release_timestamp < block_time while releasing the tokens
+    Checks release_timestamp < block_time while releasing the tokens.
     """
     participant = accounts[2]
     amount = 3 * 10**18
@@ -128,7 +128,7 @@ def test_releaseTokens_releaseTimestamp(time_lock, accounts, mock_token):
 
 def test_releaseTokens(time_lock, accounts, mock_token):
     """
-    Checks the flow of releaseTokens function
+    Checks the flow of releaseTokens function.
     """
     participant = accounts[2]
     amount = 3 * 10**18
@@ -148,14 +148,14 @@ def test_releaseTokens(time_lock, accounts, mock_token):
 
 def test_withDrawTokens_ownerCheck(time_lock, accounts):
     """
-    Checks whether withdrawTokens function is called by Owner
+    Checks whether withdrawTokens function is called by Owner.
     """
     with brownie.reverts():
         time_lock.withdrawTokens(5, {"from": accounts[2], "gas_price": "60 gwei"})
 
 def test_withDrawTokens(time_lock, accounts, mock_token):
     """
-    Checks the flow of withdrawTokens function
+    Checks the flow of withdrawTokens function.
     """
     amount = 3 * 10**18
     mock_token.transfer(
@@ -168,7 +168,7 @@ def test_withDrawTokens(time_lock, accounts, mock_token):
 
 def test_contractBalance(time_lock, accounts, mock_token):
     """
-    Checks the flow of getContractBalance function
+    Checks the flow of getContractBalance function.
     """
     amount = 3 * 10**18
     mock_token.transfer(
