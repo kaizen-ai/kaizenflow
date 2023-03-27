@@ -45,6 +45,7 @@ hprint.config_notebook()
 # # Order class
 
 # %%
+# TODO(gp): Consider reordering matching the white paper order.
 class Order:
     
     def __init__(
@@ -153,6 +154,24 @@ get_random_order()
 # # Order matching
 
 # %%
+def is_active_order(order):
+    if order is None:
+        return False
+    if not order.quantity > 0:
+        return False
+    return True
+
+
+def get_transfer_df(transfers: List):
+    if transfers:
+        transfer_df = pd.concat(transfers, axis=1).T
+    else:
+        transfer_df = pd.DataFrame(
+            columns=["token", "amount", "from", "to"]
+        )
+    return transfer_df
+
+
 def match_orders(orders: List[Order], clearing_price) -> pd.DataFrame:
     # Build buy and sell heaps.
     buy_heap = []
@@ -186,6 +205,7 @@ def match_orders(orders: List[Order], clearing_price) -> pd.DataFrame:
         if not sell_order or sell_order.quantity == 0:
             sell_order = copy.copy(sell_heap.pop())
         quantity = min(buy_order.quantity, sell_order.quantity)
+        # TODO(gp): Encode as dict and push the representation in get_transfer_df.
         transfer1 = pd.Series({
             "token": buy_order.base_token,
             "amount": quantity,
@@ -203,22 +223,6 @@ def match_orders(orders: List[Order], clearing_price) -> pd.DataFrame:
         buy_order.quantity -= quantity
         sell_order.quantity -= quantity
     transfer_df = get_transfer_df(transfers)
-    return transfer_df
-
-def is_active_order(order):
-    if order is None:
-        return False
-    if not order.quantity > 0:
-        return False
-    return True
-
-def get_transfer_df(transfers: List):
-    if transfers:
-        transfer_df = pd.concat(transfers, axis=1).T
-    else:
-        transfer_df = pd.DataFrame(
-            columns=["token", "amount", "from", "to"]
-        )
     return transfer_df
 
 
