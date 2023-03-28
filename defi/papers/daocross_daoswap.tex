@@ -193,12 +193,12 @@ base token and ETH as quote token:
 	\item Quantity $q$ is in terms of the base token (``buy/sell a certain
 	      amount of BTC")
 	\item Limit price is in terms of the quote token (``buy/sell BTC with a
-	      limit price of $p$ BTC per ETH")
+	      limit price of $p$ ETH per BTC")
 \end{itemize}
 
-A party who places a ``buy" order must have the quote token (``BTC") in custody,
+A party who places a ``buy" order must have the quote token (``ETH") in custody,
 i.e., in its wallet. A party who places a ``sell" order must have the base
-token (``ETH") in custody.
+token (``BTC") in custody.
 
 \subsection{Order attributes}
 A DaoCross or DaoSwap order must have the following attributes:
@@ -220,25 +220,26 @@ Deposit address enables one to use multiple wallets to facilitate account
 management. For example, a miner may have a supply of BTC collected and held in
 one wallet which it would like to systematically diversify into ETH and perhaps
 other tokens. In specifying a deposit address, it may use a separate wallet to
-collect incoming ETH.
+collect incoming ETH. This functionality is also standard in traditional
+finance, e.g., purchasing T-Bills on TreasuryDirect.
 
 \subsubsection{Order notation}
 A general limit order is then represented by the tuple:
 \begin{center}
 	\texttt{(timestamp, action, quantity, base\_token, limit\_price, quote\_token, 
-     deposit\_address,  )}
+     deposit\_address)}
 \end{center}
 
 We organize the quantities involved in an order in a way that makes it simple
 to read the constraints in natural language: ``At timestamp \texttt{timestamp}
-an order to \texttt{action} a \texttt{quantity} of the token
+create an order to \texttt{action} a \texttt{quantity} of the token
 \texttt{base\_token} for a limit price of \texttt{limit\_price} with respect to
 token \texttt{quote\_token} and deposit the resulting tokens at
 \texttt{deposit\_address}"
 
 For brevity's sake in the following we might:
 \begin{itemize}
-	\item omit the timestamp and the deposit address when not important
+	\item omit the timestamp and the deposit address when not relevant
 	\item omit the (infinite) limit price for market orders
 \end{itemize}
 
@@ -252,7 +253,7 @@ corresponds to the natural language description:
 units of ETH, exchanging them for wBTC with a limit price of 4.0 wBTC per unit
 of ETH, depositing the proceeds at \texttt{0xdeadc0de}".
 
-wBTC is a wrapped BTC, i.e., a token on Ethereum blockchain tracking Bitcoin.
+wBTC is wrapped BTC, i.e., a token on the Ethereum blockchain tracking Bitcoin.
 
 \subsubsection{Example of market order notation}
 Consider a swap for the tokens ETH, wBTC and assume that:
@@ -286,7 +287,7 @@ price of one ETH is equal to 0.2 wBTC, the exchange can be executed with
 another party.
 
 On the other hand, a limit order \texttt{(buy, 1.0, ETH, 0.1, wBTC)} requires
-that the price of ETH is lower than the current price and this does not allow
+that the price of ETH be lower than the current price and this does not allow
 the token swap to be carried out.
 
 A limit order \texttt{(sell, 1.0, ETH, 2.0, wBTC)} means ``sell 1 unit of ETH,
@@ -298,7 +299,7 @@ executed.
 Any limit order as defined above can be translated into inequalities involving
 quantity of exchanged tokens and allowed token prices. These equations can then
 be collected in a system of equations governing the equilibrium achieved by the
-orders
+orders.
 
 We indicate with an asterisk the quantities resulting from an executed swap
 order:
