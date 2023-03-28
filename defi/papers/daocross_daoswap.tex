@@ -28,9 +28,17 @@
 \newcommand{\USDT}{\mathrm{USDT}}
 \newcommand{\midpoint}{\mathrm{midpoint}}
 
-\title{DaoCross and DaoSwap}
+% Use this if using `\contrib[]{...}`.
+%\makeatletter\let\@wraptoccontribs\wraptoccontribs\makeatother
 
 \begin{document}
+
+\title{DaoCross and DaoSwap}
+
+\author{G.P. Saggese}
+\author{Paul Smith}
+
+\thanks{With contributions from Tamara Jordania, Samarth KaPatel, and Daniel Yachmenev}
 
 \date{\today}
 
@@ -38,10 +46,6 @@
 
 \tableofcontents
 
-\section{Authors}
-GP Saggese, Paul Smith
-
-with contributions from Tamara Jordania, Samarth Jayraj Ka Patel, Daniel Yachmenev
 
 % ###############################################################################
 
@@ -102,8 +106,9 @@ a token at a token exchange rate up to $p$. But what if some parties express
 quantity in terms ETH and and some in terms of BTC, and some parties express
 limit prices in terms of ETH per BTC, while others express limit prices in
 terms of BTC per ETH? Under these conditions, setting a single clearing price
-and determining fill prioritization rules raises several questions without
-obvious answers.
+and determining fill prioritization rules raises several questions. We will
+raise and address these in the sequel, but to begin, we will consider a more
+constrained setting.
 
 \subsection{Breaking the symmetry}
 To simplify, we follow the practice of FX (foreign exchange) futures markets,
@@ -133,7 +138,8 @@ on market quality outcomes.
 On the other hand, liquidity for a pair of currencies may be split across two
 separate contracts, necessarily with two separate limit order books. Using our
 example, this would mean treating BTC/ETH and ETH/BTC as separate token pairs,
-even though the underlying parties and sources of liquidity are the same.
+even though the union of the underlying parties and sources of liquidity are
+the same.
 
 \subsection{Basket case}
 It seems plausible that by retaining the symmetry in the two-token case and
