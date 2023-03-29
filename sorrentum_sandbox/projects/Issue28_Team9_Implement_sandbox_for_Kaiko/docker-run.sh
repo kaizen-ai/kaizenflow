@@ -1,1 +1,0 @@
-docker run -itd --name kaiko kaiko

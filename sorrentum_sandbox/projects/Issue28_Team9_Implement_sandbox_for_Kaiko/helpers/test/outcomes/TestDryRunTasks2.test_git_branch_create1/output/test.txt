@@ -1,3 +1,0 @@
-call('git pull --autostash')
-call('git checkout -b AmpTask123_test')
-call('git push --set-upstream origin AmpTask123_test')
