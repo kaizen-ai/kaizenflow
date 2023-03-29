@@ -1,3 +1,40 @@
+-   [Sorrentum Sandbox](#sorrentum-sandbox){#toc-sorrentum-sandbox}
+-   [Running the Sorrentum Jupyter
+    container](#running-the-sorrentum-jupyter-container){#toc-running-the-sorrentum-jupyter-container}
+    -   [Running Jupyter](#running-jupyter){#toc-running-jupyter}
+    -   [Running bash](#running-bash){#toc-running-bash}
+-   [Sorrentum system
+    container](#sorrentum-system-container){#toc-sorrentum-system-container}
+    -   [High-level
+        description](#high-level-description){#toc-high-level-description}
+    -   [Scripts](#scripts){#toc-scripts}
+    -   [Sorrentum app
+        container](#sorrentum-app-container){#toc-sorrentum-app-container}
+    -   [Bring up Sorrentum data
+        node](#bring-up-sorrentum-data-node){#toc-bring-up-sorrentum-data-node}
+    -   [Check the Airflow
+        status](#check-the-airflow-status){#toc-check-the-airflow-status}
+    -   [Pausing Airflow
+        service](#pausing-airflow-service){#toc-pausing-airflow-service}
+    -   [Restarting the
+        services](#restarting-the-services){#toc-restarting-the-services}
+    -   [Tutorial Airflow](#tutorial-airflow){#toc-tutorial-airflow}
+-   [Sorrentum system
+    examples](#sorrentum-system-examples){#toc-sorrentum-system-examples}
+    -   [Binance](#binance){#toc-binance}
+        -   [Run system in standalone
+            mode](#run-system-in-standalone-mode){#toc-run-system-in-standalone-mode}
+        -   [Run inside
+            Airflow](#run-inside-airflow){#toc-run-inside-airflow}
+    -   [Reddit](#reddit){#toc-reddit}
+    -   [Running outside
+        Airflow](#running-outside-airflow){#toc-running-outside-airflow}
+        -   [Download data](#download-data-1){#toc-download-data-1}
+        -   [Load, QA and
+            Transform](#load-qa-and-transform){#toc-load-qa-and-transform}
+    -   [Running inside
+        Airflow](#running-inside-airflow){#toc-running-inside-airflow}
+
 # Sorrentum Sandbox
 
 - This dir `sorrentum_sandbox` contains examples for Sorrentum data nodes
@@ -493,7 +530,7 @@
   > docker-compose up --build --force-recreate
   ```
 
-## Tutorial Airflow
+# Tutorial Airflow
 
 - From [official tutorial](https://airflow.apache.org/docs/apache-airflow/2.2.2/tutorial.html)
 
@@ -502,7 +539,15 @@
   > vi $GIT_ROOT/sorrentum_sandbox/devops/airflow_data/dags/airflow_tutorial.py
   ```
 
+- Start the Sorrentum container with Airflow inside
+  ```
+  > cd $GIT_ROOT/sorrentum_sandbox/devops
+  > docker-compose up
+  ```
+
 - In Airflow web-server navigate to http://localhost:8091/tree?dag_id=tutorial
+
+## Interacting with Airflow
 
 - Lots of the Airflow commands can be executed through the CLI or the web
   interface
