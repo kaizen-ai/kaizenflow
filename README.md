@@ -10,8 +10,7 @@
 Sorrentum is an open-Source DeFi protocol to build advanced financial applications
 
 - [Website](https://www.sorrentum.org)
-- [Collaboration page](https://github.com/sorrentum/sorrentum/wiki/Welcome-to-the-Sorrentum-Project)
-- [Technical entry point](https://docs.google.com/document/d/14Ul5uWd7NU1zZ9ZLHp1TerLMN7MOfS5MS5bSX-2rBQ8/edit)
+- [Welcome page](https://github.com/sorrentum/sorrentum/wiki/Welcome-to-the-Sorrentum-Project)
 - [UMD DATA605 Big Data Systems](https://github.com/gpsaggese/umd_data605)
    - Contains [lectures](https://github.com/gpsaggese/umd_data605/tree/main/lectures) and [tutorials](https://github.com/gpsaggese/umd_data605/tree/main/tutorials) about many of the technologies we use in Sorrentum, e.g.,
      - Dask

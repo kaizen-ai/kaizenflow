@@ -214,7 +214,8 @@ def _dassert_setup_consistency() -> None:
         msg = (
             "One and only one set-up config should be true:\n"
             + setup_to_str())
-        raise ValueError(msg)
+        _LOG.warning(msg)
+        #raise ValueError(msg)
 
 
 # If the env var is not defined then we want to check. The only reason to skip

@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 r"""
 This script performs several actions on a Jupyter notebook, such as:
+
 - opening a notebook in the browser
 - publishing a notebook locally or remotely on an HTML server
 
@@ -19,7 +20,7 @@ This script performs several actions on a Jupyter notebook, such as:
   ```
   > publish_notebook.py \
       --file nlp/notebooks/PTask768_event_filtering.ipynb \
-      --action publish_on_s3 \
+      --action publish \
       --aws_profile 'am'
   ```
 
@@ -164,17 +165,12 @@ def _post_to_s3(
     Export a notebook as HTML to S3.
 
     :param local_src_path: the path of the local ipynb to export
-    :param s3_path: full S3 path starting with `s3://` and ending with `/notebooks`
+    :param s3_path: full S3 path starting with `s3://`
     :param aws_profile: the name of an AWS profile or a s3fs filesystem
     """
     hdbg.dassert_file_exists(local_src_path)
     # TODO(gp): Pass s3_path through the credentials.
     hs3.dassert_is_s3_path(s3_path)
-    hdbg.dassert(
-        s3_path.endswith("/notebooks"),
-        "S3 path needs to point to a `notebooks` dir, instead s3_path='%s'",
-        s3_path,
-    )
     # Compute the full S3 path.
     remote_path = os.path.join(s3_path, os.path.basename(local_src_path))
     # TODO(gp): Make sure the S3 dir exists.
@@ -227,7 +223,7 @@ def _parse() -> argparse.ArgumentParser:
         help="The Git branch containing the notebook, if different than `master`",
     )
     parser.add_argument(
-        "--publish_notebook_dir",
+        "--target_dir",
         action="store",
         type=str,
         default=None,
@@ -247,17 +243,16 @@ def _parse() -> argparse.ArgumentParser:
         choices=[
             "convert",
             "open",
-            "publish_locally",
-            "publish_on_s3",
+            "publish",
+            # TODO(Grisha): consider discontinuing if not used.
             "publish_on_webserver",
         ],
         help="""
-- convert (default): convert notebook to HTML in the current dir
-- open: open an existing notebook on S3 it in the local browser
-- publish_locally: publish notebook in a central local directory
-- publish_on_s3: publish notebook on S3
-- publish_on_webserver: publish notebook through a webservice
-""",
+        - convert: convert notebook to HTML in the current dir
+        - open: open an existing notebook
+        - publish: publish notebook to a specified directory
+        - publish_on_webserver: publish notebook through a webservice
+        """,
     )
     parser = hs3.add_s3_args(parser)
     parser = hparser.add_verbosity_arg(parser)
@@ -298,39 +293,53 @@ def _main(parser: argparse.ArgumentParser) -> None:
         html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
         # Try to open.
         hopen.open_file(html_file_name)
-    elif args.action == "publish_locally":
-        # Convert to HTML.
-        if args.publish_notebook_dir is not None:
-            dst_dir = args.publish_notebook_dir
-        else:
-            dst_dir = henv.execute_repo_config_code("get_html_local_path()")
-            dst_dir = os.path.join(dst_dir, "published_notebooks")
-        hdbg.dassert_dir_exists(dst_dir)
-        hio.create_dir(dst_dir, incremental=True)
-        _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
-    elif args.action == "publish_on_s3":
-        # Convert to HTML.
-        dst_dir = "."
-        html_file_name = _export_notebook_to_dir(src_file_name, args.tag, dst_dir)
-        # Copy to S3.
+    if args.action == "publish":
+        target_dir = args.target_dir
+        _LOG.debug("target_dir='%s'", target_dir)
         aws_profile = args.aws_profile
         _LOG.debug("aws_profile='%s'", aws_profile)
-        # Get the S3 path from command line.
-        s3_path = args.s3_path
-        _LOG.debug("s3_path=%s", s3_path)
-        if s3_path is None:
-            # The user didn't specified the path, so we derive it from the
-            # credentials or from the env vars.
-            _LOG.debug("Getting s3_path from credentials file")
-            s3_path = hs3.get_s3_bucket_path(aws_profile, add_s3_prefix=False)
-        s3_path = "s3://" + s3_path + "/notebooks"
-        s3_file_name = _post_to_s3(html_file_name, s3_path, aws_profile)
-        # TODO(gp): Remove the file or save it directly in a temp dir.
-        cmd = f"""
-        # To open the notebook from S3 run:
-        > publish_notebook.py --file {s3_file_name} --action open --aws_profile {aws_profile}
-        """
-        print(hprint.dedent(cmd))
+        html_bucket_path = henv.execute_repo_config_code("get_html_bucket_path()")
+        if target_dir is None:
+            # Set defait tatget dir for the notebook publishing.
+            target_dir = os.path.join(html_bucket_path, "notebooks")
+            # TODO(Grisha): we should infer the profile from the HTML bucket or extend `get_html_bucket_path()`
+            # so that it also returns the `aws_profile`.
+            aws_profile = "ck"
+            _LOG.info(
+                "`target_dir` was not provided, using the default one='%s', aws_profile='%s'",
+                target_dir,
+                aws_profile,
+            )
+        if hs3.is_s3_path(target_dir):
+            # Convert to HTML.
+            dst_dir = "."
+            # TODO(Grisha): @Dan Consider posting an HTML to s3 without postig it locally.
+            html_file_name = _export_notebook_to_dir(
+                src_file_name, args.tag, dst_dir
+            )
+            # Copy to S3.
+            s3_file_name = _post_to_s3(html_file_name, target_dir, aws_profile)
+            # TODO(gp): Remove the file or save it directly in a temp dir.
+            cmd = f"""
+            # To open the notebook from S3 run:
+            > publish_notebook.py --file {s3_file_name} --action open --aws_profile {aws_profile}
+            """
+            print(hprint.dedent(cmd))
+            #
+            if target_dir.startswith(html_bucket_path):
+                dir_to_url = henv.execute_repo_config_code(
+                    "get_html_dir_to_url_mapping()"
+                )
+                url_bucket_path = dir_to_url[html_bucket_path]
+                url = s3_file_name.replace(html_bucket_path, url_bucket_path)
+                cmd = f"""
+                # To open the notebook from a web-browser open a link:
+                {url}
+                """
+                print(hprint.dedent(cmd))
+        else:
+            hdbg.dassert_dir_exists(target_dir)
+            _export_notebook_to_dir(src_file_name, args.tag, target_dir)
     elif args.action == "publish_on_webserver":
         remote_dst_path = os.path.basename(html_file_name)
         _post_to_webserver(html_file_name, remote_dst_path)
