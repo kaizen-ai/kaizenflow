@@ -69,7 +69,16 @@ class Order:
         return str(self)
 
     def __str__(self):
-        ret = "action=%s, quantity=%s, base_token=%s, limit_price=%s, quote_token=%s" % (self.action, self.quantity, self.base_token, self.limit_price, self.quote_token)
+        ret = (
+            "action=%s, quantity=%s, base_token=%s, limit_price=%s, quote_token=%s"
+            % (
+                self.action,
+                self.quantity,
+                self.base_token,
+                self.limit_price,
+                self.quote_token,
+            )
+        )
         return ret
 
 
@@ -78,7 +87,9 @@ class Order:
 
 # %%
 # TODO(Grisha): consider extending for n orders.
-def optimize_for_volume(order_1: Order, order_2: Order, exchange_rate: float) -> None:
+def optimize_for_volume(
+    order_1: Order, order_2: Order, exchange_rate: float
+) -> None:
     """
     Find the maximum transacted volume given the orders and the constraints.
 
@@ -114,14 +125,14 @@ def optimize_for_volume(order_1: Order, order_2: Order, exchange_rate: float) ->
     _LOG.info("limit_price_cond_2 is %s", limit_price_cond_2)
     # Executed quantity is not greater than the requested quantity
     # given that the limit price condition is satisfied.
-    prob += q_base_asterisk_1 <= order_1.quantity + M*(1-limit_price_cond_1)
-    prob += q_base_asterisk_2 <= order_2.quantity + M*(1-limit_price_cond_2)
+    prob += q_base_asterisk_1 <= order_1.quantity + M * (1 - limit_price_cond_1)
+    prob += q_base_asterisk_2 <= order_2.quantity + M * (1 - limit_price_cond_2)
     # Executed quantity is zero if the limit price condition is not met.
-    prob += q_base_asterisk_1 <= M*limit_price_cond_1
-    prob += q_base_asterisk_1 >= -M*limit_price_cond_1
+    prob += q_base_asterisk_1 <= M * limit_price_cond_1
+    prob += q_base_asterisk_1 >= -M * limit_price_cond_1
     #
-    prob += q_base_asterisk_2 <= M*limit_price_cond_2
-    prob += q_base_asterisk_2 >= -M*limit_price_cond_2
+    prob += q_base_asterisk_2 <= M * limit_price_cond_2
+    prob += q_base_asterisk_2 >= -M * limit_price_cond_2
     # The number of sold tokens must match the number of bought tokens.
     prob += q_base_asterisk_1 == q_base_asterisk_2
     #
@@ -137,11 +148,20 @@ def optimize_for_volume(order_1: Order, order_2: Order, exchange_rate: float) ->
         pulp.value(prob.objective),
         q_base_asterisk_1.varValue,
         q_base_asterisk_2.varValue,
-        round(prob.solutionTime, 2)
+        round(prob.solutionTime, 2),
     )
 
 
-def get_test_orders(limit_price_1: float, limit_price_2: float) -> Tuple[Order, Order]:
+def get_test_orders(
+    limit_price_1: float, limit_price_2: float
+) -> Tuple[Order, Order]:
+    """
+    Get toy orders to demonstrate how the solver works.
+    
+    :param limit_price_1: limit price for the buy order
+    :param limit_price_2: limit price for the sell order
+    :return: buy and sell orders
+    """
     # Genereate buy order.
     action = "buy"
     quantity = 5
@@ -151,7 +171,7 @@ def get_test_orders(limit_price_1: float, limit_price_2: float) -> Tuple[Order, 
     _LOG.info("Buy order: %s", str(order_1))
     # Generate sell order.
     action = "sell"
-    quantity = 5
+    quantity = 6
     base_token = "BTC"
     quote_token = "ETH"
     order_2 = Order(action, quantity, base_token, limit_price_2, quote_token)
@@ -161,6 +181,10 @@ def get_test_orders(limit_price_1: float, limit_price_2: float) -> Tuple[Order, 
 
 # %% [markdown]
 # # Solve the optimization problem
+
+# %% [markdown]
+# Any simulation for which the limit price constraint is not satisfied for at least one order ends with no trades being executed.
+# While if the limit price constraint is satisfied for all orders the trade is executed using the maximum quantity of the base token taking into account the constraint saying that quantity of sold token = quantity of bought token.
 
 # %%
 exchange_rate = 4
