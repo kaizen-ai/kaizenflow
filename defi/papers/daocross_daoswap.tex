@@ -21,7 +21,7 @@
 \newcommand{\askbase}{\mathrm{ask}_\mathrm{quote\;token}}
 \newcommand{\bidquote}{\mathrm{bid}_\mathrm{base\;token}}
 \newcommand{\askquote}{\mathrm{ask}_\mathrm{base\;token}}
-\newcommand{\BTC}{\mathrm{BTC}}
+\newcommand{\BTC}{\mathrm{wBTC}}
 \newcommand{\ETH}{\mathrm{ETH}}
 \newcommand{\DAI}{\mathrm{DAI}}
 \newcommand{\USDC}{\mathrm{USDC}}
@@ -50,19 +50,23 @@
 % ###############################################################################
 
 \section{Introduction}
-DaoCross and DaoSwap constitute a decentralized protocol that facilitates
-on-chain ERC20 token exchange. DaoSwap provides a mechanism for efficient
-relative price discovery, and DaoCross enables parties to engage in
-zero market impact transactions with price improvement.
+DaoCross and DaoSwap are smart
+contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
+that facilitate on-chain
+ERC-20\footnote{https://ethereum.org/en/developers/docs/standards/tokens/erc-20/}
+token exchange. DaoSwap provides a mechanism for efficient relative price
+discovery, and DaoCross enables parties to engage in zero market impact
+transactions with price improvement.
 
-DaoSwap is a smart contract for performing decentralized Walrasian-style
-auctions at regular time intervals. The auction performs price discovery by
-matching supply and demand (\cite{Wa}).
+DaoSwap performs price discovery by matching supply and demand at regular time
+intervals. Supply and demand is expressed through a collection of buy and sell
+limit orders, and the clearing price is determined by a Walrasian-style
+auction (\cite{Wa}).
 
 DaoCross is a decentralized liquidity pool that crosses buy and sell orders
 with respect to an external reference price, i.e., a price oracle. This allows
 traders to interact directly with each other and share price improvement with
-respect to exchanges (by trading at bid-ask midpoint). Additionally, order
+respect to exchanges, e.g., by trading at bid-ask midpoint. Additionally, order
 intentions are not publicly disclosed prior to a cross, which enables block or
 other high-volume traders to execute quickly with minimal market impact.
 
@@ -95,20 +99,21 @@ both share several common advantages:
 % ###############################################################################
 
 \section{Matching liquidity}
-Suppose there are two parties, Alice an ETH holder and Bob a BTC holder, who
-wish to swap tokens at a competitive rate. Suppose also that there are many
-additional ETH and BTC holders who may be interested in participating in a
+Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
+(wrapped bitcoin, an ERC-20 compliant coin that tracks bitcoin), who wish to =
+swap tokens at a competitive rate. Suppose also that there are many
+additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
 swap. How should the liquidity be pooled? At first glance, it appears that
 there should be a single pool of liquidity. The wrinkle manifests in determining
 how to express a desire to trade. A simple expression of a desire to trade is
 a limit order representing a commitment to trade up to $q$ in quantity of
 a token at a token exchange rate up to $p$. But what if some parties express
-quantity in terms ETH and and some in terms of BTC, and some parties express
-limit prices in terms of ETH per BTC, while others express limit prices in
-terms of BTC per ETH? Under these conditions, setting a single clearing price
-and determining fill prioritization rules raises several questions. We will
-raise and address these in the sequel, but to begin, we will consider a more
-constrained setting.
+quantity in terms $\ETH$ and and some in terms of $\BTC$, and some parties
+express limit prices in terms of $\ETH$ per $\BTC$, while others express limit
+prices in terms of $\BTC$ per $\ETH$? Under these conditions, setting a single
+clearing price and determining fill prioritization rules raises several
+questions. We will consider and address these in the sequel, but to begin, we
+will discuss a more constrained setting.
 
 \subsection{Breaking the symmetry}
 To simplify, we follow the practice of FX (foreign exchange) futures markets,
@@ -123,7 +128,7 @@ The roles are expressed by writing \emph{base currency/quote currency}, e.g.,
 A limit order then consists of a quantity expressed in the units of the base
 currency and a price expressed in terms of the quote currency (per unit or
 suitable multiple of base currency). See, for example, \cite{Cme23} (e.g.,
-footnotes on page 25), for usage of this terminology. See \cite{CmeFx} for how
+footnotes on page 25) for usage of this terminology. See \cite{CmeFx} for how
 this works in practice for Euro FX contracts, where contract units are
 denominated in Euros and price is quoted in U.S. dollars and cents per Euro
 increment.
@@ -131,15 +136,16 @@ increment.
 By breaking the symmetry, one may run a standard limit order book, hold a
 classical Walrasian-style auction, and handle size quantization effects by
 using one of a variety of priority rules based on quantity, price, and time.
+See \cite{BeLaLiVa22} for discussion around priority rule variations and their
+effects on market quality outcomes.
 
-See \cite{BeLaLiVa22} for discussion around these variations and their effects
-on market quality outcomes.
-
-On the other hand, liquidity for a pair of currencies may be split across two
-separate contracts, necessarily with two separate limit order books. Using our
-example, this would mean treating BTC/ETH and ETH/BTC as separate token pairs,
-even though the union of the underlying parties and sources of liquidity are
-the same.
+An effect of breaking the symmetry in this way is that either liquidity for a
+pair of currencies may be expressed in only one form, or liquidity for a pair
+of currencies is split across two separate contracts (with roles of base and
+quote token reversed), each with its own limit order book.
+Using our example, this would mean treating $\BTC/\ETH$ and $\ETH/\BTC$ as
+separate token pairs, even though the union of the underlying parties and
+sources of liquidity are the same.
 
 \subsection{Basket case}
 It seems plausible that by retaining the symmetry in the two-token case and
@@ -182,23 +188,23 @@ token, and \emph{price} is a token exchange rate expressed in terms of the
 quote token per unit of base token (or multiple thereof).
 
 \subsubsection{Example of base/quote tokens}
-By way of example, in the pair BTC/ETH, BTC is the base token and ETH is the
-quote token. Interest to trade is expressed in terms of orders with BTC as
-base token and ETH as quote token:
+By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
+is the quote token. Interest to trade is expressed in terms of orders
+with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 \begin{itemize}
 	\item A ``buy" order represents a commitment to purchase the base token
-	      (``BTC") and pay with the quote token (``ETH")
+        $\BTC$ and pay with the quote token $\ETH$
 	\item A ``sell" order represents a commitment to sell the base token
-	      (``BTC") and receive the quote token (``ETH").
+	      $\BTC$) and receive the quote token $\ETH$.
 	\item Quantity $q$ is in terms of the base token (``buy/sell a certain
-	      amount of BTC")
-	\item Limit price is in terms of the quote token (``buy/sell BTC with a
-	      limit price of $p$ ETH per BTC")
+	      amount of $\BTC$")
+	\item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
+	      limit price of $p$ $\ETH$ per $\BTC$")
 \end{itemize}
 
-A party who places a ``buy" order must have the quote token (``ETH") in custody,
+A party who places a ``buy" order must have the quote token ($\ETH$) in custody,
 i.e., in its wallet. A party who places a ``sell" order must have the base
-token (``BTC") in custody.
+token ($\BTC$) in custody.
 
 \subsection{Order attributes}
 A DaoCross or DaoSwap order must have the following attributes:
@@ -213,87 +219,86 @@ A DaoCross or DaoSwap order must have the following attributes:
 \end{enumerate}
 We have discussed attributes 1-5 in some detail.
 
-Timestamp is used to determine eligibility in a swap or cross and can play a
-role in order fill priority.
+Timestamp (6th attribute) is used to determine eligibility in a swap or cross
+and can play a role in order fill priority.
 
-Deposit address enables one to use multiple wallets to facilitate account
-management. For example, a miner may have a supply of BTC collected and held in
-one wallet which it would like to systematically diversify into ETH and perhaps
-other tokens. In specifying a deposit address, it may use a separate wallet to
-collect incoming ETH. This functionality is also standard in traditional
-finance, e.g., purchasing T-Bills on TreasuryDirect.
+Deposit address (7th attribute) enables one to use multiple wallets to
+facilitate account management. For example, a miner may have a supply of $\BTC$
+collected and held in one wallet which it would like to systematically
+diversify into $\ETH$ and perhaps other tokens. In specifying a deposit
+address, it may use a separate wallet to collect incoming $\ETH$. This
+functionality is also standard in traditional finance, e.g., purchasing
+T-Bills on TreasuryDirect.
 
 \subsubsection{Order notation}
-A general limit order is then represented by the tuple:
+We introduce the following tuple notation for a general limit order:
 \begin{center}
 	\texttt{(timestamp, action, quantity, base\_token, limit\_price, quote\_token, 
      deposit\_address)}
 \end{center}
 
-We organize the quantities involved in an order in a way that makes it simple
-to read the constraints in natural language: ``At timestamp \texttt{timestamp}
-create an order to \texttt{action} a \texttt{quantity} of the token
-\texttt{base\_token} for a limit price of \texttt{limit\_price} with respect to
-token \texttt{quote\_token} and deposit the resulting tokens at
-\texttt{deposit\_address}"
+The quantities are arranged to make the order simple to read in natural
+language:
+``At timestamp \texttt{timestamp} create an order to \texttt{action} a
+\texttt{quantity} of the token \texttt{base\_token} for a limit price of
+\texttt{limit\_price} with respect to token \texttt{quote\_token} and deposit
+the resulting tokens at \texttt{deposit\_address}."
 
-For brevity's sake in the following we might:
+For brevity, in the sequel we may:
 \begin{itemize}
 	\item omit the timestamp and the deposit address when not relevant
 	\item omit the (infinite) limit price for market orders
 \end{itemize}
 
 \subsubsection{Example of limit order notation}
-E.g., an order like:
+The order
 \begin{center}
-	\texttt{(1678660406, buy, 3.2, ETH, 4.0, wBTC, \texttt{0xdeadc0de})}
+	\texttt{(1678660406, buy, 3.2, $\ETH$, 4.0, $\BTC$, \texttt{0xdeadc0de})}
 \end{center}
 corresponds to the natural language description:
-``At the timestamp Mon Mar 13 2023 02:33:25 GMT+0000, the user wants to buy 3.2
-units of ETH, exchanging them for wBTC with a limit price of 4.0 wBTC per unit
-of ETH, depositing the proceeds at \texttt{0xdeadc0de}".
-
-wBTC is wrapped BTC, i.e., a token on the Ethereum blockchain tracking Bitcoin.
+``At timestamp Mon Mar 13 2023 02:33:25 GMT+0000, the user commits to buying up
+to 3.2 units of $\ETH$ in exchange for $\BTC$ up to a price of 4.0 $\BTC$ per
+$\ETH$ with proceeds deposited at \texttt{0xdeadc0de}".
 
 \subsubsection{Example of market order notation}
-Consider a swap for the tokens ETH, wBTC and assume that:
+Consider a swap for the tokens $\ETH$, $\BTC$ and assume that:
 \begin{itemize}
-\item the exchange rate between ETH and wBTC is 0.2 (i.e., 5 ETH can be
-  exchanged for 1 wBTC and vice versa)
-\item there is no constraint on the quantity of ETH and wBTC available for each
-  trade participants
+\item the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
+  0.2 $\BTC$ can be exchanged for 1 $\ETH$ and vice versa)
+\item there is no constraint on the quantity of $\ETH$ and $\BTC$ available to
+  each trading participant
 \end{itemize}
 
 Then
 \begin{itemize}
-    \item An order \texttt{(buy, 1.0, ETH, nan, wBTC)} means buying 1 ETH in
-      exchange for 0.2 wBTC
-    \item An order \texttt{(sell, 1.0, ETH, wBTC)} means selling 1 ETH,
-      receiving the corresponding amount of 0.2 wBTC
-    \item An order \texttt{(buy, 1.0, wBTC, ETH)} means buying 1 wBTC, paying
-      with 5 ETH
-    \item An order \texttt{(sell, 1.0, wBTC, ETH)} means exchanging 1 wBTC with
-      5 ETH
+    \item An order \texttt{(buy, 1.0, $\ETH$, nan, $\BTC$)} means buying 1
+      $\ETH$ in exchange for 0.2 $\BTC$
+    \item An order \texttt{(sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$,
+      receiving the corresponding amount of 0.2 $\BTC$
+    \item An order \texttt{(buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
+      paying with 5 $\ETH$
+    \item An order \texttt{(sell, 1.0, $\BTC$, $\ETH$)} means exchanging
+      1 $\BTC$ in return for 5 $\ETH$
 \end{itemize}
 
 \subsubsection{Example of limit orders}
-Consider the same swap for ETH and wBTC above, assume the same exchange rate
-of ETH and wBTC, i.e., $\frac{p_{ETH}}{p_{wBTC}} = 0.2$, assume that each agent
-has a very large amount of ETH and wBTC.
+Consider the same swap for $\ETH$ and $\BTC$ above, assume the same exchange
+rate of ETH and wBTC, i.e., $p_{\BTC\_per\_\ETH} = 0.2$, and assume that each
+agent has a very large amount of $\ETH$ and $\BTC$.
 
-A limit order \texttt{(buy, 1.0, ETH, 2.0, wBTC)} means ``buy 1 ETH paying in wBTC
-assuming that the price of 1 ETH is at most 2 wBTC". In this case, since the
-price of one ETH is equal to 0.2 wBTC, the exchange can be executed with
-another party.
+A limit order \texttt{(buy, 1.0, $\ETH$, 0.5, $\BTC$)} means
+``buy up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
+In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
+can be executed at the prevailing market rate.
 
-On the other hand, a limit order \texttt{(buy, 1.0, ETH, 0.1, wBTC)} requires
-that the price of ETH be lower than the current price and this does not allow
-the token swap to be carried out.
+On the other hand, a limit order \texttt{(buy, 1.0, $\ETH$, 0.1, $\BTC$)}
+requires that the rate of $\BTC$ per $\ETH$ be lower than the current market
+rate, and so the limit price prevents a token swap from being carried out.
 
-A limit order \texttt{(sell, 1.0, ETH, 2.0, wBTC)} means ``sell 1 unit of ETH,
-receiving wBTC as long as the price of one unit of ETH is more than 2 wBTC".
-Because $p_{ETH} = 0.2 \cdot p_{wBTC} < 2.0 \cdot p_{wBTC}$, the order can be
-executed.
+A limit order \texttt{(sell, 1.0, $\ETH$, 0.5, $\BTC$)} means
+``sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
+Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
+price of 0.5, the order cannot be executed.
 
 \subsubsection{Limit order as a set of linear inequalities}
 Any limit order as defined above can be translated into inequalities involving
@@ -607,6 +612,7 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 		author={Adams, Hayden},
 		title={Uniswap Whitepaper},
 		date={2018},
+        eprint={https://hackmd.io/s/HJ9jLsfTz},
 	}
 
 	\bib{AdZiRo20}{article}{
@@ -639,13 +645,15 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 		eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4169352},
 	}
 
-	\bib{BoBoDoGo18}{article}{
+	\bib{BoBoDoGo18}{book}{
 		author={Bouchaud, Jean-Philippe},
 		author={Bonart, Julius},
 		author={Donier, Jonathan},
 		author={Gould, Martin},
-		title={Trades, Quotes and Prices},
+		title={Trades, Quotes and Prices: Financial Markets Under the Microscope},
 		date={2018},
+        publisher={Cambridge University Press},
+        doi={https://doi.org/10.1017/9781316659335},
 	}
 
 	\bib{Cme23}{article}{
@@ -680,7 +688,7 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 	\bib{MsAts}{article}{
 		author={Morgan Stanley},
 		title={MS Pool ATS-N Filings},
-		eprint={https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filenum=013-00117&owner=exclude&count=40}
+		eprint={https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filenum=013-00117}
 	}
 
 	\bib{Wa}{article}{
@@ -697,7 +705,7 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 		date={2005},
 		pages={239-251},
 		volume={164},
-		eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981?via\%3Dihub},
+		eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981},
 	}
 
 \end{thebibliography}
