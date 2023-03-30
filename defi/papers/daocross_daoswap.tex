@@ -261,44 +261,44 @@ to 3.2 units of $\ETH$ in exchange for $\BTC$ up to a price of 4.0 $\BTC$ per
 $\ETH$ with proceeds deposited at \texttt{0xdeadc0de}".
 
 \subsubsection{Example of market order notation}
-Consider a swap for the tokens ETH, wBTC and assume that:
+Consider a swap for the tokens $\ETH$, $\BTC$ and assume that:
 \begin{itemize}
-\item the exchange rate between ETH and wBTC is 0.2 (i.e., 5 ETH can be
-  exchanged for 1 wBTC and vice versa)
-\item there is no constraint on the quantity of ETH and wBTC available for each
-  trade participants
+\item the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
+  0.2 $\BTC$ can be exchanged for 1 $\ETH$ and vice versa)
+\item there is no constraint on the quantity of $\ETH$ and $\BTC$ available to
+  each trading participant
 \end{itemize}
 
 Then
 \begin{itemize}
-    \item An order \texttt{(buy, 1.0, ETH, nan, wBTC)} means buying 1 ETH in
-      exchange for 0.2 wBTC
-    \item An order \texttt{(sell, 1.0, ETH, wBTC)} means selling 1 ETH,
-      receiving the corresponding amount of 0.2 wBTC
-    \item An order \texttt{(buy, 1.0, wBTC, ETH)} means buying 1 wBTC, paying
-      with 5 ETH
-    \item An order \texttt{(sell, 1.0, wBTC, ETH)} means exchanging 1 wBTC with
-      5 ETH
+    \item An order \texttt{(buy, 1.0, $\ETH$, nan, $\BTC$)} means buying 1
+      $\ETH$ in exchange for 0.2 $\BTC$
+    \item An order \texttt{(sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$,
+      receiving the corresponding amount of 0.2 $\BTC$
+    \item An order \texttt{(buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
+      paying with 5 $\ETH$
+    \item An order \texttt{(sell, 1.0, $\BTC$, $\ETH$)} means exchanging
+      1 $\BTC$ in return for 5 $\ETH$
 \end{itemize}
 
 \subsubsection{Example of limit orders}
-Consider the same swap for ETH and wBTC above, assume the same exchange rate
-of ETH and wBTC, i.e., $\frac{p_{ETH}}{p_{wBTC}} = 0.2$, assume that each agent
-has a very large amount of ETH and wBTC.
+Consider the same swap for $\ETH$ and $\BTC$ above, assume the same exchange
+rate of ETH and wBTC, i.e., $p_{\BTC\_per\_\ETH} = 0.2$, and assume that each
+agent has a very large amount of $\ETH$ and $\BTC$.
 
-A limit order \texttt{(buy, 1.0, ETH, 2.0, wBTC)} means ``buy 1 ETH paying in wBTC
-assuming that the price of 1 ETH is at most 2 wBTC". In this case, since the
-price of one ETH is equal to 0.2 wBTC, the exchange can be executed with
-another party.
+A limit order \texttt{(buy, 1.0, $\ETH$, 0.5, $\BTC$)} means
+``buy up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
+In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
+can be executed at the prevailing market rate.
 
-On the other hand, a limit order \texttt{(buy, 1.0, ETH, 0.1, wBTC)} requires
-that the price of ETH be lower than the current price and this does not allow
-the token swap to be carried out.
+On the other hand, a limit order \texttt{(buy, 1.0, $\ETH$, 0.1, $\BTC$)}
+requires that the rate of $\BTC$ per $\ETH$ be lower than the current market
+rate, and so the limit price prevents a token swap from being carried out.
 
-A limit order \texttt{(sell, 1.0, ETH, 2.0, wBTC)} means ``sell 1 unit of ETH,
-receiving wBTC as long as the price of one unit of ETH is more than 2 wBTC".
-Because $p_{ETH} = 0.2 \cdot p_{wBTC} < 2.0 \cdot p_{wBTC}$, the order can be
-executed.
+A limit order \texttt{(sell, 1.0, $\ETH$, 0.5, $\BTC$)} means
+``sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
+Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
+price of 0.5, the order cannot be executed.
 
 \subsubsection{Limit order as a set of linear inequalities}
 Any limit order as defined above can be translated into inequalities involving
