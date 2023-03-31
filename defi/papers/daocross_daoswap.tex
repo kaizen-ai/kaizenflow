@@ -339,68 +339,73 @@ price of 0.5, the order cannot be executed.
 
 \subsection{Limit order as a set of linear inequalities}
 Any limit order as defined above can be translated into inequalities involving
-quantity of exchanged tokens and allowed token prices. These equations can then
-be collected in a system of equations governing the equilibrium achieved by the
-orders.
+quantity of exchanged tokens and token exchange rates. Multiple limit orders
+can be converted into a system of inequalities, which collectively constrain
+potential exchange outcomes.
 
-We indicate with an asterisk the quantities resulting from an executed swap
-order:
+In both DaoCross and DaoSwap, a swap between a given base/quote token pair
+occurs at a single exchange rate, i.e., the clearing price is the same for
+all executed orders. On the other hand, quantity exchanged is specific to
+each order and each order's constraint on quantity exchanged cannot be
+violated.
+
+In the sequel we use an asterisk to denote clearing quantity and exchange
+rate:
 \begin{itemize}
-  \item $q_{base}^*(o_i)$ the actual quantity of the base token exchanged in
-    the swap requested by order $o_i$
-  \item $p_{base}^*(o_i)$ the actual price of the base token exchanged as per
-    $o_i$
-  \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
+    \item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
+      swap from order $o_i$
+  \item $p_{quote\_per\_base}^*(o_i)$ denotes exchange rate at
+  % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
 \end{itemize}
+Note that
+\[
+    p_{quote\_per\_base}^*(o_i) =
+    1 / p_{base\_per\_quote}^*(o_i)
+\]
 
-An order like $o_1 =$ \texttt{(buy, 2, A, 3, B)} means ``buy 2 units of token A
-paying with token B with a limit price for A of at most 3 B" and it corresponds to a
-set of inequalities on the actual quantity of A obtained and the price paid:
-\begin{equation}
-  \begin{cases}
-    p_{base}^*(o_1) = p_A \le 3 p_B \\
-    (0 \le q_{A}^*(o_1) \le 2) \land (p_A \le 3 p_B) \lor (q_A^*(o_1) = 0)\\
-  \end{cases}
-\end{equation}
-The constraint on the quantity exchanged is conditioned to the corresponding
-price satisfying the desired limit price constraint, otherwise the swap can not
+An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
+token A in exchange for token B with a limit price up to 3 B per unit of A"
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+    (p_{B\_per\_A}^*(o_1) \leq 3) \land
+    (0 \le q_{A}^*(o_1) \leq 2) \lor
+    (q_A^*(o_1) = 0)
+\end{equation*}
+The constraint on the quantity exchanged is conditioned on the corresponding
+price satisfying the desired limit price constraint, otherwise the swap cannot
 be carried out and the exchanged quantity is 0.
-
-While the constraint on quantities is specific of each order, the constraint on
-price of base / quote token is a global one on the price of the corresponding
-token since the price of a token needs to be the same across all the swaps.
 
 In the same way, an order like $o_2 =$ \texttt{(sell, 3, A, 2, B)} means ``sell
 3 units of token A paying in token B with a limit price for one unit of A of at
-least 2 B" which corresponds to the inequialities
-\begin{equation}
-  \begin{cases}
-    p_A \ge 2 p_B \\
-    (0 \le q_{A}^*(o_2) \le 3) \land (p_A \ge 2 p_B) \lor (q_A^*(o_2) = 0)\\
-  \end{cases}
-\end{equation}
-
-\subsubsection{Market order as a set of linear inequalities}
-A market order (i.e., without a limit order) has no constraint on price and thus
-it is reduced to:
-\begin{equation}
-  \begin{cases}
-    p_A \le 3 p_B \\
-    0 \le q_{A}^*(o_1) \le 2 \\
-  \end{cases}
-\end{equation}
+least 2 B" which corresponds to
+\begin{equation*}
+    (p_{B\_per\_A}^*(o_2) \geq 2) \land
+    (0 \le q_{A}^*(o_2) \leq 2) \lor
+    (q_A^*(o_2) = 0)
+\end{equation*}
+A market order (i.e., without a limit price) has no constraint on exhange rate
+and thus is reduced to
+\[
+    0 \le q_{A}^*(o_1) \le 2
+\]
 
 \subsubsection{Order equivalence}
-If the exchange rate between two tokens A and B is known and equal to
-$p_A / p_B = c$, the four types of orders corresponding to "buying" vs "selling"
-and to ``A for B" vs ``B for A" can be reduced to only two types since a buy
-(sell) order for token A is equivalent to a sell (buy) order for token
-B after properly converting the quantities and the limit price given the value
-$c$.
+Let
+\[
+    o_1 = (\buy, q, A, p_{B\_per\_A}, B).
+\]
+Suppose that $p^*_{B\_per\_A}$ is fixed and known. Then the order
+\[
+    o_2 = (\sell, q^\prime, B, 1 / p_{B\_per\_A}, A)
+\]
+may be handled in order crossing in the same way that $o_1$ may be
+provided that
+\[
+    q^\prime = q \cdot p^*_{B\_per\_A}
+\]
 
-This is easily shown in terms of the corresponding inequations describing the orders:
-...
-
+% TODO(gp): flesh out the examples
 %p_A / p_B = c <-> q_A = c * q_B <-> q_A units of A can be exchanged with (const * q_B) units of B
 %E.g., ETH / wBTC = 0.5 <-> 1 ETH = 0.5 wBTC <-> 2 ETH = 1 wBTC
 %So 3 ETH can be exchanged with 1.5 wBTC
