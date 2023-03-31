@@ -188,7 +188,7 @@ auction expense.
 
 % ###############################################################################
 
-\section{Protocol Introduction}
+\section{Protocol introduction}
 In the previous section, we discussed the notions of base currency and
 quote currency from foreign exchange. Here we extend them to tokens.
 
@@ -549,7 +549,8 @@ For each $i$, define
     \right)
 \]
 where $p^*_{\quotetoken_i\_per\_\basetoken_i}$ is the unique clearing price for
-the indicated base token/quote token ordered pair
+the indicated base token/quote token ordered pair.
+TODO(Paul): revive the ``to token" notation.
 Then, each limit order $o_i$ may be expressed as
 \[
     c_i \land
@@ -579,9 +580,17 @@ Note that, in the case $w = u$, this enforces a unique exchange rate between
 a pair of tokens (changing the roles of the base and quote tokens inverts the
 exchange rate).
 
+\subsection{Conservation of exchanged value}
+
+For each order $i$, let $\tilde{q}_i^*$ denote the quantity of
+$\quotetoken_i$ exchanged. Then we must have
+\[
+    \tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
+\]
+for each $i$. In effect, this enforces the market clearing price for each
+order.
+
 \subsection{Conservation of exchanged tokens}
-
-
 
 Assume by convention that a buy order removes base tokens from the system and
 provides quote tokens to the system, whereas a sell order does the opposite.
@@ -599,7 +608,7 @@ Then, for each $u \in T$, the following conservation law must hold:
 \[
     \sum_i \mathcal{T}_u(\basetoken_i) \cdot q^*_i
     =
-    - \sum_i \mathcal{T}_u(\quotetoken_i) \cdot q^*_i p^*_i
+    - \sum_i \mathcal{T}_u(\quotetoken_i) \cdot \tilde{q}_i^*
 \]
 Note that this translates into one equality per token participating in the
 swap. Note also that this is a global constraint on the swap not local to one
@@ -609,17 +618,18 @@ across the collection of orders, suitable counterparties for the swap to occur.
 
 \subsection{Combining the constraints}
 
-Rewriting all the constraints in terms of orders and the unique set of base and quote tokens:
-$\mathit{to\_token}(q_{base}(o_i)) = t_1, ..., t_n$
+We now collect the constraints that must be satisfied:
 \begin{equation}
   \begin{cases}
     c_i \land (q_i^* \leq q_i) \lor (q_i^* = 0)
+      & \forall i \in \{1, \ldots, n\} \\
+    \tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
       & \forall i \in \{1, \ldots, n\} \\
     p^*_{u\_per\_v} \cdot p^*_{v\_per\_w} = p^*_{u\_per\_w}
       & \forall u, v, w \in T \\
     \sum_{j = 1}^n \mathcal{T}_u(\basetoken_j) \cdot q^*_j
     =
-    - \sum_{j = 1}^n \mathcal{T}_u(\quotetoken_j) \cdot q^*_j p^*_j
+      - \sum_{j = 1}^n \mathcal{T}_u(\quotetoken_j) \cdot \tilde{q}_j^*
       & \forall u \in T
   \end{cases}
 \end{equation}
