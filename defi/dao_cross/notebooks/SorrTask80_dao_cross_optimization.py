@@ -16,7 +16,7 @@
 # # Description
 
 # %% [markdown]
-# The notebook demonstrates how open-source solvers solves the DaoCross problem.
+# The notebook demonstrates how open-source solvers solve the DaoCross problem.
 
 # %% [markdown]
 # # Imports
@@ -54,7 +54,8 @@ hprint.config_notebook()
 # %% [markdown]
 # # Order class
 
-# %%
+# %% run_control={"marked": true}
+# TODO(Grisha): move to a lib and re-use everywhere.
 class Order:
 
     # TODO(Grisha): add type hints, add assertions.
@@ -87,6 +88,7 @@ class Order:
 
 # %%
 # TODO(Grisha): consider extending for n orders.
+# TODO(Grisha): move to a lib, add unit tests.
 def optimize_for_volume(
     order_1: Order, order_2: Order, exchange_rate: float
 ) -> None:
@@ -96,7 +98,7 @@ def optimize_for_volume(
     :param order_1: input buy order
     :param order_2: input sell order
     :param exchange_rate: price of base token / price of quote token
-    :return: solver output in a human readable format
+    :return: solver's output in a human readable format
     """
     # Assume the fixed directions.
     hdbg.dassert_eq(order_1.action, "buy")
@@ -104,7 +106,7 @@ def optimize_for_volume(
     #
     hdbg.dassert_lt(0, exchange_rate)
     # Initialize the model.
-    prob = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)
+    problem = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)
     # Specify the vars. By setting the lower bound to zero it is safe
     # to omit the >= 0 constraint on the executed quantity.
     q_base_asterisk_1 = pulp.LpVariable("q_base_asterisk_1", lowBound=0)
@@ -113,7 +115,7 @@ def optimize_for_volume(
     # TODO(Grisha): since the base token is the same, i.e. BTC it's
     # ok to use quantity, however the objective function should be
     # modified to account for different base tokens.
-    prob += q_base_asterisk_1 + q_base_asterisk_2
+    problem += q_base_asterisk_1 + q_base_asterisk_2
     # Constraints.
     # Random number that is big enough to use the
     # "Big M" method.
@@ -125,30 +127,33 @@ def optimize_for_volume(
     _LOG.info("limit_price_cond_2 is %s", limit_price_cond_2)
     # Executed quantity is not greater than the requested quantity
     # given that the limit price condition is satisfied.
-    prob += q_base_asterisk_1 <= order_1.quantity + M * (1 - limit_price_cond_1)
-    prob += q_base_asterisk_2 <= order_2.quantity + M * (1 - limit_price_cond_2)
+    problem += q_base_asterisk_1 <= order_1.quantity + M * (1 - limit_price_cond_1)
+    problem += q_base_asterisk_2 <= order_2.quantity + M * (1 - limit_price_cond_2)
     # Executed quantity is zero if the limit price condition is not met.
-    prob += q_base_asterisk_1 <= M * limit_price_cond_1
-    prob += q_base_asterisk_1 >= -M * limit_price_cond_1
+    problem += q_base_asterisk_1 <= M * limit_price_cond_1
+    problem += q_base_asterisk_1 >= -M * limit_price_cond_1
     #
-    prob += q_base_asterisk_2 <= M * limit_price_cond_2
-    prob += q_base_asterisk_2 >= -M * limit_price_cond_2
+    problem += q_base_asterisk_2 <= M * limit_price_cond_2
+    problem += q_base_asterisk_2 >= -M * limit_price_cond_2
     # The number of sold tokens must match the number of bought tokens.
-    prob += q_base_asterisk_1 == q_base_asterisk_2
-    #
-    prob.solve()
+    problem += q_base_asterisk_1 == q_base_asterisk_2
+    # Use the default solver and suppress the solver's log.
+    solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
+    problem.solve(solver)
     # Display the results.
+    # TODO(Grisha): probably package the output in a dict.
     _LOG.info(
         "The status is: %s"
         "\nThe total volume (in BTC) exchanged is: %s"
         "\nThe value of exchanged base token from order 1: %s"
         "\nThe value of exchanged base token from order 2: %s"
         "\nThe solution time (in seconds) is: %s",
-        pulp.LpStatus[prob.status],
-        pulp.value(prob.objective),
+        pulp.LpStatus[problem.status],
+        pulp.value(problem.objective),
         q_base_asterisk_1.varValue,
         q_base_asterisk_2.varValue,
-        round(prob.solutionTime, 2),
+        # TODO(Grisha): double-check that time is in seconds.
+        round(problem.solutionTime, 2),
     )
 
 
