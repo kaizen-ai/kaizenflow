@@ -13,7 +13,6 @@ import psycopg2
 from sqlalchemy import create_engine
 from datetime import datetime
 from io import StringIO
-# API Key is BQYfQWbIU9aPXWtxpMAixOrC1fCLiIz3
 
 
 
@@ -67,7 +66,7 @@ def run_bitquery_query(start_time: str,  limit: int) -> pd.DataFrame:
 
   # API endpoint and header
   endpoint = "https://graphql.bitquery.io/"
-  headers = {"X-API-KEY": "BQYfQWbIU9aPXWtxpMAixOrC1fCLiIz3"}
+  headers = {"X-API-KEY": ""}
 
   # Define an empty list to store the results
   results = []

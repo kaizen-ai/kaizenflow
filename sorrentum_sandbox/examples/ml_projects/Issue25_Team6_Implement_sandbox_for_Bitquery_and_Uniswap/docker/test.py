@@ -8,7 +8,6 @@ import psycopg2
 from sqlalchemy import create_engine
 from datetime import datetime
 from io import StringIO
-# API Key is BQYfQWbIU9aPXWtxpMAixOrC1fCLiIz3
 
 
 # database connection parameters
