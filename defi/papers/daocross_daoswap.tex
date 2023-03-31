@@ -528,7 +528,7 @@ need that the total quantity exchanged of each token be preserved across the
 swaps, i.e., the quantity bought for each token is equal to the quantity sold.
 
 \subsection{Limit order inequalities}
-Let $\{o_i\}$ be a set of limit orders, each of the form
+Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
 \[
     o_i = (a_i, q_i, \basetoken_i, p_i, \quotetoken_i)
 \]
@@ -613,36 +613,35 @@ Rewriting all the constraints in terms of orders and the unique set of base and 
 $\mathit{to\_token}(q_{base}(o_i)) = t_1, ..., t_n$
 \begin{equation}
   \begin{cases}
-    \forall \text{ order } i cond_i: \mathit{to\_ineq}(a(o_i))(p^*_{base}(o_i) \leq lp_{base}(o_i) p^*_{quote}(o_i)) \\
-    \forall \text{ order } i (0 \le q^*_{base}(o_i) \le q_{base}) \land (cond_i) \lor (q^*_{base}(o_i) = 0) \\
-    \forall \text{ order} i exch\_q_{base}(o_i) = \mathit{to\_diff}(a(o_i)) \cdot q_{base}(o_i) \\
-    \forall \text{ order} i exch\_q_{quote}(o_i) = - \mathit{to\_diff}(a(o_i)) \cdot q_{base}(o_i) \cdot \frac{p_{quote}}{p_{base}} \\
-    \sum_{t_j} exch\_q_{base}(t_j) = 0 \\
-    \sum_{t_k} exch\_q_{quote}(t_k) = 0 \\
+    c_i \land (q_i^* \leq q_i) \lor (q_i^* = 0)
+      & \forall i \in \{1, \ldots, n\} \\
+    p^*_{u\_per\_v} \cdot p^*_{v\_per\_w} = p^*_{u\_per\_w}
+      & \forall u, v, w \in T \\
+    \sum_{j = 1}^n \mathcal{T}_u(\basetoken_j) \cdot q^*_j
+    =
+    - \sum_{j = 1}^n \mathcal{T}_u(\quotetoken_j) \cdot q^*_j p^*_j
+      & \forall u \in T
   \end{cases}
 \end{equation}
 
-TODO(gp): Check the math better by implementing it. Also try to simplify the
-formulation which is still cumbersome.
+\subsection{Solution of the general DaoSwap problem}
 
-\subsubsection{Solution of the general DaoSwap problem}
-
-The general solution of the DaoSwap problem is a set of non-linear equation with 
-combinatorial constraints, which is of course NP-complete.
+The general solution of the DaoSwap problem must satisfy a set of non-linear,
+combinatorial constraints, whose solution is NP-complete.
 
 It can still be solved in an effective way with solvers like ...
 
 TODO(gp): explain better, cite
 
-\subsubsection{Formulating DaoCross problem}
-In the DaoCross set-up, the price of the tokens involved into the swap is
+\subsection{Reformulating the DaoCross problem}
+In the DaoCross set-up, the price of the tokens involved in the swap is
 determined by an external oracle.
-This allows to simplify the general problem by applying the equivalence
+This allows simplifying the general problem by applying the equivalence
 principle between orders and removing the non-linearity from the set of
 inequalities above.
 
-In fact the actual prices $p^*$ compared to the limit price verifies or not the
-boolean condition $cond_i$ which then allows to specify the quantity
+In fact, the actual prices $p^*$ compared to the limit price verifies or not the
+boolean condition $c_i$, which then allows specifying the quantity
 constraints:
 \begin{equation}
   \begin{cases}
@@ -653,7 +652,7 @@ constraints:
 \end{equation}
 
 The problem then becomes a set of linear inequalities that can be solved with
-several efficient methods (e.g., simplex-method).
+various efficient methods (e.g., simplex-method).
 
 TODO(gp): check
 
