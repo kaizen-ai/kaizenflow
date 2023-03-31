@@ -21,11 +21,26 @@
 \newcommand{\askbase}{\mathrm{ask}_\mathrm{quote\;token}}
 \newcommand{\bidquote}{\mathrm{bid}_\mathrm{base\;token}}
 \newcommand{\askquote}{\mathrm{ask}_\mathrm{base\;token}}
-\newcommand{\BTC}{\mathrm{wBTC}}
-\newcommand{\ETH}{\mathrm{ETH}}
-\newcommand{\DAI}{\mathrm{DAI}}
-\newcommand{\USDC}{\mathrm{USDC}}
-\newcommand{\USDT}{\mathrm{USDT}}
+% Use teletype for tokens (\texttt{...}), but do not allow italics
+%  (\textnormal{...}).
+\newcommand{\BTC}{\textnormal{\texttt{wBTC}}}
+\newcommand{\ETH}{\textnormal{\texttt{ETH}}}
+\newcommand{\DAI}{\textnormal{\texttt{DAI}}}
+\newcommand{\USDC}{\textnormal{\texttt{USDC}}}
+\newcommand{\USDT}{\textnormal{\texttt{USDT}}}
+% Use non-italic teletype for order attributes in order notation.
+\newcommand{\timestamp}{\textnormal{\texttt{timestamp}}}
+\newcommand{\action}{\textnormal{\texttt{action}}}
+\newcommand{\quantity}{\textnormal{\texttt{quantity}}}
+\newcommand{\basetoken}{\textnormal{\texttt{base\_token}}}
+\newcommand{\limitprice}{\textnormal{\texttt{limit\_price}}}
+\newcommand{\quotetoken}{\textnormal{\texttt{quote\_token}}}
+\newcommand{\depositaddress}{\textnormal{\texttt{deposit\_address}}}
+%
+\newcommand{\buy}{\textnormal{\texttt{buy}}}
+\newcommand{\sell}{\textnormal{\texttt{sell}}}
+\newcommand{\nan}{\textnormal{\texttt{nan}}}
+
 \newcommand{\midpoint}{\mathrm{midpoint}}
 
 % Use this if using `\contrib[]{...}`.
@@ -187,7 +202,7 @@ By convention, \emph{quantity} to exchange is expressed in terms of the base
 token, and \emph{price} is a token exchange rate expressed in terms of the
 quote token per unit of base token (or multiple thereof).
 
-\subsubsection{Example of base/quote tokens}
+\begin{example}[base/quote tokens]
 By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
 is the quote token. Interest to trade is expressed in terms of orders
 with $\BTC$ as base token and $\ETH$ as quote token, as follows:
@@ -201,106 +216,128 @@ with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 	\item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
 	      limit price of $p$ $\ETH$ per $\BTC$")
 \end{itemize}
-
 A party who places a ``buy" order must have the quote token ($\ETH$) in custody,
 i.e., in its wallet. A party who places a ``sell" order must have the base
 token ($\BTC$) in custody.
+\end{example}
 
-\subsection{Order attributes}
-A DaoCross or DaoSwap order must have the following attributes:
-\begin{enumerate}
-	\item Base token
-	\item Quote token
-	\item Action (buy/sell)
-	\item Quantity
-	\item Limit price
-	\item Timestamp
-	\item Deposit address
-\end{enumerate}
-We have discussed attributes 1-5 in some detail.
-
-Timestamp (6th attribute) is used to determine eligibility in a swap or cross
-and can play a role in order fill priority.
-
-Deposit address (7th attribute) enables one to use multiple wallets to
-facilitate account management. For example, a miner may have a supply of $\BTC$
-collected and held in one wallet which it would like to systematically
-diversify into $\ETH$ and perhaps other tokens. In specifying a deposit
-address, it may use a separate wallet to collect incoming $\ETH$. This
-functionality is also standard in traditional finance, e.g., purchasing
-T-Bills on TreasuryDirect.
-
-\subsubsection{Order notation}
-We introduce the following tuple notation for a general limit order:
-\begin{center}
-	\texttt{(timestamp, action, quantity, base\_token, limit\_price, quote\_token, 
-     deposit\_address)}
-\end{center}
+\subsection{Order attributes and notation}
+We introduce the following tuple notation for a general limit order
+(valid for both DaoCross and DaoSwap).
+\begin{definition}[Limit order]
+A DaoCross or DaoSwap limit order is represented by a tuple of the form
+\begin{align*}
+    ( & \timestamp, \\
+    & \action, \\
+    & \quantity, \\
+    & \basetoken, \\
+    & \limitprice, \\
+    & \quotetoken, \\
+    & \depositaddress )
+\end{align*}
+\end{definition}
 
 The quantities are arranged to make the order simple to read in natural
 language:
-``At timestamp \texttt{timestamp} create an order to \texttt{action} a
-\texttt{quantity} of the token \texttt{base\_token} for a limit price of
-\texttt{limit\_price} with respect to token \texttt{quote\_token} and deposit
-the resulting tokens at \texttt{deposit\_address}."
+``At timestamp $\timestamp$ create an order to $\action$ a $\quantity$ of
+the token $\basetoken$ for a limit price of $\limitprice$ with respect to
+the token $\quotetoken$ and deposit the resulting tokens at $\depositaddress$."
+
+We have previously discussed the roles of \action, \quantity, \basetoken,
+\limitprice, and \quotetoken.
+The roles of $\timestamp$ include determining eligibility in a swap or
+cross and can extend to influencing order fill priority.
+The $\depositaddress$ attribute mirrors standard functionality
+available in traditional finance, e.g., in purchasing T-Bills on
+TreasuryDirect\footnote{https://www.treasurydirect.gov}. This feature
+facilitates account management through the use of multiple wallets. For
+example, a miner may have a supply of $\texttt{BTC}$ collected and held in one wallet
+which it would like to systematically diversify into $\ETH$ and perhaps other
+tokens. In specifying a deposit address, it may use a separate wallet to collect
+incoming $\ETH$.
 
 For brevity, in the sequel we may:
 \begin{itemize}
-	\item omit the timestamp and the deposit address when not relevant
-	\item omit the (infinite) limit price for market orders
+	\item omit $\timestamp$ and $\depositaddress$ when not relevant to the
+        discussion
+	\item omit the (infinite) $\limitprice$ for market orders
 \end{itemize}
 
-\subsubsection{Example of limit order notation}
+\begin{example}[Limit order notation]
 The order
 \begin{center}
-	\texttt{(1678660406, buy, 3.2, $\ETH$, 4.0, $\BTC$, \texttt{0xdeadc0de})}
+    (\textnormal{\texttt{1678660406}},
+    \buy,
+    \textnormal{\texttt{3.2}},
+    \ETH,
+    \textnormal{\texttt{4.0}},
+    \BTC,
+    \textnormal{\texttt{0xdeadc0de}})
 \end{center}
 corresponds to the natural language description:
-``At timestamp Mon Mar 13 2023 02:33:25 GMT+0000, the user commits to buying up
-to 3.2 units of $\ETH$ in exchange for $\BTC$ up to a price of 4.0 $\BTC$ per
-$\ETH$ with proceeds deposited at \texttt{0xdeadc0de}".
+``At timestamp \textnormal{\texttt{Mon Mar 13 2023 02:33:25 GMT+0000}}, the user
+commits to $\buy$ up to \textnormal{\texttt{3.2}} units of $\ETH$ in exchange
+for $\BTC$ up to a $\limitprice$ of \textnormal{\texttt{4.0}} $\BTC$ per $\ETH$
+with proceeds deposited at \textnormal{\texttt{0xdeadc0de}}".
+\end{example}
 
-\subsubsection{Example of market order notation}
-Consider a swap for the tokens $\ETH$, $\BTC$ and assume that:
-\begin{itemize}
-\item the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
-  0.2 $\BTC$ can be exchanged for 1 $\ETH$ and vice versa)
-\item there is no constraint on the quantity of $\ETH$ and $\BTC$ available to
-  each trading participant
-\end{itemize}
+Next we introduce some examples of market order and limit order behavior when
+a clearing rate has been set.
+In particular, consider a swap for the tokens $\ETH$, $\BTC$ and assume that
+the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
+0.2 $\BTC$ can be exchanged for 1 $\ETH$ and vice versa).
 
-Then
+\begin{example}[Market order notation and clearing]
+The following market orders omit $\timestamp$, $\limitprice$, and
+$\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
 \begin{itemize}
-    \item An order \texttt{(buy, 1.0, $\ETH$, nan, $\BTC$)} means buying 1
+    \item An order \texttt{(\buy, 1.0, $\ETH$, $\BTC$)} means buying 1
       $\ETH$ in exchange for 0.2 $\BTC$
-    \item An order \texttt{(sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$,
+    \item An order \texttt{(\sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$,
       receiving the corresponding amount of 0.2 $\BTC$
-    \item An order \texttt{(buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
+    \item An order \texttt{(\buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
       paying with 5 $\ETH$
-    \item An order \texttt{(sell, 1.0, $\BTC$, $\ETH$)} means exchanging
+    \item An order \texttt{(\sell, 1.0, $\BTC$, $\ETH$)} means exchanging
       1 $\BTC$ in return for 5 $\ETH$
 \end{itemize}
+\end{example}
 
-\subsubsection{Example of limit orders}
-Consider the same swap for $\ETH$ and $\BTC$ above, assume the same exchange
-rate of ETH and wBTC, i.e., $p_{\BTC\_per\_\ETH} = 0.2$, and assume that each
-agent has a very large amount of $\ETH$ and $\BTC$.
+Next we consider the behavior of limit orders under the same prevailing exchange
+rate (and we assume that there is sufficient supply of tokens to fully fill the
+orders).
 
-A limit order \texttt{(buy, 1.0, $\ETH$, 0.5, $\BTC$)} means
-``buy up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
+\begin{example}[Executable buy limit order]
+A limit order
+\[
+\texttt{(\buy, 1.0, $\ETH$, 0.5, $\BTC$)}
+\]
+means
+``$\buy$ up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
 In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
 can be executed at the prevailing market rate.
+\end{example}
 
-On the other hand, a limit order \texttt{(buy, 1.0, $\ETH$, 0.1, $\BTC$)}
+\begin{example}[Non-executable buy limit order]
+On the other hand, a limit order
+\[
+\texttt{(\buy, 1.0, $\ETH$, 0.1, $\BTC$)}
+\]
 requires that the rate of $\BTC$ per $\ETH$ be lower than the current market
 rate, and so the limit price prevents a token swap from being carried out.
+\end{example}
 
-A limit order \texttt{(sell, 1.0, $\ETH$, 0.5, $\BTC$)} means
-``sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
+\begin{example}[Non-executable sell limit order]
+A limit order
+\[
+\texttt{(\sell, 1.0, $\ETH$, 0.5, $\BTC$)}
+\]
+means
+``\sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
 Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
+\end{example}
 
-\subsubsection{Limit order as a set of linear inequalities}
+\subsection{Limit order as a set of linear inequalities}
 Any limit order as defined above can be translated into inequalities involving
 quantity of exchanged tokens and allowed token prices. These equations can then
 be collected in a system of equations governing the equilibrium achieved by the
@@ -362,6 +399,7 @@ B after properly converting the quantities and the limit price given the value
 $c$.
 
 This is easily shown in terms of the corresponding inequations describing the orders:
+...
 
 %p_A / p_B = c <-> q_A = c * q_B <-> q_A units of A can be exchanged with (const * q_B) units of B
 %E.g., ETH / wBTC = 0.5 <-> 1 ETH = 0.5 wBTC <-> 2 ETH = 1 wBTC
@@ -377,7 +415,7 @@ This is easily shown in terms of the corresponding inequations describing the or
 %
 %Since p_A / p_B <= lp_B <-> p_B / p_A >= 1 / lp_B and q_A = c * q_B, the first order o_2 = (sell, q_B, B, lp_A, A) is equivalent to (buy, c * q_B, A, 1 / lp_B, B).
 
-\subsubsection{Example of order equivalence}
+% \subsubsection{Example of order equivalence}
 %Example of order equivalence. Assume that Alice wants to buy 5 wBTC with ETH. The exchange rate ETH / wBTC is 0.1 (or equivalently 1 ETH corresponds to 10 wBTC). With her order, Alice wants to receive 5 wBTC in exchange for 0.5 ETH. Alice would be satisfied also with an order of selling 0.5 ETH against wBTC. 
 %
 %q_BTC < 4
@@ -387,7 +425,7 @@ This is easily shown in terms of the corresponding inequations describing the or
 
 % ###############################################################################
 
-\subsection{DaoCross reference price}
+\section{Reference clearing prices and prioritization}
 DaoCross relies on a \emph{price oracle} for determining the effective
 token exchange rate in a cross. The price oracle may come from a lit
 exchange, centralized or decentralized, or even on-chain automated market
@@ -404,7 +442,7 @@ of BTC/ETH would be considered a cross pair in the world of traditional
 finance. Because most cross pairs are not traded directly on exchanges, we
 must derive a clearing price from pairs involving stablecoins.
 
-\subsection{Lit exchange bid-ask midpoint reference price}
+\subsubsection{Lit exchange bid-ask midpoint reference price}
 Let $\bidbtc, \askbtc$ be stablecoin-denominated top-of-book bid-ask prices
 for $\BTC$ (e.g., expressed in $\USDC$), and $\bideth, \asketh$ be the analogous
 prices for $\ETH$. Then, a commitment to buy one $\BTC$ and pay $\ETH$ would
@@ -428,7 +466,56 @@ it is possible to perform a time or volume weighted average of prices so as
 to avoid extreme price variations and to mitigate the risk and effects of any
 market manipulation attemps.
 
-\subsubsection{Formulation of the general DaoSwap problem}
+\subsection{Order crossing}
+At regular time intervals, order submissions are cut off and reference prices
+are determined. An element of randomness is used to determine order cutoff
+times and reference price cutoff times in order to
+mitigate manipulative behaviors.
+
+An order is eligible for matching if its timestamp is within the cutoff window
+and if the external reference price does not exceed its limit price.
+
+Except on occasions where eligible buy/sell volume is perfectly matched, not
+all orders can be fully crossed. There are also discretization effects to
+consider arising from discrete order sizes and a discrete price grid
+\cite{BoBoDoGo18}[\S 3.2.1].
+See \cite{BeLaLiVa22} for a discussion of the trade-offs surrounding
+different prioritization rule choices. See \cite{MsAts} for the
+prioritization rules used by one of Morgan Stanley's equity liquidity pools.
+
+\subsubsection{Priority rules}
+DaoCross prioritizes fills according to:
+\begin{itemize}
+	\item Volume (higher volume comes first in priority)
+	\item Price (higher limit price breaks volume ties)
+	\item Timestamp (earlier timestamp breaks ties in volume and price)
+\end{itemize}
+If, in the unlikely scenario that all three of these parameters perfectly
+agree, a certain priority is not guaranteed.
+
+\subsubsection{Matching algorithm}
+The mechanism for matching eligible buy and sell orders consists of two
+priority queues, one for eligible buy orders and one for eligible sell orders.
+Priority is determined according to the volume/price/timestamp priority rules
+introduced above. Top-of-queue orders are compared, and the lesser of the two
+volumes is fully filled. Once an order is fully filled at the established
+reference price. One an order is fully filled, it is removed from the priority
+queue. The procedure continues until one of the two priority queues is empty.
+
+\subsubsection{Computational complexity}
+Let $n$ denote the sum (or max) of the number of eligible buy and sell orders.
+Priority queue construction occurs in $O(n)$ time, order removal costs
+$O(n \log n)$, and order remove occurs $O(n)$ times. So, the computational
+time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
+
+\subsubsection{DaoSwap variant}
+The mechanics for DaoSwap are similar to those above, with the primary
+difference being that an auction is used to determine a single clearing price.
+Variations in prioritization rules also possible.
+
+% ###############################################################################
+
+\section{Formulation of the general DaoSwap problem}
 The general problem of determining the token equilibrium price and the
 allocation among the swap participants can be formulated in terms of the
 inequalities on quantities and prices corresponding to the orders and on the
@@ -532,60 +619,11 @@ TODO(gp): check
 
 % ###############################################################################
 
-\subsection{Order crossing}
-At regular time intervals, order submissions are cut off and reference prices
-are determined. An element of randomness is used to determine order cutoff
-times and reference price cutoff times in order to
-mitigate manipulative behaviors.
-
-An order is eligible for matching if its timestamp is within the cutoff window
-and if the external reference price does not exceed its limit price.
-
-Except on occasions where eligible buy/sell volume is perfectly matched, not
-all orders can be fully crossed. There are also discretization effects to
-consider arising from discrete order sizes and a discrete price grid
-\cite{BoBoDoGo18}[\S 3.2.1].
-See \cite{BeLaLiVa22} for a discussion of the trade-offs surrounding
-different prioritization rule choices. See \cite{MsAts} for the
-prioritization rules used by one of Morgan Stanley's equity liquidity pools.
-
-\subsubsection{Priority rules}
-DaoCross prioritizes fills according to:
-\begin{itemize}
-	\item Volume (higher volume comes first in priority)
-	\item Price (higher limit price breaks volume ties)
-	\item Timestamp (earlier timestamp breaks ties in volume and price)
-\end{itemize}
-If, in the unlikely scenario that all three of these parameters perfectly
-agree, a certain priority is not guaranteed.
-
-\subsubsection{Matching algorithm}
-The mechanism for matching eligible buy and sell orders consists of two
-priority queues, one for eligible buy orders and one for eligible sell orders.
-Priority is determined according to the volume/price/timestamp priority rules
-introduced above. Top-of-queue orders are compared, and the lesser of the two
-volumes is fully filled. Once an order is fully filled at the established
-reference price. One an order is fully filled, it is removed from the priority
-queue. The procedure continues until one of the two priority queues is empty.
-
-\subsubsection{Computational complexity}
-Let $n$ denote the sum (or max) of the number of eligible buy and sell orders.
-Priority queue construction occurs in $O(n)$ time, order removal costs
-$O(n \log n)$, and order remove occurs $O(n)$ times. So, the computational
-time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
-
-\subsubsection{DaoSwap variant}
-The mechanics for DaoSwap are similar to those above, with the primary
-difference being that an auction is used to determine a single clearing price.
-Variations in prioritization rules also possible.
+% \section{Fees}
 
 % ###############################################################################
 
-\subsection{Fees}
-
-% ###############################################################################
-
-\subsection{Comparison with Uniswap}
+\section{Comparison with Uniswap}
 
 Uniswap doesn't support limit orders
 - v3 introduced some steps towards incorporating 
@@ -598,8 +636,6 @@ operating at different time scales, Uniswap is affected by impermanent loss
 Uniswap requires multiple swaps and fees for arbitrary tokens
 - DaoSwap/Cross pools all the liquidity in a single optimization problem
 
-% ###############################################################################
-\section{Example}
 
 % ###############################################################################
 
