@@ -33,6 +33,7 @@ from typing import Tuple
 import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
+import defi.dao_cross.order as ddacrord
 
 # %%
 try:
@@ -52,45 +53,15 @@ hprint.config_notebook()
 
 
 # %% [markdown]
-# # Order class
-
-# %% run_control={"marked": true}
-# TODO(Grisha): move to a lib and re-use everywhere.
-class Order:
-
-    # TODO(Grisha): add type hints, add assertions.
-    def __init__(self, action, quantity, base_token, limit_price, quote_token):
-        self.action = action
-        self.quantity = quantity
-        self.base_token = base_token
-        self.limit_price = limit_price
-        self.quote_token = quote_token
-
-    def __repr__(self):
-        return str(self)
-
-    def __str__(self):
-        ret = (
-            "action=%s, quantity=%s, base_token=%s, limit_price=%s, quote_token=%s"
-            % (
-                self.action,
-                self.quantity,
-                self.base_token,
-                self.limit_price,
-                self.quote_token,
-            )
-        )
-        return ret
-
-
-# %% [markdown]
 # # Functions
 
 # %%
 # TODO(Grisha): consider extending for n orders.
 # TODO(Grisha): move to a lib, add unit tests.
 def optimize_for_volume(
-    order_1: Order, order_2: Order, exchange_rate: float
+    order_1: ddacrord.Order,
+    order_2: ddacrord.Order,
+    exchange_rate: float,
 ) -> None:
     """
     Find the maximum transacted volume given the orders and the constraints.
@@ -159,7 +130,7 @@ def optimize_for_volume(
 
 def get_test_orders(
     limit_price_1: float, limit_price_2: float
-) -> Tuple[Order, Order]:
+) -> Tuple[ddacrord.Order, ddacrord.Order]:
     """
     Get toy orders to demonstrate how the solver works.
     
@@ -167,19 +138,36 @@ def get_test_orders(
     :param limit_price_2: limit price for the sell order
     :return: buy and sell orders
     """
+    # Set dummy variables.
+    base_token = "BTC"
+    quote_token = "ETH"
+    deposit_address = 1
+    wallet_address = 1
     # Genereate buy order.
     action = "buy"
     quantity = 5
-    base_token = "BTC"
-    quote_token = "ETH"
-    order_1 = Order(action, quantity, base_token, limit_price_1, quote_token)
+    order_1 = ddacrord.Order(
+        base_token,
+        quote_token,
+        action,
+        quantity,
+        limit_price_1,
+        deposit_address,
+        wallet_address,
+    )
     _LOG.info("Buy order: %s", str(order_1))
     # Generate sell order.
     action = "sell"
     quantity = 6
-    base_token = "BTC"
-    quote_token = "ETH"
-    order_2 = Order(action, quantity, base_token, limit_price_2, quote_token)
+    order_2 = ddacrord.Order(
+        base_token,
+        quote_token,
+        action,
+        quantity,
+        limit_price_2,
+        deposit_address,
+        wallet_address,
+    )
     _LOG.info("Sell order: %s", str(order_2))
     return order_1, order_2
 
@@ -227,3 +215,5 @@ limit_price_1 = 3
 limit_price_2 = 5
 test_orders_1 = get_test_orders(limit_price_1, limit_price_2)
 optimize_for_volume(test_orders_1[0], test_orders_1[1], exchange_rate)
+
+# %%

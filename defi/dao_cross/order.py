@@ -4,6 +4,7 @@ Import as:
 import defi.dao_cross.order as ddacrord
 """
 
+import datetime
 import logging
 from typing import Optional, Union
 
@@ -73,7 +74,7 @@ class Order:
         ret = "base_token=%s quote_token=%s action=%s quantity=%s limit_price=%s timestamp=%s deposit_address=%s" % (self.base_token, self.quote_token, self.action, self.quantity, self.limit_price, self.timestamp, self.deposit_address)
         return ret
 
-    def __lt__(self, other: Order) -> bool:
+    def __lt__(self, other: 'Order') -> bool:
         """
         Compare if order is lower in priority than the passed one.
 
@@ -82,13 +83,13 @@ class Order:
         """
         return self._takes_precedence(other)
 
-    def __gt__(self, other: Order) -> bool:
+    def __gt__(self, other: 'Order') -> bool:
         """
         Compare if order is greater in priority than the passed one.
         """
         return not self._takes_precedence(other)
     
-    def _takes_precedence(self, other: Order) -> bool:
+    def _takes_precedence(self, other: 'Order') -> bool:
         """
         Compare order to another one according to quantity, price and timestamp.
 
