@@ -29,6 +29,8 @@ class Order:
         limit_price: float,
         deposit_address: Union[int, str],
         wallet_address: Union[int, str],
+        *,
+        timestamp: Optional[datetime.datetime] = None,
     ) -> None:
         """
         Constructor.
@@ -41,7 +43,8 @@ class Order:
         :param quantity: quantity in terms of the base token
         :param limit_price: limit price in terms of the quote token
         :param deposit_address: deposit address to implement the order for
-        :param wallet_address: wallen address to implement the order for
+        :param wallet_address: wallet address to implement the order for
+        :param timestamp: time of order execution
         """
         self.base_token = base_token
         self.quote_token = quote_token 
@@ -59,9 +62,9 @@ class Order:
                 raise ValueError("Invalid action='%s'" % self.action)
         else:
             self.limit_price = limit_price
-        self.timestamp = hdateti.get_current_time(tz="UTC")
         self.deposit_address = deposit_address
         self.wallet_address = wallet_address
+        self.timestamp = timestamp or hdateti.get_current_time(tz="UTC")
 
     def __repr__(self) -> str:
         return str(self)
