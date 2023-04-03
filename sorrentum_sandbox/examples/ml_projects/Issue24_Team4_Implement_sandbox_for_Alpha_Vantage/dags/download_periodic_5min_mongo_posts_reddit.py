@@ -10,16 +10,16 @@ from airflow.operators.bash_operator import BashOperator
 
 _DAG_ID = "download_periodic_hourly_alpha_vantage_tickers"
 _DAG_DESCRIPTION = (
-    "Download tickers every hour and save to MongoDB"
+    "Download tickers every day and save to MongoDB"
 )
 # Specify when to execute the DAG.
-_SCHEDULE = "0 * * * *"
+_SCHEDULE = "0 0 * * *"
 
 # Default parameters for the DAG.
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
-    "start_date": datetime.datetime(2023,4,2),
+    "start_date": datetime.datetime(2022,1,1),
     "end_date":datetime.datetime(2023,4,3),
     "email": ["ajoshi18@umd.edu"],
     "email_on_failure": False,

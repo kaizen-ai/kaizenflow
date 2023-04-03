@@ -9,7 +9,7 @@ from api.mongo_db import Mongo
 
 # Get latest data from API
 ticker = Ticker("AXP", get_name=True)
-ticker.get_data(data_type=DataType.WEEKLY)
+ticker.get_data(data_type=DataType.HOURLY)
 
 # Save updated data if needed
 # Mongo will verify if the information is duplicate, or new,
