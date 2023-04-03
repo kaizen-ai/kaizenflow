@@ -5,6 +5,8 @@
 \usepackage{hyperref}
 \usepackage{slashed}
 \usepackage{fullpage}
+% Prevent tables from repositioning tables.
+\usepackage{float}
 
 \newtheorem{thm}{Theorem}
 \newtheorem{algorithm}[thm]{Algorithm}
@@ -686,16 +688,16 @@ arbitrageurs, market makers).
 
 Typically an exchange (or swap) requires two components:
 \begin{itemize}
-  \item Trade matching: participants find a counterparty agreeing on quantity and
-    price of the assets to swap (this includes price discovery)
-  \item Trade settlement: the assets are actually swapped after finding
-    matching counterparties
+	\item Trade matching: participants find a counterparty agreeing on quantity and
+	      price of the assets to swap (this includes price discovery)
+	\item Trade settlement: the assets are actually swapped after finding
+	      matching counterparties
 \end{itemize}
 
 In decentralized finance a token swap can be accomplished in different ways, e.g., using
 \begin{itemize}
-  \item a centralized exchange (e.g., Coinbase, Binance, OkX)
-  \item a decentralized exchange (e.g., Uniswap, SushiSwap)
+	\item a centralized exchange (e.g., Coinbase, Binance, OkX)
+	\item a decentralized exchange (e.g., Uniswap, SushiSwap)
 \end{itemize}
 
 Centralized exchanges are usually organized around different versions of a
@@ -703,9 +705,9 @@ central limit order book (CLOB)
 
 Decentralized exchanges can be organized as
 \begin{itemize}
-\item off-chain order books (e.g., 1inch)
-\item on-chain order books (e.g., SwapSwap, KyberSwap)
-\item automatic market makers (AMM) (e.g., Uniswap)
+	\item off-chain order books (e.g., 1inch)
+	\item on-chain order books (e.g., SwapSwap, KyberSwap)
+	\item automatic market makers (AMM) (e.g., Uniswap)
 \end{itemize}
 
 Any off-chain solution incurs into custodial and censorship issues, that makes
@@ -722,108 +724,171 @@ TODO(gp): Add colors: in green what's good, yellow, red
 
 TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 
-\begin{table}
-\centering
-\begin{tabular}{llll}
-               & LOB & AMM  & DaoSwap    & DaoCross  \\
-Custodial risk & Yes        & No        & No  & No      \\
-Transparency   & Low        & High  	& High  Medium  \\
-Censorship resistant  & No  & Yes  & Yes  & No \\
-Intrinsic efficiency  & Medium & Low  & High  & Medium \\
-Support for limit order & Yes  & No  & Yes  & Yes \\
-Risk of predatory behaviors & High  & High  & Low  & Medium \\
-Impermanent loss  & No  & Yes  & No  & No \\
-Multi-coin exchange support & Low  & Medium & High  & High \\
-\end{tabular}
+% TODO(gp): Consider using one of the fancy table, e.g., tabularray
+\begin{samepage}
+\begin{table}[h!]
+	\centering
+	\begin{tabular}{lllll}
+		                            & \emph{LOB}    & \emph{AMM}    & \emph{DaoSwap}     & \emph{DaoCross} \\
+		\hline
+		Custodial risk              & Yes    & No     & No           & No       \\
+        Transparency                & Low    & High   & High         & Medium   \\
+		Censorship resistant        & No     & Yes    & Yes          & No       \\
+		Intrinsic efficiency        & Medium & Low    & High         & Medium   \\
+		Support for limit order     & Yes    & No     & Yes          & Yes      \\
+		Risk of predatory behaviors & High   & High   & Low          & Medium   \\
+		Impermanent loss            & No     & Yes    & No           & No       \\
+		Multi-coin exchange support & Low    & Medium & High         & High     \\
+		\hline
+	\end{tabular}
 \end{table}
+\end{samepage}
 
 \subsection{DaoSwap}
 
-- Custodial risk: Low
-    - Private keys and funds are always under the control of the users
-- Transparency: High
-    - Work is done on-chain and the off-chain computations are independently verifiable
-- Censoriship resistance: Yes
-    - The application runs on-chain and even if the web front-end is attacked or disabled. The off-chain computation can be made robust using similar approaches to distributed oracles, or even ported on-chain if gas prices are not an issue (e.g., using Layer2 solutions)
-- Intrinsic efficiency: High
-    - DaoSwap relies on periodic auctions and it has been argued in previous literature that for small enough intervals (e.g., seconds) periodic auctions result in the same quality of continuous matching without allowing predatory behaviors
-    - TODO(gp): Add a reference to Cramton paper
-- Support for limit order: Yes
-    - Limit orders are supported natively
-- Risk of predatory behaviors: Low
-	- TODO(gp):
-- Impermanent loss: No
-	- TODO(gp):
-- Support for multi-coin swap: Yes
-	- TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+\begin{itemize}
+  \item Custodial risk: Low
+	  \begin{itemize}
+	  \item Private keys and funds are always under the control of the users
+	  \end{itemize}
+  \item Transparency: High
+	  \begin{itemize}
+	  \item Work is done on-chain and the off-chain computations are independently verifiable
+	  \end{itemize}
+  \item Censoriship resistance: Yes
+	  \begin{itemize}
+	  \item The application runs on-chain and even if the web front-end is attacked
+	  or disabled. The off-chain computation can be made robust using similar
+	  approaches to distributed oracles, or even ported on-chain if gas prices
+	  are not an issue (e.g., using Layer2 solutions)
+	  \end{itemize}
+  \item Intrinsic efficiency: High
+	  \begin{itemize}
+	  \item DaoSwap relies on periodic auctions and it has been argued in previous literature that for small enough intervals (e.g., seconds) periodic auctions result in the same quality of continuous matching without allowing predatory behaviors
+	  \item TODO(gp): Add a reference to Cramton paper
+	  \end{itemize}
+  \item Support for limit order: Yes
+	  \begin{itemize}
+	  \item Limit orders are supported natively
+	  \end{itemize}
+  \item Risk of predatory behaviors: Low
+	  \begin{itemize}
+	  \item TODO(gp):
+	  \end{itemize}
+  \item Impermanent loss: No
+	  \begin{itemize}
+	  \item TODO(gp):
+	  \end{itemize}
+  \item Support for multi-coin swap: Yes
+	  \begin{itemize}
+	  \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+	  \end{itemize}
+\end{itemize}
 
 \subsection{DaoSwap}
 
-- Custodial risk: Low
-    - Same as DaoSwap
-- Transparency: Medium
-    - DaoCross relies on price discovery carried out on a lit exchange
-- Censoriship resistance: No
-    - The robustness of DaoCross is the same as the lit exchange that it relies on. See comments on the corresponding topic for LOB
-- Intrinsic efficiency: Medium
-    - The efficiency in matching trades is the same as the limit-order book. See comments on the corresponding topic for LOB
-- Support for limit order: Yes
-    - Same as DaoSwap
-- Risk of predatory behaviors:
-    -
-- Impermanent loss: No
-- Support for multi-coin swap:
-	- TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+\begin{itemize}
+\item Custodial risk: Low
+	\begin{itemize}
+    \item Same as DaoSwap
+	\end{itemize}
+\item Transparency: Medium
+	\begin{itemize}
+    \item DaoCross relies on price discovery carried out on a lit exchange
+	\end{itemize}
+\item Censoriship resistance: No
+	\begin{itemize}
+    \item The robustness of DaoCross is the same as the lit exchange that it relies on. See comments on the corresponding topic for LOB
+	\end{itemize}
+\item Intrinsic efficiency: Medium
+	\begin{itemize}
+    \item The efficiency in matching trades is the same as the limit-order book. See comments on the corresponding topic for LOB
+	\end{itemize}
+\item Support for limit order: Yes
+	\begin{itemize}
+    \item Same as DaoSwap
+	\end{itemize}
+\item Risk of predatory behaviors:
+	\begin{itemize}
+    \item TODO(gp)
+	\end{itemize}
+\item Impermanent loss: No
+	\begin{itemize}
+    \item TODO(gp)
+	\end{itemize}
+\item Support for multi-coin swap:
+	\begin{itemize}
+	\item TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+	\end{itemize}
+\end{itemize}
 
 \subsection{Limit Order Book (LOB)}
 
-- Custodial risk: High
-    - Exchanges own user private keys and funds, creating issues with fraud (e.g., FTX) and hacking (Mt. Gox)
-- Transparency: Low
-    - Many centralized exchanges can easily exaggerate volume (e.g., through wash trading) to attract ICOs and liquidity
-    - There is no guarantee on the
-- Censorship resistance: No
-    - Users need to link their bank account to CEX and transfer funds, which can take 2-3 days and be subjected to Know-Your-Customer (KYC) and AML (Anti money laundering policies)
-    - Governments can censor, interfere with, or even severe the connection between traditional and decentralized finance (see recent interventions of SEC against Coinbase and Binance, and FDIC rescue of Silvergate Bank, Signature Bank)
-- Intrinsic efficiency: Medium
-    - Limit order books are considered efficient in matching continuously trades, although recently researchers have criticized their time-continuous-time nature as source of latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash Boys)
-    - The same token can be traded on different exchanges causing liquidity and price discovery to be fragmented with detriment on market quality
-- Support for limit order: Yes
-    - Limit order books naturally support limit orders from users
-- Risk of predatory behaviors: High
-	- LOB operators often welcome and incentivize high-frequency traders as way
-to increase trading revenues and liquidity, at expense of predatory tactics
-(e.g., front-running, latency arbitrage, spoofing, sniping) which arm
-- Impermanent loss: No
-    - LOB
-- Support for multi-coin swap: No
+\begin{itemize}
+  \item Custodial risk: High
+	  \begin{itemize}
+	  \item Exchanges own user private keys and funds, creating issues with fraud (e.g., FTX) and hacking (Mt. Gox)
+	  \end{itemize}
+  \item Transparency: Low
+	  \begin{itemize}
+	  \item Many centralized exchanges can easily exaggerate volume (e.g., through wash trading) to attract ICOs and liquidity
+	  \item There is no guarantee on the
+	  \end{itemize}
+  \item Censorship resistance: No
+	  \begin{itemize}
+	  \item Users need to link their bank account to CEX and transfer funds, which can take 2-3 days and be subjected to Know-Your-Customer (KYC) and AML (Anti money laundering policies)
+	  \item Governments can censor, interfere with, or even severe the connection between traditional and decentralized finance (see recent interventions of SEC against Coinbase and Binance, and FDIC rescue of Silvergate Bank, Signature Bank)
+	  \end{itemize}
+  \item Intrinsic efficiency: Medium
+	  \begin{itemize}
+	  \item Limit order books are considered efficient in matching continuously trades, although recently researchers have criticized their time-continuous-time nature as source of latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash Boys)
+	  \item The same token can be traded on different exchanges causing liquidity and price discovery to be fragmented with detriment on market quality
+	  \end{itemize}
+  \item Support for limit order: Yes
+	  \begin{itemize}
+	  \item Limit order books naturally support limit orders from users
+  \item Risk of predatory behaviors: High
+	  \item LOB operators often welcome and incentivize high-frequency traders as way
+  to increase trading revenues and liquidity, at expense of predatory tactics
+  (e.g., front-running, latency arbitrage, spoofing, sniping) which arm
+	  \end{itemize}
+  \item Impermanent loss: No
+	  \begin{itemize}
+	  \item LOB
+	  \end{itemize}
+  \item Support for multi-coin swap: No
+\end{itemize}
 
 \subsection{Automatic Market Makers (AMM)}
 
-- Custodial risk: Low
-    - Private keys and the
-- Transparency:
-- Censoriship risk:
-- Intrinsic efficiency: Low
-    - Arbitrageurs are needed to keep liquidity pool and prices in alignment with other centers for price discovery
-- Support for limit order: No
-    - Uniswap V3 doesn't support limit orders directly but only in terms of
-- Risk of predatory behaviors: High
-- Impermanent loss: Yes
-    - Uniswap is affected by impermanent loss because liquidity providers and liquidity takers are in general different users operating at different time scales
-- Support for multi-coin swap: Medium
-	- Uniswap requires multiple swaps and fees for arbitrary tokens
-
-\section{Comparison with Uniswap}
-
-Uniswap doesn't support limit orders
-- DaoSwap/Cross supports limit orders
-
-Because liquidity providers and liquidity takers are in general different users
-operating at different time scales, Uniswap is affected by impermanent loss
-- DaoSwap/Cross is not affected by that
-
-
+\begin{itemize}
+  \item Custodial risk: Low
+	  \begin{itemize}
+	  \item Private keys and the
+	  \end{itemize}
+  \item Transparency:
+  \item Censoriship risk:
+  \item Intrinsic efficiency: Low
+	  \begin{itemize}
+	  \item Arbitrageurs are needed to keep liquidity pool and prices in alignment with other centers for price discovery
+	  \end{itemize}
+  \item Support for limit order: No
+	  \begin{itemize}
+	  \item Uniswap V3 doesn't support limit orders directly but only in terms of
+	  \end{itemize}
+  \item Risk of predatory behaviors: High
+	  \begin{itemize}
+	  \item TODO(gp):
+	  \end{itemize}
+  \item Impermanent loss: Yes
+	  \begin{itemize}
+	  \item Uniswap is affected by impermanent loss because liquidity providers and liquidity takers are in general different users operating at different time scales
+	  \end{itemize}
+  \item Support for multi-coin swap: Medium
+	  \begin{itemize}
+	  \item Uniswap requires multiple swaps and fees for arbitrary tokens
+	  \end{itemize}
+\end{itemize}
 
 % ###############################################################################
 
