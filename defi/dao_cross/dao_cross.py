@@ -11,8 +11,8 @@ from typing import Any, Dict, List, Optional
 
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import defi.dao_cross.order as ddacrord
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
@@ -57,7 +57,9 @@ def match_orders(
     # quantity until zero or queues empty.
     buy_order = None
     sell_order = None
-    while (buy_heap or ddacrord.is_active_order(buy_order)) and (sell_heap or ddacrord.is_active_order(sell_order)):
+    while (buy_heap or ddacrord.is_active_order(buy_order)) and (
+        sell_heap or ddacrord.is_active_order(sell_order)
+    ):
         # Pop 1 buy and 1 sell orders from the heaps for matching.
         if not buy_order or buy_order.quantity == 0:
             # Make a copy so that `match_orders()` does not alter state (and is idempotent).
@@ -72,7 +74,7 @@ def match_orders(
             "token": buy_order.base_token,
             "amount": quantity,
             "from": sell_order.wallet_address,
-            "to": buy_order.deposit_address
+            "to": buy_order.deposit_address,
         }
         transfers.append(base_transfer)
         # Get quote token transfer dict and add it to the transfers list.
@@ -91,9 +93,7 @@ def match_orders(
     return transfer_df
 
 
-def get_transfer_df(
-    transfers: Optional[List[Dict[str, Any]]]
-) -> pd.DataFrame:
+def get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     """
     Get a table of all the passed transfers.
 
@@ -111,7 +111,5 @@ def get_transfer_df(
     if transfers:
         transfer_df = pd.DataFrame(transfers)
     else:
-        transfer_df = pd.DataFrame(
-            columns=["token", "amount", "from", "to"]
-        )
+        transfer_df = pd.DataFrame(columns=["token", "amount", "from", "to"])
     return transfer_df

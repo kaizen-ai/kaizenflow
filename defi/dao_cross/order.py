@@ -48,7 +48,7 @@ class Order:
         :param timestamp: time of order execution
         """
         self.base_token = base_token
-        self.quote_token = quote_token 
+        self.quote_token = quote_token
         hdbg.dassert_in(action, ["buy", "sell"])
         self.action = action
         self.quantity = quantity
@@ -71,27 +71,39 @@ class Order:
         return str(self)
 
     def __str__(self) -> str:
-        ret = "base_token=%s quote_token=%s action=%s quantity=%s limit_price=%s timestamp=%s deposit_address=%s" % (self.base_token, self.quote_token, self.action, self.quantity, self.limit_price, self.timestamp, self.deposit_address)
+        ret = (
+            "base_token=%s quote_token=%s action=%s quantity=%s limit_price=%s timestamp=%s deposit_address=%s"
+            % (
+                self.base_token,
+                self.quote_token,
+                self.action,
+                self.quantity,
+                self.limit_price,
+                self.timestamp,
+                self.deposit_address,
+            )
+        )
         return ret
 
-    def __lt__(self, other: 'Order') -> bool:
+    def __lt__(self, other: "Order") -> bool:
         """
         Compare if order is lower in priority than the passed one.
 
-        Because we use a min-heap, taking precedence in the order queue is given
-        "lower priority" in the internal heap.
+        Because we use a min-heap, taking precedence in the order queue
+        is given "lower priority" in the internal heap.
         """
         return self._takes_precedence(other)
 
-    def __gt__(self, other: 'Order') -> bool:
+    def __gt__(self, other: "Order") -> bool:
         """
         Compare if order is greater in priority than the passed one.
         """
         return not self._takes_precedence(other)
-    
-    def _takes_precedence(self, other: 'Order') -> bool:
+
+    def _takes_precedence(self, other: "Order") -> bool:
         """
-        Compare order to another one according to quantity, price and timestamp.
+        Compare order to another one according to quantity, price and
+        timestamp.
 
         Prioritize orders according to:
             1. Quantity - higher quantity comes first in priority

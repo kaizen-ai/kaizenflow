@@ -1,14 +1,46 @@
 from typing import List
 
 import pandas as pd
-import helpers.hpandas as hpandas
-import helpers.hunit_test as hunitest
 
 import defi.dao_cross.dao_cross as ddcrdacr
 import defi.dao_cross.order as ddacrord
+import helpers.hpandas as hpandas
+import helpers.hunit_test as hunitest
 
 
 class TestMatchOrders1(hunitest.TestCase):
+    def test_match_orders1(self) -> None:
+        orders = self._get_test_orders()
+        clearing_price = 1
+        # Match orders
+        actual_df = ddcrdacr.match_orders(orders, clearing_price)
+        actual_signature = hpandas.df_to_str(
+            actual_df,
+            print_shape_info=True,
+            tag="df",
+        )
+        # pylint: disable=line-too-long
+        expected_signature = r"""
+        # df=
+        index=[0, 5]
+        columns=token,amount,from,to
+        shape=(6, 4)
+        token  amount  from  to
+        0   BTC     1.2     1   1
+        1   ETH     1.2     1   1
+        2   BTC     0.3     1   2
+        3   ETH     0.3     2   1
+        4   BTC     1.1     6   2
+        5   ETH     1.1     2   6
+        """
+        # pylint: enable=line-too-long
+        self.assert_equal(
+            actual_signature,
+            expected_signature,
+            dedent=True,
+            fuzzy_match=True,
+        )
+
     def _get_test_orders(self) -> List[ddacrord.Order]:
         base_token = "BTC"
         quote_token = "ETH"
@@ -76,35 +108,3 @@ class TestMatchOrders1(hunitest.TestCase):
         )
         orders = [order_1, order_2, order_3, order_4, order_5, order_6]
         return orders
-
-    def test_match_orders1(self) -> None:
-        orders = self._get_test_orders()
-        clearing_price = 1
-        # Match orders
-        actual_df = ddcrdacr.match_orders(orders, clearing_price)
-        actual_signature = hpandas.df_to_str(
-            actual_df,
-            print_shape_info=True,
-            tag="df",
-        )
-        # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
-        index=[0, 5]
-        columns=token,amount,from,to
-        shape=(6, 4)
-        token  amount  from  to
-        0   BTC     1.2     1   1
-        1   ETH     1.2     1   1
-        2   BTC     0.3     1   2
-        3   ETH     0.3     2   1
-        4   BTC     1.1     6   2
-        5   ETH     1.1     2   6
-        """
-        # pylint: enable=line-too-long
-        self.assert_equal(
-            actual_signature,
-            expected_signature,
-            dedent=True,
-            fuzzy_match=True,
-        )
