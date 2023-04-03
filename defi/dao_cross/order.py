@@ -35,6 +35,7 @@ class Order:
     ) -> None:
         """
         Constructor.
+
         :param base_token: token to express order quantity with
         :param quote_token: token to express order price with
         :param action: order action type
@@ -87,6 +88,7 @@ class Order:
     def __lt__(self, other: "Order") -> bool:
         """
         Compare if order is lower in priority than the passed one.
+
         Because we use a min-heap, taking precedence in the order queue
         is given "lower priority" in the internal heap.
         """
@@ -101,8 +103,8 @@ class Order:
     def _takes_precedence(self, other: "Order") -> bool:
         """
         Compare order to another one according to quantity, price and
-        timestamp.
-        Prioritize orders according to:
+        timestamp. Prioritize orders according to:
+
             1. Quantity - higher quantity comes first in priority
             2. Price - higher limit price breaks quantity ties
             3. Timestamp - earlier timestamp breaks ties in quantity and price
@@ -158,6 +160,7 @@ def get_random_order(seed: Optional[int] = None) -> Order:
 def is_active_order(order: Optional[Order]) -> bool:
     """
     Return whether the order is active or not.
+
     Order is active if it is not empty and its quantity is above 0.
     """
     if order is None:

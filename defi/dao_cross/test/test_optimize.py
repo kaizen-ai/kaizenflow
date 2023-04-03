@@ -1,24 +1,25 @@
-import pytest
 import logging
 from typing import Tuple
 
-import helpers.hunit_test as hunitest
+import defi.dao_cross.optimize as ddacropt
 import defi.dao_cross.order as ddacrord
-import defi.dao_cross.optimize as opt
+import helpers.hunit_test as hunitest
 
 _LOG = logging.getLogger(__name__)
+
 
 class TestRunSolver1(hunitest.TestCase):
     """
     Run the solver using toy orders.
     """
+
     @staticmethod
     def get_test_orders(
         limit_price_1: float, limit_price_2: float
     ) -> Tuple[ddacrord.Order, ddacrord.Order]:
         """
         Get toy orders for the unit tests.
-        
+
         :param limit_price_1: limit price for the buy order
         :param limit_price_2: limit price for the sell order
         :return: buy and sell orders
@@ -64,7 +65,9 @@ class TestRunSolver1(hunitest.TestCase):
         limit_price_1 = 5
         limit_price_2 = 3
         test_orders_1 = self.get_test_orders(limit_price_1, limit_price_2)
-        result = opt.run_solver(test_orders_1[0], test_orders_1[1], exchange_rate)
+        result = ddacropt.run_solver(
+            test_orders_1[0], test_orders_1[1], exchange_rate
+        )
         # Check that the solution is found and it is different from zero.
         self.assertEqual(result["problem_objective_value"], 10)
         # Check executed quantity values.
@@ -79,7 +82,9 @@ class TestRunSolver1(hunitest.TestCase):
         limit_price_1 = 5
         limit_price_2 = 5
         test_orders_1 = self.get_test_orders(limit_price_1, limit_price_2)
-        result = opt.run_solver(test_orders_1[0], test_orders_1[1], exchange_rate)
+        result = ddacropt.run_solver(
+            test_orders_1[0], test_orders_1[1], exchange_rate
+        )
         # Check that the solution is found but it is zero.
         self.assertEqual(result["problem_objective_value"], 0)
         # Check executed quantity values.

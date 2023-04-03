@@ -1,10 +1,15 @@
+"""
+Import as:
+
+import defi.dao_cross.optimize as ddacropt
+"""
+
 import logging
 from typing import Any, Dict
 
+import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
 import helpers.hprint as hprint
-
-import defi.dao_cross.order as ddacrord
 
 # Equivalent to `import x as x`, but skip this module if the module is
 # not present.
@@ -54,8 +59,12 @@ def run_solver(
     _LOG.debug(hprint.to_str("limit_price_cond_2"))
     # Executed quantity is not greater than the requested quantity
     # given that the limit price condition is satisfied.
-    problem += q_base_asterisk_1 <= order_1.quantity + M * (1 - limit_price_cond_1)
-    problem += q_base_asterisk_2 <= order_2.quantity + M * (1 - limit_price_cond_2)
+    problem += q_base_asterisk_1 <= order_1.quantity + M * (
+        1 - limit_price_cond_1
+    )
+    problem += q_base_asterisk_2 <= order_2.quantity + M * (
+        1 - limit_price_cond_2
+    )
     # Executed quantity is zero if the limit price condition is not met.
     problem += q_base_asterisk_1 <= M * limit_price_cond_1
     problem += q_base_asterisk_1 >= -M * limit_price_cond_1
