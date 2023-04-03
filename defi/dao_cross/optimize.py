@@ -2,6 +2,7 @@ import logging
 from typing import Any, Dict
 
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 import defi.dao_cross.order as ddacrord
 
@@ -19,13 +20,14 @@ def run_solver(
     order_1: ddacrord.Order, order_2: ddacrord.Order, exchange_rate: float
 ) -> Dict[str, Any]:
     """
-    Find the maximum transacted volume given the orders and the constraints.
+    Find the maximum transacted volume given the constraints.
 
-    :param order_1: input buy order
-    :param order_2: input sell order
-    :param exchange_rate: price of base token / price of quote token
+    :param order_1: buy order
+    :param order_2: sell order
+    :param exchange_rate: ratio -- price of base token / price of quote token
     :return: solver's output in a human readable format
     """
+    _LOG.debug(hprint.to_str("order_1 order_2"))
     # Assume the fixed directions.
     hdbg.dassert_eq(order_1.action, "buy")
     hdbg.dassert_eq(order_2.action, "sell")
@@ -47,9 +49,9 @@ def run_solver(
     M = 1e6
     # TODO(Grisha): this should be a function of action.
     limit_price_cond_1 = int(exchange_rate <= order_1.limit_price)
-    _LOG.info("limit_price_cond_1 is %s", limit_price_cond_1)
+    _LOG.debug(hprint.to_str("limit_price_cond_1"))
     limit_price_cond_2 = int(exchange_rate >= order_2.limit_price)
-    _LOG.info("limit_price_cond_2 is %s", limit_price_cond_2)
+    _LOG.debug(hprint.to_str("limit_price_cond_2"))
     # Executed quantity is not greater than the requested quantity
     # given that the limit price condition is satisfied.
     problem += q_base_asterisk_1 <= order_1.quantity + M * (1 - limit_price_cond_1)
@@ -66,7 +68,7 @@ def run_solver(
     solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
     problem.solve(solver)
     # Display the results.
-    # TODO(Grisha): move to a separate function.
+    # TODO(Grisha): move packaging to a separate function.
     result: Dict[str, Any] = {}
     result["problem_status"] = pulp.LpStatus[problem.status]
     result["problem_objective_value"] = pulp.value(problem.objective)

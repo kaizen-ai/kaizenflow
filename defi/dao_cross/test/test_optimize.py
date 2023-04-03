@@ -10,14 +10,14 @@ _LOG = logging.getLogger(__name__)
 
 class TestRunSolver1(hunitest.TestCase):
     """
-    Run notebooks without failures.
+    Run the solver using toy orders.
     """
     @staticmethod
     def get_test_orders(
         limit_price_1: float, limit_price_2: float
     ) -> Tuple[ddacrord.Order, ddacrord.Order]:
         """
-        Get toy orders to demonstrate how the solver works.
+        Get toy orders for the unit tests.
         
         :param limit_price_1: limit price for the buy order
         :param limit_price_2: limit price for the sell order
@@ -31,8 +31,6 @@ class TestRunSolver1(hunitest.TestCase):
         # Genereate buy order.
         action = "buy"
         quantity = 5
-        base_token = "BTC"
-        quote_token = "ETH"
         order_1 = ddacrord.Order(
             base_token,
             quote_token,
@@ -46,8 +44,6 @@ class TestRunSolver1(hunitest.TestCase):
         # Generate sell order.
         action = "sell"
         quantity = 6
-        base_token = "BTC"
-        quote_token = "ETH"
         order_2 = ddacrord.Order(
             base_token,
             quote_token,
@@ -61,9 +57,31 @@ class TestRunSolver1(hunitest.TestCase):
         return order_1, order_2
 
     def test1(self) -> None:
+        """
+        The limit price condition is True for all orders.
+        """
         exchange_rate = 4
         limit_price_1 = 5
         limit_price_2 = 3
         test_orders_1 = self.get_test_orders(limit_price_1, limit_price_2)
-        res = opt.run_solver(test_orders_1[0], test_orders_1[1], exchange_rate)
-        print(res)
+        result = opt.run_solver(test_orders_1[0], test_orders_1[1], exchange_rate)
+        # Check that the solution is found and it is different from zero.
+        self.assertEqual(result["problem_objective_value"], 10)
+        # Check executed quantity values.
+        self.assertEqual(result["q_base_asterisk_1"], 5)
+        self.assertEqual(result["q_base_asterisk_2"], 5)
+
+    def test2(self) -> None:
+        """
+        The limit price condition is False for at least one order.
+        """
+        exchange_rate = 4
+        limit_price_1 = 5
+        limit_price_2 = 5
+        test_orders_1 = self.get_test_orders(limit_price_1, limit_price_2)
+        result = opt.run_solver(test_orders_1[0], test_orders_1[1], exchange_rate)
+        # Check that the solution is found but it is zero.
+        self.assertEqual(result["problem_objective_value"], 0)
+        # Check executed quantity values.
+        self.assertEqual(result["q_base_asterisk_1"], 0)
+        self.assertEqual(result["q_base_asterisk_2"], 0)
