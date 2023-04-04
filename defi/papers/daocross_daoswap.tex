@@ -1,16 +1,16 @@
 \documentclass[11pt, reqno]{amsart}
-\newtheorem{theorem}{Theorem}
 \usepackage{amsfonts, amssymb, amscd, amsrefs}
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{slashed}
 \usepackage{fullpage}
 
-\newtheorem{thm}{Theorem}
-\newtheorem{algorithm}[thm]{Algorithm}
-\newtheorem{definition}[thm]{Definition}
-\newtheorem{example}[thm]{Example}
-\newtheorem{problem}[thm]{Problem}
+% https://ctan.math.washington.edu/tex-archive/macros/latex/required/amscls/doc/amsthdoc.pdf
+\theoremstyle{definition}
+\newtheorem{defn}{Definition}
+\newtheorem{problem}{Problem}
+\theoremstyle{remark}
+\newtheorem{exmp}{Example}
 
 \newcommand{\bidbtc}{\mathrm{bid}_\mathrm{BTC}}
 \newcommand{\askbtc}{\mathrm{ask}_\mathrm{BTC}}
@@ -53,7 +53,8 @@
 \author{G.P. Saggese}
 \author{Paul Smith}
 
-\thanks{With contributions from Tamara Jordania, Samarth KaPatel, and Daniel Yachmenev}
+\thanks{With contributions from Tamara Jordania, Samarth KaPatel,
+Grigorii Pomazkin, and Daniel Yachmenev}
 
 \date{\today}
 
@@ -202,7 +203,7 @@ By convention, \emph{quantity} to exchange is expressed in terms of the base
 token, and \emph{price} is a token exchange rate expressed in terms of the
 quote token per unit of base token (or multiple thereof).
 
-\begin{example}[base/quote tokens]
+\begin{exmp}[base/quote tokens]
 By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
 is the quote token. Interest to trade is expressed in terms of orders
 with $\BTC$ as base token and $\ETH$ as quote token, as follows:
@@ -219,12 +220,12 @@ with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 A party who places a ``buy" order must have the quote token ($\ETH$) in custody,
 i.e., in its wallet. A party who places a ``sell" order must have the base
 token ($\BTC$) in custody.
-\end{example}
+\end{exmp}
 
 \subsection{Order attributes and notation}
 We introduce the following tuple notation for a general limit order
 (valid for both DaoCross and DaoSwap).
-\begin{definition}[Limit order]
+\begin{defn}[Limit order]
 A DaoCross or DaoSwap limit order is represented by a tuple of the form
 \begin{align*}
     ( & \timestamp, \\
@@ -235,7 +236,7 @@ A DaoCross or DaoSwap limit order is represented by a tuple of the form
     & \quotetoken, \\
     & \depositaddress )
 \end{align*}
-\end{definition}
+\end{defn}
 
 The quantities are arranged to make the order simple to read in natural
 language:
@@ -263,7 +264,7 @@ For brevity, in the sequel we may:
 	\item omit the (infinite) $\limitprice$ for market orders
 \end{itemize}
 
-\begin{example}[Limit order notation]
+\begin{exmp}[Limit order notation]
 The order
 \begin{center}
     (\textnormal{\texttt{1678660406}},
@@ -279,7 +280,7 @@ corresponds to the natural language description:
 commits to $\buy$ up to \textnormal{\texttt{3.2}} units of $\ETH$ in exchange
 for $\BTC$ up to a $\limitprice$ of \textnormal{\texttt{4.0}} $\BTC$ per $\ETH$
 with proceeds deposited at \textnormal{\texttt{0xdeadc0de}}".
-\end{example}
+\end{exmp}
 
 Next we introduce some examples of market order and limit order behavior when
 a clearing rate has been set.
@@ -287,7 +288,7 @@ In particular, consider a swap for the tokens $\ETH$, $\BTC$ and assume that
 the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
 0.2 $\BTC$ can be exchanged for 1 $\ETH$ and vice versa).
 
-\begin{example}[Market order notation and clearing]
+\begin{exmp}[Market order notation and clearing]
 The following market orders omit $\timestamp$, $\limitprice$, and
 $\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
 \begin{itemize}
@@ -300,13 +301,13 @@ $\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
     \item An order \texttt{(\sell, 1.0, $\BTC$, $\ETH$)} means exchanging
       1 $\BTC$ in return for 5 $\ETH$
 \end{itemize}
-\end{example}
+\end{exmp}
 
 Next we consider the behavior of limit orders under the same prevailing exchange
 rate (and we assume that there is sufficient supply of tokens to fully fill the
 orders).
 
-\begin{example}[Executable buy limit order]
+\begin{exmp}[Executable buy limit order]
 A limit order
 \[
 \texttt{(\buy, 1.0, $\ETH$, 0.5, $\BTC$)}
@@ -315,18 +316,18 @@ means
 ``$\buy$ up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
 In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
 can be executed at the prevailing market rate.
-\end{example}
+\end{exmp}
 
-\begin{example}[Non-executable buy limit order]
+\begin{exmp}[Non-executable buy limit order]
 On the other hand, a limit order
 \[
 \texttt{(\buy, 1.0, $\ETH$, 0.1, $\BTC$)}
 \]
 requires that the rate of $\BTC$ per $\ETH$ be lower than the current market
 rate, and so the limit price prevents a token swap from being carried out.
-\end{example}
+\end{exmp}
 
-\begin{example}[Non-executable sell limit order]
+\begin{exmp}[Non-executable sell limit order]
 A limit order
 \[
 \texttt{(\sell, 1.0, $\ETH$, 0.5, $\BTC$)}
@@ -335,7 +336,7 @@ means
 ``\sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
 Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
-\end{example}
+\end{exmp}
 
 \subsection{Limit order as a set of linear inequalities}
 Any limit order as defined above can be translated into inequalities involving
@@ -447,7 +448,7 @@ of BTC/ETH would be considered a cross pair in the world of traditional
 finance. Because most cross pairs are not traded directly on exchanges, we
 must derive a clearing price from pairs involving stablecoins.
 
-\subsubsection{Lit exchange bid-ask midpoint reference price}
+\subsection{Lit exchange bid-ask midpoint reference price}
 Let $\bidbtc, \askbtc$ be stablecoin-denominated top-of-book bid-ask prices
 for $\BTC$ (e.g., expressed in $\USDC$), and $\bideth, \asketh$ be the analogous
 prices for $\ETH$. Then, a commitment to buy one $\BTC$ and pay $\ETH$ would
@@ -672,7 +673,7 @@ TODO(gp): check
 
 % ###############################################################################
 
-\section{Comparison with Uniswap}
+\section{Comparison with automated market makers}
 
 Uniswap doesn't support limit orders
 - v3 introduced some steps towards incorporating 
@@ -763,6 +764,16 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 		pages={107-119},
 		eprint={https://doi.org/10.1023/A:1022058209073},
 	}
+
+    \bib{MiMoRoZh22}{article}{
+        author={Milionis, Jason},
+        author={Moallemi, Ciamac C.},
+        author={Roughgarden, Tim},
+        author={Zhang, Anthony Lee},
+        title={Automated Market Making and Loss-Versus-Rebalancing},
+        date={2022},
+        eprint={https://doi.org/10.48550/arXiv.2208.06046},
+    }
 
 	\bib{Ms}{article}{
 		author={Morgan Stanley},
