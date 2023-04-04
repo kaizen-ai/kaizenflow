@@ -29,7 +29,7 @@ class UniswapV1:
 
     def add_liquidity(self, token_amount: float, eth_amount: float) -> None:
         """
-        Adds liquidity by increasing the token and ETH reserves.
+        Add liquidity by increasing the token and ETH reserves.
         """
         self.token_reserve += token_amount
         self.eth_reserve += eth_amount
@@ -58,10 +58,11 @@ class UniswapV1:
         self, input_amount: float, input_reserve: float, output_reserve: float
     ) -> float:
         """
-        Get the amount of output token.
+        Get the amount of output token that can be bought for the given
+        amount of input token and token reserves.
 
-        :param input_amount: input token reserve
-        :param input_reserve: output token reserve
+        :param input_amount: input token amount
+        :param input_reserve: input token reserve
         :param output_reserve: output token reserve
         :return: output token amount
         """
