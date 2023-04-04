@@ -103,13 +103,11 @@ class Order:
     def _takes_precedence(self, other: "Order") -> bool:
         """
         Compare order to another one according to quantity, price and
-        timestamp.
+        timestamp. Prioritize orders according to:
 
-        Prioritize orders according to:
             1. Quantity - higher quantity comes first in priority
             2. Price - higher limit price breaks quantity ties
             3. Timestamp - earlier timestamp breaks ties in quantity and price
-
         :param other: order to compare the actual order with
         :return: "True" if order preceeds the other one, "False" otherwise
         """
