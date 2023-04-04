@@ -20,28 +20,15 @@ pulp = pytest.importorskip("pulp")
 _LOG = logging.getLogger(__name__)
 
 
-def action_to_int(action: str) -> int:
-    """
-    """
-    if action == "buy":
-        ret = 1
-    elif action == "sell":
-        ret = -1
-    else:
-        raise ValueError(f"Unsupported action={action}")
-    return ret
-
-
 # TODO(Grisha): consider extending for n base tokens.
 def run_solver(
     orders: List[ddacrord.Order], exchange_rate: float
 ) -> Dict[str, Any]:
     """
-    Find the maximum transacted volume given the constraints.
+    Find the maximum exchanged volume given the constraints.
 
-    :param order_1: buy order
-    :param order_2: sell order
-    :param exchange_rate: ratio -- price of base token / price of quote token
+    :param orders: buy / sell orders
+    :param exchange_rate: price (in terms of quote token) per unit of base token
     :return: solver's output in a human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
@@ -69,7 +56,7 @@ def run_solver(
     for i in range(n_orders):
         # Impose constraints on executed quantites.
         limit_price_cond = int(
-            exchange_rate * action_to_int(orders[i].action) <= orders[i].limit_price * action_to_int(orders[i].action)
+            exchange_rate * ddacrord.action_to_int(orders[i].action) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
         )
         _LOG.debug(hprint.to_str("limit_price_cond"))
         # Executed quantity is not greater than the requested quantity given that
@@ -81,7 +68,7 @@ def run_solver(
         problem += q_base_asterisk[i] >= -M * limit_price_cond
     # Global constraint: the number of sold tokens must match the number
     # of bought tokens.
-    problem += pulp.lpSum(q_base_asterisk[i] * action_to_int(orders[i].action) for i in range(n_orders)) == 0
+    problem += pulp.lpSum(q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action) for i in range(n_orders)) == 0
     # Use the default solver and suppress the solver's log.
     solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
     problem.solve(solver)

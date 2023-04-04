@@ -168,3 +168,20 @@ def is_active_order(order: Optional[Order]) -> bool:
     if not order.quantity > 0:
         return False
     return True
+
+
+def action_to_int(action: str) -> int:
+    """
+    Translate an action to an int.
+
+    :param action: direction: `buy` or `sell`
+    :return: int representation of a direction
+    """
+    ret = None
+    if action == "buy":
+        ret = 1
+    elif action == "sell":
+        ret = -1
+    else:
+        raise ValueError(f"Unsupported action={action}")
+    return ret
