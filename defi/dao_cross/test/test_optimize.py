@@ -33,7 +33,7 @@ class TestRunSolver1(hunitest.TestCase):
         wallet_address = 1
         # Genereate buy orders.
         buy_action = "buy"
-        # 
+        #
         quantity = 4
         order_1 = ddacrord.Order(
             base_token,
@@ -90,9 +90,7 @@ class TestRunSolver1(hunitest.TestCase):
         limit_price_buy = 5
         limit_price_sell = 3
         test_orders = self.get_test_orders(limit_price_buy, limit_price_sell)
-        result = ddacropt.run_solver(
-            test_orders, exchange_rate
-        )
+        result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found and is different from zero.
         self.assertEqual(result["problem_objective_value"], 14)
         # Check the executed quantity values.
@@ -110,9 +108,7 @@ class TestRunSolver1(hunitest.TestCase):
         limit_price_buy = 3
         limit_price_sell = 3
         test_orders = self.get_test_orders(limit_price_buy, limit_price_sell)
-        result = ddacropt.run_solver(
-            test_orders, exchange_rate
-        )
+        result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found but it equals zero.
         self.assertEqual(result["problem_objective_value"], 0)
         # Check the executed quantity values.
@@ -130,9 +126,7 @@ class TestRunSolver1(hunitest.TestCase):
         limit_price_buy = 5
         limit_price_sell = 5
         test_orders = self.get_test_orders(limit_price_buy, limit_price_sell)
-        result = ddacropt.run_solver(
-            test_orders, exchange_rate
-        )
+        result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found but it equals zero.
         self.assertEqual(result["problem_objective_value"], 0)
         # Check the executed quantity values.

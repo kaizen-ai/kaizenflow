@@ -41,12 +41,15 @@ def run_solver(
     hdbg.dassert_lt(0, exchange_rate)
     # Initialize the model.
     problem = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)
-    # Specify the vars. Setting the lower bound to zero allows to omit the >= 0 
+    # Specify the vars. Setting the lower bound to zero allows to omit the >= 0
     # constraint on the executed quantities.
-    q_base_asterisk = [pulp.LpVariable("q_base_asterisk_{0}".format(i+1), lowBound=0) for i in range(n_orders)]
+    q_base_asterisk = [
+        pulp.LpVariable(f"q_base_asterisk_{i}", lowBound=0)
+        for i in range(n_orders)
+    ]
     # Objective function.
-    # TODO(Grisha): since the base token is the same, i.e. BTC it is ok to use 
-    # quantity, however the objective function should be modified to account for 
+    # TODO(Grisha): since the base token is the same, i.e. BTC it is ok to use
+    # quantity, however the objective function should be modified to account for
     # different base tokens.
     problem += pulp.lpSum(q_base_asterisk)
     # Constraints.
@@ -56,19 +59,28 @@ def run_solver(
     for i in range(n_orders):
         # Impose constraints on executed quantites.
         limit_price_cond = int(
-            exchange_rate * ddacrord.action_to_int(orders[i].action) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
+            exchange_rate * ddacrord.action_to_int(orders[i].action)
+            <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
         )
         _LOG.debug(hprint.to_str("limit_price_cond"))
         # Executed quantity is not greater than the requested quantity given that
         # the limit price condition is satisfied.
-        problem += q_base_asterisk[i] <= orders[i].quantity + M * (1 - limit_price_cond)
+        problem += q_base_asterisk[i] <= orders[i].quantity + M * (
+            1 - limit_price_cond
+        )
         # Executed quantity is zero if the limit price condition is not met. I.e., an order
         # cannot be executed.
         problem += q_base_asterisk[i] <= M * limit_price_cond
         problem += q_base_asterisk[i] >= -M * limit_price_cond
     # Global constraint: the number of sold tokens must match the number
     # of bought tokens.
-    problem += pulp.lpSum(q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action) for i in range(n_orders)) == 0
+    problem += (
+        pulp.lpSum(
+            q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action)
+            for i in range(n_orders)
+        )
+        == 0
+    )
     # Use the default solver and suppress the solver's log.
     solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
     problem.solve(solver)
