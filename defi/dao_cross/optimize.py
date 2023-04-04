@@ -49,7 +49,7 @@ def run_solver(
     #
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
-    hdbg.dassert_container_type(list, ddacrord.Order)
+    hdbg.dassert_container_type(orders, list, ddacrord.Order)
     #
     hdbg.dassert_lt(0, exchange_rate)
     # Initialize the model.
@@ -74,7 +74,7 @@ def run_solver(
         _LOG.debug(hprint.to_str("limit_price_cond"))
         # Executed quantity is not greater than the requested quantity given that
         # the limit price condition is satisfied.
-        problem += q_base_asterisk[i] <= q_base_asterisk[i].quantity + M * (1 - limit_price_cond)
+        problem += q_base_asterisk[i] <= orders[i].quantity + M * (1 - limit_price_cond)
         # Executed quantity is zero if the limit price condition is not met. I.e., an order
         # cannot be executed.
         problem += q_base_asterisk[i] <= M * limit_price_cond
