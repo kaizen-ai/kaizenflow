@@ -4,8 +4,33 @@
 \usepackage{hyperref}
 \usepackage{slashed}
 \usepackage{fullpage}
-% Prevent tables from repositioning tables.
+% Prevent from repositioning tables.
 \usepackage{float}
+
+% TODO(gp): It aborts with
+% ! Undefined control sequence.
+%<argument> ...on\endcsname \protect \@secnumpunct
+%
+%l.164 \subsection{Breaking the symmetry}
+% https://tex.stackexchange.com/questions/165930/bold-and-italic-subsection-title-with-custom-font-size
+%\usepackage{titlesec}
+%\titleformat{\section}
+%{\normalfont\fontfamily{phv}\fontsize{12}{17}\bfseries}{\thesection}{1em}{}
+%\titleformat{\subsection}
+%{\normalfont\fontfamily{phv}\fontsize{12}{17}\bfseries\itshape}{\thesubsection}{1em}{}
+%\titleformat{\subsection}
+%  {\normalfont\fontsize{12}{17}\sffamily\bfseries\slshape}
+%  {\thesubsection}
+%  {1em}
+%  {}
+
+%\usepackage{titlesec}
+
+%\titleformat*{\section}{\LARGE\bfseries}
+%\titleformat*{\subsection}{\Large\bfseries}
+%\titleformat*{\subsubsection}{\large\bfseries}
+%\titleformat*{\paragraph}{\large\bfseries}
+%\titleformat*{\subparagraph}{\large\bfseries}
 
 % https://ctan.math.washington.edu/tex-archive/macros/latex/required/amscls/doc/amsthdoc.pdf
 \theoremstyle{definition}
@@ -92,21 +117,21 @@ other high-volume traders to execute quickly with minimal market impact.
 DaoSwap and DaoCross differ in how the token exchange rate is determined, but
 both share several common advantages:
 \begin{enumerate}
-	\item Low Cost:
+	\item Low cost:
 	      they are a DeFi primitive that allows trading tokens peer-to-peer
 	      without incurring spread costs
-	\item Capital Efficiency:
+	\item Capital efficiency:
 	      participants provide liquidity only when
 	      they wish to trade, and only in the amount they wish to trade
-	\item No Impermanent Loss:
+	\item No impermanent loss:
 	      liquidity providers are not exposed to the risk of impermanent loss
 	      (a form of unrealized loss that becomes realized upon withdrawing
 	      liquidity), unlike the case with other decentralized exchange protocols
 	      based on automated market makers
-	\item No Intermediary Custody:
+	\item No intermediary custody:
 	      exchanged tokens always remain under the control of their respective
 	      owners
-	\item No Rent Extraction from High-Frequency Traders:
+	\item No rent extraction from high-frequency traders:
 	      speed alone does not confer an advantage to traders, as the discrete
 	      timing prevents predatory tactics such as front-running, limit order
 	      scalping, and spoofing, which are known issues seen with continuous
@@ -117,9 +142,15 @@ both share several common advantages:
 
 % ###############################################################################
 
+% TODO(gp): Maybe we should just say "in traditional finance people think in terms
+% of limit orders", "people want to swap tokens independently of the direction".
+% The general solution is DaoSwap.
+% Or maybe explain how traditional markets work since they have been evolving for
+% long time with certain use cases.
+
 \section{Matching liquidity}
 Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
-(wrapped bitcoin, an ERC-20 compliant coin that tracks bitcoin), who wish to =
+(wrapped bitcoin, an ERC-20 compliant coin that tracks bitcoin), who wish to
 swap tokens at a competitive rate. Suppose also that there are many
 additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
 swap. How should the liquidity be pooled? At first glance, it appears that
@@ -206,6 +237,8 @@ By convention, \emph{quantity} to exchange is expressed in terms of the base
 token, and \emph{price} is a token exchange rate expressed in terms of the
 quote token per unit of base token (or multiple thereof).
 
+% TODO(gp): Can the example be called with a reference to the section, instead
+% of having a different numbering scheme?
 \begin{exmp}[base/quote tokens]
 By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
 is the quote token. Interest to trade is expressed in terms of orders
@@ -214,7 +247,7 @@ with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 	\item A ``buy" order represents a commitment to purchase the base token
         $\BTC$ and pay with the quote token $\ETH$
 	\item A ``sell" order represents a commitment to sell the base token
-	      $\BTC$) and receive the quote token $\ETH$.
+	      $\BTC$ and receive the quote token $\ETH$.
 	\item Quantity $q$ is in terms of the base token (``buy/sell a certain
 	      amount of $\BTC$")
 	\item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
@@ -255,7 +288,7 @@ The $\depositaddress$ attribute mirrors standard functionality
 available in traditional finance, e.g., in purchasing T-Bills on
 TreasuryDirect\footnote{https://www.treasurydirect.gov}. This feature
 facilitates account management through the use of multiple wallets. For
-example, a miner may have a supply of $\texttt{BTC}$ collected and held in one wallet
+example, a miner may have a supply of $\BTC$ collected and held in one wallet
 which it would like to systematically diversify into $\ETH$ and perhaps other
 tokens. In specifying a deposit address, it may use a separate wallet to collect
 incoming $\ETH$.
@@ -316,6 +349,11 @@ A limit order
     \texttt{(\buy, 1.0, $\ETH$, 0.5, $\BTC$)}
 \]
 means
+% TODO(gp): I understand the intent of pairing variables in the tuples and
+% natural language. I would use buy and not \buy here since we are using natural language
+% In fact we don't use \texttt{1.0} in the text. I'm ok with leaving BTC and ETH
+% in teletype since those are symbols like $ and it's a coincidence that teletype
+% is used for both code and our symbols.
 ``$\buy$ up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
 In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
 can be executed at the prevailing market rate.
@@ -336,12 +374,12 @@ A limit order
     \texttt{(\sell, 1.0, $\ETH$, 0.5, $\BTC$)}
 \]
 means
-``\sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
+``$\sell$ up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
 Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
 \end{exmp}
 
-\subsection{Limit order as a set of linear inequalities}
+\subsection{Limit order as a set of inequalities}
 Any limit order as defined above can be translated into inequalities involving
 quantity of exchanged tokens and token exchange rates. Multiple limit orders
 can be converted into a system of inequalities, which collectively constrain
@@ -351,35 +389,78 @@ In both DaoCross and DaoSwap, a swap between a given base/quote token pair
 occurs at a single exchange rate, i.e., the clearing price is the same for
 all executed orders. On the other hand, quantity exchanged is specific to
 each order and each order's constraint on quantity exchanged cannot be
-violated.
+violated. In the same way each order can be executed with a non-null quantity
+only when the single exchange rate is compatible with the limit price.
 
 In the sequel we use an asterisk to denote clearing quantity and exchange
 rate:
 \begin{itemize}
 	\item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
 	      swap from order $o_i$
-	\item $p_{quote\_per\_base}^*(o_i)$ denotes exchange rate at
+	\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
+		  and base tokens for all the swaps
 	      % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
 \end{itemize}
-Note that
+Note that:
 \[
-	p_{quote\_per\_base}^*(o_i) =
-	1 / p_{base\_per\_quote}^*(o_i)
+	p_{quote\_per\_base} = 
+	\frac{1}{p_{base\_per\_quote}}
 \]
 
-An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
-token A in exchange for token B with a limit price up to 3 B per unit of A"
+If prices of base and quote tokens are expressed in terms of a common currency
+(e.g., USD) then it holds that:
+\[
+	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}}
+\]
+
+\subsubsection{\textbf{\emph{Extracting attributes from orders}}}
+Given an order $o_i =$ \texttt{(\buy, q, A, lb, B)} we indicate with:
+\begin{itemize}
+	\item $action(o_i)$ the desired action (e.g., $\buy$)
+	\item $q_{base}(o_i)$ the maximum desired quantity $q$
+	\item $lb(o_i)$ the limit price $lb$
+	\item $base(o_i)$ the base token $A$
+	\item $quote(o_i)$ the quote token $A$
+\end{itemize}
+
+% TODO(gp): I'd use something like:
+\subsubsection{\textbf{\emph{Inequalities for buy order}}}
+An order of the form $o_i =$ \texttt{(\buy, q, A, lb, B)} means ``buy $q$ units of
+token A in exchange for token B with a limit price up to $lb$ B per unit of A"
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-	(p_{B\_per\_A}^*(o_1) \leq 3) \land
-	(0 \le q_{A}^*(o_1) \leq 2) \lor
-	(q_A^*(o_1) = 0)
+	(p_{B\_per\_A})^* \leq lb(o_i) \land
+	(0 \le q_{A}^*(o_i) \leq q(o_i)) \lor
+	(q_A^*(o_i) = 0)
 \end{equation*}
 The constraint on the quantity exchanged is conditioned on the corresponding
 price satisfying the desired limit price constraint, otherwise the swap cannot
 be carried out and the exchanged quantity is 0.
 
+\subsubsection{\textbf{\emph{Example of inequalities for buy order}}}
+An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
+token A in exchange for token B with a limit price up to 3 B per unit of A"
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{B\_per\_A}) \leq 3) \land
+	(0 \le q_{A}^*(o_1) \leq 2) \lor
+	(q_A^*(o_1) = 0)
+\end{equation*}
+
+\subsubsection{\textbf{\emph{Inequalities for sell order}}}
+An order of the form $o_i =$ \texttt{(\sell, q, A, lb, B)} means ``sell $q$ units of
+token A paying in token B with a limit price of at least to $lb$ B per unit of A"
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{B\_per\_A})^* \geq lb(o_i) \land
+	(0 \le q_{A}^*(o_i) \geq q(o_i)) \lor
+	(q_A^*(o_i) = 0)
+\end{equation*}
+
+\subsubsection{\textbf{\emph{Example of inequalities for sell order}}}
 In the same way, an order like $o_2 =$ \texttt{(sell, 3, A, 2, B)} means ``sell
 3 units of token A paying in token B with a limit price for one unit of A of at
 least 2 B" which corresponds to
@@ -388,13 +469,19 @@ least 2 B" which corresponds to
 	(0 \le q_{A}^*(o_2) \leq 2) \lor
 	(q_A^*(o_2) = 0)
 \end{equation*}
-A market order (i.e., without a limit price) has no constraint on exhange rate
+
+\subsubsection{\textbf{\emph{Example of inequalities for buy market order}}}
+A market order (i.e., without a limit price) has no constraint on exchange rate
 and thus is reduced to
 \[
-	0 \le q_{A}^*(o_1) \le 2
+	0 \le q_{A}^*(o_1) \le q(o_i)
 \]
 
-\subsubsection{Order equivalence}
+\subsection{\textbf{\emph{Order equivalence}}}
+When the exchange rate between two tokens is known, it is possible to convert
+buy / sell orders for A and B tokens into buy / sell orders for one of the
+token only, according to the transformation below.
+
 Let
 \[
 	o_1 = (\buy, q, A, p_{B\_per\_A}, B).
