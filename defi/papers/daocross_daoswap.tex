@@ -4,6 +4,33 @@
 \usepackage{hyperref}
 \usepackage{slashed}
 \usepackage{fullpage}
+% Prevent from repositioning tables.
+\usepackage{float}
+
+% TODO(gp): It aborts with
+% ! Undefined control sequence.
+%<argument> ...on\endcsname \protect \@secnumpunct
+%
+%l.164 \subsection{Breaking the symmetry}
+% https://tex.stackexchange.com/questions/165930/bold-and-italic-subsection-title-with-custom-font-size
+%\usepackage{titlesec}
+%\titleformat{\section}
+%{\normalfont\fontfamily{phv}\fontsize{12}{17}\bfseries}{\thesection}{1em}{}
+%\titleformat{\subsection}
+%{\normalfont\fontfamily{phv}\fontsize{12}{17}\bfseries\itshape}{\thesubsection}{1em}{}
+%\titleformat{\subsection}
+%  {\normalfont\fontsize{12}{17}\sffamily\bfseries\slshape}
+%  {\thesubsection}
+%  {1em}
+%  {}
+
+%\usepackage{titlesec}
+
+%\titleformat*{\section}{\LARGE\bfseries}
+%\titleformat*{\subsection}{\Large\bfseries}
+%\titleformat*{\subsubsection}{\large\bfseries}
+%\titleformat*{\paragraph}{\large\bfseries}
+%\titleformat*{\subparagraph}{\large\bfseries}
 
 % https://ctan.math.washington.edu/tex-archive/macros/latex/required/amscls/doc/amsthdoc.pdf
 \theoremstyle{definition}
@@ -53,8 +80,9 @@
 \author{G.P. Saggese}
 \author{Paul Smith}
 
-\thanks{With contributions from Tamara Jordania, Samarth KaPatel,
-Grigorii Pomazkin, and Daniel Yachmenev}
+\thanks{With contributions from Dan Yachmenev, Danya Tikhomirov, Grisha
+Pomazkin, Juraj Smeriga, Nina Trubacheva, Samarth KaPatel, Tamara Zhordaniya,
+Vladimir Yakovenko}
 
 \date{\today}
 
@@ -89,21 +117,21 @@ other high-volume traders to execute quickly with minimal market impact.
 DaoSwap and DaoCross differ in how the token exchange rate is determined, but
 both share several common advantages:
 \begin{enumerate}
-	\item Low Cost:
+	\item Low cost:
 	      they are a DeFi primitive that allows trading tokens peer-to-peer
 	      without incurring spread costs
-	\item Capital Efficiency:
+	\item Capital efficiency:
 	      participants provide liquidity only when
 	      they wish to trade, and only in the amount they wish to trade
-	\item No Impermanent Loss:
+	\item No impermanent loss:
 	      liquidity providers are not exposed to the risk of impermanent loss
 	      (a form of unrealized loss that becomes realized upon withdrawing
 	      liquidity), unlike the case with other decentralized exchange protocols
 	      based on automated market makers
-	\item No Intermediary Custody:
+	\item No intermediary custody:
 	      exchanged tokens always remain under the control of their respective
 	      owners
-	\item No Rent Extraction from High-Frequency Traders:
+	\item No rent extraction from high-frequency traders:
 	      speed alone does not confer an advantage to traders, as the discrete
 	      timing prevents predatory tactics such as front-running, limit order
 	      scalping, and spoofing, which are known issues seen with continuous
@@ -114,9 +142,15 @@ both share several common advantages:
 
 % ###############################################################################
 
+% TODO(gp): Maybe we should just say "in traditional finance people think in terms
+% of limit orders", "people want to swap tokens independently of the direction".
+% The general solution is DaoSwap.
+% Or maybe explain how traditional markets work since they have been evolving for
+% long time with certain use cases.
+
 \section{Matching liquidity}
 Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
-(wrapped bitcoin, an ERC-20 compliant coin that tracks bitcoin), who wish to =
+(wrapped bitcoin, an ERC-20 compliant coin that tracks bitcoin), who wish to
 swap tokens at a competitive rate. Suppose also that there are many
 additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
 swap. How should the liquidity be pooled? At first glance, it appears that
@@ -203,6 +237,8 @@ By convention, \emph{quantity} to exchange is expressed in terms of the base
 token, and \emph{price} is a token exchange rate expressed in terms of the
 quote token per unit of base token (or multiple thereof).
 
+% TODO(gp): Can the example be called with a reference to the section, instead
+% of having a different numbering scheme?
 \begin{exmp}[base/quote tokens]
 By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
 is the quote token. Interest to trade is expressed in terms of orders
@@ -211,7 +247,7 @@ with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 	\item A ``buy" order represents a commitment to purchase the base token
         $\BTC$ and pay with the quote token $\ETH$
 	\item A ``sell" order represents a commitment to sell the base token
-	      $\BTC$) and receive the quote token $\ETH$.
+	      $\BTC$ and receive the quote token $\ETH$.
 	\item Quantity $q$ is in terms of the base token (``buy/sell a certain
 	      amount of $\BTC$")
 	\item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
@@ -228,13 +264,13 @@ We introduce the following tuple notation for a general limit order
 \begin{defn}[Limit order]
 A DaoCross or DaoSwap limit order is represented by a tuple of the form
 \begin{align*}
-    ( & \timestamp, \\
-    & \action, \\
-    & \quantity, \\
-    & \basetoken, \\
-    & \limitprice, \\
-    & \quotetoken, \\
-    & \depositaddress )
+    ( & \timestamp,       \\
+      & \action,          \\
+      & \quantity,        \\
+      & \basetoken,       \\
+      & \limitprice,      \\
+      & \quotetoken,      \\
+      & \depositaddress )
 \end{align*}
 \end{defn}
 
@@ -252,7 +288,7 @@ The $\depositaddress$ attribute mirrors standard functionality
 available in traditional finance, e.g., in purchasing T-Bills on
 TreasuryDirect\footnote{https://www.treasurydirect.gov}. This feature
 facilitates account management through the use of multiple wallets. For
-example, a miner may have a supply of $\texttt{BTC}$ collected and held in one wallet
+example, a miner may have a supply of $\BTC$ collected and held in one wallet
 which it would like to systematically diversify into $\ETH$ and perhaps other
 tokens. In specifying a deposit address, it may use a separate wallet to collect
 incoming $\ETH$.
@@ -260,7 +296,7 @@ incoming $\ETH$.
 For brevity, in the sequel we may:
 \begin{itemize}
 	\item omit $\timestamp$ and $\depositaddress$ when not relevant to the
-        discussion
+	      discussion
 	\item omit the (infinite) $\limitprice$ for market orders
 \end{itemize}
 
@@ -293,13 +329,13 @@ The following market orders omit $\timestamp$, $\limitprice$, and
 $\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
 \begin{itemize}
     \item An order \texttt{(\buy, 1.0, $\ETH$, $\BTC$)} means buying 1
-      $\ETH$ in exchange for 0.2 $\BTC$
+          $\ETH$ in exchange for 0.2 $\BTC$
     \item An order \texttt{(\sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$,
-      receiving the corresponding amount of 0.2 $\BTC$
+          receiving the corresponding amount of 0.2 $\BTC$
     \item An order \texttt{(\buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
-      paying with 5 $\ETH$
+          paying with 5 $\ETH$
     \item An order \texttt{(\sell, 1.0, $\BTC$, $\ETH$)} means exchanging
-      1 $\BTC$ in return for 5 $\ETH$
+          1 $\BTC$ in return for 5 $\ETH$
 \end{itemize}
 \end{exmp}
 
@@ -310,9 +346,14 @@ orders).
 \begin{exmp}[Executable buy limit order]
 A limit order
 \[
-\texttt{(\buy, 1.0, $\ETH$, 0.5, $\BTC$)}
+    \texttt{(\buy, 1.0, $\ETH$, 0.5, $\BTC$)}
 \]
 means
+% TODO(gp): I understand the intent of pairing variables in the tuples and
+% natural language. I would use buy and not \buy here since we are using natural language
+% In fact we don't use \texttt{1.0} in the text. I'm ok with leaving BTC and ETH
+% in teletype since those are symbols like $ and it's a coincidence that teletype
+% is used for both code and our symbols.
 ``$\buy$ up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
 In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
 can be executed at the prevailing market rate.
@@ -321,7 +362,7 @@ can be executed at the prevailing market rate.
 \begin{exmp}[Non-executable buy limit order]
 On the other hand, a limit order
 \[
-\texttt{(\buy, 1.0, $\ETH$, 0.1, $\BTC$)}
+    \texttt{(\buy, 1.0, $\ETH$, 0.1, $\BTC$)}
 \]
 requires that the rate of $\BTC$ per $\ETH$ be lower than the current market
 rate, and so the limit price prevents a token swap from being carried out.
@@ -330,15 +371,15 @@ rate, and so the limit price prevents a token swap from being carried out.
 \begin{exmp}[Non-executable sell limit order]
 A limit order
 \[
-\texttt{(\sell, 1.0, $\ETH$, 0.5, $\BTC$)}
+    \texttt{(\sell, 1.0, $\ETH$, 0.5, $\BTC$)}
 \]
 means
-``\sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
+``$\sell$ up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
 Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
 \end{exmp}
 
-\subsection{Limit order as a set of linear inequalities}
+\subsection{Limit order as a set of inequalities}
 Any limit order as defined above can be translated into inequalities involving
 quantity of exchanged tokens and token exchange rates. Multiple limit orders
 can be converted into a system of inequalities, which collectively constrain
@@ -348,62 +389,111 @@ In both DaoCross and DaoSwap, a swap between a given base/quote token pair
 occurs at a single exchange rate, i.e., the clearing price is the same for
 all executed orders. On the other hand, quantity exchanged is specific to
 each order and each order's constraint on quantity exchanged cannot be
-violated.
+violated. In the same way each order can be executed with a non-null quantity
+only when the single exchange rate is compatible with the limit price.
 
 In the sequel we use an asterisk to denote clearing quantity and exchange
 rate:
 \begin{itemize}
-    \item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
-      swap from order $o_i$
-  \item $p_{quote\_per\_base}^*(o_i)$ denotes exchange rate at
-  % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
+	\item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
+	      swap from order $o_i$
+	\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
+		  and base tokens for all the swaps
+	      % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
 \end{itemize}
-Note that
+Note that:
 \[
-    p_{quote\_per\_base}^*(o_i) =
-    1 / p_{base\_per\_quote}^*(o_i)
+	p_{quote\_per\_base} = 
+	\frac{1}{p_{base\_per\_quote}}
 \]
 
-An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
-token A in exchange for token B with a limit price up to 3 B per unit of A"
+If prices of base and quote tokens are expressed in terms of a common currency
+(e.g., USD) then it holds that:
+\[
+	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}}
+\]
+
+\subsubsection{\textbf{\emph{Extracting attributes from orders}}}
+Given an order $o_i =$ \texttt{(\buy, q, A, lb, B)} we indicate with:
+\begin{itemize}
+	\item $action(o_i)$ the desired action (e.g., $\buy$)
+	\item $q_{base}(o_i)$ the maximum desired quantity $q$
+	\item $lb(o_i)$ the limit price $lb$
+	\item $base(o_i)$ the base token $A$
+	\item $quote(o_i)$ the quote token $A$
+\end{itemize}
+
+% TODO(gp): I'd use something like:
+\subsubsection{\textbf{\emph{Inequalities for buy order}}}
+An order of the form $o_i =$ \texttt{(\buy, q, A, lb, B)} means ``buy $q$ units of
+token A in exchange for token B with a limit price up to $lb$ B per unit of A"
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-    (p_{B\_per\_A}^*(o_1) \leq 3) \land
-    (0 \le q_{A}^*(o_1) \leq 2) \lor
-    (q_A^*(o_1) = 0)
+	(p_{B\_per\_A})^* \leq lb(o_i) \land
+	(0 \le q_{A}^*(o_i) \leq q(o_i)) \lor
+	(q_A^*(o_i) = 0)
 \end{equation*}
 The constraint on the quantity exchanged is conditioned on the corresponding
 price satisfying the desired limit price constraint, otherwise the swap cannot
 be carried out and the exchanged quantity is 0.
 
+\subsubsection{\textbf{\emph{Example of inequalities for buy order}}}
+An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
+token A in exchange for token B with a limit price up to 3 B per unit of A"
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{B\_per\_A}) \leq 3) \land
+	(0 \le q_{A}^*(o_1) \leq 2) \lor
+	(q_A^*(o_1) = 0)
+\end{equation*}
+
+\subsubsection{\textbf{\emph{Inequalities for sell order}}}
+An order of the form $o_i =$ \texttt{(\sell, q, A, lb, B)} means ``sell $q$ units of
+token A paying in token B with a limit price of at least to $lb$ B per unit of A"
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{B\_per\_A})^* \geq lb(o_i) \land
+	(0 \le q_{A}^*(o_i) \geq q(o_i)) \lor
+	(q_A^*(o_i) = 0)
+\end{equation*}
+
+\subsubsection{\textbf{\emph{Example of inequalities for sell order}}}
 In the same way, an order like $o_2 =$ \texttt{(sell, 3, A, 2, B)} means ``sell
 3 units of token A paying in token B with a limit price for one unit of A of at
 least 2 B" which corresponds to
 \begin{equation*}
-    (p_{B\_per\_A}^*(o_2) \geq 2) \land
-    (0 \le q_{A}^*(o_2) \leq 2) \lor
-    (q_A^*(o_2) = 0)
+	(p_{B\_per\_A}^*(o_2) \geq 2) \land
+	(0 \le q_{A}^*(o_2) \leq 2) \lor
+	(q_A^*(o_2) = 0)
 \end{equation*}
-A market order (i.e., without a limit price) has no constraint on exhange rate
+
+\subsubsection{\textbf{\emph{Example of inequalities for buy market order}}}
+A market order (i.e., without a limit price) has no constraint on exchange rate
 and thus is reduced to
 \[
-    0 \le q_{A}^*(o_1) \le 2
+	0 \le q_{A}^*(o_1) \le q(o_i)
 \]
 
-\subsubsection{Order equivalence}
+\subsection{\textbf{\emph{Order equivalence}}}
+When the exchange rate between two tokens is known, it is possible to convert
+buy / sell orders for A and B tokens into buy / sell orders for one of the
+token only, according to the transformation below.
+
 Let
 \[
-    o_1 = (\buy, q, A, p_{B\_per\_A}, B).
+	o_1 = (\buy, q, A, p_{B\_per\_A}, B).
 \]
 Suppose that $p^*_{B\_per\_A}$ is fixed and known. Then the order
 \[
-    o_2 = (\sell, q^\prime, B, 1 / p_{B\_per\_A}, A)
+	o_2 = (\sell, q^\prime, B, 1 / p_{B\_per\_A}, A)
 \]
 may be handled in order crossing in the same way that $o_1$ may be
 provided that
 \[
-    q^\prime = q \cdot p^*_{B\_per\_A}
+	q^\prime = q \cdot p^*_{B\_per\_A}
 \]
 
 % TODO(gp): flesh out the examples
@@ -531,51 +621,51 @@ swaps, i.e., the quantity bought for each token is equal to the quantity sold.
 \subsection{Limit order inequalities}
 Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
 \[
-    o_i = (a_i, q_i, \basetoken_i, p_i, \quotetoken_i)
+	o_i = (a_i, q_i, \basetoken_i, p_i, \quotetoken_i)
 \]
 where the quote token is implicit in the quantity $q_i$ and the quote and base
 tokens are implicit in the limit price $p_i$.
 To encode directionality in the limit price inequality, we introduce
 \[
-    \mathcal{I}(a) :=
-    \begin{cases}
-      +1 \text{ for } a = \buy \\
-      -1 \text{ for } a = \sell \\
-    \end{cases}
+	\mathcal{I}(a) :=
+	\begin{cases}
+		+1 \text{ for } a = \buy  \\
+		-1 \text{ for } a = \sell \\
+	\end{cases}
 \]
 For each $i$, define
 \[
-    c_i := \left(
-    p^*_{\quotetoken_i\_per\_\basetoken_i} \leq \mathcal{I}(a_i) \cdot p_i
-    \right)
+	c_i := \left(
+	p^*_{\quotetoken_i\_per\_\basetoken_i} \leq \mathcal{I}(a_i) \cdot p_i
+	\right)
 \]
 where $p^*_{\quotetoken_i\_per\_\basetoken_i}$ is the unique clearing price for
 the indicated base token/quote token ordered pair.
 TODO(Paul): revive the ``to token" notation.
 Then, each limit order $o_i$ may be expressed as
 \[
-    c_i \land
-    (q_i^* \leq q_i) \lor
-    (q_i^* = 0)
+	c_i \land
+	(q_i^* \leq q_i) \lor
+	(q_i^* = 0)
 \]
 
 \subsection{No arbitrage}
 Let $T$ denote the intersection of the union of all base tokens and the union
 of all quote tokens:
 \[
-    T :=
-    \left( \cup_i \basetoken_i \right)
-    \cap
-    \left( \cup_i \quotetoken_i \right)
+	T :=
+	\left( \cup_i \basetoken_i \right)
+	\cap
+	\left( \cup_i \quotetoken_i \right)
 \]
 The set of tokens $T$ is the set of tokens eligible for swapping.
 We require the following \emph{no arbitrage}
 constraints be satisfied for all tokens $u, v, w \in T$
 involved in a swap:
 \[
-    p^*_{u\_per\_v} \cdot
-    p^*_{v\_per\_w} = 
-    p^*_{u\_per\_w}
+	p^*_{u\_per\_v} \cdot
+	p^*_{v\_per\_w} =
+	p^*_{u\_per\_w}
 \]
 Note that, in the case $w = u$, this enforces a unique exchange rate between
 a pair of tokens (changing the roles of the base and quote tokens inverts the
@@ -586,7 +676,7 @@ exchange rate).
 For each order $i$, let $\tilde{q}_i^*$ denote the quantity of
 $\quotetoken_i$ exchanged. Then we must have
 \[
-    \tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
+	\tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
 \]
 for each $i$. In effect, this enforces the market clearing price for each
 order.
@@ -599,17 +689,17 @@ provides quote tokens to the system, whereas a sell order does the opposite.
 For each token $u \in T$, define the indicator function
 $\mathcal{T}: T \to \{0, 1\}$ via
 \[
-    \mathcal{T}_u(v) =
-    \begin{cases}
-    1 \text{ if } v = u \\
-    0 \text{ if } v \neq u
-    \end{cases}
+	\mathcal{T}_u(v) =
+	\begin{cases}
+		1 \text{ if } v = u \\
+		0 \text{ if } v \neq u
+	\end{cases}
 \]
 Then, for each $u \in T$, the following conservation law must hold:
 \[
-    \sum_i \mathcal{T}_u(\basetoken_i) \cdot q^*_i
-    =
-    - \sum_i \mathcal{T}_u(\quotetoken_i) \cdot \tilde{q}_i^*
+	\sum_i \mathcal{T}_u(\basetoken_i) \cdot q^*_i
+	=
+	- \sum_i \mathcal{T}_u(\quotetoken_i) \cdot \tilde{q}_i^*
 \]
 Note that this translates into one equality per token participating in the
 swap. Note also that this is a global constraint on the swap rather than local
@@ -621,18 +711,18 @@ across the collection of orders, suitable counterparties.
 
 We now collect the constraints that must be satisfied:
 \begin{equation}
-  \begin{cases}
-    c_i \land (q_i^* \leq q_i) \lor (q_i^* = 0)
-      & \forall i \in \{1, \ldots, n\} \\
-    \tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
-      & \forall i \in \{1, \ldots, n\} \\
-    p^*_{u\_per\_v} \cdot p^*_{v\_per\_w} = p^*_{u\_per\_w}
-      & \forall u, v, w \in T \\
-    \sum_{j = 1}^n \mathcal{T}_u(\basetoken_j) \cdot q^*_j
-    =
-      - \sum_{j = 1}^n \mathcal{T}_u(\quotetoken_j) \cdot \tilde{q}_j^*
-      & \forall u \in T
-  \end{cases}
+	\begin{cases}
+		c_i \land (q_i^* \leq q_i) \lor (q_i^* = 0)
+		 & \forall i \in \{1, \ldots, n\} \\
+		\tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
+		 & \forall i \in \{1, \ldots, n\} \\
+		p^*_{u\_per\_v} \cdot p^*_{v\_per\_w} = p^*_{u\_per\_w}
+		 & \forall u, v, w \in T          \\
+		\sum_{j = 1}^n \mathcal{T}_u(\basetoken_j) \cdot q^*_j
+		=
+		- \sum_{j = 1}^n \mathcal{T}_u(\quotetoken_j) \cdot \tilde{q}_j^*
+		 & \forall u \in T
+	\end{cases}
 \end{equation}
 
 \subsection{Solution of the general DaoSwap problem}
@@ -655,11 +745,11 @@ In fact, the actual prices $p^*$ compared to the limit price verifies or not the
 boolean condition $c_i$, which then allows specifying the quantity
 constraints:
 \begin{equation}
-  \begin{cases}
-    cond_i := \mathit{to\_ineq}(a(o_i))(p_{base}(o_i) \leq lp_{base}(o_i) p_{quote}(o_i)) \\
-    0 \le q_{base}(o_i) \le q_{base} \text{ if } cond_i \\
-    q_{base}(o_i) = 0 \text{ if } \lnot cond_i \\
-  \end{cases}
+	\begin{cases}
+		cond_i := \mathit{to\_ineq}(a(o_i))(p_{base}(o_i) \leq lp_{base}(o_i) p_{quote}(o_i)) \\
+		0 \le q_{base}(o_i) \le q_{base} \text{ if } cond_i                                   \\
+		q_{base}(o_i) = 0 \text{ if } \lnot cond_i                                            \\
+	\end{cases}
 \end{equation}
 
 The problem then becomes a set of linear inequalities that can be solved with
@@ -673,19 +763,225 @@ TODO(gp): check
 
 % ###############################################################################
 
-\section{Comparison with automated market makers}
+\section{Alternative solutions for token swapping}
 
-Uniswap doesn't support limit orders
-- v3 introduced some steps towards incorporating 
-- DaoSwap/Cross supports limit orders
+TODO(gp): Some of the text should be in the abstract / intro.
 
-Because liquidity providers and liquidity takers are in general different users
-operating at different time scales, Uniswap is affected by impermanent loss
-- DaoSwap/Cross is not affected by that
+DaoSwap is a new approach to token swapping that brings together advantages of
+efficiency from centralized limit-order book approaches and transparency and
+self-custody of decentralized approaches.
 
-Uniswap requires multiple swaps and fees for arbitrary tokens
-- DaoSwap/Cross pools all the liquidity in a single optimization problem
+Exchanges are ubiquitous in financial systems and create value by bringing
+together different types of participants (e.g., investors, traders, brokers,
+arbitrageurs, market makers).
 
+Typically an exchange (or swap) requires two components:
+\begin{itemize}
+	\item Trade matching: participants find a counterparty agreeing on quantity and
+	      price of the assets to swap (this includes price discovery)
+	\item Trade settlement: the assets are actually swapped after finding
+	      matching counterparties
+\end{itemize}
+
+In decentralized finance a token swap can be accomplished in different ways, e.g., using
+\begin{itemize}
+	\item a centralized exchange (e.g., Coinbase, Binance, OkX)
+	\item a decentralized exchange (e.g., Uniswap, SushiSwap)
+\end{itemize}
+
+Centralized exchanges are usually organized around different versions of a
+central limit order book (CLOB)
+
+Decentralized exchanges can be organized as
+\begin{itemize}
+	\item off-chain order books (e.g., 1inch)
+	\item on-chain order books (e.g., SwapSwap, KyberSwap)
+	\item automatic market makers (AMM) (e.g., Uniswap)
+\end{itemize}
+
+Any off-chain solution incurs into custodial and censorship issues, that makes
+that solution untenable from the goals of decentralized and self-determination.
+
+Off-chain order books are an hybrid version of CEX and DEX where the matching
+
+On-chain order book matching has the advantages of being custodial, since users
+are completely in charge of their funds
+
+Running an exchange is extremely profitable since the business model of transaction fees.
+
+TODO(gp): Add colors: in green what's good, yellow, red
+
+TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
+
+% TODO(gp): Consider using one of the fancy table, e.g., tabularray
+\begin{samepage}
+	\begin{table}[h!]
+		\centering
+		\begin{tabular}{lllll}
+			                            & \emph{LOB} & \emph{AMM} & \emph{DaoSwap} & \emph{DaoCross} \\
+			\hline
+			Custodial risk              & Yes        & No         & No             & No              \\
+			Transparency                & Low        & High       & High           & Medium          \\
+			Censorship resistant        & No         & Yes        & Yes            & No              \\
+			Intrinsic efficiency        & Medium     & Low        & High           & Medium          \\
+			Support for limit order     & Yes        & No         & Yes            & Yes             \\
+			Risk of predatory behaviors & High       & High       & Low            & Medium          \\
+			Impermanent loss            & No         & Yes        & No             & No              \\
+			Multi-coin exchange support & Low        & Medium     & High           & High            \\
+			\hline
+		\end{tabular}
+	\end{table}
+\end{samepage}
+
+% *******************************************************************************
+\subsection{DaoSwap}
+
+\begin{itemize}
+	\item Custodial risk: Low
+	      \begin{itemize}
+		      \item Private keys and funds are always under the control of the users
+	      \end{itemize}
+	\item Transparency: High
+	      \begin{itemize}
+		      \item Work is done on-chain and the off-chain computations are independently verifiable
+	      \end{itemize}
+	\item Censoriship resistance: Yes
+	      \begin{itemize}
+		      \item The application runs on-chain and even if the web front-end is attacked
+		            or disabled. The off-chain computation can be made robust using similar
+		            approaches to distributed oracles, or even ported on-chain if gas prices
+		            are not an issue (e.g., using Layer2 solutions)
+	      \end{itemize}
+	\item Intrinsic efficiency: High
+	      \begin{itemize}
+		      \item DaoSwap relies on periodic auctions and it has been argued in previous literature that for small enough intervals (e.g., seconds) periodic auctions result in the same quality of continuous matching without allowing predatory behaviors
+		      \item TODO(gp): Add a reference to Cramton paper
+	      \end{itemize}
+	\item Support for limit order: Yes
+	      \begin{itemize}
+		      \item Limit orders are supported natively
+	      \end{itemize}
+	\item Risk of predatory behaviors: Low
+	      \begin{itemize}
+		      \item TODO(gp):
+	      \end{itemize}
+	\item Impermanent loss: No
+	      \begin{itemize}
+		      \item TODO(gp):
+	      \end{itemize}
+	\item Support for multi-coin swap: Yes
+	      \begin{itemize}
+		      \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+	      \end{itemize}
+\end{itemize}
+
+% *******************************************************************************
+\subsection{DaoCross}
+
+\begin{itemize}
+	\item Custodial risk: Low
+	      \begin{itemize}
+		      \item Same as DaoSwap
+	      \end{itemize}
+	\item Transparency: Medium
+	      \begin{itemize}
+		      \item DaoCross relies on price discovery carried out on a lit exchange
+	      \end{itemize}
+	\item Censoriship resistance: No
+	      \begin{itemize}
+		      \item The robustness of DaoCross is the same as the lit exchange that it relies on. See comments on the corresponding topic for LOB
+	      \end{itemize}
+	\item Intrinsic efficiency: Medium
+	      \begin{itemize}
+		      \item The efficiency in matching trades is the same as the limit-order book. See comments on the corresponding topic for LOB
+	      \end{itemize}
+	\item Support for limit order: Yes
+	      \begin{itemize}
+		      \item Same as DaoSwap
+	      \end{itemize}
+	\item Risk of predatory behaviors:
+	      \begin{itemize}
+		      \item TODO(gp)
+	      \end{itemize}
+	\item Impermanent loss: No
+	      \begin{itemize}
+		      \item TODO(gp)
+	      \end{itemize}
+	\item Support for multi-coin swap:
+	      \begin{itemize}
+		      \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+	      \end{itemize}
+\end{itemize}
+
+% *******************************************************************************
+\subsection{Limit Order Book (LOB)}
+
+\begin{itemize}
+	\item Custodial risk: High
+	      \begin{itemize}
+		      \item Exchanges own user private keys and funds, creating issues with fraud (e.g., FTX) and hacking (Mt. Gox)
+	      \end{itemize}
+	\item Transparency: Low
+	      \begin{itemize}
+		      \item Many centralized exchanges can easily exaggerate volume (e.g., through wash trading) to attract ICOs and liquidity
+		      \item There is no guarantee on the
+	      \end{itemize}
+	\item Censorship resistance: No
+	      \begin{itemize}
+		      \item Users need to link their bank account to CEX and transfer funds, which can take 2-3 days and be subjected to Know-Your-Customer (KYC) and AML (Anti money laundering policies)
+		      \item Governments can censor, interfere with, or even severe the connection between traditional and decentralized finance (see recent interventions of SEC against Coinbase and Binance, and FDIC rescue of Silvergate Bank, Signature Bank)
+	      \end{itemize}
+	\item Intrinsic efficiency: Medium
+	      \begin{itemize}
+		      \item Limit order books are considered efficient in matching continuously trades, although recently researchers have criticized their time-continuous-time nature as source of latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash Boys)
+		      \item The same token can be traded on different exchanges causing liquidity and price discovery to be fragmented with detriment on market quality
+	      \end{itemize}
+	\item Support for limit order: Yes
+	      \begin{itemize}
+		      \item Limit order books naturally support limit orders from users
+		      \item Risk of predatory behaviors: High
+		      \item LOB operators often welcome and incentivize high-frequency traders as way
+		            to increase trading revenues and liquidity, at expense of predatory tactics
+		            (e.g., front-running, latency arbitrage, spoofing, sniping) which arm
+	      \end{itemize}
+	\item Impermanent loss: No
+	      \begin{itemize}
+		      \item LOB
+	      \end{itemize}
+	\item Support for multi-coin swap: No
+\end{itemize}
+
+% *******************************************************************************
+\subsection{Automatic Market Makers (AMM)}
+
+\begin{itemize}
+	\item Custodial risk: Low
+	      \begin{itemize}
+		      \item Private keys and the
+	      \end{itemize}
+	\item Transparency:
+	\item Censoriship risk:
+	\item Intrinsic efficiency: Low
+	      \begin{itemize}
+		      \item Arbitrageurs are needed to keep liquidity pool and prices in alignment with other centers for price discovery
+	      \end{itemize}
+	\item Support for limit order: No
+	      \begin{itemize}
+		      \item Uniswap V3 doesn't support limit orders directly but only in terms of
+	      \end{itemize}
+	\item Risk of predatory behaviors: High
+	      \begin{itemize}
+		      \item TODO(gp):
+	      \end{itemize}
+	\item Impermanent loss: Yes
+	      \begin{itemize}
+		      \item Uniswap is affected by impermanent loss because liquidity providers and liquidity takers are in general different users operating at different time scales
+	      \end{itemize}
+	\item Support for multi-coin swap: Medium
+	      \begin{itemize}
+		      \item Uniswap requires multiple swaps and fees for arbitrary tokens
+	      \end{itemize}
+\end{itemize}
 
 % ###############################################################################
 
@@ -698,7 +994,7 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 		author={Adams, Hayden},
 		title={Uniswap Whitepaper},
 		date={2018},
-        eprint={https://hackmd.io/s/HJ9jLsfTz},
+		eprint={https://hackmd.io/s/HJ9jLsfTz},
 	}
 
 	\bib{AdZiRo20}{article}{
@@ -738,8 +1034,8 @@ Uniswap requires multiple swaps and fees for arbitrary tokens
 		author={Gould, Martin},
 		title={Trades, Quotes and Prices: Financial Markets Under the Microscope},
 		date={2018},
-        publisher={Cambridge University Press},
-        doi={https://doi.org/10.1017/9781316659335},
+		publisher={Cambridge University Press},
+		doi={https://doi.org/10.1017/9781316659335},
 	}
 
 	\bib{Cme23}{article}{
