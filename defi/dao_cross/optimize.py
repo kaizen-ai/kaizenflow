@@ -55,7 +55,9 @@ def run_solver(
     # Constraints.
     # Impose constraints on executed quantites on the order level.
     for i in range(n_orders):
-        limit_price_cond = exchange_rate * ddacrord.action_to_int(orders[i].action) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
+        limit_price_cond = exchange_rate * ddacrord.action_to_int(
+            orders[i].action
+        ) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
         _LOG.debug(hprint.to_str("limit_price_cond"))
         if limit_price_cond:
             # Executed quantity is less than or equal to the requested quantity.

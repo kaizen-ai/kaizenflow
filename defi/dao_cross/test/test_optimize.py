@@ -131,7 +131,7 @@ class TestRunSolver1(hunitest.TestCase):
         result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found but it equals zero.
         self.assertEqual(result["problem_objective_value"], 2)
-        # Check the executed quantity values. 
+        # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
         exp = r"""
         [1.0, 0.0, 0.0, 1.0]
