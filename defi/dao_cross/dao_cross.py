@@ -17,6 +17,29 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
+    """
+    Get a table of all the passed transfers.
+
+    :param transfers: list of transfers, where each transfer is a dict with the
+        following format:
+        ```
+        {
+            "token": name of a token to transfer,
+            "amount": transferred quantity,
+            "from": wallet address to send transfer from,
+            "to": deposit to send transfer to,
+        }
+        ```
+    :return: table of transfers
+    """
+    if transfers:
+        transfer_df = pd.DataFrame(transfers)
+    else:
+        transfer_df = pd.DataFrame(columns=["token", "amount", "from", "to"])
+    return transfer_df
+
+
 def match_orders(
     orders: List[ddacrord.Order],
     clearing_price: float,
@@ -89,27 +112,5 @@ def match_orders(
         buy_order.quantity -= quantity
         sell_order.quantity -= quantity
     # Get DataFrame with the transfers implemented to match the passed orders.
-    transfer_df = get_transfer_df(transfers)
-    return transfer_df
-
-
-def get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
-    """
-    Get a table of all the passed transfers.
-
-    Transfer is a dict with the following format:
-    {
-        "token": name of a token to transfer,
-        "amount": transferred quantity,
-        "from": wallet address to send transfer from,
-        "to": deposit to send transfer to,
-    }
-
-    :param transfers: list of transfers
-    :return: table of transfers
-    """
-    if transfers:
-        transfer_df = pd.DataFrame(transfers)
-    else:
-        transfer_df = pd.DataFrame(columns=["token", "amount", "from", "to"])
+    transfer_df = _get_transfer_df(transfers)
     return transfer_df

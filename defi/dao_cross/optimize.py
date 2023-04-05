@@ -32,12 +32,11 @@ def run_solver(
     :return: solver's output in a human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
-    _LOG.debug(hprint.to_str("exchange_rate"))
-    #
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
     hdbg.dassert_container_type(orders, list, ddacrord.Order)
     #
+    _LOG.debug(hprint.to_str("exchange_rate"))
     hdbg.dassert_lt(0, exchange_rate)
     # Initialize the model.
     problem = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)

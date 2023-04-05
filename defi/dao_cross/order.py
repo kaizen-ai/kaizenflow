@@ -16,9 +16,10 @@ import helpers.hdbg as hdbg
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Maybe LimitOrder or DaoLimitOrder?
 class Order:
     """
-    Create Order for DaoCross or DaoSwap.
+    Limit order to be used in DaoCross or DaoSwap.
     """
 
     def __init__(
@@ -41,7 +42,7 @@ class Order:
         :param action: order action type
             - "buy": purchase the base token and pay with the quote token
             - "sell": sell the base token and receive the quote token
-        :param quantity: quantity in terms of the base token
+        :param quantity: maximum quantity in terms of the base token
         :param limit_price: limit price in terms of the quote token
         :param deposit_address: deposit address to implement the order for
         :param wallet_address: wallet address to implement the order for
