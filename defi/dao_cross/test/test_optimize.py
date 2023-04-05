@@ -81,7 +81,26 @@ class TestRunSolver1(hunitest.TestCase):
             deposit_address,
             wallet_address,
         )
+        order_5 = ddacrord.Order(
+            quote_token,
+            base_token,
+            "buy",
+            3,
+            0.3,
+            deposit_address,
+            wallet_address,
+        )
+        order_6 = ddacrord.Order(
+            quote_token,
+            base_token,
+            "sell",
+            2,
+            0.2,
+            deposit_address,
+            wallet_address,
+        )
         orders = [order_1, order_2, order_3, order_4]
+        #orders = [order_1, order_2, order_3, order_4, order_5, order_6]
         return orders
 
     def test1(self) -> None:
