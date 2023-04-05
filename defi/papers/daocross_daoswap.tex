@@ -33,11 +33,12 @@
 %\titleformat*{\subparagraph}{\large\bfseries}
 
 % https://ctan.math.washington.edu/tex-archive/macros/latex/required/amscls/doc/amsthdoc.pdf
+\newtheorem{thm}{Theorem}
 \theoremstyle{definition}
-\newtheorem{defn}{Definition}
-\newtheorem{problem}{Problem}
+\newtheorem{defn}{Definition}[section]
+\newtheorem{problem}{Problem}[section]
 \theoremstyle{remark}
-\newtheorem{exmp}{Example}
+\newtheorem{exmp}{Example}[subsection]
 
 \newcommand{\bidbtc}{\mathrm{bid}_\mathrm{BTC}}
 \newcommand{\askbtc}{\mathrm{ask}_\mathrm{BTC}}
@@ -75,14 +76,22 @@
 
 \begin{document}
 
-\title{DaoCross and DaoSwap}
+\title{X: A protocol for decentralized exchange with limit orders}
 
 \author{G.P. Saggese}
 \author{Paul Smith}
 
-\thanks{With contributions from Dan Yachmenev, Danya Tikhomirov, Grisha
-Pomazkin, Juraj Smeriga, Nina Trubacheva, Samarth KaPatel, Tamara Zhordaniya,
-Vladimir Yakovenko}
+\thanks{With contributions from
+Samarth KaPatel,
+Grisha Pomazkin,
+Juraj Smeriga,
+Danya Tikhomirov,
+Nina Trubacheva,
+Dan Yachmenev,
+Vladimir Yakovenko,
+and
+Tamara Zhordaniya
+}
 
 \date{\today}
 
@@ -94,6 +103,34 @@ Vladimir Yakovenko}
 % ###############################################################################
 
 \section{Introduction}
+
+X is a new protocol that enables decentralized token exchange using limit
+orders. The ability to express intent to buy or sell an asset in exchange for
+another using limit orders is foundational in markets, as supply and demand are
+naturally expressed in terms of quantity, and matching supply and demand
+determines price. Limit orders provide flexibility to traders, while
+simultaneously clearly delineating maximum possible exposure.
+
+The popularity of centralized exchanges in cryptocurrency trading may be
+attributable in part to the familiar interface (limit orders) and familiar
+market microstructure (limit order books, or LOBs). However, the ethos of
+decentralized finance, the opportunity to reimagine how financial components
+or functions may operate, and certain high-profile centralized exchange
+issues, have all led to and spurred on a flurry of innovation in the realm of
+decentralized token exchange.
+
+Some have pursued creating decentralized limit order books. A significant
+drawback of this direction is on-chain computational expense.
+Others have created markets that rely upon automated market makers (AMMs).
+While AMMs provide certain advantages, such as in containing computational
+expenses, they suffer from drawbacks such as impermanent loss and interfaces
+that differ from the limit order interface.
+
+The approach we introduce preserves the useful interface of traditional
+markets (limit orders), embraces the advantages of decentralization and
+transparency, and circumvents the major disadvantages of alternative
+decentralized approaches.
+
 DaoCross and DaoSwap are smart
 contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
 that facilitate on-chain
@@ -354,7 +391,7 @@ means
 % In fact we don't use \texttt{1.0} in the text. I'm ok with leaving BTC and ETH
 % in teletype since those are symbols like $ and it's a coincidence that teletype
 % is used for both code and our symbols.
-``$\buy$ up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
+``buy up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
 In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
 can be executed at the prevailing market rate.
 \end{exmp}
@@ -374,7 +411,7 @@ A limit order
     \texttt{(\sell, 1.0, $\ETH$, 0.5, $\BTC$)}
 \]
 means
-``$\sell$ up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
+``sell up to 1 unit of $\ETH$ in exchange for $\BTC$ at a rate down to 0.5 $\BTC$ per $\ETH$."
 Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
 \end{exmp}
@@ -401,10 +438,10 @@ rate:
 		  and base tokens for all the swaps
 	      % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
 \end{itemize}
-Note that:
+Note that
 \[
 	p_{quote\_per\_base} = 
-	\frac{1}{p_{base\_per\_quote}}
+	\frac{1}{p_{base\_per\_quote}}.
 \]
 
 If prices of base and quote tokens are expressed in terms of a common currency
@@ -413,7 +450,7 @@ If prices of base and quote tokens are expressed in terms of a common currency
 	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}}
 \]
 
-\subsubsection{\textbf{\emph{Extracting attributes from orders}}}
+\subsubsection{Extracting attributes from orders}
 Given an order $o_i =$ \texttt{(\buy, q, A, lb, B)} we indicate with:
 \begin{itemize}
 	\item $action(o_i)$ the desired action (e.g., $\buy$)
@@ -423,8 +460,7 @@ Given an order $o_i =$ \texttt{(\buy, q, A, lb, B)} we indicate with:
 	\item $quote(o_i)$ the quote token $A$
 \end{itemize}
 
-% TODO(gp): I'd use something like:
-\subsubsection{\textbf{\emph{Inequalities for buy order}}}
+\subsubsection{Inequalities for buy order}
 An order of the form $o_i =$ \texttt{(\buy, q, A, lb, B)} means ``buy $q$ units of
 token A in exchange for token B with a limit price up to $lb$ B per unit of A"
 and it corresponds to the following constraint on realized quantity exchanged
@@ -438,7 +474,7 @@ The constraint on the quantity exchanged is conditioned on the corresponding
 price satisfying the desired limit price constraint, otherwise the swap cannot
 be carried out and the exchanged quantity is 0.
 
-\subsubsection{\textbf{\emph{Example of inequalities for buy order}}}
+\begin{exmp}[Inequalities for buy order]
 An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
 token A in exchange for token B with a limit price up to 3 B per unit of A"
 and it corresponds to the following constraint on realized quantity exchanged
@@ -448,8 +484,9 @@ and clearing exchange rate:
 	(0 \le q_{A}^*(o_1) \leq 2) \lor
 	(q_A^*(o_1) = 0)
 \end{equation*}
+\end{exmp}
 
-\subsubsection{\textbf{\emph{Inequalities for sell order}}}
+\subsubsection{Inequalities for sell order}
 An order of the form $o_i =$ \texttt{(\sell, q, A, lb, B)} means ``sell $q$ units of
 token A paying in token B with a limit price of at least to $lb$ B per unit of A"
 and it corresponds to the following constraint on realized quantity exchanged
@@ -460,7 +497,7 @@ and clearing exchange rate:
 	(q_A^*(o_i) = 0)
 \end{equation*}
 
-\subsubsection{\textbf{\emph{Example of inequalities for sell order}}}
+\begin{exmp}[Inequalities for sell order]
 In the same way, an order like $o_2 =$ \texttt{(sell, 3, A, 2, B)} means ``sell
 3 units of token A paying in token B with a limit price for one unit of A of at
 least 2 B" which corresponds to
@@ -469,15 +506,17 @@ least 2 B" which corresponds to
 	(0 \le q_{A}^*(o_2) \leq 2) \lor
 	(q_A^*(o_2) = 0)
 \end{equation*}
+\end{exmp}
 
-\subsubsection{\textbf{\emph{Example of inequalities for buy market order}}}
+\begin{exmp}[Inequalities for buy market order]
 A market order (i.e., without a limit price) has no constraint on exchange rate
 and thus is reduced to
 \[
 	0 \le q_{A}^*(o_1) \le q(o_i)
 \]
+\end{exmp}
 
-\subsection{\textbf{\emph{Order equivalence}}}
+\subsection{Order equivalence}
 When the exchange rate between two tokens is known, it is possible to convert
 buy / sell orders for A and B tokens into buy / sell orders for one of the
 token only, according to the transformation below.
