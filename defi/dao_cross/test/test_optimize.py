@@ -16,14 +16,14 @@ class TestRunSolver1(hunitest.TestCase):
 
     @staticmethod
     def get_test_orders(
-        limit_price_buy: float,
-        limit_price_sell: float,
+        limit_price_buy_1: float,
+        limit_price_sell_1: float,
     ) -> List[ddacrord.Order]:
         """
         Get toy orders for the unit tests.
 
-        :param limit_price_buy: limit price for buy orders
-        :param limit_price_sell: limit price for sell orders
+        :param limit_price_buy_1: limit price for the 1st buy order
+        :param limit_price_sell_1: limit price for the 1st sell order
         :return: buy and sell orders
         """
         # Set dummy variables.
@@ -40,18 +40,19 @@ class TestRunSolver1(hunitest.TestCase):
             quote_token,
             buy_action,
             quantity,
-            limit_price_buy,
+            limit_price_buy_1,
             deposit_address,
             wallet_address,
         )
         #
         quantity = 5
+        limit_price = 5
         order_2 = ddacrord.Order(
             base_token,
             quote_token,
             buy_action,
             quantity,
-            limit_price_buy,
+            limit_price,
             deposit_address,
             wallet_address,
         )
@@ -64,18 +65,19 @@ class TestRunSolver1(hunitest.TestCase):
             quote_token,
             sell_action,
             quantity,
-            limit_price_sell,
+            limit_price_sell_1,
             deposit_address,
             wallet_address,
         )
         #
         quantity = 1
+        limit_price = 3
         order_4 = ddacrord.Order(
             base_token,
             quote_token,
             sell_action,
             quantity,
-            limit_price_sell,
+            limit_price,
             deposit_address,
             wallet_address,
         )
@@ -87,9 +89,9 @@ class TestRunSolver1(hunitest.TestCase):
         The limit price condition is True for all orders.
         """
         exchange_rate = 4
-        limit_price_buy = 5
-        limit_price_sell = 3
-        test_orders = self.get_test_orders(limit_price_buy, limit_price_sell)
+        limit_price_buy_1 = 5
+        limit_price_sell_1 = 3
+        test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found and is different from zero.
         self.assertEqual(result["problem_objective_value"], 14)
@@ -105,16 +107,16 @@ class TestRunSolver1(hunitest.TestCase):
         The limit price condition is False for a buy order.
         """
         exchange_rate = 4
-        limit_price_buy = 3
-        limit_price_sell = 3
-        test_orders = self.get_test_orders(limit_price_buy, limit_price_sell)
+        limit_price_buy_1 = 3
+        limit_price_sell_1 = 3
+        test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found but it equals zero.
-        self.assertEqual(result["problem_objective_value"], 0)
+        self.assertEqual(result["problem_objective_value"], 10)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
         exp = r"""
-        [0.0, 0.0, 0.0, 0.0]
+        [0.0, 5.0, 5.0, 0.0]
         """
         self.assert_equal(var_values_str, exp, fuzzy_match=True)
 
@@ -123,15 +125,15 @@ class TestRunSolver1(hunitest.TestCase):
         The limit price condition is False for a sell order.
         """
         exchange_rate = 4
-        limit_price_buy = 5
-        limit_price_sell = 5
-        test_orders = self.get_test_orders(limit_price_buy, limit_price_sell)
+        limit_price_buy_1 = 5
+        limit_price_sell_1 = 5
+        test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, exchange_rate)
         # Check that the solution is found but it equals zero.
-        self.assertEqual(result["problem_objective_value"], 0)
+        self.assertEqual(result["problem_objective_value"], 2)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
         exp = r"""
-        [0.0, 0.0, 0.0, 0.0]
+        [1.0, 0.0, 0.0, 1.0]
         """
         self.assert_equal(var_values_str, exp, fuzzy_match=True)

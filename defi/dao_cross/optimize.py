@@ -40,8 +40,8 @@ def run_solver(
     hdbg.dassert_lt(0, exchange_rate)
     # Initialize the model.
     problem = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)
-    # Specify the vars. Setting the lower bound to zero allows to omit the >= 0
-    # constraint on the executed quantities.
+    # Specify the executed quantities vars. Setting the lower bound to zero
+    # allows to omit the >= 0 constraint.
     q_base_asterisk = [
         pulp.LpVariable(f"q_base_asterisk_{i}", lowBound=0)
         for i in range(n_orders)
@@ -52,25 +52,18 @@ def run_solver(
     # different base tokens.
     problem += pulp.lpSum(q_base_asterisk)
     # Constraints.
-    # A big number that can turn off a constraint, e.g., saying that `-1e6 < x < 1e6`
-    # is the same as not imposing a constraint.
-    M = 1e6
+    # Impose constraints on executed quantites on the order level.
     for i in range(n_orders):
-        # Impose constraints on executed quantites.
-        limit_price_cond = int(
-            exchange_rate * ddacrord.action_to_int(orders[i].action)
-            <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
-        )
+        limit_price_cond = exchange_rate * ddacrord.action_to_int(
+            orders[i].action
+        ) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
         _LOG.debug(hprint.to_str("limit_price_cond"))
-        # Executed quantity is not greater than the requested quantity given that
-        # the limit price condition is satisfied.
-        problem += q_base_asterisk[i] <= orders[i].quantity + M * (
-            1 - limit_price_cond
-        )
-        # Executed quantity is zero if the limit price condition is not met. I.e., an order
-        # cannot be executed.
-        problem += q_base_asterisk[i] <= M * limit_price_cond
-        problem += q_base_asterisk[i] >= -M * limit_price_cond
+        if limit_price_cond:
+            # Executed quantity is less than or equal to the requested quantity.
+            problem += q_base_asterisk[i] <= orders[i].quantity
+        else:
+            # Executed quantity is zero, i.e., the order cannot be executed.
+            problem += q_base_asterisk[i] == 0
     # Global constraint: the number of sold tokens must match the number
     # of bought tokens.
     problem += (
