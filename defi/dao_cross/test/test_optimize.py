@@ -20,7 +20,7 @@ class TestRunSolver1(hunitest.TestCase):
         limit_price_sell_1: float,
     ) -> List[ddacrord.Order]:
         """
-        Get toy orders for the unit tests.
+        Get four orders for the unit tests (two buy and two sell orders).
 
         :param limit_price_buy_1: limit price for the 1st buy order
         :param limit_price_sell_1: limit price for the 1st sell order
@@ -31,7 +31,7 @@ class TestRunSolver1(hunitest.TestCase):
         quote_token = "ETH"
         deposit_address = 1
         wallet_address = 1
-        # Genereate buy orders.
+        # Generate buy orders.
         buy_action = "buy"
         #
         quantity = 4
@@ -104,14 +104,15 @@ class TestRunSolver1(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        The limit price condition is False for a buy order.
+        The limit price condition is False for a buy order and True for the
+        sell order.
         """
         exchange_rate = 4
         limit_price_buy_1 = 3
         limit_price_sell_1 = 3
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, exchange_rate)
-        # Check that the solution is found but it equals zero.
+        # Check that the solution is found, but it equals zero.
         self.assertEqual(result["problem_objective_value"], 10)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
@@ -122,14 +123,15 @@ class TestRunSolver1(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        The limit price condition is False for a sell order.
+        The limit price condition is False for a sell order, and True for the
+        sell order.
         """
         exchange_rate = 4
         limit_price_buy_1 = 5
         limit_price_sell_1 = 5
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, exchange_rate)
-        # Check that the solution is found but it equals zero.
+        # Check that the solution is found, but it equals zero.
         self.assertEqual(result["problem_objective_value"], 2)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
@@ -137,3 +139,5 @@ class TestRunSolver1(hunitest.TestCase):
         [1.0, 0.0, 0.0, 1.0]
         """
         self.assert_equal(var_values_str, exp, fuzzy_match=True)
+
+    # TODO(gp): @all add more unit tests.

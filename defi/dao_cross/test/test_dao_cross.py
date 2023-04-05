@@ -12,14 +12,13 @@ class TestMatchOrders1(hunitest.TestCase):
     def test_match_orders1(self) -> None:
         orders = self._get_test_orders()
         clearing_price = 1
-        # Match orders
+        # Match orders.
         actual_df = ddcrdacr.match_orders(orders, clearing_price)
         actual_signature = hpandas.df_to_str(
             actual_df,
             print_shape_info=True,
             tag="df",
         )
-        # pylint: disable=line-too-long
         expected_signature = r"""
         # df=
         index=[0, 5]
@@ -33,7 +32,6 @@ class TestMatchOrders1(hunitest.TestCase):
         4   BTC     1.1     6   2
         5   ETH     1.1     2   6
         """
-        # pylint: enable=line-too-long
         self.assert_equal(
             actual_signature,
             expected_signature,
@@ -41,6 +39,7 @@ class TestMatchOrders1(hunitest.TestCase):
             fuzzy_match=True,
         )
 
+    # TODO(gp): @all make it static and rename `get_test_orders()`.
     def _get_test_orders(self) -> List[ddacrord.Order]:
         base_token = "BTC"
         quote_token = "ETH"

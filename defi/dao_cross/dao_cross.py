@@ -16,10 +16,12 @@ import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
+# TODO(gp): I'd call this file order_matching.py since this should be used for
+#  both dao_cross and dao_swap.
 
 def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     """
-    Get a table of all the passed transfers.
+    Get a table of all the token transfers.
 
     :param transfers: list of transfers, where each transfer is a dict with the
         following format:
@@ -31,7 +33,7 @@ def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
             "to": deposit to send transfer to,
         }
         ```
-    :return: table of transfers
+    :return: table of transfers as df
     """
     if transfers:
         transfer_df = pd.DataFrame(transfers)
@@ -40,12 +42,19 @@ def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     return transfer_df
 
 
+# TODO(gp): Extend to support swaps between A vs B and B vs A using the
+#  order equivalence. We need to specify what tokens the clearing price refers to
+#  (e.g., clearing_price, base_token, quote_token).
+# TODO(gp): Ensure that all orders are compatible, i.e., involve the same tokens
+#  A and B.
 def match_orders(
     orders: List[ddacrord.Order],
     clearing_price: float,
 ) -> pd.DataFrame:
     """
-    Implement DaoCross orders matching.
+    Implement orders matching given a clearing price.
+
+    All orders are assumed to be
 
     :param orders: orders to match
     :param clearing_price: clearing price
@@ -54,9 +63,19 @@ def match_orders(
     # Build buy and sell heaps.
     buy_heap = []
     sell_heap = []
+    # TODO(Dan): Think of more asserts to check if orders are compatible.
+    #  Get all the base and quote tokens from all the orders and make sure that
+    #  there are only two of them.
+    # tokens = []
+    # for order in orders:
+    #   if not tokens:
+    #       tokens = set([order.base_token, order.quote_token])
+    #   else:
+    #       tmp_tokens = set([order.base_token, order.quote_token])
+    #       if tmp_tokens != tokens:
+    #           raise
     # Push orders to the heaps based on the action type and filtered by limit price.
     for order in orders:
-        # TODO(Dan): Think of more asserts to check if orders are compatible.
         hdbg.dassert_type_is(order, ddacrord.Order)
         hdbg.dassert_lte(0, order.quantity)
         hdbg.dassert_type_is(order.timestamp, pd.Timestamp)

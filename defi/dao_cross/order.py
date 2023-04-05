@@ -58,11 +58,13 @@ class Order:
             - "sell": sell the base token and receive the quote token
         :param quantity: maximum quantity in terms of the base token (e.g., 3.2)
         :param limit_price: limit price in terms of the quote token (e.g.,
-            4.0 BTC per ETH)
+            4.0 BTC per ETH). The limit price is interpreted as non-strict
+            inequality, e.g., if `limit_price=4`, the order can be executed
+            with a price of 4.0 quote / base token
         :param deposit_address: deposit address to transfer the result of the swap
             (e.g., 0xdeadc0de)
-        :param wallet_address: wallet address to implement the order for (e.g.,
-            0xabcd0000)
+        :param wallet_address: wallet address with the token to provide to the
+            swap (e.g., 0xabcd0000)
         :param timestamp: time of order execution (e.g., "Mon Mar 13 2023
             02:33:25 GMT+0000")
             - `None` means the current wall clock time
@@ -179,13 +181,12 @@ def get_random_order(seed: Optional[int] = None) -> Order:
     return order
 
 
+# TODO(gp): I'd make it a static method of Order.
 def is_active_order(order: Optional[Order]) -> bool:
     """
     Return whether `order` is active or not.
 
     Order is active if it is not empty and its quantity is above 0.
-
-    Since we need to
     """
     if order is None:
         return False
@@ -200,7 +201,8 @@ def action_to_int(action: str) -> int:
     Translate an action to an int.
 
     :param action: direction: `buy` or `sell`
-    :return: int representation of a direction
+    :return: int representation of a direction with the usual conventions of
+        buy / sell
     """
     ret = None
     if action == "buy":
