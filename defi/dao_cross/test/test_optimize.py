@@ -94,7 +94,7 @@ class TestRunSolver1(hunitest.TestCase):
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, prices)
         # Check that the solution is found and is different from zero.
-        self.assertEqual(result["problem_objective_value"], 14)
+        self.assertEqual(result["problem_objective_value"], 28)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
         exp = r"""
@@ -112,7 +112,7 @@ class TestRunSolver1(hunitest.TestCase):
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, prices)
         # Check that the solution is found but it equals zero.
-        self.assertEqual(result["problem_objective_value"], 10)
+        self.assertEqual(result["problem_objective_value"], 20)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
         exp = r"""
@@ -130,7 +130,7 @@ class TestRunSolver1(hunitest.TestCase):
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
         result = ddacropt.run_solver(test_orders, prices)
         # Check that the solution is found but it equals zero.
-        self.assertEqual(result["problem_objective_value"], 2)
+        self.assertEqual(result["problem_objective_value"], 4)
         # Check the executed quantity values.
         var_values_str = pprint.pformat(result["q_base_asterisk"])
         exp = r"""

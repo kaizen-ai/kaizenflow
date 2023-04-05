@@ -51,7 +51,7 @@ def run_solver(
     # TODO(Grisha): since the base token is the same, i.e. BTC it is ok to use
     # quantity, however the objective function should be modified to account for
     # different base tokens.
-    problem += pulp.lpSum(q_base_asterisk)
+    problem += pulp.lpSum(q_base_asterisk[i] * prices[orders[i].base_token] for i in range (n_orders))
     # Constraints.
     # Impose constraints on executed quantites on the order level.
     for i in range(n_orders):
@@ -70,13 +70,24 @@ def run_solver(
             problem += q_base_asterisk[i] == 0
     # Global constraint: the number of sold tokens must match the number
     # of bought tokens.
-    problem += (
-        pulp.lpSum(
-            q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action)
-            for i in range(n_orders)
+    base_tokens = [order.base_token for order in orders]
+    for token in base_tokens:
+        problem += (
+            pulp.lpSum(
+                q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action) * (1 if orders[i].base_token == token else 0)
+                for i in range(n_orders)
+            )
+            == 0
         )
-        == 0
-    )
+    # problem += (
+    #     for token in base_tokens:
+    #         token_orders = [order for order in orders if order.base_token == t]
+    #         pulp.lpSum(
+    #             q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action)
+    #             for i in range(n_orders)
+    #         )
+    #         == 0
+    # )
     # Use the default solver and suppress the solver's log.
     solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
     problem.solve(solver)
