@@ -88,11 +88,11 @@ class TestRunSolver1(hunitest.TestCase):
         """
         The limit price condition is True for all orders.
         """
-        exchange_rate = 4
+        prices = {"BTC": 2, "ETH": 8}
         limit_price_buy_1 = 5
         limit_price_sell_1 = 3
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
-        result = ddacropt.run_solver(test_orders, exchange_rate)
+        result = ddacropt.run_solver(test_orders, prices)
         # Check that the solution is found and is different from zero.
         self.assertEqual(result["problem_objective_value"], 14)
         # Check the executed quantity values.
@@ -106,11 +106,11 @@ class TestRunSolver1(hunitest.TestCase):
         """
         The limit price condition is False for a buy order.
         """
-        exchange_rate = 4
+        prices = {"BTC": 2, "ETH": 8}
         limit_price_buy_1 = 3
         limit_price_sell_1 = 3
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
-        result = ddacropt.run_solver(test_orders, exchange_rate)
+        result = ddacropt.run_solver(test_orders, prices)
         # Check that the solution is found but it equals zero.
         self.assertEqual(result["problem_objective_value"], 10)
         # Check the executed quantity values.
@@ -124,11 +124,11 @@ class TestRunSolver1(hunitest.TestCase):
         """
         The limit price condition is False for a sell order.
         """
-        exchange_rate = 4
+        prices = {"BTC": 2, "ETH": 8}
         limit_price_buy_1 = 5
         limit_price_sell_1 = 5
         test_orders = self.get_test_orders(limit_price_buy_1, limit_price_sell_1)
-        result = ddacropt.run_solver(test_orders, exchange_rate)
+        result = ddacropt.run_solver(test_orders, prices)
         # Check that the solution is found but it equals zero.
         self.assertEqual(result["problem_objective_value"], 2)
         # Check the executed quantity values.

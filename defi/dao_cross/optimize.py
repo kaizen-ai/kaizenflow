@@ -22,7 +22,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Grisha): consider extending for n base tokens.
 def run_solver(
-    orders: List[ddacrord.Order], exchange_rate: float
+    orders: List[ddacrord.Order], prices: Dict[str, float]
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
@@ -32,13 +32,13 @@ def run_solver(
     :return: solver's output in a human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
-    _LOG.debug(hprint.to_str("exchange_rate"))
+    #_LOG.debug(hprint.to_str("exchange_rate"))
     #
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
     hdbg.dassert_container_type(orders, list, ddacrord.Order)
     #
-    hdbg.dassert_lt(0, exchange_rate)
+    #hdbg.dassert_lt(0, exchange_rate)
     # Initialize the model.
     problem = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)
     # Specify the executed quantities vars. Setting the lower bound to zero
@@ -55,7 +55,10 @@ def run_solver(
     # Constraints.
     # Impose constraints on executed quantites on the order level.
     for i in range(n_orders):
-        limit_price_cond = exchange_rate * ddacrord.action_to_int(
+        base_price = prices[orders[i].base_token]
+        quote_price = prices[orders[i].quote_token]
+        price_quote_per_base = quote_price / base_price
+        limit_price_cond = price_quote_per_base * ddacrord.action_to_int(
             orders[i].action
         ) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
         _LOG.debug(hprint.to_str("limit_price_cond"))
