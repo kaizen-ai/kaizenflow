@@ -29,7 +29,7 @@ def run_solver(
 
     :param orders: buy / sell orders
     :param exchange_rate: price (in terms of quote token) per unit of base token
-    :return: solver's output in a human readable format
+    :return: solver's output in human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
     n_orders = len(orders)

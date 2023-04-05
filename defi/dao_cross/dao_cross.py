@@ -104,7 +104,8 @@ def match_orders(
     ):
         # Pop 1 buy and 1 sell orders from the heaps for matching.
         if not buy_order or buy_order.quantity == 0:
-            # Make a copy so that `match_orders()` does not alter state (and is idempotent).
+            # Make a copy so that `match_orders()` does not alter state (and is
+            # idempotent).
             buy_order = copy.copy(buy_heap.pop())
         if not sell_order or sell_order.quantity == 0:
             sell_order = copy.copy(sell_heap.pop())
