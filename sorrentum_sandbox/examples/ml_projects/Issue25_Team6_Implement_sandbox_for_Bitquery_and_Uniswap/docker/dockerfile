@@ -1,31 +1,38 @@
-# Use an official Python runtime as a parent image
-FROM python:3.9-slim-buster
+# Use a small image `alpine` with Python inside.
+FROM ubuntu:20.04 AS BUILDER
+FROM python:3.10-slim-buster
+ENV DEBIAN_FRONTEND noninteractive
 
-# Set the working directory to /app
-WORKDIR /app
+# Copy app into image.
+# ADD . /code
+# Set working dir.
 
-# Copy the requirements file into the container at /app
+RUN apt-get -y update
+RUN apt-get -y upgrade
+RUN apt-get -y install gcc python3-dev
+
+RUN apt install -y --no-install-recommends --fix-missing \
+    sudo \ 
+    curl \
+    gnupg \
+    git \
+    vim \
+    jupyter-notebook
+
+ENV INSTALL_DIR=/bitquery
+WORKDIR $INSTALL_DIR
+
+# Install requirements.
 COPY requirements.txt .
+COPY bitquery ./bitquery
 
-# Make template directory
-COPY /templates /app/templates
+RUN pip3 install -r requirements.txt
+# Set the default app.
 
-# Upgrade pip
-RUN python -m pip install --upgrade pip
+EXPOSE 8888
 
-# Install any needed packages specified in requirements.txt
-RUN pip install --no-cache-dir -r requirements.txt
+CMD [ "python", "app.py" ]
 
-# Copy the rest of the application code into the container at /app
-COPY . /app
+ENTRYPOINT (jupyter notebook --ip 0.0.0.0 --port 8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='') && \
+    /bin/bash
 
-# Set the environment variable for the database connection URL
-ENV DATABASE_URL=postgresql://postgres:postgres@db/db
-
-# Expose ports
-EXPOSE 8000
-EXPOSE 8001
-EXPOSE 5432
-
-# Run the Flask app and connect to PostgreSQL
-CMD ["python", "app.py"]
