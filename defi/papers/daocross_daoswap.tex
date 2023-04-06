@@ -136,18 +136,13 @@ with layer 2 solutions. By addressing these issues, we combine the novel
 advantages of decentralized exchange with the utility and ease-of-use of the
 familiar interface of limit orders.
 
-DaoCross and DaoSwap are smart
+Behind the interface, we propose two smart
 contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
-that facilitate on-chain
+for
 ERC-20\footnote{https://ethereum.org/en/developers/docs/standards/tokens/erc-20/}
-token exchange. DaoSwap provides a mechanism for efficient relative price
-discovery, and DaoCross enables parties to engage in zero market impact
-transactions with price improvement.
-
-DaoSwap performs price discovery by matching supply and demand at regular time
-intervals. Supply and demand is expressed through a collection of buy and sell
-limit orders, and the clearing price is determined by a Walrasian-style
-auction (\cite{Wa}).
+token exchange that match supply and demand differently depending upon whether
+there exists an external reference price or whether the contract also performs
+the role of price discovery.
 
 DaoCross is a decentralized liquidity pool that crosses buy and sell orders
 with respect to an external reference price, i.e., a price oracle. This allows
@@ -156,7 +151,13 @@ respect to exchanges, e.g., by trading at bid-ask midpoint. Additionally, order
 intentions are not publicly disclosed prior to a cross, which enables block or
 other high-volume traders to execute quickly with minimal market impact.
 
-DaoSwap and DaoCross differ in how the token exchange rate is determined, but
+DaoSwap performs price discovery by matching supply and demand at regular time
+intervals. In the simplest case, the clearing price is determined by a
+Walrasian-style auction (\cite{Wa}). In cases where liquidity is pooled more
+broadly, the auction clearing mechanism satisfies a collection of conditional
+inequalities.
+
+While DaoSwap and DaoCross differ in how the token exchange rate is determined,
 both share several common advantages:
 \begin{enumerate}
 	\item Low cost:
