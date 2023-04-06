@@ -13,6 +13,7 @@ import pandas as pd
 
 import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
+import helpers.hprint as hprint
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,15 +29,17 @@ def match_orders(
     :param clearing_price: clearing price
     :return: transfers implemented to match orders
     """
+    _LOG.debug(hprint.to_str("orders"))
+    _LOG.debug(hprint.to_str("clearing_price"))
+    hdbg.dassert_lt(0, len(orders))
+    hdbg.dassert_container_type(orders, list, ddacrord.Order)
+    hdbg.dassert_lt(0, clearing_price)
     # Build buy and sell heaps.
     buy_heap = []
     sell_heap = []
     # Push orders to the heaps based on the action type and filtered by limit price.
     for order in orders:
-        # TODO(Dan): Think of more asserts to check if orders are compatible.
         hdbg.dassert_type_is(order, ddacrord.Order)
-        hdbg.dassert_lte(0, order.quantity)
-        hdbg.dassert_type_is(order.timestamp, pd.Timestamp)
         if order.action == "buy":
             if order.limit_price >= clearing_price:
                 heapq.heappush(buy_heap, order)
@@ -57,8 +60,8 @@ def match_orders(
     # quantity until zero or queues empty.
     buy_order = None
     sell_order = None
-    while (buy_heap or ddacrord.is_active_order(buy_order)) and (
-        sell_heap or ddacrord.is_active_order(sell_order)
+    while (buy_heap or is_active_order(buy_order)) and (
+        sell_heap or is_active_order(sell_order)
     ):
         # Pop 1 buy and 1 sell orders from the heaps for matching.
         if not buy_order or buy_order.quantity == 0:
@@ -113,3 +116,16 @@ def get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     else:
         transfer_df = pd.DataFrame(columns=["token", "amount", "from", "to"])
     return transfer_df
+
+
+def is_active_order(order: Optional[ddacrord.Order]) -> bool:
+    """
+    Return whether the passed order is active or not.
+
+    Order is active if it is not empty and its quantity is above 0.
+    """
+    if order is None:
+        return False
+    if not order.quantity > 0:
+        return False
+    return True
