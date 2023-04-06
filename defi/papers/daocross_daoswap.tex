@@ -56,6 +56,8 @@
 \newcommand{\DAI}{\textnormal{\texttt{DAI}}}
 \newcommand{\USDC}{\textnormal{\texttt{USDC}}}
 \newcommand{\USDT}{\textnormal{\texttt{USDT}}}
+\newcommand{\tA}{\textnormal{\texttt{A}}}
+\newcommand{\tB}{\textnormal{\texttt{B}}}
 % Use non-italic teletype for order attributes in order notation.
 \newcommand{\timestamp}{\textnormal{\texttt{timestamp}}}
 \newcommand{\action}{\textnormal{\texttt{action}}}
@@ -449,96 +451,100 @@ Note that
 	p_{quote\_per\_base} = 
 	\frac{1}{p_{base\_per\_quote}}.
 \]
-
 If prices of base and quote tokens are expressed in terms of a common currency
 (e.g., USD) then it holds that:
 \[
-	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}}
+	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}},
 \]
+where the numeraire plays the role of a quote token for both
+$p_{quote}$ and $p_{base}$ and is implicit.
 
-\subsubsection{Extracting attributes from orders}
-Given an order $o_i =$ \texttt{(\buy, q, A, lb, B)} we indicate with:
+Given an order $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} we indicate with:
 \begin{itemize}
-	\item $action(o_i)$ the desired action (e.g., $\buy$)
+	\item $action(o_i)$ the desired action ($\buy$ or $\sell$)
 	\item $q_{base}(o_i)$ the maximum desired quantity $q$
-	\item $lb(o_i)$ the limit price $lb$
-	\item $base(o_i)$ the base token $A$
-	\item $quote(o_i)$ the quote token $A$
+	\item $base(o_i)$ the base token $\tA$
+    \item $p(o_i)$ the limit price $p$ (in terms of quote per base)
+	\item $quote(o_i)$ the quote token $\tB$
 \end{itemize}
 
 \subsubsection{Inequalities for buy order}
-An order of the form $o_i =$ \texttt{(\buy, q, A, lb, B)} means ``buy $q$ units of
-token A in exchange for token B with a limit price up to $lb$ B per unit of A"
+An order of the form $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} means
+``buy $q$ units of token $\tA$ in exchange for token $\tB$ with a limit price
+up to $p$ $\tB$ per unit of $\tA$",
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-	(p_{B\_per\_A})^* \leq lb(o_i) \land
-	(0 \le q_{A}^*(o_i) \leq q(o_i)) \lor
-	(q_A^*(o_i) = 0)
+    (p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
+	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
+	(q_\tA^*(o_i) = 0)
 \end{equation*}
 The constraint on the quantity exchanged is conditioned on the corresponding
-price satisfying the desired limit price constraint, otherwise the swap cannot
-be carried out and the exchanged quantity is 0.
+price satisfying the desired limit price constraint: if the desire limit price
+constraint is not met, the swap cannot be carried out and the exchanged quantity
+is 0.
 
 \begin{exmp}[Inequalities for buy order]
-An order of the form $o_1 =$ \texttt{(\buy, 2, A, 3, B)} means ``buy 2 units of
-token A in exchange for token B with a limit price up to 3 B per unit of A"
+An order of the form $o_1 = \texttt{(\buy, 2, \tA, 3, \tB)}$ means
+``buy 2 units of token $\tA$ in exchange for token $\tB$ with a limit price up
+to 3 $\tB$ per unit of $\tA$",
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-	(p_{B\_per\_A}) \leq 3) \land
-	(0 \le q_{A}^*(o_1) \leq 2) \lor
-	(q_A^*(o_1) = 0)
+	(p_{\tB\_per\_\tA}^* \leq 3) \land
+	(0 \le q_\tA^*(o_1) \leq 2) \lor
+	(q_\tA^*(o_1) = 0)
 \end{equation*}
 \end{exmp}
 
-\subsubsection{Inequalities for sell order}
-An order of the form $o_i =$ \texttt{(\sell, q, A, lb, B)} means ``sell $q$ units of
-token A paying in token B with a limit price of at least to $lb$ B per unit of A"
-and it corresponds to the following constraint on realized quantity exchanged
-and clearing exchange rate:
-\begin{equation*}
-	(p_{B\_per\_A})^* \geq lb(o_i) \land
-	(0 \le q_{A}^*(o_i) \geq q(o_i)) \lor
-	(q_A^*(o_i) = 0)
-\end{equation*}
-
-\begin{exmp}[Inequalities for sell order]
-In the same way, an order like $o_2 =$ \texttt{(sell, 3, A, 2, B)} means ``sell
-3 units of token A paying in token B with a limit price for one unit of A of at
-least 2 B" which corresponds to
-\begin{equation*}
-	(p_{B\_per\_A}^*(o_2) \geq 2) \land
-	(0 \le q_{A}^*(o_2) \leq 2) \lor
-	(q_A^*(o_2) = 0)
-\end{equation*}
-\end{exmp}
-
-\begin{exmp}[Inequalities for buy market order]
+\begin{exmp}[Inequality for buy market order]
 A market order (i.e., without a limit price) has no constraint on exchange rate
 and thus is reduced to
 \[
-	0 \le q_{A}^*(o_1) \le q(o_i)
+	0 \le q_\tA^*(o_1) \le q(o_i)
 \]
 \end{exmp}
 
-\subsection{Order equivalence}
+\subsubsection{Inequalities for sell order}
+An order of the form $o_i = \texttt{(\sell, q, \tA, p, \tB)}$ means
+``sell $q$ units of token $\tA$ in exchange for token $\tB$ with a limit price
+of at least $p$ $\tB$ per unit of $\tA$",
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{\tB\_per\_\tA}^* \geq p(o_i) \land
+	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
+    (q_\tA^*(o_i) = 0)
+\end{equation*}
+
+\begin{exmp}[Inequalities for sell order]
+In the same way, an order like $o_2 = \texttt{(sell, 3, \tA, 2, \tB)}$ means
+``sell 3 units of token $\tA$ in exchange for token $\tB$ with a limit price of
+at least 2 $\tB$ per unit of $\tA$", which corresponds to
+\begin{equation*}
+	(p_{\tB\_per\_\tA}^*(o_2) \geq 2) \land
+	(0 \le q_\tA^*(o_2) \leq 2) \lor
+	(q_\tA^*(o_2) = 0)
+\end{equation*}
+\end{exmp}
+
+\subsection{Order normalization}
 When the exchange rate between two tokens is known, it is possible to convert
-buy / sell orders for A and B tokens into buy / sell orders for one of the
-token only, according to the transformation below.
+buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders where all
+orders have token $\tA$ only, according to the transformation below.
 
 Let
 \[
-	o_1 = (\buy, q, A, p_{B\_per\_A}, B).
+	o_1 = (\buy, q, \tA, p_{\tB\_per\_\tA}, \tB).
 \]
-Suppose that $p^*_{B\_per\_A}$ is fixed and known. Then the order
+Suppose that $p^*_{\tB\_per\_tA}$ is fixed and known. Then the order
 \[
-	o_2 = (\sell, q^\prime, B, 1 / p_{B\_per\_A}, A)
+	o_2 = (\sell, q^\prime, \tB, 1 / p_{\tB\_per\_\tA}, \tA)
 \]
 may be handled in order crossing in the same way that $o_1$ may be
 provided that
 \[
-	q^\prime = q \cdot p^*_{B\_per\_A}
+	q^\prime = q \cdot p^*_{\tB\_per\_\tA}
 \]
 
 % TODO(gp): flesh out the examples
