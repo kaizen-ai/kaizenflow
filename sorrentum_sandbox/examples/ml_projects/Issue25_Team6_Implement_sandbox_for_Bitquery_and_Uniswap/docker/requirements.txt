@@ -2,4 +2,6 @@ redis
 requests
 pandas
 numpy
+matplotlib
+seaborn
 notebook

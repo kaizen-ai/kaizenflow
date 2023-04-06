@@ -48,7 +48,7 @@ def make_query(start_date:str):
   
 
 def run_query(query: str):
-    
+    # header here just for easy use
     headers = {"X-API-KEY": "BQYNhPk2qKSeVqqYH6I8CyHpwXk6Bihm"}
     request = requests.post(
         "https://graphql.bitquery.io", json={"query": query}, headers=headers

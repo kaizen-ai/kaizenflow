@@ -2,7 +2,7 @@
 import time
 import redis
 
-from bitquery.get_data import run_query, json_to_df, make_query
+from get_data import run_query, json_to_df, make_query
 
 import os
 from typing import Any, Dict, List
@@ -25,6 +25,7 @@ def main():
         df = json_to_df(result["data"]["ethereum"]["dexTrades"])
         data_dfs.append(df)
         offset += 25000
+        print(3-i)
 
     full_data = pd.concat(data_dfs)
     
