@@ -106,7 +106,12 @@ Tamara Zhordaniya}
 \section{Introduction}
 
 X is a new protocol that enables decentralized token exchange using limit
-orders. A limit order expresses a commitment to buy or to sell an asset, up to
+orders. It brings together the advantages of efficiency and ease-of-use of
+centralized exchanges with the transparency and self-custody of
+decentralized approaches.
+
+\subsection{Limit orders as an interface}
+A limit order expresses a commitment to buy or to sell an asset, up to
 a certain quantity, at a price that is as good or better than the limit price.
 As supply and demand are represented by quantity available at a given price,
 limit orders provide a way for buyers and sellers to participate in price
@@ -118,23 +123,74 @@ means to engage with markets. We further promote this interface as one that
 is natural, flexible, and elegant. It is natural in that it expresses
 supply or demand directly in terms of quantity and price, with a clearly
 defined maximum possible exposure in a commitment to trade. The interface is
-flexible in that it allows participants to construct personalized supply and
-demand curves using multiple limit orders. The elegance follows from the
+flexible because it allows participants to construct personalized supply and
+demand curves by combining multiple limit orders. The elegance follows from the
 simplicity and ease-of-use of the interface.
 
 In any case, limit orders and their aggregation into limit order books (LOBs)
-are wildly popular. They are the backbone of traditional financial markets
+are tremendously popular. They are ubiquitous in traditional financial markets
 and dominate cryptocurrency trading on centralized exchanges. Interestingly,
-however, limit orders do not currently play a prominent role in the realm of
+however, limit orders currently do not play as prominent a role in the realm of
 decentralized finance. Instead, alternative approaches that rely upon
 automated market makers (AMMs) have taken center stage, and these approaches
 offer a different set of advantages and disadvantages.
 
-A key obstacle to using limit order books in decentralized exchange is cost of
-computation. Continual submission and cancelation of orders incurs costs, as
-does the ongoing process of matching supply and demand. X addresses these
-core issues primarily in two ways: (1) discretizing time; and (2) scaling
-with layer 2 solutions. By addressing these issues, we combine the novel
+\subsection{How exchanges create value}
+To better understand the comparative advantages and disadvantages of different
+approaches to token exchange, we step back and consider the purpose and
+functions of exchanges.
+Exchanges create value by bringing together different types of participants,
+such as investors, traders, hedgers, brokers, arbitrageurs, and market makers.
+By providing a common meeting ground, exchanges facilitate matching supply
+and demand.
+
+Typically, an exchange (or swap) requires two components:
+\begin{enumerate}
+	\item Trade matching: participants find a counterparty agreeing on quantity
+          and price of the assets to swap (this includes price discovery)
+	\item Trade settlement: the assets are actually swapped after finding
+	      matching counterparties
+\end{enumerate}
+
+In decentralized finance a token swap can be accomplished in different ways,
+e.g., using
+\begin{itemize}
+	\item a centralized exchange (e.g., Coinbase, Binance, OkX)
+	\item a decentralized exchange (e.g., Uniswap, SushiSwap)
+\end{itemize}
+
+Centralized exchanges are usually organized around different versions of a
+central limit order book (CLOB), whereas
+decentralized exchanges have been organized as
+\begin{itemize}
+	\item off-chain order books (e.g., 1inch)
+	\item on-chain order books (e.g., SwapSwap, KyberSwap)
+	\item automataged market makers (AMM) (e.g., Uniswap)
+\end{itemize}
+
+Any off-chain solution runs into custodial and censorship issues that stand
+in direct conflict with the ethos of decentralization and self-determination.
+
+Off-chain order books are an hybrid version of CEX and DEX where the matching
+
+On-chain order book matching has the advantages of being custodial, since users
+are completely in charge of their funds.
+A major disadvantage of using on-chain limit order books in decentralized
+exchange is cost of computation. Continual submission and cancelation of orders
+incurs costs, as does the ongoing process of matching supply and demand.
+
+Exchanges are compensated for this value creation by collecting transaction
+fees.
+
+\subsection{The advantages of X}
+
+$X$ retains the key advantages of on-chain decentralized exchange while
+overcoming the issues of cost. Additionally, it includes an implementation
+that preserves the LOB interface but deepens the pool of available
+liquidity in matching supply and demand.
+
+X addresses cost issues primarily in two ways: (1) discretizing time; and (2)
+scaling with layer 2 solutions. By addressing these issues, we combine the novel
 advantages of decentralized exchange with the utility and ease-of-use of the
 familiar interface of limit orders.
 
@@ -792,19 +848,19 @@ This allows simplifying the general problem by applying the equivalence
 principle between orders and removing the non-linearity from the set of
 inequalities above.
 
-In fact, the actual prices $p^*$ compared to the limit price verifies or not the
-boolean condition $c_i$, which then allows specifying the quantity
-constraints:
+In the case of each order $o_i$, the boolean condition $c_i$ (which compares
+the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
+or not (the solution does not need to consider both branches)
 \begin{equation}
 	\begin{cases}
-		cond_i := \mathit{to\_ineq}(a(o_i))(p_{base}(o_i) \leq lp_{base}(o_i) p_{quote}(o_i)) \\
-		0 \le q_{base}(o_i) \le q_{base} \text{ if } cond_i                                   \\
-		q_{base}(o_i) = 0 \text{ if } \lnot cond_i                                            \\
+        0 \le q_{base}(o_i) \le q_{base} & \text{ if } c_i                                   \\
+        q_{base}(o_i) = 0 & \text{ if } \lnot c_i                                            \\
 	\end{cases}
 \end{equation}
 
-The problem then becomes a set of linear inequalities that can be solved with
-various efficient methods (e.g., simplex-method).
+The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
+prevails, then order $o_i$ is effectively removed from problem) that can be
+solved with various efficient methods (e.g., simplex-method).
 
 TODO(gp): check
 
@@ -815,50 +871,6 @@ TODO(gp): check
 % ###############################################################################
 
 \section{Alternative solutions for token swapping}
-
-TODO(gp): Some of the text should be in the abstract / intro.
-
-DaoSwap is a new approach to token swapping that brings together advantages of
-efficiency from centralized limit-order book approaches and transparency and
-self-custody of decentralized approaches.
-
-Exchanges are ubiquitous in financial systems and create value by bringing
-together different types of participants (e.g., investors, traders, brokers,
-arbitrageurs, market makers).
-
-Typically an exchange (or swap) requires two components:
-\begin{itemize}
-	\item Trade matching: participants find a counterparty agreeing on quantity and
-	      price of the assets to swap (this includes price discovery)
-	\item Trade settlement: the assets are actually swapped after finding
-	      matching counterparties
-\end{itemize}
-
-In decentralized finance a token swap can be accomplished in different ways, e.g., using
-\begin{itemize}
-	\item a centralized exchange (e.g., Coinbase, Binance, OkX)
-	\item a decentralized exchange (e.g., Uniswap, SushiSwap)
-\end{itemize}
-
-Centralized exchanges are usually organized around different versions of a
-central limit order book (CLOB)
-
-Decentralized exchanges can be organized as
-\begin{itemize}
-	\item off-chain order books (e.g., 1inch)
-	\item on-chain order books (e.g., SwapSwap, KyberSwap)
-	\item automatic market makers (AMM) (e.g., Uniswap)
-\end{itemize}
-
-Any off-chain solution incurs into custodial and censorship issues, that makes
-that solution untenable from the goals of decentralized and self-determination.
-
-Off-chain order books are an hybrid version of CEX and DEX where the matching
-
-On-chain order book matching has the advantages of being custodial, since users
-are completely in charge of their funds
-
-Running an exchange is extremely profitable since the business model of transaction fees.
 
 TODO(gp): Add colors: in green what's good, yellow, red
 
@@ -873,9 +885,9 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 			\hline
 			Custodial risk              & Yes        & No         & No             & No              \\
 			Transparency                & Low        & High       & High           & Medium          \\
-			Censorship resistant        & No         & Yes        & Yes            & No              \\
+			Censorship resistance       & No         & Yes        & Yes            & No              \\
 			Intrinsic efficiency        & Medium     & Low        & High           & Medium          \\
-			Support for limit order     & Yes        & No         & Yes            & Yes             \\
+			Support for limit orders    & Yes        & No         & Yes            & Yes             \\
 			Risk of predatory behaviors & High       & High       & Low            & Medium          \\
 			Impermanent loss            & No         & Yes        & No             & No              \\
 			Multi-coin exchange support & Low        & Medium     & High           & High            \\
