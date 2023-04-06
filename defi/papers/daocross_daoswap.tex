@@ -90,8 +90,7 @@ Nina Trubacheva,
 Dan Yachmenev,
 Vladimir Yakovenko,
 and
-Tamara Zhordaniya
-}
+Tamara Zhordaniya}
 
 \date{\today}
 
@@ -105,31 +104,37 @@ Tamara Zhordaniya
 \section{Introduction}
 
 X is a new protocol that enables decentralized token exchange using limit
-orders. The ability to express intent to buy or sell an asset in exchange for
-another using limit orders is foundational in markets, as supply and demand are
-naturally expressed in terms of quantity, and matching supply and demand
-determines price. Limit orders provide flexibility to traders, while
-simultaneously clearly delineating maximum possible exposure.
+orders. A limit order expresses a commitment to buy or to sell an asset, up to
+a certain quantity, at a price that is as good or better than the limit price.
+As supply and demand are represented by quantity available at a given price,
+limit orders provide a way for buyers and sellers to participate in price
+discovery and exchange.
 
-The popularity of centralized exchanges in cryptocurrency trading may be
-attributable in part to the familiar interface (limit orders) and familiar
-market microstructure (limit order books, or LOBs). However, the ethos of
-decentralized finance, the opportunity to reimagine how financial components
-or functions may operate, and certain high-profile centralized exchange
-issues, have all led to and spurred on a flurry of innovation in the realm of
-decentralized token exchange.
+We adopt the perspective that limit orders may be thought of as an interface
+to market participation. That is, limit orders provide participants with a
+means to engage with markets. We further promote this interface as one that
+is natural, flexible, and elegant. It is natural in that it expresses
+supply or demand directly in terms of quantity and price, with a clearly
+defined maximum possible exposure in a commitment to trade. The interface is
+flexible in that it allows participants to construct personalized supply and
+demand curves using multiple limit orders. The elegance follows from the
+simplicity and ease-of-use of the interface.
 
-Some have pursued creating decentralized limit order books. A significant
-drawback of this direction is on-chain computational expense.
-Others have created markets that rely upon automated market makers (AMMs).
-While AMMs provide certain advantages, such as in containing computational
-expenses, they suffer from drawbacks such as impermanent loss and interfaces
-that differ from the limit order interface.
+In any case, limit orders and their aggregation into limit order books (LOBs)
+are wildly popular. They are the backbone of traditional financial markets
+and dominate cryptocurrency trading on centralized exchanges. Interestingly,
+however, limit orders do not currently play a prominent role in the realm of
+decentralized finance. Instead, alternative approaches that rely upon
+automated market makers (AMMs) have taken center stage, and these approaches
+offer a different set of advantages and disadvantages.
 
-The approach we introduce preserves the useful interface of traditional
-markets (limit orders), embraces the advantages of decentralization and
-transparency, and circumvents the major disadvantages of alternative
-decentralized approaches.
+A key obstacle to using limit order books in decentralized exchange is cost of
+computation. Continual submission and cancelation of orders incurs costs, as
+does the ongoing process of matching supply and demand. X addresses these
+core issues primarily in two ways: (1) discretizing time; and (2) scaling
+with layer 2 solutions. By addressing these issues, we combine the novel
+advantages of decentralized exchange with the utility and ease-of-use of the
+familiar interface of limit orders.
 
 DaoCross and DaoSwap are smart
 contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
