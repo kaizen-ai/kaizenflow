@@ -29,7 +29,7 @@ def run_solver(
     Find the maximum exchanged volume given the constraints.
 
     :param orders: buy / sell orders
-    :param prices: price per token
+    :param prices: prices in USDT for each token
     :return: solver's output in a human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
@@ -69,14 +69,14 @@ def run_solver(
         else:
             # Executed quantity is zero, i.e., the order cannot be executed.
             problem += q_base_asterisk[i] == 0
-    # Global constraint on the token level: the amount of sold tokens must match that 
+    # Impose constraints on the token level: the amount of sold tokens must match that 
     # of bought tokens for each token.
     base_tokens = [order.base_token for order in orders]
     for token in base_tokens:
         problem += (
             pulp.lpSum(
                 # TODO(Grisha): the `if-else` part could become a separate function,
-                # i.e. the token indicator function Tau.
+                # i.e. the indicator function -- Tau.
                 q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action) * (1 if orders[i].base_token == token else 0)
                 for i in range(n_orders)
             )
