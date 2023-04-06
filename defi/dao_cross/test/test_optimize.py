@@ -29,6 +29,7 @@ class TestRunSolver1(hunitest.TestCase):
         # Set dummy variables.
         base_token = "BTC"
         quote_token = "ETH"
+        timestamp = None
         deposit_address = 1
         wallet_address = 1
         # Genereate buy orders.
@@ -41,6 +42,7 @@ class TestRunSolver1(hunitest.TestCase):
             buy_action,
             quantity,
             limit_price_buy_1,
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -53,6 +55,7 @@ class TestRunSolver1(hunitest.TestCase):
             buy_action,
             quantity,
             limit_price,
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -66,6 +69,7 @@ class TestRunSolver1(hunitest.TestCase):
             sell_action,
             quantity,
             limit_price_sell_1,
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -78,6 +82,7 @@ class TestRunSolver1(hunitest.TestCase):
             sell_action,
             quantity,
             limit_price,
+            timestamp,
             deposit_address,
             wallet_address,
         )
