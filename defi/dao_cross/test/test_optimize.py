@@ -1,5 +1,4 @@
 import logging
-import pprint
 from typing import Any, Dict, List
 
 import defi.dao_cross.optimize as ddacropt
@@ -46,8 +45,8 @@ def _generate_test_orders(
 
 
 def _check(
-    self_ : Any,
-    orders: List[ddacrord.Order], 
+    self_: Any,
+    orders: List[ddacrord.Order],
     prices: Dict[str, float],
     expected_volume: float,
     expected_quantities: str,
@@ -75,6 +74,7 @@ class TestRunSolver1(hunitest.TestCase):
     """
     Run the optimization problem for 2 orders with the same base token.
     """
+
     _base_tokens = ["BTC", "BTC"]
     _quote_tokens = ["ETH", "ETH"]
     _actions = ["buy", "sell"]
@@ -89,10 +89,10 @@ class TestRunSolver1(hunitest.TestCase):
         limit_prices = [3, 1]
         test_orders = _generate_test_orders(
             self._base_tokens,
-            self._quote_tokens, 
-            self._actions, 
-            self._quantities, 
-            limit_prices
+            self._quote_tokens,
+            self._actions,
+            self._quantities,
+            limit_prices,
         )
         # Run the check.
         expected_volume = 32
@@ -117,6 +117,7 @@ class TestRunSolver2(hunitest.TestCase):
     """
     Run the optimization problem for N orders with the same base token.
     """
+
     _base_tokens = ["BTC", "BTC", "BTC", "BTC"]
     _quote_tokens = ["ETH", "ETH", "ETH", "ETH"]
     _actions = ["buy", "buy", "sell", "sell"]
@@ -131,10 +132,10 @@ class TestRunSolver2(hunitest.TestCase):
         limit_prices = [4, 4.5, 2.1, 3]
         test_orders = _generate_test_orders(
             self._base_tokens,
-            self._quote_tokens, 
-            self._actions, 
-            self._quantities, 
-            limit_prices
+            self._quote_tokens,
+            self._actions,
+            self._quantities,
+            limit_prices,
         )
         # Run the check.
         expected_volume = 32
@@ -159,6 +160,7 @@ class TestRunSolver3(hunitest.TestCase):
     """
     Run the optimization problem for N orders with different base tokens.
     """
+
     _base_tokens = ["BTC", "BTC", "BTC", "BTC", "ETH", "ETH", "ETH", "ETH"]
     _quote_tokens = ["ETH", "ETH", "ETH", "ETH", "BTC", "BTC", "BTC", "BTC"]
     _actions = ["buy", "buy", "sell", "sell", "buy", "buy", "sell", "sell"]
@@ -173,10 +175,10 @@ class TestRunSolver3(hunitest.TestCase):
         limit_prices = [3, 3.5, 1.5, 1.9, 0.6, 2, 0.1, 0.25]
         test_orders = _generate_test_orders(
             self._base_tokens,
-            self._quote_tokens, 
-            self._actions, 
-            self._quantities, 
-            limit_prices
+            self._quote_tokens,
+            self._actions,
+            self._quantities,
+            limit_prices,
         )
         # Run the check.
         expected_volume = 132

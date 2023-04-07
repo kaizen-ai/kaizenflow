@@ -48,7 +48,9 @@ def run_solver(
         for i in range(n_orders)
     ]
     # Objective function. Maximize the total exchanged volume.
-    problem += pulp.lpSum(q_base_asterisk[i] * prices[orders[i].base_token] for i in range (n_orders))
+    problem += pulp.lpSum(
+        q_base_asterisk[i] * prices[orders[i].base_token] for i in range(n_orders)
+    )
     # Constraints.
     # Impose constraints on executed quantites on the order level.
     for i in range(n_orders):
@@ -70,7 +72,7 @@ def run_solver(
         else:
             # Executed quantity is zero, i.e., the order cannot be executed.
             problem += q_base_asterisk[i] == 0
-    # Impose constraints on the token level: the amount of sold tokens must match that 
+    # Impose constraints on the token level: the amount of sold tokens must match that
     # of bought tokens for each token.
     base_tokens = [order.base_token for order in orders]
     for token in base_tokens:
@@ -78,7 +80,9 @@ def run_solver(
             pulp.lpSum(
                 # TODO(Grisha): the `if-else` part could become a separate function,
                 # i.e. the indicator function -- Tau.
-                q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action) * (1 if orders[i].base_token == token else 0)
+                q_base_asterisk[i]
+                * ddacrord.action_to_int(orders[i].action)
+                * (1 if orders[i].base_token == token else 0)
                 for i in range(n_orders)
             )
             == 0
