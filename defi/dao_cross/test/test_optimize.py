@@ -34,6 +34,7 @@ class TestRunSolver1(hunitest.TestCase):
         quote_token = "ETH"
         buy_action = "buy"
         sell_action = "sell"
+        timestamp = None
         deposit_address = 1
         wallet_address = 1
         # Genereate buy orders.
@@ -44,6 +45,7 @@ class TestRunSolver1(hunitest.TestCase):
             buy_action,
             quantity,
             limit_prices[0],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -55,6 +57,7 @@ class TestRunSolver1(hunitest.TestCase):
             buy_action,
             quantity,
             limit_prices[1],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -66,6 +69,7 @@ class TestRunSolver1(hunitest.TestCase):
             sell_action,
             quantity,
             limit_prices[2],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -77,6 +81,7 @@ class TestRunSolver1(hunitest.TestCase):
             sell_action,
             quantity,
             limit_prices[3],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -99,6 +104,7 @@ class TestRunSolver1(hunitest.TestCase):
         quote_token = "BTC"
         buy_action = "buy"
         sell_action = "sell"
+        timestamp = None
         deposit_address = 1
         wallet_address = 1
         # Genereate buy orders.
@@ -109,6 +115,7 @@ class TestRunSolver1(hunitest.TestCase):
             buy_action,
             quantity,
             limit_prices[0],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -120,6 +127,7 @@ class TestRunSolver1(hunitest.TestCase):
             buy_action,
             quantity,
             limit_prices[1],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -131,6 +139,7 @@ class TestRunSolver1(hunitest.TestCase):
             sell_action,
             quantity,
             limit_prices[2],
+            timestamp,
             deposit_address,
             wallet_address,
         )
@@ -142,6 +151,7 @@ class TestRunSolver1(hunitest.TestCase):
             sell_action,
             quantity,
             limit_prices[3],
+            timestamp,
             deposit_address,
             wallet_address,
         )
