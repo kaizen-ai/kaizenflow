@@ -6,58 +6,48 @@ DAG to download stock market data.
 import datetime
 import os
 
-import airflow
-from airflow.operators.bash_operator import BashOperator
+from airflow.models import DAG
+from airflow.decorators import task
 
-from dotenv import load_dotenv
+import time
+from models.list_of_tickers import SP500
+from models.ticker import Ticker
+from models.time_series import TimeInterval, DataType
+from api.mongo_db import Mongo
 
-load_dotenv()
-
-_DAG_ID = "download_sp500_alpha_vantage"
-_DAG_DESCRIPTION = (
-    "Download tickers every day and save to MongoDB"
-)
-# Specify when to execute the DAG.
-_SCHEDULE = "0 0 * * *"
-
-# Default parameters for the DAG.
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
     "start_date": datetime.datetime(2022, 1, 1),
     "end_date": datetime.datetime(2023, 4, 3),
-    "email": [os.environ.get("EMAIL")],
+    "email": [os.environ.get("EMAIL", "testing@umd.edu")],
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 1,
 }
 
-# Create a DAG.
-dag = airflow.DAG(
-    dag_id=_DAG_ID,
-    description=_DAG_DESCRIPTION,
+with DAG(
+    dag_id="update.sp500",
+    description="Downloads and updates S&P 500 data",
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval=_SCHEDULE,
+    schedule_interval='@once',
     catchup=False,
-    # start_date=datetime.datetime(2022, 1, 1, 0, 0, 0),
-)
+) as dag:
 
-bash_command = [
-    # Sleep 5 seconds to ensure the post is submitted.
-    "sleep 5",
-    "&&",
-    "python /cmamp/update_sp500.py"
-    # , "--start_timestamp {{ data_interval_start }}",
-    # "--end_timestamp {{ data_interval_end }}",
-    # "-v DEBUG"
-]
+    @task
+    def update():
+        counter = 0
 
-downloading_task = BashOperator(
-    task_id="download.sp500.alpha_vantage",
-    depends_on_past=False,
-    bash_command=" ".join(bash_command),
-    dag=dag,
-)
+        for symbol in SP500:
+            ticker = Ticker(symbol, get_name=False)
+            ticker.get_data(data_type=DataType.INTRADAY,
+                            time_interval=TimeInterval.ONE)
+            Mongo.save_data(ticker)
+            counter += 1
 
-downloading_task
+            if counter >= 5:
+                counter = 0
+                time.sleep(61)
+
+    update()

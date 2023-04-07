@@ -22,7 +22,6 @@ WORKDIR $INSTALL_DIR
 COPY requirements.txt .
 COPY models models/
 COPY api api/
-COPY list_of_tickers.py .
 COPY .env .
 COPY main.ipynb .
 
