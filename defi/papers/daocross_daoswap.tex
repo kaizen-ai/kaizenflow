@@ -199,17 +199,23 @@ e.g., using
 \end{itemize}
 
 Centralized exchanges are usually organized around different versions of a
-central limit order book (CLOB), whereas
-decentralized exchanges have been organized as
+central limit order book (CLOB), whereas decentralized exchanges have been
+organized as
 \begin{itemize}
 	\item off-chain order books (e.g., 1inch)
 	\item on-chain order books (e.g., SwapSwap, KyberSwap)
 	\item automated market makers (AMM) (e.g., Uniswap)
 \end{itemize}
 
-Any off-chain solution runs into custodial and censorship issues that stand
+Off-chain solutions can run into custodial and censorship issues that stand
 in direct conflict with the ethos of decentralization and self-determination.
-At the same time solutions 
+Unfortunately limitations of current blockchain technology restrict
+the amount of computation that can be performed on-chain, although these limits
+are continously being removed by advancements in research and blockchain
+technology (e.g., layer 2 chains, optimistic and zero-knowledge rollups).
+Thus we consider solutions based on self-custody that do not require
+to trust a third party (or at least allow to verify its fairness) in line with
+the principle of decentralization.
 
 Off-chain order books are an hybrid version of CEX and DEX where the price
 discovery and trade matching happens off-chain, while the trade settlement is
@@ -225,7 +231,7 @@ incurs costs, as does the ongoing process of matching supply and demand.
 
 $X$ retains the key advantages of on-chain decentralized exchange while
 overcoming the issues of cost. Additionally, it includes an implementation
-that preserves the LOB interface but deepens the pool of available
+that preserves the familiar LOB interface but deepens the pool of available
 liquidity in matching supply and demand.
 
 X addresses cost issues primarily in two ways: (1) discretizing time; and (2)
@@ -238,8 +244,8 @@ contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
 for
 ERC-20\footnote{https://ethereum.org/en/developers/docs/standards/tokens/erc-20/}
 token exchange that match supply and demand differently depending upon whether
-there exists an external reference price or whether the contract also performs
-the role of price discovery.
+there exists an external reference price (DaoCross) or whether the contract
+also performs the role of price discovery (DaoSwap).
 
 DaoCross is a decentralized liquidity pool that crosses buy and sell orders
 with respect to an external reference price, i.e., a price oracle. This allows
@@ -282,15 +288,9 @@ both share several common advantages:
 
 % ###############################################################################
 
-% TODO(gp): Maybe we should just say "in traditional finance people think in terms
-% of limit orders", "people want to swap tokens independently of the direction".
-% The general solution is DaoSwap.
-% Or maybe explain how traditional markets work since they have been evolving for
-% long time with certain use cases.
-
 \section{Matching liquidity}
 Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
-(wrapped bitcoin, an ERC-20 compliant coin that tracks bitcoin), who wish to
+(wrapped bitcoin, an ERC-20 compliant coin that tracks Bitcoin), who wish to
 swap tokens at a competitive rate. Suppose also that there are many
 additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
 swap. How should the liquidity be pooled? At first glance, it appears that
@@ -298,7 +298,7 @@ there should be a single pool of liquidity. The wrinkle manifests in determining
 how to express a desire to trade. A simple expression of a desire to trade is
 a limit order representing a commitment to trade up to $q$ in quantity of
 a token at a token exchange rate up to $p$. But what if some parties express
-quantity in terms $\ETH$ and and some in terms of $\BTC$, and some parties
+quantity in terms $\ETH$ and some in terms of $\BTC$, and some parties
 express limit prices in terms of $\ETH$ per $\BTC$, while others express limit
 prices in terms of $\BTC$ per $\ETH$? Under these conditions, setting a single
 clearing price and determining fill prioritization rules raises several
@@ -1084,6 +1084,18 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 		      \item Uniswap requires multiple swaps and fees for arbitrary tokens
 	      \end{itemize}
 \end{itemize}
+
+
+The main reason why AMM have flourished in crypto is because they can work under severely constrained computational power
+This is not necessarily true any more
+Off-chain computation
+Layer2
+- AMM benefits: simplicity guaranteed
+- AMM costs: force LPs to trade at worse-than-market prices
+- AMM price needs to be corrected by an arbitrageur
+We don't think AMM will completely replaced but new mechanisms are needed
+LPs need to be compensated with revenues to offset the cost of their adverse selection (quantified and characterized by the LVR paper)
+
 
 % ###############################################################################
 
