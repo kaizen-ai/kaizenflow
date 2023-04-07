@@ -20,8 +20,6 @@ pulp = pytest.importorskip("pulp")
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Grisha): which kind of the `prices` format should we expect from an
-# external oracle? Using `{token: price in USDT}` format.
 def run_solver(
     orders: List[ddacrord.Order], prices: Dict[str, float]
 ) -> Dict[str, Any]:
@@ -29,7 +27,8 @@ def run_solver(
     Find the maximum exchanged volume given the constraints.
 
     :param orders: buy / sell orders
-    :param prices: prices in USDT for each token
+    :param prices: prices in terms of a reference common currency (e.g., USDT)
+        for each token
     :return: solver's output in a human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
@@ -55,7 +54,9 @@ def run_solver(
     for i in range(n_orders):
         # TODO(Grisha): could be a separate function with relevant assertions,
         # e.g., `get_price_quote_per_base(base_token, quote_token, prices)`.
+        hdbg.dassert_in(orders[i].base_token, prices)
         base_price = prices[orders[i].base_token]
+        hdbg.dassert_in(orders[i].quote_token, prices)
         quote_price = prices[orders[i].quote_token]
         price_quote_per_base = quote_price / base_price
         _LOG.debug(hprint.to_str("price_quote_per_base"))
