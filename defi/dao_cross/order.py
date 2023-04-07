@@ -4,21 +4,21 @@ Import as:
 import defi.dao_cross.order as ddacrord
 """
 
-import datetime
 import logging
 from typing import Optional, Union
 
 import numpy as np
+import pandas as pd
 
-import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
+import helpers.hdatetime as hdateti
 
 _LOG = logging.getLogger(__name__)
 
 
 class Order:
     """
-    Create Order for DaoCross or DaoSwap.
+    Create order for DaoCross or DaoSwap.
     """
 
     def __init__(
@@ -27,29 +27,32 @@ class Order:
         quote_token: str,
         action: str,
         quantity: float,
-        limit_price: float,
+        limit_price: Optional[float],
+        timestamp: Optional[pd.Timestamp],
         deposit_address: Union[int, str],
         wallet_address: Union[int, str],
-        *,
-        timestamp: Optional[datetime.datetime] = None,
     ) -> None:
         """
         Constructor.
 
-        :param base_token: token to express order quantity with
-        :param quote_token: token to express order price with
+        :param base_token: token to express order quantity
+        :param quote_token: token to express order price
         :param action: order action type
             - "buy": purchase the base token and pay with the quote token
             - "sell": sell the base token and receive the quote token
         :param quantity: quantity in terms of the base token
-        :param limit_price: limit price in terms of the quote token
+        :param limit_price: limit price in terms of the quote token per base token
+        :param timestamp: time of order execution
+            - if `None`, current timestamp is used
         :param deposit_address: deposit address to implement the order for
         :param wallet_address: wallet address to implement the order for
-        :param timestamp: time of order execution
         """
+        hdbg.dassert_isinstance(base_token, str)
+        hdbg.dassert_isinstance(quote_token, str)
+        hdbg.dassert_lte(0, quantity)
+        hdbg.dassert_in(action, ["buy", "sell"])
         self.base_token = base_token
         self.quote_token = quote_token
-        hdbg.dassert_in(action, ["buy", "sell"])
         self.action = action
         self.quantity = quantity
         # Replace NaN with signed `np.inf` depending upon `action`.
@@ -63,16 +66,21 @@ class Order:
                 raise ValueError("Invalid action='%s'" % self.action)
         else:
             self.limit_price = limit_price
+        # Use current time of execution if timestamp is not specified.
+        if timestamp:
+            hdbg.dassert_type_is(timestamp, pd.Timestamp)
+            self.timestamp = timestamp
+        else:
+            self.timestamp = hdateti.get_current_time(tz="UTC")
         self.deposit_address = deposit_address
         self.wallet_address = wallet_address
-        self.timestamp = timestamp or hdateti.get_current_time(tz="UTC")
 
     def __repr__(self) -> str:
         return str(self)
 
     def __str__(self) -> str:
         ret = (
-            "base_token=%s quote_token=%s action=%s quantity=%s limit_price=%s timestamp=%s deposit_address=%s"
+            "base_token=%s quote_token=%s action=%s quantity=%s limit_price=%s timestamp=%s deposit_address=%s wallet_address=%s"
             % (
                 self.base_token,
                 self.quote_token,
@@ -81,6 +89,7 @@ class Order:
                 self.limit_price,
                 self.timestamp,
                 self.deposit_address,
+                self.wallet_address,
             )
         )
         return ret
@@ -123,7 +132,7 @@ class Order:
 
 def get_random_order(seed: Optional[int] = None) -> Order:
     """
-    Get Order for ETH/BTC with randomized valid parameters.
+    Get an order for ETH/BTC with randomized valid parameters.
     """
     if seed is not None:
         np.random.seed(seed)
@@ -135,6 +144,8 @@ def get_random_order(seed: Optional[int] = None) -> Order:
     quantity = np.random.randint(1, 10)
     # Do not impose a limit price.
     limit_price = np.nan
+    # Do not impose a timestamp.
+    timestamp = np.nan
     # Create a random wallet address.
     deposit_address = np.random.randint(-3, 3)
     # Prevent self-crossing (in a crude way).
@@ -144,30 +155,18 @@ def get_random_order(seed: Optional[int] = None) -> Order:
         deposit_address = -abs(deposit_address)
     # Make wallet address and deposit address the same.
     wallet_address = deposit_address
-    # Build order.
+    # Build the order.
     order = Order(
         base_token,
         quote_token,
         action,
         quantity,
         limit_price,
+        timestamp,
         deposit_address,
         wallet_address,
     )
     return order
-
-
-def is_active_order(order: Optional[Order]) -> bool:
-    """
-    Return whether the order is active or not.
-
-    Order is active if it is not empty and its quantity is above 0.
-    """
-    if order is None:
-        return False
-    if not order.quantity > 0:
-        return False
-    return True
 
 
 def action_to_int(action: str) -> int:

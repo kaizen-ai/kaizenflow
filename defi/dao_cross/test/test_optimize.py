@@ -12,6 +12,7 @@ _LOG = logging.getLogger(__name__)
 
 # TODO(Grisha): split into multiple test classes and
 # add more unit tests.
+# TODO(Grisha): factor out common idioms.
 class TestRunSolver1(hunitest.TestCase):
     """
     Run the solver using toy orders.
