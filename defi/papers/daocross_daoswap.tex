@@ -78,9 +78,9 @@
 
 \begin{document}
 
-\title{X: A protocol for decentralized exchange with limit orders}
+\title{DELOC: A protocol for Decentralized Exchange Limit Order Crossing}
 
-\author{G.P. Saggese}
+\author{Giacinto Paolo Saggese}
 \author{Paul Smith}
 
 \thanks{With contributions from
@@ -105,12 +105,34 @@ Tamara Zhordaniya}
 
 \section{Introduction}
 
-X is a new protocol that enables decentralized token exchange using limit
+DELOC\footnote{Temporary code name}
+is a new protocol that enables decentralized token exchange using limit
 orders. It brings together the advantages of efficiency and ease-of-use of
 centralized exchanges with the transparency and self-custody of
 decentralized approaches.
 
-\subsection{Limit orders as an interface}
+\subsection{Token swap as financial primitive}
+Swapping tokens is one of the most important and widely used primitives in
+decentralized finance.
+In March 2023, the average daily trading volume in cryptocurrencies was over
+\$34B, after reaching a peak of \$516B per day in May 20, 2021.
+\footnote{https://www.statista.com/statistics/1272903/cryptocurrency-trade-volume}
+
+% TODO(gp): We should compute this ourselves using spot, futures, etc
+
+Trading volume on decentralized exchanges has been increasing over time and now
+it is approaching 20\% of the total traded cryptocurrency volume.
+\footnote{https://www.theblock.co/data/decentralized-finance/dex-non-custodial/dex-to-cex-spot-trade-volume}
+As of March 2023, Uniswap has transacted more than \$1.4T and 139 million trades
+\footnote{https://uniswap.org/}.
+The move from centralized to decentralized exchanges has been accelerating by
+scandals involving CEXs (e.g., FTX bankruptcy), regulatory crackdown, and with
+end-users increased embracing of the principles of self-custody and
+decentralization.
+We believe that this trend towards larger trading volumes and 
+will only accelerate in the future.
+
+\subsection{Limit orders as an interface to token swap}
 A limit order expresses a commitment to buy or to sell an asset, up to
 a certain quantity, at a price that is as good or better than the limit price.
 As supply and demand are represented by quantity available at a given price,
@@ -127,8 +149,8 @@ flexible because it allows participants to construct personalized supply and
 demand curves by combining multiple limit orders. The elegance follows from the
 simplicity and ease-of-use of the interface.
 
-In any case, limit orders and their aggregation into limit order books (LOBs)
-are tremendously popular. They are ubiquitous in traditional financial markets
+As consequence of these benefits, limit orders and their aggregation into limit order books (LOBs)
+are ubiquitous in traditional financial markets
 and dominate cryptocurrency trading on centralized exchanges. Interestingly,
 however, limit orders currently do not play as prominent a role in the realm of
 decentralized finance. Instead, alternative approaches that rely upon
@@ -141,10 +163,27 @@ approaches to token exchange, we step back and consider the purpose and
 functions of exchanges.
 Exchanges create value by bringing together different types of participants,
 such as investors, traders, hedgers, brokers, arbitrageurs, and market makers.
+Market participants have different goals (e.g., hedging, investing,
+speculating, gambling), horizons (from long-term investments to low-latency
+trading), risk tolerance, and beliefs about security values. The opportunity to
+trade arises from these differences.
 By providing a common meeting ground, exchanges facilitate matching supply
 and demand.
 
-Typically, an exchange (or swap) requires two components:
+Exchange have several roles:
+\begin{itemize}
+\item Establish the rules of trading process and institutional roles, so that
+  the trading process is structured, monitored, and standardized
+\item Provide a certain amount of oversight by monitoring and certify financial
+  statements and governance procedures
+\item Generate market data for market participants, such 
+     as trades and quote changes
+\end{itemize}
+
+Exchanges are compensated for this value creation by collecting transaction
+fees as a small percent of traded volume.
+
+Typically, an exchange requires two components:
 \begin{enumerate}
 	\item Trade matching: participants find a counterparty agreeing on quantity
           and price of the assets to swap (this includes price discovery)
@@ -155,8 +194,8 @@ Typically, an exchange (or swap) requires two components:
 In decentralized finance a token swap can be accomplished in different ways,
 e.g., using
 \begin{itemize}
-	\item a centralized exchange (e.g., Coinbase, Binance, OkX)
-	\item a decentralized exchange (e.g., Uniswap, SushiSwap)
+    \item a centralized exchange (CEX) (e.g., Coinbase, Binance, OkX)
+    \item a decentralized exchange (DEX) (e.g., Uniswap, SushiSwap)
 \end{itemize}
 
 Centralized exchanges are usually organized around different versions of a
@@ -165,22 +204,22 @@ decentralized exchanges have been organized as
 \begin{itemize}
 	\item off-chain order books (e.g., 1inch)
 	\item on-chain order books (e.g., SwapSwap, KyberSwap)
-	\item automataged market makers (AMM) (e.g., Uniswap)
+	\item automated market makers (AMM) (e.g., Uniswap)
 \end{itemize}
 
 Any off-chain solution runs into custodial and censorship issues that stand
 in direct conflict with the ethos of decentralization and self-determination.
+At the same time solutions 
 
-Off-chain order books are an hybrid version of CEX and DEX where the matching
+Off-chain order books are an hybrid version of CEX and DEX where the price
+discovery and trade matching happens off-chain, while the trade settlement is
+performed on-chain.
 
 On-chain order book matching has the advantages of being custodial, since users
 are completely in charge of their funds.
 A major disadvantage of using on-chain limit order books in decentralized
 exchange is cost of computation. Continual submission and cancelation of orders
 incurs costs, as does the ongoing process of matching supply and demand.
-
-Exchanges are compensated for this value creation by collecting transaction
-fees.
 
 \subsection{The advantages of X}
 
