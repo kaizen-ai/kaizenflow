@@ -78,7 +78,7 @@
 
 \begin{document}
 
-\title{DELOC: A protocol for Decentralized Exchange Limit Order Crossing}
+\title{Deloc: A protocol for Decentralized Exchange Limit Order Crossing}
 
 \author{Giacinto Paolo Saggese}
 \author{Paul Smith}
@@ -105,11 +105,14 @@
 
 \section{Introduction}
 
-DELOC\footnote{Temporary code name}
+Deloc\footnote{Temporary code name}
 is a new protocol that enables decentralized token exchange using limit
 orders. It brings together the advantages of efficiency and ease-of-use of
 centralized exchanges with the transparency and self-custody of
 decentralized approaches.
+
+Deloc does not suffer from impermanent loss, contrary to automatic market
+makers (such as Uniswap).
 
 \subsection{Token swap as financial primitive}
 Swapping tokens is one of the most important and widely used primitives in
@@ -197,6 +200,10 @@ e.g., using
 	\item a centralized exchange (CEX) (e.g., Coinbase, Binance, OkX)
 	\item a decentralized exchange (DEX) (e.g., Uniswap, SushiSwap)
 \end{itemize}
+
+We consider CEXs a temporary bridge between traditional finance and the
+new vision of a decentralized finance and we do not consider them a viable
+long-term solution to the problems that DeFi is poised to address.
 
 Centralized exchanges are usually organized around different versions of a
 central limit order book (CLOB), whereas decentralized exchanges have been
@@ -905,7 +912,37 @@ TODO(gp): check
 
 % ###############################################################################
 
-% \section{Fees}
+\section{Fees and tokenomics}
+DELOC charges a fee to each transaction based on the exchanged tokens.
+E.g., a transaction requiring 
+
+% ###############################################################################
+
+\section{Implementation details}
+
+\subsection{DaoCross and DaoSwap Architecture}
+
+
+
+\subsection{Off-chain computation}
+Currently DELOC offloads some computations to external oracles, due to current
+computational limitation of blockchains. We do not believe that this is detrimental
+to the security and decentralization level of DELOC as long as these computations
+are provably correct.
+
+For instance although the solution of the DaoSwap problem is NP-hard, verifying
+that one solution is correct only requires linear time with the number of
+constraints.
+
+For this reason DaoSwap stores on-chain the result of the DaoSwap optimization
+in order to allow independent verification that the off-chain system is malicious
+or compromised.
+
+\subsection{Ensuring a timely solution}
+DaoSwap avoids that solving the optimization problem becomes intractable by
+performing a swap when a maximum number of order is reached.
+
+\subsection{Performing the swap}
 
 % ###############################################################################
 
@@ -945,7 +982,8 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Transparency: High
 	      \begin{itemize}
-		      \item Work is done on-chain and the off-chain computations are independently verifiable
+              \item Work is done on-chain and the off-chain computations are
+                independently verifiable
 	      \end{itemize}
 	\item Censoriship resistance: Yes
 	      \begin{itemize}
@@ -956,7 +994,10 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Intrinsic efficiency: High
 	      \begin{itemize}
-		      \item DaoSwap relies on periodic auctions and it has been argued in previous literature that for small enough intervals (e.g., seconds) periodic auctions result in the same quality of continuous matching without allowing predatory behaviors
+              \item DaoSwap relies on periodic auctions and it has been argued
+                in previous literature that for small enough intervals (e.g.,
+                seconds) periodic auctions result in the same quality of
+                continuous matching without allowing predatory behaviors
 		      \item TODO(gp): Add a reference to Cramton paper
 	      \end{itemize}
 	\item Support for limit order: Yes
@@ -973,7 +1014,8 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Support for multi-coin swap: Yes
 	      \begin{itemize}
-		      \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+              \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single
+                optimization problem
 	      \end{itemize}
 \end{itemize}
 
@@ -991,11 +1033,15 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Censoriship resistance: No
 	      \begin{itemize}
-		      \item The robustness of DaoCross is the same as the lit exchange that it relies on. See comments on the corresponding topic for LOB
+              \item The robustness of DaoCross is the same as the lit exchange
+                that it relies on. See comments on the corresponding topic for
+                LOB
 	      \end{itemize}
 	\item Intrinsic efficiency: Medium
 	      \begin{itemize}
-		      \item The efficiency in matching trades is the same as the limit-order book. See comments on the corresponding topic for LOB
+              \item The efficiency in matching trades is the same as the
+                limit-order book. See comments on the corresponding topic for
+                LOB
 	      \end{itemize}
 	\item Support for limit order: Yes
 	      \begin{itemize}
@@ -1011,7 +1057,8 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Support for multi-coin swap:
 	      \begin{itemize}
-		      \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single optimization problem
+              \item TODO(gp): DaoSwap/Cross pools all the liquidity in a single
+                optimization problem
 	      \end{itemize}
 \end{itemize}
 
@@ -1025,18 +1072,31 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Transparency: Low
 	      \begin{itemize}
-		      \item Many centralized exchanges can easily exaggerate volume (e.g., through wash trading) to attract ICOs and liquidity
+              \item Many centralized exchanges can easily exaggerate volume
+                (e.g., through wash trading) to attract ICOs and liquidity
 		      \item There is no guarantee on the
 	      \end{itemize}
 	\item Censorship resistance: No
 	      \begin{itemize}
-		      \item Users need to link their bank account to CEX and transfer funds, which can take 2-3 days and be subjected to Know-Your-Customer (KYC) and AML (Anti money laundering policies)
-		      \item Governments can censor, interfere with, or even severe the connection between traditional and decentralized finance (see recent interventions of SEC against Coinbase and Binance, and FDIC rescue of Silvergate Bank, Signature Bank)
+              \item Users need to link their bank account to CEX and transfer
+                funds, which can take 2-3 days and be subjected to
+                Know-Your-Customer (KYC) and AML (Anti money laundering
+                policies)
+              \item Governments can censor, interfere with, or even severe the
+                connection between traditional and decentralized finance (see
+                recent interventions of SEC against Coinbase and Binance, and
+                FDIC rescue of Silvergate Bank, Signature Bank)
 	      \end{itemize}
 	\item Intrinsic efficiency: Medium
 	      \begin{itemize}
-		      \item Limit order books are considered efficient in matching continuously trades, although recently researchers have criticized their time-continuous-time nature as source of latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash Boys)
-		      \item The same token can be traded on different exchanges causing liquidity and price discovery to be fragmented with detriment on market quality
+              \item Limit order books are considered efficient in matching
+                continuously trades, although recently researchers have
+                criticized their time-continuous-time nature as source of
+                latency arbitrage (TODO(gp): Add ref to Compton, IEX, Flash
+                Boys)
+              \item The same token can be traded on different exchanges causing
+                liquidity and price discovery to be fragmented with detriment
+                on market quality
 	      \end{itemize}
 	\item Support for limit order: Yes
 	      \begin{itemize}
@@ -1065,7 +1125,8 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	\item Censoriship risk:
 	\item Intrinsic efficiency: Low
 	      \begin{itemize}
-		      \item Arbitrageurs are needed to keep liquidity pool and prices in alignment with other centers for price discovery
+              \item Arbitrageurs are needed to keep liquidity pool and prices
+                in alignment with other centers for price discovery
 	      \end{itemize}
 	\item Support for limit order: No
 	      \begin{itemize}
@@ -1077,7 +1138,9 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 	      \end{itemize}
 	\item Impermanent loss: Yes
 	      \begin{itemize}
-		      \item Uniswap is affected by impermanent loss because liquidity providers and liquidity takers are in general different users operating at different time scales
+              \item Uniswap is affected by impermanent loss because liquidity
+                providers and liquidity takers are in general different users
+                operating at different time scales
 	      \end{itemize}
 	\item Support for multi-coin swap: Medium
 	      \begin{itemize}
@@ -1098,14 +1161,17 @@ Some of the benefits of AMMs are:
 	\item ability to function without a reference price
 \end{itemize}
 
-Some of the drawbacks
+Some of the drawbacks of AMMs are:
 \begin{itemize}
-	\item force LPs to trade at worse-than-market prices
+	\item force liquidity providers to trade at worse-than-market prices
 	\item a rarely used building blocks used mainly in prediction markets rather than
 	      in mainstream finance. In fact only recently papers have started analyzing
 	      the financial return / risk profile of AMMs \cite{MiMoRoZh22}
 	\item price needs to be corrected by an arbitrageur impacting the quality of
 	      the provided liquidity
+    \item artificially separate liquidity providers from traders, preventing traders
+          from providing liquidity to each others in the way well-functioning
+          market do
 \end{itemize}
 
 Some critiques and counterpoints can be made to the benefits of AMMs listed above.
@@ -1123,8 +1189,8 @@ Some critiques and counterpoints can be made to the benefits of AMMs listed abov
 	      the vast majority of crypto coins are extremely liquid and don't require to
 	      trade off trading quality.
 	\item ability to function without a reference price.
-	      This feature was certainly appealing to initial researchers (e.g., TODO(gp):
-	      Add ButerinPaper) in search of a fully-decentralized solution to the problem
+          This feature was certainly appealing to initial researchers (e.g., \cite{Bu17})
+	      in search of a fully-decentralized solution to the problem
 	      of token exchange. In reality, the fact that price discovery unquestionably
 	      happens on current CEXs turned AMMs into arbitrage generation machines
 	      (AGMs), where 80\% of the trading volume is due to arbitrageurs keeping AMM
@@ -1360,6 +1426,13 @@ $(a_1, b_1)$ of the book
 		volume={164},
 		eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981},
 	}
+
+    \bib{Bu17}{article}{
+        author={Buterin, Vitalik},
+        title={Let's run on-chain decentralized exchanges the way we run prediction markets},
+        date={2017},
+        eprint={https://www.reddit.com/r/ethereum/comments/55m04x/lets_run_onchain_decentralized_exchanges_the_way}
+    }
 
 \end{thebibliography}
 
