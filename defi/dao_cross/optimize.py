@@ -20,25 +20,26 @@ pulp = pytest.importorskip("pulp")
 _LOG = logging.getLogger(__name__)
 
 
-# TODO(Grisha): consider extending for n base tokens.
+# TODO(Grisha): which kind of the `prices` format should we expect from an
+# external oracle? Using `{token: price in USDT}` format.
 def run_solver(
-    orders: List[ddacrord.Order], exchange_rate: float
+    orders: List[ddacrord.Order], prices: Dict[str, float]
 ) -> Dict[str, Any]:
     """
     Find the maximum exchanged volume given the constraints.
 
     :param orders: buy / sell orders
-    :param exchange_rate: price (in terms of quote token) per unit of base token
+    :param prices: prices in USDT for each token
     :return: solver's output in a human readable format
     """
     _LOG.debug(hprint.to_str("orders"))
-    _LOG.debug(hprint.to_str("exchange_rate"))
-    #
     n_orders = len(orders)
     hdbg.dassert_lt(0, n_orders)
     hdbg.dassert_container_type(orders, list, ddacrord.Order)
     #
-    hdbg.dassert_lt(0, exchange_rate)
+    _LOG.debug(hprint.to_str("prices"))
+    hdbg.dassert_isinstance(prices, dict)
+    hdbg.dassert_lt(0, len(prices))
     # Initialize the model.
     problem = pulp.LpProblem("The DaoCross problem", pulp.LpMaximize)
     # Specify the executed quantities vars. Setting the lower bound to zero
@@ -47,15 +48,18 @@ def run_solver(
         pulp.LpVariable(f"q_base_asterisk_{i}", lowBound=0)
         for i in range(n_orders)
     ]
-    # Objective function.
-    # TODO(Grisha): since the base token is the same, i.e. BTC it is ok to use
-    # quantity, however the objective function should be modified to account for
-    # different base tokens.
-    problem += pulp.lpSum(q_base_asterisk)
+    # Objective function. Maximize the total exchanged volume.
+    problem += pulp.lpSum(q_base_asterisk[i] * prices[orders[i].base_token] for i in range (n_orders))
     # Constraints.
     # Impose constraints on executed quantites on the order level.
     for i in range(n_orders):
-        limit_price_cond = exchange_rate * ddacrord.action_to_int(
+        # TODO(Grisha): could be a separate function with relevant assertions,
+        # e.g., `get_price_quote_per_base(base_token, quote_token, prices)`.
+        base_price = prices[orders[i].base_token]
+        quote_price = prices[orders[i].quote_token]
+        price_quote_per_base = quote_price / base_price
+        _LOG.debug(hprint.to_str("price_quote_per_base"))
+        limit_price_cond = price_quote_per_base * ddacrord.action_to_int(
             orders[i].action
         ) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
         _LOG.debug(hprint.to_str("limit_price_cond"))
@@ -65,15 +69,19 @@ def run_solver(
         else:
             # Executed quantity is zero, i.e., the order cannot be executed.
             problem += q_base_asterisk[i] == 0
-    # Global constraint: the number of sold tokens must match the number
-    # of bought tokens.
-    problem += (
-        pulp.lpSum(
-            q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action)
-            for i in range(n_orders)
+    # Impose constraints on the token level: the amount of sold tokens must match that 
+    # of bought tokens for each token.
+    base_tokens = [order.base_token for order in orders]
+    for token in base_tokens:
+        problem += (
+            pulp.lpSum(
+                # TODO(Grisha): the `if-else` part could become a separate function,
+                # i.e. the indicator function -- Tau.
+                q_base_asterisk[i] * ddacrord.action_to_int(orders[i].action) * (1 if orders[i].base_token == token else 0)
+                for i in range(n_orders)
+            )
+            == 0
         )
-        == 0
-    )
     # Use the default solver and suppress the solver's log.
     solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
     problem.solve(solver)
