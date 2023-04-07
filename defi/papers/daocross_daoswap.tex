@@ -84,15 +84,15 @@
 \author{Paul Smith}
 
 \thanks{With contributions from
-Samarth KaPatel,
-Grisha Pomazkin,
-Juraj Smeriga,
-Danya Tikhomirov,
-Nina Trubacheva,
-Dan Yachmenev,
-Vladimir Yakovenko,
-and
-Tamara Zhordaniya}
+	Samarth KaPatel,
+	Grisha Pomazkin,
+	Juraj Smeriga,
+	Danya Tikhomirov,
+	Nina Trubacheva,
+	Dan Yachmenev,
+	Vladimir Yakovenko,
+	and
+	Tamara Zhordaniya}
 
 \date{\today}
 
@@ -147,7 +147,7 @@ and demand.
 Typically, an exchange (or swap) requires two components:
 \begin{enumerate}
 	\item Trade matching: participants find a counterparty agreeing on quantity
-          and price of the assets to swap (this includes price discovery)
+	      and price of the assets to swap (this includes price discovery)
 	\item Trade settlement: the assets are actually swapped after finding
 	      matching counterparties
 \end{enumerate}
@@ -345,14 +345,14 @@ By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
 is the quote token. Interest to trade is expressed in terms of orders
 with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 \begin{itemize}
-	\item A ``buy" order represents a commitment to purchase the base token
-        $\BTC$ and pay with the quote token $\ETH$
-	\item A ``sell" order represents a commitment to sell the base token
-	      $\BTC$ and receive the quote token $\ETH$.
-	\item Quantity $q$ is in terms of the base token (``buy/sell a certain
-	      amount of $\BTC$")
-	\item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
-	      limit price of $p$ $\ETH$ per $\BTC$")
+    \item A ``buy" order represents a commitment to purchase the base token
+          $\BTC$ and pay with the quote token $\ETH$
+    \item A ``sell" order represents a commitment to sell the base token
+          $\BTC$ and receive the quote token $\ETH$.
+    \item Quantity $q$ is in terms of the base token (``buy/sell a certain
+          amount of $\BTC$")
+    \item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
+          limit price of $p$ $\ETH$ per $\BTC$")
 \end{itemize}
 A party who places a ``buy" order must have the quote token ($\ETH$) in custody,
 i.e., in its wallet. A party who places a ``sell" order must have the base
@@ -365,13 +365,13 @@ We introduce the following tuple notation for a general limit order
 \begin{defn}[Limit order]
 A DaoCross or DaoSwap limit order is represented by a tuple of the form
 \begin{align*}
-    ( & \timestamp,       \\
-      & \action,          \\
-      & \quantity,        \\
-      & \basetoken,       \\
-      & \limitprice,      \\
-      & \quotetoken,      \\
-      & \depositaddress )
+( & \timestamp,       \\
+  & \action,          \\
+  & \quantity,        \\
+  & \basetoken,       \\
+  & \limitprice,      \\
+  & \quotetoken,      \\
+  & \depositaddress )
 \end{align*}
 \end{defn}
 
@@ -396,21 +396,21 @@ incoming $\ETH$.
 
 For brevity, in the sequel we may:
 \begin{itemize}
-	\item omit $\timestamp$ and $\depositaddress$ when not relevant to the
-	      discussion
-	\item omit the (infinite) $\limitprice$ for market orders
+\item omit $\timestamp$ and $\depositaddress$ when not relevant to the
+      discussion
+\item omit the (infinite) $\limitprice$ for market orders
 \end{itemize}
 
 \begin{exmp}[Limit order notation]
 The order
 \begin{center}
-    (\textnormal{\texttt{1678660406}},
-    \buy,
-    \textnormal{\texttt{3.2}},
-    \ETH,
-    \textnormal{\texttt{4.0}},
-    \BTC,
-    \textnormal{\texttt{0xdeadc0de}})
+(\textnormal{\texttt{1678660406}},
+\buy,
+\textnormal{\texttt{3.2}},
+\ETH,
+\textnormal{\texttt{4.0}},
+\BTC,
+\textnormal{\texttt{0xdeadc0de}})
 \end{center}
 corresponds to the natural language description:
 ``At timestamp \textnormal{\texttt{Mon Mar 13 2023 02:33:25 GMT+0000}}, the user
@@ -499,12 +499,12 @@ rate:
 	\item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
 	      swap from order $o_i$
 	\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
-		  and base tokens for all the swaps
+	      and base tokens for all the swaps
 	      % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
 \end{itemize}
 Note that
 \[
-	p_{quote\_per\_base} = 
+	p_{quote\_per\_base} =
 	\frac{1}{p_{base\_per\_quote}}.
 \]
 If prices of base and quote tokens are expressed in terms of a common currency
@@ -520,7 +520,7 @@ Given an order $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} we indicate with:
 	\item $action(o_i)$ the desired action ($\buy$ or $\sell$)
 	\item $q_{base}(o_i)$ the maximum desired quantity $q$
 	\item $base(o_i)$ the base token $\tA$
-    \item $p(o_i)$ the limit price $p$ (in terms of quote per base)
+	\item $p(o_i)$ the limit price $p$ (in terms of quote per base)
 	\item $quote(o_i)$ the quote token $\tB$
 \end{itemize}
 
@@ -531,7 +531,7 @@ up to $p$ $\tB$ per unit of $\tA$",
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-    (p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
+	(p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
 	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
 	(q_\tA^*(o_i) = 0)
 \end{equation*}
@@ -547,9 +547,9 @@ to 3 $\tB$ per unit of $\tA$",
 and it corresponds to the following constraint on realized quantity exchanged
 and clearing exchange rate:
 \begin{equation*}
-	(p_{\tB\_per\_\tA}^* \leq 3) \land
-	(0 \le q_\tA^*(o_1) \leq 2) \lor
-	(q_\tA^*(o_1) = 0)
+    (p_{\tB\_per\_\tA}^* \leq 3) \land
+    (0 \le q_\tA^*(o_1) \leq 2) \lor
+    (q_\tA^*(o_1) = 0)
 \end{equation*}
 \end{exmp}
 
@@ -557,7 +557,7 @@ and clearing exchange rate:
 A market order (i.e., without a limit price) has no constraint on exchange rate
 and thus is reduced to
 \[
-	0 \le q_\tA^*(o_1) \le q(o_i)
+    0 \le q_\tA^*(o_1) \le q(o_i)
 \]
 \end{exmp}
 
@@ -570,7 +570,7 @@ and clearing exchange rate:
 \begin{equation*}
 	(p_{\tB\_per\_\tA}^* \geq p(o_i) \land
 	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
-    (q_\tA^*(o_i) = 0)
+	(q_\tA^*(o_i) = 0)
 \end{equation*}
 
 \begin{exmp}[Inequalities for sell order]
@@ -578,9 +578,9 @@ In the same way, an order like $o_2 = \texttt{(sell, 3, \tA, 2, \tB)}$ means
 ``sell 3 units of token $\tA$ in exchange for token $\tB$ with a limit price of
 at least 2 $\tB$ per unit of $\tA$", which corresponds to
 \begin{equation*}
-	(p_{\tB\_per\_\tA}^*(o_2) \geq 2) \land
-	(0 \le q_\tA^*(o_2) \leq 2) \lor
-	(q_\tA^*(o_2) = 0)
+    (p_{\tB\_per\_\tA}^*(o_2) \geq 2) \land
+    (0 \le q_\tA^*(o_2) \leq 2) \lor
+    (q_\tA^*(o_2) = 0)
 \end{equation*}
 \end{exmp}
 
@@ -853,8 +853,8 @@ the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
 or not (the solution does not need to consider both branches)
 \begin{equation}
 	\begin{cases}
-        0 \le q_{base}(o_i) \le q_{base} & \text{ if } c_i                                   \\
-        q_{base}(o_i) = 0 & \text{ if } \lnot c_i                                            \\
+		0 \le q_{base}(o_i) \le q_{base} & \text{ if } c_i       \\
+		q_{base}(o_i) = 0                & \text{ if } \lnot c_i \\
 	\end{cases}
 \end{equation}
 
@@ -1071,24 +1071,24 @@ corresponds to removing an amount of $\delta a$ from the pool, which must
 be compensated for by adding (paying) some amount $\delta b$ to the pool.
 The constant product constraint ensures
 \[
-    a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
+	a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
 \]
 which upon rearrangement leads to
 \[
-    \delta b = b_0 \frac{\delta a}{a_0 - \delta a}
+	\delta b = b_0 \frac{\delta a}{a_0 - \delta a}
 \]
 The effective cost of buying $\delta a$ units of $\tA$ is given by
 \[
-    \frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
+	\frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
 \]
 If we make the substitution $b_0 = k / a_0$, this becomes
 \[
-    \frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
+	\frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
 \]
 In the idealized setting of infinite divisibility of tokens, the
 instantaneous price of buying $\tA$ at point $(a_0, b_0)$ is
 \[
-    \frac{b_0}{a_0} = \frac{k}{a_0^2}
+	\frac{b_0}{a_0} = \frac{k}{a_0^2}
 \]
 Note that as more of token $\tA$ is purchased (more $\tA$ is withdrawn from
 the pool), the price of token $\tA$ in the pool (in terms of the quote token)
@@ -1100,25 +1100,25 @@ Rephrasing, suppose $q$ denotes quantity of token $\tA$ that we wish to
 purchase. If the current state of the market is $a_0, b_0$, then the price $p$
 of purchasing quantity $q$ is
 \[
-    p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
+	p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
 \]
 For brevity, we drop the functional dependence. Reexpressing in
 terms of quantity, we have
 \[
-    q = a_0 - \frac{k}{a_0 p}
+	q = a_0 - \frac{k}{a_0 p}
 \]
 which expresses cumulative quantity $q$ available at average price $p$.
 To obtain the marginal quantity available ``at" price point $p$, we
 differentiate with respect to price to obtain
 \[
-    q^\prime = \frac{k}{a_0} \cdot \frac{1}{p^2}
+	q^\prime = \frac{k}{a_0} \cdot \frac{1}{p^2}
 \]
 As the price increases, the marginal quantity available at the given price
 level decreases.
 At the market price $b_0 / a_0 = k / a_0^2$, the instantaneous quantity
 available is
 \[
-    q^\prime|_{p = k / a_0^2} = \frac{a_0^3}{k}
+	q^\prime|_{p = k / a_0^2} = \frac{a_0^3}{k}
 \]
 
 We may quantize this by discretizing price increments (e.g., imposing a
@@ -1126,22 +1126,22 @@ minimum tick size). Suppose the minimum price increment is $\delta p$.
 Then, between price points $p_1$ and $p_1 + \delta p$ the quantity
 available is
 \[
-    \delta q = \frac{k}{a_0} \cdot \frac{\delta p}{p_1 (p_1 + \delta p)}
+	\delta q = \frac{k}{a_0} \cdot \frac{\delta p}{p_1 (p_1 + \delta p)}
 \]
 We may interpret this a sell limit order in the book for quantity
 $\delta q$ at an effective limit price of approximately $p_1$.
 
 When a buy transaction takes places, the market price changes from
 \[
-    p_0 = \frac{b_0}{a_0}
+	p_0 = \frac{b_0}{a_0}
 \]
 to
 \[
-    p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
+	p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
 \]
 Note that this is greater than the effective purchase price of
 \[
-    \frac{b_0}{a_0 - \delta a},
+	\frac{b_0}{a_0 - \delta a},
 \]
 which is analogous to what happens when multiple levels of a limit order book
 are cleared (the new best offer is greater than the effective price of the buy
@@ -1228,15 +1228,15 @@ $(a_1, b_1)$ of the book
 		eprint={https://doi.org/10.1023/A:1022058209073},
 	}
 
-    \bib{MiMoRoZh22}{article}{
-        author={Milionis, Jason},
-        author={Moallemi, Ciamac C.},
-        author={Roughgarden, Tim},
-        author={Zhang, Anthony Lee},
-        title={Automated Market Making and Loss-Versus-Rebalancing},
-        date={2022},
-        eprint={https://doi.org/10.48550/arXiv.2208.06046},
-    }
+	\bib{MiMoRoZh22}{article}{
+		author={Milionis, Jason},
+		author={Moallemi, Ciamac C.},
+		author={Roughgarden, Tim},
+		author={Zhang, Anthony Lee},
+		title={Automated Market Making and Loss-Versus-Rebalancing},
+		date={2022},
+		eprint={https://doi.org/10.48550/arXiv.2208.06046},
+	}
 
 	\bib{Ms}{article}{
 		author={Morgan Stanley},
