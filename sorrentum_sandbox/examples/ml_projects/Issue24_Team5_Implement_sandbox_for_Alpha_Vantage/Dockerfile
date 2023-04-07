@@ -6,7 +6,7 @@ ENV DEBIAN_FRONTEND noninteractive
 
 RUN apt-get -y update
 RUN apt-get -y upgrade
-RUN apt-get install gcc python3-dev -y
+RUN apt-get -y install gcc python3-dev
 
 RUN apt install -y --no-install-recommends --fix-missing \
     sudo \
@@ -31,4 +31,4 @@ RUN pip3 install -r requirements.txt
 EXPOSE 8888
 
 ENTRYPOINT (jupyter notebook --ip 0.0.0.0 --port 8888  --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='') && \
-        /bin/bash
+    /bin/bash

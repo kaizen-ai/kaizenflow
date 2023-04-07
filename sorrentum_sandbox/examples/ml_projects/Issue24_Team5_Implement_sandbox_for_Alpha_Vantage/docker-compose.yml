@@ -3,9 +3,9 @@ version: '3'
 services:
   alpha_vantage:
     image: alpha_vantage
-    ports: 
+    ports:
       - "8888:8888"
-      
+
   postgres:
     image: postgres:9.6
     environment:
@@ -25,7 +25,7 @@ services:
         PYTHON_DEPS: sqlalchemy==1.2.0
     restart: always
     depends_on:
-      - postgres
+      - alpha_vantage
     environment:
       - LOAD_EX=n
       - EXECUTOR=Local
@@ -39,7 +39,11 @@ services:
       - "8080:8080"
     command: webserver
     healthcheck:
-      test: ["CMD-SHELL", "[ -f /usr/local/airflow/airflow-webserver.pid ]"]
+      test:
+        [
+          "CMD-SHELL",
+          "[ -f /usr/local/airflow/airflow-webserver.pid ]"
+        ]
       interval: 30s
       timeout: 30s
       retries: 3

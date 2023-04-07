@@ -1,8 +1,6 @@
 from datetime import date, timedelta
 
-import matplotlib.dates as mdates
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 
 from api.mongo_db import Mongo
@@ -11,13 +9,14 @@ from models.time_series import DataType, TimeInterval
 
 plt.style.use("./processing/style.mplstyle")
 
+
 def display(
-        ticker: str,
-        kind = DataType.DAILY,
-        start = None,
-        end = None,
-        update = False
-    ):
+    ticker: str,
+    kind=DataType.DAILY,
+    start=None,
+    end=None,
+    update=False
+):
     """Graphs specified ticker from the data available in the Database"""
 
     # If you want to update the dataset before graphing, call alpha vantage
@@ -43,17 +42,19 @@ def display(
     df.type = df.type.astype(str)
 
     # Filter only relevant data and sort by date
-    df = df.query("type==@kind.value and (@start <= date <= @end)").sort_values(by='date', ascending=False)
+    df = df.query(
+        "type==@kind.value and (@start <= date <= @end)").sort_values(by='date', ascending=False)
 
     # If there is no data leave
     if len(df) == 0:
         print(f"No data for found for {ticker} between {start} and {end}")
         return
 
-    # Assigns color values depending on whether the 
+    # Assigns color values depending on whether the
     # closing price was higher or lower than the open price
-    df['color'] = df.apply(lambda row: 'green' if (row.close - row.open) > 0 else 'darkred', axis = 1)
-    
+    df['color'] = df.apply(lambda row: 'green' if (
+        row.close - row.open) > 0 else 'darkred', axis=1)
+
     last = df.iloc[0]
     first = df.iloc[-1]
 
@@ -70,7 +71,6 @@ def display(
     ax2 = figure.add_subplot(111, label='vol', frame_on=False)
     ax = figure.add_subplot(111, label='price', frame_on=False)
 
-
     # Setting the X and x limits since theyre the same
     X = df.date
     ax.set_xlim(first.date, last.date)
@@ -83,24 +83,24 @@ def display(
     price = last.close
     text = f"{data.name}\n${price:.2f}"
     ax.text(x=0, y=1.1, s=text, va="bottom", ha="left",
-                size=35, c="white", transform=ax.transAxes)
+            size=35, c="white", transform=ax.transAxes)
     ax.tick_params(axis='x', colors="white")
     ax.tick_params(axis='y', colors="white")
 
     # Change annotation
     change_text = f"{arrow} {change:.2f} ({pct_change:.2f}%)"
     ax.text(x=0, y=1, s=change_text, va="bottom", ha="left",
-                size=25, c=color, transform=ax.transAxes)
+            size=25, c=color, transform=ax.transAxes)
 
     # Date annotation
     date_range = f'{first.date} to {last.date}'.replace('-', '/')
     ax.set_xlabel(date_range, color="white")
 
     # Axis for volume graph
-    ax2.set_ylim(0, df.volume.max()*2) 
-    ax2.xaxis.set_ticks([])  
+    ax2.set_ylim(0, df.volume.max()*2)
+    ax2.xaxis.set_ticks([])
     ax2.yaxis.set_ticks([])
-    
+
     # Plot price (line) and volume (bars)
     ax.plot(X, df.close, color=color)
     ax2.bar(X, df.volume, color=df.color, alpha=0.7)

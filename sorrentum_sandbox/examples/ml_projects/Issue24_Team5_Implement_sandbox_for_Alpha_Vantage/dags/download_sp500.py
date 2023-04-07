@@ -4,11 +4,16 @@ DAG to download stock market data.
 
 
 import datetime
+import os
 
 import airflow
 from airflow.operators.bash_operator import BashOperator
 
-_DAG_ID = "download_periodic_hourly_alpha_vantage_tickers"
+from dotenv import load_dotenv
+
+load_dotenv()
+
+_DAG_ID = "download_sp500_alpha_vantage"
 _DAG_DESCRIPTION = (
     "Download tickers every day and save to MongoDB"
 )
@@ -19,9 +24,9 @@ _SCHEDULE = "0 0 * * *"
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
-    "start_date": datetime.datetime(2022,1,1),
-    "end_date":datetime.datetime(2023,4,3),
-    "email": ["ajoshi18@umd.edu"],
+    "start_date": datetime.datetime(2022, 1, 1),
+    "end_date": datetime.datetime(2023, 4, 3),
+    "email": [os.environ.get("EMAIL")],
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 1,
@@ -42,14 +47,14 @@ bash_command = [
     # Sleep 5 seconds to ensure the post is submitted.
     "sleep 5",
     "&&",
-    "python /cmamp/download_to_db.py"
-    #, "--start_timestamp {{ data_interval_start }}",
+    "python /cmamp/update_sp500.py"
+    # , "--start_timestamp {{ data_interval_start }}",
     # "--end_timestamp {{ data_interval_end }}",
     # "-v DEBUG"
 ]
 
 downloading_task = BashOperator(
-    task_id="download.airflow.downloaded.hourly.mongo.tickers.alpha_vantage",
+    task_id="download.sp500.alpha_vantage",
     depends_on_past=False,
     bash_command=" ".join(bash_command),
     dag=dag,
