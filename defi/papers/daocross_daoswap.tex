@@ -1099,6 +1099,110 @@ LPs need to be compensated with revenues to offset the cost of their adverse sel
 
 % ###############################################################################
 
+\section{CPMM as an LOB}
+
+Here we reinterpret a constant product market maker as a limit order order book
+that a market participant may transact against (e.g., hit a bid or lift an
+offer). In a traditional limit order book, one expects frequent limit order
+cancellation and submission in response to market activity.
+
+Let $\tA$ and $\tB$ be two tokens in a CPMM and suppose that the available
+supply of $\tA$ and $\tB$ in the pool at time $t_0$ are, respectively,
+$a_0$ and $b_0$. We set $k = a_0 b_0$. Though neither token $\tA$ nor token
+$\tB$ enjoys a distinguished role, for the purposes of this discussion we
+designate token $\tA$ the base token and token $\tB$ the quote token
+(due to the symmetry, the subsequent analysis continues to hold with the roles
+reversed). From this perspective, we think of placing orders to either buy or
+sell token $\tA$, with price quoted in token $\tB$ per unit of $\tA$.
+
+\subsection{Buy order}
+
+Suppose we wish to place an order to buy $\delta a$ of token $\tA$. This
+corresponds to removing an amount of $\delta a$ from the pool, which must
+be compensated for by adding (paying) some amount $\delta b$ to the pool.
+The constant product constraint ensures
+\[
+    a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
+\]
+which upon rearrangement leads to
+\[
+    \delta b = b_0 \frac{\delta a}{a_0 - \delta a}
+\]
+The effective cost of buying $\delta a$ units of $\tA$ is given by
+\[
+    \frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
+\]
+If we make the substitution $b_0 = k / a_0$, this becomes
+\[
+    \frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
+\]
+In the idealized setting of infinite divisibility of tokens, the
+instantaneous price of buying $\tA$ at point $(a_0, b_0)$ is
+\[
+    \frac{b_0}{a_0} = \frac{k}{a_0^2}
+\]
+Note that as more of token $\tA$ is purchased (more $\tA$ is withdrawn from
+the pool), the price of token $\tA$ in the pool (in terms of the quote token)
+goes up, as expected.
+
+\subsection{Supply liquidity}
+
+Rephrasing, suppose $q$ denotes quantity of token $\tA$ that we wish to
+purchase. If the current state of the market is $a_0, b_0$, then the price $p$
+of purchasing quantity $q$ is
+\[
+    p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
+\]
+For brevity, we drop the functional dependence. Reexpressing in
+terms of quantity, we have
+\[
+    q = a_0 - \frac{k}{a_0 p}
+\]
+which expresses cumulative quantity $q$ available at average price $p$.
+To obtain the marginal quantity available ``at" price point $p$, we
+differentiate with respect to price to obtain
+\[
+    q^\prime = \frac{k}{a_0} \cdot \frac{1}{p^2}
+\]
+As the price increases, the marginal quantity available at the given price
+level decreases.
+At the market price $b_0 / a_0 = k / a_0^2$, the instantaneous quantity
+available is
+\[
+    q^\prime|_{p = k / a_0^2} = \frac{a_0^3}{k}
+\]
+
+We may quantize this by discretizing price increments (e.g., imposing a
+minimum tick size). Suppose the minimum price increment is $\delta p$.
+Then, between price points $p_1$ and $p_1 + \delta p$ the quantity
+available is
+\[
+    \delta q = \frac{k}{a_0} \cdot \frac{\delta p}{p_1 (p_1 + \delta p)}
+\]
+We may interpret this a sell limit order in the book for quantity
+$\delta q$ at an effective limit price of approximately $p_1$.
+
+When a buy transaction takes places, the market price changes from
+\[
+    p_0 = \frac{b_0}{a_0}
+\]
+to
+\[
+    p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
+\]
+Note that this is greater than the effective purchase price of
+\[
+    \frac{b_0}{a_0 - \delta a},
+\]
+which is analogous to what happens when multiple levels of a limit order book
+are cleared (the new best offer is greater than the effective price of the buy
+order that cleared multiple levels of offers).
+
+Following a transaction, marginal quantity readjusts given the new position
+$(a_1, b_1)$ of the book
+
+% ###############################################################################
+
 \bibliography{Daobib}
 \bibliographystyle{amsplain}
 
