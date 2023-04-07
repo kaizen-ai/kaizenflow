@@ -1086,18 +1086,61 @@ TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 \end{itemize}
 
 
-The main reason why AMM have flourished in crypto is because they can work under severely constrained computational power
-This is not necessarily true any more
-Off-chain computation
-Layer2
-- AMM benefits: simplicity guaranteed
-- AMM costs: force LPs to trade at worse-than-market prices
-- AMM price needs to be corrected by an arbitrageur
-We don't think AMM will completely replaced but new mechanisms are needed
-LPs need to be compensated with revenues to offset the cost of their adverse selection (quantified and characterized by the LVR paper)
-
-
 % ###############################################################################
+
+\section{Comments on AMMs}
+
+Some of the benefits of AMMs are:
+\begin{itemize}
+  \item conceptual simplicity
+  \item low computational requirements
+  \item ability to provide liquidity even for illiquid markets
+  \item ability to function without a reference price
+\end{itemize}
+
+Some of the drawbacks 
+\begin{itemize}
+  \item force LPs to trade at worse-than-market prices
+  \item a rarely used building blocks used mainly in prediction markets rather than
+  in mainstream finance. In fact only recently papers have started analyzing
+  the financial return / risk profile of AMMs \cite{MiMoRoZh22}
+  \item price needs to be corrected by an arbitrageur impacting the quality of
+    the provided liquidity
+\end{itemize}
+
+Some critiques and counterpoints can be made to the benefits of AMMs listed above.
+\begin{itemize}
+\item conceptual simplicity. Although this is a favorable point for users
+  without experience in finance, the evolution of finance practices favors the
+    use of limit orders, as explained in the introduction.
+  \item low computational requirements. This is not necessarily a strict
+    requirement any more due to progress in off-chain computation and improved
+    scalability in blockchain technology (such as layer 2 blockchains).
+    We don't believe that an inefficient solution should be preferred only because
+    of implementation simplicity.
+  \item ability to function even for illiquid markets.
+    Although this is a valid advantage for many markets (e.g., prediction markets),
+    the vast majority of crypto coins are extremely liquid and don't require to
+    trade off trading quality.
+  \item ability to function without a reference price.
+  This feature was certainly appealing to initial researchers (e.g., TODO(gp):
+  Add ButerinPaper) in search of a fully-decentralized solution to the problem
+  of token exchange. In reality, the fact that price discovery unquestionably
+  happens on current CEXs turned AMMs into arbitrage generation machines
+  (AGMs), where 80\% of the trading volume is due to arbitrageurs keeping AMM
+  prices in sync with the predominant price TODO(gp): Add reference
+\end{itemize}
+
+One of the problems with current state of DeFi is that users look for
+applications to use their crypto coins, waiting for mainsteam adoption of 
+crypto in every day payment.
+Also a current trend is for crypto holders to find yield to benefit from
+holding crypto. AMMs satisfied the need for ways to extract yields from holding
+coins.
+
+We don't think AMM will completely replaced but new mechanisms are needed LPs
+need to be compensated with revenues to offset the cost of their adverse
+selection (quantified and characterized by the LVR paper)
 
 \section{CPMM as an LOB}
 
