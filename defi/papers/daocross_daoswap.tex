@@ -109,7 +109,7 @@ Deloc\footnote{Temporary code name}
 is a new protocol that enables decentralized token exchange using limit
 orders. It brings together the advantages of trading efficiency and ease-of-use
 of centralized exchanges with the transparency and self-custody of
-decentralized approaches, without 
+decentralized approaches, without
 
 suffering of impermanent loss, contrary to automatic market
 makers (such as Uniswap).
@@ -118,7 +118,7 @@ makers (such as Uniswap).
 Swapping tokens is one of the most important and widely used primitives in
 decentralized finance.
 In March 2023, the average daily trading volume in cryptocurrencies was over
-\$34B, after reaching a peak of \$516B per day in May 20, 2021.
+34 billion USD, after reaching a peak of 516 billion USD per day in May 20, 2021.
 \footnote{https://www.statista.com/statistics/1272903/cryptocurrency-trade-volume}
 
 % TODO(gp): We should compute this ourselves using spot, futures, etc
@@ -126,8 +126,8 @@ In March 2023, the average daily trading volume in cryptocurrencies was over
 Trading volume on decentralized exchanges has been increasing over time and now
 it is approaching 20\% of the total traded cryptocurrency volume.
 \footnote{https://www.theblock.co/data/decentralized-finance/dex-non-custodial/dex-to-cex-spot-trade-volume}
-As of March 2023, Uniswap has transacted more than \$1.4T and 139 million trades
-\footnote{https://uniswap.org/}.
+As of March 2023, Uniswap has transacted more than 1.4 trillion USD and 139
+million trades \footnote{https://uniswap.org/}.
 The move from centralized to decentralized exchanges has been accelerating by
 scandals involving CEXs (e.g., FTX bankruptcy), regulatory crackdown, and with
 end-users increased embracing of the principles of self-custody and
@@ -370,9 +370,11 @@ auction expense.
 
 % ###############################################################################
 
-\section{Protocol introduction}
+\section{Limit orders}
 In the previous section, we discussed the notions of base currency and
 quote currency from foreign exchange. Here we extend them to tokens.
+
+% ===============================================================================
 
 \subsection{Base/quote tokens}
 A token (ordered) pair consists of a \emph{base token} and a
@@ -384,17 +386,15 @@ By convention, \emph{quantity} to exchange is expressed in terms of the base
 token, and \emph{price} is a token exchange rate expressed in terms of the
 quote token per unit of base token (or multiple thereof).
 
-% TODO(gp): Can the example be called with a reference to the section, instead
-% of having a different numbering scheme?
 \begin{exmp}[base/quote tokens]
-By way of example, in the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
+In the pair $\BTC/\ETH$, $\BTC$ is the base token and $\ETH$
 is the quote token. Interest to trade is expressed in terms of orders
 with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 \begin{itemize}
     \item A ``buy" order represents a commitment to purchase the base token
           $\BTC$ and pay with the quote token $\ETH$
     \item A ``sell" order represents a commitment to sell the base token
-          $\BTC$ and receive the quote token $\ETH$.
+          $\BTC$ and receive the quote token $\ETH$
     \item Quantity $q$ is in terms of the base token (``buy/sell a certain
           amount of $\BTC$")
     \item Limit price is in terms of the quote token (``buy/sell $\BTC$ with a
@@ -405,6 +405,26 @@ i.e., in its wallet. A party who places a ``sell" order must have the base
 token ($\BTC$) in custody.
 \end{exmp}
 
+% ===============================================================================
+
+\subsection{Exchange price properties}
+If prices of base and quote tokens are expressed in terms of a common currency
+(e.g., USD) then it holds that:
+\[
+	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}},
+\]
+where the numeraire plays the role of a quote token for both $p_{quote}$ and
+$p_{base}$ and is implicit.
+
+Consequently
+\[
+	p_{quote\_per\_base} =
+	\frac{1}{p_{base\_per\_quote}}.
+\]
+
+% ===============================================================================
+
+% TODO(gp): Maybe add a source_address as way to identify the user.
 \subsection{Order attributes and notation}
 We introduce the following tuple notation for a general limit order
 (valid for both DaoCross and DaoSwap).
@@ -423,14 +443,15 @@ A DaoCross or DaoSwap limit order is represented by a tuple of the form
 
 The quantities are arranged to make the order simple to read in natural
 language:
-``At timestamp $\timestamp$ create an order to $\action$ a $\quantity$ of
-the token $\basetoken$ for a limit price of $\limitprice$ with respect to
-the token $\quotetoken$ and deposit the resulting tokens at $\depositaddress$."
+``At timestamp $\timestamp$ create an order to $\action$ up to a number
+$\quantity$ $\basetoken$ tokens for a limit price of $\limitprice$ with respect
+to the token $\quotetoken$ and deposit the resulting tokens at
+$\depositaddress$."
 
 We have previously discussed the roles of \action, \quantity, \basetoken,
 \limitprice, and \quotetoken.
-The roles of $\timestamp$ include determining eligibility in a swap or
-cross and can extend to influencing order fill priority.
+The roles of $\timestamp$ include determining eligibility in a swap and can
+extend to influencing order fill priority.
 The $\depositaddress$ attribute mirrors standard functionality
 available in traditional finance, e.g., in purchasing T-Bills on
 TreasuryDirect\footnote{https://www.treasurydirect.gov}. This feature
@@ -439,13 +460,6 @@ example, a miner may have a supply of $\BTC$ collected and held in one wallet
 which it would like to systematically diversify into $\ETH$ and perhaps other
 tokens. In specifying a deposit address, it may use a separate wallet to collect
 incoming $\ETH$.
-
-For brevity, in the sequel we may:
-\begin{itemize}
-\item omit $\timestamp$ and $\depositaddress$ when not relevant to the
-      discussion
-\item omit the (infinite) $\limitprice$ for market orders
-\end{itemize}
 
 \begin{exmp}[Limit order notation]
 The order
@@ -459,12 +473,60 @@ The order
 \textnormal{\texttt{0xdeadc0de}})
 \end{center}
 corresponds to the natural language description:
-``At timestamp \textnormal{\texttt{Mon Mar 13 2023 02:33:25 GMT+0000}}, the user
-commits to $\buy$ up to \textnormal{\texttt{3.2}} units of $\ETH$ in exchange
-for $\BTC$ up to a $\limitprice$ of \textnormal{\texttt{4.0}} $\BTC$ per $\ETH$
-with proceeds deposited at \textnormal{\texttt{0xdeadc0de}}".
+``At timestamp Mon Mar 13 2023 02:33:25 GMT+0000, the user commits to buy up to
+3.2 units of $\ETH$ in exchange for $\BTC$ up to a $\limitprice$ of 4.0
+$\BTC$ per $\ETH$ with proceeds deposited at \textnormal{\texttt{0xdeadc0de}}".
 \end{exmp}
 
+\subsubsection{Extracting attributes from an order}
+Given an order $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} we indicate with:
+\begin{itemize}
+	\item $action(o_i)$ the desired action ($\buy$ or $\sell$)
+	\item $q_{base}(o_i)$ the maximum desired quantity $q$
+	\item $base(o_i)$ the base token $\tA$
+	\item $p(o_i)$ the limit price $p$ (in terms of quote per base)
+	\item $quote(o_i)$ the quote token $\tB$
+\end{itemize}
+
+\subsubsection{Order short notation}
+In the sequel, when clear from the context we may:
+\begin{itemize}
+\item omit $\timestamp$ and $\depositaddress$ when not relevant to the
+      discussion
+\item omit the (infinite) $\limitprice$ for market orders
+\end{itemize}
+
+% ===============================================================================
+
+\subsection{Order clearing quantity and exchange rate}
+In both DaoCross and DaoSwap orders are collected from users during a finite
+period of time, after which tokens are redistributed among users according to their
+limit orders.
+
+Equilibrium prices for the tokens are determined based on the available limit
+orders and a criteria designed to maximize the wellfare of the participants in
+the swap. At the same time orders are matched in a many-to-many relationships.
+
+Swaps between base/quote token pairs occur at a single exchange rate, i.e., the
+clearing (or equilibrium) price is the same for all executed orders. On the
+other hand, quantity exchanged is specific to each order and each order's
+constraint on quantity exchanged cannot be violated. In the same way each order
+can be executed with a non-null quantity only when the single exchange rate is
+compatible with the limit price.
+
+In the sequel we use an asterisk to denote clearing quantity and exchange
+rate:
+\begin{itemize}
+	\item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
+	      swap from order $o_i$
+	\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
+	      and base tokens for all the swaps
+	      % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
+\end{itemize}
+
+% ===============================================================================
+
+\subsection{Execution of orders}
 Next we introduce some examples of market order and limit order behavior when
 a clearing rate has been set.
 In particular, consider a swap for the tokens $\ETH$, $\BTC$ and assume that
@@ -487,8 +549,8 @@ $\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
 \end{exmp}
 
 Next we consider the behavior of limit orders under the same prevailing exchange
-rate (and we assume that there is sufficient supply of tokens to fully fill the
-orders).
+rate and we assume that there is sufficient supply of tokens to fully fill the
+orders.
 
 \begin{exmp}[Executable buy limit order]
 A limit order
@@ -496,11 +558,6 @@ A limit order
     \texttt{(\buy, 1.0, $\ETH$, 0.5, $\BTC$)}
 \]
 means
-% TODO(gp): I understand the intent of pairing variables in the tuples and
-% natural language. I would use buy and not \buy here since we are using natural language
-% In fact we don't use \texttt{1.0} in the text. I'm ok with leaving BTC and ETH
-% in teletype since those are symbols like $ and it's a coincidence that teletype
-% is used for both code and our symbols.
 ``buy up to 1 $\ETH$ in exchange for $\BTC$ at a rate up to 0.5 $\BTC$ per $\ETH$."
 In this case, since the price of one $\ETH$ is equal to 0.2 $\BTC$, the order
 can be executed at the prevailing market rate.
@@ -526,49 +583,13 @@ Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
 \end{exmp}
 
+% ===============================================================================
+
 \subsection{Limit order as a set of inequalities}
 Any limit order as defined above can be translated into inequalities involving
 quantity of exchanged tokens and token exchange rates. Multiple limit orders
 can be converted into a system of inequalities, which collectively constrain
 potential exchange outcomes.
-
-In both DaoCross and DaoSwap, a swap between a given base/quote token pair
-occurs at a single exchange rate, i.e., the clearing price is the same for
-all executed orders. On the other hand, quantity exchanged is specific to
-each order and each order's constraint on quantity exchanged cannot be
-violated. In the same way each order can be executed with a non-null quantity
-only when the single exchange rate is compatible with the limit price.
-
-In the sequel we use an asterisk to denote clearing quantity and exchange
-rate:
-\begin{itemize}
-	\item $q_{base}^*(o_i)$ denotes quantity of the base token exchanged in a
-	      swap from order $o_i$
-	\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
-	      and base tokens for all the swaps
-	      % \item Same definitions hold for the quote token $q_{quote}^*$ and $p_{quote}^*$
-\end{itemize}
-Note that
-\[
-	p_{quote\_per\_base} =
-	\frac{1}{p_{base\_per\_quote}}.
-\]
-If prices of base and quote tokens are expressed in terms of a common currency
-(e.g., USD) then it holds that:
-\[
-	p_{quote\_per\_base} = \frac{p_{quote}}{p_{base}},
-\]
-where the numeraire plays the role of a quote token for both
-$p_{quote}$ and $p_{base}$ and is implicit.
-
-Given an order $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} we indicate with:
-\begin{itemize}
-	\item $action(o_i)$ the desired action ($\buy$ or $\sell$)
-	\item $q_{base}(o_i)$ the maximum desired quantity $q$
-	\item $base(o_i)$ the base token $\tA$
-	\item $p(o_i)$ the limit price $p$ (in terms of quote per base)
-	\item $quote(o_i)$ the quote token $\tB$
-\end{itemize}
 
 \subsubsection{Inequalities for buy order}
 An order of the form $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} means
@@ -582,10 +603,12 @@ and clearing exchange rate:
 	(q_\tA^*(o_i) = 0)
 \end{equation*}
 The constraint on the quantity exchanged is conditioned on the corresponding
-price satisfying the desired limit price constraint: if the desire limit price
+price satisfying the desired limit price constraint: if the desired limit price
 constraint is not met, the swap cannot be carried out and the exchanged quantity
 is 0.
 
+% TODO(gp): Personally although less Latex-fancy this renders better IMO.
+%\subsubsection{Example of inequalities for buy order}
 \begin{exmp}[Inequalities for buy order]
 An order of the form $o_1 = \texttt{(\buy, 2, \tA, 3, \tB)}$ means
 ``buy 2 units of token $\tA$ in exchange for token $\tB$ with a limit price up
@@ -630,6 +653,8 @@ at least 2 $\tB$ per unit of $\tA$", which corresponds to
 \end{equation*}
 \end{exmp}
 
+% ===============================================================================
+
 \subsection{Order normalization}
 When the exchange rate between two tokens is known, it is possible to convert
 buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders where all
@@ -665,7 +690,7 @@ provided that
 %Since p_A / p_B <= lp_B <-> p_B / p_A >= 1 / lp_B and q_A = c * q_B, the first order o_2 = (sell, q_B, B, lp_A, A) is equivalent to (buy, c * q_B, A, 1 / lp_B, B).
 
 % \subsubsection{Example of order equivalence}
-%Example of order equivalence. Assume that Alice wants to buy 5 wBTC with ETH. The exchange rate ETH / wBTC is 0.1 (or equivalently 1 ETH corresponds to 10 wBTC). With her order, Alice wants to receive 5 wBTC in exchange for 0.5 ETH. Alice would be satisfied also with an order of selling 0.5 ETH against wBTC. 
+%Example of order equivalence. Assume that Alice wants to buy 5 wBTC with ETH. The exchange rate ETH / wBTC is 0.1 (or equivalently 1 ETH corresponds to 10 wBTC). With her order, Alice wants to receive 5 wBTC in exchange for 0.5 ETH. Alice would be satisfied also with an order of selling 0.5 ETH against wBTC.
 %
 %q_BTC < 4
 %p_ETH / p_BTC < 3
@@ -914,7 +939,7 @@ TODO(gp): check
 
 \section{Fees and tokenomics}
 DELOC charges a fee to each transaction based on the exchanged tokens.
-E.g., a transaction requiring 
+E.g., a transaction requiring
 
 % ###############################################################################
 
