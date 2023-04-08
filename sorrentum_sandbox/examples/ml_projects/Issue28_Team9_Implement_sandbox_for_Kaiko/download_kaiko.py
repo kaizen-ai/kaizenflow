@@ -15,43 +15,39 @@ class KaikoDownloader(ssandown.DataDownloader):
     """
     Class for downloading kaiko Data using kaiko python library
     """
-
-    _MAX_LINES = 1000
+    _EXCHANGE = "cbse"
     _UNIVERSE = {
         "kaiko": [
-            "ETH-USD",
-            "BTC-USD",
+            "eth-usd",
+            "btc-usd",
         ]
     }
+    # Setting a client with API key
+    _API_KEY = "1d16b71fdfa506550a8a9cc5faa36fa4"
+    _KC = ka.KaikoClient(api_key=_API_KEY)
 
     def download(
-        self, start_timestamp: str, end_timestamp: str, interval
+        self, start_timestamp: str, end_timestamp: str
     ) -> ssandown.RawData:
         dfs = []
         for symbol in self._UNIVERSE["kaiko"]:
 
-            data = ka.download(
-            tickers = symbol,
-            start=start_timestamp,
-            end=end_timestamp,
-            interval = interval,
-            ignore_tz = True,
-            prepost = False,
-            )
-            data['timestamp']=data.index
+            data = ka.Trades(
+                data_version="v1",
+                exchange=self._EXCHANGE,
+                instrument=symbol,
+                start_time=start_timestamp,
+                end_time=end_timestamp,
+                client=self._KC,
+            ).df
             data['currency_pair']=symbol
-            data['exchangeTimezoneName'] = ka.Ticker(symbol).history_metadata['exchangeTimezoneName']
-            data['timezone'] = ka.Ticker(symbol).history_metadata['timezone']
             
             dfs.append(data)
             # Delay for throttling in seconds.
             time.sleep(0.5)
         df = pd.concat(dfs, ignore_index=True)
         df.columns=[x.replace(' ','_').lower() for x in list(df.columns)]
-        print(df.columns)
-
-        #df = df[df["timestamp"] <= end_timestamp_as_unix]
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
         return ssandown.RawData(df)
 
-print('Done')
+print('download_kaiko.py Done')

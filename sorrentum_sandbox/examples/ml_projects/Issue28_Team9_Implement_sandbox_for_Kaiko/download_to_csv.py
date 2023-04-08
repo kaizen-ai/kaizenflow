@@ -11,7 +11,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hio as hio
 import common.download as sinsadow
-import Issue28_Team9_Implement_sandbox_for_Kaiko.download_kaiko as sisebido
+import download_kaiko as sisebido
 import common.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
