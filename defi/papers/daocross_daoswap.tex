@@ -114,6 +114,8 @@ decentralized approaches, without
 suffering of impermanent loss, contrary to automatic market
 makers (such as Uniswap).
 
+% ===============================================================================
+
 \subsection{Token swap as financial primitive}
 Swapping tokens is one of the most important and widely used primitives in
 decentralized finance.
@@ -134,6 +136,8 @@ end-users increased embracing of the principles of self-custody and
 decentralization.
 We believe that this trend towards larger trading volumes and will only
 accelerate in the future.
+
+% ===============================================================================
 
 \subsection{Limit orders as an interface to token swap}
 A limit order expresses a commitment to buy or to sell an asset, up to
@@ -159,6 +163,8 @@ however, limit orders currently do not play as prominent a role in the realm of
 decentralized finance. Instead, alternative approaches that rely upon
 automated market makers (AMMs) have taken center stage, and these approaches
 offer a different set of advantages and disadvantages.
+
+% ===============================================================================
 
 \subsection{How exchanges create value}
 To better understand the comparative advantages and disadvantages of different
@@ -233,6 +239,8 @@ are completely in charge of their funds.
 A major disadvantage of using on-chain limit order books in decentralized
 exchange is cost of computation. Continual submission and cancelation of orders
 incurs costs, as does the ongoing process of matching supply and demand.
+
+% ===============================================================================
 
 \subsection{The advantages of X}
 
@@ -312,6 +320,8 @@ clearing price and determining fill prioritization rules raises several
 questions. We will consider and address these in the sequel, but to begin, we
 will discuss a more constrained setting.
 
+% ===============================================================================
+
 \subsection{Breaking the symmetry}
 To simplify, we follow the practice of FX (foreign exchange) futures markets,
 which break the symmetry by specifying two non-interchangeable roles:
@@ -343,6 +353,8 @@ quote token reversed), each with its own limit order book.
 Using our example, this would mean treating $\BTC/\ETH$ and $\ETH/\BTC$ as
 separate token pairs, even though the union of the underlying parties and
 sources of liquidity are the same.
+
+% ===============================================================================
 
 \subsection{Basket case}
 It seems plausible that by retaining the symmetry in the two-token case and
@@ -528,7 +540,7 @@ rate:
 
 \subsection{Execution of orders}
 Next we introduce some examples of market order and limit order behavior when
-a clearing rate has been set.
+a clearing exchange rate has been set.
 In particular, consider a swap for the tokens $\ETH$, $\BTC$ and assume that
 the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
 0.2 $\BTC$ can be exchanged for 1 $\ETH$ and vice versa).
@@ -716,6 +728,8 @@ of BTC/ETH would be considered a cross pair in the world of traditional
 finance. Because most cross pairs are not traded directly on exchanges, we
 must derive a clearing price from pairs involving stablecoins.
 
+% ===============================================================================
+
 \subsection{Lit exchange bid-ask midpoint reference price}
 Let $\bidbtc, \askbtc$ be stablecoin-denominated top-of-book bid-ask prices
 for $\BTC$ (e.g., expressed in $\USDC$), and $\bideth, \asketh$ be the analogous
@@ -739,6 +753,8 @@ When using either an on-chain price oracle or an exchange as a price oracle,
 it is possible to perform a time or volume weighted average of prices so as
 to avoid extreme price variations and to mitigate the risk and effects of any
 market manipulation attemps.
+
+% ===============================================================================
 
 \subsection{Order crossing}
 At regular time intervals, order submissions are cut off and reference prices
@@ -796,6 +812,8 @@ inequalities on quantities and prices corresponding to the orders and on the
 need that the total quantity exchanged of each token be preserved across the
 swaps, i.e., the quantity bought for each token is equal to the quantity sold.
 
+% ===============================================================================
+
 \subsection{Limit order inequalities}
 Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
 \[
@@ -827,6 +845,8 @@ Then, each limit order $o_i$ may be expressed as
 	(q_i^* = 0)
 \]
 
+% ===============================================================================
+
 \subsection{No arbitrage}
 Let $T$ denote the intersection of the union of all base tokens and the union
 of all quote tokens:
@@ -849,6 +869,8 @@ Note that, in the case $w = u$, this enforces a unique exchange rate between
 a pair of tokens (changing the roles of the base and quote tokens inverts the
 exchange rate).
 
+% ===============================================================================
+
 \subsection{Conservation of exchanged value}
 
 For each order $i$, let $\tilde{q}_i^*$ denote the quantity of
@@ -858,6 +880,8 @@ $\quotetoken_i$ exchanged. Then we must have
 \]
 for each $i$. In effect, this enforces the market clearing price for each
 order.
+
+% ===============================================================================
 
 \subsection{Conservation of exchanged tokens}
 
@@ -885,6 +909,8 @@ to each order;
 in particular, it expresses the notion that each filled order must have,
 across the collection of orders, suitable counterparties.
 
+% ===============================================================================
+
 \subsection{Combining the constraints}
 
 We now collect the constraints that must be satisfied:
@@ -903,6 +929,8 @@ We now collect the constraints that must be satisfied:
 	\end{cases}
 \end{equation}
 
+% ===============================================================================
+
 \subsection{Solution of the general DaoSwap problem}
 
 The general solution of the DaoSwap problem must satisfy a set of non-linear,
@@ -912,7 +940,9 @@ It can still be solved in an effective way with solvers like ...
 
 TODO(gp): explain better, cite
 
-\subsection{Reformulating the DaoCross problem}
+% ===============================================================================
+
+\subsection{DaoCross problem as simplified DaoSwap problem}
 In the DaoCross set-up, the price of the tokens involved in the swap is
 determined by an external oracle.
 This allows simplifying the general problem by applying the equivalence
@@ -944,6 +974,8 @@ E.g., a transaction requiring
 % ###############################################################################
 
 \section{Implementation details}
+
+% ===============================================================================
 
 \subsection{DaoCross and DaoSwap Architecture}
 
