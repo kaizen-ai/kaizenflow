@@ -29,7 +29,7 @@ _LOG = logging.getLogger(__name__)
 
 
   ##-- For Yearly Commits
-yc_df=pd.DataFrame()
+#yc_df=pd.DataFrame()
 
  ##-- For Issues Data
 #issues_df=pd.DataFrame()
@@ -63,7 +63,7 @@ def downloader(pair,**kwargs):
 
 
   ##-- For Yearly Commits
-  #yc_df=pd.DataFrame()
+  yc_df=pd.DataFrame()
 
   ##-- For Issues Data
   issues_df=pd.DataFrame()
