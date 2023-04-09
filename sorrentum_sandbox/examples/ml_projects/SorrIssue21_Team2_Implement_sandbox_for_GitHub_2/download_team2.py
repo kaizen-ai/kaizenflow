@@ -25,7 +25,7 @@ _LOG = logging.getLogger(__name__)
 
 
   #Defining Data Frame for main data
-data=pd.DataFrame()
+#data=pd.DataFrame()
 
 
   ##-- For Yearly Commits
@@ -59,7 +59,7 @@ def downloader(pair,**kwargs):
 
 
   #Defining Data Frame for main data
-  #data=pd.DataFrame()
+  data=pd.DataFrame()
 
 
   ##-- For Yearly Commits
