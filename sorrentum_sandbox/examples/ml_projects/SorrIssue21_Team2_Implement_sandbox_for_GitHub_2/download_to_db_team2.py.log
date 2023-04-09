@@ -1,0 +1,12 @@
+18:59:45 - [36mINFO [0m download_team2.py downloader:134                       18:59:45 - [36mINFO [0m download_team2.py downloader:134                       Downloaded data: 
+	           id            created_at            updated_at  \
+0  121470383  2018-02-14T04:26:27Z  2023-04-09T14:09:31Z   
+
+              pushed_at    size  stargazers_count  watchers_count  \
+0  2023-04-09T22:50:58Z  438898             10172           10172   
+
+   forks_count  open_issues_count  watchers  network_count  subscribers_count  \
+0         2820                864     10172           2820                269   
+
+   owner_id  organization_id  Crypto  
+0  35608259         35608259  solana  

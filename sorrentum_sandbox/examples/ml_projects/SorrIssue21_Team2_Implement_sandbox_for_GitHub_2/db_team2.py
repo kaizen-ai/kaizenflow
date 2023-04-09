@@ -28,7 +28,6 @@ def get_github_create_main_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS github_main(
-        # needs modify:
              id SERIAL PRIMARY KEY,
              created_at TIMESTAMP WITH TIME ZONE,
             updated_at TIMESTAMP,
@@ -56,7 +55,6 @@ def get_github_create_issues_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS github_issues(
-          # needs modify:
             id SERIAL PRIMARY KEY,
             number NUMERIC,
             title VARCHAR(255) NOT NULL,
@@ -82,7 +80,6 @@ def get_github_create_commits_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS github_commits(
-          # needs modify:
           total NUMERIC,
           week NUMERIC,
           days VARCHAR(255) NOT NULL,
