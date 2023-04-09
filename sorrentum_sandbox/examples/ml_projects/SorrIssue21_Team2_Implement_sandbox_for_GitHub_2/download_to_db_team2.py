@@ -20,8 +20,8 @@ import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
-import sorrentum_sandbox.examples.ml_project.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.db_team2 as sisebidb
-import sorrentum_sandbox.examples.ml_project.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.download_team2 as sisebido
+import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.db_team2 as sisebidb
+import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.download_team2 as sisebido
 
 
 _LOG = logging.getLogger(__name__)
