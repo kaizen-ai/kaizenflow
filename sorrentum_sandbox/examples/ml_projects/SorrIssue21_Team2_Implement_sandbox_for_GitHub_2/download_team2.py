@@ -23,6 +23,17 @@ pd.set_option('display.max_columns', None)
 
 _LOG = logging.getLogger(__name__)
 
+
+  #Defining Data Frame for main data
+data=pd.DataFrame()
+
+
+  ##-- For Yearly Commits
+yc_df=pd.DataFrame()
+
+ ##-- For Issues Data
+issues_df=pd.DataFrame()
+
 def downloader(pair,**kwargs):
 
   ##Links for requests
@@ -48,14 +59,14 @@ def downloader(pair,**kwargs):
 
 
   #Defining Data Frame for main data
-  data=pd.DataFrame()
+  #data=pd.DataFrame()
 
 
   ##-- For Yearly Commits
-  yc_df=pd.DataFrame()
+  #yc_df=pd.DataFrame()
 
   ##-- For Issues Data
-  issues_df=pd.DataFrame()
+  #issues_df=pd.DataFrame()
 
   #Creating a loop to get the required data---
 
