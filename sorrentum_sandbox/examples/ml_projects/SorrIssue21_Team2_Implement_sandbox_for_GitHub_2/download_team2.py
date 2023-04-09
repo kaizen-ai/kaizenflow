@@ -32,7 +32,7 @@ _LOG = logging.getLogger(__name__)
 yc_df=pd.DataFrame()
 
  ##-- For Issues Data
-issues_df=pd.DataFrame()
+#issues_df=pd.DataFrame()
 
 def downloader(pair,**kwargs):
 
@@ -66,7 +66,7 @@ def downloader(pair,**kwargs):
   #yc_df=pd.DataFrame()
 
   ##-- For Issues Data
-  #issues_df=pd.DataFrame()
+  issues_df=pd.DataFrame()
 
   #Creating a loop to get the required data---
 
