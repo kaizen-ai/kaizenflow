@@ -84,7 +84,7 @@ def get_github_create_commits_table_query() -> str:
           week NUMERIC,
           days VARCHAR(255) NOT NULL,
           Crypto_Name VARCHAR(255) NOT NULL,
-          Extension ,
+          Extension VARCHAR(255) NOT NULL,
           Sun NUMERIC,
           Mon NUMERIC,
           Tue NUMERIC,
@@ -174,13 +174,13 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         as downloading the data, but as an example this suffices.
         """
         cursor = self.db_conn.cursor()
-        #
+        
         query = get_github_create_main_table_query()
         cursor.execute(query)
-        #
+        
         query = get_github_create_issues_table_query()
         cursor.execute(query)
-        #
+        
         query = get_github_create_commits_table_query()
         cursor.execute(query)
 
