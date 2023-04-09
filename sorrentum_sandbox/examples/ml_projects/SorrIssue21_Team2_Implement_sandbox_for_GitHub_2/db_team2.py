@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 Implementation of load part of the ETL and QA pipeline.
 
