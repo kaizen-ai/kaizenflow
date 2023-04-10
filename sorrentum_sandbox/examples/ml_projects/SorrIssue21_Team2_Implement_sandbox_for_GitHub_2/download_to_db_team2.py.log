@@ -1,4 +1,4 @@
-20:57:50 - [36mINFO [0m download_team2.py downloader:134                       20:57:50 - [36mINFO [0m download_team2.py downloader:134                       GitHub Main data: 
+21:01:17 - [36mINFO [0m download_team2.py downloader:134                       21:01:17 - [36mINFO [0m download_team2.py downloader:134                       GitHub Main data: 
 	           id            created_at            updated_at  \
 0  121470383  2018-02-14T04:26:27Z  2023-04-10T00:14:57Z   
 
@@ -10,7 +10,7 @@
 
    owner_id  organization_id  Crypto  
 0  35608259         35608259  solana  
-20:57:50 - [36mINFO [0m download_team2.py downloader:135                       20:57:50 - [36mINFO [0m download_team2.py downloader:135                       GitHub Issues data: 
+21:01:17 - [36mINFO [0m download_team2.py downloader:135                       21:01:17 - [36mINFO [0m download_team2.py downloader:135                       GitHub Issues data: 
 	            id  number                                              title  \
 0  1659926837   31117                   update influx enterprise scripts   
 1  1659139915   31115                      bank_from_latest_snapshot_dir   
@@ -38,7 +38,7 @@
 2     brooksprumo    840349      solana   /issues  
 3        t-nelson    490004      solana   /issues  
 4  ryleung-solana  91908731      solana   /issues  
-20:57:50 - [36mINFO [0m download_team2.py downloader:136                       20:57:50 - [36mINFO [0m download_team2.py downloader:136                       GitHub Yearly Commits data: 
+21:01:17 - [36mINFO [0m download_team2.py downloader:136                       21:01:17 - [36mINFO [0m download_team2.py downloader:136                       GitHub Yearly Commits data: 
 	    total        week                         days Crypto_Name  \
 0    127  1649548800  [5, 26, 21, 18, 23, 24, 10]      solana   
 1    124  1650153600   [1, 19, 34, 26, 14, 25, 5]      solana   

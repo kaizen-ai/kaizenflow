@@ -34,7 +34,7 @@ _LOG = logging.getLogger(__name__)
  ##-- For Issues Data
 #issues_df=pd.DataFrame()
 
-def downloader(pair,**kwargs):
+def downloader(pair,pair2,**kwargs):
 
   ##Links for requests
   BTC = "https://api.github.com/repos/bitcoin/bitcoin"
