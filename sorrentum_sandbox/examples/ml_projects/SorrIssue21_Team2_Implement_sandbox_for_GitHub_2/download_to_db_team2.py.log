@@ -1,54 +1,29 @@
-12:01:18 - [36mINFO [0m download_team2.py downloader:138                       12:01:18 - [36mINFO [0m download_team2.py downloader:138                       GitHub Main data: 
-	           id            created_at            updated_at  \
-0  121470383  2018-02-14T04:26:27Z  2023-04-10T11:26:29Z   
-
-              pushed_at    size  stargazers_count  watchers_count  \
-0  2023-04-10T15:37:08Z  438942             10178           10178   
-
-   forks_count  open_issues_count  watchers  network_count  subscribers_count  \
-0         2823                868     10178           2823                269   
-
-   owner_id  organization_id  Crypto  
-0  35608259         35608259  solana  
-12:01:18 - [36mINFO [0m download_team2.py downloader:139                       12:01:18 - [36mINFO [0m download_team2.py downloader:139                       GitHub Issues data: 
+12:04:33 - [36mINFO [0m download_team2.py downloader:147                       12:04:33 - [36mINFO [0m download_team2.py downloader:147                       
+Inserting GitHub Issues data: 
 	            id  number                                              title  \
-0  1660897309   31127       Extract new_epoch processing out of new_bank   
-1  1660874528   31126  Documentation typo in on-chain-programs/deploy...   
-2  1660507215   31125                     doc: typo in geyser plugin doc   
-3  1660506333   31124              Geyser drops finalized notifications    
-4  1660494189   31123               Bump hashbrown from 0.12.3 to 0.13.2   
+0  1659834974   27441  doc: correct sqlite & qrencode versions used i...   
+1  1659833323   27440     contrib: followups to #27358 (verify-binaries)   
+2  1658927974   27436                  test: LLVM/Clang 16 for MSAN jobs   
+3  1658002064   27434  validation: implement MaybeInvalidateFork() an...   
+4  1657857428   27433  getblocktemplate improvements for segwit and s...   
 
              created_at            updated_at closed_at author_association  \
-0  2023-04-10T14:49:40Z  2023-04-10T15:36:22Z      None        CONTRIBUTOR   
-1  2023-04-10T14:29:52Z  2023-04-10T14:32:06Z      None               NONE   
-2  2023-04-10T09:25:58Z  2023-04-10T09:37:31Z      None        CONTRIBUTOR   
-3  2023-04-10T09:25:05Z  2023-04-10T09:28:49Z      None               NONE   
-4  2023-04-10T09:13:24Z  2023-04-10T09:13:25Z      None        CONTRIBUTOR   
+0  2023-04-09T10:56:58Z  2023-04-10T04:07:55Z      None             MEMBER   
+1  2023-04-09T10:50:12Z  2023-04-10T16:04:30Z      None             MEMBER   
+2  2023-04-07T15:27:28Z  2023-04-10T09:57:33Z      None             MEMBER   
+3  2023-04-06T20:25:43Z  2023-04-08T14:07:18Z      None             MEMBER   
+4  2023-04-06T18:18:37Z  2023-04-10T04:08:38Z      None             MEMBER   
 
-   comments                                               body  \
-0         0  #### Problem\r\n\r\n- extract new epoch proces...   
-1         0  #### Problem\r\n\r\nTypo in `on-chain-programs...   
-2         0  #### Problem\r\n\r\nTypo `ReplicaTransactionIn...   
-3         0  #### Problem\r\n\r\nIt seems that quite often,...   
-4         0  Bumps [hashbrown](https://github.com/rust-lang...   
+   comments                                               body user_login  \
+0         1   Followup to https://github.com/bitcoin/bitcoi...   fanquake   
+1         2  Followup to #27358, fixing up the example comm...   fanquake   
+2         1  Similar to other CI infra changes we've made r...   fanquake   
+3         1  Closes https://github.com/bitcoin/bitcoin/issu...  pinheadmz   
+4         2  **Sigops**\r\n\r\nTwo recent F2Pool blocks vio...      Sjors   
 
-        user_login   user_id Crypto_Name Extension  
-0         HaoranYi    219428      solana   /issues  
-1        Carlosted  76854355      solana   /issues  
-2         diman-io  71597545      solana   /issues  
-3     linuskendall   5172293      solana   /issues  
-4  dependabot[bot]  49699333      solana   /issues  
-12:01:18 - [36mINFO [0m download_team2.py downloader:140                       12:01:18 - [36mINFO [0m download_team2.py downloader:140                       GitHub Yearly Commits data: 
-	    total        week                        days Crypto_Name  \
-0    124  1650153600  [1, 19, 34, 26, 14, 25, 5]      solana   
-1    131  1650758400  [1, 25, 18, 25, 37, 16, 9]      solana   
-2    106  1651363200  [4, 20, 22, 24, 16, 16, 4]      solana   
-3     10  1651968000       [0, 0, 0, 7, 3, 0, 0]      solana   
-4    103  1652572800  [0, 11, 15, 21, 14, 35, 7]      solana   
-
-                Extension  Sun  Mon  Tue  Wed  Thur  Fri  Sat  
-0  /stats/commit_activity    1   19   34   26    14   25    5  
-1  /stats/commit_activity    1   25   18   25    37   16    9  
-2  /stats/commit_activity    4   20   22   24    16   16    4  
-3  /stats/commit_activity    0    0    0    7     3    0    0  
-4  /stats/commit_activity    0   11   15   21    14   35    7  
+   user_id Crypto_Name Extension  
+0   863730     bitcoin   /issues  
+1   863730     bitcoin   /issues  
+2   863730     bitcoin   /issues  
+3  2084648     bitcoin   /issues  
+4    10217     bitcoin   /issues  

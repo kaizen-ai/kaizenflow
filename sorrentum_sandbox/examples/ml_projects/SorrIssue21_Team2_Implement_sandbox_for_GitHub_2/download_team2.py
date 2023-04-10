@@ -144,10 +144,10 @@ def downloader(pair,target_table,**kwargs):
     _LOG.info(f"\nInserting GitHub Main data: \n\t {data.head()}")
   elif target_table =='github_commits':
     table=yc_df
-    _LOG.info(f"\nInserting GitHub Issues data: \n\t {issues_df.head()}")
+    _LOG.info(f"\nInserting GitHub Yearly Commits data: \n\t {yc_df.head()}")
   elif target_table =='github_issues':
     table=issues_df
-    _LOG.info(f"\nInserting GitHub Yearly Commits data: \n\t {yc_df.head()}")  
+    _LOG.info(f"\nInserting GitHub Issues data: \n\t {issues_df.head()}")  
   else:
     table=data
 
