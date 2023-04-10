@@ -7,7 +7,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
 import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
-#ok
+#donwla
 _LOG = logging.getLogger(__name__)
 
 
@@ -32,7 +32,7 @@ def _add_download_args(
         help="End of the loaded period, in UNIX",
     )
     parser.add_argument(
-        "--target_table",
+        "--coingecko_data",
         action="store",
         required=True,
         type=str,
@@ -70,7 +70,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    saver.save(raw_data, args.target_table)
+    saver.save(raw_data, args.coingecko_data)
 
 
 if __name__ == "__main__":
