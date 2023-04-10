@@ -64,7 +64,7 @@ def get_github_create_issues_table_query() -> str:
             author_association VARCHAR(255) NOT NULL,
             comments NUMERIC,
             body VARCHAR(255) NOT NULL,
-            user_login NUMERIC,
+            user_login VARCHAR(255) NOT NULL,
             user_id NUMERIC,
             Crypto_Name VARCHAR(255) NOT NULL,
             Extension VARCHAR(255) NOT NULL
