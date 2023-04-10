@@ -34,7 +34,7 @@ _LOG = logging.getLogger(__name__)
  ##-- For Issues Data
 #issues_df=pd.DataFrame()
 
-def downloader(pair,pair2,**kwargs):
+def downloader(pair,**kwargs):
 
   ##Links for requests
   BTC = "https://api.github.com/repos/bitcoin/bitcoin"
@@ -73,7 +73,7 @@ def downloader(pair,pair2,**kwargs):
   ## Use this to fetch for all cryptos
   #crypto = [BTC, SOL, ETH, DOGE, MATIC, STORJ, AVAX, SAND, DYDX, BNB]
   ## Use this for specific crypto
-  crypto = [SOL]
+  crypto = [pair]
 
   #extensions = [yearly_commits, weekly_commits_aggregated , total_commits_users, hourly_commits, issues , issue_comments]
   extensions = [issues, yearly_commits]
@@ -134,6 +134,6 @@ def downloader(pair,pair2,**kwargs):
   _LOG.info(f"GitHub Main data: \n\t {data.head()}")
   _LOG.info(f"GitHub Issues data: \n\t {issues_df.head()}")
   _LOG.info(f"GitHub Yearly Commits data: \n\t {yc_df.head()}")  
-  return ssandown.RawData(data,issues_df)
+  return ssandown.RawData(data)
 
 
