@@ -38,28 +38,27 @@ def downloader(pair,**kwargs):
 
   ##Links for requests
   if pair =='BTC':
-	  BTC = "https://api.github.com/repos/bitcoin/bitcoin"
-	  crypto = [BTC]
+	  link = "https://api.github.com/repos/bitcoin/bitcoin"
   elif pair =='SOL':
-  	SOL = "https://api.github.com/repos/solana-labs/solana"
-    crypto = [SOL]
+    link = "https://api.github.com/repos/solana-labs/solana"
   elif pair =='ETH':	
-	  ETH = "https://api.github.com/repos/ethereum"
+	  link = "https://api.github.com/repos/ethereum"
   elif pair =='DOGE':	
-	  DOGE = "https://api.github.com/repos/dogecoin/dogecoin"
+	  link = "https://api.github.com/repos/dogecoin/dogecoin"
   elif pair =='MATIC': 	
-	  MATIC = "https://api.github.com/repos/maticnetwork/bor"
+	  link = "https://api.github.com/repos/maticnetwork/bor"
   elif pair =='STORJ':	
-	  STORJ = "https://api.github.com/repos/storj/storj"
+	  link = "https://api.github.com/repos/storj/storj"
   elif pair =='AVAX':	
-	  AVAX = "https://api.github.com/repos/ava-labs"
+	  link = "https://api.github.com/repos/ava-labs"
   elif pair =='SAND':	
-	  SAND = "https://api.github.com/repos/thesandboxgame"
+	  link = "https://api.github.com/repos/thesandboxgame"
   elif pair =='DYDX':	
-	  DYDX = "https://api.github.com/repos/dydxprotocol"
+	  link = "https://api.github.com/repos/dydxprotocol"
   elif pair =='BNB':
-	  BNB = "https://api.github.com/repos/bnb-chain"
+	  link = "https://api.github.com/repos/bnb-chain"
 
+  crypto = [link]
 
   #Extension for different stats
   yearly_commits = "/stats/commit_activity"
