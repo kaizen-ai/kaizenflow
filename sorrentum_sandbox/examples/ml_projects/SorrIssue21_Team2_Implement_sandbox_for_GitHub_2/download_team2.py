@@ -140,14 +140,14 @@ def downloader(pair,**kwargs):
   _LOG.info(f"GitHub Yearly Commits data: \n\t {yc_df.head()}")  
 
   #Datatable to be inserted
-   if target_table =='github_main':
-     table=data
-   elif target_table =='github_commits':
-     table=yc_df
-   elif target_table =='github_issues':
-     table=issues_df
-   else:
-     table=data
+  if target_table =='github_main':
+    table=data
+  elif target_table =='github_commits':
+    table=yc_df
+  elif target_table =='github_issues':
+    table=issues_df
+  else:
+    table=data
   return ssandown.RawData(table)
 
 
