@@ -21,12 +21,16 @@ _LOG = logging.getLogger(__name__)
 def match_orders(
     orders: List[ddacrord.Order],
     clearing_price: float,
+    base_token: str,
+    quote_token: str,
 ) -> pd.DataFrame:
     """
-    Implement DaoCross orders matching.
+    Implement DaoCross orders matching for token swaps.
 
     :param orders: orders to match
     :param clearing_price: clearing price
+    :param base_token: name of the base token for swaps
+    :param quote_token: name of the quote token for swaps
     :return: transfers implemented to match orders
     """
     _LOG.debug(hprint.to_str("orders"))
@@ -39,7 +43,15 @@ def match_orders(
     sell_heap = []
     # Push orders to the heaps based on the action type and filtered by limit price.
     for order in orders:
-        hdbg.dassert_type_is(order, ddacrord.Order)
+        hdbg.dassert_eq(
+            sorted(order.base_token, order.quote_token),
+            sorted(base_token, quote_token),
+        )
+        # Adjust all orders to the same base and quote tokens using order
+        # equivalence.
+        if order.base_token == quote_token:
+            order = get_equivalent_order(order)
+        # Distribute equalized orders on buy and sell heaps.
         if order.action == "buy":
             if order.limit_price >= clearing_price:
                 heapq.heappush(buy_heap, order)
@@ -93,7 +105,51 @@ def match_orders(
         sell_order.quantity -= quantity
     # Get DataFrame with the transfers implemented to match the passed orders.
     transfer_df = get_transfer_df(transfers)
-    return transfer_df
+    # Check if there are any remaining orders.
+    if buy_heap:
+        _LOG.warning("Buy orders remain unmatched: %s", buy_heap)
+    if sell_heap:
+        _LOG.warning("Sell orders remain unmatched: %s", sell_heap)
+    return transfers_df
+
+
+def get_equivalent_order(
+    order: ddacrord.Order,
+    clearing_price: float,
+) -> order: ddacrord.Order:
+    """
+    Get equivalent DaoCross order.
+
+    :param order: input order
+    :param clearing_price: clearing price
+    :return: order equivalent to the input one
+    """
+    hdbg.dassert_type_is(order, ddacrord.Order)
+    # Swap base and quote token values.
+    base_token = order.quote_token
+    quote_token = order.base_token
+    # Set action opposite to the input's one.
+    if order.action == "buy":
+        action = "sell"
+    elif order.action == "sell":
+        action = "buy"
+    else:
+        raise ValueError("Invalid action='%s'" % order.action)
+    # Adjust quantity and limit price.
+    quantity = order.quantity / clearing_price
+    limit_price = 1 / order.limit_price
+    # Build equivalent order.
+    order = ddacrord.Order(
+        base_token,
+        quote_token,
+        action,
+        quantity,
+        limit_price,
+        timestamp,
+        deposit_address,
+        wallet_address,
+    )
+    return order
 
 
 def get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
