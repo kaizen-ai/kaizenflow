@@ -1329,8 +1329,8 @@ goes up, as expected.
 \subsection{Supply liquidity}
 
 TODO(Paul): Here we use $p$ as effective price of transacting quantity $q$.
-Switch to the more natural cumulative quantity up to a given (max) price $p$
-(as in \cite{Yo20}).
+Using cumulative quantity up to a given (max) price $p$ (as in \cite{Yo20}) is
+more natural for some analyses.
 
 Rephrasing, suppose $q$ denotes quantity of token $\tA$ that we wish to
 purchase. If the current state of the market is $a_0, b_0$, then the price $p$
@@ -1344,6 +1344,19 @@ terms of quantity, we have
     q = a_0 - \frac{k}{a_0 p} = a_0 \left(1 - \frac{p_0}{p}\right)
 \]
 which expresses cumulative quantity $q$ available at average price $p$.
+
+\subsubsection{Slippage and post-trade state}
+
+Measure slippage as the relative difference between effective buy price and
+market price $p_0$. We calculate
+\[
+    \frac{p - p_0}{p_0} = \frac{a_0}{a_0 - q} - 1 = \frac{q}{a_0 - q}
+\]
+Note that this only depends upon amount of $\tA$ in the pool and the purchase
+quantity. TODO(Paul): find and cite the earliest references for this.
+Note that this is approximately linear in $q$ for large $a_0$ (in other
+words, market impact is approximately linear when there is sufficient
+depth). Note that this is independent of volatility and turnover.
 
 When a buy transaction takes places, the market price changes from
 \[
@@ -1362,7 +1375,7 @@ are cleared (the new best offer is greater than the effective price of the buy
 order that cleared multiple levels of offers).
 
 Following a transaction, marginal quantity readjusts given the new position
-$(a_1, b_1)$ of the book
+$(a_1, b_1)$ of the book.
 
 % ###############################################################################
 
