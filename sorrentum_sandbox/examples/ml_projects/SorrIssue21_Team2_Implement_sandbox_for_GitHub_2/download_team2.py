@@ -37,16 +37,27 @@ _LOG = logging.getLogger(__name__)
 def downloader(pair,**kwargs):
 
   ##Links for requests
-  BTC = "https://api.github.com/repos/bitcoin/bitcoin"
-  SOL = "https://api.github.com/repos/solana-labs/solana"
-  ETH = "https://api.github.com/repos/ethereum"
-  DOGE = "https://api.github.com/repos/dogecoin/dogecoin"
-  MATIC = "https://api.github.com/repos/maticnetwork/bor"
-  STORJ = "https://api.github.com/repos/storj/storj"
-  AVAX = "https://api.github.com/repos/ava-labs"
-  SAND = "https://api.github.com/repos/thesandboxgame"
-  DYDX = "https://api.github.com/repos/dydxprotocol"
-  BNB = "https://api.github.com/repos/bnb-chain"
+  if pair ==BTC:
+	BTC = "https://api.github.com/repos/bitcoin/bitcoin"
+	crypto = [BTC]
+  elif pair ==SOL:
+  	SOL = "https://api.github.com/repos/solana-labs/solana"
+  elif pair ==ETH:	
+	ETH = "https://api.github.com/repos/ethereum"
+  elif pair ==DOGE:	
+	DOGE = "https://api.github.com/repos/dogecoin/dogecoin"
+  elif pair ==MATIC: 	
+	MATIC = "https://api.github.com/repos/maticnetwork/bor"
+  elif pair ==STORJ:	
+	STORJ = "https://api.github.com/repos/storj/storj"
+  elif pair ==AVAX:	
+	AVAX = "https://api.github.com/repos/ava-labs"
+  elif pair ==SAND:	
+	SAND = "https://api.github.com/repos/thesandboxgame"
+  elif pair ==DYDX:	
+	DYDX = "https://api.github.com/repos/dydxprotocol"
+  elif pair ==BNB:
+	BNB = "https://api.github.com/repos/bnb-chain"
 
 
   #Extension for different stats
@@ -73,7 +84,7 @@ def downloader(pair,**kwargs):
   ## Use this to fetch for all cryptos
   #crypto = [BTC, SOL, ETH, DOGE, MATIC, STORJ, AVAX, SAND, DYDX, BNB]
   ## Use this for specific crypto
-  crypto = [pair]
+  #crypto = [pair]
 
   #extensions = [yearly_commits, weekly_commits_aggregated , total_commits_users, hourly_commits, issues , issue_comments]
   extensions = [issues, yearly_commits]
