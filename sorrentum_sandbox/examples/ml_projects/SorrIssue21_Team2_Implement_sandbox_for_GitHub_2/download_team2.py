@@ -131,7 +131,9 @@ def downloader(pair,**kwargs):
   #Renaming the columns
   issues_df = issues_df.rename(columns = {'user.login': 'user_login','user.id':'user_id'}, inplace = False)
       
-  _LOG.info(f"Downloaded data: \n\t {data.head()}")    
-  return ssandown.RawData(data)
+  _LOG.info(f"GitHub Main data: \n\t {data.head()}")
+  _LOG.info(f"GitHub Issues data: \n\t {issues_df.head()}")
+  _LOG.info(f"GitHub Yearly Commits data: \n\t {yc_df.head()}")  
+  return ssandown.RawData(data,issues_df,yc_df)
 
 
