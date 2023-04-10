@@ -134,6 +134,6 @@ def downloader(pair,**kwargs):
   _LOG.info(f"GitHub Main data: \n\t {data.head()}")
   _LOG.info(f"GitHub Issues data: \n\t {issues_df.head()}")
   _LOG.info(f"GitHub Yearly Commits data: \n\t {yc_df.head()}")  
-  return ssandown.RawData(data,issues_df,yc_df)
+  return ssandown.RawData(data,issues_df)
 
 
