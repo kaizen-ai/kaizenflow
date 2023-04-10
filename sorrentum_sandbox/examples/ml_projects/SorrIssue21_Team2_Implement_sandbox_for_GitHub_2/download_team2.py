@@ -27,7 +27,7 @@ _LOG = logging.getLogger(__name__)
  ##-- For Issues Data
 #issues_df=pd.DataFrame()
 
-def downloader(pair,**kwargs):
+def downloader(pair,target_table,**kwargs):
 
   ##Links for requests
   if pair =='BTC':
