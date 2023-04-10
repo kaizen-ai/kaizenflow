@@ -37,27 +37,28 @@ _LOG = logging.getLogger(__name__)
 def downloader(pair,**kwargs):
 
   ##Links for requests
-  if pair ==BTC:
-	BTC = "https://api.github.com/repos/bitcoin/bitcoin"
-	crypto = [BTC]
-  elif pair ==SOL:
+  if pair =='BTC':
+	  BTC = "https://api.github.com/repos/bitcoin/bitcoin"
+	  crypto = [BTC]
+  elif pair =='SOL':
   	SOL = "https://api.github.com/repos/solana-labs/solana"
-  elif pair ==ETH:	
-	ETH = "https://api.github.com/repos/ethereum"
-  elif pair ==DOGE:	
-	DOGE = "https://api.github.com/repos/dogecoin/dogecoin"
-  elif pair ==MATIC: 	
-	MATIC = "https://api.github.com/repos/maticnetwork/bor"
-  elif pair ==STORJ:	
-	STORJ = "https://api.github.com/repos/storj/storj"
-  elif pair ==AVAX:	
-	AVAX = "https://api.github.com/repos/ava-labs"
-  elif pair ==SAND:	
-	SAND = "https://api.github.com/repos/thesandboxgame"
-  elif pair ==DYDX:	
-	DYDX = "https://api.github.com/repos/dydxprotocol"
-  elif pair ==BNB:
-	BNB = "https://api.github.com/repos/bnb-chain"
+    crypto = [SOL]
+  elif pair =='ETH':	
+	  ETH = "https://api.github.com/repos/ethereum"
+  elif pair =='DOGE':	
+	  DOGE = "https://api.github.com/repos/dogecoin/dogecoin"
+  elif pair =='MATIC': 	
+	  MATIC = "https://api.github.com/repos/maticnetwork/bor"
+  elif pair =='STORJ':	
+	  STORJ = "https://api.github.com/repos/storj/storj"
+  elif pair =='AVAX':	
+	  AVAX = "https://api.github.com/repos/ava-labs"
+  elif pair =='SAND':	
+	  SAND = "https://api.github.com/repos/thesandboxgame"
+  elif pair =='DYDX':	
+	  DYDX = "https://api.github.com/repos/dydxprotocol"
+  elif pair =='BNB':
+	  BNB = "https://api.github.com/repos/bnb-chain"
 
 
   #Extension for different stats
