@@ -54,21 +54,7 @@ def get_github_create_issues_table_query() -> str:
     This table contains the data as it is downloaded.
     """
     query = """
-    CREATE TABLE  github_issues(
-            id SERIAL PRIMARY KEY,
-            number NUMERIC,
-            title VARCHAR(255) NOT NULL,
-            created_at TIMESTAMP,
-            updated_at TIMESTAMP,
-            closed_at TIMESTAMP,
-            author_association VARCHAR(255) NOT NULL,
-            comments NUMERIC,
-            body VARCHAR(255) NOT NULL,
-            user_login VARCHAR(255) NOT NULL,
-            user_id NUMERIC,
-            Crypto_Name VARCHAR(255) NOT NULL,
-            Extension VARCHAR(255) NOT NULL
-            )
+    DROP TABLE github_issues
             """
     return query
 

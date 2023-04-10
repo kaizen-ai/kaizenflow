@@ -1,29 +1,29 @@
-12:09:59 - [36mINFO [0m download_team2.py downloader:150                       12:09:59 - [36mINFO [0m download_team2.py downloader:150                       
+12:11:11 - [36mINFO [0m download_team2.py downloader:150                       12:11:11 - [36mINFO [0m download_team2.py downloader:150                       
 Inserting GitHub Issues data: 
 	            id  number                                              title  \
-0  1660897309   31127       Extract new_epoch processing out of new_bank   
-1  1660874528   31126  Documentation typo in on-chain-programs/deploy...   
-2  1660507215   31125                     doc: typo in geyser plugin doc   
-3  1660506333   31124              Geyser drops finalized notifications    
-4  1660494189   31123               Bump hashbrown from 0.12.3 to 0.13.2   
+0  1661014315   31128  cargo build-sbf depends on libssl.so.1.1, whic...   
+1  1660897309   31127       Extract new_epoch processing out of new_bank   
+2  1660874528   31126  Documentation typo in on-chain-programs/deploy...   
+3  1660507215   31125                     doc: typo in geyser plugin doc   
+4  1660506333   31124              Geyser drops finalized notifications    
 
              created_at            updated_at closed_at author_association  \
-0  2023-04-10T14:49:40Z  2023-04-10T15:36:22Z      None        CONTRIBUTOR   
-1  2023-04-10T14:29:52Z  2023-04-10T14:32:06Z      None               NONE   
-2  2023-04-10T09:25:58Z  2023-04-10T09:37:31Z      None        CONTRIBUTOR   
-3  2023-04-10T09:25:05Z  2023-04-10T09:28:49Z      None               NONE   
-4  2023-04-10T09:13:24Z  2023-04-10T09:13:25Z      None        CONTRIBUTOR   
+0  2023-04-10T16:10:30Z  2023-04-10T16:10:30Z      None               NONE   
+1  2023-04-10T14:49:40Z  2023-04-10T15:36:22Z      None        CONTRIBUTOR   
+2  2023-04-10T14:29:52Z  2023-04-10T14:32:06Z      None               NONE   
+3  2023-04-10T09:25:58Z  2023-04-10T09:37:31Z      None        CONTRIBUTOR   
+4  2023-04-10T09:25:05Z  2023-04-10T09:28:49Z      None               NONE   
 
-   comments                                               body  \
-0         0  #### Problem\r\n\r\n- extract new epoch proces...   
-1         0  #### Problem\r\n\r\nTypo in `on-chain-programs...   
-2         0  #### Problem\r\n\r\nTypo `ReplicaTransactionIn...   
-3         0  #### Problem\r\n\r\nIt seems that quite often,...   
-4         0  Bumps [hashbrown](https://github.com/rust-lang...   
+   comments                                               body     user_login  \
+0         0  #### Problem\r\nThe solana build toolchain is ...  ARitz-Cracker   
+1         0  #### Problem\r\n\r\n- extract new epoch proces...       HaoranYi   
+2         0  #### Problem\r\n\r\nTypo in `on-chain-programs...      Carlosted   
+3         0  #### Problem\r\n\r\nTypo `ReplicaTransactionIn...       diman-io   
+4         0  #### Problem\r\n\r\nIt seems that quite often,...   linuskendall   
 
-        user_login   user_id Crypto_Name Extension  
-0         HaoranYi    219428      solana   /issues  
-1        Carlosted  76854355      solana   /issues  
-2         diman-io  71597545      solana   /issues  
-3     linuskendall   5172293      solana   /issues  
-4  dependabot[bot]  49699333      solana   /issues  
+    user_id Crypto_Name Extension  
+0   5233816      solana   /issues  
+1    219428      solana   /issues  
+2  76854355      solana   /issues  
+3  71597545      solana   /issues  
+4   5172293      solana   /issues  
