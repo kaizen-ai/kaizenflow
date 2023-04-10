@@ -135,19 +135,23 @@ def downloader(pair,target_table,**kwargs):
   #Renaming the columns
   issues_df = issues_df.rename(columns = {'user.login': 'user_login','user.id':'user_id'}, inplace = False)
       
-  _LOG.info(f"GitHub Main data: \n\t {data.head()}")
-  _LOG.info(f"GitHub Issues data: \n\t {issues_df.head()}")
-  _LOG.info(f"GitHub Yearly Commits data: \n\t {yc_df.head()}")  
+  
+  
 
   #Datatable to be inserted
   if target_table =='github_main':
     table=data
+    _LOG.info(f"\nInserting GitHub Main data: \n\t {data.head()}")
   elif target_table =='github_commits':
     table=yc_df
+    _LOG.info(f"\nInserting GitHub Issues data: \n\t {issues_df.head()}")
   elif target_table =='github_issues':
     table=issues_df
+    _LOG.info(f"\nInserting GitHub Yearly Commits data: \n\t {yc_df.head()}")  
   else:
     table=data
+
+  print("\nData Inserted to:",target_table)  
   return ssandown.RawData(table)
 
 
