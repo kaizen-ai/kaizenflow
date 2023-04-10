@@ -78,7 +78,7 @@
 
 \begin{document}
 
-\title{Deloc: A protocol for Decentralized Exchange Limit Order Crossing}
+\title{DELOC: A protocol for Decentralized Exchange Limit Order Crossing}
 
 \author{Giacinto Paolo Saggese}
 \author{Paul Smith}
@@ -105,12 +105,12 @@
 
 \section{Introduction}
 
-Deloc\footnote{Temporary code name}
+DELOC\footnote{Temporary code name}
 is a new protocol that enables decentralized token exchange using limit
-orders. It brings together the advantages of trading efficiency and ease-of-use
+orders. It brings together the advantages of trading efficiency and ease-of-usj
 of centralized exchanges with the transparency and self-custody of
-decentralized approaches, without suffering of impermanent loss, contrary to
-automatic market makers (such as Uniswap).
+decentralized approaches, without the risk of impermanent loss, contrary to
+automatic market maker-based approaches.
 
 % ===============================================================================
 
@@ -118,19 +118,19 @@ automatic market makers (such as Uniswap).
 Swapping tokens is one of the most important and widely used primitives in
 decentralized finance.
 In March 2023, the average daily trading volume in cryptocurrencies was over
-34 billion USD, after reaching a peak of 516 billion USD per day in May 20, 2021
-\footnote{https://www.statista.com/statistics/1272903/cryptocurrency-trade-volume}.
+\$34 Billion USD, after reaching a peak of \$516 Billion USD per day in May 20,
+2021\footnote{https://www.statista.com/statistics/1272903/cryptocurrency-trade-volume}.
 
 % TODO(gp): We should compute this ourselves using spot, futures, etc
 
 Trading volume on decentralized exchanges has been increasing over time and now
-it is approaching 20\% of the total traded cryptocurrency volume
-\footnote{https://www.theblock.co/data/decentralized-finance/dex-non-custodial/dex-to-cex-spot-trade-volume}.
-As of March 2023, Uniswap has transacted more than 1.4 trillion USD and 139
-million trades \footnote{https://uniswap.org/}.
-The move from centralized to decentralized exchanges has been accelerating by
-scandals involving CEXs (e.g., FTX bankruptcy), regulatory crackdown, and with
-end-users increased embracing of the principles of self-custody and
+is approaching 20\% of the total traded cryptocurrency
+volume\footnote{https://www.theblock.co/data/decentralized-finance/dex-non-custodial/dex-to-cex-spot-trade-volume}.
+As of March 2023, Uniswap has transacted more than \$1.4 Trillion USD and 139
+million trades\footnote{https://uniswap.org/}.
+The move from centralized to decentralized exchanges has been accelerating due
+to scandals involving CEXs (e.g., FTX bankruptcy), regulatory crackdown, and
+thanks to end-users' increased embrace of the principles of self-custody and
 decentralization.
 We believe that this trend towards larger trading volumes and will only
 accelerate in the future.
@@ -154,8 +154,8 @@ flexible because it allows participants to construct personalized supply and
 demand curves by combining multiple limit orders. The elegance follows from the
 simplicity and ease-of-use of the interface.
 
-As consequence of these benefits, limit orders and their aggregation into limit order books (LOBs)
-are ubiquitous in traditional financial markets
+As consequence of these benefits, limit orders and their aggregation into
+limit order books (LOBs) are ubiquitous in traditional financial markets
 and dominate cryptocurrency trading on centralized exchanges. Interestingly,
 however, limit orders currently do not play as prominent a role in the realm of
 decentralized finance. Instead, alternative approaches that rely upon
@@ -171,18 +171,18 @@ functions of exchanges.
 Exchanges create value by bringing together different types of participants,
 such as investors, traders, hedgers, brokers, arbitrageurs, and market makers.
 Market participants have different goals (e.g., hedging, investing,
-speculating, gambling), horizons (from long-term investments to low-latency
-trading), risk tolerance, and beliefs about security values. The opportunity to
-trade arises from these differences.
+speculating), horizons (from long-term investment to low-latency trading),
+risk tolerance, liquidity preferences, and beliefs about security values. The
+opportunity to trade arises from these differences.
 By providing a common meeting ground, exchanges facilitate matching supply
 and demand.
 
-Exchange have several roles:
+Exchanges have several roles:
 \begin{itemize}
-	\item Establish the rules of trading process and institutional roles, so that
-	      the trading process is structured, monitored, and standardized
-	\item Provide a certain amount of oversight by monitoring and certify financial
-	      statements and governance procedures
+	\item Establish the rules of the trading process and institutional roles, so
+          that the trading process is structured, monitored, and standardized
+	\item Provide a certain amount of oversight by monitoring and certifying
+          financial statements and governance procedures
     \item Generate market data for market participants, such as trades and
           quote changes
 \end{itemize}
@@ -194,11 +194,11 @@ Typically, an exchange requires two components:
 \begin{enumerate}
 	\item Trade matching: participants find a counterparty agreeing on quantity
 	      and price of the assets to swap (this includes price discovery)
-	\item Trade settlement: the assets are actually swapped after finding
-	      matching counterparties
+    \item Trade settlement (clearing): the assets are actually swapped after
+          finding matching counterparties
 \end{enumerate}
 
-In decentralized finance a token swap can be accomplished in different ways,
+In decentralized finance, a token swap can be accomplished in different ways,
 e.g., using
 \begin{itemize}
 	\item a centralized exchange (CEX) (e.g., Coinbase, Binance, OkX)
@@ -206,7 +206,7 @@ e.g., using
 \end{itemize}
 
 We consider CEXs a temporary bridge between traditional finance and the
-new vision of a decentralized finance and we do not consider them a viable
+new vision of decentralized finance and we do not consider them a viable
 long-term solution to the problems that DeFi is poised to address.
 
 Centralized exchanges are usually organized around different versions of a
@@ -220,13 +220,13 @@ organized as
 
 Off-chain solutions can run into custodial and censorship issues that stand
 in direct conflict with the ethos of decentralization and self-determination.
-Unfortunately limitations of current blockchain technology restrict
+Unfortunately, limitations of current blockchain technology restrict
 the amount of computation that can be performed on-chain, although these limits
 are continously being removed by advancements in research and blockchain
 technology (e.g., layer 2 chains, optimistic and zero-knowledge rollups).
 Thus we consider solutions based on self-custody that do not require
-to trust a third party (or at least allow to verify its fairness) in line with
-the principle of decentralization.
+trusting a third party (or at least allow one to verify its fairness) in line
+with the principles of decentralization.
 
 Off-chain order books are an hybrid version of CEX and DEX where the price
 discovery and trade matching happens off-chain, while the trade settlement is
@@ -240,17 +240,17 @@ incurs costs, as does the ongoing process of matching supply and demand.
 
 % ===============================================================================
 
-\subsection{The advantages of X}
+\subsection{The advantages of DELOC}
 
-$X$ retains the key advantages of on-chain decentralized exchange while
+DELOC retains the key advantages of on-chain decentralized exchange while
 overcoming the issues of cost. Additionally, it includes an implementation
 that preserves the familiar LOB interface but deepens the pool of available
 liquidity in matching supply and demand.
 
-X addresses cost issues primarily in two ways: (1) discretizing time; and (2)
-scaling with layer 2 solutions. By addressing these issues, we combine the novel
-advantages of decentralized exchange with the utility and ease-of-use of the
-familiar interface of limit orders.
+DELOC addresses cost issues primarily in two ways: (1) discretizing time; and
+(2) scaling with layer 2 solutions. By addressing these issues, we combine the
+novel advantages of decentralized exchange with the utility and ease-of-use of
+the familiar interface of limit orders.
 
 Behind the interface, we propose two smart
 contracts\footnote{https://ethereum.org/en/developers/docs/smart-contracts/}
@@ -277,8 +277,8 @@ While DaoSwap and DaoCross differ in how the token exchange rate is determined,
 both share several common advantages:
 \begin{enumerate}
 	\item Low cost:
-	      they are a DeFi primitive that allows trading tokens peer-to-peer
-	      without incurring spread costs
+	      they implement a DeFi primitive that allows trading tokens
+          peer-to-peer without incurring spread costs
 	\item Capital efficiency:
 	      participants provide liquidity only when
 	      they wish to trade, and only in the amount they wish to trade
@@ -303,7 +303,7 @@ both share several common advantages:
 
 \section{Matching liquidity}
 Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
-(wrapped bitcoin, an ERC-20 compliant coin that tracks Bitcoin), who wish to
+(wrapped Bitcoin, an ERC-20 compliant coin that tracks Bitcoin), who wish to
 swap tokens at a competitive rate. Suppose also that there are many
 additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
 swap. How should the liquidity be pooled? At first glance, it appears that
@@ -345,12 +345,12 @@ See \cite{BeLaLiVa22} for discussion around priority rule variations and their
 effects on market quality outcomes.
 
 An effect of breaking the symmetry in this way is that either liquidity for a
-pair of currencies may be expressed in only one form, or liquidity for a pair
-of currencies is split across two separate contracts (with roles of base and
-quote token reversed), each with its own limit order book.
+pair of currencies may be expressed in only one of the two forms, or liquidity
+for a pair of currencies is split across two separate contracts (with roles of
+base and quote token reversed), each with its own limit order book.
 Using our example, this would mean treating $\BTC/\ETH$ and $\ETH/\BTC$ as
 separate token pairs, even though the union of the underlying parties and
-sources of liquidity are the same.
+sources of liquidity are typically the same.
 
 % ===============================================================================
 
@@ -377,6 +377,10 @@ While there may be other use cases and even demand for such auctions,
 unfortunately, the problem in general is NP-complete (e.g., \cite{XiStWh05}),
 which is a significant limiting factor in terms of feasibility and
 auction expense.
+
+In the sequel we propose such an exchange mechanism valid for any collection
+of standard limit orders (all base/quote token limit orders may be pooled and
+cleared in a single optimization).
 
 % ###############################################################################
 
@@ -426,7 +430,7 @@ If prices of base and quote tokens are expressed in terms of a common currency
 where the numeraire plays the role of a quote token for both $p_{quote}$ and
 $p_{base}$ and is implicit.
 
-Consequently
+Note that
 \[
 	p_{quote\_per\_base} =
 	\frac{1}{p_{base\_per\_quote}}.
@@ -515,14 +519,14 @@ limit orders.
 
 Equilibrium prices for the tokens are determined based on the available limit
 orders and a criteria designed to maximize the wellfare of the participants in
-the swap. At the same time orders are matched in a many-to-many relationships.
+the swap. At the same time orders are matched in many-to-many relationships.
 
 Swaps between base/quote token pairs occur at a single exchange rate, i.e., the
 clearing (or equilibrium) price is the same for all executed orders. On the
 other hand, quantity exchanged is specific to each order and each order's
-constraint on quantity exchanged cannot be violated. In the same way each order
-can be executed with a non-null quantity only when the single exchange rate is
-compatible with the limit price.
+constraint on quantity exchanged cannot be violated. In the same way, each order
+can be executed with a non-null quantity only when the limit price is compatible
+with the clearing exchange rate.
 
 In the sequel we use an asterisk to denote clearing quantity and exchange
 rate:
@@ -545,7 +549,7 @@ the exchange rate between $\ETH$ and $\BTC$ is fixed at 0.2 (i.e.,
 
 \begin{exmp}[Market order notation and clearing]
 The following market orders omit $\timestamp$, $\limitprice$, and
-$\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
+$\depositaddress$ in favor of emphasizing the amounts of token exchanged:
 \begin{itemize}
     \item An order \texttt{(\buy, 1.0, $\ETH$, $\BTC$)} means buying 1
           $\ETH$ in exchange for 0.2 $\BTC$
@@ -553,11 +557,10 @@ $\depositaddress$ in favor of emphasizing the amounts of tokens exchanged:
           receiving the corresponding amount of 0.2 $\BTC$
     \item An order \texttt{(\buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
           paying with 5 $\ETH$
-    \item An order \texttt{(\sell, 1.0, $\BTC$, $\ETH$)} means exchanging
+    \item An order \texttt{(\sell, 1.0, $\BTC$, $\ETH$)} means selling 
           1 $\BTC$ in return for 5 $\ETH$
 \end{itemize}
 \end{exmp}
-
 Next we consider the behavior of limit orders under the same prevailing exchange
 rate and we assume that there is sufficient supply of tokens to fully fill the
 orders.
@@ -613,7 +616,7 @@ and clearing exchange rate:
 	(q_\tA^*(o_i) = 0)
 \end{equation*}
 The constraint on the quantity exchanged is conditioned on the corresponding
-price satisfying the desired limit price constraint: if the desired limit price
+price's satisfying the desired limit price constraint: if the desired limit price
 constraint is not met, the swap cannot be carried out and the exchanged quantity
 is 0.
 
@@ -668,7 +671,7 @@ at least 2 $\tB$ per unit of $\tA$", which corresponds to
 \subsection{Order normalization}
 When the exchange rate between two tokens is known, it is possible to convert
 buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders where all
-orders have token $\tA$ only, according to the transformation below.
+orders have token $\tB$ as the base token, according to the transformation below.
 
 Let
 \[
@@ -720,11 +723,11 @@ straightforward, provided there is an automated market maker trading the
 target currency pair with sufficient liquidity.
 
 To use an exchange as a price reference, we must consider some additional
-steps. First, exchanges typically use a dollar stablecoin (e.g., USDC, USDT) as
-the quote currency and all other currencies as base currencies. Our example
-of BTC/ETH would be considered a cross pair in the world of traditional
-finance. Because most cross pairs are not traded directly on exchanges, we
-must derive a clearing price from pairs involving stablecoins.
+steps. First, exchanges typically use a dollar stablecoin (e.g., $\USDC$,
+$\USDT$) as the quote currency and all other currencies as base currencies. Our
+example of $\BTC/\ETH$ would be considered a cross pair in the world of
+traditional finance. Because most cross pairs are not traded directly on
+exchanges, we must derive a clearing price from pairs involving stablecoins.
 
 % ===============================================================================
 
@@ -736,7 +739,7 @@ clear at a midpoint price of
 \[
 	\BTC/\ETH_{\midpoint} = \frac{\bidbtc + \askbtc}{\bideth + \asketh}
 \]
-expressed in BTC per ETH. Note that if the dollar price of BTH is significantly
+expressed in $\BTC$ per $\ETH$. Note that if the dollar price of BTH is significantly
 more than the dollar price of ETH, then this price implies paying many
 multiples of ETH for BTC (as is the case at the time of this writing).
 
@@ -787,13 +790,13 @@ priority queues, one for eligible buy orders and one for eligible sell orders.
 Priority is determined according to the volume/price/timestamp priority rules
 introduced above. Top-of-queue orders are compared, and the lesser of the two
 volumes is fully filled. Once an order is fully filled at the established
-reference price. One an order is fully filled, it is removed from the priority
-queue. The procedure continues until one of the two priority queues is empty.
+reference price, it is removed from the priority queue. The procedure continues
+until one of the two priority queues is empty.
 
 \subsubsection{Computational complexity}
 Let $n$ denote the sum (or max) of the number of eligible buy and sell orders.
-Priority queue construction occurs in $O(n)$ time, order removal costs
-$O(n \log n)$, and order remove occurs $O(n)$ times. So, the computational
+Priority queue construction occurs in $O(n)$ time, each order removal costs
+$O(\log n)$, and order removal occurs $O(n)$ times. So, the computational
 time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
 
 \subsubsection{DaoSwap variant}
@@ -855,7 +858,7 @@ of all quote tokens:
 	\left( \cup_i \quotetoken_i \right)
 \]
 The set of tokens $T$ is the set of tokens eligible for swapping.
-We require the following \emph{no arbitrage}
+We require that the following \emph{no arbitrage}
 constraints be satisfied for all tokens $u, v, w \in T$
 involved in a swap:
 \[
@@ -926,6 +929,9 @@ We now collect the constraints that must be satisfied:
 		 & \forall u \in T
 	\end{cases}
 \end{equation}
+TODO(Paul): Determine the minimal number of no-arbitrage constraints that need
+to be verified. The number of no-arbitrage constaints is on the order of
+$O(|T|^3)$, whereas the number of other constraints grows at most $O(n)$.
 
 % ===============================================================================
 
@@ -949,12 +955,12 @@ inequalities above.
 
 In the case of each order $o_i$, the boolean condition $c_i$ (which compares
 the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
-or not (the solution does not need to consider both branches)
+or not (the solution does not need to consider both branches):
 \begin{equation}
 	\begin{cases}
 		0 \le q_{base}(o_i) \le q_{base} & \text{ if } c_i       \\
 		q_{base}(o_i) = 0                & \text{ if } \lnot c_i \\
-	\end{cases}
+	\end{cases}.
 \end{equation}
 
 The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
@@ -966,7 +972,7 @@ TODO(gp): check
 % ###############################################################################
 
 \section{Fees and tokenomics}
-DELOC charges a fee to each transaction based on the exchanged tokens.
+DELOC charges a fee on each transaction based on the exchanged tokens.
 E.g., a transaction requiring
 
 % ###############################################################################
@@ -985,17 +991,18 @@ computational limitation of blockchains. We do not believe that this is detrimen
 to the security and decentralization level of DELOC as long as these computations
 are provably correct.
 
-For instance although the solution of the DaoSwap problem is NP-hard, verifying
-that one solution is correct only requires linear time with the number of
+For instance, although the solution of the DaoSwap problem is NP-hard, verifying
+that one solution is correct only requires time linear in the number of
 constraints.
 
-For this reason DaoSwap stores on-chain the result of the DaoSwap optimization
-in order to allow independent verification that the off-chain system is malicious
-or compromised.
+For this reason, DaoSwap stores on-chain the result of the DaoSwap optimization
+in order to allow independent verification that the off-chain system is not
+malicious or compromised.
 
 \subsection{Ensuring a timely solution}
-DaoSwap avoids that solving the optimization problem becomes intractable by
-performing a swap when a maximum number of order is reached.
+DaoSwap avoids the case where solving the optimization problem becomes
+intractable by performing a swap when a maximum number of orders and/or
+currency pairs is reached.
 
 \subsection{Performing the swap}
 
@@ -1219,14 +1226,14 @@ Some of the benefits of AMMs are:
 Some of the drawbacks of AMMs are:
 \begin{itemize}
 	\item force liquidity providers to trade at worse-than-market prices
-	\item a rarely used building blocks used mainly in prediction markets rather than
+	\item a rarely used building block used mainly in prediction markets rather than
 	      in mainstream finance. In fact only recently papers have started analyzing
 	      the financial return / risk profile of AMMs \cite{MiMoRoZh22}
-	\item price needs to be corrected by an arbitrageur impacting the quality of
+	\item price needs to be corrected by an arbitrageur, impacting the quality of
 	      the provided liquidity
-    \item artificially separate liquidity providers from traders, preventing traders
-          from providing liquidity to each others in the way well-functioning
-          market do
+    \item artificially separates liquidity providers from traders, preventing traders
+          from providing liquidity to each other in the way well-functioning
+          markets do
 \end{itemize}
 
 Some critiques and counterpoints can be made to the benefits of AMMs listed above.
@@ -1235,14 +1242,15 @@ Some critiques and counterpoints can be made to the benefits of AMMs listed abov
 	      without experience in finance, the evolution of finance practices favors the
 	      use of limit orders, as explained in the introduction.
 	\item low computational requirements. This is not necessarily a strict
-	      requirement any more due to progress in off-chain computation and improved
-	      scalability in blockchain technology (such as layer 2 blockchains).
-	      We don't believe that an inefficient solution should be preferred only because
-	      of implementation simplicity.
+	      requirement any more due to progress in off-chain computation and
+          improved scalability in blockchain technology (such as layer 2
+          blockchains). We do not believe that an inefficient solution (from
+          the point of view of exchanged value) should be preferred only
+          because of implementation simplicity.
 	\item ability to function even for illiquid markets.
 	      Although this is a valid advantage for many markets (e.g., prediction markets),
-	      the vast majority of crypto coins are extremely liquid and don't require to
-	      trade off trading quality.
+	      the vast majority of crypto coins are extremely liquid and do not require
+	      trading off trading quality.
 	\item ability to function without a reference price.
           This feature was certainly appealing to initial researchers (e.g., \cite{Bu17})
 	      in search of a fully-decentralized solution to the problem
@@ -1264,6 +1272,11 @@ need to be compensated with revenues to offset the cost of their adverse
 selection (quantified and characterized by the LVR paper)
 
 \section{CPMM as an LOB}
+
+TODO(Paul): Replace with a reference to the derivation in \cite{Yo20}, and
+focus on the difference in stylized facts between the LOB a CPMM implies
+versus the LOBs seen in LOB-based markets. Note that some conventions here
+vs the paper are slightly different.
 
 Here we reinterpret a constant product market maker as a limit order order book
 that a market participant may transact against (e.g., hit a bid or lift an
@@ -1305,11 +1318,19 @@ instantaneous price of buying $\tA$ at point $(a_0, b_0)$ is
 \[
 	\frac{b_0}{a_0} = \frac{k}{a_0^2}
 \]
+For convenience, define $p_0$ as this price:
+\[
+    p_0 := \frac{b_0}{a_0} = \frac{k}{a_0^2}
+\]
 Note that as more of token $\tA$ is purchased (more $\tA$ is withdrawn from
 the pool), the price of token $\tA$ in the pool (in terms of the quote token)
 goes up, as expected.
 
 \subsection{Supply liquidity}
+
+TODO(Paul): Here we use $p$ as effective price of transacting quantity $q$.
+Switch to the more natural cumulative quantity up to a given (max) price $p$
+(as in \cite{Yo20}).
 
 Rephrasing, suppose $q$ denotes quantity of token $\tA$ that we wish to
 purchase. If the current state of the market is $a_0, b_0$, then the price $p$
@@ -1320,31 +1341,9 @@ of purchasing quantity $q$ is
 For brevity, we drop the functional dependence. Reexpressing in
 terms of quantity, we have
 \[
-	q = a_0 - \frac{k}{a_0 p}
+    q = a_0 - \frac{k}{a_0 p} = a_0 \left(1 - \frac{p_0}{p}\right)
 \]
 which expresses cumulative quantity $q$ available at average price $p$.
-To obtain the marginal quantity available ``at" price point $p$, we
-differentiate with respect to price to obtain
-\[
-	q^\prime = \frac{k}{a_0} \cdot \frac{1}{p^2}
-\]
-As the price increases, the marginal quantity available at the given price
-level decreases.
-At the market price $b_0 / a_0 = k / a_0^2$, the instantaneous quantity
-available is
-\[
-	q^\prime|_{p = k / a_0^2} = \frac{a_0^3}{k}
-\]
-
-We may quantize this by discretizing price increments (e.g., imposing a
-minimum tick size). Suppose the minimum price increment is $\delta p$.
-Then, between price points $p_1$ and $p_1 + \delta p$ the quantity
-available is
-\[
-	\delta q = \frac{k}{a_0} \cdot \frac{\delta p}{p_1 (p_1 + \delta p)}
-\]
-We may interpret this a sell limit order in the book for quantity
-$\delta q$ at an effective limit price of approximately $p_1$.
 
 When a buy transaction takes places, the market price changes from
 \[
@@ -1420,6 +1419,13 @@ $(a_1, b_1)$ of the book
 		doi={https://doi.org/10.1017/9781316659335},
 	}
 
+    \bib{Bu17}{article}{
+        author={Buterin, Vitalik},
+        title={Let's run on-chain decentralized exchanges the way we run prediction markets},
+        date={2017},
+        eprint={https://www.reddit.com/r/ethereum/comments/55m04x/lets_run_onchain_decentralized_exchanges_the_way}
+    }
+
 	\bib{Cme23}{article}{
 		author={CME Group},
 		title={2023 FX Product Guide},
@@ -1442,6 +1448,15 @@ $(a_1, b_1)$ of the book
 		pages={107-119},
 		eprint={https://doi.org/10.1023/A:1022058209073},
 	}
+
+    \bib{MiMoRo23}{article}{
+		author={Milionis, Jason},
+		author={Moallemi, Ciamac C.},
+		author={Roughgarden, Tim},
+        title={Complexity-Approximation Trade-offs in Exchange Mechanisms: AMMs vs. LOBs},
+        date={2023},
+        eprint={https://arxiv.org/abs/2302.11652},
+    }
 
 	\bib{MiMoRoZh22}{article}{
 		author={Milionis, Jason},
@@ -1482,12 +1497,13 @@ $(a_1, b_1)$ of the book
 		eprint={https://www.sciencedirect.com/science/article/abs/pii/S0377221703008981},
 	}
 
-    \bib{Bu17}{article}{
-        author={Buterin, Vitalik},
-        title={Let's run on-chain decentralized exchanges the way we run prediction markets},
-        date={2017},
-        eprint={https://www.reddit.com/r/ethereum/comments/55m04x/lets_run_onchain_decentralized_exchanges_the_way}
+    \bib{Yo20}{article}{
+        author={Young, Jamie E.},
+        title={On Equivalence of Automated Market Maker and Limit Order Book Systems},
+        date={October 2020},
+        eprint={https://professorjey.com/assets/papers/AMM_Order_Book_Equivalence_DRAFT_2020_10_16.pdf},
     }
+
 
 \end{thebibliography}
 
