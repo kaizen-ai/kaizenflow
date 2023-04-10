@@ -71,7 +71,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
     if(args.roundid is None):
-        raw_data = sisebido.downloader(pair = args.pair, num_of_data = args.num_of_data)
+        raw_data = sisebido.downloader(pair = args.pair,target_table=args.target_table, num_of_data = args.num_of_data)
     elif(args.num_of_data is None):
         raw_data = sisebido.downloader(pair = args.pair, roundid = args.roundid)
     # Save data to DB.
