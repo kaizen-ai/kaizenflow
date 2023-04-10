@@ -54,7 +54,7 @@ def get_github_create_issues_table_query() -> str:
     This table contains the data as it is downloaded.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS github_issues(
+    CREATE TABLE  github_issues(
             id SERIAL PRIMARY KEY,
             number NUMERIC,
             title VARCHAR(255) NOT NULL,
@@ -79,7 +79,7 @@ def get_github_create_commits_table_query() -> str:
     This table contains the data as it is downloaded.
     """
     query = """
-    CREATE TABLE IF NOT EXISTS github_commits(
+    CREATE TABLE IF NOT EXISTS  github_commits(
           total NUMERIC,
           week NUMERIC,
           days VARCHAR(255) NOT NULL,
