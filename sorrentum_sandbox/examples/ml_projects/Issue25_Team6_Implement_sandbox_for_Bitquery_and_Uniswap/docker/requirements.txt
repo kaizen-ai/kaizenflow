@@ -1,3 +1,4 @@
+install
 redis
 requests
 pandas
@@ -5,3 +6,6 @@ numpy
 matplotlib
 seaborn
 notebook
+jupyter
+apache-airflow
+psycopg2-binary

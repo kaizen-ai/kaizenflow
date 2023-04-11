@@ -1,38 +1,88 @@
 # Use a small image `alpine` with Python inside.
 FROM ubuntu:20.04 AS BUILDER
-FROM python:3.10-slim-buster
+# FROM python:3.10-slim-buster
 ENV DEBIAN_FRONTEND noninteractive
 
-# Copy app into image.
-# ADD . /code
-# Set working dir.
 
 RUN apt-get -y update
 RUN apt-get -y upgrade
 RUN apt-get -y install gcc python3-dev
 
-RUN apt install -y --no-install-recommends --fix-missing \
-    sudo \ 
-    curl \
-    gnupg \
-    git \
-    vim \
-    jupyter-notebook
+RUN apt-get -y update && \
+    apt-get -y upgrade && \
+    apt-get -y install gcc python3-dev dos2unix && \
+    apt install -y --no-install-recommends --fix-missing \
+        sudo\
+        jupyter-notebook\
+        postgresql-client\
+        curl \
+        gnupg \
+        git \
+        vim \
+        postgresql-client
 
-ENV INSTALL_DIR=/bitquery
-WORKDIR $INSTALL_DIR
+
+
+# Install Python.
+RUN apt install -y --no-install-recommends \
+    python3 \
+    python3-pip \
+    python3-dev
 
 # Install requirements.
 COPY requirements.txt .
-COPY bitquery ./bitquery
-
 RUN pip3 install -r requirements.txt
-# Set the default app.
 
+
+# # Pull postgres image
+# FROM postgres:latest as postgres
+
+# Install PostgreSQL and its dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        postgresql \
+        postgresql-contrib \
+        libpq-dev \
+        && \
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
+
+
+## enivromental variables
+ENV POSTGRES_USER user
+ENV POSTGRES_PASSWORD password
+ENV POSTGRES_DB db
+ENV AIRFLOW_HOME=/install/airflow
+
+# Postgress volume directory
+VOLUME postgres_data:/var/lib/postgresql/data
+
+ENV INSTALL_DIR /install
+# WORKDIR /install
+
+USER root
+
+# Config.
+ADD etc_sudoers /install/
+COPY etc_sudoers /etc/sudoers
+COPY bashrc /var/lib/postgresql/.bashrc
+
+# Install Jupyter extensions.
+ADD install_jupyter_extensions.sh /install/
+RUN chmod +x /install/install_jupyter_extensions.sh
+
+# Report package versions.
+ADD version.sh /install/
+RUN chmod +x /install/version.sh 2>&1 | tee version.log
+
+# Expose airflow web server, PostgresSQL, and Jupyter ports
 EXPOSE 8888
+EXPOSE 5432
+EXPOSE 8080
 
-#CMD [ "python", "bitquery/app.py" ]
+# Copy the entrypoint script into the container
+COPY entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/entrypoint.sh
 
-ENTRYPOINT (jupyter notebook --ip 0.0.0.0 --port 8888 --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='') && \
-    /bin/bash
-
+# Set the entrypoint of the container to the entrypoint script
+ENTRYPOINT ["bash", "/usr/local/bin/entrypoint.sh"]
