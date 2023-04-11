@@ -147,13 +147,13 @@ def downloader(pair,target_table,**kwargs):
       return connection
 
     #checking for existing rows in Data tables-
-    issues_check_query= "SELECT * FROM github_issues"
-    issues_check=pd.read_sql_query(issues_check_query, self.db_conn)
+  issues_check_query= "SELECT * FROM github_issues"
+  issues_check=pd.read_sql_query(issues_check_query, self.db_conn)
 
-    allowed = issues_check.id.unique()
-    issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
-    issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
-    issues_df=issues_df.drop(['duplicate_id'], axis=1)
+  allowed = issues_check.id.unique()
+  issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
+  issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
+  issues_df=issues_df.drop(['duplicate_id'], axis=1)
 
 
   
