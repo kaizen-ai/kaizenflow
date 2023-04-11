@@ -112,7 +112,10 @@ def downloader(pair,target_table,**kwargs):
   #Preprocessing--
   #1.For Yearly Commit Data Frame---
   ###Convertin Days Column values in 'Yearly Commit' to separte columns
-  yc_df[['Sun','Mon','Tue','Wed','Thur','Fri','Sat']] = pd.DataFrame(yc_df.days.tolist(), index= yc_df.index)        
+  if yc_df.empty:
+    print("Dataframe is empty!")
+  else:
+    yc_df[['Sun','Mon','Tue','Wed','Thur','Fri','Sat']] = pd.DataFrame(yc_df.days.tolist(), index= yc_df.index)        
 
   #2.For the main data frame -----
   ##Rearranging columns & Keeping only the features that are needed
