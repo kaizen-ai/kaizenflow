@@ -58,11 +58,11 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
 def get_db_connection() -> Any:
    
     connection = psycop.connect(
-        host="host.docker.internal",
-        dbname="kaiko database",
-        port=5432,
+        host="localhost",
+        dbname="kaiko connection",
+        port=1999,
         user="postgres",
-        password="Oliver1999",
+        password="postgres",
     )
     connection.autocommit = True
     return connection
@@ -155,3 +155,4 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
+    

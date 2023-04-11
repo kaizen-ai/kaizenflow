@@ -41,8 +41,6 @@ def _add_download_args(
         type=str,
         help="Name of the db table to save data into",
     )
-    return parser
-
 
 def _parse() -> argparse.ArgumentParser:
     hdbg.init_logger(use_exec_path=True)
@@ -60,7 +58,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.KaikoDownloader()
+    downloader = sisebido.OhlcvRestApiDownloader(args.use_global_api)
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()

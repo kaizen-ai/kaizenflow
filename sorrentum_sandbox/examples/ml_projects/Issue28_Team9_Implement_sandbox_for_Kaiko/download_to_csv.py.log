@@ -1,4 +1,4 @@
-16:29:29 - [36mINFO [0m kaiko.py __init__:155              16:29:29 - [36mINFO [0m kaiko.py __init__:155              
+16:11:59 - [36mINFO [0m kaiko.py __init__:155              16:11:59 - [36mINFO [0m kaiko.py __init__:155              
 
 Initiated data object
 KaikoData setup with
@@ -7,9 +7,9 @@ KaikoData setup with
 - Required parameters:
 	{'commodity': 'trades', 'data_version': 'v1', 'exchange': 'cbse', 'instrument_class': 'spot', 'instrument': 'eth-usd'},
 - Optional parameters:
-	{'page_size': 100000, 'start_time': '2022-01-01T00:00:00.000Z', 'end_time': '2022-01-01T01:00:00.000Z'}
+	{'page_size': 100000, 'start_time': '2022-01-01T00:00:00.000Z', 'end_time': '2022-02-01T00:00:00.000Z'}
 
-16:29:31 - [36mINFO [0m kaiko.py __init__:155              16:29:31 - [36mINFO [0m kaiko.py __init__:155              
+16:12:02 - [36mINFO [0m kaiko.py __init__:155              16:12:02 - [36mINFO [0m kaiko.py __init__:155              
 
 Initiated data object
 KaikoData setup with
@@ -18,12 +18,12 @@ KaikoData setup with
 - Required parameters:
 	{'commodity': 'trades', 'data_version': 'v1', 'exchange': 'cbse', 'instrument_class': 'spot', 'instrument': 'btc-usd'},
 - Optional parameters:
-	{'page_size': 100000, 'start_time': '2022-01-01T00:00:00.000Z', 'end_time': '2022-01-01T01:00:00.000Z'}
+	{'page_size': 100000, 'start_time': '2022-01-01T00:00:00.000Z', 'end_time': '2022-02-01T00:00:00.000Z'}
 
-16:29:31 - [36mINFO [0m download_kaiko.py download:50                          16:29:31 - [36mINFO [0m download_kaiko.py download:50                          Downloaded data: 
+16:12:05 - [36mINFO [0m download_kaiko.py download:50                          16:12:05 - [36mINFO [0m download_kaiko.py download:50                          Downloaded data: 
 	       trade_id    price    amount  taker_side_sell currency_pair
-0  200304673.0  3722.78  0.038577              1.0       eth-usd
-1  200304672.0  3722.78  0.010000              1.0       eth-usd
-2  200304671.0  3722.78  0.200000              1.0       eth-usd
-3  200304670.0  3722.78  0.010000              1.0       eth-usd
-4  200304669.0  3722.78  0.010000              1.0       eth-usd
+0  215994448.0  2689.72  0.001000              1.0       eth-usd
+1  215994447.0  2689.72  0.377759              1.0       eth-usd
+2  215994446.0  2689.72  0.001000              1.0       eth-usd
+3  215994445.0  2689.72  2.600000              1.0       eth-usd
+4  215994444.0  2689.86  0.499400              1.0       eth-usd
