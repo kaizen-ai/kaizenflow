@@ -19,11 +19,7 @@ _LOG = logging.getLogger(__name__)
 # TODO(gp): Maybe LimitOrder or DaoLimitOrder?
 class Order:
     """
-<<<<<<< HEAD
     Limit order to be used in DaoCross or DaoSwap.
-=======
-    Create order for DaoCross or DaoSwap.
->>>>>>> master
     """
 
     # TODO(gp): @all Reorg the params to match the white paper order.
@@ -35,21 +31,16 @@ class Order:
         quote_token: str,
         action: str,
         quantity: float,
-<<<<<<< HEAD
         limit_price: float,
         # TODO(gp): -> dst_address?
-=======
-        limit_price: Optional[float],
-        timestamp: Optional[pd.Timestamp],
->>>>>>> master
         deposit_address: Union[int, str],
         # TODO(gp): -> src_address?
         wallet_address: Union[int, str],
+        timestamp: Optional[pd.Timestamp],
     ) -> None:
         """
         Constructor.
 
-<<<<<<< HEAD
         According to the white paper, an order like:
 
         ```(0xabcd0000, 1678660406, buy, 3.2, ETH, 4.0, BTC, 0xdeadc0de)```
@@ -76,19 +67,6 @@ class Order:
         :param timestamp: time of order execution (e.g., "Mon Mar 13 2023
             02:33:25 GMT+0000")
             - `None` means the current wall clock time
-=======
-        :param base_token: token to express order quantity
-        :param quote_token: token to express order price
-        :param action: order action type
-            - "buy": purchase the base token and pay with the quote token
-            - "sell": sell the base token and receive the quote token
-        :param quantity: quantity in terms of the base token
-        :param limit_price: limit price in terms of the quote token per base token
-        :param timestamp: time of order execution
-            - if `None`, current timestamp is used
-        :param deposit_address: deposit address to implement the order for
-        :param wallet_address: wallet address to implement the order for
->>>>>>> master
         """
         hdbg.dassert_isinstance(base_token, str)
         hdbg.dassert_isinstance(quote_token, str)
@@ -214,7 +192,6 @@ def get_random_order(seed: Optional[int] = None) -> Order:
     return order
 
 
-<<<<<<< HEAD
 # TODO(gp): I'd make it a static method of Order.
 def is_active_order(order: Optional[Order]) -> bool:
     """
@@ -230,8 +207,6 @@ def is_active_order(order: Optional[Order]) -> bool:
 
 
 # TODO(gp): I'd make it a static method of Order.
-=======
->>>>>>> master
 def action_to_int(action: str) -> int:
     """
     Translate an action to an int.
