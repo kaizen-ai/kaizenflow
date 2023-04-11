@@ -18,10 +18,10 @@ from airflow.operators.bash import BashOperator
 
 _DAG_ID = "download_github_data_team2_dag_1min"
 _DAG_DESCRIPTION = (
-    "Download GitHub data every minute and save to Postgres"
+    "Download GitHub data for SOL every 6 hours and save to Postgres"
 )
 # Specify when often to execute the DAG.
-_SCHEDULE = "* * * * *"
+_SCHEDULE = "05 0,6,12,18 * * *"
 
 # Pass default parameters for the DAG.
 default_args = {
