@@ -40,7 +40,7 @@ class Order:
 
         According to the white paper, an order like:
 
-        ```(1678660406, buy, 3.2, ETH, 4.0, BTC, 0xdeadc0de, 0xabcd0000)```
+        ```(1678660406, buy, 3.2, ETH, 4.0, wBTC, 0xdeadc0de, 0xabcd0000)```
 
         corresponds to the natural language description:
         “At timestamp Mon Mar 13 2023 02:33:25 GMT+0000, the user commits

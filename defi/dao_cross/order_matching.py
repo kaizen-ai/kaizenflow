@@ -53,7 +53,7 @@ def match_orders(
     All orders are assumed to be compatible.
 
     :param orders: orders to match
-    :param clearing_price: clearing price
+    :param clearing_price: amount of quote tokens per base token
     :param base_token: name of the base token for swaps, which determines
         the quantity
     :param quote_token: name of the base token for swaps, which determines
@@ -72,8 +72,8 @@ def match_orders(
     # Push orders to the heaps based on the action type and filtered by limit price.
     for order in orders:
         hdbg.dassert_eq(
-            sorted(order.base_token, order.quote_token),
-            sorted(base_token, quote_token),
+            sorted([order.base_token, order.quote_token]),
+            sorted([base_token, quote_token]),
         )
         # Adjust all orders to the same base and quote tokens using order
         # equivalence.
@@ -143,7 +143,7 @@ def match_orders(
         _LOG.warning("Buy orders remain unmatched: %s", buy_heap)
     if sell_heap:
         _LOG.warning("Sell orders remain unmatched: %s", sell_heap)
-    return transfers_df
+    return transfer_df
 
 
 def get_equivalent_order(
@@ -153,14 +153,15 @@ def get_equivalent_order(
     """
     Get equivalent DaoCross order.
 
+    E.g., if `clearing_price` is 0.5 BTC for 1 ETH:
+    input order: (1678660406, sell, 3.2, ETH, 0.25, BTC, 0xdeadc0de, 0xabcd0000)
+    output order: (1678660406, buy, 1.6, BTC, 4.0, ETH, 0xdeadc0de, 0xabcd0000)
+
     :param order: input order
-    :param clearing_price: clearing price
+    :param clearing_price: amount of quote tokens per base token
     :return: order equivalent to the input one
     """
-    hdbg.dassert_type_is(order, ddacrord.Order)
-    # Swap base and quote token values.
-    base_token = order.quote_token
-    quote_token = order.base_token
+    hdbg.dassert_isinstance(order, ddacrord.Order)
     # Set action opposite to the input's one.
     if order.action == "buy":
         action = "sell"
@@ -168,18 +169,22 @@ def get_equivalent_order(
         action = "buy"
     else:
         raise ValueError("Invalid action='%s'" % order.action)
-    # Adjust quantity and limit price.
-    quantity = order.quantity / clearing_price
+    # Convert quantity of base token to quantity of quote token.
+    quantity = order.quantity * clearing_price
+    # Swap base and quote token values.
+    base_token = order.quote_token
+    quote_token = order.base_token
+    # Convert limit price of base token to limit price of quote token.
     limit_price = 1 / order.limit_price
     # Build equivalent order.
     order = ddacrord.Order(
-        base_token,
-        quote_token,
+        order.timestamp,
         action,
         quantity,
+        base_token,
         limit_price,
-        timestamp,
-        deposit_address,
-        wallet_address,
+        quote_token,
+        order.deposit_address,
+        order.wallet_address,
     )
     return order
