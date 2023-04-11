@@ -130,18 +130,18 @@ def downloader(pair,target_table,**kwargs):
   
   #Connection String for main DB
   def get_db_connection(query_var) :       
-      connection = psycop.connect(
+	connection = psycop.connect(
           host="host.docker.internal",                                      
           dbname="airflow",
           port=5532,
           user="postgres",
           password="postgres",
       )
-  	drt_cursor=connection.cursor()
-  	drt_cursor.execute(query_var)
-  	data=drt_cursor.fetchall()
-  	connection.close()
-  	return pd.DataFrame(data)
+    drt_cursor=connection.cursor()
+    drt_cursor.execute(query_var)
+    data=drt_cursor.fetchall()
+    connection.close()
+    return pd.DataFrame(data)
 
     #checking for existing rows in Data tables-
   issues_check_query= "SELECT * FROM github_issues"
