@@ -28,7 +28,7 @@ def get_github_create_main_table_query() -> str:
     """
     query = """
     CREATE TABLE IF NOT EXISTS github_main(
-             id SERIAL PRIMARY KEY,
+             id NUMERIC,
              created_at TIMESTAMP WITH TIME ZONE,
             updated_at TIMESTAMP,
             pushed_at TIMESTAMP,
@@ -42,7 +42,8 @@ def get_github_create_main_table_query() -> str:
             subscribers_count NUMERIC,
             owner_id NUMERIC, 
             organization_id NUMERIC,
-            Crypto VARCHAR(255) NOT NULL
+            Crypto VARCHAR(255) NOT NULL,
+            inserted_at TIMESTAMP
             )
             """
     return query
@@ -232,3 +233,4 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
+

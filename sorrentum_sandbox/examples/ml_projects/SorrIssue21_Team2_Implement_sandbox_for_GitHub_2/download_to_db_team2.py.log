@@ -1,13 +1,13 @@
-23:55:51 - [36mINFO [0m download_team2.py downloader:144                       23:55:51 - [36mINFO [0m download_team2.py downloader:144                       
+15:09:42 - [36mINFO [0m download_team2.py downloader:144                       15:09:42 - [36mINFO [0m download_team2.py downloader:144                       
 Inserting GitHub Main data: 
 	         id            created_at            updated_at             pushed_at  \
-0  1181927  2010-12-19T15:16:43Z  2023-04-11T03:10:33Z  2023-04-11T02:06:38Z   
+0  1181927  2010-12-19T15:16:43Z  2023-04-11T19:07:47Z  2023-04-11T18:36:34Z   
 
      size  stargazers_count  watchers_count  forks_count  open_issues_count  \
-0  228726             68990           68990        34044                689   
+0  228758             69003           69003        34048                684   
 
    watchers  network_count  subscribers_count  owner_id  organization_id  \
-0     68990          34044               3931    528860           528860   
+0     69003          34048               3931    528860           528860   
 
     Crypto  
 0  bitcoin  

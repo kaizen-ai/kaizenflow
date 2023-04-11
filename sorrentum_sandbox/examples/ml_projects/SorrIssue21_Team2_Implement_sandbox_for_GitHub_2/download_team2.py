@@ -87,6 +87,7 @@ def downloader(pair,target_table,**kwargs):
       d1 = json_normalize(common)  
       crypto_name=m.split('/')[-1]
       d1['Crypto']=crypto_name
+      d1['inserted_at']=pd.Timestamp.now()
       data=data.append(d1)
       
       for n in extensions:
@@ -124,7 +125,7 @@ def downloader(pair,target_table,**kwargs):
   #2.For the main data frame -----
   ##Rearranging columns & Keeping only the features that are needed
   data=data[['id', 'created_at','updated_at','pushed_at', 'size', 'stargazers_count','watchers_count', 'forks_count','open_issues_count',
-            'watchers','network_count', 'subscribers_count','owner.id','organization.id','Crypto']]
+            'watchers','network_count', 'subscribers_count','owner.id','organization.id','Crypto','inserted_at']]
   #Renaming the columns
   data = data.rename(columns = {'owner.id': 'owner_id','organization.id':'organization_id'}, inplace = False)
 
