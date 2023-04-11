@@ -17,15 +17,6 @@ import sorrentum_sandbox.common.download as ssandown
 _LOG = logging.getLogger(__name__)
 
 
-  #Defining Data Frame for main data
-#data=pd.DataFrame()
-
-
-  ##-- For Yearly Commits
-#yc_df=pd.DataFrame()
-
- ##-- For Issues Data
-#issues_df=pd.DataFrame()
 
 def downloader(pair,target_table,**kwargs):
 
@@ -137,6 +128,34 @@ def downloader(pair,target_table,**kwargs):
   issues_df = issues_df.rename(columns = {'user.login': 'user_login','user.id':'user_id'}, inplace = False)
       
   
+  #Connection String for main DB
+  def get_db_connection() -> Any:
+      """
+      Retrieve connection to the Postgres DB inside the Sorrentum data node.
+
+      The parameters must match the parameters set up in the Sorrentum
+      data node docker-compose.
+      """
+      connection = psycop.connect(
+          host="host.docker.internal",
+          dbname="airflow",
+          port=5532,
+          user="postgres",
+          password="postgres",
+      )
+      connection.autocommit = True
+      return connection
+
+    #checking for existing rows in Data tables-
+    issues_check_query= "SELECT * FROM github_issues"
+    issues_check=pd.read_sql_query(issues_check_query, self.db_conn)
+
+    allowed = issues_check.id.unique()
+    issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
+    issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
+    issues_df=issues_df.drop(['duplicate_id'], axis=1)
+
+
   
 
   #Datatable to be inserted
