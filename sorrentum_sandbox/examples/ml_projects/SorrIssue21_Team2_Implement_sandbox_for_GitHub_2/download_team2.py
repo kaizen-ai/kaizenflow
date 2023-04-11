@@ -130,7 +130,7 @@ def downloader(pair,target_table,**kwargs):
   
   #Connection String for main DB
   def get_db_connection(query_var) :       
-	connection = psycop.connect(
+    connection = psycop.connect(
           host="host.docker.internal",                                      
           dbname="airflow",
           port=5532,
