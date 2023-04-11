@@ -1,7 +1,7 @@
 """
 Import as:
 
-import defi.dao_cross.dao_cross as ddcrdacr
+import defi.dao_cross.order_matching as ddcrorma
 """
 
 import copy
@@ -18,6 +18,29 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
+def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
+    """
+    Get a table of all the token transfers.
+
+    :param transfers: list of transfers, where each transfer is a dict with the
+        following format:
+        ```
+        {
+            "token": name of a token to transfer,
+            "amount": transferred quantity,
+            "from": wallet address to send transfer from,
+            "to": deposit to send transfer to,
+        }
+        ```
+    :return: table of transfers as df
+    """
+    if transfers:
+        transfer_df = pd.DataFrame(transfers)
+    else:
+        transfer_df = pd.DataFrame(columns=["token", "amount", "from", "to"])
+    return transfer_df
+
+
 def match_orders(
     orders: List[ddacrord.Order],
     clearing_price: float,
@@ -25,7 +48,9 @@ def match_orders(
     quote_token: str,
 ) -> pd.DataFrame:
     """
-    Implement DaoCross orders matching for token swaps.
+    Implement orders matching given a clearing price.
+
+    All orders are assumed to be compatible.
 
     :param orders: orders to match
     :param clearing_price: clearing price
@@ -43,6 +68,7 @@ def match_orders(
     # Build buy and sell heaps.
     buy_heap = []
     sell_heap = []
+    # TODO(Dan): Think of more asserts to check if orders are compatible.
     # Push orders to the heaps based on the action type and filtered by limit price.
     for order in orders:
         hdbg.dassert_eq(
@@ -66,22 +92,27 @@ def match_orders(
                 _LOG.debug("Order not eligible for matching due to limit")
         else:
             raise ValueError("Invalid action='%s'" % order.action)
+    # Check that we have orders of both types so matching is possible.
+    hdbg.dassert_lt(0, len(buy_heap))
+    hdbg.dassert_lt(0, len(sell_heap))
     _LOG.debug("buy_heap=%s", buy_heap)
     _LOG.debug("sell_heap=%s", sell_heap)
     # Set a list to store transfers that perform matching.
     transfers = []
+    # Pick first in priority buy and sell orders for matching.
+    # Make a copy so that the func does not alter state (and is idempotent).
+    buy_order = copy.copy(buy_heap.pop())
+    sell_order = copy.copy(sell_heap.pop())
     # Successively compare `buy_heap` top with `sell_heap` top, matching
     # quantity until zero or queues empty.
-    buy_order = None
-    sell_order = None
-    while (buy_heap or is_active_order(buy_order)) and (
-        sell_heap or is_active_order(sell_order)
+    while (buy_heap or buy_order.is_active) and (
+        sell_heap or sell_order.is_active
     ):
-        # Pop 1 buy and 1 sell orders from the heaps for matching.
-        if not buy_order or buy_order.quantity == 0:
-            # Make a copy so that `match_orders()` does not alter state (and is idempotent).
+        # If an order is not active anymore, pop the next order
+        # from the corresponding heaps for matching.
+        if not buy_order.is_active:
             buy_order = copy.copy(buy_heap.pop())
-        if not sell_order or sell_order.quantity == 0:
+        if not sell_order.is_active:
             sell_order = copy.copy(sell_heap.pop())
         # Transfer quantity is equal to the min quantity among the matching
         # buy and sell orders.
@@ -106,7 +137,7 @@ def match_orders(
         buy_order.quantity -= quantity
         sell_order.quantity -= quantity
     # Get DataFrame with the transfers implemented to match the passed orders.
-    transfer_df = get_transfer_df(transfers)
+    transfer_df = _get_transfer_df(transfers)
     # Check if there are any remaining orders.
     if buy_heap:
         _LOG.warning("Buy orders remain unmatched: %s", buy_heap)
@@ -118,7 +149,7 @@ def match_orders(
 def get_equivalent_order(
     order: ddacrord.Order,
     clearing_price: float,
-) -> order: ddacrord.Order:
+) -> ddacrord.Order:
     """
     Get equivalent DaoCross order.
 
@@ -152,38 +183,3 @@ def get_equivalent_order(
         wallet_address,
     )
     return order
-
-
-def get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
-    """
-    Get a table of all the passed transfers.
-
-    Transfer is a dict with the following format:
-    {
-        "token": name of a token to transfer,
-        "amount": transferred quantity,
-        "from": wallet address to send transfer from,
-        "to": deposit to send transfer to,
-    }
-
-    :param transfers: list of transfers
-    :return: table of transfers
-    """
-    if transfers:
-        transfer_df = pd.DataFrame(transfers)
-    else:
-        transfer_df = pd.DataFrame(columns=["token", "amount", "from", "to"])
-    return transfer_df
-
-
-def is_active_order(order: Optional[ddacrord.Order]) -> bool:
-    """
-    Return whether the passed order is active or not.
-
-    Order is active if it is not empty and its quantity is above 0.
-    """
-    if order is None:
-        return False
-    if not order.quantity > 0:
-        return False
-    return True
