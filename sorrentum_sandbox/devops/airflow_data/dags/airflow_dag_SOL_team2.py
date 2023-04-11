@@ -16,7 +16,7 @@ import datetime
 import airflow
 from airflow.operators.bash import BashOperator
 
-_DAG_ID = "download_github_data_team2_dag_1min"
+_DAG_ID = "download_github_data_for_SOL_6hour_gap"
 _DAG_DESCRIPTION = (
     "Download GitHub data for SOL every 6 hours and save to Postgres"
 )
