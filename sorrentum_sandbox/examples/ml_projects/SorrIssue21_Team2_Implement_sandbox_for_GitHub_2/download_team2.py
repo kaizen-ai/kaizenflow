@@ -8,6 +8,7 @@ import requests
 import json
 from pandas import json_normalize
 import warnings
+import psycopg2 as psycop
 
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_columns', None)
