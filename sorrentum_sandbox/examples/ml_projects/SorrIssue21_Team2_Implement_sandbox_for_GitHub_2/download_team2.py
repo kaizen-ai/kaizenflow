@@ -148,7 +148,7 @@ def downloader(pair,target_table,**kwargs):
   issues_check_query= "SELECT * FROM github_issues"
   issues_check = get_db_connection(issues_check_query)
   print("Existing Issues df:",issues_check.head(2))	
-  allowed = issues_check.iloc[:, :1].unique()
+  allowed = issues_check.iloc[:, 0].unique()
   issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
   issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
   issues_df=issues_df.drop(['duplicate_id'], axis=1)
