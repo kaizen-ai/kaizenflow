@@ -129,26 +129,23 @@ def downloader(pair,target_table,**kwargs):
       
   
   #Connection String for main DB
-  def get_db_connection() -> Any:
-      """
-      Retrieve connection to the Postgres DB inside the Sorrentum data node.
-
-      The parameters must match the parameters set up in the Sorrentum
-      data node docker-compose.
-      """
+  def get_db_connection(query_var) :       
       connection = psycop.connect(
-          host="host.docker.internal",
+          host="host.docker.internal",                                      
           dbname="airflow",
           port=5532,
           user="postgres",
           password="postgres",
       )
-      connection.autocommit = True
-      return connection
+  drt_cursor=connection.cursor()
+  drt_cursor.execute(query_var)
+  data=drt_cursor.fetchall()
+  connection.close()
+  return pd.DataFrame(data)
 
     #checking for existing rows in Data tables-
   issues_check_query= "SELECT * FROM github_issues"
-  issues_check=pd.read_sql_query(issues_check_query, self.db_conn)
+  issues_check = get_db_connection(issues_check_query)
 
   allowed = issues_check.id.unique()
   issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
