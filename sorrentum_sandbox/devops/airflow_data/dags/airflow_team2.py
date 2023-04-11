@@ -51,8 +51,8 @@ bash_command = [
     "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py"	
     "--pair BTC",
     "--target_table 'github_commits'",
-    #"--start_timestamp {{ data_interval_start }} ",
-    #"--end_timestamp {{ data_interval_end }}",
+    "--start_timestamp {{ data_interval_start }} ",
+    "--end_timestamp {{ data_interval_end }}",
     "-v DEBUG"
 ]
 
