@@ -82,6 +82,9 @@ def match_orders(
                 _LOG.debug("Order not eligible for matching due to limit")
         else:
             raise ValueError("Invalid action='%s'" % order.action)
+    # Check that we have orders of both types so matching is possible.
+    hdbg.dassert_lt(0, len(buy_heap))
+    hdbg.dassert_lt(0, len(sell_heap))
     _LOG.debug("buy_heap=%s", buy_heap)
     _LOG.debug("sell_heap=%s", sell_heap)
     # Set a list to store transfers that perform matching.
