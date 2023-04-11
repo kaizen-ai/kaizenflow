@@ -27,8 +27,23 @@ def get_github_create_main_table_query() -> str:
     This table contains the data as it is downloaded.
     """
     query = """
-     Drop Table  github_main
-           
+    CREATE TABLE IF NOT EXISTS github_main(
+             id SERIAL PRIMARY KEY,
+             created_at TIMESTAMP WITH TIME ZONE,
+            updated_at TIMESTAMP,
+            pushed_at TIMESTAMP,
+            size NUMERIC,
+            stargazers_count NUMERIC,
+            watchers_count NUMERIC,
+            forks_count NUMERIC,
+            open_issues_count NUMERIC,
+            watchers  NUMERIC,
+            network_count NUMERIC,
+            subscribers_count NUMERIC,
+            owner_id NUMERIC, 
+            organization_id NUMERIC,
+            Crypto VARCHAR(255) NOT NULL
+            )
             """
     return query
 
@@ -39,7 +54,21 @@ def get_github_create_issues_table_query() -> str:
     This table contains the data as it is downloaded.
     """
     query = """
-           Drop Table  github_issues
+         CREATE TABLE IF NOT EXISTS github_issues(
+            id SERIAL PRIMARY KEY,
+            number NUMERIC,
+            title VARCHAR(500) NOT NULL,
+            created_at TIMESTAMP,
+            updated_at TIMESTAMP,
+            closed_at TIMESTAMP,
+            author_association VARCHAR(255),
+            comments NUMERIC,   
+            body VARCHAR(50000) ,
+            user_login VARCHAR(255) NOT NULL,
+            user_id NUMERIC,
+            Crypto_Name VARCHAR(255) NOT NULL,
+            Extension VARCHAR(255) NOT NULL
+            )
              
             """
     return query
@@ -51,7 +80,20 @@ def get_github_create_commits_table_query() -> str:
     This table contains the data as it is downloaded.
     """
     query = """
-    Drop Table  github_commits
+    CREATE TABLE IF NOT EXISTS  github_commits(
+          total NUMERIC,
+          week NUMERIC,
+          days VARCHAR(255) NOT NULL,
+          Crypto_Name VARCHAR(255) NOT NULL,
+          Extension VARCHAR(255) NOT NULL,
+          Sun NUMERIC,
+          Mon NUMERIC,
+          Tue NUMERIC,
+          Wed NUMERIC, 
+          Thur NUMERIC, 
+          Fri NUMERIC, 
+          Sat NUMERIC
+            )
             """
     return query
 
