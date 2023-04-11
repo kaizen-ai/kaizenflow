@@ -818,10 +818,11 @@ swaps, i.e., the quantity bought for each token is equal to the quantity sold.
 \subsection{Limit order inequalities}
 Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
 \[
-	o_i = (a_i, q_i, \basetoken_i, p_i, \quotetoken_i)
+	o_i = (a_i, q_i, \pi_i, p_i, \tau_i)
 \]
-where the quote token is implicit in the quantity $q_i$ and the quote and base
-tokens are implicit in the limit price $p_i$.
+where the quote token $\tau_i$ is implicit in the quantity $q_i$ and
+the quote token $\tau_i$ and base token $\pi_i$ are implicit in the limit price
+$p_i$ and in the action $a_i$.
 To encode directionality in the limit price inequality, we introduce
 \[
 	\mathcal{I}(a) :=
@@ -833,12 +834,11 @@ To encode directionality in the limit price inequality, we introduce
 For each $i$, define
 \[
 	c_i := \left(
-	p^*_{\quotetoken_i\_per\_\basetoken_i} \leq \mathcal{I}(a_i) \cdot p_i
+	p^*_{\tau_i\_per\_\pi_i} \leq \mathcal{I}(a_i) \cdot p_i
 	\right)
 \]
-where $p^*_{\quotetoken_i\_per\_\basetoken_i}$ is the unique clearing price for
+where $p^*_{\tau_i\_per\_\pi_i}$ is the unique clearing price for
 the indicated base token/quote token ordered pair.
-TODO(Paul): revive the ``to token" notation.
 Then, each limit order $o_i$ may be expressed as
 \[
 	c_i \land
@@ -853,22 +853,28 @@ Let $T$ denote the intersection of the union of all base tokens and the union
 of all quote tokens:
 \[
 	T :=
-	\left( \cup_i \basetoken_i \right)
-	\cap
-	\left( \cup_i \quotetoken_i \right)
+    \left( \bigcup_{i=1}^n \pi_i \right)
+	\bigcap
+    \left( \bigcup_{i=1}^n \tau_i \right)
 \]
 The set of tokens $T$ is the set of tokens eligible for swapping.
-We require that the following \emph{no arbitrage}
-constraints be satisfied for all tokens $u, v, w \in T$
-involved in a swap:
+Let $\Gamma$ denote the directed graph whose vertices $V$ are given by the set
+of elements $T$, and whose directed edges $E$ are given by
 \[
-	p^*_{u\_per\_v} \cdot
-	p^*_{v\_per\_w} =
-	p^*_{u\_per\_w}
+    E = \bigcup_{\substack{i \in \{1, \ldots, n\} \\ \pi_i, \tau_i \in T}}(\pi_i, \tau_i)
 \]
-Note that, in the case $w = u$, this enforces a unique exchange rate between
-a pair of tokens (changing the roles of the base and quote tokens inverts the
-exchange rate).
+Let $C$ denote the collection of all elementary circuits of $\Gamma$.
+For an elementary circuit $\gamma \in C$, consecutively enumerate the vertices
+(with starting place arbitrary) by $c_j$ for $j = 1, \ldots, |\gamma|$. The
+\emph{no arbitrage} constraints states that, for each $\gamma \in C$, we have
+\[
+    p^*_{{c_1\_per\_c_{|\gamma|}}} \cdot
+    \prod_{j = 1}^{|\gamma| - 1}p^*_{{c_{j + 1}}\_per\_c_j}
+    = 1
+\]
+In the case of a two-token cycle, this constraint reduces to ensuring that
+there is a unique exchange rate between the pair of tokens (changing the roles
+of the base and quote tokens in limit orders inverts the exchange rate).
 
 % ===============================================================================
 
@@ -877,7 +883,7 @@ exchange rate).
 For each order $i$, let $\tilde{q}_i^*$ denote the quantity of
 $\quotetoken_i$ exchanged. Then we must have
 \[
-	\tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
+	\tilde{q}_i^* = q_i^* \cdot p_{\tau_i\_per\_\pi_i}^*
 \]
 for each $i$. In effect, this enforces the market clearing price for each
 order.
@@ -900,9 +906,9 @@ $\mathcal{T}: T \to \{0, 1\}$ via
 \]
 Then, for each $u \in T$, the following conservation law must hold:
 \[
-	\sum_i \mathcal{T}_u(\basetoken_i) \cdot q^*_i
+	\sum_i \mathcal{T}_u(\pi_i) \cdot q^*_i
 	=
-	- \sum_i \mathcal{T}_u(\quotetoken_i) \cdot \tilde{q}_i^*
+	- \sum_i \mathcal{T}_u(\tau_i) \cdot \tilde{q}_i^*
 \]
 Note that this translates into one equality per token participating in the
 swap. Note also that this is a global constraint on the swap rather than local
@@ -917,21 +923,28 @@ across the collection of orders, suitable counterparties.
 We now collect the constraints that must be satisfied:
 \begin{equation}
 	\begin{cases}
-		c_i \land (q_i^* \leq q_i) \lor (q_i^* = 0)
+		c_i \land (0 \leq q_i^* \leq q_i) \lor (q_i^* = 0)
 		 & \forall i \in \{1, \ldots, n\} \\
-		\tilde{q}_i^* = q_i^* \cdot p_{\quotetoken_i\_per\_\basetoken_i}^*
+		\tilde{q}_i^* = q_i^* \cdot p_{\tau_i \_per\_\pi_i}^*
 		 & \forall i \in \{1, \ldots, n\} \\
-		p^*_{u\_per\_v} \cdot p^*_{v\_per\_w} = p^*_{u\_per\_w}
-		 & \forall u, v, w \in T          \\
-		\sum_{j = 1}^n \mathcal{T}_u(\basetoken_j) \cdot q^*_j
-		=
-		- \sum_{j = 1}^n \mathcal{T}_u(\quotetoken_j) \cdot \tilde{q}_j^*
-		 & \forall u \in T
+        p^*_{{c_1\_per\_c_{|\gamma|}}} \cdot
+        \prod_{j = 1}^{|\gamma| - 1}p^*_{{c_{j + 1}}\_per\_c_j}
+        = 1
+		 & \forall \gamma \in C \\
+        \sum_{j = 1}^n \mathcal{T}_u(\pi_i) \cdot q^*_i
+        =
+        - \sum_{j = 1}^n \mathcal{T}_u(\tau_i) \cdot \tilde{q}_i^*
+         & \forall u \in T
 	\end{cases}
 \end{equation}
-TODO(Paul): Determine the minimal number of no-arbitrage constraints that need
-to be verified. The number of no-arbitrage constaints is on the order of
-$O(|T|^3)$, whereas the number of other constraints grows at most $O(n)$.
+Note that $n$ is the number of orders and $|T| \leq n$. So first two
+collections of constraints and the last collection of constraints grow at most
+linearly in the number of orders and so are $O(n)$.
+Claim: the number of elementary cycles is also bounded by $n$ (consider proof
+by induction, looking at how many cycles can be added with each additional
+edge).
+For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
+as well as \cite{MaDe76} for a comparison.
 
 % ===============================================================================
 
@@ -1461,6 +1474,28 @@ $(a_1, b_1)$ of the book.
 		pages={107-119},
 		eprint={https://doi.org/10.1023/A:1022058209073},
 	}
+
+    \bib{Jo75}{article}{
+        author={Johnson, Donald B.},
+        title={Finding all the Elementary Circuits of a Directed Graph},
+        journal={SIAM Journal on Computing},
+        date={1975},
+        volume={4},
+        number={1},
+        pages={77-84},
+    }
+
+    \bib{MaDe76}{article}{
+        author={Mateti, Prabhaker},
+        author={Narsingh, Deo},
+        title={On Algorithms for Enumerating All Circuits of a Graph},
+        journal={SIAM Journal on Computing},
+        date={1976},
+        volume={5},
+        number={1},
+        pages={90-99},
+        eprint={https://doi.org/10.1137/0205007}
+    }
 
     \bib{MiMoRo23}{article}{
 		author={Milionis, Jason},
