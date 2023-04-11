@@ -111,7 +111,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     downloader = sisebido.CGDownloader()
     raw_data = downloader.download(id, from_timestamp, to_timestamp)
     # Save data as CSV.
-    saver = CsvDataFrameSaver(args.target_dir)
+    saver = CsvDataFrameSaver(args.target_table)
     saver.save(raw_data)
 
 
