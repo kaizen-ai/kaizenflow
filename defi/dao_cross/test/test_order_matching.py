@@ -2,55 +2,15 @@ from typing import List
 
 import pandas as pd
 
-import defi.dao_cross.order_matching as ddcrorma
 import defi.dao_cross.order as ddacrord
+import defi.dao_cross.order_matching as ddcrorma
 import helpers.hpandas as hpandas
 import helpers.hunit_test as hunitest
 
 
 class TestMatchOrders1(hunitest.TestCase):
-    def test_match_orders1(self) -> None:
-        orders = self._get_test_orders()
-        clearing_price = 2
-        # Get the actual outcome.
-        actual_df = ddcrorma.match_orders(orders, clearing_price)
-        # Check the unique tokens.
-        actual_tokens = sorted(list(actual_df["token"].unique()))
-        expected_tokens = ["BTC", "ETH"]
-        self.assertEqual(actual_tokens, expected_tokens)
-        # Check that the DaoCross conservation law is fullfilled.
-        btc_quantity = actual_df[actual_df["token"] == "BTC"]["amount"].sum()
-        eth_quantity = actual_df[actual_df["token"] == "ETH"]["amount"].sum()
-        self.assertEqual(btc_quantity * clearing_price, eth_quantity)
-        # Check the signature.
-        actual_signature = hpandas.df_to_str(
-            actual_df,
-            print_shape_info=True,
-            tag="df",
-        )
-        # pylint: disable=line-too-long
-        expected_signature = r"""
-        # df=
-        index=[0, 5]
-        columns=token,amount,from,to
-        shape=(6, 4)
-        token  amount  from  to
-        0   BTC     1.2     1   1
-        1   ETH     2.4     1   1
-        2   BTC     0.3     1   2
-        3   ETH     0.6     2   1
-        4   BTC     1.1     6   2
-        5   ETH     2.2     2   6
-        """
-        # pylint: enable=line-too-long
-        self.assert_equal(
-            actual_signature,
-            expected_signature,
-            dedent=True,
-            fuzzy_match=True,
-        )
-
-    def _get_test_orders(self) -> List[ddacrord.Order]:
+    @staticmethod
+    def get_test_orders() -> List[ddacrord.Order]:
         timestamp = pd.Timestamp("2023-01-01 00:00:01+00:00")
         base_token = "BTC"
         quote_token = "ETH"
@@ -117,3 +77,42 @@ class TestMatchOrders1(hunitest.TestCase):
         )
         orders = [order_1, order_2, order_3, order_4, order_5, order_6]
         return orders
+
+    def test_match_orders1(self) -> None:
+        orders = self.get_test_orders()
+        clearing_price = 1
+        # Match orders.
+        actual_df = ddcrorma.match_orders(orders, clearing_price)
+        # Check the unique tokens.
+        actual_tokens = sorted(list(actual_df["token"].unique()))
+        expected_tokens = ["BTC", "ETH"]
+        self.assertEqual(actual_tokens, expected_tokens)
+        # Check that the DaoCross conservation law is fullfilled.
+        btc_quantity = actual_df[actual_df["token"] == "BTC"]["amount"].sum()
+        eth_quantity = actual_df[actual_df["token"] == "ETH"]["amount"].sum()
+        self.assertEqual(btc_quantity * clearing_price, eth_quantity)
+        # Check the signature.
+        actual_signature = hpandas.df_to_str(
+            actual_df,
+            print_shape_info=True,
+            tag="df",
+        )
+        expected_signature = r"""
+        # df=
+        index=[0, 5]
+        columns=token,amount,from,to
+        shape=(6, 4)
+        token  amount  from  to
+        0   BTC     1.2     1   1
+        1   ETH     1.2     1   1
+        2   BTC     0.3     1   2
+        3   ETH     0.3     2   1
+        4   BTC     1.1     6   2
+        5   ETH     1.1     2   6
+        """
+        self.assert_equal(
+            actual_signature,
+            expected_signature,
+            dedent=True,
+            fuzzy_match=True,
+        )

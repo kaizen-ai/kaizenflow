@@ -10,15 +10,16 @@ from typing import Optional, Union
 import numpy as np
 import pandas as pd
 
-import helpers.hdbg as hdbg
 import helpers.hdatetime as hdateti
+import helpers.hdbg as hdbg
 
 _LOG = logging.getLogger(__name__)
 
 
+# TODO(gp): Maybe LimitOrder or DaoLimitOrder?
 class Order:
     """
-    Create order for DaoCross or DaoSwap.
+    Limit order to be used in DaoCross or DaoSwap.
     """
 
     def __init__(
@@ -29,22 +30,41 @@ class Order:
         base_token: str,
         limit_price: float,
         quote_token: str,
+        # TODO(gp): -> dst_address?
         deposit_address: Union[int, str],
+        # TODO(gp): -> src_address?
         wallet_address: Union[int, str],
     ) -> None:
         """
         Constructor.
 
-        :param timestamp: time of order execution
+        According to the white paper, an order like:
+
+        ```(1678660406, buy, 3.2, ETH, 4.0, BTC, 0xdeadc0de, 0xabcd0000)```
+
+        corresponds to the natural language description:
+        “At timestamp Mon Mar 13 2023 02:33:25 GMT+0000, the user commits
+        to buy up to 3.2 units of ETH in exchange for wBTC up to a limit price
+        of 4.0 wBTC per ETH with proceeds deposited at 0xdeadc0de and with
+        token provided to the swap from wallet address 0xabcd0000”
+
+        :param timestamp: time of order execution (e.g., "Mon Mar 13 2023
+            02:33:25 GMT+0000")
+            - `None` means the current wall clock time
         :param action: order action type
             - "buy": purchase the base token and pay with the quote token
             - "sell": sell the base token and receive the quote token
-        :param quantity: quantity in terms of the base token
-        :param base_token: token to express order quantity
-        :param limit_price: limit price in terms of the quote token per base token
-        :param quote_token: token to express order price
-        :param deposit_address: deposit address to implement the order for
-        :param wallet_address: wallet address to implement the order for
+        :param quantity: maximum quantity in terms of the base token (e.g., 3.2)
+        :param base_token: token to express order quantity with (e.g., ETH)
+        :param limit_price: limit price in terms of the quote token (e.g.,
+            4.0 BTC per ETH). The limit price is interpreted as non-strict
+            inequality, e.g., if `limit_price=4`, the order can be executed
+            with a price of 4.0 quote / base token
+        :param quote_token: token to express order price with (e.g., BTC)
+        :param deposit_address: deposit address to transfer the result of the swap
+            (e.g., 0xdeadc0de)
+        :param wallet_address: wallet address with the token to provide to the
+            swap (e.g., 0xabcd0000)
         """
         hdbg.dassert_isinstance(base_token, str)
         hdbg.dassert_isinstance(quote_token, str)
@@ -108,16 +128,39 @@ class Order:
         """
         return not self._takes_precedence(other)
 
+    @property
+    def is_active(self) -> bool:
+        """
+        `Order` is active if its quantity is above 0.
+        """
+        if self.quantity > 0:
+            return True
+        else:
+            return False
+
+    @property
+    def action_as_int(self) -> int:
+        """
+        Translate `Order` action to an int representation of a direction with
+        the usual conventions of buy / sell.
+        """
+        if self.action == "buy":
+            return 1
+        else:
+            return -1
+
     def _takes_precedence(self, other: "Order") -> bool:
         """
         Compare order to another one according to quantity, price and
-        timestamp. Prioritize orders according to:
+        timestamp.
+
+        Prioritize orders according to:
 
             1. Quantity - higher quantity comes first in priority
             2. Price - higher limit price breaks quantity ties
             3. Timestamp - earlier timestamp breaks ties in quantity and price
         :param other: order to compare the actual order with
-        :return: "True" if order preceeds the other one, "False" otherwise
+        :return: "True" if this order preceeds the other one, "False" otherwise
         """
         takes_precedence = False
         if self.quantity > other.quantity:
@@ -167,20 +210,3 @@ def get_random_order(seed: Optional[int] = None) -> Order:
         wallet_address,
     )
     return order
-
-
-def action_to_int(action: str) -> int:
-    """
-    Translate an action to an int.
-
-    :param action: direction: `buy` or `sell`
-    :return: int representation of a direction
-    """
-    ret = None
-    if action == "buy":
-        ret = 1
-    elif action == "sell":
-        ret = -1
-    else:
-        raise ValueError(f"Unsupported action={action}")
-    return ret

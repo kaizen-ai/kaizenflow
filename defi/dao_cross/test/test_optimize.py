@@ -212,7 +212,7 @@ class TestRunSolver4(hunitest.TestCase):
         limit_prices: List[float],
     ) -> List[ddacrord.Order]:
         """
-        Get toy BTC orders for the unit tests.
+        Get four orders for the unit tests (two buy and two sell orders).
 
         :param limit_prices: limit in prices: quote token per base token
         :return: buy and sell orders with the base token "BTC"
@@ -366,7 +366,8 @@ class TestRunSolver4(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        The limit price condition is False for a buy order.
+        The limit price condition is False for a buy order and True for the
+        sell order.
         """
         prices = {"BTC": 2, "ETH": 8}
         btc_limit_prices = [5, 2, 3, 2]
@@ -378,7 +379,8 @@ class TestRunSolver4(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        The limit price condition is False for a sell order.
+        The limit price condition is False for a sell order, and True for the
+        sell order.
         """
         prices = {"BTC": 2, "ETH": 8}
         btc_limit_prices = [5, 5.5, 3, 6]
