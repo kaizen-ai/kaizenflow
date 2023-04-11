@@ -1,29 +1,13 @@
-12:25:10 - [36mINFO [0m download_team2.py downloader:150                       12:25:10 - [36mINFO [0m download_team2.py downloader:150                       
-Inserting GitHub Issues data: 
-	            id  number                                              title  \
-0  1659834974   27441  doc: correct sqlite & qrencode versions used i...   
-1  1659833323   27440     contrib: followups to #27358 (verify-binaries)   
-2  1658927974   27436                  test: LLVM/Clang 16 for MSAN jobs   
-3  1658002064   27434  validation: implement MaybeInvalidateFork() an...   
-4  1657857428   27433  getblocktemplate improvements for segwit and s...   
+23:50:12 - [36mINFO [0m download_team2.py downloader:144                       23:50:12 - [36mINFO [0m download_team2.py downloader:144                       
+Inserting GitHub Main data: 
+	           id            created_at            updated_at  \
+0  121470383  2018-02-14T04:26:27Z  2023-04-10T23:29:00Z   
 
-             created_at            updated_at closed_at author_association  \
-0  2023-04-09T10:56:58Z  2023-04-10T04:07:55Z      None             MEMBER   
-1  2023-04-09T10:50:12Z  2023-04-10T16:05:10Z      None             MEMBER   
-2  2023-04-07T15:27:28Z  2023-04-10T09:57:33Z      None             MEMBER   
-3  2023-04-06T20:25:43Z  2023-04-08T14:07:18Z      None             MEMBER   
-4  2023-04-06T18:18:37Z  2023-04-10T04:08:38Z      None             MEMBER   
+              pushed_at    size  stargazers_count  watchers_count  \
+0  2023-04-11T01:19:16Z  439103             10180           10180   
 
-   comments                                               body user_login  \
-0         1   Followup to https://github.com/bitcoin/bitcoi...   fanquake   
-1         2  Followup to #27358, fixing up the example comm...   fanquake   
-2         1  Similar to other CI infra changes we've made r...   fanquake   
-3         1  Closes https://github.com/bitcoin/bitcoin/issu...  pinheadmz   
-4         2  **Sigops**\r\n\r\nTwo recent F2Pool blocks vio...      Sjors   
+   forks_count  open_issues_count  watchers  network_count  subscribers_count  \
+0         2825                867     10180           2825                269   
 
-   user_id Crypto_Name Extension  
-0   863730     bitcoin   /issues  
-1   863730     bitcoin   /issues  
-2   863730     bitcoin   /issues  
-3  2084648     bitcoin   /issues  
-4    10217     bitcoin   /issues  
+   owner_id  organization_id  Crypto  
+0  35608259         35608259  solana  
