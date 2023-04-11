@@ -144,14 +144,16 @@ def downloader(pair,target_table,**kwargs):
     connection.close()
     return pd.DataFrame(data)
 
-    #checking for existing rows in Data tables-
+   #checking for existing IDs in Issues Data table-
   issues_check_query= "SELECT * FROM github_issues"
   issues_check = get_db_connection(issues_check_query)
   print("Existing Issues df:",issues_check.head(2))	
   allowed = issues_check.iloc[:, 0].unique()
+  #Removing existing IDs from fetched dataframe	
   issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
   issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
   issues_df=issues_df[issues_df['duplicate_id']==0]
+  #Dropping not requried columns---
   issues_df=issues_df.drop(['duplicate_id'], axis=1)
 
 
@@ -166,6 +168,7 @@ def downloader(pair,target_table,**kwargs):
     _LOG.info(f"\nInserting GitHub Yearly Commits data: \n\t {yc_df.head()}")
   elif target_table =='github_issues':
     table=issues_df
+    _LOG.info(f"\nNew Unique GitHub Issues found: {len(issues_df)}")	
     _LOG.info(f"\nInserting GitHub Issues data: \n\t {issues_df.head()}")  
   else:
     table=data
