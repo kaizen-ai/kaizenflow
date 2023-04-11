@@ -151,6 +151,7 @@ def downloader(pair,target_table,**kwargs):
   allowed = issues_check.iloc[:, 0].unique()
   issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
   issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
+  issues_df=issues_df[issues_df['duplicate_id']==0]
   issues_df=issues_df.drop(['duplicate_id'], axis=1)
 
 
