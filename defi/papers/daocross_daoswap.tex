@@ -39,6 +39,7 @@
 \newtheorem{problem}{Problem}[subsection]
 \theoremstyle{remark}
 \newtheorem{exmp}{Example}[subsection]
+\newtheorem{rmk}{Remark}[subsection]
 
 \newcommand{\bidbtc}{\mathrm{bid}_\mathrm{BTC}}
 \newcommand{\askbtc}{\mathrm{ask}_\mathrm{BTC}}
@@ -823,32 +824,61 @@ Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
 where the quote token $\tau_i$ is implicit in the quantity $q_i$ and
 the quote token $\tau_i$ and base token $\pi_i$ are implicit in the limit price
 $p_i$ and in the action $a_i$.
-To encode directionality in the limit price inequality, we introduce
+
+For each order $o_i$, let $x_{i1}$ denote the realized amount of base token
+exchanged, and let $x_{i2}$ denote the realized amount of quote token
+exchanged.
+
+\begin{rmk}
+Regardless of the direction of the exchange, we require the quantities to
+be nonnegative:
 \[
-	\mathcal{I}(a) :=
-	\begin{cases}
-		+1 \text{ for } a = \buy  \\
-		-1 \text{ for } a = \sell \\
-	\end{cases}
+    x_{i1} \geq 0, \quad x_{i2} \geq 0.
 \]
-For each $i$, define
+While not a limit-order imposed constraint per se, it helps clarify
+conventions, and, in any case, is a desirable feature of a well-functioning
+exchange. In particular, it implies that tokens have nonnegative value to hold.
+
+Further, we impose that $x_{i1} = 0$ if and
+only if $x_{i2} = 0$:
 \[
-	c_i := \left(
-	p^*_{\tau_i\_per\_\pi_i} \leq \mathcal{I}(a_i) \cdot p_i
-	\right)
+    x_{i1} = 0 \iff x_{i2} = 0.
 \]
-where $p^*_{\tau_i\_per\_\pi_i}$ is the unique clearing price for
-the indicated base token/quote token ordered pair.
-Then, each limit order $o_i$ may be expressed as
+This implies that, when exchange takes place, the effective price is finite and
+nonnegative, that is, there is ``no free lunch".
+\end{rmk}
+
+\begin{rmk}
+With this notation, the limit order constraint on quantity may be expressed as
 \[
-	c_i \land
-	(q_i^* \leq q_i) \lor
-	(q_i^* = 0)
+    x_{i1} \leq q_i
 \]
+\end{rmk}
+
+Additionally, for each $o_i$, let $a_{i1}$ and $a_{i2}$ belong to
+$\{-1, +1\}$, with sign determined by $o_i$ in the following way: if
+$a_i$ (the action) of $o_i$ is to buy, then set $a_{i1} = -1$ (the buy
+order is taking liquidity of the base token), and if it is to sell, then
+set $a_{i1} = 1$. We always have $a_{i2} = -a_{i1}$, and if the action
+of $a_i$ is to sell rather than to buy, then its signs are reversed with
+respect to the buy action.
+
+The effective transaction price (in the event that nonzero token is exchanged)
+is represented by $x_{i2} / x_{i1}$. If the action is to buy (base token),
+then $p_i$ represents an upper bound, and the opposite is true if the action is
+to sell.
+
+\begin{rmk}
+The limit order constraint on price may be expressed as
+\[
+    a_{i2} x_{i2} \leq x_{i1} p_i
+\]
+\end{rmk}
 
 % ===============================================================================
 
-\subsection{No arbitrage}
+\subsection{Unique clearing price per token pair}
+
 Let $T$ denote the intersection of the union of all base tokens and the union
 of all quote tokens:
 \[
@@ -858,42 +888,33 @@ of all quote tokens:
     \left( \bigcup_{i=1}^n \tau_i \right)
 \]
 The set of tokens $T$ is the set of tokens eligible for swapping.
-Let $\Gamma$ denote the directed graph whose vertices $V$ are given by the set
-of elements $T$, and whose directed edges $E$ are given by
+
+We now introduce market exchange imposed constraints (beyond the basic ones of
+nonnegative token value and finite price). The first of these is that the
+effective exchange rate for an order involving tokens $\nu \in T$ and
+$\eta \in T$ is the same for all filled orders. In other words, the clearing
+exchange rate is unique for all participants. In particular, we require that
+for all $i, j$ whose respective orders $o_i, o_j$ both involve tokens
+$\nu$, $\eta$, then we have
 \[
-    E = \bigcup_{\substack{i \in \{1, \ldots, n\} \\ \pi_i, \tau_i \in T}}(\pi_i, \tau_i)
+    x_{i1} x_{j2} - x_{i2} x_{j1} = 0
 \]
-Let $C$ denote the collection of all elementary circuits of $\Gamma$.
-For an elementary circuit $\gamma \in C$, consecutively enumerate the vertices
-(with starting place arbitrary) by $c_j$ for $j = 1, \ldots, |\gamma|$. The
-\emph{no arbitrage} constraints states that, for each $\gamma \in C$, we have
+when the tokens $\nu$ and $\eta$ play identical base/quote roles in $o_i$,
+$o_j$, and we have
 \[
-    p^*_{{c_1\_per\_c_{|\gamma|}}} \cdot
-    \prod_{j = 1}^{|\gamma| - 1}p^*_{{c_{j + 1}}\_per\_c_j}
-    = 1
+    x_{i1} x_{j1} - x_{i2} x_{j2} = 0
 \]
-In the case of a two-token cycle, this constraint reduces to ensuring that
-there is a unique exchange rate between the pair of tokens (changing the roles
-of the base and quote tokens in limit orders inverts the exchange rate).
+if they play opposite roles.
+
+We rewrite this as
+\begin{align*}
+    x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+    x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j
+\end{align*}
 
 % ===============================================================================
 
-\subsection{Conservation of exchanged value}
-
-For each order $i$, let $\tilde{q}_i^*$ denote the quantity of
-$\quotetoken_i$ exchanged. Then we must have
-\[
-	\tilde{q}_i^* = q_i^* \cdot p_{\tau_i\_per\_\pi_i}^*
-\]
-for each $i$. In effect, this enforces the market clearing price for each
-order.
-
-% ===============================================================================
-
-\subsection{Conservation of exchanged tokens}
-
-Assume by convention that a buy order removes base tokens from the system and
-provides quote tokens to the system, whereas a sell order does the opposite.
+\subsection{Supply and demand match}
 
 For each token $u \in T$, define the indicator function
 $\mathcal{T}: T \to \{0, 1\}$ via
@@ -906,14 +927,12 @@ $\mathcal{T}: T \to \{0, 1\}$ via
 \]
 Then, for each $u \in T$, the following conservation law must hold:
 \[
-	\sum_i \mathcal{T}_u(\pi_i) \cdot q^*_i
-	=
-	- \sum_i \mathcal{T}_u(\tau_i) \cdot \tilde{q}_i^*
+    \sum_i \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
+    + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
+    = 0
 \]
 Note that this translates into one equality per token participating in the
-swap. Note also that this is a global constraint on the swap rather than local
-to each order;
-in particular, it expresses the notion that each filled order must have,
+swap. These equalities express the notion that each filled order must have,
 across the collection of orders, suitable counterparties.
 
 % ===============================================================================
@@ -923,39 +942,64 @@ across the collection of orders, suitable counterparties.
 We now collect the constraints that must be satisfied:
 \begin{equation}
 	\begin{cases}
-		c_i \land (0 \leq q_i^* \leq q_i) \lor (q_i^* = 0)
-		 & \forall i \in \{1, \ldots, n\} \\
-		\tilde{q}_i^* = q_i^* \cdot p_{\tau_i \_per\_\pi_i}^*
-		 & \forall i \in \{1, \ldots, n\} \\
-        p^*_{{c_1\_per\_c_{|\gamma|}}} \cdot
-        \prod_{j = 1}^{|\gamma| - 1}p^*_{{c_{j + 1}}\_per\_c_j}
-        = 1
-		 & \forall \gamma \in C \\
-        \sum_{j = 1}^n \mathcal{T}_u(\pi_i) \cdot q^*_i
-        =
-        - \sum_{j = 1}^n \mathcal{T}_u(\tau_i) \cdot \tilde{q}_i^*
-         & \forall u \in T
+        x_{i1} \geq 0, \quad x_{i2} \geq 0 & \forall i \in \{1, \ldots, n\} \\
+        x_{i1} = 0 \iff x_{i2} = 0 & \forall i \in \{1, \ldots, n\} \\
+        x_{i1} \leq q_i & \forall i \in \{1, \ldots, n\} \\
+        a_{i2} x_{i2} \leq x_{i1} p_i & \forall i \in \{1, \ldots, n\} \\
+        x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+        x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
+        \sum_{i=1}^n \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
+        + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
+        = 0 & \forall u \in T
 	\end{cases}
 \end{equation}
-Note that $n$ is the number of orders and $|T| \leq n$. So first two
-collections of constraints and the last collection of constraints grow at most
-linearly in the number of orders and so are $O(n)$.
-Claim: the number of elementary cycles is also bounded by $n$ (consider proof
-by induction, looking at how many cycles can be added with each additional
-edge).
-For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
-as well as \cite{MaDe76} for a comparison.
 
 % ===============================================================================
 
 \subsection{Solution of the general DaoSwap problem}
 
+Given the constraints, our goal is to find quantities $x_{i1}, x_{i2}$ such
+that exchanged quantity is maximized.
+
+The unique clearing price constraint prevents the problem from falling in the
+domain of linear programming.
+
+TODO(gp): explain better, cite...
 The general solution of the DaoSwap problem must satisfy a set of non-linear,
 combinatorial constraints, whose solution is NP-complete.
 
-It can still be solved in an effective way with solvers like ...
+It can still be solved in an effective way with solvers like...
 
-TODO(gp): explain better, cite
+% ===============================================================================
+
+\subsection{No arbitrage}
+
+Beyond the constraint of having a unique clearing price (if the clearing price
+is defined), it is desirable to structure trade so that arbitrage opportunities
+in the realized exchange were not present.
+
+Let $\Gamma$ denote the directed graph whose vertices $V$ are given by the set
+of elements $T$, and whose directed edges $E$ are given by
+\[
+    E = \bigcup_{\substack{i \in \{1, \ldots, n\} \\ \pi_i, \tau_i \in T}}
+    \left( (\pi_i, \tau_i) \cup (\tau_i, \pi_i) \right)
+\]
+Each edge $(b, a) \in E$ seek to give the weight $w_{a, b}$. Note that
+$w_{a, b}$ and $w_{b, a}$ are distinct.
+
+Let $C$ denote the collection of all simple cycles of $\Gamma$.
+For an simple cycle $\gamma \in C$, consecutively enumerate the vertices
+(with starting place arbitrary) by $c_j$ for $j = 1, \ldots, |\gamma|$.
+Let $c_0 := c_{|\gamma|}$ for notational convenience. Then
+the \emph{no arbitrage} constraints states that, for each $\gamma \in C$, we have
+\[
+    \sum_{j = 0}^{|\gamma|} w_{j, j + 1} = 0
+\]
+In the case of a two-token cycle, this constraint reduces to ensuring that
+there is a unique exchange rate between the pair of tokens (changing the roles
+of the base and quote tokens in limit orders inverts the exchange rate).
+For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
+as well as \cite{MaDe76} for a comparison.
 
 % ===============================================================================
 
