@@ -1,0 +1,8 @@
+flask
+psycopg2-binary
+pandas
+requests
+typing
+redis
+sqlalchemy
+datetime

@@ -1,0 +1,6 @@
+18:11:40 - [36mINFO [0m download_yahoo.py download:54                          18:11:40 - [36mINFO [0m download_yahoo.py download:54                          Downloaded data: 
+	            Open          High           Low  ...  currency_pair  exchangeTimezoneName  timezone
+0     17.082336     17.795355     17.033552  ...       AVAX-USD                   UTC       UTC
+1  23150.929688  23880.632812  23088.626953  ...        BTC-USD                   UTC       UTC
+
+[2 rows x 10 columns]
