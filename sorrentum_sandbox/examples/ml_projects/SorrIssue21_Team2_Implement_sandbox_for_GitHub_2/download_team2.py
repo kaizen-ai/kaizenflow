@@ -8,6 +8,7 @@ import requests
 import json
 from pandas import json_normalize
 import warnings
+import psycopg2 as psycop
 
 warnings.filterwarnings("ignore")
 pd.set_option('display.max_columns', None)
@@ -17,15 +18,6 @@ import sorrentum_sandbox.common.download as ssandown
 _LOG = logging.getLogger(__name__)
 
 
-  #Defining Data Frame for main data
-#data=pd.DataFrame()
-
-
-  ##-- For Yearly Commits
-#yc_df=pd.DataFrame()
-
- ##-- For Issues Data
-#issues_df=pd.DataFrame()
 
 def downloader(pair,target_table,**kwargs):
 
@@ -87,6 +79,7 @@ def downloader(pair,target_table,**kwargs):
       d1 = json_normalize(common)  
       crypto_name=m.split('/')[-1]
       d1['Crypto']=crypto_name
+      d1['inserted_at']=pd.Timestamp.now()
       data=data.append(d1)
       
       for n in extensions:
@@ -119,12 +112,15 @@ def downloader(pair,target_table,**kwargs):
   #Preprocessing--
   #1.For Yearly Commit Data Frame---
   ###Convertin Days Column values in 'Yearly Commit' to separte columns
-  yc_df[['Sun','Mon','Tue','Wed','Thur','Fri','Sat']] = pd.DataFrame(yc_df.days.tolist(), index= yc_df.index)        
+  if yc_df.empty:
+    print("Dataframe is empty!")
+  else:
+    yc_df[['Sun','Mon','Tue','Wed','Thur','Fri','Sat']] = pd.DataFrame(yc_df.days.tolist(), index= yc_df.index)        
 
   #2.For the main data frame -----
   ##Rearranging columns & Keeping only the features that are needed
   data=data[['id', 'created_at','updated_at','pushed_at', 'size', 'stargazers_count','watchers_count', 'forks_count','open_issues_count',
-            'watchers','network_count', 'subscribers_count','owner.id','organization.id','Crypto']]
+            'watchers','network_count', 'subscribers_count','owner.id','organization.id','Crypto','inserted_at']]
   #Renaming the columns
   data = data.rename(columns = {'owner.id': 'owner_id','organization.id':'organization_id'}, inplace = False)
 
@@ -136,6 +132,34 @@ def downloader(pair,target_table,**kwargs):
   issues_df = issues_df.rename(columns = {'user.login': 'user_login','user.id':'user_id'}, inplace = False)
       
   
+  #Connection String for main DB
+  def get_db_connection(query_var) :       
+    connection = psycop.connect(
+          host="host.docker.internal",                                      
+          dbname="airflow",
+          port=5532,
+          user="postgres",
+          password="postgres",
+      )
+    drt_cursor=connection.cursor()
+    drt_cursor.execute(query_var)
+    data=drt_cursor.fetchall()
+    connection.close()
+    return pd.DataFrame(data)
+
+   #checking for existing IDs in Issues Data table-
+  issues_check_query= "SELECT * FROM github_issues"
+  issues_check = get_db_connection(issues_check_query)
+  print("Existing Issues df:",issues_check.head(2))	
+  allowed = issues_check.iloc[:, 0].unique()
+  #Removing existing IDs from fetched dataframe	
+  issues_df.loc[issues_df.id.isin(allowed),'duplicate_id']=1
+  issues_df["duplicate_id"]=issues_df.duplicate_id.fillna(value=0)
+  issues_df=issues_df[issues_df['duplicate_id']==0]
+  #Dropping not requried columns---
+  issues_df=issues_df.drop(['duplicate_id'], axis=1)
+
+
   
 
   #Datatable to be inserted
@@ -147,6 +171,7 @@ def downloader(pair,target_table,**kwargs):
     _LOG.info(f"\nInserting GitHub Yearly Commits data: \n\t {yc_df.head()}")
   elif target_table =='github_issues':
     table=issues_df
+    _LOG.info(f"\nNew Unique GitHub Issues found: {len(issues_df)}")	
     _LOG.info(f"\nInserting GitHub Issues data: \n\t {issues_df.head()}")  
   else:
     table=data
