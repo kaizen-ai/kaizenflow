@@ -27,7 +27,7 @@ with DAG(
     description="Downloads and updates S&P 500 data",
     max_active_runs=1,
     default_args=default_args,
-    schedule_interval='@once',
+    schedule_interval='@daily',
     catchup=False,
 ) as dag:
 
