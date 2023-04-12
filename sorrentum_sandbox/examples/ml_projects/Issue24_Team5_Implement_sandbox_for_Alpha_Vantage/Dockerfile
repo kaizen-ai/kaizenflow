@@ -22,6 +22,7 @@ WORKDIR $INSTALL_DIR
 COPY requirements.txt .
 COPY models models/
 COPY api api/
+COPY processing processing/
 COPY .env .
 COPY main.ipynb .
 

@@ -27,8 +27,7 @@ class TimeSeriesData:
     volume: int
 
     def to_json(self):
-        return {
-            "type": self.type.value,
+        dic = {
             "date": self.date,
             "open": self.open,
             "close": self.close,
@@ -36,6 +35,8 @@ class TimeSeriesData:
             "low": self.low,
             "volume": self.volume
         }
+        dic['type'] = self.type if isinstance(self.type, str) else self.type.value
+        return dic
 
     @classmethod
     def load_json(cls, data_type: DataType, data: dict) -> list:

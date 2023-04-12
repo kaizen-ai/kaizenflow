@@ -6,6 +6,7 @@ import pandas as pd
 from api.mongo_db import Mongo
 from models.ticker import Ticker
 from models.time_series import DataType, TimeInterval
+from processing.anomalies import isolation_forest_labels, quantiles
 
 plt.style.use("./processing/style.mplstyle")
 
@@ -15,7 +16,8 @@ def display(
     kind=DataType.DAILY,
     start=None,
     end=None,
-    update=False
+    update=False,
+    outliers=None,
 ):
     """Graphs specified ticker from the data available in the Database"""
 
@@ -68,41 +70,59 @@ def display(
     figure.set_figwidth(15)
     figure.set_figheight(5)
 
+    ax1 = figure.add_subplot(111, label='outliers', frame_on=False)
     ax2 = figure.add_subplot(111, label='vol', frame_on=False)
-    ax = figure.add_subplot(111, label='price', frame_on=False)
+    ax3 = figure.add_subplot(111, label='price', frame_on=False)
 
     # Setting the X and x limits since theyre the same
     X = df.date
-    ax.set_xlim(first.date, last.date)
+
+    ax1.set_xlim(first.date, last.date)
     ax2.set_xlim(first.date, last.date)
+    ax3.set_xlim(first.date, last.date)
+
+    ax1.set_ylim(df.close.min(), df.close.max())
+    ax2.set_ylim(0, df.volume.max()*2)
+    ax3.set_ylim(df.close.min(), df.close.max())
+
+    # Remove all ticks
+    ax1.xaxis.set_ticks([])
+    ax1.yaxis.set_ticks([])
+    ax2.xaxis.set_ticks([])
+    ax2.yaxis.set_ticks([])
 
     # Current price
-    ax.axhline(y=last.close, color="gray", linestyle="dotted")
+    ax3.axhline(y=last.close, color="gray", linestyle="dotted")
 
     # Title annotation
     price = last.close
     text = f"{data.name}\n${price:.2f}"
-    ax.text(x=0, y=1.1, s=text, va="bottom", ha="left",
-            size=35, c="white", transform=ax.transAxes)
-    ax.tick_params(axis='x', colors="white")
-    ax.tick_params(axis='y', colors="white")
+    ax3.text(x=0, y=1.1, s=text, va="bottom", ha="left",
+            size=35, c="white", transform=ax3.transAxes)
+    ax3.tick_params(axis='x', colors="white")
+    ax3.tick_params(axis='y', colors="white")
 
     # Change annotation
     change_text = f"{arrow} {change:.2f} ({pct_change:.2f}%)"
-    ax.text(x=0, y=1, s=change_text, va="bottom", ha="left",
-            size=25, c=color, transform=ax.transAxes)
+    ax3.text(x=0, y=1, s=change_text, va="bottom", ha="left",
+            size=25, c=color, transform=ax3.transAxes)
 
     # Date annotation
     date_range = f'{first.date} to {last.date}'.replace('-', '/')
-    ax.set_xlabel(date_range, color="white")
-
-    # Axis for volume graph
-    ax2.set_ylim(0, df.volume.max()*2)
-    ax2.xaxis.set_ticks([])
-    ax2.yaxis.set_ticks([])
+    ax3.set_xlabel(date_range, color="white")
 
     # Plot price (line) and volume (bars)
-    ax.plot(X, df.close, color=color)
+    if outliers:
+        if outliers == 'qt':
+            df['anomaly'] = quantiles(data=df)
+        else:
+            df['anomaly'] = isolation_forest_labels(data=df)
+        
+        outliers = df.query('anomaly==True')
+        ax1.scatter(outliers.date, outliers.close, color='blue')
+
     ax2.bar(X, df.volume, color=df.color, alpha=0.7)
+    ax3.plot(X, df.close, color=color)
+
 
     plt.show()
