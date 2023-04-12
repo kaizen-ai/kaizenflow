@@ -24,7 +24,7 @@ RUN apt-get update && apt-get install -y nodejs
 RUN node -v
 RUN npm -v
 
-#Install Prettier and Ethlint/Solium.
+# Install Prettier and Ethlint/Solium.
 RUN npm install -g prettier && \
     npm install -g prettier-plugin-solidity && \
     npm install -g solium
@@ -40,7 +40,7 @@ USER="$(id -u $(logname)):$(id -g $(logname))"
 WORKDIR="$(realpath .)"
 MOUNT="type=bind,source=${WORKDIR},target=${WORKDIR}"
 
-# Since Ethlint doesn't does not support multiple file inputs but only directories,
+# Since Ethlint doesn't support multiple file inputs but only directories,
 # we copy all the files supplied to the command line to a temporary directory and
 # use it as input to Ethlint.
 TMP_DIR_NAME="./tmp.lint_solidity"
