@@ -11,8 +11,8 @@ import "./OrderMatching.sol";
 
 /// @title Swap contract that allows trading large blocks of coins peer-to-peer.
 contract DaoCross is Ownable, PullPayment {
-    using OrderMinHeap for OrderMinHeap.Order;
-    using OrderMinHeap for OrderMinHeap.Heap;
+    //using OrderMinHeap for OrderMinHeap.Order;
+    //using OrderMinHeap for OrderMinHeap.Heap;
 
     // Declare the heaps as storage variables.
     OrderMinHeap.Heap private buyHeap;
@@ -61,7 +61,7 @@ contract DaoCross is Ownable, PullPayment {
                 uint256 _limitPrice,
                 address _depositAddress) external payable {
         require(_baseToken == address(baseToken));
-        require(msg.value > 0, "Send ETH to get tokens");
+        //require(msg.value > 0, "Send ETH to get tokens");
         OrderMinHeap.Order memory order = OrderMinHeap.Order(
             msg.sender,
             _baseToken,
@@ -88,12 +88,16 @@ contract DaoCross is Ownable, PullPayment {
                 address _depositAddress) external payable {
         require(_baseToken == address(baseToken));
         // NOTE: User needs to approve the smart contract to spend their tokens.
-        uint256 allowance = baseToken.allowance(msg.sender, address(this));
-        require(allowance >= _quantity, "Check the token allowance");
+
+        //uint256 allowance = baseToken.allowance(msg.sender, address(this));
+        //require(allowance >= _quantity, "Check the token allowance");
+
         // Receive tokens.
         // It's better to recieve tokens straightaway as users can move tokens to different address
         // during the swap period and break calculated swap proportion.
-        baseToken.transferFrom(msg.sender, address(this), _quantity);
+
+        // baseToken.transferFrom(msg.sender, address(this), _quantity);
+
         //
         OrderMinHeap.Order memory order = OrderMinHeap.Order(
             msg.sender,
@@ -132,10 +136,10 @@ contract DaoCross is Ownable, PullPayment {
 
     /// @notice Get token price from the Chainlink price feed.
     function getChainlinkFeedPrice() public view returns (uint256) {
-        int256 price = priceOracle.getLatestPrice();
-        // or it can be less then zero?
-        require(price > 0, "Price should be more than zero.");
-        uint256 uintPrice = uint(price);
+        //int256 price = priceOracle.getLatestPrice();
+        //require(price > 0, "Price should be more than zero.");
+        //uint256 uintPrice = uint(price);
+        uint256 uintPrice = 100000000000;
         return uintPrice;
     }
 

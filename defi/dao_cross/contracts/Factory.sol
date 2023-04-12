@@ -46,8 +46,4 @@ contract SwapFactory is Ownable {
         return coveredTokens;
     }
 
-    function getCoveredTokensLength() external view returns (uint256) {
-        return coveredTokens.length;
-    }
-
 }
