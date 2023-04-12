@@ -514,13 +514,14 @@ In the sequel, when clear from the context we may:
 % ===============================================================================
 
 \subsection{Order clearing quantity and exchange rate}
-In both DaoCross and DaoSwap orders are collected from users during a finite
-period of time, after which tokens are redistributed among users according to their
-limit orders.
+In DaoCross, orders are collected from users during a finite period of time,
+after which tokens are redistributed among users according to their limit
+orders.
 
 Equilibrium prices for the tokens are determined based on the available limit
 orders and a criteria designed to maximize the wellfare of the participants in
-the swap. At the same time orders are matched in many-to-many relationships.
+the swap. At the same time, orders are matched in (generically) many-to-many
+relationships.
 
 Swaps between base/quote token pairs occur at a single exchange rate, i.e., the
 clearing (or equilibrium) price is the same for all executed orders. On the
@@ -800,15 +801,10 @@ Priority queue construction occurs in $O(n)$ time, each order removal costs
 $O(\log n)$, and order removal occurs $O(n)$ times. So, the computational
 time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
 
-\subsubsection{DaoSwap variant}
-The mechanics for DaoSwap are similar to those above, with the primary
-difference being that an auction is used to determine a single clearing price.
-Variations in prioritization rules also possible.
-
 % ###############################################################################
 
 \section{Formulation of the general DaoSwap problem}
-The general problem of determining the token equilibrium price and the
+The general problem of determining the token equilibrium prices and the
 allocation among the swap participants can be formulated in terms of the
 inequalities on quantities and prices corresponding to the orders and on the
 need that the total quantity exchanged of each token be preserved across the
@@ -830,22 +826,22 @@ exchanged, and let $x_{i2}$ denote the realized amount of quote token
 exchanged.
 
 \begin{rmk}
-Regardless of the direction of the exchange, we require the quantities to
-be nonnegative:
+Regardless of the direction of the order action $a_i$, we require the quantities
+of token exchanged to be nonnegative:
 \[
     x_{i1} \geq 0, \quad x_{i2} \geq 0.
 \]
 While not a limit-order imposed constraint per se, it helps clarify
-conventions, and, in any case, is a desirable feature of a well-functioning
-exchange. In particular, it implies that tokens have nonnegative value to hold.
-
-Further, we impose that $x_{i1} = 0$ if and
-only if $x_{i2} = 0$:
-\[
-    x_{i1} = 0 \iff x_{i2} = 0.
-\]
-This implies that, when exchange takes place, the effective price is finite and
-nonnegative, that is, there is ``no free lunch".
+conventions, which is that a positive quantity of token must be exchanged
+for a positive quantity of token.
+%
+%Further, we impose that $x_{i1} = 0$ if and
+%only if $x_{i2} = 0$:
+%\[
+%    x_{i1} = 0 \iff x_{i2} = 0.
+%\]
+%This implies that, when exchange takes place, the effective price is finite and
+%nonnegative, that is, there is ``no free lunch".
 \end{rmk}
 
 \begin{rmk}
@@ -863,21 +859,25 @@ set $a_{i1} = 1$. We always have $a_{i2} = -a_{i1}$, and if the action
 of $a_i$ is to sell rather than to buy, then its signs are reversed with
 respect to the buy action.
 
-The effective transaction price (in the event that nonzero token is exchanged)
-is represented by $x_{i2} / x_{i1}$. If the action is to buy (base token),
-then $p_i$ represents an upper bound, and the opposite is true if the action is
-to sell.
+The effective transaction price (in the event that positive tokens are
+exchanged) is represented by $x_{i2} / x_{i1}$. If the action is to buy (base
+token), then $p_i$ represents an upper bound, and the opposite is true if the
+action is to sell.
 
 \begin{rmk}
 The limit order constraint on price may be expressed as
 \[
     a_{i2} x_{i2} \leq x_{i1} p_i
 \]
+This holds true over the whole range of valid values for the $x_{ij}$
+(that is, including equality with zero).
 \end{rmk}
 
 % ===============================================================================
 
-\subsection{Unique clearing price per token pair}
+% ===============================================================================
+
+\subsection{Supply and demand match}
 
 Let $T$ denote the intersection of the union of all base tokens and the union
 of all quote tokens:
@@ -888,33 +888,6 @@ of all quote tokens:
     \left( \bigcup_{i=1}^n \tau_i \right)
 \]
 The set of tokens $T$ is the set of tokens eligible for swapping.
-
-We now introduce market exchange imposed constraints (beyond the basic ones of
-nonnegative token value and finite price). The first of these is that the
-effective exchange rate for an order involving tokens $\nu \in T$ and
-$\eta \in T$ is the same for all filled orders. In other words, the clearing
-exchange rate is unique for all participants. In particular, we require that
-for all $i, j$ whose respective orders $o_i, o_j$ both involve tokens
-$\nu$, $\eta$, then we have
-\[
-    x_{i1} x_{j2} - x_{i2} x_{j1} = 0
-\]
-when the tokens $\nu$ and $\eta$ play identical base/quote roles in $o_i$,
-$o_j$, and we have
-\[
-    x_{i1} x_{j1} - x_{i2} x_{j2} = 0
-\]
-if they play opposite roles.
-
-We rewrite this as
-\begin{align*}
-    x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
-    x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j
-\end{align*}
-
-% ===============================================================================
-
-\subsection{Supply and demand match}
 
 For each token $u \in T$, define the indicator function
 $\mathcal{T}: T \to \{0, 1\}$ via
@@ -943,11 +916,11 @@ We now collect the constraints that must be satisfied:
 \begin{equation}
 	\begin{cases}
         x_{i1} \geq 0, \quad x_{i2} \geq 0 & \forall i \in \{1, \ldots, n\} \\
-        x_{i1} = 0 \iff x_{i2} = 0 & \forall i \in \{1, \ldots, n\} \\
+        % x_{i1} = 0 \iff x_{i2} = 0 & \forall i \in \{1, \ldots, n\} \\
         x_{i1} \leq q_i & \forall i \in \{1, \ldots, n\} \\
         a_{i2} x_{i2} \leq x_{i1} p_i & \forall i \in \{1, \ldots, n\} \\
-        x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
-        x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
+        %x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+        %x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
         \sum_{i=1}^n \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
         + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
         = 0 & \forall u \in T
@@ -961,8 +934,68 @@ We now collect the constraints that must be satisfied:
 Given the constraints, our goal is to find quantities $x_{i1}, x_{i2}$ such
 that exchanged quantity is maximized.
 
+Note that this problem falls in domain of linear programming. We may arrange
+the nonnegative quantities $x_{i1}, x_{i2}$, $i \in \{1, \ldots, n\}$ in a
+vector $x$. Our goal is to find $x$ that maximizes
+\[
+    c^T x
+\]
+where $c^T = \begin{bmatrix}1 & \ldots & 1 \end{bmatrix}$ is of size $2n$
+subject to
+\[
+    A x \leq b
+\]
+(TODO(Paul): reformulate the constraints using $A$ and $b$)
+and
+\[
+    x \geq 0.
+\]
+The problem is polynomial-time in the ideal setting of infinite divisibility.
+Discretization (and renormalization) move the problem to the domain of
+integer programming, which is NP-hard.
+
+In our setting, where the typical exchanged value is much larger than the
+discretization grid, obtaining a linear programming solution and
+discretizing after-the-fact may be acceptable in practice.
+
+
+
+% ===============================================================================
+
+\subsection{Additional constraint 1: Unique clearing price per token pair}
+
+In the DaoCross case, a single exchange rate per exchanged token pair
+prevails. One may make a case that a desirable property for a swap is that,
+for participants trading the same token pair, no participant gets a better or
+worse price than any other.
+
+Suppse the effective exchange rate for an order involving tokens $\nu \in T$
+and $\eta \in T$ is the same for all filled orders. In other words, the clearing
+exchange rate is unique for all participants.
+Then, for all $i, j$ whose respective orders $o_i, o_j$ both involve tokens
+$\nu$, $\eta$, we have
+\[
+    x_{i1} x_{j2} - x_{i2} x_{j1} = 0
+\]
+when the tokens $\nu$ and $\eta$ play identical base/quote roles in $o_i$,
+$o_j$, and
+\[
+    x_{i1} x_{j1} - x_{i2} x_{j2} = 0
+\]
+if they play opposite roles.
+
+We rewrite this as
+\begin{align*}
+    x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+    x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j
+\end{align*}
+
 The unique clearing price constraint prevents the problem from falling in the
 domain of linear programming.
+
+Note that limit order constraints as formulated in the DaoCross case also hint
+at this nonlinearity, as they involve conjunctions with a global clearing
+price (which DaoSwap must determine).
 
 TODO(gp): explain better, cite...
 The general solution of the DaoSwap problem must satisfy a set of non-linear,
@@ -972,7 +1005,7 @@ It can still be solved in an effective way with solvers like...
 
 % ===============================================================================
 
-\subsection{No arbitrage}
+\subsection{Additional constraint 2: No arbitrage}
 
 Beyond the constraint of having a unique clearing price (if the clearing price
 is defined), it is desirable to structure trade so that arbitrage opportunities
@@ -1015,10 +1048,11 @@ the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
 or not (the solution does not need to consider both branches):
 \begin{equation}
 	\begin{cases}
-		0 \le q_{base}(o_i) \le q_{base} & \text{ if } c_i       \\
-		q_{base}(o_i) = 0                & \text{ if } \lnot c_i \\
+		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
+		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
 	\end{cases}.
 \end{equation}
+TODO: Comment on quote token amount exchanged. Verify supply meets demand.
 
 The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
 prevails, then order $o_i$ is effectively removed from problem) that can be
