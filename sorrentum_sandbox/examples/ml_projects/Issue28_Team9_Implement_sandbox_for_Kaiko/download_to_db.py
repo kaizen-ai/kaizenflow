@@ -59,7 +59,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
-    downloader = sisebido.OhlcvRestApiDownloader(args.use_global_api)
+    downloader = sisebido.KaikoDownloader()
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
