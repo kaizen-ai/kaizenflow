@@ -21,7 +21,7 @@ _DAG_DESCRIPTION = (
     "Download GitHub data for BTC every 6 hours and save to Postgres"
 )
 # Specify when often to execute the DAG.
-_SCHEDULE = "10 0,6,12,18 * * *"
+_SCHEDULE = "10 1,7,13,19 * * *"
 
 # Pass default parameters for the DAG.
 default_args = {
