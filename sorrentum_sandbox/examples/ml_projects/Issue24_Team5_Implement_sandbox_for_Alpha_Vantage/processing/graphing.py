@@ -10,14 +10,13 @@ from processing.anomalies import isolation_forest_labels, quantiles
 
 plt.style.use("./processing/style.mplstyle")
 
-
 def display(
     ticker: str,
-    kind=DataType.DAILY,
-    start=None,
-    end=None,
-    update=False,
-    outliers=None,
+    kind: DataType=DataType.DAILY,
+    start: date=None,
+    end: date=None,
+    update: bool=False,
+    outliers: str=None,
 ):
     """Graphs specified ticker from the data available in the Database"""
 
@@ -77,6 +76,7 @@ def display(
     # Setting the X and x limits since theyre the same
     X = df.date
 
+    # Set graph limits
     ax1.set_xlim(first.date, last.date)
     ax2.set_xlim(first.date, last.date)
     ax3.set_xlim(first.date, last.date)
@@ -111,7 +111,7 @@ def display(
     date_range = f'{first.date} to {last.date}'.replace('-', '/')
     ax3.set_xlabel(date_range, color="white")
 
-    # Plot price (line) and volume (bars)
+    # Plot price (line), volume (bars), and outliers (scatter)
     if outliers:
         if outliers == 'qt':
             df['anomaly'] = quantiles(data=df)
@@ -123,6 +123,5 @@ def display(
 
     ax2.bar(X, df.volume, color=df.color, alpha=0.7)
     ax3.plot(X, df.close, color=color)
-
 
     plt.show()

@@ -33,6 +33,7 @@ with DAG(
 
     @task
     def update():
+        """Downloads S&P500 data in one minute intervals"""
         counter = 0
 
         for symbol in SP500:
@@ -44,6 +45,6 @@ with DAG(
 
             if counter >= 5:
                 counter = 0
-                time.sleep(61)
+                time.sleep(61) # Wait one minute
 
     update()

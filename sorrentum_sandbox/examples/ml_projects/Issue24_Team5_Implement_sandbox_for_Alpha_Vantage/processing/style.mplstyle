@@ -1,5 +1,4 @@
 lines.linewidth: 1
-font.family: Arial
 
 axes.spines.left: False
 axes.spines.bottom: False

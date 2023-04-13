@@ -13,8 +13,7 @@ RUN apt install -y --no-install-recommends --fix-missing \
     curl \
     gnupg \
     git \
-    vim \
-    jupyter-notebook
+    vim
 
 ENV INSTALL_DIR=/alpha_vantage
 WORKDIR $INSTALL_DIR
@@ -30,5 +29,5 @@ RUN pip3 install -r requirements.txt
 
 EXPOSE 8888
 
-ENTRYPOINT (jupyter notebook --ip 0.0.0.0 --port 8888  --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='') && \
+ENTRYPOINT (jupyter lab --ip 0.0.0.0 --port 8888  --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='') && \
     /bin/bash
