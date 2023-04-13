@@ -41,6 +41,7 @@ def _add_download_args(
         type=str,
         help="Name of the db table to save data into",
     )
+    return parser
 
 def _parse() -> argparse.ArgumentParser:
     hdbg.init_logger(use_exec_path=True)
