@@ -1,0 +1,49 @@
+version: "3.9"
+
+services:
+    my-service:
+        build:
+            context: .
+            dockerfile: dockerfile
+        ports:
+        - "8000:8000"
+    postgres:
+        image: postgres:latest
+        container_name: postgres
+        environment:
+            POSTGRES_USER: postgres
+            POSTGRES_PASSWORD: postgres
+            POSTGRES_DB: db
+        ports:
+        - "5432:5432"
+        volumes:
+        - postgres-data:/var/lib/postgresql/data
+
+    airflow:
+        image: apache/airflow:2.2.3
+        container_name: airflow
+        environment:
+        - POSTGRES_USER=postgres
+        - POSTGRES_PASSWORD=postgres
+        - POSTGRES_DB=db
+        - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://postgres:postgres@postgres:5432/db
+        - AIRFLOW__WEBSERVER__WEB_SERVER_PORT=8080
+        ports:
+        - "8080:8080"
+        depends_on:
+        - postgres
+        volumes:
+        - ./dags:/opt/airflow/dags
+        - ./logs:/opt/airflow/logs
+        - ./plugins:/opt/airflow/plugins
+
+    jupyter:
+        image: jupyter/scipy-notebook
+        container_name: jupyter
+        ports:
+        - "8888:8888"
+        volumes:
+        - ./notebooks:/home/
+
+    volumes:
+    postgres-data:

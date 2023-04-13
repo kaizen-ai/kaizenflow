@@ -15,6 +15,11 @@ from datetime import datetime
 from io import StringIO
 
 
+# API Key
+os.environ['API_KEY'] = 'BQYfQWbIU9aPXWtxpMAixOrC1fCLiIz3'
+
+# Get API Key
+api_key = os.environ.get('API_KEY')
 
 # function for bitquery query
 def run_bitquery_query(start_time: str,  limit: int) -> pd.DataFrame:
@@ -66,7 +71,7 @@ def run_bitquery_query(start_time: str,  limit: int) -> pd.DataFrame:
 
   # API endpoint and header
   endpoint = "https://graphql.bitquery.io/"
-  headers = {"X-API-KEY": ""}
+  headers = {"X-API-KEY": api_key}
 
   # Define an empty list to store the results
   results = []
@@ -121,7 +126,7 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
   return df
 
 # Define the start time to retrieve data
-start_time = '2023-03-22T00:00:00Z'
+start_time = '2023-04-13T19:20:00Z'
 
 # Define the limit
 limit = 25000
@@ -130,10 +135,9 @@ limit = 25000
 # Commented out for debugging - Query was taking too long 
 df = run_bitquery_query(start_time,limit)
 
-# print(df.head())
 
-# df.to_csv("bitquery_raw.csv")
-
+df.to_csv("bitquery_raw.csv")
+print(df.head())
 
 # df = pd.read_csv(r"C:\Users\jrfie\Documents\Git_Repository\UMD_Courses\DATA605\sorrentum\projects\Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap\docker\bitquery_raw.csv")
 
@@ -144,36 +148,16 @@ tran_wallet_info = df[["transaction_hash","transaction_to_address","transaction_
 tran_market_info = df[["transaction_hash","baseAmount","quoteAmount","quotePrice","maximum_price","minimum_price","open_price","close_price"]]
 tran_metadata = df[["transaction_hash","trades","transaction_gas"]]
 
-
-print(tran_token_info.head())
-print(len(tran_token_info))
-
-
-# tables_and_dfs = [
-#   {
-#     "table_name":"tran_token_info",
-#     "df":tran_token_info
-#   },
-#   {
-#     "table_name":"tran_wallet_info",
-#     "df":tran_wallet_info
-#   },
-#   {
-#     "table_name":"tran_market_info",
-#     "df":tran_market_info
-#   },
-#   {
-#     "table_name":"tran_metadata",
-#     "df":tran_metadata
-#   }
-#   ]
+# Debugging
+# print(tran_token_info.head())
+# print(len(tran_token_info))
 
 # database connection parameters
 host = 'localhost'
-port = '5432' # this might be 8001
+port = '5432'
 dbname = 'db'
-user = 'user'
-password = 'password'
+user = 'postgres'
+password = 'postgres'
 
 # connection to the postgress database
 conn = psycopg2.connect(
@@ -186,7 +170,7 @@ conn = psycopg2.connect(
 
 # # Use SQLAlchemy to create the table
 
-engine = create_engine('postgresql://user:password@localhost:5432/db',fast_executemany=True)
+engine = create_engine('postgresql+psycopg2://postgres:postgres@localhost:5432/db',fast_executemany=True)
 
 # # # upload tables to postgress server
 tran_token_info.to_sql('tran_token_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
