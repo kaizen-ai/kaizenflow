@@ -13,7 +13,7 @@ library OrderMatching {
         address to;
     }
 
-    function matchOrders(OrderMinHeap.Order[] storage orders,
+    function matchOrders(OrderMinHeap.Order[] memory orders,
                  OrderMinHeap.Heap storage buyHeap,
                  OrderMinHeap.Heap storage sellHeap,
                  uint256 clearingPrice)
@@ -41,13 +41,13 @@ library OrderMatching {
 
         // Successively compare buyHeap top with sellHeap top, matching quantity until zero or queues empty.
         while (buyHeap.size > 0 && sellHeap.size > 0) {
-            OrderMinHeap.Order memory buyOrder = OrderMinHeap.top(buyHeap); // Changed insert to top
+            OrderMinHeap.Order memory buyOrder = OrderMinHeap.top(buyHeap);
             OrderMinHeap.removeTop(buyHeap);
             OrderMinHeap.Order memory sellOrder = OrderMinHeap.top(sellHeap);
             OrderMinHeap.removeTop(sellHeap);
 
             // Transfer quantity is equal to the min quantity among the matching buy and sell orders.
-            uint256 quantity = min(buyOrder.quantity, sellOrder.quantity);
+            uint256 quantity = buyOrder.quantity < sellOrder.quantity ? buyOrder.quantity : sellOrder.quantity;
 
             // Get base token transfer dict and add it to the transfers list.
             Transfer memory baseTransfer = Transfer(
@@ -89,7 +89,4 @@ library OrderMatching {
     }
 
 
-    function min(uint256 a, uint256 b) private pure returns (uint256) {
-        return a < b ? a : b;
-    }
 }
