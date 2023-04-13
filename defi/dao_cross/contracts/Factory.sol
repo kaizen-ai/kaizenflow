@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.4;
+pragma solidity ^0.8.0;
 
 import "./DaoCross.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
@@ -34,7 +34,6 @@ contract SwapFactory is Ownable {
         coveredTokens.push(_token);
         emit PairCreated(_token, swapAddress, msg.sender, block.timestamp);
     }
-
 
     function getSwapByToken(address _token) external view returns (address) {
         address swapAddr = tokenToSwap[_token];
