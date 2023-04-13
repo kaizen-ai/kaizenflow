@@ -12,6 +12,8 @@ RUN apt-get update -yqq && \
       python3-pip \
       vim
 
+COPY . /app/
+
 USER airflow
 RUN /usr/local/bin/python -m pip install --upgrade pip
 

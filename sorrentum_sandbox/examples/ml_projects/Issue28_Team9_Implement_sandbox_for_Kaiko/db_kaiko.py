@@ -58,11 +58,11 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
 def get_db_connection() -> Any:
    
     connection = psycop.connect(
-        host="host.docker.internal",
-        dbname="kaiko database",
+        host="localhost",
+        dbname="kaiko",
         port=5432,
         user="postgres",
-        password="Oliver1999",
+        password="postgres",
     )
     connection.autocommit = True
     return connection

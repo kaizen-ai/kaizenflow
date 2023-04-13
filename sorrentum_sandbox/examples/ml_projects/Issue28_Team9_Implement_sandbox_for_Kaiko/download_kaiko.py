@@ -32,14 +32,15 @@ class KaikoDownloader(ssandown.DataDownloader):
         dfs = []
         for symbol in self._UNIVERSE["kaiko"]:
 
-            data = ka.Trades(
-                data_version="v1",
+            data = ka.TickTrades(
                 exchange=self._EXCHANGE,
                 instrument=symbol,
                 start_time=start_timestamp,
                 end_time=end_timestamp,
                 client=self._KC,
             ).df
+            
+            data = data.reset_index()
             data['currency_pair']=symbol
             
             dfs.append(data)

@@ -1,0 +1,1 @@
+python3 download_to_db.py --start_timestamp "2023-3-1 0:0" --end_timestamp "2023-3-1 1:0" --target_table "public.test"
