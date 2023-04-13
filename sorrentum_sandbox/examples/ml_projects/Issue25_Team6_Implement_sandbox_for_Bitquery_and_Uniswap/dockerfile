@@ -1,0 +1,56 @@
+FROM ubuntu:20.04 AS BUILDER
+ENV DEBIAN_FRONTEND noninteractive
+
+# Update apt-get and install necessary packages
+RUN apt-get update -y \
+    && apt-get install -y \
+        gcc \
+        python3-dev \
+        python3-pip \
+        python3-dev \
+        postgresql \
+        libpq-dev \
+        vim \
+        curl \
+        gnupg2 \
+        apt-transport-https \
+        build-essential \
+        python3-setuptools \
+        python3-wheel \
+        python3-venv \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install requirements.
+COPY requirements.txt .
+RUN pip3 install -r requirements.txt
+
+# Data directory for jupyter notebook
+RUN mkdir /data
+RUN mkdir /data/postgresql_data
+
+
+# Create a new Postgres database and user for airflow
+RUN service postgresql start && \
+    su - postgres -c "psql -c \"CREATE USER airflow WITH PASSWORD 'airflow';\"" && \
+    su - postgres -c "createdb -O airflow airflow"
+
+
+# Postgress volume directory
+VOLUME postgres_data:data/postgresql_data
+
+
+
+# Initialize Airflow metadata database and create admin user
+RUN airflow db init
+RUN airflow users create --username airflow --password airflow --firstname air --lastname flow --role Admin --email fakemail@nowhere.com
+
+# Expose Jupyter Airflow and Postgres ports
+EXPOSE 8888 8080 5432
+
+# start services
+CMD service postgresql start &&\
+airflow scheduler & \
+airflow webserver -p 8080 & \
+jupyter-notebook --port=8888 --allow-root --no-browser --ip=0.0.0.0 --NotebookApp.notebook_dir='/data' --NotebookApp.token=''
+

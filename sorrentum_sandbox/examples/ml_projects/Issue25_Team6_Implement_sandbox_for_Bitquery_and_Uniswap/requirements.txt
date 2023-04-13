@@ -7,5 +7,5 @@ matplotlib
 seaborn
 notebook
 jupyter
-apache-airflow
+apache-airflow[postgres]
 psycopg2-binary
