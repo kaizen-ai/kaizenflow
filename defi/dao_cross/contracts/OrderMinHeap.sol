@@ -23,7 +23,9 @@ library OrderMinHeap {
     }
 
     function insert(Heap storage self, Order storage order) internal {
-        require(self.size < self.data.length, "Heap overflow");
+        if (self.size == self.data.length) {
+            self.data.push();
+        }
         uint32 _index = self.size++;
         while (_index > 0 && self.data[parent(_index)].limitPrice < order.limitPrice) {
             self.data[_index] = self.data[parent(_index)];
