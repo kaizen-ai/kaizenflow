@@ -12,8 +12,6 @@ RUN apt-get update -yqq && \
       python3-pip \
       vim
 
-COPY . /app/
-
 USER airflow
 RUN /usr/local/bin/python -m pip install --upgrade pip
 
@@ -36,3 +34,6 @@ RUN pip3 install \
     python-dotenv \
     apache-airflow-providers-http==2.0.1 \
     apache-airflow-providers-postgres==2.2.0
+
+USER root
+COPY . /app/
