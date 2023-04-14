@@ -881,6 +881,7 @@ def _get_base_image(base_image: str) -> str:
             + "/"
             + hlitauti.get_default_param("BASE_IMAGE")
         )
+    # TODO(Grisha): difference between `cmamp` and `sorrentum`.
     #_dassert_is_base_image_name_valid(base_image)
     return base_image
 
@@ -925,6 +926,7 @@ def get_image(
     hdbg.dassert_in(stage, "local dev prod".split())
     # Get the base image.
     base_image = _get_base_image(base_image)
+    # TODO(Grisha): difference between `cmamp` and `sorrentum`.
     #_dassert_is_base_image_name_valid(base_image)
     # Get the full image name.
     image = [base_image]
@@ -940,6 +942,7 @@ def get_image(
         image.append(f"-{version}")
     #
     image = "".join(image)
+    # TODO(Grisha): difference between `cmamp` and `sorrentum`.
     #_dassert_is_image_name_valid(image)
     return image
 
@@ -1032,6 +1035,7 @@ def _get_docker_base_cmd(
     # - Handle the image.
     image = get_image(base_image, stage, version)
     _LOG.debug("base_image=%s stage=%s -> image=%s", base_image, stage, image)
+    # TODO(Grisha): difference between `cmamp` and `sorrentum`.
     #_dassert_is_image_name_valid(image)
     docker_cmd_.append(f"IMAGE={image}")
     # - Handle extra env vars.
