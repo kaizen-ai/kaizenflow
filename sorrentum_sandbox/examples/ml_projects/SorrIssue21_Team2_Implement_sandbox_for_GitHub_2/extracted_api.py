@@ -39,7 +39,7 @@ print("Pulling the Commits df:",commits_df.head(2))
 main_check_query= "SELECT * FROM github_main"
 main_df = get_db_connection(main_check_query)
 main_df.rename(columns={0:'id',1:'created_at',2:'updated_at',3:'pushed_at',4:'size',5:'stargazers_count',6:'watchers_count',7:'forks_count',8:'open_issues_count',9:'watchers', 
-10:'network_count',11:'subscribers_count',12:'owner_id',13:'organization_id',14:'Crypto'}, inplace=True)
+10:'network_count',11:'subscribers_count',12:'owner_id',13:'organization_id',14:'Crypto',15:'inserted_at'}, inplace=True)
 print("Pulling the Main df:",main_df.head(2))
 
 
