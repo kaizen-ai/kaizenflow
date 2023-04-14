@@ -59,8 +59,8 @@ def get_db_connection() -> Any:
    
     connection = psycop.connect(
         host="localhost",
-        dbname="kaiko",
-        port=5432,
+        dbname="kaiko connection",
+        port=1999,
         user="postgres",
         password="postgres",
     )
