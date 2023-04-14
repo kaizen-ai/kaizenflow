@@ -127,8 +127,21 @@ contract DaoCross is Ownable, PullPayment {
         uint256 clearingPrice = getChainlinkFeedPrice();
         // Initialize the heaps.
         Transfer[] memory transfers = matchOrders(clearingPrice);
+        for (uint256 i = 0; i < transfers.length; i++) {
+            Transfer memory transfer = transfers[i];
+            // Send ETH.
+            if (transfer.token == address(0x0)) {
+                (bool sent, bytes memory data) = transfer.to.call{value: transfer.amount}("");
+                require(sent, "Failed to send Ether");
+
+            } else {
+                // Send tokens.
+                require(transfer.token == address(baseToken));
+                baseToken.transfer(transfer.to, transfer.amount);
+
+            }
+        }
         eraseOrders();
-        // TODO(Toma): implement payments!
         return transfers;
     }
 

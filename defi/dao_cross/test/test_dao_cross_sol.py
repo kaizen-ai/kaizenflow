@@ -28,30 +28,32 @@ def daocross(price_oracle, base_token):
     )
 
 
-def test_on_swap_time(daocross, base_token):
-    # Add some buy orders.
+def test_match_orders(daocross, base_token):
+    # Submit buy orders.
     # Buy 5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 5 * 10**18, 100000000000, accounts[1], {"from": accounts[1], "value": 100000000000*5})
     # Buy 3 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 3 * 10**18, 100000000000, accounts[2], {"from": accounts[2], "value": 100000000000*3})
     # Add some sell orders.
+    # First transfer the token to the users that will participate sell order.
     base_token.transfer(accounts[3], 4 * 10**18, {"from": accounts[0]})
     base_token.transfer(accounts[4], 3* 10**18, {"from": accounts[0]})
-    #
+    # Approve the tranfers for dao cross.
     base_token.approve(daocross, 4 * 10**18, {"from": accounts[3]})
     base_token.approve(daocross, 3 * 10**18, {"from": accounts[4]})
-    #
+    # Submit sell orders.
     daocross.sellOrder(base_token.address, 4 * 10**18, 100000000000, accounts[3], {"from": accounts[3]})
     daocross.sellOrder(base_token.address, 3 * 10**18, 100000000000, accounts[4], {"from": accounts[4]})
 
     # Execute the swap
-    transfers = daocross.onSwapTime({"from": accounts[0]})
+    tx = daocross.matchOrders(100000000000, {"from": accounts[0]})
+    transfers = tx.return_value
 
     # Validate the transfers
     assert len(transfers) > 0
 
     for transfer in transfers:
-        assert transfer.token == base_token.address or transfer.token == "0x0000000000000000000000000000000000000000"
-        assert transfer.amount > 0
-        assert transfer.from_ in [accounts[1], accounts[2], accounts[3], accounts[4]]
-        assert transfer.to in [accounts[1], accounts[2], accounts[3], accounts[4]]
+        assert transfer[0] == base_token.address or transfer[0] == "0x0000000000000000000000000000000000000000"
+        assert transfer[1] > 0
+        assert transfer[2] in [accounts[1], accounts[2], accounts[3], accounts[4]]
+        assert transfer[3] in [accounts[1], accounts[2], accounts[3], accounts[4]]
