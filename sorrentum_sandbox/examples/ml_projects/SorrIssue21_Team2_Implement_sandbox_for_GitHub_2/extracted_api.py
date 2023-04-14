@@ -19,3 +19,29 @@ def get_db_connection(query_var) :
     connection.close()
     return pd.DataFrame(data)
 
+#Pulling Data from Issues Table-
+issues_check_query= "SELECT * FROM github_issues"
+issues_df = get_db_connection(issues_check_query)
+print("Pulling The Issues df:",issues_df.head(2))
+
+
+
+#Pulling Data from Commits Table-
+commits_check_query= "SELECT * FROM github_commits"
+commits_df = get_db_connection(commits_check_query)
+print("Pulling the Commits df:",commits_df.head(2))
+
+
+#Pulling Data from Main Table-
+main_check_query= "SELECT * FROM github_main"
+main_df = get_db_connection(main_check_query)
+print("Pulling the Main df:",main_df.head(2))
+
+
+#Inserting to separte csv..
+print("Inserting to CSV Files")
+issues_df.to_csv("github_issues",encoding='utf-8', index=False)
+commits_df.to_csv("github_commits",encoding='utf-8', index=False)
+main_df.to_csv("github_main",encoding='utf-8', index=False)
+print("Insertion Done!")
+
