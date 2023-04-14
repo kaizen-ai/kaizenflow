@@ -21,20 +21,22 @@ def get_db_connection(query_var) :
 
 #Pulling Data from Issues Table-
 issues_check_query= "SELECT * FROM github_issues"
-issues_df = get_db_connection(issues_check_query)
+issues_df = get_db_connection(issues_check_query,columns=['id','number','title','created_at','updated_at','closed_at','author_association','comments','body','user_login','user_id','Crypto_Name','Extension'])
 print("Pulling The Issues df:",issues_df.head(2))
 
 
 
 #Pulling Data from Commits Table-
 commits_check_query= "SELECT * FROM github_commits"
-commits_df = get_db_connection(commits_check_query)
+commits_df = get_db_connection(commits_check_query,columns=['total', 'week', 'days', 'Crypto_Name', 'Extension', 'Sun', 'Mon',
+       'Tue', 'Wed', 'Thur', 'Fri', 'Sat'])
 print("Pulling the Commits df:",commits_df.head(2))
 
 
 #Pulling Data from Main Table-
 main_check_query= "SELECT * FROM github_main"
-main_df = get_db_connection(main_check_query)
+main_df = get_db_connection(main_check_query,columns=['id', 'created_at','updated_at','pushed_at', 'size', 'stargazers_count','watchers_count', 'forks_count','open_issues_count',
+            'watchers','network_count', 'subscribers_count','owner_id','organization_id','Crypto','inserted_at'])
 print("Pulling the Main df:",main_df.head(2))
 
 
