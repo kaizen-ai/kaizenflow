@@ -3,3 +3,17 @@
 .ipynb_checkpoints
 __pycache__
 .dockerignore
+
+devops/.DS_Store
+
+sorrentum_sandbox/devops/.env
+
+.vscode/
+
+core/
+
+.DS_Store
+
+sorrentum_sandbox/devops/
+
+sorrentum_sandbox/examples/ml_projects/SorrIssue14_Team1_Implement_sandbox_for_Google_Trends/
