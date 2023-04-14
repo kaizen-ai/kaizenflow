@@ -21,10 +21,9 @@ def get_db_connection(query_var) :
 
 #Pulling Data from Issues Table-
 issues_check_query= "SELECT * FROM github_issues"
-issues_df = get_db_connection(issues_check_query)
-
-issues_df.rename(columns={0:'id',1:'number',2:'title',3:'created_at',4:'updated_at',5:'closed_at',6:'author_association',7:'comments',8:'body',9:'user_login',10:'user_id',
-                          11:'Crypto_Name',12:'Extension'}, inplace=True)
+issues_df = pd.read_sql(issues_check_query,con)
+issues_df.rename(columns={0:'id',1:'number',2:'title',3:'created_at',4:'updated_at',5:'closed_at',6:'author_association',7:'comments',8:'body',9:'user_login',10:'user_id',11:'Crypto_Name',12:'Extension'}, 
+inplace=True)
 print("Pulling The Issues df:",issues_df.head(2))
 
 
@@ -32,16 +31,15 @@ print("Pulling The Issues df:",issues_df.head(2))
 #Pulling Data from Commits Table-
 commits_check_query= "SELECT * FROM github_commits"
 commits_df = get_db_connection(commits_check_query)
-commits_df = pd.DataFrame(commits_df, columns = ['total', 'week', 'days', 'Crypto_Name', 'Extension', 'Sun', 'Mon',
-       'Tue', 'Wed', 'Thur', 'Fri', 'Sat'])
-
+commits_df.rename(columns={0:'total',1:'week',2:'days',3:'Crypto_Name',4:'Extension',5:'Sun',6:'Mon',7:'Tue',8:'Wed',9:'Thur',10:'Fri',11:'Sat'}, inplace=True)
 print("Pulling the Commits df:",commits_df.head(2))
 
 
 #Pulling Data from Main Table-
 main_check_query= "SELECT * FROM github_main"
-df = get_db_connection(main_check_query)
-main_df=pd.DataFrame(df)
+main_df = get_db_connection(main_check_query)
+main_df.rename(columns={0:'id',1:'created_at',2:'updated_at',3:'pushed_at',4:'size',5:'stargazers_count',6:'watchers_count',7:'forks_count',8:'open_issues_count',9:'watchers', 
+10:'network_count',11:'subscribers_count',12:'owner_id',13:'organization_id',14:'Crypto'}, inplace=True)
 print("Pulling the Main df:",main_df.head(2))
 
 
