@@ -6,9 +6,9 @@ import psycopg2 as psycop
 
 
 #Connection String for main DB
-def get_db_connection(query_var) :       
+def get_db_connection(query_var) :
     connection = psycop.connect(
-        host="host.docker.internal",                                      
+        host="host.docker.internal",
         dbname="airflow",
         port=5532,
         user="postgres",
@@ -21,9 +21,16 @@ def get_db_connection(query_var) :
 
 #Pulling Data from Issues Table-
 issues_check_query= "SELECT * FROM github_issues"
-issues_df = get_db_connection(issues_check_query)
-issues_df = pd.DataFrame(issues_df,columns=['id','number','title','created_at','updated_at','closed_at','author_association','comments','body','user_login','user_id','Crypto_Name',
-'Extension']) 
+issues_df = pd.read_sql(issues_check_query,con)
+
+issues_df.rename(columns={0:'id'}, columns={1:'number'}, 
+                 columns={2:'title'}, columns={3:'created_at'}, 
+                 columns={4:'updated_at'}, columns={5:'closed_at'}, 
+                 columns={6:'author_association'}, columns={7:'comments'}, 
+                 columns={8:'body'}, columns={9:'user_login'}, 
+                 columns={10:'user_id'}, columns={11:'Crypto_Name'}, 
+                 columns={10:'Extension'},
+                 inplace=True)
 print("Pulling The Issues df:",issues_df.head(2))
 
 
@@ -49,6 +56,7 @@ print("Inserting to CSV Files")
 
 issues_df.to_csv("github_issues.csv",encoding='utf-8', index=False)
 commits_df.to_csv("github_commits.csv",encoding='utf-8', index=False)
-main_df.to_csv("github_main.csv",encoding='utf-8', index=False)
+main_df.to_csv("github_main.csv",encoding='utf-8', index=False) 
 print("Insertion Done!")
+
 
