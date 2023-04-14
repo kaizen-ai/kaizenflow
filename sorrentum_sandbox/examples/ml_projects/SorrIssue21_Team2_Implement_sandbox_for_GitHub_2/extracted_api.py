@@ -39,8 +39,8 @@ print("Pulling the Commits df:",commits_df.head(2))
 
 #Pulling Data from Main Table-
 main_check_query= "SELECT * FROM github_main"
-main_df = get_db_connection(main_check_query)
-main_df=pd.DataFrame(main_df,columns=['id', 'created_at','updated_at','pushed_at', 'size', 'stargazers_count','watchers_count', 'forks_count','open_issues_count',
+df = get_db_connection(main_check_query)
+main_df=pd.DataFrame(df,columns=['id', 'created_at','updated_at','pushed_at', 'size', 'stargazers_count','watchers_count', 'forks_count','open_issues_count',
             'watchers','network_count', 'subscribers_count','owner_id','organization_id','Crypto','inserted_at'])
 print("Pulling the Main df:",main_df.head(2))
 
