@@ -1,3 +1,7 @@
+
+
+
+#!/usr/bin/env python3
 ##Import requried packages
 import pandas as pd
 import psycopg2 as psycop
