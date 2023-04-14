@@ -66,3 +66,11 @@
 - Go a link that corresponds to your server to make sure Jupyter is running:
     - `dev1`: http://172.30.2.136:8889/tree?
     - `dev2`: http://172.30.2.128:8889/tree?
+    
+## Solidity Linter
+
+- Use the script `lint_solidity.sh` inside `dev_scripts` directory for formatting and linting the smart contracts.
+- Start the defi container from the main directory. 
+  ```
+  > dev_scripts/lint_solidity.sh file.sol file2.sol ....
+  ```
