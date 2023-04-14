@@ -21,7 +21,7 @@ def get_db_connection(query_var) :
 
 #Pulling Data from Issues Table-
 issues_check_query= "SELECT * FROM github_issues"
-issues_df = pd.read_sql(issues_check_query,con)
+issues_df = get_db_connection(issues_check_query)
 issues_df.rename(columns={0:'id',1:'number',2:'title',3:'created_at',4:'updated_at',5:'closed_at',6:'author_association',7:'comments',8:'body',9:'user_login',10:'user_id',11:'Crypto_Name',12:'Extension'}, 
 inplace=True)
 print("Pulling The Issues df:",issues_df.head(2))
