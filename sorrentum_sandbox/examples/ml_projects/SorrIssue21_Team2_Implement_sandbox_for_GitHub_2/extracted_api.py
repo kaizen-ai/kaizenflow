@@ -40,8 +40,8 @@ print("Pulling the Main df:",main_df.head(2))
 
 #Inserting to separte csv..
 print("Inserting to CSV Files")
-issues_df.to_csv("github_issues",encoding='utf-8', index=False)
-commits_df.to_csv("github_commits",encoding='utf-8', index=False)
-main_df.to_csv("github_main",encoding='utf-8', index=False)
+issues_df.to_csv("github_issues.csv",encoding='utf-8', index=False)
+commits_df.to_csv("github_commits.csv",encoding='utf-8', index=False)
+main_df.to_csv("github_main.csv",encoding='utf-8', index=False)
 print("Insertion Done!")
 
