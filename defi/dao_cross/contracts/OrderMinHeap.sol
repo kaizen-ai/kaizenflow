@@ -18,10 +18,16 @@ library OrderMinHeap {
         Order[] data;
     }
 
+
+    /// @notice Initializes the heap with a size of 0
+    /// @param self The heap structure to initialize
     function createHeap(Heap storage self) internal {
         self.size = 0;
     }
 
+    /// @notice Inserts an order into the heap while maintaining the min-heap property
+    /// @param self The heap structure to insert the order into
+    /// @param order The order to be inserted
     function insert(Heap storage self, Order storage order) internal {
         if (self.size == self.data.length) {
             self.data.push();
@@ -34,30 +40,47 @@ library OrderMinHeap {
         self.data[_index] = order;
     }
 
+    /// @notice Removes the top (smallest) element from the heap 
+    /// @param self The heap structure to remove the top element from
     function removeTop(Heap storage self) internal {
         require(self.size > 0, "Heap underflow");
         self.data[0] = self.data[--self.size];
-        sink(self, 0);
+        heapify(self, 0);
     }
 
+    /// @notice Returns the index of the top element in the heap
     function topIndex(Heap storage self) internal view returns (uint256) {
         require(self.size > 0, "Heap underflow");
         return self.data[0].index;
     }
 
+    /// @notice Calculates the parent index for a given index
     function parent(uint32 i) private pure returns (uint32) {
         return (i - 1) / 2;
     }
 
+    /// @notice Calculates the left child index for a given index
     function left(uint32 i) private pure returns (uint32) {
         return 2 * i + 1;
     }
 
+    /// @notice Calculates the left child index for a given index
     function right(uint32 i) private pure returns (uint32) {
         return 2 * i + 2;
     }
 
-    function sink(Heap storage self, uint32 i) private {
+    /**
+     * @notice Reorganizes the heap to maintain the min-heap property after removing the top element.
+     * @dev This function is called after removing the top element from the heap to ensure that the
+     * heap remains a valid min-heap. It starts at the given index and compares the element with
+     * its children. If the element is greater than any of its children, it swaps the element
+     * with the smallest child and continues the process down the heap until the min-heap
+     * property is satisfied.
+     *
+     * @param self The heap structure to reorganize
+     * @param i The index at which to start reorganizing the heap
+     */
+    function heapify(Heap storage self, uint32 i) private {
         uint32 min = i;
         if (left(i) < self.size && self.data[left(i)].limitPrice > self.data[min].limitPrice) {
             min = left(i);
@@ -67,7 +90,7 @@ library OrderMinHeap {
         }
         if (min != i) {
             (self.data[i], self.data[min]) = (self.data[min], self.data[i]);
-            sink(self, min);
+            heapify(self, min);
         }
     }
 }

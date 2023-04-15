@@ -29,22 +29,26 @@ def daocross(price_oracle, base_token):
 
 
 def test_match_orders(daocross, base_token):
-    # Submit buy orders.
+    # Submit buy orders, try to buy overall 11.5.
     # Buy 5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 5 * 10**18, 100000000000, accounts[1], {"from": accounts[1], "value": 100000000000*5})
-    # Buy 3 tokens for 100000000000 WEI.
-    daocross.buyOrder(base_token.address, 3 * 10**18, 100000000000, accounts[2], {"from": accounts[2], "value": 100000000000*3})
-    # Add some sell orders.
+    # Buy 2.5 tokens for 100000000000 WEI.
+    daocross.buyOrder(base_token.address, 2.5 * 10**18, 100000000000, accounts[2], {"from": accounts[2], "value": 100000000000*2.5})
+    # Buy 4 tokens for 100000000000 WEI.
+    daocross.buyOrder(base_token.address, 4 * 10**18, 100000000000, accounts[3], {"from": accounts[3], "value": 100000000000*4})
+    # Add some sell orders, overall sell 10 tokens.
     # First transfer the token to the users that will participate sell order.
-    base_token.transfer(accounts[3], 4 * 10**18, {"from": accounts[0]})
-    base_token.transfer(accounts[4], 3* 10**18, {"from": accounts[0]})
+    base_token.transfer(accounts[4], 2 * 10**18, {"from": accounts[0]})
+    base_token.transfer(accounts[5], 5* 10**18, {"from": accounts[0]})
+    base_token.transfer(accounts[6], 3* 10**18, {"from": accounts[0]})
     # Approve the tranfers for dao cross.
-    base_token.approve(daocross, 4 * 10**18, {"from": accounts[3]})
-    base_token.approve(daocross, 3 * 10**18, {"from": accounts[4]})
+    base_token.approve(daocross, 2 * 10**18, {"from": accounts[4]})
+    base_token.approve(daocross, 5 * 10**18, {"from": accounts[5]})
+    base_token.approve(daocross, 3 * 10**18, {"from": accounts[6]})
     # Submit sell orders.
-    daocross.sellOrder(base_token.address, 4 * 10**18, 100000000000, accounts[3], {"from": accounts[3]})
-    daocross.sellOrder(base_token.address, 3 * 10**18, 100000000000, accounts[4], {"from": accounts[4]})
-
+    daocross.sellOrder(base_token.address, 2 * 10**18, 100000000000, accounts[4], {"from": accounts[4]})
+    daocross.sellOrder(base_token.address, 5 * 10**18, 100000000000, accounts[5], {"from": accounts[5]})
+    daocross.sellOrder(base_token.address, 3 * 10**18, 100000000000, accounts[6], {"from": accounts[6]})
     # Execute the swap
     tx = daocross.matchOrders(100000000000, {"from": accounts[0]})
     transfers = tx.return_value

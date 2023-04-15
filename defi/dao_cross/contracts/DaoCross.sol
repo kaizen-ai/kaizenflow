@@ -6,11 +6,10 @@ import "./OrderMinHeap.sol";
 
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../node_modules/@openzeppelin/contracts/security/PullPayment.sol";
 
 
 /// @title Swap contract that allows trading large blocks of coins peer-to-peer.
-contract DaoCross is Ownable, PullPayment {
+contract DaoCross is Ownable {
     using OrderMinHeap for OrderMinHeap.Order;
     using OrderMinHeap for OrderMinHeap.Heap;
 
@@ -122,18 +121,22 @@ contract DaoCross is Ownable, PullPayment {
         emit newSellOrder(_baseToken, address(0x0), _quantity, _limitPrice, _depositAddress);
     }
 
-    /// @notice Execute the swap.
-    function onSwapTime() public onlyOwner returns (Transfer[] memory) {
+    /**
+     * @notice Execute the swap.
+     * @dev This function calculates the clearing price using the Chainlink price feed, matches orders based on the
+     * calculated clearing price, and then executes transfers of Ether and tokens for the matched orders. After
+     * executing the transfers, it erases all orders.
+     */
+    function onSwapTime() public onlyOwner  {
         uint256 clearingPrice = getChainlinkFeedPrice();
         // Initialize the heaps.
         Transfer[] memory transfers = matchOrders(clearingPrice);
         for (uint256 i = 0; i < transfers.length; i++) {
             Transfer memory transfer = transfers[i];
-            // Send ETH.
             if (transfer.token == address(0x0)) {
+                // Send ETH.
                 (bool sent, bytes memory data) = transfer.to.call{value: transfer.amount}("");
                 require(sent, "Failed to send Ether");
-
             } else {
                 // Send tokens.
                 require(transfer.token == address(baseToken));
@@ -141,10 +144,20 @@ contract DaoCross is Ownable, PullPayment {
 
             }
         }
+        // We also need to return money to the users who paid extra?
+        // To users whose order was not fully accomplished?
         eraseOrders();
-        return transfers;
     }
-
+    
+    /**
+     * @notice Match buy and sell orders based on the clearing price.
+     * @dev This function will create two heaps (buyHeap and sellHeap) based on the orders' limit prices and
+     * the given clearing price. It will then successively compare the top elements of the two heaps and
+     * match their quantities until either heap is empty. Finally, it will return an array of transfers
+     * needed to fulfill the matched orders.
+     * @param clearingPrice The price at which buy and sell orders are matched
+     * @return transfers An array of Transfer structs representing the transfers needed to fulfill the matched orders
+     */
     function matchOrders(uint256 clearingPrice) public returns (Transfer[] memory transfers) {
         OrderMinHeap.createHeap(buyHeap);
         OrderMinHeap.createHeap(sellHeap);
@@ -190,7 +203,7 @@ contract DaoCross is Ownable, PullPayment {
             // Get quote token transfer dict and add it to the transfers list.
             Transfer memory quoteTransfer = Transfer(
                 buyOrder.quoteToken,
-                quantity * clearingPrice,
+                (quantity * clearingPrice)/10**18, // don't forget that token quantity has 18 decimals
                 buyOrder.walletAddress,
                 sellOrder.depositAddress
             );
@@ -215,13 +228,6 @@ contract DaoCross is Ownable, PullPayment {
         }
         // Return the transfers array.
         return resizedTransfers;
-    }
-
-    /// @notice Implement pull-payment strategy for ERC20 tokens. 
-    function withdrawTokens() public { 
-        uint256 allowance = baseToken.allowance(address(this), msg.sender);
-        require(allowance > 0, "No tokens are allowed to transfer.");
-        baseToken.transferFrom(address(this), msg.sender, allowance);        
     }
 
     /// @notice Get token price from the Chainlink price feed.
