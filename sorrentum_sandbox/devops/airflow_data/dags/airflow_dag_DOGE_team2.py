@@ -16,9 +16,9 @@ import datetime
 import airflow
 from airflow.operators.bash import BashOperator
 
-_DAG_ID = "download_github_data_for_SOL_6hour_gap"
+_DAG_ID = "download_github_data_for_DOGE_6hour_gap"
 _DAG_DESCRIPTION = (
-    "Download GitHub data for SOL every 6 hours and save to Postgres"
+    "Download GitHub data for DOGE every 6 hours and save to Postgres"
 )
 # Specify when often to execute the DAG.
 _SCHEDULE = "05 0,6,12,18 * * *"
