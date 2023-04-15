@@ -8,5 +8,6 @@ Username: airflow
 Password: airflow
 
 Postgres airflow username and password:
-Username: airflow
-Password: airflow
+Username: docker
+Password: docker
+database: db
