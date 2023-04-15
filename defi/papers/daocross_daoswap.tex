@@ -106,8 +106,7 @@
 
 \section{Introduction}
 
-DELOC\footnote{Temporary code name}
-is a new protocol that enables decentralized token exchange using limit
+Deloc is a new protocol that enables decentralized token exchange using limit
 orders. It brings together the advantages of trading efficiency and ease-of-use
 of centralized exchanges with the transparency and self-custody of
 decentralized approaches, without the risk of impermanent loss, contrary to
@@ -127,14 +126,14 @@ In March 2023, the average daily trading volume in cryptocurrencies was over
 Trading volume on decentralized exchanges has been increasing over time and now
 is approaching 20\% of the total traded cryptocurrency
 volume\footnote{https://www.theblock.co/data/decentralized-finance/dex-non-custodial/dex-to-cex-spot-trade-volume}.
-As of March 2023, Uniswap has transacted more than \$1.4 Trillion USD and 139
-million trades\footnote{https://uniswap.org/}.
+As of March 2023, Uniswap has transacted more than \$1.4 Trillion USD and
+performed more than 139 million trades\footnote{https://uniswap.org/}.
 The move from centralized to decentralized exchanges has been accelerating due
-to scandals involving CEXs (e.g., FTX bankruptcy), regulatory crackdown, and
-thanks to end-users' increased embrace of the principles of self-custody and
-decentralization.
-We believe that this trend towards larger trading volumes and will only
-accelerate in the future.
+to recents scandals involving CEXs (e.g., FTX bankruptcy), regulatory
+crackdown, and thanks to end-users' increased embrace of the principles of
+self-custody and decentralization.
+We believe that this trend towards larger trading volumes will only accelerate
+in the future.
 
 % ===============================================================================
 
@@ -817,15 +816,17 @@ Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
 \[
 	o_i = (a_i, q_i, \pi_i, p_i, \tau_i)
 \]
-where the quote token $\tau_i$ is implicit in the quantity $q_i$ and
+where the quote token $\pi_i$ is implicit in the quantity $q_i$ and
 the quote token $\tau_i$ and base token $\pi_i$ are implicit in the limit price
 $p_i$ and in the action $a_i$.
 
+% TODO(gp): To simplify let's use the notation with the asterisk to represent
+% the actual quantity, e.g., $\pi_i^*$
 For each order $o_i$, let $x_{i1}$ denote the realized amount of base token
 exchanged, and let $x_{i2}$ denote the realized amount of quote token
 exchanged.
 
-\begin{rmk}
+\subsubsection{Token quantities are nonnegative}
 Regardless of the direction of the order action $a_i$, we require the quantities
 of token exchanged to be nonnegative:
 \[
@@ -842,15 +843,13 @@ for a positive quantity of token.
 %\]
 %This implies that, when exchange takes place, the effective price is finite and
 %nonnegative, that is, there is ``no free lunch".
-\end{rmk}
 
-\begin{rmk}
 With this notation, the limit order constraint on quantity may be expressed as
 \[
     x_{i1} \leq q_i
 \]
-\end{rmk}
 
+% TODO(gp): Let's reuse the tau notation
 Additionally, for each $o_i$, let $a_{i1}$ and $a_{i2}$ belong to
 $\{-1, +1\}$, with sign determined by $o_i$ in the following way: if
 $a_i$ (the action) of $o_i$ is to buy, then set $a_{i1} = -1$ (the buy
@@ -872,8 +871,6 @@ The limit order constraint on price may be expressed as
 This holds true over the whole range of valid values for the $x_{ij}$
 (that is, including equality with zero).
 \end{rmk}
-
-% ===============================================================================
 
 % ===============================================================================
 
@@ -957,8 +954,6 @@ integer programming, which is NP-hard.
 In our setting, where the typical exchanged value is much larger than the
 discretization grid, obtaining a linear programming solution and
 discretizing after-the-fact may be acceptable in practice.
-
-
 
 % ===============================================================================
 
