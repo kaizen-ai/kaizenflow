@@ -34,6 +34,5 @@ RUN pip3 install \
     python-dotenv \
     apache-airflow-providers-http==2.0.1 \
     apache-airflow-providers-postgres==2.2.0
-
-USER root
-COPY . /app/
+    
+COPY . /opt/airflow/
