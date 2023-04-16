@@ -38,6 +38,7 @@ RUN mkdir /data/airflow
 RUN sudo chmod -R u=rwx '/data'
 RUN sudo chmod -R 0700 '/data'
 
+COPY scripts /data/
 # # Set environment variables
 # ENV AIRFLOW_HOME /data/airflow
 # ENV PYTHONPATH "${PYTHONPATH}:${AIRFLOW_HOME}"
