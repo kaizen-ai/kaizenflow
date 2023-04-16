@@ -11,8 +11,8 @@ import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sise
 Download data from CoinGecko and save it into the DB.
 Use as:
 > dowonload_to_db.py \
-    --from_timestamp '2016-01-01 ' \
-    --to_timestamp '6years' \
+    --from_timestamp '1679016228 ' \
+    --to_timestamp '1681694628' \
     --target_table 'coingecko_historic'\
     --api 'CoinGeckoAPI()'\
     --id 'bitcoin'
