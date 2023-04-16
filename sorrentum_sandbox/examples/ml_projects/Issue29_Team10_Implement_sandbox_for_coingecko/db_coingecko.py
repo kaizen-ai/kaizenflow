@@ -29,13 +29,13 @@ def get_db_connection() -> Any:
     return connection
 
 
-def get_coingecko_create_table_query() -> str:
+def get_coingecko_historic_table_query() -> str:
     """
     Get SQL query to create coingecko table.
     """
 
     query = """
-                CREATE TABLE IF NOT EXISTS coingecko_data
+                CREATE TABLE IF NOT EXISTS coingecko_historic
                 (
                     timestamp BIGINT,
                     price NUMERIC,
@@ -45,6 +45,21 @@ def get_coingecko_create_table_query() -> str:
             """
     return query
 
+def get_coingecko_realtime_table_query() -> str:
+    """
+    Get SQL query to create coingecko table.
+    """
+
+    query = """
+                CREATE TABLE IF NOT EXISTS coingecko_rt
+                (
+                    timestamp BIGINT,
+                    price NUMERIC,
+                    market_cap NUMERIC,
+                    total_volume NUMERIC
+                );
+            """
+    return query
 
 def get_coingecko_drop_query() -> str:
     """
@@ -124,9 +139,11 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         """
         cursor = self.db_conn.cursor()
         #
-        query = get_coingecko_create_table_query()
+        query = get_coingecko_historic_table_query()
         cursor.execute(query)
-
+        #
+        query = get_coingecko_realtime_table_query()
+        cursor.execute(query)
 
 # # #############################################################################
 # # PostgresClient

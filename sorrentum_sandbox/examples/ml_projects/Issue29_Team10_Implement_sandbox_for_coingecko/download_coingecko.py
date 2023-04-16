@@ -13,13 +13,11 @@ class CGDownloader(ssandown.DataDownloader):
     """
     Class for downloading Coingecko Data for ETH and BTC
     """
-    # _UNIVERSE = {
-    #     "coingecko": [
-    #         "bitcoin",
-    #         "ethereum",
-    #     ]
-    # }
-    
+
+    def __init__(self, api: str, chart_name: str):
+        self.api = api
+        self.chart_name = chart_name
+
     def download(
         self, id: str, from_timestamp: str, to_timestamp: str, *args: Any, **kwargs: Any
     ) -> ssandown.RawData:
