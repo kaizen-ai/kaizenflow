@@ -1,0 +1,24 @@
+[2023-04-14T04:50:02.720+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T00:32:00+00:00 [queued]>
+[2023-04-14T04:50:02.736+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T00:32:00+00:00 [queued]>
+[2023-04-14T04:50:02.743+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-14T04:50:02.745+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-04-14T04:50:02.746+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-14T04:50:02.767+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): get_sklearn> on 2023-04-14 00:32:00+00:00
+[2023-04-14T04:50:02.774+0000] {standard_task_runner.py:55} INFO - Started process 115 to run task
+[2023-04-14T04:50:02.780+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_with_python_dependencies_v03', 'get_sklearn', 'scheduled__2023-04-14T00:32:00+00:00', '--job-id', '45', '--raw', '--subdir', 'DAGS_FOLDER/dag_with_python_dependencies.py', '--cfg-path', '/tmp/tmprcf7erzm']
+[2023-04-14T04:50:02.788+0000] {standard_task_runner.py:83} INFO - Job 45: Subtask get_sklearn
+[2023-04-14T04:50:02.942+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T00:32:00+00:00 [running]> on host f17075e7e65f
+[2023-04-14T04:50:03.044+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_with_python_dependencies_v03
+AIRFLOW_CTX_TASK_ID=get_sklearn
+AIRFLOW_CTX_EXECUTION_DATE=2023-04-14T00:32:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-14T00:32:00+00:00
+[2023-04-14T04:50:03.627+0000] {logging_mixin.py:137} INFO - sklearn with version: 0.24.2 
+[2023-04-14T04:50:03.634+0000] {python.py:177} INFO - Done. Returned value was: None
+[2023-04-14T04:50:03.661+0000] {taskinstance.py:1332} INFO - Marking task as SUCCESS. dag_id=dag_with_python_dependencies_v03, task_id=get_sklearn, execution_date=20230414T003200, start_date=20230414T045002, end_date=20230414T045003
+[2023-04-14T04:50:03.780+0000] {local_task_job.py:212} INFO - Task exited with return code 0
+[2023-04-14T04:50:03.848+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check

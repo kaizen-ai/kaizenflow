@@ -1,0 +1,21 @@
+[2023-04-15T03:41:27.599+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-15T01:10:00+00:00 [queued]>
+[2023-04-15T03:41:27.666+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-15T01:10:00+00:00 [queued]>
+[2023-04-15T03:41:27.668+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-15T03:41:27.670+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-04-15T03:41:27.672+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-15T03:41:27.827+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): get_sklearn> on 2023-04-15 01:10:00+00:00
+[2023-04-15T03:41:27.876+0000] {standard_task_runner.py:55} INFO - Started process 236 to run task
+[2023-04-15T03:41:27.941+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_with_python_dependencies_v03', 'get_sklearn', 'scheduled__2023-04-15T01:10:00+00:00', '--job-id', '249', '--raw', '--subdir', 'DAGS_FOLDER/dag_with_python_dependencies.py', '--cfg-path', '/tmp/tmpyc4578d_']
+[2023-04-15T03:41:27.948+0000] {standard_task_runner.py:83} INFO - Job 249: Subtask get_sklearn
+[2023-04-15T03:41:29.265+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-15T01:10:00+00:00 [running]> on host 618610b18aa7
+[2023-04-15T03:41:49.169+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_with_python_dependencies_v03
+AIRFLOW_CTX_TASK_ID=get_sklearn
+AIRFLOW_CTX_EXECUTION_DATE=2023-04-15T01:10:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-15T01:10:00+00:00
+[2023-04-15T03:41:49.214+0000] {logging_mixin.py:137} WARNING -   0%|          | 0/2 [00:00<?, ?it/s]
+[2023-04-15T03:41:49.611+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed

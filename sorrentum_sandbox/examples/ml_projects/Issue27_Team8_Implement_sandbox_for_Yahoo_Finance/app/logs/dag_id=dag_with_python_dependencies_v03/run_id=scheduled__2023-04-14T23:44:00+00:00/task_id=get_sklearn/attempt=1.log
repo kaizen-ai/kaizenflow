@@ -1,0 +1,40 @@
+[2023-04-15T03:34:37.839+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T23:44:00+00:00 [queued]>
+[2023-04-15T03:34:40.221+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T23:44:00+00:00 [queued]>
+[2023-04-15T03:34:40.316+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-15T03:34:40.331+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-04-15T03:34:40.334+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-15T03:34:41.076+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): get_sklearn> on 2023-04-14 23:44:00+00:00
+[2023-04-15T03:34:41.294+0000] {standard_task_runner.py:55} INFO - Started process 117 to run task
+[2023-04-15T03:34:41.417+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_with_python_dependencies_v03', 'get_sklearn', 'scheduled__2023-04-14T23:44:00+00:00', '--job-id', '214', '--raw', '--subdir', 'DAGS_FOLDER/dag_with_python_dependencies.py', '--cfg-path', '/tmp/tmp52wgkmyw']
+[2023-04-15T03:34:41.473+0000] {standard_task_runner.py:83} INFO - Job 214: Subtask get_sklearn
+[2023-04-15T03:34:43.894+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T23:44:00+00:00 [running]> on host 76edc18680e0
+[2023-04-15T03:34:47.561+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_with_python_dependencies_v03
+AIRFLOW_CTX_TASK_ID=get_sklearn
+AIRFLOW_CTX_EXECUTION_DATE=2023-04-14T23:44:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-14T23:44:00+00:00
+[2023-04-15T03:34:48.593+0000] {logging_mixin.py:137} WARNING -   0%|          | 0/2 [00:00<?, ?it/s]
+[2023-04-15T03:34:50.940+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
+[2023-04-15T03:35:08.050+0000] {logging_mixin.py:137} WARNING -  50%|#####     | 1/2 [00:19<00:19, 19.38s/it]
+[2023-04-15T03:35:09.996+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
+[2023-04-15T03:35:11.785+0000] {logging_mixin.py:137} WARNING - 100%|##########| 2/2 [00:23<00:00, 10.18s/it]
+[2023-04-15T03:35:11.796+0000] {logging_mixin.py:137} WARNING - 100%|##########| 2/2 [00:23<00:00, 11.56s/it]
+[2023-04-15T03:35:11.836+0000] {logging_mixin.py:137} INFO - Index(['open', 'high', 'low', 'close', 'adj_close', 'volume', 'timestamp',
+       'currency_pair', 'exchangetimezonename', 'timezone'],
+      dtype='object')
+[2023-04-15T03:35:12.519+0000] {download_yahoo.py:57} INFO - Downloaded data: 
+	         open       high        low  ...  currency_pair  exchangetimezonename  timezone
+0  18.256571  18.256571  18.256571  ...       AVAX-USD                   UTC       UTC
+1  18.261120  18.261120  18.261120  ...       AVAX-USD                   UTC       UTC
+2  18.260952  18.260952  18.260952  ...       AVAX-USD                   UTC       UTC
+3  18.264101  18.264101  18.264101  ...       AVAX-USD                   UTC       UTC
+4  18.268419  18.268419  18.268419  ...       AVAX-USD                   UTC       UTC
+
+[5 rows x 10 columns]
+[2023-04-15T03:35:12.528+0000] {logging_mixin.py:137} INFO - raw_data
+[2023-04-15T03:35:29.205+0000] {local_task_job.py:212} INFO - Task exited with return code Negsignal.SIGKILL
+[2023-04-15T03:35:34.616+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check

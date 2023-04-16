@@ -1,0 +1,14 @@
+[2023-04-15T03:33:57.113+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-15T00:02:00+00:00 [queued]>
+[2023-04-15T03:33:57.175+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-15T00:02:00+00:00 [queued]>
+[2023-04-15T03:33:57.177+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-15T03:33:57.184+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-04-15T03:33:57.187+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-15T03:34:10.267+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): get_sklearn> on 2023-04-15 00:02:00+00:00
+[2023-04-15T03:34:10.803+0000] {standard_task_runner.py:55} INFO - Started process 95 to run task
+[2023-04-15T03:34:11.150+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_with_python_dependencies_v03', 'get_sklearn', 'scheduled__2023-04-15T00:02:00+00:00', '--job-id', '207', '--raw', '--subdir', 'DAGS_FOLDER/dag_with_python_dependencies.py', '--cfg-path', '/tmp/tmpk_7kq08b']
+[2023-04-15T03:34:11.186+0000] {standard_task_runner.py:83} INFO - Job 207: Subtask get_sklearn
+[2023-04-15T03:34:12.741+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-15T00:02:00+00:00 [running]> on host 76edc18680e0
+[2023-04-15T03:34:39.914+0000] {local_task_job.py:212} INFO - Task exited with return code Negsignal.SIGKILL
+[2023-04-15T03:34:41.301+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check

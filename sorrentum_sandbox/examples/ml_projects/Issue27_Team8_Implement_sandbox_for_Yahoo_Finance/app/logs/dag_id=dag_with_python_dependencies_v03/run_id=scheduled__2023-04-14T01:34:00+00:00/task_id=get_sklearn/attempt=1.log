@@ -1,0 +1,19 @@
+[2023-04-14T04:52:29.121+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T01:34:00+00:00 [queued]>
+[2023-04-14T04:52:29.248+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T01:34:00+00:00 [queued]>
+[2023-04-14T04:52:29.273+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-14T04:52:29.278+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-04-14T04:52:29.284+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-14T04:52:29.472+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): get_sklearn> on 2023-04-14 01:34:00+00:00
+[2023-04-14T04:52:29.550+0000] {standard_task_runner.py:55} INFO - Started process 133 to run task
+[2023-04-14T04:52:29.720+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_with_python_dependencies_v03', 'get_sklearn', 'scheduled__2023-04-14T01:34:00+00:00', '--job-id', '76', '--raw', '--subdir', 'DAGS_FOLDER/dag_with_python_dependencies.py', '--cfg-path', '/tmp/tmp6jc_9qrd']
+[2023-04-14T04:52:29.828+0000] {standard_task_runner.py:83} INFO - Job 76: Subtask get_sklearn
+[2023-04-14T04:52:37.522+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_with_python_dependencies_v03.get_sklearn scheduled__2023-04-14T01:34:00+00:00 [running]> on host 57709d3878ce
+[2023-04-14T04:52:39.152+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_with_python_dependencies_v03
+AIRFLOW_CTX_TASK_ID=get_sklearn
+AIRFLOW_CTX_EXECUTION_DATE=2023-04-14T01:34:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-14T01:34:00+00:00
