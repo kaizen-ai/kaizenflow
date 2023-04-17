@@ -61,9 +61,10 @@ def run_solver(
         quote_price = prices[orders[i].quote_token]
         price_quote_per_base = quote_price / base_price
         _LOG.debug(hprint.to_str("price_quote_per_base"))
-        limit_price_cond = price_quote_per_base * ddacrord.action_to_int(
-            orders[i].action
-        ) <= orders[i].limit_price * ddacrord.action_to_int(orders[i].action)
+        limit_price_cond = (
+            price_quote_per_base * orders[i].action_as_int
+            <= orders[i].limit_price * orders[i].action_as_int
+        )
         _LOG.debug(hprint.to_str("limit_price_cond"))
         if limit_price_cond:
             # Executed quantity is less than or equal to the requested quantity.
