@@ -1,6 +1,7 @@
 ---
 version: '3.4'
 
+# common image for all airflow containers
 x-common:
   &common
   # image: apache/airflow:2.3.0
@@ -15,6 +16,7 @@ x-common:
     - /var/run/docker.sock:/var/run/docker.sock
     - ../:/cmamp
 
+# health check
 x-depends-on:
   &depends-on
   depends_on:
@@ -23,7 +25,9 @@ x-depends-on:
     airflow-init:
       condition: service_completed_successfully
 
+# 2 services, infra and client data
 services:
+  # infra
   postgres:
     image: postgres:13
     container_name: postgres
@@ -38,6 +42,7 @@ services:
     volumes:
       - airflow-database-data:/var/lib/postgresql/data/
 
+  # client data
   postgres_db:
     image: postgres:14
     container_name: postgres_container
@@ -50,6 +55,7 @@ services:
       - db_volume_2_2:/var/lib/postgresql/data/
     ports:
       - '5432:5432'
+
 
   scheduler:
     <<: *common

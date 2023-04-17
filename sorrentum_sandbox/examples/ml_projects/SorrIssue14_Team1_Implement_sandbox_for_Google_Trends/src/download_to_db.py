@@ -8,7 +8,6 @@ import src.db as sisebidb
 import src.download as sisebido
 from utilities import custom_logger
 
-
 def _add_download_args(
         parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -70,49 +69,39 @@ log_path = "src/logs/"
 
 
 def _main(parser: argparse.ArgumentParser) -> None:
+    # fetch args
     args = parser.parse_args()
     start_timestamp = args.start_timestamp
     end_timestamp = args.end_timestamp
     target_table = args.target_table
+
+    # boolean flags
     use_api = True if args.use_api == "True" else False
     real_time_data = True if args.real_time_data == "True" else False
 
+    # topic to search
     topic = "washing machines"
     topic = topic.lower()
-    # _LOG.info("-------------------------------------------")
-    # _LOG.info("Topic to fetch: " + topic)
 
-    # _LOG.info("Prepping the Downloader")
+    # initialising a downloader
     downloader = sisebido.OhlcvRestApiDownloader()
 
-    # # _LOG.info("Downloading the data using the Google Trends API...")
-    # # raw_data = downloader.download(topic.lower(), use_api=True)
-    #
-    # _LOG.info("Fetching the Json from /root/data/data.json")
-    # raw_data = downloader.download(start_timestamp=, end_timestamp=, use_api=False)
-
-    # if use_api:
-    #     _LOG.info("Downloading the data using the Google Trends API...")
-    # else:
-    #     _LOG.info("Fetching the Json from /root/data/data.json")
+    # fethcing the data as a dataframe
     raw_data = downloader.download(topic=topic, start_timestamp=start_timestamp, end_timestamp=end_timestamp,
                                    use_api=use_api, real_time_data=real_time_data)
 
-    # _LOG.info("Json fetched and converted to DataFrame")
-
-    # _LOG.info("Fetching a connection to postgres db...")
+    # making a DB connection
     db_conn = sisebidb.get_db_connection()
     print("!!connection fetched!!")
-    # _LOG.info("Connection fetched")
 
-    # _LOG.info("Creating a Saver...")
+    # initalising a saver object
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
-    # _LOG.info("DB saver created")
 
-    # _LOG.info("Saving to DB...")
+    # saving the data
     saver.save(raw_data, target_table)
-    # _LOG.info("Data saved")
     print("!Done!")
+
+    # print df.head
     print(raw_data.head(5))
 
 

@@ -7,14 +7,19 @@ import datetime
 import airflow
 from airflow.operators.bash import BashOperator
 
+# dag for histroical data
 _DAG_ID = "download_historical_postgres"
 _DAG_DESCRIPTION = (
     "Download Google trends data once and save to Postgres"
 )
+
 # Specify when often to execute the DAG.
+# runs once
 _SCHEDULE = "* * * * *"
 
+
 # Pass default parameters for the DAG.
+# adding our time zone
 default_args = {
     "owner": "airflow",
     "depends_on_past": False,
@@ -26,6 +31,7 @@ default_args = {
 }
 
 # Create a DAG.
+# adding a start date
 dag = airflow.DAG(
     dag_id=_DAG_ID,
     description=_DAG_DESCRIPTION,
@@ -35,7 +41,7 @@ dag = airflow.DAG(
     catchup=False,
     start_date=datetime.datetime(2023, 4, 16, 8, 0, 0)
 )
-# start_date=datetime.datetime(2023, 4, 15, 23, 30, 0)
+
 
 bash_command = [
     # Sleep 5 seconds to ensure the bar is finished.
