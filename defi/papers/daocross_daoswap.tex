@@ -1237,6 +1237,16 @@ or not (the solution does not need to consider both branches):
 \end{equation}
 TODO: Comment on quote token amount exchanged. Verify supply meets demand.
 
+TODO(Paul): a reference price may be interpreted as a new constraint:
+\[
+    a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*
+\]
+For non-compatible limit orders, the only quantities that satisfy both the
+limit order inequality and the reference price equality are given by
+\[
+    q_{i, \tau}^* = q_{i, \pi}^* = 0
+\]
+
 The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
 prevails, then order $o_i$ is effectively removed from problem) that can be
 solved with various efficient methods (e.g., simplex-method).
