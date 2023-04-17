@@ -562,6 +562,13 @@ where
           with respect to a common numeraire resulting from the actual execution
           of the order.
 \end{itemize}
+Additionally, for each $o$, let $a_\pi$ and $a_\tau$ belong to
+$\{-1, +1\}$, with sign determined by $o$ in the following way: if
+$a$ (the action) of $o$ is to buy, then set $a_\pi = -1$ (the buy
+order is taking liquidity of the base token), and if it is to sell, then
+set $a_\pi = 1$. We always have $a_\tau = -a_\pi$, and if the action
+of $a$ is to sell rather than to buy, then its signs are reversed with
+respect to the buy action.
 
 This compact notation is more convenient for expressing and analyzing
 constraints imposed by limit orders.
@@ -572,9 +579,9 @@ In Deloc, orders are collected from users during a finite period of time,
 after which tokens are redistributed among users according to their limit
 orders.
 
-Equilibrium prices for the tokens are determined based on the available limit
-orders, constraints defining different swap problems, an optimization criterion
-designed to maximize the welfare of the participants in the swap.
+Effective prices for the tokens are determined based on the available limit
+orders, constraints defining different swap problems, and an optimization
+criterion designed to maximize the welfare of the participants in the swap.
 
 At the same time, orders are matched in (generically) many-to-many relationships.
 
@@ -584,35 +591,50 @@ Swaps between base/quote token pairs can occur
 clearing (or equilibrium) price is the same for all executed orders; or
   \item at different exchange rate for different orders
 \end{itemize}
+A limit order's price constraint may not be violated in an execution for that
+order.
 
-On the other hand, quantity exchanged is specific to each order and each
-order's constraint on quantity exchanged cannot be violated. In the same way,
-each order can be executed with a non-null quantity only when the limit price
-is compatible with the clearing exchange rate.
+In constrast, quantity exchanged is always specific to each order. Each
+order's constraint on quantity exchanged cannot be violated, and that order
+may participate in exchange only if its effective price respects its limit
+order price.
 
 \subsubsection{Attributes of an executed order}
-When an order $o$ is actually executed some quantities previously variable
-become known, and we qualify the known variables with a star close to the
-corresponding variable quantity before the swap.
-\[
-	o = (a, q, \pi, p, \tau)
-\]
+When an order $o$ is executed, quantity exchange (of both base and quote
+tokens) is observable, and, in the event of an execution, an effective
+price for that order is observable from the amount of base and quote token
+exchanged. Moreover, in some exchange mechanisms, there is a unique global
+clearing price for any pair of tokens exchanged, and this also becomes
+observable.
 
-E.g.,
+We qualify these observed values with a star superscript on the
+corresponding limit order variable.
+
+Recalling that an order may be represented as the tuple
+\[
+	o = (a, q, \pi, p, \tau),
+\]
+we let
 \begin{itemize}
-	\item $q_{\pi}^*$ is the quantity of the base token $\pi$ exchanged in the
+	\item $q_\pi^*$ be the quantity of the base token $\pi$ exchanged in the
 	      execution of order $o$
-	\item $p_{\pi}^*$ denotes the actual price of the base token with respect
+	\item $q_\tau^*$ be the quantity of the quote token $\tau$ exchanged in
+          th execution of order $o$
+	\item $p_\pi^*$ denote the actual price of the base token with respect
           to a common numeraire. Note that the price can
-          be specific of each order (i.e., $p_{\pi}^*(o)$) or equal across the orders
-          (i.e., $p_{\pi}^*)$, depending on constraints imposed to the exchange problem
-    \item $p_{\pi\_per\_\tau}^*$ (or $p_{quote\_per\_base}^*$ denotes the actual exchange
+          be specific to each order (i.e., $p_\pi^*(o)$) or equal across the orders
+          (i.e., $p_\pi^*)$, depending on constraints imposed on the exchange problem
+    \item $p_{\pi\_per\_\tau}^*$ (or $p_{quote\_per\_base}^*$ denote the actual exchange
           rate between the quote and base tokens for the swap $o$
-    \item $p_{quote\_per\_base}^*$ denotes the actual exchange rate between the
-          quote and base tokens for all the swaps
+    \item $p_{quote\_per\_base}^*$ denote the actual exchange rate between the
+          quote and base tokens for all the swaps (if it exists)
 	\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
-	      and base tokens for all the swaps
+          and base tokens for all the swaps (if it exists)
 \end{itemize}
+By convention, we require that
+\[
+    q_\pi^* \geq 0, \quad q_\tau^* \geq 0.
+\]
 
 % ===============================================================================
 \subsection{Execution of orders}
@@ -674,7 +696,7 @@ price of 0.5, the order cannot be executed.
 % ===============================================================================
 \subsection{Limit order as a set of inequalities}
 Any limit order as defined above can be translated into inequalities involving
-quantity of exchanged tokens and token exchange rates. Multiple limit orders
+quantity of tokens exchanged and token exchange rates. Multiple limit orders
 can be converted into a system of inequalities, which collectively constrain
 potential exchange outcomes.
 
@@ -786,9 +808,81 @@ provided that
 % ###############################################################################
 \section{Constraints}
 
+Throughout this section, let $\{o_i\}_1^n$ denote a collection of $n$ limit
+orders, each of the form
+\[
+	o_i = (a_i, q_i, \pi_i, p_i, \tau_i),
+\]
+where the quote token $\pi_i$ is implicit in the quantity $q_i$ and
+the quote token $\tau_i$ and base token $\pi_i$ are implicit in the limit price
+$p_i$ and in the action $a_i$.
+
+% TODO(gp): To simplify let's use the notation with the asterisk to represent
+% the actual quantity, e.g., $\pi_i^*$
+For each order $o_i$, let $x_{i1}$ denote the realized amount of base token
+exchanged, and let $x_{i2}$ denote the realized amount of quote token
+exchanged.
+
+\subsection{Limit order constraints always respected}
+
+Each limit order constraint on quantity exchanged is straightforward:
+\[
+    q_{i, \pi}^* \leq q_i
+\]
+
+The limit order price constraint inequality direction depends upon whether the
+action is to buy or to sell.
+The effective transaction price (in the event that positive tokens are
+exchanged) is represented by $q_{i, \tau}^* / q_{i, \pi}^*$. If the action is to
+buy (base token), then $p_i$ represents an upper bound, and the opposite is true
+if the action is to sell:
+\[
+    a_{i, \tau} q_{i, \tau}^* \leq q_{i, \pi}^* p_i.
+\]
+Here we have multiplied through by $q_{i, \pi}^*$, with the result being that
+the inequality holds in the event that $q_{i, \pi}^*$ or $q_{i, \tau}^*$ is
+zero.
+
 % All the constraints that are common
 
 % Constraint for limit orders
+
+% ===============================================================================
+\subsection{Supply and demand always match}
+All of the exchange mechanisms that we consider must match quantity supplied
+with quantity consumed in a swap. That is, the exchange neither injects nor
+removes token from the swap. To formally express this, we introduce the
+following notation.
+
+Let $T$ denote the intersection of the union of all base tokens and the union
+of all quote tokens:
+\[
+	T :=
+    \left( \bigcup_{i=1}^n \pi_i \right)
+	\bigcap
+    \left( \bigcup_{i=1}^n \tau_i \right)
+\]
+The set of tokens $T$ is the set of tokens eligible for swapping.
+
+For each token $u \in T$, define the indicator function
+$\mathcal{T}: T \to \{0, 1\}$ via
+\[
+	\mathcal{T}_u(v) =
+	\begin{cases}
+		1 \text{ if } v = u \\
+		0 \text{ if } v \neq u
+	\end{cases}
+\]
+Then, for each $u \in T$, the following conservation law must hold:
+\[
+    \sum_i \mathcal{T}_u(\pi_i) \cdot a_{i, \pi} x_{i, \pi}
+    + \mathcal{T}_u(\tau_i) \cdot a_{i, \tau} x_{i, \tau}
+    = 0
+\]
+Note that this translates into one equality per token participating in the
+swap. These equalities express the notion that each filled order must have,
+across the collection of orders, suitable counterparties.
+
 
 % ===============================================================================
 \subsection{Unique clearing price per token pair}
@@ -798,9 +892,9 @@ prevails. One may make a case that a desirable property for a swap is that,
 for participants trading the same token pair, no participant gets a better or
 worse price than any other.
 
-Suppse the effective exchange rate for an order involving tokens $\nu \in T$
-and $\eta \in T$ is the same for all filled orders. In other words, the clearing
-exchange rate is unique for all participants.
+Suppose that the effective exchange rate for an order involving tokens
+$\nu \in T$ and $\eta \in T$ is the same for all filled orders. In other words,
+the clearing exchange rate is unique for all participants.
 Then, for all $i, j$ whose respective orders $o_i, o_j$ both involve tokens
 $\nu$, $\eta$, we have
 \[
@@ -861,38 +955,6 @@ there is a unique exchange rate between the pair of tokens (changing the roles
 of the base and quote tokens in limit orders inverts the exchange rate).
 For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
 as well as \cite{MaDe76} for a comparison.
-
-% ===============================================================================
-\subsection{Supply and demand match}
-
-Let $T$ denote the intersection of the union of all base tokens and the union
-of all quote tokens:
-\[
-	T :=
-    \left( \bigcup_{i=1}^n \pi_i \right)
-	\bigcap
-    \left( \bigcup_{i=1}^n \tau_i \right)
-\]
-The set of tokens $T$ is the set of tokens eligible for swapping.
-
-For each token $u \in T$, define the indicator function
-$\mathcal{T}: T \to \{0, 1\}$ via
-\[
-	\mathcal{T}_u(v) =
-	\begin{cases}
-		1 \text{ if } v = u \\
-		0 \text{ if } v \neq u
-	\end{cases}
-\]
-Then, for each $u \in T$, the following conservation law must hold:
-\[
-    \sum_i \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
-    + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
-    = 0
-\]
-Note that this translates into one equality per token participating in the
-swap. These equalities express the notion that each filled order must have,
-across the collection of orders, suitable counterparties.
 
 % ===============================================================================
 \subsection{Maximization of welfare from the token swap}
@@ -1014,29 +1076,8 @@ swaps, i.e., the quantity bought for each token is equal to the quantity sold.
 \subsubsection{Problem formulation}
 
 \subsubsection{Limit order inequalities}
-Let $\{o_i\}_{i = 1}^n$ be a set of limit orders, each of the form
-\[
-	o_i = (a_i, q_i, \pi_i, p_i, \tau_i)
-\]
-where the quote token $\pi_i$ is implicit in the quantity $q_i$ and
-the quote token $\tau_i$ and base token $\pi_i$ are implicit in the limit price
-$p_i$ and in the action $a_i$.
 
-% TODO(gp): To simplify let's use the notation with the asterisk to represent
-% the actual quantity, e.g., $\pi_i^*$
-For each order $o_i$, let $x_{i1}$ denote the realized amount of base token
-exchanged, and let $x_{i2}$ denote the realized amount of quote token
-exchanged.
-
-\subsubsection{Token quantities are nonnegative}
-Regardless of the direction of the order action $a_i$, we require the quantities
-of token exchanged to be nonnegative:
-\[
-    x_{i1} \geq 0, \quad x_{i2} \geq 0.
-\]
-While not a limit-order imposed constraint per se, it helps clarify
-conventions, which is that a positive quantity of token must be exchanged
-for a positive quantity of token.
+% \subsubsection{Token quantities are nonnegative}
 %
 %Further, we impose that $x_{i1} = 0$ if and
 %only if $x_{i2} = 0$:
@@ -1045,34 +1086,6 @@ for a positive quantity of token.
 %\]
 %This implies that, when exchange takes place, the effective price is finite and
 %nonnegative, that is, there is ``no free lunch".
-
-With this notation, the limit order constraint on quantity may be expressed as
-\[
-    x_{i1} \leq q_i
-\]
-
-% TODO(gp): Let's reuse the tau notation
-Additionally, for each $o_i$, let $a_{i1}$ and $a_{i2}$ belong to
-$\{-1, +1\}$, with sign determined by $o_i$ in the following way: if
-$a_i$ (the action) of $o_i$ is to buy, then set $a_{i1} = -1$ (the buy
-order is taking liquidity of the base token), and if it is to sell, then
-set $a_{i1} = 1$. We always have $a_{i2} = -a_{i1}$, and if the action
-of $a_i$ is to sell rather than to buy, then its signs are reversed with
-respect to the buy action.
-
-The effective transaction price (in the event that positive tokens are
-exchanged) is represented by $x_{i2} / x_{i1}$. If the action is to buy (base
-token), then $p_i$ represents an upper bound, and the opposite is true if the
-action is to sell.
-
-\begin{rmk}
-The limit order constraint on price may be expressed as
-\[
-    a_{i2} x_{i2} \leq x_{i1} p_i
-\]
-This holds true over the whole range of valid values for the $x_{ij}$
-(that is, including equality with zero).
-\end{rmk}
 
 \subsubsection{Limit price in terms of quantities}
 Assume that a buy order is:
