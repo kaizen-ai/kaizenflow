@@ -78,18 +78,11 @@ class TestMatchOrders1(hunitest.TestCase):
         orders = [order_1, order_2, order_3, order_4, order_5, order_6]
         return orders
 
-    def test1(self) -> None:
-        """
-        All the orders have similar base and quote tokens.
-        """
+    def test_match_orders1(self) -> None:
         orders = self.get_test_orders()
         clearing_price = 1
-        base_token = "BTC"
-        quote_token = "ETH"
         # Match orders.
-        actual_df = ddcrorma.match_orders(
-            orders, clearing_price, base_token, quote_token
-        )
+        actual_df = ddcrorma.match_orders(orders, clearing_price)
         # Check the unique tokens.
         actual_tokens = sorted(list(actual_df["token"].unique()))
         expected_tokens = ["BTC", "ETH"]
@@ -123,83 +116,3 @@ class TestMatchOrders1(hunitest.TestCase):
             dedent=True,
             fuzzy_match=True,
         )
-
-    def test2(self) -> None:
-        """
-        All buy orders are replaced by their equivalent.
-        """
-        mixed_orders = []
-        orders = self.get_test_orders()
-        clearing_price = 1
-        for order in orders:
-            if order.action == "buy":
-                # Replace "buy" order with its "sell" equivalent.
-                order = ddcrorma.get_equivalent_order(order, clearing_price)
-            mixed_orders.append(order)
-        base_token = "BTC"
-        quote_token = "ETH"
-        # Match orders.
-        actual_df = ddcrorma.match_orders(
-            orders, clearing_price, base_token, quote_token
-        )
-        # Check the unique tokens.
-        actual_tokens = sorted(list(actual_df["token"].unique()))
-        expected_tokens = ["BTC", "ETH"]
-        self.assertEqual(actual_tokens, expected_tokens)
-        # Check that the DaoCross conservation law is fullfilled.
-        btc_quantity = actual_df[actual_df["token"] == "BTC"]["amount"].sum()
-        eth_quantity = actual_df[actual_df["token"] == "ETH"]["amount"].sum()
-        self.assertEqual(btc_quantity * clearing_price, eth_quantity)
-        # Check the signature.
-        actual_signature = hpandas.df_to_str(
-            actual_df,
-            print_shape_info=True,
-            tag="df",
-        )
-        expected_signature = r"""
-        # df=
-        index=[0, 5]
-        columns=token,amount,from,to
-        shape=(6, 4)
-        token  amount  from  to
-        0   BTC     1.2     1   1
-        1   ETH     1.2     1   1
-        2   BTC     0.3     1   2
-        3   ETH     0.3     2   1
-        4   BTC     1.1     6   2
-        5   ETH     1.1     2   6
-        """
-        self.assert_equal(
-            actual_signature,
-            expected_signature,
-            dedent=True,
-            fuzzy_match=True,
-        )
-
-
-class TestGetEquivalentOrder1(hunitest.TestCase):
-    def test1(self) -> None:
-        timestamp = pd.Timestamp("2023-01-01 00:00:01+00:00")
-        action = "sell"
-        quantity = 3.2
-        base_token = "BTC"
-        limit_price = 0.25
-        quote_token = "ETH"
-        deposit_address = 1
-        wallet_address = 1
-        #
-        input_order = ddacrord.Order(
-            timestamp=timestamp,
-            action=action,
-            quantity=quantity,
-            base_token=base_token,
-            limit_price=limit_price,
-            quote_token=quote_token,
-            deposit_address=deposit_address,
-            wallet_address=wallet_address,
-        )
-        clearing_price = 0.5
-        # Get equivalent order and check its signature.
-        output_order = ddcrorma.get_equivalent_order(input_order, clearing_price)
-        expected_signature = "timestamp=2023-01-01 00:00:01+00:00 action=buy quantity=1.6 base_token=ETH limit_price=4.0 quote_token=BTC deposit_address=1 wallet_address=1"
-        self.assertEqual(output_order.__repr__(), expected_signature)
