@@ -3,7 +3,7 @@ import logging
 
 import pandas as pd
 
-from helpers import hdbg as hdbg
+import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
 import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido

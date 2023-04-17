@@ -7,6 +7,7 @@ ENV DATABASE_URL=postgresql://postgres:postgres@db/db
 # Expose ports
 EXPOSE 5432
 EXPOSE 8000
+EXPOSE 5532
 
 ADD requirements.txt requirements.txt
 RUN pip install -r requirements.txt
