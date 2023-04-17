@@ -32,6 +32,7 @@ contract DaoCross is Ownable {
         uint256 amount;
         address from;
         address to;
+        bool isReturn;
     }
 
     // Events used to interact with frontend.
@@ -67,7 +68,8 @@ contract DaoCross is Ownable {
                 uint256 _limitPrice,
                 address _depositAddress) external payable {
         require(_baseToken == address(baseToken));
-        //require(msg.value > 0, "Send ETH to get tokens");
+        uint256 fullPrice = (_quantity*_limitPrice)/10**18;
+        require(msg.value >= fullPrice, "Value should cover the full price of requested amount of tokens");
         OrderMinHeap.Order memory order = OrderMinHeap.Order(
             orders.length,
             msg.sender,
@@ -127,7 +129,7 @@ contract DaoCross is Ownable {
      * calculated clearing price, and then executes transfers of Ether and tokens for the matched orders. After
      * executing the transfers, it erases all orders.
      */
-    function onSwapTime() public onlyOwner  {
+    function onSwapTime() public onlyOwner {
         uint256 clearingPrice = getChainlinkFeedPrice();
         // Initialize the heaps.
         Transfer[] memory transfers = matchOrders(clearingPrice);
@@ -161,51 +163,84 @@ contract DaoCross is Ownable {
     function matchOrders(uint256 clearingPrice) public returns (Transfer[] memory transfers) {
         OrderMinHeap.createHeap(buyHeap);
         OrderMinHeap.createHeap(sellHeap);
-        // Push orders to the heaps based on the action type and filtered by limit price.
-        for (uint256 _index = 0; _index < orders.length; _index++) {
-            OrderMinHeap.Order storage order = orders[_index];
-            if (order.isBuy == true && order.limitPrice >= clearingPrice) {
-                OrderMinHeap.insert(buyHeap, order);
-            } else if (order.isBuy == false && order.limitPrice <= clearingPrice) {
-                OrderMinHeap.insert(sellHeap, order);
-            }
-        }
 
         // Initialize transfers array.
         // The length of the transfers array is initially set to twice the length of the orders array 
         // to ensure that it has enough space to accommodate all possible transfers without resizing 
         // the array during the matching process. This is a trade-off made for simplicity and ease 
         // of implementation.
-        transfers = new Transfer[](orders.length * 2);
+        transfers = new Transfer[](orders.length * 3);
         uint256 transferIndex = 0;
+
+        // Push orders to the heaps based on the action type.
+        for (uint256 _index = 0; _index < orders.length; _index++) {
+            OrderMinHeap.Order storage order = orders[_index];
+            Transfer memory returnTransfer;
+            if (order.isBuy == true) {
+                if (order.limitPrice >= clearingPrice) {
+                    OrderMinHeap.insert(buyHeap, order);
+                } else {
+                    // In buy order users send ETH to this contract, so let's return ETH.
+                    returnTransfer = Transfer(
+                        order.quoteToken, // for ETH we use zero address
+                        (order.quantity * order.limitPrice)/10**18,
+                        order.walletAddress,
+                        order.depositAddress,
+                        true
+                    ); 
+                    // Add the return to transfer array.
+                    transfers[transferIndex++] = returnTransfer;
+                }
+            } else {
+                if (order.limitPrice <= clearingPrice) {
+                    OrderMinHeap.insert(sellHeap, order);
+                } else {
+                    // In sell order users send ERC20 to this contract, so let's return ERC20.
+                    returnTransfer = Transfer(
+                        order.baseToken,
+                        order.quantity,
+                        order.walletAddress,
+                        order.depositAddress,
+                        true
+                    );
+                    // Add the return to transfer array.
+                    transfers[transferIndex++] = returnTransfer;
+                }
+            }
+        }
 
         // Successively compare buyHeap top with sellHeap top, matching quantity until zero or queues empty.
         while (buyHeap.size > 0 && sellHeap.size > 0) {
+            // Get index of top order in the min heap.
             uint256 buyIndex = OrderMinHeap.topIndex(buyHeap);
             uint256 sellIndex = OrderMinHeap.topIndex(sellHeap);
+            //
             OrderMinHeap.Order storage buyOrder = orders[buyIndex];
             OrderMinHeap.Order storage sellOrder = orders[sellIndex];
+            // Remove top element of the min heap (the smallest one).
             OrderMinHeap.removeTop(buyHeap);
             OrderMinHeap.removeTop(sellHeap);
 
             // Transfer quantity is equal to the min quantity among the matching buy and sell orders.
             uint256 quantity = buyOrder.quantity < sellOrder.quantity ? buyOrder.quantity : sellOrder.quantity;
 
-            // Get base token transfer dict and add it to the transfers list.
+            // Fill base token transfer.
             Transfer memory baseTransfer = Transfer(
                 buyOrder.baseToken,
                 quantity,
                 sellOrder.walletAddress,
-                buyOrder.depositAddress
+                buyOrder.depositAddress,
+                false
             );
             transfers[transferIndex++] = baseTransfer;
 
-            // Get quote token transfer dict and add it to the transfers list.
+            // Fill quote token transfer.
             Transfer memory quoteTransfer = Transfer(
                 buyOrder.quoteToken,
-                (quantity * clearingPrice)/10**18, // don't forget that token quantity has 18 decimals
+                (quantity * clearingPrice)/10**18, // token quantity has 18 decimals
                 buyOrder.walletAddress,
-                sellOrder.depositAddress
+                sellOrder.depositAddress,
+                false
             );
             transfers[transferIndex++] = quoteTransfer;
 
@@ -221,6 +256,36 @@ contract DaoCross is Ownable {
                 OrderMinHeap.insert(sellHeap, sellOrder);
             }
         }
+
+        // Let's find unmatched orders and add returns to transfers array.
+        OrderMinHeap.Heap storage remainingHeap = buyHeap.size > 0 ? buyHeap : sellHeap;
+        while (remainingHeap.size > 0) {
+            uint256 remainingIndex = OrderMinHeap.topIndex(remainingHeap);
+            OrderMinHeap.Order memory remainingOrder = orders[remainingIndex];
+            OrderMinHeap.removeTop(remainingHeap);
+            Transfer memory remainingTransfer;
+            if (remainingOrder.isBuy == true) {
+                // In buy order users send ETH to this contract, so let's return ETH.
+                remainingTransfer = Transfer(
+                    remainingOrder.quoteToken, // for ETH we use zero address
+                    (remainingOrder.quantity * clearingPrice)/10**18,
+                    remainingOrder.walletAddress,
+                    remainingOrder.depositAddress,
+                    true
+                );
+            } else {
+                // In sell order users send ERC20 to this contract, so let's return ERC20.
+                remainingTransfer = Transfer(
+                    remainingOrder.baseToken,
+                    remainingOrder.quantity,
+                    remainingOrder.walletAddress,
+                    remainingOrder.depositAddress,
+                    true
+                );
+            }
+            // Add the return to transfer array.
+            transfers[transferIndex++] = remainingTransfer;
+        }
         // Resize the transfers array to match the actual number of transfers.
         Transfer[] memory resizedTransfers = new Transfer[](transferIndex);
         for (uint256 i = 0; i < transferIndex; i++) {
@@ -233,7 +298,7 @@ contract DaoCross is Ownable {
     /// @notice Get token price from the Chainlink price feed.
     function getChainlinkFeedPrice() public view returns (uint256) {
         int256 price = priceOracle.getLatestPrice();
-        require(price > 0, "Price should be more than zero.");
+        require(price > 0, "Price should be more than zero");
         uint256 uintPrice = uint(price);
         return uintPrice;
     }
