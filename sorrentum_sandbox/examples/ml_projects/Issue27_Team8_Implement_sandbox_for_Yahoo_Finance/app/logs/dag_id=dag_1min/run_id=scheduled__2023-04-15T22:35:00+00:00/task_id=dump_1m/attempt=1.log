@@ -39,3 +39,43 @@ AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-15T22:35:00+00:00
 [2023-04-15T22:54:27.958+0000] {taskinstance.py:1332} INFO - Marking task as SUCCESS. dag_id=dag_1min, task_id=dump_1m, execution_date=20230415T223500, start_date=20230415T225341, end_date=20230415T225427
 [2023-04-15T22:54:28.879+0000] {local_task_job.py:212} INFO - Task exited with return code 0
 [2023-04-15T22:54:30.519+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check
+[2023-04-17T02:52:17.067+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-04-15T22:35:00+00:00 [queued]>
+[2023-04-17T02:52:17.207+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-04-15T22:35:00+00:00 [queued]>
+[2023-04-17T02:52:17.234+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-17T02:52:17.240+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-04-17T02:52:17.250+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-04-17T02:52:17.504+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): dump_1m> on 2023-04-15 22:35:00+00:00
+[2023-04-17T02:52:17.708+0000] {standard_task_runner.py:55} INFO - Started process 581 to run task
+[2023-04-17T02:52:17.775+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_1min', 'dump_1m', 'scheduled__2023-04-15T22:35:00+00:00', '--job-id', '18', '--raw', '--subdir', 'DAGS_FOLDER/dag_1min.py', '--cfg-path', '/tmp/tmp6odae0b5']
+[2023-04-17T02:52:17.797+0000] {standard_task_runner.py:83} INFO - Job 18: Subtask dump_1m
+[2023-04-17T02:52:19.138+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_1min.dump_1m scheduled__2023-04-15T22:35:00+00:00 [running]> on host 583dc14c087d
+[2023-04-17T02:52:22.472+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_1min
+AIRFLOW_CTX_TASK_ID=dump_1m
+AIRFLOW_CTX_EXECUTION_DATE=2023-04-15T22:35:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-15T22:35:00+00:00
+[2023-04-17T02:52:23.492+0000] {taskinstance.py:1776} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 175, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 192, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/dag_1min.py", line 19, in dump_1m
+    dump_latest_data('yahoo_yfinance_spot_downloaded_1min','1m')
+  File "/code/Latest_Data.py", line 29, in dump_latest_data
+    cursor.execute(postgreSQL_select_Query)
+psycopg2.errors.UndefinedTable: relation "yahoo_yfinance_spot_downloaded_1min" does not exist
+LINE 1: select * from yahoo_yfinance_spot_downloaded_1min
+                      ^
+
+[2023-04-17T02:52:23.756+0000] {taskinstance.py:1332} INFO - Marking task as FAILED. dag_id=dag_1min, task_id=dump_1m, execution_date=20230415T223500, start_date=20230417T025217, end_date=20230417T025223
+[2023-04-17T02:52:24.258+0000] {standard_task_runner.py:105} ERROR - Failed to execute job 18 for task dump_1m (relation "yahoo_yfinance_spot_downloaded_1min" does not exist
+LINE 1: select * from yahoo_yfinance_spot_downloaded_1min
+                      ^
+; 581)
+[2023-04-17T02:52:24.479+0000] {local_task_job.py:212} INFO - Task exited with return code 1
+[2023-04-17T02:52:25.051+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check

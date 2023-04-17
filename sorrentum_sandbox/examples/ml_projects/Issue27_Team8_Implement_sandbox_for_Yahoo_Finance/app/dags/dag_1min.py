@@ -22,7 +22,7 @@ def dump_1m():
 with DAG(
     default_args=default_args,
     dag_id="dag_1min",
-    start_date=datetime(2023, 4, 15,22,35,0),
+    start_date=datetime(2023, 4, 17,6,0,0),
     schedule_interval='*/5 * * * *'
 ) as dag:
     task1 = PythonOperator(

@@ -4,9 +4,9 @@ ADD requirements.txt requirements.txt
 #RUN pip install -r requirements.txt
 #RUN export DOCKER_DEFAULT_PLATFORM=linux/amd64
 #COPY app.py app.py
-COPY ../../../helpers helpers
-COPY ../../../common common
-COPY ../../../common/__init__.py __init__.py
+COPY helpers helpers
+COPY ../../../../common common
+#COPY ../../../common/__init__.py __init__.py
 COPY download_yahoo.py download_yahoo.py
 COPY download_to_csv_yahoo.py download_to_csv_yahoo.py
 COPY db_yahoo.py db_yahoo.py
