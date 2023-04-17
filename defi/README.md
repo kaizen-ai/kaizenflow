@@ -16,7 +16,7 @@
 
 ## Run the `defi` container
 
-- Typically you want to have one `defi` container with multiple terminals
+- Typically, you want to have one `defi` container with multiple terminals
   attached to it to run servers (e.g., Ganache) and clients (e.g., Jupyter, bash)
 - We suggest to use `tmux` to keep all the terminals in a single window
   and make it easy to control via keyboard
@@ -63,7 +63,19 @@
   > devops/docker_exec.sh
   docker> /data/devops/run_jupyter.sh
   ```
-- Go to a link that corresponds to your server to make sure Jupyter is running:
-  - On your laptop, localhost:8888
-  - On `dev1`, http://172.30.2.136:8889/tree?
-  - On `dev2`, http://172.30.2.128:8889/tree?
+- Go to a link where Jupyter is running
+  - On your laptop: localhost:8888
+  - On `dev1`: http://172.30.2.136:8889/tree
+  - On `dev2`: http://172.30.2.128:8889/tree
+    
+## Solidity Linter
+
+- Use the script `lint_solidity.sh` inside `dev_scripts` directory for formatting
+  and linting the smart contracts
+- Start the defi container from the main directory:
+  ```
+  > dev_scripts/lint_solidity.sh file.sol file2.sol ...
+  ```
+
+## Code organization
+

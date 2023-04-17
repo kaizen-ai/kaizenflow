@@ -14,8 +14,8 @@
 
 - These are the files needed for the tutorials:
   ```
-  + tree --dirsfirst -n -F --charset unicode tutorial_brownie/
-  tutorial_brownie//
+  + tree --dirsfirst -n -F --charset unicode tutorial_brownie
+  tutorial_brownie/
   |-- hello_world_contract/
   |   |-- build/
   |   |   |-- contracts/
