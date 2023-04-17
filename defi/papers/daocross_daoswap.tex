@@ -898,19 +898,19 @@ the clearing exchange rate is unique for all participants.
 Then, for all $i, j$ whose respective orders $o_i, o_j$ both involve tokens
 $\nu$, $\eta$, we have
 \[
-    x_{i1} x_{j2} - x_{i2} x_{j1} = 0
+    q_{i, \pi}^* q_{j, \tau}^* - q_{i, \tau}^* q_{j, \pi}^* = 0
 \]
 when the tokens $\nu$ and $\eta$ play identical base/quote roles in $o_i$,
 $o_j$, and
 \[
-    x_{i1} x_{j1} - x_{i2} x_{j2} = 0
+    q_{i, \pi}^* q_{j, \pi}^* - q_{i, \tau}^* q_{j, \tau}^* = 0
 \]
 if they play opposite roles.
 
 We rewrite this as
 \begin{align*}
-    x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
-    x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j
+    q_{i, \pi}^* q_{j, \tau}^* - q_{i, \tau}^* q_{j, \pi}^* = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+    q_{i, \pi}^* q_{j, \pi}^* - q_{i, \tau}^* q_{j, \tau}^* = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j
 \end{align*}
 
 The unique clearing price constraint prevents the problem from falling in the
@@ -928,10 +928,21 @@ It can still be solved in an effective way with solvers like...
 
 % ===============================================================================
 \subsection{No arbitrage constraint}
+In DaoCross, multi-currency arbitrages may or may not exist in the reference
+prices. In practice, one would expect such opportunities in the reference
+prices to be fleeting or small, since otherwise arbitrageurs would exploit
+them until market pressures eliminated the opportunity. Note, though, that
+it is not the exchange mechanism itself that minimizes arbitrage opportunities;
+rather, it is the active participation of arbitrageurs.
 
-Beyond the constraint of having a unique clearing price (if the clearing price
-is defined), it is desirable to structure trade so that arbitrage opportunities
-in the realized exchange were not present.
+In the case of multi-token DaoSwap, and in the case where we impose unique
+clearing prices (per token pair), we have the flexibility to impose the
+additional constraint of no-arbitrage in the realized prices. One the one hand,
+this property is appealing in terms of fairness. On the other hand, any such
+arbitrages are not exploitable in practice (the swap is atomic), and in any
+case, the additional constraints are nonlinear in terms of how they constrain
+the problem and nonlinear in terms of their growth in the number of distinct
+tokens.
 
 Let $\Gamma$ denote the directed graph whose vertices $V$ are given by the set
 of elements $T$, and whose directed edges $E$ are given by
@@ -1135,6 +1146,35 @@ The limit price means that 1 $\ETH$ is worth at most 4 $\BTC$
 \subsection{DaoSwap with per-order clearing price}
 
 \subsubsection{Combining the constraints}
+
+Let $x$ denote the vector with structure
+\[
+    x =
+    \begin{bmatrix}
+        q_{1, \pi}^*, q_{2, \tau}^*, \ldots, q_{n, \pi}^*, q_{n, \tau}^*
+    \end{bmatrix}^T
+\]
+Next we introduce the following matrices.
+
+Let $Q$ be the matrix whose $i$-th row is $n$-dimensional, with a ``1" in the
+column $2i - 1$ and zeros elsewhere, and let $q$ denote the vector
+\[
+    x =
+    \begin{bmatrix}
+        q_1, \ldots, q_n
+    \end{bmatrix}^T
+\]
+Then the limit order quantity constraint is expressed in matrix form via
+\[
+    Q x \leq q
+\]
+
+Let $P$ be the matrix whose $i$-th row is $n$-dimensional with entry
+$-p_i$ in the $2i - 1$ column, $a_{i, \tau}$ in the $2i$ column, and zeros
+elsewhere. Then the limit order price constraint may be expressed as
+\[
+    P x \leq 0
+\]
 
 We now collect the constraints that must be satisfied:
 \begin{equation}
