@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Download reddit data and save it into the DB.
+Download CoinMarketCap data and save it into the MongoDB.
 
 Use as:
 > download_to_db.py --api_key 'change to your own api key' --collection_name cmc_data
@@ -25,18 +25,11 @@ def add_download_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
     parser.add_argument(
-        "--start",
+        "--id",
         action="store",
         required=True,
-        type=int,
-        help="Path to the target directory to store CSV data into",
-    )
-    parser.add_argument(
-        "--limit",
-        action="store",
-        required=True,
-        type=int,
-        help="Path to the target directory to store CSV data into",
+        type=str,
+        help="One cryptocurrency CoinMarketCap ID",
     )
     parser.add_argument(
         "--collection_name",
@@ -62,7 +55,7 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     downloader = coinmarketcap_download.CMCRestApiDownloader()
-    raw_data = downloader.download(args.start, args.limit)
+    raw_data = downloader.download(args.id)
     if len(raw_data.get_data()) > 0:
         mongo_saver = coinmarketcap_db.MongoDataSaver(
             mongo_client=pymongo.MongoClient(
