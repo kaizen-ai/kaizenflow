@@ -119,7 +119,7 @@ decentralized approaches, without the risk of impermanent loss, contrary to
 automatic market maker-based approaches.
 
 % ===============================================================================
-\subsection{Token swap as financial primitive}
+\subsection{Token swap as a financial primitive}
 Swapping tokens is one of the most important and widely used primitives in
 decentralized finance.
 In March 2023, the average daily trading volume in cryptocurrencies was over
@@ -136,7 +136,7 @@ volume\footnote{https://www.theblock.co/data/decentralized-finance/dex-non-custo
 As of March 2023, Uniswap has transacted more than \$1.4 Trillion USD and
 performed more than 139 million trades\footnote{https://uniswap.org/}.
 The move from centralized to decentralized exchanges has been accelerating due
-to recents scandals involving CEXs (e.g., FTX bankruptcy), regulatory
+to recent scandals involving CEXs (e.g., FTX bankruptcy), regulatory
 crackdown, and thanks to end-users' increased embrace of the principles of
 self-custody and decentralization.
 We believe that this trend towards larger trading volumes will only accelerate
@@ -187,7 +187,7 @@ security values. The opportunity to trade arises from these differences.
 
 Exchanges have several roles:
 \begin{itemize}
-    \item Provide a common meeting ground for market participants, exchanges
+    \item Provide a common meeting ground for market participants to
           facilitate matching supply and demand
 	\item Establish the rules of the trading process and institutional roles, so
           that the trading process is structured, monitored, and standardized
@@ -216,7 +216,7 @@ e.g., using
 	\item a decentralized exchange (DEX) (e.g., Uniswap, SushiSwap)
 \end{itemize}
 
-We consider CEXs a temporary bridge between traditional finance and the
+We consider CEXs as a temporary bridge between traditional finance and the
 new vision of decentralized finance and we do not consider them a viable
 long-term solution to the problems that DeFi is poised to address.
 Centralized exchanges are usually organized around different versions of a
@@ -236,8 +236,8 @@ the amount of computation that can be performed on-chain, although these limits
 are continously being removed by advancements in research and blockchain
 technology (e.g., layer 2 chains, optimistic and zero-knowledge rollups).
 Thus we consider solutions based on self-custody that do not require
-trusting a third party (or at least allow one to verify its fairness) in line
-with the principles of decentralization.
+trusting a third party (or that at least allow one to verify its fairness) in
+line with the principles of decentralization.
 
 Off-chain order books are an hybrid version of CEX and DEX where the price
 discovery and trade matching happens off-chain, while the trade settlement is
@@ -277,8 +277,7 @@ other high-volume traders to execute quickly with minimal market impact.
 DaoSwap performs price discovery by matching supply and demand at regular time
 intervals. In the simplest case, the clearing price is determined by a
 Walrasian-style auction (\cite{Wa}). In cases where liquidity is pooled more
-broadly, the auction clearing mechanism satisfies a collection of conditional
-inequalities.
+broadly, the auction clearing mechanism satisfies a collection of inequalities.
 
 \subsubsection{Advantages of DaoCross and DaoSwap}
 While DaoSwap and DaoCross differ in how the token exchange rate is determined,
@@ -311,7 +310,7 @@ both share several common advantages:
 A comparison between DaoCross and DaoSwap and other solutions for token
 swapping, namely limit-order books (e.g., centralized exchanges such as
 Binance) and automatic market-makers (e.g., Uniswap) is summarized below
-and discussed in details later in Section \ref{AlSoToSw}.
+and discussed in detail later in Section \ref{AlSoToSw}.
 
 \begin{samepage}
 	\begin{table}[h!]
@@ -347,11 +346,11 @@ quantity in terms $\ETH$ and some in terms of $\BTC$, and some parties
 express limit prices in terms of $\ETH$ per $\BTC$, while others express limit
 prices in terms of $\BTC$ per $\ETH$? Under these conditions, setting a single
 clearing price and determining fill prioritization rules raises several
-questions. We will consider and address these in the sequel, but to begin, we
-will discuss a more constrained setting.
+questions. We shall consider and address these in the sequel, but to begin, we
+discuss a more constrained setting.
 
 % ===============================================================================
-\subsection{Limit order in foreign exchange markets}
+\subsection{Limit orders in foreign exchange markets}
 To simplify, we follow the practice of FX (foreign exchange) markets,
 which break the symmetry by specifying two non-interchangeable roles:
 \begin{enumerate}
@@ -413,8 +412,8 @@ unfortunately, the problem in general is NP-complete (e.g., \cite{XiStWh05}),
 which is a significant limiting factor in terms of feasibility and
 auction expense.
 
-In the sequel we propose such an exchange mechanism valid for any collection
-of standard limit orders (all base/quote token limit orders may be pooled and
+In the sequel we propose an exchange mechanism valid for any collection of
+standard limit orders (all base/quote token limit orders may be pooled and
 cleared in a single optimization).
 
 % ###############################################################################
@@ -454,7 +453,7 @@ with $\BTC$ as base token and $\ETH$ as quote token, as follows:
 \end{exmp}
 
 % ===============================================================================
-\subsection{Exchange price properties}
+\subsection{Price properties}
 If prices of base and quote tokens are expressed in terms of a common currency
 (e.g., USD) then it holds that:
 \[
@@ -469,11 +468,11 @@ Of course it holds
 	\frac{1}{p_{base\_per\_quote}}.
 \]
 
-Note that in the follow we use both notations of price of a token relative to
+Note that in the following we use both notations of price of a token relative to
 another token, and price of a token with respect to a common numeraire, depending
 on which notation is simpler.
-The two representations are equivalent besides a multiplicative constant and
-it is always possible to convert one in the other.
+The two representations are equivalent aside from a multiplicative constant, and
+it is always possible to convert one into the other.
 
 % ===============================================================================
 % TODO(gp): Consider adding source_address as way to identify the user.
@@ -539,32 +538,33 @@ In the sequel, when clear from the context we may:
 \end{itemize}
 
 \subsubsection{Extracting attributes from an order}
-The $i$-th limit order can also be represented in terms of its components
+A limit order can also be represented as a tuple in the following way
 \[
 	o = (a, q, \pi, p, \tau)
 \]
-
-where:
+where
 \begin{itemize}
 	\item $a$ is the desired action ($\buy$ or $\sell$)
     \item $\pi$ is the base token
     \item $\tau$ is the quote token
     \item $q$ is the maximum quantity desired in the exchange of the base token
           $\pi$
-    \item $q_{\pi}$ or $q_{base}$ is a variable indicating the quantity of the base token
-          potentially exchanged
+    \item $q_{\pi}$ or $q_{base}$ is a variable indicating the quantity of the
+          base token potentially exchanged
     \item $q_{\tau}$ or $q_{quote}$ is the corresponding quantity of the quote
-          token $\tau$ exchanged resulting from the actual execution of the order
-	\item $p$ is the limit price in terms of quote token $\tau$ per base token $\pi$
-    \item $p_{\pi}$ (or $p_{base}$) is the variable price of the base token with respect to a common
-          numeraire
+          token $\tau$ exchanged resulting from the actual execution of the
+          order
+	\item $p$ is the limit price in terms of quote token $\tau$ per base token
+          $\pi$
+    \item $p_{\pi}$ (or $p_{base}$) is the variable price of the base token with
+          respect to a common numeraire
     \item $p_{\tau}$ (or $p_{quote}$) is the variable price of the base token
-          with respect to a common numeraire resulting from the actual execution of
-          the order 
+          with respect to a common numeraire resulting from the actual execution
+          of the order.
 \end{itemize}
 
-E.g., for the $i$-th order $o_i$, the corresponding action is indicated as
-$a(o_i)$, or in short $a_i$.
+This compact notation is more convenient for expressing and analyzing
+constraints imposed by limit orders.
 
 % ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
