@@ -180,7 +180,8 @@ contract DaoCross is Ownable {
                 if (order.limitPrice >= clearingPrice) {
                     OrderMinHeap.insert(buyHeap, order);
                 } else {
-                    // In buy order users send ETH to this contract, so let's return ETH.
+                    // If the limit price user suggested and clearing price don't match 
+                    // we need to return ETH to the user.
                     returnTransfer = Transfer(
                         order.quoteToken, // for ETH we use zero address
                         (order.quantity * order.limitPrice)/10**18,
@@ -195,7 +196,8 @@ contract DaoCross is Ownable {
                 if (order.limitPrice <= clearingPrice) {
                     OrderMinHeap.insert(sellHeap, order);
                 } else {
-                    // In sell order users send ERC20 to this contract, so let's return ERC20.
+                    // If the limit price user suggested and clearing price don't match 
+                    // we need to return ERC20 to the user.
                     returnTransfer = Transfer(
                         order.baseToken,
                         order.quantity,
@@ -221,10 +223,11 @@ contract DaoCross is Ownable {
             OrderMinHeap.removeTop(buyHeap);
             OrderMinHeap.removeTop(sellHeap);
 
-            // Transfer quantity is equal to the min quantity among the matching buy and sell orders.
+            // Choose the order with the smaller quantity.
             uint256 quantity = buyOrder.quantity < sellOrder.quantity ? buyOrder.quantity : sellOrder.quantity;
 
-            // Fill base token transfer.
+            // Fill base token transfer. E.g. transfer ERC20 token to the user who
+            // wanted to buy ERC20 in exchange for ETH.
             Transfer memory baseTransfer = Transfer(
                 buyOrder.baseToken,
                 quantity,
@@ -234,7 +237,8 @@ contract DaoCross is Ownable {
             );
             transfers[transferIndex++] = baseTransfer;
 
-            // Fill quote token transfer.
+            // Fill quote token transfer. E.g. transfer ETH to the user who
+            // wanted to sell ERC20 and get ETH.
             Transfer memory quoteTransfer = Transfer(
                 buyOrder.quoteToken,
                 (quantity * clearingPrice)/10**18, // token quantity has 18 decimals
@@ -256,8 +260,9 @@ contract DaoCross is Ownable {
                 OrderMinHeap.insert(sellHeap, sellOrder);
             }
         }
-
-        // Let's find unmatched orders and add returns to transfers array.
+        // Process the quantities that were left in the orders unmatched.
+        // Fill return transfers.
+        // Find the heap that is not empty.
         OrderMinHeap.Heap storage remainingHeap = buyHeap.size > 0 ? buyHeap : sellHeap;
         while (remainingHeap.size > 0) {
             uint256 remainingIndex = OrderMinHeap.topIndex(remainingHeap);
@@ -265,7 +270,7 @@ contract DaoCross is Ownable {
             OrderMinHeap.removeTop(remainingHeap);
             Transfer memory remainingTransfer;
             if (remainingOrder.isBuy == true) {
-                // In buy order users send ETH to this contract, so let's return ETH.
+                // Return ETH remained unmatched.
                 remainingTransfer = Transfer(
                     remainingOrder.quoteToken, // for ETH we use zero address
                     (remainingOrder.quantity * clearingPrice)/10**18,
@@ -274,7 +279,7 @@ contract DaoCross is Ownable {
                     true
                 );
             } else {
-                // In sell order users send ERC20 to this contract, so let's return ERC20.
+                // Return ERC20 remained unmatched.
                 remainingTransfer = Transfer(
                     remainingOrder.baseToken,
                     remainingOrder.quantity,
