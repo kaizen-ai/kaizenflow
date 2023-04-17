@@ -19,10 +19,10 @@ def get_db_connection() -> Any:
     """
     connection = psycop.connect(
         host="localhost",
-        dbname="postgres",
+        dbname="airflow",
         port=5432,
-        user="postgres",
-        password="postgres",
+        user="airflow",
+        password="airflow",
     )
     connection.autocommit = True
 
