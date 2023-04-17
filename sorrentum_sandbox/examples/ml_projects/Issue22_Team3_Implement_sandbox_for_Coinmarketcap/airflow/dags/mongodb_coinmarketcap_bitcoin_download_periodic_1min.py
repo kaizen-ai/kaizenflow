@@ -8,7 +8,7 @@ import airflow
 from datetime import timedelta
 from airflow.operators.bash import BashOperator
 
-_DAG_ID = "download_periodic_1min_mongodb_coinmarketcap"
+_DAG_ID = "bitcoin_mongodb_coinmarketcap_download_periodic_1min"
 _DAG_DESCRIPTION = (
     "Download coinmarketcap data every minute and save to MongoDB."
 )
@@ -41,11 +41,11 @@ bash_command = [
     "&&",
     "cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue22_Team3_Implement_sandbox_for_Coinmarketcap",
     "&&",
-    "./download_to_db.py --start 1 --limit 200 --collection_name coinmarketcap_spot_downloaded_1min -v DEBUG",
+    "./download_to_db.py --id '1' --collection_name 'bitcoin_coinmarketcap_spot_downloaded_1min' -v DEBUG",
 ]
 
 downloading_task = BashOperator(
-    task_id="download.periodic_1min.mongodb.coinmarketcap",
+    task_id="coinmarketcap.bitcoin.mongodb.download.periodic_1min",
     depends_on_past=False,
     bash_command=" ".join(bash_command),
     dag=dag,
