@@ -12,14 +12,14 @@ from io import StringIO
 
 
 
-df = pd.read_csv(r"bitquery_raw.csv")
+# df = pd.read_csv(r"bitquery_raw.csv")
 
-# def build_postgress_table(df:pd.DataFrame)
-# Split dataframe into table schema format for postgress
-tran_token_info = df[["transaction_hash","baseCurrency_symbol","baseCurrency_address","quoteCurrency_symbol","quoteCurrency_address"]]
-tran_wallet_info = df[["transaction_hash","transaction_to_address","transaction_txFrom_address"]]
-tran_market_info = df[["transaction_hash","baseAmount","quoteAmount","quotePrice","maximum_price","minimum_price","open_price","close_price"]]
-tran_metadata = df[["transaction_hash","trades","transaction_gas"]]
+# # def build_postgress_table(df:pd.DataFrame)
+# # Split dataframe into table schema format for postgress
+# tran_token_info = df[["transaction_hash","baseCurrency_symbol","baseCurrency_address","quoteCurrency_symbol","quoteCurrency_address"]]
+# tran_wallet_info = df[["transaction_hash","transaction_to_address","transaction_txFrom_address"]]
+# tran_market_info = df[["transaction_hash","baseAmount","quoteAmount","quotePrice","maximum_price","minimum_price","open_price","close_price"]]
+# tran_metadata = df[["transaction_hash","trades","transaction_gas"]]
 
 # Debugging
 # print(tran_token_info.head())
@@ -41,15 +41,15 @@ conn = psycopg2.connect(
     password=password
 )
 
-# # Use SQLAlchemy to create the table
+# # # Use SQLAlchemy to create the table
 
-engine = create_engine('postgresql+psycopg2://postgres:postgres@localhost:5432/db')
+# engine = create_engine('postgresql://postgres:postgres@localhost:5432/db')
 
-# # # upload tables to postgress server
-tran_token_info.to_sql('tran_token_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
-tran_wallet_info.to_sql('tran_wallet_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
-tran_market_info.to_sql('tran_market_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
-tran_metadata.to_sql('tran_metadata', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
+# # # # upload tables to postgress server
+# tran_token_info.to_sql('tran_token_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
+# tran_wallet_info.to_sql('tran_wallet_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
+# tran_market_info.to_sql('tran_market_info', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
+# tran_metadata.to_sql('tran_metadata', engine, index=False, if_exists='replace', method='multi', chunksize=3000)
 
 
 
@@ -57,7 +57,7 @@ tran_metadata.to_sql('tran_metadata', engine, index=False, if_exists='replace', 
 # Create a cursor to execute SQL queries
 cur = conn.cursor()
 # Execute a SQL query to retrieve the last row of the table
-cur.execute("SELECT * FROM tran_token_info")
+cur.execute("SELECT * FROM tran_metadata")
 result = cur.fetchall()
 df = pd.DataFrame(result)
 print(df.head())
