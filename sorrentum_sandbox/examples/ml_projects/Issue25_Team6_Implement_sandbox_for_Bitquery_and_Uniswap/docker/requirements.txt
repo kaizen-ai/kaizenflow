@@ -1,7 +1,8 @@
-redis
-requests
+flask
+psycopg2-binary
 pandas
-numpy
-matplotlib
-seaborn
-notebook
+requests
+typing
+redis
+sqlalchemy
+datetime

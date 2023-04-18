@@ -3,16 +3,20 @@
 Download chainlink data from Binance and save it into the DB.
 
 Use as:
+
 > download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --target_table 'chainlink_real_time'
 > download_to_db.py --pair BTC/USD --start_roundid 92233720368547792257 --end_roundid 92233720368547792260 --target_table 'chainlink_history'
+
 """
 import argparse
 import logging
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+
 import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.db as sisebidb
 import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
+
 
 
 _LOG = logging.getLogger(__name__)
@@ -32,6 +36,7 @@ def _add_download_args(
         help="Currency pair to download",
     )
     parser.add_argument(
+
         "--start_roundid",
         action="store",
         required=True,
@@ -44,6 +49,7 @@ def _add_download_args(
         required=False,
         type=int,
         help="the last data to download",
+
     )
     parser.add_argument(
         "--target_table",
@@ -69,10 +75,12 @@ def _parse() -> argparse.ArgumentParser:
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
+
     if(args.end_roundid is None):
         raw_data = sisebido.downloader(pair = args.pair, start_roundid = args.start_roundid)
     else:
         raw_data = sisebido.downloader(pair = args.pair, start_roundid = args.start_roundid, end_roundid = args.end_roundid)
+
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
     saver = sisebidb.PostgresDataFrameSaver(db_conn)

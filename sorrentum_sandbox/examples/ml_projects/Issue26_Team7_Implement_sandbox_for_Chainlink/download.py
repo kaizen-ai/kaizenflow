@@ -3,10 +3,12 @@ Extract part of the ETL and QA pipeline.
 
 Import as:
 
+
 import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
 """
 import logging
 import time
+
 import pandas as pd
 from web3 import Web3
 from tqdm import tqdm
@@ -15,7 +17,9 @@ import sorrentum_sandbox.common.download as ssandown
 
 _LOG = logging.getLogger(__name__)
 
+
 def downloader(pair,start_roundid, **kwargs):
+
     """
     Download data in Euthereum Mainnet from Web3 Socket.
     """
@@ -26,6 +30,7 @@ def downloader(pair,start_roundid, **kwargs):
     addr_dict = {'BTC/USD':'0xF4030086522a5bEEa4988F8cA5B36dbC97BeE88c', 'BUSD/USD':'0x833D8Eb16D306ed1FbB5D7A2E019e106B960965A', 
                  'ETH/USD': '0x5f4eC3Df9cbd43714FE2740f5E3616155c5b8419', 'DOGE/USD': '0x2465CefD3b488BE410b941b1d4b2767088e2A028'} 
     addr = addr_dict.get(pair)
+
     data_lst = []
 
     # If end_roundid is specified, download from the start_roundid to the end_roundid.
@@ -49,6 +54,7 @@ def downloader(pair,start_roundid, **kwargs):
                 time.sleep(600)
             
     data_df = pd.DataFrame(data_lst, columns = ['roundId', 'price', 'startedAt', 'updatedAt', 'answeredInRound']) # List to Dataframe
+
     data_df['pair'] = contract.functions.description().call() # Add pair column to the dataframe.
     data_df['decimals'] = contract.functions.decimals().call() # Add decimals column to the dataframe.
     data_df['startedAt'] = pd.to_datetime(data_df['startedAt'],unit='s') # Covert the startedAt column data type from timestamp to datetime.
