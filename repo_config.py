@@ -96,7 +96,7 @@ def enable_privileged_mode() -> bool:
     Return whether an host supports privileged mode for its containers.
     """
     ret = False
-    if get_name() in ("//dev_tools", ):
+    if get_name() in ("//dev_tools",):
         ret = False
     else:
         # Keep this in alphabetical order.
