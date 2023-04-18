@@ -267,7 +267,7 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
         # TODO(Grisha): fails for the students who probably work on a machine
         # that is not in the list above. Perhaps we should return False based
         # on the `get_name()` output.
-        ret = False
+        shared_data_dirs = None
         #_raise_invalid_host()
     return shared_data_dirs
 
