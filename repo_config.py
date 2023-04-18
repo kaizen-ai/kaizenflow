@@ -33,6 +33,7 @@ def _print(msg: str) -> None:
 
 
 def get_name() -> str:
+    # TODO(Grisha): why using `//cmamp` for the `sorrentum` repo?
     return "//cmamp"
 
 
@@ -95,7 +96,7 @@ def enable_privileged_mode() -> bool:
     Return whether an host supports privileged mode for its containers.
     """
     ret = False
-    if get_name() in ("//dev_tools",):
+    if get_name() in ("//dev_tools", ):
         ret = False
     else:
         # Keep this in alphabetical order.
@@ -114,7 +115,11 @@ def enable_privileged_mode() -> bool:
             # Docker for macOS Monterey doesn't seem to support dind.
             ret = False
         else:
-            _raise_invalid_host()
+            # TODO(Grisha): fails for the students who probably work on a machine
+            # that is not in the list above. Perhaps we should return False based
+            # on the `get_name()` output.
+            ret = False
+            #_raise_invalid_host()
     return ret
 
 
