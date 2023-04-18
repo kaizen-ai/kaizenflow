@@ -82,7 +82,7 @@ def run_solver(
                 # TODO(Grisha): the `if-else` part could become a separate function,
                 # i.e. the indicator function -- Tau.
                 q_base_asterisk[i]
-                * ddacrord.action_to_int(orders[i].action)
+                * orders[i].action_as_int
                 * (1 if orders[i].base_token == token else 0)
                 for i in range(n_orders)
             )
@@ -139,7 +139,12 @@ def run_daoswap_solver(
         problem += q_pi_star[i] <= orders[i].quantity
     # Impose limit order price constraint.
     for i in range(n_orders):
-        problem += ddacrord.action_to_int(orders[i].action) * q_tau_star[i] <= q_pi_star[i] * orders[i].price
+        # For the purposes of implementation, we should condition on the
+        # direction of the inequality.
+        if orders[i].action_as_int == 1:
+            problem += q_tau_star[i] <= q_pi_star[i] * orders[i].limit_price
+        elif orders[i].action_as_int == -1:
+            problem += q_tau_star[i] >= q_pi_star[i] * orders[i].limit_price
     # Impose constraints on the token level: the amount of sold tokens must match that
     # of bought tokens for each token.
     base_tokens = [order.base_token for order in orders]
@@ -148,11 +153,11 @@ def run_daoswap_solver(
                 pulp.lpSum(
                     # TODO(Grisha): the `if-else` part could become a separate function,
                     # i.e. the indicator function -- Tau.
-                    -ddacrord.action_to_int(orders[i].action)
+                    -orders[i].action_as_int
                     * q_pi_star[i]
                     * (1 if orders[i].base_token == token else 0)
                     +
-                    ddacrord.action_to_int(orders[i].action)
+                    orders[i].action_as_int
                     * q_tau_star[i]
                     * (1 if orders[i].quote_token == token else 0)
                     for i in range(n_orders)
