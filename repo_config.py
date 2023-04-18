@@ -141,7 +141,11 @@ def has_docker_sudo() -> bool:
         # macOS runs Docker with sudo by default.
         ret = True
     else:
-        _raise_invalid_host()
+        # TODO(Grisha): fails for the students who probably work on a machine
+        # that is not in the list above. Perhaps we should return False based
+        # on the `get_name()` output.
+        ret = False
+        #_raise_invalid_host()
     return ret
 
 
@@ -209,7 +213,11 @@ def has_dind_support() -> bool:
             elif hserver.is_dev4() or hserver.is_ig_prod():
                 assert not has_dind, "Not expected privileged mode"
             else:
-                _raise_invalid_host()
+                # TODO(Grisha): fails for the students who probably work on a machine
+                # that is not in the list above. Perhaps we should return False based
+                # on the `get_name()` output.
+                return False
+                #_raise_invalid_host()
     else:
         am_repo_config = os.environ.get("AM_REPO_CONFIG_CHECK", "True")
         print(
@@ -256,7 +264,11 @@ def get_shared_data_dirs() -> Optional[Dict[str, str]]:
     elif hserver.is_mac() or hserver.is_inside_ci() or hserver.is_cmamp_prod():
         shared_data_dirs = None
     else:
-        _raise_invalid_host()
+        # TODO(Grisha): fails for the students who probably work on a machine
+        # that is not in the list above. Perhaps we should return False based
+        # on the `get_name()` output.
+        ret = False
+        #_raise_invalid_host()
     return shared_data_dirs
 
 
@@ -316,7 +328,11 @@ def run_docker_as_root() -> bool:
     elif hserver.is_mac():
         ret = False
     else:
-        _raise_invalid_host()
+        # TODO(Grisha): fails for the students who probably work on a machine
+        # that is not in the list above. Perhaps we should return False based
+        # on the `get_name()` output.
+        ret = False
+        #_raise_invalid_host()
     return ret
 
 
