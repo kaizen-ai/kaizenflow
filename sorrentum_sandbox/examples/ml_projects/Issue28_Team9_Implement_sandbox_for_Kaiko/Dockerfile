@@ -36,3 +36,4 @@ RUN pip3 install \
     apache-airflow-providers-postgres==2.2.0
     
 COPY . /opt/airflow/
+

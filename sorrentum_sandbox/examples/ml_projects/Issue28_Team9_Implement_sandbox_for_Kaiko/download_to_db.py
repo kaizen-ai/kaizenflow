@@ -8,8 +8,10 @@ import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.hparser as hparser
+
 import db_kaiko as sisebidb
 import download_kaiko as sisebido
+
 
 _LOG = logging.getLogger(__name__)
 
@@ -41,7 +43,9 @@ def _add_download_args(
         type=str,
         help="Name of the db table to save data into",
     )
+
     return parser
+
 
 def _parse() -> argparse.ArgumentParser:
     hdbg.init_logger(use_exec_path=True)
@@ -59,7 +63,9 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load data.
     start_timestamp = pd.Timestamp(args.start_timestamp)
     end_timestamp = pd.Timestamp(args.end_timestamp)
+
     downloader = sisebido.KaikoDownloader()
+
     raw_data = downloader.download(start_timestamp, end_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()

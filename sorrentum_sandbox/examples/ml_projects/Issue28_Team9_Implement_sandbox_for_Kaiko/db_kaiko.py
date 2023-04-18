@@ -56,6 +56,7 @@ def get_ohlcv_spot_resampled_5min_create_table_query() -> str:
 
 
 def get_db_connection() -> Any:
+
     try:
         connection = psycop.connect(
             host="host.docker.internal",
@@ -72,6 +73,7 @@ def get_db_connection() -> Any:
             user="postgres",
             password="postgres",
         )
+
     connection.autocommit = True
     return connection
 
@@ -162,5 +164,6 @@ class PostgresClient(sinsacli.DataClient):
             select_query += f" timestamp < {end_timestamp_as_unix}"
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
+
         return data
-    
+

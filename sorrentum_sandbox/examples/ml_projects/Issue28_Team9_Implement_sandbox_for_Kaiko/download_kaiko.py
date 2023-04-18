@@ -15,6 +15,7 @@ class KaikoDownloader(ssandown.DataDownloader):
     """
     Class for downloading kaiko Data using kaiko python library
     """
+
     _EXCHANGE = "cbse"
     _UNIVERSE = {
         "kaiko": [
@@ -28,9 +29,11 @@ class KaikoDownloader(ssandown.DataDownloader):
 
     def download(
         self, start_timestamp: str, end_timestamp: str
+
     ) -> ssandown.RawData:
         dfs = []
         for symbol in self._UNIVERSE["kaiko"]:
+
 
             data = ka.TickTrades(
                 exchange=self._EXCHANGE,
@@ -42,13 +45,16 @@ class KaikoDownloader(ssandown.DataDownloader):
             
             data = data.reset_index()
             data['currency_pair']=symbol
+
             
             dfs.append(data)
             # Delay for throttling in seconds.
             time.sleep(0.5)
         df = pd.concat(dfs, ignore_index=True)
         df.columns=[x.replace(' ','_').lower() for x in list(df.columns)]
+
         _LOG.info(f"Downloaded data: \n\t {df.head()}")
         return ssandown.RawData(df)
 
 print('download_kaiko.py Done')
+
