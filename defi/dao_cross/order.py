@@ -4,8 +4,9 @@ Import as:
 import defi.dao_cross.order as ddacrord
 """
 
+import collections
 import logging
-from typing import Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas as pd
@@ -149,6 +150,17 @@ class Order:
         else:
             return -1
 
+    def to_dict(self) -> Dict[str, Any]:
+        dict_: Dict[str, Any] = collections.OrderedDict()
+        dict_["timestamp"] = self.timestamp
+        dict_["action"] = self.action
+        dict_["quantity"] = self.quantity
+        dict_["base_token"] = self.base_token
+        dict_["limit_price"] = self.limit_price
+        dict_["quote_token"] = self.quote_token
+        dict_["deposit_address"] = self.deposit_address
+        return dict_
+
     def _takes_precedence(self, other: "Order") -> bool:
         """
         Compare order to another one according to quantity, price and
@@ -210,3 +222,18 @@ def get_random_order(seed: Optional[int] = None) -> Order:
         wallet_address,
     )
     return order
+
+
+def convert_orders_to_dataframe(
+    orders: List[Order]
+) -> pd.DataFrame:
+    """
+    Convert a list of orders to a dataframe
+
+    :param orders: list of `Order`
+    :return: dataframe with one order per row and attributes as cols
+    """
+    hdbg.dassert_container_type(orders, list, Order)
+    df = pd.concat([pd.Series(order.to_dict()) for order in orders], axis=1).T
+    df = df.convert_dtypes()
+    return df
