@@ -135,20 +135,11 @@ ddacrord.convert_orders_to_dataframe(orders)
 daocross_results = ddacropt.run_daocross_solver(orders, prices)
 display(daocross_results)
 
-# %%
-## Run DaoSwap
+# %% [markdown]
+# ## Run DaoSwap
 
 # %%
 daoswap_results = ddacropt.run_daoswap_solver(orders)
 display(daoswap_results)
-
-# %%
-result_df
-
-# %%
-effective_price = [result["q_tau_star"][i] / result["q_pi_star"][i] for i in range(len(orders))]
-
-# %%
-effective_price
 
 # %%
