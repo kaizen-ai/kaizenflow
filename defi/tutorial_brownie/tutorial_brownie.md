@@ -7,8 +7,8 @@
 - `Brownie` allows to:
   - deploy contracts
   - interact with contracts on mainnet or local testnet
-  - debugging
-  - unit testing
+  - debug contracts
+  - unit test contracts
 
 # Brownie tutorials
 
