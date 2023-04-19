@@ -1,18 +1,22 @@
 # The `defi` container
 
+## Using the `defi` container
+
+- The container is controlled with the scripts
+  - `docker_bash.sh`: start a new `defi` container
+  - `docker_exec.sh`: start a new bash in the `defi` container
+  - `docker_build.sh`: build the container (for admins)
+  - `docker_kill.sh`: kill all the `defi` containers
+
 ## Build the `defi` container
 
+- This is typically performed by administrators and you can use the pre-built
+  container
 - To build the container storing all the DeFi toolchain:
   ```
   > cd $GIT_ROOT/defi/devops
   > docker_build.sh
   ```
-
-- The container is controlled with the scripts
-  - `docker_bash.sh`: start a new `defi` container
-  - `docker_exec.sh`: start a new bash in the `defi` container
-  - `docker_build.sh`: build the container
-  - `docker_kill.sh`: kill all the `defi` containers
 
 ## Run the `defi` container
 
@@ -63,7 +67,7 @@
   > devops/docker_exec.sh
   docker> /data/devops/run_jupyter.sh
   ```
-- Go to a link where Jupyter is running
+- Go to the link where the Jupyter notebook is running
   - On your laptop: localhost:8888
   - On `dev1`: http://172.30.2.136:8889/tree
   - On `dev2`: http://172.30.2.128:8889/tree

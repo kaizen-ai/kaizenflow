@@ -62,4 +62,3 @@
 
 There are several books I can recommend about Ethereum internals, and why Web 3
 is as revolutionary as Internet itself (2020 - Token Economy - Voshmgir)
-
