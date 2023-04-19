@@ -7,7 +7,6 @@ import "./OrderMinHeap.sol";
 import "../node_modules/@openzeppelin/contracts/access/Ownable.sol";
 import "../node_modules/@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-
 /// @title Swap contract that allows trading large blocks of coins peer-to-peer.
 contract DaoCross is Ownable {
     using OrderMinHeap for OrderMinHeap.Order;
@@ -36,8 +35,20 @@ contract DaoCross is Ownable {
     }
 
     // Events used to interact with frontend.
-    event newBuyOrder(address baseToken, address quoteToken, uint256 amount, uint256 limitPrice, address depositAddress);
-    event newSellOrder(address baseToken, address quoteToken, uint256 amount, uint256 limitPrice, address depositAddress);
+    event newBuyOrder(
+        address baseToken,
+        address quoteToken,
+        uint256 amount,
+        uint256 limitPrice,
+        address depositAddress
+    );
+    event newSellOrder(
+        address baseToken,
+        address quoteToken,
+        uint256 amount,
+        uint256 limitPrice,
+        address depositAddress
+    );
 
     /// @param _baseToken: a token to swap (e.g., wBTC, ADA)
     /// @param _swapPeriodInSecs: how often to perform the swap (e.g., 300 to perform a swap every 5 minutes)
@@ -46,11 +57,12 @@ contract DaoCross is Ownable {
     ///    with a different number of seconds in [0, 5] before or after the 5 minute mark.
     /// @param _feesAsPct: fees to charge in terms of value exchanged
     /// @param _priceOracle: contract providing the price for the swap
-    constructor(address _baseToken,
-           uint16 _swapPeriodInSecs, 
-           uint8 _swapRandomizationInSecs, 
-           uint8 _feesAsPct,
-           address _priceOracle) {
+    constructor(
+        address _baseToken,
+        uint16 _swapPeriodInSecs,
+        uint8 _swapRandomizationInSecs,
+        uint8 _feesAsPct,
+        address _priceOracle) {
         swapPeriodInSecs = _swapPeriodInSecs;
         swapRandomizationInSecs = _swapRandomizationInSecs;
         feesAsPct = _feesAsPct;
@@ -63,13 +75,18 @@ contract DaoCross is Ownable {
     /// @param _quantity: amount of token to buy with 18 decimals, e.g. 1 * 10**18 for 1 token
     /// @param _limitPrice: the max price for one token in WEI
     /// @param _depositAddress: the address to send the tokens after the order is completed
-    function buyOrder(address _baseToken,
-                uint256 _quantity, 
-                uint256 _limitPrice,
-                address _depositAddress) external payable {
+    function buyOrder(
+        address _baseToken,
+        uint256 _quantity,
+        uint256 _limitPrice,
+        address _depositAddress
+    ) external payable {
         require(_baseToken == address(baseToken));
-        uint256 fullPrice = (_quantity*_limitPrice)/10**18;
-        require(msg.value >= fullPrice, "Value should cover the full price of requested amount of tokens");
+        uint256 fullPrice = (_quantity * _limitPrice) / 10 ** 18;
+        require(
+            msg.value >= fullPrice,
+            "Value should cover the full price of requested amount of tokens"
+        );
         OrderMinHeap.Order memory order = OrderMinHeap.Order(
             orders.length,
             msg.sender,
@@ -80,10 +97,15 @@ contract DaoCross is Ownable {
             true,
             _depositAddress,
             block.timestamp
-
         );
         orders.push(order);
-        emit newBuyOrder(_baseToken, address(0x0), _quantity, _limitPrice, _depositAddress);
+        emit newBuyOrder(
+            _baseToken,
+            address(0x0),
+            _quantity,
+            _limitPrice,
+            _depositAddress
+        );
     }
 
     /// @notice Create an order to sell the tokens for ETH.
@@ -91,10 +113,12 @@ contract DaoCross is Ownable {
     /// @param _quantity: amount of token to sell with 18 decimals, e.g. 1 * 10**18 for 1 token
     /// @param _limitPrice: the upper price for one token in WEI
     /// @param _depositAddress: the address to send the ETH after the order is completed
-    function sellOrder(address _baseToken,
-                uint256 _quantity, 
-                uint256 _limitPrice,
-                address _depositAddress) external payable {
+    function sellOrder(
+        address _baseToken,
+        uint256 _quantity,
+        uint256 _limitPrice,
+        address _depositAddress
+    ) external payable {
         require(_baseToken == address(baseToken));
         // NOTE: User needs to approve the smart contract to spend their tokens.
 
@@ -117,10 +141,15 @@ contract DaoCross is Ownable {
             false,
             _depositAddress,
             block.timestamp
-
         );
         orders.push(order);
-        emit newSellOrder(_baseToken, address(0x0), _quantity, _limitPrice, _depositAddress);
+        emit newSellOrder(
+            _baseToken,
+            address(0x0),
+            _quantity,
+            _limitPrice,
+            _depositAddress
+        );
     }
 
     /**
@@ -137,20 +166,22 @@ contract DaoCross is Ownable {
             Transfer memory transfer = transfers[i];
             if (transfer.token == address(0x0)) {
                 // Send ETH.
-                (bool sent, bytes memory data) = transfer.to.call{value: transfer.amount}("");
+                // TODO(gp): This seems invalid Solidity.
+                //(bool sent, bytes memory data) = transfer.to.call{
+                //    value: transfer.amount
+                //}("");
                 require(sent, "Failed to send Ether");
             } else {
                 // Send tokens.
                 require(transfer.token == address(baseToken));
                 baseToken.transfer(transfer.to, transfer.amount);
-
             }
         }
         // We also need to return money to the users who paid extra?
         // To users whose order was not fully accomplished?
         eraseOrders();
     }
-    
+
     /**
      * @notice Match buy and sell orders based on the clearing price.
      * @dev This function will create two heaps (buyHeap and sellHeap) based on the orders' limit prices and
@@ -160,14 +191,16 @@ contract DaoCross is Ownable {
      * @param clearingPrice The price at which buy and sell orders are matched
      * @return transfers An array of Transfer structs representing the transfers needed to fulfill the matched orders
      */
-    function matchOrders(uint256 clearingPrice) public returns (Transfer[] memory transfers) {
+    function matchOrders(
+        uint256 clearingPrice
+    ) public returns (Transfer[] memory transfers) {
         OrderMinHeap.createHeap(buyHeap);
         OrderMinHeap.createHeap(sellHeap);
 
         // Initialize transfers array.
-        // The length of the transfers array is initially set to twice the length of the orders array 
-        // to ensure that it has enough space to accommodate all possible transfers without resizing 
-        // the array during the matching process. This is a trade-off made for simplicity and ease 
+        // The length of the transfers array is initially set to twice the length of the orders array
+        // to ensure that it has enough space to accommodate all possible transfers without resizing
+        // the array during the matching process. This is a trade-off made for simplicity and ease
         // of implementation.
         transfers = new Transfer[](orders.length * 3);
         uint256 transferIndex = 0;
@@ -180,15 +213,15 @@ contract DaoCross is Ownable {
                 if (order.limitPrice >= clearingPrice) {
                     OrderMinHeap.insert(buyHeap, order);
                 } else {
-                    // If the limit price user suggested and clearing price don't match 
+                    // If the limit price user suggested and clearing price don't match
                     // we need to return ETH to the user.
                     returnTransfer = Transfer(
                         order.quoteToken, // for ETH we use zero address
-                        (order.quantity * order.limitPrice)/10**18,
+                        (order.quantity * order.limitPrice) / 10 ** 18,
                         order.walletAddress,
                         order.depositAddress,
                         true
-                    ); 
+                    );
                     // Add the return to transfer array.
                     transfers[transferIndex++] = returnTransfer;
                 }
@@ -196,7 +229,7 @@ contract DaoCross is Ownable {
                 if (order.limitPrice <= clearingPrice) {
                     OrderMinHeap.insert(sellHeap, order);
                 } else {
-                    // If the limit price user suggested and clearing price don't match 
+                    // If the limit price user suggested and clearing price don't match
                     // we need to return ERC20 to the user.
                     returnTransfer = Transfer(
                         order.baseToken,
@@ -224,7 +257,9 @@ contract DaoCross is Ownable {
             OrderMinHeap.removeTop(sellHeap);
 
             // Choose the order with the smaller quantity.
-            uint256 quantity = buyOrder.quantity < sellOrder.quantity ? buyOrder.quantity : sellOrder.quantity;
+            uint256 quantity = buyOrder.quantity < sellOrder.quantity
+                ? buyOrder.quantity
+                : sellOrder.quantity;
 
             // Fill base token transfer. E.g. transfer ERC20 token to the user who
             // wanted to buy ERC20 in exchange for ETH.
@@ -241,7 +276,7 @@ contract DaoCross is Ownable {
             // wanted to sell ERC20 and get ETH.
             Transfer memory quoteTransfer = Transfer(
                 buyOrder.quoteToken,
-                (quantity * clearingPrice)/10**18, // token quantity has 18 decimals
+                (quantity * clearingPrice) / 10 ** 18, // token quantity has 18 decimals
                 buyOrder.walletAddress,
                 sellOrder.depositAddress,
                 false
@@ -263,7 +298,9 @@ contract DaoCross is Ownable {
         // Process the quantities that were left in the orders unmatched.
         // Fill return transfers.
         // Find the heap that is not empty.
-        OrderMinHeap.Heap storage remainingHeap = buyHeap.size > 0 ? buyHeap : sellHeap;
+        OrderMinHeap.Heap storage remainingHeap = buyHeap.size > 0
+            ? buyHeap
+            : sellHeap;
         while (remainingHeap.size > 0) {
             uint256 remainingIndex = OrderMinHeap.topIndex(remainingHeap);
             OrderMinHeap.Order memory remainingOrder = orders[remainingIndex];
@@ -273,7 +310,7 @@ contract DaoCross is Ownable {
                 // Return ETH remained unmatched.
                 remainingTransfer = Transfer(
                     remainingOrder.quoteToken, // for ETH we use zero address
-                    (remainingOrder.quantity * clearingPrice)/10**18,
+                    (remainingOrder.quantity * clearingPrice) / 10 ** 18,
                     remainingOrder.walletAddress,
                     remainingOrder.depositAddress,
                     true
@@ -312,8 +349,7 @@ contract DaoCross is Ownable {
         // Remove orders from the previous.
         delete orders;
         // Create new orders array.
-        OrderMinHeap.Order[] storage orders;
+        // TODO(gp): Dead variable.
+        //OrderMinHeap.Order[] storage orders;
     }
-
-
 }
