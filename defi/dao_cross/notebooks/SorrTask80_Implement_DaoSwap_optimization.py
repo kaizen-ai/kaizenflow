@@ -31,6 +31,7 @@ import logging
 from typing import List, Tuple
 
 import numpy as np
+import pandas as pd
 
 import helpers.hdbg as hdbg
 import helpers.henv as henv
@@ -119,19 +120,30 @@ def test1() -> None:
 
 
 # %%
+prices = {"BTC": 3, "ETH": 6}
+
+# %%
 orders = test1()
 
 # %%
-len(orders)
+ddacrord.convert_orders_to_dataframe(orders)
+
+# %% [markdown]
+# ## Run DaoCross
 
 # %%
-orders
+daocross_results = ddacropt.run_daocross_solver(orders, prices)
+display(daocross_results)
 
 # %%
-result = ddacropt.run_daoswap_solver(orders)
+## Run DaoSwap
 
 # %%
-result
+daoswap_results = ddacropt.run_daoswap_solver(orders)
+display(daoswap_results)
+
+# %%
+result_df
 
 # %%
 effective_price = [result["q_tau_star"][i] / result["q_pi_star"][i] for i in range(len(orders))]
