@@ -165,7 +165,7 @@ contract DaoCross is Ownable {
         OrderMinHeap.createHeap(sellHeap);
 
         // Initialize transfers array.
-        // The length of the transfers array is initially set to twice the length of the orders array 
+        // The length of the transfers array is initially set to the length of the orders array * 3 
         // to ensure that it has enough space to accommodate all possible transfers without resizing 
         // the array during the matching process. This is a trade-off made for simplicity and ease 
         // of implementation.

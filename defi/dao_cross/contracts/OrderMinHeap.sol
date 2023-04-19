@@ -33,7 +33,7 @@ library OrderMinHeap {
             self.data.push();
         }
         uint32 _index = self.size++;
-        while (_index > 0 && self.data[parent(_index)].limitPrice < order.limitPrice) {
+        while (_index > 0 && self.data[parent(_index)].quantity < order.quantity) {
             self.data[_index] = self.data[parent(_index)];
             _index = parent(_index);
         }
@@ -81,16 +81,24 @@ library OrderMinHeap {
      * @param i The index at which to start reorganizing the heap
      */
     function heapify(Heap storage self, uint32 i) private {
-        uint32 min = i;
-        if (left(i) < self.size && self.data[left(i)].limitPrice > self.data[min].limitPrice) {
-            min = left(i);
-        }
-        if (right(i) < self.size && self.data[right(i)].limitPrice > self.data[min].limitPrice) {
-            min = right(i);
-        }
-        if (min != i) {
-            (self.data[i], self.data[min]) = (self.data[min], self.data[i]);
-            heapify(self, min);
+        while (true) {
+            uint32 min = i;
+            uint32 leftChild = left(i);
+            uint32 rightChild = right(i);
+
+            if (leftChild < self.data.length && self.data[leftChild].quantity > self.data[min].quantity) {
+                min = leftChild;
+            }
+            if (rightChild < self.data.length && self.data[rightChild].quantity > self.data[min].quantity) {
+                min = rightChild;
+            }
+
+            if (min != i) {
+                (self.data[i], self.data[min]) = (self.data[min], self.data[i]);
+                i = min;
+            } else {
+                break;
+            }
         }
     }
 }
