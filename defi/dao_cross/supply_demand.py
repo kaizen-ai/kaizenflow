@@ -7,7 +7,7 @@ import defi.dao_cross.supply_demand as ddcrsede
 import copy
 import heapq
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Tuple, Optional
 
 import pandas as pd
 
@@ -113,18 +113,22 @@ def get_curve(
         (order.quantity, order.limit_price,) for order in orders
     ]
     # Sort orders by limit price with respect to the curve type.
-    ascending = type_ == "supply"
-    orders_info = sorted(orders_info, key=lambda x: x[1], ascending=ascending)
-    # Get the coordinates where curves crosses prices axis.
-    first_curve_point = (0, orders_info[0][1])
+    # Supply curve is monotonically increasing, so sort orders in ascending order.
+    # Demand curve is monotonically decreasing, so sort orders in descending order.
+    reverse = type_ == "demand"
+    orders_info = sorted(orders_info, key=lambda x: x[1], reverse=reverse)
     # Initiate the list with the first coordintate.
-    curve_points = [first_curve_point]
+    curve_points = []
     # Set amount of quantity that has entered the market before the contemplated order.
     quantity_before = 0
     for order_info in orders_info:
         quantity = order_info[0] + quantity_before
-        quantity_before = quantity_before + quantity
         price = order_info[1]
-        curve_point = (quantity, price,)
-        curve_points.append(curve_point)
+        #
+        curve_point1 = (quantity_before, price)
+        curve_points.append(curve_point1)
+        curve_point2 = (quantity, price)
+        curve_points.append(curve_point2)
+        #
+        quantity_before = quantity_before + order_info[0]
     return curve_points
