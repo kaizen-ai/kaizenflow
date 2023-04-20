@@ -71,6 +71,9 @@ def get_supply_orders1(
         action,
         quantities,
         limit_prices,
+        quantity_scale=quantity_scale,
+        quantity_const=quantity_const,
+        limit_price_scale=limit_price_scale,
     )
     return orders
 
@@ -91,6 +94,9 @@ def get_demand_orders1(
         action,
         quantities,
         limit_prices,
+        quantity_scale=quantity_scale,
+        quantity_const=quantity_const,
+        limit_price_scale=limit_price_scale,
     )
     return orders
 
