@@ -4,14 +4,34 @@ Import as:
 import defi.dao_swap.twap_vwap_adapter as ddstvwad
 """
 
+import os
 import json
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, List, Tuple, Callable
 
 import numpy as np
 import requests
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
+from functools import wraps
 
 app = Flask(__name__)
+
+API_KEY = os.environ.get("API_KEY")
+# Specify FLASK_DEBUG_MODE=0 To turn off debug mode.
+DEBUG_MODE = os.environ.get("FLASK_DEBUG_MODE", "1") == "1"
+
+
+def require_api_key(func: Callable) -> Callable:
+    """
+    Perform authorization of a request.
+    """
+    @wraps(func)
+    def check_api_key(*args, **kwargs):
+        api_key = request.headers.get("X-API-KEY")
+        if not api_key or api_key != API_KEY:
+            abort(401, "Unauthorized: Invalid API key")
+        return func(*args, **kwargs)
+    
+    return check_api_key
 
 
 def _get_price_volume_data() -> Tuple[List[int], List[float]]:
@@ -38,6 +58,7 @@ def _get_price_volume_data() -> Tuple[List[int], List[float]]:
 
 
 @app.route("/get_twap", methods=["POST"])
+@require_api_key
 def get_twap() -> Dict[str, Any]:
     """
     Get TWAP for the Chainlink node.
@@ -54,6 +75,7 @@ def get_twap() -> Dict[str, Any]:
 
 
 @app.route("/get_vwap", methods=["POST"])
+@require_api_key
 def get_vwap() -> Dict[str, Any]:
     """
     Get VWAP for the Chainlink node.
@@ -70,4 +92,4 @@ def get_vwap() -> Dict[str, Any]:
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=DEBUG_MODE)
