@@ -41,20 +41,23 @@ def _get_transfer_df(transfers: Optional[List[Dict[str, Any]]]) -> pd.DataFrame:
     return transfer_df
 
 
-# TODO(gp): Extend to support swaps between A vs B and B vs A using the
-#  order equivalence. We need to specify what tokens the clearing price refers to
-#  (e.g., clearing_price, base_token, quote_token).
 def match_orders(
     orders: List[ddacrord.Order],
     clearing_price: float,
+    base_token: str,
+    quote_token: str,
 ) -> pd.DataFrame:
     """
-    Implement orders matching given a clearing price.
+    Implement orders matching for token swaps given a clearing price.
 
     All orders are assumed to be compatible.
 
     :param orders: orders to match
     :param clearing_price: clearing price
+    :param base_token: name of the base token for swaps, which determines
+        the quantity
+    :param quote_token: name of the quote token for swaps, which determines
+        the price
     :return: transfers implemented to match orders
     """
     _LOG.debug(hprint.to_str("orders"))
@@ -65,11 +68,17 @@ def match_orders(
     # Build buy and sell heaps.
     buy_heap = []
     sell_heap = []
-    # TODO(Dan): Get all the base and quote tokens from all the orders and make
-    # sure that there are only two of them.
-    # TODO(Dan): Think of more asserts to check if orders are compatible.
-    # Push orders to the heaps based on the action type and filtered by limit price.
     for order in orders:
+        # Check that only base and quote tokens are used in the passed orders.
+        hdbg.dassert_eq(
+            sorted([order.base_token, order.quote_token]),
+            sorted([base_token, quote_token]),
+        )
+        # Adjust all orders to the same base and quote tokens using order
+        # equivalence.
+        if order.base_token == quote_token:
+            order = get_equivalent_order(order)
+        # Distribute equalized orders on buy and sell heaps.
         if order.action == "buy":
             if order.limit_price >= clearing_price:
                 heapq.heappush(buy_heap, order)
@@ -128,4 +137,53 @@ def match_orders(
         sell_order.quantity -= quantity
     # Get DataFrame with the transfers implemented to match the passed orders.
     transfer_df = _get_transfer_df(transfers)
+    # Check if there are any remaining orders.
+    if buy_heap:
+        _LOG.warning("Buy orders remain unmatched: %s", buy_heap)
+    if sell_heap:
+        _LOG.warning("Sell orders remain unmatched: %s", sell_heap)
     return transfer_df
+
+
+def get_equivalent_order(
+    order: ddacrord.Order,
+    clearing_price: float,
+) -> ddacrord.Order:
+    """
+    Get equivalent DaoCross order.
+
+    E.g., if `clearing_price` is 0.5 BTC for 1 ETH:
+    input order: (1678660406, sell, 3.2, ETH, 0.25, BTC, 0xdeadc0de, 0xabcd0000)
+    output order: (1678660406, buy, 1.6, BTC, 4.0, ETH, 0xdeadc0de, 0xabcd0000)
+
+    :param order: input order
+    :param clearing_price: clearing price
+    :return: order equivalent to the input one
+    """
+    hdbg.dassert_isinstance(order, ddacrord.Order)
+    # Set action opposite to the input's one.
+    if order.action == "buy":
+        action = "sell"
+    elif order.action == "sell":
+        action = "buy"
+    else:
+        raise ValueError("Invalid action='%s'" % order.action)
+    # Convert quantity of base token to quantity of quote token.
+    quantity = order.quantity * clearing_price
+    # Swap base and quote token values.
+    base_token = order.quote_token
+    quote_token = order.base_token
+    # Convert limit price of base token to limit price of quote token.
+    limit_price = 1 / order.limit_price
+    # Build equivalent order.
+    order = ddacrord.Order(
+        order.timestamp,
+        action,
+        quantity,
+        base_token,
+        limit_price,
+        quote_token,
+        order.deposit_address,
+        order.wallet_address,
+    )
+    return order
