@@ -114,7 +114,7 @@
 % TODO(gp): Do we spell Deloc or DELOC?
 % TODO(gp): Should we switch to DELOCK?
 
-Deloc is a new protocol that enables decentralized token exchange using limit
+DELOC is a new protocol that enables decentralized token exchange using limit
 orders. It brings together the advantages of trading efficiency and ease-of-use
 of centralized exchanges with the transparency and self-custody of
 decentralized approaches, without the risk of impermanent loss, contrary to
@@ -335,11 +335,9 @@ and discussed in detail in Section \ref{AlSoToSw}.
 
 % ###############################################################################
 \section{Matching liquidity}
-Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
-(wrapped Bitcoin, an ERC-20 compliant coin that tracks Bitcoin), who wish to
-swap tokens at a competitive rate. Suppose also that there are many
-additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
-swap. How should the liquidity be pooled? At first glance, it appears that
+Suppose there is a group of $\ETH$ holders and a group of $\BTC$ holders who
+wish to swap tokens at a competitive rate.
+How should the liquidity be pooled? At first glance, it appears that
 there should be a single pool of liquidity. The wrinkle manifests in determining
 how to express a desire to trade. A simple expression of a desire to trade is
 a limit order representing a commitment to trade up to $q$ in quantity of
@@ -349,12 +347,13 @@ express limit prices in terms of $\ETH$ per $\BTC$, while others express limit
 prices in terms of $\BTC$ per $\ETH$? Under these conditions, setting a single
 clearing price and determining fill prioritization rules raises several
 questions. We shall consider and address these in the sequel, but to begin, we
-discuss a more constrained setting.
+discuss a more constrained setting, common in practice.
 
 % ===============================================================================
 \subsection{Limit orders in foreign exchange markets}
 To simplify, we follow the practice of foreign exchange (FX) markets,
-which break the symmetry by specifying two non-interchangeable roles:
+which break the symmetric, interchangeable roles of two currencies by
+specifying two non-interchangeable roles:
 \begin{enumerate}
 	\item a \emph{base} currency (for quantity)
 	\item a \emph{quote} currency (for price)
@@ -388,7 +387,7 @@ sources of liquidity are typically the same.
 \subsection{Multi-coin exchange}
 It seems plausible that by retaining the symmetry in the two-token case and
 instead treating a pair of tokens as a single source of liquidity, one may
-contrive a more efficient exchange mechanism.
+devise a more efficient exchange mechanism.
 
 This minor expansion, however, suggests widening even further the universe of
 eligible swaps. For example, if there are three tokens available for exchange,
@@ -413,8 +412,8 @@ unfortunately, the problem in general is NP-complete (e.g., \cite{XiStWh05}),
 which is a significant limiting factor in terms of feasibility and
 auction expense.
 
-In the sequel we propose exchange mechanisms valid for any collection of
-standard limit orders (all base/quote token limit orders may be pooled and
+In the sequel, we propose practical exchange mechanisms valid for any collection
+of standard limit orders (all base/quote token limit orders may be pooled and
 cleared in a single optimization).
 
 % ###############################################################################
@@ -474,6 +473,9 @@ another token, and price of a token with respect to a common numeraire, dependin
 on which notation is simpler.
 The two representations are equivalent aside from a multiplicative constant, and
 it is always possible to convert one into the other.
+
+Centralized exchanges typically present token prices with a USD-based stablecoin
+as the quote token, so that, in effect, the US dollar is the numeraire.
 
 % ===============================================================================
 % TODO(gp): Consider adding source_address as way to identify the user.
@@ -576,7 +578,7 @@ constraints imposed by limit orders.
 
 % ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
-In Deloc, orders are collected from users during a finite period of time,
+In DELOC, orders are collected from users during a finite period of time,
 after which tokens are redistributed among users according to their limit
 orders.
 
