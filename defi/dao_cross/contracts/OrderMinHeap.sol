@@ -33,7 +33,7 @@ library OrderMinHeap {
             self.data.push();
         }
         uint32 _index = self.size++;
-        while (_index > 0 && self.data[parent(_index)].quantity < order.quantity) {
+        while (_index > 0 && self.data[parent(_index)].quantity > order.quantity) {
             self.data[_index] = self.data[parent(_index)];
             _index = parent(_index);
         }
@@ -86,10 +86,10 @@ library OrderMinHeap {
             uint32 leftChild = left(i);
             uint32 rightChild = right(i);
 
-            if (leftChild < self.data.length && self.data[leftChild].quantity > self.data[min].quantity) {
+            if (leftChild < self.data.length && self.data[leftChild].quantity < self.data[min].quantity) {
                 min = leftChild;
             }
-            if (rightChild < self.data.length && self.data[rightChild].quantity > self.data[min].quantity) {
+            if (rightChild < self.data.length && self.data[rightChild].quantity < self.data[min].quantity) {
                 min = rightChild;
             }
 
