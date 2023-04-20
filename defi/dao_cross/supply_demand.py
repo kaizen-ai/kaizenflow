@@ -18,146 +18,101 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-def get_supply_orders1() -> List[ddacrord.Order]:
-    ts = None
+def _get_curve_orders(
+    action: str,
+    quantities: List[int],
+    limit_prices: List[int],
+    *,
+    quantity_scale: float = 1.0,
+    quantity_const: float = 0.0,
+    limit_price_scale: float = 1.0,
+    timestamp: Optional[pd.Timestamp] = None,
+    base_token: str = "BTC",
+    quote_token: str = "ETH",
+    deposit_address: int = 1,
+    wallet_address: int = 1,
+):
+    """
+    Get orders corresponding to a specified supply / demand curve.
+    """
+    orders = []
+    for quantity, limit_price in zip(quantities, limit_prices):
+        #
+        quantity = quantity * quantity_scale + quantity_const
+        limit_price = limit_price * limit_price_scale
+        #
+        order = ddacrord.Order(
+            timestamp,
+            action,
+            quantity,
+            base_token,
+            limit_price,
+            quote_token,
+            deposit_address,
+            wallet_address,
+        )
+        orders.append(order)
+    return orders
+
+
+def get_supply_orders1(
+    *,
+    quantity_scale: float = 1.0,
+    quantity_const: float = 0.0,
+    limit_price_scale: float = 1.0,
+) -> List[ddacrord.Order]:
+    """
+    Get orders corresponding to a monotonically increasing supply curve.
+    """
     action = "sell"
-    base = "BTC"
-    quote = "ETH"
-    src = -1
-    dst = -1
-    orders = [
-        ddacrord.Order(
-            ts, action, quantity=40, base, limit_price=100, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=40, base, limit_price=60, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=30, base, limit_price=40, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=30, base, limit_price=30, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=20, base, limit_price=20, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=20, base, limit_price=10, quote, src, dst
-        ),
-    ]
+    quantities = [40, 40, 30, 30, 20, 20]
+    limit_prices = [100, 60, 40, 30, 20, 10]
+    orders = _get_curve_orders(
+        action,
+        quantities,
+        limit_prices,
+    )
     return orders
 
 
-def get_supply_orders2() -> List[ddacrord.Order]:
-    ts = None
-    action = "sell"
-    base = "BTC"
-    quote = "ETH"
-    src = -1
-    dst = -1
-    orders = [
-        ddacrord.Order(
-            ts, action, quantity=4, base, limit_price=10, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=4, base, limit_price=6, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=3, base, limit_price=4, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=3, base, limit_price=3, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=2, base, limit_price=2, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=2, base, limit_price=1, quote, src, dst
-        ),
-    ]
-    return orders
-
-
-def get_demand_orders1() -> List[ddacrord.Order]:
-    ts = None
+def get_demand_orders1(
+    *,
+    quantity_scale: float = 1.0,
+    quantity_const: float = 0.0,
+    limit_price_scale: float = 1.0,
+) -> List[ddacrord.Order]:
+    """
+    Get orders corresponding to a monotonically decreasing demand curve.
+    """
     action = "buy"
-    base = "BTC"
-    quote = "ETH"
-    src = 1
-    dst = 1
-    orders = [
-        ddacrord.Order(
-            ts, action, quantity=10, base, limit_price=110, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=30, base, limit_price=100, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=20, base, limit_price=80, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=40, base, limit_price=60, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=50, base, limit_price=40, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=30, base, limit_price=30, quote, src, dst
-        ),
-    ]
-    return orders
-
-
-def get_demand_orders2() -> List[ddacrord.Order]:
-    ts = None
-    action = "buy"
-    base = "BTC"
-    quote = "ETH"
-    src = 1
-    dst = 1
-    orders = [
-        ddacrord.Order(
-            ts, action, quantity=1, base, limit_price=9, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=3, base, limit_price=8, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=2, base, limit_price=6, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=4, base, limit_price=4, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=5, base, limit_price=2, quote, src, dst
-        ),
-        ddacrord.Order(
-            ts, action, quantity=3, base, limit_price=1, quote, src, dst
-        ),
-    ]
+    quantities = [10, 30, 20, 40, 50, 30]
+    limit_prices = [110, 100, 80, 60, 40, 30]
+    orders = _get_curve_orders(
+        action,
+        quantities,
+        limit_prices,
+    )
     return orders
 
 
 def get_curve(
     orders: List[ddacrord.Order], type_: str
 ) -> List[Tuple[int, int]]:
-    # Extract quantity and proce from the passed orders in order to filter them.
+    """
+    Build a supply / demand curve using the given orders.
+    """
+    hdbg.dassert_in(type_, ["demand", "supply"])
+    # Extract quantity and price from the passed orders in order to filter them.
     orders_info = [
         (order.quantity, order.limit_price,) for order in orders
     ]
-    # Sort orders by limit price so order of asks is preserved.
-    if type_ == "supply":
-        # Supply curve starts from the order with the lowest limit price.
-        orders_info = sorted(orders_info, key=lambda x: x[1])
-    elif type_ == "demand":
-        # Supply curve starts from the order with the highest limit price.
-        orders_info = sorted(orders_info, key=lambda x: x[1], ascending=False)
-    else:
-        ValueError("Invalid type_='%s'" % self.type_)
+    # Sort orders by limit price with respect to the curve type.
+    ascending = type_ == "supply"
+    orders_info = sorted(orders_info, key=lambda x: x[1], ascending=ascending)
     # Get the coordinates where curves crosses prices axis.
-    first_curve_point = (0, orders_info[0][1],)
+    first_curve_point = (0, orders_info[0][1])
     # Initiate the list with the first coordintate.
-    curve_points = [first_curve_point,]
+    curve_points = [first_curve_point]
     # Set amount of quantity that has entered the market before the contemplated order.
     quantity_before = 0
     for order_info in orders_info:
