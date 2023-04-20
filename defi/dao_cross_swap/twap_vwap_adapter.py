@@ -48,8 +48,8 @@ def _get_price_volume_data() -> Tuple[List[int], List[float]]:
     )
     price_data = json.loads(response.text)["prices"]
     # Get price and volume data.
-    prices = [float(entry[1]) for entry in price_data]
-    volumes = [float(entry[2]) for entry in price_data]
+    prices = [float(entry[0]) for entry in price_data]
+    volumes = [float(entry[1]) for entry in price_data]
     # Convert prices to WEI.
     eth_to_wei = 10**18
     prices = [int(price * eth_to_wei) for price in prices]
