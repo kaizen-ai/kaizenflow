@@ -42,10 +42,9 @@ def _get_price_volume_data() -> Tuple[List[int], List[float]]:
     symbol = request.json["symbol"]
     start_time = request.json["start_time"]
     end_time = request.json["end_time"]
-    time_interval = request.json["time_interval"]
     # Query the CoinGecko API for price data within the specified time range.
     response = requests.get(
-        f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency=eth&from={start_time}&to={end_time}&interval={time_interval}"
+        f"https://api.coingecko.com/api/v3/coins/{symbol}/market_chart/range?vs_currency=eth&from={start_time}&to={end_time}"
     )
     price_data = json.loads(response.text)["prices"]
     # Get price and volume data.
