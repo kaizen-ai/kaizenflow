@@ -350,7 +350,7 @@ questions. We shall consider and address these in the sequel, but to begin, we
 discuss a more constrained setting, common in practice.
 
 % ===============================================================================
-\subsection{Limit orders in foreign exchange markets}
+\subsection{Conventions in foreign exchange markets}
 To simplify, we follow the practice of foreign exchange (FX) markets,
 which break the symmetric, interchangeable roles of two currencies by
 specifying two non-interchangeable roles:
@@ -575,6 +575,53 @@ respect to the buy action.
 
 This compact notation is more convenient for expressing and analyzing
 constraints imposed by limit orders.
+
+% ===============================================================================
+\subsection{Building a demand curve with limit orders}
+
+A market participant may express a personalized supply or demand curve with
+limit orders.
+
+Suppose price $p$ may vary in discrete price increments (the case in practice),
+and let $Q_+(p)$ denote the (total) quantity market participant Alice desires
+at price $p$ (or better).  We make the mild (and rational) assumption that
+$Q_+(p)$ is monotonically decreasing in $p$: as price $p$ goes up, Alice desires
+to buy less in total quantity.
+
+To translate Alice's demand into a set of limit orders, first assume that there
+is a maximum price that Alice is willing to pay, $p_M$ (if no such upper limit
+exists, we may first assume that Alice executes market orders until such a
+price exists). Assume also that there is a maximum quantity $Q_M$ that Alice
+demands, and that price is always positive. Then, there exists a partitioning
+of prices $(p_j, p_{j + 1})$ and positive (cumulative) quantities $Q_j$ such
+that
+\[
+    Q_+(p) = \sum_{j = 0}^n Q_j \cdot \mathbb{1}_{[p_j, p_{j + 1}]}(p),
+\]
+where $\mathbb{1}$ denotes the indicator function. We allow $p_{j + 1} = p_j$.
+This representation simply expresses the fact that $Q_+(p)$ only changes at
+discrete price points (we have assumed price is discrete).
+
+To convert $Q_+(p)$ to a set of limit orders, we begin with the highest price
+with demand, $p_{n + 1}$, and create the buy limit order $o_n$ with limit price
+$p_{n + 1}$ and quantity $Q_n$. Next, we create buy limit order $o_{n - 1}$ with
+limit price $p_n$ and quantity $q_{n - 1} - q_n$. Generically, limit order
+$o_k$ is a buy limit order with limit price $p_{k + 1}$:
+\[
+    p(o_k) = p_{k + 1}
+\]
+and quantity $Q_k - \sum_{j = k}^n Q_j$:
+\[
+    q(o_k) = Q_k - \sum_{j = k}^n Q_j
+\]
+Because the quantities $Q_j$ represent cumulative quantity at price
+$p_{j + 1}$ or better, each $q(o_k) > 0$.
+
+Note that the case for expressing a supply curve is analogous, and sell limit
+orders are used instead. The preceding discussion has a continuous analogue,
+though in practice minimal tick increments. The key assumption, almost always
+satisfied in practice, is that cumulative supply and demand are monotonic in
+price.
 
 % ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
@@ -866,11 +913,22 @@ For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
 as well as \cite{MaDe76} for a comparison.
 
 % ===============================================================================
-\subsection{Maximization of welfare from the token swap}
+\subsection{Maximization criteria in a token swap}
 
-One measure of welfare is total amount of token swapped.
-% TODO(Paul): Verify (or disprove) that this is invariant under change of scale
-%   of a token (with change of scale also reflected in all limit orders).
+In a Walrasian auction, a single clearing price is chosen so that, at that
+price, aggregate supply meets aggregate demand (with priority rules used in
+the discrete setting to handle discretization effects). This may be framed
+as a max-min problem (see \cite{BoBoDoGo18}[\S 1.1.1]).
+
+We propose maximizing the total quantity of token swapped.
+
+Note that any feasible solution that satisfies the constraints is invariant
+under the change of scale of a token, e.g., if the unit of measurement of
+quantity of a token changes, and if the limit orders are updated accordingly
+with the unit change, then any solution to the original problem remains a
+solution to the rescaled problem.
+
+
 % TODO(gp): Explain.
 
 % ===============================================================================
