@@ -114,7 +114,7 @@
 % TODO(gp): Do we spell Deloc or DELOC?
 % TODO(gp): Should we switch to DELOCK?
 
-Deloc is a new protocol that enables decentralized token exchange using limit
+DELOC is a new protocol that enables decentralized token exchange using limit
 orders. It brings together the advantages of trading efficiency and ease-of-use
 of centralized exchanges with the transparency and self-custody of
 decentralized approaches, without the risk of impermanent loss, contrary to
@@ -335,11 +335,9 @@ and discussed in detail in Section \ref{AlSoToSw}.
 
 % ###############################################################################
 \section{Matching liquidity}
-Suppose there are two parties, Alice an $\ETH$ holder and Bob a $\BTC$ holder
-(wrapped Bitcoin, an ERC-20 compliant coin that tracks Bitcoin), who wish to
-swap tokens at a competitive rate. Suppose also that there are many
-additional $\ETH$ and $\BTC$ holders who may be interested in participating in a
-swap. How should the liquidity be pooled? At first glance, it appears that
+Suppose there is a group of $\ETH$ holders and a group of $\BTC$ holders who
+wish to swap tokens at a competitive rate.
+How should the liquidity be pooled? At first glance, it appears that
 there should be a single pool of liquidity. The wrinkle manifests in determining
 how to express a desire to trade. A simple expression of a desire to trade is
 a limit order representing a commitment to trade up to $q$ in quantity of
@@ -349,12 +347,13 @@ express limit prices in terms of $\ETH$ per $\BTC$, while others express limit
 prices in terms of $\BTC$ per $\ETH$? Under these conditions, setting a single
 clearing price and determining fill prioritization rules raises several
 questions. We shall consider and address these in the sequel, but to begin, we
-discuss a more constrained setting.
+discuss a more constrained setting, common in practice.
 
 % ===============================================================================
-\subsection{Limit orders in foreign exchange markets}
+\subsection{Conventions in foreign exchange markets}
 To simplify, we follow the practice of foreign exchange (FX) markets,
-which break the symmetry by specifying two non-interchangeable roles:
+which break the symmetric, interchangeable roles of two currencies by
+specifying two non-interchangeable roles:
 \begin{enumerate}
 	\item a \emph{base} currency (for quantity)
 	\item a \emph{quote} currency (for price)
@@ -388,7 +387,7 @@ sources of liquidity are typically the same.
 \subsection{Multi-coin exchange}
 It seems plausible that by retaining the symmetry in the two-token case and
 instead treating a pair of tokens as a single source of liquidity, one may
-contrive a more efficient exchange mechanism.
+devise a more efficient exchange mechanism.
 
 This minor expansion, however, suggests widening even further the universe of
 eligible swaps. For example, if there are three tokens available for exchange,
@@ -413,8 +412,8 @@ unfortunately, the problem in general is NP-complete (e.g., \cite{XiStWh05}),
 which is a significant limiting factor in terms of feasibility and
 auction expense.
 
-In the sequel we propose exchange mechanisms valid for any collection of
-standard limit orders (all base/quote token limit orders may be pooled and
+In the sequel, we propose practical exchange mechanisms valid for any collection
+of standard limit orders (all base/quote token limit orders may be pooled and
 cleared in a single optimization).
 
 % ###############################################################################
@@ -474,6 +473,9 @@ another token, and price of a token with respect to a common numeraire, dependin
 on which notation is simpler.
 The two representations are equivalent aside from a multiplicative constant, and
 it is always possible to convert one into the other.
+
+Centralized exchanges typically present token prices with a USD-based stablecoin
+as the quote token, so that, in effect, the US dollar is the numeraire.
 
 % ===============================================================================
 % TODO(gp): Consider adding source_address as way to identify the user.
@@ -575,8 +577,55 @@ This compact notation is more convenient for expressing and analyzing
 constraints imposed by limit orders.
 
 % ===============================================================================
+\subsection{Building a demand curve with limit orders}
+
+A market participant may express a personalized supply or demand curve with
+limit orders.
+
+Suppose price $p$ may vary in discrete price increments (the case in practice),
+and let $Q_+(p)$ denote the (total) quantity market participant Alice desires
+at price $p$ (or better).  We make the mild (and rational) assumption that
+$Q_+(p)$ is monotonically decreasing in $p$: as price $p$ goes up, Alice desires
+to buy less in total quantity.
+
+To translate Alice's demand into a set of limit orders, first assume that there
+is a maximum price that Alice is willing to pay, $p_M$ (if no such upper limit
+exists, we may first assume that Alice executes market orders until such a
+price exists). Assume also that there is a maximum quantity $Q_M$ that Alice
+demands, and that price is always positive. Then, there exists a partitioning
+of prices $(p_j, p_{j + 1})$ and positive (cumulative) quantities $Q_j$ such
+that
+\[
+    Q_+(p) = \sum_{j = 0}^n Q_j \cdot \mathbb{1}_{[p_j, p_{j + 1}]}(p),
+\]
+where $\mathbb{1}$ denotes the indicator function. We allow $p_{j + 1} = p_j$.
+This representation simply expresses the fact that $Q_+(p)$ only changes at
+discrete price points (we have assumed price is discrete).
+
+To convert $Q_+(p)$ to a set of limit orders, we begin with the highest price
+with demand, $p_{n + 1}$, and create the buy limit order $o_n$ with limit price
+$p_{n + 1}$ and quantity $Q_n$. Next, we create buy limit order $o_{n - 1}$ with
+limit price $p_n$ and quantity $q_{n - 1} - q_n$. Generically, limit order
+$o_k$ is a buy limit order with limit price $p_{k + 1}$:
+\[
+    p(o_k) = p_{k + 1}
+\]
+and quantity $Q_k - \sum_{j = k}^n Q_j$:
+\[
+    q(o_k) = Q_k - \sum_{j = k}^n Q_j
+\]
+Because the quantities $Q_j$ represent cumulative quantity at price
+$p_{j + 1}$ or better, each $q(o_k) > 0$.
+
+Note that the case for expressing a supply curve is analogous, and sell limit
+orders are used instead. The preceding discussion has a continuous analogue,
+though in practice minimal tick increments. The key assumption, almost always
+satisfied in practice, is that cumulative supply and demand are monotonic in
+price.
+
+% ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
-In Deloc, orders are collected from users during a finite period of time,
+In DELOC, orders are collected from users during a finite period of time,
 after which tokens are redistributed among users according to their limit
 orders.
 
@@ -697,117 +746,6 @@ Since the current rate of $\BTC$ per $\ETH$ is 0.2, which is below the limit
 price of 0.5, the order cannot be executed.
 \end{exmp}
 
-% ===============================================================================
-\subsection{Limit order as a set of inequalities}
-Any limit order as defined above can be translated into inequalities involving
-quantity of tokens exchanged and token exchange rates. Multiple limit orders
-can be converted into a system of inequalities, which collectively constrain
-potential exchange outcomes.
-
-\subsubsection{Inequalities for buy order}
-An order of the form $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} means
-``buy $q$ units of token $\tA$ in exchange for token $\tB$ with a limit price
-up to $p$ $\tB$ per unit of $\tA$",
-and it corresponds to the following constraint on realized quantity exchanged
-and clearing exchange rate:
-\begin{equation*}
-	(p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
-	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
-	(q_\tA^*(o_i) = 0)
-\end{equation*}
-The constraint on the quantity exchanged is conditioned on the corresponding
-price's satisfying the desired limit price constraint: if the desired limit price
-constraint is not met, the swap cannot be carried out and the exchanged quantity
-is 0.
-
-% TODO(gp): Personally although less Latex-fancy this renders better IMO.
-%\subsubsection{Example of inequalities for buy order}
-\begin{exmp}[Inequalities for buy order]
-An order of the form $o_1 = \texttt{(\buy, 2, \tA, 3, \tB)}$ means
-``buy 2 units of token $\tA$ in exchange for token $\tB$ with a limit price up
-to 3 $\tB$ per unit of $\tA$",
-and it corresponds to the following constraint on realized quantity exchanged
-and clearing exchange rate:
-\begin{equation*}
-    (p_{\tB\_per\_\tA}^* \leq 3) \land
-    (0 \le q_\tA^*(o_1) \leq 2) \lor
-    (q_\tA^*(o_1) = 0)
-\end{equation*}
-\end{exmp}
-
-\begin{exmp}[Inequality for buy market order]
-A market order (i.e., without a limit price) has no constraint on exchange rate
-and thus is reduced to
-\[
-    0 \le q_\tA^*(o_1) \le q(o_i)
-\]
-\end{exmp}
-
-\subsubsection{Inequalities for sell order}
-An order of the form $o_i = \texttt{(\sell, q, \tA, p, \tB)}$ means
-``sell $q$ units of token $\tA$ in exchange for token $\tB$ with a limit price
-of at least $p$ $\tB$ per unit of $\tA$",
-and it corresponds to the following constraint on realized quantity exchanged
-and clearing exchange rate:
-\begin{equation*}
-	(p_{\tB\_per\_\tA}^* \geq p(o_i) \land
-	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
-	(q_\tA^*(o_i) = 0)
-\end{equation*}
-
-\begin{exmp}[Inequalities for sell order]
-In the same way, an order like $o_2 = \texttt{(sell, 3, \tA, 2, \tB)}$ means
-``sell 3 units of token $\tA$ in exchange for token $\tB$ with a limit price of
-at least 2 $\tB$ per unit of $\tA$", which corresponds to
-\begin{equation*}
-    (p_{\tB\_per\_\tA}^*(o_2) \geq 2) \land
-    (0 \le q_\tA^*(o_2) \leq 2) \lor
-    (q_\tA^*(o_2) = 0)
-\end{equation*}
-\end{exmp}
-
-% ===============================================================================
-\subsection{Order normalization}
-When the exchange rate between two tokens is known, it is possible to convert
-buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders where all
-orders have token $\tB$ as the base token, according to the transformation below.
-
-Let
-\[
-	o_1 = (\buy, q, \tA, p_{\tB\_per\_\tA}, \tB).
-\]
-Suppose that $p^*_{\tB\_per\_tA}$ is fixed and known. Then the order
-\[
-	o_2 = (\sell, q^\prime, \tB, 1 / p_{\tB\_per\_\tA}, \tA)
-\]
-may be handled in order crossing in the same way that $o_1$ may be
-provided that
-\[
-	q^\prime = q \cdot p^*_{\tB\_per\_\tA}
-\]
-
-% TODO(gp): flesh out the examples
-%p_A / p_B = c <-> q_A = c * q_B <-> q_A units of A can be exchanged with (const * q_B) units of B
-%E.g., ETH / wBTC = 0.5 <-> 1 ETH = 0.5 wBTC <-> 2 ETH = 1 wBTC
-%So 3 ETH can be exchanged with 1.5 wBTC
-%
-%q^*(o_1) = (buy, q_A, A, lp_B, B) = "buy at most q_A units of A, where the price for A is at most lp_B"
-%q^*(o_1) <= q_A
-%p_A / p_B <= lp_B
-%
-%(sell, q_B, B, lp_A, A) = "sell at most q_B units of B, where the price for B is at least lp_A"
-%q^*(o_2) <= q_B
-%p_B / p_A >= lp_A
-%
-%Since p_A / p_B <= lp_B <-> p_B / p_A >= 1 / lp_B and q_A = c * q_B, the first order o_2 = (sell, q_B, B, lp_A, A) is equivalent to (buy, c * q_B, A, 1 / lp_B, B).
-
-% \subsubsection{Example of order equivalence}
-%Example of order equivalence. Assume that Alice wants to buy 5 wBTC with ETH. The exchange rate ETH / wBTC is 0.1 (or equivalently 1 ETH corresponds to 10 wBTC). With her order, Alice wants to receive 5 wBTC in exchange for 0.5 ETH. Alice would be satisfied also with an order of selling 0.5 ETH against wBTC.
-%
-%q_BTC < 4
-%p_ETH / p_BTC < 3
-%
-%q_BTC = 0 if (p_ETH / p_BTC >= 3) else q_BTC < 4
 
 % ###############################################################################
 \section{Constraints}
@@ -839,7 +777,10 @@ exchanged) is represented by $q_{i, \tau}^* / q_{i, \pi}^*$. If the action is to
 buy (base token), then $p_i$ represents an upper bound, and the opposite is true
 if the action is to sell:
 \begin{equation}\label{limit_order_price_constraint}
-    a_{i, \tau} q_{i, \tau}^* \leq q_{i, \pi}^* p_i.
+    \begin{cases}
+        q_{i, \tau}^* \leq q_{i, \pi}^* p_i & a_{i, \tau} = 1 \\
+        q_{i, \tau}^* \geq q_{i, \pi}^* p_i & a_{i, \tau} = -1 \\
+    \end{cases}
 \end{equation}
 Here we have multiplied through by $q_{i, \pi}^*$, with the result being that
 the inequality holds in the event that $q_{i, \pi}^*$ or $q_{i, \tau}^*$ is
@@ -877,14 +818,14 @@ $\mathcal{T}: T \to \{0, 1\}$ via
 \]
 Then, for each $u \in T$, the following conservation law must hold:
 \begin{equation}\label{token_conservation_law}
-    \sum_i \mathcal{T}_u(\pi_i) \cdot a_{i, \pi} x_{i, \pi}
-    + \mathcal{T}_u(\tau_i) \cdot a_{i, \tau} x_{i, \tau}
+    \sum_i \mathcal{T}_u(\pi_i) \cdot a_{i, \pi} q_{i, \pi}^*
+    + \mathcal{T}_u(\tau_i) \cdot a_{i, \tau} q_{i, \tau}^*
     = 0
 \end{equation}
 Note that this translates into one equality per token participating in the
 swap. These equalities express the notion that each filled order must have,
-across the collection of orders, suitable counterparties.
-
+across the collection of orders, suitable counterparties. In other words,
+for each token, the total amount bought must equal the total amount sold.
 
 % ===============================================================================
 \subsection{Unique clearing price per token pair}
@@ -972,12 +913,157 @@ For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
 as well as \cite{MaDe76} for a comparison.
 
 % ===============================================================================
-\subsection{Maximization of welfare from the token swap}
+\subsection{Maximization criteria in a token swap}
 
-One measure of welfare is total amount of token swapped.
-% TODO(Paul): Verify (or disprove) that this is invariant under change of scale
-%   of a token (with change of scale also reflected in all limit orders).
+In a Walrasian auction, a single clearing price is chosen so that, at that
+price, aggregate supply meets aggregate demand (with priority rules used in
+the discrete setting to handle discretization effects). This may be framed
+as a max-min problem (see \cite{BoBoDoGo18}[\S 1.1.1]).
+
+We propose maximizing the total quantity of token swapped, a simple linear
+constraint.
+
+\subsubsection{Invariance under token redenomination}
+Note that any feasible solution that satisfies the constraints is invariant
+under the change of scale of a token, e.g., if the unit of measurement of
+quantity of a token changes, and if the limit orders are updated accordingly
+with the unit change, then any solution to the original problem remains a
+solution to the rescaled problem.
+
+What remains to show is that the optimal solution to the original problem
+transforms into the optimal solution to the rescaled problem (even though
+the optimal values of the objective are generally different).
+For this, we may take a feasible solution to the original problem and map
+it to its corresponding feasible solution in the rescaled problem. The
+only part of the objective function that changes is the contribution of
+the rescaled token, which gets rescaled linearly. The property of being
+a local maximum is preserved by this transformation, and since any local
+maximum is a global maximum (due to convexity), the transformed solution
+is the optimal solution to the transformed problem.
+
+\subsubsection{Is a single clearing price needed?}
+
+Maximizing token swapped subject to the basic limit order and token
+conservation constraints does not necessarily lead to unique clearing prices
+for each token pair. In fact, adding the additional constraints associated
+with a unique clearing price would reduce the total volume exchanged. We
+argue that by not imposing a single clearing price, more of each participant's
+supply or demand curve may be satisfied. As an added benefit, the swap
+problem to solve is a linear program rather than an optimization problem with
+nonlinear constraints.
+
 % TODO(gp): Explain.
+
+% ===============================================================================
+\subsection{Alternative expression of limit order constraints}
+Limit orders alternatively may be translated into inequalities involving
+quantity of tokens exchanged and token exchange rates. This formulation may be
+more intuitive in cases where a unique token clearing price should prevail.
+
+\subsubsection{Inequalities for buy order}
+An order of the form $o_i =$ \texttt{(\buy, q, \tA, p, \tB)} means
+``buy $q$ units of token $\tA$ in exchange for token $\tB$ with a limit price
+up to $p$ $\tB$ per unit of $\tA$",
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{\tB\_per\_\tA}^* \leq p(o_i)) \land
+	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
+	(q_\tA^*(o_i) = 0)
+\end{equation*}
+The constraint on the quantity exchanged is conditioned on the corresponding
+price's satisfying the desired limit price constraint: if the desired limit price
+constraint is not met, the swap cannot be carried out and the exchanged quantity
+is 0.
+
+% TODO(gp): Personally although less Latex-fancy this renders better IMO.
+%\subsubsection{Example of inequalities for buy order}
+\begin{exmp}[Inequalities for buy order]
+An order of the form $o_1 = \texttt{(\buy, 2, \tA, 3, \tB)}$ means
+``buy 2 units of token $\tA$ in exchange for token $\tB$ with a limit price up
+to 3 $\tB$ per unit of $\tA$",
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+    (p_{\tB\_per\_\tA}^* \leq 3) \land
+    (0 \le q_\tA^*(o_1) \leq 2) \lor
+    (q_\tA^*(o_1) = 0)
+\end{equation*}
+\end{exmp}
+
+\begin{exmp}[Inequality for buy market order]
+A market order (i.e., without a limit price) has no constraint on exchange rate
+and thus is reduced to
+\[
+    0 \le q_\tA^*(o_1) \le q(o_i)
+\]
+\end{exmp}
+
+\subsubsection{Inequalities for sell order}
+An order of the form $o_i = \texttt{(\sell, q, \tA, p, \tB)}$ means
+``sell $q$ units of token $\tA$ in exchange for token $\tB$ with a limit price
+of at least $p$ $\tB$ per unit of $\tA$",
+and it corresponds to the following constraint on realized quantity exchanged
+and clearing exchange rate:
+\begin{equation*}
+	(p_{\tB\_per\_\tA}^* \geq p(o_i) \land
+	(0 \le q_\tA^*(o_i) \leq q(o_i)) \lor
+	(q_\tA^*(o_i) = 0)
+\end{equation*}
+
+\begin{exmp}[Inequalities for sell order]
+In the same way, an order like $o_2 = \texttt{(sell, 3, \tA, 2, \tB)}$ means
+``sell 3 units of token $\tA$ in exchange for token $\tB$ with a limit price of
+at least 2 $\tB$ per unit of $\tA$", which corresponds to
+\begin{equation*}
+    (p_{\tB\_per\_\tA}^*(o_2) \geq 2) \land
+    (0 \le q_\tA^*(o_2) \leq 2) \lor
+    (q_\tA^*(o_2) = 0)
+\end{equation*}
+\end{exmp}
+
+% ===============================================================================
+\subsection{Order normalization}
+When the exchange rate between two tokens is known, it is possible to convert
+buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders where all
+orders have token $\tB$ as the base token, according to the transformation below.
+
+Let
+\[
+	o_1 = (\buy, q, \tA, p_{\tB\_per\_\tA}, \tB).
+\]
+Suppose that $p^*_{\tB\_per\_\tA}$ is fixed and known. Then the order
+\[
+	o_2 = (\sell, q^\prime, \tB, 1 / p_{\tB\_per\_\tA}, \tA)
+\]
+may be handled in order crossing in the same way that $o_1$ may be
+provided that
+\[
+	q^\prime = q \cdot p^*_{\tB\_per\_\tA}
+\]
+
+% TODO(gp): flesh out the examples
+%p_A / p_B = c <-> q_A = c * q_B <-> q_A units of A can be exchanged with (const * q_B) units of B
+%E.g., ETH / wBTC = 0.5 <-> 1 ETH = 0.5 wBTC <-> 2 ETH = 1 wBTC
+%So 3 ETH can be exchanged with 1.5 wBTC
+%
+%q^*(o_1) = (buy, q_A, A, lp_B, B) = "buy at most q_A units of A, where the price for A is at most lp_B"
+%q^*(o_1) <= q_A
+%p_A / p_B <= lp_B
+%
+%(sell, q_B, B, lp_A, A) = "sell at most q_B units of B, where the price for B is at least lp_A"
+%q^*(o_2) <= q_B
+%p_B / p_A >= lp_A
+%
+%Since p_A / p_B <= lp_B <-> p_B / p_A >= 1 / lp_B and q_A = c * q_B, the first order o_2 = (sell, q_B, B, lp_A, A) is equivalent to (buy, c * q_B, A, 1 / lp_B, B).
+
+% \subsubsection{Example of order equivalence}
+%Example of order equivalence. Assume that Alice wants to buy 5 wBTC with ETH. The exchange rate ETH / wBTC is 0.1 (or equivalently 1 ETH corresponds to 10 wBTC). With her order, Alice wants to receive 5 wBTC in exchange for 0.5 ETH. Alice would be satisfied also with an order of selling 0.5 ETH against wBTC.
+%
+%q_BTC < 4
+%p_ETH / p_BTC < 3
+%
+%q_BTC = 0 if (p_ETH / p_BTC >= 3) else q_BTC < 4
 
 % ###############################################################################
 \section{Order matching}
@@ -1247,20 +1333,21 @@ inequalities above.
 In the case of each order $o_i$, the boolean condition $c_i$ (which compares
 the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
 or not (the solution does not need to consider both branches):
-\begin{equation}
+\begin{equation*}
 	\begin{cases}
 		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
 		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
 	\end{cases}.
-\end{equation}
+\end{equation*}
 TODO: Comment on quote token amount exchanged. Verify supply meets demand.
 
 TODO(Paul): a reference price may be interpreted as a new constraint:
-\[
+\begin{equation}\label{reference_price_constraint}
     a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*
-\]
+\end{equation}
 For non-compatible limit orders, the only quantities that satisfy both the
-limit order inequality and the reference price equality are given by
+limit order inequality \eqref{limit_order_price_constraint} and the reference
+price equality \eqref{reference_price_constraint} are given by
 \[
     q_{i, \tau}^* = q_{i, \pi}^* = 0
 \]
