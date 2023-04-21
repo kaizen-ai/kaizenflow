@@ -1066,7 +1066,217 @@ provided that
 %q_BTC = 0 if (p_ETH / p_BTC >= 3) else q_BTC < 4
 
 % ###############################################################################
-\section{Order matching}
+
+\section{Formulation and solutions of swap problems}
+The general problem of determining the token equilibrium prices and the
+allocation among the swap participants can be formulated in terms of the
+inequalities on quantities and prices corresponding to the orders and on the
+need that the total quantity exchanged of each token be preserved across the
+swaps, i.e., the quantity bought for each token is equal to the quantity sold.
+
+\subsection{Problem formulations}
+
+\begin{problem}[DaoSwap token exchange]\label{problem_daoswap}
+Let $\{o_i\}_{i = 1}^n$ be a collection of limit orders, with associated
+constraints given by \eqref{limit_order_quantity_constraint},
+\eqref{limit_order_price_constraint}, and \eqref{token_conservation_law}.
+The DaoSwap problem is to find nonnegative quantities
+$q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the constraints
+\eqref{limit_order_quantity_constraint},
+\eqref{limit_order_price_constraint}, and \eqref{token_conservation_law},
+such that the objective function
+\begin{equation}\label{objective_function}
+    \sum_{i = 1}^n q_{i, \pi}^* + q_{i, \tau}^*
+\end{equation}
+is maximized.
+\end{problem}
+
+\begin{problem}[DaoCross token exchange]
+Let $\{o_i\}_{i = 1}^n$ and associated constraints be as in Problem
+\ref{problem_daoswap}.
+Let $\{p_i^*\}$ denote a collection of reference prices, such that
+each $p_i^*$ only depends upon the base token $\pi_i$ and quote
+token $\tau_i$ of order $o_i$.
+Introduce the reference price constraint
+\begin{equation}\label{reference_price_constraint}
+    a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*
+\end{equation}
+The DaoCross problem is to find nonnegative quantities
+$q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the constraints
+\eqref{limit_order_quantity_constraint},
+\eqref{limit_order_price_constraint}, \eqref{token_conservation_law},
+and
+\eqref{reference_price_constraint}
+such that the objective function \eqref{objective_function} is maximized.
+\end{problem}
+For non-compatible limit orders, the only quantities that satisfy both the
+limit order inequality \eqref{limit_order_price_constraint} and the reference
+price equality \eqref{reference_price_constraint} are given by
+\[
+    q_{i, \tau}^* = q_{i, \pi}^* = 0
+\]
+
+\begin{problem}[DaoSwap token exchange with additional constraints]
+Let..
+\end{problem}
+
+% ===============================================================================
+
+\subsection{Problem solutions}
+
+\subsubsection{DaoSwap as a linear program}
+
+Let $x$ denote the vector with structure
+\[
+    x =
+    \begin{bmatrix}
+        q_{1, \pi}^*, q_{2, \tau}^*, \ldots, q_{n, \pi}^*, q_{n, \tau}^*
+    \end{bmatrix}^T
+\]
+Next we introduce the following matrices.
+
+Let $Q$ be the matrix whose $i$-th row is $n$-dimensional, with a ``1" in the
+column $2i - 1$ and zeros elsewhere, and let $q$ denote the vector
+\[
+    x =
+    \begin{bmatrix}
+        q_1, \ldots, q_n
+    \end{bmatrix}^T
+\]
+Then the limit order quantity constraint
+\eqref{limit_order_quantity_constraint}
+is expressed in matrix form via
+\[
+    Q x \leq q
+\]
+
+Let $P$ be the matrix whose $i$-th row is $n$-dimensional with entry
+$-p_i$ in the $2i - 1$ column, $a_{i, \tau}$ in the $2i$ column, and zeros
+elsewhere. Then the limit order price constraint
+\eqref{limit_order_price_constraint}
+may be expressed as
+\[
+    P x \leq 0
+\]
+
+For \eqref{token_conservation_law}, we introduce a matrix $R$, which expresses
+the equality constraint (which could be expressed as two inequality constraints
+in canonical form).
+
+We now collect the constraints that must be satisfied:
+\begin{equation}
+	\begin{cases}
+        x_{i1} \geq 0, \quad x_{i2} \geq 0 & \forall i \in \{1, \ldots, n\} \\
+        % x_{i1} = 0 \iff x_{i2} = 0 & \forall i \in \{1, \ldots, n\} \\
+        x_{i1} \leq q_i & \forall i \in \{1, \ldots, n\} \\
+        a_{i2} x_{i2} \leq x_{i1} p_i & \forall i \in \{1, \ldots, n\} \\
+        %x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+        %x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
+        \sum_{i=1}^n \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
+        + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
+        = 0 & \forall u \in T
+	\end{cases}
+\end{equation}
+
+Given the constraints, our goal is to find quantities $x_{i1}, x_{i2}$ such
+that exchanged quantity is maximized.
+
+Note that this problem falls in domain of linear programming. We may arrange
+the nonnegative quantities $x_{i1}, x_{i2}$, $i \in \{1, \ldots, n\}$ in a
+vector $x$. Our goal is to find $x$ that maximizes
+\[
+    \mathbb{1}^T x,
+\]
+where $\mathbb{1}$ is the $2n$-dimensional vector of all ones,
+subject to
+\[
+    A x \leq b
+\]
+(TODO(Paul): reformulate the constraints using $A$ and $b$)
+and
+\[
+    x \geq 0.
+\]
+The problem is polynomial-time in the ideal setting of infinite divisibility.
+Discretization (and renormalization) move the problem to the domain of
+integer programming, which is NP-hard.
+
+In our setting, where the typical exchanged value is much larger than the
+discretization grid, obtaining a linear programming solution and
+discretizing after-the-fact may be acceptable in practice.
+
+\subsubsection{DaoCross problem as simplified DaoSwap problem}
+In the DaoCross set-up, the price of the tokens involved in the swap is
+determined by an external oracle.
+This allows simplifying the general problem by applying the equivalence
+principle between orders and removing the non-linearity from the set of
+inequalities above.
+
+In the case of each order $o_i$, the boolean condition $c_i$ (which compares
+the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
+or not (the solution does not need to consider both branches):
+\begin{equation*}
+	\begin{cases}
+		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
+		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
+	\end{cases}.
+\end{equation*}
+TODO: Comment on quote token amount exchanged. Verify supply meets demand.
+
+The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
+prevails, then order $o_i$ is effectively removed from problem) that can be
+solved with various efficient methods (e.g., simplex-method).
+
+TODO(gp): check
+
+\subsubsection{Limit price in terms of quantities}
+Assume that a buy order is:
+\[
+	o = (\buy q, \pi, p, \tau)
+\]
+
+corresponds to the natural language description:
+``the user $A$ commits to buy up to $q$ units of the token $\pi$ in exchange
+for token $\tau$ up to a limit price of $p$ $\tau$ for a single token
+$\pi$".
+
+Assume that this exchange actually takes place between the user $A$ and a user
+$B$ (without loss of generality with respect to $B$ being an aggregate of
+multiple users).
+
+Assume that the prices of the tokens $\pi$ and $\tau$ are both expressed with
+respect to a common numeraire, $p_{\pi}$ and $p_{\tau}$
+
+Consider the flows between A and B of both tokens and value:
+
+A gives to B:
+- $q^*_{\tau}$ tokens $\tau$
+- $q_{\pi} p_{\pi}$ in value with respect to the numeraire
+
+A receives from B
+- $q^*_{\pi}$ tokens $\pi$
+- $q_{\tau} p_{\tau}$ in value with respect to the numeraire
+
+- From the limit order constraint we know that
+  $$p_{\pi} \le p p_{\tau}$$
+  $$\frac{p_{\pi}}{p_{\tau}} \le p$$
+
+\subsubsection{Example of limit price in terms of quantities}
+Assume that an order is:
+\[
+  (\buy, \textnormal{\texttt{3.2}}, \ETH, \textnormal{\texttt{4.0}}, \BTC)
+\]
+
+corresponds to the natural language description:
+``the user commits to buy up to 3.2 units of $\ETH$ in exchange for $\BTC$ up
+to a $\limitprice$ of 4.0 $\BTC$ per $\ETH$"
+
+The limit price means that 1 $\ETH$ is worth at most 4 $\BTC$
+
+% ###############################################################################
+\section{DaoCross order matching with two tokens}
+
+% TODO(Paul): This section discusses a special case of DaoCross.
 
 % ===============================================================================
 \subsection{DaoCross reference clearing prices}
@@ -1162,201 +1372,6 @@ Priority queue construction occurs in $O(n)$ time, each order removal costs
 $O(\log n)$, and order removal occurs $O(n)$ many times. So, the computational
 time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
 
-% ###############################################################################
-\section{Formulation and solutions of swap problems}
-The general problem of determining the token equilibrium prices and the
-allocation among the swap participants can be formulated in terms of the
-inequalities on quantities and prices corresponding to the orders and on the
-need that the total quantity exchanged of each token be preserved across the
-swaps, i.e., the quantity bought for each token is equal to the quantity sold.
-
-% ===============================================================================
-\subsection{DaoCross}
-
-\subsubsection{Problem formulation}
-
-\subsubsection{Problem solution}
-
-% ===============================================================================
-\subsection{DaoSwap with per-order clearing price}
-
-\subsubsection{Problem formulation}
-
-\subsubsection{Limit order inequalities}
-
-% \subsubsection{Token quantities are nonnegative}
-%
-%Further, we impose that $x_{i1} = 0$ if and
-%only if $x_{i2} = 0$:
-%\[
-%    x_{i1} = 0 \iff x_{i2} = 0.
-%\]
-%This implies that, when exchange takes place, the effective price is finite and
-%nonnegative, that is, there is ``no free lunch".
-
-\subsubsection{Limit price in terms of quantities}
-Assume that a buy order is:
-\[
-	o = (\buy q, \pi, p, \tau)
-\]
-
-corresponds to the natural language description:
-``the user $A$ commits to buy up to $q$ units of the token $\pi$ in exchange
-for token $\tau$ up to a limit price of $p$ $\tau$ for a single token
-$\pi$".
-
-Assume that this exchange actually takes place between the user $A$ and a user
-$B$ (without loss of generality with respect to $B$ being an aggregate of
-multiple users).
-
-Assume that the prices of the tokens $\pi$ and $\tau$ are both expressed with
-respect to a common numeraire, $p_{\pi}$ and $p_{\tau}$
-
-Consider the flows between A and B of both tokens and value:
-
-A gives to B:
-- $q^*_{\tau}$ tokens $\tau$
-- $q_{\pi} p_{\pi}$ in value with respect to the numeraire
-
-A receives from B
-- $q^*_{\pi}$ tokens $\pi$
-- $q_{\tau} p_{\tau}$ in value with respect to the numeraire
-
-- From the limit order constraint we know that
-  $$p_{\pi} \le p p_{\tau}$$
-  $$\frac{p_{\pi}}{p_{\tau}} \le p$$
-
-\subsubsection{Example of limit price in terms of quantities}
-Assume that an order is:
-\[
-  (\buy, \textnormal{\texttt{3.2}}, \ETH, \textnormal{\texttt{4.0}}, \BTC)
-\]
-
-corresponds to the natural language description:
-``the user commits to buy up to 3.2 units of $\ETH$ in exchange for $\BTC$ up
-to a $\limitprice$ of 4.0 $\BTC$ per $\ETH$"
-
-The limit price means that 1 $\ETH$ is worth at most 4 $\BTC$
-
-% ===============================================================================
-\subsection{DaoSwap with per-order clearing price}
-
-\subsubsection{Combining the constraints}
-
-Let $x$ denote the vector with structure
-\[
-    x =
-    \begin{bmatrix}
-        q_{1, \pi}^*, q_{2, \tau}^*, \ldots, q_{n, \pi}^*, q_{n, \tau}^*
-    \end{bmatrix}^T
-\]
-Next we introduce the following matrices.
-
-Let $Q$ be the matrix whose $i$-th row is $n$-dimensional, with a ``1" in the
-column $2i - 1$ and zeros elsewhere, and let $q$ denote the vector
-\[
-    x =
-    \begin{bmatrix}
-        q_1, \ldots, q_n
-    \end{bmatrix}^T
-\]
-Then the limit order quantity constraint
-\eqref{limit_order_quantity_constraint}
-is expressed in matrix form via
-\[
-    Q x \leq q
-\]
-
-Let $P$ be the matrix whose $i$-th row is $n$-dimensional with entry
-$-p_i$ in the $2i - 1$ column, $a_{i, \tau}$ in the $2i$ column, and zeros
-elsewhere. Then the limit order price constraint
-\eqref{limit_order_price_constraint}
-may be expressed as
-\[
-    P x \leq 0
-\]
-
-For \eqref{token_conservation_law}, we introduce a matrix $R$, which expresses
-the equality constraint (which could be expressed as two inequality constraints
-in canonical form).
-
-We now collect the constraints that must be satisfied:
-\begin{equation}
-	\begin{cases}
-        x_{i1} \geq 0, \quad x_{i2} \geq 0 & \forall i \in \{1, \ldots, n\} \\
-        % x_{i1} = 0 \iff x_{i2} = 0 & \forall i \in \{1, \ldots, n\} \\
-        x_{i1} \leq q_i & \forall i \in \{1, \ldots, n\} \\
-        a_{i2} x_{i2} \leq x_{i1} p_i & \forall i \in \{1, \ldots, n\} \\
-        %x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
-        %x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
-        \sum_{i=1}^n \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
-        + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
-        = 0 & \forall u \in T
-	\end{cases}
-\end{equation}
-
-\subsubsection{Solution}
-Given the constraints, our goal is to find quantities $x_{i1}, x_{i2}$ such
-that exchanged quantity is maximized.
-
-Note that this problem falls in domain of linear programming. We may arrange
-the nonnegative quantities $x_{i1}, x_{i2}$, $i \in \{1, \ldots, n\}$ in a
-vector $x$. Our goal is to find $x$ that maximizes
-\[
-    \mathbb{1}^T x,
-\]
-where $\mathbb{1}$ is the $2n$-dimensional vector of all ones,
-subject to
-\[
-    A x \leq b
-\]
-(TODO(Paul): reformulate the constraints using $A$ and $b$)
-and
-\[
-    x \geq 0.
-\]
-The problem is polynomial-time in the ideal setting of infinite divisibility.
-Discretization (and renormalization) move the problem to the domain of
-integer programming, which is NP-hard.
-
-In our setting, where the typical exchanged value is much larger than the
-discretization grid, obtaining a linear programming solution and
-discretizing after-the-fact may be acceptable in practice.
-
-\subsubsection{DaoCross problem as simplified DaoSwap problem}
-In the DaoCross set-up, the price of the tokens involved in the swap is
-determined by an external oracle.
-This allows simplifying the general problem by applying the equivalence
-principle between orders and removing the non-linearity from the set of
-inequalities above.
-
-In the case of each order $o_i$, the boolean condition $c_i$ (which compares
-the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
-or not (the solution does not need to consider both branches):
-\begin{equation*}
-	\begin{cases}
-		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
-		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
-	\end{cases}.
-\end{equation*}
-TODO: Comment on quote token amount exchanged. Verify supply meets demand.
-
-TODO(Paul): a reference price may be interpreted as a new constraint:
-\begin{equation}\label{reference_price_constraint}
-    a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*
-\end{equation}
-For non-compatible limit orders, the only quantities that satisfy both the
-limit order inequality \eqref{limit_order_price_constraint} and the reference
-price equality \eqref{reference_price_constraint} are given by
-\[
-    q_{i, \tau}^* = q_{i, \pi}^* = 0
-\]
-
-The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
-prevails, then order $o_i$ is effectively removed from problem) that can be
-solved with various efficient methods (e.g., simplex-method).
-
-TODO(gp): check
 
 % ###############################################################################
 \section{Fees and tokenomics}
@@ -1852,6 +1867,15 @@ $(a_1, b_1)$ of the book.
 		eprint={https://doi.org/10.1023/A:1022058209073},
 	}
 
+    \bib{IyJoMo16}{article}{
+        author={Iyer, Krishnamurthy},
+        author={Johari, Ramesh},
+        author={Moallemi, Ciamac C.},
+        title={Welfare Analysis of Dark Pools},
+        date={2016},
+        eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2040959},
+    }
+
     \bib{Jo75}{article}{
         author={Johnson, Donald B.},
         title={Finding all the Elementary Circuits of a Directed Graph},
@@ -1860,6 +1884,13 @@ $(a_1, b_1)$ of the book.
         volume={4},
         number={1},
         pages={77-84},
+    }
+
+    \bib{MaPa17}{article}{
+        author={Malinova, Katya},
+        author={Park, Andreas},
+        title={Market Design with Blockchain Technology},
+        eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2785626},
     }
 
     \bib{MaDe76}{article}{
@@ -1904,6 +1935,20 @@ $(a_1, b_1)$ of the book.
 		title={MS Pool ATS-N Filings},
 		eprint={https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&filenum=013-00117}
 	}
+
+    \bib{Pa22a}{article}{
+        author={Park, Andreas},
+        title={Conceptual Flaws of Decentralized Automated Market Making},
+        date={2022},
+        eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=3805750},
+    }
+
+    \bib{Pa22b}{article}{
+        author={Park, Andreas},
+        title={A 2022 Primer for Crypto-Trading},
+        date={2022},
+        eprint={https://papers.ssrn.com/sol3/papers.cfm?abstract_id=4148717},
+    }
 
 	\bib{Wa}{article}{
 		title={Walrasian auction},
