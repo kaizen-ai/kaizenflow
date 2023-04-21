@@ -920,14 +920,37 @@ price, aggregate supply meets aggregate demand (with priority rules used in
 the discrete setting to handle discretization effects). This may be framed
 as a max-min problem (see \cite{BoBoDoGo18}[\S 1.1.1]).
 
-We propose maximizing the total quantity of token swapped.
+We propose maximizing the total quantity of token swapped, a simple linear
+constraint.
 
+\subsubsection{Invariance under token redenomination}
 Note that any feasible solution that satisfies the constraints is invariant
 under the change of scale of a token, e.g., if the unit of measurement of
 quantity of a token changes, and if the limit orders are updated accordingly
 with the unit change, then any solution to the original problem remains a
 solution to the rescaled problem.
 
+What remains to show is that the optimal solution to the original problem
+transforms into the optimal solution to the rescaled problem (even though
+the optimal values of the objective are generally different).
+For this, we may take a feasible solution to the original problem and map
+it to its corresponding feasible solution in the rescaled problem. The
+only part of the objective function that changes is the contribution of
+the rescaled token, which gets rescaled linearly. The property of being
+a local maximum is preserved by this transformation, and since any local
+maximum is a global maximum (due to convexity), the transformed solution
+is the optimal solution to the transformed problem.
+
+\subsubsection{Is a single clearing price needed?}
+
+Maximizing token swapped subject to the basic limit order and token
+conservation constraints does not necessarily lead to unique clearing prices
+for each token pair. In fact, adding the additional constraints associated
+with a unique clearing price would reduce the total volume exchanged. We
+argue that by not imposing a single clearing price, more of each participant's
+supply or demand curve may be satisfied. As an added benefit, the swap
+problem to solve is a linear program rather than an optimization problem with
+nonlinear constraints.
 
 % TODO(gp): Explain.
 
