@@ -1,8 +1,20 @@
 # The `defi` container
 
+## The `defi` container
+- We have packaged all the tools you need to build and test dApps with Sorrentum
+  in a Docker container
+
+- You can get familiar with Docker using the lectures and tutorials from UMD
+  DATA605
+  - https://github.com/gpsaggese/umd_data605/tree/main/lectures
+  - https://github.com/gpsaggese/umd_data605/tree/main/tutorials
+
+- (For advanced users): The internals of the container are
+  https://github.com/sorrentum/sorrentum/tree/master/defi/devops
+
 ## Using the `defi` container
 
-- The container is controlled with the scripts
+- The container is controlled with the following scripts:
   - `docker_bash.sh`: start a new `defi` container
   - `docker_exec.sh`: start a new bash in the `defi` container
   - `docker_build.sh`: build the container (for admins)
@@ -10,6 +22,7 @@
 
 ## Build the `defi` container
 
+- (For advanced users)
 - This is typically performed by administrators and you can use the pre-built
   container
 - To build the container storing all the DeFi toolchain:

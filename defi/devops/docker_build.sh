@@ -1,4 +1,7 @@
 #!/bin/bash -xe
 
+REPO_NAME=sorrentum
 IMAGE_NAME=defi
-docker build --progress plain -t $IMAGE_NAME .
+FULL_IMAGE_NAME=$REPO_NAME/$IMAGE_NAME
+
+docker build --progress plain -t $FULL_IMAGE_NAME .

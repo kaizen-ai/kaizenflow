@@ -1,26 +1,36 @@
 # From 0 to Web3 in 15 days
 
-- Web3 / Defi / Crypto is a complex topic, but if you know what to read, it takes
-  a short time to get up to speed and build
-- The focus is to get you learn by doing instead of learning all the theory first
+- Web3 / Defi / Crypto is a complex topic, but if you know what to read / study,
+  it takes a short time to get up to speed and start building
+- The focus of this guide is to get you learn by doing, instead of learning all
+  the theory first
   - Once you see example and get you hands dirty, the theory will be much simpler
     to understand
 - We've selected a set of resources to get you from 0 to Web3 developer in less
   than 2 weeks
-- Several students with no knowledge of Web3 were able to get up to speed using
-  the resources we suggest, so it's just about putting the time and the result is
-  guaranteed!
+  - Although you are surprise, this is possible
+  - Several students with no knowledge of Web3 were able to get up to speed using
+    the resources below
+  - So it's just about putting the time and the result is guaranteed!
 
 ## Next steps
 - To track your on-boarding to the stupendous world of Web3, file an issue on
-  GitHub assigned to you with the following checklist:
-  - [ ] Get the DeFi Docker to work
-  - [ ] Read a Solidity book
+  GitHub repo https://github.com/sorrentum/sorrentum assigned to you with the
+  following checklist:
+  - [ ] Make sure you can run the DeFi Docker container
+  - [ ] Learn Solidity
   - [ ] Run the Web3 tutorials using Sorrentum toolchain
   - [ ] Get assigned a simple issue
   - [ ] Go through Prof Harvey's DeFi class
 
+- Each action item is described below
+- Once you have completed the action item, mark that done on GitHub
+
 ## Level 1: Being able to develop dApps in Solidity
+
+### Run the DeFi container
+
+- Follow the instructions https://github.com/sorrentum/sorrentum/blob/master/defi/README.md
 
 ### Learn Solidity
 - You can learn Solidity with one of these books:
@@ -29,13 +39,12 @@
   - [Hands-On Smart Contract Development with Solidity and Ethereum: From
     Fundamentals to Deployment](https://www.amazon.com/Hands-Contract-Development-Solidity-Ethereum-ebook/dp/B081ZF73L8)
 
-- We have copies of these books to borrow (send an email to gsaggese@umd.edu)
+- We have copies of these books to borrow
+  - If you need one, send an email to gsaggese@umd.edu
 
 ### Learn the Sorrentum Web3 toolchain
-- Use our tutorials to build dApps in Python3 (instead of nasty JavaScript)
-- You can follow this tutorial:
-  - defi/README.md
-  - defi/tutorial_brownie/tutorial_brownie.md
+- Use our tutorials to build dApps in Python3, instead of nasty JavaScript
+  - https://github.com/sorrentum/sorrentum/blob/master/defi/tutorial_brownie/tutorial_brownie.md
 
   - The tools we use are:
     - web3.py https://web3py.readthedocs.io/en/v5/
