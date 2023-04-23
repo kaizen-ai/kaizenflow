@@ -1,4 +1,7 @@
-#!/bin/bash -xe
+#!/bin/bash -e
+
+GIT_ROOT=$(git rev-parse --show-toplevel)
+source $GIT_ROOT/docker_common/utils.sh
 
 # Find the name of the container.
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
@@ -9,8 +12,4 @@ if [[ ! -e $SCRIPT_DIR ]]; then
 fi;
 source $DOCKER_NAME
 
-# TODO(gp): Update.
-CONTAINER_ID=$(docker container ls | grep $IMAGE_NAME | awk '{print $1}')
-OPTS="--user $(id -u):$(id -g)"
-#OPTS=""
-docker exec $OPTS -it $CONTAINER_ID bash
+push_container_image

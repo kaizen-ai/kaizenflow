@@ -1,4 +1,11 @@
 build_container_image() {
+    # Building a container should happen in devops.
+    CURR_DIR=$(basename $(pwd))
+    if [[ $CURR_DIR != "devops" ]]; then
+        echo "The script should be run from a 'devops' dir instead of '$CURR_DIR'"
+        exit -1
+    fi;
+    #
     FULL_IMAGE_NAME=$REPO_NAME/$IMAGE_NAME
     echo "FULL_IMAGE_NAME=$FULL_IMAGE_NAME"
     # Prepare build area.
@@ -7,7 +14,12 @@ build_container_image() {
     if [[ -d $DIR ]]; then
         rm -rf $DIR
     fi;
-    cp -Lr . $DIR || true
+    mkdir $DIR
+    # We can't copy `.` to `tmp.build` since we get:
+    # "cp: cannot copy a directory, '.', into itself, 'tmp.build'"
+    #cp -Lr . $DIR || true
+    cp -Lr . ../$DIR
+    mv ../$DIR .
     # Build container.
     export DOCKER_BUILDKIT=1
     #export DOCKER_BUILDKIT=0
