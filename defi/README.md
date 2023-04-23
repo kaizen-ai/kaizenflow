@@ -93,6 +93,3 @@
   ```
   > dev_scripts/lint_solidity.sh file.sol file2.sol ...
   ```
-
-## Code organization
-

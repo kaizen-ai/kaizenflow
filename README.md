@@ -30,20 +30,6 @@ Sorrentum is an open-Source DeFi protocol to build advanced financial applicatio
 ## Python coding style guide
 - Read Sorrentum [Python coding style guide](https://docs.google.com/document/d/1R6jhFDbZKvyDdbnSQ9DA_N8417YF13hMI_Uw4quO4Xk)
 
-## Subscribing to the Telegram channels
-- Sorrentum - All: https://t.me/+a9XMN1ixUjwwNjBh
-- Sorrentum - Model Research: https://t.me/+ClGbWSHyVIU3MmVh
-- Sorrentum - NLP Research: https://t.me/+i9K52TnNnBFhNGQx
-- Sorrentum - Web3 Research: https://t.me/+VPfKSu526MA1ZGNh
-- Sorrentum - Arbitrage Research: https://t.me/+fidFMZ9fYts5ODQ5
-- Sorrentum - Growth hacking: https://t.me/+Ey0tteEb8iNmNmVh
-
-## Research office hours
-- Meeting room: https://umd.zoom.us/j/7447082187
-  - Ask for the password
-- The latest calendar is posted at
-  - TODO(gp): Add link
-
 ## Technologies used
 - [UMD DATA605 Big Data Systems](https://github.com/gpsaggese/umd_data605)
   contains
