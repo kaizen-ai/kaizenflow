@@ -4,14 +4,14 @@ Import as:
 import defi.dao_swap.twap_vwap_adapter as ddstvwad
 """
 
-import os
 import json
-from typing import Any, Dict, List, Tuple, Callable
+import os
+from functools import wraps
+from typing import Any, Callable, Dict, List, Tuple
 
 import numpy as np
 import requests
-from flask import Flask, jsonify, request, abort
-from functools import wraps
+from flask import Flask, abort, jsonify, request
 
 app = Flask(__name__)
 
@@ -24,13 +24,14 @@ def require_api_key(func: Callable) -> Callable:
     """
     Perform authorization of a request.
     """
+
     @wraps(func)
     def check_api_key(*args, **kwargs):
         api_key = request.headers.get("X-API-KEY")
         if not api_key or api_key != API_KEY:
             abort(401, "Unauthorized: Invalid API key")
         return func(*args, **kwargs)
-    
+
     return check_api_key
 
 
@@ -48,8 +49,8 @@ def _get_price_volume_data() -> Tuple[List[int], List[float]]:
     )
     price_data = json.loads(response.text)["prices"]
     # Get price and volume data.
-    prices = [float(entry[0]) for entry in price_data]
-    volumes = [float(entry[1]) for entry in price_data]
+    prices = [float(entry[1]) for entry in price_data]
+    volumes = [float(entry[0]) for entry in price_data]
     # Convert prices to WEI.
     eth_to_wei = 10**18
     prices = [int(price * eth_to_wei) for price in prices]
