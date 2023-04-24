@@ -140,7 +140,7 @@ class TestMatchOrders1(hunitest.TestCase):
         quote_token = "ETH"
         # Match orders.
         actual_df = ddcrorma.match_orders(
-            orders, clearing_price, base_token, quote_token
+            mixed_orders, clearing_price, base_token, quote_token
         )
         # Check the unique tokens.
         actual_tokens = sorted(list(actual_df["token"].unique()))
