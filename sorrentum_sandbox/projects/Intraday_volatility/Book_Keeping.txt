@@ -1,0 +1,7 @@
+Book Keeping
+- After getting assigned an issue check in with you other group members to check on current progress and to see where the project is going
+- If an issue has not been made for the task create it in the github repo
+- Create a branch from that issue
+- Create a folder in sorrentum\sorrentum_sandbox\projects for your task
+- Store all code relevent to the project in this folder
+- Before cleaning data or committing to a task make sure that there are not already scripts written for that which you can use

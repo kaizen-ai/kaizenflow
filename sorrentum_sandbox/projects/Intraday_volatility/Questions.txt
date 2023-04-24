@@ -1,0 +1,5 @@
+- Should I be using polynomial regression for this task?
+	- I looked at the other regression models and did not believe that they were correct for this task
+- Can I create a NN model after creating the regression model?
+- Is the s_t,n is the GK model average per 10 mins based on the paper?
+	- OG: #guess that s_t,n is the GK model average per 10 mins

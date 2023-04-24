@@ -1,0 +1,6 @@
+Future plan
+- Compute intra-day volatility and EWMA for all coins and save to a CSV
+	- save CSV to a google zip folder for ease of access later
+- Partition the data into training and test data
+- Train polynomial regression model on entire training set and test set to find results
+- Hopefully create a NN to better predict and fit to the data

@@ -1,0 +1,7 @@
+Current Tasks
+- create dataframe of dates, EWMA, and intraday volatility
+- create scatterplots of EWMA (dependent) vs intraday volatility and dates (independent)
+	- this will show how intraday volatility and the time of year influence EWMA
+	- possible compute SVM to quantify significance of these factors
+- Use sklearn's polynomial regression to find weights for prediction since this is a regression task
+

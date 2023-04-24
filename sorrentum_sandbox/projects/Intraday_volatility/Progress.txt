@@ -1,0 +1,9 @@
+Progress:
+This is all currently being done with only 1 bitcoin type for initial testing
+- cleaned binance data
+	- removed unnecessary data that did not pertain to the predictions
+- performed data transformations
+	- converted data into 30s ave segmentations
+- calculated:
+	- intraday volitility
+	- EWMA
