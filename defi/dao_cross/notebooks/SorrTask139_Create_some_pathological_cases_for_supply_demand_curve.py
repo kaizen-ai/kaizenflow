@@ -50,11 +50,23 @@ hprint.config_notebook()
 # ## Get orders and set prices.
 
 # %%
-supply_orders1 = ddcrsede.get_supply_orders1()
+type_ = "supply"
+supply_quantities = [40, 40, 30, 30, 20, 20]
+supply_limit_prices = [100, 60, 40, 30, 20, 10]
+#
+supply_orders1 = ddcrsede.get_curve_orders(
+    type_, supply_quantities, supply_limit_prices
+)
 supply_orders1
 
 # %%
-demand_orders = ddcrsede.get_demand_orders1()
+type_ = "demand"
+demand_quantities = [10, 30, 20, 40, 50, 30]
+demand_limit_prices = [110, 100, 80, 60, 40, 30]
+#
+demand_orders = ddcrsede.get_curve_orders(
+    type_, demand_quantities, demand_limit_prices
+)
 demand_orders
 
 # %%
@@ -64,11 +76,13 @@ prices = {"BTC": 2, "ETH": 1}
 # ## Multiple intersection points at quantity Q'
 
 # %%
-supply_curve1 = ddcrsede.get_curve(supply_orders1, "supply")
+type_ = "supply"
+supply_curve1 = ddcrsede.get_curve(supply_orders1, type_)
 supply_curve1
 
 # %%
-demand_curve = ddcrsede.get_curve(demand_orders, "demand")
+type_ = "demand"
+demand_curve = ddcrsede.get_curve(demand_orders, type_)
 demand_curve
 
 # %%
@@ -86,8 +100,17 @@ display(daocross_results1)
 
 # %%
 quantity_const = 10.0
-supply_orders2 = ddcrsede.get_supply_orders1(quantity_const=quantity_const)
-supply_curve2 = ddcrsede.get_curve(supply_orders2, "supply")
+supply_orders2 = ddcrsede.get_curve_orders(
+    type_,
+    supply_quantities,
+    supply_limit_prices,
+    quantity_const=quantity_const,
+)
+supply_orders2
+
+# %%
+type_ = "supply"
+supply_curve2 = ddcrsede.get_curve(supply_orders2, type_)
 supply_curve2
 
 # %%
@@ -105,8 +128,17 @@ display(daocross_results2)
 
 # %%
 quantity_const = 100.0
-supply_orders3 = ddcrsede.get_supply_orders1(quantity_const=quantity_const)
-supply_curve3 = ddcrsede.get_curve(supply_orders3, "supply")
+supply_orders3 = ddcrsede.get_curve_orders(
+    type_,
+    supply_quantities,
+    supply_limit_prices,
+    quantity_const=quantity_const,
+)
+supply_orders3
+
+# %%
+type_ = "supply"
+supply_curve3 = ddcrsede.get_curve(supply_orders3, type_)
 supply_curve3
 
 # %%

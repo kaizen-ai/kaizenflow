@@ -18,8 +18,8 @@ import helpers.hprint as hprint
 _LOG = logging.getLogger(__name__)
 
 
-def _get_curve_orders(
-    action: str,
+def get_curve_orders(
+    type_: str,
     quantities: List[int],
     limit_prices: List[int],
     *,
@@ -33,13 +33,20 @@ def _get_curve_orders(
     wallet_address: int = 1,
 ):
     """
-    Get orders corresponding to a specified supply / demand curve.
+    Get a list of orders that represent supply or demand.
     """
     orders = []
     for quantity, limit_price in zip(quantities, limit_prices):
-        #
+        # Adjust values by the passed params.
         quantity = quantity * quantity_scale + quantity_const
         limit_price = limit_price * limit_price_scale
+        # Get order action based on the curve type.
+        if type_ == "supply":
+            action = "sell"
+        elif type_ == "demand":
+            action = "buy"
+        else:
+            raise ValueError("Invalid type_='%s'" % type_)
         #
         order = ddacrord.Order(
             timestamp,
@@ -52,52 +59,6 @@ def _get_curve_orders(
             wallet_address,
         )
         orders.append(order)
-    return orders
-
-
-def get_supply_orders1(
-    *,
-    quantity_scale: float = 1.0,
-    quantity_const: float = 0.0,
-    limit_price_scale: float = 1.0,
-) -> List[ddacrord.Order]:
-    """
-    Get orders corresponding to a monotonically increasing supply curve.
-    """
-    action = "sell"
-    quantities = [40, 40, 30, 30, 20, 20]
-    limit_prices = [100, 60, 40, 30, 20, 10]
-    orders = _get_curve_orders(
-        action,
-        quantities,
-        limit_prices,
-        quantity_scale=quantity_scale,
-        quantity_const=quantity_const,
-        limit_price_scale=limit_price_scale,
-    )
-    return orders
-
-
-def get_demand_orders1(
-    *,
-    quantity_scale: float = 1.0,
-    quantity_const: float = 0.0,
-    limit_price_scale: float = 1.0,
-) -> List[ddacrord.Order]:
-    """
-    Get orders corresponding to a monotonically decreasing demand curve.
-    """
-    action = "buy"
-    quantities = [10, 30, 20, 40, 50, 30]
-    limit_prices = [110, 100, 80, 60, 40, 30]
-    orders = _get_curve_orders(
-        action,
-        quantities,
-        limit_prices,
-        quantity_scale=quantity_scale,
-        quantity_const=quantity_const,
-        limit_price_scale=limit_price_scale,
-    )
     return orders
 
 
