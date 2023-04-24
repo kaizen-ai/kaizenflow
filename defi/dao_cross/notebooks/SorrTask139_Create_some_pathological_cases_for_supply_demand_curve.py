@@ -58,7 +58,7 @@ demand_orders = ddcrsede.get_demand_orders1()
 demand_orders
 
 # %%
-prices = {"BTC": 1, "ETH": 1}
+prices = {"BTC": 2, "ETH": 1}
 
 # %% [markdown]
 # ## Multiple intersection points at quantity Q'
