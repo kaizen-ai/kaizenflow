@@ -15,3 +15,5 @@
 ```
 {"data":{"result":"1.6819202140995054e+30"},"jobRunID":"42"}
 ```
+
+*Note: In order to make the request possible using docker-in-docker, run the above*  `docker run ...` *and* `curl ...` from inside docker
