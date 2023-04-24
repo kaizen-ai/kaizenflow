@@ -1,0 +1,12 @@
+# df=
+index=[0, 7]
+columns=token,amount,from,to
+shape=(8, 4)
+token amount from to
+0 ETH 6 0 3
+1 BTC 6 3 0
+2 ETH 3 -2 2
+...
+5 BTC 1 0 -2
+6 ETH 2 -3 0
+7 BTC 2 0 -3

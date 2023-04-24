@@ -177,13 +177,17 @@ class TestMatchOrders1(hunitest.TestCase):
         )
     
     def test3(self) -> None:
-        order = ddacrord.get_random_order()
+        orders = []
+
+        for i in range(6):
+            order = ddacrord.get_random_order()
+            orders.append(order)
         clearing_price = 1
-        base_token = "BTC"
-        quote_token = "ETH"
+        base_token = "ETH"
+        quote_token = "BTC"
         # Match orders.
         actual_df = ddcrorma.match_orders(
-            [order], clearing_price, base_token, quote_token
+            orders, clearing_price, base_token, quote_token
         )
         # Check the unique tokens.
         actual_tokens = sorted(list(actual_df["token"].unique()))
@@ -201,16 +205,17 @@ class TestMatchOrders1(hunitest.TestCase):
         )
         expected_signature = r"""
         # df=
-        index=[0, 5]
+        index=[0, 7]
         columns=token,amount,from,to
-        shape=(6, 4)
+        shape=(8, 4)
         token  amount  from  to
-        0   BTC     1.2     1   1
-        1   ETH     1.2     1   1
-        2   BTC     0.3     1   2
-        3   ETH     0.3     2   1
-        4   BTC     1.1     6   2
-        5   ETH     1.1     2   6
+        0   ETH       6     0   3
+        1   BTC       6     3   0
+        2   ETH       3    -2   2
+        ...
+        5   BTC       1     0  -2
+        6   ETH       2    -3   0
+        7   BTC       2     0  -3
         """
         self.assert_equal(
             actual_signature,
