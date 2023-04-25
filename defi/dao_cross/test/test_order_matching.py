@@ -177,10 +177,13 @@ class TestMatchOrders1(hunitest.TestCase):
         )
     
     def test3(self) -> None:
+        """
+        All orders are randomly generated
+        """
         orders = []
-
+        # Randomly create orders.
         for i in range(6):
-            order = ddacrord.get_random_order()
+            order = ddacrord.get_random_order(seed=i)
             orders.append(order)
         clearing_price = 1
         base_token = "ETH"
@@ -209,13 +212,13 @@ class TestMatchOrders1(hunitest.TestCase):
         columns=token,amount,from,to
         shape=(8, 4)
         token  amount  from  to
-        0   ETH       6     0   3
-        1   BTC       6     3   0
-        2   ETH       3    -2   2
+        0   ETH       4    -3   0
+        1   BTC       4     0  -3
+        2   ETH       5    -3   0
         ...
-        5   BTC       1     0  -2
-        6   ETH       2    -3   0
-        7   BTC       2     0  -3
+        5   BTC       1     2  -3
+        6   ETH       8    -2   2
+        7   BTC       8     2  -2
         """
         self.assert_equal(
             actual_signature,
