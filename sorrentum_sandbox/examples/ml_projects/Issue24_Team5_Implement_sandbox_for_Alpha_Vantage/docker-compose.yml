@@ -93,6 +93,28 @@ services:
     build: .
     ports:
       - "8888:8888"
+  dask-scheduler:
+    build: 
+      context: .
+      dockerfile: ./dask/Dockerfile
+      args:
+        python: "3.10"
+    hostname: scheduler
+    ports:
+      - "8786:8786"
+      - "8787:8787"
+    command: ["dask-scheduler"]
+  
+  worker:
+    build: 
+      context: .
+      dockerfile: ./dask/Dockerfile
+      args:
+        python: "3.10"
+    command: ["dask-worker", "tcp://scheduler:8786"]
+    # For Docker swarm you can specify multiple workers, this is ignored by `docker-compose up`
+    deploy:
+      replicas: 2
 
   postgres:
     image: postgres:13
@@ -305,3 +327,4 @@ services:
 
 volumes:
   postgres-db-volume:
+
