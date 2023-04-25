@@ -449,6 +449,7 @@ def config_func_to_str() -> str:
         "get_docker_shared_group",
         # "get_extra_amp_repo_sym_name",
         "get_host_name",
+        "get_html_dir_to_url_mapping",
         "get_invalid_words",
         "get_name",
         "get_repo_map",
