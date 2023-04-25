@@ -18,13 +18,12 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hio as hio
 import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap.download as sisebido
 import sorrentum_sandbox.common.save as sinsasav
 
+import sorrentum_sandbox.examples.ml_projects.Issue22_Team3_Implement_sandbox_for_Coinmarketcap as coinmarketcap
+coinmarketcap_download = coinmarketcap.download
+
 _LOG = logging.getLogger(__name__)
-
-
-
 
 def save_to_json(data) -> None:
     """
@@ -32,6 +31,7 @@ def save_to_json(data) -> None:
     """
     with open('CoinMarketData.json', 'w+') as f:
         json.dump(data, f)
+        _LOG.info("Saving data to json file 'CoinMarketCap.json'") 
 
 # #############################################################################
 
@@ -77,7 +77,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # report_memory_usage=True
     )
     # Download data.
-    downloader = sisebido.CMCRestApiDownloader()
+    downloader = coinmarketcap_download.CMCRestApiDownloader()
     raw_data = downloader.download(args.start,args.limit)
     # Save data as CSV.
     save_to_json(raw_data.get_data())

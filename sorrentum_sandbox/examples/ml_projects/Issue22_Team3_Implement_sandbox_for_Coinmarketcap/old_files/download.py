@@ -41,8 +41,8 @@ class CMCRestApiDownloader(ssandown.DataDownloader):
         self.api_key = os.environ["COINMARKETCAP_API_KEY"]
 
 
-    def get_data(self,id):
-        url = self._build_url(self, id)
+    def get_data(self, start, limit):
+        url = self._build_url(self, start, limit)
         _LOG.info("Request url: {}" .format(url))
         # Request error and exception handling
         try:
@@ -61,30 +61,31 @@ class CMCRestApiDownloader(ssandown.DataDownloader):
                 _LOG.info("Request successful!")
                 # return data
                 # Convert all int to str to avoid OverflowError: MongoDB can only handle up to 8-byte ints
-                return response.json(parse_int=str)['data']
+                return response.json(parse_int=str)['data']  
             else:
                  _LOG.info("Request failed, status code:{}" .format(response.json()['status']['error_code']))
         except Exception as e:
-            _LOG.info(f"Request exception:{e}") 
+            _LOG.info(f"Request exception:{e}")       
 
 
-    def download(self,id) -> ssandown.RawData:
+    def download(self, start, limit) -> ssandown.RawData:
         # request data
-        cmc_data = self.get_data(id)
+        cmc_data = self.get_data(start, limit)
         _LOG.info(f"Downloaded data")
-        _LOG.info(f"Show the First Data: {cmc_data}")
+        _LOG.info(f"Show the First Data: {cmc_data[0]}")
         return ssandown.RawData(cmc_data)
 
     @staticmethod
     def _build_url(
         self,
-        id: int = 1,
+        start: int = 1,
+        limit: int = 5000,
         convert: str = "USD",
     ) -> str:
         """
         Build up URL with the placeholders from the args.
         """
         return (
-            f"https://pro-api.coinmarketcap.com/v2/cryptocurrency/quotes/latest?"
-            f"id={id}&convert={convert}"
+            f"https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest?"
+            f"start={start}&convert={convert}&limit={limit}"
         )
