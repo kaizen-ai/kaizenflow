@@ -51,8 +51,8 @@ hprint.config_notebook()
 
 # %%
 type_ = "supply"
-supply_quantities = [40, 40, 30, 30, 20, 20]
-supply_limit_prices = [100, 60, 40, 30, 20, 10]
+supply_quantities = [1, 1, 1, 1]
+supply_limit_prices = [1.5, 2, 3, 3.5]
 #
 supply_orders1 = ddcrsede.get_curve_orders(
     type_, supply_quantities, supply_limit_prices
@@ -61,8 +61,8 @@ supply_orders1
 
 # %%
 type_ = "demand"
-demand_quantities = [10, 30, 20, 40, 50, 30]
-demand_limit_prices = [110, 100, 80, 60, 40, 30]
+demand_quantities = [1, 1, 1, 1]
+demand_limit_prices = [3.5, 2.5, 2, 1.5]
 #
 demand_orders = ddcrsede.get_curve_orders(
     type_, demand_quantities, demand_limit_prices
@@ -77,12 +77,12 @@ prices = {"BTC": 2, "ETH": 1}
 
 # %%
 type_ = "supply"
-supply_curve1 = ddcrsede.get_curve(supply_orders1, type_)
+supply_curve1 = ddcrsede.get_curve_dots(supply_orders1, type_)
 supply_curve1
 
 # %%
 type_ = "demand"
-demand_curve = ddcrsede.get_curve(demand_orders, type_)
+demand_curve = ddcrsede.get_curve_dots(demand_orders, type_)
 demand_curve
 
 # %%
@@ -99,7 +99,7 @@ display(daocross_results1)
 # ## Multiple intersection points at price P'
 
 # %%
-quantity_const = 10.0
+quantity_const = 1.0
 supply_orders2 = ddcrsede.get_curve_orders(
     type_,
     supply_quantities,
@@ -110,7 +110,7 @@ supply_orders2
 
 # %%
 type_ = "supply"
-supply_curve2 = ddcrsede.get_curve(supply_orders2, type_)
+supply_curve2 = ddcrsede.get_curve_dots(supply_orders2, type_)
 supply_curve2
 
 # %%
@@ -124,21 +124,21 @@ daocross_results2 = ddacropt.run_daocross_solver(all_orders2, prices)
 display(daocross_results2)
 
 # %% [markdown]
-# ## No intersection, demand is higher
+# ## No intersection
 
 # %%
-quantity_const = 100.0
+limit_price_const = 5.0
 supply_orders3 = ddcrsede.get_curve_orders(
     type_,
     supply_quantities,
     supply_limit_prices,
-    quantity_const=quantity_const,
+    limit_price_const=limit_price_const,
 )
 supply_orders3
 
 # %%
 type_ = "supply"
-supply_curve3 = ddcrsede.get_curve(supply_orders3, type_)
+supply_curve3 = ddcrsede.get_curve_dots(supply_orders3, type_)
 supply_curve3
 
 # %%
@@ -150,11 +150,5 @@ plt.show()
 all_orders3 = supply_orders3 + demand_orders
 daocross_results3 = ddacropt.run_daocross_solver(all_orders3, prices)
 display(daocross_results3)
-
-# %% [markdown]
-# # No intersection, demand is lower
-
-# %%
-# TODO(Dan): Implement
 
 # %%

@@ -7,6 +7,7 @@ import defi.dao_cross.supply_demand as ddcrsede
 import copy
 import heapq
 import logging
+import random
 from typing import Any, Dict, List, Tuple, Optional
 
 import pandas as pd
@@ -26,20 +27,17 @@ def get_curve_orders(
     quantity_scale: float = 1.0,
     quantity_const: float = 0.0,
     limit_price_scale: float = 1.0,
-    timestamp: Optional[pd.Timestamp] = None,
-    base_token: str = "BTC",
-    quote_token: str = "ETH",
-    deposit_address: int = 1,
-    wallet_address: int = 1,
+    limit_price_const: float = 0.0,
 ):
     """
     Get a list of orders that represent supply or demand.
     """
     orders = []
     for quantity, limit_price in zip(quantities, limit_prices):
-        # Adjust values by the passed params.
-        quantity = quantity * quantity_scale + quantity_const
-        limit_price = limit_price * limit_price_scale
+        # Set default values.
+        timestamp = None
+        base_token = "BTC"
+        quote_token = "ETH"
         # Get order action based on the curve type.
         if type_ == "supply":
             action = "sell"
@@ -47,7 +45,13 @@ def get_curve_orders(
             action = "buy"
         else:
             raise ValueError("Invalid type_='%s'" % type_)
-        #
+        # Adjust quantities and prices by the passed params.
+        quantity = quantity * quantity_scale + quantity_const
+        limit_price = limit_price * limit_price_scale + limit_price_const
+        # Generate random addresses.
+        deposit_address = random.randint(1, 10)
+        wallet_address = deposit_address
+        # Build orders.
         order = ddacrord.Order(
             timestamp,
             action,
@@ -62,34 +66,45 @@ def get_curve_orders(
     return orders
 
 
-def get_curve(
+def get_curve_dots(
     orders: List[ddacrord.Order], type_: str
 ) -> List[Tuple[int, int]]:
     """
-    Build a supply / demand curve using the given orders.
+    Get coordinates of dots that represent a curve of the specified type.
     """
     hdbg.dassert_in(type_, ["demand", "supply"])
-    # Extract quantity and price from the passed orders in order to filter them.
+    # Extract quantity and price from the passed orders for sorting.
     orders_info = [
         (order.quantity, order.limit_price,) for order in orders
     ]
     # Sort orders by limit price with respect to the curve type.
-    # Supply curve is monotonically increasing, so sort orders in ascending order.
-    # Demand curve is monotonically decreasing, so sort orders in descending order.
+    # Supply curve is monotonically increasing, orders are in ascending order.
+    # Demand curve is monotonically decreasing, orders are in descending order.
     reverse = type_ == "demand"
     orders_info = sorted(orders_info, key=lambda x: x[1], reverse=reverse)
-    # Initiate the list with the first coordintate.
-    curve_points = []
-    # Set amount of quantity that has entered the market before the contemplated order.
-    quantity_before = 0
+    # Set amount of quantity that has already entered the market.
+    quantity_on_market = 0
+    dots = []
     for order_info in orders_info:
-        quantity = order_info[0] + quantity_before
+        # New order will increment the quantity on the market.
+        quantity = order_info[0] + quantity_on_market
         price = order_info[1]
-        #
-        curve_point1 = (quantity_before, price)
-        curve_points.append(curve_point1)
-        curve_point2 = (quantity, price)
-        curve_points.append(curve_point2)
-        #
-        quantity_before = quantity_before + order_info[0]
-    return curve_points
+        # Add a dot that connects order dots on a broken curve.
+        dot1 = (quantity_on_market, price)
+        dots.append(dot1)
+        # Add a dot with order data.
+        dot2 = (quantity, price)
+        dots.append(dot2)
+        # Update quantity on market.
+        quantity_on_market = quantity_on_market + order_info[0]
+    # Add last line of the curve:
+    if type_ == "supply":
+        # Extend supply curve with a straight line up at the max quantity.
+        last_dot = (dots[-1][0], dots[-1][1] * 1.25)
+    elif type_ == "demand":
+        # Extend demand curve with a straight line down until zero quantity.
+        last_dot = (dots[-1][0], 0)
+    else:
+        raise ValueError("Invalid type_='%s'" % type_)
+    dots.append(last_dot)
+    return dots
