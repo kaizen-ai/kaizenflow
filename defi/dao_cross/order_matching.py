@@ -77,7 +77,7 @@ def match_orders(
         # Adjust all orders to the same base and quote tokens using order
         # equivalence.
         if order.base_token == quote_token:
-            order = get_equivalent_order(order)
+            order = get_equivalent_order(order, clearing_price)
         # Distribute equalized orders on buy and sell heaps.
         if order.action == "buy":
             if order.limit_price >= clearing_price:
