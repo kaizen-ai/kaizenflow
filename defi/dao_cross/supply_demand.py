@@ -4,17 +4,12 @@ Import as:
 import defi.dao_cross.supply_demand as ddcrsede
 """
 
-import copy
-import heapq
 import logging
 import random
-from typing import Any, Dict, List, Tuple, Optional
+from typing import List, Tuple
 
-import pandas as pd
-
-import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
-import helpers.hprint as hprint
+import defi.dao_cross.order as ddacrord
 
 _LOG = logging.getLogger(__name__)
 
@@ -28,7 +23,7 @@ def get_curve_orders(
     quantity_const: float = 0.0,
     limit_price_scale: float = 1.0,
     limit_price_const: float = 0.0,
-):
+) -> List[ddacrord.Order]:
     """
     Get a list of orders that represent supply or demand.
     """
@@ -86,7 +81,8 @@ def get_curve_dots(
     quantity_on_market = 0
     dots = []
     for order_info in orders_info:
-        # New order will increment the quantity on the market.
+        # Order quintity is a distance between the dot with this order
+        # and quantity on market before it.
         quantity = order_info[0] + quantity_on_market
         price = order_info[1]
         # Add a dot that connects order dots on a broken curve.
