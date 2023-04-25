@@ -3,9 +3,10 @@
 Download data from Chainlink and save it as CSV locally.
 
 Use as:
-> download_to_csv.py --pair ETH/USD --num_of_data 10 --target_dir 'chainlink_data'
 
-> download_to_csv.py --pair ETH/USD --roundid 55340232221128670494 --target_dir 'chainlink_data'
+> download_to_csv.py --pair BTC/USD --start_roundid 92233720368547792257 --target_dir 'chainlink_data'
+> download_to_csv.py --pair BTC/USD --start_roundid 92233720368547792257 --end_roundid 92233720368547792260 --target_dir 'chainlink_data'
+
 """
 import argparse
 import logging
@@ -18,7 +19,9 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import helpers.hio as hio
 import sorrentum_sandbox.common.download as sinsadow
-import sorrentum_sandbox.projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
+
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.download as sisebido
+
 import sorrentum_sandbox.common.save as sinsasav
 
 _LOG = logging.getLogger(__name__)
@@ -64,26 +67,30 @@ def _add_download_args(
         help="Currency pair to download",
 )
     parser.add_argument(
-        "--num_of_data",
+
+        "--start_roundid",
+        action="store",
+        required=True,
+        type=int,
+        help="the first data to download",
+)
+    parser.add_argument(
+        "--end_roundid",
         action="store",
         required=False,
         type=int,
-        help="Number of data to download",
+        help="the last data to dowlonad",
 )
-    parser.add_argument(
-        "--roundid",
-        action="store",
-        required=False,
-        type=str,
-        help="Roundid for the last stored transaction data",
-    )
+
     parser.add_argument(
         "--target_dir",
         action="store",
         required=True,
         type=str,
         help="Path to the target directory to store CSV data into",
-    )
+
+)
+
     return parser
 
 
@@ -105,10 +112,12 @@ def _main(parser: argparse.ArgumentParser) -> None:
         # report_memory_usage=True
     )
     # Download data.
-    if(args.roundid is None):
-        raw_data = sisebido.downloader(pair = args.pair, num_of_data = args.num_of_data)
-    elif(args.num_of_data is None):
-        raw_data = sisebido.downloader(pair = args.pair, roundid = args.roundid)
+
+    if(args.end_roundid is None):
+        raw_data = sisebido.downloader(pair = args.pair, start_roundid = args.start_roundid)
+    else:
+        raw_data = sisebido.downloader(pair = args.pair, start_roundid = args.start_roundid, end_roundid = args.end_roundid)
+
     # Save data as CSV.
     saver = CsvDataFrameSaver(args.target_dir)
     saver.save(raw_data)
