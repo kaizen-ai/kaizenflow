@@ -136,7 +136,7 @@ supply_orders3 = ddcrsede.get_curve_orders(
     supply_limit_prices,
     limit_price_const=limit_price_const,
 )
-supply_orders3
+ddacrord.convert_orders_to_dataframe(supply_orders3)
 
 # %%
 type_ = "supply"
