@@ -151,8 +151,8 @@ def run_daocross_solver(
             problem += q_tau_star[i] >= q_pi_star[i] * orders[i].limit_price
     # Impose constraints on the token level: the amount of sold tokens must match that
     # of bought tokens for each token.
-    base_tokens = [order.base_token for order in orders]
-    for token in base_tokens:
+    tokens = list(set([order.base_token for order in orders] + [order.quote_token for order in orders]))
+    for token in tokens:
         problem += (
                 pulp.lpSum(
                     -orders[i].action_as_int
@@ -227,6 +227,9 @@ def run_daoswap_solver(
         for i in range(n_orders)
     ]
     # Objective function. Maximize the total exchanged volume.
+    # problem.setObjective(pulp.lpSum(
+    #     [q_pi_star[i] + q_tau_star[i] for i in range(n_orders)]
+    # ))
     problem += pulp.lpSum(
         q_pi_star[i] + q_tau_star[i] for i in range(n_orders)
     )
@@ -244,8 +247,8 @@ def run_daoswap_solver(
             problem += q_tau_star[i] >= q_pi_star[i] * orders[i].limit_price
     # Impose constraints on the token level: the amount of sold tokens must match that
     # of bought tokens for each token.
-    base_tokens = [order.base_token for order in orders]
-    for token in base_tokens:
+    tokens = list(set([order.base_token for order in orders] + [order.quote_token for order in orders]))
+    for token in tokens:
         problem += (
                 pulp.lpSum(
                     -orders[i].action_as_int
@@ -275,7 +278,8 @@ def run_daoswap_solver(
     #                     q_pi_star[i] * q_pi_star[j] - q_tau_star[i] * q_tau_star[j] == 0
     #                 )
     # Use the default solver and suppress the solver's log.
-    solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
+    # solver = pulp.getSolver("PULP_CBC_CMD", msg=0)
+    solver = pulp.getSolver("PULP_CBC_CMD")
     problem.solve(solver)
     # Display the results.
     # TODO(Grisha): move packaging to a separate function.
