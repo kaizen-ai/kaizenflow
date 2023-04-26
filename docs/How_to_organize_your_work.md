@@ -1,4 +1,15 @@
-# Tech leads
+# Golden rule
+
+- "Remember to treat others the way you want to be treated"
+- Everybody comes from a different place and different skill-level, somebody has
+  a job, somebody has a full-time work
+- Let's be polite, helpful, and supportive to each other
+- I'll remind you an adage that I tell myself when my teammates drive me crazy:
+  "If you want to go fast, go alone; if you want to go far, go together"
+
+# Roles
+
+## Tech leads
 
 - Tech leads are contributors that have put more effort in Sorrentum and / or
   have more experience in research and development
@@ -11,7 +22,8 @@
 
 - What tech leads do:
 
-  - Organize the work in their specific project together with GP / Paul
+  - Organize the work in their specific project together with GP / Paul and the
+    other full-time contributors
   - Help young team members, e.g., answering their questions, showing how we do
     things
   - Answer other team members questions, even in different projects
@@ -24,8 +36,15 @@
   - Practice leadership skills (which mainly entail technical excellence and
     patience)
   - Work closely with GP / Paul
-  - Material benefits (e.g., higher Sorrentum bonuses once the system is in
-    place)
+  - Material benefits (e.g., higher Sorrentum bonuses once the reward system is
+    in place)
+
+## Developers
+
+- People on teams working on the same project or on related projects can:
+  1) work together on the same tasks (you can coordinate on GitHub, Telegram, or do a Zoom)
+  2) work together and split the work (still you need coordination)
+  3) each can "replicate" the work so that both of you understand (no coordination)
 
 # How to organize your research
 

@@ -1,7 +1,5 @@
 # **# Before you start**
 
-
-
 * GitHub is the place where we keep our code
 * git is the tool (program) for version control
 * We interact with GitHub via `git`
