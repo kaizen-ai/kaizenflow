@@ -25,6 +25,7 @@ import helpers.hdbg as hdbg
 import helpers.henv as henv
 import helpers.hprint as hprint
 import defi.dao_cross.supply_demand as ddcrsede
+import defi.dao_cross.order as ddacrord
 
 # %%
 try:
@@ -57,20 +58,20 @@ supply_limit_prices = [1.5, 2, 3, 3.5]
 supply_orders1 = ddcrsede.get_curve_orders(
     type_, supply_quantities, supply_limit_prices
 )
-supply_orders1
+ddacrord.convert_orders_to_dataframe(supply_orders1)
 
 # %%
 type_ = "demand"
 demand_quantities = [1, 1, 1, 1]
 demand_limit_prices = [3.5, 2.5, 2, 1.5]
 #
-demand_orders = ddcrsede.get_curve_orders(
+demand_orders1 = ddcrsede.get_curve_orders(
     type_, demand_quantities, demand_limit_prices
 )
-demand_orders
+ddacrord.convert_orders_to_dataframe(demand_orders1)
 
 # %%
-prices = {"BTC": 2, "ETH": 1}
+prices = {"BTC": 1, "ETH": 2}
 
 # %% [markdown]
 # ## Multiple intersection points at quantity Q'
@@ -80,9 +81,9 @@ type_ = "supply"
 supply_curve1 = ddcrsede.get_curve_dots(supply_orders1, type_)
 supply_curve1
 
-# %%
+# %% run_control={"marked": true}
 type_ = "demand"
-demand_curve = ddcrsede.get_curve_dots(demand_orders, type_)
+demand_curve = ddcrsede.get_curve_dots(demand_orders1, type_)
 demand_curve
 
 # %%
@@ -91,7 +92,7 @@ plt.plot(*zip(*demand_curve))
 plt.show()
 
 # %% run_control={"marked": false}
-all_orders1 = supply_orders1 + demand_orders
+all_orders1 = supply_orders1 + demand_orders1
 daocross_results1 = ddacropt.run_daocross_solver(all_orders1, prices)
 display(daocross_results1)
 
@@ -100,13 +101,14 @@ display(daocross_results1)
 
 # %%
 quantity_const = 1.0
+type_ = "supply"
 supply_orders2 = ddcrsede.get_curve_orders(
     type_,
     supply_quantities,
     supply_limit_prices,
     quantity_const=quantity_const,
 )
-supply_orders2
+ddacrord.convert_orders_to_dataframe(supply_orders2)
 
 # %%
 type_ = "supply"
@@ -119,7 +121,7 @@ plt.plot(*zip(*demand_curve))
 plt.show()
 
 # %%
-all_orders2 = supply_orders2 + demand_orders
+all_orders2 = supply_orders2 + demand_orders1
 daocross_results2 = ddacropt.run_daocross_solver(all_orders2, prices)
 display(daocross_results2)
 
