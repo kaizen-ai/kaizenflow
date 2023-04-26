@@ -56,20 +56,6 @@ to Sorrentum (e.g., 10 hours / week), it is wise to wait to be sure you can do
 it. If you are excited and want to start, go for it, do your best, and we’ll
 make this experience the best possible for you.
 
-## On-boarding process
-
-- Create an issue in the repo https://github.com/sorrentum/sorrentum with the
-  following checklist
-  ```
-  [ ] Subscribe to the Research Office hours calendar
-  [ ] Subscribe to Telegram channels (see below)
-  [ ] Read Sorrentum Python coding style guide (see below)
-  [ ] Learn how to do contribute code via GitHub Pull Requests (see below)
-  [ ] Get assigned a warm-up issue (see below)
-  ```
-  and go through the list one-by-one marking each item as done when it's
-  actually done
-
 # Documents
 
 ## On-boarding
@@ -79,8 +65,6 @@ make this experience the best possible for you.
 ## How to start developing
 
 - [How to organize your work](docs/How_to_organize_your_work.md)
-
-- [Code organization](docs/code_organization.md)
 
 - [Quick start for developing](docs/Quick_start_for_developing.md)
 
@@ -105,10 +89,17 @@ make this experience the best possible for you.
 - You can go through the lectures and tutorials on a per-need basis, depending
   on what it's useful for you to develop
 
+## In-depth docs
+
+- [Code organization](docs/code_organization.md)
+
+## DeFi on-boarding
+
+- [DeFi readme](https://github.com/sorrentum/sorrentum/tree/master/defi/README.md)
 
 ## DeFi docs
 
-- [DeFi readme](https://github.com/sorrentum/sorrentum/tree/master/defi/README.md)
+## Arbitrage / Modeling on-boarding
 
 ## Arbitrage / Modeling docs
 
