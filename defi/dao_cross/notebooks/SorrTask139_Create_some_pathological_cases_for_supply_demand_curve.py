@@ -81,14 +81,14 @@ type_ = "supply"
 supply_curve1 = ddcrsede.get_curve_dots(supply_orders1, type_)
 supply_curve1
 
-# %% run_control={"marked": true}
+# %% run_control={"marked": false}
 type_ = "demand"
-demand_curve = ddcrsede.get_curve_dots(demand_orders1, type_)
-demand_curve
+demand_curve1 = ddcrsede.get_curve_dots(demand_orders1, type_)
+demand_curve1
 
 # %%
 plt.plot(*zip(*supply_curve1))
-plt.plot(*zip(*demand_curve))
+plt.plot(*zip(*demand_curve1))
 plt.show()
 
 # %% run_control={"marked": false}
@@ -117,7 +117,7 @@ supply_curve2
 
 # %%
 plt.plot(*zip(*supply_curve2))
-plt.plot(*zip(*demand_curve))
+plt.plot(*zip(*demand_curve1))
 plt.show()
 
 # %%
@@ -145,11 +145,11 @@ supply_curve3
 
 # %%
 plt.plot(*zip(*supply_curve3))
-plt.plot(*zip(*demand_curve))
+plt.plot(*zip(*demand_curve1))
 plt.show()
 
 # %%
-all_orders3 = supply_orders3 + demand_orders
+all_orders3 = supply_orders3 + demand_orders1
 daocross_results3 = ddacropt.run_daocross_solver(all_orders3, prices)
 display(daocross_results3)
 
