@@ -14,7 +14,7 @@ ENV DASK_VERSION=${release}
 ENV PYTHONPATH="${PYTHONPATH}:./"
 
 RUN mamba install -y \
-    "mamba>=0.27.0" \
+    mamba>=0.27.0 \
     python=${PYTHON_VERSION} \
     nomkl \
     cmake \
@@ -31,6 +31,7 @@ RUN mamba install -y \
 COPY prepare.sh /usr/bin/prepare.sh
 COPY ./ ./
 
+RUN chmod +x /usr/bin/prepare.sh
 RUN mkdir /opt/app
 
 ENTRYPOINT ["tini", "-g", "--", "/usr/bin/prepare.sh"]

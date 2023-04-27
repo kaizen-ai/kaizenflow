@@ -1,7 +1,12 @@
 from typing import List
 from api.alpha_vantage import AlphaVantage
 from models.time_series import TimeSeriesData, TimeInterval, DataType
+import dask.dataframe as dd
 import pandas as pd
+
+# This makes the DAGs not import
+# from dask.distributed import Client
+# client = Client("scheduler:8786")
 
 class Ticker:
     def __init__(
@@ -13,8 +18,8 @@ class Ticker:
     ) -> None:
         self.ticker = ticker
 
-        self.name = kwargs.get('name', ticker)
-        if get_name:
+        self.name = kwargs.pop('name', ticker)
+        if get_name and (self.ticker == self.name):
             self.name = AlphaVantage.get_name_for(ticker)
 
         self.last_updated = None
@@ -29,6 +34,13 @@ class Ticker:
             self.last_open = last.open
             self.last_close = last.close
 
+        kwargs.pop('_id', None)
+        if kwargs:
+            for k, v in kwargs.items():
+                self.__setattr__(k, v)
+
+        
+
     def __repr__(self) -> str:
         return f"""
         Name: {self.name} | {self.ticker}
@@ -38,7 +50,11 @@ class Ticker:
         Datapoints: {len(self.time_series_data) if self.time_series_data else "No Data"}
         """
 
-    def get_data(self, data_type: DataType, time_interval: TimeInterval = TimeInterval.HOUR):
+    def get_data(
+            self,
+            data_type: DataType,
+            time_interval: TimeInterval = TimeInterval.HOUR
+        ):
         """
         Requests and loads the specified data type using Alpha Vantage.
 
@@ -61,14 +77,14 @@ class Ticker:
     def to_json(self) -> dict:
         """Converts object to JSON as long as it has time_series_data"""
         if self.time_series_data:
-            return  {
-                "ticker": self.ticker,
-                "name": self.name,
-                "last_updated": self.last_updated,
-                "last_open": self.last_open,
-                "last_close": self.last_close,
-                "time_series_data": [point.to_json() for point in self.time_series_data]
-            }
+            json = {}
+            for k, v in self.__dict__.items():
+                if isinstance(v, list):
+                    json[k] = [point.to_json() for point in v]
+                else:
+                    json[k] = v
+
+            return json
     
     def to_CSV(self):
         """Stores data in CSV format locally"""
@@ -76,3 +92,43 @@ class Ticker:
         if json:
             df = pd.DataFrame(json['time_series_data'])
             df.to_csv(f'./{self.ticker.lower()}.csv')
+
+    def compute_rolling_averages(self):
+        """Calculates the Rolling Averages for 20, 50 and 200"""
+
+        df = dd.from_pandas(pd.DataFrame(self.time_series_data), npartitions=1)
+        df = df.query("type=='intraday'").sort_values(by='date')
+        df2 = df.drop(columns=['type', 'date'])
+
+        for window in [20, 50, 200]:
+            avgs = df2.rolling(window=window).mean()
+            avg = avgs.tail(1).close.values[0]
+            if avg:
+                self.__setattr__(f"rolling_avg_{window}", avg)
+
+    def compute_rsi(self):
+        """Calculates the Relative Strength Index (RSI)"""
+
+        try:
+            df = dd.from_pandas(pd.DataFrame(self.time_series_data), npartitions=1)
+            df = df.query("type=='intraday'").sort_values(by='date')
+            df2 = df.drop(columns=['type', 'date']).diff()
+
+            gain = df2.mask(df2 < 0, 0)
+            loss = -df2.mask(df2 > 0, 0)
+
+            avg_gain = gain.rolling(14).mean().tail(1).close.values[0]
+            avg_loss = loss.rolling(14).mean().tail(1).close.values[0]
+            
+            rsi = 100 - (100 / (1 + (avg_gain / avg_loss)))
+            if rsi:
+                self.__setattr__('rsi', rsi)
+        except Exception as e:
+            print(e)
+            pass
+    
+    def calculate_stats(self):
+        """Calls all of the computations to make a ticker whole"""
+
+        self.compute_rolling_averages()
+        self.compute_rsi()

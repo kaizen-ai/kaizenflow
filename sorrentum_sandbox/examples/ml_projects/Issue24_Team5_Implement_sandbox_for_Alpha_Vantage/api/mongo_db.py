@@ -41,7 +41,7 @@ class Mongo:
         Parameters:
         ticker: str - Ticker for company lookup.
         """
-        data = cls.collection.find_one({"_id": ticker})
+        data = cls.collection.find_one({"_id": ticker.upper()})
         if data:
             data['time_series_data'] = [TimeSeriesData(
                 **point) for point in data['time_series_data']]
@@ -78,6 +78,18 @@ class Mongo:
             upsert=True
         )
 
+        cls.collection.find_one_and_update(
+            {"_id": data.ticker},
+            {"$set": json},
+            upsert=True
+        )
+
+    @classmethod
+    def update_ticker_stats(cls, data: Ticker):
+        """Update everything except the time series data"""
+        
+        json = data.to_json()
+        json.pop('time_series_data', None)
         cls.collection.find_one_and_update(
             {"_id": data.ticker},
             {"$set": json},
