@@ -7,13 +7,11 @@
     * You can add a new public key here [GH -> Personal settings -> SSH keys](https://github.com/settings/keys)
     * More details about what is public key you can find in [ssh.md](https://github.com/cryptokaizen/cmamp/blob/master/documentation/general/ssh.md)
 
-
 ## Readings
 
 * Read at least the first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
 * Read about [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
     * We use Git submodules to compose and share code about repos
-
 
 # Workflow
 
@@ -388,11 +386,10 @@ instead.
 
 
 
-# **# How-to and troubleshooting**
+# How-to and troubleshooting
 
 
-## 
-**   ## Do not mess up your branch**
+## Do not mess up your branch
 
 
 
@@ -431,11 +428,10 @@ something funny is going on
 * If you see that there is a problem, don't push upstream (because the branch will be broken for everybody) and ask a Git expert
 
 
-## **## Analyzing commits**
+## Analyzing commits
 
 
-### 
-**   ### Show files modified in a commit**
+### Show files modified in a commit**
 
 
 
@@ -469,11 +465,10 @@ something funny is going on
 
 
 
-## **## Conflicts**
+## Conflicts
 
 
-### 
-**   ### Getting the conflicting files**
+### Getting the conflicting files
 
 
 
@@ -481,8 +476,7 @@ something funny is going on
 `git diff --name-only --diff-filter=U`
 * This is what the script `git_conflict_files.sh` does
 
-### 
-   **### Accepting "theirs"**
+### Accepting "theirs"
 
 
 ```
@@ -515,7 +509,7 @@ something funny is going on
 Stage #1 is the common ancestor of the files, stage #2 is the target-branch version, and stage #3 is the version you are merging from.
 
 
-## **## How to get out of a messy/un-mergeable branch**
+## How to get out of a messy/un-mergeable branch
 
 
 
@@ -591,23 +585,19 @@ Stage #1 is the common ancestor of the files, stage #2 is the target-branch vers
         ```
 
 
-## 
-**## Reverting**
+## Reverting
 
 
-### 
-**### Reverting the last local commit**
+### Reverting the last local commit
 
 
 `> git reset --soft HEAD~`
 
 
-## 
-**## Branching**
+## Branching
 
 
-### 
-**### Checking what work has been done in a branch**
+### Checking what work has been done in a branch
 
 
 
@@ -671,8 +661,7 @@ since `git diff` compares two commits and not a range of commits like `git log` 
     ```
 
 
-### 
-**### Checking if you need to merge `master` into your feature branch**
+### Checking if you need to merge `master` into your feature branch
 
 * You can see what commits are in master but missing in your branch with: \
 ```
@@ -690,8 +679,7 @@ since `git diff` compares two commits and not a range of commits like `git log` 
 
 * You want to `rebase` your feature branch onto `master`
 
-### 
-**### Comparing the difference of a directory among branches**
+### Comparing the difference of a directory among branches
 
 * This is useful if we want to focus on changes on a single dir
 
@@ -745,8 +733,7 @@ since `git diff` compares two commits and not a range of commits like `git log` 
     ```
 
 
-## 
-**## Merging `master`**
+## Merging `master`
 
 * If your branch lives long, you want to apply changes made on master to show on your branch
 * Merge flow
@@ -775,8 +762,7 @@ since `git diff` compares two commits and not a range of commits like `git log` 
 * In few informal words, the `--no-ff` option means that commits are not "inlined" (similar to rebase) even if possible, but a merge commit is always used
     * The problem is that if the commits are "inlined" then you can't revert the change in one shot like we would do for a merge commit, but you need to revert all the inlined changes
 
-## 
-**## Rebasing**
+## Rebasing
 
 * **For now, we suggest avoiding the rebase flow**
 * The reason is that rebase makes things cleaner when used properly, but can get you into deep trouble if not used properly
@@ -817,8 +803,7 @@ since `git diff` compares two commits and not a range of commits like `git log` 
     ```
 
 
-## 
-**## Merging pull requests**
+## Merging pull requests
 
 * The procedure for manual merges is as follows
 * **Do not merge yourself unless explicitly requested by a reviewer**
@@ -840,17 +825,14 @@ since `git diff` compares two commits and not a range of commits like `git log` 
 * Delete the branch, if you are done with it: \
 `> git branch -d my_feature`
 
-# 
-**# Submodules**
+# Submodules
 
 
-## 
-**## Adding a submodule**
+## Adding a submodule
 
 * Following the instructions in [https://git-scm.com/book/en/v2/Git-Tools-Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
-## 
-**## Working in a submodule**
+## Working in a submodule
 
 * When you work in a submodule, the flow should be like:
     * Create a branch in a submodule
@@ -858,8 +840,7 @@ since `git diff` compares two commits and not a range of commits like `git log` 
     * Push the submodule branch
     * Create a PR in the submodule when you are done
 
-## 
-**## Updating a submodule to the latest commit**
+## Updating a submodule to the latest commit
 
 * After the submodule PR is merged:
     * Checkout the submodule in the master branch and do `git pull`
@@ -868,35 +849,30 @@ since `git diff` compares two commits and not a range of commits like `git log` 
     * Commit changes, push
     * Create a PR
 
-## 
-**## To check if supermodule and amp are in sync**
+## To check if supermodule and amp are in sync
 
 * Run the script: \
 `> dev_scripts/git/git_submodules_are_updated.sh`
 
-## 
-**## Roll forward git submodules pointers:**
+## Roll forward git submodules pointers:
 
 * Run the script: \
 `> dev_scripts/git/git_submodules_roll_fwd.sh`
 
-## 
-**## To clean all the repos**
+## To clean all the repos
 
 
 `> git submodule foreach git clean -fd`
 
 
-## 
-**## Pull a branch without checkout**
+## Pull a branch without checkout
 
 
 
 * This is useful when merging `master` in a different branch and we don't want to checkout master just to pull \
 `> git fetch origin master:master`
 
-## 
-**## To force updating all the submodules**
+## To force updating all the submodules
 
 * Run the script \
 `> dev_scripts/git/git_submodules_pull.sh` \

@@ -43,13 +43,13 @@ We understand that due to classes and other commitments, you might not be able
 to work on Sorrentum consistently. That’s ok. At the same time, please be aware
 that taking on a task means that:
 
-1. the same task might not be available to your colleagues; and
+1. The same task might not be available to your colleagues; and
 
-2. we spend time helping, training, and mentoring you
+2. We spend time helping, training, and mentoring you
    - So the energy we put into helping you will be taken away from your
      colleagues
-   - If you give up our effort could have been better used for other teammates
-     that committed more firmly to making progress
+   - If you drop out the project, our effort could have been used for other
+     teammates that committed more firmly to making progress
 
 In other words, if you are not sure you can commit a meaningful amount of time
 to Sorrentum (e.g., 10 hours / week), it is wise to wait to be sure you can do
