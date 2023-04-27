@@ -227,8 +227,6 @@ class TestRunSolver4(hunitest.TestCase):
         deposit_address = 1
         wallet_address = 1
         # Generate buy orders.
-        buy_action = "buy"
-        #
         quantity = 4
         order_0 = ddacrord.Order(
             timestamp,
