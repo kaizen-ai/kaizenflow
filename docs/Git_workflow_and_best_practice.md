@@ -139,11 +139,7 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 
 
 > git checkout my_feature
-
-
 > git merge master
-
-
 ```
 
     - A simpler flow which should be equivalent
@@ -464,7 +460,7 @@ vendors/first_rate/utils.py
 
 > git show :3:README
 
-````
+```
 
 Stage #1 is the common ancestor of the files, stage #2 is the target-branch
 version, and stage #3 is the version you are merging from.
@@ -558,7 +554,7 @@ version, and stage #3 is the version you are merging from.
 
 ```\
 
-````
+```
 
 # Fetch all the data from origin.
 
@@ -620,20 +616,20 @@ version, and stage #3 is the version you are merging from.
 
 ### Checking if you need to merge `master` into your feature branch
 
-- You can see what commits are in master but missing in your branch with: \
+- You can see what commits are in master but missing in your branch with:
 
-````
+```
 
-    > gll ..master
-
-
-    de51a7c saggese Improve script to help diffing trees in case of difficult merges. Add notes from reviews ( 5 hours ago) Sat Oct 5 11:24:11 2019 (origin/master, origin/HEAD, master)
+> gll ..master
 
 
-    8acd60c saggese Add a basic end-to-end unit test for the linter ( 19 hours ago) Fri Oct 4 21:28:09 2019 …
+de51a7c saggese Improve script to help diffing trees in case of difficult merges. Add notes from reviews ( 5 hours ago) Sat Oct 5 11:24:11 2019 (origin/master, origin/HEAD, master)
 
 
-    ```
+8acd60c saggese Add a basic end-to-end unit test for the linter ( 19 hours ago) Fri Oct 4 21:28:09 2019 …
+
+
+```
 
 - You want to `rebase` your feature branch onto `master`
 
@@ -641,18 +637,13 @@ version, and stage #3 is the version you are merging from.
 
 - This is useful if we want to focus on changes on a single dir
 
-````
-
+```
 > git ll master..PTask274 vendors/cme
-
 39a9e33 Julia PTask274 lint ( 2 days ago) Fri Sep 27 11:43:41 2019
-
 c8e7e1a Julia PTask268 modify according to review16 ( 2 days ago) Fri Sep 27
 11:41:47 2019
-
 a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26 17:13:33
 2019
-
 ```
 
 
@@ -675,7 +666,7 @@ vendors/first_rate/utils.py
 
 vendors/test/test_vendors.py
 
-````
+```
 
 
 ## Merging `master`
@@ -695,12 +686,15 @@ vendors/test/test_vendors.py
 
     ```
 
-- Checkout your feature branch \
-`> git checkout my_feature`
-- Merge stuff from `master` to `my_feature` \
-`> git merge master --no-ff`
-
+- Checkout your feature branch
+```
+> git checkout my_feature
+```
+- Merge stuff from `master` to `my_feature`
+```
+> git merge master --no-ff
 ... editor will open a message for the merge commit ...
+```
 
 
 
@@ -717,32 +711,14 @@ vendors/test/test_vendors.py
     ```
     > git checkout my_feature
     // See that you have that master doesn't have.
-
-
     > git ll origin/master..
-
-
     // See that master has that you don't have.
-
-
     > git ll ..origin/master
-
-
     > git rebase master
-
-
     > git ll ..origin/master
-
-
     // Now you see that there is nothing in master you don't have
-
-
-    > > git ll origin/master..
-
-
+    > git ll origin/master..
     // You can see that you are ahead of master
-
-
     ```
 
 
@@ -752,14 +728,10 @@ vendors/test/test_vendors.py
 - **Do not merge yourself unless explicitly requested by a reviewer**
 - Pull changes from remote `master` branch
 
-        ```
+```
 > git checkout master
-
-
-        > git pull
-
-
-        ```
+> git pull
+```
 
 - Merge your branch into `master` without fast-forward \
 `> git merge --no-ff my_feature`
@@ -793,13 +765,17 @@ vendors/test/test_vendors.py
 
 ## To check if supermodule and amp are in sync
 
-- Run the script: \
-`> dev_scripts/git/git_submodules_are_updated.sh`
+- Run the script:
+```
+> dev_scripts/git/git_submodules_are_updated.sh
+```
 
 ## Roll forward git submodules pointers:
 
-- Run the script: \
-`> dev_scripts/git/git_submodules_roll_fwd.sh`
+- Run the script:
+```
+> dev_scripts/git/git_submodules_roll_fwd.sh
+```
 
 ## To clean all the repos
 
@@ -816,17 +792,10 @@ vendors/test/test_vendors.py
 
 ## To force updating all the submodules
 
-- Run the script \
-`> dev_scripts/git/git_submodules_pull.sh` \
+- Run the script `> dev_scripts/git/git_submodules_pull.sh` 
 or
 
 ```
-
-
 > git submodule update --init --recursive`
-
-
 > git submodule foreach git pull --autostash
-
-
 ```
