@@ -18,9 +18,9 @@ def get_db_connection() -> Any:
     data node docker-compose.
     """
     connection = psycop.connect(
-        host="host.docker.internal",
+        host="localhost",
         dbname="airflow",
-        port=5532,
+        port=5432,
         user="postgres",
         password="postgres",
     )

@@ -1,12 +1,14 @@
 import argparse
 import logging
-
+from pathlib import Path
 import pandas as pd
 
 import helpers.hdbg as hdbg
+# from helpers import hparser
+# from helpers import hdbg
 import helpers.hparser as hparser
-import Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
-import Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
+import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.db_coingecko as sisebidb
+import sorrentum_sandbox.examples.ml_projects.Issue29_Team10_Implement_sandbox_for_coingecko.download_coingecko as sisebido
 """
 Download data from CoinGecko and save it into the DB.
 Use as:
@@ -81,7 +83,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     from_timestamp = str(args.from_timestamp)
     to_timestamp = str(args.to_timestamp)
     id = str(args.id)
-    downloader = sisebido.CGDownloader(api=args.api)
+    downloader = sisebido.CGDownloader()
     raw_data = downloader.download(id, from_timestamp, to_timestamp)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()

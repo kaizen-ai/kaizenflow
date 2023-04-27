@@ -6,7 +6,7 @@ import requests
 from pycoingecko import CoinGeckoAPI
 import helpers.hdatetime as hdateti
 import helpers.hdbg as hdbg
-import common.download as ssandown
+import sorrentum_sandbox.common.download as ssandown
 _LOG = logging.getLogger(__name__)
 ###ok
 class CGDownloader(ssandown.DataDownloader):
@@ -14,15 +14,18 @@ class CGDownloader(ssandown.DataDownloader):
     Class for downloading Coingecko Data for ETH and BTC
     """
 
-    def __init__(self, api: str):
-        self.api = api
+    # def __init__(self, api: str):
+    #     self.api = api
+    def __init__(self):
+        self = self
 
     def download(
         self, id: str, from_timestamp: str, to_timestamp: str, *args: Any, **kwargs: Any
     ) -> ssandown.RawData:
 
         # for symbol in self._UNIVERSE["coingecko"]:
-        cg = self.api
+        # cg = self.api
+        cg = CoinGeckoAPI()
         data = cg.get_coin_market_chart_range_by_id(
         id= id,
         vs_currency= 'usd',
