@@ -111,8 +111,8 @@ dominant decentralized alternatives lack this interface. We propose ``TLP", a
 protocol for decentralized exchange built around limit orders, at whose heart
 is a novel auction mechanism for price discovery, matching and clearing. While
 the auction mechanism has application beyond decentralized exchange, its
-features have immediate and perhaps their most important application to
-decentralized token exchange.
+features have immediate and application to efficient decentralized token
+exchange.
 \end{abstract}
 
 \tableofcontents
@@ -123,14 +123,11 @@ decentralized token exchange.
 % ###############################################################################
 \section{Introduction}
 
-% TODO(gp): Do we spell Deloc or DELOC?
-% TODO(gp): Should we switch to DELOCK?
-
-DELOC is a new protocol that enables decentralized token exchange using limit
-orders. It brings together the advantages of trading efficiency and ease-of-use
-of centralized exchanges with the transparency and self-custody of
-decentralized approaches, without the risk of impermanent loss, contrary to
-automatic market maker-based approaches.
+TLP (pronounced ``tulip") is a new protocol that enables decentralized token
+exchange using limit orders. It brings together the advantages of trading
+efficiency and ease-of-use of centralized exchanges with the transparency and
+self-custody of decentralized approaches, without the risk of impermanent loss,
+contrary to automatic market maker-based approaches.
 
 % ===============================================================================
 \subsection{Token swap as a financial primitive}
@@ -264,9 +261,9 @@ exchange is cost of computation. Continual submission and cancelation of orders
 incurs costs, as does the ongoing process of matching supply and demand.
 
 % ===============================================================================
-\subsection{The advantages of DELOC}
+\subsection{The advantages of TLP}
 
-DELOC retains the key advantages of on-chain decentralized exchange while
+TLP retains the key advantages of on-chain decentralized exchange while
 overcoming the issues of cost. Additionally, it includes an implementation
 that preserves the familiar LOB interface but deepens the pool of available
 liquidity in matching supply and demand.
@@ -289,9 +286,9 @@ other high-volume traders to execute quickly with minimal market impact.
 
 \subsubsection{DaoSwap}
 DaoSwap performs price discovery by matching supply and demand at regular time
-intervals. In the simplest case, the clearing price is determined by a
-Walrasian-style auction (\cite{Wa}). In cases where liquidity is pooled more
-broadly, the auction clearing mechanism satisfies a collection of inequalities.
+intervals. In the simplest case, it resembles a Walrasian-style auction
+\cite{Wa}. In cases where liquidity is pooled more broadly, the auction clearing
+mechanism satisfies a collection of inequalities.
 
 \subsubsection{Advantages of DaoCross and DaoSwap}
 While DaoSwap and DaoCross differ in how the token exchange rate is determined,
@@ -302,7 +299,7 @@ both share several common advantages:
           peer-to-peer without incurring spread costs
 	\item Capital efficiency:
 	      participants provide liquidity only when
-	      they wish to trade, and only in the amount they wish to trade
+	      they wish to trade, and only in the amount that they wish to trade
 	\item No impermanent loss:
 	      liquidity providers are not exposed to the risk of impermanent loss
 	      (a form of unrealized loss that becomes realized upon withdrawing
@@ -317,7 +314,7 @@ both share several common advantages:
 	      scalping, and spoofing, which are known issues seen with continuous
 	      limit order books
 	\item Ease-of-use: the interaction between buyers and sellers occurs
-	      through smart contracts, with a website front-end available
+	      through smart contracts, with a website front-end planned
 \end{enumerate}
 
 \subsubsection{Comparison with alternative solutions}
@@ -589,7 +586,7 @@ This compact notation is more convenient for expressing and analyzing
 constraints imposed by limit orders.
 
 % ===============================================================================
-\subsection{Building a demand curve with limit orders}
+\subsection{Building a supply/demand curve with limit orders}
 
 A market participant may express a personalized supply or demand curve with
 limit orders.
@@ -614,10 +611,10 @@ where $\mathbb{1}$ denotes the indicator function. We allow $p_{j + 1} = p_j$.
 This representation simply expresses the fact that $Q_+(p)$ only changes at
 discrete price points (we have assumed price is discrete).
 
-To convert $Q_+(p)$ to a set of limit orders, we begin with the highest price
+To convert $Q_+(p)$ into a set of limit orders, we begin with the highest price
 with demand, $p_{n + 1}$, and create the buy limit order $o_n$ with limit price
 $p_{n + 1}$ and quantity $Q_n$. Next, we create buy limit order $o_{n - 1}$ with
-limit price $p_n$ and quantity $q_{n - 1} - q_n$. Generically, limit order
+limit price $p_n$ and quantity $Q_{n - 1} - Q_n$. Generically, limit order
 $o_k$ is a buy limit order with limit price $p_{k + 1}$:
 \[
     p(o_k) = p_{k + 1}
@@ -631,20 +628,19 @@ $p_{j + 1}$ or better, each $q(o_k) > 0$.
 
 Note that the case for expressing a supply curve is analogous, and sell limit
 orders are used instead. The preceding discussion has a continuous analogue,
-though in practice minimal tick increments. The key assumption, almost always
-satisfied in practice, is that cumulative supply and demand are monotonic in
-price.
+though in practice minimal tick increments mean that the setting is discrete.
+The key assumption, almost always satisfied in practice, is that cumulative
+supply and demand are monotonic in price.
 
 % ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
-In DELOC, orders are collected from users during a finite period of time,
+In TLP, orders are collected from users during a finite period of time,
 after which tokens are redistributed among users according to their limit
 orders.
 
 Effective prices for the tokens are determined based on the available limit
 orders, constraints defining different swap problems, and an optimization
 criterion designed to maximize the welfare of the participants in the swap.
-
 At the same time, orders are matched in (generically) many-to-many relationships.
 
 Swaps between base/quote token pairs can occur
@@ -691,10 +687,10 @@ we let
     %      (i.e., $p_\pi^*)$, depending on constraints imposed on the exchange problem
     %\item $p_{\pi\_per\_\tau}^*$ (or $p_{quote\_per\_base}^*$ denote the actual exchange
     %      rate between the quote and base tokens for the swap $o$
-    \item $p_{quote\_per\_base}^*$ denote the actual exchange rate between the
+    \item $p_{quote\_per\_base}^*$ denote the unique exchange rate between the
           quote and base tokens for all the swaps (if it exists)
-	T\item $p_{quote\_per\_base}^*$ denotes exchange rate between the quote
-          and base tokens for all the swaps (if it exists)
+	\item $p_{quote\_per\_base}^*$ denotes the unique exchange rate between the
+	      quote and base tokens for all the swaps (if it exists)
 \end{itemize}
 By convention, we require that
 \[
@@ -715,8 +711,8 @@ $\depositaddress$ in favor of emphasizing the amounts of token exchanged:
 \begin{itemize}
     \item An order \texttt{(\buy, 1.0, $\ETH$, $\BTC$)} means buying 1
           $\ETH$ in exchange for 0.2 $\BTC$
-    \item An order \texttt{(\sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$,
-          receiving the corresponding amount of 0.2 $\BTC$
+    \item An order \texttt{(\sell, 1.0, $\ETH$, $\BTC$)} means selling 1 $\ETH$
+          and receiving 0.2 $\BTC$
     \item An order \texttt{(\buy, 1.0, $\BTC$, $\ETH$)} means buying 1 $\BTC$,
           paying with 5 $\ETH$
     \item An order \texttt{(\sell, 1.0, $\BTC$, $\ETH$)} means selling 
@@ -790,12 +786,12 @@ buy (base token), then $p_i$ represents an upper bound, and the opposite is true
 if the action is to sell:
 \begin{equation}\label{limit_order_price_constraint}
     \begin{cases}
-        q_{i, \tau}^* \leq q_{i, \pi}^* p_i & a_{i, \tau} = 1 \\
-        q_{i, \tau}^* \geq q_{i, \pi}^* p_i & a_{i, \tau} = -1 \\
+        q_{i, \tau}^* \leq q_{i, \pi}^* p_i, & a_{i, \tau} = 1 \\
+        q_{i, \tau}^* \geq q_{i, \pi}^* p_i, & a_{i, \tau} = -1 \\
     \end{cases}
 \end{equation}
 Here we have multiplied through by $q_{i, \pi}^*$, with the result being that
-the inequality holds in the event that $q_{i, \pi}^*$ or $q_{i, \tau}^*$ is
+the inequality also holds in the event that $q_{i, \pi}^*$ or $q_{i, \tau}^*$ is
 zero.
 
 % All the constraints that are common
@@ -865,23 +861,16 @@ $o_j$, and
 if they play opposite roles.
 
 We rewrite this as
-\begin{align*}
-    q_{i, \pi}^* q_{j, \tau}^* - q_{i, \tau}^* q_{j, \pi}^* = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
-    q_{i, \pi}^* q_{j, \pi}^* - q_{i, \tau}^* q_{j, \tau}^* = 0 & & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j
-\end{align*}
+\begin{equation}
+    \begin{cases}
+        q_{i, \pi}^* q_{j, \tau}^* - q_{i, \tau}^* q_{j, \pi}^* = 0, & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
+        q_{i, \pi}^* q_{j, \pi}^* - q_{i, \tau}^* q_{j, \tau}^* = 0, & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
+    \end{cases}
+\label{unique_price_constraint}
+\end{equation}
 
 The unique clearing price constraint prevents the problem from falling in the
-domain of linear programming.
-
-%Note that limit order constraints as formulated in the DaoCross case also hint
-%at this nonlinearity, as they involve conjunctions with a global clearing
-%price (which DaoSwap must determine).
-
-%TODO(gp): explain better, cite...
-%The general solution of the DaoSwap problem must satisfy a set of non-linear,
-%combinatorial constraints, whose solution is NP-complete.
-
-%It can still be solved in an effective way with solvers like...
+domain of linear programming (to be discussed in the sequel).
 
 % ===============================================================================
 \subsection{No arbitrage constraint}
@@ -899,7 +888,7 @@ this property is appealing in terms of fairness. On the other hand, any such
 arbitrages are not exploitable in practice (the swap is atomic), and in any
 case, the additional constraints are nonlinear in terms of how they constrain
 the problem and nonlinear in terms of their growth in the number of distinct
-tokens.
+tokens. We present how such constraints may be expressed, if desired.
 
 Let $\Gamma$ denote the directed graph whose vertices $V$ are given by the set
 of elements $T$, and whose directed edges $E$ are given by
@@ -907,14 +896,14 @@ of elements $T$, and whose directed edges $E$ are given by
     E = \bigcup_{\substack{i \in \{1, \ldots, n\} \\ \pi_i, \tau_i \in T}}
     \left( (\pi_i, \tau_i) \cup (\tau_i, \pi_i) \right)
 \]
-Each edge $(b, a) \in E$ seek to give the weight $w_{a, b}$. Note that
+Each edge $(b, a) \in E$ we give the weight $w_{a, b}$. Note that
 $w_{a, b}$ and $w_{b, a}$ are distinct.
 
 Let $C$ denote the collection of all simple cycles of $\Gamma$.
 For an simple cycle $\gamma \in C$, consecutively enumerate the vertices
 (with starting place arbitrary) by $c_j$ for $j = 1, \ldots, |\gamma|$.
 Let $c_0 := c_{|\gamma|}$ for notational convenience. Then
-the \emph{no arbitrage} constraints states that, for each $\gamma \in C$, we have
+the \emph{no arbitrage} constraints state that, for each $\gamma \in C$, we have
 \[
     \sum_{j = 0}^{|\gamma|} w_{j, j + 1} = 0
 \]
@@ -922,7 +911,7 @@ In the case of a two-token cycle, this constraint reduces to ensuring that
 there is a unique exchange rate between the pair of tokens (changing the roles
 of the base and quote tokens in limit orders inverts the exchange rate).
 For an efficient algorithm for finding all elementary cycles, see \cite{Jo75}
-as well as \cite{MaDe76} for a comparison.
+as well as \cite{MaDe76} for a comparison of various algorithms.
 
 % ===============================================================================
 \subsection{Maximization criteria in a token swap}
@@ -932,8 +921,11 @@ price, aggregate supply meets aggregate demand (with priority rules used in
 the discrete setting to handle discretization effects). This may be framed
 as a max-min problem (see \cite{BoBoDoGo18}[\S 1.1.1]).
 
-We propose maximizing the total quantity of token swapped, a simple linear
-constraint.
+We propose maximizing the total quantity of token swapped, which is a simple
+linear constraint. That is, the objective to maximize is
+\begin{equation}\label{objective_function}
+\sum_{i = 1}^n q_{i, \pi}^* + q_{i, \tau}^*
+\end{equation}
 
 \subsubsection{Invariance under token redenomination}
 Note that any feasible solution that satisfies the constraints is invariant
@@ -944,11 +936,12 @@ solution to the rescaled problem.
 
 What remains to show is that the optimal solution to the original problem
 transforms into the optimal solution to the rescaled problem (even though
-the optimal values of the objective are generally different).
+the optimal values of the objective \eqref{objective_function} are generally
+different).
 For this, we may take a feasible solution to the original problem and map
 it to its corresponding feasible solution in the rescaled problem. The
 only part of the objective function that changes is the contribution of
-the rescaled token, which gets rescaled linearly. The property of being
+the rescaled token, which is rescaled linearly. The property of being
 a local maximum is preserved by this transformation (which can be seen by
 considering partial derivatives), and since any local
 maximum is a global maximum (due to convexity), the transformed solution
@@ -1037,9 +1030,10 @@ at least 2 $\tB$ per unit of $\tA$", which corresponds to
 
 % ===============================================================================
 \subsection{Order normalization}
-When the exchange rate between two tokens is known, it is possible to convert
-buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders where all
-orders have token $\tB$ as the base token, according to the transformation below.
+When the exchange rate between two tokens is known, then it is possible to
+convert buy/sell orders for both $\tA$ and $\tB$ tokens into buy/sell orders
+where all orders have token $\tB$ as the base token, according to the
+transformation below.
 
 Let
 \[
@@ -1097,14 +1091,10 @@ The DaoSwap problem is to find nonnegative quantities
 $q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the constraints
 \eqref{limit_order_quantity_constraint},
 \eqref{limit_order_price_constraint}, and \eqref{token_conservation_law},
-such that the objective function
-\begin{equation}\label{objective_function}
-    \sum_{i = 1}^n q_{i, \pi}^* + q_{i, \tau}^*
-\end{equation}
-is maximized.
+such that the objective function \eqref{objective_function} is maximized.
 \end{problem}
 
-\begin{problem}[DaoCross token exchange]
+\begin{problem}[DaoCross token exchange]\label{problem_daocross}
 Let $\{o_i\}_{i = 1}^n$ and associated constraints be as in Problem
 \ref{problem_daoswap}.
 Let $\{p_i^*\}$ denote a collection of reference prices, such that
@@ -1112,7 +1102,7 @@ each $p_i^*$ only depends upon the base token $\pi_i$ and quote
 token $\tau_i$ of order $o_i$.
 Introduce the reference price constraint
 \begin{equation}\label{reference_price_constraint}
-    a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*
+    a_{i, \tau} q_{i, \tau}^* = q_{i, \pi}^* p_i^*, \quad i \in \{1, \ldots, n\}
 \end{equation}
 The DaoCross problem is to find nonnegative quantities
 $q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the constraints
@@ -1129,8 +1119,16 @@ price equality \eqref{reference_price_constraint} are given by
     q_{i, \tau}^* = q_{i, \pi}^* = 0
 \]
 
-\begin{problem}[DaoSwap token exchange with additional constraints]
-Let..
+\begin{problem}[DaoSwap token exchange with unique clearing prices]
+\label{problem_daoswap_with_unique_prices}
+Let $\{o_i\}_{i = 1}^n$ and associated constraints be as in Problem
+\ref{problem_daoswap}.
+The DaoSwap problem with unique clearing prices is to find nonnegative
+quantities $q_{i, \pi}^*, q_{i, \tau}^*$, $i = 1, \ldots, n$, that satisfy the
+constraints \eqref{limit_order_quantity_constraint},
+\eqref{limit_order_price_constraint}, and \eqref{token_conservation_law},
+\eqref{unique_price_constraint}
+such that the objective function \eqref{objective_function} is maximized.
 \end{problem}
 
 % ===============================================================================
@@ -1174,42 +1172,27 @@ may be expressed as
 
 For \eqref{token_conservation_law}, we introduce a matrix $R$, which expresses
 the equality constraint (which could be expressed as two inequality constraints
-in canonical form).
-
-We now collect the constraints that must be satisfied:
-\begin{equation}
-	\begin{cases}
-        x_{i1} \geq 0, \quad x_{i2} \geq 0 & \forall i \in \{1, \ldots, n\} \\
-        % x_{i1} = 0 \iff x_{i2} = 0 & \forall i \in \{1, \ldots, n\} \\
-        x_{i1} \leq q_i & \forall i \in \{1, \ldots, n\} \\
-        a_{i2} x_{i2} \leq x_{i1} p_i & \forall i \in \{1, \ldots, n\} \\
-        %x_{i1} x_{j2} - x_{i2} x_{j1} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \pi_j \land \tau_i = \tau_j \\
-        %x_{i1} x_{j1} - x_{i2} x_{j2} = 0 & \forall i, j \in \{1, \ldots, n\}: \pi_i = \tau_j \land \tau_i = \pi_j \\
-        \sum_{i=1}^n \mathcal{T}_u(\pi_i) \cdot a_{i1} x_{i1}
-        + \mathcal{T}_u(\tau_i) \cdot a_{i2} x_{i2}
-        = 0 & \forall u \in T
-	\end{cases}
-\end{equation}
-
-Given the constraints, our goal is to find quantities $x_{i1}, x_{i2}$ such
-that exchanged quantity is maximized.
-
-Note that this problem falls in domain of linear programming. We may arrange
-the nonnegative quantities $x_{i1}, x_{i2}$, $i \in \{1, \ldots, n\}$ in a
-vector $x$. Our goal is to find $x$ that maximizes
+in canonical form) such that it becomes
 \[
-    \mathbb{1}^T x,
+    R x = 0
 \]
-where $\mathbb{1}$ is the $2n$-dimensional vector of all ones,
-subject to
+
+Then Problem \ref{problem_daoswap} may be expressed as the problem of maximizing
 \[
-    A x \leq b
+    \mathbb{1}^T x
 \]
-(TODO(Paul): reformulate the constraints using $A$ and $b$)
-and
+subject to the inequality constraints
 \[
-    x \geq 0.
+    \begin{bmatrix} Q & P & -I \end{bmatrix} x \leq
+    \begin{bmatrix} q & 0 & 0 \end{bmatrix}
 \]
+and the equality constraints
+\[
+    R x = 0
+\]
+Note that this problem falls in domain of linear programming and may be solved
+via standard simplex or interior point methods.
+
 The problem is polynomial-time in the ideal setting of infinite divisibility.
 Discretization (and renormalization) move the problem to the domain of
 integer programming, which is NP-hard.
@@ -1218,78 +1201,104 @@ In our setting, where the typical exchanged value is much larger than the
 discretization grid, obtaining a linear programming solution and
 discretizing after-the-fact may be acceptable in practice.
 
-\subsubsection{DaoCross problem as simplified DaoSwap problem}
-In the DaoCross set-up, the price of the tokens involved in the swap is
-determined by an external oracle.
-This allows simplifying the general problem by applying the equivalence
-principle between orders and removing the non-linearity from the set of
-inequalities above.
+\subsubsection{DaoDross as a linear program with additional constraints}
 
-In the case of each order $o_i$, the boolean condition $c_i$ (which compares
-the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
-or not (the solution does not need to consider both branches):
-\begin{equation*}
-	\begin{cases}
-		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
-		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
-	\end{cases}.
-\end{equation*}
-TODO: Comment on quote token amount exchanged. Verify supply meets demand.
+We proceed as in the case of DaoSwap, but add the additional equality
+constraint \eqref{reference_price_constraint}, which may similarly
+may be expressed in matrix form.
 
-The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
-prevails, then order $o_i$ is effectively removed from problem) that can be
-solved with various efficient methods (e.g., simplex-method).
+As in the case of DaoSwap, DaoCross is a linear program, and so may be solved
+efficiently.
 
-TODO(gp): check
+\subsubsection{DaoSwap with unique clearing prices}
 
-\subsubsection{Limit price in terms of quantities}
-Assume that a buy order is:
-\[
-	o = (\buy q, \pi, p, \tau)
-\]
+Problem \ref{problem_daoswap_with_unique_prices} differs from
+Problem \ref{problem_daoswap} in that constraints
+\eqref{unique_price_constraint} must hold. These constraints are quadratic
+rather than linear in $x$, which means that Problem
+\ref{problem_daoswap_with_unique_prices} falls outside of the domain of
+linear programming.
 
-corresponds to the natural language description:
-``the user $A$ commits to buy up to $q$ units of the token $\pi$ in exchange
-for token $\tau$ up to a limit price of $p$ $\tau$ for a single token
-$\pi$".
+Due to the fact that the constraint matrix is not positive definite and
+the fact that the matrix expresses a constraint rather than part of an
+objective function, it does not appear that the problem admits a
+quadratic programming formulation.
 
-Assume that this exchange actually takes place between the user $A$ and a user
-$B$ (without loss of generality with respect to $B$ being an aggregate of
-multiple users).
+% \subsubsection{DaoCross problem as simplified DaoSwap problem}
+% In the DaoCross set-up, the price of the tokens involved in the swap is
+% determined by an external oracle.
+% This allows simplifying the general problem by applying the equivalence
+% principle between orders and removing the non-linearity from the set of
+% inequalities above.
+%
+% In the case of each order $o_i$, the boolean condition $c_i$ (which compares
+% the actual price $p^*$ and the limit order price $p(o_i)$) is either verified
+% or not (the solution does not need to consider both branches):
+% \begin{equation*}
+% 	\begin{cases}
+% 		0 \le q_{base}^*(o_i) \le q_{base}^* & \text{ if } c_i       \\
+% 		q_{base}^*(o_i) = 0                & \text{ if } \lnot c_i \\
+% 	\end{cases}.
+% \end{equation*}
+% TODO: Comment on quote token amount exchanged. Verify supply meets demand.
+%
+% The problem then becomes a set of linear inequalities (in fact, if $\lnot c_i$
+% prevails, then order $o_i$ is effectively removed from problem) that can be
+% solved with various efficient methods (e.g., simplex-method).
 
-Assume that the prices of the tokens $\pi$ and $\tau$ are both expressed with
-respect to a common numeraire, $p_{\pi}$ and $p_{\tau}$
-
-Consider the flows between A and B of both tokens and value:
-
-A gives to B:
-- $q^*_{\tau}$ tokens $\tau$
-- $q_{\pi} p_{\pi}$ in value with respect to the numeraire
-
-A receives from B
-- $q^*_{\pi}$ tokens $\pi$
-- $q_{\tau} p_{\tau}$ in value with respect to the numeraire
-
-- From the limit order constraint we know that
-  $$p_{\pi} \le p p_{\tau}$$
-  $$\frac{p_{\pi}}{p_{\tau}} \le p$$
-
-\subsubsection{Example of limit price in terms of quantities}
-Assume that an order is:
-\[
-  (\buy, \textnormal{\texttt{3.2}}, \ETH, \textnormal{\texttt{4.0}}, \BTC)
-\]
-
-corresponds to the natural language description:
-``the user commits to buy up to 3.2 units of $\ETH$ in exchange for $\BTC$ up
-to a $\limitprice$ of 4.0 $\BTC$ per $\ETH$"
-
-The limit price means that 1 $\ETH$ is worth at most 4 $\BTC$
+% TODO(gp): check
+%
+% \subsubsection{Limit price in terms of quantities}
+% Assume that a buy order is:
+% \[
+% 	o = (\buy q, \pi, p, \tau)
+% \]
+%
+% corresponds to the natural language description:
+% ``the user $A$ commits to buy up to $q$ units of the token $\pi$ in exchange
+% for token $\tau$ up to a limit price of $p$ $\tau$ for a single token
+% $\pi$".
+%
+% Assume that this exchange actually takes place between the user $A$ and a user
+% $B$ (without loss of generality with respect to $B$ being an aggregate of
+% multiple users).
+%
+% Assume that the prices of the tokens $\pi$ and $\tau$ are both expressed with
+% respect to a common numeraire, $p_{\pi}$ and $p_{\tau}$
+%
+% Consider the flows between A and B of both tokens and value:
+%
+% A gives to B:
+% - $q^*_{\tau}$ tokens $\tau$
+% - $q_{\pi} p_{\pi}$ in value with respect to the numeraire
+%
+% A receives from B
+% - $q^*_{\pi}$ tokens $\pi$
+% - $q_{\tau} p_{\tau}$ in value with respect to the numeraire
+%
+% - From the limit order constraint we know that
+%   $$p_{\pi} \le p p_{\tau}$$
+%   $$\frac{p_{\pi}}{p_{\tau}} \le p$$
+%
+% \subsubsection{Example of limit price in terms of quantities}
+% Assume that an order is:
+% \[
+%   (\buy, \textnormal{\texttt{3.2}}, \ETH, \textnormal{\texttt{4.0}}, \BTC)
+% \]
+%
+% corresponds to the natural language description:
+% ``the user commits to buy up to 3.2 units of $\ETH$ in exchange for $\BTC$ up
+% to a $\limitprice$ of 4.0 $\BTC$ per $\ETH$"
+%
+% The limit price means that 1 $\ETH$ is worth at most 4 $\BTC$
 
 % ###############################################################################
 \section{DaoCross order matching with two tokens}
 
-% TODO(Paul): This section discusses a special case of DaoCross.
+In this section, we consider a simplified version of Problem
+\ref{problem_daocross}. In particular, we only allow two tokens in the pool
+of liquidity, and we use order normalization to transform orders so that
+there is a unique base token and unique quote token across all orders.
 
 % ===============================================================================
 \subsection{DaoCross reference clearing prices}
@@ -1388,7 +1397,7 @@ time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
 
 % ###############################################################################
 \section{Fees and tokenomics}
-DELOC charges a fee on each transaction based on the exchanged tokens.
+TLP charges a fee on each transaction based on the exchanged tokens.
 E.g., a transaction requiring
 
 % ###############################################################################
@@ -1396,16 +1405,16 @@ E.g., a transaction requiring
 
 % ===============================================================================
 \subsection{DaoCross and DaoSwap Architecture}
-DELOC addresses cost issues primarily in two ways: (1) discretizing time; and
+TLP addresses cost issues primarily in two ways: (1) discretizing time; and
 (2) scaling with layer 2 solutions. By addressing these issues, we combine the
 novel advantages of decentralized exchange with the utility and ease-of-use of
 the familiar interface of limit orders.
 
 % ===============================================================================
 \subsection{Off-chain computation}
-Currently DELOC offloads some computations to external oracles, due to current
+Currently TLP offloads some computations to external oracles, due to current
 computational limitation of blockchains. We do not believe that this is detrimental
-to the security and decentralization level of DELOC as long as these computations
+to the security and decentralization level of TLP as long as these computations
 are provably correct.
 
 For instance, although the solution of the DaoSwap problem is NP-hard, verifying
@@ -1429,8 +1438,6 @@ currency pairs is reached.
 
 \section{Alternative solutions for token swapping}
 \label{AlSoToSw}
-
-TODO(gp): Add colors: in green what's good, yellow, red
 
 TODO(gp): Reorg, maybe from best to worst? DaoSwap, LOB, DaoCross, AMM
 
@@ -1689,112 +1696,112 @@ Also a current trend is for crypto holders to find yield to benefit from
 holding crypto. AMMs satisfied the need for ways to extract yields from holding
 coins.
 
-We don't think AMM will completely replaced but new mechanisms are needed LPs
+We don't think AMM will be completely replaced but new mechanisms are needed LPs
 need to be compensated with revenues to offset the cost of their adverse
 selection (quantified and characterized by the LVR paper)
 
-% ===============================================================================
-\subsection{CPMM as an LOB}
-TODO(Paul): Replace with a reference to the derivation in \cite{Yo20}, and
-focus on the difference in stylized facts between the LOB a CPMM implies
-versus the LOBs seen in LOB-based markets. Note that some conventions here
-vs the paper are slightly different.
-
-Here we reinterpret a constant product market maker as a limit order order book
-that a market participant may transact against (e.g., hit a bid or lift an
-offer). In a traditional limit order book, one expects frequent limit order
-cancellation and submission in response to market activity.
-
-Let $\tA$ and $\tB$ be two tokens in a CPMM and suppose that the available
-supply of $\tA$ and $\tB$ in the pool at time $t_0$ are, respectively,
-$a_0$ and $b_0$. We set $k = a_0 b_0$. Though neither token $\tA$ nor token
-$\tB$ enjoys a distinguished role, for the purposes of this discussion we
-designate token $\tA$ the base token and token $\tB$ the quote token
-(due to the symmetry, the subsequent analysis continues to hold with the roles
-reversed). From this perspective, we think of placing orders to either buy or
-sell token $\tA$, with price quoted in token $\tB$ per unit of $\tA$.
-
-\subsubsection{Buy order}
-Suppose we wish to place an order to buy $\delta a$ of token $\tA$. This
-corresponds to removing an amount of $\delta a$ from the pool, which must
-be compensated for by adding (paying) some amount $\delta b$ to the pool.
-The constant product constraint ensures
-\[
-	a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
-\]
-which upon rearrangement leads to
-\[
-	\delta b = b_0 \frac{\delta a}{a_0 - \delta a}
-\]
-The effective cost of buying $\delta a$ units of $\tA$ is given by
-\[
-	\frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
-\]
-If we make the substitution $b_0 = k / a_0$, this becomes
-\[
-	\frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
-\]
-In the idealized setting of infinite divisibility of tokens, the
-instantaneous price of buying $\tA$ at point $(a_0, b_0)$ is
-\[
-	\frac{b_0}{a_0} = \frac{k}{a_0^2}
-\]
-For convenience, define $p_0$ as this price:
-\[
-    p_0 := \frac{b_0}{a_0} = \frac{k}{a_0^2}
-\]
-Note that as more of token $\tA$ is purchased (more $\tA$ is withdrawn from
-the pool), the price of token $\tA$ in the pool (in terms of the quote token)
-goes up, as expected.
-
-\subsubsection{Supply liquidity}
-TODO(Paul): Here we use $p$ as effective price of transacting quantity $q$.
-Using cumulative quantity up to a given (max) price $p$ (as in \cite{Yo20}) is
-more natural for some analyses.
-
-Rephrasing, suppose $q$ denotes quantity of token $\tA$ that we wish to
-purchase. If the current state of the market is $a_0, b_0$, then the price $p$
-of purchasing quantity $q$ is
-\[
-	p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
-\]
-For brevity, we drop the functional dependence. Reexpressing in
-terms of quantity, we have
-\[
-    q = a_0 - \frac{k}{a_0 p} = a_0 \left(1 - \frac{p_0}{p}\right)
-\]
-which expresses cumulative quantity $q$ available at average price $p$.
-
-\subsubsection{Slippage and post-trade state}
-Measure slippage as the relative difference between effective buy price and
-market price $p_0$. We calculate
-\[
-    \frac{p - p_0}{p_0} = \frac{a_0}{a_0 - q} - 1 = \frac{q}{a_0 - q}
-\]
-Note that this only depends upon amount of $\tA$ in the pool and the purchase
-quantity. TODO(Paul): find and cite the earliest references for this.
-Note that this is approximately linear in $q$ for large $a_0$ (in other
-words, market impact is approximately linear when there is sufficient
-depth). Note that this is independent of volatility and turnover.
-
-When a buy transaction takes places, the market price changes from
-\[
-	p_0 = \frac{b_0}{a_0}
-\]
-to
-\[
-	p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
-\]
-Note that this is greater than the effective purchase price of
-\[
-	\frac{b_0}{a_0 - \delta a},
-\]
-which is analogous to what happens when multiple levels of a limit order book
-are cleared (the new best offer is greater than the effective price of the buy
-order that cleared multiple levels of offers).
-
-Following a transaction, marginal quantity readjusts given the new position
-$(a_1, b_1)$ of the book.
+% % ===============================================================================
+% \subsection{CPMM as an LOB}
+% TODO(Paul): Replace with a reference to the derivation in \cite{Yo20}, and
+% focus on the difference in stylized facts between the LOB a CPMM implies
+% versus the LOBs seen in LOB-based markets. Note that some conventions here
+% vs the paper are slightly different.
+%
+% Here we reinterpret a constant product market maker as a limit order order book
+% that a market participant may transact against (e.g., hit a bid or lift an
+% offer). In a traditional limit order book, one expects frequent limit order
+% cancellation and submission in response to market activity.
+%
+% Let $\tA$ and $\tB$ be two tokens in a CPMM and suppose that the available
+% supply of $\tA$ and $\tB$ in the pool at time $t_0$ are, respectively,
+% $a_0$ and $b_0$. We set $k = a_0 b_0$. Though neither token $\tA$ nor token
+% $\tB$ enjoys a distinguished role, for the purposes of this discussion we
+% designate token $\tA$ the base token and token $\tB$ the quote token
+% (due to the symmetry, the subsequent analysis continues to hold with the roles
+% reversed). From this perspective, we think of placing orders to either buy or
+% sell token $\tA$, with price quoted in token $\tB$ per unit of $\tA$.
+%
+% \subsubsection{Buy order}
+% Suppose we wish to place an order to buy $\delta a$ of token $\tA$. This
+% corresponds to removing an amount of $\delta a$ from the pool, which must
+% be compensated for by adding (paying) some amount $\delta b$ to the pool.
+% The constant product constraint ensures
+% \[
+% 	a_0 b_0 = (a_0 - \delta a) (b_0 + \delta b)
+% \]
+% which upon rearrangement leads to
+% \[
+% 	\delta b = b_0 \frac{\delta a}{a_0 - \delta a}
+% \]
+% The effective cost of buying $\delta a$ units of $\tA$ is given by
+% \[
+% 	\frac{\delta b}{\delta a} = \frac{b_0}{a_0 - \delta a}
+% \]
+% If we make the substitution $b_0 = k / a_0$, this becomes
+% \[
+% 	\frac{\delta b}{\delta a} = \frac{k}{a_0(a_0 - \delta a)}
+% \]
+% In the idealized setting of infinite divisibility of tokens, the
+% instantaneous price of buying $\tA$ at point $(a_0, b_0)$ is
+% \[
+% 	\frac{b_0}{a_0} = \frac{k}{a_0^2}
+% \]
+% For convenience, define $p_0$ as this price:
+% \[
+%     p_0 := \frac{b_0}{a_0} = \frac{k}{a_0^2}
+% \]
+% Note that as more of token $\tA$ is purchased (more $\tA$ is withdrawn from
+% the pool), the price of token $\tA$ in the pool (in terms of the quote token)
+% goes up, as expected.
+%
+% \subsubsection{Supply liquidity}
+% TODO(Paul): Here we use $p$ as effective price of transacting quantity $q$.
+% Using cumulative quantity up to a given (max) price $p$ (as in \cite{Yo20}) is
+% more natural for some analyses.
+%
+% Rephrasing, suppose $q$ denotes quantity of token $\tA$ that we wish to
+% purchase. If the current state of the market is $a_0, b_0$, then the price $p$
+% of purchasing quantity $q$ is
+% \[
+% 	p(a_0, b_0, q) = \frac{k}{a_0 (a_0 - q)}
+% \]
+% For brevity, we drop the functional dependence. Reexpressing in
+% terms of quantity, we have
+% \[
+%     q = a_0 - \frac{k}{a_0 p} = a_0 \left(1 - \frac{p_0}{p}\right)
+% \]
+% which expresses cumulative quantity $q$ available at average price $p$.
+%
+% \subsubsection{Slippage and post-trade state}
+% Measure slippage as the relative difference between effective buy price and
+% market price $p_0$. We calculate
+% \[
+%     \frac{p - p_0}{p_0} = \frac{a_0}{a_0 - q} - 1 = \frac{q}{a_0 - q}
+% \]
+% Note that this only depends upon amount of $\tA$ in the pool and the purchase
+% quantity. TODO(Paul): find and cite the earliest references for this.
+% Note that this is approximately linear in $q$ for large $a_0$ (in other
+% words, market impact is approximately linear when there is sufficient
+% depth). Note that this is independent of volatility and turnover.
+%
+% When a buy transaction takes places, the market price changes from
+% \[
+% 	p_0 = \frac{b_0}{a_0}
+% \]
+% to
+% \[
+% 	p_1 = \frac{b_0 + \delta b}{a_0 - \delta a}.
+% \]
+% Note that this is greater than the effective purchase price of
+% \[
+% 	\frac{b_0}{a_0 - \delta a},
+% \]
+% which is analogous to what happens when multiple levels of a limit order book
+% are cleared (the new best offer is greater than the effective price of the buy
+% order that cleared multiple levels of offers).
+%
+% Following a transaction, marginal quantity readjusts given the new position
+% $(a_1, b_1)$ of the book.
 
 % ###############################################################################
 \bibliography{Daobib}
