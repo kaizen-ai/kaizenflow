@@ -294,27 +294,27 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 
 ```
 
-            > git checkout PTask354_INFRA_Populate_S3_bucket
+> git checkout PTask354_INFRA_Populate_S3_bucket
 
 
-            > git pull
+> git pull
 
 
-            > git merge master
+> git merge master
 
 
-            ```
+```
 
         - Resolve conflicts
 
-            ```
+```
 
 > git commit
 
-            > git pull
+> git pull
 
 
-            ```
+```
 
 - Ask Git if the branch is merged
 - One approach is to ask Git if all the changes in master are also in the branch
@@ -334,28 +334,30 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 - Manually check if there is any textual difference \- Another approach is to
   check what the differences are between the branch and `origin/master`
 
-              ```
+```
 
-  > git log master..HEAD
+> git log master..HEAD
 
-              6465b0c saggese, 25 seconds ago : Merge branch 'master' into PTask354_INFRA_Populate_S3_bucket  (HEAD -> PTask354_INFRA_Populate_S3_bucket, origin/PTask354_INFRA_Populate_S3_bucket)
-
-
-              > git log HEAD..master
+6465b0c saggese, 25 seconds ago : Merge branch 'master' into PTask354_INFRA_Populate_S3_bucket  (HEAD -> PTask354_INFRA_Populate_S3_bucket, origin/PTask354_INFRA_Populate_S3_bucket)
 
 
-              ```
+> git log HEAD..master
+
+
+```
 
       - Here we see that there are no textual differences
       - So we can either merge the branch into `master` or just kill directly
 
-- Kill-kill-kill! \- To delete both the local and remote branch you can do
+- Kill-kill-kill!
+- To delete both the local and remote branch you can do
 
-              ```
+```
 
-  > git branch -d PTask354_INFRA_Populate_S3_bucket
+> git branch -d PTask354_INFRA_Populate_S3_bucket
 
-              > git push origin --delete PTask354_INFRA_Populate_S3_bucket```
+> git push origin --delete PTask354_INFRA_Populate_S3_bucket
+```
 
 # How-to and troubleshooting
 
@@ -408,29 +410,29 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
   `> git show --name-only $HASH`
 - E.g.,
 
-      ```
+```
 
-  > git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
+> git show --name-only 39a9e335298a3fe604896fa19296d20829801cf2
 
-      commit 39a9e335298a3fe604896fa19296d20829801cf2
-
-
-      Author: Julia &lt;julia@...>
+commit 39a9e335298a3fe604896fa19296d20829801cf2
 
 
-      Date:   Fri Sep 27 11:43:41 2019
+Author: Julia &lt;julia@...>
 
 
-          PTask274 lint
+Date:   Fri Sep 27 11:43:41 2019
 
 
-      vendors/cme/utils.py
+PTask274 lint
 
 
-      vendors/first_rate/utils.py
+vendors/cme/utils.py
 
 
-      ```
+vendors/first_rate/utils.py
+
+
+```
 
 ## Conflicts
 
@@ -462,7 +464,7 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 
 > git show :3:README
 
-```
+````
 
 Stage #1 is the common ancestor of the files, stage #2 is the target-branch
 version, and stage #3 is the version you are merging from.
@@ -556,7 +558,7 @@ version, and stage #3 is the version you are merging from.
 
 ```\
 
-```
+````
 
 # Fetch all the data from origin.
 
@@ -620,7 +622,7 @@ version, and stage #3 is the version you are merging from.
 
 - You can see what commits are in master but missing in your branch with: \
 
-```
+````
 
     > gll ..master
 
@@ -639,7 +641,7 @@ version, and stage #3 is the version you are merging from.
 
 - This is useful if we want to focus on changes on a single dir
 
-```
+````
 
 > git ll master..PTask274 vendors/cme
 
@@ -673,7 +675,7 @@ vendors/first_rate/utils.py
 
 vendors/test/test_vendors.py
 
-```
+````
 
 
 ## Merging `master`
@@ -768,7 +770,6 @@ vendors/test/test_vendors.py
 
 # Submodules
 
-
 ## Adding a submodule
 
 - Following the instructions in [https://git-scm.com/book/en/v2/Git-Tools-Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
@@ -819,13 +820,13 @@ vendors/test/test_vendors.py
 `> dev_scripts/git/git_submodules_pull.sh` \
 or
 
-    ```
+```
 
 
-    > git submodule update --init --recursive`
+> git submodule update --init --recursive`
 
 
-    > git submodule foreach git pull --autostash
+> git submodule foreach git pull --autostash
 
 
-    ```
+```
