@@ -39,8 +39,6 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
         query_alter_1 = "between"
         query_alter_2 = "[%s, %s]" % (start_time,end_time)
 
-    print(start_time)
-    print(end_time)
     # GraphQL API query to get Uniswap DEX data
     query = """
     query{
@@ -117,7 +115,7 @@ def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawDat
     while True:
         # Construct the API query with the current offset
         fractured_query = query % (limit, offset,query_alter_1, query_alter_2,time_format)
-        print(fractured_query)
+        
         # Send the API request and get the response
         response = requests.post(endpoint, json={'query': fractured_query}, headers=headers)
 
