@@ -59,16 +59,16 @@ def get_db_connection() -> Any:
     try:
         connection = psycop.connect(
             host="host.docker.internal",
-            dbname="kaiko connection",
-            port=1999,
+            dbname="kaiko",
+            port=5432,
             user="postgres",
             password="postgres",
         )
     except Exception:
         connection = psycop.connect(
             host="localhost",
-            dbname="kaiko connection",
-            port=1999,
+            dbname="kaiko",
+            port=5432,
             user="postgres",
             password="postgres",
         )
