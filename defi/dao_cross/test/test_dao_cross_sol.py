@@ -200,7 +200,7 @@ def test_onSwapTime_buyOrder_with_less_than_limitPrice(daocross, base_token):
     daocross.sellOrder(base_token.address, 5 * 10**18, 200000000000, accounts[5], {"from": accounts[5], "gas_price": "60 gwei"})
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
 
-    assert accounts[6].balance() == initialBalance
+    assert base_token.balanceOf(accounts[5]) == 5 * 10**18
 
 
 def test_match_orders(daocross, base_token):
