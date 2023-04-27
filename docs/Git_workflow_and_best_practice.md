@@ -53,7 +53,7 @@
 > gup.py
 ```
 
-  instead.
+instead.
 
 - Name a branch after its corresponding issue
 - The canonical name for a new feature branch is obtained by running
@@ -82,10 +82,10 @@ LemTask274_PRICE_Download_equity_data
 
       - Alternatively, you can create and checkout in one command with: \
 
-  `> git checkout -b my_feature` _ From this point on, you commit only in the
-  branch and changes to master will not affect your branch _ If the branch
-  already exists, check out the branch by executing \
-  `> git checkout my_feature`
+`> git checkout -b my_feature` _ From this point on, you commit only in the
+branch and changes to master will not affect your branch _ If the branch already
+exists, check out the branch by executing \
+ `> git checkout my_feature`
 
 - Commit your work early and often
 - Commits on your feature branch do not affect master. Checkpoint your work
@@ -114,8 +114,10 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 
     - Note that `-u` tells git to set the upstream of this branch to origin
     - This operation is needed only the first time you create the branch and not for each `git push`
+
 - Merge `master` into your feature branch regularly
-    - Merge `master` into your feature branch at least once a day, if the branch stays around that long:
+  - Merge `master` into your feature branch at least once a day, if the branch
+    stays around that long:
 
 ```
 // Get the .git from the server
@@ -169,35 +171,33 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 
 - Repeat Steps 4-7 as needed
 - Request a review of your work by making a pull request (PR)
-    - Verify that your work is ready for a review by going through this checklist:
-        -  The PR is self-contained
-        -  The latest `master` has been merged into the feature branch
-        -  All files in the PR have been linted with `linter.py`
-        -  All tests pass
-    - If your work is ready for review, make a pull request
-        - Use the GitHub UI (for now; we may replace with a script). Go to the branch on the web interface and push "Compare & pull request"
-        - Make sure that GP and Paul are assigned as reviewers, as well as anyone else who may be interested
-        - Make sure that GP and Paul are assigned as assignees
-    - Follow up on all comments and mark as resolved any requested changes that you resolve
-
+  - Verify that your work is ready for a review by going through this checklist:
+    - The PR is self-contained
+    - The latest `master` has been merged into the feature branch
+    - All files in the PR have been linted with `linter.py`
+    - All tests pass
+  - If your work is ready for review, make a pull request
+    - Use the GitHub UI (for now; we may replace with a script). Go to the
+      branch on the web interface and push "Compare & pull request"
+    - Make sure that GP and Paul are assigned as reviewers, as well as anyone
+      else who may be interested
+    - Make sure that GP and Paul are assigned as assignees
+  - Follow up on all comments and mark as resolved any requested changes that
+    you resolve
 
 # Best Practices
 
-
 ## Do not check in large data files
 
-
-
 - Avoid checking in large data files
-    - The reason is that large files bloat the repo
-    - Once a large file is checked in, it never goes away
-    - Therefore, **DO NOT CHECK IN DATA FILES IN EXCESS OF 500K**
-    - If in doubt (even on a branch), ask first!
+  - The reason is that large files bloat the repo
+  - Once a large file is checked in, it never goes away
+  - Therefore, **DO NOT CHECK IN DATA FILES IN EXCESS OF 500K**
+  - If in doubt (even on a branch), ask first!
 - Sometimes is makes sense to check in some representative data for unit tests
 - BUT, larger tests should obtain their data from s3 or MongoDB
 
 ## Branch workflow best practices
-
 
 ### Branches are cheap
 
@@ -206,75 +206,92 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
 ### `master` is sacred
 
 - In an ideal world `master` branch is sacred (see Platinum rule of Git)
-    - Development should never be done directly on master
-    - Changes to master should only happen by pull-request or merge
-    - One should avoid working in master except in rare cases, e.g., a simple urgent bug-fix needed to unblock people
-    - `master` should be always never broken (all tests are passing and it is deployable)
+  - Development should never be done directly on master
+  - Changes to master should only happen by pull-request or merge
+  - One should avoid working in master except in rare cases, e.g., a simple
+    urgent bug-fix needed to unblock people
+  - `master` should be always never broken (all tests are passing and it is
+    deployable)
 
 ### Always work in a branch
 
 - Generally it is best to be the sole contributor to your branch
-    - If you need to collaborate with somebody on a branch, remember that the golden rule of rebase still applies to this "public" branch: "do not rebase pushed commits"
+  - If you need to collaborate with somebody on a branch, remember that the
+    golden rule of rebase still applies to this "public" branch: "do not rebase
+    pushed commits"
 - It is ok to open multiple branches for a given task if needed
-    - E.g., if you have multiple chunks of work or multiple people are working on orthogonal changes
-    - It might be that the task is too big and needs to be broken in smaller bugs
+  - E.g., if you have multiple chunks of work or multiple people are working on
+    orthogonal changes
+  - It might be that the task is too big and needs to be broken in smaller bugs
 - All the rules that apply to `master` apply also to a branch
-    - E.g., commit often, use meaningful commit messages.
-    - We are ok with a little looser attitude in your branch
-    - E.g., it might be ok to not run unit tests before each commit, but be careful!
+  - E.g., commit often, use meaningful commit messages.
+  - We are ok with a little looser attitude in your branch
+  - E.g., it might be ok to not run unit tests before each commit, but be
+    careful!
 - Use a branch even if working on a research notebook
-    - Try to avoid modifying notebooks in multiple branches simultaneously, since notebook merges can be painful
-    - Working in a branch in this case facilitates review
-    - Working in a branch protects the codebase from accidental pushes of code changes outside of the notebook (e.g., hacks to get the notebook working that need to be cleaned up)
-
+  - Try to avoid modifying notebooks in multiple branches simultaneously, since
+    notebook merges can be painful
+  - Working in a branch in this case facilitates review
+  - Working in a branch protects the codebase from accidental pushes of code
+    changes outside of the notebook (e.g., hacks to get the notebook working
+    that need to be cleaned up)
 
 ### Keep different changes in separate branches
 
 - It is easier for you to keep work sane and separated
 - Cons of multiple conceptual changes in the same branches
-- You are testing / debugging all at once which might make your life more difficult
+- You are testing / debugging all at once which might make your life more
+  difficult
 - Reviewing unrelated changes slows down the review process
-- Packaging unrelated changes together that means no change gets merged until all of the changes are accepted
+- Packaging unrelated changes together that means no change gets merged until
+  all of the changes are accepted
 
 ## Pull request (PR) best practices
 
 - Make sure your PR is coherent
-    - It may not need to do everything the Task requires, but the PR should be self-contained and not break anything
-- If you absolutely need changes under review to keep going, create the new branch from the old branch rather than from master (less ideal)
-    - Try to avoid branching from branches
-        - This creates also dependencies on the order of committing branches
-        - You end up with a spiderweb of branches
+  - It may not need to do everything the Task requires, but the PR should be
+    self-contained and not break anything
+- If you absolutely need changes under review to keep going, create the new
+  branch from the old branch rather than from master (less ideal)
+  - Try to avoid branching from branches
+    - This creates also dependencies on the order of committing branches
+    - You end up with a spiderweb of branches
 - Frequent small PRs are easier to review
-    - you will also experience faster review turnaround
-    - reviewers like working on smaller changes more than working on larger ones
-    - PR review time does not scale linearly with lines changed (may be more like exponential)
-- Merging changes frequently means other people can more easily see how the code is progressing earlier on in the process, and give you feedback
-    - E.g., "here it is a much simpler way of doing this", or even better "you don't need to write any code, just do &lt;this_and_that>"
+  - you will also experience faster review turnaround
+  - reviewers like working on smaller changes more than working on larger ones
+  - PR review time does not scale linearly with lines changed (may be more like
+    exponential)
+- Merging changes frequently means other people can more easily see how the code
+  is progressing earlier on in the process, and give you feedback
+  - E.g., "here it is a much simpler way of doing this", or even better "you
+    don't need to write any code, just do &lt;this_and_that>"
 - Merged changes are tested in the Jenkins build
-
 
 ## Workflow diagram
 
 ## Deleting a branch
 
-- You can run the script `dev_scripts/git/git_branch.sh` to get all the branches together with some information, e.g., last commit and creator
-- E.g., let's assume we believe that `PTask354_INFRA_Populate_S3_bucket` is obsolete and we want to delete it
+- You can run the script `dev_scripts/git/git_branch.sh` to get all the branches
+  together with some information, e.g., last commit and creator
+- E.g., let's assume we believe that `PTask354_INFRA_Populate_S3_bucket` is
+  obsolete and we want to delete it
 - Get `master` up to date
 
-    ```
-> git checkout master
+      ```
+
+  > git checkout master
+
+      > git fetch
 
 
-    > git fetch
+      > git pull
 
 
-    > git pull
-
-
-    ```
+      ```
 
 - Merge `master` into the target branch
-- Pull and merge \
+- Pull and merge
+
 ```
 
             > git checkout PTask354_INFRA_Populate_S3_bucket
@@ -437,19 +454,15 @@ Branch 'my_feature' set up to track remote branch 'my_feature' from 'origin'.
   branch from which you executed the command before getting the conflicts, and
   the second option refers to the branch where the changes are coming from.
 
-  ```
+```
 
+> git show :1:README
 
-  > git show :1:README
+> git show :2:README
 
+> git show :3:README
 
-  > git show :2:README
-
-
-  > git show :3:README
-
-
-  ```
+```
 
 Stage #1 is the common ancestor of the files, stage #2 is the target-branch
 version, and stage #3 is the version you are merging from.
@@ -459,75 +472,75 @@ version, and stage #3 is the version you are merging from.
 - If one screws up a branch
 - rebase to master
 - resolve the conflicts
-  - E.g., pick the `master` version when needed:
-    `git checkout --theirs ...; git add ...`
+- E.g., pick the `master` version when needed:
+  `git checkout --theirs ...; git add ...`
 - diff the changes in the branch vs another client at `master`
 
-          ```
+        ```
 
-  > diff_to_vimdiff.py --dir1 $DIR1/amp --dir2 $DIR2/amp --skip_vim
+> diff_to_vimdiff.py --dir1 $DIR1/amp --dir2 $DIR2/amp --skip_vim
 
-          Saving log to file '/Users/saggese/src/...2/amp/dev_scripts/diff_to_vimdiff.py.log'
-
-
-          10-06_15:22 INFO : _parse_diff_output:36  : Reading '/tmp/tmp.diff_to_vimdiff.txt'
+        Saving log to file '/Users/saggese/src/...2/amp/dev_scripts/diff_to_vimdiff.py.log'
 
 
-          #       DIFF: README.md
+        10-06_15:22 INFO : _parse_diff_output:36  : Reading '/tmp/tmp.diff_to_vimdiff.txt'
 
 
-          #       DIFF: core/dataflow.py
+        #       DIFF: README.md
 
 
-          #       DIFF: core/dataflow_core.py
+        #       DIFF: core/dataflow.py
 
 
-          #       DIFF: core/test/test_core.py
+        #       DIFF: core/dataflow_core.py
 
 
-          #       DIFF: dev_scripts/diff_to_vimdiff.py
+        #       DIFF: core/test/test_core.py
 
 
-          #       ONLY: diff_to_vimdiff.py.log in $DIR1/dev_scripts
+        #       DIFF: dev_scripts/diff_to_vimdiff.py
 
 
-          #       DIFF: dev_scripts/grc
+        #       ONLY: diff_to_vimdiff.py.log in $DIR1/dev_scripts
 
 
-          #       ONLY: code_style.txt in $DIR2/docs/notes
+        #       DIFF: dev_scripts/grc
 
 
-          ...
+        #       ONLY: code_style.txt in $DIR2/docs/notes
 
 
-          #       DIFF: vendors/test/test_vendors.py
+        ...
 
 
-          ```
+        #       DIFF: vendors/test/test_vendors.py
+
+
+        ```
 
 - diff / merge manually the files that are different
 
-          ```
+        ```
 
-  > diff_to_vimdiff.py --dir1 $DIR1/...2/amp --dir2 $DIR2/...3/amp --skip_vim
-  > --only_diff_content
+> diff_to_vimdiff.py --dir1 $DIR1/...2/amp --dir2 $DIR2/...3/amp --skip_vim
+> --only_diff_content
 
-          #       DIFF: README.md
-
-
-          #       DIFF: core/dataflow.py
+        #       DIFF: README.md
 
 
-          #       DIFF: core/dataflow_core.py
+        #       DIFF: core/dataflow.py
 
 
-          #       DIFF: core/test/test_core.py
+        #       DIFF: core/dataflow_core.py
 
 
-          ...
+        #       DIFF: core/test/test_core.py
 
 
-          ```
+        ...
+
+
+        ```
 
 ## Reverting
 
@@ -541,9 +554,9 @@ version, and stage #3 is the version you are merging from.
 
 - Look at all the branches available:
 
-  ```\
+```\
 
-  ```
+```
 
 # Fetch all the data from origin.
 
@@ -627,17 +640,16 @@ version, and stage #3 is the version you are merging from.
 - This is useful if we want to focus on changes on a single dir
 
 ```
-> git ll master..PTask274 vendors/cme
 
+> git ll master..PTask274 vendors/cme
 
 39a9e33 Julia PTask274 lint ( 2 days ago) Fri Sep 27 11:43:41 2019
 
+c8e7e1a Julia PTask268 modify according to review16 ( 2 days ago) Fri Sep 27
+11:41:47 2019
 
-c8e7e1a Julia PTask268 modify according to review16 ( 2 days ago) Fri Sep 27 11:41:47 2019
-
-
-a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26 17:13:33 2019
-
+a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26 17:13:33
+2019
 
 ```
 
@@ -647,27 +659,19 @@ a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26 17:13:33 2
 
 > git diff --name-only a637594..33a46b2 -- vendors helpers
 
-
 helpers/csv.py
-
 
 vendors/cme/utils.py
 
-
 vendors/first_rate/Task274_verify_datasets.ipynb
-
 
 vendors/first_rate/Task274_verify_datasets.py
 
-
 vendors/first_rate/reader.py
-
 
 vendors/first_rate/utils.py
 
-
 vendors/test/test_vendors.py
-
 
 ```
 
