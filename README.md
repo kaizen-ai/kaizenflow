@@ -76,16 +76,8 @@ make this experience the best possible for you.
   contains
   [lectures](https://github.com/gpsaggese/umd_data605/tree/main/lectures) and
   [tutorials](https://github.com/gpsaggese/umd_data605/tree/main/tutorials)
-  about most of the technologies we use in Sorrentum, e.g.,
-  - Dask
-  - Docker
-  - Docker Compose
-  - Git, github
-  - Jupyter
-  - MongoDB
-  - Pandas
-  - Postgres
-  - Apache Spark
+  about most of the technologies we use in Sorrentum, e.g., Dask, Docker, Docker
+  Compose, Git, github, Jupyter, MongoDB, Pandas, Postgres, Apache Spark
 - You can go through the lectures and tutorials on a per-need basis, depending
   on what it's useful for you to develop
 

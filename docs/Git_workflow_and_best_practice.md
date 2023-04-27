@@ -1,4 +1,4 @@
-# **# Before you start**
+# Before you start
 
 * GitHub is the place where we keep our code
 * git is the tool (program) for version control
@@ -8,18 +8,14 @@
     * More details about what is public key you can find in [ssh.md](https://github.com/cryptokaizen/cmamp/blob/master/documentation/general/ssh.md)
 
 
-## **## Readings**
-
-
+## Readings
 
 * Read at least the first 3 chapters of [Git book](https://git-scm.com/book/en/v2)
 * Read about [Git Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
     * We use Git submodules to compose and share code about repos
 
 
-# **# Workflow**
-
-
+# Workflow
 
 * Run `git fetch`
 
@@ -232,10 +228,10 @@ instead.
     * Follow up on all comments and mark as resolved any requested changes that you resolve
 
 
-# **# Best Practices**
+# Best Practices
 
 
-## **## Do not check in large data files**
+## Do not check in large data files
 
 
 
@@ -247,17 +243,14 @@ instead.
 * Sometimes is makes sense to check in some representative data for unit tests
 * BUT, larger tests should obtain their data from s3 or MongoDB
 
-## 
-**## Branch workflow best practices**
+## Branch workflow best practices
 
 
-### 
-**### Branches are cheap**
+### Branches are cheap
 
 * One of the advantages of working with Git is that branches are cheap
 
-### 
-**### `master` is sacred**
+### `master` is sacred
 
 * In an ideal world `master` branch is sacred (see Platinum rule of Git)
     * Development should never be done directly on master
@@ -265,8 +258,7 @@ instead.
     * One should avoid working in master except in rare cases, e.g., a simple urgent bug-fix needed to unblock people
     * `master` should be always never broken (all tests are passing and it is deployable)
 
-### 
-**### Always work in a branch**
+### Always work in a branch
 
 * Generally it is best to be the sole contributor to your branch
     * If you need to collaborate with somebody on a branch, remember that the golden rule of rebase still applies to this "public" branch: "do not rebase pushed commits"
@@ -283,9 +275,7 @@ instead.
     * Working in a branch protects the codebase from accidental pushes of code changes outside of the notebook (e.g., hacks to get the notebook working that need to be cleaned up)
 
 
-### **### Keep different changes in separate branches**
-
-
+### Keep different changes in separate branches
 
 * It is easier for you to keep work sane and separated
 * Cons of multiple conceptual changes in the same branches
@@ -293,8 +283,7 @@ instead.
 * Reviewing unrelated changes slows down the review process
 * Packaging unrelated changes together that means no change gets merged until all of the changes are accepted
 
-## 
-**## Pull request (PR) best practices**
+## Pull request (PR) best practices
 
 * Make sure your PR is coherent
     * It may not need to do everything the Task requires, but the PR should be self-contained and not break anything
@@ -311,12 +300,9 @@ instead.
 * Merged changes are tested in the Jenkins build
 
 
-## **## Workflow diagram**
+## Workflow diagram
 
-
-## **## Deleting a branch**
-
-
+## Deleting a branch
 
 * You can run the script `dev_scripts/git/git_branch.sh` to get all the branches together with some information, e.g., last commit and creator
 * E.g., let's assume we believe that `PTask354_INFRA_Populate_S3_bucket` is obsolete and we want to delete it
