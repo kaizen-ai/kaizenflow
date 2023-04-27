@@ -646,8 +646,6 @@ a637594 saggese PTask274: Add tag for review ( 3 days ago) Thu Sep 26 17:13:33
 2019
 ```
 
-
-
 ```
 
 > git diff --name-only a637594..33a46b2 -- vendors helpers
@@ -668,59 +666,64 @@ vendors/test/test_vendors.py
 
 ```
 
-
 ## Merging `master`
 
-- If your branch lives long, you want to apply changes made on master to show on your branch
+- If your branch lives long, you want to apply changes made on master to show on
+  your branch
 - Merge flow
 - Assume your branch is clean
-    - E.g., everything is committed, or stashed
+  - E.g., everything is committed, or stashed
 - Pull changes from `master` on the remote repo
 
-    ```
-> git checkout master
+      ```
+
+  > git checkout master
+
+      > git pull
 
 
-    > git pull
-
-
-    ```
+      ```
 
 - Checkout your feature branch
+
 ```
 > git checkout my_feature
 ```
+
 - Merge stuff from `master` to `my_feature`
+
 ```
 > git merge master --no-ff
 ... editor will open a message for the merge commit ...
 ```
 
-
-
-- In few informal words, the `--no-ff` option means that commits are not "inlined" (similar to rebase) even if possible, but a merge commit is always used
-    - The problem is that if the commits are "inlined" then you can't revert the change in one shot like we would do for a merge commit, but you need to revert all the inlined changes
+- In few informal words, the `--no-ff` option means that commits are not
+  "inlined" (similar to rebase) even if possible, but a merge commit is always
+  used
+  - The problem is that if the commits are "inlined" then you can't revert the
+    change in one shot like we would do for a merge commit, but you need to
+    revert all the inlined changes
 
 ## Rebasing
 
 - **For now, we suggest avoiding the rebase flow**
-- The reason is that rebase makes things cleaner when used properly, but can get you into deep trouble if not used properly
+- The reason is that rebase makes things cleaner when used properly, but can get
+  you into deep trouble if not used properly
 - You can rebase onto `master`, i.e., you re-apply your changes to `master`
 - Not the other way around: that would be a disaster!
 
-    ```
-    > git checkout my_feature
-    // See that you have that master doesn't have.
-    > git ll origin/master..
-    // See that master has that you don't have.
-    > git ll ..origin/master
-    > git rebase master
-    > git ll ..origin/master
-    // Now you see that there is nothing in master you don't have
-    > git ll origin/master..
-    // You can see that you are ahead of master
-    ```
-
+  ```
+  > git checkout my_feature
+  // See that you have that master doesn't have.
+  > git ll origin/master..
+  // See that master has that you don't have.
+  > git ll ..origin/master
+  > git rebase master
+  > git ll ..origin/master
+  // Now you see that there is nothing in master you don't have
+  > git ll origin/master..
+  // You can see that you are ahead of master
+  ```
 
 ## Merging pull requests
 
@@ -734,38 +737,40 @@ vendors/test/test_vendors.py
 ```
 
 - Merge your branch into `master` without fast-forward \
-`> git merge --no-ff my_feature`
+  `> git merge --no-ff my_feature`
 - Push the newly merged master \
-`> git push`
+  `> git push`
 - Delete the branch, if you are done with it: \
-`> git branch -d my_feature`
+  `> git branch -d my_feature`
 
 # Submodules
 
 ## Adding a submodule
 
-- Following the instructions in [https://git-scm.com/book/en/v2/Git-Tools-Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
+- Following the instructions in
+  [https://git-scm.com/book/en/v2/Git-Tools-Submodules](https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
 ## Working in a submodule
 
 - When you work in a submodule, the flow should be like:
-    - Create a branch in a submodule
-    - Do your job
-    - Push the submodule branch
-    - Create a PR in the submodule when you are done
+  - Create a branch in a submodule
+  - Do your job
+  - Push the submodule branch
+  - Create a PR in the submodule when you are done
 
 ## Updating a submodule to the latest commit
 
 - After the submodule PR is merged:
-    - Checkout the submodule in the master branch and do `git pull`
-    - In the main repo, create a branch like `PTask1234_update_submodule`
-    - From the new branch do `git add &lt;submodule_name>`, e.g., `git add amp`
-    - Commit changes, push
-    - Create a PR
+  - Checkout the submodule in the master branch and do `git pull`
+  - In the main repo, create a branch like `PTask1234_update_submodule`
+  - From the new branch do `git add &lt;submodule_name>`, e.g., `git add amp`
+  - Commit changes, push
+  - Create a PR
 
 ## To check if supermodule and amp are in sync
 
 - Run the script:
+
 ```
 > dev_scripts/git/git_submodules_are_updated.sh
 ```
@@ -773,27 +778,24 @@ vendors/test/test_vendors.py
 ## Roll forward git submodules pointers:
 
 - Run the script:
+
 ```
 > dev_scripts/git/git_submodules_roll_fwd.sh
 ```
 
 ## To clean all the repos
 
-
 `> git submodule foreach git clean -fd`
-
 
 ## Pull a branch without checkout
 
-
-
-- This is useful when merging `master` in a different branch and we don't want to checkout master just to pull \
-`> git fetch origin master:master`
+- This is useful when merging `master` in a different branch and we don't want
+  to checkout master just to pull
+  ```> git fetch origin master:master```
 
 ## To force updating all the submodules
 
-- Run the script `> dev_scripts/git/git_submodules_pull.sh` 
-or
+- Run the script `> dev_scripts/git/git_submodules_pull.sh` or
 
 ```
 > git submodule update --init --recursive`
