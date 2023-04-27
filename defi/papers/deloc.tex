@@ -83,7 +83,7 @@
 
 \begin{document}
 
-\title{TLP: A protocol for trading with liquidity providers}
+\title{TuLiP: A protocol for trading with liquidity providers}
 
 \author{Giacinto Paolo Saggese}
 \author{Paul Smith}
@@ -107,7 +107,7 @@
 Modern financial exchanges are built on the concept of limit order books. Limit
 orders are a natural and powerful way to interact with markets. Creating modes
 of decentralized exchange around limit orders poses unique challenges, and the
-dominant decentralized alternatives lack this interface. We propose ``TLP", a
+dominant decentralized alternatives lack this interface. We propose ``TuLiP", a
 protocol for decentralized exchange built around limit orders, at whose heart
 is a novel auction mechanism for price discovery, matching and clearing. While
 the auction mechanism has application beyond decentralized exchange, its
@@ -123,7 +123,7 @@ decentralized token exchange.
 % ###############################################################################
 \section{Introduction}
 
-TLP (pronounced ``tulip") is a new protocol that enables decentralized token
+TuLiP is a new protocol that enables decentralized token
 exchange using limit orders. It brings together the advantages of trading
 efficiency and ease-of-use of centralized exchanges with the transparency and
 self-custody of decentralized approaches, without the risk of impermanent loss,
@@ -261,9 +261,9 @@ exchange is cost of computation. Continual submission and cancelation of orders
 incurs costs, as does the ongoing process of matching supply and demand.
 
 % ===============================================================================
-\subsection{The advantages of TLP}
+\subsection{The advantages of TuLiP}
 
-TLP retains the key advantages of on-chain decentralized exchange while
+TuLiP retains the key advantages of on-chain decentralized exchange while
 overcoming the issues of cost. Additionally, it includes an implementation
 that preserves the familiar LOB interface but deepens the pool of available
 liquidity in matching supply and demand.
@@ -634,7 +634,7 @@ supply and demand are monotonic in price.
 
 % ===============================================================================
 \subsection{Order clearing quantity and exchange rate}
-In TLP, orders are collected from users during a finite period of time,
+In TuLiP, orders are collected from users during a finite period of time,
 after which tokens are redistributed among users according to their limit
 orders.
 
@@ -1397,7 +1397,7 @@ time complexity of the task is $O(n \log n)$. Memory requirements are $O(n)$.
 
 % ###############################################################################
 \section{Fees and tokenomics}
-TLP charges a fee on each transaction based on the exchanged tokens.
+TuLiP charges a fee on each transaction based on the exchanged tokens.
 E.g., a transaction requiring
 
 % ###############################################################################
@@ -1405,7 +1405,7 @@ E.g., a transaction requiring
 
 % ===============================================================================
 \subsection{DaoCross and DaoSwap Architecture}
-TLP addresses cost issues primarily in two ways: (1) discretizing time; and
+TuLiP addresses cost issues primarily in two ways: (1) discretizing time; and
 (2) scaling with layer 2 solutions. By addressing these issues, we combine the
 novel advantages of decentralized exchange with the utility and ease-of-use of
 the familiar interface of limit orders.
