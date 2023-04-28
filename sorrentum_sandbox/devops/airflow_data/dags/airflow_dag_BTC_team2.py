@@ -99,7 +99,7 @@ bash_command5 = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 15",
     "&&",
-    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/Anomaly_Detection_Script.py",
     "--pair BTC",
     "--target_table 'github_analysis'",
     #"--start_timestamp {{ data_interval_start }} ",
@@ -145,4 +145,4 @@ anomaly_detection = BashOperator(
   
 
 
-downloading_main >> downloading_issues >> downloading_commits
+downloading_main >> downloading_issues >> downloading_commits >> downloading_extracts >> anomaly_detection
