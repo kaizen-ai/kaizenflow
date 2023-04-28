@@ -14,6 +14,7 @@ import helpers.hdbg as hdbg
 import helpers.hparser as hparser
 import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.db_team2 as sisebidb
 import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.download_team2 as sisebido
+import sorrentum_sandbox.examples.ml_projects.SorrIssue21_Team2_Implement_sandbox_for_GitHub_2.Anomaly_Detection_Script as sisebido2
 
 
 _LOG = logging.getLogger(__name__)
@@ -71,7 +72,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     # Load data.
     if(args.roundid is None):
-        raw_data = sisebido.downloader(pair = args.pair,target_table=args.target_table, num_of_data = args.num_of_data)
+        if (args.target_table == 'github_analysis'):
+            raw_data=sisebido2.downloader(pair = args.pair,target_table=args.target_table, num_of_data = args.num_of_data)
+        else:   
+            raw_data = sisebido.downloader(pair = args.pair,target_table=args.target_table, num_of_data = args.num_of_data)
     elif(args.num_of_data is None):
         raw_data = sisebido.downloader(pair = args.pair, roundid = args.roundid)
     # Save data to DB.
@@ -82,3 +86,4 @@ def _main(parser: argparse.ArgumentParser) -> None:
 
 if __name__ == "__main__":
     _main(_parse())
+
