@@ -38,7 +38,7 @@ docker-compose up -d
 ## Running project
 ####################################################
 cd sorrentum_sandbox\examples\ml_projects\Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/
-unix2dos docker_bash.sh
+
 ./docker_bash.sh
 
 docker> cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/
