@@ -12,6 +12,7 @@ from models.ticker import Ticker
 from models.time_series import TimeInterval, DataType
 from api.mongo_db import Mongo
 from airflow.utils.dates import days_ago
+from dask.distributed import Client
 
 default_args = {
     "owner": "airflow",
@@ -31,29 +32,25 @@ with DAG(
 
     @task
     def update():
-        """Downloads S&P500 data in one minute intervals for the past trading day"""
+        """Downloads S&P500 data in one minute intervals for the past trading day. Calculates RSI and moving averages and updates 
+        the DB after the databse is updated"""
         counter = 0
-
+        client = Client("tcp://scheduler:8786")
         for symbol in SP500:
             ticker = Ticker(symbol, get_name=False)
             ticker.get_data(data_type=DataType.INTRADAY,
                             time_interval=TimeInterval.ONE)
             Mongo.save_data(ticker)
+            # calculate stats for the ticker
+            ticker.calculate_stats()
+            # update the stats in the DB
+            Mongo.update_ticker_stats(ticker)
+
             counter += 1
 
             if counter >= 5:
                 counter = 0
                 time.sleep(61) # Wait one minute
 
-    @task
-    def calculate_features():
-        """Calculates RSI and moving averages and updates 
-        the DB after the databse is updated"""
 
-        tickers = Mongo.download()
-
-        for ticker in tickers:
-            ticker.calculate_stats()
-            Mongo.update_ticker_stats(ticker)
-
-    update() >> calculate_features()
+    update() 
