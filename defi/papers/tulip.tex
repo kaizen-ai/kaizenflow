@@ -619,12 +619,12 @@ $o_k$ is a buy limit order with limit price $p_{k + 1}$:
 \[
     p(o_k) = p_{k + 1}
 \]
-and quantity $Q_k - \sum_{j = k}^n Q_j$:
+and quantity $Q_k - Q_{k + 1}$:
 \[
-    q(o_k) = Q_k - \sum_{j = k}^n Q_j
+    q(o_k) = Q_k - Q_{k + 1}
 \]
 Because the quantities $Q_j$ represent cumulative quantity at price
-$p_{j + 1}$ or better, each $q(o_k) > 0$.
+$p_{j + 1}$ or better, and are monotonically decreasing, each $q(o_k) > 0$.
 
 Note that the case for expressing a supply curve is analogous, and sell limit
 orders are used instead. The preceding discussion has a continuous analogue,
