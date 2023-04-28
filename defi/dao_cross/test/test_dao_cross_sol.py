@@ -247,7 +247,7 @@ def test_onSwapTime_remainingHeap_moreSelling(daocross, base_token):
     the remaining tokens are transfered to the owner of the tokens.
     Buying 10 tokens and selling 11.5 tokens.
     """
-    # Add some sell orders, overall sell 10 tokens.
+    # Add some sell orders, overall sell 11.5 tokens.
     # First transfer the token to the users that will participate sell order.
     base_token.transfer(accounts[4], 2 * 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
     base_token.transfer(accounts[5], 5* 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
