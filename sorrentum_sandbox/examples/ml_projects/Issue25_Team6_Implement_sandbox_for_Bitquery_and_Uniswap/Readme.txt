@@ -35,12 +35,12 @@ docker-compose up -d
 ## Running project
 ####################################################
 cd sorrentum_sandbox\examples\ml_projects\Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/
-unix2dos docker_bash.sh
+
 ./docker_bash.sh
 
 docker> cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/
 docker> python3 download_to_csv.py --start_timestamp '2023-04-20T16:38:00' --target_dir 'uniswap_data'
-docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap'
+docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table'
 
 ####################################################
 ## Running project in Windows
