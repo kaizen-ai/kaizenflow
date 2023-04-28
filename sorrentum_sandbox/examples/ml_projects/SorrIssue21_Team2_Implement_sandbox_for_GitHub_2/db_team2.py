@@ -98,6 +98,38 @@ def get_github_create_commits_table_query() -> str:
             """
     return query
 
+
+           
+def get_github_create_analysis_table_query() -> str:
+    """
+    Get SQL query to create github_commits table. 
+       
+    This table contains the data as it is downloaded.
+    """
+    query = """CREATE TABLE IF NOT EXISTS  github_analysis(
+    Crypto VARCHAR(255) NOT NULL,
+    Datatable VARCHAR(255) NOT NULL,
+    Column_Type VARCHAR(255) NOT NULL,
+    Column_Name VARCHAR(255) NOT NULL,
+          total_count NUMERIC,
+          unique_count NUMERIC,
+          null_count NUMERIC,
+          null_Percent NUMERIC, 
+          levels VARCHAR(255) NOT NULL,
+          value_count NUMERIC,
+          counts_Percent NUMERIC,
+          mean NUMERIC,
+          std NUMERIC,
+          min NUMERIC,
+          max NUMERIC,
+          Analysed_On TIMESTAMP
+          )
+            """
+    return query
+
+
+
+
 def get_db_connection() -> Any:
     """
     Retrieve connection to the Postgres DB inside the Sorrentum data node.
@@ -185,7 +217,9 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         
         query = get_github_create_commits_table_query()
         cursor.execute(query)
-
+        
+        query = get_github_create_analysis_table_query()
+        cursor.execute(query)
 # #############################################################################
 # PostgresClient
 # #############################################################################
@@ -233,4 +267,5 @@ class PostgresClient(sinsacli.DataClient):
         # Read data.
         data = pd.read_sql_query(select_query, self.db_conn)
         return data
+
 
