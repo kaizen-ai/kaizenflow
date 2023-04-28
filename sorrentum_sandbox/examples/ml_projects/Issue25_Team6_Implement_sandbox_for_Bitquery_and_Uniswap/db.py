@@ -55,39 +55,6 @@ def get_uniswap_table_query() -> str:
     return query
 
 
-def get_live_table_query() -> str:
-    """
-    Get SQL query to create GraphQL API table.
-
-    This table contains the data as it is downloaded.
-    """
-    query = """
-    CREATE TABLE IF NOT EXISTS uniswap_table(
-            tradeIndex INT,
-            block_timestamp_time TIMESTAMP,
-            block_height INT,
-            protocol VARCHAR(255) NOT NULL,
-            timeInterval_minute TIMESTAMP,
-            baseAmount DECIMAL NOT NULL,
-            quoteAmount DECIMAL NOT NULL,
-            trades INT,
-            quotePrice DECIMAL NOT NULL,
-            maximum_price DECIMAL NOT NULL,
-            minimum_price DECIMAL NOT NULL,
-            open_price DECIMAL NOT NULL,
-            close_price DECIMAL NOT NULL,
-            baseCurrency_symbol VARCHAR(255) NOT NULL,
-            baseCurrency_address VARCHAR(255) NOT NULL,
-            quoteCurrency_symbol VARCHAR(255) NOT NULL,
-            quoteCurrency_address VARCHAR(255) NOT NULL,
-            transaction_hash VARCHAR(255) NOT NULL,
-            transaction_gas INT,
-            transaction_to_address VARCHAR(255) NOT NULL,
-            transaction_txFrom_address VARCHAR(255) NOT NULL
-            )
-            """
-    return query
-
 
 def get_db_connection() -> Any:
     """

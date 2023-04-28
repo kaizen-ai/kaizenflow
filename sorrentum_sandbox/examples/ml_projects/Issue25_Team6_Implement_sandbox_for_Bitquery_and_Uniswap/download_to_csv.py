@@ -54,7 +54,7 @@ class CsvDataFrameSaver(sinsasav.DataSaver):
         """
         hdbg.dassert_isinstance(data.get_data(), pd.DataFrame, "Only DataFrame is supported.")
         signature = (
-            "uniswap_table"
+            "uniswap"
         )
         signature += ".csv"
         hio.create_dir(self.target_dir, incremental=True)
