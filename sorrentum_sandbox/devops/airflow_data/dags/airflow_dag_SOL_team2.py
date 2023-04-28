@@ -83,6 +83,33 @@ bash_command3 = [
     "-v DEBUG"
 ]
 
+
+bash_command4 = [
+    # Sleep 10 seconds to ensure the bar is finished.
+    "sleep 10",
+    "&&",
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/extracted_api.py",
+    #"--pair BTC",
+    #"--target_table 'github_commits'",  
+    #"--start_timestamp {{ data_interval_start }} ",
+    #"--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG"
+]
+    
+bash_command5 = [
+    # Sleep 5 seconds to ensure the bar is finished.
+    "sleep 15",
+    "&&",
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/SorrIssue21_Team2_Implement_sandbox_for_GitHub_2/download_to_db_team2.py",
+    "--pair SOL",
+    "--target_table 'github_analysis'",
+    #"--start_timestamp {{ data_interval_start }} ",
+    #"--end_timestamp {{ data_interval_end }}",
+    "-v DEBUG"
+]   
+    
+
+
 downloading_main = BashOperator(
     task_id="download_main",
     depends_on_past=False,
@@ -105,4 +132,22 @@ downloading_commits = BashOperator(
 )
 
 
-downloading_main >> downloading_issues >> downloading_commits
+downloading_extracts = BashOperator(   
+    task_id="extracted_api",
+    depends_on_past=False,
+    bash_command=" ".join(bash_command4),
+    dag=dag,
+)   
+
+anomaly_detection = BashOperator(
+    task_id="anomaly_detection",
+    depends_on_past=False,
+    bash_command=" ".join(bash_command5),
+    dag=dag,
+)   
+
+
+
+downloading_main >> downloading_issues >> downloading_commits >> downloading_extracts >> anomaly_detection
+    
+
