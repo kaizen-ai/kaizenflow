@@ -60,8 +60,8 @@ def _parse() -> argparse.ArgumentParser:
 
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
+    
     # Compute data.
-
     if args.all:
         raw_data = compute.computer()
     elif args.start_roundid:

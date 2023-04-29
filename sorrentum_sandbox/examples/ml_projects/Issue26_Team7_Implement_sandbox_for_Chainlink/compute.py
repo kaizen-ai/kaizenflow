@@ -7,11 +7,11 @@ Import as:
 import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.compute as compute
 """
 
-from query_API import *
 
 import pandas as pd
 import dask.dataframe as dd
 import sorrentum_sandbox.common.download as ssandown
+import sorrentum_sandbox.examples.ml_projects.Issue26_Team7_Implement_sandbox_for_Chainlink.query_API as query_API
 
 
 def percentage_diff(df):
@@ -21,13 +21,13 @@ def computer(**kwargs):
 
     if 'start_roundid' in kwargs:
         start_roundid = kwargs['start_roundid']
-        start_roundid = str(start_roundid-1)
+        start_roundid = str(start_roundid)
         query = "SELECT roundid, price, updatedat, pair, decimals FROM chainlink_real_time WHERE roundid > {}"
         formatted_query = query.format(start_roundid)
-        df = query_from_db(formatted_query)
+        df = query_API.query_from_db(formatted_query)
     else: 
-        history_df = query_from_db("Select roundid, price, updatedat, pair, decimals From chainlink_history")
-        real_time_df = query_from_db("Select roundid, price, updatedat, pair, decimals From chainlink_real_time")
+        history_df = query_API.query_from_db("Select roundid, price, updatedat, pair, decimals From chainlink_history")
+        real_time_df = query_API.query_from_db("Select roundid, price, updatedat, pair, decimals From chainlink_real_time")
         df = pd.concat([history_df, real_time_df])
     
 
