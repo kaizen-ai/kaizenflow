@@ -1,4 +1,8 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+
+
+
 #Installing the dask package
 #!pip install dask
 
@@ -74,7 +78,7 @@ def downloader(pair,target_table,**kwargs):
             data=ddf[ddf['Crypto_Name']=='solana']            
             
         print("Analysis for",m,'& Coin:',pair)
-        #print(data)
+        print(data)
 
 
         #Code for Univariate analysis---
