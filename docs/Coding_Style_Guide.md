@@ -1625,28 +1625,31 @@ The code should be organized to allow these different modes of operations, but t
 - You can use the package https://github.com/andialbrecht/sqlparse to format
   SQL queries
 - There is also an on-line version of the same formatter at https://sqlformat.org
+
 ## <a name="_fy8eoq72xnz2"></a>**Misc (to reorg)**
 - TODO(*): Start moving these functions in the right place once we have more a
   better document structure
+
 ### <a name="_98u43jga6htz"></a>***Write robust code***
 - Write code where there is minimal coupling between different different parts
   - This is a corollary of DRY, since not following DRY implies coupling
 - Consider the following code:
-
+  ```
   if server_name == "ip-172-31-16-23":
       out = 1
   if server_name == "ip-172-32-15-23":
       out = 2
+  ```
 - This code is brittle since if you change the first part to:
-
+  ```
   if server_name.startswith("ip-172"):
       out = 1
   if server_name == "ip-172-32-15-23":
       out = 2
-
-  executing the code with server_name = "ip-172-32-15-23" will give out=2
+  ```
+  executing the code with `server_name = "ip-172-32-15-23"` will give `out=2`
 - The proper approach is to enumerate all the cases like:
-
+  ```
   if server_name == "ip-172-31-16-23":
       out = 1
   elif server_name == "ip-172-32-15-23":
@@ -1654,23 +1657,25 @@ The code should be organized to allow these different modes of operations, but t
   ...
   else:
       raise ValueError("Invalid server_name='%s'" % server_name)
+  ```
+
 ### <a name="_80t21iqbeo18"></a>***Capitalized words***
-- In documentation and comments we capitalize abbreviations (e.g., YAML,
-  CSV)
+- In documentation and comments we capitalize abbreviations (e.g., `YAML`,
+  `CSV`)
 - In the code:
   - We try to leave abbreviations capitalized when it doesn't conflict with
     other rules
-    - E.g., convert_to_CSV, but csv_file_name as a variable name that is not
-      global
+    - E.g., `convert_to_CSV`, but `csv_file_name` as a variable name that is not global
   - Other times we use camel case, when appropriate
-    - E.g., ConvertCsvToYaml, since ConvertCSVToYAML is difficult to read
+    - E.g., `ConvertCsvToYaml`, since `ConvertCSVToYAML` is difficult to read
+
 ### <a name="_xp62qcw97bcp"></a>***Regex***
 - The rule of thumb is to compile a regex expression, e.g.,
-
+  ```
   backslash_regexp = re.compile(r"\\")
+  ```
+  only if it's called more than once, otherwise the overhead of compilation and creating another var is not justified
 
-  only if it's called more than once, otherwise the overhead of compilation and
-  creating another var is not justified
 ### <a name="_or2wuk6lc5dw"></a>***Order of functions in a file***
 - We try to organize code in a file to represent the logical flow of the code
   execution, e.g.,
@@ -1680,16 +1685,14 @@ The code should be organized to allow these different modes of operations, but t
 - Try to put private helper functions close to the functions that are using them
   - This rule of thumb is a bit at odds with clearly separating public and
     private section in classes
-    - A possible justification is that classes typically contain less code than
-      a file and tend to be used through their API
-    - A file contains larger amount of loosely coupled code and so we want to
-      keep implementation and API close together
+    - A possible justification is that classes typically contain less code than a file and tend to be used through their API
+    - A file contains larger amount of loosely coupled code and so we want to keep implementation and API close together
 ### <a name="_ctc5m8w42foo"></a>***Use layers design pattern***
 - A "layer" design pattern (see Unix architecture) is a piece of code that talks
   / has dependency only to one outermost layer and one innermost layer
 - You can use this approach in your files representing data processing pipelines
 - You can split code in sections using 80 characters # comments, e.g.,
-
+  ```
   # ###################...
   # Read.
   # ###################...
@@ -1699,11 +1702,12 @@ The code should be organized to allow these different modes of operations, but t
   # ###################...
   # Process.
   # ###################...
-- This often suggests to split the code in classes to represent namespaces of
-  related functions
-### <a name="_z8ejnvmgtkgl"></a>***Write complete if-then-else***
-- Consider this good piece of code
+  ```
+- This often suggests to split the code in classes to represent namespaces of related functions
 
+### <a name="_z8ejnvmgtkgl"></a>***Write complete `if-then-else`***
+- Consider this good piece of code
+  ```
   dbg.dassert_in(
       frequency,
       ["D", "T"]
@@ -1715,25 +1719,22 @@ The code should be organized to allow these different modes of operations, but t
       ...
   else:
       raise ValueError("The %s frequency is not supported" % frequency)
+  ```
 - This code is robust and correct
-- Still the if-then-else is enough and the assertion is not needed
+- Still the `if-then-else` is enough and the assertion is not needed
   - DRY here wins: you don't want to have to keep two pieces of code in sync
-- It makes sense to check early only when you want to fail before doing more
-  work
-  - E.g., sanity checking the parameters of a long running function, so that it
-    doesn't run for 1 hr and then crash because the name of the file is
-    incorrect
+- It makes sense to check early only when you want to fail before doing more work
+  - E.g., sanity checking the parameters of a long running function, so that it doesn't run for 1 hr and then crash because the name of the file is incorrect
+
 ### <a name="_agbp4f3fd8gi"></a>***Do not be stingy at typing***
-- Why calling an object TimeSeriesMinStudy instead of TimeSeriesMinuteStudy?
+- Why calling an object `TimeSeriesMinStudy` instead of `TimeSeriesMinuteStudy`?
   - Saving 3 letters is not worth
-  - The reader might interpret Min as Minimal (or Miniature, Minnie,
-    Minotaur)
+  - The reader might interpret `Min` as `Minimal` (or `Miniature`, `Minnie`, `Minotaur`)
 - If you don't like to type, we suggest you get a better keyboard, e.g.,
   [this](https://kinesis-ergo.com/shop/advantage2/)
+
 ### <a name="_1fpomy79nom4"></a>***Research quality vs production quality***
-- Code belonging to top level libraries (e.g., //amp/core, //amp/helpers)
-  and production (e.g., //.../db, vendors) needs to meet high quality
-  standards, e.g.,
+- Code belonging to top level libraries (e.g., `//amp/core`, `//amp/helpers`) and production (e.g., `//.../db`, `vendors`) needs to meet high quality standards, e.g.,
   - Well commented
   - Following our style guide
   - Thoroughly reviewed
@@ -1754,16 +1755,16 @@ The code should be organized to allow these different modes of operations, but t
   - Somehow unit tested
 - We should be able to raise the quality of a piece of research code to
   production quality when that research goes into production
+
 ### <a name="_l11z10i9lwg6"></a>***Life cycle of research code***
-- Often the life cycle of a piece of code is to start as research and then be
-  promoted to higher level libraries to be used in multiple research, after its
-  quality reaches production quality
+- Often the life cycle of a piece of code is to start as research and then be promoted to higher level libraries to be used in multiple research, after its quality reaches production quality
+
 ### <a name="_2mzm3l4sjsrc"></a>***No ugly hacks***
-- We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be
-  undone (much more than the effort to do it right in the first place)
+- We don't tolerate "ugly hacks", i.e., hacks that require lots of work to be undone (much more than the effort to do it right in the first place)
   - Especially an ugly design hack, e.g., a Singleton, or some unnecessary
     dependency between distant pieces of code
   - Ugly hacks spreads everywhere in the code base
+
 ### <a name="_2ag48chdljj9"></a>***Always separate what changes from what stays the same***
 - In both main code and unit test it's not a good idea to repeat the same code
 - **Bad**
@@ -1775,7 +1776,7 @@ The code should be organized to allow these different modes of operations, but t
   - What code is clearer to you, VersionA or VersionB?
   - Can you spot the difference between the 2 pieces of code?
   - Version A
-
+    ```
     stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
     texts = ["a", "an", "the"]
     stop_words = nlp_ut.get_stopwords(
@@ -1793,8 +1794,9 @@ The code should be organized to allow these different modes of operations, but t
     actual_result = nlp_ut.remove_tokens(texts, stop_words=stop_words)
     expected_result = []
     self.assertEqual(actual_result, expected_result)
+    ```
   - Version B
-
+    ```
     def _helper(texts, categories, expected_result):
         stopwords = nlp_ut.read_stopwords_json(_STOPWORDS_PATH)
         stop_words = nlp_ut.get_stopwords(
@@ -1814,6 +1816,7 @@ The code should be organized to allow these different modes of operations, but t
     categories = ["auxiliary_verbs"]
     expected_result = []
     _helper(texts, categories, expected_result)
+    ```
     - Yes, Version A is **Bad** and Version B is **Good**
 ### <a name="_89o3zm4yi3lu"></a>***Don't mix real changes with linter changes***
 - The linter is in change of reformatting the code according to our conventions
@@ -1832,7 +1835,7 @@ The code should be organized to allow these different modes of operations, but t
 3. If you run the linter and see that the linter is reformatting / modifying
    pieces of code you din't change, it means that our team mate forgot to lint
    their code
-   - git blame can figure out the culprit
+   - `git blame` can figure out the culprit
    - You can send him / her a ping to remind her to lint, so you don't have to
      clean after him / her
    - In this case, the suggested approach is:
@@ -1841,7 +1844,7 @@ The code should be organized to allow these different modes of operations, but t
        any change
      - Run the unit tests to make sure nothing is breaking
      - You can fix lints or just do formatting: it's up to you
-     - You can make this change directly on master or do a PR if you want to
+     - You can make this change directly on `master` or do a PR if you want to
        be extra sure: your call
 
 # <a name="_mfgnp9i6bpoe"></a>**6. Conventions (Addendum)**
@@ -1853,6 +1856,7 @@ For some reason talking about conventions makes people defensive and uncomfortab
 Conventions are not a matter of being right or wrong, but to consider pros and cons of different approaches, and make the decision only once instead of discussing the same problem every time. In this way we can focus on achieving the UltimateGoal.
 
 If you are unsure or indifferent to a choice, be flexible and let other persons that seem to be less flexible decide.
+
 ## <a name="_10eekrukwnqy"></a>**Goal**
 The goal of the conventions is to simplify our job by removing ambiguity
 
@@ -1865,6 +1869,7 @@ The goal of the conventions is to simplify our job by removing ambiguity
 Once a convention is stable, we would like to automate enforcing it by the linter
 
 - ideally the linter should fix our mistakes so we don't even have to think about them, and reviewers don't have to be distracted with pointing out the lints
+
 ## <a name="_fwt106gsfna"></a>**Keep the rules simple**
 E.g., assume that we accepted the following rules:
 
@@ -1879,6 +1884,7 @@ In this case we want to leverage the ambiguity of "it's unclear what is the corr
 
 - E.g., every name of tools or library is always capitalized
 - This is simple to remember and automatically enforce
+
 ### <a name="_a044hfnivuhm"></a>**Allow turning off the automatic tools**
 We understand that tools can't always understand the context and the subtleties of human thoughts, and therefore they yield inevitably to false positives.
 
@@ -1907,44 +1913,33 @@ We consider this as an extension of a pre-condition ("only assign values that ar
 Often is more compact since it doesn't have reference to `self`
 ####
 #### <a name="_v7wvgg1jl2hw"></a><a name="_7wx581y1ihl3"></a>*Bad*
-*```*
-
-*self._tau = tau*
-
-*dbg.dassert_lte(self._tau, 0)*
-
-*```*
+```
+self._tau = tau
+dbg.dassert_lte(self._tau, 0)
+```
 ####
 #### <a name="_xv707wdngi03"></a><a name="_fq5yd9a3kpj0"></a>*Good*
-*```*
-
-*dbg.dassert_lte(tau, 0)*
-
-*self._tau = tau*
-
-*```*
+```
+dbg.dassert_lte(tau, 0)
+self._tau = tau
+```
 ####
 #### <a name="_u4k7m5y57ier"></a><a name="_wou84jgvrs7a"></a>*Exceptions*
 When we handle a default assignment, it's more natural to implement a post-condition:
-
-*```*
-
-*col_rename_func = col_rename_func or (lambda x: x)*
-
-*dbg.dassert_isinstance(col_rename_func, collections.Callable)*
-
-*```*
+```
+col_rename_func = col_rename_func or (lambda x: x)
+dbg.dassert_isinstance(col_rename_func, collections.Callable)
+```
 
 ### <a name="_8wbrke1ir3rk"></a>***Format docstrings and comments as markdown***
 **Good**
-
+```
 """
 
 Generate "random returns" in the form:
 
-```
 
-`               `vol_sq
+               vol_sq
 
 2000-01-03   3.111881
 
@@ -1954,17 +1949,16 @@ Generate "random returns" in the form:
 
 2000-01-06   8.544551
 
-```
-
 """
+```
 
 **Bad**
-
+```
 """
 
 Generate "random returns" in the form:
 
-`               `vol_sq
+              `vol_sq
 
 2000-01-03   3.111881
 
@@ -1975,6 +1969,7 @@ Generate "random returns" in the form:
 2000-01-06   8.544551
 
 """
+```
 
 ### <a name="_zea6e81nxfw5"></a>***Do not abbreviate just to save characters***
 ####
@@ -2123,7 +2118,7 @@ Bad: RH1E/configs.py
 
 **Rationale**
 
-Pros of the repetition (e.g., RH1E/RH1E_configs.py):
+Pros of the repetition (e.g., `RH1E/RH1E_configs.py`):
 
 - The filename is unique so there is no dependency on where you are
 - Since pytest requires all files to be unique, we need to repeat the prefix for the test names and the rule is "always make the names of the files unique"
@@ -2134,6 +2129,7 @@ Cons of the repetition:
 - Stuttering
 - What happens if there are multiple nested dirs? Do we repeat all the prefixes?
   - This seems to be an infrequent case
+
 ### <a name="_7hxq8svtq28l"></a>***Be clear on the meaning of TODO***
 A `TODO(Batman): clean this up` can be interpreted as
 
@@ -2168,4 +2164,3 @@ Timestamp
 - E.g., `start_timestamp` instead of `start_datetime`
 ### <a name="_h3504xf4mtjv"></a>***Always use imperative docstring and comments***
 PEP257 and Google standards seem to mix imperative and descriptive style without really a reason. The proposal is to always use "imperative" in both comments and all docstrings.
-
