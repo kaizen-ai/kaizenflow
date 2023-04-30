@@ -140,9 +140,7 @@ class PostgresDataFrameSaver(sinsasav.DataSaver):
         #
         query = get_uniswap_table_query()
         cursor.execute(query)
-        #
-        query = get_live_table_query()
-        cursor.execute(query)
+        
 
 
 # #############################################################################

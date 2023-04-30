@@ -39,7 +39,7 @@ bash_command = [
     # Sleep 5 seconds to ensure the bar is finished.
     "sleep 5","&&","pwd",
     "&&",
-    "python3 /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/download_to_db.py",
+    "/cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/download_to_db.py",
     "--start_timestamp {{ data_interval_start }}",
     "--target_table uniswap_table",
     "--live_flag"
