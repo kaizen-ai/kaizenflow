@@ -1,7 +1,7 @@
 # Getting a first issue to work on (aka warm-up issue)
 
 - The goal is to get comfortable with the development system
- 
+
 - We mark certain bugs as "good-as-first-bug"
 
 - Typical warm-up issues are:
@@ -26,13 +26,15 @@
 
 # Sorrentum Docker container
 
-- Get familiar with Docker if you are not (e.g., https://docs.docker.com/get-started/overview/)
+- Get familiar with Docker if you are not (e.g.,
+  https://docs.docker.com/get-started/overview/)
 
 - We work in a Docker container that has all the required dependencies installed
 
   - You can use PyCharm / VS code on your laptop to edit code, but you want to
-    run code inside the dev container since this makes sure everyone is running with
-    the same system, and it makes it easy to share code and reproduce problems
+    run code inside the dev container since this makes sure everyone is running
+    with the same system, and it makes it easy to share code and reproduce
+    problems
 
   0. Build the thin environment
 
