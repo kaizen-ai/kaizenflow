@@ -42,9 +42,11 @@
 ## Developers
 
 - People on teams working on the same project or on related projects can:
-  1) work together on the same tasks (you can coordinate on GitHub, Telegram, or do a Zoom)
-  2) work together and split the work (still you need coordination)
-  3) each can "replicate" the work so that both of you understand (no coordination)
+  1. work together on the same tasks (you can coordinate on GitHub, Telegram, or
+     do a Zoom)
+  2. work together and split the work (still you need coordination)
+  3. each can "replicate" the work so that both of you understand (no
+     coordination)
 
 # How to organize your research
 
