@@ -1,6 +1,8 @@
 import logging
 from typing import Any, Dict, List
 
+import numpy as np
+
 import defi.dao_cross.optimize as ddacropt
 import defi.dao_cross.order as ddacrord
 import helpers.hdbg as hdbg
@@ -11,11 +13,11 @@ _LOG = logging.getLogger(__name__)
 
 
 def _generate_test_orders(
-    base_tokens: List[str],
-    quote_tokens: List[str],
     actions: List[str],
     quantities: List[float],
+    base_tokens: List[str],
     limit_prices: List[float],
+    quote_tokens: List[str],
 ) -> List[ddacrord.Order]:
     """
     Create N `Order` instances using the inputs.
@@ -24,19 +26,19 @@ def _generate_test_orders(
     """
     # Use dummy values as the params are not relevant for the
     # optimization problem.
-    timestamp = None
+    timestamp = np.nan
     deposit_address = 1
     wallet_address = 1
     orders: List[ddacrord.Order] = []
     # TODO(Grisha): check that all lists are of the same length.
     for i in range(len(base_tokens)):
         order_i = ddacrord.Order(
-            base_tokens[i],
-            quote_tokens[i],
+            timestamp,
             actions[i],
             quantities[i],
+            base_tokens[i],
             limit_prices[i],
-            timestamp,
+            quote_tokens[i],
             deposit_address,
             wallet_address,
         )
@@ -75,10 +77,10 @@ class TestRunSolver1(hunitest.TestCase):
     Run the optimization problem for 2 orders with the same base token.
     """
 
-    _base_tokens = ["BTC", "BTC"]
-    _quote_tokens = ["ETH", "ETH"]
     _actions = ["buy", "sell"]
     _quantities = [8, 9]
+    _base_tokens = ["BTC", "BTC"]
+    _quote_tokens = ["ETH", "ETH"]
 
     def test1(self) -> None:
         """
@@ -88,11 +90,11 @@ class TestRunSolver1(hunitest.TestCase):
         prices = {"BTC": 2, "ETH": 4}
         limit_prices = [3, 1]
         test_orders = _generate_test_orders(
-            self._base_tokens,
-            self._quote_tokens,
             self._actions,
             self._quantities,
+            self._base_tokens,
             limit_prices,
+            self._quote_tokens,
         )
         # Run the check.
         expected_volume = 32
@@ -118,10 +120,10 @@ class TestRunSolver2(hunitest.TestCase):
     Run the optimization problem for N orders with the same base token.
     """
 
-    _base_tokens = ["BTC", "BTC", "BTC", "BTC"]
-    _quote_tokens = ["ETH", "ETH", "ETH", "ETH"]
     _actions = ["buy", "buy", "sell", "sell"]
     _quantities = [2, 6, 7, 5]
+    _base_tokens = ["BTC", "BTC", "BTC", "BTC"]
+    _quote_tokens = ["ETH", "ETH", "ETH", "ETH"]
 
     def test1(self) -> None:
         """
@@ -131,11 +133,11 @@ class TestRunSolver2(hunitest.TestCase):
         prices = {"BTC": 2, "ETH": 8}
         limit_prices = [4, 4.5, 2.1, 3]
         test_orders = _generate_test_orders(
-            self._base_tokens,
-            self._quote_tokens,
             self._actions,
             self._quantities,
+            self._base_tokens,
             limit_prices,
+            self._quote_tokens,
         )
         # Run the check.
         expected_volume = 32
@@ -161,10 +163,10 @@ class TestRunSolver3(hunitest.TestCase):
     Run the optimization problem for N orders with different base tokens.
     """
 
-    _base_tokens = ["BTC", "BTC", "BTC", "BTC", "ETH", "ETH", "ETH", "ETH"]
-    _quote_tokens = ["ETH", "ETH", "ETH", "ETH", "BTC", "BTC", "BTC", "BTC"]
     _actions = ["buy", "buy", "sell", "sell", "buy", "buy", "sell", "sell"]
     _quantities = [4, 2, 5, 3, 6, 2, 9, 1]
+    _base_tokens = ["BTC", "BTC", "BTC", "BTC", "ETH", "ETH", "ETH", "ETH"]
+    _quote_tokens = ["ETH", "ETH", "ETH", "ETH", "BTC", "BTC", "BTC", "BTC"]
 
     def test1(self) -> None:
         """
@@ -174,11 +176,11 @@ class TestRunSolver3(hunitest.TestCase):
         prices = {"BTC": 3, "ETH": 6}
         limit_prices = [3, 3.5, 1.5, 1.9, 0.6, 2, 0.1, 0.25]
         test_orders = _generate_test_orders(
-            self._base_tokens,
-            self._quote_tokens,
             self._actions,
             self._quantities,
+            self._base_tokens,
             limit_prices,
+            self._quote_tokens,
         )
         # Run the check.
         expected_volume = 132
@@ -210,65 +212,65 @@ class TestRunSolver4(hunitest.TestCase):
         limit_prices: List[float],
     ) -> List[ddacrord.Order]:
         """
-        Get toy BTC orders for the unit tests.
+        Get four orders for the unit tests (two buy and two sell orders).
 
         :param limit_prices: limit in prices: quote token per base token
         :return: buy and sell orders with the base token "BTC"
         """
         hdbg.dassert_eq(len(limit_prices), 4)
         # Set the common variables.
-        base_token = "BTC"
-        quote_token = "ETH"
+        timestamp = np.nan
         buy_action = "buy"
         sell_action = "sell"
-        timestamp = None
+        base_token = "BTC"
+        quote_token = "ETH"
         deposit_address = 1
         wallet_address = 1
-        # Genereate buy orders.
+        # Generate buy orders.
         quantity = 4
         order_0 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             buy_action,
             quantity,
+            base_token,
             limit_prices[0],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
         #
         quantity = 5
         order_1 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             buy_action,
             quantity,
+            base_token,
             limit_prices[1],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
         # Genereate sell orders.
         quantity = 6
         order_2 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             sell_action,
             quantity,
+            base_token,
             limit_prices[2],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
         #
         quantity = 2
         order_3 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             sell_action,
             quantity,
+            base_token,
             limit_prices[3],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
@@ -287,58 +289,58 @@ class TestRunSolver4(hunitest.TestCase):
         """
         hdbg.dassert_eq(len(limit_prices), 4)
         # Set the common variables.
-        base_token = "ETH"
-        quote_token = "BTC"
+        timestamp = np.nan
         buy_action = "buy"
         sell_action = "sell"
-        timestamp = None
+        base_token = "ETH"
+        quote_token = "BTC"
         deposit_address = 1
         wallet_address = 1
         # Genereate buy orders.
         quantity = 1
         order_0 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             buy_action,
             quantity,
+            base_token,
             limit_prices[0],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
         #
         quantity = 9
         order_1 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             buy_action,
             quantity,
+            base_token,
             limit_prices[1],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
         # Genereate sell orders.
         quantity = 8
         order_2 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             sell_action,
             quantity,
+            base_token,
             limit_prices[2],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
         #
         quantity = 6
         order_3 = ddacrord.Order(
-            base_token,
-            quote_token,
+            timestamp,
             sell_action,
             quantity,
+            base_token,
             limit_prices[3],
-            timestamp,
+            quote_token,
             deposit_address,
             wallet_address,
         )
@@ -364,7 +366,8 @@ class TestRunSolver4(hunitest.TestCase):
 
     def test2(self) -> None:
         """
-        The limit price condition is False for a buy order.
+        The limit price condition is False for a buy order and True for the
+        sell order.
         """
         prices = {"BTC": 2, "ETH": 8}
         btc_limit_prices = [5, 2, 3, 2]
@@ -376,7 +379,8 @@ class TestRunSolver4(hunitest.TestCase):
 
     def test3(self) -> None:
         """
-        The limit price condition is False for a sell order.
+        The limit price condition is False for a sell order, and True for the
+        sell order.
         """
         prices = {"BTC": 2, "ETH": 8}
         btc_limit_prices = [5, 5.5, 3, 6]
