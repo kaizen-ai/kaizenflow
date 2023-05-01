@@ -1,0 +1,17 @@
+dotenv: .env
+networks:
+  default: development
+  goerli:
+    host: https://goerli.infura.io/v3/${INFURA_PROJECT_ID}
+    chainid: 5
+    accounts:
+      - ${PRIVATE_KEY}
+    explorer: https://goerli.etherscan.io
+    timeout: 180
+  optimism-goerli:
+    host: https://opt-goerli.g.alchemy.com/v2/${OPTIMISM_ALCHEMY_ID}
+    chainid: 420
+    accounts:
+      - ${PRIVATE_KEY}
+    explorer: https://goerli-optimistic.etherscan.io
+    timeout: 180
