@@ -18,7 +18,7 @@ database: airflow
 ## Running project
 ####################################################
 go to project directory
-cd ~\sorrentum_sandbox\examples\ml_projects\Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/
+cd ~\sorrentum_sandbox\devops
 docker-compose up -d
 ./init_airflow_setup.sh
 ./docker_bash.sh
@@ -34,9 +34,9 @@ docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --targ
 ####################################################
 For windows users from project directory run:
 go to project directory
-cd ~\sorrentum_sandbox\examples\ml_projects\Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/
-wsl
+cd ~\sorrentum_sandbox\devops
 docker-compose up -d
+wsl
 dos2unix init_airflow_setup.sh
 ./init_airflow_setup.sh
 dos2unix docker_bash.sh
