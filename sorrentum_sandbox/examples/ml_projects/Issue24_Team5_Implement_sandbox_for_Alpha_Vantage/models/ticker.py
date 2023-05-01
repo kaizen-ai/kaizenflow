@@ -1,12 +1,13 @@
 from typing import List
-from api.alpha_vantage import AlphaVantage
-from models.time_series import TimeSeriesData, TimeInterval, DataType
+
 import dask.dataframe as dd
 import pandas as pd
+from api.alpha_vantage import AlphaVantage
+from dask.distributed import Client
 
-# This makes the DAGs not import
-# from dask.distributed import Client
-# client = Client("scheduler:8786")
+from models.time_series import DataType, TimeInterval, TimeSeriesData
+
+_ = Client("scheduler:8786")
 
 class Ticker:
     def __init__(
@@ -96,15 +97,19 @@ class Ticker:
     def compute_rolling_averages(self):
         """Calculates the Rolling Averages for 20, 50 and 200"""
 
-        df = dd.from_pandas(pd.DataFrame(self.time_series_data), npartitions=1)
-        df = df.query("type=='intraday'").sort_values(by='date')
-        df2 = df.drop(columns=['type', 'date'])
+        try:
+            df = dd.from_pandas(pd.DataFrame(self.time_series_data), npartitions=1)
+            df = df.query("type=='intraday'").sort_values(by='date')
+            df2 = df.drop(columns=['type', 'date'])
 
-        for window in [20, 50, 200]:
-            avgs = df2.rolling(window=window).mean()
-            avg = avgs.tail(1).close.values[0]
-            if avg:
-                self.__setattr__(f"rolling_avg_{window}", avg)
+            for window in [20, 50, 200]:
+                avgs = df2.rolling(window=window).mean()
+                avg = avgs.tail(1).close.values[0]
+                if avg:
+                    self.__setattr__(f"rolling_avg_{window}", avg)
+        except Exception as e:
+            print(e)
+            pass
 
     def compute_rsi(self):
         """Calculates the Relative Strength Index (RSI)"""

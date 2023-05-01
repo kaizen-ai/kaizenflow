@@ -26,8 +26,3 @@ COPY .env .
 COPY main.ipynb .
 
 RUN pip3 install -r requirements.txt
-
-EXPOSE 8888
-
-ENTRYPOINT (jupyter lab --ip 0.0.0.0 --port 8888  --no-browser --allow-root --NotebookApp.token='' --NotebookApp.password='') && \
-    /bin/bash
