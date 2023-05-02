@@ -226,7 +226,7 @@ class TestRunSolver4(hunitest.TestCase):
         quote_token = "ETH"
         deposit_address = 1
         wallet_address = 1
-        # Genereate buy orders.
+        # Generate buy orders.
         quantity = 4
         order_0 = ddacrord.Order(
             timestamp,

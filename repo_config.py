@@ -357,6 +357,18 @@ def get_html_bucket_path() -> str:
     return html_bucket_path
 
 
+def get_html_dir_to_url_mapping() -> Dict[str, str]:
+    """
+    Return a mapping between directories mapped on URLs.
+
+    This is used when we have web servers serving files from specific directories.
+    """
+    dir_to_url = {
+        "s3://cryptokaizen-html": "http://172.30.2.44"
+    }
+    return dir_to_url
+
+
 def get_docker_shared_group() -> str:
     """
     Return the group of the user running Docker, if any.
@@ -437,6 +449,7 @@ def config_func_to_str() -> str:
         "get_docker_shared_group",
         # "get_extra_amp_repo_sym_name",
         "get_host_name",
+        "get_html_dir_to_url_mapping",
         "get_invalid_words",
         "get_name",
         "get_repo_map",
