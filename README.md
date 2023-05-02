@@ -3,8 +3,6 @@
 Sorrentum is an open-source Web3 / DeFi protocol to build advanced financial
 applications using machine learning.
 
-This document contains links to more in-depth documentation.
-
 # Welcome
 
 Hello!
@@ -19,17 +17,16 @@ students. We’ve seen this mixture of ingredients work exceptionally well at
 Stanford / Berkeley / MIT / etc, where every student seems to be trying to start
 a company on the side. Our goal is to bootstrap the same virtuous cycle outside
 Silicon Valley so that instead of just looking for a job, you create your own.
-
 We are still figuring out things as we go, and we are working with University of
-Maryland and other interested parties to provide research assistantships and
-grants.
+Maryland and other interested parties to provide internships, research
+assistantships, and development grants.
 
 Besides the immediate financial benefit, this is a unique opportunity for you to:
 
-- work on cutting-edge problems on machine learning and Web3
-- learn about startups and how to start your own project
-- write academic papers
-- get internships and full-time positions at companies working on Sorrentum
+- Work on cutting-edge problems on machine learning and Web3
+- Learn about startups and how to start your own project
+- Write academic papers
+- Get internships and full-time positions at companies working on Sorrentum
   applications or from our network
 
 Most importantly, this is a unique way to be part of a community of individuals
@@ -39,17 +36,16 @@ interested in building innovative products.
 
 This is our only request to you.
 
-We understand that due to classes and other commitments, you might not be able
-to work on Sorrentum consistently. That’s ok. At the same time, please be aware
-that taking on a task means that:
+We understand that due to your commitments (e.g., classes, life), you might not
+be able to work on Sorrentum consistently. That’s ok. At the same time, please be
+aware that taking on a task means that:
 
 1. The same task might not be available to your colleagues; and
 
-2. We spend time helping, training, and mentoring you
-   - So the energy we put into helping you will be taken away from your
-     colleagues
-   - If you drop out the project, our effort could have been used for other
-     teammates that committed more firmly to making progress
+2. We spend time helping, training, and mentoring you. So the energy we put into
+   helping you will be taken away from your colleagues. If you drop out of the
+   project, our effort could have been used for other teammates that committed
+   more firmly to making progress
 
 In other words, if you are not sure you can commit a meaningful amount of time
 to Sorrentum (e.g., 10 hours / week), it is wise to wait to be sure you can do
@@ -58,17 +54,27 @@ make this experience the best possible for you.
 
 # Documents
 
+This document contains links to more in-depth documentation.
+
 ## On-boarding
 
 - [Signing up for Sorrentum](docs/Signing_up_for_Sorrentum.md)
 
 ## How to start developing
 
+- This contains the absolute minimal amount of info to start developing
+
 - [How to organize your work](docs/How_to_organize_your_work.md)
 
 - [Quick start for developing](docs/Quick_start_for_developing.md)
 
 - [Sorrentum Python coding style guide](https://docs.google.com/document/d/1R6jhFDbZKvyDdbnSQ9DA_N8417YF13hMI_Uw4quO4Xk)
+
+## Learn how to become efficient at developing
+
+- This contains a set of resources that over time will make 10x more productive
+
+- TODO: Docker
 
 ## Technologies used
 
@@ -83,17 +89,19 @@ make this experience the best possible for you.
 
 ## In-depth docs
 
-- [Code organization](docs/code_organization.md)
+- [Code organization](/code_organization.md)
 
-## DeFi on-boarding
+## DeFi: start developing
 
-- [DeFi readme](https://github.com/sorrentum/sorrentum/tree/master/defi/README.md)
+- [DeFi README](/defi/README.md)
+ 
+- [From 0 to Web3](/defi/From_0_to_Web3.md)
 
-## DeFi docs
+## DeFi: in-depth docs
 
-## Arbitrage / Modeling on-boarding
+## Arbitrage / Modeling: start developing
 
-## Arbitrage / Modeling docs
+## Arbitrage / Modeling: in-depth docs
 
 # Useful links
 

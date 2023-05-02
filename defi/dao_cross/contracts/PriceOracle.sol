@@ -8,9 +8,7 @@ contract PriceOracle {
 
     /// @param priceFeedAddr: contract address from https://docs.chain.link/data-feeds/price-feeds/addresses
     constructor(address priceFeedAddr) {
-        priceFeed = AggregatorV3Interface(
-            priceFeedAddr
-        );
+        priceFeed = AggregatorV3Interface(priceFeedAddr);
     }
 
     /// @notice Returns the latest price.
@@ -23,12 +21,13 @@ contract PriceOracle {
         answeredInRound: The round ID in which the answer was computed.
         */
         (
-            /* uint80 roundID */,
-            int256 price,
-            /*uint startedAt*/,
-            /*uint updatedAt*/,
-            /*uint80 answeredInRound*/
-        ) = priceFeed.latestRoundData();
+            ,
+            /* uint80 roundID */ int256 price,
+            ,
+            ,
+
+        ) = /*uint startedAt*/ /*uint updatedAt*/ /*uint80 answeredInRound*/
+            priceFeed.latestRoundData();
         return price;
     }
 }
