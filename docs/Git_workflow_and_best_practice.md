@@ -791,7 +791,9 @@ vendors/test/test_vendors.py
 
 - This is useful when merging `master` in a different branch and we don't want
   to checkout master just to pull
-  ```> git fetch origin master:master```
+  ```
+  > git fetch origin master:master
+  ```
 
 ## To force updating all the submodules
 
