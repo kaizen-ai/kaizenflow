@@ -225,6 +225,8 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     
     # Buy 5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 5 * 10**18, 100000000000, accounts[1], {"from": accounts[1], "gas_price": "60 gwei", "value": 100000000000*5})
+    #Balance after placing the order.
+    initialBalance = accounts[1].balance()
     # Buy 2.5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 2.5 * 10**18, 100000000000, accounts[2], {"from": accounts[2], "gas_price": "60 gwei", "value": 100000000000*2.5})
     # Buy 4 tokens for 100000000000 WEI.
@@ -234,6 +236,8 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     
     #Check that user that wanted to buy 5 tokens, gets only 3.5 tokens.
     assert base_token.balanceOf(accounts[1]) == 3.5 * 10**18
+    #Check that buyer got their extra money for unbought 1.5 token back.
+    assert accounts[1].balance() == initialBalance + 100000000000*1.5
     #Check that user that wanted to buy 2.5 tokens gets 2.5 tokens.
     assert base_token.balanceOf(accounts[2]) == 2.5 * 10**18
     #Check that user that wanted to buy 4 tokens gets 4 tokens.
