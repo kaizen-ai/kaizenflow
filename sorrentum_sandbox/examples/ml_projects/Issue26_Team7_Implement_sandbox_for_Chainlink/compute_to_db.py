@@ -23,6 +23,8 @@ def _add_download_args(
     """
     Add the command line options for exchange download.
     """
+    # when specified the start_roundid argument, 
+    # the data from the specified roundid to the latest roundid will be computed and store in the chainlink_compute table.
     parser.add_argument(
         "--start_roundid",
         action="store",
@@ -30,12 +32,15 @@ def _add_download_args(
         type=int,
         help="the first data to compute",
     )
+    # when specified the all argument, 
+    # all the data in chainlink_history and chainlink_real_time will be computed and store in the chainlink_compute table 
     parser.add_argument(
         "--all",
         action="store_true",
         required=False,
         help="compute all data",
     )
+    # table to store the compute data
     parser.add_argument(
         "--target_table",
         action="store",
