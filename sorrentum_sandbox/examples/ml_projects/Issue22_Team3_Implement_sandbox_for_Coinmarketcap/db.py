@@ -36,27 +36,20 @@ class MongoDataSaver(ssansave.DataSaver):
         #     hdbg.dassert_isinstance(data, list, "This data type is not supported")
         db = self.mongo_client
         db[self.db_name][collection_name].insert_one(data)
-    
-    # get data from mongoDB
-    def get_data(self, collection_name: str) -> pd.DataFrame:
-        db = self.mongo_client
-        data = list(db[self.db_name][collection_name].find())
-        df = pd.DataFrame(data)
-        return df
 
 # #############################################################################
-# MongoClient
+# MongoClient Data Loader
 # #############################################################################
 
 
 class MongoClient(ssanclie.DataClient):
     """
-    Load data located in MongoDB into the memory.
+    Load CoinMarketCap data located in MongoDB into the memory.
     """
 
     def __init__(self, mongo_client: pymongo.MongoClient, db_name: str):
         """
-        Build Reddit MongoDB client.
+        Build CoinMarketCap MongoDB client.
 
         :param mongo_client: MongoDB client
         :param db_name: name of the database to connect to
@@ -66,40 +59,20 @@ class MongoClient(ssanclie.DataClient):
 
     def load(
         self,
-        dataset_signature: str,
+        collection_name: str,
         *,
-        start_timestamp: Optional[pd.Timestamp] = None,
-        end_timestamp: Optional[pd.Timestamp] = None,
+        start: Optional[int]= None,
+        limit: Optional[int] = None,
     ) -> pd.DataFrame:
         """
-        Load data from MongoDB collection directory for a specified time
-        period.
+        Load data from MongoDB collection directory.
 
-        The method assumes data having a 'timestamp' column.
-
-        :param dataset_signature: collection name where data come from
-        :param start_timestamp: beginning of the time period to load. If `None`,
-            start with the earliest available data
-        :param end_timestamp: end of the time period to load. If `None`, download
-            up to the latest available data
+        :param collection_name: collection name where data come from
         :return: loaded data
         """
         # Access the data.
         db = self.mongo_client[self.db_name]
-        # Build the filter.
-        timestamp_filter: dict = {"created": {}}
-        if start_timestamp or end_timestamp:
-            if start_timestamp:
-                timestamp_filter["created"] = {
-                    "$gte": start_timestamp.to_pydatetime()
-                }
-            if end_timestamp:
-                timestamp_filter["created"].update(
-                    {"$lt": end_timestamp.to_pydatetime()}
-                )
-        else:
-            timestamp_filter = {}
-        data = list(db[dataset_signature].find(timestamp_filter))
+        data = list(db[collection_name].find())
         # Convert the data to a dataframe.
         df = pd.DataFrame(data)
         return df
