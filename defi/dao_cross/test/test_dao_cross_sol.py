@@ -213,14 +213,15 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     Buying 11.5 tokens and selling 10 tokens.
     """
     # Add some sell orders, overall sell 10 tokens.
-    # First transfer the token to the users that will participate sell order.
-    base_token.transfer(accounts[4], 2 * 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
-    base_token.transfer(accounts[5], 5* 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
-    base_token.transfer(accounts[6], 3* 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
-    # Approve the tranfers for dao cross.
-    base_token.approve(daocross, 2 * 10**18, {"from": accounts[4], "gas_price": "60 gwei"})
-    base_token.approve(daocross, 5 * 10**18, {"from": accounts[5], "gas_price": "60 gwei"})
-    base_token.approve(daocross, 3 * 10**18, {"from": accounts[6], "gas_price": "60 gwei"})
+    n_tokens =  [2, 5, 3]
+    account_ind = [4, 5, 6]
+    for n, ind in zip(n_tokens, account_ind):
+        # Transfer the token to the users that will participate sell order.
+        base_token.transfer(accounts[ind], n * 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
+        # Approve the transfers for the contract.
+        base_token.approve(daocross, n * 10**18, {"from": accounts[ind], "gas_price": "60 gwei"})
+        # Submit sell order.
+        daocross.sellOrder(base_token.address, n * 10**18, 100000000000, accounts[ind], {"from": accounts[ind], "gas_price": "60 gwei"})
     
     # Buy 5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 5 * 10**18, 100000000000, accounts[1], {"from": accounts[1], "gas_price": "60 gwei", "value": 100000000000*5})
@@ -228,10 +229,7 @@ def test_onSwapTime_remainingHeap_moreBuying(daocross, base_token):
     daocross.buyOrder(base_token.address, 2.5 * 10**18, 100000000000, accounts[2], {"from": accounts[2], "gas_price": "60 gwei", "value": 100000000000*2.5})
     # Buy 4 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 4 * 10**18, 100000000000, accounts[3], {"from": accounts[3], "gas_price": "60 gwei", "value": 100000000000*4})
-    # Submit sell orders.
-    daocross.sellOrder(base_token.address, 2 * 10**18, 100000000000, accounts[4], {"from": accounts[4], "gas_price": "60 gwei"})
-    daocross.sellOrder(base_token.address, 5 * 10**18, 100000000000, accounts[5], {"from": accounts[5], "gas_price": "60 gwei"})
-    daocross.sellOrder(base_token.address, 3 * 10**18, 100000000000, accounts[6], {"from": accounts[6], "gas_price": "60 gwei"})
+    
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
     
     #Check that user that wanted to buy 5 tokens, gets only 3.5 tokens.
@@ -253,16 +251,16 @@ def test_onSwapTime_remainingHeap_moreSelling(daocross, base_token):
     
     Buying 10 tokens and selling 11.5 tokens.
     """
-    # Add some sell orders, overall sell 11.5 tokens.
-    # First transfer the token to the users that will participate sell order.
-    base_token.transfer(accounts[4], 2 * 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
-    base_token.transfer(accounts[5], 5* 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
-    base_token.transfer(accounts[6], 4.5* 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
-    # Approve the tranfers for dao cross.
-    base_token.approve(daocross, 2 * 10**18, {"from": accounts[4], "gas_price": "60 gwei"})
-    base_token.approve(daocross, 5 * 10**18, {"from": accounts[5], "gas_price": "60 gwei"})
-    base_token.approve(daocross, 4.5 * 10**18, {"from": accounts[6], "gas_price": "60 gwei"})
-    
+    n_tokens =  [2, 5, 4.5]
+    account_ind = [4, 5, 6]
+    for n, ind in zip(n_tokens, account_ind):
+        # Transfer the token to the users that will participate sell order.
+        base_token.transfer(accounts[ind], n * 10**18, {"from": accounts[0], "gas_price": "60 gwei"})
+        # Approve the transfers for the contract.
+        base_token.approve(daocross, n * 10**18, {"from": accounts[ind], "gas_price": "60 gwei"})
+        # Submit sell order.
+        daocross.sellOrder(base_token.address, n * 10**18, 100000000000, accounts[ind], {"from": accounts[ind], "gas_price": "60 gwei"})
+ 
     # Buy 5 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 5 * 10**18, 100000000000, accounts[1], {"from": accounts[1], "gas_price": "60 gwei", "value": 100000000000*5})
     # Buy 2 tokens for 100000000000 WEI.
@@ -270,9 +268,6 @@ def test_onSwapTime_remainingHeap_moreSelling(daocross, base_token):
     # Buy 3 tokens for 100000000000 WEI.
     daocross.buyOrder(base_token.address, 3 * 10**18, 100000000000, accounts[3], {"from": accounts[3], "gas_price": "60 gwei", "value": 100000000000*3})
     # Submit sell orders.
-    daocross.sellOrder(base_token.address, 2 * 10**18, 100000000000, accounts[4], {"from": accounts[4], "gas_price": "60 gwei"})
-    daocross.sellOrder(base_token.address, 5 * 10**18, 100000000000, accounts[5], {"from": accounts[5], "gas_price": "60 gwei"})
-    daocross.sellOrder(base_token.address, 4.5 * 10**18, 100000000000, accounts[6], {"from": accounts[6], "gas_price": "60 gwei"})
     daocross.onSwapTime({"from": accounts[0], "gas_price": "60 gwei"})
     
     #Check that user that wanted to buy 5 tokens gets 5 tokens.
@@ -287,4 +282,5 @@ def test_onSwapTime_remainingHeap_moreSelling(daocross, base_token):
     assert base_token.balanceOf(accounts[5]) == 1.5 * 10**18
     # Check that seller that wanted to sell 4.5 tokens sold 4.5 tokens.
     assert base_token.balanceOf(accounts[6]) == 0
+
 
