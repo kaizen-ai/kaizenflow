@@ -24,6 +24,19 @@
 - After being reviewed, the PR will be merged to the master branch by your
   reviewers
 
+# Cloning the code
+
+- All the source code should go under `~/src` (e.g., `/Users/<YOUR_USER>/src` on a Mac PC)
+- The path to the local repo folder should look like this `~/src/{REPO_NAME}{IDX}` where
+  - `IDX` is an integer
+  - `REPO_NAME` is a name of the repository
+- To clone the repo, use the cloning command described in [the Github official documentation](https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/cloning-a-repository-from-github/cloning-a-repository)
+- Example of cloning command:
+```
+> git clone git@github.com:sorrentum/sorrentum.git ~/src/sorrentum1
+```
+  
+
 # Sorrentum Docker container
 
 - Get familiar with Docker if you are not (e.g.,
