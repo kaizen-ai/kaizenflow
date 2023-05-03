@@ -39,28 +39,32 @@ hprint.config_notebook()
 # # Get linear supply / demand orders
 
 # %%
+type_ = "supply"
 alpha = 2.0
 beta = 10.0
 n_orders = 10
-linear_supply_orders = ddcrsede.get_linear_supply_orders(alpha, beta, n_orders)
+linear_supply_orders = ddcrsede.convert_aggregated_curve_to_limit_orders(type_, alpha, beta, n_orders)
 ddacrord.convert_orders_to_dataframe(linear_supply_orders)
 
 # %%
+type_ = "demand"
 alpha = -2.0
 beta = 210.0
 n_orders = 10
-linear_demand_orders = ddcrsede.get_linear_demand_orders(alpha, beta, n_orders)
+linear_demand_orders = ddcrsede.convert_aggregated_curve_to_limit_orders(type_, alpha, beta, n_orders)
 ddacrord.convert_orders_to_dataframe(linear_demand_orders)
 
 # %% [markdown]
 # # Get curves
 
 # %%
-supply_curve = ddcrsede.get_curve_dots(linear_supply_orders, "supply")
+type_ = "supply"
+supply_curve = ddcrsede.get_supply_demand_curve(type_, linear_supply_orders)
 supply_curve
 
 # %%
-demand_curve = ddcrsede.get_curve_dots(linear_demand_orders, "demand")
+type_ = "demand"
+demand_curve = ddcrsede.get_supply_demand_curve(type_, linear_demand_orders)
 demand_curve
 
 # %%
