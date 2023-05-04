@@ -33,7 +33,6 @@ _LOG = logging.getLogger(__name__)
 # Script.
 # #############################################################################
 
-
 def _add_load_args(
     parser: argparse.ArgumentParser,
 ) -> argparse.ArgumentParser:
@@ -66,6 +65,38 @@ def _parse() -> argparse.ArgumentParser:
     return parser
 
 
+def process_data(cmc_data):
+    cmc_data = cmc_data.rename(columns={'1': 'data'})
+    cmc_data = pd.concat([cmc_data[cmc_data.columns.difference(['data'])], pd.json_normalize(cmc_data.data)], axis=1)
+    kept_columns = ['name','quote.USD.last_updated','max_supply','total_supply','circulating_supply', 'quote.USD.price', 'quote.USD.market_cap', 'quote.USD.market_cap_dominance', 'quote.USD.fully_diluted_market_cap','quote.USD.volume_24h', ]
+
+    cmc_data = cmc_data[kept_columns]
+    cmc_data.columns = cmc_data.columns.str.replace('quote.USD.', '')
+    # cmc_data['last_updated'] = pd.to_datetime(cmc_data['last_updated'])
+    _LOG.info("Processed data tail: \n %s", cmc_data.tail(20))    
+
+    return cmc_data
+
+def fliter_new_data(cmc_data, features_last_updated):
+    if not features_last_updated.empty:
+        features_last_updated_value = features_last_updated['last_updated'].iloc[0]
+        _LOG.info("1. features_last_updated: \n %s", features_last_updated)
+        _LOG.info("2. Last updated value in cmc_data collection: %s", cmc_data['last_updated'].iloc[-1])
+        _LOG.info("3. Last updated value in target collection: %s", features_last_updated_value)
+        # Find rows index where 'last_updated' is equal to 'features_last_updated'
+        matching_row = cmc_data.loc[cmc_data['last_updated'] == features_last_updated_value]
+        _LOG.info("4. Matching row: \n %s", matching_row.head())
+        if not matching_row.empty:
+            # Get rows where 'last_updated' is later than the maximum 'last_updated' value in 'matching_rows'
+            later_rows = cmc_data.loc[cmc_data['last_updated'] > matching_row['last_updated'].iloc[0]]
+            cmc_data = later_rows
+            _LOG.info("5. New data to process: \n %s", cmc_data.head())
+            _LOG.info("6. [ %s ] New Data to process.", len(cmc_data))
+            return cmc_data
+        else:
+            _LOG.info("No new data to process.")
+            return pd.DataFrame()
+
 def _main(parser: argparse.ArgumentParser) -> None:
     args = parser.parse_args()
     hdbg.init_logger(use_exec_path=True)
@@ -89,36 +120,18 @@ def _main(parser: argparse.ArgumentParser) -> None:
     _LOG.info("Loaded data: \n %s", cmc_data.head())
 
     # Process data
-    cmc_data = cmc_data.rename(columns={'1': 'data'})
-    cmc_data = pd.concat([cmc_data[cmc_data.columns.difference(['data'])], pd.json_normalize(cmc_data.data)], axis=1)
-    kept_columns = ['name','quote.USD.last_updated','max_supply','total_supply','circulating_supply', 'quote.USD.price', 'quote.USD.market_cap', 'quote.USD.market_cap_dominance', 'quote.USD.fully_diluted_market_cap','quote.USD.volume_24h', ]
-
-    cmc_data = cmc_data[kept_columns]
-    cmc_data.columns = cmc_data.columns.str.replace('quote.USD.', '')
-    # cmc_data['last_updated'] = pd.to_datetime(cmc_data['last_updated'])
-    _LOG.info("Processed data tail: \n %s", cmc_data.tail(20))
+    cmc_data = process_data(cmc_data)
 
 
     # Get last updated data from target collection
     features_last_updated = coinmarketcap_mongo_client.get_last_updated(collection_name=args.target_collection)
-    # features_last_updated['last_updated'] = pd.to_datetime(features_last_updated['last_updated'])
-    if not features_last_updated.empty:
-        features_last_updated_value = features_last_updated['last_updated'].iloc[0]
-        _LOG.info("1. features_last_updated: \n %s", features_last_updated)
-        _LOG.info("2. Last updated value in cmc_data collection: %s", cmc_data['last_updated'].iloc[-1])
-        _LOG.info("3. Last updated value in target collection: %s", features_last_updated_value)
-        # Find rows index where 'last_updated' is equal to 'features_last_updated'
-        matching_row = cmc_data.loc[cmc_data['last_updated'] == features_last_updated_value]
-        _LOG.info("4. Matching row: \n %s", matching_row.head())
-        if not matching_row.empty:
-            # Get rows where 'last_updated' is later than the maximum 'last_updated' value in 'matching_rows'
-            later_rows = cmc_data.loc[cmc_data['last_updated'] > matching_row['last_updated'].iloc[0]]
-            cmc_data = later_rows
-            _LOG.info("5. New data to process: \n %s", cmc_data.head())
-            _LOG.info("6. [ %s ] New Data to process.", len(cmc_data))
-        else:
-            _LOG.info("No new data to process.")
-            return
+
+    # Filter new data to process
+    cmc_data = fliter_new_data(cmc_data, features_last_updated)
+
+    # Check if there is new data to process
+    if cmc_data.empty:
+        return
 
     # Transform data
     features = coinmarketcap_features.extract_features(cmc_data)
