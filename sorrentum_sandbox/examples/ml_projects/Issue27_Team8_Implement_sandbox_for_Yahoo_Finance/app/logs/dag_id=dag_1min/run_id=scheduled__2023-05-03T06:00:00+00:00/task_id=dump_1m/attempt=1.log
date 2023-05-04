@@ -1,0 +1,41 @@
+[2023-05-03T06:05:13.616+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T06:00:00+00:00 [queued]>
+[2023-05-03T06:05:13.697+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T06:00:00+00:00 [queued]>
+[2023-05-03T06:05:13.701+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03T06:05:13.704+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-05-03T06:05:13.708+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03T06:05:13.901+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): dump_1m> on 2023-05-03 06:00:00+00:00
+[2023-05-03T06:05:13.969+0000] {standard_task_runner.py:55} INFO - Started process 371 to run task
+[2023-05-03T06:05:14.017+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_1min', 'dump_1m', 'scheduled__2023-05-03T06:00:00+00:00', '--job-id', '198', '--raw', '--subdir', 'DAGS_FOLDER/dag_1min.py', '--cfg-path', '/tmp/tmpdh_5_6bz']
+[2023-05-03T06:05:14.025+0000] {standard_task_runner.py:83} INFO - Job 198: Subtask dump_1m
+[2023-05-03T06:05:14.587+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_1min.dump_1m scheduled__2023-05-03T06:00:00+00:00 [running]> on host c58811f86e80
+[2023-05-03T06:05:15.330+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_1min
+AIRFLOW_CTX_TASK_ID=dump_1m
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T06:00:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T06:00:00+00:00
+[2023-05-03T06:05:16.951+0000] {logging_mixin.py:137} WARNING -   0%|          | 0/2 [00:00<?, ?it/s]
+[2023-05-03T06:05:17.930+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
+[2023-05-03T06:05:19.684+0000] {logging_mixin.py:137} WARNING -  50%|#####     | 1/2 [00:02<00:02,  2.73s/it]
+[2023-05-03T06:05:20.059+0000] {logging_mixin.py:137} INFO - [*********************100%***********************]  1 of 1 completed
+[2023-05-03T06:05:21.439+0000] {logging_mixin.py:137} WARNING - 100%|##########| 2/2 [00:04<00:00,  2.16s/it]
+[2023-05-03T06:05:21.445+0000] {logging_mixin.py:137} WARNING - 100%|##########| 2/2 [00:04<00:00,  2.24s/it]
+[2023-05-03T06:05:21.472+0000] {logging_mixin.py:137} INFO - Index(['open', 'high', 'low', 'close', 'adj_close', 'volume', 'timestamp',
+       'currency_pair', 'exchangetimezonename', 'timezone'],
+      dtype='object')
+[2023-05-03T06:05:21.608+0000] {download_yahoo.py:57} INFO - Downloaded data: 
+	         open       high        low  ...  currency_pair  exchangetimezonename  timezone
+0  16.706959  16.706959  16.706959  ...       AVAX-USD                   UTC       UTC
+1  16.701109  16.701109  16.701109  ...       AVAX-USD                   UTC       UTC
+2  16.701195  16.701195  16.701195  ...       AVAX-USD                   UTC       UTC
+3  16.702591  16.702591  16.702591  ...       AVAX-USD                   UTC       UTC
+4  16.704332  16.704332  16.704332  ...       AVAX-USD                   UTC       UTC
+
+[5 rows x 10 columns]
+[2023-05-03T06:05:21.865+0000] {python.py:177} INFO - Done. Returned value was: None
+[2023-05-03T06:05:21.937+0000] {taskinstance.py:1332} INFO - Marking task as SUCCESS. dag_id=dag_1min, task_id=dump_1m, execution_date=20230503T060000, start_date=20230503T060513, end_date=20230503T060521
+[2023-05-03T06:05:22.058+0000] {local_task_job.py:212} INFO - Task exited with return code 0
+[2023-05-03T06:05:22.211+0000] {taskinstance.py:2596} INFO - 1 downstream tasks scheduled from follow-on schedule check

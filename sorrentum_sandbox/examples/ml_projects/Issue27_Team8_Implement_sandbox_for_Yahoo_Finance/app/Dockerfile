@@ -7,6 +7,7 @@ ADD requirements.txt requirements.txt
 #COPY app.py app.py
 COPY helpers helpers
 COPY Anomaly.ipynb Anomaly.ipynb
+COPY dask_db.py dask_db.py
 COPY ../../../../common common
 #COPY ../../../common/__init__.py __init__.py
 

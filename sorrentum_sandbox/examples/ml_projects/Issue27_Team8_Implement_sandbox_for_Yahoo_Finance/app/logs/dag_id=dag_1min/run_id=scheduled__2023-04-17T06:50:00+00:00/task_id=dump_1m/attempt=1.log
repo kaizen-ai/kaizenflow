@@ -1,0 +1,40 @@
+[2023-05-01T23:51:16.063+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-04-17T06:50:00+00:00 [queued]>
+[2023-05-01T23:51:16.210+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_1min.dump_1m scheduled__2023-04-17T06:50:00+00:00 [queued]>
+[2023-05-01T23:51:16.216+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-01T23:51:16.221+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-05-01T23:51:16.224+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-01T23:51:16.417+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): dump_1m> on 2023-04-17 06:50:00+00:00
+[2023-05-01T23:51:16.464+0000] {standard_task_runner.py:55} INFO - Started process 222 to run task
+[2023-05-01T23:51:16.501+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_1min', 'dump_1m', 'scheduled__2023-04-17T06:50:00+00:00', '--job-id', '67', '--raw', '--subdir', 'DAGS_FOLDER/dag_1min.py', '--cfg-path', '/tmp/tmp5ougf8pe']
+[2023-05-01T23:51:16.514+0000] {standard_task_runner.py:83} INFO - Job 67: Subtask dump_1m
+[2023-05-01T23:51:17.261+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_1min.dump_1m scheduled__2023-04-17T06:50:00+00:00 [running]> on host 1a269c37bd32
+[2023-05-01T23:51:17.962+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_1min
+AIRFLOW_CTX_TASK_ID=dump_1m
+AIRFLOW_CTX_EXECUTION_DATE=2023-04-17T06:50:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-04-17T06:50:00+00:00
+[2023-05-01T23:51:18.336+0000] {taskinstance.py:1776} ERROR - Task failed with exception
+Traceback (most recent call last):
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 175, in execute
+    return_value = self.execute_callable()
+  File "/home/airflow/.local/lib/python3.7/site-packages/airflow/operators/python.py", line 192, in execute_callable
+    return self.python_callable(*self.op_args, **self.op_kwargs)
+  File "/opt/airflow/dags/dag_1min.py", line 19, in dump_1m
+    dump_latest_data('yahoo_yfinance_spot_downloaded_1min','1m')
+  File "/code/Latest_Data.py", line 29, in dump_latest_data
+    cursor.execute(postgreSQL_select_Query)
+psycopg2.errors.UndefinedTable: relation "yahoo_yfinance_spot_downloaded_1min" does not exist
+LINE 1: select * from yahoo_yfinance_spot_downloaded_1min
+                      ^
+
+[2023-05-01T23:51:18.421+0000] {taskinstance.py:1332} INFO - Marking task as FAILED. dag_id=dag_1min, task_id=dump_1m, execution_date=20230417T065000, start_date=20230501T235116, end_date=20230501T235118
+[2023-05-01T23:51:18.559+0000] {standard_task_runner.py:105} ERROR - Failed to execute job 67 for task dump_1m (relation "yahoo_yfinance_spot_downloaded_1min" does not exist
+LINE 1: select * from yahoo_yfinance_spot_downloaded_1min
+                      ^
+; 222)
+[2023-05-01T23:51:18.629+0000] {local_task_job.py:212} INFO - Task exited with return code 1
+[2023-05-01T23:51:18.768+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check

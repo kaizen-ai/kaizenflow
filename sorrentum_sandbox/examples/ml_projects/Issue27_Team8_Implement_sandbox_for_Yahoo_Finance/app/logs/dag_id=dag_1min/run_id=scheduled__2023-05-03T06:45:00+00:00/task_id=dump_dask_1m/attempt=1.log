@@ -1,0 +1,25 @@
+[2023-05-03T06:50:35.480+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=non-requeueable deps ti=<TaskInstance: dag_1min.dump_dask_1m scheduled__2023-05-03T06:45:00+00:00 [queued]>
+[2023-05-03T06:50:35.549+0000] {taskinstance.py:1090} INFO - Dependencies all met for dep_context=requeueable deps ti=<TaskInstance: dag_1min.dump_dask_1m scheduled__2023-05-03T06:45:00+00:00 [queued]>
+[2023-05-03T06:50:35.561+0000] {taskinstance.py:1288} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03T06:50:35.564+0000] {taskinstance.py:1289} INFO - Starting attempt 1 of 1
+[2023-05-03T06:50:35.566+0000] {taskinstance.py:1290} INFO - 
+--------------------------------------------------------------------------------
+[2023-05-03T06:50:35.695+0000] {taskinstance.py:1309} INFO - Executing <Task(PythonOperator): dump_dask_1m> on 2023-05-03 06:45:00+00:00
+[2023-05-03T06:50:35.722+0000] {standard_task_runner.py:55} INFO - Started process 1684 to run task
+[2023-05-03T06:50:35.740+0000] {standard_task_runner.py:82} INFO - Running: ['***', 'tasks', 'run', 'dag_1min', 'dump_dask_1m', 'scheduled__2023-05-03T06:45:00+00:00', '--job-id', '217', '--raw', '--subdir', 'DAGS_FOLDER/dag_1min.py', '--cfg-path', '/tmp/tmpjkp7g3_s']
+[2023-05-03T06:50:35.746+0000] {standard_task_runner.py:83} INFO - Job 217: Subtask dump_dask_1m
+[2023-05-03T06:50:36.370+0000] {task_command.py:389} INFO - Running <TaskInstance: dag_1min.dump_dask_1m scheduled__2023-05-03T06:45:00+00:00 [running]> on host c58811f86e80
+[2023-05-03T06:50:37.057+0000] {taskinstance.py:1518} INFO - Exporting the following env vars:
+AIRFLOW_CTX_DAG_OWNER=coder2j
+AIRFLOW_CTX_DAG_ID=dag_1min
+AIRFLOW_CTX_TASK_ID=dump_dask_1m
+AIRFLOW_CTX_EXECUTION_DATE=2023-05-03T06:45:00+00:00
+AIRFLOW_CTX_TRY_NUMBER=1
+AIRFLOW_CTX_DAG_RUN_ID=scheduled__2023-05-03T06:45:00+00:00
+[2023-05-03T06:50:39.943+0000] {logging_mixin.py:137} INFO - creating dask dataframe for generating features
+[2023-05-03T06:50:41.504+0000] {logging_mixin.py:137} INFO - Done
+[2023-05-03T06:50:41.642+0000] {python.py:177} INFO - Done. Returned value was: None
+[2023-05-03T06:50:41.727+0000] {taskinstance.py:1332} INFO - Marking task as SUCCESS. dag_id=dag_1min, task_id=dump_dask_1m, execution_date=20230503T064500, start_date=20230503T065035, end_date=20230503T065041
+[2023-05-03T06:50:41.926+0000] {local_task_job.py:212} INFO - Task exited with return code 0
+[2023-05-03T06:50:42.065+0000] {taskinstance.py:2596} INFO - 0 downstream tasks scheduled from follow-on schedule check
