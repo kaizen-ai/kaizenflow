@@ -100,3 +100,13 @@ psql -h localhost -U postgres airflow
 # delete table
 DROP TABLE <tablename>
 
+###################################################
+## Jupyter
+####################################################
+
+In outside terminal 
+> cd $GIT_ROOT/sorrentum_sandbox/examples
+> ./docker_jupyter.sh
+
+In local host, navigate to our folder 
+might have to pip install psycopg2
