@@ -1,23 +1,28 @@
-Rename .env_sample to .env and fill in your bitquery API_KEY to run
 
 ###################################################
-## Container login info
+## Container info
 ####################################################
 
-Airflow login:
+Airflow Info:
 Username: airflow
 Password: airflow
 
-Postgres airflow username and password:
+Postgres Info:
 Username: postgres
 Password: postgres
+Port: 5532
+host: host.docker.internal
 database: airflow
 
 
 ####################################################
-## Running project
+## Running project - Startup Airflow
 ####################################################
-go to project directory
+
+## In $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap:
+## Rename .env_sample to .env and fill in your bitquery API_KEY
+
+## go to sorrentum_sandbox directory
 cd ~\sorrentum_sandbox\devops
 docker-compose up -d
 ./init_airflow_setup.sh
@@ -26,14 +31,31 @@ docker-compose up -d
 docker> cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
 docker> python3 download_to_csv.py --start_timestamp '2023-04-20T16:38:00' --target_dir 'uniswap_data'
 docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table'
-docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table' -live_flag
+
+## Login to airflow and start the download_periodic_12hr_postgres_uniswap DAG:
+http://localhost:8091/home
 
 
 ####################################################
-## Running project in Windows
+## Running jupyter notebook
 ####################################################
-For windows users from project directory run:
-go to project directory
+cd $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
+./docker_jupyter.sh
+
+## Jupiter notebook location: (Paste into browser)
+http://localhost:8888/notebooks/data/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/uniswap_notebook.ipynb
+
+
+
+
+####################################################
+## Running project - Startup Airflow in Windows
+####################################################
+
+## In $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap:
+## Rename .env_sample to .env and fill in your bitquery API_KEY
+
+## go to sorrentum_sandbox directory
 cd ~\sorrentum_sandbox\devops
 docker-compose up -d
 wsl
@@ -44,8 +66,21 @@ dos2unix docker_bash.sh
 
 docker> cd /cmamp/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
 docker> python3 download_to_csv.py --start_timestamp '2023-04-20T16:38:00' --target_dir 'uniswap_data'
-docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table'
-docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00' --target_table 'uniswap_table' --live_flag
+docker> python3 download_to_db.py --start_timestamp '2023-04-20T16:38:00'
+
+## Login to airflow and start the download_periodic_12hr_postgres_uniswap DAG:
+http://localhost:8091/home
+
+####################################################
+## Running jupyter notebook in Windows
+####################################################
+cd $GIT_ROOT/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap
+wsl
+dos2unix
+./docker_jupyter.sh
+
+## Jupiter notebook location: (Paste into a web-browser)
+http://localhost:8888/notebooks/data/sorrentum_sandbox/examples/ml_projects/Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap/uniswap_notebook.ipynb
 
 
 

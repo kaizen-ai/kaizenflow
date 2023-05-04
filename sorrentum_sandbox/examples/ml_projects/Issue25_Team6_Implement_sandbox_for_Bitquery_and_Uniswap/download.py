@@ -111,9 +111,6 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
     endpoint = "https://graphql.bitquery.io/"
     headers = {"X-API-KEY": api_key}
 
-
-    print(query_alter_1,query_alter_2)
-
     # Define an empty list to store the results
     results = []
 
