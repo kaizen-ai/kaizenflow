@@ -10,66 +10,52 @@ import re
 from typing import List, Optional, Tuple
 
 import pandas as pd
+import dask.dataframe as dd
 
 _LOG = logging.getLogger(__name__)
 
-def get_nvt_ratio(market_cap, transaction_volume):
+def get_nvt_ratio(ddf):
     """
     NVT Ratio = Market Cap / Transaction Volume
 
-    :param: Market Cap & Transaction Volume 24h
+    :param: ddf
     :return: NVT Ratio
     """
-    if transaction_volume == 0:
-        return 0
-    return market_cap / transaction_volume
+    return ddf['market_cap'] / ddf['volume_24h']
 
-def get_mc_fdmc_ratio(market_cap, fully_diluted_market_cap):
+def get_mc_fdmc_ratio(ddf):
     """
-    :param: Market Cap & Fully Diluted Market Cap
+    :param: ddf
     :return: Market Cap / Fully Diluted Market Cap
     """
-    try:
-        # Ensure both variables are of type 'float'
-        market_cap = float(market_cap)
-        fully_diluted_market_cap = float(fully_diluted_market_cap)
-        
-        # Perform the division
-        return market_cap / fully_diluted_market_cap
-    except ValueError:
-        # Handle the case when the conversion to float fails
-        print("Error: One or both of the input values could not be converted to a float.")
-        return None
-    except ZeroDivisionError:
-        # Handle the case when 'fully_diluted_market_cap' is zero
-        print("Error: Division by zero.")
-        return None
+    # Ensure both variables are of type 'float'
+    ddf['market_cap'] = ddf['market_cap'].astype(float)
+    ddf['fully_diluted_market_cap'] = ddf['fully_diluted_market_cap'].astype(float)
+    
+    # Perform the division
+    return ddf['market_cap'] / ddf['fully_diluted_market_cap']
+
 
 def extract_features(data: pd.DataFrame) -> pd.DataFrame:
     """
     Extract features from list of posts.
 
     :param data: list of bitcoin data
-    :return: List of features
+    :return: List of computed data
     """
-    output = []
-    for _, bitcoin_data in data.iterrows():
-        nvt_ratio = get_nvt_ratio(
-            bitcoin_data["market_cap"], 
-            bitcoin_data["volume_24h"]
-        )
-        mc_fdmc_ratio = get_mc_fdmc_ratio( 
-            bitcoin_data["market_cap"],
-            bitcoin_data["fully_diluted_market_cap"],
-        )
+    output = pd.DataFrame()
+    # convert pandas dataframe to dask dataframe
+    ddf = dd.from_pandas(data, npartitions=10)
 
-        features = {
-            "name": bitcoin_data["name"],
-            "price": bitcoin_data["price"],
-            "nvt_ratio": nvt_ratio,
-            "mc_fdmc_ratio": mc_fdmc_ratio,
-            "market_cap_dominance": bitcoin_data["market_cap_dominance"],
-            "last_updated": bitcoin_data["last_updated"],
-        }
-        output += [features]
-    return pd.DataFrame(output)
+    # compute features
+    ddf['nvt_ratio'] = get_nvt_ratio(ddf)
+    ddf['mc_fdmc_ratio'] = get_mc_fdmc_ratio(ddf)
+
+    # convert dask dataframe to pandas dataframe
+    output = ddf.compute()
+
+    # rename column mapket_cap_dominance to mc_dominance
+    output = output.rename(columns={'market_cap_dominance': 'mc_dominance'})
+    # only keep the columns we want 
+    output = output[["name", "price", "nvt_ratio", "mc_fdmc_ratio", "mc_dominance", "last_updated"]]
+    return output

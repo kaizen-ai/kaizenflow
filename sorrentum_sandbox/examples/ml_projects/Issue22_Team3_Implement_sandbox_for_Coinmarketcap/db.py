@@ -85,3 +85,21 @@ class MongoClient(ssanclie.DataClient):
         # Convert the data to a dataframe.
         df = pd.DataFrame(data)
         return df
+
+    def get_last_updated(self, collection_name: str) -> pd.DataFrame:
+        """
+        Get last updated data from target collection.
+
+        :param collection_name: collection name where data come from
+        :return: loaded data
+        """
+        # Access the data.
+        db = self.mongo_client[self.db_name]
+        # make sure db is not empty
+        if db[collection_name].count_documents({}) > 0:
+            data = list(db[collection_name].find().sort("last_updated", -1).limit(1))
+            # Convert the data to a dataframe.
+            df = pd.DataFrame(data)
+            return df
+        else:
+            return pd.DataFrame()
