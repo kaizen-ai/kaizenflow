@@ -10,7 +10,8 @@ extract features and load back to the DB.
 """
 import argparse
 import logging
-
+import pytz
+import pandas as pd
 import pandas as pd
 import pymongo
 
@@ -70,7 +71,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     hdbg.init_logger(use_exec_path=True)
 
 
-    # 1) Build client.
+    # 1) Build client
     mongodb_client = pymongo.MongoClient(
         host="host.docker.internal", 
         port=27017, 
@@ -79,7 +80,7 @@ def _main(parser: argparse.ArgumentParser) -> None:
     )
     coinmarketcap_mongo_client = coinmarketcap_db.MongoClient(mongodb_client, "CoinMarketCap")
 
-    # 2) Load data.
+    # 2) Load data
     cmc_data = coinmarketcap_mongo_client.load(collection_name=args.source_collection)
 
     if len(cmc_data) == 0:
@@ -87,15 +88,25 @@ def _main(parser: argparse.ArgumentParser) -> None:
         return
     _LOG.info("Loaded data: \n %s", cmc_data.head())
 
-    # 2) Transform data.
-    features = coinmarketcap_features.extract_features(data)
+    # 3) Process data
+    cmc_data = cmc_data.rename(columns={'1': 'data'})
+    cmc_data = pd.concat([cmc_data[cmc_data.columns.difference(['data'])], pd.json_normalize(cmc_data.data)], axis=1)
+    kept_columns = ['name','quote.USD.last_updated','max_supply','total_supply','circulating_supply', 'quote.USD.price', 'quote.USD.market_cap', 'quote.USD.market_cap_dominance', 'quote.USD.fully_diluted_market_cap','quote.USD.volume_24h', ]
+    cmc_data = cmc_data[kept_columns]
+    cmc_data.columns = cmc_data.columns.str.replace('quote.USD.', '')
+    cmc_data['last_updated'] = pd.to_datetime(cmc_data['last_updated'])
+    cmc_data['last_updated'] = cmc_data['last_updated'].dt.tz_convert(pytz.timezone('US/Eastern'))
+    _LOG.info("Processed data: \n %s", cmc_data.head())
 
-    # 5) Save back to db.
+    # 2) Transform data
+    features = coinmarketcap_features.extract_features(cmc_data)
+
+    # 5) Save back to db
     _LOG.info("Extracted features: \n %s", features.head())
     db_saver = coinmarketcap_db.MongoDataSaver(
         mongo_client=mongodb_client, db_name="CoinMarketCap"
     )
-    db_saver.save(
+    db_saver.save_many(
         data=ssandown.RawData(features), collection_name=args.target_collection
     )
     _LOG.info("Features saved to MongoDB.")

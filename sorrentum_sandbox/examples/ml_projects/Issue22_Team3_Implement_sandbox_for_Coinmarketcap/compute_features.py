@@ -24,16 +24,26 @@ def get_nvt_ratio(market_cap, transaction_volume):
         return 0
     return market_cap / transaction_volume
 
-
 def get_mc_fdmc_ratio(market_cap, fully_diluted_market_cap):
     """
     :param: Market Cap & Fully Diluted Market Cap
     :return: Market Cap / Fully Diluted Market Cap
     """
-    if fully_diluted_market_cap == 0:
-        return 0
-    return market_cap / fully_diluted_market_cap
-
+    try:
+        # Ensure both variables are of type 'float'
+        market_cap = float(market_cap)
+        fully_diluted_market_cap = float(fully_diluted_market_cap)
+        
+        # Perform the division
+        return market_cap / fully_diluted_market_cap
+    except ValueError:
+        # Handle the case when the conversion to float fails
+        print("Error: One or both of the input values could not be converted to a float.")
+        return None
+    except ZeroDivisionError:
+        # Handle the case when 'fully_diluted_market_cap' is zero
+        print("Error: Division by zero.")
+        return None
 
 def extract_features(data: pd.DataFrame) -> pd.DataFrame:
     """
@@ -46,7 +56,7 @@ def extract_features(data: pd.DataFrame) -> pd.DataFrame:
     for _, bitcoin_data in data.iterrows():
         nvt_ratio = get_nvt_ratio(
             bitcoin_data["market_cap"], 
-            bitcoin_data["transaction_volume"]
+            bitcoin_data["volume_24h"]
         )
         mc_fdmc_ratio = get_mc_fdmc_ratio( 
             bitcoin_data["market_cap"],
