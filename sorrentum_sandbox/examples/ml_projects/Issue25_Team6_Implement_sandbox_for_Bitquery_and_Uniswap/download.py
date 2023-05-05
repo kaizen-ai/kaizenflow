@@ -10,6 +10,7 @@ import logging
 import os
 import pandas as pd
 import requests
+import json
 from typing import Any, Dict, List
 from dotenv import load_dotenv
 from datetime import datetime
@@ -25,7 +26,7 @@ _LOG = logging.getLogger(__name__)
 
 
 # function for bitquery query
-def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = False) -> ssandown.RawData:
+def run_bitquery_query(start_time: str, target_table: str, end_time: str = None, live_flag: bool = False) -> ssandown.RawData:
     # Query for the API
     limit = 25000
     offset = 0
@@ -34,7 +35,7 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
 
     # Check for live_flag
     if live_flag:
-        live_date = get_recent_timestamp()
+        live_date = get_recent_timestamp(target_table)
         query_alter_1 = "since"
         query_alter_2 = "%s" % live_date
 
@@ -48,7 +49,7 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
 
     # GraphQL API query to get Uniswap DEX data
     query = """
-    query{
+       query{
     ethereum(network: ethereum) {
         dexTrades(
             options: {desc: ["block.height", "tradeIndex"], limit: %d, offset: %d}
@@ -92,9 +93,10 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
             quoteAmount(in: USD)
             trades: count
             quotePrice
-            tradeAmount(in: USD)
-            buyAmount(in: USD)
-            sellAmount(in: USD)
+            maximum_price: quotePrice(calculate: maximum)
+            minimum_price: quotePrice(calculate: minimum)
+            open_price: minimum(of: block, get: quote_price)
+            close_price: maximum(of: block, get: quote_price)
         }
     }
     }
@@ -166,14 +168,14 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
 
 
 
-def get_recent_timestamp() -> str:
+def get_recent_timestamp(target_table) -> str:
     db_conn = sisebidb.get_db_connection()
 
     # Create a cursor to execute SQL queries
     cur = db_conn.cursor()
 
     # Execute a SQL query to retrieve the last row of the table
-    cur.execute("SELECT * FROM uniswap_table ORDER BY timeinterval_minute DESC LIMIT 1")
+    cur.execute("SELECT * FROM %s ORDER BY timeinterval_minute DESC LIMIT 1") % target_table
 
     # Extract the timestamp from the last row
     result = cur.fetchone()

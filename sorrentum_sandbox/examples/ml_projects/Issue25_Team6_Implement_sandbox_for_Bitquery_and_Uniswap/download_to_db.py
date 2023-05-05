@@ -73,9 +73,10 @@ def _main(parser: argparse.ArgumentParser) -> None:
     # Load data.
     start_timestamp = (args.start_timestamp)
     end_timestamp = (args.end_timestamp)
+    target_table = (args.target_table)
     live_flag = (args.live_flag)
     # downloader = sisebido.bitqueryApiDownloader()  ## TODO Alter here, create if statement and flag for realtime data
-    raw_data = sisebido.run_bitquery_query(start_timestamp, end_timestamp,live_flag)
+    raw_data = sisebido.run_bitquery_query(start_timestamp, target_table, end_timestamp,live_flag)
     # Save data to DB.
     db_conn = sisebidb.get_db_connection()
     saver = sisebidb.PostgresDataFrameSaver(db_conn)
