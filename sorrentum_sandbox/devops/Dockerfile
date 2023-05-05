@@ -20,6 +20,7 @@ USER airflow
 
 # Update pip.
 RUN /usr/local/bin/python -m pip install --upgrade pip
+RUN /usr/local/bin/python -m pip install prophet
 
 # Install Python packages.
 RUN pip3 install \
@@ -33,7 +34,14 @@ RUN pip3 install \
     pymongo \
     s3fs \
     seaborn \
-    tqdm \
+    tqdm \	
+    dask \
+    prophet \
+    distributed \
+    dask_xgboost \
+    xgboost \
+    dask_ml \
+    dask_xgboost \
     yapf
 
 # Part of the original DockerFile.
