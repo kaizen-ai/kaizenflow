@@ -10,11 +10,10 @@ import logging
 import os
 import pandas as pd
 import requests
-import json
 from typing import Any, Dict, List
 from dotenv import load_dotenv
-from datetime import datetime
-import sorrentum_sandbox.examples.ml_projects.Issue25_Team6_Implement_sandbox_for_Bitquery_and_Uniswap.db as sisebidb
+import time
+
 import sorrentum_sandbox.common.download as ssandown
 
 _LOG = logging.getLogger(__name__)
@@ -26,21 +25,14 @@ _LOG = logging.getLogger(__name__)
 
 
 # function for bitquery query
-def run_bitquery_query(start_time: str, target_table: str, end_time: str = None, live_flag: bool = False) -> ssandown.RawData:
+def run_bitquery_query(start_time: str, end_time: str = None) -> ssandown.RawData:
     # Query for the API
     limit = 25000
     offset = 0
 
     time_format = '%Y-%m-%d %H:%M:%S'
-
-    # Check for live_flag
-    if live_flag:
-        live_date = get_recent_timestamp(target_table)
-        query_alter_1 = "since"
-        query_alter_2 = "%s" % live_date
-
     # Alter query depending on if end_time is present
-    elif end_time == None:
+    if end_time == None:
         query_alter_1 = "since"
         query_alter_2 = "%s" % start_time
     else:
@@ -49,7 +41,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
 
     # GraphQL API query to get Uniswap DEX data
     query = """
-       query{
+    query{
     ethereum(network: ethereum) {
         dexTrades(
             options: {desc: ["block.height", "tradeIndex"], limit: %d, offset: %d}
@@ -111,6 +103,8 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     endpoint = "https://graphql.bitquery.io/"
     headers = {"X-API-KEY": api_key}
 
+
+
     # Define an empty list to store the results
     results = []
 
@@ -121,7 +115,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     while True:
         # Construct the API query with the current offset
         fractured_query = query % (limit, offset,query_alter_1, query_alter_2,time_format)
-
+        
         # Send the API request and get the response
         response = requests.post(endpoint, json={'query': fractured_query}, headers=headers)
 
@@ -152,7 +146,7 @@ def run_bitquery_query(start_time: str, target_table: str, end_time: str = None,
     # Normalize and convert the results list into a Pandas DataFrame
     df = json_to_df(results)
 
-    # lowercase column names and convert to Raw Data
+    # lowercase column names
     df = df.rename(str.lower, axis='columns')
     _LOG.info(f"Downloaded data: \n\t {df.head()}")
     return ssandown.RawData(df)
@@ -168,23 +162,6 @@ def json_to_df(data: List[Dict[Any, Any]]) -> pd.DataFrame:
 
 
 
-def get_recent_timestamp(target_table) -> str:
-    db_conn = sisebidb.get_db_connection()
-
-    # Create a cursor to execute SQL queries
-    cur = db_conn.cursor()
-
-    # Execute a SQL query to retrieve the last row of the table
-    query = "SELECT * FROM %s ORDER BY timeinterval_minute DESC LIMIT 1" % target_table
-    cur.execute(query) 
-
-    # Extract the timestamp from the last row
-    result = cur.fetchone()
-
-    # Convert Datetime to ISO format
-    last_timestamp = result[1].isoformat() 
-
-    cur.close()
-    return last_timestamp
 
 
+  
