@@ -66,6 +66,12 @@ def _parse() -> argparse.ArgumentParser:
 
 
 def process_data(cmc_data):
+    """
+    Process data from source_collection.
+
+    :param cmc_data: Dataframe containing data from source_collection
+    :return: Dataframe containing processed data
+    """
     cmc_data = cmc_data.rename(columns={'1': 'data'})
     cmc_data = pd.concat([cmc_data[cmc_data.columns.difference(['data'])], pd.json_normalize(cmc_data.data)], axis=1)
     kept_columns = ['name','quote.USD.last_updated','max_supply','total_supply','circulating_supply', 'quote.USD.price', 'quote.USD.market_cap', 'quote.USD.market_cap_dominance', 'quote.USD.fully_diluted_market_cap','quote.USD.volume_24h', ]
@@ -78,6 +84,13 @@ def process_data(cmc_data):
     return cmc_data
 
 def fliter_new_data(cmc_data, features_last_updated):
+    """
+    Filter out data that has already been processed.
+
+    :param cmc_data: Dataframe containing data from source_collection
+    :param features_last_updated: Dataframe containing last updated value from features collection
+    :return: Dataframe containing data that has not been processed yet
+    """
     if not features_last_updated.empty:
         features_last_updated_value = features_last_updated['last_updated'].iloc[0]
         _LOG.info("1. features_last_updated: \n %s", features_last_updated)

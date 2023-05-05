@@ -48,6 +48,7 @@ def extract_features(data: pd.DataFrame) -> pd.DataFrame:
     ddf = dd.from_pandas(data, npartitions=10)
 
     # compute features
+    # Get the NVT Ratio and Market Cap / Fully Diluted Market Cap
     ddf['nvt_ratio'] = get_nvt_ratio(ddf)
     ddf['mc_fdmc_ratio'] = get_mc_fdmc_ratio(ddf)
 
