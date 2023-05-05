@@ -66,11 +66,18 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
             }
             tradeIndex
             protocol
+            exchange {
+            fullName
+            }
+            
             baseCurrency {
             symbol
+            address
             }
+            baseAmount(in: USD)
             quoteCurrency {
             symbol
+            address
             }
             transaction {
             hash
@@ -87,7 +94,7 @@ def run_bitquery_query(start_time: str, end_time: str = None, live_flag: bool = 
             quotePrice
             tradeAmount(in: USD)
             sellAmount(in: USD)
-            buyAmount(in: USD)
+            sellAmount(in: USD)
         }
     }
     }
