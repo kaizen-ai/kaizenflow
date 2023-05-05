@@ -19,6 +19,7 @@
 This document was forked from [Google Python Style Guide](https://google.github.io/styleguide/pyguide.html), therefore, the numbering of chapters sets off where the Style Guide ends. Make sure to familiarize yourself with it before proceeding to the rest of the doc, since it is the basis of our team’s code style.
 
 Another important source is [The Pragmatic Programmer](https://drive.google.com/file/d/1g0vjtaBVq0dt32thNprBRJpeHJsJSe-Z/view?usp=sharing) by David Thomas and Andrew Hunt. While not Python-specific, it provides an invaluable set of general principles by which any person working with code (software developer, DevOps or data scientist) should abide. Read it on long commutes, during lunch, and treat yourself to a physical copy on Christmas. The book is summarized [here](https://github.com/cryptokaizen/cmamp/blob/master/documentation/general/the_pragramatic_programmer.md), but do not deprive yourself of the engaging manner in which Thomas & Hunt elaborate on these points -- on top of it all, it is a very, very enjoyable read.
+
 ## **References**
 - Coding
   - [Google Python Style Guide (GPSG)](https://google.github.io/styleguide/pyguide.html)[](https://google.github.io/styleguide/pyguide.html)
@@ -79,11 +80,11 @@ In this paragraph we summarize the high-level principles that we follow for desi
     - Do you see inconsistencies, potential issues?
   - It will take less and less time to become good at this
 
-# **5 Our coding suggestions**
+# **Our coding suggestions**
 
-## **5.1 Being careful with naming**
+## **Being careful with naming**
 
-### ***5.1.1 Follow the conventions***
+### ***Follow the conventions***
 - Name executable files (scripts) and library functions using verbs (e.g., `download.py`, `download_data()`)
 - Name classes and (non-executable) files using nouns (e.g., `Downloader()`, `downloader.py`)
 - For decorators we don't use a verb as we do for normal functions, but rather an adjective or a past tense verb, e.g.,
@@ -95,7 +96,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
       …
   ```
 
-### ***5.1.2 Follow spelling rules***
+### ***Follow spelling rules***
 - Capitalize the abbreviations, e.g.:
   - `CSV`
   - `DB` since it's an abbreviation of Database
@@ -105,7 +106,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - We use different names for indicating the same concept, e.g., `dir`, `path`, `folder`
   - Preferred term is `dir`
 
-### ***5.1.3 Search good names, avoid bad names***
+### ***Search good names, avoid bad names***
 - Naming things properly is one of the most difficult task of a programmer /
   data scientist
   - The name needs to be (possibly) short and memorable
@@ -132,7 +133,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
       - Then we need to change the name everywhere!
     - The name should capture what the data structure represents (its *semantics)* and not how it is implemented
 
-### ***5.1.4 Avoid code stutter***
+### ***Avoid code stutter***
 - An example of code stutter: in a module `git` there is a function called
   `get_git_root_path()`.
 - **Bad**
@@ -150,9 +151,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
   - This is not only aesthetic reason but a bit related to a weak form of DRY
 
-## **5.3 Comments**
+## **Comments**
 
-### ***5.3.1 Docstring conventions***
+### ***Docstring conventions***
 - Code needs to be properly commented
 - We follow python standard [PEP 257](https://www.python.org/dev/peps/pep-0257/)
   for commenting
@@ -163,7 +164,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Epytext
   - Numpydoc
 
-### ***5.3.2 ReST style***
+### ***ReST style***
 - ReST (aka re-Structured Text) style is:
   - The most widely supported in the python community
   - Supported by all doc generation tools (e.g., epydoc, sphinx)
@@ -204,7 +205,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     ```
 - [More examples of and discussions on python docstrings](https://stackoverflow.com/questions/3898572)
 
-### ***5.3.3 Descriptive vs imperative style***
+### ***Descriptive vs imperative style***
 - GPSG suggests using descriptive comments, e.g., "This function does this and
   that", instead of an imperative style "Do this and that"
 - [PEP 257](https://www.python.org/dev/peps/pep-0257/)
@@ -217,11 +218,11 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Since we prefer to rely upon automatic checks, we have decided to use the
     imperative style
 
-### ***5.3.4 Comments***
+### ***Comments***
 - Comments follow the same style of docstrings, e.g., imperative style with
   period . at the end
 
-### ***5.3.5 Use type hints***
+### ***Use type hints***
 - We expect new code to use type hints whenever possible
   - See [PEP 484](https://www.python.org/dev/peps/pep-0484/)
   - [Type hints cheat sheet](https://mypy.readthedocs.io/en/latest/cheat_sheet_py3.html)
@@ -229,7 +230,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - We plan to start using static analyzers (e.g., `mypy`) to check for bugs from
   type mistakes and to enforce type hints at run-time, whenever possible
 
-### ***5.3.6 Replace empty lines in code with comments***
+### ***Replace empty lines in code with comments***
 - If you feel that you need an empty line in the code, it probably means that a
   specific chunk of code is a logical piece of code performing a cohesive
   function.
@@ -261,7 +262,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   empty line is used also to separate functions. For this reason we suggest
   using an empty comment.
 
-### ***5.3.7 Avoid distracting comments***
+### ***Avoid distracting comments***
 - Use comments to explain the high level logic / goal of a piece of code and not
   the details
   - E.g., do not comment things that are obvious, e.g.,
@@ -270,7 +271,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   _LOG.info("Results are %s", ...)
   ```
 
-### ***5.3.8 Commenting out code***
+### ***Commenting out code***
 - When we comment out code, we should explain why it is no longer relevant and
 - What we need to do before removing the commented out code:
   - E.g., instead of
@@ -285,7 +286,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     is_alive = pd.Series(True, index=metadata.index)
     ```
 
-### ***5.3.9 If you find a bug or obsolete docstring/TODO in the code***
+### ***If you find a bug or obsolete docstring/TODO in the code***
 - The process is:
   - Do a `git blame` to find who wrote the code
   - If it's an easy bug, you can fix it and ask for a review from the author
@@ -296,7 +297,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     - Stacktrace
     - You can use the tag "BUG: ..."
 
-### ***5.3.10 Referring to an object in code comments***
+### ***Referring to an object in code comments***
 - We prefer to refer to objects in the code using Markdown like this (this is
   a convention used in the documentation system Sphinx)
   ```
@@ -310,7 +311,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   # The df `df_tmp` is used for ...
   ```
 
-### ***5.3.11 Inline comments***
+### ***Inline comments***
 - In general we prefer to avoid writing comments on the same line as code since
   they require extra maintenance (e.g., when the line becomes too long)
   - **Bad**
@@ -323,9 +324,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
     print("hello world")
     ```
 
-## **5.4 Linter**
+## **Linter**
 
-### ***5.4.1 Disabling linter messages***
+### ***Disabling linter messages***
 - When the linter reports a problem:
   - We assume that linter messages are correct, until the linter is proven wrong
   - We try to understand what is the rationale for the linter's complaints
@@ -358,7 +359,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     import config.logging_settings
     ```
 
-### ***5.4.2 Prefer non-inlined linter comments***
+### ***Prefer non-inlined linter comments***
 - Although we don't like inlined comments sometimes there is no other choice
   than an inlined comment to get the linter to understand which line we are
   referring to:
@@ -372,12 +373,12 @@ In this paragraph we summarize the high-level principles that we follow for desi
     import config.logging_settings  # pylint: disable=unused-import
     ```
 
-## **5.5 Logging**
+## **Logging**
 
-### ***5.5.1 Always use logging instead of prints***
+### ***Always use logging instead of prints***
 - Always use logging and never `print()` to monitor the execution
 
-### ***5.5.2 Our logging idiom***
+### ***Our logging idiom***
 - In order to use our logging framework (e.g., `-v` from command lines, and much
   more) use:
   ```
@@ -394,7 +395,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - E.g., when there is a bug one can run with `-v DEBUG` and see what's
     happening right before the bug
 
-### ***5.5.3 Logging level***
+### ***Logging level***
 - Use `_LOG.warning` for messages to the final user related to something
   unexpected where the code is making a decision that might be controversial
   - E.g., processing a dir that is supposed to contain only `.csv` files the
@@ -413,7 +414,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     sometimes this happens silently and it is reported only from the OS return
     code
 
-### ***5.5.4 Use positional args when logging***
+### ***Use positional args when logging***
 - **Bad**
   ```
   _LOG.debug('cmd=%s %s %s' % (cmd1, cmd2, cmd3))
@@ -427,7 +428,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - The two statements are equivalent from the functional point of view
 - The reason is that in the second case the string is not built unless the
   logging is actually performed, which limits time overhead from logging
-### ***5.5.5 Exceptions don't allow positional args***
+### ***Exceptions don't allow positional args***
 - For some reason people tend to believe that using the logging / dassert
   approach of positional param to exceptions
   - **Bad** (use positional args)
@@ -448,7 +449,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - There is little time overhead since if you get to the exception probably the
     code is going to terminate, and it's not in a hot loop
 
-### ***5.5.6 Report warnings***
+### ***Report warnings***
 - If there is a something that is suspicious but you don't feel like it's
   worthwhile to assert, report a warning with:
   ```
@@ -460,9 +461,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Send the rest to warnings.log
   - At the end of the run, reports "there are warnings in warnings.log"
 
-## **5.6 Assertions**
+## **Assertions**
 
-### ***5.6.1 Use positional args when asserting***
+### ***Use positional args when asserting***
 - `dassert_*` is modeled after logging so for the same reasons one should use
   positional args 
 - **Bad**
@@ -473,7 +474,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
   dbg.dassert_eq(a, 1, "No info for %s", method)
   ```
-### ***5.6.2 Report as much information as possible in an assertion***
+### ***Report as much information as possible in an assertion***
 - When using a `dassert_*` you want to give to the user as much information as
   possible to fix the problem
   - E.g., if you get an assertion after 8 hours of computation you don't want to
@@ -491,9 +492,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
     ```
     - Note that often is useful to add ' (backtick) to fight pesky spaces that make the value unclear, or to make the error as readable as possible
 
-## **5.7 Imports**
+## **Imports**
 
-### ***5.7.1 Don't use evil `import *`***
+### ***Don't use evil `import *`***
 - Do not use in notebooks or code the evil `import *`
   - **Bad**
     ```
@@ -510,7 +511,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     with the namespace
   - [Is evil in many other ways](https://stackoverflow.com/questions/2386714/why-is-import-bad)
 
-### ***5.7.2 Cleaning up the evil `import *`***
+### ***Cleaning up the evil `import *`***
 - To clean up the mess you can:
   - For notebooks
     - Find & replace (e.g., using jupytext and pycharm)
@@ -521,7 +522,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   tweak the path of symbols exported by a library
   - This is an advanced topic and you should rarely use it
 
-### ***5.7.3 Avoid `from ... import ...`***
+### ***Avoid `from ... import ...`***
 - The rule is:
   ```
   import library as short_name
@@ -551,7 +552,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     - `np.read_documents()` at least give information of which packages is it
       coming from
 
-### ***5.7.4 Exceptions to the import style***
+### ***Exceptions to the import style***
 - We try to minimize the exceptions to this rule to avoid to keep this rule
   simple, rather than discussing about
 - The current agreed upon exceptions are:
@@ -562,7 +563,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     in order to avoid typing everywhere, since we want to use type hints as
     much as possible
 
-### ***5.7.5 Examples of imports***
+### ***Examples of imports***
 - Example 1
   - **Bad**
     ```
@@ -600,7 +601,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
     import helpers.misc as hm
     ```
 
-### ***5.7.6 Always import with a full path from the root of the repo / submodule***
+### ***Always import with a full path from the root of the repo / submodule***
 - **Bad**
   ```
   import exchange_class
@@ -611,7 +612,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ```
 - In this way your code can run without depending upon your current dir
 
-### ***5.7.7 Baptizing module import***
+### ***Baptizing module import***
 - Each module that can be imported should have a docstring at the very beginning
   (before any code) describing how it should be imported
   ```
@@ -625,7 +626,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - The goal is to have always the same imports so it's easy to move code around,
   without collisions
 
-### ***5.7.8 Use Python and not bash for scripting***
+### ***Use Python and not bash for scripting***
 - We prefer to use python instead of bash scripts with very few
   exceptions
   - E.g., scripts that need to modify the environment by setting env vars, like
@@ -642,7 +643,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Our approach is to make simple to create scripts in python that are equivalent
   to sequencing shell commands, so that can evolve in complex scripts
 
-### ***5.7.9 Skeleton for a script***
+### ***Skeleton for a script***
 - The ingredients are:
   - `dev_scripts/script_skeleton.py`: a template to write simple scripts you can copy and modify it
   - `helpers/system_interaction.py`: a set of utilities that make simple to run shell commands (e.g., capturing their output, breaking on error or not, tee-ing to file, logging, ...)
@@ -652,7 +653,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - A simple example is: `dev_scripts/git/gup.py`
 - A complex example is: `dev_scripts/linter.py`
 
-### ***5.7.10 Some useful patterns***
+### ***Some useful patterns***
 - Some useful patterns / idioms that are supported by the framework are:
   - Incremental mode: you skip an action if its outcome is already present
     (e.g., skipping creating a dir, if it already exists and it contains all the
@@ -660,7 +661,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - Non-incremental mode: clean and execute everything from scratch
   - Dry-run mode: the commands are written to screen instead of being executed
 
-### ***5.7.11 Use scripts and not notebooks for long-running jobs***
+### ***Use scripts and not notebooks for long-running jobs***
 - We prefer to use scripts to execute code that might take long time (e.g., hours) to run, instead of notebooks
 - Pros of script
   - All the parameters are completely specified by a command line
@@ -672,7 +673,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Notebooks are designed for interactive computing / debugging and not batch jobs
   - You can experiment with notebooks, move the code into a library, and wrap it in a script
 
-### ***5.7.12 Follow the same structure***
+### ***Follow the same structure***
 - All python scripts that are meant to be executed directly should:
   1. Be marked as executable files with:
       ```
@@ -692,7 +693,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 
 - In this way you can execute directly without prepending with python
 
-### ***5.7.13 Use clear names for the scripts***
+### ***Use clear names for the scripts***
 - In general scripts (like functions) should have a name like "action_verb".
   - **Bad**
     - Example of bad names are `timestamp_extractor.py` and `timestamp_extractor_v2.py`
@@ -707,9 +708,9 @@ In this paragraph we summarize the high-level principles that we follow for desi
   this dataset, that we refer in the bug name, e.g., `TaskXYZ_edgar_timestamp_dataset_extractor.py`
 - Also where the script is located should give some clue of what is related to
 
-## **5.8 Functions**
+## **Functions**
 
-### ***5.8.1 Avoid using non-exclusive `bool` arguments***
+### ***Avoid using non-exclusive `bool` arguments***
 - While a simple `True`/`False` switch may suffice for today's needs, very often
   more flexibility is eventually needed
 - If more flexibility is needed for a `bool` argument, you are faced with the
@@ -724,7 +725,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   parameter `None`. This is only a good route if the default operation is
   non-controversial / intuitively obvious.
 
-### ***5.8.2 Try to make functions work on multiple types***
+### ***Try to make functions work on multiple types***
 - We encourage implementing functions that can work on multiple related types:
   - **Bad**: implement `demean_series()`, `demean_dataframe()`
   - **Good**: implement a function `demean(obj)` that can work with `pd.Series` and `pd.DataFrame`
@@ -735,7 +736,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Try to return the same type of the input, if possible
   - E.g., the function called on a `pd.Series` returns a `pd.Series`
 
-### ***5.8.3 Avoid hard-wired column name dependencies***
+### ***Avoid hard-wired column name dependencies***
 - When working with dataframes, we often want need handle certain columns
   differently, or perform an operation on a strict subset of columns
 - In these cases, it is tempting to assume that the special columns will have
@@ -764,7 +765,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - This prevents hidden column name dependencies from spreading like a virus
     throughout the codebase
 
-### ***5.8.4 Single exit point from a function***
+### ***Single exit point from a function***
   ```
   @staticmethod
   def _get_zero_element(list_: list):
@@ -806,7 +807,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
         return
     ```
 
-### ***5.8.5 Order of function parameters***
+### ***Order of function parameters***
 #### *Problem*
 - We want to have a standard, simple, and logical order for specifying the
   arguments of a function
@@ -817,7 +818,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   - In-out parameters
   - Default parameters
 
-### ***5.8.6 Consistency of ordering of function parameters***
+### ***Consistency of ordering of function parameters***
 - Try to:
   - Keep related variables close to each other
   - Keep the order of parameters similar across functions that have similar
@@ -827,7 +828,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Use linter to check consistency of types between function definition
   and invocation
 
-### ***5.8.7 Style for default parameter***
+### ***Style for default parameter***
 #### *Problem*
 - How to assign default parameters in a function?
 #### *Decision*
@@ -892,7 +893,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Cons:
   - One needs to add `Optional` to the type hint
 
-### ***5.8.8 Calling functions with default parameters***
+### ***Calling functions with default parameters***
 #### *Problem*
 - You have a function
   ```
@@ -904,6 +905,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
   ...
   ```
 - How should it be invoked?
+
 #### *Decision*
 - We prefer to
   - Assign directly the positional parameters
@@ -931,7 +933,7 @@ In this paragraph we summarize the high-level principles that we follow for desi
 - Cons:
   - None
 
-### ***5.8.9 Don't repeat non-default parameters***
+### ***Don't repeat non-default parameters***
 #### *Problem*
 - Given a function with the following interface:
   ```
@@ -982,16 +984,16 @@ In this paragraph we summarize the high-level principles that we follow for desi
       mult_and_sum(mul1, mul2, sum_)
       ```
 
-## **5.9 Writing clear beautiful code**
+## **Writing clear beautiful code**
 
-### ***5.9.2 Keep related code close***
+### ***Keep related code close***
 E.g., keep code that computes data close to the code that uses it.
 
 This holds also for notebooks: do not compute all the data structure and then analyze them.
 
 It’s better to keep the section that “reads data” close to the section that “processes it”. In this way it’s easier to see “blocks” of code that are dependent from each other, and run only a cluster of cells.
 
-### ***5.9.3 Distinguish public and private functions***
+### ***Distinguish public and private functions***
 The public functions `foo_bar()` (not starting with `_`) are the ones that make up the interface of a module and that are called from other modules and from notebooks.
 
 Use private functions like `_foo_bar()` when a function is a helper of another private or public function. Also follow the “keep related code close” close by keeping the private functions close to the functions (private or public) that are using them.
@@ -999,7 +1001,7 @@ Use private functions like `_foo_bar()` when a function is a helper of another p
 Some references:
 - [StackOverflow](https://stackoverflow.com/questions/1641219/does-python-have-private-variables-in-classes?noredirect=1&lq=1)
 
-### ***5.9.4 Keep public functions organized in a logical order***
+### ***Keep public functions organized in a logical order***
 Keep the public functions in an order related to the use representing the typical flow of use, e.g.,
 - common functions, used by all other functions
 - read data
@@ -1054,7 +1056,7 @@ def func1_read_data1():
     - E.g., using OOP only to reorganize the code instead of introducing “concepts”
     - IMO the worst issue is that they don’t play super-well with Jupyter autoreload
 
-### ***5.9.5 Do not wrap printf()***
+### ***Do not wrap printf()***
 
 Examples of horrible functions are:
 ```
@@ -1073,7 +1075,7 @@ def folder_name(f_name):
     return f_name
 ```
 
-### ***5.9.6 Do not introduce another “concept” unless really needed***
+### ***Do not introduce another “concept” unless really needed***
 
 We want to introduce degrees of freedom and indirection only when we think this can be useful to make the code easy to maintain, read, and expand. 
 
@@ -1106,7 +1108,7 @@ SNAPSHOT_ID = 'TigerId'
 ```
 then the variable and its value are in contrast.
 
-### ***5.9.7 Return None or keep one type***
+### ***Return None or keep one type***
 Functions that return different types can make things complicated downstream, since the callers need to be aware of all of it and handle different cases. This also complicates the docstring, since one needs to explicitly explain what the special values mean, all the types and so on.
 
 In general returning multiple types is an indication that there is a problem.
@@ -1129,7 +1131,7 @@ else:
     df['Name'] = df['Tags'].apply(extract_name)
 ```
 
-### ***5.9.8 Avoid wall-of-text functions***
+### ***Avoid wall-of-text functions***
 ```
 def get_timestamp_v07(raw_df):
     timestamp_df = get_raw_timestamp(raw_df)
@@ -1180,9 +1182,9 @@ def get_timestamp_v07(raw_df):
     return timestamp_df
 ```
 
-## **5.10 Writing robust code**
+## **Writing robust code**
 
-### ***5.10.1 Don’t let your functions catch the default-itis***
+### ***Don’t let your functions catch the default-itis***
 Default-itis is a disease of a function that manifests itself by getting too many default parameters. 
 
 Default params should be used only for parameters that 99% of the time are constant.
@@ -1191,7 +1193,7 @@ In general we require the caller to be clear and specify all the params.
 
 Functions catch defaultitis when the programmer is lazy and wants to change the behavior of a function without changing all the callers and unit tests. Resist this urge! grep is friend. pycharm does this refactoring automatically.
 
-### ***5.10.2 Explicitly bind default parameters***
+### ***Explicitly bind default parameters***
 It’s best to explicitly bind functions with the default params so that if the function signature changes, your functions doesn’t confuse a default param was a positional one.
 
 Instead of
@@ -1210,7 +1212,7 @@ do this
   )
   ```
 
-### ***5.10.3 Don’t hardwire params in a function call***
+### ***Don’t hardwire params in a function call***
 E.g., code like 
 ```
 esa_df = universe.get_esa_universe_mapped(False, True)
@@ -1223,7 +1225,7 @@ esa_df = universe.get_esa_universe_mapped(gvkey=False, cik=True)
 ```
 This solution is robust since it will work as long as gvkey and cik are the only needed params, which is as much as we can require from the called function.
 
-### ***5.10.4 Make if-then-else complete***
+### ***Make if-then-else complete***
 In general if-then-else needs to be complete, so that the code is robust.
 
 Instead of
@@ -1259,13 +1261,13 @@ if datafmt is not None and items is not None:
 
 The last line is a catch-all that makes sure even if we modify the previous code, the code is robust.
 
-### ***5.10.5 Encode the assumptions using assertions***
+### ***Encode the assumptions using assertions***
 If your code makes an assumption don’t just write a comment, but implement an assertion so the code can’t be executed if the assertion is not verified (instead of failing silently)
 ```
 dbg.dassert_lt(start_date, end_date)
 ```
 
-### ***5.10.6 Add TODOs when needed***
+### ***Add TODOs when needed***
 - When there is something that you know you should have done, but you didn’t have time to do, add a TODO, possibly using your git name or github name e.g.,
   ```
   # TODO(gp): …
@@ -1283,9 +1285,9 @@ dbg.dassert_lt(start_date, end_date)
   # TODO(Sergey): P1 This can be implemented in pandas using a range generation.
   ```
 
-## **5.11 Common Python mistakes**
+## **Common Python mistakes**
 
-### ***5.11.1 == vs is***
+### ***== vs is***
 `is` checks whether two variables point to the same object (aka reference equality), while `==` checks if the two pointed objects are equivalent (value equality).
 
 For checking against types, None we want to use `is`, `is not`
@@ -1300,7 +1302,7 @@ if var == None
 ```
 For more info checks [here](https://stackoverflow.com/questions/132988/is-there-a-difference-between-and-is-in-python)
 
-### ***5.11.2 type() vs isinstance()***
+### ***type() vs isinstance()***
 E.g., you want to do:
 ```
 if isinstance(obj, list): 
@@ -1315,7 +1317,7 @@ Note that `type(obj) == list` is even worse since we want to test for reference 
 
 For more info check [here](https://stackoverflow.com/questions/1549801/what-are-the-differences-between-type-and-isinstance)
 
-## **5.12 Unit test**
+## **Unit test**
 - Provide a minimal end-to-end unit test (which creates a conda environment and then run a few unit tests)
 - Use
   - pytest <https://docs.pytest.org/en/latest/>
@@ -1330,9 +1332,9 @@ For more info check [here](https://stackoverflow.com/questions/1549801/what-are-
 > pytest datetime_utils_test.py -x -s
 ```
 
-## **5.13 Refactoring**
+## **Refactoring**
 
-### ***5.13.1 When moving / refactoring code***
+### ***When moving / refactoring code***
 If you move files, refactor code, move functions around make sure that:
 - code and notebook work (e.g., imports and caller of the functions)
 - documentation is updated (this is difficult, so best effort is enough)
@@ -1357,9 +1359,9 @@ If it’s important code:
 - run unit tests
 - run notebooks (see [here](https://n-xovwktmtjsnaxyc2mwes2xu7pohqedmdm6zjw5q-0lu-script.googleusercontent.com/userCodeAppPanel#))
 
-## **5.14 Architectural and design pattern**
+## **Architectural and design pattern**
 
-### ***5.14.1 Organize scripts as pipelines***
+### ***Organize scripts as pipelines***
 One can organize complex computations in stages of a pipeline
 
 - E.g., to parse EDGAR forms
@@ -1379,7 +1381,7 @@ The code should be organized to allow these different modes of operations, but t
 
 - E.g., I implement the various chunks of the pipeline in a library, separating functions that read / save data after a stage and then assemble the pieces into a throw-away script where I hardwire the file names and so on
 
-### ***5.14.2 Incremental behavior***
+### ***Incremental behavior***
 - Often we need to run the same code over and over
   - E.g., because the code fails on an unexpected point and then we need to re-run from the beginning
 - We use options like:
@@ -1397,21 +1399,21 @@ The code should be organized to allow these different modes of operations, but t
     - if output file exists then we issue a log.warn and abort the process
     - if output file exists and param `--force`, then report a log.warn and rewrite output file
 
-### ***5.14.3 Run end-to-end***
+### ***Run end-to-end***
 - Try to run things end-to-end (and from scratch) so we can catch these unexpected issues and code defensively
   - E.g., we found out that TR data is malformed sometimes and only running end-to-end we can catch all the weird cases
   - This also helps with scalability issues, since if takes 1 hr for 1 month of data and we have 10 years of data is going to take 120 hours (=5 days) to run on the entire data set
 
-### ***5.14.4 Think about scalability***
+### ***Think about scalability***
 - Do experiments to try to understand if a code solution can scale to the dimension of the data we have to deal with
   - E.g., inserting data by doing SQL inserts of single rows are not scalable for pushing 100GB of data
 - Remember that typically we need to run the same scripts multiple times (e.g., for debug and / or production)
 
-### ***5.14.5 Use command line for reproducibility***
+### ***Use command line for reproducibility***
 - Try to pass params through command line options when possible
   - In this way a command line contains all the set-up to run an experiment
 
-### ***5.14.6 Structure the code in terms of filters***
+### ***Structure the code in terms of filters***
 - Focus on build a set of "filters" split into different functions, rather than a monolithic flow
 - Organize the code in terms of a sequence of transformations that can be run in sequence, e.g.,
   1. create SQL tables
